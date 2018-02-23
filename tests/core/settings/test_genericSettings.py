@@ -25,7 +25,7 @@ class TestConfigSettings(unittest.TestCase):
             posix_path = os.path.realpath(__file__).replace('\\', '/')
         else:
             posix_path = os.path.realpath(__file__)
-        self.assertEqual(self.config.path_pyiron, '/'.join(posix_path.split('/')[:-5]))
+        self.assertEqual(self.config.path_pyiron + 'base', '/'.join(posix_path.split('/')[:-4]))
 
     def test_path_bin(self):
         self.assertEqual(self.config.path_bin, self.user_home + '/PyIron_data/bin')

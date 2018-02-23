@@ -32,8 +32,8 @@ class TestConfigDefault(unittest.TestCase):
 
     def test_path_pyiron(self):
         sep = os.path.sep
-        new_path = sep.join(os.path.realpath(__file__).split(sep)[:-6])
-        self.assertEqual(self.config.path_pyiron, new_path.replace('\\', '/'))
+        new_path = sep.join(os.path.realpath(__file__).split(sep)[:-5])
+        self.assertEqual(self.config.path_pyiron + 'base', new_path.replace('\\', '/'))
         # self.assertEqual(self.config.path_pyiron, '/'.join(posixpath.realpath(__file__).split('/')[:-5]))
 
 

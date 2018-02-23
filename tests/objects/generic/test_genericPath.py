@@ -7,7 +7,7 @@ config = ConfigTesting(sql_lite_database='./testing_genericpath.db',
                        path_project=str(os.getcwd()))
 s = Settings(config=config)
 
-from pyiron.project import Project
+from pyironbase.project import Project
 from pyironbase.core.project.path import GenericPath
 
 

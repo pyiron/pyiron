@@ -8,7 +8,7 @@ config = ConfigTesting(sql_lite_database='./testing_genericjob.db',
                        path_project=str(os.getcwd()))
 s = Settings(config=config)
 
-from pyiron.project import Project
+from pyironbase.project import Project
 
 
 class TestGenericJob(unittest.TestCase):
@@ -21,10 +21,10 @@ class TestGenericJob(unittest.TestCase):
         os.remove('testing_genericjob.db')
 
     def test_db_entry(self):
-        ham = self.project.create_job("ExampleJob", "job_single_debug")
+        ham = self.project.create_job('ScriptJob', "job_single_debug")
         db_entry = ham.db_entry()
         self.assertEqual(db_entry['project'], ham.project_hdf5.project_path)
-        self.assertEqual(db_entry['hamilton'], 'ExampleJob')
+        self.assertEqual(db_entry['hamilton'], 'Script')
         self.assertEqual(db_entry['hamversion'], ham.version)
         self.assertEqual(db_entry['status'], ham.status.string)
         self.assertEqual(db_entry['job'], ham.job_name)
@@ -54,7 +54,7 @@ class TestGenericJob(unittest.TestCase):
 
     def test_job_name(self):
         cwd = os.getcwd().replace('\\', '/')
-        ham = self.project.create_job("ExampleJob", "job_single_debug")
+        ham = self.project.create_job('ScriptJob', "job_single_debug")
         self.assertEqual('job_single_debug', ham.job_name)
         self.assertEqual('/job_single_debug', ham.project_hdf5.h5_path)
         self.assertEqual(cwd + '/test_genericjob/job_single_debug.h5', ham.project_hdf5.file_name)
@@ -65,7 +65,7 @@ class TestGenericJob(unittest.TestCase):
         self.assertTrue(os.path.isfile(ham.project_hdf5.file_name))
         ham.project_hdf5.remove_file()
         self.assertFalse(os.path.isfile(ham.project_hdf5.file_name))
-        ham = self.project.create_job("ExampleJob", "job_single_debug_2")
+        ham = self.project.create_job('ScriptJob', "job_single_debug_2")
         ham.to_hdf()
         self.assertEqual('job_single_debug_2', ham.job_name)
         self.assertEqual('/job_single_debug_2', ham.project_hdf5.h5_path)
@@ -82,13 +82,13 @@ class TestGenericJob(unittest.TestCase):
     def test_move(self):
         pr_a = self.project.open('project_a')
         pr_b = self.project.open('project_b')
-        ham = pr_a.create_job("ExampleJob", "job_moving_easy")
+        ham = pr_a.create_job('ScriptJob', "job_moving_easy")
         self.assertFalse(ham.project_hdf5.file_exists)
         self.assertEqual('test_genericjob/project_a/', ham.project_hdf5.project_path)
         self.assertFalse(ham.project_hdf5.file_exists)
         ham.move_to(pr_b)
         self.assertEqual('test_genericjob/project_b/', ham.project_hdf5.project_path)
-        ham_2 = pr_a.create_job("ExampleJob", "job_moving_diff")
+        ham_2 = pr_a.create_job('ScriptJob', "job_moving_diff")
         ham_2.to_hdf()
         self.assertEqual('test_genericjob/project_a/', ham_2.project_hdf5.project_path)
         ham_2.move_to(pr_b)
