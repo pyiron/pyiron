@@ -1,0 +1,12 @@
+*.pyc
+.DS_Store
+.coverage
+nohup.out
+PyIron.log
+pyiron.log
+.idea/
+inspectionProfiles/
+_build/
+apidoc/
+.ipynb_checkpoints/
+test_times.dat
