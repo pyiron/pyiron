@@ -1,7 +1,7 @@
 """
 Setuptools based setup module
 """
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 
 setup(
@@ -31,7 +31,7 @@ setup(
     ],
 
     keywords='pyiron',
-    packages=['pyiron_atomistics'],
+    packages=find_packages(),
     install_requires=['ase',
                       'pyironbase',
                       'spglib']
