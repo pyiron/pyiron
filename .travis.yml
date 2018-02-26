@@ -17,7 +17,8 @@ install:
   - conda config --set anaconda_upload yes
 
 script:
-  - conda build --python ${PYTHONVER} --user ${USER} --token ${CONDA_UPLOAD_TOKEN} conda/pyironbase
+  - pip install .
   - cd tests
   - python find_tests.py
   - cd ..
+  - conda build --python ${PYTHONVER} --user ${USER} --token ${CONDA_UPLOAD_TOKEN} conda/pyironbase
