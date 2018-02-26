@@ -1,0 +1,45 @@
+package:
+  name: pyiron_vasp
+  version: beta
+
+source:
+  path: ../../
+
+requirements:
+  build:
+    - python
+    - h5py
+    - matplotlib
+    - numpy
+    - pandas
+    - six
+    - sqlalchemy
+    - pytables
+    - ase
+    - spglib
+    - pyironbase
+    - pyiron_atomistics
+    - pyiron_dft
+
+  run:
+    - python
+    - h5py
+    - matplotlib
+    - numpy
+    - pandas
+    - six
+    - sqlalchemy
+    - pytables
+    - ase
+    - spglib
+    - pyiron_atomistics
+    - pyiron_dft
+
+test:
+  imports:
+    - pyiron_vasp
+
+about:
+  home: http://pyiron.org
+  license: BSD
+  summary: "pyiron vasp plugin"
