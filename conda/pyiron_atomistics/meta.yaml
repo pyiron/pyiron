@@ -1,0 +1,42 @@
+package:
+  name: pyiron_atomistics
+  version: beta
+
+source:
+  path: ../../
+
+requirements:
+  build:
+    - python
+    - h5py
+    - matplotlib
+    - numpy
+    - pandas
+    - six
+    - sqlalchemy
+    - pytables
+    - ase
+    - spglib
+    - pyironbase
+
+  run:
+    - python
+    - h5py
+    - matplotlib
+    - numpy
+    - pandas
+    - six
+    - sqlalchemy
+    - pytables
+    - ase
+    - spglib
+    - pyironbase
+
+test:
+  imports:
+    - pyiron_atomistics
+
+about:
+  home: http://pyiron.org
+  license: BSD
+  summary: "pyironbase"
