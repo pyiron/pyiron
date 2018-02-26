@@ -1,7 +1,7 @@
 """
 Setuptools based setup module
 """
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 
 setup(
@@ -13,7 +13,7 @@ setup(
     url='https://github.com/jan-janssen/pyironbase',
     author='Jan Janssen (MPIE)',
     author_email='janssen@mpie.de',
-    license='BSD',
+    license='modified BSD',
 
     classifiers=[
 
@@ -31,7 +31,7 @@ setup(
     ],
 
     keywords='pyiron',
-    packages=['pyironbase'],
+    packages=find_packages(),
     install_requires=['h5py',
                       'matplotlib',
                       'numpy',
