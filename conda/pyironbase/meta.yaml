@@ -14,7 +14,7 @@ requirements:
     - pandas
     - six
     - sqlalchemy
-    - tables
+    - pytables
 
   run:
     - python
@@ -24,7 +24,7 @@ requirements:
     - pandas
     - six
     - sqlalchemy
-    - tables
+    - pytables
 
 test:
   imports:
