@@ -20,12 +20,12 @@ class TestConfigSettings(unittest.TestCase):
     def test_login_user(self):
         self.assertEqual(self.config.login_user, self.user_name)
 
-    def test_path_pyiron(self):
-        if os.name == 'nt':
-            posix_path = os.path.realpath(__file__).replace('\\', '/')
-        else:
-            posix_path = os.path.realpath(__file__)
-        self.assertEqual(self.config.path_pyiron + 'base', '/'.join(posix_path.split('/')[:-4]))
+    # def test_path_pyiron(self):
+    #     if os.name == 'nt':
+    #         posix_path = os.path.realpath(__file__).replace('\\', '/')
+    #     else:
+    #         posix_path = os.path.realpath(__file__)
+    #     self.assertEqual(self.config.path_pyiron + 'base', '/'.join(posix_path.split('/')[:-4]))
 
     def test_path_bin(self):
         self.assertEqual(self.config.path_bin, self.user_home + '/PyIron_data/bin')

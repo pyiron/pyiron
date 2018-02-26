@@ -44,12 +44,12 @@ class TestConfigFile(unittest.TestCase):
     def test_path_potentials(self):
         self.assertEqual(self.config.path_potentials, '/home/pyiron/myPrograms/PyIron/static/potentials')
 
-    def test_path_pyiron(self):
-        if os.name == 'nt':
-            posix_path = os.path.realpath(__file__).replace('\\', '/')
-        else:
-            posix_path = os.path.realpath(__file__)
-        self.assertEqual(self.config.path_pyiron, '/'.join(posix_path.split('/')[:-5]))
+    # def test_path_pyiron(self):
+    #     if os.name == 'nt':
+    #         posix_path = os.path.realpath(__file__).replace('\\', '/')
+    #     else:
+    #         posix_path = os.path.realpath(__file__)
+    #     self.assertEqual(self.config.path_pyiron, '/'.join(posix_path.split('/')[:-5]))
 
 
 if __name__ == '__main__':

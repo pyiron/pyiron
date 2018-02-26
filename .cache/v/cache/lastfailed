@@ -1,0 +1,14 @@
+{
+  "tests/objects/job/test_copyto.py::TestChildids::test_copy_to_job": true,
+  "tests/objects/job/test_copyto.py::TestChildids::test_copy_to_job_ex": true,
+  "tests/objects/job/test_genericMaster.py::TestGenericJob::test_generic_jobs": true,
+  "tests/objects/job/test_genericMaster.py::TestGenericJob::test_generic_jobs_ex": true,
+  "tests/objects/job/test_serialMaster.py::TestSerialMaster::test_convergence_goal": true,
+  "tests/objects/job/test_serialMaster.py::TestSerialMaster::test_multiple_jobs": true,
+  "tests/objects/job/test_serialMaster.py::TestSerialMaster::test_single_job": true,
+  "tests/objects/job/test_serialMaster.py::TestSerialMaster::test_single_job_new_hdf5": true,
+  "tests/objects/server/test_executable.py::TestExecutable::test_available_versions": true,
+  "tests/objects/server/test_executable.py::TestExecutable::test_executable_path": true,
+  "tests/objects/server/test_executable.py::TestExecutable::test_mpi": true,
+  "tests/objects/server/test_executable.py::TestExecutable::test_version": true
+}
