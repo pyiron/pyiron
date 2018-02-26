@@ -113,7 +113,7 @@ class Vasp(GenericDFTJob):
     @property
     def spin_constraints(self):
         if 'I_CONSTRAINED_M' in self.input.incar._dataset['Parameter']:
-            return self.input.incar['I_CONSTRAINED_M']
+            return self.input.incar['I_CONSTRAINED_M'] == 1 or self.input.incar['I_CONSTRAINED_M'] == 2
         else:
             return False
 
@@ -138,6 +138,42 @@ class Vasp(GenericDFTJob):
     @write_charge_density.setter
     def write_charge_density(self, val):
         self.input.incar["LCHARG"] = bool(val)
+
+    @property
+    def write_wave_funct(self):
+        return self.input.incar['LWAVE']
+
+    @write_wave_funct.setter
+    def write_wave_funct(self, write_wave):
+        if not isinstance(write_wave, bool):
+            raise ValueError('write_wave_funct, can either be True or False.')
+        self.input.incar['LWAVE'] = write_wave
+
+    @property
+    def write_resolved_dos(self):
+        return self.input.incar['LORBIT']
+
+    @write_resolved_dos.setter
+    def write_resolved_dos(self, resolved_dos):
+        if not isinstance(resolved_dos, bool) and not isinstance(resolved_dos, int):
+            raise ValueError('write_resolved_dos, can either be True, False or 0, 1, 2, 5, 10, 11, 12.')
+        self.input.incar['LORBIT'] = resolved_dos
+
+
+    @property
+    def sorted_indices(self):
+        """
+        How the original atom indices are ordered in the vasp format (species by species)
+        """
+        self._sorted_indices = vasp_sorter(self.structure)
+        return self._sorted_indices
+
+    @sorted_indices.setter
+    def sorted_indices(self, val):
+        """
+        Setter for the sorted indices
+        """
+        self._sorted_indices = val
 
     # Compatibility functions
     def write_input(self):
@@ -311,13 +347,19 @@ class Vasp(GenericDFTJob):
                                     if isinstance(spin, list) or isinstance(spin, np.ndarray) else str(spin)
                                     for spin in self.structure.get_initial_magnetic_moments()])
             s.logger.debug('Magnetic Moments are: {0}'.format(final_cmd))
-            self.input.incar["MAGMOM"] = final_cmd
-            self.input.incar["ISPIN"] = 2
+            if "MAGMOM" not in self.input.incar._dataset['Parameter'].keys():
+                self.input.incar["MAGMOM"] = final_cmd
+            if "ISPIN" not in self.input.incar._dataset['Parameter'].keys():
+                self.input.incar["ISPIN"] = 2
             if any([True if isinstance(spin, list) or isinstance(spin, np.ndarray) else False
                     for spin in self.structure.get_initial_magnetic_moments()]):
                 self.input.incar['LNONCOLLINEAR'] = True
-            if self.spin_constraints:
-                self.input.incar['M_CONSTR'] = final_cmd
+                if self.spin_constraints and 'M_CONSTR' not in self.input.incar._dataset['Parameter'].keys():
+                    self.input.incar['M_CONSTR'] = final_cmd
+                if 'LAMBDA' not in self.input.incar._dataset['Parameter'].keys():
+                    raise ValueError('LAMBDA is not specified but it is necessary for non collinear calculations.')
+            if self.spin_constraints and not self.input.incar['LNONCOLLINEAR']:
+                raise ValueError('Spin constraints are only avilable for non collinear calculations.')
         else:
             s.logger.debug('No magnetic moments')
 
@@ -788,43 +830,16 @@ class Vasp(GenericDFTJob):
             os.makedirs(self.working_directory)
         copyfile(old_path, new_path)
 
-    @property
-    def sorted_indices(self):
-        """
-        How the original atom indices are ordered in the vasp format (species by species)
-        """
-        self._sorted_indices = vasp_sorter(self.structure)
-        return self._sorted_indices
-
-    @sorted_indices.setter
-    def sorted_indices(self, val):
-        """
-        Setter for the sorted indices
-        """
-        self._sorted_indices = val
+    def set_spin_constraint(self, direction=False, norm=False):
+        assert isinstance(direction, bool)
+        assert isinstance(norm, bool)
+        if direction and norm:
+            self.input.incar['I_CONSTRAINED_M'] = 2
+        elif direction:
+            self.input.incar['I_CONSTRAINED_M'] = 1
 
     def __del__(self):
         pass
-
-    @property
-    def write_wave_funct(self):
-        return self.input.incar['LWAVE']
-
-    @write_wave_funct.setter
-    def write_wave_funct(self, write_wave):
-        if not isinstance(write_wave, bool):
-            raise ValueError('write_wave_funct, can either be True or False.')
-        self.input.incar['LWAVE'] = write_wave
-
-    @property
-    def write_resolved_dos(self):
-        return self.input.incar['LORBIT']
-
-    @write_resolved_dos.setter
-    def write_resolved_dos(self, resolved_dos):
-        if not isinstance(resolved_dos, bool) and not isinstance(resolved_dos, int):
-            raise ValueError('write_resolved_dos, can either be True, False or 0, 1, 2, 5, 10, 11, 12.')
-        self.input.incar['LORBIT'] = resolved_dos
 
 
 class Input:
