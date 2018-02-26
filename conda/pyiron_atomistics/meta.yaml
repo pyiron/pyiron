@@ -1,5 +1,5 @@
 package:
-  name: pyiron_atomistics
+  name: 'pyiron_atomistics'
   version: beta
 
 source:
@@ -34,9 +34,9 @@ requirements:
 
 test:
   imports:
-    - pyiron_atomistics
+    - 'pyiron_atomistics'
 
 about:
   home: http://pyiron.org
   license: BSD
-  summary: "pyironbase"
+  summary: "pyiron atomistics plugin"
