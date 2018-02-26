@@ -1,0 +1,36 @@
+package:
+  name: pyironbase
+  version: beta
+
+source:
+  path: ../../
+
+requirements:
+  build:
+    - python
+    - h5py
+    - matplotlib
+    - numpy
+    - pandas
+    - six
+    - sqlalchemy
+    - tables
+
+  run:
+    - python
+    - h5py
+    - matplotlib
+    - numpy
+    - pandas
+    - six
+    - sqlalchemy
+    - tables
+
+test:
+  imports:
+    - pyironbase
+
+about:
+  home: http://pyiron.org
+  license: BSD
+  summary: "pyironbase"
