@@ -17,4 +17,4 @@ install:
   - conda config --set anaconda_upload yes
 
 script:
-  - conda build --python ${PYTHONVER} --user ${USER} --token ${CONDA_UPLOAD_TOKEN} conda/pyironbase
+  - conda build --python ${PYTHONVER} --user ${USER} --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_atomistics
