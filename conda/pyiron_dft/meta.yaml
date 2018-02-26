@@ -19,6 +19,7 @@ requirements:
     - spglib
     - pyironbase
     - pyiron_atomistics
+    - pyiron_dft
 
   run:
     - python
@@ -33,6 +34,7 @@ requirements:
     - spglib
     - pyironbase
     - pyiron_atomistics
+    - pyiron_dft
 
 test:
   imports:
