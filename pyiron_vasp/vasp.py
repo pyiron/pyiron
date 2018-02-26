@@ -81,6 +81,100 @@ class Vasp(GenericDFTJob):
         self.input.incar["SYSTEM"] = self.job_name
         self.output = Output()
 
+    @property
+    def plane_wave_cutoff(self):
+        return self.input.incar['ENCUT']
+
+    @plane_wave_cutoff.setter
+    def plane_wave_cutoff(self, val):
+        self.input.incar['ENCUT'] = val
+
+    @property
+    def exchange_correlation_functional(self):
+        return self.input.potcar["xc"]
+
+    @exchange_correlation_functional.setter
+    def exchange_correlation_functional(self, val):
+        """
+
+        Args:
+            exchange_correlation_functional:
+
+        Returns:
+
+        """
+        if val in ["PBE", "pbe", "GGA", "gga"]:
+            self.input.potcar["xc"] = "PBE"
+        elif val in ["LDA", "lda"]:
+            self.input.potcar["xc"] = "LDA"
+        else:
+            self.input.potcar["xc"] = val
+
+    @property
+    def spin_constraints(self):
+        if 'I_CONSTRAINED_M' in self.input.incar._dataset['Parameter']:
+            return self.input.incar['I_CONSTRAINED_M'] == 1 or self.input.incar['I_CONSTRAINED_M'] == 2
+        else:
+            return False
+
+    @spin_constraints.setter
+    def spin_constraints(self, val):
+        self.input.incar['I_CONSTRAINED_M'] = val
+
+    @property
+    def write_electrostatic_potential(self):
+        return bool(self.input.incar["LVTOT"])
+
+    @write_electrostatic_potential.setter
+    def write_electrostatic_potential(self, val):
+        self.input.incar["LVTOT"] = bool(val)
+        if bool(val):
+            self.input.incar["LVHAR"] = True
+
+    @property
+    def write_charge_density(self):
+        return bool(self.input.incar["LCHARG"])
+
+    @write_charge_density.setter
+    def write_charge_density(self, val):
+        self.input.incar["LCHARG"] = bool(val)
+
+    @property
+    def write_wave_funct(self):
+        return self.input.incar['LWAVE']
+
+    @write_wave_funct.setter
+    def write_wave_funct(self, write_wave):
+        if not isinstance(write_wave, bool):
+            raise ValueError('write_wave_funct, can either be True or False.')
+        self.input.incar['LWAVE'] = write_wave
+
+    @property
+    def write_resolved_dos(self):
+        return self.input.incar['LORBIT']
+
+    @write_resolved_dos.setter
+    def write_resolved_dos(self, resolved_dos):
+        if not isinstance(resolved_dos, bool) and not isinstance(resolved_dos, int):
+            raise ValueError('write_resolved_dos, can either be True, False or 0, 1, 2, 5, 10, 11, 12.')
+        self.input.incar['LORBIT'] = resolved_dos
+
+
+    @property
+    def sorted_indices(self):
+        """
+        How the original atom indices are ordered in the vasp format (species by species)
+        """
+        self._sorted_indices = vasp_sorter(self.structure)
+        return self._sorted_indices
+
+    @sorted_indices.setter
+    def sorted_indices(self, val):
+        """
+        Setter for the sorted indices
+        """
+        self._sorted_indices = val
+
     # Compatibility functions
     def write_input(self):
         """
@@ -224,22 +318,6 @@ class Vasp(GenericDFTJob):
     def reset_output(self):
         self.output = Output()
 
-    def set_exchange_correlation_functional(self, exchange_correlation_functional):
-        """
-
-        Args:
-            exchange_correlation_functional:
-
-        Returns:
-
-        """
-        if exchange_correlation_functional in ["PBE", "pbe", "GGA", "gga"]:
-            self.input.potcar["xc"] = "PBE"
-        elif exchange_correlation_functional in ["LDA", "lda"]:
-            self.input.potcar["xc"] = "LDA"
-        else:
-            self.input.potcar["xc"] = exchange_correlation_functional
-
     def get_final_structure_from_file(self, filename="CONTCAR"):
         """
         Get the final structure of the  simulation
@@ -269,11 +347,19 @@ class Vasp(GenericDFTJob):
                                     if isinstance(spin, list) or isinstance(spin, np.ndarray) else str(spin)
                                     for spin in self.structure.get_initial_magnetic_moments()])
             s.logger.debug('Magnetic Moments are: {0}'.format(final_cmd))
-            self.input.incar["MAGMOM"] = final_cmd
-            self.input.incar["ISPIN"] = 2
+            if "MAGMOM" not in self.input.incar._dataset['Parameter'].keys():
+                self.input.incar["MAGMOM"] = final_cmd
+            if "ISPIN" not in self.input.incar._dataset['Parameter'].keys():
+                self.input.incar["ISPIN"] = 2
             if any([True if isinstance(spin, list) or isinstance(spin, np.ndarray) else False
                     for spin in self.structure.get_initial_magnetic_moments()]):
                 self.input.incar['LNONCOLLINEAR'] = True
+                if self.spin_constraints and 'M_CONSTR' not in self.input.incar._dataset['Parameter'].keys():
+                    self.input.incar['M_CONSTR'] = final_cmd
+                if 'LAMBDA' not in self.input.incar._dataset['Parameter'].keys():
+                    raise ValueError('LAMBDA is not specified but it is necessary for non collinear calculations.')
+            if self.spin_constraints and not self.input.incar['LNONCOLLINEAR']:
+                raise ValueError('Spin constraints are only avilable for non collinear calculations.')
         else:
             s.logger.debug('No magnetic moments')
 
@@ -439,43 +525,6 @@ class Vasp(GenericDFTJob):
             self.write_electrostatic_potential = retain_electrostatic_potential
         for key in kwargs.keys():
             s.logger.warning("{}tag not relevant for vasp".format(key))
-
-    @property
-    def write_electrostatic_potential(self):
-        return bool(self.input.incar["LVTOT"])
-
-    @write_electrostatic_potential.setter
-    def write_electrostatic_potential(self, val):
-        self.input.incar["LVTOT"] = bool(val)
-        if bool(val):
-            self.input.incar["LVHAR"] = True
-
-    @property
-    def write_charge_density(self):
-        return bool(self.input.incar["LCHARG"])
-
-    @write_charge_density.setter
-    def write_charge_density(self, val):
-        self.input.incar["LCHARG"] = bool(val)
-
-    @property
-    def plane_wave_cutoff(self):
-        return self.input.incar['ENCUT']
-
-    @plane_wave_cutoff.setter
-    def plane_wave_cutoff(self, val):
-        self.input.incar['ENCUT'] = val
-
-    def set_encut(self, encut):
-        """
-        Sets the plane-wave energy cutoff
-        Args:
-            encut (float): The energy cutoff in eV
-        """
-        self.plane_wave_cutoff = encut
-
-    def get_encut(self):
-        return self.plane_wave_cutoff
 
     def set_kpoints(self, mesh=None, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
                     weights=None, reciprocal=True, kmesh_density=None):
@@ -781,43 +830,16 @@ class Vasp(GenericDFTJob):
             os.makedirs(self.working_directory)
         copyfile(old_path, new_path)
 
-    @property
-    def sorted_indices(self):
-        """
-        How the original atom indices are ordered in the vasp format (species by species)
-        """
-        self._sorted_indices = vasp_sorter(self.structure)
-        return self._sorted_indices
-
-    @sorted_indices.setter
-    def sorted_indices(self, val):
-        """
-        Setter for the sorted indices
-        """
-        self._sorted_indices = val
+    def set_spin_constraint(self, direction=False, norm=False):
+        assert isinstance(direction, bool)
+        assert isinstance(norm, bool)
+        if direction and norm:
+            self.input.incar['I_CONSTRAINED_M'] = 2
+        elif direction:
+            self.input.incar['I_CONSTRAINED_M'] = 1
 
     def __del__(self):
         pass
-
-    @property
-    def write_wave_funct(self):
-        return self.input.incar['LWAVE']
-
-    @write_wave_funct.setter
-    def write_wave_funct(self, write_wave):
-        if not isinstance(write_wave, bool):
-            raise ValueError('write_wave_funct, can either be True or False.')
-        self.input.incar['LWAVE'] = write_wave
-
-    @property
-    def write_resolved_dos(self):
-        return self.input.incar['LORBIT']
-
-    @write_resolved_dos.setter
-    def write_resolved_dos(self, resolved_dos):
-        if not isinstance(resolved_dos, bool) and not isinstance(resolved_dos, int):
-            raise ValueError('write_resolved_dos, can either be True, False or 0, 1, 2, 5, 10, 11, 12.')
-        self.input.incar['LORBIT'] = resolved_dos
 
 
 class Input:
@@ -1289,11 +1311,10 @@ class Potcar(GenericParameters):
                     if not (os.path.isfile(el_path)):
                         raise ValueError('such a file does not exist in the pp directory')
                 else:
-                    el_path = self._find_potential_file(path=list(vasp_potentials.find_default(el)['Filename'])[0][0])
+                    el_path = self._find_potential_file(path=vasp_potentials.find_default(el)['Filename'].values[0])
 
             else:
-                xc, file_name = list(vasp_potentials.find_default(el)['Filename'])[0].split('/')
-                el_path = self._find_potential_file(xc=xc, file_name=file_name)
+                el_path = self._find_potential_file(path=vasp_potentials.find_default(el)['Filename'].values[0])
 
             assert (os.path.isfile(el_path))
             pot_name = "pot_" + str(i)
@@ -1326,7 +1347,12 @@ class Potcar(GenericParameters):
                         if file_name in file_lst:
                             return os.path.join(path, file_name)
         # Backwards compatibility to the old version
-        return os.path.join(s.path_potentials, 'vasp', self.pot_path_dict[xc], file_name)
+        if path is not None:
+            return os.path.join(s.path_potentials, 'vasp', path)
+        elif xc is not None and file_name is not None:
+            return os.path.join(s.path_potentials, 'vasp', self.pot_path_dict[xc], file_name)
+        else:
+            raise ValueError('Either the filename or the functional has to be defined.')
 
     def write_file(self, file_name, cwd=None):
         """
