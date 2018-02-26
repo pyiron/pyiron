@@ -33,6 +33,6 @@ setup(
     keywords='pyiron',
     packages=['pyiron_atomistics'],
     install_requires=['ase',
-                      'pyironbase'
+                      'pyironbase',
                       'spglib']
     )
