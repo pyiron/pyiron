@@ -15,6 +15,45 @@ __date__ = "Sep 1, 2017"
 
 
 class GenericDFTJob(AtomisticGenericJob):
+    @property
+    def encut(self):
+        return self.plane_wave_cutoff
+
+    @encut.setter
+    def encut(self, val):
+        self.plane_wave_cutoff = val
+
+    @property
+    def xc(self):
+        return self.exchange_correlation_functional
+
+    @xc.setter
+    def xc(self, val):
+        self.exchange_correlation_functional = val
+
+    @property
+    def plane_wave_cutoff(self):
+        raise NotImplementedError("The encut property is not implemented for this code.")
+
+    @plane_wave_cutoff.setter
+    def plane_wave_cutoff(self, val):
+        raise NotImplementedError("The encut property is not implemented for this code.")
+
+    @property
+    def spin_constraints(self):
+        raise NotImplementedError("The spin_constraints property is not implemented for this code.")
+
+    @spin_constraints.setter
+    def spin_constraints(self, val):
+        raise NotImplementedError("The spin_constraints property is not implemented for this code.")
+
+    @property
+    def exchange_correlation_functional(self):
+        raise NotImplementedError("The exchange property is not implemented for this code.")
+
+    @exchange_correlation_functional.setter
+    def exchange_correlation_functional(self, val):
+        raise NotImplementedError("The exchange property is not implemented for this code.")
 
     @staticmethod
     def _get_k_mesh_by_cell(cell, kspace_per_in_ang=0.10):
@@ -31,15 +70,6 @@ class GenericDFTJob(AtomisticGenericJob):
                     weights=None, reciprocal=True):
         raise NotImplementedError("The set_kpoints function is not implemented for this code.")
 
-    def set_encut(self, encut):
-        raise NotImplementedError("The set_encut function is not implemented for this code.")
-
-    def get_encut(self):
-        raise NotImplementedError("The set_encut function is not implemented for this code.")
-
-    def set_exchange_correlation_functional(self, exchange_correlation_functional):
-        raise NotImplementedError("The set_exchange_correlation_functional function is not implemented for this code.")
-
     def calc_static(self, electronic_steps=60, algorithm=None, retain_charge_density=False,
                     retain_electrostatic_potential=False):
         super(GenericDFTJob, self).calc_static()
@@ -52,3 +82,18 @@ class GenericDFTJob(AtomisticGenericJob):
     def calc_md(self, temperature=None, n_ionic_steps=1000, n_print=1, dt=1.0, retain_charge_density=False,
                 retain_electrostatic_potential=False, **kwargs):
         super(GenericDFTJob, self).calc_md(temperature=temperature, n_ionic_steps=n_ionic_steps, n_print=n_print)
+
+    # Backward compatibility
+    def get_encut(self):
+        return self.encut
+
+    def set_encut(self, encut):
+        """
+        Sets the plane-wave energy cutoff
+        Args:
+            encut (float): The energy cutoff in eV
+        """
+        self.plane_wave_cutoff = encut
+
+    def set_exchange_correlation_functional(self, exchange_correlation_functional):
+        self.exchange_correlation_functional = exchange_correlation_functional
