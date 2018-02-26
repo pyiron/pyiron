@@ -1,0 +1,44 @@
+package:
+  name: pyiron_example_job
+  version: beta
+
+source:
+  path: ../../
+
+requirements:
+  build:
+    - python
+    - h5py
+    - matplotlib
+    - numpy
+    - pandas
+    - six
+    - sqlalchemy
+    - pytables
+    - ase
+    - spglib
+    - pyironbase
+    - pyiron_atomistics
+
+  run:
+    - python
+    - h5py
+    - matplotlib
+    - numpy
+    - pandas
+    - six
+    - sqlalchemy
+    - pytables
+    - ase
+    - spglib
+    - pyironbase
+    - pyiron_atomistics
+
+test:
+  imports:
+    - pyiron_example_job
+
+about:
+  home: http://pyiron.org
+  license: BSD
+  summary: "pyiron example job"
