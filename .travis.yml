@@ -1,4 +1,5 @@
 language: python
+
 env:
 - MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh"
   PYTHONVER="2.7" USER="pyiron"
@@ -6,6 +7,7 @@ env:
   PYTHONVER="3.5" USER="pyiron"
 - MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
   PYTHONVER="3.6" USER="pyiron"
+
 install:
 - sudo apt-get update
 - wget ${MINICONDA} -O miniconda.sh
@@ -16,12 +18,14 @@ install:
 - conda update -q conda
 - conda install conda-build git make anaconda-client
 - conda config --set anaconda_upload yes
+
 script:
 - pip install .
 - cd tests
 - python find_tests.py
 - cd ..
 - conda build --python ${PYTHONVER} --user ${USER} --token ${CONDA_UPLOAD_TOKEN} conda/pyironbase
+
 deploy:
   provider: pypi
   user: pyiron
