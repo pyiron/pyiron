@@ -1,5 +1,4 @@
 language: python
-
 env:
 - MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh"
   PYTHONVER="2.7" USER="pyiron"
@@ -7,7 +6,6 @@ env:
   PYTHONVER="3.5" USER="pyiron"
 - MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
   PYTHONVER="3.6" USER="pyiron"
-
 install:
 - sudo apt-get update
 - wget ${MINICONDA} -O miniconda.sh
@@ -18,16 +16,14 @@ install:
 - conda update -q conda
 - conda install conda-build git make anaconda-client
 - conda config --set anaconda_upload yes
-
 script:
 - pip install .
 - cd tests
 - python find_tests.py
 - cd ..
 - conda build --python ${PYTHONVER} --user ${USER} --token ${CONDA_UPLOAD_TOKEN} conda/pyironbase
-
 deploy:
   provider: pypi
   user: pyiron
   password:
-    secure: GTSFSQmY7ja/R4mmXFGMQqgX9b7mTuaYrGQNa6WZzDeE6E6fCzmWSOinoSAiUO4cxBKBsIBVmOk+/PezkGudS6h2Usc0oVlomI7DqTlNkjugm+EDWo6jaVbsoAbpAN7YjHarCdB4WOhcgmosVlzqrtEXw8L1xkAt9ihVBoO9STG9ZTrikyJRt3AfLCCES16bxMSpwzRynkQDT+7dk4Ka5PsY5H6e1pl+otKeIxCFu+FCqCXoA8xanEE8gR/m0xQvaLE9GWXuGJpXbTb9N4OCPrllO7s4RdFf3/jd3eccv48LBV7EEABUs9aoZRchRUC/MDUaPu2jk0l3SixiW88I8FWyfs4eF7NTnkMPsaCsmq+VuC3zQ3obpw5NQVAK7qvumToGD2/ct7G0oy0FZh7fq3f4YlTz+snUaBqyNe9x/oA7qkyoieqOMjQ41bV/9tn0yOfwNb3nzG4WLhgubjOQ5c03BDqfGwwAPl8+as6ptNlTtd4iYp7kHEev2+b+jL0IX9T/sSYPi8/hmfXsG+YJlAKTeib2tqiA1QGjkCJrBCLGAtlBBibJj49UklfYXsadAAqQf+kk15S1W4zsG4PlcbGDdkO1osml7B4sZgYA3OzSj5TgAQvmhXf1pbaH9R06VSanZIieisXjiyrid+BMpC/aKsEanT/Yd/cX4vBNWXA=
+    secure: dBfgrXbyatoIpgIn5NbkuvrB6F2NGdC7z+2Q+mRB9/HK7kAAYrVlQBdhxHYzH0LoR4VEp8zCEtHlBR6gaAKLxdheln9LqtmEQFoJM2/Vk8h68ukO28jYbsFG/GebCg+k3AImj9DsxfYAGwdVtvsA10xUL5JEojjfCihsBM+N8sjvrjHsusxIxSuIxLmZgsSZQ58Dk9YGzT19RDw08XUqcMUQzQYfY0pDx8LUF7Yv67ooSgzm0Mxn6ysMz+qADu1BAW6eaKwtizI+dj6foOND+3Y9OBifL+Ie5KnHNqp3mJNJXwsLnGZ6VjFv0LtQmPljY3cxSQ0nytThUkytlT8Q08tY1vnsb9EJjZm7caRKLJJx9ExLeM9C+kDlOp/Km8w05PB28t/z0XHUGorKKzWDmqd/0UPlIoheUgLegQkhLGEmVKg4bAQPKUTR4dWG6jlXvMBWff37ZZE90i9I0VzMZWE2OFotubj4shjOrrl3X2tO3fTPmTgObnPxKxXIbUSe7KRPdokvNtK1mKIiMZMaTLIePsdOAOukZTbLfOAcMIdwUbCciykJ49WRrjws8jfSYNysf3RSNsuC7NU5pLfz7jgJMES9hVDYGSDucTQ21h3KmmeoLW/KNLL4fpS5/AFFe27Z5kvQxb5CUp617W4S9f3mFyEJOgZMucsFJuYgGPo=
