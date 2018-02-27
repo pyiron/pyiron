@@ -39,4 +39,4 @@ test:
 about:
   home: http://pyiron.org
   license: BSD
-  summary: "pyironbase"
+  summary: "pyiron atomistics plugin"
