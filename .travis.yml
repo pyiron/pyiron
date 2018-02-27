@@ -20,3 +20,8 @@ install:
 
 script:
   - conda build --python ${PYTHONVER} --user ${USER} --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_dft
+
+deploy:
+  provider: pypi
+  user: ${USER}
+  password: ${PYPI_UPLOAD_TOKEN}
