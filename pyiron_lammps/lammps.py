@@ -715,8 +715,6 @@ class Lammps(AtomisticGenericJob):
                     constraint_y.append(atom_ind + 1)
                 elif self.structure.selective_dynamics[atom_ind] == [False, False, True]:
                     constraint_z.append(atom_ind + 1)
-                else:
-                    print(self.structure.selective_dynamics[atom_ind] + ' for atom: ' + str(atom_ind) + ' is ignored!')
             if constraint_xyz:
                 self.input.control['group___constraintxyz'] = 'id ' + ' '.join([str(ind) for ind in constraint_xyz])
                 self.input.control['fix___constraintxyz'] = 'constraintxyz setforce 0.0 0.0 0.0'
