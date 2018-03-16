@@ -1311,10 +1311,10 @@ class Potcar(GenericParameters):
                     if not (os.path.isfile(el_path)):
                         raise ValueError('such a file does not exist in the pp directory')
                 else:
-                    el_path = self._find_potential_file(path=vasp_potentials.find_default(el)['Filename'].values[0])
+                    el_path = self._find_potential_file(path=vasp_potentials.find_default(el)['Filename'].values[0][0])
 
             else:
-                el_path = self._find_potential_file(path=vasp_potentials.find_default(el)['Filename'].values[0])
+                el_path = self._find_potential_file(path=vasp_potentials.find_default(el)['Filename'].values[0][0])
 
             assert (os.path.isfile(el_path))
             pot_name = "pot_" + str(i)
