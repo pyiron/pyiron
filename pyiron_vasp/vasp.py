@@ -347,16 +347,16 @@ class Vasp(GenericDFTJob):
                                     if isinstance(spin, list) or isinstance(spin, np.ndarray) else str(spin)
                                     for spin in self.structure.get_initial_magnetic_moments()])
             s.logger.debug('Magnetic Moments are: {0}'.format(final_cmd))
-            if "MAGMOM" not in self.input.incar._dataset['Parameter'].keys():
+            if "MAGMOM" not in self.input.incar._dataset['Parameter']:
                 self.input.incar["MAGMOM"] = final_cmd
-            if "ISPIN" not in self.input.incar._dataset['Parameter'].keys():
+            if "ISPIN" not in self.input.incar._dataset['Parameter']:
                 self.input.incar["ISPIN"] = 2
             if any([True if isinstance(spin, list) or isinstance(spin, np.ndarray) else False
                     for spin in self.structure.get_initial_magnetic_moments()]):
                 self.input.incar['LNONCOLLINEAR'] = True
-                if self.spin_constraints and 'M_CONSTR' not in self.input.incar._dataset['Parameter'].keys():
+                if self.spin_constraints and 'M_CONSTR' not in self.input.incar._dataset['Parameter']:
                     self.input.incar['M_CONSTR'] = final_cmd
-                if 'LAMBDA' not in self.input.incar._dataset['Parameter'].keys():
+                if self.spin_constraints and 'LAMBDA' not in self.input.incar._dataset['Parameter']:
                     raise ValueError('LAMBDA is not specified but it is necessary for non collinear calculations.')
             if self.spin_constraints and not self.input.incar['LNONCOLLINEAR']:
                 raise ValueError('Spin constraints are only avilable for non collinear calculations.')
