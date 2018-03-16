@@ -43,7 +43,7 @@ def get_species_list_from_potcar(filename="POTCAR"):
             if trigger in line:
                 str_1 = line.split(trigger)
                 str_2 = str_1[-1].split(":")
-                species_list.append(str_2[0])
+                species_list.append(str_2[0].replace(" ", ""))
     return species_list
 
 
