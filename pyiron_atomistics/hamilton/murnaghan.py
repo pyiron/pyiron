@@ -7,6 +7,7 @@ from __future__ import print_function
 import numpy as np
 import scipy.integrate
 import scipy.optimize as spy
+import scipy.constants
 from pyiron_atomistics.job.parallel import AtomisticParallelMaster
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
@@ -99,7 +100,7 @@ class FitMurnaghan(object):
             return self._debye_T
 
         GPaTokBar = 10
-        Ang3_to_Bohr3 = 6.7483345
+        Ang3_to_Bohr3 = scipy.constants.angstrom**3/scipy.constants.physical_constants['Bohr radius'][0]**3
         convert = 67.48  # conversion factor, Moruzzi Eq. (4)
         empirical = 0.617  # empirical factor, Moruzzi Eq. (6)
         gamma_low, gamma_high = 1, 2/3  # low/high T gamma

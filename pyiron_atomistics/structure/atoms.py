@@ -2221,11 +2221,11 @@ class Atoms(object):
                 self.selective_dynamics[atom_ind] = [True, True, True]
             else:
                 self.selective_dynamics[atom_ind] = [False, False, False]
-
+                
     def get_initial_magnetic_moments(self):
         """
         Get array of initial magnetic moments.
-
+    
         Returns:
             numpy.array()
         """
@@ -2235,10 +2235,14 @@ class Atoms(object):
             spin_lst = [element.tags['spin'] if 'spin' in element.tags.keys() else None
                         for element in self.get_chemical_elements()]
             if any(spin_lst):
-                if '[' in list(set(spin_lst))[0]:
+                if (isinstance(spin_lst, str) or 
+                    (isinstance(spin_lst, (list, np.ndarray)) and isinstance(spin_lst[0], str))
+                   ) and '[' in list(set(spin_lst))[0]:
                     return np.array(
                         [[float(spin_dir) for spin_dir in spin.replace('[', '').replace(']', '').replace(',', '').split()]
                          if spin else [0.0, 0.0, 0.0] for spin in spin_lst])
+                elif isinstance(spin_lst, (list, np.ndarray)):
+                    return np.array(spin_lst)
                 else:
                     return np.array([float(spin) if spin else 0.0 for spin in spin_lst])
             else:

@@ -288,7 +288,10 @@ class PeriodicTable(object):
         parent_element_data_series['Abbreviation'] = new_element
         parent_element_data_series['Parent'] = parent_element
         parent_element_data_series.name = new_element
-        self.dataframe = self.dataframe.append(parent_element_data_series)
+        if new_element not in self.dataframe.T.columns:
+            self.dataframe = self.dataframe.append(parent_element_data_series)
+        else:
+            self.dataframe.loc[new_element] = parent_element_data_series
         if len(qwargs) != 0:
             if 'tags' not in self.dataframe.columns.values:
                 self.dataframe['tags'] = None
