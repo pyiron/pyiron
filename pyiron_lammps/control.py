@@ -64,7 +64,7 @@ run 0
     def calc_minimize(self, e_tol=1e-8, f_tol=1e-8, max_iter=1000, pressure=None, n_print=1):
         max_evaluations = 10 * max_iter
         if pressure is not None:
-            self.set(fix___1=r'all box/relax iso ' + str(pressure))
+            self.set(fix___1=r'all box/relax aniso ' + str(pressure))
         else:
             self.remove_keys(["fix"])
         self.set(minimize=str(e_tol) + ' ' + str(f_tol) + ' ' + str(max_iter) + " " + str(max_evaluations))
