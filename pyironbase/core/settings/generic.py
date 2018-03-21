@@ -203,8 +203,12 @@ class Settings(with_metaclass(Singleton)):
         for path in self.top_path_dict:
             if path in full_path:
                 return path
-        raise ValueError("Path '{0}' is not included in top_level_dirs: {1} ".format(full_path,
-                                                                                     str(self.top_path_dict)))
+        if 'ConfigDefault' in str(type(self._config)):
+            raise ValueError('no config file found - using default config '
+                             '- but the current path {0} is not included.'.format(full_path))
+        else:
+            raise ValueError("Path '{0}' is not included in top_level_dirs: {1} ".format(full_path,
+                                                                                         str(self.top_path_dict)))
 
     # Private functions
     def _env_load(self):
