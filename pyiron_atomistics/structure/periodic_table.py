@@ -2,7 +2,7 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 import numpy as np
 import os
 from pyironbase.core.settings.generic import Settings
@@ -10,7 +10,8 @@ import sys
 import pandas
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Martin Boeckmann"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -213,10 +214,10 @@ class PeriodicTable(object):
 
         """
 
-        if sys.version_info.major == 2:
-            stringtypes = (str, unicode)
-        else:
-            stringtypes = str
+        # if sys.version_info.major == 2:
+        #    stringtypes = (str, )
+        # else:
+        stringtypes = (str, np.str_, np.string_)
         if isinstance(arg, stringtypes):
             if arg in self.dataframe.index.values:
                 self.el = arg
