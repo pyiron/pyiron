@@ -200,6 +200,7 @@ class Vasp(GenericDFTJob):
         try:
             self.output.collect(directory=self.working_directory)
         except VaspCollectError:
+            self._logger.info("The vasprun file is either corrupted or the simulation crashed")
             self.status.aborted = True
             return
         self.output.to_hdf(self._hdf5)
@@ -962,49 +963,51 @@ class Output:
         """
         sorted_indices = vasp_sorter(self.structure)
         files_present = os.listdir(directory)
+        read_only_from_outcar = False
         if "OUTCAR" in files_present:
             self.outcar.from_file(filename=posixpath.join(directory, "OUTCAR"))
-
         if "vasprun.xml" in files_present:
             try:
                 self.vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
             except VasprunError:
-                raise VaspCollectError("The vasprun file is either corrupted or the simulation crashed")
-            log_dict = dict()
-            log_dict["forces"] = self.vp_new.vasprun_dict["forces"]
-            log_dict["cells"] = self.vp_new.vasprun_dict["cells"]
-            log_dict["volume"] = [np.linalg.det(cell) for cell in self.vp_new.vasprun_dict["cells"]]
-            # log_dict["total_energies"] = self.vp_new.vasprun_dict["total_energies"]
-            log_dict["energy_tot"] = self.vp_new.vasprun_dict["total_energies"]
-            if "kinetic_energies" in self.vp_new.vasprun_dict.keys():
-                log_dict["energy_pot"] = log_dict["energy_tot"] - self.vp_new.vasprun_dict["kinetic_energies"]
-            else:
-                log_dict["energy_pot"] = log_dict["energy_tot"]
-            log_dict["steps"] = np.arange(len(log_dict["energy_tot"]))
-            log_dict["positions"] = self.vp_new.vasprun_dict["positions"]
-            log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
-            log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
-            log_dict["temperatures"] = self.outcar.parse_dict["temperatures"]
-            log_dict["pressures"] = self.outcar.parse_dict["pressures"]
-            log_dict["unwrapped_positions"] = unwrap_coordinates(positions=log_dict["positions"], cell=None,
-                                                                 is_relative=True)
-            for i, pos in enumerate(log_dict["positions"]):
-                log_dict["positions"][i] = np.dot(pos, log_dict["cells"][i])
-                log_dict["unwrapped_positions"][i] = np.dot(log_dict["unwrapped_positions"][i].copy(),
-                                                            log_dict["cells"][i])
-            # log_dict["scf_energies"] = self.vp_new.vasprun_dict["scf_energies"]
-            # log_dict["scf_dipole_moments"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
-            self.electronic_structure = self.vp_new.get_electronic_structure()
-            if self.electronic_structure.grand_dos_matrix is not None:
-                self.electronic_structure.grand_dos_matrix[:, :, :, sorted_indices, :] = \
-                    self.electronic_structure.grand_dos_matrix[:, :, :, :, :].copy()
-            if self.electronic_structure.resolved_densities is not None:
-                self.electronic_structure.resolved_densities[:, sorted_indices, :, :] = \
-                    self.electronic_structure.resolved_densities[:, :, :, :].copy()
-            self.structure.positions = log_dict["positions"][-1]
-            self.structure.cell = log_dict["cells"][-1]
+                # raise VaspCollectError("The vasprun file is either corrupted or the simulation crashed")
+                read_only_from_outcar = True
+            if not read_only_from_outcar:
+                log_dict = dict()
+                log_dict["forces"] = self.vp_new.vasprun_dict["forces"]
+                log_dict["cells"] = self.vp_new.vasprun_dict["cells"]
+                log_dict["volume"] = [np.linalg.det(cell) for cell in self.vp_new.vasprun_dict["cells"]]
+                # log_dict["total_energies"] = self.vp_new.vasprun_dict["total_energies"]
+                log_dict["energy_tot"] = self.vp_new.vasprun_dict["total_energies"]
+                if "kinetic_energies" in self.vp_new.vasprun_dict.keys():
+                    log_dict["energy_pot"] = log_dict["energy_tot"] - self.vp_new.vasprun_dict["kinetic_energies"]
+                else:
+                    log_dict["energy_pot"] = log_dict["energy_tot"]
+                log_dict["steps"] = np.arange(len(log_dict["energy_tot"]))
+                log_dict["positions"] = self.vp_new.vasprun_dict["positions"]
+                log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
+                log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
+                log_dict["temperatures"] = self.outcar.parse_dict["temperatures"]
+                log_dict["pressures"] = self.outcar.parse_dict["pressures"]
+                log_dict["unwrapped_positions"] = unwrap_coordinates(positions=log_dict["positions"], cell=None,
+                                                                     is_relative=True)
+                for i, pos in enumerate(log_dict["positions"]):
+                    log_dict["positions"][i] = np.dot(pos, log_dict["cells"][i])
+                    log_dict["unwrapped_positions"][i] = np.dot(log_dict["unwrapped_positions"][i].copy(),
+                                                                log_dict["cells"][i])
+                # log_dict["scf_energies"] = self.vp_new.vasprun_dict["scf_energies"]
+                # log_dict["scf_dipole_moments"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
+                self.electronic_structure = self.vp_new.get_electronic_structure()
+                if self.electronic_structure.grand_dos_matrix is not None:
+                    self.electronic_structure.grand_dos_matrix[:, :, :, sorted_indices, :] = \
+                        self.electronic_structure.grand_dos_matrix[:, :, :, :, :].copy()
+                if self.electronic_structure.resolved_densities is not None:
+                    self.electronic_structure.resolved_densities[:, sorted_indices, :, :] = \
+                        self.electronic_structure.resolved_densities[:, :, :, :].copy()
+                self.structure.positions = log_dict["positions"][-1]
+                self.structure.cell = log_dict["cells"][-1]
 
-        else:
+        if "vasprun.xml" not in files_present or read_only_from_outcar:
             assert ("OUTCAR" in files_present)
             log_dict = self.outcar.parse_dict.copy()
             log_dict["energy_tot"] = log_dict["energies"].copy()
@@ -1028,10 +1031,11 @@ class Output:
                         self.electronic_structure.efermi = self.vp_new.vasprun_dict["efermi"]
                 except ValueError:
                     pass
-
+        else:
+            return
         # important that we "reverse sort" the atoms in the vasp format into the atoms in the atoms class
         self.generic_output.log_dict = log_dict
-        if "vasprun.xml" in files_present:
+        if "vasprun.xml" in files_present and not read_only_from_outcar:
             self.dft_output.log_dict["parameters"] = self.vp_new.vasprun_dict["parameters"]
             self.dft_output.log_dict["scf_energies"] = self.vp_new.vasprun_dict["scf_energies"]
             self.dft_output.log_dict["scf_fr_energies"] = self.vp_new.vasprun_dict["scf_fr_energies"]
@@ -1053,6 +1057,8 @@ class Output:
             self.electrostatic_potential.from_file(filename=posixpath.join(directory, "LOCPOT"), normalize=False)
         if "CHGCAR" in files_present:
             self.charge_density.from_file(filename=posixpath.join(directory, "CHGCAR"), normalize=True)
+        if read_only_from_outcar:
+            raise VaspCollectError("The vasprun file is either corrupted or the simulation crashed")
 
     def to_hdf(self, hdf):
         """
