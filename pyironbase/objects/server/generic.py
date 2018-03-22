@@ -24,7 +24,7 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 s = Settings()
-server_types = [Cmmc, Vulcan]
+server_types = [Cmmc]
 
 
 class Server(PyIronObject):  # add the option to return the job id and the hold id to the server object
