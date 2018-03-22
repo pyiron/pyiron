@@ -170,7 +170,7 @@ class Executable(object):
             executable_dict = {}
             for path in self._path_bin:
                 for executable in os.listdir(path):
-                    if executable.startswith('run_' + self.__name__) & executable.endswith(extension) and \
+                    if executable.startswith('run_' + self.__name__ + '_') & executable.endswith(extension) and \
                             executable[len("run_" + self.__name__) + 1:-len(extension)] not in executable_dict.keys():
                         executable_dict[executable[len("run_" + self.__name__) + 1:-len(extension)]] = \
                             os.path.join(path, executable).replace('\\', '/')
