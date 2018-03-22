@@ -1,0 +1,48 @@
+package:
+  name: pyiron
+  version: beta
+
+source:
+  path: ../../
+
+requirements:
+  build:
+    - python
+    - h5py
+    - matplotlib
+    - numpy
+    - pandas
+    - six
+    - sqlalchemy
+    - pytables
+    - pyironbase
+    - pyiron_atomistics
+    - pyiron_dft
+    - pyiron_example_job
+    - pyiron_lammps
+    - pyiron_vasp
+
+  run:
+    - python
+    - h5py
+    - matplotlib
+    - numpy
+    - pandas
+    - six
+    - sqlalchemy
+    - pytables
+    - pyironbase
+    - pyiron_atomistics
+    - pyiron_dft
+    - pyiron_example_job
+    - pyiron_lammps
+    - pyiron_vasp
+
+test:
+  imports:
+    - pyiron
+
+about:
+  home: http://pyiron.org
+  license: BSD
+  summary: "pyiron"
