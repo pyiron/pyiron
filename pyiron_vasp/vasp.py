@@ -200,6 +200,7 @@ class Vasp(GenericDFTJob):
         try:
             self.output.collect(directory=self.working_directory)
         except VaspCollectError:
+            self._logger.info("The vasprun file is either corrupted or the simulation crashed")
             self.status.aborted = True
             return
         self.output.to_hdf(self._hdf5)
@@ -1056,6 +1057,8 @@ class Output:
             self.electrostatic_potential.from_file(filename=posixpath.join(directory, "LOCPOT"), normalize=False)
         if "CHGCAR" in files_present:
             self.charge_density.from_file(filename=posixpath.join(directory, "CHGCAR"), normalize=True)
+        if read_only_from_outcar:
+            raise VaspCollectError("The vasprun file is either corrupted or the simulation crashed")
 
     def to_hdf(self, hdf):
         """
