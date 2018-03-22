@@ -62,7 +62,7 @@ build: false
 
 test_script:
   # Build the package
-  - "%CMD_IN_ENV%conda build --python %PYTHON_VERSION% --user pyiron --token %ANACONDA_TOKEN% conda/pyironbase"
+  - "%CMD_IN_ENV% conda build --python %PYTHON_VERSION% --user pyiron --token %ANACONDA_TOKEN% conda/pyironbase"
   - "%CMD_IN_ENV% conda build tools/conda.recipe"
 
   # Install the package
