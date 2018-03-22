@@ -3262,12 +3262,14 @@ def symbols2numbers(symbols):
     Returns:
 
     """
+    pse = PeriodicTable()
+    df = pse.dataframe.T
     if isinstance(symbols, str):
         symbols = string2symbols(symbols)
-    numbers = []
+    numbers = list()
     for sym in symbols:
         if isinstance(sym, string_types):
-            numbers.append(atomic_numbers[sym])
+            numbers.append(df[sym]["AtomicNumber"])
         else:
             numbers.append(sym)
     return numbers
