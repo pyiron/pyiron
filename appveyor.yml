@@ -55,12 +55,8 @@ install:
 - conda config --set anaconda_upload yes
 # Install codecov tool for uploading coverage reports
 - pip install --upgrade pip
-- pip install .
 # Show conda info for debugging
 - conda info -a
-- cd tests
-- python find_tests.py
-- cd ..
 
 build: false
 
