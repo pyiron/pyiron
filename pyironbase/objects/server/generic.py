@@ -7,7 +7,6 @@ from pyironbase.core.settings.generic import Settings
 from pyironbase.objects.generic.template import PyIronObject
 from pyironbase.objects.server.runmode import Runmode
 from pyironbase.objects.server.scheduler.cmmc import Cmmc
-from pyironbase.objects.server.scheduler.vulcan import Vulcan
 from pyironbase.objects.server.scheduler.localhost import Localhost
 import socket
 import pandas
