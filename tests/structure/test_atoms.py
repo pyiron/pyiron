@@ -275,6 +275,28 @@ class TestAtoms(unittest.TestCase):
         cell = 2.2 * np.identity(3)
         Al_sc = Atoms('AlAl', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
         self.assertEqual(Al_sc.get_spacegroup()['InternationalTableSymbol'], 'Im-3m')
+        self.assertEqual(Al_sc.get_spacegroup()['Number'], 229)
+        cell = 4.2 * (0.5 * np.ones((3, 3)) - 0.5 * np.eye(3))
+        Al_fcc = Atoms('Al', scaled_positions=[(0, 0, 0)], cell=cell)
+        self.assertEqual(Al_fcc.get_spacegroup()['InternationalTableSymbol'], 'Fm-3m')
+        self.assertEqual(Al_fcc.get_spacegroup()['Number'], 225)
+        a = 3.18
+        c = 1.623 * a
+        cell = np.eye(3)
+        cell[0, 0] = a
+        cell[2, 2] = c
+        cell[1, 0] = -a/2
+        cell[1, 1] = np.sqrt(3) * a / 2
+        pos = np.array([[0., 0., 0.], [1/3, 2/3, 1/2]])
+        Mg_hcp = Atoms('Mg2', scaled_positions=pos, cell=cell)
+        self.assertEqual(Mg_hcp.get_spacegroup()['Number'], 194)
+        cell = np.eye(3)
+        cell[0, 0] = a
+        cell[2, 2] = c
+        cell[1, 1] = np.sqrt(3) * a
+        pos = np.array([[0., 0., 0.], [0.5, 0.5, 0.], [0.5, 0.16666667, 0.5], [0., 0.66666667, 0.5]])
+        Mg_hcp = Atoms('Mg4', scaled_positions=pos, cell=cell)
+        self.assertEqual(Mg_hcp.get_spacegroup()['Number'], 194)
 
     def test_get_primitive_cell(self):
         cell = 2.2 * np.identity(3)

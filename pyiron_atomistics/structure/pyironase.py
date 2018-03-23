@@ -5,13 +5,14 @@
 import sys
 try:
     from ase.atoms import Atoms as ASEAtoms
-except:
+except ImportError:
     pass
 import pyiron_atomistics.structure.atom as atom
 import pyiron_atomistics.structure.atoms as atoms
 
 __author__ = "Joerg Neugebauer"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"

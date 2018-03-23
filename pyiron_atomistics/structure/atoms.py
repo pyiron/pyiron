@@ -1101,73 +1101,6 @@ class Atoms(object):
         return Atoms(indices=element_list, scaled_positions=new_coordinates[1:], cell=self.cell,
                      dimension=len(cell), species=self.species)
 
-    def get_neighbors_new(self, index, exclude_self=True, include_boundary=True):
-        """
-        
-        Args:
-            index: 
-            exclude_self: 
-            include_boundary: 
-
-        Returns:
-
-        """
-        symbols = self.get_chemical_symbols()
-        dim = self.dimension
-        cell = self.cell
-        tensor = cell * cell.T
-        pos = self.scaled_positions
-        if include_boundary:
-            mesh = np.mgrid[-1:2, -1:2, -1:2]
-            if dim == 2:
-                mesh = np.mgrid[-1:2, -1:2]
-            neigh_mesh = mesh.reshape(dim, -1).T
-            lat_neigh = np.repeat(neigh_mesh, len(pos), axis=0) + np.tile(pos, (len(neigh_mesh), 1))
-            index_list = np.tile(range(len(self)), (len(neigh_mesh), 1)).flatten()
-            all_vectors = lat_neigh - pos[index]
-        else:
-            all_vectors = pos
-            index_list = np.array(range(len(self)))
-        abs_vectors = list()
-        rel_dist = list()
-        dist = list()
-        for vec in all_vectors:
-            rel_dist.append(np.linalg.norm(vec))
-            dist.append(np.dot(vec, np.dot(tensor, vec.T)))
-            abs_vectors.append(np.dot(cell, vec))
-        species_list = list()
-        for i in index_list:
-            species_list.append(symbols[i])
-        dist = np.array(dist)
-        rel_dist = np.array(rel_dist)
-        abs_vectors = np.array(abs_vectors)
-        all_vectors = np.array(all_vectors)
-        index_list = np.array(index_list)
-        species_list = np.array(species_list)
-        del_ind = np.arange(len(dist))
-        if exclude_self:
-            del_ind = np.argwhere(dist > 1.e-6).flatten()
-            if len(del_ind) > 1:
-                for count, j in enumerate(del_ind):
-                    if index_list[j] == index:
-                        np.delete(del_ind, count)
-
-        neigh_obj = NeighborNew(distances=dist[del_ind], relative_distances=rel_dist[del_ind],
-                                vectors=abs_vectors[del_ind], relative_vectors=all_vectors[del_ind],
-                                indices=index_list[del_ind], species=species_list[del_ind])
-        return neigh_obj
-
-    def get_neighborhood(self, **kwargs):
-        """
-        
-        Args:
-            **kwargs: 
-
-        Returns:
-
-        """
-        return [self.get_neighbors_new(i, **kwargs) for i, _ in enumerate(self)]
-
     def get_neighbors(self,
                       radius=None,
                       num_neighbors=12,
@@ -1546,7 +1479,7 @@ class Atoms(object):
 
         https://atztogo.github.io/spglib/python-spglib.html
         """
-        lattice = np.array(self.get_cell().T, dtype='double', order='C')
+        lattice = np.array(self.get_cell(), dtype='double', order='C')
         positions = np.array(self.get_scaled_positions(), dtype='double', order='C')
         numbers = np.array(self.get_atomic_numbers(), dtype='intc')
         space_group = spglib.get_spacegroup(cell=(lattice, positions, numbers),
@@ -3060,60 +2993,6 @@ class Neighbors:
             raise TypeError('Only lists and np.arrays are supported.')
 
 
-class NeighborNew(object):
-    """
-    New neighbor class based on nearest neighbor indexing
-    
-    Args:
-        distances: 
-        relative_distances: 
-        vectors: 
-        relative_vectors: 
-        indices: 
-        species:
-    """
-
-    def __init__(self, distances, relative_distances, vectors, relative_vectors, indices, species):
-        self.distances = distances
-        self.relative_distances = relative_distances
-        self.vectors = vectors
-        self.relative_vectors = relative_vectors
-        indices = np.array(indices).astype(int)
-        self.indices = indices
-        self.species = species
-        (self.sorted_distances, self.sorted_relative_distances, self.sorted_vectors, self.sorted_relative_vectors,
-         self.sorted_indices, self.sorted_species) = self._sort_based_on_distance()
-
-    def _sort_based_on_distance(self):
-        """
-        
-        Returns:
-
-        """
-        args = np.argsort(self.distances)
-        return (self.distances[args], self.relative_distances[args], self.vectors[args], self.relative_vectors[args],
-                self.indices[args], self.species[args])
-
-    def get_n_nearest_neighbors(self, n=2):
-        """
-        
-        Args:
-            n: 
-
-        Returns:
-
-        """
-        try:
-            max_dist = np.max(np.unique(np.sort(self.distances))[n - 1])
-        except IndexError:
-            raise ValueError("This atom does not have %d nearest neighbors in this lattice" % n)
-        del_ind = np.argwhere(self.distances <= max_dist).flatten()
-        neigh_obj = NeighborNew(distances=self.distances[del_ind], relative_distances=self.relative_distances[del_ind],
-                                vectors=self.vectors[del_ind], relative_vectors=self.relative_vectors[del_ind],
-                                indices=self.indices[del_ind], species=self.species[del_ind])
-        return neigh_obj
-
-
 class CrystalStructure(object):
     def __new__(cls, *args, **kwargs):
         basis = _CrystalStructure(*args, **kwargs).atoms()
@@ -3262,12 +3141,14 @@ def symbols2numbers(symbols):
     Returns:
 
     """
+    pse = PeriodicTable()
+    df = pse.dataframe.T
     if isinstance(symbols, str):
         symbols = string2symbols(symbols)
-    numbers = []
+    numbers = list()
     for sym in symbols:
         if isinstance(sym, string_types):
-            numbers.append(atomic_numbers[sym])
+            numbers.append(df[sym]["AtomicNumber"])
         else:
             numbers.append(sym)
     return numbers
