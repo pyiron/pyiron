@@ -967,13 +967,13 @@ class Output:
         if "OUTCAR" in files_present:
             self.outcar.from_file(filename=posixpath.join(directory, "OUTCAR"))
         if "vasprun.xml" in files_present:
+            log_dict = dict()
             try:
                 self.vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
             except VasprunError:
                 # raise VaspCollectError("The vasprun file is either corrupted or the simulation crashed")
                 read_only_from_outcar = True
             if not read_only_from_outcar:
-                log_dict = dict()
                 log_dict["forces"] = self.vp_new.vasprun_dict["forces"]
                 log_dict["cells"] = self.vp_new.vasprun_dict["cells"]
                 log_dict["volume"] = [np.linalg.det(cell) for cell in self.vp_new.vasprun_dict["cells"]]
