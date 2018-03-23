@@ -326,7 +326,7 @@ class AtomisticGenericJob(GenericJobCore):
                     self.structure.to_hdf(hdf5_input)
         else:
             self.to_hdf()
-        return super(AtomisticGenericJob, self)._run_if_lib_save(job_name=job_name, db_entry=True)
+        return super(AtomisticGenericJob, self)._run_if_lib_save(job_name=job_name, db_entry=db_entry)
 
     # Compatibility functions
     def get_final_structure(self):
