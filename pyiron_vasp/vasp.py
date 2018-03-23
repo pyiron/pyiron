@@ -1007,7 +1007,7 @@ class Output:
                 self.structure.positions = log_dict["positions"][-1]
                 self.structure.cell = log_dict["cells"][-1]
 
-        if "vasprun.xml" not in files_present or read_only_from_outcar:
+        if ("vasprun.xml" not in files_present) or read_only_from_outcar:
             assert ("OUTCAR" in files_present)
             log_dict = self.outcar.parse_dict.copy()
             log_dict["energy_tot"] = log_dict["energies"].copy()
