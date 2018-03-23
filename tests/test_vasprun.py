@@ -106,8 +106,6 @@ class TestVasprun(unittest.TestCase):
             self.assertEqual(len(d["forces"]), len(d["scf_dipole_moments"]))
             self.assertEqual(len(d["forces"].T), 3)
             self.assertEqual(len(d["positions"].T), 3)
-            #print(np.max(d["positions"]))
-            print(d["cells"][0])
             self.assertFalse(len(d["positions"][d["positions"] > 1.01]) > 0)
             self.assertEqual(np.shape(d["cells"][0]), np.shape(np.eye(3)))
             self.assertIsInstance(d["grand_eigenvalue_matrix"], np.ndarray)
