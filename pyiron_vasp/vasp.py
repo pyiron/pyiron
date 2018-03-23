@@ -1007,7 +1007,7 @@ class Output:
                 self.structure.positions = log_dict["positions"][-1]
                 self.structure.cell = log_dict["cells"][-1]
 
-        if ("vasprun.xml" not in files_present) or read_only_from_outcar:
+        elif ("vasprun.xml" not in files_present) or read_only_from_outcar:
             assert ("OUTCAR" in files_present)
             log_dict = self.outcar.parse_dict.copy()
             log_dict["energy_tot"] = log_dict["energies"].copy()
@@ -1032,7 +1032,7 @@ class Output:
                 except ValueError:
                     pass
         else:
-            return
+            raise VaspCollectError("Not able to parse vasprun.xml or OUTCAR")
         # important that we "reverse sort" the atoms in the vasp format into the atoms in the atoms class
         self.generic_output.log_dict = log_dict
         if "vasprun.xml" in files_present and not read_only_from_outcar:
