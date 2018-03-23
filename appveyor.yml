@@ -63,10 +63,6 @@ build: false
 test_script:
   # Build the package
   - "conda build --python %PYTHON_VERSION% --user pyiron --token %ANACONDA_TOKEN% conda/pyironbase"
-  - "conda build tools/conda.recipe"
-
-  # Install the package
-  - conda install --use-local %PROJECT_NAME%
 
 on_success:
 # Upload to anaconda, with the correct label derived from the version tag.
