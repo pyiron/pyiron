@@ -105,7 +105,7 @@ modindex_common_prefix = ['pyiron.']
 # a list of builtin themes.
 try:
     import sphinx_rtd_theme
-    import msmb_theme
+    # import msmb_theme
     html_theme = 'sphinx_rtd_theme'
     # html_theme = 'msmb'
 except ImportError:
