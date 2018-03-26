@@ -125,7 +125,8 @@ class ConfigFile(GenericConfig):
             str: path
         """
         if self.parser.has_option('local_paths', 'RESOURCE_PATHS'):
-            return self.parser.get('local_paths', 'RESOURCE_PATHS').split(",")
+            return [os.path.expanduser(rpath) 
+                    for rpath in self.parser.get('local_paths', 'RESOURCE_PATHS').split(",")]
         else:
             return None
 
@@ -162,7 +163,7 @@ class ConfigFile(GenericConfig):
                 local_path += '/'
             if db_path[-1] != '/':
                 db_path += '/'
-            top_dir_dict[db_path] = local_path
+            top_dir_dict[os.path.expanduser(db_path)] = os.path.expanduser(local_path)
         return top_dir_dict
 
     def _env_config(self, section):
@@ -199,7 +200,7 @@ class ConfigFile(GenericConfig):
                        'type': dbtype,
                        'top_level_dirs': top_level_dirs}
             if self.parser.has_option(section, "FILE"):
-                db_dict['file'] = self.parser.get(section, "FILE")
+                db_dict['file'] = os.path.expanduser(self.parser.get(section, "FILE"))
             else:
                 db_dict['file'] = top_level_dirs[0]
             if self.parser.has_option(section, "JOB_TABLE"):
@@ -224,7 +225,8 @@ class ConfigFile(GenericConfig):
         else:
             raise ValueError('Database configuration unreadable!')
         if self.parser.has_option(section, 'RESOURCE_PATHS'):
-            db_dict['resource_paths'] = [c.strip() for c in self.parser.get(section, 'RESOURCE_PATHS').split(",")]
+            db_dict['resource_paths'] = [os.path.expanduser(c.strip()) 
+                                         for c in self.parser.get(section, 'RESOURCE_PATHS').split(",")]
         else:
             db_dict['resource_paths'] = [self.parser.get('local_paths', 'LOCAL_PATH_POTS'),
                                          self.parser.get('local_paths', 'LOCAL_PATH_BIN')]
