@@ -7,13 +7,13 @@ import os
 import posixpath
 import numpy as np
 from string import punctuation
-from pyironbase.project import Project as ProjectCore
+from pyiron_base.project import Project as ProjectCore
 try:
-    from pyironbase.core.project.gui import ProjectGUI
+    from pyiron_base.core.project.gui import ProjectGUI
 except (ImportError, TypeError, AttributeError):
     pass
-from pyironbase.core.settings.generic import Settings
-from pyironbase.objects.generic.hdfio import ProjectHDFio
+from pyiron_base.core.settings.generic import Settings
+from pyiron_base.objects.generic.hdfio import ProjectHDFio
 from pyiron_atomistics.job.jobtype import JobType, JobTypeChoice
 from pyiron_atomistics.job.object_type import ObjectType, ObjectTypeChoice
 from pyiron_atomistics.structure.periodic_table import PeriodicTable

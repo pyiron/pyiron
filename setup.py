@@ -32,7 +32,7 @@ setup(
 
     keywords='pyiron',
     packages=find_packages(),
-    install_requires=['pyironbase',
+    install_requires=['pyiron_base',
                       'pyiron_atomistics',
                       'pyiron_dft',
                       'pyiron_example_job',

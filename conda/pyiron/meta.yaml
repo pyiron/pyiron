@@ -15,7 +15,7 @@ requirements:
     - six
     - sqlalchemy
     - pytables
-    - pyironbase
+    - pyiron_base
     - pyiron_atomistics
     - pyiron_dft
     - pyiron_example_job
@@ -31,7 +31,7 @@ requirements:
     - six
     - sqlalchemy
     - pytables
-    - pyironbase
+    - pyiron_base
     - pyiron_atomistics
     - pyiron_dft
     - pyiron_example_job
