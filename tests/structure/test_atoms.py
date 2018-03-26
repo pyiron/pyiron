@@ -1,7 +1,7 @@
 import numpy as np
 import os
-from pyironbase.core.settings.config.testing import ConfigTesting
-from pyironbase.core.settings.generic import Settings
+from pyiron_base.core.settings.config.testing import ConfigTesting
+from pyiron_base.core.settings.generic import Settings
 from pyiron_atomistics.structure.atom import Atom
 from pyiron_atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron_atomistics.structure.sparse_list import SparseList

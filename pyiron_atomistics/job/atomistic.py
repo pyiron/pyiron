@@ -7,12 +7,12 @@ import copy
 import numpy as np
 
 from pyiron_atomistics.structure.atoms import Atoms
-from pyironbase.objects.generic.parameters import GenericParameters
-from pyironbase.objects.job.generic import GenericJob as GenericJobCore
-from pyironbase.objects.job.master import GenericMaster
+from pyiron_base.objects.generic.parameters import GenericParameters
+from pyiron_base.objects.job.generic import GenericJob as GenericJobCore
+from pyiron_base.objects.job.master import GenericMaster
 
 try:
-    from pyironbase.core.project.gui import ProjectGUI
+    from pyiron_base.core.project.gui import ProjectGUI
 except (ImportError, TypeError, AttributeError):
     pass
 

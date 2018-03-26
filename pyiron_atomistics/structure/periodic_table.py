@@ -5,7 +5,7 @@
 from __future__ import print_function, unicode_literals
 import numpy as np
 import os
-from pyironbase.core.settings.generic import Settings
+from pyiron_base.core.settings.generic import Settings
 import sys
 import pandas
 

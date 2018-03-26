@@ -33,6 +33,6 @@ setup(
     keywords='pyiron',
     packages=find_packages(),
     install_requires=['ase',
-                      'pyironbase',
+                      'pyiron_base',
                       'spglib']
     )
