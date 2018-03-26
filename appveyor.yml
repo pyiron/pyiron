@@ -51,7 +51,7 @@ install:
 - '"%CONDA%\Scripts\activate.bat"'
 - conda config --set always_yes yes --set changeps1 no
 - conda update -q conda
-- conda install conda-build git make anaconda-client
+- conda install conda-build git make numpy anaconda-client
 - conda config --set anaconda_upload yes
 # Install codecov tool for uploading coverage reports
 - pip install .
