@@ -72,7 +72,12 @@ class ConfigFile(GenericConfig):
         Returns:
             str: username
         """
-        return self.parser.get('DEFAULT', 'LOGIN_USER')
+        if self.parser.has_option('DEFAULT', 'LOGIN_USER'):
+            return self.parser.get('DEFAULT', 'LOGIN_USER')
+        elif self.parser.has_option('DEFAULT', 'USER'):
+            return self.parser.get('DEFAULT', 'USER')
+        else: 
+            return 'pyiron'
 
     @property
     def pyiron_envs(self):
@@ -104,7 +109,7 @@ class ConfigFile(GenericConfig):
         Returns:
             str: path
         """
-        return self.parser.get('local_paths', 'LOCAL_PATH_BIN')
+        return self.parser.get('DEFAULT', 'LOCAL_PATH_BIN')
 
     @property
     def path_potentials(self):
@@ -114,7 +119,7 @@ class ConfigFile(GenericConfig):
         Returns:
             str: path
         """
-        return self.parser.get('local_paths', 'LOCAL_PATH_POTS')
+        return self.parser.get('DEFAULT', 'LOCAL_PATH_POTS')
 
     @property
     def resource_paths(self):
@@ -124,9 +129,9 @@ class ConfigFile(GenericConfig):
         Returns:
             str: path
         """
-        if self.parser.has_option('local_paths', 'RESOURCE_PATHS'):
+        if self.parser.has_option('DEFAULT', 'RESOURCE_PATHS'):
             return [os.path.expanduser(rpath) 
-                    for rpath in self.parser.get('local_paths', 'RESOURCE_PATHS').split(",")]
+                    for rpath in self.parser.get('DEFAULT', 'RESOURCE_PATHS').split(",")]
         else:
             return None
 
@@ -209,8 +214,7 @@ class ConfigFile(GenericConfig):
             if self.parser.has_option(section, "DATABASE_FILE"):
                 db_dict['file'] = os.path.expanduser(self.parser.get(section, "DATABASE_FILE"))   
             else:
-                top_level_one = top_level_dirs[list(top_level_dirs.keys())[0]]
-                db_dict['file'] = os.path.join('/'.join(top_level_one.split('/')[:-1]), 'sqlite.db')
+                db_dict['file'] = os.path.join(self.resource_paths[0], 'sqlite.db')
             if self.parser.has_option(section, "JOB_TABLE"):
                 db_dict['table_name'] = self.parser.get(section, "JOB_TABLE")
             else:
