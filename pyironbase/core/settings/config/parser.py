@@ -153,7 +153,12 @@ class ConfigFile(GenericConfig):
             dict: dictionary with the local files and their remote counterparts.
         """
         top_dir_dict = {}
-        for top_dir in [c.strip() for c in self.parser.get(section, "TOP_LEVEL_DIRS").split(",")]:
+        top_dir_lst = []
+        if self.parser.has_option(section, "TOP_LEVEL_DIRS"):
+            top_dir_lst += [c.strip() for c in self.parser.get(section, "TOP_LEVEL_DIRS").split(",")]
+        if self.parser.has_option(section, "PROJECT_PATHS"):
+            top_dir_lst += [c.strip() for c in self.parser.get(section, "PROJECT_PATHS").split(",")]
+        for top_dir in top_dir_lst:
             top_dir = [d.strip() for d in top_dir.split("@@")]
             if len(top_dir) == 2:
                 local_path, db_path = top_dir
