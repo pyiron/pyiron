@@ -1,6 +1,6 @@
 import os
-from pyironbase.core.settings.config.testing import ConfigTesting
-from pyironbase.core.settings.generic import Settings
+from pyiron_base.core.settings.config.testing import ConfigTesting
+from pyiron_base.core.settings.generic import Settings
 import unittest
 import numpy as np
 

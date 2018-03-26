@@ -1,13 +1,13 @@
 import os
-from pyironbase.core.settings.config.testing import ConfigTesting
-from pyironbase.core.settings.generic import Settings
+from pyiron_base.core.settings.config.testing import ConfigTesting
+from pyiron_base.core.settings.generic import Settings
 import unittest
 
 config = ConfigTesting(sql_lite_database='./testing_serial.db', path_project=str(os.getcwd()),
                        path_potentials='../../../static/potentials/')
 s = Settings(config=config)
 
-from pyironbase.project import Project
+from pyiron_base.project import Project
 
 
 def convergence_goal(self, **qwargs):
