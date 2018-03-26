@@ -9,23 +9,23 @@
    :alt: pyiron logo
    :align: center
 
+======
+pyiron
+======
 
 
 Welcome to the official documentation of the pyiron package! pyiron is a Python based IDE for computational materials
 design.
 
 
-===============
-Getting started
-===============
+.. toctree::
+   :maxdepth:2
+   source/installation.rst
+   source/developers.rst
+   source/citation.rst
+   source/faq.rst
 
 
 
 
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
