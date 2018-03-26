@@ -48,7 +48,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'pyiron'
-copyright = u'2017, Joerg Neugebauer'
+copyright = u'2018, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department ' \
+            u'All rights reserved.'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -104,7 +105,9 @@ modindex_common_prefix = ['pyiron.']
 # a list of builtin themes.
 try:
     import sphinx_rtd_theme
+    import msmb_theme
     html_theme = 'sphinx_rtd_theme'
+    # html_theme = 'msmb'
 except ImportError:
     html_theme = 'default'
 
