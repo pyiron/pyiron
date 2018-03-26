@@ -10,7 +10,6 @@ from string import punctuation
 from pyironbase.project import Project as ProjectCore
 try:
     from pyironbase.core.project.gui import ProjectGUI
-    from pyironbase.core.project.share import ShareGUI
 except (ImportError, TypeError, AttributeError):
     pass
 from pyironbase.core.settings.generic import Settings
@@ -405,28 +404,7 @@ class Project(ProjectCore):
             periodic_table.add_element(parent_element=parent_element, new_element=new_element_name)
         return periodic_table.element(new_element_name)
 
-    @staticmethod
-    def test_pyiron_installation():
-        """
-        
-        Returns:
-
-        """
-        from pyironold.pyironplugins.demo import test_config, test_lammps, test_mayavi
-        test_config()
-        test_mayavi()
-        test_lammps()
-        print('All tests were passed successful.')
-
     # Graphical user interfaces
-    def share(self):
-        """
-        
-        Returns:
-
-        """
-        ShareGUI(self)
-
     def gui(self):
         """
         
@@ -434,19 +412,3 @@ class Project(ProjectCore):
 
         """
         ProjectGUI(self)
-
-        # def get_working_directory(self):
-        #     """
-        #
-        #     :param path: (optional) absolute path for working directory were job is executed
-        #     :return:
-        #     """
-        #     with self.open("job_" + self._job_name) as work_dir:
-        #         working_directory = work_dir.path
-        #         if self._sub_job is not None:
-        #             with self.open("job_" + self._sub_job) as work_dir:
-        #                 working_directory = work_dir.path
-        #     return working_directory
-
-        # def _is_job(self, file_name):
-        #     return ".h5" in file_name
