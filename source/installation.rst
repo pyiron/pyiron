@@ -9,7 +9,7 @@ Anaconda installation
 
 Type the following command from the command line::
 
-    conda install pyiron
+    conda install -c pyiron pyiron
 
 
 pip based installation
