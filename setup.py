@@ -5,8 +5,8 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name='pyironbase',
-    version='0.0.4',
+    name='pyiron_base',
+    version='0.0.5',
     description='pyiron IDE base',
     long_description='http://pyiron.org',
 
