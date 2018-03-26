@@ -7,8 +7,8 @@ import posixpath
 import pandas as pd
 import shutil
 import os
-from pyironbase.core.settings.generic import Settings
-from pyironbase.objects.generic.parameters import GenericParameters
+from pyiron_base.core.settings.generic import Settings
+from pyiron_base.objects.generic.parameters import GenericParameters
 from pyiron_atomistics.hamilton.potentials import PotentialAbstract
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
