@@ -32,7 +32,9 @@ setup(
 
     keywords='pyiron',
     packages=find_packages(),
-    install_requires=['h5py',
+    install_requires=['getent',
+                      'h5io',
+                      'h5py',
                       'matplotlib',
                       'numpy',
                       'pandas',
