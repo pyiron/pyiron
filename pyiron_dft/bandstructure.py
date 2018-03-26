@@ -9,7 +9,7 @@ from __future__ import print_function
 import numpy as np
 from numpy import transpose as tr
 from numpy.linalg import inv, norm
-from pyironbase.objects.generic.template import PyIronObject
+from pyiron_base.objects.generic.template import PyIronObject
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
