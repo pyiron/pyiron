@@ -209,7 +209,7 @@ class ConfigFile(GenericConfig):
             if self.parser.has_option(section, "DATABASE_FILE"):
                 db_dict['file'] = os.path.expanduser(self.parser.get(section, "DATABASE_FILE"))   
             else:
-                top_level_one = top_level_dirs[top_level_dirs.keys()[0]]
+                top_level_one = top_level_dirs[list(top_level_dirs.keys())[0]]
                 db_dict['file'] = os.path.join('/'.join(top_level_one.split('/')[:-1]), 'sqlite.db')
             if self.parser.has_option(section, "JOB_TABLE"):
                 db_dict['table_name'] = self.parser.get(section, "JOB_TABLE")
