@@ -8,7 +8,7 @@ import numpy as np
 from collections import OrderedDict
 from pyiron_atomistics.structure.atoms import Atoms
 from pyiron_atomistics.structure.periodic_table import PeriodicTable
-from pyironbase.core.settings.generic import Settings
+from pyiron_base.core.settings.generic import Settings
 from pyiron_dft.waves.electronic import ElectronicStructure
 
 __author__ = "Sudarsan Surendralal"

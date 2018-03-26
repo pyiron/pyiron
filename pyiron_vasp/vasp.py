@@ -12,8 +12,8 @@ import tables
 from pyiron_dft.generic import GenericDFTJob
 from pyiron_vasp.potential import VaspPotentialFile
 from pyiron_atomistics.structure.atoms import Atoms, CrystalStructure
-from pyironbase.core.settings.generic import Settings
-from pyironbase.objects.generic.parameters import GenericParameters
+from pyiron_base.core.settings.generic import Settings
+from pyiron_base.objects.generic.parameters import GenericParameters
 from pyiron_atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
 from pyiron_vasp.outcar import Outcar
 from pyiron_vasp.procar import Procar
