@@ -6,11 +6,11 @@
 import os
 import warnings
 from six import with_metaclass
-from pyironbase.core.settings.logger import setup_logger
-from pyironbase.core.settings.config.default import ConfigDefault
-from pyironbase.core.settings.config.parser import ConfigFile
-from pyironbase.core.settings.config.template import GenericConfig
-from pyironbase.core.settings.database import DatabaseAccess
+from pyiron_base.core.settings.logger import setup_logger
+from pyiron_base.core.settings.config.default import ConfigDefault
+from pyiron_base.core.settings.config.parser import ConfigFile
+from pyiron_base.core.settings.config.template import GenericConfig
+from pyiron_base.core.settings.database import DatabaseAccess
 
 """
 The settings file provides the attributes of the configuration as properties.

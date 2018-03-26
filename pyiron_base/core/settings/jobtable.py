@@ -6,7 +6,7 @@ import pandas
 import sys
 import os
 import numpy as np
-from pyironbase.core.settings.generic import Settings
+from pyiron_base.core.settings.generic import Settings
 
 """
 The Jobtable module provides a set of top level functions to interact with the database.

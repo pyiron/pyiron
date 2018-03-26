@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
-from pyironbase.core.settings.database import DatabaseAccess
-from pyironbase.objects.job.jobstatus import JobStatus
+from pyiron_base.core.settings.database import DatabaseAccess
+from pyiron_base.objects.job.jobstatus import JobStatus
 import unittest
 
 

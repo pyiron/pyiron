@@ -29,7 +29,7 @@ script:
 - cd tests
 - python find_tests.py
 - cd ..
-- conda build --python ${PYTHONVER} --user ${USER} --token ${CONDA_UPLOAD_TOKEN} conda/pyironbase
+- conda build --python ${PYTHONVER} --user ${USER} --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_base
 
 deploy:
   provider: pypi

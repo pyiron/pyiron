@@ -5,7 +5,7 @@
 from __future__ import print_function
 import os
 import shutil
-from pyironbase.objects.job.generic import GenericJob
+from pyiron_base.objects.job.generic import GenericJob
 
 """
 Jobclass to execute python scripts and jupyter notebooks

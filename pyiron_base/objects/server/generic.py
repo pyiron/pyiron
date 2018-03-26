@@ -3,11 +3,11 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from collections import OrderedDict
-from pyironbase.core.settings.generic import Settings
-from pyironbase.objects.generic.template import PyIronObject
-from pyironbase.objects.server.runmode import Runmode
-from pyironbase.objects.server.scheduler.cmmc import Cmmc
-from pyironbase.objects.server.scheduler.localhost import Localhost
+from pyiron_base.core.settings.generic import Settings
+from pyiron_base.objects.generic.template import PyIronObject
+from pyiron_base.objects.server.runmode import Runmode
+from pyiron_base.objects.server.scheduler.cmmc import Cmmc
+from pyiron_base.objects.server.scheduler.localhost import Localhost
 import socket
 import pandas
 

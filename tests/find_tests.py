@@ -1,6 +1,6 @@
 import inspect
 import os
-import pyironbase
+import pyiron_base
 import subprocess
 import sys
 import time
@@ -11,7 +11,7 @@ import numpy as np
 # But that is not possible, as PyCharm expects the tests to be executed in the directory where they are located.
 
 current_file_name = inspect.getfile(inspect.currentframe()).split('/')[-1]
-pyrion_path = os.path.dirname(pyironbase.__file__)
+pyrion_path = os.path.dirname(pyiron_base.__file__)
 
 if len(sys.argv) == 2:
     pythonversion = sys.argv[1]

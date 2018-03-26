@@ -1,5 +1,5 @@
 package:
-  name: pyironbase
+  name: pyiron_base
   version: beta
 
 source:
@@ -30,9 +30,9 @@ requirements:
 
 test:
   imports:
-    - pyironbase
+    - pyiron_base
 
 about:
   home: http://pyiron.org
   license: BSD
-  summary: "pyironbase"
+  summary: "pyiron_base"

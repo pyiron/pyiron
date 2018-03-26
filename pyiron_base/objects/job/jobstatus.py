@@ -2,7 +2,7 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-from pyironbase.core.settings.database import DatabaseAccess
+from pyiron_base.core.settings.database import DatabaseAccess
 
 """
 The JobStatus class belongs to the GenericJob object.

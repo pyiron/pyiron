@@ -2,7 +2,7 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-from pyironbase.core.settings.config.template import GenericConfig
+from pyiron_base.core.settings.config.template import GenericConfig
 
 """
 Class to represent the pyiron configuration for automated testing 

@@ -10,7 +10,7 @@ setup(
     description='pyiron IDE base',
     long_description='http://pyiron.org',
 
-    url='https://github.com/jan-janssen/pyironbase',
+    url='https://github.com/jan-janssen/pyiron_base',
     author='Jan Janssen (MPIE)',
     author_email='janssen@mpie.de',
     license='modified BSD',

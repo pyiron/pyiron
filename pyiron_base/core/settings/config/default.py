@@ -5,7 +5,7 @@
 import getpass
 import inspect
 import os
-from pyironbase.core.settings.config.template import GenericConfig
+from pyiron_base.core.settings.config.template import GenericConfig
 
 """
 Class for the default pyiron configuration - if no .pyiron file exists this one is used. 
@@ -53,11 +53,11 @@ class ConfigDefault(GenericConfig):
             self.pyiron_code = (module_path.split("\\pyiron")[0]).replace('\\', '/')
         else:
             self.pyiron_home = self._dir_check(os.path.expanduser('~') + '/PyIron_data')
-            pyiron_path_lst = module_path.split("/pyironbase")
+            pyiron_path_lst = module_path.split("/pyiron_base")
             if len(pyiron_path_lst) == 2:
-                self.pyiron_code = module_path.split("/pyironbase")[0]
+                self.pyiron_code = module_path.split("/pyiron_base")[0]
             else:
-                self.pyiron_code = module_path.split("/pyironbase")[0]
+                self.pyiron_code = module_path.split("/pyiron_base")[0]
                 for pyiron_str in pyiron_path_lst[1:-1]:
                     self.pyiron_code += "/pyiron"
         top_level_name_1 = self.pyiron_code + '/examples/'

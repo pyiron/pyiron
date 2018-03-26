@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 from random import choice
 from string import ascii_uppercase
-from pyironbase.core.settings.database import DatabaseAccess
+from pyiron_base.core.settings.database import DatabaseAccess
 
 
 class TestDatabaseAccess(unittest.TestCase):

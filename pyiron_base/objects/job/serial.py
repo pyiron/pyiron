@@ -6,8 +6,8 @@ from __future__ import print_function
 from collections import OrderedDict
 import inspect
 import numpy as np
-from pyironbase.objects.job.master import GenericMaster
-from pyironbase.objects.generic.parameters import GenericParameters
+from pyiron_base.objects.job.master import GenericMaster
+from pyiron_base.objects.generic.parameters import GenericParameters
 
 """
 The serial master class is a metajob consisting of a dynamic list of jobs which are executed in serial mode. 

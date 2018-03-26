@@ -26,7 +26,7 @@ def set_logging_level(level, channel=None):
         level (str): 'DEBUG, INFO, WARN'
         channel (int): 0: file_log, 1: stream, None: both
     """
-    from pyironbase.core.settings.generic import Settings
+    from pyiron_base.core.settings.generic import Settings
     s = Settings()
     if channel:
         s.logger.handlers[channel].setLevel(level)

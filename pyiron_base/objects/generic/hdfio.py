@@ -8,7 +8,7 @@ import os
 import pandas
 import posixpath
 import time
-import pyironbase.external.h5io as h5io
+import pyiron_base.external.h5io as h5io
 from tables.exceptions import NoSuchNodeError
 from pandas.io.pytables import ClosedFileError
 import warnings
@@ -557,7 +557,7 @@ class FileHDFio(object):
                 import_path = 'pyiron_icams_pipelines.structurepipeline'
             if import_path == 'pyiron.objects.hamilton.example.randomatomistic' or import_path == 'pyironplugins.example.randomatomistic':
                 import_path = 'pyiron_example_job.randomatomistic'
-            if import_path == 'pyironbase.objects.hamilton.example.random' or import_path == 'pyironplugins.example.randomatomistic':
+            if import_path == 'pyiron_base.objects.hamilton.example.random' or import_path == 'pyironplugins.example.randomatomistic':
                 import_path = 'pyiron_example_job.randomatomistic'
             if import_path == 'pyiron.objects.hamilton.md.lammps' or import_path == 'pyironplugins.lammps.lammps':
                 import_path = 'pyiron_lammps.lammps'
@@ -767,7 +767,7 @@ class FileHDFio(object):
         Returns:
             Project: pyiron project object
         """
-        from pyironbase.project import Project
+        from pyiron_base.project import Project
         return Project(path=self.file_path)
 
     def _get_h5_path(self, name):

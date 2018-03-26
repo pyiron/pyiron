@@ -4,7 +4,7 @@
 
 import os
 import sys
-from pyironbase.core.settings.config.template import GenericConfig
+from pyiron_base.core.settings.config.template import GenericConfig
 
 """
 Class for parsing the .pyiron configuration file 

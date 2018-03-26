@@ -9,8 +9,8 @@ import pandas
 from sqlalchemy import Column, create_engine, Integer, MetaData, String, Table
 from sqlalchemy.sql import select, and_
 
-import pyironbase.external.getent as getent
-from pyironbase.core.settings.generic import Settings
+import pyiron_base.external.getent as getent
+from pyiron_base.core.settings.generic import Settings
 
 try:  # If the graphical packages are not available, the GUI will not work.
     import ipywidgets as widgets

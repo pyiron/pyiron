@@ -6,11 +6,11 @@ from __future__ import print_function
 from collections import OrderedDict
 from datetime import datetime
 import pandas
-from pyironbase.objects.job.generic import GenericJob
-from pyironbase.objects.job.master import GenericMaster
-from pyironbase.objects.job.submissionstatus import SubmissionStatus
-from pyironbase.objects.generic.parameters import GenericParameters
-from pyironbase.objects.job.jobstatus import JobStatus
+from pyiron_base.objects.job.generic import GenericJob
+from pyiron_base.objects.job.master import GenericMaster
+from pyiron_base.objects.job.submissionstatus import SubmissionStatus
+from pyiron_base.objects.generic.parameters import GenericParameters
+from pyiron_base.objects.job.jobstatus import JobStatus
 
 """
 The parallel master class is a metajob consisting of a list of jobs which are executed in parallel. 

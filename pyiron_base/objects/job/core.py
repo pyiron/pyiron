@@ -7,8 +7,8 @@ import copy
 import os
 import posixpath
 import time
-from pyironbase.core.settings.generic import Settings
-from pyironbase.objects.generic.template import PyIronObject
+from pyiron_base.core.settings.generic import Settings
+from pyiron_base.objects.generic.template import PyIronObject
 import shutil
 from tables import NoSuchNodeError
 import tarfile

@@ -4,7 +4,7 @@
 
 from collections import OrderedDict
 import os
-from pyironbase.objects.server.shelloption import ShellOption
+from pyiron_base.objects.server.shelloption import ShellOption
 
 """
 JobScheduler class - template for job schedulers 

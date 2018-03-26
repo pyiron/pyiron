@@ -1,5 +1,5 @@
 import os
-from pyironbase.core.settings.config.parser import ConfigFile
+from pyiron_base.core.settings.config.parser import ConfigFile
 import unittest
 
 

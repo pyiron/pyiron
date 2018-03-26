@@ -1,7 +1,7 @@
 import getpass
 import os
-from pyironbase.core.settings.config.default import ConfigDefault
-from pyironbase.core.settings.generic import Settings
+from pyiron_base.core.settings.config.default import ConfigDefault
+from pyiron_base.core.settings.generic import Settings
 import unittest
 
 

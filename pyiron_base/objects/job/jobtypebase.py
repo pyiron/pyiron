@@ -4,7 +4,7 @@
 
 from __future__ import print_function
 import importlib
-from pyironbase.core.settings.generic import Settings
+from pyiron_base.core.settings.generic import Settings
 
 """
 Jobtype class to create GenericJob type objects 

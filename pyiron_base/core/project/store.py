@@ -4,7 +4,7 @@
 
 from __future__ import print_function
 from datetime import datetime
-from pyironbase.objects.job.generic import GenericJob
+from pyiron_base.objects.job.generic import GenericJob
 
 """
 Class for storing user aggregated information in an pyiron object 

@@ -9,11 +9,11 @@ from datetime import datetime
 import os
 import sys
 import posixpath
-from pyironbase.core.settings.generic import Settings
-from pyironbase.objects.job.executable import Executable
-from pyironbase.objects.job.jobstatus import JobStatus
-from pyironbase.objects.job.core import JobCore
-from pyironbase.objects.server.generic import Server
+from pyiron_base.core.settings.generic import Settings
+from pyiron_base.objects.job.executable import Executable
+from pyiron_base.objects.job.jobstatus import JobStatus
+from pyiron_base.objects.job.core import JobCore
+from pyiron_base.objects.server.generic import Server
 import subprocess
 
 """
@@ -1037,7 +1037,7 @@ class GenericJob(JobCore):
             wl('import sys')
             if os.name == 'nt':  # Todo: too specific
                 wl('sys.path.append(\'' + str(s.path_pyiron) + '\')')
-            wl('from pyironbase.objects.job.wrapper import JobWrapper')
+            wl('from pyiron_base.objects.job.wrapper import JobWrapper')
             wl('')
             wl('debug = {0}'.format(debug))
             wl('job = JobWrapper(working_directory=\'{0}\','.format(self.project_hdf5.working_directory))

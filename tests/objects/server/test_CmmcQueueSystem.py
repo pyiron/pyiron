@@ -1,5 +1,5 @@
 import os
-from pyironbase.objects.server.scheduler.cmmc import Cmmc
+from pyiron_base.objects.server.scheduler.cmmc import Cmmc
 import unittest
 
 

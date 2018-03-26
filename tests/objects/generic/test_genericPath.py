@@ -1,14 +1,14 @@
 import os
-from pyironbase.core.settings.config.testing import ConfigTesting
-from pyironbase.core.settings.generic import Settings
+from pyiron_base.core.settings.config.testing import ConfigTesting
+from pyiron_base.core.settings.generic import Settings
 import unittest
 
 config = ConfigTesting(sql_lite_database='./testing_genericpath.db',
                        path_project=str(os.getcwd()))
 s = Settings(config=config)
 
-from pyironbase.project import Project
-from pyironbase.core.project.path import GenericPath
+from pyiron_base.project import Project
+from pyiron_base.core.project.path import GenericPath
 
 
 class TestGenericPath(unittest.TestCase):

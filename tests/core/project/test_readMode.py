@@ -1,6 +1,6 @@
 import unittest
 
-from pyironbase.core.project.readmode import ReadMode
+from pyiron_base.core.project.readmode import ReadMode
 
 
 class TestReadMode(unittest.TestCase):

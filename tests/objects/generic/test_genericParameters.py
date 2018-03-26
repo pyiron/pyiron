@@ -1,6 +1,6 @@
 from copy import deepcopy
 import pandas
-from pyironbase.objects.generic.parameters import GenericParameters
+from pyiron_base.objects.generic.parameters import GenericParameters
 import unittest
 
 

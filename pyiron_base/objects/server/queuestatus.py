@@ -5,8 +5,8 @@
 import subprocess
 import pandas
 import time
-from pyironbase.core.settings.generic import Settings
-from pyironbase.objects.job.generic import GenericJob
+from pyiron_base.core.settings.generic import Settings
+from pyiron_base.objects.job.generic import GenericJob
 
 """
 Set of functions to interact with the queuing system directly from within pyiron - optimized for the Sun grid engine.

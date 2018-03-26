@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
-from pyironbase.objects.job.jobtypebase import JobTypeChoiceBase, JobTypeBase
+from pyiron_base.objects.job.jobtypebase import JobTypeChoiceBase, JobTypeBase
 
 """
 Jobtype class to create GenericJob type objects - the choice of job types is limited to the JOB_CLASS_DICT
@@ -19,11 +19,11 @@ __date__ = "Sep 1, 2017"
 
 
 # Dictionary of the available job types and the corresponding classes
-JOB_CLASS_DICT = {'GenericMaster': 'pyironbase.objects.job.master',
-                  'ListMaster': 'pyironbase.objects.job.list',
-                  'ParallelMaster': 'pyironbase.objects.job.parallel',
-                  'ScriptJob': 'pyironbase.objects.job.script',
-                  'SerialMasterBase': 'pyironbase.objects.job.serial'}
+JOB_CLASS_DICT = {'GenericMaster': 'pyiron_base.objects.job.master',
+                  'ListMaster': 'pyiron_base.objects.job.list',
+                  'ParallelMaster': 'pyiron_base.objects.job.parallel',
+                  'ScriptJob': 'pyiron_base.objects.job.script',
+                  'SerialMasterBase': 'pyiron_base.objects.job.serial'}
 
 
 class JobTypeChoice(JobTypeChoiceBase):
