@@ -1,0 +1,62 @@
+environment:
+  global:
+    # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
+    # /E:ON and /V:ON options are not enabled in the batch script intepreter
+    # See: http://stackoverflow.com/a/13751649/163740
+    CMD_IN_ENV: 'cmd /E:ON /V:ON /C .\tools\appveyor\run_with_env.cmd'
+    ANACONDA_TOKEN:
+      secure: bzajjHETqXIrFqGaMGNGFHl1gFP0VSrDIbg8hcKc21uhlgzMmDr3/LU2DYCBYTDY
+    PROJECT_NAME: pyiron
+
+  matrix:
+    - PYTHON_VERSION: 2.7
+      CONDA: C:\Miniconda
+
+    - PYTHON_VERSION: 3.5
+      CONDA: C:\Miniconda35
+
+    - PYTHON_VERSION: 3.6
+      CONDA: C:\Miniconda36
+
+version: '{build}'
+image: Visual Studio 2015
+
+# For testing only...
+#skip_non_tags: true
+
+platform:
+- x86
+- x64
+
+branches:
+  only:
+    - master
+
+init:
+  - ps: if ($Env:PLATFORM -eq "x64") { $Env:CONDA = "${Env:CONDA}-x64" }
+  - ps: Write-Host $Env:PYTHON_VERSION
+  - ps: Write-Host $Env:CONDA
+  - ps: Write-Host $Env:PLATFORM
+  - ps: Write-Host $Env:APPVEYOR_REPO_TAG
+  - ps: Write-Host $Env:APPVEYOR_REPO_TAG_NAME
+  - ps: Write-Host $Env:APPVEYOR_REPO_NAME
+
+install:
+# Make sure the compiler is accessible
+- '"%VS140COMNTOOLS%\..\..\VC\vcvarsall.bat" %PLATFORM%'
+
+# Load the conda root environment, configure and install some packages
+- '"%CONDA%\Scripts\activate.bat"'
+- "conda config --set always_yes yes --set changeps1 no"
+- "conda update -q conda"
+- "conda install conda-build anaconda-client numpy pytables"
+- "conda config --add channels conda-forge"
+- "conda config --add channels pyiron"
+- "conda config --set anaconda_upload yes"
+- "conda info -a"
+- "pip install ."
+
+build: false
+
+test_script:
+  - "conda build --python %PYTHON_VERSION% --user pyiron --token %ANACONDA_TOKEN% conda/pyiron"
