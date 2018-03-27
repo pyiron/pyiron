@@ -25,7 +25,7 @@ else:
 if arg_length == 4:
     html_directory = sys.argv[3]
 else:
-    html_directory = './'
+    html_directory = './_build'
 
 package_list = ['pyiron', 'pyiron_vasp', 'pyiron_base', 'pyiron_atomistics', 'pyiron_lammps']
 
