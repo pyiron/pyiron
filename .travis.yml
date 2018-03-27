@@ -1,27 +1,36 @@
-language: python
-
-env:
-  - MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh" PYTHONVER="2.7" USER="pyiron" 
-  - MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.5" USER="pyiron"
-  - MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.6" USER="pyiron"
+matrix:
+  include:
+    - os: linux
+      language: python
+      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh" PYTHONVER="2.7"
+    - os: linux
+      language: python
+      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.5"
+    - os: linux
+      language: python
+      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.6"
+    - os: osx
+      language: generic
+      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh" PYTHONVER="2.7"
+    - os: osx
+      language: generic
+      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" PYTHONVER="3.5"
+    - os: osx
+      language: generic
+      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" PYTHONVER="3.6"
 
 install:
-  - sudo apt-get update
   - wget ${MINICONDA} -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
   - conda info -a
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
-  - conda install conda-build git make anaconda-client
-  - conda config --set anaconda_upload yes
+  - conda install conda-build anaconda-client numpy pytables
   - conda config --add channels conda-forge
   - conda config --add channels pyiron
+  - conda config --set anaconda_upload yes
+  - pip install .
 
 script:
-  - conda build --python ${PYTHONVER} --user ${USER} --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_dft
-
-deploy:
-  provider: pypi
-  user: ${USER}
-  password: ${PYPI_UPLOAD_TOKEN}
+  - conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_dft
