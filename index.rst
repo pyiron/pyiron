@@ -18,6 +18,10 @@ Welcome to the official documentation of the pyiron package! pyiron is a Python 
 design.
 
 
+========
+Contents
+========
+
 .. toctree::
    :maxdepth:2
    source/installation.rst
