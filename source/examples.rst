@@ -6,4 +6,4 @@ Examples
 
 .. toctree::
    :maxdepth: 1
-    source/first_steps.ipynb
+   example_notebooks/first_steps.ipynb
