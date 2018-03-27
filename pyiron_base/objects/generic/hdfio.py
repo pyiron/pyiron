@@ -8,7 +8,7 @@ import os
 import pandas
 import posixpath
 import time
-import pyiron_base.external.h5io as h5io
+import h5io
 from tables.exceptions import NoSuchNodeError
 from pandas.io.pytables import ClosedFileError
 import warnings

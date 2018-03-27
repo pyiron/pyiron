@@ -38,11 +38,11 @@ class TestConfigFile(unittest.TestCase):
     #                       'system': 'remote'}]
     #                     )
 
-    def test_path_bin(self):
-        self.assertEqual(self.config.path_bin, '/home/pyiron/myData/bin')
-
-    def test_path_potentials(self):
-        self.assertEqual(self.config.path_potentials, '/home/pyiron/myPrograms/PyIron/static/potentials')
+    # def test_path_bin(self):
+    #     self.assertEqual(self.config.path_bin, '/home/pyiron/myData/bin')
+    #
+    # def test_path_potentials(self):
+    #     self.assertEqual(self.config.path_potentials, '/home/pyiron/myPrograms/PyIron/static/potentials')
 
     # def test_path_pyiron(self):
     #     if os.name == 'nt':
