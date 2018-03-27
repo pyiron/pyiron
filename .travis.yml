@@ -27,7 +27,7 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda config --add channels pyiron
-  - conda install conda-build anaconda-client h5io
+  - conda install conda-build anaconda-client
   - conda config --set anaconda_upload yes
   - pip install .
 
