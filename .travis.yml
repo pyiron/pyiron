@@ -1,37 +1,39 @@
-language: python
-
 matrix:
   include:
     - os: linux
-      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh" PYTHONVER="2.7" USER="pyiron"
+      language: python
+      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh" PYTHONVER="2.7"
     - os: linux
-      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.5" USER="pyiron"
+      language: python
+      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.5"
     - os: linux
-      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.6" USER="pyiron"
+      language: python
+      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.6"
     - os: osx
-      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh" PYTHONVER="2.7" USER="pyiron"
+      language: generic
+      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh" PYTHONVER="2.7"
     - os: osx
-      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" PYTHONVER="3.5" USER="pyiron"
+      language: generic
+      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" PYTHONVER="3.5"
     - os: osx
-      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" PYTHONVER="3.6" USER="pyiron"
+      language: generic
+      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" PYTHONVER="3.6"
 
 install:
-- wget ${MINICONDA} -O miniconda.sh
-- bash miniconda.sh -b -p $HOME/miniconda
-- export PATH="$HOME/miniconda/bin:$PATH"
-- conda info -a
-- conda config --set always_yes yes --set changeps1 no
-- conda update -q conda
-- conda install conda-build git make anaconda-client
-- conda config --set anaconda_upload yes
-script:
-- pip install .
-- cd tests
-- python find_tests.py
-- cd ..
-- conda build --python ${PYTHONVER} --user ${USER} --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_base
+  - wget ${MINICONDA} -O miniconda.sh
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - conda info -a
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda install conda-build git make anaconda-client
+  - conda config --set anaconda_upload yes
+  - python setup.py install
 
-deploy:
-  provider: pypi
-  user: ${USER}
-  password: ${PYPI_UPLOAD_TOKEN}
+script:
+  - cd tests
+  - python find_tests.py
+  - cd ..
+
+after_success:
+  - conda build --python ${PYTHONVER} --user ${USER} --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_base
