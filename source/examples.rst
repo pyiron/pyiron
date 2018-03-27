@@ -5,6 +5,6 @@ Examples
 ========
 
 .. toctree::
-   :maxdepth:1
+   :maxdepth:2
    example_notebooks/first_steps.ipynb
    example_notebooks/basic_structures.ipynb
