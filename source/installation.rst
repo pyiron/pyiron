@@ -139,4 +139,4 @@ SQLite database with Postgres database for scalability. For more details please 
 
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth:2
