@@ -50,7 +50,7 @@ install:
 - "conda config --set always_yes yes --set changeps1 no"
 - "conda update -q conda"
 - "conda config --add channels pyiron"
-- "conda install conda-build git make anaconda-client h5py h5io matplotlib numpy pandas six sqlalchemy pytables pyiron_base"
+- "conda install conda-build anaconda-client h5io pyiron_base"
 - "conda config --set anaconda_upload yes"
 - "conda info -a"
 - "pip install ."
