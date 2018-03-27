@@ -28,6 +28,7 @@ Contents
    source/developers.rst
    source/citation.rst
    source/faq.rst
+   source/indices.rst
 
 
 
