@@ -38,3 +38,9 @@ script:
 
 after_success:
   - conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_base
+  
+deploy:
+  provider: pypi
+  user: pyiron
+  password: ${PYPI_UPLOAD_TOKEN}
+  allow_failure: true
