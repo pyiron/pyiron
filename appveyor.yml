@@ -49,6 +49,8 @@ install:
 - '"%CONDA%\Scripts\activate.bat"'
 - "conda config --set always_yes yes --set changeps1 no"
 - "conda update -q conda"
+- "conda config --add channels conda-forge"
+- "conda config --add channels pyiron"
 - "conda install conda-build git anaconda-client h5io h5py matplotlib numpy pandas six sqlalchemy pytables"
 - "conda config --set anaconda_upload yes"
 - "conda info -a"
