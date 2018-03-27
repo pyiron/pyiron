@@ -51,7 +51,7 @@ install:
 - "conda update -q conda"
 - "conda config --add channels conda-forge"
 - "conda config --add channels pyiron"
-- "conda install conda-build git anaconda-client h5io h5py matplotlib numpy pandas six sqlalchemy pytables"
+- "conda install conda-build git anaconda-client h5io h5py matplotlib numpy pandas six sqlalchemy pytables scipy"
 - "conda config --set anaconda_upload yes"
 - "conda info -a"
 - "python setup.py install"
