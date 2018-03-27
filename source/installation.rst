@@ -18,16 +18,20 @@ install pyiron
 
 from anaconda (recommended)
 ---------------------------
+ ::
 
-    `conda install -c pyiron pyiron`
+    conda install -c pyiron pyiron
 
 from pip
 --------
+ ::
 
-    `pip install pyiron`
+    pip install pyiron
     
-pyiron requires spglib for symmetry analysis of atomistic structures. To compile spglib using pip Microsoft Visual C++ 14.0 is required.
-https://wiki.python.org/moin/WindowsCompilers#Which_Microsoft_Visual_C.2B-.2B-_compiler_to_use_with_a_specific_Python_version_.3F
+pyiron requires spglib for symmetry analysis of atomistic structures. To compile spglib using pip Microsoft Visual C++
+14.0 is required. Please have a look `here <https://wiki.python.org/moin/WindowsCompilers#Which_Microsoft_Visual_C.2B-
+.2B-_compiler_to_use_with_a_specific_Python_version_.3F>`_
+
 
 from source (for developers)
 ----------------------------
@@ -50,13 +54,15 @@ install pyiron
 
 from anaconda
 -------------
+ ::
 
-    `conda install -c pyiron pyiron`
+    conda install -c pyiron pyiron
 
 from pip
 --------
+ ::
 
-    `pip install pyiron`
+    pip install pyiron
     
 
 from source (for developers)
@@ -64,7 +70,7 @@ from source (for developers)
 
 pyiron config (of the .pyiron file)
 -----------------------------------
-The `.pyiron` file in your home directory must look like this::
+The .pyiron file in your home directory must look like this::
 
     [DEFAULT]  
     PROJECT_PATHS = ~/pyiron/projects
@@ -76,8 +82,9 @@ Simulation codes
 
 Lammps Library
 ==============
+ ::
 
-    `conda install -c pyiron lammps`
+   conda install -c pyiron lammps
 
 ----------------------
 Mac OS X - workstation
@@ -88,20 +95,22 @@ install pyiron
 
 from anaconda
 -------------
+ ::
 
-    `conda install -c pyiron pyiron`
+    conda install -c pyiron pyiron
 
 from pip
 --------
+ ::
 
-    `pip install pyiron`
-    
+   pip install pyiron
+
 from source (for developers)
 ----------------------------
 
 pyiron config (of the .pyiron file)
 -----------------------------------
-The `.pyiron` file in your home directory must look like this::
+The .pyiron file in your home directory must look like this::
 
     [DEFAULT]  
     PROJECT_PATHS = ~/pyiron/projects
