@@ -38,7 +38,7 @@ for pkg in package_list:
 
 #command.append('sphinx-build -b html ./ {}'.format(html_directory))
 
-command.append('make html')
+command.append('make html BUILDDIR={}'.format(html_directory))
 
 for i in range(len(command)):
     os.system(command[i])
