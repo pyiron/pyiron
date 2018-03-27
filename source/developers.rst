@@ -4,7 +4,5 @@
 Developers
 ==========
 
-    * Jan Janssen
-    * Sudarsan Surendralal
-    * Joerg Neugebauer
-    * Yuri Lysogorisky
+The list of developers will be updated soon!
+
