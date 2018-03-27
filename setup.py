@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pyiron_lammps',
-    version='0.0.1',
+    version='0.0.3',
     description='pyiron IDE plugin for Lammps',
     long_description='http://lammps.sandia.gov',
 
