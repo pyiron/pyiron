@@ -29,6 +29,7 @@ Contents
    source/citation.rst
    source/faq.rst
    source/indices.rst
+   source/examples.rst
 
 
 
