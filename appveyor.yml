@@ -7,7 +7,6 @@ environment:
     ANACONDA_TOKEN:
       secure: bzajjHETqXIrFqGaMGNGFHl1gFP0VSrDIbg8hcKc21uhlgzMmDr3/LU2DYCBYTDY
     PROJECT_NAME: pyiron_base
-    GITHUB_REPO_NAME: pyiron/pyiron_base
 
   matrix:
     - PYTHON_VERSION: 2.7
@@ -37,7 +36,6 @@ init:
   - ps: if ($Env:PLATFORM -eq "x64") { $Env:CONDA = "${Env:CONDA}-x64" }
   - ps: Write-Host $Env:PYTHON_VERSION
   - ps: Write-Host $Env:CONDA
-  - ps: Write-Host $Env:GITHUB_REPO_NAME
   - ps: Write-Host $Env:PLATFORM
   - ps: Write-Host $Env:APPVEYOR_REPO_TAG
   - ps: Write-Host $Env:APPVEYOR_REPO_TAG_NAME
@@ -49,23 +47,20 @@ install:
 
 # Load the conda root environment, configure and install some packages
 - '"%CONDA%\Scripts\activate.bat"'
-- conda config --set always_yes yes --set changeps1 no
-- conda update -q conda
-- conda install conda-build git make numpy anaconda-client
-- conda config --set anaconda_upload yes
-# Show conda info for debugging
-- conda info -a
+- "conda config --set always_yes yes --set changeps1 no"
+- "conda update -q conda"
+- "conda install conda-build git anaconda-client h5io h5py matplotlib numpy pandas six sqlalchemy pytables"
+- "conda config --set anaconda_upload yes"
+- "conda info -a"
+- "python setup.py install"
 
 build: false
 
 test_script:
   # Build the package
-  - "conda build --python %PYTHON_VERSION% --user pyiron --token %ANACONDA_TOKEN% conda/pyiron_base"
+  - "cd tests"
+  - "python find_tests.py"
+  - "cd .."
 
 on_success:
-# Upload to anaconda, with the correct label derived from the version tag.
-# This is virtually impossible with a normal dos batch script...
-# It also contains an incredibly clunky way to avoid build failure when anaconda writes
-# something harmless to stderr. The normal way does not work!
-# & anaconda $parameters 2>&1
-# Powershell should be called Powerhell!
+  - "conda build --python %PYTHON_VERSION% --user pyiron --token %ANACONDA_TOKEN% conda/pyiron_base"
