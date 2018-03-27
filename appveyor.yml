@@ -51,7 +51,7 @@ install:
 - "conda update -q conda"
 - "conda config --add channels conda-forge"
 - "conda config --add channels pyiron"
-- "conda install conda-build git anaconda-client"
+- "conda install conda-build anaconda-client"
 - "conda config --set anaconda_upload yes"
 - "conda info -a"
 - "pip install ."
