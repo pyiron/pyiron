@@ -49,8 +49,11 @@ install:
 - '"%CONDA%\Scripts\activate.bat"'
 - "conda config --set always_yes yes --set changeps1 no"
 - "conda update -q conda"
-- "conda config --add channels pyiron"
 - "conda install conda-build anaconda-client"
+- "conda config --add channels conda-forge"
+- "conda install ase spglib"
+- "conda config --add channels pyiron"
+- "conda install h5io"
 - "conda config --set anaconda_upload yes"
 - "conda info -a"
 - "pip install ."
