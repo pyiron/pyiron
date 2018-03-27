@@ -38,5 +38,6 @@ setup(
                       'numpy',
                       'pandas',
                       'six',
-                      'sqlalchemy']
+                      'sqlalchemy',
+                      'tables']
     )
