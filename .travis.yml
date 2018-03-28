@@ -36,10 +36,11 @@ script:
   - python find_tests.py
   - cd ..
 
-after_success:
-  - conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_base
-  
 deploy:
+  provider: script
+  script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_base
+  on:
+    branch: master
   provider: pypi
   user: pyiron
   password: ${PYPI_UPLOAD_TOKEN}
