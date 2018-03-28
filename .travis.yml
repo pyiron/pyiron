@@ -33,10 +33,16 @@ install:
   - pip install .
 
 script:
-  - conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
-  
+  - python --version
+
 deploy:
-  provider: pypi
-  user: pyiron
-  password: ${PYPI_UPLOAD_TOKEN}
-  allow_failure: true
+  - provider: script
+    script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
+    on:
+      branch: master
+  - provider: pypi
+    user: pyiron
+    password: ${PYPI_UPLOAD_TOKEN}
+    allow_failure: true
+    on:
+      branch: master
