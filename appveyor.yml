@@ -59,4 +59,4 @@ test_script:
   - "python --version"
 
 on_success:
-  - if($env:APPVEYOR_REPO_BRANCH -eq 'master') { "conda build --python %PYTHON_VERSION% --user pyiron --token %ANACONDA_TOKEN% conda/pyiron_dft" }
+  - bash -c "if [ $APPVEYOR_REPO_BRANCH = 'master' ]; then conda build --python $PYTHON_VERSION --user pyiron --token $ANACONDA_TOKEN conda/pyiron_dft; fi"
