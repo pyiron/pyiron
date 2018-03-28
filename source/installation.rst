@@ -20,7 +20,9 @@ from anaconda (recommended)
 ---------------------------
  ::
 
-    conda install -c pyiron pyiron
+    conda config --add channels conda-forge
+    conda config --add channels pyiron
+    conda install pyiron
 
 from pip
 --------
@@ -56,7 +58,9 @@ from anaconda
 -------------
  ::
 
-    conda install -c pyiron pyiron
+    conda config --add channels conda-forge
+    conda config --add channels pyiron
+    conda install pyiron
 
 from pip
 --------
@@ -97,7 +101,9 @@ from anaconda
 -------------
  ::
 
-    conda install -c pyiron pyiron
+    conda config --add channels conda-forge
+    conda config --add channels pyiron
+    conda install pyiron
 
 from pip
 --------
