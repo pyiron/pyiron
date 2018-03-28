@@ -36,6 +36,7 @@ init:
   - ps: Write-Host $Env:APPVEYOR_REPO_TAG
   - ps: Write-Host $Env:APPVEYOR_REPO_TAG_NAME
   - ps: Write-Host $Env:APPVEYOR_REPO_NAME
+  - ps: Write-Host $env:APPVEYOR_REPO_BRANCH
 
 install:
 # Make sure the compiler is accessible
@@ -60,4 +61,4 @@ test_script:
   - "cd .."
 
 on_success:
-  - if($env:APPVEYOR_REPO_BRANCH = 'master') { "conda build --python %PYTHON_VERSION% --user pyiron --token %ANACONDA_TOKEN% conda/pyiron_base" }
+  - if($Env:APPVEYOR_REPO_BRANCH -eq 'master') { "conda build --python %PYTHON_VERSION% --user pyiron --token %ANACONDA_TOKEN% conda/pyiron_base" }
