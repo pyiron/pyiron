@@ -45,3 +45,5 @@ deploy:
   user: pyiron
   password: ${PYPI_UPLOAD_TOKEN}
   allow_failure: true
+  on:
+    branch: master
