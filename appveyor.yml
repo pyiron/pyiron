@@ -65,3 +65,5 @@ test_script:
 
 on_success:
   - "conda build --python %PYTHON_VERSION% --user pyiron --token %ANACONDA_TOKEN% conda/pyiron_base"
+    on:
+      branch: master
