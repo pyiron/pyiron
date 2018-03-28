@@ -28,10 +28,6 @@ platform:
 - x86
 - x64
 
-branches:
-  only:
-    - master
-
 init:
   - ps: if ($Env:PLATFORM -eq "x64") { $Env:CONDA = "${Env:CONDA}-x64" }
   - ps: Write-Host $Env:PYTHON_VERSION
@@ -56,7 +52,9 @@ install:
 - "conda info -a"
 - "pip install ."
 
-build: false
-
 test_script:
-  - "conda build --python %PYTHON_VERSION% --user pyiron --token %ANACONDA_TOKEN% conda/pyiron_vasp"
+  # Build the package
+  - "python --version"
+
+on_success:
+  - if($env:APPVEYOR_REPO_BRANCH -eq 'master') { "conda build --python %PYTHON_VERSION% --user pyiron --token %ANACONDA_TOKEN% conda/pyiron_vasp" }
