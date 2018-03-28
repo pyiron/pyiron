@@ -36,13 +36,13 @@ script:
   - python --version
 
 deploy:
-  provider: script
-  script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_atomistics
-  on:
-    branch: master
-  provider: pypi
-  user: pyiron
-  password: ${PYPI_UPLOAD_TOKEN}
-  allow_failure: true
-  on:
-    branch: master
+  - provider: script
+    script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_atomistics
+    on:
+      branch: master
+  - provider: pypi
+    user: pyiron
+    password: ${PYPI_UPLOAD_TOKEN}
+    allow_failure: true
+    on:
+      branch: master
