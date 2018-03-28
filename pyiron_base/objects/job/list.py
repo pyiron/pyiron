@@ -231,7 +231,7 @@ class ListMaster(GenericMaster):
                 self.submission_status.submit_next()
                 if not ham.status.finished:
                     ham.run()
-                self._logger.info('Murnaghan: finished job {}'.format(ham.job_name))
+                self._logger.info('ListMaster: finished job {}'.format(ham.job_name))
                 if ham.server.run_mode.thread:
                     job_lst.append(ham._process)
                 else:
