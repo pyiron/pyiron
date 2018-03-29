@@ -173,7 +173,7 @@ class ConfigFile(GenericConfig):
                 local_path += '/'
             if db_path[-1] != '/':
                 db_path += '/'
-            top_dir_dict[os.path.expanduser(db_path)] = os.path.expanduser(local_path)
+            top_dir_dict[os.path.expanduser(db_path).replace('\\', '/')] = os.path.expanduser(local_path).replace('\\', '/')
         return top_dir_dict
 
     def _env_config(self, section):
@@ -190,62 +190,48 @@ class ConfigFile(GenericConfig):
             dbtype = self.parser.get(section, "TYPE")
         else:
             dbtype = 'SQLite'
-        top_level_dirs = self._top_level_dirs(section=section)
+        db_dict = {'system': section[9:],
+                   'top_level_dirs': self._top_level_dirs(section=section),
+                   'resource_paths': [os.path.expanduser(c.strip()).replace('\\', '/') 
+                                      for c in self.parser.get(section, 'RESOURCE_PATHS').split(",")]}
+        if self.parser.has_option(section, "USER"):
+            db_dict['user'] = self.parser.get(section, "USER")
+        else:
+            db_dict['user'] = 'pyiron'
         if dbtype == 'Postgres':
-            db_dict = {'system': section[9:],
-                       'type': dbtype,
-                       'database': self.parser.get(section, "NAME"),
-                       'user': self.parser.get(section, "USER"),
-                       'password': self.parser.get(section, "PASSWD"),
-                       'table_name': self.parser.get(section, "JOB_TABLE"),
-                       'host': self.parser.get(section, "HOST"),
-                       'top_level_dirs': top_level_dirs}
+            db_dict['type'] = dbtype
+            db_dict['database'] = self.parser.get(section, "NAME")
+            db_dict['password'] = self.parser.get(section, "PASSWD")
+            db_dict['table_name'] = self.parser.get(section, "JOB_TABLE")
+            db_dict['host'] = self.parser.get(section, "HOST")
             if self.parser.has_option(section, "VIEWERUSER") & self.parser.has_option(section, "VIEWERPASSWD") \
                     & self.parser.has_option(section, "VIEWER_TABLE"):
                 db_dict['vieweruser'] = self.parser.get(section, "VIEWERUSER")
                 db_dict['viewerpassword'] = self.parser.get(section, "VIEWERPASSWD")
                 db_dict['viewertable'] = self.parser.get(section, "VIEWER_TABLE")
         elif dbtype == 'SQLite':
-            db_dict = {'system': section[9:],
-                       'type': dbtype,
-                       'top_level_dirs': top_level_dirs}
+            db_dict['type'] = dbtype
             if self.parser.has_option(section, "FILE"):
-                db_dict['file'] = os.path.expanduser(self.parser.get(section, "FILE"))
+                db_dict['file'] = os.path.expanduser(self.parser.get(section, "FILE")).replace('\\', '/')
             if self.parser.has_option(section, "DATABASE_FILE"):
-                db_dict['file'] = os.path.expanduser(self.parser.get(section, "DATABASE_FILE"))   
+                db_dict['file'] = os.path.expanduser(self.parser.get(section, "DATABASE_FILE")).replace('\\', '/')   
             else:
-                db_dict['file'] = os.path.join(self.resource_paths[0], 'sqlite.db')
+                db_dict['file'] = os.path.join(db_dict['resource_paths'][0], 'sqlite.db').replace('\\', '/')
             if self.parser.has_option(section, "JOB_TABLE"):
                 db_dict['table_name'] = self.parser.get(section, "JOB_TABLE")
             else:
                 db_dict['table_name'] = 'jobs_pyiron'
         elif dbtype == 'SQLalchemy':
-            db_dict = {'system': section[9:],
-                       'type': dbtype,
-                       'connection_string': self.parser.get(section, "CONNECTION"),
-                       'table_name': self.parser.get(section, "JOB_TABLE"),
-                       'top_level_dirs': top_level_dirs}
+            db_dict['type'] = dbtype
+            db_dict['connection_string'] = self.parser.get(section, "CONNECTION")
+            db_dict['table_name'] = self.parser.get(section, "JOB_TABLE")
         elif dbtype == 'MySQL':
-            db_dict = {'system': section[9:],
-                       'type': dbtype,
-                       'database': self.parser.get(section, "NAME"),
-                       'user': self.parser.get(section, "USER"),
-                       'password': self.parser.get(section, "PASSWD"),
-                       'table_name': self.parser.get(section, "JOB_TABLE"),
-                       'host': self.parser.get(section, "HOST"),
-                       'top_level_dirs': top_level_dirs}
+            db_dict['type'] = dbtype
+            db_dict['database'] = self.parser.get(section, "NAME")
+            db_dict['user'] = self.parser.get(section, "USER")
+            db_dict['password'] = self.parser.get(section, "PASSWD")
+            db_dict['table_name'] = self.parser.get(section, "JOB_TABLE")
+            db_dict['host'] = self.parser.get(section, "HOST")
         else:
             raise ValueError('Database configuration unreadable!')
-        if self.parser.has_option(section, 'RESOURCE_PATHS'):
-            db_dict['resource_paths'] = [os.path.expanduser(c.strip()) 
-                                         for c in self.parser.get(section, 'RESOURCE_PATHS').split(",")]
-        else:
-            db_dict['resource_paths'] = [self.parser.get('local_paths', 'LOCAL_PATH_POTS'),
-                                         self.parser.get('local_paths', 'LOCAL_PATH_BIN')]
-        if self.parser.has_option(section, "USER"):
-            db_dict['user'] = self.parser.get(section, "USER")
-        elif self.parser.has_option('DEFAULT', "USER"):
-            db_dict['user'] = self.parser.get('DEFAULT', 'LOGIN_USER')
-        else:
-            db_dict['user'] = 'pyiron'
         return db_dict
