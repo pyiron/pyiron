@@ -2,8 +2,8 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-import os
 import sys
+import posixpath
 from pyiron_base.core.settings.config.template import GenericConfig
 
 """
@@ -59,8 +59,8 @@ class ConfigFile(GenericConfig):
             config = ConfigParser()
         else:
             config = ConfigParser(inline_comment_prefixes=(';',))
-        if not os.path.isfile(config_file):
-            raise ValueError("Configuration file missing", os.path.abspath(os.path.curdir))
+        if not posixpath.isfile(config_file):
+            raise ValueError("Configuration file missing", posixpath.abspath(posixpath.curdir))
         config.read(config_file)
         self.parser = config
 
@@ -130,7 +130,7 @@ class ConfigFile(GenericConfig):
             str: path
         """
         if self.parser.has_option('DEFAULT', 'RESOURCE_PATHS'):
-            return [os.path.expanduser(rpath) 
+            return [posixpath.expanduser(rpath)
                     for rpath in self.parser.get('DEFAULT', 'RESOURCE_PATHS').split(",")]
         else:
             return None
@@ -143,7 +143,7 @@ class ConfigFile(GenericConfig):
         Returns:
             str: path
         """
-        file_path = os.path.realpath(__file__).replace('\\', '/')
+        file_path = posixpath.realpath(__file__)
         return '/'.join(file_path.split('/')[:-5])
 
     # private functions
@@ -173,7 +173,7 @@ class ConfigFile(GenericConfig):
                 local_path += '/'
             if db_path[-1] != '/':
                 db_path += '/'
-            top_dir_dict[os.path.expanduser(db_path).replace('\\', '/')] = os.path.expanduser(local_path).replace('\\', '/')
+            top_dir_dict[posixpath.expanduser(db_path)] = posixpath.expanduser(local_path)
         return top_dir_dict
 
     def _env_config(self, section):
@@ -192,7 +192,7 @@ class ConfigFile(GenericConfig):
             dbtype = 'SQLite'
         db_dict = {'system': section[9:],
                    'top_level_dirs': self._top_level_dirs(section=section),
-                   'resource_paths': [os.path.expanduser(c.strip()).replace('\\', '/') 
+                   'resource_paths': [posixpath.expanduser(c.strip())
                                       for c in self.parser.get(section, 'RESOURCE_PATHS').split(",")]}
         if self.parser.has_option(section, "USER"):
             db_dict['user'] = self.parser.get(section, "USER")
@@ -212,11 +212,11 @@ class ConfigFile(GenericConfig):
         elif dbtype == 'SQLite':
             db_dict['type'] = dbtype
             if self.parser.has_option(section, "FILE"):
-                db_dict['file'] = os.path.expanduser(self.parser.get(section, "FILE")).replace('\\', '/')
+                db_dict['file'] = posixpath.expanduser(self.parser.get(section, "FILE"))
             if self.parser.has_option(section, "DATABASE_FILE"):
-                db_dict['file'] = os.path.expanduser(self.parser.get(section, "DATABASE_FILE")).replace('\\', '/')   
+                db_dict['file'] = posixpath.expanduser(self.parser.get(section, "DATABASE_FILE"))
             else:
-                db_dict['file'] = os.path.join(db_dict['resource_paths'][0], 'sqlite.db').replace('\\', '/')
+                db_dict['file'] = posixpath.join(db_dict['resource_paths'][0], 'sqlite.db')
             if self.parser.has_option(section, "JOB_TABLE"):
                 db_dict['table_name'] = self.parser.get(section, "JOB_TABLE")
             else:

@@ -242,7 +242,7 @@ class ProjectPath(GenericPath):
         """
         new_project = self.copy()
         new_project._create_path(new_project.path, rel_path)
-        new_project.project_path = os.path.normpath(os.path.join(new_project.project_path, rel_path)).replace('\\', '/')
+        new_project.project_path = posixpath.normpath(posixpath.join(new_project.project_path, rel_path))
         if history:
             new_project.history.append(rel_path)
         return new_project
@@ -276,9 +276,9 @@ class ProjectPath(GenericPath):
         """
         try:
             if project_name:
-                os.removedirs(os.path.join(self.path, project_name))
+                os.removedirs(posixpath.join(self.path, project_name))
             else:
-                os.removedirs(os.path.join(self.path))
+                os.removedirs(self.path)
         except OSError:
             pass
 
@@ -350,12 +350,11 @@ class ProjectPath(GenericPath):
         if isinstance(path, GenericPath):
             return path
         elif isinstance(path, string_types):
-            path = os.path.normpath(path)
-            if not os.path.isabs(path):
-                path_local = self._windows_path_to_unix_path(posixpath.abspath(os.curdir))
+            path = posixpath.normpath(path).replace('\\', '/')
+            if not posixpath.isabs(path):
+                path_local = posixpath.abspath(posixpath.curdir).replace('\\', '/')
                 self._create_path(path_local, path)
                 path = posixpath.join(path_local, path)
-            path = self._windows_path_to_unix_path(path)
             root_path, project_path = self._get_project_from_path(path)
             return GenericPath(root_path, project_path)
         else:
