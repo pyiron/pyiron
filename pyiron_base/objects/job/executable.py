@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import os
+import posixpath
 
 """
 Executable class loading executables from static/bin/<code>/ 
@@ -32,14 +33,14 @@ class Executable(object):
             if not isinstance(code.__name__, str):
                 raise TypeError('The codename should be a string.')
             self.__name__ = code.__name__.lower()
-            code_path_lst = [os.path.join(path, code.__module__.split('.')[0], 'bin') for path in path_binary_codes]
-            backwards_compatible_path_lst = [os.path.join(path, self.__name__) for path in path_binary_codes]
+            code_path_lst = [posixpath.join(path, code.__module__.split('.')[0], 'bin') for path in path_binary_codes]
+            backwards_compatible_path_lst = [posixpath.join(path, self.__name__) for path in path_binary_codes]
             self._path_bin = [exe_path for exe_path in (code_path_lst + backwards_compatible_path_lst)
                               if os.path.exists(exe_path)]
         else:
             self.__name__ = codename.lower()
-            self._path_bin = [os.path.join(path, self.__name__) for path in path_binary_codes
-                              if os.path.exists(os.path.join(path, self.__name__))]
+            self._path_bin = [posixpath.join(path, self.__name__) for path in path_binary_codes
+                              if os.path.exists(posixpath.join(path, self.__name__))]
         if overwrite_nt_flag:
             self._operation_system_nt = False
         else:
@@ -173,7 +174,7 @@ class Executable(object):
                     if executable.startswith('run_' + self.__name__ + '_') & executable.endswith(extension) and \
                             executable[len("run_" + self.__name__) + 1:-len(extension)] not in executable_dict.keys():
                         executable_dict[executable[len("run_" + self.__name__) + 1:-len(extension)]] = \
-                            os.path.join(path, executable).replace('\\', '/')
+                            posixpath.join(path, executable).replace('\\', '/')
             return executable_dict
         except OSError:  # No executable exists - This is the case for GenericJob and other abstract job classes.
             return dict()

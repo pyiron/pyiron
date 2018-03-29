@@ -169,7 +169,7 @@ class Project(ProjectPath):
                 ham.copy_to(destination)
             for file in self.list_files():
                 if '.h5' not in file:
-                    shutil.copy(os.path.join(self.path, file), destination.path)
+                    shutil.copy(posixpath.join(self.path, file), destination.path)
             return destination
         else:
             raise EnvironmentError('copy_to: is not available in Viewermode !')
@@ -354,8 +354,8 @@ class Project(ProjectPath):
         Returns:
             float: project size
         """
-        folder_size = sum([sum([os.path.getsize(os.path.join(path, file)) for file in files]) for (path, dirs, files) in
-                           os.walk(self.path)])
+        folder_size = sum([sum([posixpath.getsize(posixpath.join(path, file)) for file in files])
+                           for (path, dirs, files) in os.walk(self.path)])
         return folder_size / (1024 * 1024.0)
 
     def groups(self):
@@ -606,7 +606,7 @@ class Project(ProjectPath):
                 ham = self.load(job_id)
                 ham.move_to(destination)
             for file in self.list_files():
-                shutil.move(os.path.join(self.path, file), destination.path)
+                shutil.move(posixpath.join(self.path, file), destination.path)
         else:
             raise EnvironmentError('move_to: is not available in Viewermode !')
 
@@ -747,7 +747,7 @@ class Project(ProjectPath):
                     sub_project.remove(enforce=enforce)
             self.remove_jobs(recursive=True)
             for file in self.list_files():
-                os.remove(os.path.join(self.path, file))
+                os.remove(posixpath.join(self.path, file))
             if enforce:
                 print('remove directory: {}'.format(self.path))
                 shutil.rmtree(self.path, ignore_errors=True)

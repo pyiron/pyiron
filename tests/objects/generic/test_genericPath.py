@@ -1,4 +1,5 @@
 import os
+import posixpath
 from pyiron_base.core.settings.config.testing import ConfigTesting
 from pyiron_base.core.settings.generic import Settings
 import unittest
@@ -42,10 +43,10 @@ class TestProject(unittest.TestCase):
         pr_down_twice = self.project['..']['..']
         self.assertEqual(pr_down_two.__repr__(), pr_down_twice.__repr__())
         self.assertEqual(str(sorted([directory for directory in os.listdir('.')
-                                     if not os.path.isfile(os.path.join('.', directory))])),
+                                     if not posixpath.isfile(posixpath.join('.', directory))])),
                          pr_down_one.__repr__())
         self.assertEqual(str(sorted([directory for directory in os.listdir('..')
-                                     if not os.path.isfile(os.path.join('..', directory))])),
+                                     if not posixpath.isfile(posixpath.join('..', directory))])),
                          pr_down_two.__repr__())
         self.assertEqual(pr_down_two.__repr__(), pr_down_twice.__repr__())
 

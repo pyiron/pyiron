@@ -4,7 +4,7 @@
 
 import pandas
 import sys
-import os
+import posixpath
 import numpy as np
 from pyiron_base.core.settings.generic import Settings
 
@@ -344,7 +344,7 @@ def get_job_working_directory(database, sql_query, user, project_path, job_speci
         db_entry = database.get_item_by_id(get_job_id(database, sql_query, user, project_path, job_specifier))
         if db_entry:
             job_name = db_entry['subjob'][1:]
-            return os.path.join(db_entry['projectpath'], db_entry['project'], job_name + '_hdf5', job_name)
+            return posixpath.join(db_entry['projectpath'], db_entry['project'], job_name + '_hdf5', job_name)
         else:
             return None
     except KeyError:
