@@ -27,7 +27,7 @@ if arg_length == 4:
 else:
     html_directory = './_build'
 
-package_list = ['pyiron', 'pyiron_vasp', 'pyiron_base', 'pyiron_atomistics', 'pyiron_lammps']
+package_list = ['pyiron', 'pyiron_vasp', 'pyiron_base', 'pyiron_atomistics', 'pyiron_lammps', 'pyiron_dft', 'pyiron_example_job']
 
 command.append("make clean")
 for pkg in package_list:
