@@ -52,6 +52,8 @@ install:
 - "conda info -a"
 - "pip install ."
 
+build: false
+
 test_script:
   # Build the package
   - "python --version"
