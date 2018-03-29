@@ -634,7 +634,7 @@ class JobCore(PyIronObject):
             else:
                 new_job_core._job_id = None
         if os.path.exists(self.working_directory):
-            shutil.copytree(self.working_directory, posixpath.join(project.working_directory, self.job_name))
+            shutil.copytree(self.working_directory, os.path.join(project.working_directory, self.job_name))
         return new_job_core
 
     def move_to(self, project):
@@ -803,13 +803,13 @@ class JobCore(PyIronObject):
         cwd = os.getcwd()
         try:
             os.chdir(self.working_directory)
-            with tarfile.open(posixpath.join(self.working_directory, self.job_name + ".tar.bz2"), "w:bz2") as tar:
+            with tarfile.open(os.path.join(self.working_directory, self.job_name + ".tar.bz2"), "w:bz2") as tar:
                 for name in files_to_compress:
                     if "tar" not in name:
                         tar.add(name)
             for name in files_to_compress:
                 if "tar" not in name:
-                    fullname = posixpath.join(self.working_directory, name)
+                    fullname=os.path.join(self.working_directory, name)
                     if os.path.isfile(fullname):
                         os.remove(fullname)
                     elif os.path.isdir(fullname):
@@ -819,7 +819,7 @@ class JobCore(PyIronObject):
 
     def decompress(self):
         try:
-            tar_file_name = posixpath.join(self.working_directory, self.job_name + ".tar.bz2")
+            tar_file_name=os.path.join(self.working_directory, self.job_name + ".tar.bz2")
             with tarfile.open(tar_file_name, "r:bz2") as tar:
                 tar.extractall(self.working_directory)
             os.remove(tar_file_name)
@@ -843,11 +843,11 @@ class JobCore(PyIronObject):
         try:
             cwd = os.getcwd()
             os.chdir(fpath)
-            with tarfile.open(posixpath.join(fpath, self.job_name + ".tar.bz2"), "w:bz2") as tar:
+            with tarfile.open(os.path.join(fpath, self.job_name + ".tar.bz2"), "w:bz2") as tar:
                 for name in [h5_dir_name,h5_file_name]:
                         tar.add(name)
             for name in [h5_dir_name,h5_file_name]:
-                     fullname = posixpath.join(fpath, name)
+                     fullname = os.path.join(fpath, name)
                      if os.path.isfile(fullname):
                          os.remove(fullname)
                      elif os.path.isdir(fullname):
@@ -858,7 +858,7 @@ class JobCore(PyIronObject):
     def self_unarchive(self):
         fpath = self.project_hdf5.file_path
         try:
-            tar_name = posixpath.join(fpath, self.job_name + ".tar.bz2")
+            tar_name=os.path.join(fpath, self.job_name + ".tar.bz2")
             with tarfile.open(tar_name, "r:bz2") as tar:
                 tar.extractall(fpath)
             os.remove(tar_name)
@@ -866,4 +866,4 @@ class JobCore(PyIronObject):
             pass
 
     def is_self_archived(self):
-        return os.path.isfile(posixpath.join(self.project_hdf5.file_path, self.job_name + ".tar.bz2"))
+        return os.path.isfile(os.path.join(self.project_hdf5.file_path, self.job_name + ".tar.bz2"))

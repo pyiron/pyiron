@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from collections import OrderedDict
-import posixpath
+import os
 from pyiron_base.objects.server.shelloption import ShellOption
 
 """
@@ -403,7 +403,7 @@ class JobScheduler(object):
         if self.working_directory:
             if job_id:
                 self.script_name = 'pi_'+str(job_id)+'.sh'
-            file_name = posixpath.join(self.working_directory, self.script_name)
+            file_name = os.path.join(self.working_directory, self.script_name)
             if self.wrapper:
                 with open(file_name, "w") as f:
                     for line in self.wrapper:

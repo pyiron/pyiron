@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
-import posixpath
+import os
 import shutil
 from pyiron_base.objects.job.generic import GenericJob
 
@@ -175,8 +175,8 @@ class ScriptJob(GenericJob):
         """
         Copy the script to the working directory - only python scripts and jupyter notebooks are supported
         """
-        file_name = posixpath.basename(self._script_path)
-        shutil.copyfile(src=self._script_path, dst=posixpath.join(self.working_directory, file_name))
+        file_name = os.path.basename(self._script_path)
+        shutil.copyfile(src=self._script_path, dst=os.path.join(self.working_directory, file_name))
 
     def collect_output(self):
         """
@@ -184,7 +184,7 @@ class ScriptJob(GenericJob):
         child job is already assigned to an master job nothing happens - master IDs are not overwritten.
         """
         for job in self.project.iter_jobs(recursive=False, convert_to_object=False):
-            pr_job = self.project.open(posixpath.relpath(job.working_directory, self.project.path))
+            pr_job = self.project.open(os.path.relpath(job.working_directory, self.project.path))
             for subjob_id in pr_job.get_job_ids(recursive=False):
                 if pr_job.db.get_item_by_id(subjob_id)['masterid'] is None:
                     pr_job.db.item_update({'masterid': str(job.job_id)}, subjob_id)
@@ -213,8 +213,8 @@ class ScriptJob(GenericJob):
         Returns:
             str: executable command
         """
-        file_name = posixpath.basename(script_path)
-        path = posixpath.join(working_directory, file_name)
+        file_name = os.path.basename(script_path)
+        path = os.path.join(working_directory, file_name)
         if file_name[-6:] == '.ipynb':
             return 'jupyter nbconvert --ExecutePreprocessor.timeout=9999999 --to notebook --execute ' + path
         elif file_name[-3:] == '.py':
@@ -234,4 +234,4 @@ class ScriptJob(GenericJob):
         Returns:
             str: absolute path
         """
-        return posixpath.normpath(posixpath.join(posixpath.abspath(posixpath.curdir), path)).replace('\\', '/')
+        return os.path.normpath(os.path.join(os.path.abspath(os.path.curdir), path))

@@ -7,8 +7,11 @@ import h5py
 import os
 import pandas
 import posixpath
+import time
 import h5io
 from tables.exceptions import NoSuchNodeError
+from pandas.io.pytables import ClosedFileError
+import warnings
 
 """
 Classes to map the Python objects to HDF5 data structures 
@@ -98,7 +101,7 @@ class FileHDFio(object):
         boolean if the HDF5 file is empty
     """
     def __init__(self, file_name, h5_path="/", mode="a"):
-        if not posixpath.isabs(file_name):
+        if not os.path.isabs(file_name):
             raise ValueError("file_name must be given as absolute path name")
         self._file_name = None
         self.file_name = file_name
@@ -114,7 +117,7 @@ class FileHDFio(object):
         Returns:
             bool: [True/False]
         """
-        if posixpath.isfile(self.file_name):
+        if os.path.isfile(self.file_name):
             return True
         else:
             return False
@@ -137,7 +140,7 @@ class FileHDFio(object):
         Args:
             new_file_name (str): absolute path to the HDF5 file
         """
-        self._file_name = posixpath.abspath(new_file_name).replace('\\', '/')
+        self._file_name = os.path.abspath(new_file_name).replace('\\', '/')
 
     @property
     def base_name(self):
@@ -327,7 +330,7 @@ class FileHDFio(object):
             FileHDFio: FileHDFio object pointing to the new group
         """
         new_h5_path = self.copy()
-        if posixpath.isabs(h5_rel_path):
+        if os.path.isabs(h5_rel_path):
             raise ValueError("Absolute paths are not supported -> replace by relative path name!")
 
         if h5_rel_path.strip() == ".":
@@ -710,9 +713,11 @@ class FileHDFio(object):
                 raise ValueError("Unknown item: {}".format(item))
             else:
                 if item_lst[0] == '':  # absoute HDF5 path
-                    item_abs_lst = posixpath.normpath(item).split("/")
+                    item_abs_lst = os.path.normpath(item).replace('\\', '/').split("/")
                 else:  # relative HDF5 path
-                    item_abs_lst = posixpath.normpath(posixpath.join(self.h5_path, item)).split("/")
+                    item_abs_lst = os.path.normpath(os.path.join(self.h5_path, item)).replace('\\', '/').split("/")
+                    # print(item, item_abs_lst)
+                    # item_abs_lst = os.path.normpath(os.path.join(self.h5_path, item)).replace('\\', '/').split("/")
                 if item_abs_lst[1] == '..':  # leaving the HDF5 file
                     return self._create_project_from_hdf5()['/'.join(item_abs_lst[2:])]
                 else:
@@ -915,7 +920,8 @@ class ProjectHDFio(FileHDFio):
         if not h5_path:
             h5_path = '/'
         self._project = project.copy()
-        super(ProjectHDFio, self).__init__(file_name=posixpath.join(self._project.path, self._file_name),
+        super(ProjectHDFio, self).__init__(file_name=os.path.join(self._project.path,
+                                                                  self._file_name).replace('\\', '/'),
                                            h5_path=h5_path, mode=mode)
 
     @property
@@ -948,7 +954,7 @@ class ProjectHDFio(FileHDFio):
         Returns:
             str: absolute path
         """
-        return posixpath.join(self._project.path, self.h5_path[1:])
+        return os.path.join(self._project.path, self.h5_path[1:]).replace('\\', '/')
 
     @property
     def project(self):
@@ -1102,7 +1108,7 @@ class ProjectHDFio(FileHDFio):
         """
         Create the working directory on the file system if it does not exist already.
         """
-        if not posixpath.isdir(self.working_directory):
+        if not os.path.isdir(self.working_directory):
             os.makedirs(self.working_directory)
 
     def to_object(self, object_type=None, **qwargs):

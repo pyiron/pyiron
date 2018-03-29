@@ -3,8 +3,8 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 
+import os
 import warnings
-import posixpath
 from six import with_metaclass
 from pyiron_base.core.settings.logger import setup_logger
 from pyiron_base.core.settings.config.default import ConfigDefault
@@ -60,13 +60,13 @@ class Settings(with_metaclass(Singleton)):
         self.top_path_dict = {}
 
         # Load config file if it exists or otherwise load default configuration
-        config_file = posixpath.expanduser(posixpath.join("~", ".pyiron"))
+        config_file = os.path.expanduser(os.path.join("~", ".pyiron"))
         if config:
             if isinstance(config, GenericConfig):
                 self._config = config
             else:
                 raise TypeError('The config parameter has to be an object instance dereived from GenericConfig.')
-        elif posixpath.isfile(config_file):
+        elif os.path.isfile(config_file):
             self._config = ConfigFile(config_file=config_file)
         else:
             self._config = ConfigDefault()
