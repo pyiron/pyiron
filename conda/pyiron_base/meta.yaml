@@ -15,6 +15,7 @@ requirements:
     - pandas
     - six
     - sqlalchemy
+    - pathlib2
     - pytables
 
   run:
@@ -26,6 +27,7 @@ requirements:
     - pandas
     - six
     - sqlalchemy
+    - pathlib2
     - pytables
 
 test:

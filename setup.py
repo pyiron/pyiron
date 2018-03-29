@@ -37,6 +37,7 @@ setup(
                       'matplotlib',
                       'numpy',
                       'pandas',
+                      'pathlib2',
                       'six',
                       'sqlalchemy',
                       'tables']

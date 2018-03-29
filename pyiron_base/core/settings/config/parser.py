@@ -4,6 +4,7 @@
 
 import os
 import sys
+from pathlib2 import Path
 from pyiron_base.core.settings.config.template import GenericConfig
 
 """
@@ -109,7 +110,7 @@ class ConfigFile(GenericConfig):
         Returns:
             str: path
         """
-        return self.parser.get('DEFAULT', 'LOCAL_PATH_BIN')
+        return self.convert_path(self.parser.get('DEFAULT', 'LOCAL_PATH_BIN'))
 
     @property
     def path_potentials(self):
@@ -119,7 +120,7 @@ class ConfigFile(GenericConfig):
         Returns:
             str: path
         """
-        return self.parser.get('DEFAULT', 'LOCAL_PATH_POTS')
+        return self.convert_path(self.parser.get('DEFAULT', 'LOCAL_PATH_POTS'))
 
     @property
     def resource_paths(self):
@@ -130,7 +131,7 @@ class ConfigFile(GenericConfig):
             str: path
         """
         if self.parser.has_option('DEFAULT', 'RESOURCE_PATHS'):
-            return [os.path.expanduser(rpath) 
+            return [self.convert_path(rpath)
                     for rpath in self.parser.get('DEFAULT', 'RESOURCE_PATHS').split(",")]
         else:
             return None
@@ -143,8 +144,7 @@ class ConfigFile(GenericConfig):
         Returns:
             str: path
         """
-        file_path = os.path.realpath(__file__).replace('\\', '/')
-        return '/'.join(file_path.split('/')[:-5])
+        return '/'.join(self.convert_path(__file__).split('/')[:-5])
 
     # private functions
     def _top_level_dirs(self, section):
@@ -160,9 +160,11 @@ class ConfigFile(GenericConfig):
         top_dir_dict = {}
         top_dir_lst = []
         if self.parser.has_option(section, "TOP_LEVEL_DIRS"):
-            top_dir_lst += [c.strip() for c in self.parser.get(section, "TOP_LEVEL_DIRS").split(",")]
+            top_dir_lst += [self.convert_path(c.strip())
+                            for c in self.parser.get(section, "TOP_LEVEL_DIRS").split(",")]
         if self.parser.has_option(section, "PROJECT_PATHS"):
-            top_dir_lst += [c.strip() for c in self.parser.get(section, "PROJECT_PATHS").split(",")]
+            top_dir_lst += [self.convert_path(c.strip())
+                            for c in self.parser.get(section, "PROJECT_PATHS").split(",")]
         for top_dir in top_dir_lst:
             top_dir = [d.strip() for d in top_dir.split("@@")]
             if len(top_dir) == 2:
@@ -173,7 +175,7 @@ class ConfigFile(GenericConfig):
                 local_path += '/'
             if db_path[-1] != '/':
                 db_path += '/'
-            top_dir_dict[os.path.expanduser(db_path)] = os.path.expanduser(local_path)
+            top_dir_dict[db_path] = local_path
         return top_dir_dict
 
     def _env_config(self, section):
@@ -210,11 +212,11 @@ class ConfigFile(GenericConfig):
                        'type': dbtype,
                        'top_level_dirs': top_level_dirs}
             if self.parser.has_option(section, "FILE"):
-                db_dict['file'] = os.path.expanduser(self.parser.get(section, "FILE"))
+                db_dict['file'] = self.convert_path(self.parser.get(section, "FILE"))
             if self.parser.has_option(section, "DATABASE_FILE"):
-                db_dict['file'] = os.path.expanduser(self.parser.get(section, "DATABASE_FILE"))   
+                db_dict['file'] = self.convert_path(self.parser.get(section, "DATABASE_FILE"))
             else:
-                db_dict['file'] = os.path.join(self.resource_paths[0], 'sqlite.db')
+                db_dict['file'] = self.convert_path(os.path.join(self.resource_paths[0], 'sqlite.db'))
             if self.parser.has_option(section, "JOB_TABLE"):
                 db_dict['table_name'] = self.parser.get(section, "JOB_TABLE")
             else:
@@ -237,7 +239,7 @@ class ConfigFile(GenericConfig):
         else:
             raise ValueError('Database configuration unreadable!')
         if self.parser.has_option(section, 'RESOURCE_PATHS'):
-            db_dict['resource_paths'] = [os.path.expanduser(c.strip()) 
+            db_dict['resource_paths'] = [self.convert_path(c.strip())
                                          for c in self.parser.get(section, 'RESOURCE_PATHS').split(",")]
         else:
             db_dict['resource_paths'] = [self.parser.get('local_paths', 'LOCAL_PATH_POTS'),
@@ -249,3 +251,7 @@ class ConfigFile(GenericConfig):
         else:
             db_dict['user'] = 'pyiron'
         return db_dict
+
+    @staticmethod
+    def convert_path(path):
+        return Path(path).expanduser().resolve().absolute().as_posix()
