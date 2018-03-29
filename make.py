@@ -27,16 +27,14 @@ if arg_length == 4:
 else:
     html_directory = './_build'
 
-package_list = ['pyiron', 'pyiron_vasp', 'pyiron_base', 'pyiron_atomistics', 'pyiron_lammps', 'pyiron_dft', 'pyiron_example_job']
+package_list = ['pyiron', 'pyiron_vasp', 'pyiron_base', 'pyiron_atomistics', 'pyiron_lammps', 'pyiron_dft',
+                'pyiron_example_job']
 
 command.append("make clean")
 for pkg in package_list:
     directory = posixpath.join(source_directory, pkg)
     command.append("sphinx-apidoc -f -o {} {}".format(apidoc_directory, directory))
 
-# command.append("make html")
-
-#command.append('sphinx-build -b html ./ {}'.format(html_directory))
 
 command.append('make html BUILDDIR={}'.format(html_directory))
 
