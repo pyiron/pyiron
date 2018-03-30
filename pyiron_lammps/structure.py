@@ -186,6 +186,7 @@ class LammpsStructure(GenericParameters):
         self._structure = structure
         # print('Atom type: ', self.atom_type)
         if self.atom_type == 'full':
+            #input_str = self.structure_full()
             input_str = self.structure_full()
         elif self.atom_type == 'bond':
             input_str = self.structure_bond()
@@ -337,7 +338,7 @@ class LammpsStructure(GenericParameters):
     def structure_full(self):
         """
         Write routine to create atom structure static file for atom_type='full' that can be loaded by LAMMPS
-        
+
         Returns:
 
         """
@@ -347,6 +348,12 @@ class LammpsStructure(GenericParameters):
         q_dict = {}
         for el in self._structure.get_species_symbols():
             q_dict[el] = float(self.potential.get("set group {} charge".format(el)))
+
+        species_translate_list = list()
+        sorted_species_list = self._structure.get_species_symbols()
+        for el in self._structure.species:
+            ind = np.argwhere(sorted_species_list == el.Abbreviation).flatten()[-1]
+            species_translate_list.append(ind)
 
         # analyze structure to get molecule_ids, bonds, angles etc
         molecule_lst, bonds_lst, angles_lst = [], [], []
@@ -369,11 +376,11 @@ class LammpsStructure(GenericParameters):
                 id_mol += 1
                 molecule_lst.append([id_el, id_mol, id_species])
                 # Just to ensure that the attached atoms are indeed H atoms
-                #id_n1, id_n2 = np.intersect1d(neighbors.indices[id_el], self._structure.select_index("H"))[0:2]
+                # id_n1, id_n2 = np.intersect1d(neighbors.indices[id_el], self._structure.select_index("H"))[0:2]
                 id_n1, id_n2 = neighbors.indices[id_el][0:2]
                 # print "id: ", id, id_n1, len(el_lst), el_lst[1].id
-                molecule_lst.append([id_n1, id_mol, indices[id_n1]])
-                molecule_lst.append([id_n2, id_mol, indices[id_n1]])
+                molecule_lst.append([id_n1, id_mol, species_translate_list[indices[id_n1]]])
+                molecule_lst.append([id_n2, id_mol, species_translate_list[indices[id_n2]]])
 
                 bonds_lst.append([id_el + 1, id_n1 + 1])
                 bonds_lst.append([id_el + 1, id_n2 + 1])
