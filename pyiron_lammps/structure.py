@@ -334,6 +334,104 @@ class LammpsStructure(GenericParameters):
 
         return atomtypes + '\n' + cell_dimesions + '\n' + masses + '\n' + atoms + '\n' + bonds_str + '\n'
 
+    def structure_full_new(self):
+        """
+        Write routine to create atom structure static file for atom_type='full' that can be loaded by LAMMPS
+
+        Returns:
+
+        """
+        coords = self.rotate_positions(self._structure)
+
+        # extract electric charges from potential file
+        q_dict = {}
+        for el in self._structure.get_species_symbols():
+            q_dict[el] = float(self.potential.get("set group {} charge".format(el)))
+
+        # analyze structure to get molecule_ids, bonds, angles etc
+        molecule_lst, bonds_lst, angles_lst = [], [], []
+
+        # species_lst = structure.get_species_objects()
+        # for id_el, el in enumerate(structure.species):
+        #     el.id = id
+        # el_lst = structure.get_chemical_elements()
+
+        num_atoms_in_molecule = 3
+        neighbors = self._structure.get_neighbors(num_neighbors=num_atoms_in_molecule + 2)
+        # print "neighbors: ", neighbors.distances
+        id_mol = 0
+        indices = self._structure.indices
+        for id_el, id_species in enumerate(indices):
+            el = self._structure.species[id_species]
+            # print "id: ", id, el.Abbreviation, neighbors.indices[id][0:2]
+            if el.Abbreviation in ["O"]:
+                # print "id_mol: ", id_mol
+                id_mol += 1
+                molecule_lst.append([id_el, id_mol, id_species])
+                # Just to ensure that the attached atoms are indeed H atoms
+                # id_n1, id_n2 = np.intersect1d(neighbors.indices[id_el], self._structure.select_index("H"))[0:2]
+                id_n1, id_n2 = neighbors.indices[id_el][0:2]
+                # print "id: ", id, id_n1, len(el_lst), el_lst[1].id
+                molecule_lst.append([id_n1, id_mol, indices[id_n1]])
+                molecule_lst.append([id_n2, id_mol, indices[id_n1]])
+
+                bonds_lst.append([id_el + 1, id_n1 + 1])
+                bonds_lst.append([id_el + 1, id_n2 + 1])
+
+                angles_lst.append([id_n1 + 1, id_el + 1, id_n2 + 1])
+            elif el.Abbreviation not in ["H"]:  # non-bonded ions
+                id_mol += 1
+                molecule_lst.append([id_el, id_mol, id_species])
+
+        m_lst = np.array(molecule_lst)
+        molecule_lst = m_lst[m_lst[:, 0].argsort()]
+        # print "m_lst: ", m_lst
+        # print "mol: ", molecule_lst
+
+        atomtypes = ' Start File for LAMMPS \n' + \
+                    '{0:d} atoms'.format(len(self._structure)) + ' \n' + \
+                    '{0:d} bonds'.format(len(bonds_lst)) + ' \n' + \
+                    '{0:d} angles'.format(len(angles_lst)) + ' \n' + \
+                    '{0} atom types'.format(self._structure.get_number_of_species()) + ' \n' + \
+                    '{0} bond types'.format(1) + ' \n' + \
+                    '{0} angle types'.format(1) + ' \n'
+
+        cell_dimensions = self.simulation_cell()
+
+        masses = 'Masses' + '\n\n'
+        el_obj_list = self._structure._species
+        for object_id, el in enumerate(el_obj_list):
+            masses += '{0:3d} {1:f}'.format(object_id + 1, el.AtomicMass) + '\n'
+
+        atoms = 'Atoms \n\n'
+
+        # format: atom-ID, molecule-ID, atom_type, q, x, y, z
+        format_str = '{0:d} {1:d} {2:d} {3:f} {4:f} {5:f} {6:f}'
+        for atom in molecule_lst:
+            id_atom, id_mol, id_species = atom
+            # print id_atom, id_mol, id_species
+            x, y, z = coords[id_atom]
+            el_id = self._structure.species[id_species].Abbreviation
+            atoms += format_str.format(id_atom + 1, id_mol, id_species + 1, q_dict[el_id], x, y, z) + '\n'
+
+        if len(bonds_lst) > 0:
+            bonds_str = 'Bonds \n\n'
+            for i_bond, id_vec in enumerate(bonds_lst):
+                bonds_str += '{0:d} {1:d} {2:d} {3:d}'.format(i_bond + 1, 1, id_vec[0], id_vec[1]) + '\n'
+        else:
+            bonds_str = "\n"
+
+        if len(angles_lst) > 0:
+            angles_str = 'Angles \n\n'
+            for i_angle, id_vec in enumerate(angles_lst):
+                # print "id: ", i_angle, id_vec
+                angles_str += '{0:d} {1:d} {2:d} {3:d} {4:d}'.format(i_angle + 1, 1, id_vec[0], id_vec[1], id_vec[2]) \
+                              + '\n'
+        else:
+            angles_str = "\n"
+        return atomtypes + '\n' + cell_dimensions + '\n' + masses + '\n' + atoms + '\n' \
+               + bonds_str + '\n' + angles_str + '\n'
+
     def structure_full(self):
         """
         Write routine to create atom structure static file for atom_type='full' that can be loaded by LAMMPS
