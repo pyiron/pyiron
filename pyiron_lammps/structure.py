@@ -186,7 +186,8 @@ class LammpsStructure(GenericParameters):
         self._structure = structure
         # print('Atom type: ', self.atom_type)
         if self.atom_type == 'full':
-            input_str = self.structure_full()
+            #input_str = self.structure_full()
+            input_str = self.structure_full_new()
         elif self.atom_type == 'bond':
             input_str = self.structure_bond()
         else:  # self.atom_type == 'atomic'
