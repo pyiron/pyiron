@@ -94,8 +94,8 @@ exclude_patterns = ['_build', 'old', '**.ipynb_checkpoints', '**/tests']
 pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
-modindex_common_prefix = ['pyiron_vasp/pyiron_vasp', 'pyiron_base', 'pyiron_lammps',
-                          'pyiron', 'pyiron_dft', 'pyiron_atomistics', 'pyiron_example_job']
+modindex_common_prefix = ['pyiron_vasp.', 'pyiron_base.', 'pyiron_lammps.',
+                          'pyiron.', 'pyiron_dft.', 'pyiron_atomistics.', 'pyiron_example_job.']
 
 # If true, keep warnings as "system message" paragraphs in the built documents.
 # keep_warnings = False
