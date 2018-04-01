@@ -26,7 +26,8 @@ except ImportError:
     try:
         import pyspglib as spglib
     except ImportError:
-        pass
+        raise ImportError("The spglib package needs to be installed")
+
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -43,7 +44,8 @@ s = Settings()
 class Atoms(object):
     """
     The Atoms class represents all the information required to describe a structure at the atomic scale. This class is
-    written in such a way that is compatible with the ase atoms class.
+    written in such a way that is compatible with the `ASE atoms class`_. Some of the functions in this module is based
+    on the corresponding implementation in the ASE package
 
     Args:
         elements (list/numpy.ndarray instance): List of strings containing the elements or a list of
@@ -52,9 +54,8 @@ class Atoms(object):
         symbols (list/numpy.ndarray instance): List of chemical symbols
         positions (list/numpy.ndarray): List of positions
         scaled_positions (list/numpy.ndarray instance): List of scaled positions (relative coordinates)
-        pbc (boolean): Tells if periodic boundary conditions should be applied
+        pbc (list/numpy.ndarray/boolean): Tells if periodic boundary conditions should be applied on the three axes
         cell (list/numpy.ndarray instance): A 3x3 array representing the lattice vectors of the structure
-        is_absolute (boolean): Tells if the specified positions are in absolute coordinates
 
     Note: Only one of elements/symbols or numbers should be assigned during initialization
 
@@ -62,14 +63,15 @@ class Atoms(object):
 
         positions (numpy.ndarray): A size Nx3 positions of the structure which has N ions. They are in absolute or
                                 relative coordinates based on the is_absolute tag.
-        cell (numpy.ndarray): A size 3x3 array which gives the lattice vectors of the cell as [a1, a2, a3]
+        indices (numpy.ndarray): A list of size N which gives the species index of the structure which has N atoms
+
+    .. _ASE atoms class: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
 
     """
     def __init__(self, symbols=None, positions=None, numbers=None, tags=None, momenta=None, masses=None,
                  magmoms=None, charges=None, scaled_positions=None, cell=None, pbc=None, celldisp=None, constraint=None,
                  calculator=None, info=None, indices=None, elements=None, dimension=None, species=None,
                  **qwargs):
-        # print ('init atoms: ', scaled_positions, cell, qwargs)
         if symbols is not None:
             if elements is None:
                 elements = symbols
@@ -99,7 +101,6 @@ class Atoms(object):
             assert (elements is None)
             elements = self.numbers_to_elements(numbers)
         if elements is not None:
-            # assert (numbers is None)
             el_object_list = None
             if isinstance(elements, str):
                 element_list = self.convert_formula(elements)
@@ -115,7 +116,6 @@ class Atoms(object):
                 if is_mixed:
                     object_list = list()
                     for el in elements:
-                        # print("Type: {}".format(type(el)) )
                         if isinstance(el, (str, np.str, np.str_)):
                             object_list.append(self.convert_element(el))
                         if isinstance(el, ChemicalElement):
@@ -199,22 +199,12 @@ class Atoms(object):
     @property
     def cell(self):
         """
-
-        Returns:
-
+        numpy.ndarray: A size 3x3 array which gives the lattice vectors of the cell as [a1, a2, a3]
         """
         return self._cell
 
     @cell.setter
     def cell(self, value):
-        """
-
-        Args:
-            value:
-
-        Returns:
-
-        """
         if value is None:
             self._cell = None
         else:
