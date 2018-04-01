@@ -1353,12 +1353,7 @@ class Potcar(GenericParameters):
                         if file_name in file_lst:
                             return os.path.join(path, file_name)
         # Backwards compatibility to the old version
-        if path is not None:
-            return os.path.join(s.path_potentials, 'vasp', path)
-        elif xc is not None and file_name is not None:
-            return os.path.join(s.path_potentials, 'vasp', self.pot_path_dict[xc], file_name)
-        else:
-            raise ValueError('Either the filename or the functional has to be defined.')
+        raise ValueError('Either the filename or the functional has to be defined.')
 
     def write_file(self, file_name, cwd=None):
         """
