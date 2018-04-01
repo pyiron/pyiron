@@ -14,7 +14,7 @@ class TestConfigSettingsStatic(unittest.TestCase):
         self.assertEqual(self.file_config.db_connection_name, 'DEFAULT')
 
     def test_file_db_connection_string(self):
-        self.assertEqual(self.file_config.db_connection_string, 'sqlite://' + self.resource_path + '/sqlite.db')
+        self.assertEqual(self.file_config.db_connection_string, 'sqlite:///' + self.resource_path + '/sqlite.db')
 
     def test_file_db_connection_table(self):
         self.assertEqual(self.file_config.db_connection_table, 'jobs_pyiron')
