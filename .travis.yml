@@ -33,7 +33,9 @@ install:
   - pip install .
 
 script:
-  - python --version
+  - cd tests
+  - python find_tests.py
+  - cd ..
 
 deploy:
   - provider: script
