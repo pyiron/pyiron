@@ -14,11 +14,7 @@ from pyiron_atomistics.structure.atom import Atom
 from pyiron_atomistics.structure.sparse_list import SparseArray, SparseList
 from pyiron_atomistics.structure.periodic_table import PeriodicTable, ChemicalElement, ElementColorDictionary
 from pyiron_base.core.settings.generic import Settings
-
-try:
-    from scipy.spatial import cKDTree
-except ImportError:
-    from scipy.spatial import ckdtree as cKDTree
+from scipy.spatial import cKDTree
 
 try:
     import spglib
