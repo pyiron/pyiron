@@ -139,7 +139,6 @@ class Atoms(object):
                     elif elements.dtype in [int, np.int64, np.int32]:
                         el_object_list = self.numbers_to_elements(elements)
                     else:
-                        print("elementList: ", elements, type(elements[0]))
                         raise ValueError('Unknown static type for element in list: ' + str(type(elements[0])))
 
             if el_object_list is None:
@@ -394,27 +393,15 @@ class Atoms(object):
             for el in self.species:
                 if isinstance(el.tags, dict):
                     with hdf_structure.open("new_species") as hdf_species:
-                    # species_lst = set(self.elements)
                         el.to_hdf(hdf_species)
-            # species = [el.Abbreviation for el in species_lst]
-            # species_dict = {key:i for i, key in enumerate(species)}
-            # element_lst = np.array([species_dict[el] for el in self.get_chemical_symbols()])
             hdf_structure['species'] = [el.Abbreviation for el in self.species]
-            # print('time in atoms.to_hdf (species): ', time.time() - time_start)
-            # H5py Python3 unicode issue: https://github.com/h5py/h5py/issues/289
-            # hdf_structure["elements"] = np.array(self.get_chemical_symbols())
-            # hdf_structure["elements"] = self.get_chemical_symbols()
             hdf_structure["indices"] = self.indices
-            # print('time in atoms.to_hdf (structure): ', time.time() - time_start)
 
             with hdf_structure.open("tags") as hdf_tags:
                 for tag in self._tag_list.keys():
                     tag_value = self._tag_list[tag]
                     if isinstance(tag_value, SparseList):
                         tag_value.to_hdf(hdf_tags, tag)
-
-            # print('time in atoms.to_hdf(tags): ', time.time() - time_start)
-            # tr_dict = {True: "True", False: "False"}
             hdf_structure["units"] = self.units
             hdf_structure["dimension"] = self.dimension
 
@@ -445,7 +432,6 @@ class Atoms(object):
             with hdf.open(group_name) as hdf_atoms:
                 if "new_species" in hdf_atoms.list_groups():
                     with hdf_atoms.open("new_species") as hdf_species:
-                        # print("hdf(species: ", hdf._h5_group)
                         self._pse.from_hdf(hdf_species)
 
                 el_object_list = [self.convert_element(el, self._pse) for el in hdf_atoms["species"]]
@@ -512,7 +498,6 @@ class Atoms(object):
             self._pse = PeriodicTable()
             if "species" in hdf_atoms.list_groups():
                 with hdf_atoms.open("species") as hdf_species:
-                    # print("hdf(species: ", hdf._h5_group)
                     self._pse.from_hdf(hdf_species)
             chemical_symbols = np.array(hdf_atoms["elements"], dtype=str)
             el_object_list = [self.convert_element(el, self._pse) for el in chemical_symbols]
@@ -1204,7 +1189,6 @@ class Atoms(object):
             if t_vec:
                 nbr_dist = []
                 if len(index) == 0:
-                    print("index: ", index)
                     self.neighbor_distance_vec.append(nbr_dist)
                     continue
                 vec0 = self.positions[index[0]]
@@ -1529,8 +1513,6 @@ class Atoms(object):
         space_group = red_structure.get_spacegroup(symprec)["Number"]
         # print "space group: ", space_group
         if space_group == 225:  # fcc
-            print("WARNING: experimental feature (getPrimitiveCell)")
-
             alat = np.max(cell[0])
             amat_fcc = alat * np.array([[1, 0, 1], [1, 1, 0], [0, 1, 1]])
 
@@ -1590,9 +1572,6 @@ class Atoms(object):
                     # if len(id_vec)==1:
                     #     print "c: ", i_c, coord_new, c
                     if no_match:
-                        print("WARNING: getEquivalentAtoms (no match)")
-                        print("new: ", coord_new)
-                        print("old: ", coords)
                         raise ValueError("No equivalent atom found!")
 
                 trans_vec.append(trans)
@@ -1731,8 +1710,6 @@ class Atoms(object):
                 ind_lst.append(i)
                 vol_lst.append(pvol)
                 # print ("point "+str(i)+" with coordinates "+str(p)+" has volume "+str(pvol))
-
-        print("total volume= ", np.sum(vol_lst))
         return np.array(ind_lst), np.array(vol_lst)
 
     def __add__(self, other):
@@ -1754,8 +1731,6 @@ class Atoms(object):
                     new_species_lst.append(el)
                     sum_atoms._store_elements[el.Abbreviation] = el
                     ind_conv[ind_old] = len(new_species_lst) - 1
-            # print('species_lst: ', new_species_lst, ind_conv)
-
             new_indices = copy(other.indices)
             for key, val in ind_conv.items():
                 new_indices[new_indices == key] = val + 1000
@@ -1764,7 +1739,6 @@ class Atoms(object):
             sum_atoms.set_species(new_species_lst)
 
             if not len(set(sum_atoms.indices)) == len(sum_atoms.species):
-                # print('indices: ', new_array.indices, new_array.species)
                 raise ValueError("Adding the atom instances went wrong!")
             return sum_atoms
 
@@ -2060,25 +2034,6 @@ class Atoms(object):
 
         return el_list
 
-    @staticmethod
-    def _test_neighbors(indices):
-        """
-
-        Args:
-            indices:
-
-        Returns:
-
-        """
-        for ia, ind in enumerate(indices):
-            print("index: ", ia, ind)
-
-        for ia, ind in enumerate(indices):
-            for i in ind:
-                if ia not in indices[i]:
-                    print("ia: ", ia, i, indices[i])
-                    raise ValueError('corrupt bond')
-
     # ASE compatibility
     @staticmethod
     def get_calculator():
@@ -2111,10 +2066,7 @@ class Atoms(object):
 
         positions = self.positions
         distance = np.array([positions[a1] - positions[a0]])
-        print("Warning: get_distance may fail")
-        print("atoms.get_distance: ", np.linalg.norm(distance))
         if mic:
-            print("Periodic Boundary conditions do not work")
             distance, d_len = find_mic(distance, self.cell, self.pbc)
         else:
             d_len = np.array([np.sqrt((distance ** 2).sum())])
@@ -2180,8 +2132,6 @@ class Atoms(object):
                 raise ValueError('magmons can be collinear or non-collinear.')
             for ind, element in enumerate(self.get_chemical_elements()):
                 if 'spin' in element.tags.keys():
-                    print('Overwrite: ' + str(element.Abbreviation) + ' with ' + str(element.Parent) + ' when using per ' +
-                          'atom spins.')
                     self[ind] = element.Parent
             if 'spin' not in self._tag_list._lists.keys():
                 self.add_tag(spin=None)
@@ -2684,7 +2634,6 @@ class _CrystalStructure(Atoms):
             elif self.bravais_basis == "primitive":
                 basis = np.array([[0., 0., 0.]])
             else:
-                print("basis name: ", self.bravais_basis, " not known")
                 exit()
         elif self.dimension == 2:
             if self.bravais_basis == "primitive":
@@ -2692,13 +2641,11 @@ class _CrystalStructure(Atoms):
             elif self.bravais_basis == "centered":
                 basis = np.array([[0., 0.], [0.5, 0.5]])
             else:
-                print("basis name unknown")
                 exit()
         elif self.dimension == 1:
             if self.bravais_basis == "primitive":
                 basis = np.array([[0.]])
             else:
-                print("basis name unknown")
                 exit()
         self.coordinates = basis
 
@@ -2884,8 +2831,6 @@ class _CrystalStructure(Atoms):
         # catch input error
         # print "lattice type =", name_lattice
         if name_lattice not in self.get_lattice_types():
-            print(name_lattice, "is not item of", self.dimension, "d lattice types:")
-            print(self.get_lattice_types())
             raise ValueError("is not item of ")
         else:
             self.bravais_lattice = name_lattice
@@ -2904,9 +2849,7 @@ class _CrystalStructure(Atoms):
         Returns:
 
         """
-        if name_basis not in self.get_basis_types():  # crystalLatticeDict[self.Dimension].get(self.BravaisLattice):
-            print(name_basis, "is not item of", self.bravais_lattice, "lattice:")
-            print(self.get_basis_types())
+        if name_basis not in self.get_basis_types():
             raise ValueError("is not item of")
         else:
             self.bravais_basis = name_basis
