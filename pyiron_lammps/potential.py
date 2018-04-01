@@ -64,7 +64,7 @@ class LammpsPotential(GenericParameters):
                         pot_file_lst[pot_file] = os.path.join(resource_path, pot_file)
                     if set(list(self._df['Filename'])[0]) == set(pot_file_lst.keys()):
                         return list(pot_file_lst.values())
-        return [posixpath.join(s.path_potentials, file) for file in list(self._df['Filename'])[0]]
+        raise ValueError('Was not able to locate the potentials.')
 
     def copy_pot_files(self, working_directory):
         _ = [shutil.copy(path_pot, working_directory) for path_pot in self.files]
