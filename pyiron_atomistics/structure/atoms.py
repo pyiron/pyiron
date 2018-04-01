@@ -18,7 +18,7 @@ from pyiron_base.core.settings.generic import Settings
 try:
     from scipy.spatial import cKDTree
 except ImportError:
-    from scipy.spatial import ckdtree
+    from scipy.spatial import ckdtree as cKDTree
 
 try:
     import spglib
@@ -29,7 +29,8 @@ except ImportError:
         pass
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
