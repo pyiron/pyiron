@@ -226,7 +226,8 @@ class Settings(with_metaclass(Singleton)):
         pyiron_env = self._config.pyiron_envs
         if pyiron_env['type'] == 'SQLite':
             # SQLite is raising ugly error messages when the database directory does not exist.
-            os.makedirs(os.path.dirname(pyiron_env['file']), exist_ok=True)
+            if not os.path.exists(os.path.dirname(pyiron_env['file'])):
+                os.makedirs(os.path.dirname(pyiron_env['file']))
             sql_con_str = 'sqlite:///' + pyiron_env['file']
             sql_db_table = pyiron_env['table_name']
         elif pyiron_env['type'] == 'Postgres':
