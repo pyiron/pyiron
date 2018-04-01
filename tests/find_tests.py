@@ -1,6 +1,5 @@
 import inspect
 import os
-import pyiron_base
 import subprocess
 import sys
 import time
@@ -10,8 +9,18 @@ import numpy as np
 #     python -m unittest discover -s tests -p 'test*.py'
 # But that is not possible, as PyCharm expects the tests to be executed in the directory where they are located.
 
+# create .pyiron config if it does not exist to enable non modal jobs
+config_file = os.path.expanduser(os.path.join("~", ".pyiron"))
+if not os.path.exists(config_file):
+    with open(config_file, 'w') as cf:
+        cf.writelines(['[DEFAULT]\n',
+                       'PROJECT_PATHS = ' + __file__.split('/pyiron_atomistics')[0] + '\n',
+                       'RESOURCE_PATHS = ' + __file__.split('/pyiron_atomistics')[0]
+                       + '/pyiron_atomistics/tests/static\n'])
+
+import pyiron_atomistics
 current_file_name = inspect.getfile(inspect.currentframe()).split('/')[-1]
-pyrion_path = os.path.dirname(pyiron_base.__file__)
+pyrion_path = os.path.dirname(pyiron_atomistics.__file__)
 
 if len(sys.argv) == 2:
     pythonversion = sys.argv[1]
@@ -27,15 +36,6 @@ else:
         command_lst = ['python']
 
 failed = False
-
-# create .pyiron config if it does not exist to enable non modal jobs
-config_file = os.path.expanduser(os.path.join("~", ".pyiron"))
-if not os.path.exists(config_file):
-    with open(config_file, 'w') as cf:
-        cf.writelines(['[DEFAULT]\n',
-                       'PROJECT_PATHS = ' + __file__.split('/pyiron_atomistics')[0] + '\n',
-                       'RESOURCE_PATHS = ' + __file__.split('/pyiron_atomistics')[0]
-                       + '/pyiron_atomistics/tests/static\n'])
 
 with open('test_times.dat', mode='w') as f:
     dir_tree = []
