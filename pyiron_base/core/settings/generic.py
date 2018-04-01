@@ -76,10 +76,10 @@ class Settings(with_metaclass(Singleton)):
                     cf.writelines(['[DEFAULT]\n',
                                    'PROJECT_PATHS = ~/pyiron/projects\n',
                                    'RESOURCE_PATHS = ~/pyiron/resources]\n'])
-            if not os.path.exists(os.path.expanduser('~/pyiron/projects')):
-                os.makedirs('~/pyiron/projects')
-            if not os.path.exists(os.path.expanduser('~/pyiron/resources')):
-                os.makedirs('~/pyiron/resources')
+                if not os.path.exists(os.path.expanduser('~/pyiron/projects')):
+                    os.makedirs('~/pyiron/projects')
+                if not os.path.exists(os.path.expanduser('~/pyiron/resources')):
+                    os.makedirs('~/pyiron/resources')
             self._config = self._env_config(config_file)
 
         self._viewer_conncetion_string = None
@@ -232,14 +232,22 @@ class Settings(with_metaclass(Singleton)):
         if not os.path.isfile(config_file):
             raise ValueError("Configuration file missing", os.path.abspath(os.path.curdir))
         parser.read(config_file)
-        section = parser.sections()[0]
+        if len(parser.sections()) > 0:
+            section = parser.sections()[0]
+        else:
+            section = 'DEFAULT'
         if parser.has_option(section, "TYPE"):
             dbtype = parser.get(section, "TYPE")
         else:
             dbtype = 'SQLite'
         top_level_dirs = {}
-        for top_dir in [self.convert_path(c.strip())
-                        for c in parser.get(section, "PROJECT_PATHS").split(",")]:
+        if parser.has_option(section, "PROJECT_PATHS"):
+            project_path_lst = [self.convert_path(c.strip()) for c in parser.get(section, "PROJECT_PATHS").split(",")]
+        elif parser.has_option(section, "TOP_LEVEL_DIRS"):
+            project_path_lst = [self.convert_path(c.strip()) for c in parser.get(section, "TOP_LEVEL_DIRS").split(",")]
+        else:
+            ValueError('No project path identified!')
+        for top_dir in project_path_lst:
             top_dir = [d.strip() for d in top_dir.split("@@")]
             if len(top_dir) == 2:
                 local_path, db_path = top_dir
@@ -273,7 +281,7 @@ class Settings(with_metaclass(Singleton)):
             if parser.has_option(section, "DATABASE_FILE"):
                 db_dict['file'] = self.convert_path(parser.get(section, "DATABASE_FILE"))
             else:
-                db_dict['file'] = self.convert_path(os.path.join(self.resource_paths[0], 'sqlite.db'))
+                db_dict['file'] = self.convert_path(os.path.join(resource_paths[0], 'sqlite.db'))
             if parser.has_option(section, "JOB_TABLE"):
                 db_dict['table_name'] = parser.get(section, "JOB_TABLE")
             else:
