@@ -4,8 +4,8 @@ import unittest
 import numpy as np
 
 from pyiron_atomistics.structure.atoms import CrystalStructure
-from pyironbase.core.settings.config.testing import ConfigTesting
-from pyironbase.core.settings.generic import Settings
+from pyiron_base.core.settings.config.testing import ConfigTesting
+from pyiron_base.core.settings.generic import Settings
 
 config = ConfigTesting(sql_lite_database='./testing_bandstructure.db', path_project=str(os.getcwd()),
                        path_potentials='../../../static/potentials/')

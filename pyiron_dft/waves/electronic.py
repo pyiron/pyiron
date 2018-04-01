@@ -7,6 +7,7 @@ from __future__ import print_function
 import numpy as np
 
 from pyiron_atomistics.structure.atoms import Atoms
+from pyiron_base.objects.generic.template import PyIronObject
 from pyiron_dft.waves.dos import Dos
 
 __author__ = "Sudarsan Surendralal"
