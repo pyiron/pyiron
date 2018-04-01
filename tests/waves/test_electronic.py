@@ -1,7 +1,11 @@
-import os
-import posixpath
 import unittest
+import os
+from pyiron_base.core.settings.generic import Settings
+s = Settings(config={'file': 'vasp.db',
+                     'top_level_dirs': os.path.abspath(os.getcwd()),
+                     'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
 
+import posixpath
 import numpy as np
 
 from pyiron_atomistics.structure.atoms import Atoms
@@ -25,7 +29,7 @@ class TestElectronicStructure(unittest.TestCase):
         for f in file_list:
             vp = Vasprun()
             self.assertIsInstance(vp.vasprun_dict, dict)
-            direc = os.path.abspath("../hamilton/dft/pyio/vasp_test_files/vasprun_samples")
+            direc = os.path.abspath("../static/vasprun_samples")
             filename = posixpath.join(direc, f)
             vp.from_file(filename)
             es = vp.get_electronic_structure()
