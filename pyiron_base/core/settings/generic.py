@@ -66,10 +66,17 @@ class Settings(with_metaclass(Singleton)):
                 self._config = config
             else:
                 raise TypeError('The config parameter has to be an object instance dereived from GenericConfig.')
-        elif os.path.isfile(config_file):
-            self._config = ConfigFile(config_file=config_file)
         else:
-            self._config = ConfigDefault()
+            if not os.path.isfile(config_file):
+                with open(config_file, 'w') as cf:
+                    cf.writelines(['[DEFAULT]\n',
+                                   'PROJECT_PATHS = ~/pyiron/projects\n',
+                                   'RESOURCE_PATHS = ~/pyiron/resources]\n'])
+            if not os.path.exists(os.path.expanduser('~/pyiron/projects')):
+                os.makedirs('~/pyiron/projects')
+            if not os.path.exists(os.path.expanduser('~/pyiron/resources')):
+                os.makedirs('~/pyiron/resources')
+            self._config = ConfigFile(config_file=config_file)
 
         self._viewer_conncetion_string = None
         self._viewer_connection_table = None
