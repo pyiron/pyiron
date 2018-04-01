@@ -11,7 +11,8 @@ from pyiron_base.objects.generic.template import PyIronObject
 from pyiron_dft.waves.dos import Dos
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \
+                "- Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -19,12 +20,12 @@ __status__ = "development"
 __date__ = "Sep 1, 2017"
 
 
-class ElectronicStructure(PyIronObject):
+class ElectronicStructure(object):
     """
     This is a generic module to store electronic structure data in a clean way. Kpoint and Band classes are used to
     store information related to kpoints and bands respectively. Every spin configuration has a set of k-points and
-    every k-point has a set of bands associated with it. This fundamental information is used to generate dos and
-    bandstructure data/plots using bandstructure.py and dos.py
+    every k-point has a set of bands associated with it.
+
     """
     def __init__(self):
         self.kpoints = list()
@@ -49,10 +50,11 @@ class ElectronicStructure(PyIronObject):
 
     def add_kpoint(self, value, weight):
         """
-        Appends a Kpoint() instance to self.kpoints
+        Appends a Kpoint() instance to the kpoints attribute
+
         Args:
-            value: value of the kpoint in cartesian reciprocal coordinates
-            weight: the weight of the particular kpoint
+            value (list/numpy.ndarray): Value of the k-point in cartesian reciprocal coordinates
+            weight (float): The weight of the particular k-point
 
         """
         kpt_obj = Kpoint()
@@ -63,8 +65,12 @@ class ElectronicStructure(PyIronObject):
     def get_dos(self, n_bins=100):
         """
         Gives a pyiron.objects.waves.dos.Dos instance
+
         Args:
-            n_bins: Number of histogram bins for the dos
+            n_bins (int): Number of histogram bins for the dos
+
+        Returns:
+            pyiron.objects.waves.dos.Dos: Dos instance
 
         """
         dos_obj = Dos(n_bins=n_bins, es_obj=self)
@@ -84,8 +90,9 @@ class ElectronicStructure(PyIronObject):
     @property
     def dos_densities(self):
         """
-        A (SxN) vector containing the density of states for every spin configuration with S spin configurationa and N 
+        A (SxN) vector containing the density of states for every spin configuration with S spin configurationa and N
         grid points
+
         """
         return self._dos_densities
 
@@ -96,8 +103,9 @@ class ElectronicStructure(PyIronObject):
     @property
     def dos_idensities(self):
         """
-        A (SxN) vector containing the density of states for every spin configuration with S spin configurationa and N 
+        A (SxN) vector containing the density of states for every spin configuration with S spin configurationa and N
         grid points
+
         """
         return self._dos_idensities
 
@@ -110,6 +118,7 @@ class ElectronicStructure(PyIronObject):
         """
         A (SxAxOxN) vector containing the density of states for every spin configuration with S spin configurationa, 
         A atoms, O orbitals and N grid points. The labels of the orbitals are found on the orbital_dict
+
         """
         return self._resolved_densities
 
@@ -119,6 +128,14 @@ class ElectronicStructure(PyIronObject):
 
     @property
     def orbital_dict(self):
+        """
+        A dictionary of the
+
+        Examples:
+            >>> self.orbital_dict[0]
+            's'
+
+        """
         return self._orbital_dict
 
     @orbital_dict.setter
@@ -129,6 +146,7 @@ class ElectronicStructure(PyIronObject):
     def eigenvalues(self):
         """
         A getter function to return all eigenvalues
+
         """
         return self.eigenvalue_matrix.reshape(-1)
 
@@ -136,6 +154,7 @@ class ElectronicStructure(PyIronObject):
     def occupancies(self):
         """
         A getter function to return all occupancies
+
         """
         return self.occupancy_matrix.reshape(-1)
 
@@ -144,6 +163,7 @@ class ElectronicStructure(PyIronObject):
         """
         A getter function to return the eigenvalue_matrix. The eigenvalue for a given kpoint index i and band index j
         is given by eigenvalue_matrix[i][j]
+
         """
         if self._eigenvalue_matrix is None and len(self.kpoints) > 0:
             self._eigenvalue_matrix = np.zeros((len(self.kpoints), len(self.kpoints[0].bands)))
@@ -155,6 +175,7 @@ class ElectronicStructure(PyIronObject):
     def eigenvalue_matrix(self, val):
         """
         Setter for eigenvalue_matrix
+
         Args:
             val (np.ndarray): Array of eigenvalues with len(kpoints) rows and len(bands) columns.
         """
@@ -165,6 +186,7 @@ class ElectronicStructure(PyIronObject):
         """
         A getter function to return the occupancy_matrix. The occupancy for a given kpoint index i and band index j
         is given by occupancy_matrix[i][j]
+
         """
         if self._occupancy_matrix is None and len(self.kpoints) > 0:
             self._occupancy_matrix = np.zeros((len(self.kpoints), len(self.kpoints[0].bands)))
@@ -176,8 +198,10 @@ class ElectronicStructure(PyIronObject):
     def occupancy_matrix(self, val):
         """
         Setter for occupancies
+
         Args:
             val (list): Array of occupancies with len(kpoints) rows and len(bands) columns.
+
         """
         self._occupancy_matrix = val
 
@@ -185,6 +209,7 @@ class ElectronicStructure(PyIronObject):
     def kpoint_list(self):
         """
         Getter which returns the kpoints of the electronic structure in cartesian coordinates
+
         Returns:
             list of kpoints
         """
@@ -199,6 +224,7 @@ class ElectronicStructure(PyIronObject):
     def kpoint_list(self, val):
         """
         Setter for kpoint_list
+
         Args:
             val: list of kpoint values
         """
@@ -208,6 +234,7 @@ class ElectronicStructure(PyIronObject):
     def kpoint_weights(self):
         """
         Getter which returns the weights of the kpoints of the electronic structure in cartesian coordinates
+
         Returns:
             list of kpoint
         """
@@ -222,6 +249,7 @@ class ElectronicStructure(PyIronObject):
     def kpoint_weights(self, val):
         """
         Setter for kpoint_weights
+
         Args:
             val: list of kpoint weights
         """
@@ -238,6 +266,7 @@ class ElectronicStructure(PyIronObject):
     def get_vbm(self, resolution=1e-6):
         """
         Gets the valence band maximum (VBM) of the system
+
         Args:
             resolution (float): An occupancy below this value is considered unoccupied
 
@@ -268,6 +297,7 @@ class ElectronicStructure(PyIronObject):
     def get_cbm(self, resolution=1e-6):
         """
         Gets the conduction band minimum (CBM) of the system
+
         Args:
             resolution (float): An occupancy above this value is considered occupied
 
@@ -298,6 +328,7 @@ class ElectronicStructure(PyIronObject):
     def get_band_gap(self, resolution=1e-6):
         """
         Gets the band gap of the system
+
         Args:
             resolution (float): An occupancy above this value is considered occupied
 
@@ -436,6 +467,7 @@ class ElectronicStructure(PyIronObject):
     def to_hdf(self, hdf, group_name="electronic_structure"):
         """
         Store the object to hdf5 file
+
         Args:
             hdf: Path to the hdf5 file/group in the file
             group_name: Name of the group under which the attributes are o be stored
@@ -461,6 +493,7 @@ class ElectronicStructure(PyIronObject):
     def from_hdf(self, hdf, group_name="electronic_structure"):
         """
         Retrieve the object from the hdf5 file
+
         Args:
             hdf: Path to the hdf5 file/group in the file
             group_name: Name of the group under which the attributes are stored
@@ -490,6 +523,7 @@ class ElectronicStructure(PyIronObject):
     def generate_from_matrices(self):
         """
         Generate the Kpoints and Bands from the kpoint lists and sometimes grand_dos_matrix
+
         """
         for i in range(len(self.kpoint_list)):
             self.add_kpoint(self.kpoint_list[i], self.kpoint_weights[i])
@@ -504,6 +538,7 @@ class ElectronicStructure(PyIronObject):
     def get_spin_resolved_dos(self, spin_indices=0):
         """
         Gets the spin resolved DOS
+
         Args:
             spin_indices (int): The index of the spin for which the DOS is required 
 
@@ -520,6 +555,7 @@ class ElectronicStructure(PyIronObject):
     def get_resolved_dos(self, spin_indices=0, atom_indices=None, orbital_indices=None):
         """
         Get resolved dos based on the specified spin, atom and orbital indices
+
         Args:
             spin_indices (int/list/numpy.ndarray): spin indices  
             atom_indices (int/list/numpy.ndarray): stom indices 
@@ -556,6 +592,7 @@ class ElectronicStructure(PyIronObject):
     def plot_fermi_dirac(self):
         """
         Plots the obtained eigenvalue vs occupation plot
+
         """
         try:
             import matplotlib.pylab as plt
@@ -613,10 +650,10 @@ class Kpoint(object):
 
     Attributes:
 
-        ..bands (list): List of pyiron.objects.waves.settings.Band object
-        ..value (float): Value of the k-point
-        ..weight (float): Weight of the k-point used in integration of quantities
-        ..eig_occ_matrix (numpy.ndarray): A Nx2 matrix with the first column with eigenvalues and the second with
+        bands (list): List of pyiron.objects.waves.settings.Band object
+        .. value (float): Value of the k-point
+        .. weight (float): Weight of the k-point used in integration of quantities
+        .. eig_occ_matrix (numpy.ndarray): A Nx2 matrix with the first column with eigenvalues and the second with
                                     occupancies of every band. N being the number of bands assoiated with the k-point
     """
 
@@ -645,6 +682,7 @@ class Kpoint(object):
     def add_band(self, eigenvalue, occupancy):
         """
         Add a pyiron.objects.waves.core.Band instance
+
         Args:
             eigenvalue (float): The eigenvalue associated with the Band instance
             occupancy (flaot): The occupancy associated with the Band instance
