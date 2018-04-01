@@ -1,11 +1,10 @@
 import os
-from pyiron_base.core.settings.config.testing import ConfigTesting
 from pyiron_base.core.settings.generic import Settings
 import unittest
 
-config = ConfigTesting(sql_lite_database='./testing_genericpath.db',
-                       path_project=str(os.getcwd()))
-s = Settings(config=config)
+s = Settings(config={'file': 'genericpath.db',
+                     'top_level_dirs': os.path.abspath(os.getcwd()),
+                     'resource_paths': os.path.abspath(os.getcwd())})
 
 from pyiron_base.project import Project
 from pyiron_base.core.project.path import GenericPath
@@ -30,6 +29,7 @@ class TestGenericPath(unittest.TestCase):
 class TestProject(unittest.TestCase):
     def setUp(self):
         self.current_dir = os.getcwd()
+        print(s.top_path_dict)
         self.project = Project('sub_folder')
 
     def tearDown(self):

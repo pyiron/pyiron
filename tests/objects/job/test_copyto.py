@@ -1,11 +1,10 @@
 import os
-from pyiron_base.core.settings.config.testing import ConfigTesting
 from pyiron_base.core.settings.generic import Settings
 import unittest
 
-config = ConfigTesting(sql_lite_database='./testing_copyto.db', path_project=str(os.getcwd()),
-                       path_potentials='../../../static/potentials/')
-s = Settings(config=config)
+s = Settings(config={'file': 'copyto.db',
+                     'top_level_dirs': os.path.abspath(os.getcwd()),
+                     'resource_paths': os.path.abspath(os.getcwd())})
 
 from pyiron_base.project import Project
 
@@ -23,7 +22,7 @@ class TestChildids(unittest.TestCase):
         sub_project = project.open('sub_project')
         sub_project.remove()
         s.close_connection()
-        os.remove('testing_copyto.db')
+        os.remove('copyto.db')
 
     # def test_copy_to_job(self):
     #     job_ser = self.project.create_job("SerialMaster", "sequence_single")

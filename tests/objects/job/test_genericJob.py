@@ -1,12 +1,10 @@
 import unittest
-from pyiron_base.core.settings.config.testing import ConfigTesting
 from pyiron_base.core.settings.generic import Settings
 import os
 
-config = ConfigTesting(sql_lite_database='./testing_genericjob.db',
-                       path_potentials='../../../static/potentials/',
-                       path_project=str(os.getcwd()))
-s = Settings(config=config)
+s = Settings(config={'file': 'genericjob.db',
+                     'top_level_dirs': os.path.abspath(os.getcwd()),
+                     'resource_paths': os.path.abspath(os.getcwd())})
 
 from pyiron_base.project import Project
 
@@ -18,7 +16,7 @@ class TestGenericJob(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         s.close_connection()
-        os.remove('testing_genericjob.db')
+        os.remove('genericjob.db')
 
     def test_db_entry(self):
         ham = self.project.create_job('ScriptJob', "job_single_debug")
