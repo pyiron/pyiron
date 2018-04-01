@@ -67,19 +67,45 @@ class Settings(with_metaclass(Singleton)):
         config_file = os.path.expanduser(os.path.join("~", ".pyiron"))
         if config:
             if isinstance(config, dict):
+                # Setup test configuration
+                if 'table_name' not in config.keys():
+                    config['table_name'] = 'jobs_pyiron'
+                if 'system' not in config.keys():
+                    config['system'] = 'test'
+                if 'type' not in config.keys():
+                    config['type'] = 'SQLite'
+                if 'file' not in config.keys():
+                    config['file'] = 'genericsettings.db'
+                if 'user' not in config.keys():
+                    config['user'] = 'pyiron'
+                if 'top_level_dirs' not in config.keys():
+                    config['top_level_dirs'] = [os.path.abspath(os.getcwd())]
+                if isinstance(config['top_level_dirs'], str):
+                    config['top_level_dirs'] = {config['top_level_dirs']: config['top_level_dirs']}
+                elif not isinstance(config['top_level_dirs'], dict):
+                    raise TypeError('The project paths should be a dict of path pairs!')
+                if 'resource_paths' not in config.keys():
+                    config['resource_paths'] = [os.path.abspath(os.getcwd())]
+                if isinstance(config['resource_paths'], str):
+                    config['resource_paths'] = [config['resource_paths']]
+                elif not isinstance(config['resource_paths'], list):
+                    raise TypeError('The resource paths should be a list of strings!')
                 self._config = config
             else:
                 raise TypeError('The config parameter has to be an object instance dereived from GenericConfig.')
         else:
             if not os.path.isfile(config_file):
+                # Write default config file
                 with open(config_file, 'w') as cf:
                     cf.writelines(['[DEFAULT]\n',
                                    'PROJECT_PATHS = ~/pyiron/projects\n',
-                                   'RESOURCE_PATHS = ~/pyiron/resources]\n'])
-                if not os.path.exists(os.path.expanduser('~/pyiron/projects')):
-                    os.makedirs('~/pyiron/projects')
-                if not os.path.exists(os.path.expanduser('~/pyiron/resources')):
-                    os.makedirs('~/pyiron/resources')
+                                   'RESOURCE_PATHS = ~/pyiron/resources\n'])
+                project_path = self.convert_path('~/pyiron/projects')
+                if not os.path.exists(project_path):
+                    os.makedirs(project_path)
+                resource_path = self.convert_path('~/pyiron/resources')
+                if not os.path.exists(os.path.expanduser(resource_path)):
+                    os.makedirs(resource_path)
             self._config = self._env_config(config_file)
 
         self._viewer_conncetion_string = None
@@ -183,9 +209,9 @@ class Settings(with_metaclass(Singleton)):
         pyiron_env = self._config
         if pyiron_env['type'] == 'SQLite':
             # SQLite is raising ugly error messages when the database directory does not exist.
-            if not os.path.exists(os.path.dirname(pyiron_env['file'])):
+            if os.path.dirname(pyiron_env['file']) != '' and not os.path.exists(os.path.dirname(pyiron_env['file'])):
                 os.makedirs(os.path.dirname(pyiron_env['file']))
-            sql_con_str = 'sqlite:///' + pyiron_env['file']
+            sql_con_str = 'sqlite://' + pyiron_env['file']
             sql_db_table = pyiron_env['table_name']
         elif pyiron_env['type'] == 'Postgres':
             sql_con_str = 'postgresql://' + pyiron_env['user'] + ':' + pyiron_env['password'] + '@' \
@@ -241,6 +267,7 @@ class Settings(with_metaclass(Singleton)):
         else:
             dbtype = 'SQLite'
         top_level_dirs = {}
+        project_path_lst = []
         if parser.has_option(section, "PROJECT_PATHS"):
             project_path_lst = [self.convert_path(c.strip()) for c in parser.get(section, "PROJECT_PATHS").split(",")]
         elif parser.has_option(section, "TOP_LEVEL_DIRS"):
