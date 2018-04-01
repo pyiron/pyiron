@@ -1,14 +1,9 @@
-import os
 import unittest
-from pyiron_base.core.settings.config.testing import ConfigTesting
+import os
 from pyiron_base.core.settings.generic import Settings
-
-
-config = ConfigTesting(sql_lite_database='./testing_periodictable.db',
-                       path_project=str(os.getcwd()),
-                       path_potentials='../../../static/potentials/')
-s = Settings(config=config)
-
+s = Settings(config={'file': 'periodictable.db',
+                     'top_level_dirs': os.path.abspath(os.getcwd()),
+                     'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
 
 from pyiron_atomistics.structure.periodic_table import PeriodicTable
 from pyiron.project import Project
@@ -23,8 +18,8 @@ class TestPeriodicTable(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         s.close_connection()
-        if os.path.isfile('testing_periodictable.db'):
-            os.remove('testing_periodictable.db')
+        if os.path.isfile('periodictable.db'):
+            os.remove('periodictable.db')
 
     def setUp(self):
         self.pse = PeriodicTable()

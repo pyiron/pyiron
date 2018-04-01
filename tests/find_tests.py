@@ -28,6 +28,15 @@ else:
 
 failed = False
 
+# create .pyiron config if it does not exist to enable non modal jobs
+config_file = os.path.expanduser(os.path.join("~", ".pyiron"))
+if not os.path.exists(config_file):
+    with open(config_file, 'w') as cf:
+        cf.writelines(['[DEFAULT]\n',
+                       'PROJECT_PATHS = ' + __file__.split('/pyiron_atomistics')[0] + '\n',
+                       'RESOURCE_PATHS = ' + __file__.split('/pyiron_atomistics')[0]
+                       + '/pyiron_atomistics/tests/static\n'])
+
 with open('test_times.dat', mode='w') as f:
     dir_tree = []
     for root, dirs, files in os.walk("."):

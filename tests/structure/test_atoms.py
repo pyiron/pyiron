@@ -1,18 +1,15 @@
-import numpy as np
+import unittest
 import os
-from pyiron_base.core.settings.config.testing import ConfigTesting
 from pyiron_base.core.settings.generic import Settings
+s = Settings(config={'file': 'atoms.db',
+                     'top_level_dirs': os.path.abspath(os.getcwd()),
+                     'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
+
+import numpy as np
 from pyiron_atomistics.structure.atom import Atom
 from pyiron_atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron_atomistics.structure.sparse_list import SparseList
 from pyiron_atomistics.structure.periodic_table import PeriodicTable
-import unittest
-
-
-config = ConfigTesting(sql_lite_database='./testing_atoms.db',
-                       path_project=str(os.getcwd()),
-                       path_potentials='../../../static/potentials/')
-s = Settings(config=config)
 
 
 class TestAtoms(unittest.TestCase):
