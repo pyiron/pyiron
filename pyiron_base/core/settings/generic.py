@@ -79,9 +79,9 @@ class Settings(with_metaclass(Singleton)):
                 if 'user' not in config.keys():
                     config['user'] = 'pyiron'
                 if 'top_level_dirs' not in config.keys():
-                    config['top_level_dirs'] = [os.path.abspath(os.getcwd())]
+                    config['top_level_dirs'] = {config['top_level_dirs'] + '/': config['top_level_dirs'] + '/'}
                 if isinstance(config['top_level_dirs'], str):
-                    config['top_level_dirs'] = {config['top_level_dirs']: config['top_level_dirs']}
+                    config['top_level_dirs'] = {config['top_level_dirs'] + '/': config['top_level_dirs'] + '/'}
                 elif not isinstance(config['top_level_dirs'], dict):
                     raise TypeError('The project paths should be a dict of path pairs!')
                 if 'resource_paths' not in config.keys():
@@ -211,6 +211,8 @@ class Settings(with_metaclass(Singleton)):
             # SQLite is raising ugly error messages when the database directory does not exist.
             if os.path.dirname(pyiron_env['file']) != '' and not os.path.exists(os.path.dirname(pyiron_env['file'])):
                 os.makedirs(os.path.dirname(pyiron_env['file']))
+            if pyiron_env['file'][0] != '/':
+                pyiron_env['file'] = '/' + pyiron_env['file']
             sql_con_str = 'sqlite://' + pyiron_env['file']
             sql_db_table = pyiron_env['table_name']
         elif pyiron_env['type'] == 'Postgres':
