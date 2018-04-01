@@ -1,13 +1,12 @@
 import os
-from pyiron_base.core.settings.config.testing import ConfigTesting
 from pyiron_base.core.settings.generic import Settings
 import unittest
 
-config = ConfigTesting(sql_lite_database='./testing_serial.db', path_project=str(os.getcwd()),
-                       path_potentials='../../../static/potentials/')
-s = Settings(config=config)
+s = Settings(config={'file': 'serial.db',
+                     'top_level_dirs': os.path.abspath(os.getcwd()),
+                     'resource_paths': os.path.abspath(os.getcwd())})
 
-from pyiron_base.project import Project
+from pyiron.project import Project
 
 
 def convergence_goal(self, **qwargs):
@@ -37,11 +36,11 @@ class TestSerialMaster(unittest.TestCase):
         project = Project('testing_serial')
         project.remove()
         s.close_connection()
-        os.remove('testing_serial.db')
+        os.remove('serial.db')
 
     def test_single_job(self):
         ham = self.project.create_job(self.project.job_type.ExampleJob, "job_single")
-        job_ser = self.project.create_job(self.project.job_type.SerialMaster, "sequence_single")
+        job_ser = self.project.create_job(self.project.job_type.SerialMasterBase, "sequence_single")
         job_ser.append(ham)
         job_ser.run()
         self.assertTrue(job_ser.status.finished)
@@ -51,7 +50,7 @@ class TestSerialMaster(unittest.TestCase):
         job_ser.remove()
 
     def test_multiple_jobs(self):
-        job_ser = self.project.create_job(self.project.job_type.SerialMaster, "sequence_multi")
+        job_ser = self.project.create_job(self.project.job_type.SerialMasterBase, "sequence_multi")
         ham = self.project.create_job(self.project.job_type.ExampleJob, "job_multi")
         job_ser.append(ham)
         job_ser.run()
@@ -70,7 +69,7 @@ class TestSerialMaster(unittest.TestCase):
 
     def test_convergence_goal(self):
         ham = self.project.create_job(self.project.job_type.ExampleJob, "job_convergence")
-        job_ser = self.project.create_job(self.project.job_type.SerialMaster, "sequence_convergence")
+        job_ser = self.project.create_job(self.project.job_type.SerialMasterBase, "sequence_convergence")
         job_ser.append(ham)
         job_ser.set_goal(convergence_goal=convergence_goal, eps=0.2)
         job_ser.run()
@@ -80,7 +79,7 @@ class TestSerialMaster(unittest.TestCase):
 
     def test_single_job_new_hdf5(self):
         ham = self.project.create_job(self.project.job_type.ExampleJob, "job_single_nh")
-        job_ser = self.project.create_job(self.project.job_type.SerialMaster, "sequence_single_nh")
+        job_ser = self.project.create_job(self.project.job_type.SerialMasterBase, "sequence_single_nh")
         job_ser.server.new_hdf = False
         job_ser.append(ham)
         job_ser.run()

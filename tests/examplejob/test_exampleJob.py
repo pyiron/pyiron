@@ -1,13 +1,12 @@
 import os
-from pyiron_base.core.settings.config.testing import ConfigTesting
 from pyiron_base.core.settings.generic import Settings
 import unittest
+
+s = Settings(config={'file': 'example.db',
+                     'top_level_dirs': os.path.abspath(os.getcwd()),
+                     'resource_paths': os.path.abspath(os.getcwd())})
+
 import numpy as np
-
-config = ConfigTesting(sql_lite_database='./testing_random.db', path_project=str(os.getcwd()),
-                       path_potentials='../../../../static/potentials/')
-s = Settings(config=config)
-
 from pyiron.project import Project
 
 
@@ -27,7 +26,7 @@ class TestExampleJob(unittest.TestCase):
         ham.remove()
         project.remove()
         s.close_connection()
-        os.remove('testing_random.db')
+        os.remove('example.db')
 
     def test_input(self):
         with open('random_testing/job_test_run_hdf5/job_test_run/input.inp') as input_file:
