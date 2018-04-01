@@ -6,10 +6,9 @@
 import os
 import warnings
 from six import with_metaclass
+import sys
+from pathlib2 import Path
 from pyiron_base.core.settings.logger import setup_logger
-from pyiron_base.core.settings.config.default import ConfigDefault
-from pyiron_base.core.settings.config.parser import ConfigFile
-from pyiron_base.core.settings.config.template import GenericConfig
 from pyiron_base.core.settings.database import DatabaseAccess
 
 """
@@ -23,6 +22,12 @@ __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
+
+# Depending on the Python Version - a specific version of the config parser is required.
+if sys.version_info.major == 2:
+    from ConfigParser import ConfigParser
+else:
+    from configparser import ConfigParser
 
 
 class Singleton(type):
@@ -46,8 +51,7 @@ class Settings(with_metaclass(Singleton)):
     other configuration file is found, or it can be forced to use the default configuration file.
 
     Args:
-        config (GenericConfig object instance): Provide a GenericConfig Instance to force pyiron to use that specific
-                                                configuration (optional).
+        config (dict): Provide a dict with the configuration.
     """
     def __init__(self, config=None):
         self.db_name = None
@@ -62,7 +66,7 @@ class Settings(with_metaclass(Singleton)):
         # Load config file if it exists or otherwise load default configuration
         config_file = os.path.expanduser(os.path.join("~", ".pyiron"))
         if config:
-            if isinstance(config, GenericConfig):
+            if isinstance(config, dict):
                 self._config = config
             else:
                 raise TypeError('The config parameter has to be an object instance dereived from GenericConfig.')
@@ -76,7 +80,7 @@ class Settings(with_metaclass(Singleton)):
                 os.makedirs('~/pyiron/projects')
             if not os.path.exists(os.path.expanduser('~/pyiron/resources')):
                 os.makedirs('~/pyiron/resources')
-            self._config = ConfigFile(config_file=config_file)
+            self._config = self._env_config(config_file)
 
         self._viewer_conncetion_string = None
         self._viewer_connection_table = None
@@ -91,45 +95,7 @@ class Settings(with_metaclass(Singleton)):
         Returns:
             str: username
         """
-        if 'user' in self._config.pyiron_envs.keys():
-            return self._config.pyiron_envs['user']
-        else:
-            warnings.warn("Please update your .pyiron config file!", DeprecationWarning)
-            return self._config.login_user
-
-    # local paths
-    @property
-    def path_pyiron(self):
-        """
-        Get the path where the PyIron sourcecode is installed
-
-        Returns:
-            str: path
-        """
-        warnings.warn("Please update your PYTHONPATH.", DeprecationWarning)
-        return self._config.path_pyiron
-
-    @property
-    def path_bin(self):
-        """
-        Get the path where the Hamilton executables are located
-
-        Returns:
-            str: path
-        """
-        warnings.warn("Please update your .pyiron config file!", DeprecationWarning)
-        return self._config.path_bin
-
-    @property
-    def path_potentials(self):
-        """
-        Get the path where the potentials for the individual Hamiltons are located
-
-        Returns:
-            str: path
-        """
-        warnings.warn("Please update your .pyiron config file!", DeprecationWarning)
-        return self._config.path_potentials
+        return self._config['user']
 
     @property
     def resource_paths(self):
@@ -139,11 +105,7 @@ class Settings(with_metaclass(Singleton)):
         Returns:
             list: path of paths
         """
-        if 'resource_paths' in self._config.pyiron_envs.keys():
-            return self._config.pyiron_envs['resource_paths']
-        else:
-            warnings.warn("Please update your .pyiron config file!", DeprecationWarning)
-            return self._config.resource_paths
+        return self._config['resource_paths']
 
     def __del__(self):
         """
@@ -210,12 +172,7 @@ class Settings(with_metaclass(Singleton)):
         for path in self.top_path_dict:
             if path in full_path:
                 return path
-        if 'ConfigDefault' in str(type(self._config)):
-            raise ValueError('no config file found - using default config '
-                             '- but the current path {0} is not included.'.format(full_path))
-        else:
-            raise ValueError("Path '{0}' is not included in top_level_dirs: {1} ".format(full_path,
-                                                                                         str(self.top_path_dict)))
+        raise ValueError('the current path {0} is not included in the .pyiron configuration.'.format(full_path))
 
     # Private functions
     def _env_load(self):
@@ -223,7 +180,7 @@ class Settings(with_metaclass(Singleton)):
         Private function to convert the PyIron environment variables to and SQLalchemy connection string.
         """
 
-        pyiron_env = self._config.pyiron_envs
+        pyiron_env = self._config
         if pyiron_env['type'] == 'SQLite':
             # SQLite is raising ugly error messages when the database directory does not exist.
             if not os.path.exists(os.path.dirname(pyiron_env['file'])):
@@ -256,3 +213,96 @@ class Settings(with_metaclass(Singleton)):
             local_path = local_path.replace("\\", "/")
             self.top_path_dict[local_path] = pyiron_env['system']
         self.db_name = pyiron_env['system']
+
+    # private functions
+    def _env_config(self, config_file):
+        """
+        Read section in configuration file and return a dictionary with the corresponding parameters.
+
+        Args:
+            config_file(str): confi file to parse
+
+        Returns:
+            dict: dictionary with the environment configuration
+        """
+        if sys.version_info.major == 2:
+            parser = ConfigParser()
+        else:
+            parser = ConfigParser(inline_comment_prefixes=(';',))
+        if not os.path.isfile(config_file):
+            raise ValueError("Configuration file missing", os.path.abspath(os.path.curdir))
+        parser.read(config_file)
+        section = parser.sections()[0]
+        if parser.has_option(section, "TYPE"):
+            dbtype = parser.get(section, "TYPE")
+        else:
+            dbtype = 'SQLite'
+        top_level_dirs = {}
+        for top_dir in [self.convert_path(c.strip())
+                        for c in parser.get(section, "PROJECT_PATHS").split(",")]:
+            top_dir = [d.strip() for d in top_dir.split("@@")]
+            if len(top_dir) == 2:
+                local_path, db_path = top_dir
+            else:
+                local_path, db_path = top_dir[0], top_dir[0]
+            if local_path[-1] != '/':
+                local_path += '/'
+            if db_path[-1] != '/':
+                db_path += '/'
+            top_level_dirs[db_path] = local_path
+        resource_paths = [self.convert_path(c.strip())
+                          for c in parser.get(section, 'RESOURCE_PATHS').split(",")]
+        if dbtype == 'Postgres':
+            db_dict = {'system': section,
+                       'type': dbtype,
+                       'database': parser.get(section, "NAME"),
+                       'user': parser.get(section, "USER"),
+                       'password': parser.get(section, "PASSWD"),
+                       'table_name': parser.get(section, "JOB_TABLE"),
+                       'host': parser.get(section, "HOST")}
+            if parser.has_option(section, "VIEWERUSER") & parser.has_option(section, "VIEWERPASSWD") \
+                    & parser.has_option(section, "VIEWER_TABLE"):
+                db_dict['vieweruser'] = parser.get(section, "VIEWERUSER")
+                db_dict['viewerpassword'] = parser.get(section, "VIEWERPASSWD")
+                db_dict['viewertable'] = parser.get(section, "VIEWER_TABLE")
+        elif dbtype == 'SQLite':
+            db_dict = {'system': section,
+                       'type': dbtype}
+            if parser.has_option(section, "FILE"):
+                db_dict['file'] = self.convert_path(parser.get(section, "FILE"))
+            if parser.has_option(section, "DATABASE_FILE"):
+                db_dict['file'] = self.convert_path(parser.get(section, "DATABASE_FILE"))
+            else:
+                db_dict['file'] = self.convert_path(os.path.join(self.resource_paths[0], 'sqlite.db'))
+            if parser.has_option(section, "JOB_TABLE"):
+                db_dict['table_name'] = parser.get(section, "JOB_TABLE")
+            else:
+                db_dict['table_name'] = 'jobs_pyiron'
+        elif dbtype == 'SQLalchemy':
+            db_dict = {'system': section,
+                       'type': dbtype,
+                       'connection_string': parser.get(section, "CONNECTION"),
+                       'table_name': parser.get(section, "JOB_TABLE")}
+        elif dbtype == 'MySQL':
+            db_dict = {'system': section,
+                       'type': dbtype,
+                       'database': parser.get(section, "NAME"),
+                       'user': parser.get(section, "USER"),
+                       'password': parser.get(section, "PASSWD"),
+                       'table_name': parser.get(section, "JOB_TABLE"),
+                       'host': parser.get(section, "HOST")}
+        else:
+            raise ValueError('Database configuration unreadable!')
+        db_dict['top_level_dirs'] = top_level_dirs
+        db_dict['resource_paths'] = resource_paths
+        if parser.has_option(section, "USER"):
+            db_dict['user'] = parser.get(section, "USER")
+        elif parser.has_option('DEFAULT', "USER"):
+            db_dict['user'] = parser.get('DEFAULT', 'LOGIN_USER')
+        else:
+            db_dict['user'] = 'pyiron'
+        return db_dict
+
+    @staticmethod
+    def convert_path(path):
+        return Path(path).expanduser().resolve().absolute().as_posix()

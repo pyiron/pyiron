@@ -1035,8 +1035,6 @@ class GenericJob(JobCore):
                 return f.write(arg + '\n')
 
             wl('import sys')
-            if os.name == 'nt':  # Todo: too specific
-                wl('sys.path.append(\'' + str(s.path_pyiron) + '\')')
             wl('from pyiron_base.objects.job.wrapper import JobWrapper')
             wl('')
             wl('debug = {0}'.format(debug))
