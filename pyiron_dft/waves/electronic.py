@@ -7,7 +7,6 @@ from __future__ import print_function
 import numpy as np
 
 from pyiron_atomistics.structure.atoms import Atoms
-# from pyironbase.objects.generic.template import PyIronObject
 from pyiron_dft.waves.dos import Dos
 
 __author__ = "Sudarsan Surendralal"
@@ -24,11 +23,7 @@ class ElectronicStructure(object):
     """
     This is a generic module to store electronic structure data in a clean way. Kpoint and Band classes are used to
     store information related to kpoints and bands respectively. Every spin configuration has a set of k-points and
-    every k-point has a set of bands associated with it. This fundamental information is used to generate dos and
-    bandstructure data/plots using bandstructure.py and dos.py
-
-    Attributes:
-
+    every k-point has a set of bands associated with it.
 
     """
     def __init__(self):
@@ -54,11 +49,11 @@ class ElectronicStructure(object):
 
     def add_kpoint(self, value, weight):
         """
-        Appends a Kpoint() instance to self.kpoints
+        Appends a Kpoint() instance to the kpoints attribute
 
         Args:
-            value: value of the kpoint in cartesian reciprocal coordinates
-            weight: the weight of the particular kpoint
+            value (list/numpy.ndarray): Value of the k-point in cartesian reciprocal coordinates
+            weight (float): The weight of the particular k-point
 
         """
         kpt_obj = Kpoint()
@@ -71,7 +66,10 @@ class ElectronicStructure(object):
         Gives a pyiron.objects.waves.dos.Dos instance
 
         Args:
-            n_bins: Number of histogram bins for the dos
+            n_bins (int): Number of histogram bins for the dos
+
+        Returns:
+            pyiron.objects.waves.dos.Dos: Dos instance
 
         """
         dos_obj = Dos(n_bins=n_bins, es_obj=self)
@@ -81,7 +79,6 @@ class ElectronicStructure(object):
     def dos_energies(self):
         """
         A (1xN) vector containing the energies with N grid points
-
         """
         return self._dos_energies
 
@@ -130,6 +127,14 @@ class ElectronicStructure(object):
 
     @property
     def orbital_dict(self):
+        """
+        A dictionary of the
+
+        Examples:
+            >>> self.orbital_dict[0]
+            's'
+
+        """
         return self._orbital_dict
 
     @orbital_dict.setter
@@ -644,10 +649,10 @@ class Kpoint(object):
 
     Attributes:
 
-        ..bands (list): List of pyiron.objects.waves.settings.Band object
-        ..value (float): Value of the k-point
-        ..weight (float): Weight of the k-point used in integration of quantities
-        ..eig_occ_matrix (numpy.ndarray): A Nx2 matrix with the first column with eigenvalues and the second with
+        bands (list): List of pyiron.objects.waves.settings.Band object
+        .. value (float): Value of the k-point
+        .. weight (float): Weight of the k-point used in integration of quantities
+        .. eig_occ_matrix (numpy.ndarray): A Nx2 matrix with the first column with eigenvalues and the second with
                                     occupancies of every band. N being the number of bands assoiated with the k-point
     """
 
