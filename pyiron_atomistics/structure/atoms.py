@@ -2960,6 +2960,7 @@ def pyiron_to_ase(pyiron_obj):
     atoms = ASEAtoms(symbols=element_list, positions=positions, pbc=pbc, cell=cell)
     return atoms
 
+
 def pymatgen_to_pyiron(pymatgen_obj):
     try:
         from pymatgen.io.ase import AseAtomsAdaptor
@@ -2967,12 +2968,14 @@ def pymatgen_to_pyiron(pymatgen_obj):
         raise ValueError('PyMatGen package not yet installed')
     return ase_to_pyiron(AseAtomsAdaptor().get_atoms(structure=pymatgen_obj))
 
+
 def pyiron_to_pymatgen(pyiron_obj):
     try:
         from pymatgen.io.ase import AseAtomsAdaptor
     except ImportError:
         raise ValueError('PyMatGen package not yet installed')
     return AseAtomsAdaptor().get_structure(atoms=pyiron_to_ase(pyiron_obj), cls=None)
+
 
 def ovito_to_pyiron(ovito_obj):
     """
@@ -3005,8 +3008,6 @@ def pyiron_to_ovito(atoms):
     except ImportError:
         raise ValueError('ovito package not yet installed')
 
-
-## copy from ase.atoms to allow class overloading
 
 def string2symbols(s):
     """
