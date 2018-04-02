@@ -1,11 +1,10 @@
 import os
 import unittest
+from pyiron_base.core.settings.generic import Settings, convert_path
 
-from pyiron_base.core.settings.generic import Settings
-
-s = Settings(config={'file': 'potentials.db',
-                     'top_level_dirs': os.path.abspath(os.getcwd()),
-                     'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
+s = Settings(config={'file': 'murnaghan.db',
+                     'top_level_dirs': convert_path(os.getcwd()),
+                     'resource_paths': os.path.join(convert_path(os.getcwd()), '../static')})
 
 from pyiron_lammps.potential import LammpsPotentialFile
 from pyiron_vasp.potential import VaspPotential
