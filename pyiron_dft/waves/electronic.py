@@ -596,7 +596,7 @@ class ElectronicStructure(object):
         """
         try:
             import matplotlib.pylab as plt
-        except ModuleNotFoundError:
+        except ImportError:
             import matplotlib.pyplot as plt
         arg = np.argsort(self.eigenvalues)
         plt.plot(self.eigenvalues[arg], self.occupancies[arg], linewidth=2.0, color="blue")

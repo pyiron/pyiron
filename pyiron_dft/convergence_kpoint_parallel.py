@@ -7,7 +7,7 @@ from pyiron_atomistics.job.parallel import AtomisticParallelMaster
 import numpy as np
 try:
     import pylab as plt
-except (ModuleNotFoundError, RuntimeError):
+except (ImportError, RuntimeError):
     import matplotlib.pyplot as plt
 
 __author__ = "Jan Janssen"

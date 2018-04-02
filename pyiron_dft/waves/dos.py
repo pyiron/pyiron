@@ -53,7 +53,7 @@ class Dos(object):
         """
         try:
             import matplotlib.pylab as plt
-        except ModuleNotFoundError:
+        except ImportError:
             import matplotlib.pyplot as plt
         fig = plt.figure(1, figsize=(6, 4))
         ax1 = fig.add_subplot(111)
@@ -74,7 +74,7 @@ class Dos(object):
         """
         try:
             import matplotlib.pylab as plt
-        except ModuleNotFoundError:
+        except ImportError:
             import matplotlib.pyplot as plt
         try:
             assert(self.es_obj.grand_dos_matrix is not None)
