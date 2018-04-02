@@ -2,7 +2,7 @@ import os
 import unittest
 from pyiron_base.core.settings.generic import Settings, convert_path
 
-s = Settings(config={'file': 'murnaghan.db',
+s = Settings(config={'file': 'potential.db',
                      'top_level_dirs': convert_path(os.getcwd()),
                      'resource_paths': os.path.join(convert_path(os.getcwd()), '../static')})
 
@@ -13,7 +13,7 @@ from pyiron_vasp.potential import VaspPotential
 class TestOpenKimPotential(unittest.TestCase):
     def setUp(self):
         self.kim = LammpsPotentialFile()
-        self.potential_path = os.path.join(os.path.abspath(os.getcwd()), '../static/pyiron_lammps/potentials')
+        self.potential_path = os.path.join(convert_path(os.getcwd()), '../static/pyiron_lammps/potentials')
 
     def test_find(self):
         Fe_lst = ['Al_Fe_eam_fs',
@@ -45,7 +45,7 @@ class TestOpenKimPotential(unittest.TestCase):
 class TestVaspPotential(unittest.TestCase):
     def setUp(self):
         self.vasp = VaspPotential()
-        self.potential_path = os.path.join(os.path.abspath(os.getcwd()), '../static/pyiron_vasp/potentials')
+        self.potential_path = os.path.join(convert_path(os.getcwd()), '../static/pyiron_vasp/potentials')
 
     def test_find(self):
         self.assertEqual(list(self.vasp.pbe.find('Fe')['Name']), ['Fe-gga-pbe', 'Fe_GW-gga-pbe', 'Fe_pv-gga-pbe',
