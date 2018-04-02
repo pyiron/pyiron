@@ -15,9 +15,13 @@ config_file = os.path.expanduser(os.path.join("~", ".pyiron"))
 if not os.path.exists(config_file):
     with open(config_file, 'w') as cf:
         cf.writelines(['[DEFAULT]\n',
-                       'PROJECT_PATHS = ' + convert_path(__file__).split('/pyiron_atomistics')[0] + '\n',
-                       'RESOURCE_PATHS = ' + convert_path(__file__).split('/pyiron_atomistics')[0]
+                       'PROJECT_PATHS = ' + convert_path(os.path.abspath(__file__)).split('/pyiron_atomistics')[0] + '\n',
+                       'RESOURCE_PATHS = ' + convert_path(os.path.abspath(__file__)).split('/pyiron_atomistics')[0]
                        + '/pyiron_atomistics/tests/static\n'])
+
+print(['[DEFAULT]\n',
+       'PROJECT_PATHS = ' + convert_path(os.path.abspath(__file__)).split('/pyiron_atomistics')[0] + '\n',
+       'RESOURCE_PATHS = ' + convert_path(os.path.abspath(__file__)).split('/pyiron_atomistics')[0] + '/pyiron_atomistics/tests/static\n'])
 
 import pyiron_atomistics
 current_file_name = inspect.getfile(inspect.currentframe()).split('/')[-1]
