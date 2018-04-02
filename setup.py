@@ -32,6 +32,5 @@ setup(
 
     keywords='pyiron',
     packages=find_packages(),
-    install_requires=['pyiron_atomistics'],
-    tests_require=["pyiron"]
+    install_requires=['pyiron_atomistics']
     )
