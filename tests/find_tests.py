@@ -14,10 +14,16 @@ from pyiron_base.core.settings.generic import convert_path
 config_file = os.path.expanduser(os.path.join("~", ".pyiron"))
 if not os.path.exists(config_file):
     with open(config_file, 'w') as cf:
-        cf.writelines(['[DEFAULT]\n',
-                       'PROJECT_PATHS = ' + convert_path(__file__).split('/pyiron_example_job')[0] + '\n',
-                       'RESOURCE_PATHS = ' + convert_path(__file__).split('/pyiron_example_job')[0]
-                       + '/pyiron_example_job/tests/static\n'])
+        if os.name == 'nt':
+            cf.writelines(['[DEFAULT]\n',
+                           'PROJECT_PATHS = ' + convert_path(__file__).split('/pyiron-example_job')[0] + '\n',
+                           'RESOURCE_PATHS = ' + convert_path(__file__).split('/pyiron-example_job')[0]
+                           + '/pyiron-example-job/tests/static\n'])
+        else:
+            cf.writelines(['[DEFAULT]\n',
+                           'PROJECT_PATHS = ' + convert_path(__file__).split('/pyiron_example_job')[0] + '\n',
+                           'RESOURCE_PATHS = ' + convert_path(__file__).split('/pyiron_example_job')[0]
+                           + '/pyiron_example_job/tests/static\n'])
 
 import pyiron_example_job
 current_file_name = inspect.getfile(inspect.currentframe()).split('/')[-1]
