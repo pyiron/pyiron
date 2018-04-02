@@ -282,9 +282,9 @@ class TestAtoms(unittest.TestCase):
         cell = np.eye(3)
         cell[0, 0] = a
         cell[2, 2] = c
-        cell[1, 0] = -a/2
-        cell[1, 1] = np.sqrt(3) * a / 2
-        pos = np.array([[0., 0., 0.], [1/3, 2/3, 1/2]])
+        cell[1, 0] = -a/2.
+        cell[1, 1] = np.sqrt(3) * a / 2.
+        pos = np.array([[0., 0., 0.], [1./3., 2./3., 1./2.]])
         Mg_hcp = Atoms('Mg2', scaled_positions=pos, cell=cell)
         self.assertEqual(Mg_hcp.get_spacegroup()['Number'], 194)
         cell = np.eye(3)
