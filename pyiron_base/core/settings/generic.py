@@ -100,10 +100,10 @@ class Settings(with_metaclass(Singleton)):
                     cf.writelines(['[DEFAULT]\n',
                                    'PROJECT_PATHS = ~/pyiron/projects\n',
                                    'RESOURCE_PATHS = ~/pyiron/resources\n'])
-                project_path = self.convert_path('~/pyiron/projects')
+                project_path = convert_path('~/pyiron/projects')
                 if not os.path.exists(project_path):
                     os.makedirs(project_path)
-                resource_path = self.convert_path('~/pyiron/resources')
+                resource_path = convert_path('~/pyiron/resources')
                 if not os.path.exists(os.path.expanduser(resource_path)):
                     os.makedirs(resource_path)
             self._config = self._env_config(config_file)
@@ -269,9 +269,9 @@ class Settings(with_metaclass(Singleton)):
         top_level_dirs = {}
         project_path_lst = []
         if parser.has_option(section, "PROJECT_PATHS"):
-            project_path_lst = [self.convert_path(c.strip()) for c in parser.get(section, "PROJECT_PATHS").split(",")]
+            project_path_lst = [convert_path(c.strip()) for c in parser.get(section, "PROJECT_PATHS").split(",")]
         elif parser.has_option(section, "TOP_LEVEL_DIRS"):
-            project_path_lst = [self.convert_path(c.strip()) for c in parser.get(section, "TOP_LEVEL_DIRS").split(",")]
+            project_path_lst = [convert_path(c.strip()) for c in parser.get(section, "TOP_LEVEL_DIRS").split(",")]
         else:
             ValueError('No project path identified!')
         for top_dir in project_path_lst:
@@ -285,7 +285,7 @@ class Settings(with_metaclass(Singleton)):
             if db_path[-1] != '/':
                 db_path += '/'
             top_level_dirs[db_path] = local_path
-        resource_paths = [self.convert_path(c.strip())
+        resource_paths = [convert_path(c.strip())
                           for c in parser.get(section, 'RESOURCE_PATHS').split(",")]
         if dbtype == 'Postgres':
             db_dict = {'system': section,
@@ -338,9 +338,9 @@ class Settings(with_metaclass(Singleton)):
             db_dict['user'] = 'pyiron'
         return db_dict
 
-    @staticmethod
-    def convert_path(path):
-        if not (sys.version_info.major < 3 and os.name == 'nt'):
-            return Path(path).expanduser().resolve().absolute().as_posix()
-        else:
-            return os.path.abspath(os.path.normpath(os.path.expanduser(path))).replace('\\', '/')
+
+def convert_path(path):
+    if not (sys.version_info.major < 3 and os.name == 'nt'):
+        return Path(path).expanduser().resolve().absolute().as_posix()
+    else:
+        return os.path.abspath(os.path.normpath(os.path.expanduser(path))).replace('\\', '/')
