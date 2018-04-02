@@ -16,8 +16,8 @@ if not os.path.exists(config_file):
     with open(config_file, 'w') as cf:
         if os.name == 'nt':
             cf.writelines(['[DEFAULT]\n',
-                           'PROJECT_PATHS = ' + convert_path(__file__).split('/pyiron-example_job')[0] + '\n',
-                           'RESOURCE_PATHS = ' + convert_path(__file__).split('/pyiron-example_job')[0]
+                           'PROJECT_PATHS = ' + convert_path(__file__).split('/pyiron-example-job')[0] + '\n',
+                           'RESOURCE_PATHS = ' + convert_path(__file__).split('/pyiron-example-job')[0]
                            + '/pyiron-example-job/tests/static\n'])
         else:
             cf.writelines(['[DEFAULT]\n',
