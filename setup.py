@@ -35,6 +35,5 @@ setup(
     install_requires=['lxml',
                       'pyiron_atomistics',
                       'pyiron_dft',
-                      'six'],
-    tests_require=["pyiron"]
+                      'six']
     )
