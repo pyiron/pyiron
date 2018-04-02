@@ -529,13 +529,7 @@ class Atoms(object):
 
     def _from_hdf_old(self, hdf, group_name="structure"):
         """
-
-        Args:
-            hdf:
-            group_name:
-
-        Returns:
-
+        This function exits merely for the purpose of backward compatibility
         """
         with hdf.open(group_name) as hdf_atoms:
             self._pse = PeriodicTable()
@@ -1141,6 +1135,9 @@ class Atoms(object):
             cutoff (float): Upper bound of the distance to which the search must be done
 
         Returns:
+
+            pyiron_atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor indices, distances
+            and vectors
 
         """
         # eps = 1e-4
