@@ -34,5 +34,6 @@ setup(
     packages=find_packages(),
     install_requires=['ase',
                       'pyiron_base',
-                      'spglib']
+                      'spglib'],
+    tests_require=["pyiron"]
     )
