@@ -17,6 +17,9 @@ if not os.path.exists(config_file):
                        'PROJECT_PATHS = ' + __file__.split('/pyiron_atomistics')[0] + '\n',
                        'RESOURCE_PATHS = ' + __file__.split('/pyiron_atomistics')[0]
                        + '/pyiron_atomistics/tests/static\n'])
+print(['[DEFAULT]\n',
+       'PROJECT_PATHS = ' + __file__.split('/pyiron_atomistics')[0] + '\n',
+       'RESOURCE_PATHS = ' + __file__.split('/pyiron_atomistics')[0] + '/pyiron_atomistics/tests/static\n'])
 
 import pyiron_atomistics
 current_file_name = inspect.getfile(inspect.currentframe()).split('/')[-1]
