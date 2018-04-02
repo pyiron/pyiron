@@ -525,9 +525,9 @@ class Atoms(object):
                 return self
 
         else:
-            return self.from_hdf_old(hdf, group_name)
+            return self._from_hdf_old(hdf, group_name)
 
-    def from_hdf_old(self, hdf, group_name="structure"):
+    def _from_hdf_old(self, hdf, group_name="structure"):
         """
 
         Args:
