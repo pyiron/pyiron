@@ -304,11 +304,11 @@ class Settings(with_metaclass(Singleton)):
             db_dict = {'system': section,
                        'type': dbtype}
             if parser.has_option(section, "FILE"):
-                db_dict['file'] = self.convert_path(parser.get(section, "FILE"))
+                db_dict['file'] = parser.get(section, "FILE").replace('\\', '/')
             if parser.has_option(section, "DATABASE_FILE"):
-                db_dict['file'] = self.convert_path(parser.get(section, "DATABASE_FILE"))
+                db_dict['file'] = parser.get(section, "DATABASE_FILE").replace('\\', '/')
             else:
-                db_dict['file'] = self.convert_path(os.path.join(resource_paths[0], 'sqlite.db'))
+                db_dict['file'] = '/'.join([resource_paths[0], 'sqlite.db'])
             if parser.has_option(section, "JOB_TABLE"):
                 db_dict['table_name'] = parser.get(section, "JOB_TABLE")
             else:
