@@ -31,6 +31,7 @@ install:
   - conda config --add channels pyiron
   - conda config --set anaconda_upload yes
   - pip install .
+  - pip install .[test]
 
 script:
   - cd tests

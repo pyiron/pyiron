@@ -51,6 +51,7 @@ install:
 - "conda config --set anaconda_upload yes"
 - "conda info -a"
 - "pip install ."
+- "pip install .[test]"
 
 build: false
 
