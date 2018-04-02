@@ -1,7 +1,12 @@
-import os
-import posixpath
 import unittest
+from pyiron_base.core.settings.generic import Settings
+import os
 
+s = Settings(config={'file': 'vasprun.db',
+                     'top_level_dirs': os.path.abspath(os.getcwd()),
+                     'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
+
+import posixpath
 import numpy as np
 from pyiron_vasp.vasprun import Vasprun, VasprunError
 
@@ -22,7 +27,7 @@ class TestVasprun(unittest.TestCase):
         file_list = ["vasprun_1.xml", "vasprun_2.xml", "vasprun_3.xml", "vasprun_4.xml", "vasprun_5.xml",
                      "vasprun_6.xml"]
         self.num_species = [3, 1, 2, 2, 3, 4]
-        direc = os.path.abspath("./vasp_test_files/vasprun_samples")
+        direc = os.path.abspath("../static/vasp_test_files/vasprun_samples")
         for f in file_list:
             vp = Vasprun()
             self.assertIsInstance(vp.vasprun_dict, dict)

@@ -1,12 +1,10 @@
-import os
 import unittest
-
-from pyiron_base.core.settings.config.testing import ConfigTesting
 from pyiron_base.core.settings.generic import Settings
+import os
 
-config = ConfigTesting(sql_lite_database='./testing_vasp_import.db', path_project=str(os.getcwd()),
-                       path_potentials='../../static/potentials/')
-s = Settings(config=config)
+s = Settings(config={'file': 'import.db',
+                     'top_level_dirs': os.path.normpath(os.path.abspath(os.path.join(os.getcwd(), '..'))),
+                     'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
 
 from pyiron.project import Project
 from pyiron_vasp.vasp import Vasp
@@ -23,10 +21,10 @@ class TestVaspImport(unittest.TestCase):
         project.remove_jobs(recursive=True)
         project.remove()
         s.close_connection()
-        os.remove('testing_vasp_import.db')
+        os.remove('import.db')
 
     def test_import(self):
-        self.project.import_from_path(path='../vasp_test_files/full_job_sample', recursive=False)
+        self.project.import_from_path(path='../../static/vasp_test_files/full_job_sample', recursive=False)
         ham = self.project.load(1)
         self.assertTrue(isinstance(ham, Vasp))
 
