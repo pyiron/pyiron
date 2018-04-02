@@ -1,12 +1,14 @@
 from pyiron_base.core.settings.generic import Settings
 from pathlib2 import Path
 import os
+import sys
 import unittest
 
 
 class TestConfigSettingsStatic(unittest.TestCase):
     def setUp(self):
-        if not os.path.exists(os.path.expanduser('~/.pyiron')):
+        if sys.version_info.major < 3 and os.name == 'nt':
+            # In Python 2.7 on Windows for pathlib2 it is required that the directories exist, so we create them
             if not os.path.exists(os.path.expanduser('~/pyiron/resources')):
                 os.makedirs(os.path.expanduser('~/pyiron/resources'))
             if not os.path.exists(os.path.expanduser('~/pyiron/projects')):
