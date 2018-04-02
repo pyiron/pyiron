@@ -51,12 +51,15 @@ install:
 - "conda config --set anaconda_upload yes"
 - "conda info -a"
 - "pip install ."
+- "pip install pyiron"
 
 build: false
 
 test_script:
   # Build the package
-  - "python --version"
+  - "cd tests"
+  - "python find_tests.py"
+  - "cd .."
 
 on_success:
   - bash -c "if [ $APPVEYOR_REPO_BRANCH = 'master' ]; then conda build --python $PYTHON_VERSION --user pyiron --token $ANACONDA_TOKEN conda/pyiron_atomistics; fi"
