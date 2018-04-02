@@ -13,15 +13,6 @@ from pyiron_atomistics.structure.atoms import Atoms
 from pyiron_vasp.structure import read_atoms, write_poscar, vasp_sorter, \
     atoms_from_string
 
-__author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
-__version__ = "1.0"
-__maintainer__ = "Sudarsan Surendralal"
-__email__ = "surendralal@mpie.de"
-__status__ = "production"
-__date__ = "Sep 1, 2017"
-
 
 class TestVaspStructure(unittest.TestCase):
 
