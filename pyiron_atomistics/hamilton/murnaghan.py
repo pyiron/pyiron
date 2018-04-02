@@ -406,7 +406,7 @@ class Murnaghan(AtomisticParallelMaster):
     def plot(self, num_steps=100, plt_show=True):
         try:
             import matplotlib.pylab as plt
-        except ModuleNotFoundError:
+        except ImportError:
             import matplotlib.pyplot as plt
         if not self.fit_dict:
             self.fit_murnaghan()
