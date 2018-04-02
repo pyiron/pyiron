@@ -1,5 +1,6 @@
 from pyiron_base.core.settings.generic import Settings
 from pathlib2 import Path
+import os
 import unittest
 
 
@@ -8,6 +9,8 @@ class TestConfigSettingsStatic(unittest.TestCase):
         self.user_path = Path('~').expanduser().resolve().absolute().as_posix()
         self.resource_path = Path('~/pyiron/resources').expanduser().resolve().absolute().as_posix()
         self.project_path = Path('~/pyiron/projects').expanduser().resolve().absolute().as_posix() + '/'
+        if not os.path.exists(self.resource_path)
+            os.makedirs(self.resource_path)
         self.file_config = Settings()
 
     def test_file_db_connection_name(self):
