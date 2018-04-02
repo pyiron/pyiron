@@ -109,7 +109,7 @@ class ProjectGUI:
         """
         try:
             import pylab as plt
-        except ModuleNotFoundError:
+        except ImportError:
             import matplotlib.pyplot as plt
 
         plt.ioff()
