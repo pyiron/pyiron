@@ -1,10 +1,10 @@
 import os
-from pyiron_base.core.settings.generic import Settings
 import unittest
+from pyiron_base.core.settings.generic import Settings, convert_path
 
 s = Settings(config={'file': 'example.db',
-                     'top_level_dirs': os.path.abspath(os.getcwd()),
-                     'resource_paths': os.path.abspath(os.getcwd())})
+                     'top_level_dirs': convert_path(os.getcwd()),
+                     'resource_paths': convert_path(os.getcwd())})
 
 import numpy as np
 from pyiron.project import Project
