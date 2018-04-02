@@ -8,7 +8,10 @@ import numpy as np
 try:
     import pylab as plt
 except (ImportError, RuntimeError):
-    import matplotlib.pyplot as plt
+    try:
+        import matplotlib.pyplot as plt
+    except RuntimeError:
+        pass
 
 __author__ = "Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
