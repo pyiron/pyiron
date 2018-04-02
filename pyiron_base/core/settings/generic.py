@@ -340,4 +340,7 @@ class Settings(with_metaclass(Singleton)):
 
     @staticmethod
     def convert_path(path):
-        return Path(path).expanduser().resolve().absolute().as_posix()
+        if not (sys.version_info.major < 3 and os.name == 'nt'):
+            return Path(path).expanduser().resolve().absolute().as_posix()
+        else:
+            return os.path.abspath(os.path.normpath(os.path.expanduser(path))).replace('\\', '/')
