@@ -92,18 +92,17 @@ class Settings(with_metaclass(Singleton)):
         # Take dictionary as primary source - overwrite everything
         if isinstance(config, dict):
             for key, value in config.items():
-                if key not in ['resource_paths', 'project_paths']:
+                if key not in ['resource_paths', 'project_paths'] or isinstance(value, list):
                     self._configuration[key] = value
+                elif isinstance(value, str):
+                    self._configuration[key] = [value]
                 else:
-                    if isinstance(value, list):
-                        self._configuration[key] = [convert_path(path) for path in value]
-                    elif isinstance(value, str):
-                        self._configuration[key] = [convert_path(value)]
-                    else:
-                        TypeError('Config dictionary parameter type not recognized ', key, value)
+                    TypeError('Config dictionary parameter type not recognized ', key, value)
 
-        self._configuration['project_paths'] = [path + '/' if path[-1] != '/' else path
+        self._configuration['project_paths'] = [convert_path(path) + '/' if path[-1] != '/' else convert_path(path)
                                                 for path in self._configuration['project_paths']]
+        self._configuration['resource_paths'] = [convert_path(path)
+                                                for path in self._configuration['resource_paths']]   
 
         # Build the SQLalchemy connection strings
         if self._configuration['sql_type'] == 'Postgres':
