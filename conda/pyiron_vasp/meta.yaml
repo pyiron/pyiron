@@ -35,6 +35,11 @@ requirements:
     - pyiron_atomistics
     - pyiron_dft
 
+build:
+  script_env:
+   - TRAVIS
+   - APPVEYOR
+
 test:
   imports:
     - pyiron_vasp
