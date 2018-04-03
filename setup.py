@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pyiron_atomistics',
-    version='0.0.3',
+    version='0.0.8',
     description='pyiron IDE plugin for atomistic calculations',
     long_description='http://pyiron.org',
 
