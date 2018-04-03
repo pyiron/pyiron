@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pyiron_vasp',
-    version='0.0.8',
+    version='0.0.9',
     description='pyiron IDE plugin for VASP',
     long_description='https://www.vasp.at',
 
@@ -31,7 +31,7 @@ setup(
     ],
 
     keywords='pyiron',
-    packages=find_packages(exclude=["tests"]),
+    packages=find_packages(exclude=["*tests*"]),
     install_requires=['lxml',
                       'pyiron_atomistics',
                       'pyiron_dft',
