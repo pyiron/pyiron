@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pyiron_base',
-    version='0.0.6',
+    version='0.0.8',
     description='pyiron IDE base',
     long_description='http://pyiron.org',
 
