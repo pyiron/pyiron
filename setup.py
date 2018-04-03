@@ -10,8 +10,8 @@ setup(
     description='pyiron IDE base',
     long_description='http://pyiron.org',
 
-    url='https://github.com/jan-janssen/pyiron_base',
-    author='Jan Janssen (MPIE)',
+    url='https://github.com/pyiron/pyiron_base',
+    author='Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department',
     author_email='janssen@mpie.de',
     license='modified BSD',
 
