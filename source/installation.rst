@@ -19,7 +19,6 @@ The easiest way to test pyiron is to use the docker image. Docker is a framework
 With the first line docker downloads the pyiron image from the pyiron repository https://hub.docker.com/r/pyiron/pyiron/ with the second line docker starts an instance of jupyterlab running pyiron. Ending with the following statement: 
 
 .. code-block:: bash
-   ::
    
     Copy/paste this URL into your browser when you connect for the first time, to login with a token:
     http://localhost:8888/?token=eb1394c21574a59249b6d36eab4484f59b7f13516f23f152
@@ -35,21 +34,18 @@ Local installation
 The local installation of pyiron is designed for a single user running pyiron on a workstation. The installation is operation system independent. We recommend the Anaconda Python distribution https://www.anaconda.com but pyiron can also be installed using pip. For anaconda users, install pyiron: 
 
 .. code-block:: bash
-   ::
    
     conda install -c pyiron -c conda-forge nglview=0.6.2.3 jupyter_contrib_nbextensions=0.3.3 pyiron
 
 Alternatively install pyiron from pip (for spglib which is a pyiron dependency a local compiler is required). 
 
 .. code-block:: bash
-   ::
    
     pip install nglview==0.6.2.3 jupyter_contrib_nbextensions==0.3.3 pyiron
 
 To validate pyiron is successfully installed, open a Python shell and execute: 
 
 .. code-block:: python
-   ::
    
     import pyiron
 
@@ -58,7 +54,6 @@ The import creates a '~/.pyiron' configuration file and the folders '~/pyiron/pr
 Afterwards we can test the pyiron visualisation by opening a terminal, navigating to the pyiron projects folder and start a jupyter notebook session: 
 
 .. code-block:: bash
-   ::
    
     cd ~/pyiron/projects
     jupyter notebook 
@@ -66,7 +61,6 @@ Afterwards we can test the pyiron visualisation by opening a terminal, navigatin
 The jupyter navigator should be started automatically inside the browser, so you can create a new jupyter notebook and enter the following lines: 
 
 .. code-block:: python
-   ::
    
     from pyiron import Project
     pr = Project('test')
@@ -80,7 +74,6 @@ In addition to the executables additional resources like emperical potentials '~
 After the executable is configured the first calculation can be executed, using the atomistic structure from above we run: 
 
 .. code-block:: python
-   ::
    
     ham = pr.create_job(pr.job_type.Lammps, 'lammpstestjob')
     ham.structure = basis 
