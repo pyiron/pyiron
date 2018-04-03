@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pyiron_atomistics',
-    version='0.0.8',
+    version='0.0.9',
     description='pyiron IDE plugin for atomistic calculations',
     long_description='http://pyiron.org',
 
@@ -31,7 +31,7 @@ setup(
     ],
 
     keywords='pyiron',
-    packages=find_packages(exclude=["tests"]),
+    packages=find_packages(exclude=["*tests*"]),
     install_requires=['ase',
                       'pyiron_base',
                       'spglib']
