@@ -10,8 +10,8 @@ setup(
     description='pyiron IDE plugin for Lammps',
     long_description='http://lammps.sandia.gov',
 
-    url='https://github.com/jan-janssen/pyiron_lammps',
-    author='Jan Janssen (MPIE)',
+    url='https://github.com/pyiron/pyiron_lammps',
+    author='Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department',
     author_email='janssen@mpie.de',
     license='BSD',
 
