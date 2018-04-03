@@ -12,6 +12,8 @@ Docker (demonstration)
 The easiest way to test pyiron is to use the docker image. Docker is a framework for operating-system-level virtualization, allowing users to test new software in separated virtual environments. To read more about Docker, visit https://docs.docker.com. After you installed docker on your system, you can download and start the pyiron image using the following commands:  
 
 .. code-block:: bash
+   ::
+   
     docker pull pyiron/pyiron
     docker run -i -t -p 8888:8888 pyiron/pyiron /bin/bash -c "/opt/conda/bin/jupyter lab --notebook-dir=/opt/notebooks --ip='*' --port=8888 --no-browser --allow-root"
 
@@ -19,6 +21,7 @@ With the first line docker downloads the pyiron image from the pyiron repository
 
 .. code-block:: bash
    ::
+   
     Copy/paste this URL into your browser when you connect for the first time, to login with a token:
     http://localhost:8888/?token=eb1394c21574a59249b6d36eab4484f59b7f13516f23f152
 
@@ -34,18 +37,21 @@ The local installation of pyiron is designed for a single user running pyiron on
 
 .. code-block:: bash
    ::
+   
     conda install -c pyiron -c conda-forge nglview=0.6.2.3 jupyter_contrib_nbextensions=0.3.3 pyiron
 
 Alternatively install pyiron from pip (for spglib which is a pyiron dependency a local compiler is required). 
 
 .. code-block:: bash
    ::
+   
     pip install nglview==0.6.2.3 jupyter_contrib_nbextensions==0.3.3 pyiron
 
 To validate pyiron is successfully installed, open a Python shell and execute: 
 
 .. code-block:: python
    ::
+   
     import pyiron
 
 The import creates a '~/.pyiron' configuration file and the folders '~/pyiron/projects' and '~/pyiron/resources'. All pyrion projects should be started in the '~/pyiron/projects' folder. pyiron is tracking the pyiron objects within this folder. The '~/pyiron/resources' includes the resources for the individual pyiron plugins. A basic template for the resource directory is avialable at https://github.com/pyiron/pyiron-resources which you can download as a zip file https://github.com/pyiron/pyiron-resources/archive/master.zip . Copy the folders 'pyrion_atomistics', 'pyiron_lammps' and 'pyiron_vasp' to '~/pyiron/resources'.
@@ -54,6 +60,7 @@ Afterwards we can test the pyiron visualisation by opening a terminal, navigatin
 
 .. code-block:: bash
    ::
+   
     cd ~/pyiron/projects
     jupyter notebook 
     
@@ -61,6 +68,7 @@ The jupyter navigator should be started automatically inside the browser, so you
 
 .. code-block:: python
    ::
+   
     from pyiron import Project
     pr = Project('test')
     basis = pr.create_structure('Fe', 'bcc', 2.78)
@@ -74,6 +82,7 @@ After the executable is configured the first calculation can be executed, using 
 
 .. code-block:: python
    ::
+   
     ham = pr.create_job(pr.job_type.Lammps, 'lammpstestjob')
     ham.structure = basis 
     ham.potential = ham.list_potentials()[0]
