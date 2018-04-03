@@ -8,6 +8,7 @@ pyiron is build and tested for Python 2.7, 3.5 and 3.6. It can be installed as a
 ----------------------
 Docker (demonstration)
 ----------------------
+
 The easiest way to test pyiron is to use the docker image. Docker is a framework for operating-system-level virtualization, allowing users to test new software in separated virtual environments. To read more about Docker, visit https://docs.docker.com. After you installed docker on your system, you can download and start the pyiron image using the following commands:  
  ::
 
@@ -28,6 +29,7 @@ Copy the line http://localhost:8888/?token=eb1394c21574a59249b6d36eab4484f59b7f1
 ------------------
 Local installation
 ------------------
+
 The local installation of pyiron is designed for a single user running pyiron on a workstation. The installation is operation system independent. We recommend the Anaconda Python distribution https://www.anaconda.com but pyiron can also be installed using pip. For anaconda users, install pyiron: 
  ::
 
@@ -76,6 +78,7 @@ Congratulation, you executed the first pyiron calculation on your system.
 --------------------
 Cluster installation
 --------------------
+
 In contrast to the single user installation the cluster installation is using a PostgreSQL database instead of a SQLite database and jupyterhub instead of just jupyter. More details comming soon. 
 
 
