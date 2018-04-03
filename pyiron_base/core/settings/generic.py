@@ -10,6 +10,7 @@ import sys
 from pathlib2 import Path
 from pyiron_base.core.settings.logger import setup_logger
 from pyiron_base.core.settings.database import DatabaseAccess
+from pyiron_base.core.settings.install import install_pyiron
 
 """
 The settings file provides the attributes of the configuration as properties.
@@ -64,7 +65,10 @@ class Settings(with_metaclass(Singleton)):
         self.top_path_dict = {}
 
         # Load config file if it exists or otherwise load default configuration
-        config_file = os.path.expanduser(os.path.join("~", ".pyiron"))
+        if 'PYIRONCONFIG' in os.environ.keys():
+            config_file = os.environ['PYIRONCONFIG']
+        else:
+            config_file = os.path.expanduser(os.path.join("~", ".pyiron"))
         if config:
             if isinstance(config, dict):
                 # Setup test configuration
@@ -95,17 +99,13 @@ class Settings(with_metaclass(Singleton)):
                 raise TypeError('The config parameter has to be an object instance dereived from GenericConfig.')
         else:
             if not os.path.isfile(config_file):
-                # Write default config file
-                with open(config_file, 'w') as cf:
-                    cf.writelines(['[DEFAULT]\n',
-                                   'PROJECT_PATHS = ~/pyiron/projects\n',
-                                   'RESOURCE_PATHS = ~/pyiron/resources\n'])
-                project_path = convert_path('~/pyiron/projects')
-                if not os.path.exists(project_path):
-                    os.makedirs(project_path)
-                resource_path = convert_path('~/pyiron/resources')
-                if not os.path.exists(os.path.expanduser(resource_path)):
-                    os.makedirs(resource_path)
+                user_input = None
+                while user_input not in ['yes', 'no']:
+                    user_input = input('No pyiron installation found, should pyiron be installed [yes/no]:')
+                if user_input == 'yes':
+                    install_pyiron()
+                else:
+                    raise ValueError('pyiron was not installed!')
             self._config = self._env_config(config_file)
 
         self._viewer_conncetion_string = None
