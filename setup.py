@@ -10,8 +10,8 @@ setup(
     description='pyiron IDE plugin for VASP',
     long_description='https://www.vasp.at',
 
-    url='https://github.com/jan-janssen/pyiron_vasp',
-    author='Jan Janssen (MPIE)',
+    url='https://github.com/pyiron/pyiron_vasp',
+    author='Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department',
     author_email='janssen@mpie.de',
     license='BSD',
 
