@@ -49,7 +49,7 @@ To validate pyiron is successfully installed, open a Python shell and execute:
    
     import pyiron
 
-The import creates a :bash:`~/.pyiron` configuration file and the folders :bash:`~/pyiron/projects` and :bash:`~/pyiron/resources`. All pyrion projects should be started in the :bash:`~/pyiron/projects` folder. pyiron is tracking the pyiron objects within this folder. The :bash:`~/pyiron/resources` includes the resources for the individual pyiron plugins. A basic template for the resource directory is avialable at https://github.com/pyiron/pyiron-resources which you can download as a zip file https://github.com/pyiron/pyiron-resources/archive/master.zip . Copy the folders :bash:`pyrion_atomistics`, :bash:`pyiron_lammps` and :bash:`pyiron_vasp` to :bash:`~/pyiron/resources`.
+The import creates a :code:`~/.pyiron` configuration file and the folders :code:`~/pyiron/projects` and :code:`~/pyiron/resources`. All pyrion projects should be started in the :code:`~/pyiron/projects` folder. pyiron is tracking the pyiron objects within this folder. The :code:`~/pyiron/resources` includes the resources for the individual pyiron plugins. A basic template for the resource directory is avialable at https://github.com/pyiron/pyiron-resources which you can download as a zip file https://github.com/pyiron/pyiron-resources/archive/master.zip . Copy the folders :code:`pyrion_atomistics`, :code:`pyiron_lammps` and :code:`pyiron_vasp` to :code:`~/pyiron/resources`.
 
 Afterwards we can test the pyiron visualisation by opening a terminal, navigating to the pyiron projects folder and start a jupyter notebook session: 
 
@@ -67,7 +67,7 @@ The jupyter navigator should be started automatically inside the browser, so you
     basis = pr.create_structure('Fe', 'bcc', 2.78)
     basis.plot3d() 
     
-The code above creates a two atom iron bcc structure with a lattice constant of 2.78 and visualizes the structure. To execute a first pyiron calculation we need to add an interface to the simulation code. For lammps this can be done by editing the file :bash:`~/pyiron/resources/pyiron_lammps/bin/run_lammps_<version number>.bat` for windows or :bash:`~/pyiron/resources/pyiron_lammps/bin/run_lammps_<version number>.sh` for linux / MacOs. The version number is used as an identifier to support multiple versions of the same executable. Sample scripts are provided in https://github.com/pyiron/pyiron-resources . 
+The code above creates a two atom iron bcc structure with a lattice constant of 2.78 and visualizes the structure. To execute a first pyiron calculation we need to add an interface to the simulation code. For lammps this can be done by editing the file :code:`~/pyiron/resources/pyiron_lammps/bin/run_lammps_<version number>.bat` for windows or :code:`~/pyiron/resources/pyiron_lammps/bin/run_lammps_<version number>.sh` for linux / MacOs. The version number is used as an identifier to support multiple versions of the same executable. Sample scripts are provided in https://github.com/pyiron/pyiron-resources . 
 
 In addition to the executables additional resources like emperical potentials :bash:`~/pyiron/resources/pyiron_lammps/potentials/` can be stored for each individual code in their resource directory. 
 
