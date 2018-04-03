@@ -14,8 +14,8 @@ import pandas as pd
 
 from pyiron_lammps.potential import LammpsPotentialFile
 from pyiron_atomistics.job.atomistic import AtomisticGenericJob
-from pyironbase.core.settings.generic import Settings
-from pyironbase.pyio.parser import Logstatus, extract_data_from_file
+from pyiron_base.core.settings.generic import Settings
+from pyiron_base.pyio.parser import Logstatus, extract_data_from_file
 from pyiron_lammps.control import LammpsControl
 from pyiron_lammps.potential import LammpsPotential
 from pyiron_lammps.structure import LammpsStructure, UnfoldingPrism
@@ -396,7 +396,7 @@ class Lammps(AtomisticGenericJob):
         super(Lammps, self).calc_static()
         self.input.control.calc_static()
 
-    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100, delta_temp=1.0,
+    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, dt=None, time_step=None, n_print=100, delta_temp=1.0,
                 delta_press=None, seed=None, tloop=None, rescale_velocity=True):
         """
         
@@ -404,7 +404,8 @@ class Lammps(AtomisticGenericJob):
             temperature: 
             pressure: 
             n_ionic_steps: 
-            time_step: 
+            dt:
+            time_step:
             n_print: 
             delta_temp: 
             delta_press: 
@@ -415,6 +416,8 @@ class Lammps(AtomisticGenericJob):
         Returns:
 
         """
+        if dt is not None:
+            time_step = dt
         super(Lammps, self).calc_md(temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100,
                                     delta_temp=1.0, delta_press=None, seed=None, tloop=None, rescale_velocity=True)
         self.input.control.calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,

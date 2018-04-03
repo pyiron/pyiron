@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pyiron_lammps',
-    version='0.0.1',
+    version='0.0.9',
     description='pyiron IDE plugin for Lammps',
     long_description='http://lammps.sandia.gov',
 
@@ -31,7 +31,7 @@ setup(
     ],
 
     keywords='pyiron',
-    packages=find_packages(),
+    packages=find_packages(exclude=["*tests*"]),
     install_requires=['ase',
                       'pyiron_atomistics']
     )
