@@ -13,15 +13,13 @@ The easiest way to test pyiron is to use the docker image. Docker is a framework
 
 
     docker pull pyiron/pyiron
-    
     docker run -i -t -p 8888:8888 pyiron/pyiron /bin/bash -c "/opt/conda/bin/jupyter lab --notebook-dir=/opt/notebooks --ip='*' --port=8888 --no-browser --allow-root"
 
 With the first line docker downloads the pyiron image from the pyiron repository https://hub.docker.com/r/pyiron/pyiron/ with the second line docker starts an instance of jupyterlab running pyiron. Ending with the following statement: 
 
 
-   Copy/paste this URL into your browser when you connect for the first time,
-       to login with a token:
-           http://localhost:8888/?token=eb1394c21574a59249b6d36eab4484f59b7f13516f23f152
+    Copy/paste this URL into your browser when you connect for the first time, to login with a token:
+    http://localhost:8888/?token=eb1394c21574a59249b6d36eab4484f59b7f13516f23f152
 
 Copy the line http://localhost:8888/?token=eb1394c21574a59249b6d36eab4484f59b7f13516f23f152 from your terminal to the web browser to access jupyterlab. 
 
