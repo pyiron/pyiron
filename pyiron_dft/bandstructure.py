@@ -9,7 +9,7 @@ from __future__ import print_function
 import numpy as np
 from numpy import transpose as tr
 from numpy.linalg import inv, norm
-from pyiron_base.objects.generic.template import PyIronObject
+from pyiron_base.objects.generic.template import PyironObject
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
@@ -41,7 +41,7 @@ class BandPath(object):
                 spl_distances.append(np.linalg.norm(x2 - x1))
 
 
-class Bandstructure(PyIronObject):
+class Bandstructure(PyironObject):
     translate_to_pylab = {"Gamma": r"$\Gamma$", "G'": r"$\Gamma^\prime$"}
 
     def __init__(self, structure=None, prec=1e-5):
