@@ -32,6 +32,11 @@ requirements:
     - spglib
     - pyiron_base
 
+build:
+  script_env:
+   - TRAVIS
+   - APPVEYOR
+
 test:
   imports:
     - pyiron_atomistics
