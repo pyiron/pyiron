@@ -12,7 +12,6 @@ Docker (demonstration)
 The easiest way to test pyiron is to use the docker image. Docker is a framework for operating-system-level virtualization, allowing users to test new software in separated virtual environments. To read more about Docker, visit https://docs.docker.com. After you installed docker on your system, you can download and start the pyiron image using the following commands:  
 
 .. code-block:: bash
-   ::
    
     docker pull pyiron/pyiron
     docker run -i -t -p 8888:8888 pyiron/pyiron /bin/bash -c "/opt/conda/bin/jupyter lab --notebook-dir=/opt/notebooks --ip='*' --port=8888 --no-browser --allow-root"
