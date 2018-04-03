@@ -55,8 +55,8 @@ class Settings(with_metaclass(Singleton)):
     def __init__(self, config=None):
         # Default config dictionary
         self._configuration = {'user': 'pyiron',
-                               'resource_paths': [os.path.abspath(os.getcwd())],
-                               'project_paths': [os.path.abspath(os.getcwd())],
+                               'resource_paths': ['~/pyiron/resources'],
+                               'project_paths': ['~/pyiron/projects'],
                                'sql_connection_string': None,
                                'sql_table_name': 'jobs_pyiron',
                                'sql_view_connection_string': None,
