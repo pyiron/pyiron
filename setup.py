@@ -31,7 +31,7 @@ setup(
     ],
 
     keywords='pyiron',
-    packages=find_packages(),
+    packages=find_packages(exclude=["tests"]),
     install_requires=['lxml',
                       'pyiron_atomistics',
                       'pyiron_dft',
