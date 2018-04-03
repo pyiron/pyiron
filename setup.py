@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pyiron_dft',
-    version='0.0.9',
+    version='0.1.0',
     description='pyiron IDE plugin for DFT',
     long_description='http://pyiron.org',
 
