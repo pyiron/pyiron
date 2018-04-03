@@ -79,11 +79,11 @@ class Settings(with_metaclass(Singleton)):
                 if 'type' not in config.keys():
                     config['type'] = 'SQLite'
                 if 'file' not in config.keys():
-                    config['file'] = 'genericsettings.db'
+                    config['file'] = 'sqlite.db'
                 if 'user' not in config.keys():
                     config['user'] = 'pyiron'
                 if 'top_level_dirs' not in config.keys():
-                    config['top_level_dirs'] = {config['top_level_dirs'] + '/': config['top_level_dirs'] + '/'}
+                    config['top_level_dirs'] = {os.path.abspath(os.getcwd()) + '/': os.path.abspath(os.getcwd()) + '/'}
                 if isinstance(config['top_level_dirs'], str):
                     config['top_level_dirs'] = {config['top_level_dirs'] + '/': config['top_level_dirs'] + '/'}
                 elif not isinstance(config['top_level_dirs'], dict):

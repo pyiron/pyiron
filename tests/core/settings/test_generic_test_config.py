@@ -6,7 +6,7 @@ from pyiron_base.core.settings.generic import Settings
 class TestConfigSettingsStatic(unittest.TestCase):
     def setUp(self):
         self.resource_path = Path('.').expanduser().resolve().absolute().as_posix()
-        self.test_config = Settings(config={'file': 'genericsettings.db',
+        self.test_config = Settings(config={'file': 'sqlite.db',
                                             'top_level_dirs': self.resource_path,
                                             'resource_paths': self.resource_path})
 
@@ -14,7 +14,7 @@ class TestConfigSettingsStatic(unittest.TestCase):
         self.assertEqual(self.test_config.db_connection_name, 'test')
 
     def test_db_connection_string(self):
-        self.assertEqual(self.test_config.db_connection_string, 'sqlite:///genericsettings.db')
+        self.assertEqual(self.test_config.db_connection_string, 'sqlite:///sqlite.db')
 
     def test_db_connection_table(self):
         self.assertEqual(self.test_config.db_connection_table, 'jobs_pyiron')
