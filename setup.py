@@ -10,8 +10,8 @@ setup(
     description='pyiron IDE plugin for example calculation',
     long_description='http://pyiron.org',
 
-    url='https://github.com/jan-janssen/pyiron_example_job',
-    author='Jan Janssen (MPIE)',
+    url='https://github.com/pyiron/pyiron_example_job',
+    author='Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department',
     author_email='janssen@mpie.de',
     license='BSD',
 
