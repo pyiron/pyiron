@@ -8,7 +8,7 @@ import os
 import pandas
 import posixpath
 from pyiron_base.core.settings.generic import Settings
-from pyiron_base.objects.generic.template import PyIronObject
+from pyiron_base.objects.generic.template import PyironObject
 
 """
 GenericParameters class defines the typical input file with a key value structure plus an additional column for comments.
@@ -25,7 +25,7 @@ __date__ = "Sep 1, 2017"
 s = Settings()
 
 
-class GenericParameters(PyIronObject):
+class GenericParameters(PyironObject):
     """
     GenericParameters class defines the typical input file with a key value structure plus an additional column for comments.
     Convenience class to easily create, read, and modify input files

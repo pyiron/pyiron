@@ -4,7 +4,7 @@
 
 from collections import OrderedDict
 from pyiron_base.core.settings.generic import Settings
-from pyiron_base.objects.generic.template import PyIronObject
+from pyiron_base.objects.generic.template import PyironObject
 from pyiron_base.objects.server.runmode import Runmode
 from pyiron_base.objects.server.scheduler.cmmc import Cmmc
 from pyiron_base.objects.server.scheduler.localhost import Localhost
@@ -27,7 +27,7 @@ s = Settings()
 server_types = [Cmmc]
 
 
-class Server(PyIronObject):  # add the option to return the job id and the hold id to the server object
+class Server(PyironObject):  # add the option to return the job id and the hold id to the server object
     """
     Generic Server object to handle the execution environment for the job
 

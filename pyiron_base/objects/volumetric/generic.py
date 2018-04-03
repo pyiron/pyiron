@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import numpy as np
-from pyiron_base.objects.generic.template import PyIronObject
+from pyiron_base.objects.generic.template import PyironObject
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
@@ -14,7 +14,7 @@ __status__ = "development"
 __date__ = "Sep 1, 2017"
 
 
-class VolumetricData(PyIronObject):
+class VolumetricData(PyironObject):
 
     """
     A new class to handle 3-dimensional volumetric data elegantly (charge densities, electrostatic potentials etc) based

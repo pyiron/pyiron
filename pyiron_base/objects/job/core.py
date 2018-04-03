@@ -8,7 +8,7 @@ import os
 import posixpath
 import time
 from pyiron_base.core.settings.generic import Settings
-from pyiron_base.objects.generic.template import PyIronObject
+from pyiron_base.objects.generic.template import PyironObject
 import shutil
 from tables import NoSuchNodeError
 import tarfile
@@ -29,7 +29,7 @@ __date__ = "Sep 1, 2017"
 s = Settings()
 
 
-class JobCore(PyIronObject):
+class JobCore(PyironObject):
     """
     The JobCore the most fundamental pyiron job class. From this class the GenericJob as well as the reduced JobPath
     class are derived. While JobPath only provides access to the HDF5 file it is about one order faster.

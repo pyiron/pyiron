@@ -15,7 +15,7 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 
-class PyIronObject(object):
+class PyironObject(object):
     """
     Template class to list the required properties and functions for every pyiron object.
     """
@@ -112,7 +112,7 @@ class PyIronObject(object):
                                       offers a whole more functionality.
 
         Returns:
-            PyIronObject: the pyiron object
+            PyironObject: the pyiron object
         """
         raise NotImplementedError("load() should be implemented in the derived class")
 
@@ -126,7 +126,7 @@ class PyIronObject(object):
             job_specifier (str, int): identifier of the pyiron object - this needs to be unique in the project.
 
         Returns:
-            PyIronObject: a reduces pyiron object like JobPath
+            PyironObject: a reduces pyiron object like JobPath
         """
         raise NotImplementedError("insect() should be implemented in the derived class")
 
@@ -135,7 +135,7 @@ class PyIronObject(object):
         Copy the pyiron object - this copies only the link to the HDF5 file - not the content of the HDF5 file.
 
         Returns:
-            PyIronObject: a copy of the pyiron object
+            PyironObject: a copy of the pyiron object
         """
         raise NotImplementedError("copy() should be implemented in the derived class")
 
@@ -147,7 +147,7 @@ class PyIronObject(object):
             new_project (ProjectHDFio): new location
 
         Returns:
-            PyIronObject: a copy of the pyiron object
+            PyironObject: a copy of the pyiron object
         """
         raise NotImplementedError("copy() should be implemented in the derived class")
 
