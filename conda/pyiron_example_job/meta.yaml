@@ -34,6 +34,11 @@ requirements:
     - pyiron_base
     - pyiron_atomistics
 
+build:
+  script_env:
+   - TRAVIS
+   - APPVEYOR
+
 test:
   imports:
     - pyiron_example_job
