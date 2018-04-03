@@ -2,8 +2,8 @@ import unittest
 from pyiron_base.core.settings.generic import Settings
 import os
 
-s = Settings(config={'file': 'vasp.db',
-                     'top_level_dirs': os.path.abspath(os.getcwd()),
+s = Settings(config={'sql_file': 'vasp.db',
+                     'project_paths': os.path.abspath(os.getcwd()),
                      'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
 
 

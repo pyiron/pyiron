@@ -2,8 +2,8 @@ import unittest
 from pyiron_base.core.settings.generic import Settings
 import os
 
-s = Settings(config={'file': 'import.db',
-                     'top_level_dirs': os.path.normpath(os.path.abspath(os.path.join(os.getcwd(), '..'))),
+s = Settings(config={'sql_file': 'import.db',
+                     'project_paths': os.path.normpath(os.path.abspath(os.path.join(os.getcwd(), '..'))),
                      'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
 
 from pyiron.project import Project
