@@ -2,8 +2,8 @@ import os
 import unittest
 from pyiron_base.core.settings.generic import Settings, convert_path
 
-s = Settings(config={'file': 'serial.db',
-                     'top_level_dirs': convert_path(os.getcwd()),
+s = Settings(config={'sql_file': 'serial.db',
+                     'project_paths': convert_path(os.getcwd()),
                      'resource_paths': convert_path(os.getcwd())})
 
 from pyiron.project import Project
