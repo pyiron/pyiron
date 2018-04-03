@@ -10,8 +10,8 @@ setup(
     description='pyiron IDE plugin for DFT',
     long_description='http://pyiron.org',
 
-    url='https://github.com/jan-janssen/pyiron_dft',
-    author='Jan Janssen (MPIE)',
+    url='https://github.com/pyiron/pyiron_dft',
+    author='Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department',
     author_email='janssen@mpie.de',
     license='BSD',
 
