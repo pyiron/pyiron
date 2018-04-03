@@ -2,8 +2,8 @@ import os
 from pyiron_base.core.settings.generic import Settings
 import unittest
 
-s = Settings(config={'file': 'projectpath.db',
-                     'top_level_dirs': os.path.abspath(os.getcwd()),
+s = Settings(config={'sql_file': 'projectpath.db',
+                     'project_paths': os.path.abspath(os.getcwd()),
                      'resource_paths': os.path.abspath(os.getcwd())})
 
 from pyiron_base.core.project.path import ProjectPath

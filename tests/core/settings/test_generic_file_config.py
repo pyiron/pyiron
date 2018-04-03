@@ -18,21 +18,21 @@ class TestConfigSettingsStatic(unittest.TestCase):
         self.project_path = Path('~/pyiron/projects').expanduser().resolve().absolute().as_posix() + '/'
         self.file_config = Settings()
 
-    def test_file_db_connection_name(self):
-        self.assertEqual(self.file_config.db_connection_name, 'DEFAULT')
+    # def test_file_db_connection_name(self):
+    #     self.assertEqual(self.file_config.db_connection_name, 'DEFAULT')
+    #
+    # def test_file_db_connection_string(self):
+    #     self.assertEqual(self.file_config.db_connection_string, 'sqlite:///' + self.resource_path + '/sqlite.db')
+    #
+    # def test_file_db_connection_table(self):
+    #     self.assertEqual(self.file_config.db_connection_table, 'jobs_pyiron')
 
-    def test_file_db_connection_string(self):
-        self.assertEqual(self.file_config.db_connection_string, 'sqlite:///' + self.resource_path + '/sqlite.db')
+    # def test_file_db_translate_dict(self):
+    #     self.assertEqual(self.file_config.db_translate_dict,
+    #                      {'DEFAULT': {self.project_path: self.project_path}})
 
-    def test_file_db_connection_table(self):
-        self.assertEqual(self.file_config.db_connection_table, 'jobs_pyiron')
-
-    def test_file_db_translate_dict(self):
-        self.assertEqual(self.file_config.db_translate_dict,
-                         {'DEFAULT': {self.project_path: self.project_path}})
-
-    def test_file_db_name(self):
-        self.assertEqual(self.file_config.db_name, 'DEFAULT')
+    # def test_file_db_name(self):
+    #     self.assertEqual(self.file_config.db_name, 'DEFAULT')
 
     def test_file_top_path(self):
         self.assertEqual(self.file_config.top_path(self.project_path + '/test'), self.project_path)

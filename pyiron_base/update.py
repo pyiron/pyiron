@@ -26,32 +26,31 @@ def database():
     """
     s = Settings()
     s.open_connection()
-    for db_name in s.db_dict:
-        db = s.db_dict[db_name]
-        try:
-            if "projectPath".lower() not in db.get_table_headings(db.table_name):
-                print("add missing column: " + "projectPath")
-                db.add_column(col_name="projectPath", col_type="varchar(255)")
-            if "subJob".lower() not in db.get_table_headings(db.table_name):
-                print("add missing column: " + "subJob")
-                db.add_column(col_name="subJob", col_type="varchar(255)")
-            else:
-                print("change data type of subJob")
-                db.change_column_type(col_name="subJob", col_type="varchar(255)")
-            if "masterID".lower() not in db.get_table_headings(db.table_name):
-                print("add missing column: " + "masterid")
-                db.add_column(col_name="masterid", col_type="bigint")
+    db = s.database
+    try:
+        if "projectPath".lower() not in db.get_table_headings(db.table_name):
+            print("add missing column: " + "projectPath")
+            db.add_column(col_name="projectPath", col_type="varchar(255)")
+        if "subJob".lower() not in db.get_table_headings(db.table_name):
+            print("add missing column: " + "subJob")
+            db.add_column(col_name="subJob", col_type="varchar(255)")
+        else:
+            print("change data type of subJob")
+            db.change_column_type(col_name="subJob", col_type="varchar(255)")
+        if "masterID".lower() not in db.get_table_headings(db.table_name):
+            print("add missing column: " + "masterid")
+            db.add_column(col_name="masterid", col_type="bigint")
 
-            if "hamversion" in db.get_table_headings(db.table_name):
-                print("change data type hamversion")
-                db.change_column_type(col_name="hamversion", col_type="varchar(50)")
+        if "hamversion" in db.get_table_headings(db.table_name):
+            print("change data type hamversion")
+            db.change_column_type(col_name="hamversion", col_type="varchar(50)")
 
-            if "job" in db.get_table_headings(db.table_name):
-                print("change data type job")
-                db.change_column_type(col_name="job", col_type="varchar(50)")
-            print(db.table_name, " - database successful updated")
-        except ValueError:
-            print(db.table_name, " - database failed")
+        if "job" in db.get_table_headings(db.table_name):
+            print("change data type job")
+            db.change_column_type(col_name="job", col_type="varchar(50)")
+        print(db.table_name, " - database successful updated")
+    except ValueError:
+        print(db.table_name, " - database failed")
 
     print("database update done")
 

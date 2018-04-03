@@ -99,9 +99,8 @@ class Project(ProjectPath):
         self._inspect_mode = False
         self._store = None
 
-        db_name = s.top_path_dict[self.root_path]
         s.open_connection()
-        self.db = s.db_dict[db_name]
+        self.db = s.database
         self.job_type = JobTypeChoice()
 
     @property
@@ -785,18 +784,16 @@ class Project(ProjectPath):
         Switch from user mode to viewer mode - if viewer_mode is enable pyiron has read only access to the database.
         """
         s.switch_to_viewer_mode()
-        db_name = s.top_path_dict[self.root_path]
         s.open_connection()
-        self.db = s.db_dict[db_name]
+        self.db = s.database
 
     def switch_to_user_mode(self):
         """
         Switch from viewer mode to user mode - if viewer_mode is enable pyiron has read only access to the database.
         """
         s.switch_to_user_mode()
-        db_name = s.top_path_dict[self.root_path]
         s.open_connection()
-        self.db = s.db_dict[db_name]
+        self.db = s.database
 
     def queue_delete_job(self, item):
         """
