@@ -30,6 +30,11 @@ requirements:
     - pathlib2
     - pytables
 
+build:
+  script_env:
+   - TRAVIS
+   - APPVEYOR
+
 test:
   imports:
     - pyiron_base
