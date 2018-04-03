@@ -38,6 +38,11 @@ requirements:
     - pyiron_lammps
     - pyiron_vasp
 
+build:
+  script_env:
+   - TRAVIS
+   - APPVEYOR
+
 test:
   imports:
     - pyiron
