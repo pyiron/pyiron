@@ -78,7 +78,10 @@ class Settings(with_metaclass(Singleton)):
         elif not ('TRAVIS' in os.environ.keys() or 'APPVEYOR' in os.environ.keys()):
             user_input = None
             while user_input not in ['yes', 'no']:
-                user_input = input('No pyiron installation found, should pyiron be installed [yes/no]:')
+                if sys.version_info.major > 2:
+                    user_input = input('No pyiron installation found, should pyiron be installed [yes/no]:')
+                else:
+                    user_input = raw_input('No pyiron installation found, should pyiron be installed [yes/no]:')
             if user_input == 'yes':
                 install_pyiron(config_file_name=config_file,
                                zip_file="resources.zip",
