@@ -165,7 +165,16 @@ class SparseList(object):
         if isinstance(item, slice):
             ind_list = range(len(self))[item]
         elif isinstance(item, (list, tuple, np.ndarray)):
-            ind_list = item
+            if len(item) == 0:
+                ind_list = []
+            else:
+                if isinstance(item[0], (int, np.int64, np.int32)):
+                    ind_list = item
+                elif isinstance(item[0], (bool, np.bool_)):
+                    ind_list = []
+                    for i, bo in enumerate(item):
+                        if bo:
+                            ind_list.append(i)
         else:
             raise ValueError('Unknown item type: ' + str(type(item)))
         sliced_dict = {j: self._dict[ind] for j, ind in enumerate(ind_list) if ind in self._dict}
@@ -232,6 +241,9 @@ class SparseList(object):
             return "[" + " ".join([str(el) for el in self]) + "]"
         else:
             return "[" + " ".join([str(el) for el in self.list()]) + "]"
+
+    def __repr__(self):
+        return str(self.list())
 
 
 def sparse_index(index_list, length, default_val=True):
@@ -305,7 +317,6 @@ class SparseArray(object):
                     raise ValueError('Inconsistent vector lengths {} {} {}'.format(key, len(self), len(value)))
             self._lists[key] = value
 
-
     def __setitem__(self, key, value):
         # exclude hidden variables (starting with _ from being added to _lists
         # if (not hasattr(self, '_lists')) or (key[0] == "_"):
@@ -321,7 +332,8 @@ class SparseArray(object):
                 self._lists[key] = value
                 return
             else:
-                raise ValueError('Length of array object and new list are inconsistent: {} {} {}'.format(key, len(value), len(self)))
+                raise ValueError(
+                    'Length of array object and new list are inconsistent: {} {} {}'.format(key, len(value), len(self)))
         raise ValueError('Unsupported argument: ' + str(type(value)))
 
     def __getattr__(self, item):
@@ -343,7 +355,7 @@ class SparseArray(object):
         for k in self.keys():
             if len(self._lists[k]) == 0:
                 # ensure ASE compatibility
-                print ('Empty key in SparseList: ', k, key)
+                print('Empty key in SparseList: ', k, key)
                 continue
             # print "del: ", k, key
             if isinstance(self._lists[k], np.ndarray):
@@ -410,12 +422,11 @@ class SparseArray(object):
                         try:
                             new_dict[key] = value[item]
                         except IndexError:
-                            print ('Index error:: ', key, item, value)
+                            print('Index error:: ', key, item, value)
                     # else:
                     #     new_dict[key] = []
         # print ("new_dict: ", new_dict, self.__class__)
         return self.__class__(**new_dict)
-
 
     def keys(self):
         """

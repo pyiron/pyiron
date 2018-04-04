@@ -1,10 +1,10 @@
 import os
-from pyiron_base.core.settings.generic import Settings
 import unittest
+from pyiron_base.core.settings.generic import Settings, convert_path
 
-s = Settings(config={'file': 'murnaghan.db',
-                     'top_level_dirs': os.path.abspath(os.getcwd()),
-                     'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
+s = Settings(config={'sql_file': 'murnaghan.db',
+                     'project_paths': convert_path(os.getcwd()),
+                     'resource_paths': os.path.join(convert_path(os.getcwd()), '../static')})
 
 from pyiron.project import Project
 
