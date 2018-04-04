@@ -2,11 +2,12 @@
 Setuptools based setup module
 """
 from setuptools import setup, find_packages
+import versioneer
 
 
 setup(
     name='pyiron_lammps',
-    version='0.1.0',
+    version=versioneer.get_version(),
     description='pyiron IDE plugin for Lammps',
     long_description='http://lammps.sandia.gov',
 
@@ -33,5 +34,6 @@ setup(
     keywords='pyiron',
     packages=find_packages(exclude=["*tests*"]),
     install_requires=['ase',
-                      'pyiron_atomistics']
+                      'pyiron_atomistics'],
+    cmdclass=versioneer.get_cmdclass(),
     )
