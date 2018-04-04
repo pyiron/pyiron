@@ -46,3 +46,13 @@ deploy:
     allow_failure: true
     on:
       branch: master
+  - provider: script
+    script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
+    on:
+      tags: true
+  - provider: pypi
+    user: pyiron
+    password: ${PYPI_UPLOAD_TOKEN}
+    allow_failure: true
+    on:
+      tags: true
