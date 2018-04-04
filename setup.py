@@ -2,11 +2,11 @@
 Setuptools based setup module
 """
 from setuptools import setup, find_packages
-
+import versioneer
 
 setup(
     name='pyiron',
-    version='0.0.9',
+    version=versioneer.get_version(),
     description='pyiron IDE base',
     long_description='http://pyiron.org',
 
@@ -37,5 +37,6 @@ setup(
                       'pyiron_dft',
                       'pyiron_example_job',
                       'pyiron_lammps',
-                      'pyiron_vasp']
+                      'pyiron_vasp'],
+    cmdclass=versioneer.get_cmdclass(),
     )
