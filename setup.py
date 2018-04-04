@@ -1,6 +1,9 @@
+# This Python file uses the following encoding: utf-8
+
 """
 Setuptools based setup module
 """
+
 from setuptools import setup, find_packages
 import versioneer
 
