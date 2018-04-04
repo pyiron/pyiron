@@ -2,11 +2,12 @@
 Setuptools based setup module
 """
 from setuptools import setup, find_packages
+import versioneer
 
 
 setup(
     name='pyiron_atomistics',
-    version='0.1.0',
+    version=versioneer.get_version(),
     description='pyiron IDE plugin for atomistic calculations',
     long_description='http://pyiron.org',
 
@@ -34,5 +35,6 @@ setup(
     packages=find_packages(exclude=["*tests*"]),
     install_requires=['ase',
                       'pyiron_base',
-                      'spglib']
+                      'spglib'],
+    cmdclass=versioneer.get_cmdclass(),
     )
