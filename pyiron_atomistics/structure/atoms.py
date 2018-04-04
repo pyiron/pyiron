@@ -1549,7 +1549,7 @@ class Atoms(object):
 
         https://atztogo.github.io/spglib/python-spglib.html
         """
-        lattice = np.array(self.get_cell().T, dtype='double', order='C')
+        lattice = np.array(self.get_cell(), dtype='double', order='C')
         positions = np.array(self.get_scaled_positions(), dtype='double', order='C')
         numbers = np.array(self.get_atomic_numbers(), dtype='intc')
         space_group = spglib.get_spacegroup(cell=(lattice, positions, numbers),
