@@ -18,7 +18,7 @@ Contents
 ========
 
 .. toctree::
-   :maxdepth:2
+   :maxdepth:4
    source/installation.rst
    source/developers.rst
    source/citation.rst
