@@ -14,8 +14,8 @@ import pandas as pd
 
 from pyiron_lammps.potential import LammpsPotentialFile
 from pyiron_atomistics.job.atomistic import AtomisticGenericJob
-from pyironbase.core.settings.generic import Settings
-from pyironbase.pyio.parser import Logstatus, extract_data_from_file
+from pyiron_base.core.settings.generic import Settings
+from pyiron_base.pyio.parser import Logstatus, extract_data_from_file
 from pyiron_lammps.control import LammpsControl
 from pyiron_lammps.potential import LammpsPotential
 from pyiron_lammps.structure import LammpsStructure, UnfoldingPrism
