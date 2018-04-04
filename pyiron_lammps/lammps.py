@@ -14,8 +14,8 @@ import pandas as pd
 
 from pyiron_lammps.potential import LammpsPotentialFile
 from pyiron_atomistics.job.atomistic import AtomisticGenericJob
-from pyiron_base.core.settings.generic import Settings
-from pyiron_base.pyio.parser import Logstatus, extract_data_from_file
+from pyironbase.core.settings.generic import Settings
+from pyironbase.pyio.parser import Logstatus, extract_data_from_file
 from pyiron_lammps.control import LammpsControl
 from pyiron_lammps.potential import LammpsPotential
 from pyiron_lammps.structure import LammpsStructure, UnfoldingPrism
@@ -61,6 +61,7 @@ class Lammps(AtomisticGenericJob):
         self._cutoff_radius = None
         self._is_continuation = None
         self._lib['available'] = True
+        self._calc_type = None
 
     @property
     def cutoff_radius(self):
@@ -76,7 +77,7 @@ class Lammps(AtomisticGenericJob):
         """
         
         Args:
-            cutoff: 
+            cutoff:
 
         Returns:
 
@@ -97,7 +98,7 @@ class Lammps(AtomisticGenericJob):
         """
         
         Args:
-            potential_filename: 
+            potential_filename:
 
         Returns:
 
@@ -148,7 +149,7 @@ class Lammps(AtomisticGenericJob):
         """
         
         Args:
-            iteration_step: 
+            iteration_step:
 
         Returns:
 
@@ -206,7 +207,7 @@ class Lammps(AtomisticGenericJob):
         lmp_structure.write_file(file_name="structure.inp", cwd=self.working_directory)
         if int(self.executable.version.split('.')[0]) > 2016 or \
                 (int(self.executable.version.split('.')[0]) == 2016 and
-                         int(self.executable.version.split('.')[1]) == 11):
+                 int(self.executable.version.split('.')[1]) == 11):
             self.input.control['dump_modify'] = \
                 '1 sort id format line "%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g"'
         else:
@@ -248,8 +249,8 @@ class Lammps(AtomisticGenericJob):
         """
         
         Args:
-            file_name: 
-            cwd: 
+            file_name:
+            cwd:
 
         Returns:
 
@@ -271,8 +272,8 @@ class Lammps(AtomisticGenericJob):
         """
         
         Args:
-            file_name: 
-            cwd: 
+            file_name:
+            cwd:
 
         Returns:
 
@@ -290,8 +291,8 @@ class Lammps(AtomisticGenericJob):
         general purpose routine to extract static from a lammps log file
         
         Args:
-            file_name: 
-            cwd: 
+            file_name:
+            cwd:
 
         Returns:
 
@@ -375,11 +376,11 @@ class Lammps(AtomisticGenericJob):
         """
         
         Args:
-            e_tol: 
-            f_tol: 
-            max_iter: 
-            pressure: 
-            n_print: 
+            e_tol:
+            f_tol:
+            max_iter:
+            pressure:
+            n_print:
 
         Returns:
 
@@ -396,28 +397,26 @@ class Lammps(AtomisticGenericJob):
         super(Lammps, self).calc_static()
         self.input.control.calc_static()
 
-    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, dt=None, time_step=None, n_print=100, delta_temp=1.0,
+    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100, delta_temp=1.0,
                 delta_press=None, seed=None, tloop=None, rescale_velocity=True):
         """
         
         Args:
-            temperature: 
-            pressure: 
-            n_ionic_steps: 
-            dt:
+            temperature:
+            pressure:
+            n_ionic_steps:
             time_step:
-            n_print: 
-            delta_temp: 
-            delta_press: 
-            seed: 
-            tloop: 
-            rescale_velocity: 
+            n_print:
+            delta_temp:
+            delta_press:
+            seed:
+            tloop:
+            rescale_velocity:
 
         Returns:
 
         """
-        if dt is not None:
-            time_step = dt
+        self._calc_type = 'MD'
         super(Lammps, self).calc_md(temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100,
                                     delta_temp=1.0, delta_press=None, seed=None, tloop=None, rescale_velocity=True)
         self.input.control.calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
@@ -429,8 +428,8 @@ class Lammps(AtomisticGenericJob):
         """
         
         Args:
-            hdf: 
-            group_name: 
+            hdf:
+            group_name:
 
         Returns:
 
@@ -443,8 +442,8 @@ class Lammps(AtomisticGenericJob):
         """
         
         Args:
-            hdf: 
-            group_name: 
+            hdf:
+            group_name:
 
         Returns:
 
@@ -457,7 +456,7 @@ class Lammps(AtomisticGenericJob):
         """
         
         Args:
-            filename: 
+            filename:
 
         Returns:
 
@@ -468,7 +467,7 @@ class Lammps(AtomisticGenericJob):
         """
         
         Args:
-            filename: 
+            filename:
 
         Returns:
 
@@ -482,8 +481,8 @@ class Lammps(AtomisticGenericJob):
         general purpose routine to extract static from a lammps dump file
         
         Args:
-            file_name: 
-            cwd: 
+            file_name:
+            cwd:
 
         Returns:
 
@@ -569,13 +568,14 @@ class Lammps(AtomisticGenericJob):
             lf.status_dict["unwrapped_positions"].append([[0], pos])
         with self.project_hdf5.open("output/generic") as hdf_output:
             lf.to_hdf(hdf_output)
+        return lf
 
     # Outdated functions:
     def set_potential(self, file_name):
         """
         
         Args:
-            file_name: 
+            file_name:
 
         Returns:
 
@@ -699,53 +699,62 @@ class Lammps(AtomisticGenericJob):
         return output
 
     def _set_selective_dynamics(self):
-        if 'selective_dynamics' in self.structure._tag_list._lists.keys() and \
-                any(np.array(list(self.structure.selective_dynamics.values())).flatten()):
-            constraint_xyz, constraint_xy, constraint_yz, constraint_xz, constraint_x, constraint_y, constraint_z =\
+        if 'selective_dynamics' in self.structure._tag_list.keys() and \
+                any(np.array(self.structure.selective_dynamics.list()).flatten()):
+            constraint_xyz, constraint_xy, constraint_yz, constraint_xz, constraint_x, constraint_y, constraint_z = \
                 [], [], [], [], [], [], []
             for atom_ind in range(len(self.structure)):
-                if self.structure.selective_dynamics[atom_ind] == [True, True, True]:
+                sel = list(self.structure.selective_dynamics[atom_ind])
+                if sel == [True, True, True]:
                     constraint_xyz.append(atom_ind + 1)
-                elif self.structure.selective_dynamics[atom_ind] == [True, True, False]:
+                elif sel == [True, True, False]:
                     constraint_xy.append(atom_ind + 1)
-                elif self.structure.selective_dynamics[atom_ind] == [False, True, True]:
+                elif sel == [False, True, True]:
                     constraint_yz.append(atom_ind + 1)
-                elif self.structure.selective_dynamics[atom_ind] == [True, False, True]:
+                elif sel == [True, False, True]:
                     constraint_xz.append(atom_ind + 1)
-                elif self.structure.selective_dynamics[atom_ind] == [True, False, False]:
+                elif sel == [True, False, False]:
                     constraint_x.append(atom_ind + 1)
-                elif self.structure.selective_dynamics[atom_ind] == [False, True, False]:
+                elif sel == [False, True, False]:
                     constraint_y.append(atom_ind + 1)
-                elif self.structure.selective_dynamics[atom_ind] == [False, False, True]:
+                elif sel == [False, False, True]:
                     constraint_z.append(atom_ind + 1)
             if constraint_xyz:
+                print('constraint (xyz): {}'.format(len(constraint_xyz)))
                 self.input.control['group___constraintxyz'] = 'id ' + ' '.join([str(ind) for ind in constraint_xyz])
                 self.input.control['fix___constraintxyz'] = 'constraintxyz setforce 0.0 0.0 0.0'
-                self.input.control['velocity___constraintxyz'] = 'set 0.0 0.0 0.0'
+                if self._calc_type == 'MD':
+                    self.input.control['velocity___constraintxyz'] = 'set 0.0 0.0 0.0'
             if constraint_xy:
                 self.input.control['group___constraintxy'] = 'id ' + ' '.join([str(ind) for ind in constraint_xy])
                 self.input.control['fix___constraintxy'] = 'constraintxy setforce 0.0 0.0 NULL'
-                self.input.control['velocity___constraintxy'] = 'set 0.0 0.0 NULL'
+                if self._calc_type == 'MD':
+                    self.input.control['velocity___constraintxy'] = 'set 0.0 0.0 NULL'
             if constraint_yz:
                 self.input.control['group___constraintyz'] = 'id ' + ' '.join([str(ind) for ind in constraint_yz])
                 self.input.control['fix___constraintyz'] = 'constraintyz setforce NULL 0.0 0.0'
-                self.input.control['velocity___constraintyz'] = 'set NULL 0.0 0.0'
+                if self._calc_type == 'MD':
+                    self.input.control['velocity___constraintyz'] = 'set NULL 0.0 0.0'
             if constraint_xz:
                 self.input.control['group___constraintxz'] = 'id ' + ' '.join([str(ind) for ind in constraint_xz])
                 self.input.control['fix___constraintxz'] = 'constraintxz setforce 0.0 NULL 0.0'
-                self.input.control['velocity___constraintxz'] = 'set 0.0 NULL 0.0'
+                if self._calc_type == 'MD':
+                    self.input.control['velocity___constraintxz'] = 'set 0.0 NULL 0.0'
             if constraint_x:
                 self.input.control['group___constraintx'] = 'id ' + ' '.join([str(ind) for ind in constraint_x])
                 self.input.control['fix___constraintx'] = 'constraintx setforce 0.0 NULL NULL'
-                self.input.control['velocity___constraintx'] = 'set 0.0 NULL NULL'
+                if self._calc_type == 'MD':
+                    self.input.control['velocity___constraintx'] = 'set 0.0 NULL NULL'
             if constraint_y:
                 self.input.control['group___constrainty'] = 'id ' + ' '.join([str(ind) for ind in constraint_y])
                 self.input.control['fix___constrainty'] = 'constrainty setforce NULL 0.0 NULL'
-                self.input.control['velocity___constrainty'] = 'set NULL 0.0 NULL'
+                if self._calc_type == 'MD':
+                    self.input.control['velocity___constrainty'] = 'set NULL 0.0 NULL'
             if constraint_z:
                 self.input.control['group___constraintz'] = 'id ' + ' '.join([str(ind) for ind in constraint_z])
                 self.input.control['fix___constraintz'] = 'constraintz setforce NULL NULL 0.0'
-                self.input.control['velocity___constraintz'] = 'set NULL NULL 0.0'
+                if self._calc_type == 'MD':
+                    self.input.control['velocity___constraintz'] = 'set NULL NULL 0.0'
 
     def _collect_thermo_output_from_lib(self, output, hdf5_prefix=None):
         attr = self.input.control.dataset["Parameter"]
@@ -892,7 +901,7 @@ class Input:
         """
         
         Args:
-            hdf5: 
+            hdf5:
 
         Returns:
 
@@ -905,7 +914,7 @@ class Input:
         """
         
         Args:
-            hdf5: 
+            hdf5:
 
         Returns:
 
@@ -919,7 +928,7 @@ def to_amat(l_list):
     """
     
     Args:
-        l_list: 
+        l_list:
 
     Returns:
 
