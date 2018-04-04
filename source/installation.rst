@@ -48,8 +48,9 @@ To validate pyiron is successfully installed, open a Python shell and execute:
 .. code-block:: python
    
     import pyiron
+    >>> No pyiron installation found, should pyiron be installed [yes/no]:
 
-The import creates a :code:`~/.pyiron` configuration file and the folders :code:`~/pyiron/projects` and :code:`~/pyiron/resources`. All pyrion projects should be started in the :code:`~/pyiron/projects` folder. pyiron is tracking the pyiron objects within this folder. The :code:`~/pyiron/resources` includes the resources for the individual pyiron plugins. A basic template for the resource directory is avialable at https://github.com/pyiron/pyiron-resources which you can download as a zip file https://github.com/pyiron/pyiron-resources/archive/master.zip . Copy the folders :code:`pyrion_atomistics`, :code:`pyiron_lammps` and :code:`pyiron_vasp` to :code:`~/pyiron/resources`.
+If you answer with 'yes' pyiron creates a :code:`~/.pyiron` configuration file and the folders :code:`~/pyiron/projects` and :code:`~/pyiron/resources`. All pyrion projects should be started in the :code:`~/pyiron/projects` folder. pyiron is tracking the pyiron objects within this folder. The :code:`~/pyiron/resources` includes the resources for the individual pyiron plugins. A basic template for the resource directory is avialable at https://github.com/pyiron/pyiron-resources which is downloaded automatically and the folders :code:`pyrion_atomistics`, :code:`pyiron_lammps` and :code:`pyiron_vasp` are copied to :code:`~/pyiron/resources`.
 
 Afterwards we can test the pyiron visualisation by opening a terminal, navigating to the pyiron projects folder and start a jupyter notebook session: 
 
