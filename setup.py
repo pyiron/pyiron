@@ -2,11 +2,12 @@
 Setuptools based setup module
 """
 from setuptools import setup, find_packages
+import versioneer
 
 
 setup(
     name='pyiron_example_job',
-    version='0.0.9',
+    version=versioneer.get_version(),
     description='pyiron IDE plugin for example calculation',
     long_description='http://pyiron.org',
 
@@ -32,5 +33,6 @@ setup(
 
     keywords='pyiron',
     packages=find_packages(exclude=["*tests*"]),
-    install_requires=['pyiron_atomistics']
+    install_requires=['pyiron_atomistics'],
+    cmdclass=versioneer.get_cmdclass(),
     )
