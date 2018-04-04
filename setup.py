@@ -2,11 +2,12 @@
 Setuptools based setup module
 """
 from setuptools import setup, find_packages
+import versioneer
 
 
 setup(
     name='pyiron_vasp',
-    version='0.0.9',
+    version=versioneer.get_version(),
     description='pyiron IDE plugin for VASP',
     long_description='https://www.vasp.at',
 
@@ -35,5 +36,6 @@ setup(
     install_requires=['lxml',
                       'pyiron_atomistics',
                       'pyiron_dft',
-                      'six']
+                      'six'],
+    cmdclass=versioneer.get_cmdclass(),
     )
