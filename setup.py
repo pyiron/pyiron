@@ -2,11 +2,12 @@
 Setuptools based setup module
 """
 from setuptools import setup, find_packages
+import versioneer
 
 
 setup(
     name='pyiron_base',
-    version='0.0.9',
+    version=versioneer.get_version(),
     description='pyiron IDE base',
     long_description='http://pyiron.org',
 
@@ -40,5 +41,6 @@ setup(
                       'pathlib2',
                       'six',
                       'sqlalchemy',
-                      'tables']
+                      'tables'],
+    cmdclass=versioneer.get_cmdclass(),
     )
