@@ -70,7 +70,7 @@ The jupyter navigator should be started automatically inside the browser, so you
     
 The code above creates a two atom iron bcc structure with a lattice constant of 2.78 and visualizes the structure. To execute a first pyiron calculation we need to add an interface to the simulation code. For lammps this can be done by editing the file :code:`~/pyiron/resources/pyiron_lammps/bin/run_lammps_<version number>.bat` for windows or :code:`~/pyiron/resources/pyiron_lammps/bin/run_lammps_<version number>.sh` for linux / MacOs. The version number is used as an identifier to support multiple versions of the same executable. Sample scripts are provided in https://github.com/pyiron/pyiron-resources . 
 
-In addition to the executables additional resources like emperical potentials :bash:`~/pyiron/resources/pyiron_lammps/potentials/` can be stored for each individual code in their resource directory. 
+In addition to the executables additional resources like emperical potentials :code:`~/pyiron/resources/pyiron_lammps/potentials/` can be stored for each individual code in their resource directory. 
 
 After the executable is configured the first calculation can be executed, using the atomistic structure from above we run: 
 
