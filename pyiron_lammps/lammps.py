@@ -61,7 +61,6 @@ class Lammps(AtomisticGenericJob):
         self._cutoff_radius = None
         self._is_continuation = None
         self._lib['available'] = True
-        self._calc_type = None
 
     @property
     def cutoff_radius(self):
@@ -416,7 +415,6 @@ class Lammps(AtomisticGenericJob):
         Returns:
 
         """
-        self._calc_type = 'MD'
         super(Lammps, self).calc_md(temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100,
                                     delta_temp=1.0, delta_press=None, seed=None, tloop=None, rescale_velocity=True)
         self.input.control.calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
@@ -723,37 +721,37 @@ class Lammps(AtomisticGenericJob):
                 print('constraint (xyz): {}'.format(len(constraint_xyz)))
                 self.input.control['group___constraintxyz'] = 'id ' + ' '.join([str(ind) for ind in constraint_xyz])
                 self.input.control['fix___constraintxyz'] = 'constraintxyz setforce 0.0 0.0 0.0'
-                if self._calc_type == 'MD':
+                if self._generic_input['calc_mode'] == 'md':
                     self.input.control['velocity___constraintxyz'] = 'set 0.0 0.0 0.0'
             if constraint_xy:
                 self.input.control['group___constraintxy'] = 'id ' + ' '.join([str(ind) for ind in constraint_xy])
                 self.input.control['fix___constraintxy'] = 'constraintxy setforce 0.0 0.0 NULL'
-                if self._calc_type == 'MD':
+                if self._generic_input['calc_mode'] == 'md':
                     self.input.control['velocity___constraintxy'] = 'set 0.0 0.0 NULL'
             if constraint_yz:
                 self.input.control['group___constraintyz'] = 'id ' + ' '.join([str(ind) for ind in constraint_yz])
                 self.input.control['fix___constraintyz'] = 'constraintyz setforce NULL 0.0 0.0'
-                if self._calc_type == 'MD':
+                if self._generic_input['calc_mode'] == 'md':
                     self.input.control['velocity___constraintyz'] = 'set NULL 0.0 0.0'
             if constraint_xz:
                 self.input.control['group___constraintxz'] = 'id ' + ' '.join([str(ind) for ind in constraint_xz])
                 self.input.control['fix___constraintxz'] = 'constraintxz setforce 0.0 NULL 0.0'
-                if self._calc_type == 'MD':
+                if self._generic_input['calc_mode'] == 'md':
                     self.input.control['velocity___constraintxz'] = 'set 0.0 NULL 0.0'
             if constraint_x:
                 self.input.control['group___constraintx'] = 'id ' + ' '.join([str(ind) for ind in constraint_x])
                 self.input.control['fix___constraintx'] = 'constraintx setforce 0.0 NULL NULL'
-                if self._calc_type == 'MD':
+                if self._generic_input['calc_mode'] == 'md':
                     self.input.control['velocity___constraintx'] = 'set 0.0 NULL NULL'
             if constraint_y:
                 self.input.control['group___constrainty'] = 'id ' + ' '.join([str(ind) for ind in constraint_y])
                 self.input.control['fix___constrainty'] = 'constrainty setforce NULL 0.0 NULL'
-                if self._calc_type == 'MD':
+                if self._generic_input['calc_mode'] == 'md':
                     self.input.control['velocity___constrainty'] = 'set NULL 0.0 NULL'
             if constraint_z:
                 self.input.control['group___constraintz'] = 'id ' + ' '.join([str(ind) for ind in constraint_z])
                 self.input.control['fix___constraintz'] = 'constraintz setforce NULL NULL 0.0'
-                if self._calc_type == 'MD':
+                if self._generic_input['calc_mode'] == 'md':
                     self.input.control['velocity___constraintz'] = 'set NULL NULL 0.0'
 
     def _collect_thermo_output_from_lib(self, output, hdf5_prefix=None):
