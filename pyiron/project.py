@@ -348,6 +348,9 @@ class Project(ProjectCore):
             dimension (int): Dimension of the structure
             species (list): List of species
 
+        Returns:
+            pyiron_atomistics.structure.atoms.Atoms: The required structure instance
+
         """
         return Atoms(symbols=symbols, positions=positions, numbers=numbers, tags=tags, momenta=momenta, masses=masses,
                      magmoms=magmoms, charges=charges, scaled_positions=scaled_positions, cell=cell, pbc=pbc,
