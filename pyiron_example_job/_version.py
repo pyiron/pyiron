@@ -40,7 +40,7 @@ def get_config():
     # _version.py
     cfg = VersioneerConfig()
     cfg.VCS = "git"
-    cfg.style = "pep440"
+    cfg.style = "pep440-pre"
     cfg.tag_prefix = "pyiron_example_job-"
     cfg.parentdir_prefix = "pyiron_example_job"
     cfg.versionfile_source = "pyiron_example_job/_version.py"
