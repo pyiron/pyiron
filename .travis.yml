@@ -35,10 +35,10 @@ install:
 script:
   - cd tests
   - python find_tests.py
-  - cd ..
   
 after_success:
   - coveralls
+  - cd ..
 
 deploy:
   - provider: pypi
