@@ -327,10 +327,10 @@ class Project(ProjectCore):
         Creates a pyiron_atomistics.structure.atoms.Atoms instance.
 
         """
-        return Atoms(symbols=None, positions=None, numbers=None, tags=None, momenta=None, masses=None,
-                     magmoms=None, charges=None, scaled_positions=None, cell=None, pbc=None, celldisp=None,
-                     constraint=None, calculator=None, info=None, indices=None, elements=None, dimension=None,
-                     species=None, **qwargs)
+        return Atoms(symbols=symbols, positions=positions, numbers=numbers, tags=tags, momenta=momenta, masses=masses,
+                     magmoms=magmoms, charges=charges, scaled_positions=scaled_positions, cell=cell, pbc=pbc,
+                     celldisp=celldisp, constraint=constraint, calculator=calculator, info=info, indices=indices,
+                     elements=elements, dimension=dimension, species=species, **qwargs)
 
     setattr(create_atoms, '__doc__', create_atoms.__doc__ + Atoms.__doc__)
 
