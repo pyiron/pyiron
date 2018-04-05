@@ -21,8 +21,8 @@ def _download_resources(zip_file="resources.zip",
     urllib2.urlretrieve(giturl_for_zip_file, temp_zip_file)
     if os.path.exists(user_directory):
         raise ValueError('The resource directory exists already, therefore it can not be created: ', user_directory)
-    zip_file_object = ZipFile(temp_zip_file)
-    zip_file_object.extractall(temp_directory)
+    with ZipFile(temp_zip_file) as zip_file_object:
+        zip_file_object.extractall(temp_directory)
     copytree(temp_extract_folder, user_directory)
     os.remove(temp_zip_file)
     rmtree(temp_extract_folder)
