@@ -27,7 +27,8 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda config --add channels pyiron
-  - conda install conda-build anaconda-client pytables numpy
+  - conda install -y -c conda-forge coveralls 
+  - conda install conda-build anaconda-client pytables numpy 
   - conda config --set anaconda_upload yes
   - pip install .
 
@@ -35,6 +36,9 @@ script:
   - cd tests
   - python find_tests.py
   - cd ..
+  
+after_success:
+  - coveralls
 
 deploy:
   - provider: pypi
