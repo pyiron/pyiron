@@ -31,7 +31,8 @@ install:
   - conda config --add channels pyiron
   - conda config --set anaconda_upload yes
   - pip install --pre --no-deps pyiron_base pyiron_atomistics
-  - pip install pyiron
+  - pip install .
+  - pip install --pre --no-deps pyiron pyiron_vasp pyiron_lammps pyiron_example_job
 
 script:
   - cd tests
