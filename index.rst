@@ -7,9 +7,23 @@
 pyiron
 ======
 
+.. image:: https://travis-ci.org/pyiron/pyiron.svg?branch=master
+    :target: https://travis-ci.org/pyiron/pyiron
+
+.. image:: https://anaconda.org/pyiron/pyiron/badges/downloads.svg
+
+.. image:: https://anaconda.org/pyiron/pyiron/badges/latest_release_date.svg
+
 
 Welcome to the official documentation of the pyiron package! pyiron is a Python based IDE for computational materials
 design.
+
+
+============
+Introduction
+============
+
+
 
 
 
