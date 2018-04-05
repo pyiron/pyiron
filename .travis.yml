@@ -30,29 +30,29 @@ install:
   - conda config --add channels conda-forge
   - conda config --add channels pyiron
   - conda config --set anaconda_upload yes
-  - pip install .
+  - pip install --pre .
 
 script:
   - python --version
 
 deploy:
-  - provider: script
-    script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
-    on:
-      branch: master
   - provider: pypi
     user: pyiron
     password: ${PYPI_UPLOAD_TOKEN}
     allow_failure: true
     on:
       branch: master
-  - provider: script
-    script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
+  - provider: pypi
+    user: pyiron
+    password: ${PYPI_UPLOAD_TOKEN}
+    allow_failure: true
     on:
       tags: true
-  - provider: pypi
-    user: pyiron
-    password: ${PYPI_UPLOAD_TOKEN}
-    allow_failure: true
+  - provider: script
+    script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
+    on:
+      branch: master
+  - provider: script
+    script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
     on:
       tags: true

@@ -50,7 +50,7 @@ install:
 - "conda config --add channels pyiron"
 - "conda config --set anaconda_upload yes"
 - "conda info -a"
-- "pip install ."
+- "pip install --pre ."
 
 build: false
 
