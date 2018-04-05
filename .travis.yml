@@ -30,10 +30,14 @@ install:
   - conda config --add channels conda-forge
   - conda config --add channels pyiron
   - conda config --set anaconda_upload yes
+  - conda install -y -c conda-forge coveralls coverage
   - pip install --pre .
 
 script:
   - python --version
+
+after_success:
+  - coveralls
 
 deploy:
   - provider: pypi
