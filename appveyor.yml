@@ -52,7 +52,7 @@ install:
 - "conda info -a"
 - "pip install --pre --no-deps pyiron_base pyiron_atomistics pyiron_dft"
 - "pip install ."
-- "pip install pyiron"
+- "pip install --pre --no-deps pyiron pyiron_lammps pyiron_example_job:
 
 build: false
 
