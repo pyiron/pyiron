@@ -25,6 +25,7 @@ Contents
    source/faq.rst
    source/indices.rst
    source/examples.rst
+   Imprint <https://www.mpie.de/impressum>
 
 
 
