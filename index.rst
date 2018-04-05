@@ -28,7 +28,7 @@ What is pyiron?
 
 pyiron is a free and open-source library developed, tested and maintained by computational physicists and materials scientists at the department of
 `Computational Materials Design <https://www.mpie.de/CM>`_  at the Max-Planck-Institut für Eisenforschung GmbH, Düsseldorf
-and the department of `Interdisciplinary Center for Advanced Materials Simulation <http://www.icams.de/content/departments/atomistic-modelling-and-simulation/>`_
+and the department of Atomistic Modeling and Simulation at the `Interdisciplinary Center for Advanced Materials Simulation <http://www.icams.de/content/departments/atomistic-modelling-and-simulation/>`_
 at the  Ruhr-Universität Bochum, Germany. pyiron offers a convenient way to automate workflows in atomistic simulations so that
 users can concentrate on the science rather than the technical details of their simulations.
 
