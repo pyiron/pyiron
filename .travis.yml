@@ -30,6 +30,7 @@ install:
   - conda config --add channels conda-forge
   - conda config --add channels pyiron
   - conda config --set anaconda_upload yes
+  - conda install -y -c conda-forge coveralls coverage
   - pip install --pre --no-deps pyiron_base pyiron_atomistics
   - pip install .
   - pip install --pre --no-deps pyiron pyiron_vasp pyiron_lammps pyiron_example_job
@@ -37,6 +38,9 @@ install:
 script:
   - cd tests
   - python find_tests.py
+
+after_success:
+  - coveralls
   - cd ..
 
 deploy:
