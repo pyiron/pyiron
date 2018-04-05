@@ -7,7 +7,7 @@ import sys
 if sys.version_info >= (3,):
     import urllib.request as urllib2
 else:
-    import urllib2
+    import urllib as urllib2
 
 
 def _download_resources(zip_file="resources.zip",
