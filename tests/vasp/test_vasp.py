@@ -2,9 +2,10 @@ import unittest
 from pyiron_base.core.settings.generic import Settings
 import os
 
-s = Settings(config={'sql_file': 'vasp.db',
-                     'project_paths': os.path.abspath(os.getcwd()),
-                     'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
+file_location = os.path.dirname(os.path.abspath(__file__))
+s = Settings(config={'sql_file': os.path.join(file_location, 'vasp.db'),
+                     'project_paths': file_location,
+                     'resource_paths': os.path.join(file_location, '../static')})
 
 
 from pyiron_atomistics.structure.atoms import CrystalStructure
@@ -20,13 +21,14 @@ class TestVasp(unittest.TestCase):
     """
 
     def setUp(self):
-        self.project = Project('test_vasp')
+        self.project = Project(os.path.join(file_location, 'test_vasp'))
         self.job = self.project.create_job("Vasp", "trial")
 
     @classmethod
     def tearDownClass(cls):
-        s.close_connection()
-        os.remove('vasp.db')
+        # s.close_connection()
+        # os.remove(s._configuration['sql_file'])
+        pass
 
     def test_init(self):
         self.assertEqual(self.job.__name__, "Vasp")

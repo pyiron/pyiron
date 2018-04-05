@@ -7,13 +7,17 @@ import numpy as np
 from pyiron_vasp.vasp import Outcar
 
 
+file_location = os.path.dirname(os.path.abspath(__file__))
+
+
 class TestOutcar(unittest.TestCase):
     def setUp(self):
         self.file_list = list()
         self.outcar_parser = Outcar()
         file_list = ["OUTCAR_1", "OUTCAR_2", "OUTCAR_3", "OUTCAR_4", "OUTCAR_5", "OUTCAR_6"]
         for f in file_list:
-            direc = os.path.abspath("../static/vasp_test_files/outcar_samples")
+            direc = os.path.abspath(os.path.join(file_location,
+                                                 "../static/vasp_test_files/outcar_samples"))
             filename = posixpath.join(direc, f)
             self.file_list.append(filename)
 
