@@ -326,13 +326,33 @@ class Project(ProjectCore):
         """
         Creates a pyiron_atomistics.structure.atoms.Atoms instance.
 
+        Args:
+            elements (list/numpy.ndarray): List of strings containing the elements or a list of
+                                pyiron_atomistics.structure.periodic_table.ChemicalElement instances
+            numbers (list/numpy.ndarray): List of atomic numbers of elements
+            symbols (list/numpy.ndarray): List of chemical symbols
+            positions (list/numpy.ndarray): List of positions
+            scaled_positions (list/numpy.ndarray): List of scaled positions (relative coordinates)
+            pbc (boolean): Tells if periodic boundary conditions should be applied
+            cell (list/numpy.ndarray): A 3x3 array representing the lattice vectors of the structure
+            momenta (list/numpy.ndarray): List of momentum values
+            tags (list/numpy.ndarray): A list of tags
+            masses (list/numpy.ndarray): A list of masses
+            magmoms (list/numpy.ndarray): A list of magnetic moments
+            charges (list/numpy.ndarray): A list of point charges
+            celldisp:
+            constraint (list/numpy.ndarray): A list of constraints
+            calculator: ASE calculator
+            info (list/str): ASE compatibility
+            indices (list/numpy.ndarray): The list of species indices
+            dimension (int): Dimension of the structure
+            species (list): List of species
+
         """
         return Atoms(symbols=symbols, positions=positions, numbers=numbers, tags=tags, momenta=momenta, masses=masses,
                      magmoms=magmoms, charges=charges, scaled_positions=scaled_positions, cell=cell, pbc=pbc,
                      celldisp=celldisp, constraint=constraint, calculator=calculator, info=info, indices=indices,
                      elements=elements, dimension=dimension, species=species, **qwargs)
-
-    setattr(create_atoms, '__doc__', create_atoms.__doc__ + Atoms.__doc__)
 
     @staticmethod
     def create_surface(element, surface_type, size=(1, 1, 1), vacuum=1.0, center=False, **kwargs):
