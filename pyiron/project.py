@@ -21,9 +21,12 @@ from pyiron_lammps.potential import LammpsPotentialFile
 from pyiron_vasp.potential import VaspPotential
 from pyiron_atomistics.structure.atoms import CrystalStructure
 import pyiron_atomistics.structure.pyironase as ase
+from pyiron_atomistics.structure.atoms import Atoms
+
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \
+                "- Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -314,6 +317,22 @@ class Project(ProjectCore):
             from ase.build import bulk
             return bulk(name=name, crystalstructure=crystalstructure, a=a, c=c, covera=covera, u=u,
                         orthorhombic=orthorhombic, cubic=cubic)
+
+    @staticmethod
+    def create_atoms(symbols=None, positions=None, numbers=None, tags=None, momenta=None, masses=None,
+                 magmoms=None, charges=None, scaled_positions=None, cell=None, pbc=None, celldisp=None, constraint=None,
+                 calculator=None, info=None, indices=None, elements=None, dimension=None, species=None,
+                 **qwargs):
+        """
+        Creates a pyiron_atomistics.structure.atoms.Atoms instance.
+
+        """
+        return Atoms(symbols=None, positions=None, numbers=None, tags=None, momenta=None, masses=None,
+                     magmoms=None, charges=None, scaled_positions=None, cell=None, pbc=None, celldisp=None,
+                     constraint=None, calculator=None, info=None, indices=None, elements=None, dimension=None,
+                     species=None, **qwargs)
+
+    setattr(create_atoms, '__doc__', create_atoms.__doc__ + Atoms.__doc__)
 
     @staticmethod
     def create_surface(element, surface_type, size=(1, 1, 1), vacuum=1.0, center=False, **kwargs):
