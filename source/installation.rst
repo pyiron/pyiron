@@ -21,9 +21,9 @@ With the first line docker downloads the pyiron image from the pyiron repository
 .. code-block:: bash
    
     Copy/paste this URL into your browser when you connect for the first time, to login with a token:
-    http://localhost:8888/?token=eb1394c21574a59249b6d36eab4484f59b7f13516f23f152
+    http://localhost:8888/?token=<your_token>
 
-Copy the line http://localhost:8888/?token=eb1394c21574a59249b6d36eab4484f59b7f13516f23f152 from your terminal to the web browser to access jupyterlab. 
+Copy the line http://localhost:8888/?token=<your_token> from your terminal to the web browser to access jupyterlab.
 
 
 
