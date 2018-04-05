@@ -30,29 +30,30 @@ install:
   - conda config --add channels conda-forge
   - conda config --add channels pyiron
   - conda config --set anaconda_upload yes
+  - pip install --pre --no-deps pyiron_base pyiron_atomistics
   - pip install .
 
 script:
   - python --version
 
 deploy:
-  - provider: script
-    script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_lammps
-    on:
-      branch: master
   - provider: pypi
     user: pyiron
     password: ${PYPI_UPLOAD_TOKEN}
     allow_failure: true
     on:
       branch: master
-  - provider: script
-    script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_lammps
+  - provider: pypi
+    user: pyiron
+    password: ${PYPI_UPLOAD_TOKEN}
+    allow_failure: true
     on:
       tags: true
-  - provider: pypi
-    user: pyiron
-    password: ${PYPI_UPLOAD_TOKEN}
-    allow_failure: true
+  - provider: script
+    script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_lammps
+    on:
+      branch: master
+  - provider: script
+    script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_lammps
     on:
       tags: true
