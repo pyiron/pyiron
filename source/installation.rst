@@ -67,7 +67,18 @@ The jupyter navigator should be started automatically inside the browser, so you
     pr = Project('test')
     basis = pr.create_structure('Fe', 'bcc', 2.78)
     basis.plot3d() 
-    
+
+If NGLview is not loaded correctly or the atomistic structure is not displayed, which some times happens in particular with the miniconda distribution, it might be reasonable to try the latest development version: 
+
+.. code-block:: bash
+
+    conda install ipywidgets=7.1.2 nodejs -c conda-forge
+    pip install nglview==1.1.2
+    nglview enable 
+    conda install jupyterlab=0.31.12 -y -c conda-forge
+    jupyter-labextension install @jupyter-widgets/jupyterlab-manager@0.33.2
+    jupyter-labextension install nglview-js-widgets@1.1.2
+ 
 The code above creates a two atom iron bcc structure with a lattice constant of 2.78 and visualizes the structure. To execute a first pyiron calculation we need to add an interface to the simulation code. For lammps this can be done by editing the file :code:`~/pyiron/resources/pyiron_lammps/bin/run_lammps_<version number>.bat` for windows or :code:`~/pyiron/resources/pyiron_lammps/bin/run_lammps_<version number>.sh` for linux / MacOs. The version number is used as an identifier to support multiple versions of the same executable. Sample scripts are provided in https://github.com/pyiron/pyiron-resources . 
 
 In addition to the executables additional resources like emperical potentials :code:`~/pyiron/resources/pyiron_lammps/potentials/` can be stored for each individual code in their resource directory. 
