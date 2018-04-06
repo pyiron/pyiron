@@ -3,7 +3,11 @@
 ============
 Installation
 ============
+
+.. seealso:: Before you install pyiron locally test it live on MyBinder.org .. image:: https://mybinder.org/badge.svg :target: https://mybinder.org/v2/gh/pyiron/pyiron-docker.git/binder
+
 pyiron is build and tested for Python 2.7, 3.5 and 3.6. It can be installed as a basic python package but we highly recommend installing jupyter notebooks and nglview to have a more modern interface with integrated visualisation capabilities. 
+
 
 ----------------------
 Docker (demonstration)
@@ -82,6 +86,14 @@ If NGLview is not loaded correctly or the atomistic structure is not displayed, 
 The code above creates a two atom iron bcc structure with a lattice constant of 2.78 and visualizes the structure. To execute a first pyiron calculation we need to add an interface to the simulation code. For lammps this can be done by editing the file :code:`~/pyiron/resources/pyiron_lammps/bin/run_lammps_<version number>.bat` for windows or :code:`~/pyiron/resources/pyiron_lammps/bin/run_lammps_<version number>.sh` for linux / MacOs. The version number is used as an identifier to support multiple versions of the same executable. Sample scripts are provided in https://github.com/pyiron/pyiron-resources . 
 
 In addition to the executables additional resources like emperical potentials :code:`~/pyiron/resources/pyiron_lammps/potentials/` can be stored for each individual code in their resource directory. 
+
+To install lammps http://lammps.sandia.gov on Linux or MacOs we provide a serial executable via anaconda: 
+
+.. code-block:: bash
+
+    conda install lammps -c pyiron
+    
+The windows executable is available at http://rpm.lammps.org/windows.html . After the installation it has to be linked in :code:`~/pyiron/resources/pyiron_lammps/bin/run_lammps_<version number>.bat`.  
 
 After the executable is configured the first calculation can be executed, using the atomistic structure from above we run: 
 
