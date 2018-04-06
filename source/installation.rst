@@ -4,7 +4,8 @@
 Installation
 ============
 
-.. seealso:: Before you install pyiron locally test it live on MyBinder.org .. image:: https://mybinder.org/badge.svg :target: https://mybinder.org/v2/gh/pyiron/pyiron-docker.git/binder
+
+.. seealso:: Before you install pyiron locally test it live on MyBinder.org image:: https://mybinder.org/badge.svg :target: https://mybinder.org/v2/gh/pyiron/pyiron-docker.git/binder
 
 pyiron is build and tested for Python 2.7, 3.5 and 3.6. It can be installed as a basic python package but we highly recommend installing jupyter notebooks and nglview to have a more modern interface with integrated visualisation capabilities. 
 
