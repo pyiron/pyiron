@@ -45,6 +45,7 @@ Contents
 
 .. toctree::
    :maxdepth:4
+   Try it now! <https://mybinder.org/v2/gh/pyiron/pyiron-docker.git/binder>
    source/installation.rst
    source/developers.rst
    source/citation.rst
