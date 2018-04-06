@@ -18,6 +18,11 @@ pyiron
 Welcome to the official documentation of the pyiron package! pyiron is a Python based IDE for computational materials
 design.
 
+Try pyiron without installation
+===============================
+
+Using `Binder <https://mybinder.org/>`_, you can try some of our examples online without any installation.
+`Try it now! <https://mybinder.org/v2/gh/pyiron/pyiron-docker.git/binder>`_
 
 ============
 Introduction
@@ -45,7 +50,6 @@ Contents
 
 .. toctree::
    :maxdepth:4
-   Try it now! <https://mybinder.org/v2/gh/pyiron/pyiron-docker.git/binder>
    source/installation.rst
    source/developers.rst
    source/citation.rst
