@@ -40,12 +40,15 @@ class Vasp(GenericDFTJob):
     Class to setup and run and analyze VASP simulations which is a derivative of pyiron.objects.job.generic.GenericJob.
     The functions in these modules are written in such the function names and attributes are very generic
     (get_structure(), molecular_dynamics(), version) but the functions are written to handle VASP specific input/output.
+
     Args:
         project (pyiron.project.Project instance):  Specifies the project path among other attributes
         job_name (str): Name of the job
+
     Attributes:
         input (pyiron_vasp.vasp.Input instance): Instance which handles the input
         output (pyiron_vasp.vasp.Input instance): Instance which handles the output
+
     Examples:
         Let's say you need to run a vasp simulation where you would like to control the input parameters manually. To
         set up a static dft run with Gaussian smearing and a k-point MP mesh of [6, 6, 6]. You would have to set it up
@@ -61,6 +64,7 @@ class Vasp(GenericDFTJob):
         >>> ham.set_occupancy_smearing(smearing="gaussian")
         >>> ham.set_kpoints(mesh=[6, 6, 6])
         The exact same tags as in the first examples are set automatically.
+
     """
 
     def __init__(self, project, job_name):
@@ -89,8 +93,7 @@ class Vasp(GenericDFTJob):
     def exchange_correlation_functional(self, val):
         """
         Args:
-            exchange_correlation_functional:
-        Returns:
+            val(str):
         """
         if val in ["PBE", "pbe", "GGA", "gga"]:
             self.input.potcar["xc"] = "PBE"
