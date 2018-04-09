@@ -36,5 +36,5 @@ script:
 after_success:
   - cd pyiron.github.io
   - git add -A 
-  - git commit -m "Build documentation on ${HOSTNAME}" 
+  - git commit -m "${TRAVIS_COMMIT_MESSAGE}" 
   - git push
