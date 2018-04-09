@@ -27,6 +27,7 @@ script:
   - git rm -r *
   - touch .nojekyll
   - echo "[DEFAULT]\nTOP_LEVEL_DIRS = $PWD\nRESOURCE_PATHS = $PWD/pyiron-resources" > ~/.pyiron
+  - echo "# Build Status\n\nThis repository is automatically updated based on the changes in https://github.com/pyiron/pyiron_docs .\n[![Build Status](https://travis-ci.org/pyiron/pyiron_docs.svg?branch=master)](https://travis-ci.org/pyiron/pyiron_docs)" > README.md
   - cd ../MetaRepo
   - for d in $(ls -d pyiron*); do sphinx-apidoc -f -o ../pyiron_docs/apidoc $d/$d; done
   - cd ../pyiron_docs
