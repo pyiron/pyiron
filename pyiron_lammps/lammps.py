@@ -384,8 +384,8 @@ class Lammps(AtomisticGenericJob):
         Returns:
 
         """
-        super(Lammps, self).calc_minimize(e_tol, f_tol, max_iter, pressure, n_print)
-        self.input.control.calc_minimize(e_tol, f_tol, max_iter, pressure, n_print)
+        super(Lammps, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure, n_print=n_print)
+        self.input.control.calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure, pressure=pressure)
 
     def calc_static(self):
         """
@@ -416,8 +416,9 @@ class Lammps(AtomisticGenericJob):
         """
         if dt is not None:
             time_step = dt
-        super(Lammps, self).calc_md(temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100,
-                                    delta_temp=1.0, delta_press=None, seed=None, tloop=None, rescale_velocity=True)
+        super(Lammps, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps, 
+                                    time_step=time_step, n_print=n_print, delta_temp=delta_temp, delta_press=delta_press,
+                                    seed=seed, tloop=tloop, rescale_velocity=rescale_velocity)
         self.input.control.calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
                                    time_step=time_step, n_print=n_print, delta_temp=delta_temp, delta_press=delta_press,
                                    seed=seed, tloop=tloop, rescale_velocity=rescale_velocity)
