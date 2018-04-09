@@ -13,13 +13,14 @@ install:
   - conda config --add channels conda-forge
   - conda config --add channels pyiron
   - conda config --set anaconda_upload yes
-  - conda install -y -c conda-forge -c pyiron pyiron sphinx nbsphinx
+  - conda install -y -c conda-forge -c pyiron pyiron sphinx nbsphinx lammps 
 
 script:
   - cd .. 
   - git clone --recurse-submodules https://github.com/pyiron/MetaRepo.git
   - git clone https://github.com/pyiron/pyiron.github.io.git
   - git clone https://github.com/pyiron/pyiron-resources.git
+  - echo "[DEFAULT]\nTOP_LEVEL_DIRS = $PWD\nRESOURCE_PATHS = $PWD/pyiron-resources" > ~/.pyiron
   - cd MetaRepo
   - for d in $(ls -d pyiron*); do sphinx-apidoc -f -o ../pyiron_docs/apidoc $d/$d; done
   - cd pyiron_docs
