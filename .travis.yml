@@ -17,11 +17,11 @@ install:
   - conda install -y -c conda-forge -c pyiron numpy pytables git pyiron sphinx nbsphinx lammps ipywidgets
 
 script:
-  - git config --global user.email "travis@travis-ci.org"
-  - git config --global user.name "Travis CI"
+  - git config --global user.email "${GH_EMAIL}"
+  - git config --global user.name "${GH_USER}"
   - cd .. 
   - git clone --recurse-submodules https://github.com/pyiron/MetaRepo.git
-  - git clone https://jan-janssen:${GH_TOKEN}@github.com/pyiron/pyiron.github.io.git
+  - git clone https://${GH_USER}:${GH_TOKEN}@github.com/pyiron/pyiron.github.io.git
   - git clone https://github.com/pyiron/pyiron-resources.git
   - cd pyiron.github.io
   - git rm -r *
@@ -36,5 +36,5 @@ script:
 after_success:
   - cd pyiron.github.io
   - git add -A 
-  - git commit -m "Build documentation on $HOSTNAME" 
+  - git commit -m "Build documentation on ${HOSTNAME}" 
   - git push
