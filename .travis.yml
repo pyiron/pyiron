@@ -20,8 +20,18 @@ script:
   - git clone --recurse-submodules https://github.com/pyiron/MetaRepo.git
   - git clone https://github.com/pyiron/pyiron.github.io.git
   - git clone https://github.com/pyiron/pyiron-resources.git
+  - cd pyiron.github.io
+  - git rm -r *
+  - touch .nojekyll
   - echo "[DEFAULT]\nTOP_LEVEL_DIRS = $PWD\nRESOURCE_PATHS = $PWD/pyiron-resources" > ~/.pyiron
-  - cd MetaRepo
+  - cd ../MetaRepo
   - for d in $(ls -d pyiron*); do sphinx-apidoc -f -o ../pyiron_docs/apidoc $d/$d; done
-  - cd pyiron_docs
+  - cd ../pyiron_docs
   - sphinx-build -b html ./ ../pyiron.github.io
+  - cd ..
+  
+after_success:
+  - cd pyiron.github.io
+  - git add -A 
+  - git commit -m "Build documentation on $HOSTNAME" 
+  - git push 
