@@ -2,6 +2,10 @@ os: linux
 language: python
 env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.6"
 
+branches:
+  only:
+  - master
+
 install:
   - wget ${MINICONDA} -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
