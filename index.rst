@@ -24,8 +24,9 @@ Try pyiron without installation
 Using `Binder <https://mybinder.org/>`_, you can try some of our examples online without any installation.
 `Try it now! <https://mybinder.org/v2/gh/pyiron/pyiron-docker.git/binder>`_
 
-.. image:: source/screenshot.png
-    :width: 500px
+.. image:: _static/screenshot.png
+    :width: 840px
+    :height: 525px
     :align: center
     :alt: Screenshot of pyiron running inside jupyterlab. 
 
