@@ -11,12 +11,10 @@ install:
   - export PATH="$HOME/miniconda/bin:$PATH"
   - conda info -a
   - conda config --set always_yes yes --set changeps1 no
-  - conda update -q conda
-  - conda install conda-build anaconda-client numpy pytables git
   - conda config --add channels conda-forge
   - conda config --add channels pyiron
-  - conda config --set anaconda_upload yes
-  - conda install -y -c conda-forge -c pyiron pyiron sphinx nbsphinx lammps ipywidgets
+  - conda update -q conda
+  - conda install -y -c conda-forge -c pyiron numpy pytables git pyiron sphinx nbsphinx lammps ipywidgets
 
 script:
   - git config --global user.email "travis@travis-ci.org"
