@@ -16,4 +16,10 @@ install:
   - conda install -y -c conda-forge -c pyiron pyiron sphinx nbsphinx
 
 script:
-  - python --version
+  - cd .. 
+  - git clone --recurse-submodules https://github.com/pyiron/MetaRepo.git
+  - git clone git@github.com:pyiron/pyiron.github.io.git
+  - cd MetaRepo
+  - for d in $(ls -d pyiron*); do sphinx-apidoc -f -o ../pyiron_docs/apidoc $d/$d; done
+  - cd pyiron_docs
+  - sphinx-build -b html ./ pyiron.github.io
