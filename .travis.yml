@@ -1,4 +1,3 @@
-os: linux
 language: python
 env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.6"
 
@@ -20,6 +19,8 @@ install:
   - conda install -y -c conda-forge -c pyiron pyiron sphinx nbsphinx lammps 
 
 script:
+  - git config --global user.email "travis@travis-ci.org"
+  - git config --global user.name "Travis CI"
   - cd .. 
   - git clone --recurse-submodules https://github.com/pyiron/MetaRepo.git
   - git clone https://github.com/pyiron/pyiron.github.io.git
@@ -38,4 +39,5 @@ after_success:
   - cd pyiron.github.io
   - git add -A 
   - git commit -m "Build documentation on $HOSTNAME" 
-  - git push 
+  - git remote add github-token https://${GH_TOKEN}@github.com/pyiron/pyiron.github.io.git > /dev/null 2>&1
+  - git push --quiet --set-upstream github-token 
