@@ -14,7 +14,7 @@ install:
   - conda config --add channels conda-forge
   - conda config --add channels pyiron
   - conda update -q conda
-  - conda install -y -c conda-forge -c pyiron numpy pytables git pyiron sphinx nbsphinx lammps ipywidgets
+  - conda install -y -c conda-forge -c pyiron numpy pytables git pyiron sphinx nbsphinx lammps ipywidgets sphinx_rtd_theme
 
 script:
   - git config --global user.email "${GH_EMAIL}"
