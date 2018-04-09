@@ -927,15 +927,17 @@ class Output:
         """
         sorted_indices = vasp_sorter(self.structure)
         files_present = os.listdir(directory)
+        log_dict = dict()
         if "OUTCAR" in files_present:
             self.outcar.from_file(filename=posixpath.join(directory, "OUTCAR"))
+            log_dict["temperatures"] = self.outcar.parse_dict["temperatures"]
+            log_dict["pressures"] = self.outcar.parse_dict["pressures"]
 
         if "vasprun.xml" in files_present:
             try:
                 self.vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
             except VasprunError:
                 raise VaspCollectError("The vasprun file is either corrupted or the simulation crashed")
-            log_dict = dict()
             log_dict["forces"] = self.vp_new.vasprun_dict["forces"]
             log_dict["cells"] = self.vp_new.vasprun_dict["cells"]
             log_dict["volume"] = [np.linalg.det(cell) for cell in self.vp_new.vasprun_dict["cells"]]
@@ -949,8 +951,6 @@ class Output:
             log_dict["positions"] = self.vp_new.vasprun_dict["positions"]
             log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
             log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
-            log_dict["temperatures"] = self.outcar.parse_dict["temperatures"]
-            log_dict["pressures"] = self.outcar.parse_dict["pressures"]
             log_dict["unwrapped_positions"] = unwrap_coordinates(positions=log_dict["positions"], cell=None,
                                                                  is_relative=True)
             for i, pos in enumerate(log_dict["positions"]):
