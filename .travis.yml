@@ -16,7 +16,7 @@ install:
   - conda config --add channels conda-forge
   - conda config --add channels pyiron
   - conda config --set anaconda_upload yes
-  - conda install -y -c conda-forge -c pyiron pyiron sphinx nbsphinx lammps 
+  - conda install -y -c conda-forge -c pyiron pyiron sphinx nbsphinx lammps ipywidgets
 
 script:
   - git config --global user.email "travis@travis-ci.org"
