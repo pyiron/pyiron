@@ -23,7 +23,7 @@ script:
   - git config --global user.name "Travis CI"
   - cd .. 
   - git clone --recurse-submodules https://github.com/pyiron/MetaRepo.git
-  - git clone https://github.com/pyiron/pyiron.github.io.git
+  - git clone https://jan-janssen:${GH_TOKEN}@github.com/pyiron/pyiron.github.io.git
   - git clone https://github.com/pyiron/pyiron-resources.git
   - cd pyiron.github.io
   - git rm -r *
@@ -39,5 +39,4 @@ after_success:
   - cd pyiron.github.io
   - git add -A 
   - git commit -m "Build documentation on $HOSTNAME" 
-  - git remote add github-token https://${GH_TOKEN}@github.com/pyiron/pyiron.github.io.git > /dev/null 2>&1
   - git push --quiet --set-upstream github-token 
