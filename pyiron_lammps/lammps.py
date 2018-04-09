@@ -385,7 +385,7 @@ class Lammps(AtomisticGenericJob):
 
         """
         super(Lammps, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure, n_print=n_print)
-        self.input.control.calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure, pressure=pressure)
+        self.input.control.calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure, n_print=n_print)
 
     def calc_static(self):
         """
