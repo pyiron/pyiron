@@ -1,0 +1,19 @@
+os: linux
+language: python
+env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.6"
+
+install:
+  - wget ${MINICONDA} -O miniconda.sh
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - conda info -a
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda install conda-build anaconda-client numpy pytables git
+  - conda config --add channels conda-forge
+  - conda config --add channels pyiron
+  - conda config --set anaconda_upload yes
+  - conda install -y -c conda-forge -c pyiron pyiron sphinx nbsphinx
+
+script:
+  - python --version
