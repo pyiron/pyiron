@@ -22,4 +22,4 @@ script:
   - cd MetaRepo
   - for d in $(ls -d pyiron*); do sphinx-apidoc -f -o ../pyiron_docs/apidoc $d/$d; done
   - cd pyiron_docs
-  - sphinx-build -b html ./ pyiron.github.io
+  - sphinx-build -b html ./ ../pyiron.github.io
