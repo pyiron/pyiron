@@ -9,4 +9,7 @@ inspectionProfiles/
 _build/
 apidoc/
 .ipynb_checkpoints/
+*.inp
+*.out
+*.lammps
 
