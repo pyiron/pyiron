@@ -1,0 +1,41 @@
+language: python
+env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.6"
+
+branches:
+  only:
+  - master
+
+install:
+  - wget ${MINICONDA} -O miniconda.sh
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - conda info -a
+  - conda config --set always_yes yes --set changeps1 no
+  - conda config --add channels conda-forge
+  - conda config --add channels pyiron
+  - conda update -q conda
+  - conda install -y -c conda-forge -c pyiron numpy pytables git pyiron sphinx nbsphinx lammps ipywidgets sphinx_rtd_theme
+
+script:
+  - git config --global user.email "${GH_EMAIL}"
+  - git config --global user.name "${GH_USER}"
+  - cd .. 
+  - git clone --recurse-submodules https://github.com/pyiron/MetaRepo.git
+  - git clone https://${GH_USER}:${GH_TOKEN}@github.com/pyiron/pyiron.github.io.git
+  - git clone https://github.com/pyiron/pyiron-resources.git
+  - cd pyiron.github.io
+  - git rm -r *
+  - touch .nojekyll
+  - echo -e "[DEFAULT]\nTOP_LEVEL_DIRS = $PWD\nRESOURCE_PATHS = $PWD/pyiron-resources" > ~/.pyiron
+  - echo -e "# Build Status\n\nThis repository is automatically updated based on the changes in https://github.com/pyiron/pyiron_docs .\n[![Build Status](https://travis-ci.org/pyiron/pyiron_docs.svg?branch=master)](https://travis-ci.org/pyiron/pyiron_docs)" > README.md
+  - cd ../MetaRepo
+  - for d in $(ls -d pyiron*); do sphinx-apidoc -f -o ../pyiron_docs/apidoc $d/$d; done
+  - cd ../pyiron_docs
+  - sphinx-build -b html ./ ../pyiron.github.io
+  - cd ..
+  
+after_success:
+  - cd pyiron.github.io
+  - git add -A 
+  - git commit -m "${TRAVIS_COMMIT_MESSAGE}" 
+  - git push

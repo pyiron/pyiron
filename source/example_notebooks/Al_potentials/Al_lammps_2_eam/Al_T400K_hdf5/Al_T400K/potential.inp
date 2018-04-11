@@ -1,0 +1,2 @@
+pair_style eam/alloy
+pair_coeff * * Al_lammps_2.eam Al

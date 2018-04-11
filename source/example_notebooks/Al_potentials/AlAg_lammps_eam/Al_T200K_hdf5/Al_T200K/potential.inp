@@ -1,0 +1,2 @@
+pair_style eam/alloy
+pair_coeff * * AlAg.lammps.eam Al Ag
