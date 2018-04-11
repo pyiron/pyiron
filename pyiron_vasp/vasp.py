@@ -1303,8 +1303,12 @@ class Potcar(GenericParameters):
                 el = el_obj.Abbreviation
             if isinstance(el_obj.tags, dict):
                 if 'pseudo_potcar_file' in el_obj.tags.keys():
-                    file_name = el_obj.tags['pseudo_potcar_file']
-                    el_path = self._find_potential_file(xc=xc, file_name=file_name)
+                    # file_name = el_obj.tags['pseudo_potcar_file']
+                    # el_path = self._find_potential_file(xc=xc, file_name=file_name)
+                    new_element = el_obj.tags['pseudo_potcar_file']
+                    vasp_potentials.add_new_element(parent_element=el, new_element=new_element)
+                    el_path = self._find_potential_file(
+                        path=vasp_potentials.find_default(new_element)['Filename'].values[0][0])
                     if not (os.path.isfile(el_path)):
                         raise ValueError('such a file does not exist in the pp directory')
                 else:
