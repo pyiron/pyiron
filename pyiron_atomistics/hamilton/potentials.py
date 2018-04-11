@@ -9,7 +9,7 @@ OpenKim https://openkim.org database.
 import posixpath
 import pandas
 import os
-from pyironbase.core.settings.generic import Settings
+from pyiron_base.core.settings.generic import Settings
 
 __author__ = "Martin Boeckmann, Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
@@ -114,10 +114,7 @@ class PotentialAbstract(object):
                                             })
                         elif periodic_table_file_name in file_lst and periodic_table_file_name.endswith('.h5'):
                             return pandas.read_hdf(os.path.join(path, periodic_table_file_name), mode='r')
-        # Backwards compatibility to the old version
-        return pandas.read_hdf(key=backward_compatibility_name,
-                               path_or_buf=posixpath.join(s.path_potentials, 'potentials.h5'),
-                               mode='r')
+        raise ValueError('Was not able to locate the potential files.')
 
     @staticmethod
     def _get_potential_default_df(plugin_name,
@@ -143,7 +140,4 @@ class PotentialAbstract(object):
                             return pandas.read_csv(os.path.join(path, periodic_table_file_name), index_col=0)
                         elif periodic_table_file_name in file_lst and periodic_table_file_name.endswith('.h5'):
                             return pandas.read_hdf(os.path.join(path, periodic_table_file_name), mode='r')
-        # Backwards compatibility to the old version
-        return pandas.read_hdf(key=backward_compatibility_name,
-                               path_or_buf=posixpath.join(s.path_potentials, 'potentials.h5'),
-                               mode='r')
+        raise ValueError('Was not able to locate the potential files.')

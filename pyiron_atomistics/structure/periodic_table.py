@@ -5,7 +5,7 @@
 from __future__ import print_function, unicode_literals
 import numpy as np
 import os
-from pyironbase.core.settings.generic import Settings
+from pyiron_base.core.settings.generic import Settings
 import sys
 import pandas
 
@@ -322,8 +322,7 @@ class PeriodicTable(object):
                             return pandas.read_csv(os.path.join(path, periodic_table_file_name), index_col=0)
                         elif periodic_table_file_name in file_lst and periodic_table_file_name.endswith('.h5'):
                             return pandas.read_hdf(os.path.join(path, periodic_table_file_name), mode='r')
-            # Backwards compatibility to the old version
-            return pandas.read_hdf(os.path.join(s.path_potentials, 'periodictable.h5'), mode='r')
+            raise ValueError('Was not able to locate a periodic table. ')
         else:
             if file_name.endswith('.h5'):
                 return pandas.read_hdf(file_name, mode='r')

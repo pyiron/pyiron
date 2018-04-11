@@ -1,6 +1,13 @@
+import unittest
+import os
+from pyiron_base.core.settings.generic import Settings
+s = Settings(config={'sql_file': 'atom.db',
+                     'project_paths': os.path.abspath(os.getcwd()),
+                     'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
+
 from pyiron_atomistics.structure.atom import Atom
 from pyiron_atomistics.structure.periodic_table import PeriodicTable
-import unittest
+
 
 
 class TestAtom(unittest.TestCase):

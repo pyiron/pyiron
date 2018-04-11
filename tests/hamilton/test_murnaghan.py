@@ -1,11 +1,10 @@
 import os
-from pyironbase.core.settings.config.testing import ConfigTesting
-from pyironbase.core.settings.generic import Settings
 import unittest
+from pyiron_base.core.settings.generic import Settings, convert_path
 
-config = ConfigTesting(sql_lite_database='./testing_murnaghan.db', path_project=str(os.getcwd()),
-                       path_potentials='../../../static/potentials/')
-s = Settings(config=config)
+s = Settings(config={'sql_file': 'murnaghan.db',
+                     'project_paths': convert_path(os.getcwd()),
+                     'resource_paths': os.path.join(convert_path(os.getcwd()), '../static')})
 
 from pyiron.project import Project
 
@@ -38,8 +37,8 @@ class TestMurnaghan(unittest.TestCase):
         project = Project('testing_murnaghan')
         project.remove(enforce=True)
         s.close_connection()
-        if os.path.isfile('../testing_murnaghan.db'):
-            project.remove_file('../testing_murnaghan.db')
+        if os.path.isfile('../murnaghan.db'):
+            project.remove_file('../murnaghan.db')
 
     def test_run(self):
         ham = self.project.create_job(self.project.job_type.AtomisticExampleJob, "job_test")

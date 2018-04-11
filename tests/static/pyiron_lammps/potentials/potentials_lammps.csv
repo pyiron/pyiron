@@ -1,0 +1,17 @@
+,Config,Filename,Model,Name,Species
+0,"['pair_style eam/fs \n', 'pair_coeff * * Fe.eam.fs Fe\n']",['nist-potentials/2017--Wang-P-Xu-S-Liu-J-Li-X-Wei-Y-Wang-H-Gao-H-Yang-Y--Fe/Fe.eam.fs'],EAM,Fe_eam_fs,['Fe']
+0,"['pair_style eam/fs \n', 'pair_coeff * * Al-Fe.eam.fs Al Fe\n']",['nist-potentials/Al-Fe-MIM/Al-Fe.eam.fs'],EAM,Al_Fe_eam_fs,"['Al', 'Fe']"
+0,"['pair_style eam/alloy \n', 'pair_coeff * * mg-al-set.eam.alloy Mg Al\n']",['nist-potentials/Al-Mg-LOARH/mg-al-set.eam.alloy'],EAM,mg_al_set_eam_alloy,"['Mg', 'Al']"
+0,"['pair_style eam/fs \n', 'pair_coeff * * Al-Mg.eam.fs Al Mg\n']",['nist-potentials/Al-Mg-MIM/Al-Mg.eam.fs'],EAM,Al_Mg_eam_fs,"['Al', 'Mg']"
+0,"['pair_style eam/fs \n', 'pair_coeff * * Fe.eam.fs Fe\n']",['nist-potentials/Fe-ATVF/Fe.eam.fs'],EAM,Fe_eam_fs,['Fe']
+0,"['pair_style eam/alloy \n', 'pair_coeff * * FeCuNi.eam.alloy Fe Cu Ni\n']",['nist-potentials/Fe-Cu-Ni-GB/FeCuNi.eam.alloy'],EAM,FeCuNi_eam_alloy,"['Fe', 'Cu', 'Ni']"
+0,"['pair_style eam/fs \n', 'pair_coeff * * Fe_2.eam.fs Fe\n']",['nist-potentials/Fe-MIM/Fe_2.eam.fs'],EAM,Fe_2_eam_fs,['Fe']
+0,"['pair_style eam/fs \n', 'pair_coeff * * Fe_5.eam.fs Fe\n']",['nist-potentials/Fe-MIM/Fe_5.eam.fs'],EAM,Fe_5_eam_fs,['Fe']
+0,"['pair_style eam/fs \n', 'pair_coeff * * Fe_2.eam.fs Fe\n']",['nist-potentials/Fe-MIM2/Fe_2.eam.fs'],EAM,Fe_2_eam_fs,['Fe']
+0,"['pair_style eam/alloy \n', 'pair_coeff * * FeNiCr_Bonny_2013_ptDef.eam.alloy Fe Ni Cr\n']",['nist-potentials/Fe-Ni-Cr-GB-2013/FeNiCr_Bonny_2013_ptDef.eam.alloy'],EAM,FeNiCr_Bonny_2013_ptDef_eam_alloy,"['Fe', 'Ni', 'Cr']"
+0,"['pair_style eam/alloy \n', 'pair_coeff * * FeNiCr.eam.alloy Fe Ni Cr\n']",['nist-potentials/Fe-Ni-Cr-GB/FeNiCr.eam.alloy'],EAM,FeNiCr_eam_alloy,"['Fe', 'Ni', 'Cr']"
+0,"['pair_style eam/alloy \n', 'pair_coeff * * Fe-Ni.eam.alloy Fe Ni\n']",['nist-potentials/Fe-Ni-GB/Fe-Ni.eam.alloy'],EAM,Fe_Ni_eam_alloy,"['Fe', 'Ni']"
+0,"['pair_style eam/fs \n', 'pair_coeff * * Fe-P.eam.fs Fe P\n']",['nist-potentials/Fe-P-MIM/Fe-P.eam.fs'],EAM,Fe_P_eam_fs,"['Fe', 'P']"
+0,"['pair_style eam/alloy \n', 'pair_coeff * * Fe_Mishin2006.eam.alloy Fe\n']",['nist-potentials/Fe-YM/Fe_Mishin2006.eam.alloy'],EAM,Fe_Mishin2006_eam_alloy,['Fe']
+0,"['pair_style eam/fs \n', 'pair_coeff * * Fe-C_Hepburn_Ackland.eam.fs Fe C\n']",['nist-potentials/FeC-GJA/Fe-C_Hepburn_Ackland.eam.fs'],EAM,Fe_C_Hepburn_Ackland_eam_fs,"['Fe', 'C']"
+0,"['pair_style eam/fs \n', 'pair_coeff * * V-Fe.eam.fs V Fe\n']",['nist-potentials/V-Fe-MIM/V-Fe.eam.fs'],EAM,V_Fe_eam_fs,"['V', 'Fe']"

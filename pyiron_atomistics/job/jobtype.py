@@ -6,8 +6,8 @@ from __future__ import print_function
 import importlib
 import inspect
 import pkgutil
-from pyironbase.objects.job.generic import GenericJob
-from pyironbase.objects.job.jobtypebase import JobTypeChoiceBase, JobTypeBase
+from pyiron_base.objects.job.generic import GenericJob
+from pyiron_base.objects.job.jobtypebase import JobTypeChoiceBase, JobTypeBase
 
 """
 Jobtype class to create GenericJob type objects - the choice of job types is limited to the JOB_CLASS_DICT
@@ -21,11 +21,11 @@ __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
 
-JOB_CLASS_DICT = {'GenericMaster': 'pyironbase.objects.job.master',
-                  'ListMaster': 'pyironbase.objects.job.list',
-                  'ParallelMaster': 'pyironbase.objects.job.parallel',
-                  'ScriptJob': 'pyironbase.objects.job.script',
-                  'SerialMasterBase': 'pyironbase.objects.job.serial'}
+JOB_CLASS_DICT = {'GenericMaster': 'pyiron_base.objects.job.master',
+                  'ListMaster': 'pyiron_base.objects.job.list',
+                  'ParallelMaster': 'pyiron_base.objects.job.parallel',
+                  'ScriptJob': 'pyiron_base.objects.job.script',
+                  'SerialMasterBase': 'pyiron_base.objects.job.serial'}
 
 for d in [{name: obj.__module__
            for name, obj in inspect.getmembers(importlib.import_module(name))

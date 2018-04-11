@@ -1,11 +1,9 @@
-import os
-from pyironbase.core.settings.config.testing import ConfigTesting
-from pyironbase.core.settings.generic import Settings
 import unittest
-
-config = ConfigTesting(sql_lite_database='./structure_testing.db', path_project=str(os.getcwd()),
-                       path_potentials='../../../static/potentials/')
-s = Settings(config=config)
+import os
+from pyiron_base.core.settings.generic import Settings
+s = Settings(config={'sql_file': 'container.db',
+                     'project_paths': os.path.abspath(os.getcwd()),
+                     'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
 
 from pyiron.project import Project
 
@@ -26,7 +24,7 @@ class TestStructureContainer(unittest.TestCase):
         ham.remove()
         project.remove()
         s.close_connection()
-        os.remove('structure_testing.db')
+        os.remove('container.db')
 
     def test_container(self):
         structure_container = self.project.load(1)

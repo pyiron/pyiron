@@ -1,18 +1,15 @@
-import numpy as np
+import unittest
 import os
-from pyironbase.core.settings.config.testing import ConfigTesting
-from pyironbase.core.settings.generic import Settings
+from pyiron_base.core.settings.generic import Settings
+s = Settings(config={'sql_file': 'atoms.db',
+                     'project_paths': os.path.abspath(os.getcwd()),
+                     'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
+
+import numpy as np
 from pyiron_atomistics.structure.atom import Atom
 from pyiron_atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron_atomistics.structure.sparse_list import SparseList
 from pyiron_atomistics.structure.periodic_table import PeriodicTable
-import unittest
-
-
-config = ConfigTesting(sql_lite_database='./testing_atoms.db',
-                       path_project=str(os.getcwd()),
-                       path_potentials='../../../static/potentials/')
-s = Settings(config=config)
 
 
 class TestAtoms(unittest.TestCase):
@@ -285,9 +282,9 @@ class TestAtoms(unittest.TestCase):
         cell = np.eye(3)
         cell[0, 0] = a
         cell[2, 2] = c
-        cell[1, 0] = -a/2
-        cell[1, 1] = np.sqrt(3) * a / 2
-        pos = np.array([[0., 0., 0.], [1/3, 2/3, 1/2]])
+        cell[1, 0] = -a/2.
+        cell[1, 1] = np.sqrt(3) * a / 2.
+        pos = np.array([[0., 0., 0.], [1./3., 2./3., 1./2.]])
         Mg_hcp = Atoms('Mg2', scaled_positions=pos, cell=cell)
         self.assertEqual(Mg_hcp.get_spacegroup()['Number'], 194)
         cell = np.eye(3)

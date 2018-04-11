@@ -1,6 +1,8 @@
+{% set data = load_setup_py_data() %}
+
 package:
   name: pyiron_atomistics
-  version: beta
+  version: {{ data.get('version') }}
 
 source:
   path: ../../
@@ -17,7 +19,7 @@ requirements:
     - pytables
     - ase
     - spglib
-    - pyironbase
+    - pyiron_base
 
   run:
     - python
@@ -30,7 +32,12 @@ requirements:
     - pytables
     - ase
     - spglib
-    - pyironbase
+    - pyiron_base
+
+build:
+  script_env:
+   - TRAVIS
+   - APPVEYOR
 
 test:
   imports:

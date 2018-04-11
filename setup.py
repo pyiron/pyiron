@@ -2,16 +2,17 @@
 Setuptools based setup module
 """
 from setuptools import setup, find_packages
+import versioneer
 
 
 setup(
     name='pyiron_atomistics',
-    version='0.0.1',
+    version=versioneer.get_version(),
     description='pyiron IDE plugin for atomistic calculations',
     long_description='http://pyiron.org',
 
-    url='https://github.com/jan-janssen/pyiron_atomistics',
-    author='Jan Janssen (MPIE)',
+    url='https://github.com/pyiron/pyiron_atomistics',
+    author='Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department',
     author_email='janssen@mpie.de',
     license='BSD',
 
@@ -31,8 +32,9 @@ setup(
     ],
 
     keywords='pyiron',
-    packages=find_packages(),
+    packages=find_packages(exclude=["*tests*"]),
     install_requires=['ase',
-                      'pyironbase',
-                      'spglib']
+                      'pyiron_base',
+                      'spglib'],
+    cmdclass=versioneer.get_cmdclass(),
     )

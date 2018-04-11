@@ -7,12 +7,12 @@ import copy
 import numpy as np
 
 from pyiron_atomistics.structure.atoms import Atoms
-from pyironbase.objects.generic.parameters import GenericParameters
-from pyironbase.objects.job.generic import GenericJob as GenericJobCore
-from pyironbase.objects.job.master import GenericMaster
+from pyiron_base.objects.generic.parameters import GenericParameters
+from pyiron_base.objects.job.generic import GenericJob as GenericJobCore
+from pyiron_base.objects.job.master import GenericMaster
 
 try:
-    from pyironbase.core.project.gui import ProjectGUI
+    from pyiron_base.core.project.gui import ProjectGUI
 except (ImportError, TypeError, AttributeError):
     pass
 
@@ -91,7 +91,7 @@ class AtomisticGenericJob(GenericJobCore):
         self._generic_input['calc_mode'] = 'minimize'
         self._generic_input['max_iter'] = max_iter
         self._generic_input['pressure'] = pressure
-        self._generic_input.remove_keys(['temperature', 'n_ionic_steps', 'n_print'])
+        self._generic_input.remove_keys(['temperature', 'n_ionic_steps', 'n_print', 'velocity'])
 
     def calc_static(self):
         """
@@ -100,7 +100,7 @@ class AtomisticGenericJob(GenericJobCore):
 
         """
         self._generic_input['calc_mode'] = 'static'
-        self._generic_input.remove_keys(['max_iter', 'pressure', 'temperature', 'n_ionic_steps', 'n_print'])
+        self._generic_input.remove_keys(['max_iter', 'pressure', 'temperature', 'n_ionic_steps', 'n_print', 'velocity'])
 
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100, delta_temp=1.0,
                 delta_press=None, seed=None, tloop=None, rescale_velocity=True):
@@ -326,7 +326,7 @@ class AtomisticGenericJob(GenericJobCore):
                     self.structure.to_hdf(hdf5_input)
         else:
             self.to_hdf()
-        return super(AtomisticGenericJob, self)._run_if_lib_save(job_name=job_name, db_entry=True)
+        return super(AtomisticGenericJob, self)._run_if_lib_save(job_name=job_name, db_entry=db_entry)
 
     # Compatibility functions
     def get_final_structure(self):

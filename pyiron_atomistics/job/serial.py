@@ -4,7 +4,7 @@
 
 from __future__ import print_function
 from collections import OrderedDict
-from pyironbase.objects.job.serial import SerialMasterBase
+from pyiron_base.objects.job.serial import SerialMasterBase
 from pyiron_atomistics.job.atomistic import AtomisticGenericJob
 
 __author__ = "Jan Janssen"
