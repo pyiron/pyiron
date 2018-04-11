@@ -200,7 +200,8 @@ class PeriodicTable(object):
                 self.dataframe['tags'][el] = new_element.tags
             else:
                 self.dataframe = self.dataframe.append(new_element.sub)
-                self.dataframe['tags'] = self.dataframe['tags'].apply(lambda x: {} if pandas.isnull(x) else x)
+                self.dataframe['tags'] = self.dataframe['tags'].apply(lambda x: None if pandas.isnull(x) else x)
+                self.dataframe['Parent'] = self.dataframe['Parent'].apply(lambda x: None if pandas.isnull(x) else x)
 
     def element(self, arg, **qwargs):
         """
