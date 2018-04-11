@@ -40,12 +40,15 @@ class Vasp(GenericDFTJob):
     Class to setup and run and analyze VASP simulations which is a derivative of pyiron.objects.job.generic.GenericJob.
     The functions in these modules are written in such the function names and attributes are very generic
     (get_structure(), molecular_dynamics(), version) but the functions are written to handle VASP specific input/output.
+
     Args:
         project (pyiron.project.Project instance):  Specifies the project path among other attributes
         job_name (str): Name of the job
+
     Attributes:
         input (pyiron_vasp.vasp.Input instance): Instance which handles the input
         output (pyiron_vasp.vasp.Input instance): Instance which handles the output
+
     Examples:
         Let's say you need to run a vasp simulation where you would like to control the input parameters manually. To
         set up a static dft run with Gaussian smearing and a k-point MP mesh of [6, 6, 6]. You would have to set it up
@@ -61,6 +64,7 @@ class Vasp(GenericDFTJob):
         >>> ham.set_occupancy_smearing(smearing="gaussian")
         >>> ham.set_kpoints(mesh=[6, 6, 6])
         The exact same tags as in the first examples are set automatically.
+
     """
 
     def __init__(self, project, job_name):
@@ -75,6 +79,9 @@ class Vasp(GenericDFTJob):
 
     @property
     def plane_wave_cutoff(self):
+        """
+        Plane wave energy cutoff in eV
+        """
         return self.input.incar['ENCUT']
 
     @plane_wave_cutoff.setter
@@ -83,15 +90,13 @@ class Vasp(GenericDFTJob):
 
     @property
     def exchange_correlation_functional(self):
+        """
+        The exchange correlation functional used (LDA or GGA)
+        """
         return self.input.potcar["xc"]
 
     @exchange_correlation_functional.setter
     def exchange_correlation_functional(self, val):
-        """
-        Args:
-            exchange_correlation_functional:
-        Returns:
-        """
         if val in ["PBE", "pbe", "GGA", "gga"]:
             self.input.potcar["xc"] = "PBE"
         elif val in ["LDA", "lda"]:
@@ -101,6 +106,9 @@ class Vasp(GenericDFTJob):
 
     @property
     def spin_constraints(self):
+        """
+        Returns True if the calculation is spin polarized
+        """
         if 'I_CONSTRAINED_M' in self.input.incar._dataset['Parameter']:
             return self.input.incar['I_CONSTRAINED_M'] == 1 or self.input.incar['I_CONSTRAINED_M'] == 2
         else:
@@ -112,6 +120,9 @@ class Vasp(GenericDFTJob):
 
     @property
     def write_electrostatic_potential(self):
+        """
+        True if the local potential or electrostatic potential LOCPOT file is/should be written
+        """
         return bool(self.input.incar["LVTOT"])
 
     @write_electrostatic_potential.setter
@@ -122,6 +133,9 @@ class Vasp(GenericDFTJob):
 
     @property
     def write_charge_density(self):
+        """
+        True if the charge density file CHGCAR file is/should be written
+        """
         return bool(self.input.incar["LCHARG"])
 
     @write_charge_density.setter
@@ -130,6 +144,9 @@ class Vasp(GenericDFTJob):
 
     @property
     def write_wave_funct(self):
+        """
+        True if the wave function file WAVECAR file is/should be written
+        """
         return self.input.incar['LWAVE']
 
     @write_wave_funct.setter
@@ -140,6 +157,9 @@ class Vasp(GenericDFTJob):
 
     @property
     def write_resolved_dos(self):
+        """
+        True if the resolved DOS should be written (in the vasprun.xml file)
+        """
         return self.input.incar['LORBIT']
 
     @write_resolved_dos.setter
@@ -147,7 +167,6 @@ class Vasp(GenericDFTJob):
         if not isinstance(resolved_dos, bool) and not isinstance(resolved_dos, int):
             raise ValueError('write_resolved_dos, can either be True, False or 0, 1, 2, 5, 10, 11, 12.')
         self.input.incar['LORBIT'] = resolved_dos
-
 
     @property
     def sorted_indices(self):
@@ -226,7 +245,8 @@ class Vasp(GenericDFTJob):
 
     def from_directory(self, directory):
         """
-        The Vasp instance is created by parsing the input and outpus from the specified directory
+        The Vasp instance is created by parsing the input and output from the specified directory
+
         Args:
             directory (str): Path to the directory
         """
@@ -275,6 +295,13 @@ class Vasp(GenericDFTJob):
             return
 
     def stop_calculation(self, next_electronic_step=False):
+        """
+        Call to stop the VASP calculation
+
+        Args:
+            next_electronic_step (bool): True if the next electronic step should be calculated
+
+        """
         filename = os.path.join(self.working_directory, 'STOPCAR')
         with open(filename, 'w') as f:
             if not next_electronic_step:
@@ -294,6 +321,7 @@ class Vasp(GenericDFTJob):
     def from_hdf(self, hdf=None, group_name=None):
         """
         Recreates instance from the hdf5 file
+
         Args:
             hdf (str): Path to the hdf5 file
             group_name (str): Name of the group which contains the object
@@ -305,15 +333,20 @@ class Vasp(GenericDFTJob):
                 self.output.from_hdf(self._hdf5)
 
     def reset_output(self):
+        """
+        Resets the output instance
+        """
         self.output = Output()
 
     def get_final_structure_from_file(self, filename="CONTCAR"):
         """
-        Get the final structure of the  simulation
+        Get the final structure of the simulation usually from the CONTCAR file
+
         Args:
             filename (str): Path to the CONTCAR file in VASP
+
         Returns:
-            final_structure: pyiron_atomistics.structure.atoms.Atoms object
+            pyiron_atomistics.structure.atoms.Atoms: The final structure
         """
         filename = posixpath.join(self.working_directory, filename)
         input_structure = self.structure.copy()
@@ -354,6 +387,7 @@ class Vasp(GenericDFTJob):
     def set_coulomb_interactions(self, interaction_type=2, ldau_print=True):
         """
         Write the on-site Coulomb interactions in the INCAR file
+
         Args:
             interaction_type (int): Type of Coulombic interaction
               1 - Asimov method
@@ -394,6 +428,8 @@ class Vasp(GenericDFTJob):
 
     def set_algorithm(self, algorithm='Fast', ialgo=None):
         """
+        Sets the type of electronic minimization algorithm
+
         Args:
             algorithm (str): Algorithm defined by VASP (Fast, Normal etc.)
             ialgo (int): Sets the IALGO tag in VASP. If not none, this overwrites algorithm
@@ -413,6 +449,7 @@ class Vasp(GenericDFTJob):
         """
         Function to setup the hamiltonian to perform ionic relaxations using DFT. The ISIF tag has to be supplied
         separately.
+
         Args:
             ionic_energy: 
             ionic_forces: 
@@ -1266,8 +1303,12 @@ class Potcar(GenericParameters):
                 el = el_obj.Abbreviation
             if isinstance(el_obj.tags, dict):
                 if 'pseudo_potcar_file' in el_obj.tags.keys():
-                    file_name = el_obj.tags['pseudo_potcar_file']
-                    el_path = self._find_potential_file(xc=xc, file_name=file_name)
+                    # file_name = el_obj.tags['pseudo_potcar_file']
+                    # el_path = self._find_potential_file(xc=xc, file_name=file_name)
+                    new_element = el_obj.tags['pseudo_potcar_file']
+                    vasp_potentials.add_new_element(parent_element=el, new_element=new_element)
+                    el_path = self._find_potential_file(
+                        path=vasp_potentials.find_default(new_element)['Filename'].values[0][0])
                     if not (os.path.isfile(el_path)):
                         raise ValueError('such a file does not exist in the pp directory')
                 else:

@@ -5,7 +5,8 @@
 import numpy as np
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \
+                "- Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -18,6 +19,12 @@ KBAR_TO_EVA = 6.241509125883258e-4
 class Outcar(object):
     """
     This module is used to parse VASP OUTCAR files.
+
+    Attributes:
+
+        parse_dict (dict): A dictionary with all the useful quantities parsed from an OUTCAR file after from_file() is
+                           executed
+
     """
 
     def __init__(self):
@@ -25,7 +32,7 @@ class Outcar(object):
 
     def from_file(self, filename="OUTCAR"):
         """
-        Store relevant quantities from the OUTCAR file into parse_dict.
+        Parse and store relevant quantities from the OUTCAR file into parse_dict.
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
@@ -77,8 +84,8 @@ class Outcar(object):
         Store output in an HDF5 file
 
         Args:
-            hdf: HDF5 group or file
-            group_name (str): HDF5 group
+            hdf (pyiron_base.objects.generic.hdfio.FileHDFio): HDF5 group or file
+            group_name (str): Name of the HDF5 group
         """
         with hdf.open(group_name) as hdf5_output:
             for key in self.parse_dict.keys():
@@ -89,8 +96,8 @@ class Outcar(object):
         Load output from an HDF5 file
 
         Args:
-            hdf: HDF5 group or file
-            group_name (str): HDF5 group
+            hdf (pyiron_base.objects.generic.hdfio.FileHDFio): HDF5 group or file
+            group_name (str): Name of the HDF5 group
         """
         with hdf.open(group_name) as hdf5_output:
             for key in hdf5_output.list_nodes():
@@ -106,8 +113,8 @@ class Outcar(object):
 
         Returns:
             [positions, forces] (sequence)
-            positions (numpy.ndarray): A Nx3xM array of positions in $\AA$
-            forces (numpy.ndarray): A Nx3xM array of forces in $eV / \AA$
+            numpy.ndarray: A Nx3xM array of positions in $\AA$
+            numpy.ndarray: A Nx3xM array of forces in $eV / \AA$
 
             where N is the number of atoms and M is the number of time steps
         """
@@ -148,7 +155,7 @@ class Outcar(object):
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
-            positions (numpy.ndarray): A Nx3xM array of positions in $\AA$
+            numpy.ndarray: A Nx3xM array of positions in $\AA$
 
             where N is the number of atoms and M is the number of time steps
         """
@@ -185,7 +192,7 @@ class Outcar(object):
 
         Returns:
 
-            forces (numpy.ndarray): A Nx3xM array of forces in $eV / \AA$
+            numpy.ndarray: A Nx3xM array of forces in $eV / \AA$
 
             where N is the number of atoms and M is the number of time steps
         """
@@ -221,7 +228,7 @@ class Outcar(object):
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
-            cells (numpy.ndarray): A 3x3xM array of the cell shape in $\AA$
+            numpy.ndarray: A 3x3xM array of the cell shape in $\AA$
 
             where M is the number of time steps
         """
@@ -245,6 +252,16 @@ class Outcar(object):
 
     @staticmethod
     def get_stresses(filename="OUTCAR", si_unit=True):
+        """
+
+        Args:
+            filename (str): Input filename
+            si_unit (bool): True SI units are used
+
+        Returns:
+            numpy.ndarray: An array of stress values
+
+        """
         trigger = "FORCE on cell =-STRESS in cart. coord.  units (eV):"
         pullay_stress_lst = []
         trigger_indices = []
@@ -279,7 +296,7 @@ class Outcar(object):
             planewaves (bool): Get the planewaves assigned to the irreducible kpoints
 
         Returns:
-            set: (numpy.ndarray)
+            numpy.ndarray: An array of k-points
         """
         kpoint_lst = []
         weight_lst = []
@@ -331,7 +348,7 @@ class Outcar(object):
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
-            energies (numpy.ndarray): A 1xM array of the total energies in $eV$
+            numpy.ndarray: A 1xM array of the total energies in $eV$
 
             where M is the number of time steps
         """
@@ -353,12 +370,13 @@ class Outcar(object):
     @staticmethod
     def get_all_total_energies(filename="OUTCAR"):
         """
+        Gets the energy at every electronic step
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
-            scf_energies (list)
+            list: A list of energie for every electronic step at every ionic step
         """
         ionic_trigger = "FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)"
         electronic_trigger = "free energy    TOTEN  ="
@@ -380,14 +398,14 @@ class Outcar(object):
     @staticmethod
     def get_magnetization(filename="OUTCAR"):
         """
+        Gets the magnetization
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
-            magnetization (list)
+            list: A list withthe mgnetization values
         """
-        final_magmom_lst = []
         ionic_trigger = "FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)"
         electronic_trigger = "eigenvalue-minimisations"
         nion_trigger = "NIONS ="
@@ -426,19 +444,21 @@ class Outcar(object):
                                                   float(lines[i - 4 - atom_index].split()[-1]),
                                                   float(lines[i + 4 + atom_index].split()[-1])]
                                                  for atom_index in range(n_atoms)])
-                    elif 'magnetization (x)' in line and not 'magnetization (y)' in lines[i + 4 + n_atoms + 3]:
-                        final_magmom_lst.append([float(lines[i + 4 + atom_index].split()[-1]) for atom_index in range(n_atoms)])
+                    elif 'magnetization (x)' in line and 'magnetization (y)' not in lines[i + 4 + n_atoms + 3]:
+                        final_magmom_lst.append([float(lines[i + 4 + atom_index].split()[-1]) for atom_index in
+                                                 range(n_atoms)])
         return mag_lst, final_magmom_lst
 
     @staticmethod
     def get_broyden_mixing_mesh(filename="OUTCAR"):
         """
+        Gets the Broyden mixing mesh size
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
-            int
+            int: Mesh size
         """
         trigger = "gives a total of "
         with open(filename, 'r') as f:
@@ -449,12 +469,13 @@ class Outcar(object):
     @staticmethod
     def get_temperatures(filename="OUTCAR"):
         """
+        Gets the temperature at each ionic step (applicable for MD)
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
-            numpy.ndarray
+            numpy.ndarray: An array of temperatures in Kelvin
         """
         temperatures = []
         trigger_indices = []
@@ -487,7 +508,7 @@ class Outcar(object):
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
-            np.linspace
+            numpy.ndarray: Steps during the simulation
         """
         nblock_trigger = "NBLOCK ="
         trigger = "FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)"
@@ -508,11 +529,13 @@ class Outcar(object):
 
     def get_time(self, filename="OUTCAR"):
         """
+        Time after each simulation step (for MD)
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
+            numpy.ndarray: An array of time values in fs
 
         """
         potim_trigger = "POTIM  ="
@@ -538,7 +561,7 @@ class Outcar(object):
             total (bool): Get either the total correction or the correction per atom
 
         Returns:
-            float:
+            float: The kinetic energy error in eV
         """
         trigger = "kinetic energy error for atom="
         e_kin_err = None
@@ -567,12 +590,13 @@ class Outcar(object):
     @staticmethod
     def get_fermi_level(filename="OUTCAR"):
         """
+        Getting the Fermi-level (Kohn_Sham) from the OUTCAR file
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
-            float:
+            float: The Kohn-Sham Fermi level in eV
         """
         trigger = "E-fermi :"
         e_fermi = None
@@ -590,11 +614,13 @@ class Outcar(object):
     @staticmethod
     def get_dipole_moments(filename="OUTCAR"):
         """
+        Get the electric dipole moment at every electronic step
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
+            list: A list of dipole moments in (eA) for each electronic step
 
         """
         moment_trigger = "dipolmoment"
