@@ -23,7 +23,10 @@ class ElectronicStructure(object):
     """
     This is a generic module to store electronic structure data in a clean way. Kpoint and Band classes are used to
     store information related to kpoints and bands respectively. Every spin configuration has a set of k-points and
-    every k-point has a set of bands associated with it.
+    every k-point has a set of bands associated with it. This is loosely adapted from the pymatgen electronic_structure
+    modules. Many of the functions have been substantially modified for pyiron
+
+    http://pymatgen.org/pymatgen.electronic_structure.bandstructure.html
 
     """
     def __init__(self):
