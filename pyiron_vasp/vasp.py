@@ -53,12 +53,15 @@ class Vasp(GenericDFTJob):
         Let's say you need to run a vasp simulation where you would like to control the input parameters manually. To
         set up a static dft run with Gaussian smearing and a k-point MP mesh of [6, 6, 6]. You would have to set it up
         as shown below:
+
         >>> ham = Vasp(job_name="trial_job")
         >>> ham.input.incar.set(IBRION=-1)
         >>> ham.input.incar.set(ISMEAR=0)
         >>> ham.input.kpoints.set(size_of_mesh=[6, 6, 6])
+
         However, the according to pyiron's philosophy, it is recommended to avoid using code specific tags like IBRION,
         ISMEAR etc. Therefore the recommended way to set this calculation is as follows:
+
         >>> ham = Vasp(job_name="trial_job")
         >>> ham.calc_static()
         >>> ham.set_occupancy_smearing(smearing="gaussian")
@@ -312,6 +315,11 @@ class Vasp(GenericDFTJob):
     def to_hdf(self, hdf=None, group_name=None):
         """
         Stores the instance attributes into the hdf5 file
+
+        Args:
+            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
+            group_name (str): The name of the group under which the data must be stored as
+
         """
         super(Vasp, self).to_hdf(hdf=hdf, group_name=group_name)
         self._structure_to_hdf()
@@ -323,8 +331,9 @@ class Vasp(GenericDFTJob):
         Recreates instance from the hdf5 file
 
         Args:
-            hdf (str): Path to the hdf5 file
-            group_name (str): Name of the group which contains the object
+            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): The HDF file/path to read the data from
+            group_name (str): The name of the group under which the data must be stored as
+
         """
         super(Vasp, self).from_hdf(hdf=hdf, group_name=group_name)
         self._structure_from_hdf()
@@ -390,8 +399,8 @@ class Vasp(GenericDFTJob):
 
         Args:
             interaction_type (int): Type of Coulombic interaction
-              1 - Asimov method
-              2 - Dudarev method
+                1 - Asimov method
+                2 - Dudarev method
             ldau_print (boolean): True/False
         """
         obj_lst = self.structure.get_species_objects()
@@ -451,16 +460,16 @@ class Vasp(GenericDFTJob):
         separately.
 
         Args:
-            ionic_energy: 
-            ionic_forces: 
             electronic_steps (int): Maximum number of electronic steps
             ionic_steps (int): Maximum number of ionic
             max_iter (int): Maximum number of iterations
             pressure (float): External pressure to be applied
             algorithm (str): Type of VASP algorithm to be used "Fast"/"Accurate"
-            retain_charge_density (boolean): True/False
-            retain_electrostatic_potential (boolean): True/False
-            volume_only (boolean): Option to relax only the volume (keeping the relative coordinates fixed
+            retain_charge_density (bool): True if the charge density should be written
+            retain_electrostatic_potential (boolean): True if the electrostatic potential should be written
+            ionic_energy (float): Ionic energy convergence criteria (eV)
+            ionic_forces (float): Ionic forces convergence criteria (overwrites ionic energy) (ev/A)
+            volume_only (bool): Option to relax only the volume (keeping the relative coordinates fixed
         """
         super(Vasp, self).calc_minimize(electronic_steps=electronic_steps, ionic_steps=ionic_steps, max_iter=max_iter,
                                         pressure=pressure, algorithm=algorithm,
@@ -494,11 +503,12 @@ class Vasp(GenericDFTJob):
                     retain_electrostatic_potential=False):
         """
         Function to setup the hamiltonian to perform static SCF DFT runs.
+
         Args:
             electronic_steps (int): Maximum number of electronic steps
-            algorithm: Type of VASP algorithm to be used "Fast"/"Accurate"
-            retain_charge_density (boolean): True/False
-            retain_electrostatic_potential (boolean): True/False
+            algorithm (str): Type of VASP algorithm to be used "Fast"/"Accurate"
+            retain_charge_density (bool): True if
+            retain_electrostatic_potential (bool): True/False
         """
         super(Vasp, self).calc_static(electronic_steps=electronic_steps, algorithm=algorithm,
                                       retain_charge_density=retain_charge_density,
@@ -517,13 +527,14 @@ class Vasp(GenericDFTJob):
                 retain_electrostatic_potential=False, **kwargs):
         """
         Sets appropriate tags for molecular dynamics in VASP
+
         Args:
             temperature (int/float/list): Temperature/ range of temperatures in Kelvin
             n_ionic_steps (int): Maximum number of ionic steps
             n_print (int): Prints outputs every n_print steps
             dt (float): time step (fs)
-            retain_charge_density (boolean): True/False
-            retain_electrostatic_potential (boolean): True/False
+            retain_charge_density (bool): True id the charge density should be written
+            retain_electrostatic_potential (bool): True if the electrostatic potential should be written
         """
         super(Vasp, self).calc_md(temperature=temperature, n_ionic_steps=n_ionic_steps, n_print=n_print, dt=dt,
                                   retain_charge_density=retain_charge_density,
@@ -553,16 +564,17 @@ class Vasp(GenericDFTJob):
                     weights=None, reciprocal=True, kmesh_density=None):
         """
         Function to setup the k-points for the VASP job
+
         Args:
             mesh (list): Size of the mesh (in the MP scheme)
             scheme (str): Type of k-point generation scheme (MP/GP(gamma point)/Manual/Line)
             center_shift (list): Shifts the center of the mesh from the gamma point by the given vector
             symmetry_reduction (boolean): Tells if the symmetry reduction is to be applied to the k-points
-            manual_kpoints (list/numpy.ndarray instance): Manual list of k-points
-            weights(list/numpy.ndarray instance): Manually supplied weights to each k-point in case of the manual mode
-            reciprocal (boolean): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
+            manual_kpoints (list/numpy.ndarray): Manual list of k-points
+            weights(list/numpy.ndarray): Manually supplied weights to each k-point in case of the manual mode
+            reciprocal (bool): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
             reciprocal space)
-            kmesh_density (float):
+            kmesh_density (float): Value of the required density
         """
 
         if not symmetry_reduction:
@@ -606,6 +618,7 @@ class Vasp(GenericDFTJob):
     def set_for_band_structure_calc(self, num_points, structure=None, read_charge_density=True):
         """
         Sets up the input for a non self-consistent bandstructure calculation
+
         Args:
             num_points (int): Number of k-points along the total BZ path
             structure (pyiron_atomistics.structure.atoms.Atoms instance): Structure for which the bandstructure is to be
@@ -628,10 +641,12 @@ class Vasp(GenericDFTJob):
         """
         Gets the structure from a given iteration step of the simulation (MD/ionic relaxation). For static calculations
         there is only one ionic iteration step
+
         Args:
             iteration_step (int): Step for which the structure is requested
+
         Returns:
-            pyiron_atomistics.structure.atoms.Atoms object
+            pyiron_atomistics.structure.atoms.Atoms: The required structure
         """
         assert (self.structure is not None)
         snapshot = self.structure.copy()
@@ -643,6 +658,7 @@ class Vasp(GenericDFTJob):
         """
         Sets the electronic and ionic convergence precision. For ionic convergence either the energy or the force
         precision is required
+
         Args:
             ionic_energy (float): Ionic energy convergence precision (eV)
             electronic_energy (float): Electronic energy convergence precision (eV)
@@ -657,11 +673,13 @@ class Vasp(GenericDFTJob):
     def set_electric_field(self, e_field=0.1, direction=2, dipol_position=None):
         """
         Set an external electric field using the dipole layer method proposed by [Neugebauer & Scheffler]_
+
         Args:
             e_field (float): Magnitude of the external electric field (eV/A)
             direction (int): Direction along which the field has to be applied (0, 1, or 2)
             dipol_position (list): Position of the center of the dipole (not the center of the vacuum) in relative
                                 coordinates
+
         .. [Neugebauer & Scheffler] Phys. Rev. B 46, 16067
         """
         assert (direction in range(3))
@@ -676,6 +694,7 @@ class Vasp(GenericDFTJob):
     def set_occupancy_smearing(self, smearing="fermi", width=0.1, ismear=None):
         """
         Set how the finite temperature smearing is applied in determining partial occupancies
+
         Args:
             smearing (str): Type of smearing (fermi/gaussian etc.)
             width (float): Smearing width (eV)
@@ -693,6 +712,7 @@ class Vasp(GenericDFTJob):
         Set the number of points in the respective directions for the 3D FFT mesh used for computing the charge density
         or electrostatic potentials. In VASP, using PAW potentials, this refers to the "finer fft mesh". If no values
         are set, the default settings from Vasp are used to set the number of grid points.
+
         Args:
             nx (int): Number of points on the x-grid
             ny (int): Number of points on the y-grid
@@ -708,6 +728,7 @@ class Vasp(GenericDFTJob):
     def get_electronic_structure(self):
         """
         Gets the electronic structure instance from the hdf5 file
+
         Returns:
                 pyiron.pyiron_atomistics.waves.electronic.ElectronicStructure instance
         """
@@ -722,6 +743,7 @@ class Vasp(GenericDFTJob):
     def get_charge_density(self):
         """
         Gets the charge density from the hdf5 file. This value is normalized by the volume
+
         Returns:
                 pyiron_atomistics.volumetric.generic.VolumetricData instance
         """
@@ -736,6 +758,7 @@ class Vasp(GenericDFTJob):
     def get_electrostatic_potential(self):
         """
         Gets the electrostatic potential from the hdf5 file.
+
         Returns:
                 pyiron_atomistics.volumetric.generic.VolumetricData instance
         """
@@ -750,10 +773,12 @@ class Vasp(GenericDFTJob):
     def restart(self, snapshot=-1, job_name=None, job_type=None):
         """
         Restart a new job created from an existing Vasp calculation.
+
         Args:
             snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Vasp job type is assumed
+
         Returns:
             new_ham (pyiron_vasp.vasp.Vasp instance): New job
         """
@@ -766,12 +791,14 @@ class Vasp(GenericDFTJob):
                                     self_consistent_calc=False):
         """
         Restart a new job created from an existing Vasp calculation by reading the charge density.
+
         Args:
             snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Vasp job type is assumed
             icharg (int): Vasp ICHARG tag
             self_consistent_calc (boolean): Tells if the new calculation is self consistent
+
         Returns:
             new_ham (pyiron_vasp.vasp.Vasp instance): New job
         """
@@ -794,11 +821,13 @@ class Vasp(GenericDFTJob):
 
         """
         Restart a new job created from an existing Vasp calculation by reading the wave functions.
+
         Args:
             snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Vasp job type is assumed
             istart (int): Vasp ISTART tag
+
         Returns:
             new_ham (pyiron_vasp.vasp.Vasp instance): New job
         """
@@ -815,9 +844,11 @@ class Vasp(GenericDFTJob):
     def copy_chgcar(self, old_vasp_job):
         """
         Copy CHGCAR from previous VASP calcualtion to the new VASP job.
-        Sets ICHARG = 1
-        :param old_vasp_job: finished VASP hamiltonian
-        :return:
+        (Sets ICHARG = 1)
+
+        Args:
+            old_vasp_job (pyiron_vasp.vasp.Vasp): Finished Vasp job instance
+
         """
         self.copy_file(old_vasp_job)
         self.input.incar["ICHARG"] = 1
@@ -825,14 +856,24 @@ class Vasp(GenericDFTJob):
     def copy_wavecar(self, old_vasp_job):
         """
         Copy WAVECAR from previous VASP calcualtion to the new VASP job.
-        Sets ISTART = 1
-        :param old_vasp_job: finished VASP hamiltonian
-        :return:
+        (Sets ICHARG = 1)
+
+        Args:
+            (pyiron_vasp.vasp.Vasp): Finished Vasp job instance
+
         """
         self.copy_file(old_vasp_job, filename="WAVECAR")
         self.input.incar["ISTART"] = 1
 
     def copy_file(self, old_vasp_job, filename="CHGCAR"):
+        """
+        Copy a file from a previous vasp job
+
+        Args:
+            old_vasp_job (pyiron_vasp.vasp.Vasp): Finished Vasp job instance
+            filename (str): Destination to copy the file
+
+        """
         if not isinstance(old_vasp_job, Vasp):
             raise ValueError("old_vasp_job is not Vasp job type")
         import os
@@ -844,6 +885,16 @@ class Vasp(GenericDFTJob):
         copyfile(old_path, new_path)
 
     def set_spin_constraint(self, direction=False, norm=False):
+        """
+        Setting thr spin constraints
+
+        Args:
+            direction:
+            norm:
+
+        Returns:
+
+        """
         assert isinstance(direction, bool)
         assert isinstance(norm, bool)
         if direction and norm:
@@ -858,13 +909,17 @@ class Vasp(GenericDFTJob):
 class Input:
     """
     Handles setting the input parameters for a VASP job.
+
     Attributes:
         incar: .pyiron_vasp.vasp.Incar instance to handle the INCAR file inputs in VASP
         kpoints: pyiron_vasp.vasp.Kpoints instance to handle the KPOINTS file inputs in VASP
         potcar: pyiron_vasp.vasp.Potcar instance to set the appropriate POTCAR files for the simulation
+
     Ideally, the user would not have to access the Input instance unless the user wants to set an extremely specific
     VASP tag which can't se set using functions in Vasp().
+
     Examples:
+
         >>> atoms =  CrystalStructure("Pt", BravaisBasis="fcc", a=3.98)
         >>> ham = Vasp("trial")
         >>> ham.structure = atoms
@@ -881,6 +936,7 @@ class Input:
     def write(self, structure, directory=None):
         """
         Writes all the input files to a specified directory
+
         Args:
             structure (pyiron_atomistics.structure.atoms.Atoms instance): Structure to be written
             directory (str): The working directory for the VASP run
@@ -900,6 +956,7 @@ class Input:
     def to_hdf(self, hdf):
         """
         Writes the important attributes to a hdf file
+
         Args:
             hdf: The hdf5 instance
         """
