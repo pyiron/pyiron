@@ -7,7 +7,6 @@ from __future__ import print_function
 import numpy as np
 
 from pyiron_atomistics.structure.atoms import Atoms
-from pyiron_base.objects.generic.template import PyironObject
 from pyiron_dft.waves.dos import Dos
 
 __author__ = "Sudarsan Surendralal"
@@ -24,7 +23,10 @@ class ElectronicStructure(object):
     """
     This is a generic module to store electronic structure data in a clean way. Kpoint and Band classes are used to
     store information related to kpoints and bands respectively. Every spin configuration has a set of k-points and
-    every k-point has a set of bands associated with it.
+    every k-point has a set of bands associated with it. This is loosely adapted from the pymatgen electronic_structure
+    modules. Many of the functions have been substantially modified for pyiron
+
+    http://pymatgen.org/pymatgen.electronic_structure.bandstructure.html
 
     """
     def __init__(self):
@@ -596,7 +598,7 @@ class ElectronicStructure(object):
         """
         try:
             import matplotlib.pylab as plt
-        except ImportError:
+        except ModuleNotFoundError:
             import matplotlib.pyplot as plt
         arg = np.argsort(self.eigenvalues)
         plt.plot(self.eigenvalues[arg], self.occupancies[arg], linewidth=2.0, color="blue")
