@@ -8,7 +8,8 @@ Finished VASP calculations that were created outside of pyiron can be imported u
 
     from pyiron.project import Project
     pr = Project('imported_jobs')
-    # path_to_import = <path_with_vasp_directories>
+    # Searches and imports vasp jobs from 'vasp_directory'
+    path_to_import = "vasp_directory"
     pr.import_from_path(path=path_to_import, recursive=True)
 
 The calculations are imported into the project 'imported_jobs'. The recursive function imports vasp directories within
