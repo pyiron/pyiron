@@ -59,6 +59,7 @@ Contents
    source/installation.rst
    source/developers.rst
    source/citation.rst
+   source/import.rst
    source/faq.rst
    source/indices.rst
    source/examples.rst
