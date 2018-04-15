@@ -53,12 +53,15 @@ class Vasp(GenericDFTJob):
         Let's say you need to run a vasp simulation where you would like to control the input parameters manually. To
         set up a static dft run with Gaussian smearing and a k-point MP mesh of [6, 6, 6]. You would have to set it up
         as shown below:
+
         >>> ham = Vasp(job_name="trial_job")
         >>> ham.input.incar.set(IBRION=-1)
         >>> ham.input.incar.set(ISMEAR=0)
         >>> ham.input.kpoints.set(size_of_mesh=[6, 6, 6])
+
         However, the according to pyiron's philosophy, it is recommended to avoid using code specific tags like IBRION,
         ISMEAR etc. Therefore the recommended way to set this calculation is as follows:
+
         >>> ham = Vasp(job_name="trial_job")
         >>> ham.calc_static()
         >>> ham.set_occupancy_smearing(smearing="gaussian")
@@ -451,8 +454,6 @@ class Vasp(GenericDFTJob):
         separately.
 
         Args:
-            ionic_energy: 
-            ionic_forces: 
             electronic_steps (int): Maximum number of electronic steps
             ionic_steps (int): Maximum number of ionic
             max_iter (int): Maximum number of iterations
@@ -460,6 +461,8 @@ class Vasp(GenericDFTJob):
             algorithm (str): Type of VASP algorithm to be used "Fast"/"Accurate"
             retain_charge_density (boolean): True/False
             retain_electrostatic_potential (boolean): True/False
+            ionic_energy (float): Ionic energy convergence criteria
+            ionic_forces (float): Ionic forces convergence criteria (overwrites ionic energy)
             volume_only (boolean): Option to relax only the volume (keeping the relative coordinates fixed
         """
         super(Vasp, self).calc_minimize(electronic_steps=electronic_steps, ionic_steps=ionic_steps, max_iter=max_iter,
@@ -494,6 +497,7 @@ class Vasp(GenericDFTJob):
                     retain_electrostatic_potential=False):
         """
         Function to setup the hamiltonian to perform static SCF DFT runs.
+
         Args:
             electronic_steps (int): Maximum number of electronic steps
             algorithm: Type of VASP algorithm to be used "Fast"/"Accurate"
@@ -517,6 +521,7 @@ class Vasp(GenericDFTJob):
                 retain_electrostatic_potential=False, **kwargs):
         """
         Sets appropriate tags for molecular dynamics in VASP
+
         Args:
             temperature (int/float/list): Temperature/ range of temperatures in Kelvin
             n_ionic_steps (int): Maximum number of ionic steps
@@ -553,6 +558,7 @@ class Vasp(GenericDFTJob):
                     weights=None, reciprocal=True, kmesh_density=None):
         """
         Function to setup the k-points for the VASP job
+
         Args:
             mesh (list): Size of the mesh (in the MP scheme)
             scheme (str): Type of k-point generation scheme (MP/GP(gamma point)/Manual/Line)
