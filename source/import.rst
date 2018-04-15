@@ -15,8 +15,8 @@ The calculations are imported into the project 'imported_jobs'. The recursive fu
 each vasp directory if present.
 
 .. note::  This functionality best works when both the vasprun.xml and OUTCAR files are present in the directories. The
-import would work only id the vasprun.xml file exists too. If the vasprun.xml file does not exist, the OUTCAR and CONTCAR
-files must be present
+   import would work only id the vasprun.xml file exists too. If the vasprun.xml file does not exist, the OUTCAR and CONTCAR
+   files must be present
 
 .. toctree::
    :maxdepth:4
