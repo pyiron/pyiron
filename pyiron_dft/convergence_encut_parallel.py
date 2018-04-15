@@ -7,8 +7,11 @@ from pyiron_atomistics.job.parallel import AtomisticParallelMaster
 import numpy as np
 try:
     import pylab as plt
-except ModuleNotFoundError:
-    import matplotlib.pyplot as plt
+except (ImportError, RuntimeError):
+    try:
+        import matplotlib.pyplot as plt
+    except RuntimeError:
+        pass
 
 __author__ = "Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"

@@ -2,16 +2,17 @@
 Setuptools based setup module
 """
 from setuptools import setup, find_packages
+import versioneer
 
 
 setup(
     name='pyiron_dft',
-    version='0.0.3',
+    version=versioneer.get_version(),
     description='pyiron IDE plugin for DFT',
     long_description='http://pyiron.org',
 
-    url='https://github.com/jan-janssen/pyiron_dft',
-    author='Jan Janssen (MPIE)',
+    url='https://github.com/pyiron/pyiron_dft',
+    author='Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department',
     author_email='janssen@mpie.de',
     license='BSD',
 
@@ -31,6 +32,7 @@ setup(
     ],
 
     keywords='pyiron',
-    packages=find_packages(),
-    install_requires=['pyiron_atomistics']
+    packages=find_packages(exclude=["*tests*"]),
+    install_requires=['pyiron_atomistics'],
+    cmdclass=versioneer.get_cmdclass(),
     )

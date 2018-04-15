@@ -1,0 +1,2 @@
+include versioneer.py
+include pyiron_dft/_version.py

@@ -1,16 +1,12 @@
-import os
 import unittest
+import os
+from pyiron_base.core.settings.generic import Settings
+s = Settings(config={'sql_file': 'bandstructure.db',
+                     'project_paths': os.path.abspath(os.getcwd()),
+                     'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
 
 import numpy as np
-
 from pyiron_atomistics.structure.atoms import CrystalStructure
-from pyiron_base.core.settings.config.testing import ConfigTesting
-from pyiron_base.core.settings.generic import Settings
-
-config = ConfigTesting(sql_lite_database='./testing_bandstructure.db', path_project=str(os.getcwd()),
-                       path_potentials='../../../static/potentials/')
-s = Settings(config=config)
-
 from pyiron_dft.bandstructure import Bandstructure
 
 

@@ -30,14 +30,24 @@ install:
   - conda config --add channels conda-forge
   - conda config --add channels pyiron
   - conda config --set anaconda_upload yes
+  - conda install -y -c conda-forge coveralls coverage
+  - pip install --pre --no-deps pyiron_base pyiron_atomistics
   - pip install .
+  - pip install --pre --no-deps pyiron pyiron_vasp pyiron_lammps pyiron_example_job
 
 script:
-  - python --version
+  - cd tests
+  - python find_tests.py
+
+after_success:
+  - coveralls
+  - cd ..
 
 deploy:
-  - provider: script
-    script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_dft
+  - provider: pypi
+    user: pyiron
+    password: ${PYPI_UPLOAD_TOKEN}
+    allow_failure: true
     on:
       branch: master
   - provider: pypi
@@ -45,5 +55,12 @@ deploy:
     password: ${PYPI_UPLOAD_TOKEN}
     allow_failure: true
     on:
+      tags: true
+  - provider: script
+    script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_dft
+    on:
       branch: master
- 
+  - provider: script
+    script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_dft
+    on:
+      tags: true
