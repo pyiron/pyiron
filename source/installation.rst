@@ -13,7 +13,7 @@ We provide various levels of environments to test pyiron:
 
 * `Docker (for demonstration) <InstallDocker>`_: for demonstration (no VASP license, only temporary data storage)
 
-* `Local Installation (Workstation) <InstallLocal>`: for Windows, Linux or Mac OS X workstation (interface for local VASP executable, support for the latest jupyterlab based GUI) 
+* `Local Installation (Workstation) <InstallLocal>`_: for Windows, Linux or Mac OS X workstation (interface for local VASP executable, support for the latest jupyterlab based GUI) 
 
 .. _InstallBinder:
 
