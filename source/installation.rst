@@ -115,7 +115,7 @@ While the anaconda installation already includes the lammps executable, the pip 
 
 Visualization 
 =============
-In addition to the pyiron package we recommend installing the `NGLview visualization framework <https://github.com/arose/nglview>`. 
+In addition to the pyiron package we recommend installing the `NGLview visualization framework <https://github.com/arose/nglview>`_. 
 
 Stable version 0.6.3 – for jupyter notebooks (recommended):
 -----------------------------------------------------------
@@ -193,9 +193,9 @@ Next step
 =========
 To get a better overview of all the available functionality inside pyiron we recommend the examples provided in the examples section. 
 
-----------------------
+**********************
 Computer Cluster (HPC)
-----------------------
+**********************
 While the local Installation is designed to scale beyond a single workstation, further multi user extensions are required like: 
 
 * `Jupyterhub <https://github.com/jupyterhub/jupyterhub>`_ for managing multiple Jupyter Sessions.
