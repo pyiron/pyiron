@@ -15,39 +15,65 @@ pyiron
 .. image:: https://anaconda.org/pyiron/pyiron/badges/latest_release_date.svg
 
 
-Welcome to the official documentation of the pyiron package! pyiron is a Python based IDE for computational materials
-design.
+pyiron is the integrated development environment for computational materials science. It connects among other things:
 
-Try pyiron without installation
-===============================
+• Atomic structure objects – compatible to the `Atomic Simulation Environment (ASE) <https://wiki.fysik.dtu.dk/ase/>`_.
 
-Using `Binder <https://mybinder.org/>`_, you can try some of our examples online without any installation.
-`Try it now! <https://mybinder.org/v2/gh/pyiron/pyiron-docker.git/binder>`_
+• Atomistic simulation codes – like `LAMMPS <http://lammps.sandia.gov>`_ and `VASP <https://www.vasp.at>`_.
 
-.. image:: _static/screenshot.png
-    :width: 840px
-    :height: 525px
+• Feedback Loops – to construct dynamic simulation life cycles.
+
+• Hierarchical data management – interfacing with storage resources like SQL and `HDF5 <https://support.hdfgroup.org/HDF5/>`_.
+
+• Integrated visualization – based on the `NGLview <https://github.com/arose/nglview>`_. 
+
+• Interactive simulation protocols - based on `Jupyter notebooks <http://jupyter.org>`_.
+
+• Object oriented job management – for scaling simulation protocols.
+
+.. image:: _static/screenshots.png
+    :width: 870px
+    :height: 231px
     :align: center
     :alt: Screenshot of pyiron running inside jupyterlab. 
 
-============
-Introduction
-============
+pyiron was initially developed in the `Computational Materials Design department <https://www.mpie.de/CM>`_ of `Joerg Neugebauer <https://www.mpie.de/person/43010/2763386>`_ at the `Max Planck Insitut für Eisenforschung (Max Planck Insitute for iron research) <https://www.mpie.de/2281/en>`_ as a framework for ab initio thermo dynamics. In collaboration with the `Interdisciplinary Centre for Advanced Materials Simulation (ICAMS) <http://www.icams.de>`_ the framework was recently extended for high through put applications resulting in the opensource release of the pyiron. 
 
-What is pyiron?
-===============
+.. note::  
 
-pyiron is a free and open-source library developed, tested and maintained by computational physicists and materials scientists at the department of
-`Computational Materials Design <https://www.mpie.de/CM>`_  at the Max-Planck-Institut für Eisenforschung GmbH, Düsseldorf
-and the department of Atomistic Modeling and Simulation at the `Interdisciplinary Center for Advanced Materials Simulation <http://www.icams.de/content/departments/atomistic-modelling-and-simulation/>`_
-at the  Ruhr-Universität Bochum, Germany. pyiron offers a convenient way to automate workflows in atomistic simulations so that
-users can concentrate on the science rather than the technical details of their simulations.
+    pyiron 1.0 – Disclaimer 
+    With the first open source release the pyiron objects are introduced as an abstract class of building blocks for simulation life cycles. While this release is fully scalable in terms of computing resources, we are currently working on finalizing the high throughput extension as well as a set of specialized pyiron plugins for `Computational Phase Studies <https://www.mpie.de/2891195/computational_phase_studies>`_, `Electrochemistry and Corrosion <https://www.mpie.de/3119070/Corrosion>`_.
 
-User friendliness
-=================
+***********
+Test pyiron
+***********
+We provide various levels of environments to test pyiron :doc:`installation` : 
 
-pyiron is designed in the 'pythonic' way of making extensive use of object oriented programming, functional programming
-and intuitive naming conventions to make things easier for users.
+* Mybinder.org (beta): test pyiron directly in your browser (no VASP license, no visualization, only temporary data storage) 
+
+* Docker Image: for demonstration (no VASP license, only temporary data storage)
+
+* Anaconda/ pip installation: for Windows, Linux or Mac OS X workstation (interface for local VASP executable, support for the latest jupyterlab based GUI) 
+
+********************
+Join the development
+********************
+We are interested to get in contact with you, if you: 
+
+* Develop your own simulation code or methods on the atomistic scale. 
+
+* Conduct high through put studies in the field of computational material science. 
+
+* Are a student who wants to learn more about method development and Big Data in material science. 
+
+****
+News
+****
+* Tomorrow: The pyiron paper is submitted 
+* 05.04.2018: test pyiron on mybinder.org (beta)
+* 27.03.2018: pyiron is available on anaconda.org install pyiron using: :code:`conda install -c pyiron pyiron`
+* 27.02.2018: pyiron is available on pypi.org install pyiron using: :code:`pip install pyiron` 
+* 05.12.2017: The pyiron website goes online. 
 
 .. toctree::
    :hidden:
