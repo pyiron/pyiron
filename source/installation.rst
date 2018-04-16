@@ -182,7 +182,7 @@ Open a new jupyter notebook and inside the notebook you can now validate your py
     
 Finally a first lammps calculation can be executed by: 
 
-.. code-block:: bash
+.. code-block:: python
 
     ham = pr.create_job(pr.job_type.Lammps, 'lammpstestjob')
     ham.structure = basis
