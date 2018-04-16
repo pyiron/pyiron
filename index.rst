@@ -41,20 +41,18 @@ pyiron was initially developed in the `Computational Materials Design department
 
 .. note::  
 
-    **pyiron 1.0 – Disclaimer**:
-    
-    With the first open source release the pyiron objects are introduced as an abstract class of building blocks for simulation life cycles. While this release is fully scalable in terms of computing resources, we are currently working on finalizing the high throughput extension as well as a set of specialized pyiron plugins for `Computational Phase Studies <https://www.mpie.de/2891195/computational_phase_studies>`_, `Electrochemistry and Corrosion <https://www.mpie.de/3119070/Corrosion>`_.
+    **pyiron 1.0 – Disclaimer**: With the first open source release the pyiron objects are introduced as an abstract class of building blocks for simulation life cycles. While this release is fully scalable in terms of computing resources, we are currently working on finalizing the high throughput extension as well as a set of specialized pyiron plugins for `Computational Phase Studies <https://www.mpie.de/2891195/computational_phase_studies>`_, `Electrochemistry and Corrosion <https://www.mpie.de/3119070/Corrosion>`_.
 
 ***********
 Test pyiron
 ***********
 We provide various levels of environments to test pyiron: 
 
-* `Mybinder.org (first try) <InstallBinder>`_: test pyiron directly in your browser (no VASP license, no visualization, only temporary data storage) 
+* :ref:`Mybinder.org (first try) <InstallBinder>`_: test pyiron directly in your browser (no VASP license, no visualization, only temporary data storage) 
 
-* `Docker (for demonstration) <InstallDocker>`_: for demonstration (no VASP license, only temporary data storage)
+* :ref:`Docker (for demonstration) <InstallDocker>`_: for demonstration (no VASP license, only temporary data storage)
 
-* `Local Installation (Workstation) <InstallLocal>`_: for Windows, Linux or Mac OS X workstation (interface for local VASP executable, support for the latest jupyterlab based GUI) 
+* :ref:`Local Installation (Workstation) <InstallLocal>`_: for Windows, Linux or Mac OS X workstation (interface for local VASP executable, support for the latest jupyterlab based GUI) 
 
 ********************
 Join the development
