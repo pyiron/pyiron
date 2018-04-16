@@ -162,7 +162,7 @@ html_static_path = ['_static']
 # html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-html_sidebars = { '**': ['globaltoc.html', 'relations.html', 'sourcelink.html', 'searchbox.html'] }
+# html_sidebars = {}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -216,7 +216,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   ('index', 'pyiron.tex', u'pyiron Documentation',
-   u'Joerg Neugebauer', 'manual'),
+   u'Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -245,8 +245,10 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'pyiron', u'pyiron Documentation',
-     [u'Joerg Neugebauer'], 1)
+    ('index', 
+     'pyiron', 
+     u'pyiron Documentation',
+     [u'Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -259,8 +261,12 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'pyiron', u'pyiron Documentation',
-   u'Joerg Neugebauer', 'pyiron', 'One line description of project.',
+  ('index', 
+   'pyiron', 
+   u'pyiron Documentation',
+   u'Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department', 
+   'pyiron', 
+   'One line description of project.',
    'Miscellaneous'),
 ]
 
