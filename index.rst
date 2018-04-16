@@ -54,7 +54,8 @@ Contents
 ========
 
 .. toctree::
-   :maxdepth:4
+   :hidden:
+   
    source/installation.rst
    source/developers.rst
    source/citation.rst
