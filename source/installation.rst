@@ -31,7 +31,7 @@ You can test pyiron on `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/p
 The `Mybinder service <https://mybinder.org>`_ is the most flexible way to test pyiron and get a first impression. 
 `Start pyiron on MyBinder.org to test your first pyiron examples. <https://mybinder.org/v2/gh/pyiron/pyiron-docker.git/binder>`_
 
--- _InstallDocker:
+.. _InstallDocker:
 
 **************************
 Docker (for demonstration)
