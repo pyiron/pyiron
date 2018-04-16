@@ -106,16 +106,11 @@ modindex_common_prefix = ['pyiron_vasp.', 'pyiron_base.', 'pyiron_lammps.',
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 
-
 try:
-     import msmb_theme
-     html_theme = 'msmb'
+   import sphinx_rtd_theme
+   html_theme = 'sphinx_rtd_theme'
 except ImportError:
-     try:
-         import sphinx_rtd_theme
-         html_theme = 'sphinx_rtd_theme'
-     except ImportError:
-         html_theme = 'default'
+   html_theme = 'default'
 
 #try:
 #    import sphinx_rtd_theme
@@ -167,7 +162,7 @@ html_static_path = ['_static']
 # html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-# html_sidebars = {}
+html_sidebars = { '**': ['globaltoc.html', 'relations.html', 'sourcelink.html', 'searchbox.html'] }
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
