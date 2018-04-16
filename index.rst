@@ -49,12 +49,8 @@ User friendliness
 pyiron is designed in the 'pythonic' way of making extensive use of object oriented programming, functional programming
 and intuitive naming conventions to make things easier for users.
 
-
-========
-Contents
-========
-
 .. toctree::
+   :hidden:
    :maxdepth:4
    source/installation.rst
    source/developers.rst
