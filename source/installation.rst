@@ -38,7 +38,7 @@ While `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/pyiron-docker.git/
 
 *  Only temporary data storage, when you shutdown your `Docker <https://www.docker.com>`_ instance the environment is reset.
 
-This installation of pyiron is most suitable for presentations. After the local installation of `Docker <https://www.docker.com>`_ there are tow versions to choose from stable version based on `jupyter notebooks <http://jupyter.org>`_ and the latest beta version based on `jupyter lab <https://github.com/jupyterlab/jupyterlab>`_. For both versions the first command downloads the image from `Dockerhub <https://hub.docker.com/r/pyiron/pyiron/>`_ and the second command executes it locally. 
+This installation of pyiron is most suitable for presentations. After the local installation of `Docker <https://www.docker.com>`_ there are two versions to choose from stable version based on `jupyter notebooks <http://jupyter.org>`_ and the latest beta version based on `jupyter lab <https://github.com/jupyterlab/jupyterlab>`_. For both versions the first command downloads the image from `Dockerhub <https://hub.docker.com/r/pyiron/pyiron/>`_ and the second command executes it locally. 
 
 Docker image with jupyter notebook (stable)
 ===========================================
