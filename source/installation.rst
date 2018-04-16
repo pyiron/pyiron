@@ -9,11 +9,13 @@ Before you install:
 *******************
 We provide various levels of environments to test pyiron: 
 
-* `Mybinder.org (first try)`_: test pyiron directly in your browser (no VASP license, no visualization, only temporary data storage) 
+* `Mybinder.org (first try) <InstallBinder>`_: test pyiron directly in your browser (no VASP license, no visualization, only temporary data storage) 
 
-* `Docker (for demonstration)`_: for demonstration (no VASP license, only temporary data storage)
+* `Docker (for demonstration) <InstallDocker>`_: for demonstration (no VASP license, only temporary data storage)
 
-* `Local Installation (Workstation)`_: for Windows, Linux or Mac OS X workstation (interface for local VASP executable, support for the latest jupyterlab based GUI) 
+* `Local Installation (Workstation) <InstallLocal>`: for Windows, Linux or Mac OS X workstation (interface for local VASP executable, support for the latest jupyterlab based GUI) 
+
+.. _InstallBinder:
 
 ************************
 Mybinder.org (first try)
@@ -28,6 +30,8 @@ You can test pyiron on `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/p
 
 The `Mybinder service <https://mybinder.org>`_ is the most flexible way to test pyiron and get a first impression. 
 `Start pyiron on MyBinder.org to test your first pyiron examples. <https://mybinder.org/v2/gh/pyiron/pyiron-docker.git/binder>`_
+
+-- _InstallDocker:
 
 **************************
 Docker (for demonstration)
@@ -71,6 +75,8 @@ After the run command the following line is displayed: Copy/paste this URL into 
     http://localhost:8888/?token=<your_token>
 
 Open the link with your personal jupyter token :code:`<your_token>` in the browser of your choice. Just like the Binder image also the Docker image comes with the examples preinstalled. 
+
+.. _InstallLocal:
 
 ********************************
 Local Installation (Workstation)
@@ -192,6 +198,8 @@ Finally a first lammps calculation can be executed by:
 Next step
 =========
 To get a better overview of all the available functionality inside pyiron we recommend the examples provided in the examples section - :doc:`examples`. 
+
+.. _IntallCluster:
 
 **********************
 Computer Cluster (HPC)
