@@ -9,11 +9,11 @@ Before you install:
 *******************
 We provide various levels of environments to test pyiron: 
 
-* :ref:`Mybinder.org (first try) <InstallBinder>`_: test pyiron directly in your browser (no VASP license, no visualization, only temporary data storage) 
+* :ref:`Mybinder.org (first try) <InstallBinder>`: test pyiron directly in your browser (no VASP license, no visualization, only temporary data storage) 
 
-* :ref:`Docker (for demonstration) <InstallDocker>`_: for demonstration (no VASP license, only temporary data storage)
+* :ref:`Docker (for demonstration) <InstallDocker>`: for demonstration (no VASP license, only temporary data storage)
 
-* :ref:`Local Installation (Workstation) <InstallLocal>`_: for Windows, Linux or Mac OS X workstation (interface for local VASP executable, support for the latest jupyterlab based GUI) 
+* :ref:`Local Installation (Workstation) <InstallLocal>`: for Windows, Linux or Mac OS X workstation (interface for local VASP executable, support for the latest jupyterlab based GUI) 
 
 .. _InstallBinder:
 
