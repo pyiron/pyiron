@@ -47,13 +47,13 @@ pyiron was initially developed in the `Computational Materials Design department
 ***********
 Test pyiron
 ***********
-We provide various levels of environments to test pyiron :doc:`installation` : 
+We provide various levels of environments to test pyiron: 
 
-* Mybinder.org (beta): test pyiron directly in your browser (no VASP license, no visualization, only temporary data storage) 
+* `Mybinder.org (first try) <InstallBinder>`_: test pyiron directly in your browser (no VASP license, no visualization, only temporary data storage) 
 
-* Docker Image: for demonstration (no VASP license, only temporary data storage)
+* `Docker (for demonstration) <InstallDocker>`_: for demonstration (no VASP license, only temporary data storage)
 
-* Anaconda/ pip installation: for Windows, Linux or Mac OS X workstation (interface for local VASP executable, support for the latest jupyterlab based GUI) 
+* `Local Installation (Workstation) <InstallLocal>`_: for Windows, Linux or Mac OS X workstation (interface for local VASP executable, support for the latest jupyterlab based GUI) 
 
 ********************
 Join the development
