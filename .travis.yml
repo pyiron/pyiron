@@ -26,9 +26,10 @@ install:
   - conda info -a
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
-  - conda config --add channels pyiron
-  - conda install -y -c conda-forge coveralls coverage
   - conda install conda-build anaconda-client pytables numpy 
+  - conda config --add channels pyiron
+  - conda config --add channels conda-forge
+  - conda install -y coveralls coverage
   - conda config --set anaconda_upload yes
   - pip install .
 
