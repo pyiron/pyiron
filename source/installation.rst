@@ -191,7 +191,7 @@ Finally a first lammps calculation can be executed by:
 
 Next step
 =========
-To get a better overview of all the available functionality inside pyiron we recommend the examples provided in the examples section. 
+To get a better overview of all the available functionality inside pyiron we recommend the examples provided in the examples section - :doc:`examples`. 
 
 **********************
 Computer Cluster (HPC)
