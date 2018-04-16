@@ -9,36 +9,36 @@ Before you install:
 *******************
 We provide various levels of environments to test pyiron: 
 
-* Mybinder.org (beta): test pyiron directly in your browser (no VASP license, no visualization, only temporary data storage) 
+* `Mybinder.org (first try)`_: test pyiron directly in your browser (no VASP license, no visualization, only temporary data storage) 
 
-* Docker Image: for demonstration (no VASP license, only temporary data storage)
+* `Docker (for demonstration)`_: for demonstration (no VASP license, only temporary data storage)
 
-* Anaconda/ pip installation: for Windows, Linux or Mac OS X workstation (interface for local VASP executable, support for the latest jupyterlab based GUI) 
+* `Local Installation (Workstation)`_: for Windows, Linux or Mac OS X workstation (interface for local VASP executable, support for the latest jupyterlab based GUI) 
 
 ************************
 Mybinder.org (first try)
 ************************
-You can test pyiron on Mybinder.org (beta), without the need of a local installation. This installation comes with the following limitations: 
+You can test pyiron on `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/pyiron-docker.git/binder>`, without the need of a local installation. This installation comes with the following limitations: 
 
-* No VASP license, DFT calculation can be imported and loaded but the execution is disabled.
+* No `VASP <https://www.vasp.at>` license, DFT calculation can be imported and loaded but the execution is disabled.
 
-* No visualization of atomistic structures using NGLview. 
+* No visualization of atomistic structures using `NGLview <https://github.com/arose/nglview>`. 
 
-* Only temporary data storage, when you leave your session on Mybinder (beta) the environment is reset. 
+* Only temporary data storage, when you leave your session on `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/pyiron-docker.git/binder>` the environment is reset. 
 
-The Mybinder service is the most flexible way to test pyiron and get a first impression. 
-Start pyiron on MyBinder.org to test your first pyiron examples <button> .
+The `Mybinder service <https://mybinder.org>` is the most flexible way to test pyiron and get a first impression. 
+`Start pyiron on MyBinder.org to test your first pyiron examples. <https://mybinder.org/v2/gh/pyiron/pyiron-docker.git/binder>`
 
 **************************
 Docker (for demonstration)
 **************************
-While Mybinder.org is based on a similar Docker image, running the docker image locally enables more flexibility. In particular the graphical user interface is fully supported in this version. Still the following limitations remain: 
+While `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/pyiron-docker.git/binder>` is based on a similar `Docker <https://www.docker.com>` image, running the Docker image locally enables more flexibility. In particular the graphical user interface is fully supported in this version. Still the following limitations remain: 
 
-* No VASP license, DFT calculation can be imported and loaded but the execution is disabled. 
+* No `VASP <https://www.vasp.at>` license, DFT calculation can be imported and loaded but the execution is disabled. 
 
 *  Only temporary data storage, when you shutdown your Docker instance the environment is reset.
 
-This installation of pyiron is most suitable for presentations. After the local installation of Docker there are tow versions to choose from stable version based on jupyter notebooks and the latest beta version based on jupyter lab. For both versions the first command downloads the image from Dockerhub and the second command executes it locally. 
+This installation of pyiron is most suitable for presentations. After the local installation of `Docker <https://www.docker.com>` there are tow versions to choose from stable version based on jupyter notebooks and the latest beta version based on jupyter lab. For both versions the first command downloads the image from Dockerhub and the second command executes it locally. 
 
 Docker image with jupyter notebook (stable)
 ===========================================
