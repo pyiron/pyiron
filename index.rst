@@ -70,11 +70,11 @@ We are interested to get in contact with you, if you:
 ****
 News
 ****
-* Tomorrow: The pyiron paper is submitted 
-* 05.04.2018: test pyiron on mybinder.org (beta)
-* 27.03.2018: pyiron is available on anaconda.org install pyiron using: :code:`conda install -c pyiron pyiron`
-* 27.02.2018: pyiron is available on pypi.org install pyiron using: :code:`pip install pyiron` 
-* 05.12.2017: The pyiron website goes online. 
+* **Tomorrow:** The pyiron paper is submitted 
+* **05.04.2018:** test pyiron on mybinder.org (beta)
+* **27.03.2018:** pyiron is available on `anaconda.org <https://anaconda.org/pyiron/>`_ install pyiron using: :code:`conda install -c pyiron -c conda-forge pyiron`
+* **27.02.2018:** pyiron is available on `pypi.org <https://pypi.org/user/pyiron/>`_ install pyiron using: :code:`pip install pyiron` 
+* **05.12.2017:** The pyiron website goes online. 
 
 .. toctree::
    :hidden:
