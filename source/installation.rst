@@ -198,9 +198,9 @@ Computer Cluster (HPC)
 ----------------------
 While the local Installation is designed to scale beyond a single workstation, further multi user extensions are required like: 
 
-* Jupyterhub for managing multiple Jupyter Sessions.
+* `Jupyterhub <https://github.com/jupyterhub/jupyterhub>`_ for managing multiple Jupyter Sessions.
 
-* PostgreSQL database for scalability.
+* `PostgreSQL <https://www.postgresql.org>`_ database for scalability.
 
 * Queuing system for job management.
 
