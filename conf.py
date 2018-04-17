@@ -49,7 +49,7 @@ master_doc = 'index'
 # General information about the project.
 project = u'pyiron'
 copyright = u'2018, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department ' \
-            u'All rights reserved.'
+            u'All rights reserved'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
