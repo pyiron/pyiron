@@ -82,8 +82,8 @@ News
    source/citation.rst
    source/import.rst
    source/faq.rst
-   source/indices.rst
    source/examples.rst
+   :ref:`modul index <modindex>`
    Imprint <https://www.mpie.de/impressum>
 
 
