@@ -33,7 +33,7 @@ This includes the following modules/ plugins:
 
 * **pyiron**: https://github.com/pyiron/pyiron
 
-For all the other modules/ plugins in particular those hosted at https://gitlab.mpcdf.mpg.de/pyiron (MPIE internal) please ask the developers for the corrsponding references. We try to publish those as under the open source license when the initial papers are published. Afterwards they are going to be added to the official `Github repository <https://github.com/pyiron>`_. 
+For all the other modules/ plugins in particular those hosted at https://gitlab.mpcdf.mpg.de/pyiron (MPIE internal) please ask the developers for the corrsponding references. We try to publish those under the open source license when the initial papers are published. Afterwards they are going to be added to the official `Github repository <https://github.com/pyiron>`_. 
 
 **************
 external paper
