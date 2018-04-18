@@ -59,10 +59,9 @@ Alumni (chronological)
 
 * Murat Celik (MPIE) – Sqlalchemy based database adapter – 2016-2017. 
 
-* Martin Boeckmann (MPIE) – Metropolis Monte Carlo implementation – 2016-2017.
-
 * Navid Shayanfar (MPIE) - Parser for the in-house DFT code `S/PHI/nX <https://www.mpie.de/3389199/Optimized-key-algorithms>`_ - 2017.
 
+* Martin Boeckmann (MPIE) – Metropolis Monte Carlo implementation – 2017-2018.
 
 
 **********************
