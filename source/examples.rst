@@ -11,4 +11,4 @@ Tutorials
    example_notebooks/structures.ipynb
    example_notebooks/hcp_workfunction.ipynb
    example_notebooks/water_MD.ipynb
-   source/import.rst
+   import.rst
