@@ -35,7 +35,7 @@ Some of the features in pyiron rely on external codes which should be cited sepa
 
 Atomic Simulation Environment (ASE)
 ===================================
-pyiron is compatible with the `ASE <https://wiki.fysik.dtu.dk/ase/index.html>`_ structure classes, allowing the user to generate structures using the `ASE framework <https://wiki.fysik.dtu.dk/ase/index.html>` and run the simulation within pyiron. 
+pyiron is compatible with the `ASE <https://wiki.fysik.dtu.dk/ase/index.html>`_ structure classes, allowing the user to generate structures using the `ASE framework <https://wiki.fysik.dtu.dk/ase/index.html>`_ and run the simulation within pyiron. 
 
 .. code-block::
 
