@@ -8,6 +8,18 @@ How to cite pyiron?
 ===================
 To cite pyiron and the corresponding codes, please follow the instructions on the `publication page <_citation>`_.
 
+What units does pyiron use?
+===========================
+* mass = atomic mass units
+* distance = Angstroms
+* time = femtoseconds
+* energy = eV
+* velocity = Angstroms/femtoseconds
+* force = eV/Angstrom
+* temperature = Kelvin
+* pressure = GPa
+* charge = multiple of electron charge (1.0 is a proton)
+
 How to import existing calculation?
 ===================================
 
