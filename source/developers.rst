@@ -11,7 +11,7 @@ pyiron was initially developed in the `Computational Materials Design department
 Core Developer (alphabetical)
 *****************************
 
-* `**Jan Janssen (MPIE)** <https://www.mpie.de/person/42524/2768816>`_ – Leading the pyiron development – since 2015.  
+* **`Jan Janssen (MPIE) <https://www.mpie.de/person/42524/2768816>`_** – Leading the pyiron development – since 2015.  
 
 * `**Yury Lysogorski (ICAMS)** <http://www.icams.de/content/people/icams-staff-members/?detail=1484>`_ – Leading the high throughput development – since 2017.
 
