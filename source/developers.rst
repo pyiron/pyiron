@@ -61,7 +61,7 @@ Alumni (chronological)
 
 * Martin Boeckmann (MPIE) – Metropolis Monte Carlo implementation – 2016-2017.
 
-* Navid Shayanfar (MPIE) - Parser for the in-house DFT code sphinx - 2017.
+* Navid Shayanfar (MPIE) - Parser for the in-house DFT code `S/PHI/nX <https://www.mpie.de/3389199/Optimized-key-algorithms>`_ - 2017.
 
 
 
