@@ -65,6 +65,12 @@ Alumni (chronological)
 
 
 
+**********************
+External collaborators
+**********************
+* `Max Planck Computing & Data facility (MPCDF) <http://www.mpcdf.mpg.de>`_ - The MPCDF provides high-level support for the development, optimization, analysis and visualization of high-performance-computing applications. 
+
+
 .. toctree::
    :maxdepth:2
 
