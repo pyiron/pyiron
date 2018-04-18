@@ -76,14 +76,14 @@ News
 
 .. toctree::
    :hidden:
-   
+
+   source/about.rst
    source/installation.rst
+   source/examples.rst
    source/developers.rst
    source/citation.rst
-   source/import.rst
    source/faq.rst
-   source/examples.rst
-   :ref:`modul index <modindex>`
+   modul index <https://pyiron.github.io/py-modindex.html>
    Imprint <https://www.mpie.de/impressum>
 
 

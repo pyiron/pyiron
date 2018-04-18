@@ -1,8 +1,8 @@
 .. _examples:
 
-========
-Examples
-========
+=========
+Tutorials
+=========
 
 .. toctree::
    :maxdepth:10
@@ -10,3 +10,4 @@ Examples
    example_notebooks/structures.ipynb
    example_notebooks/hcp_workfunction.ipynb
    example_notebooks/water_MD.ipynb
+   source/import.rst
