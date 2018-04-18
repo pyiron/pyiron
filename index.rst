@@ -83,7 +83,7 @@ News
    source/developers.rst
    source/citation.rst
    source/faq.rst
-   modul index <https://pyiron.github.io/py-modindex.html>
+   Modul index <https://pyiron.github.io/py-modindex.html>
    Imprint <https://www.mpie.de/impressum>
 
 

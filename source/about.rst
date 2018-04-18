@@ -4,7 +4,7 @@
 About
 =====
 
-.. image:: _static/screenshot.png
+.. image:: ../_static/screenshot.png
     :width: 840px
     :height: 525px
     :align: center
