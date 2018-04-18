@@ -15,7 +15,7 @@ Core Developer (alphabetical)
 
 * `Yury Lysogorski (ICAMS) <http://www.icams.de/content/people/icams-staff-members/?detail=1484>`_ – Leading the high throughput development – since 2017.
 
-* `Sudarsan Surendralal (MPIE) <https://www.mpie.de/person/41328/2768816>`_ – Leading the electronic structure code development – since 2014.
+* `Sudarsan Surendralal (MPIE) <https://www.mpie.de/person/41328/2768816>`_ – Leading the electronic structure code development – since 2015.
 
 
 
