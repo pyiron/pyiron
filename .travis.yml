@@ -48,21 +48,21 @@ deploy:
     allow_failure: true
     on:
       branch: master
-      condition: ${PYTHONVER} = 3.6
+      condition: "${PYTHONVER} = 3.6"
   - provider: pypi
     user: pyiron
     password: ${PYPI_UPLOAD_TOKEN}
     allow_failure: true
     on:
       tags: true
-      condition: ${PYTHONVER} = 3.6
+      condition: "${PYTHONVER} = 3.6"
   - provider: script
     script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_base
     on:
       branch: master
-      condition: ${PYTHONVER} = 3.6
+      condition: "${PYTHONVER} = 3.6"
   - provider: script
     script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_base
     on:
       tags: true
-      condition: ${PYTHONVER} = 3.6
+      condition: "${PYTHONVER} = 3.6"
