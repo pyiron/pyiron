@@ -37,6 +37,7 @@ requirements:
     - pyiron_atomistics
 
 build:
+  noarch: python
   script_env:
    - TRAVIS
    - APPVEYOR
