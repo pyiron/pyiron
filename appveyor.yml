@@ -4,8 +4,6 @@ environment:
     # /E:ON and /V:ON options are not enabled in the batch script intepreter
     # See: http://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: 'cmd /E:ON /V:ON /C .\tools\appveyor\run_with_env.cmd'
-    ANACONDA_TOKEN:
-      secure: bzajjHETqXIrFqGaMGNGFHl1gFP0VSrDIbg8hcKc21uhlgzMmDr3/LU2DYCBYTDY
     PROJECT_NAME: pyiron_vasp
 
   matrix:
@@ -62,7 +60,3 @@ test_script:
   - "cd tests"
   - "python find_tests.py"
   - "cd .."
-
-on_success:
-  - bash -c "if [ $APPVEYOR_REPO_BRANCH = 'master' ]; then conda build --python $PYTHON_VERSION --user pyiron --token $ANACONDA_TOKEN conda/pyiron_vasp; fi"
-
