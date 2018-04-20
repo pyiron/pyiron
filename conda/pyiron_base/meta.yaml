@@ -33,6 +33,7 @@ requirements:
     - pytables
 
 build:
+  noarch: python
   script_env:
    - TRAVIS
    - APPVEYOR
