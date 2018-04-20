@@ -31,9 +31,9 @@ script:
   - cd ../MetaRepo
   - git submodule update --init --recursive
   - git submodule foreach git pull origin master
+  - for d in $(ls -d pyiron*); do export PYTHONPATH=$(pwd)/$d:$PYTHONPATH; done
   - for d in $(ls -d pyiron*); do sphinx-apidoc -f -o ../pyiron_docs/apidoc $d/$d; done
   - cd ../pyiron_docs
-  - conda install -y -c pyiron pyiron
   - sphinx-build -b html ./ ../pyiron.github.io
   - cd ..
   
