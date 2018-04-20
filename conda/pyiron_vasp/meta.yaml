@@ -40,7 +40,7 @@ requirements:
     - lxml
 
 build:
-  noarch: generic
+  noarch: python
   script_env:
    - TRAVIS
    - APPVEYOR
