@@ -10,7 +10,7 @@ try:
 except (ImportError, RuntimeError):
     try:
         import matplotlib.pyplot as plt
-    except RuntimeError:
+    except (ImportError, RuntimeError):
         pass
 
 __author__ = "Jan Janssen"
