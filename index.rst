@@ -41,7 +41,7 @@ pyiron was initially developed in the `Computational Materials Design department
 
 .. note::  
 
-    **pyiron 1.0 – Disclaimer**: With the first open source release the pyiron objects are introduced as an abstract class of building blocks for simulation life cycles. While this release is fully scalable in terms of computing resources, we are currently working on finalizing the high throughput extension as well as a set of specialized pyiron plugins for `Computational Phase Studies <https://www.mpie.de/2891195/computational_phase_studies>`_, `Electrochemistry and Corrosion <https://www.mpie.de/3119070/Corrosion>`_.
+    **pyiron 1.0 – Disclaimer**: With the first open source release under the `BSD license <https://github.com/pyiron/pyiron/blob/master/LICENSE>`_ the pyiron objects are introduced as an abstract class of building blocks for simulation life cycles. While this release is fully scalable in terms of computing resources, we are currently working on finalizing the high throughput extension as well as a set of specialized pyiron plugins for `Computational Phase Studies <https://www.mpie.de/2891195/computational_phase_studies>`_, `Electrochemistry and Corrosion <https://www.mpie.de/3119070/Corrosion>`_.
 
 ***********
 Test pyiron
@@ -83,6 +83,7 @@ News
    source/developers.rst
    source/citation.rst
    source/faq.rst
+   License (BSD) <https://github.com/pyiron/pyiron/blob/master/LICENSE>
    Modul index <https://pyiron.github.io/py-modindex.html>
    Imprint <https://www.mpie.de/impressum>
 
