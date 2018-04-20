@@ -41,6 +41,7 @@ requirements:
     - pyiron_vasp
 
 build:
+  noarch: python
   script_env:
    - TRAVIS
    - APPVEYOR
