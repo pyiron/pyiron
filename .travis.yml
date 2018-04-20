@@ -14,8 +14,7 @@ install:
   - conda config --add channels conda-forge
   - conda config --add channels pyiron
   - conda update -q conda
-  - conda install -y -c conda-forge -c pyiron numpy pytables git sphinx nbsphinx lammps ipywidgets sphinx_rtd_theme
-  - pip install --pre --no-deps pyiron pyiron_lammps pyiron_example_job pyiron_atomistics pyiron_dft pyiron_base pyiron_vasp 
+  - conda install -y -c conda-forge numpy pytables git sphinx nbsphinx ipywidgets sphinx_rtd_theme
 
 script:
   - git config --global user.email "${GH_EMAIL}"
@@ -34,6 +33,7 @@ script:
   - git submodule foreach git pull origin master
   - for d in $(ls -d pyiron*); do sphinx-apidoc -f -o ../pyiron_docs/apidoc $d/$d; done
   - cd ../pyiron_docs
+  - conda install -y -c pyiron pyiron
   - sphinx-build -b html ./ ../pyiron.github.io
   - cd ..
   
