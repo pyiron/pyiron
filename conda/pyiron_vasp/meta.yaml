@@ -22,6 +22,7 @@ requirements:
     - pyiron_base
     - pyiron_atomistics
     - pyiron_dft
+    - lxml
 
   run:
     - python
@@ -36,6 +37,7 @@ requirements:
     - spglib
     - pyiron_atomistics
     - pyiron_dft
+    - lxml
 
 build:
   script_env:
