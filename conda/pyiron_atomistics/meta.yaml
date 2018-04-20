@@ -35,6 +35,7 @@ requirements:
     - pyiron_base
 
 build:
+  noarch: python
   script_env:
    - TRAVIS
    - APPVEYOR
