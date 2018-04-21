@@ -74,6 +74,21 @@ News
 * **27.02.2018:** pyiron is available on `pypi.org <https://pypi.org/user/pyiron/>`_ install pyiron using: :code:`pip install pyiron` 
 * **05.12.2017:** The pyiron website goes online. 
 
+******
+Citing 
+******
+If you use pyiron in your research, please consider citing the following work:
+
+.. code-block:: bibtex 
+
+  @article{pyiron-paper,
+    author={Jan Janssen and Sudarsan Surendralal and Yury Lysogorskiy and Mira Todorova and Tilmann Hickel and Ralf Drautz and Jörg Neugebauer},
+    title={pyiron: An integrated development environment for computational materials science},
+    year={2018}
+  }
+
+Read more about `citing individual modules/ plugins of pyiron and the implemented simulation codes <citation>`_. 
+
 .. toctree::
    :hidden:
 
