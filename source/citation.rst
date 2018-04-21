@@ -1,8 +1,8 @@
 .. _citation:
 
-===========
-Publication
-===========
+======
+Citing
+======
 The pyiron integrated development environment (IDE) for computational materials science - pyiron IDE - is based on a flexible plugin infrastructure. So depending on which modules are used please cite the corresponding papers.
 
 *****************************
