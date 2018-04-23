@@ -44,12 +44,12 @@ class Atoms(object):
     on the corresponding implementation in the ASE package
 
     Args:
-        elements (list/numpy.ndarray instance): List of strings containing the elements or a list of
+        elements (list/numpy.ndarray): List of strings containing the elements or a list of
                             pyiron_atomistics.structure.periodic_table.ChemicalElement instances
-        numbers (list/numpy.ndarray instance): List of atomic numbers of elements
-        symbols (list/numpy.ndarray instance): List of chemical symbols
+        numbers (list/numpy.ndarray): List of atomic numbers of elements
+        symbols (list/numpy.ndarray): List of chemical symbols
         positions (list/numpy.ndarray): List of positions
-        scaled_positions (list/numpy.ndarray instance): List of scaled positions (relative coordinates)
+        scaled_positions (list/numpy.ndarray): List of scaled positions (relative coordinates)
         pbc (list/numpy.ndarray/boolean): Tells if periodic boundary conditions should be applied on the three axes
         cell (list/numpy.ndarray instance): A 3x3 array representing the lattice vectors of the structure
 
