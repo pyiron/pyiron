@@ -1,10 +1,6 @@
 import unittest
 import os
 from pyiron_base.core.settings.generic import Settings
-s = Settings(config={'sql_file': 'atoms.db',
-                     'project_paths': os.path.abspath(os.getcwd()),
-                     'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
-
 import numpy as np
 from pyiron_atomistics.structure.atom import Atom
 from pyiron_atomistics.structure.atoms import Atoms, CrystalStructure
@@ -12,13 +8,38 @@ from pyiron_atomistics.structure.sparse_list import SparseList
 from pyiron_atomistics.structure.periodic_table import PeriodicTable
 
 
+s = Settings(config={'sql_file': 'atoms.db',
+                     'project_paths': os.path.abspath(os.getcwd()),
+                     'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
+
+
 class TestAtoms(unittest.TestCase):
+
     def setUp(self):
         pass
         self.CO2 = Atoms("CO2", positions=[[0, 0, 0], [0, 0, 1.5], [0, 1.5, 0]])
         C = Atom('C').element
         self.C3 = Atoms([C, C, C], positions=[[0, 0, 0], [0, 0, 2], [0, 2, 0]])
         self.C2 = Atoms(2 * [Atom('C')])
+
+    def test__init__(self):
+        pos, cell = generate_fcc_lattice()
+        pse = PeriodicTable()
+        el = pse.element("Al")
+        basis = Atoms()
+        self.assertIsInstance(basis, Atoms)
+        basis = Atoms(symbols='Al', positions=pos, cell=cell)
+        self.assertIsInstance(basis, Atoms)
+        self.assertEqual(basis.get_spacegroup()["Number"], 225)
+        basis = Atoms(elements='Al', positions=pos, cell=cell)
+        self.assertIsInstance(basis, Atoms)
+        basis = Atoms(elements=['Al'], positions=pos, cell=cell)
+        self.assertIsInstance(basis, Atoms)
+        self.assertRaises(ValueError, Atoms, symbols="Pt", elements='Al', positions=pos, cell=cell)
+        basis = Atoms(numbers=[13], positions=pos, cell=cell)
+        self.assertEqual(basis.get_majority_species()[1], "Al")
+        basis = Atoms(species=[el], indices=[0], positions=pos, cell=cell)
+        self.assertEqual(basis.get_majority_species()[1], "Al")
 
     def create_Fe_bcc(self):
         self.pse = PeriodicTable()
@@ -558,6 +579,12 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(basis.get_chemical_formula(), "O3")
         self.assertEqual(len(basis.species), 1)
         self.assertEqual(len(basis.get_species_symbols()), 1)
+
+
+def generate_fcc_lattice():
+    positions = [[0, 0, 0]]
+    cell = (np.ones((3, 3)) - np.eye(3)) * 0.5 * 4.2
+    return positions, cell
 
 
 if __name__ == '__main__':
