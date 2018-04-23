@@ -87,6 +87,9 @@ class Atoms(object):
         self._pse = PeriodicTable()
         self._tag_list = SparseArray()
         self.indices = np.array([])
+        self._info = dict()
+        self.arrays = dict()
+
         el_index_lst = list()
         element_list = None
 
@@ -186,8 +189,6 @@ class Atoms(object):
                 self.pbc = True  # default setting
             else:
                 self.pbc = pbc
-        self._info = dict()
-        self.arrays = dict()
         self.set_initial_magnetic_moments(magmoms)
 
     @property
