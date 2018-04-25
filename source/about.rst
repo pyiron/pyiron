@@ -14,23 +14,23 @@ Introduction
     :align: center
     :alt: Screenshot of pyiron running inside jupyterlab.
 
-pyiron is the integrated development environment for computational materials science. It connects among other things:
+pyiron is an integrated development environment for implementing, testing, and running simulations in computational materials science. It combines several tools in a common plattform:
 
-* Atomic structure objects – compatible to the `Atomic Simulation Environment (ASE) <https://wiki.fysik.dtu.dk/ase/>`_.
+• Atomic structure objects – compatible to the `Atomic Simulation Environment (ASE) <https://wiki.fysik.dtu.dk/ase/>`_.
 
-* Atomistic simulation codes – like `LAMMPS <http://lammps.sandia.gov>`_ and `VASP <https://www.vasp.at>`_.
+• Atomistic simulation codes – like `LAMMPS <http://lammps.sandia.gov>`_ and `VASP <https://www.vasp.at>`_.
 
-* Feedback Loops – to construct dynamic simulation life cycles.
+• Feedback Loops – to construct dynamic simulation life cycles.
 
-* Hierarchical data management – interfacing with storage resources like SQL and `HDF5 <https://support.hdfgroup.org/HDF5/>`_.
+• Hierarchical data management – interfacing with storage resources like SQL and `HDF5 <https://support.hdfgroup.org/HDF5/>`_.
 
-* Integrated visualization – based on the `NGLview <https://github.com/arose/nglview>`_.
+• Integrated visualization – based on `NGLview <https://github.com/arose/nglview>`_. 
 
-* Interactive simulation protocols - based on `Jupyter notebooks <http://jupyter.org>`_.
+• Interactive simulation protocols - based on `Jupyter notebooks <http://jupyter.org>`_.
 
-* Object oriented job management – for scaling simulation protocols.
+• Object oriented job management – for scaling complex simulation protocols from single jobs to high-throughput simulations.
 
-pyiron was initially developed in the `Computational Materials Design department <https://www.mpie.de/CM>`_ of `Joerg Neugebauer <https://www.mpie.de/person/43010/2763386>`_ at the `Max Planck Insitut für Eisenforschung (Max Planck Insitute for iron research) <https://www.mpie.de/2281/en>`_ as a framework for ab initio thermo dynamics. In collaboration with the `Interdisciplinary Centre for Advanced Materials Simulation (ICAMS) <http://www.icams.de>`_ the framework was recently extended for high throughput applications resulting in the opensource release of the pyiron.
+pyiron (called pyron) is developed in the `Computational Materials Design department <https://www.mpie.de/CM>`_ of `Joerg Neugebauer <https://www.mpie.de/person/43010/2763386>`_ at the `Max Planck Insitut für Eisenforschung (Max Planck Insitute for iron research) <https://www.mpie.de/2281/en>`_. While its original focus was to provide a framework to develop and run complex simulation protocols as needed for ab initio thermodynamics it quickly evolved into a versatile tool to manage a wide variety of simulation tasks. In 2016 the `Interdisciplinary Centre for Advanced Materials Simulation (ICAMS) <http://www.icams.de>`_ joined the development of the framework with a specific focus on high throughput applications. In 2018 pyiron was released as open-source project. 
 
 ************
 Getting Help
