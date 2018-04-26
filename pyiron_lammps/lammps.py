@@ -205,7 +205,7 @@ class Lammps(AtomisticGenericJob):
         lmp_structure = self._get_lammps_structure(structure=self.structure, cutoff_radius=self.cutoff_radius)
         lmp_structure.write_file(file_name="structure.inp", cwd=self.working_directory)
         if self.executable.version and int(self.executable.version.split('.')[0]) > 2016 or \
-                (int(self.executable.version.split('.')[0]) == 2016 and
+                (self.executable.version and int(self.executable.version.split('.')[0]) == 2016 and
                  int(self.executable.version.split('.')[1]) == 11):
             self.input.control['dump_modify'] = \
                 '1 sort id format line "%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g"'
