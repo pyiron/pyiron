@@ -68,7 +68,8 @@ class LammpsPotential(GenericParameters):
             raise ValueError('Was not able to locate the potentials.')
 
     def copy_pot_files(self, working_directory):
-        _ = [shutil.copy(path_pot, working_directory) for path_pot in self.files]
+        if self.files is not None:
+            _ = [shutil.copy(path_pot, working_directory) for path_pot in self.files]
 
     def get_element_lst(self):
         return list(self._df['Species'])[0]
