@@ -204,7 +204,7 @@ class Lammps(AtomisticGenericJob):
             raise ValueError("Input structure not set. Use method set_structure()")
         lmp_structure = self._get_lammps_structure(structure=self.structure, cutoff_radius=self.cutoff_radius)
         lmp_structure.write_file(file_name="structure.inp", cwd=self.working_directory)
-        if int(self.executable.version.split('.')[0]) > 2016 or \
+        if self.executable.version and int(self.executable.version.split('.')[0]) > 2016 or \
                 (int(self.executable.version.split('.')[0]) == 2016 and
                  int(self.executable.version.split('.')[1]) == 11):
             self.input.control['dump_modify'] = \
