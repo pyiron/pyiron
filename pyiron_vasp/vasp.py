@@ -375,7 +375,7 @@ class Vasp(GenericDFTJob):
         if any(self.structure.get_initial_magnetic_moments().flatten()):
             final_cmd = '   '.join([' '.join([str(spinmom) for spinmom in spin])
                                     if isinstance(spin, list) or isinstance(spin, np.ndarray) else str(spin)
-                                    for spin in self.structure.get_initial_magnetic_moments()])
+                                    for spin in self.structure.get_initial_magnetic_moments()[self.sorted_indices]])
             s.logger.debug('Magnetic Moments are: {0}'.format(final_cmd))
             if "MAGMOM" not in self.input.incar._dataset['Parameter']:
                 self.input.incar["MAGMOM"] = final_cmd
