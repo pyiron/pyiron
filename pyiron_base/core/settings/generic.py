@@ -75,7 +75,7 @@ class Settings(with_metaclass(Singleton)):
             config_file = os.path.expanduser(os.path.join("~", ".pyiron"))
         if os.path.isfile(config_file):
             self._config_parse_file(config_file)
-        elif not ('TRAVIS' in os.environ.keys() or 'APPVEYOR' in os.environ.keys()):
+        elif not ('TRAVIS' in os.environ.keys() or 'APPVEYOR' in os.environ.keys() or 'CIRCLECI' in os.environ.keys()):
             user_input = None
             while user_input not in ['yes', 'no']:
                 if sys.version_info.major > 2:
