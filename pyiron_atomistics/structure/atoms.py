@@ -220,9 +220,11 @@ class Atoms(object):
 
         if self._is_scaled:
             return self._internal_positions
-        else:
+        elif self.cell is not None:
             b_mat = np.linalg.inv(self.cell)
             return np.dot(b_mat.T, np.array(self.positions).T).T
+        else:
+            return None
 
     @property
     def positions(self):
