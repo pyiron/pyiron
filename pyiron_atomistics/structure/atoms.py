@@ -82,7 +82,9 @@ class Atoms(object):
             # make it ASE compatible
             if np.linalg.matrix_rank(cell) == 1:
                 cell = np.eye(len(cell)) * cell
-        self.cell = cell
+            else:
+                cell = np.array(cell)
+        self._cell = cell
         self._species = list()
         self._internal_positions = None
         self._pse = PeriodicTable()
@@ -279,7 +281,7 @@ class Atoms(object):
     @property
     def info(self):
         """
-        This function is merely used to be compatible with the ASE Atoms class
+        This dictionary is merely used to be compatible with the ASE Atoms class.
 
         """
         return self._info
