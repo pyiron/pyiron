@@ -92,7 +92,7 @@ class Atoms(object):
         self.arrays = dict()
         self.adsorbate_info = {}
         self.bonds = None
-        self.pbc = False
+        self._pbc = False
         self.dimension = 3  # Default
         self.units = {"length": "A", "mass": "u"}
 
@@ -292,7 +292,7 @@ class Atoms(object):
     def pbc(self):
         """
         list: A list of boolean values which gives the periodic boundary consitions along the three axes.
-        The default value is [True, True, True]
+              The default value is [True, True, True]
 
         """
         if not isinstance(self._pbc, np.ndarray):
@@ -307,7 +307,7 @@ class Atoms(object):
     def elements(self):
         """
         numpy.ndarray: A size N list of pyiron_atomistics.structure.periodic_table.ChemicalElement instances according
-        to the ordering of the atoms in the instance
+                       to the ordering of the atoms in the instance
 
         """
         return np.array([self.species[el] for el in self.indices])
