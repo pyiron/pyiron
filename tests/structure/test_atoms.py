@@ -77,6 +77,16 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue("Al" not in [sp.Abbreviation] for sp in basis._species_to_index_dict.keys())
         self.assertTrue("Pt" in [sp.Abbreviation] for sp in basis._species_to_index_dict.keys())
 
+    def test_new_array(self):
+        pos, cell = generate_fcc_lattice()
+        pse = PeriodicTable()
+        el = pse.element("Pt")
+        basis = Atoms(symbols='Al', positions=pos, cell=cell)
+        basis.set_repeat([10, 10, 10])
+        spins = np.ones(len(basis))
+        basis.new_array(name="spins", a=spins)
+        self.assertTrue(np.array_equal(basis.arrays['spins'], spins))
+
     def create_Fe_bcc(self):
         self.pse = PeriodicTable()
         self.pse.add_element("Fe", "Fe_up", spin="up", pseudo_name='GGA')
