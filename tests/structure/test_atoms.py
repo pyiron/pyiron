@@ -79,13 +79,28 @@ class TestAtoms(unittest.TestCase):
 
     def test_new_array(self):
         pos, cell = generate_fcc_lattice()
-        pse = PeriodicTable()
-        el = pse.element("Pt")
         basis = Atoms(symbols='Al', positions=pos, cell=cell)
         basis.set_repeat([10, 10, 10])
         spins = np.ones(len(basis))
         basis.new_array(name="spins", a=spins)
         self.assertTrue(np.array_equal(basis.arrays['spins'], spins))
+
+    def test_set_array(self):
+        pos, cell = generate_fcc_lattice()
+        basis = Atoms(symbols='Al', positions=pos, cell=cell)
+        basis.set_repeat([10, 10, 10])
+        spins = np.ones(len(basis), dtype=float)
+        basis.set_array(name="spins", a=2*spins, dtype=int)
+        self.assertTrue(np.array_equal(basis.arrays['spins'], 2 * spins))
+
+    def test_get_array(self):
+        pos, cell = generate_fcc_lattice()
+        basis = Atoms(symbols='Al', positions=pos, cell=cell)
+        basis.set_repeat([10, 10, 10])
+        spins = np.ones(len(basis), dtype=float)
+        basis.set_array(name="spins", a=2*spins, dtype=int)
+        self.assertTrue(np.array_equal(basis.arrays['spins'], 2 * spins))
+        self.assertTrue(np.array_equal(basis.get_array(name="spins"), 2 * spins))
 
     def create_Fe_bcc(self):
         self.pse = PeriodicTable()
