@@ -89,6 +89,10 @@ class Atoms(object):
         self.indices = np.array([])
         self._info = dict()
         self.arrays = dict()
+        self.adsorbate_info = {}
+        self.bonds = None
+        self.pbc = False
+        self.dimension = 3  # Default
 
         el_index_lst = list()
         element_list = None
@@ -181,9 +185,6 @@ class Atoms(object):
             self.dimension = 3
         if dimension is not None:
             self.dimension = dimension
-        self.adsorbate_info = {}
-        self.bonds = None
-        self.pbc = False
         if cell is not None:
             if pbc is None:
                 self.pbc = True  # default setting
