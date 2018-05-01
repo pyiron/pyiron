@@ -38,6 +38,7 @@ class TestAtoms(unittest.TestCase):
         self.assertIsNone(basis.positions)
         self.assertIsNone(basis.scaled_positions)
         self.assertIsInstance(basis.species, list)
+        self.assertIsInstance(basis.elements, np.ndarray)
         self.assertIsNone(basis.cell)
         basis = Atoms(symbols='Al', positions=pos, cell=cell)
         self.assertIsInstance(basis, Atoms)
@@ -63,6 +64,7 @@ class TestAtoms(unittest.TestCase):
         self.assertIsInstance(basis._internal_positions, np.ndarray)
         self.assertIsInstance(basis.positions, np.ndarray)
         self.assertIsInstance(basis.scaled_positions, np.ndarray)
+        self.assertIsInstance(basis.elements, np.ndarray)
 
     def test_set_species(self):
         pos, cell = generate_fcc_lattice()
