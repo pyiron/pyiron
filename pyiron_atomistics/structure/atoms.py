@@ -93,6 +93,7 @@ class Atoms(object):
         self.bonds = None
         self.pbc = False
         self.dimension = 3  # Default
+        self.units = {"length": "A", "mass": "u"}
 
         el_index_lst = list()
         element_list = None
@@ -178,7 +179,6 @@ class Atoms(object):
             print ('set qwargs (ASE): ', key, val)
             setattr(self, key, val)
 
-        self.units = {"length": "A", "mass": "u"}
         if len(positions) > 0:
             self.dimension = len(positions[0])
         else:
