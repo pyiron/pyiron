@@ -65,7 +65,15 @@ class TestAtoms(unittest.TestCase):
         self.assertIsInstance(basis.scaled_positions, np.ndarray)
 
     def test_set_species(self):
-        pass
+        pos, cell = generate_fcc_lattice()
+        pse = PeriodicTable()
+        el = pse.element("Pt")
+        basis = Atoms(symbols='Al', positions=pos, cell=cell)
+        self.assertEqual(basis.get_chemical_formula(), "Al")
+        basis.set_species([el])
+        self.assertEqual(basis.get_chemical_formula(), "Pt")
+        self.assertTrue("Al" not in [sp.Abbreviation] for sp in basis._species_to_index_dict.keys())
+        self.assertTrue("Pt" in [sp.Abbreviation] for sp in basis._species_to_index_dict.keys())
 
     def create_Fe_bcc(self):
         self.pse = PeriodicTable()
