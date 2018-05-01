@@ -83,6 +83,7 @@ class Atoms(object):
             if np.linalg.matrix_rank(cell) == 1:
                 cell = np.eye(len(cell)) * cell
         self.cell = cell
+        self._species = list()
         self._internal_positions = None
         self._pse = PeriodicTable()
         self._tag_list = SparseArray()
