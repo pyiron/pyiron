@@ -35,18 +35,18 @@ class TestProject(unittest.TestCase):
         self.project.remove()
 
     def test_repr(self):
-        self.assertEqual("[]", self.project.__repr__()['groups'])
+        self.assertEqual([], self.project.list_groups())
         pr_down_one = self.project['..']
         pr_down_two = self.project['../..']
         pr_down_twice = self.project['..']['..']
         self.assertEqual(pr_down_two.__repr__(), pr_down_twice.__repr__())
-        self.assertEqual(str(sorted([directory for directory in os.listdir('.')
-                                     if not os.path.isfile(os.path.join('.', directory))])),
-                         pr_down_one.__repr__()['groups'])
-        self.assertEqual(str(sorted([directory for directory in os.listdir('..')
-                                     if not os.path.isfile(os.path.join('..', directory))])),
-                         pr_down_two.__repr__()['groups'])
-        self.assertEqual(pr_down_two.__repr__()['groups'], pr_down_twice.__repr__()['groups'])
+        self.assertEqual(sorted([directory for directory in os.listdir('.')
+                                 if not os.path.isfile(os.path.join('.', directory))]),
+                         pr_down_one.list_groups())
+        self.assertEqual(sorted([directory for directory in os.listdir('..')
+                                 if not os.path.isfile(os.path.join('..', directory))]),
+                         pr_down_two.list_groups())
+        self.assertEqual(pr_down_two.list_groups(), pr_down_twice.list_groups())
 
 if __name__ == '__main__':
     unittest.main()
