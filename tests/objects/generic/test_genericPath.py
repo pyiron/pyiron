@@ -40,13 +40,13 @@ class TestProject(unittest.TestCase):
         pr_down_two = self.project['../..']
         pr_down_twice = self.project['..']['..']
         self.assertEqual(pr_down_two.__repr__(), pr_down_twice.__repr__())
-        self.assertEqual(str({'nodes': [], 'groups': sorted([directory for directory in os.listdir('.')
-                                                             if not os.path.isfile(os.path.join('.', directory))])}),
-                         pr_down_one.__repr__())
-        self.assertEqual(str({'nodes': [], 'groups': sorted([directory for directory in os.listdir('..')
-                                                             if not os.path.isfile(os.path.join('..', directory))])}),
-                         pr_down_two.__repr__())
-        self.assertEqual(pr_down_two.__repr__(), pr_down_twice.__repr__())
+        self.assertEqual(str(sorted([directory for directory in os.listdir('.')
+                                     if not os.path.isfile(os.path.join('.', directory))])),
+                         pr_down_one.__repr__()['groups'])
+        self.assertEqual(str(sorted([directory for directory in os.listdir('..')
+                                     if not os.path.isfile(os.path.join('..', directory))])),
+                         pr_down_two.__repr__()['groups'])
+        self.assertEqual(pr_down_two.__repr__()['groups'], pr_down_twice.__repr__()['groups'])
 
 if __name__ == '__main__':
     unittest.main()
