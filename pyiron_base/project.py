@@ -956,9 +956,7 @@ class Project(ProjectPath):
         Returns:
             str: string representation
         """
-        groups = self.list_dirs(skip_hdf5=True)
-        nodes = self.list_nodes()
-        return str(groups + nodes)
+        return str({'groups': self.list_dirs(skip_hdf5=True), 'nodes': self.list_nodes()})
 
     def __setitem__(self, key, value):
         """
