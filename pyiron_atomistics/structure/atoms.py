@@ -82,13 +82,21 @@ class Atoms(object):
             # make it ASE compatible
             if np.linalg.matrix_rank(cell) == 1:
                 cell = np.eye(len(cell)) * cell
-        self.cell = cell
+            else:
+                cell = np.array(cell)
+        self._cell = cell
+        self._species = list()
         self._internal_positions = None
         self._pse = PeriodicTable()
         self._tag_list = SparseArray()
         self.indices = np.array([])
         self._info = dict()
         self.arrays = dict()
+        self.adsorbate_info = {}
+        self.bonds = None
+        self._pbc = False
+        self.dimension = 3  # Default
+        self.units = {"length": "A", "mass": "u"}
 
         el_index_lst = list()
         element_list = None
@@ -171,19 +179,15 @@ class Atoms(object):
         self._tag_list._length = len(positions)
 
         for key, val in qwargs.items():
-            print ('set qwargs (ASE): ', key, val)
+            print('set qwargs (ASE): ', key, val)
             setattr(self, key, val)
 
-        self.units = {"length": "A", "mass": "u"}
         if len(positions) > 0:
             self.dimension = len(positions[0])
         else:
             self.dimension = 3
         if dimension is not None:
             self.dimension = dimension
-        self.adsorbate_info = {}
-        self.bonds = None
-        self.pbc = False
         if cell is not None:
             if pbc is None:
                 self.pbc = True  # default setting
@@ -218,9 +222,11 @@ class Atoms(object):
 
         if self._is_scaled:
             return self._internal_positions
-        else:
+        elif self.cell is not None:
             b_mat = np.linalg.inv(self.cell)
             return np.dot(b_mat.T, np.array(self.positions).T).T
+        else:
+            return None
 
     @property
     def positions(self):
@@ -275,7 +281,7 @@ class Atoms(object):
     @property
     def info(self):
         """
-        This function is merely used to be compatible with the ASE Atoms class
+        This dictionary is merely used to be compatible with the ASE Atoms class.
 
         """
         return self._info
@@ -288,7 +294,7 @@ class Atoms(object):
     def pbc(self):
         """
         list: A list of boolean values which gives the periodic boundary consitions along the three axes.
-        The default value is [True, True, True]
+              The default value is [True, True, True]
 
         """
         if not isinstance(self._pbc, np.ndarray):
@@ -303,7 +309,7 @@ class Atoms(object):
     def elements(self):
         """
         numpy.ndarray: A size N list of pyiron_atomistics.structure.periodic_table.ChemicalElement instances according
-        to the ordering of the atoms in the instance
+                       to the ordering of the atoms in the instance
 
         """
         return np.array([self.species[el] for el in self.indices])
@@ -1003,7 +1009,7 @@ class Atoms(object):
         warnings.filterwarnings("ignore")
         return analyse_ovito_cna_adaptive(atoms=self, mode=mode)
 
-    def plot3d(self, spacefill=True, show_cell=True):
+    def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5, background='white', color_scheme='value', show_axes=True):
         """
 
         Returns:
@@ -1025,6 +1031,15 @@ class Atoms(object):
         if show_cell:
             if parent_basis.cell is not None:
                 view.add_unitcell()
+        if show_axes:
+            view.shape.add_arrow([-2, -2, -2], [2, -2, -2], [1, 0, 0], 0.5)
+            view.shape.add_arrow([-2, -2, -2], [-2, 2, -2], [0, 1, 0], 0.5)
+            view.shape.add_arrow([-2, -2, -2], [-2, -2, 2], [0, 0, 1], 0.5)
+        if camera!='perspective' and camera!='orthographic':
+            print('Only perspective or orthographic is permitted')
+            return None
+        view.camera = camera
+        view.background = background
         return view
 
     def pos_xyz(self):
