@@ -48,11 +48,11 @@ Explore pyiron
 **************
 We provide various options to install, explore and run pyiron: 
 
-* :ref:`Mybinder.org (first try) <InstallBinder>`: test pyiron directly in your browser (no VASP license, no visualization, only temporary data storage) 
+* :ref:`Workstation Installation (**recommeded**) <InstallLocal>`: for Windows, Linux or Mac OS X workstations (interface for local VASP executable, support for the latest jupyterlab based GUI)
 
-* :ref:`Docker (for demonstration) <InstallDocker>`: for demonstration (no VASP license, only temporary data storage)
+* :ref:`Mybinder.org (beta) <InstallBinder>`: test pyiron directly in your browser (no VASP license, no visualization, only temporary data storage)
 
-* :ref:`Local Installation (Workstation) <InstallLocal>`: for Windows, Linux or Mac OS X workstations (interface for local VASP executable, support for the latest jupyterlab based GUI) 
+* :ref:`Docker (for demonstration) <InstallDocker>`: requires Docker installation (no VASP license, only temporary data storage)
 
 ********************
 Join the development
