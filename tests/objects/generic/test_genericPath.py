@@ -35,7 +35,7 @@ class TestProject(unittest.TestCase):
         self.project.remove()
 
     def test_repr(self):
-        self.assertEqual("{'nodes': [], 'groups': []}", self.project.__repr__())
+        self.assertEqual("[]", self.project.__repr__()['groups'])
         pr_down_one = self.project['..']
         pr_down_two = self.project['../..']
         pr_down_twice = self.project['..']['..']
