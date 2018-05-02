@@ -48,7 +48,7 @@ Explore pyiron
 **************
 We provide various options to install, explore and run pyiron: 
 
-* :ref:`Workstation Installation (**recommeded**) <InstallLocal>`: for Windows, Linux or Mac OS X workstations (interface for local VASP executable, support for the latest jupyterlab based GUI)
+* :ref:`Workstation Installation (recommeded) <InstallLocal>`: for Windows, Linux or Mac OS X workstations (interface for local VASP executable, support for the latest jupyterlab based GUI)
 
 * :ref:`Mybinder.org (beta) <InstallBinder>`: test pyiron directly in your browser (no VASP license, no visualization, only temporary data storage)
 

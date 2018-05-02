@@ -6,7 +6,7 @@ Installation
 
 .. note:: **Before you install:** We provide various levels of environments to test pyiron:
 
-          * :ref:`Local Installation (**recommeded**) <InstallLocal>`: for Windows, Linux or Mac OS X workstation (interface for local VASP executable, support for the latest jupyterlab based GUI)
+          * :ref:`Local Installation (recommeded) <InstallLocal>`: for Windows, Linux or Mac OS X workstation (interface for local VASP executable, support for the latest jupyterlab based GUI)
 
           * :ref:`Mybinder.org (beta) <InstallBinder>`: test pyiron directly in your browser (no VASP license, no visualization, only temporary data storage)
 
