@@ -179,7 +179,7 @@ class Atoms(object):
         self._tag_list._length = len(positions)
 
         for key, val in qwargs.items():
-            print ('set qwargs (ASE): ', key, val)
+            print('set qwargs (ASE): ', key, val)
             setattr(self, key, val)
 
         if len(positions) > 0:
