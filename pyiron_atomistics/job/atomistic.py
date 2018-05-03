@@ -55,7 +55,7 @@ class AtomisticGenericJob(GenericJobCore):
         self._generic_input['structure'] = 'atoms'
         self._structure = basis
 
-    def copy_to(self, project, new_job_name=None, input_only=False, new_database_entry=True):
+    def copy_to(self, project=None, new_job_name=None, input_only=False, new_database_entry=True):
         """
 
         Args:
