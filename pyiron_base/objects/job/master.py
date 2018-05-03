@@ -212,7 +212,7 @@ class GenericMaster(GenericJob):
                 child.move_to(project.open(self.job_name + '_hdf5'))
         super(GenericMaster, self).move_to(project)
 
-    def copy_to(self, project, new_job_name=None, input_only=False, new_database_entry=True):
+    def copy_to(self, project=None, new_job_name=None, input_only=False, new_database_entry=True):
         """
         Copy the content of the job including the HDF5 file to a new location
 
@@ -226,7 +226,7 @@ class GenericMaster(GenericJob):
         Returns:
             GenericJob: GenericJob object pointing to the new location.
         """
-        new_generic_job = super(GenericMaster, self).copy_to(project, new_job_name=new_job_name,
+        new_generic_job = super(GenericMaster, self).copy_to(project=project, new_job_name=new_job_name,
                                                              input_only=input_only,
                                                              new_database_entry=new_database_entry)
         if new_generic_job.job_id and new_database_entry:
