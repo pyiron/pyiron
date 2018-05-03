@@ -1003,7 +1003,7 @@ class Atoms(object):
         warnings.filterwarnings("ignore")
         return analyse_ovito_cna_adaptive(atoms=self, mode=mode)
 
-    def plot3d(self, spacefill=True, show_cell=True):
+    def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5, background='white', color_scheme='value', show_axes=True):
         """
 
         Returns:
@@ -1025,6 +1025,15 @@ class Atoms(object):
         if show_cell:
             if parent_basis.cell is not None:
                 view.add_unitcell()
+        if show_axes:
+            view.shape.add_arrow([-2, -2, -2], [2, -2, -2], [1, 0, 0], 0.5)
+            view.shape.add_arrow([-2, -2, -2], [-2, 2, -2], [0, 1, 0], 0.5)
+            view.shape.add_arrow([-2, -2, -2], [-2, -2, 2], [0, 0, 1], 0.5)
+        if camera!='perspective' and camera!='orthographic':
+            print('Only perspective or orthographic is permitted')
+            return None
+        view.camera = camera
+        view.background = background
         return view
 
     def pos_xyz(self):
