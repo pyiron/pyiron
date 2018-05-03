@@ -355,6 +355,8 @@ class ProjectPath(GenericPath):
                 path_local = self._windows_path_to_unix_path(posixpath.abspath(os.curdir))
                 self._create_path(path_local, path)
                 path = posixpath.join(path_local, path)
+            elif not os.path.exists(path) and os.path.exists(os.path.normpath(os.path.join(path, '..'))):
+                self._create_path(path)
             path = self._windows_path_to_unix_path(path)
             root_path, project_path = self._get_project_from_path(path)
             return GenericPath(root_path, project_path)
