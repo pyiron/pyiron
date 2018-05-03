@@ -928,7 +928,8 @@ class GenericJob(JobCore):
         self.collect_output()
         self.collect_logfiles()
         self.project.db.item_update(self._runtime(), self.job_id)
-        self.status.finished = True
+        if self.status.collect:
+            self.status.finished = True
         self.update_master()
         self._calculate_successor()
         self.send_to_database()
