@@ -420,7 +420,7 @@ class GenericJob(JobCore):
         copied_self._job_id = None
         return copied_self
 
-    def copy_to(self, project, new_job_name=None, input_only=False, new_database_entry=True):
+    def copy_to(self, project=None, new_job_name=None, input_only=False, new_database_entry=True):
         """
         Copy the content of the job including the HDF5 file to a new location
 
@@ -434,6 +434,8 @@ class GenericJob(JobCore):
         Returns:
             GenericJob: GenericJob object pointing to the new location.
         """
+        if project is None and new_job_name is not None:
+
         if not self.project_hdf5.file_exists:
             self.to_hdf()
             delete_file_after_copy = True
@@ -477,7 +479,7 @@ class GenericJob(JobCore):
         Reset the job id sets the job_id to None in the GenericJob as well as all connected modules like JobStatus.
         """
         self._job_id = job_id
-        self._status = JobStatus(db=self.project.db, job_id=self.job_id)
+        self._status = JobStatus(db=self.project.db, job_id=self._job_id)
 
     def run(self, run_again=False, repair=False, debug=False, run_mode=None, que_wait_for=None,):
         """
