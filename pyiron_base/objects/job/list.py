@@ -136,7 +136,7 @@ class ListMaster(GenericMaster):
         Reset the job id sets the job_id to None as well as all connected modules like JobStatus and SubmissionStatus.
         """
         super(ListMaster, self).reset_job_id(job_id=job_id)
-        self.submission_status = SubmissionStatus(db=self.project.db, job_id=self.job_id)
+        self.submission_status = SubmissionStatus(db=self.project.db, job_id=job_id)
 
     def refresh_submission_status(self):
         """
