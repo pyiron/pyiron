@@ -391,7 +391,7 @@ class Vasp(GenericDFTJob):
         if any(self.structure.get_initial_magnetic_moments().flatten()):
             final_cmd = '   '.join([' '.join([str(spinmom) for spinmom in spin])
                                     if isinstance(spin, list) or isinstance(spin, np.ndarray) else str(spin)
-                                    for spin in self.structure.get_initial_magnetic_moments()])
+                                    for spin in self.structure.get_initial_magnetic_moments()[self.sorted_indices]])
             s.logger.debug('Magnetic Moments are: {0}'.format(final_cmd))
             if "MAGMOM" not in self.input.incar._dataset['Parameter']:
                 self.input.incar["MAGMOM"] = final_cmd
@@ -686,17 +686,31 @@ class Vasp(GenericDFTJob):
         else:
             self.input.incar["EDIFFG"] = abs(ionic_energy)
 
-    def set_electric_field(self, e_field=0.1, direction=2, dipol_position=None):
+    def set_dipole_correction(self, direction=2, dipole_center=None):
         """
-        Set an external electric field using the dipole layer method proposed by [Neugebauer & Scheffler]_
+        Apply a dipole correction using the dipole layer method proposed by `Neugebauer & Scheffler`_
+
+        Args:
+            direction (int): Direction along which the field has to be applied (0, 1, or 2)
+            dipole_center (list/numpy.ndarray): Position of the center of the dipole (not the center of the vacuum) in
+                                                relative coordinates
+
+        .. _Neugebauer & Scheffler: https://doi.org/10.1103/PhysRevB.46.16067
+        """
+        self.set_electric_field(e_field=0, direction=direction, dipole_center=dipole_center)
+
+    def set_electric_field(self, e_field=0.1, direction=2, dipole_center=None):
+        """
+        Set an external electric field using the dipole layer method proposed by `Neugebauer & Scheffler`_
 
         Args:
             e_field (float): Magnitude of the external electric field (eV/A)
             direction (int): Direction along which the field has to be applied (0, 1, or 2)
-            dipol_position (list): Position of the center of the dipole (not the center of the vacuum) in relative
-                                coordinates
+            dipole_center (list/numpy.ndarray): Position of the center of the dipole (not the center of the vacuum) in
+                                                relative coordinates
 
-        .. [Neugebauer & Scheffler] Phys. Rev. B 46, 16067
+        .. _Neugebauer & Scheffler: https://doi.org/10.1103/PhysRevB.46.16067
+
         """
         assert (direction in range(3))
         self.input.incar["ISYM"] = 0
@@ -704,8 +718,8 @@ class Vasp(GenericDFTJob):
         self.input.incar["IDIPOL"] = direction + 1
         self.input.incar["LDIPOL"] = True
         self.input.incar["EFIELD"] = e_field
-        if dipol_position is not None:
-            self.input.incar["DIPOL"] = " ".join(str(val) for val in dipol_position)
+        if dipole_center is not None:
+            self.input.incar["DIPOL"] = " ".join(str(val) for val in dipole_center)
 
     def set_occupancy_smearing(self, smearing="fermi", width=0.1, ismear=None):
         """

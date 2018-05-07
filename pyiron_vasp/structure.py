@@ -243,7 +243,10 @@ def _dict_to_atoms(atoms_dict, species_list=None, read_from_first_line=False):
             try:
                 el_list = np.array([species_list[i]])
                 el_list = np.tile(el_list, atoms_dict["species_dict"][sp_key]["count"])
-                symbol += species_list[i] + str(atoms_dict["species_dict"][sp_key]["count"])
+                if isinstance(species_list[i], str):
+                    symbol += species_list[i] + str(atoms_dict["species_dict"][sp_key]["count"])
+                else: 
+                    symbol += species_list[i].Abbreviation + str(atoms_dict["species_dict"][sp_key]["count"])
             except IndexError:
                 raise ValueError("Number of species in the specified species list does not match that in the file")
         elif "species" in atoms_dict["species_dict"][sp_key].keys():
