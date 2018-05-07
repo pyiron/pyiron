@@ -85,7 +85,7 @@ class Settings(with_metaclass(Singleton)):
                     user_input = input('It appears that pyiron is not yet configured, do you want to create a default start configuration (recommended: yes). [yes/no]:')
                 else:
                     user_input = raw_input('It appears that pyiron is not yet configured, do you want to create a default start configuration (recommended: yes). [yes/no]:')
-            if user_input.lower() == 'yes' or user_input.lower() == 'y' or :
+            if user_input.lower() == 'yes' or user_input.lower() == 'y':
                 install_pyiron(config_file_name=config_file,
                                zip_file="resources.zip",
                                resource_directory="~/pyiron/resources",
