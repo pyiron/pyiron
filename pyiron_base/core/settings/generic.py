@@ -82,10 +82,9 @@ class Settings(with_metaclass(Singleton)):
             user_input = None
             while user_input not in ['yes', 'no']:
                 if sys.version_info.major > 2:
-                    user_input = input('No pyiron installation found, should pyiron be installed [yes/no]:')
+                    user_input = input('It appears that pyiron is not yet configured, do you want to create a default start configuration (recommended: yes). [yes/no]:')
                 else:
-                    user_input = raw_input('It appears that pyiron is not yet configured, do you want to create a default start configuration (recommended: yes). [yes/no] 
-:')
+                    user_input = raw_input('It appears that pyiron is not yet configured, do you want to create a default start configuration (recommended: yes). [yes/no]:')
             if user_input.lower() == 'yes' or user_input.lower() == 'y' or :
                 install_pyiron(config_file_name=config_file,
                                zip_file="resources.zip",
