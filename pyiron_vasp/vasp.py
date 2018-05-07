@@ -186,6 +186,22 @@ class Vasp(GenericDFTJob):
         """
         self._sorted_indices = val
 
+    @property
+    def fix_spin_constraint(self):
+        return self.spin_constraints
+
+    @fix_spin_constraint.setter
+    def fix_spin_constraint(self, boolean):
+        raise NotImplementedError("The fix_spin_constraint property is not implemented for this code. "
+                                  "Instead use ham.spin_constraints - I_CONSTRAINED_M.")
+
+    @property
+    def fix_symmetry(self):
+        if 'ISYM' in self.input.incar._dataset['Parameter']:
+            return self.input.incar['ISYM'] == 1 or self.input.incar['ISYM'] == 2 or self.input.incar['ISYM'] == 3
+        else:
+            return True
+
     # Compatibility functions
     def write_input(self):
         """
