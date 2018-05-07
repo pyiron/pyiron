@@ -61,6 +61,24 @@ class GenericDFTJob(AtomisticGenericJob):
         kmesh = np.floor(np.array([2 * np.pi / ll for ll in latlens]) / kspace_per_in_ang)
         return kmesh
 
+    @property
+    def fix_spin_constraint(self):
+        return self._generic_input['fix_spin_constraint']
+
+    @fix_spin_constraint.setter
+    def fix_spin_constraint(self, boolean):
+        assert isinstance(boolean, bool)
+        self._generic_input['fix_spin_constraint'] = boolean
+
+    @property
+    def fix_symmetry(self):
+        return self._generic_input['fix_symmetry']
+
+    @fix_symmetry.setter
+    def fix_symmetry(self, boolean):
+        assert isinstance(boolean, bool)
+        self._generic_input['fix_symmetry'] = boolean
+
     def set_kmesh_density(self, kspace_per_in_ang=0.10):
         mesh = self._get_k_mesh_by_cell(self.structure, kspace_per_in_ang)
         self.set_kpoints(mesh=mesh, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
