@@ -78,7 +78,7 @@ class Vasp(GenericDFTJob):
         self._executable_activate()
         self.input = Input()
         self.input.incar["SYSTEM"] = self.job_name
-        self.output = Output()
+        self._output_parser = Output()
 
     @property
     def plane_wave_cutoff(self):
@@ -223,13 +223,13 @@ class Vasp(GenericDFTJob):
                 self.structure = self.get_final_structure_from_file(filename="CONTCAR")
             except IOError:
                 self.structure = self.get_final_structure_from_file(filename="POSCAR")
-        self.output.structure = self.structure.copy()
+        self._output_parser.structure = self.structure.copy()
         try:
-            self.output.collect(directory=self.working_directory)
+            self._output_parser.collect(directory=self.working_directory)
         except VaspCollectError:
             self.status.aborted = True
             return
-        self.output.to_hdf(self._hdf5)
+        self._output_parser.to_hdf(self._hdf5)
 
     def cleanup(self, files_to_remove=("WAVECAR", "CHGCAR", "CHG", "vasprun.xml")):
         """
@@ -340,7 +340,7 @@ class Vasp(GenericDFTJob):
         super(Vasp, self).to_hdf(hdf=hdf, group_name=group_name)
         self._structure_to_hdf()
         self.input.to_hdf(self._hdf5)
-        self.output.to_hdf(self._hdf5)
+        self._output_parser.to_hdf(self._hdf5)
 
     def from_hdf(self, hdf=None, group_name=None):
         """
@@ -355,13 +355,13 @@ class Vasp(GenericDFTJob):
         self._structure_from_hdf()
         self.input.from_hdf(self._hdf5)
         if "output" in self.project_hdf5.list_groups() and "structure" in self["output"].list_groups():
-                self.output.from_hdf(self._hdf5)
+                self._output_parser.from_hdf(self._hdf5)
 
     def reset_output(self):
         """
         Resets the output instance
         """
-        self.output = Output()
+        self._output_parser = Output()
 
     def get_final_structure_from_file(self, filename="CONTCAR"):
         """
@@ -644,8 +644,8 @@ class Vasp(GenericDFTJob):
         if read_charge_density:
             self.input.incar["ICHARG"] = 11
         if structure is None:
-            assert (self.output.structure is not None)
-            structure = self.output.structure
+            assert (self._output_parser.structure is not None)
+            structure = self._output_parser.structure
         from pyiron_dft.bandstructure import Bandstructure
         bs_obj = Bandstructure(structure)
         _, q_point_list, [_, _] = bs_obj.get_path(num_points=num_points, path_type="full")
@@ -1434,13 +1434,7 @@ class Potcar(GenericParameters):
                     for path, folder_lst, file_lst in os.walk(resource_path):
                         if file_name in file_lst:
                             return os.path.join(path, file_name)
-        # Backwards compatibility to the old version
-        if path is not None:
-            return os.path.join(s.path_potentials, 'vasp', path)
-        elif xc is not None and file_name is not None:
-            return os.path.join(s.path_potentials, 'vasp', self.pot_path_dict[xc], file_name)
-        else:
-            raise ValueError('Either the filename or the functional has to be defined.')
+        raise ValueError('Either the filename or the functional has to be defined.')
 
     def write_file(self, file_name, cwd=None):
         """
