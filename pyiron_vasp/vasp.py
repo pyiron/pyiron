@@ -202,6 +202,11 @@ class Vasp(GenericDFTJob):
         else:
             return True
 
+    @fix_symmetry.setter
+    def fix_symmetry(self, boolean):
+        raise NotImplementedError("The fix_symmetry property is not implemented for this code. "
+                                  "Instead use ham.input.incar['ISYM'].")
+          
     # Compatibility functions
     def write_input(self):
         """
