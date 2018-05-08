@@ -528,17 +528,17 @@ class DatabaseAccess(object):
             if key == 'element_lst':
                 part_of_statement = [self.query_for_element(element=element) for element in value]
             elif isinstance(value, list):
-                or_statement = [self.simulation_table.c[str(key)].like(element)
-                                if key not in ['id', 'masterid', 'parentid']
-                                else self.simulation_table.c[str(key)] == element
+                or_statement = [self.simulation_table.c[str(key)] == element
+                                if '%' not in value
+                                else self.simulation_table.c[str(key)].like(element)
                                 for element in value]
                 # here we wrap the given values in an sqlalchemy-type or_statement
                 part_of_statement = [or_(*or_statement)]
             else:
-                if key not in ['id', 'masterid', 'parentid']:
-                    part_of_statement = [self.simulation_table.c[str(key)].like(value)]
-                else:
+                if '%' not in value:
                     part_of_statement = [self.simulation_table.c[str(key)] == value]
+                else:
+                    part_of_statement = [self.simulation_table.c[str(key)].like(value)]
             # here all statements are wrapped together for the and statement
             and_statement += part_of_statement
         if return_all_columns:
