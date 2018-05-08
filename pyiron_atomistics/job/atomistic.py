@@ -32,6 +32,7 @@ class AtomisticGenericJob(GenericJobCore):
         self.__version__ = "0.1"
         self._structure = None
         self._generic_input = GenericInput()
+        self.output = GenericOutput(job=self)
 
     @property
     def structure(self):
@@ -437,3 +438,53 @@ calc_mode=static # static, minimize, md
 structure=atoms # atoms, continue_final
 '''
         self.load_string(file_content)
+
+
+class GenericOutput(object):
+    def __init__(self, job):
+        self._job = job
+
+    @property
+    def cells(self):
+        return self._job['output/generic/cells']
+
+    @property
+    def energy_pot(self):
+        return self._job['output/generic/energy_pot']
+
+    @property
+    def energy_tot(self):
+        return self._job['output/generic/energy_tot']
+
+    @property
+    def forces(self):
+        return self._job['output/generic/forces']
+
+    @property
+    def positions(self):
+        return self._job['output/generic/positions']
+
+    @property
+    def pressures(self):
+        return self._job['output/generic/pressures']
+
+    @property
+    def steps(self):
+        return self._job['output/generic/steps']
+
+    @property
+    def temperatures(self):
+        return self._job['output/generic/temperatures']
+
+    @property
+    def time(self):
+        return self._job['output/generic/time']
+
+    @property
+    def unwrapped_positions(self):
+        return self._job['output/generic/unwrapped_positions']
+
+    @property
+    def volume(self):
+        return self._job['output/generic/volume']
+
