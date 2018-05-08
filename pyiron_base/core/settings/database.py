@@ -563,7 +563,7 @@ class DatabaseAccess(object):
                 part_of_statement = [self.query_for_element(element=element) for element in value]
             elif isinstance(value, list):
                 or_statement = [self.simulation_table.c[str(key)] == element
-                                if '%' not in value
+                                if '%' not in element
                                 else self.simulation_table.c[str(key)].like(element)
                                 for element in value]
                 # here we wrap the given values in an sqlalchemy-type or_statement
