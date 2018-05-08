@@ -63,8 +63,9 @@ class DatabaseAccess(object):
         """
         self.table_name = table_name
         self._keep_connection = False
+        self._sql_lite = 'sqlite' in connection_string
         try:
-            if 'sqlite' not in connection_string:
+            if not self._sql_lite:
                 self._engine = create_engine(connection_string,
                                              connect_args={'connect_timeout': 15},
                                              poolclass=NullPool)
@@ -399,7 +400,11 @@ class DatabaseAccess(object):
         try:
             result = self.conn.execute(query)
         except (OperationalError, DatabaseError):
-            self.conn = self._engine.connect()
+            if not self._sql_lite:
+                self.conn = AutorestoredConnection(self._engine)
+            else:
+                self.conn = self._engine.connect()
+                self.conn.connection.create_function("like", 2, self.regexp)
             result = self.conn.execute(query)
         row = result.fetchall()
         if not self._keep_connection:
@@ -429,7 +434,12 @@ class DatabaseAccess(object):
             try:
                 self.conn.execute(query, par_dict)
             except (OperationalError, DatabaseError):
-                self.conn = self._engine.connect()
+                if not self._sql_lite:
+                    self.conn = AutorestoredConnection(self._engine)
+                else:
+                    self.conn = self._engine.connect()
+                    self.conn.connection.create_function("like", 2, self.regexp)
+
                 self.conn.execute(query, par_dict)
             if not self._keep_connection:
                 self.conn.close()
@@ -569,7 +579,7 @@ class DatabaseAccess(object):
                 # here we wrap the given values in an sqlalchemy-type or_statement
                 part_of_statement = [or_(*or_statement)]
             else:
-                if '%' not in value:
+                if '%' not in str(value):
                     part_of_statement = [self.simulation_table.c[str(key)] == value]
                 else:
                     part_of_statement = [self.simulation_table.c[str(key)].like(value)]
@@ -582,7 +592,12 @@ class DatabaseAccess(object):
         try:
             result = self.conn.execute(query)
         except (OperationalError, DatabaseError):
-            self.conn = self._engine.connect()
+            if not self._sql_lite:
+                self.conn = AutorestoredConnection(self._engine)
+            else:
+                self.conn = self._engine.connect()
+                self.conn.connection.create_function("like", 2, self.regexp)
+
             result = self.conn.execute(query)
         row = result.fetchall()
         if not self._keep_connection:
