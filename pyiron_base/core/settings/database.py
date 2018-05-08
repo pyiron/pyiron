@@ -4,9 +4,9 @@
 
 import re
 from datetime import datetime
-from sqlalchemy import Column, create_engine, DateTime, Float, Integer, MetaData, String, Table, text, and_, or_, cast
-from sqlalchemy.sql import select, expression
-from sqlalchemy.ext.compiler import compiles
+from sqlalchemy import Column, create_engine, DateTime, Float, Integer, MetaData, String, Table, text, and_, or_
+from sqlalchemy.pool import NullPool
+from sqlalchemy.sql import select
 from sqlalchemy.exc import OperationalError, DatabaseError
 
 """
@@ -14,12 +14,28 @@ DatabaseAccess class deals with accessing the database
 """
 
 __author__ = "Murat Han Celik"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH" \
+                " - Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
+
+
+class AutorestoredConnection:
+    def __init__(self, engine):
+        self.engine = engine
+        self._conn = None
+
+    def execute(self, *args, **kwargs):
+        if not self._conn or self._conn.closed:
+            self._conn = self.engine.connect()
+        result = self._conn.execute(*args, **kwargs)
+        return result
+
+    def close(self):
+        self._conn.close()
 
 
 class DatabaseAccess(object):
@@ -46,16 +62,21 @@ class DatabaseAccess(object):
             table_name (str): database table name, a simple string like: 'simulation'
         """
         self.table_name = table_name
+        self._keep_connection = False
         try:
             if 'sqlite' not in connection_string:
-                self._engine = create_engine(connection_string, connect_args={'connect_timeout': 15})
+                self._engine = create_engine(connection_string,
+                                             connect_args={'connect_timeout': 15},
+                                             poolclass=NullPool)
+                self.conn = AutorestoredConnection(self._engine)
             else:
                 self._engine = create_engine(connection_string)
-            self.conn = self._engine.connect()
+                self.conn = self._engine.connect()
+                self.conn.connection.create_function("like", 2, self.regexp)
+                self._keep_connection = True
         except Exception as except_msg:
             raise ValueError("Connection to database failed: " + str(except_msg))
-        if self._engine.dialect.name is "sqlite":
-            self.conn.connection.create_function("like", 2, self.regexp)
+
         self.__reload_db()
         self.simulation_table = Table(str(table_name), self.metadata,
                                       Column('id', Integer, primary_key=True, autoincrement=True),
@@ -213,7 +234,9 @@ class DatabaseAccess(object):
                 col_name = col_name[-1]
             if isinstance(col_type, list):
                 col_type = col_type[-1]
-            self._engine.execute('ALTER TABLE %s ALTER COLUMN %s TYPE %s' % (self.simulation_table.name, col_name, col_type))
+            self._engine.execute('ALTER TABLE %s ALTER COLUMN %s TYPE %s' % (self.simulation_table.name,
+                                                                             col_name,
+                                                                             col_type))
         else:
             raise PermissionError('Not avilable in viewer mode.')
 
@@ -279,6 +302,8 @@ class DatabaseAccess(object):
         else:
             result = self.conn.execute(text("select * from " + self.table_name))
         row = result.fetchall()
+        if not self._keep_connection:
+            self.conn.close()
 
         # change the date of str datatype back into datetime object
         output_list = []
@@ -295,7 +320,7 @@ class DatabaseAccess(object):
                     tmp_values[timestart_index] = datetime.strptime(
                         str(tmp_values[timestart_index]), '%Y-%m-%d %H:%M:%S.%f')
                 except ValueError:
-                    print ("error in: ", str(col))
+                    print("error in: ", str(col))
             output_list += [dict(zip(col.keys(), tmp_values))]
         return output_list
 
@@ -329,6 +354,8 @@ class DatabaseAccess(object):
             try:
                 par_dict = dict((key.lower(), value) for key, value in par_dict.items())           # make keys lowercase
                 result = self.conn.execute(self.simulation_table.insert(par_dict))
+                if not self._keep_connection:
+                    self.conn.close()
                 return result.inserted_primary_key[-1]
             except Exception as except_msg:
                 raise ValueError("Error occurred: " + str(except_msg))
@@ -375,6 +402,8 @@ class DatabaseAccess(object):
             self.conn = self._engine.connect()
             result = self.conn.execute(query)
         row = result.fetchall()
+        if not self._keep_connection:
+            self.conn.close()
         return [dict(zip(col.keys(), col.values())) for col in row]
 
     def item_update(self, par_dict, item_id):
@@ -402,6 +431,8 @@ class DatabaseAccess(object):
             except (OperationalError, DatabaseError):
                 self.conn = self._engine.connect()
                 self.conn.execute(query, par_dict)
+            if not self._keep_connection:
+                self.conn.close()
         else:
             raise PermissionError('Not avilable in viewer mode.')
 
@@ -417,6 +448,8 @@ class DatabaseAccess(object):
         """
         if not self._viewer_mode:
             self.conn.execute(self.simulation_table.delete(self.simulation_table.c['id'] == int(item_id)))
+            if not self._keep_connection:
+                self.conn.close()
         else:
             raise PermissionError('Not avilable in viewer mode.')
 
@@ -458,7 +491,8 @@ class DatabaseAccess(object):
 
     def query_for_element(self, element):
         return or_(
-            *[self.simulation_table.c['chemicalformula'].like('%' + element + '[ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]%'),
+            *[self.simulation_table.c['chemicalformula'].like('%' + element +
+                                                              '[ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]%'),
               self.simulation_table.c['chemicalformula'].like('%' + element)])
 
     def get_items_dict(self, item_dict, return_all_columns=True):
@@ -551,5 +585,7 @@ class DatabaseAccess(object):
             self.conn = self._engine.connect()
             result = self.conn.execute(query)
         row = result.fetchall()
+        if not self._keep_connection:
+            self.conn.close()
         return [dict(zip(col.keys(), col.values())) for col in row]
 
