@@ -121,7 +121,7 @@ class ExampleJob(GenericJob):
         self.input = ExampleInput()
         self.executable = "python " + str(os.path.dirname(os.path.realpath(__file__))) + \
                           "/executable.py"
-        self._lib['available'] = True
+        self._interactive_cache = {'alat': [], 'count': [], 'energy': []}
 
     # define routines that create all necessary input files
     def write_input(self):
@@ -213,7 +213,7 @@ class ExampleJob(GenericJob):
         with self.project_hdf5.open("input") as hdf5_input:
             self.input.from_hdf(hdf5_input)
 
-    def run_if_lib(self):
+    def run_if_interactive(self):
         """
         Run the job as Python library and store the result in the HDF5 File.
 
@@ -221,18 +221,22 @@ class ExampleJob(GenericJob):
             int: job ID
         """
         from pyiron_example_job.executable import ExampleExecutable
+        self.status.running = True
         alat, count, energy = ExampleExecutable().run_lib(self.input)
+        self._interactive_cache['alat'].append(alat)
+        self._interactive_cache['count'].append(count)
+        self._interactive_cache['energy'].append(energy)
 
+    def interactive_close(self):
         self.to_hdf()
-        job_id = self.project.db.add_item_dict(self.db_entry())
         with self.project_hdf5.open("output") as h5:
-            h5["generic/energy"] = np.array(energy)
-            h5["generic/volume"] = np.array(alat)
-            h5["generic/alat"] = np.array(alat)
-            h5["generic/count"] = np.array(count)
-            h5["generic/energy_tot"] = np.array(energy)
-        self.project.db.item_update(self._runtime(), job_id)
-        return job_id
+            h5["generic/energy"] = np.array(self._interactive_cache['energy'])
+            h5["generic/volume"] = np.array(self._interactive_cache['alat'])
+            h5["generic/alat"] = np.array(self._interactive_cache['alat'])
+            h5["generic/count"] = np.array(self._interactive_cache['count'])
+            h5["generic/energy_tot"] = np.array(self._interactive_cache['energy'])
+        self.project.db.item_update(self._runtime(), self._job_id)
+        self.status.finished = True
 
 
 class ExampleInput(GenericParameters):
@@ -363,7 +367,6 @@ class AtomisticExampleJob(AtomisticGenericJob, ExampleJob):
         self.input = ExampleInput()
         self.executable = "python " + str(os.path.dirname(os.path.realpath(__file__))) + \
                           "/executable.py"
-        self._lib['available'] = True
 
     @property
     def structure(self):

@@ -11,12 +11,16 @@ from pyiron.project import Project
 
 class TestExampleJob(unittest.TestCase):
     def setUp(self):
-        self.count = 12
+        self.count_run_one = 12
+        self.count_run_two = 12
         self.project = Project('random_testing_lib')
         self.ham = self.project.create_job("ExampleJob", "job_test_run")
-        self.ham.input['count'] = self.count
-        self.ham.library_activated = True
+        self.ham.input['count'] = self.count_run_one
+        self.ham.server.run_mode.interactive = True
         self.ham.run()
+        self.ham.input['count'] = self.count_run_two
+        self.ham.run()
+        self.ham.interactive_close()
 
     @classmethod
     def tearDownClass(cls):
@@ -29,9 +33,11 @@ class TestExampleJob(unittest.TestCase):
 
     def test_output(self):
         count = self.ham.get("output/generic/count")
-        energy_length = len(self.ham.get("output/generic/energy"))
-        self.assertEqual(self.count, count)
-        self.assertEqual(count, energy_length)
+        energy = self.ham.get("output/generic/energy")
+        self.assertEqual(self.count_run_one, count[0])
+        self.assertEqual(self.count_run_two, count[1])
+        self.assertEqual(count[0], len(energy[0]))
+        self.assertEqual(count[0], len(energy[1]))
 
 
 if __name__ == '__main__':
