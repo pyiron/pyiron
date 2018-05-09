@@ -131,7 +131,6 @@ class GenericJob(JobCore):
         self._logger = s.logger
         self._executable = None
         self._import_directory = None
-        self._lib = {'available': False, 'enabled': False}
         self._status = JobStatus(db=project.db, job_id=self.job_id)
         self.refresh_job_status()
         self._restart_file_list = list()
@@ -204,31 +203,6 @@ class GenericJob(JobCore):
         """
         self._executable_activate()
         self._executable.executable_path = exe
-
-    @property
-    def library_activated(self):
-        """
-        For job types which offer a Python library pyiron can use the python library instead of an external executable.
-        The library mode can be either activated or deactivated.
-        
-        Returns:
-            bool: [True/False]
-        """
-        return self._lib['enabled']
-
-    @library_activated.setter
-    def library_activated(self, library_activated_bool):
-        """
-        For job types which offer a Python library pyiron can use the python library instead of an external executable.
-        The library mode can be either activated or deactivated.
-        
-        Args:
-            library_activated_bool (bool): [True/False]
-        """
-        if not isinstance(library_activated_bool, bool):
-            raise TypeError('The library mode can either be activated or disabled [True, False].')
-        if self._lib['available']:
-            self._lib['enabled'] = library_activated_bool
 
     @property
     def server(self):
@@ -391,7 +365,6 @@ class GenericJob(JobCore):
         del self._parent_id
         del self._master_id
         del self._import_directory
-        del self._lib
         del self._status
         del self._restart_file_list
         # del self._process
@@ -582,7 +555,7 @@ class GenericJob(JobCore):
         self._logger.info('{}, status: {}, output: {}'.format(self.job_info_str, self.status, out))
         self.run()
 
-    def run_if_lib(self):
+    def run_if_interactive(self):
         """
         For jobs which executables are available as Python library, those can also be executed with a library call
         instead of calling an external executable. This is usually faster than a single core python job.
@@ -851,12 +824,6 @@ class GenericJob(JobCore):
         """
         if self.check_if_job_exists():
             print('job exists already and therefore was not created!')
-        elif self._lib['available'] and self._lib['enabled']:
-            self._job_id = self.run_if_lib()
-            self.refresh_job_status()
-            self.status.finished = True
-            print('The job ' + self.job_name + ' is available and has ID: ' + str(self._job_id))
-            self.run()
         else:
             self._create_job_structure(debug=debug)
             self.run(que_wait_for=que_wait_for)
@@ -884,6 +851,8 @@ class GenericJob(JobCore):
             self.run_if_non_modal()
         elif self.server.run_mode.queue:
             return self.run_if_scheduler(que_wait_for)
+        elif self.server.run_mode.interactive:
+            self.run_if_interactive()
         return None
 
     def _run_if_submitted(self):  # Submitted jobs are handled by the job wrapper!
@@ -903,6 +872,8 @@ class GenericJob(JobCore):
         """
         if self.server.run_mode.queue and self.project.queue_job_info(self) is None:
             self.run(run_again=True)
+        elif self.server.run_mode.interactive:
+            self.run_if_interactive()
         else:
             print('Job ' + str(self.job_id) + ' is running!')
 
@@ -1082,12 +1053,13 @@ class GenericJob(JobCore):
         Args:
             debug (bool): Debug Mode
         """
-        self.project_hdf5.create_working_directory()
-        self._copy_restart_files()
-        self.write_input()
         self._job_id = self.save()
         print('The job ' + self.job_name + ' was saved and received the ID: ' + str(self._job_id))
-        self._write_run_wrapper(debug=debug)
+        if not self.server.run_mode.interactive:
+            self.project_hdf5.create_working_directory()
+            self._copy_restart_files()
+            self.write_input()
+            self._write_run_wrapper(debug=debug)
         self.status.created = True
         self._calculate_predecessor()
 
