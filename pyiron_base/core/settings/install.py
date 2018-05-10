@@ -2,6 +2,7 @@ import os
 from zipfile import ZipFile
 from shutil import copytree, rmtree
 import tempfile
+import stat
 import sys
 
 if sys.version_info >= (3,):
@@ -24,6 +25,12 @@ def _download_resources(zip_file="resources.zip",
     with ZipFile(temp_zip_file) as zip_file_object:
         zip_file_object.extractall(temp_directory)
     copytree(temp_extract_folder, user_directory)
+    if os.name != 'nt':  # 
+        for root, dirs, files in os.walk(user_directory):
+            for file in files: 
+                if '.sh' in file: 
+                    st = os.stat(os.path.join(root, file))
+                    os.chmod(os.path.join(root, file), st.st_mode | stat.S_IEXEC)
     os.remove(temp_zip_file)
     rmtree(temp_extract_folder)
 
