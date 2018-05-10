@@ -60,7 +60,6 @@ class Lammps(AtomisticGenericJob):
         self.input = Input()
         self._cutoff_radius = None
         self._is_continuation = None
-        self._lib['available'] = True
 
     @property
     def cutoff_radius(self):
@@ -134,7 +133,7 @@ class Lammps(AtomisticGenericJob):
         Returns:
 
         """
-        return self.get_available_potentials()
+        return self.list_potentials()
 
     def get_final_structure(self):
         """
