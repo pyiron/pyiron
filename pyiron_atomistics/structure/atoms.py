@@ -422,6 +422,13 @@ class Atoms(object):
         return [atom_number_to_element[i_el] for i_el in numbers]
 
     def copy(self):
+        """
+        Returns a copy of the instance
+
+        Returns:
+            pyiron_atomistics.structure.atoms.Atoms: A copy of the instance
+
+        """
         return self.__copy__()
 
     def to_hdf(self, hdf, group_name="structure"):
