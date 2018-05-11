@@ -113,6 +113,14 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(self.CO2.selective_dynamics[1], [True, False, True])
         self.assertIsInstance(self.CO2.selective_dynamics.list(), list)
 
+    def test_copy(self):
+        pos, cell = generate_fcc_lattice()
+        basis = Atoms(symbols='Al', positions=pos, cell=cell)
+        basis_copy = basis.copy()
+        self.assertEqual(basis, basis_copy)
+        basis_copy[:] = "Pt"
+        self.assertNotEqual(basis, basis_copy)
+
     def create_Fe_bcc(self):
         self.pse = PeriodicTable()
         self.pse.add_element("Fe", "Fe_up", spin="up", pseudo_name='GGA')
