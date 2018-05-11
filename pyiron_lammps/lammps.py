@@ -6,7 +6,6 @@ from __future__ import print_function
 
 import os
 import posixpath
-import tempfile
 
 import h5py
 import numpy as np
@@ -616,31 +615,6 @@ class Lammps(AtomisticGenericJob):
                 new_ham.restart_file_list.append(posixpath.join(self.working_directory, "restart.out"))
         return new_ham
 
-    def run_if_lib(self, job_name=None, structure=None, db_entry=True):
-        """
-
-        Args:
-            job_name:
-            structure:
-            db_entry:
-
-        Returns:
-
-        """
-        job_id = self._run_if_lib_save(job_name=job_name, structure=structure, db_entry=db_entry)
-        lammps_instance = PyLammps()
-        if structure:
-            self._set_structure_for_lib(lammps=lammps_instance, structure=structure)
-        else:
-            self._set_structure_for_lib(lammps=lammps_instance)
-        self._set_potential_for_lib(lammps=lammps_instance)
-        self._set_selective_dynamics()
-        self._collect_thermo_output_from_lib(self._set_control(lammps=lammps_instance), hdf5_prefix=job_name)
-        self._collect_dump_from_lib(lammps=lammps_instance, hdf5_prefix=job_name)
-        lammps_instance.close()
-        self._run_if_lib_finished(job_id)
-        return job_id
-
     def _get_lammps_structure(self, structure=None, cutoff_radius=None):
         lmp_structure = LammpsStructure()
         lmp_structure.potential = self.input.potential
@@ -657,45 +631,6 @@ class Lammps(AtomisticGenericJob):
         if not set(lmp_structure.structure.get_species_symbols()).issubset(set(lmp_structure.el_eam_lst)):
             raise ValueError('The selected potentials do not support the given combination of elements.')
         return lmp_structure
-
-    def _set_structure_for_lib(self, lammps, structure=None):
-        lammps.units(self.input.control['units'])
-        lammps.dimension(self.input.control['dimension'])
-        lammps.boundary(self.input.control['boundary'])
-        lammps.atom_style(self.input.control['atom_style'])
-        lammps.atom_modify("map array")
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as tfile:
-            for line in self._get_lammps_structure(structure=structure, cutoff_radius=None).get_string_lst():
-                tfile.write(line)
-        lammps.read_data(tfile.name)
-        try:
-            os.remove(tfile.name)
-        except FileNotFoundError:
-            pass
-
-    def _set_potential_for_lib(self, lammps):
-        potential_lst = []
-        for potential in self.input.potential.files:
-            potential_lst.append([potential.split('/')[-1], potential])
-        for line in self.input.potential.get_string_lst():
-            if len(line) > 2:
-                for potential in potential_lst:
-                    if potential[0] in line:
-                        line = line.replace(potential[0], potential[1])
-                lammps.command(line.split('\n')[0])
-
-    def _set_control(self, lammps):
-        output = None
-        for line in self.input.control.get_string_lst()[6:-1]:
-            if 'dump' not in line:
-                lammps.command(line.split('\n')[0])
-        last_line = self.input.control.get_string_lst()[-1]
-        if 'run' in last_line:
-            output = lammps.run(int(last_line.split()[1]))
-        elif 'minimize' in last_line:
-            mini_line = last_line.split()[1:]
-            output = lammps.minimize(float(mini_line[0]), float(mini_line[1]), int(mini_line[2]), int(mini_line[3]))
-        return output
 
     def _set_selective_dynamics(self):
         if 'selective_dynamics' in self.structure._tag_list.keys() and \
@@ -754,141 +689,6 @@ class Lammps(AtomisticGenericJob):
                 self.input.control['fix___constraintz'] = 'constraintz setforce NULL NULL 0.0'
                 if self._generic_input['calc_mode'] == 'md':
                     self.input.control['velocity___constraintz'] = 'set NULL NULL 0.0'
-
-    def _collect_thermo_output_from_lib(self, output, hdf5_prefix=None):
-        attr = self.input.control.dataset["Parameter"]
-        tag_dict = {"Loop time of": {"arg": "0",
-                                     "type": "float",
-                                     "h5": "time_loop"},
-
-                    "Memory usage per processor": {"arg": "1",
-                                                   "h5": "memory"}
-                    }
-
-        tag_dict["Step Temp PotEng TotEng Pxx Pyy Pzz Volume"] = {"arg": ":,:",
-                                                                  "rows": "Loop",
-                                                                  "splitTag": True}
-
-        h5_dict = {"Step": "steps",
-                   "Temp": "temperatures",
-                   "PotEng": "energy_pot",
-                   "TotEng": "energy_tot",
-                   "Pxx": "pressure_x",
-                   "Pyy": "pressure_y",
-                   "Pzz": "pressure_z",
-                   "Volume": "volume",
-                   "E_pair": "E_pair",
-                   "E_mol": "E_mol"
-                   }
-
-        lammps_dict = {"step": "Step",
-                       "temp": "Temp",
-                       "pe": "PotEng",
-                       "etotal": "TotEng",
-                       "pxx": "Pxx",
-                       "pyy": "Pyy",
-                       "pzz": "Pzz",
-                       "vol": "Volume"
-                       }
-
-        lf = Logstatus()
-        lf.extract_from_list(list_of_lines=output,
-                             tag_dict=tag_dict,
-                             h5_dict=h5_dict,
-                             key_dict=lammps_dict)
-
-        lf.store_as_vector = ['energy_tot', 'temperatures', 'steps', 'volume', 'energy_pot']
-        # print ("lf_keys: ", lf.status_dict['energy_tot'])
-
-        lf.combine_xyz('pressure_x', 'pressure_y', 'pressure_z', 'pressures', as_vector=True)
-
-        del lf.status_dict['time_loop']
-        try:
-            del lf.status_dict['memory']
-        except KeyError:
-            pass
-        if hdf5_prefix:
-            hdf5_path = hdf5_prefix + "/output/generic"
-        else:
-            hdf5_path = "output/generic"
-        with self.project_hdf5.open(hdf5_path) as hdf_output:
-            lf.to_hdf(hdf_output)
-
-    def _collect_dump_from_lib(self, lammps, hdf5_prefix=None):
-        cell, ind_arr, atm_arr, pos_arr, force_arr = self._get_final_dump(lammps=lammps)
-        lf = Logstatus()
-        lf.status_dict['positions'] = [[[0], pos_arr]]
-        lf.status_dict['forces'] = [[[0], force_arr]]
-        lf.status_dict['cells'] = [[[0], cell]]
-
-        prism = UnfoldingPrism(self.structure.cell, digits=15)
-
-        for ind, (pos, forc, cel) in enumerate(
-                zip(lf.status_dict["positions"], lf.status_dict["forces"], lf.status_dict["cells"])):
-            cell = cel[1]
-            positions = pos[1]
-            forces = forc[1]
-
-            # rotation matrix from lammps(unfolded) cell to original cell
-            rotation_lammps2orig = np.linalg.inv(prism.R)
-
-            # convert from scaled positions to absolute in lammps cell
-            positions = np.array([np.dot(cell.T, r) for r in positions])
-            # rotate positions from lammps to original
-            positions_atoms = np.array([np.dot(np.array(r), rotation_lammps2orig) for r in positions])
-
-            # rotate forces from lammps to original cell
-            forces_atoms = np.array([np.dot(np.array(f), rotation_lammps2orig) for f in forces])
-
-            # unfold cell
-            cell = prism.unfold_cell(cell)
-            # rotate cell from unfolded lammps to original
-            cell_atoms = np.array([np.dot(np.array(f), rotation_lammps2orig) for f in cell])
-
-            lf.status_dict["positions"][ind][1] = positions_atoms
-            lf.status_dict["forces"][ind][1] = forces_atoms
-            lf.status_dict["cells"][ind][1] = cell_atoms
-
-        if hdf5_prefix:
-            hdf5_path = hdf5_prefix + "/output/generic"
-        else:
-            hdf5_path = "output/generic"
-        with self.project_hdf5.open(hdf5_path) as hdf_output:
-            lf.to_hdf(hdf_output)
-
-    @staticmethod
-    def _get_final_dump(lammps):
-        xhi, xlo, yhi, ylo, zhi, zlo = lammps.system.xhi, lammps.system.xlo, lammps.system.yhi, lammps.system.ylo, lammps.system.zhi, lammps.system.zlo
-        xy, xz, yz = lammps.lmp.extract_global('xy', 1), lammps.lmp.extract_global('xz', 1), lammps.lmp.extract_global(
-            'yz', 1)
-        index_lst, atom_type_lst, positions_lst, forces_lst = [], [], [], []
-        for i in range(lammps.atoms.natoms):
-            atom = lammps.atoms[i]
-            pos = atom.position
-            index_lst.append(atom.id)
-            atom_type_lst.append(atom.type)
-            positions_lst.append(
-                [(pos[0] - xlo) / (xhi - xlo), (pos[1] - ylo) / (yhi - ylo), (pos[2] - zlo) / (zhi - zlo)])
-            forces_lst.append(atom.force)
-        ind_arr, atm_arr, pos_arr, force_arr = np.array(index_lst), np.array(atom_type_lst), np.array(
-            positions_lst), np.array(forces_lst)
-        index = np.argsort(ind_arr)
-        cell = to_amat(np.array([xlo, xhi, xy, ylo, yhi, xz, zlo, zhi, yz]))
-        return np.array(cell), ind_arr[index], atm_arr[index], pos_arr[index], force_arr[index]
-
-    @staticmethod
-    def _conv_box(line):
-        return [float(number) for number in line.split()[0:2]]
-
-    @staticmethod
-    def _conv_mass(line):
-        mass_type, mass_weight = line.split()
-        return int(mass_type), float(mass_weight)
-
-    @staticmethod
-    def _conv_atoms(line):
-        index, atom_type, pos_x, pos_y, pos_z = line.split()
-        return int(atom_type), float(pos_x), float(pos_y), float(pos_z)
 
 
 class Input:
