@@ -102,6 +102,17 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(np.array_equal(basis.arrays['spins'], 2 * spins))
         self.assertTrue(np.array_equal(basis.get_array(name="spins"), 2 * spins))
 
+    def test_add_tags(self):
+        self.CO2.add_tag(test_tag="a")
+        self.assertIsInstance(self.CO2.test_tag, SparseList)
+        self.assertEqual(self.CO2.test_tag[0], "a")
+        self.assertEqual(self.CO2.test_tag[0], self.CO2.test_tag[2])
+        self.assertIsInstance(self.CO2.test_tag.list(), list)
+        self.CO2.add_tag(selective_dynamics=[True, True, True])
+        self.CO2.selective_dynamics[1] = [True, False, True]
+        self.assertEqual(self.CO2.selective_dynamics[1], [True, False, True])
+        self.assertIsInstance(self.CO2.selective_dynamics.list(), list)
+
     def create_Fe_bcc(self):
         self.pse = PeriodicTable()
         self.pse.add_element("Fe", "Fe_up", spin="up", pseudo_name='GGA')
@@ -467,17 +478,6 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(np.array_equal(o_indices, basis.select_index(o_up)))
         self.assertEqual(len(basis.select_index("O")), 0)
         self.assertTrue(np.array_equal(o_indices, basis.select_parent_index("O")))
-
-    def test_adding_tags(self):
-        self.CO2.add_tag(test_tag="a")
-        self.assertIsInstance(self.CO2.test_tag, SparseList)
-        self.assertEqual(self.CO2.test_tag[0], "a")
-        self.assertEqual(self.CO2.test_tag[0], self.CO2.test_tag[2])
-        self.assertIsInstance(self.CO2.test_tag.list(), list)
-        self.CO2.add_tag(selective_dynamics=[True, True, True])
-        self.CO2.selective_dynamics[1] = [True, False, True]
-        self.assertEqual(self.CO2.selective_dynamics[1], [True, False, True])
-        self.assertIsInstance(self.CO2.selective_dynamics.list(), list)
 
     def test__eq__(self):
         test_basis = self.CO2.copy()
