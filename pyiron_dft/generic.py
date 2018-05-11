@@ -16,7 +16,7 @@ __date__ = "Sep 1, 2017"
 
 class GenericDFTJob(AtomisticGenericJob):
     def __init__(self, project, job_name):
-        super(AtomisticGenericJob, self).__init__(project, job_name)
+        super(GenericDFTJob, self).__init__(project, job_name)
         self._generic_input['fix_symmetry'] = True
 
     @property
