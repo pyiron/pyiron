@@ -397,10 +397,12 @@ class AtomisticGenericJob(GenericJobCore):
 
 class Trajectory(object):
     """
+    A trajectory instance compatible with the ase.io class
 
     Args:
-        positions:
-        structure:
+        positions (numpy.ndarray): The array of the trajectory in cartesian coordinates
+        structure (pyiron_atomistics.structure.atoms.Atoms): The initial structure instance from which the species info
+                                                             is derived
         center_of_mass (bool): False (default)
     """
 
@@ -418,6 +420,8 @@ class Trajectory(object):
     def __getitem__(self, item):
         new_structure = self._structure.copy()
         new_structure.positions = self._positions[item]
+        # This step is necessary for using ase.io.write for trajectories
+        new_structure.arrays['positions'] = new_structure.positions
         return new_structure
 
     def __len__(self):
