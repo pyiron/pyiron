@@ -403,7 +403,7 @@ class Trajectory(object):
         positions (numpy.ndarray): The array of the trajectory in cartesian coordinates
         structure (pyiron_atomistics.structure.atoms.Atoms): The initial structure instance from which the species info
                                                              is derived
-        center_of_mass (bool): False (default)
+        center_of_mass (bool): False (default) if the specified positions are w.r.t. the origin
     """
 
     def __init__(self, positions, structure, center_of_mass=False):
