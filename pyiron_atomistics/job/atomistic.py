@@ -2,6 +2,7 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
+from ase.io import write as ase_write
 import copy
 
 import numpy as np
@@ -308,6 +309,25 @@ class AtomisticGenericJob(GenericJobCore):
         return Trajectory(self['output/generic/positions'][::stride], self.structure.get_parent_basis(),
                           center_of_mass=center_of_mass)
 
+    def write_traj(self, filename, format=None, parallel=True, append=False, stride=1, center_of_mass=False, **kwargs):
+        """
+        Writes the trajectory in a given file format based on the `ase.io.write`_ function.
+
+        Args:
+            filename (str): Filename of the output
+            format (str): The specific format of the output
+            parallel (bool):
+            append (bool):
+            stride (int): Writes trajectory every `stride` steps
+            center_of_mass (bool): True if the positions are centered on the COM
+            **kwargs: Additional ase arguments
+
+        .. _ase.io.write: https://wiki.fysik.dtu.dk/ase/_modules/ase/io/formats.html#write
+        """
+        traj = self.trajectory(stride=stride, center_of_mass=center_of_mass)
+        # Using thr ASE output writer
+        ase_write(filename=filename, images=traj, format=format,  parallel=parallel, append=append, **kwargs)
+
     def _run_if_lib_save(self, job_name=None, structure=None, db_entry=True):
         """
 
@@ -397,11 +417,13 @@ class AtomisticGenericJob(GenericJobCore):
 
 class Trajectory(object):
     """
+    A trajectory instance compatible with the ase.io class
 
     Args:
-        positions:
-        structure:
-        center_of_mass (bool): False (default)
+        positions (numpy.ndarray): The array of the trajectory in cartesian coordinates
+        structure (pyiron_atomistics.structure.atoms.Atoms): The initial structure instance from which the species info
+                                                             is derived
+        center_of_mass (bool): False (default) if the specified positions are w.r.t. the origin
     """
 
     def __init__(self, positions, structure, center_of_mass=False):
@@ -418,6 +440,8 @@ class Trajectory(object):
     def __getitem__(self, item):
         new_structure = self._structure.copy()
         new_structure.positions = self._positions[item]
+        # This step is necessary for using ase.io.write for trajectories
+        new_structure.arrays['positions'] = new_structure.positions
         return new_structure
 
     def __len__(self):
