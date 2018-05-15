@@ -513,6 +513,6 @@ class GenericOutput(object):
         return self._job['output/generic/volume']
 
     @property
-    def indices(self):
-        return self._job['output/generic/indices']
+    def elements(self):
+        return self._job['output/generic/elements']
 
