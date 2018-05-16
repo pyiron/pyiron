@@ -1,4 +1,4 @@
-#!/bin/build
+#!/bin/bash
 
 if [ "$TRAVIS_BRANCH" = "master" ]; then
     pip install --pre --no-deps pyiron_base pyiron_atomistics pyiron_dft pyiron_example_job pyiron_vasp pyiron
