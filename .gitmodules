@@ -1,0 +1,3 @@
+[submodule "source/examples"]
+	path = source/examples
+	url = https://github.com/pyiron/examples.git
