@@ -1144,10 +1144,10 @@ class Output:
 
             self.generic_output.dft_log_dict["scf_dipole_mom"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
             self.generic_output.dft_log_dict["dipole_mom"] = total_dipole_moments
-            self.generic_output.dft_log_dict["energy_tot"] = self.vp_new.vasprun_dict["total_energies"]
+            self.generic_output.dft_log_dict["energy_int"] = self.vp_new.vasprun_dict["total_energies"]
             self.generic_output.dft_log_dict["energy_free"] = self.vp_new.vasprun_dict["total_fr_energies"]
             self.generic_output.dft_log_dict["energy_zero"] = self.vp_new.vasprun_dict["total_0_energies"]
-            self.generic_output.dft_log_dict["scf_energy_tot"] = self.vp_new.vasprun_dict["scf_energies"]
+            self.generic_output.dft_log_dict["scf_energy_int"] = self.vp_new.vasprun_dict["scf_energies"]
             self.generic_output.dft_log_dict["scf_energy_free"] = self.vp_new.vasprun_dict["scf_fr_energies"]
             self.generic_output.dft_log_dict["scf_energy_zero"] = self.vp_new.vasprun_dict["scf_0_energies"]
 
