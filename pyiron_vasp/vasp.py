@@ -1241,6 +1241,9 @@ class GenericOutput:
             # hdf_go["description"] = self.description
             for key, val in self.log_dict.items():
                 hdf_go[key] = val
+            with hdf_go.open("dft") as hdf_dft:
+                for key, val in self.dft_log_dict.items():
+                    hdf_dft[key] = val
 
     def from_hdf(self, hdf):
         """
@@ -1255,6 +1258,10 @@ class GenericOutput:
                     pass
                 else:
                     self.log_dict[node] = hdf_go[node]
+            if 'dft' in hdf_go.list_groups():
+                with hdf_go.open("dft") as hdf_dft:
+                    for node in hdf_dft.list_nodes():
+                        self.dft_log_dict[node] = hdf_dft[node]
 
 
 class DFTOutput:
