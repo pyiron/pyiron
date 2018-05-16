@@ -1059,7 +1059,7 @@ class Output:
         log_dict = dict()
         if "OUTCAR" in files_present:
             self.outcar.from_file(filename=posixpath.join(directory, "OUTCAR"))
-            log_dict["temperatures"] = self.outcar.parse_dict["temperatures"]
+            log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
 
         if "vasprun.xml" in files_present:
