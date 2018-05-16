@@ -1216,6 +1216,7 @@ class GenericOutput:
 
     def __init__(self):
         self.log_dict = dict()
+        self.dft_log_dict = dict()
         self.description = "generic_output contains generic output static"
 
     def to_hdf(self, hdf):
