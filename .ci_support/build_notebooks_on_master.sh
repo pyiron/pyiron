@@ -9,9 +9,9 @@ if [ "$TRAVIS_BRANCH" = "master" ]; then
     
     # Select ipykernelt
     if [ "$PYTHONVER" = "2.7" ]; then
-        kernel = "python2"
+        kernel="python2"
     else
-        kernel = "python3"
+        kernel="python3"
     fi;
 
     # execute notebooks 
