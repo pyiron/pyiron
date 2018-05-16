@@ -36,7 +36,9 @@ install:
 script:
   - cd tests
   - python find_tests.py
+  - cd ..
   - ./.ci_support/build_notebooks_on_master.sh
+  - cd tests
   
 after_success:
   - coveralls
