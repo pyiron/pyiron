@@ -14,7 +14,8 @@ if [ "$TRAVIS_BRANCH" = "master" ]; then
         kernel="python3"
     fi;
 
-    # execute notebooks 
+    # execute notebooks
+    mkdir -p notebooks
     cd notebooks
     for notebook in $(ls *.ipynb); do 
         jupyter nbconvert --ExecutePreprocessor.timeout=9999999 --ExecutePreprocessor.kernel_name=$kernel --to notebook --execute $notebook; 
