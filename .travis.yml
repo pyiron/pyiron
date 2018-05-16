@@ -39,6 +39,7 @@ script:
 
 after_success:
   - coveralls
+  - ./notebooks/build.sh
 
 deploy:
   - provider: pypi
