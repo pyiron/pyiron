@@ -1141,8 +1141,20 @@ class Output:
             self.dft_output.log_dict["total_energies"] = self.vp_new.vasprun_dict["total_energies"]
             self.dft_output.log_dict["total_fr_energies"] = self.vp_new.vasprun_dict["total_fr_energies"]
             self.dft_output.log_dict["total_0_energies"] = self.vp_new.vasprun_dict["total_0_energies"]
+
+            self.generic_output.dft_log_dict["scf_dipole_mom"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
+            self.generic_output.dft_log_dict["dipole_mom"] = total_dipole_moments
+            self.generic_output.dft_log_dict["energy_tot"] = self.vp_new.vasprun_dict["total_energies"]
+            self.generic_output.dft_log_dict["energy_free"] = self.vp_new.vasprun_dict["total_fr_energies"]
+            self.generic_output.dft_log_dict["energy_zero"] = self.vp_new.vasprun_dict["total_0_energies"]
+            self.generic_output.dft_log_dict["scf_energy_tot"] = self.vp_new.vasprun_dict["scf_energies"]
+            self.generic_output.dft_log_dict["scf_energy_free"] = self.vp_new.vasprun_dict["scf_fr_energies"]
+            self.generic_output.dft_log_dict["scf_energy_zero"] = self.vp_new.vasprun_dict["scf_0_energies"]
+
             if "kinetic_energies" in self.vp_new.vasprun_dict.keys():
                 self.dft_output.log_dict["kinetic_energies"] = self.vp_new.vasprun_dict["kinetic_energies"]
+                self.generic_output.dft_log_dict["scf_energy_kin"] = self.vp_new.vasprun_dict["kinetic_energies"]
+
         if "LOCPOT" in files_present:
             self.electrostatic_potential.from_file(filename=posixpath.join(directory, "LOCPOT"), normalize=False)
         if "CHGCAR" in files_present:
