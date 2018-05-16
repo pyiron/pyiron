@@ -1080,11 +1080,11 @@ class Output:
             log_dict["positions"] = self.vp_new.vasprun_dict["positions"]
             log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
             log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
-            log_dict["unwrapped_positions"] = unwrap_coordinates(positions=log_dict["positions"], cell=None,
+            log_dict["positions_unwrapped"] = unwrap_coordinates(positions=log_dict["positions"], cell=None,
                                                                  is_relative=True)
             for i, pos in enumerate(log_dict["positions"]):
                 log_dict["positions"][i] = np.dot(pos, log_dict["cells"][i])
-                log_dict["unwrapped_positions"][i] = np.dot(log_dict["unwrapped_positions"][i].copy(),
+                log_dict["positions_unwrapped"][i] = np.dot(log_dict["positions_unwrapped"][i].copy(),
                                                             log_dict["cells"][i])
             # log_dict["scf_energies"] = self.vp_new.vasprun_dict["scf_energies"]
             # log_dict["scf_dipole_moments"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
