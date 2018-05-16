@@ -101,3 +101,4 @@ Read more about `citing individual modules/ plugins of pyiron and the implemente
    License (BSD) <https://github.com/pyiron/pyiron/blob/master/LICENSE>
    Modul index <https://pyiron.github.io/py-modindex.html>
    Imprint <https://www.mpie.de/impressum>
+   Data protection <https://www.mpie.de/3392182/data-protection>
