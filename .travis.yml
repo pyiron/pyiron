@@ -36,7 +36,7 @@ install:
 
 script:
   - python --version
-  - ./notebooks/build.sh
+  - ./.ci_support/build_notebooks_on_master.sh
 
 after_success:
   - coveralls
