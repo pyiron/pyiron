@@ -36,10 +36,10 @@ install:
 
 script:
   - python --version
+  - ./notebooks/build.sh
 
 after_success:
   - coveralls
-  - ./notebooks/build.sh
 
 deploy:
   - provider: pypi
