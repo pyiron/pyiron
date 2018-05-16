@@ -5,6 +5,8 @@ if [ "$TRAVIS_BRANCH" = "master" ]; then
     conda install -y -c conda-forge lammps jupyter 
     git clone https://github.com/pyiron/pyiron-resources.git resources
     echo "[DEFAULT]\nTOP_LEVEL_DIRS = $(pwd)\nRESOURCE_PATHS = $(pwd)/resources" > ~/.pyiron
+    cat ~/.pyiron
+    echo $(pwd)
 
     cd notebooks
     for notebook in $(ls *.ipynb); do 
