@@ -19,6 +19,8 @@ install:
 script:
   - git config --global user.email "${GH_EMAIL}"
   - git config --global user.name "${GH_USER}"
+  - git submodule update --init --recursive
+  - git submodule foreach git pull origin master
   - cd .. 
   - git clone --recurse-submodules https://github.com/pyiron/MetaRepo.git
   - git clone https://${GH_USER}:${GH_TOKEN}@github.com/pyiron/pyiron.github.io.git
