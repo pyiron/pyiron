@@ -914,8 +914,12 @@ class Project(ProjectPath):
         else:
             item_lst = item.split("/")
             if len(item_lst) > 1:
-                return self._get_item_helper(item=item_lst[0],
-                                             convert_to_object=False).__getitem__("/".join(item_lst[1:]))
+                try:
+                    return self._get_item_helper(item=item_lst[0],
+                                                 convert_to_object=False).__getitem__("/".join(item_lst[1:]))
+                except ValueError:
+                    return self._get_item_helper(item=item_lst[0],
+                                                 convert_to_object=True).__getitem__("/".join(item_lst[1:]))
         return self._get_item_helper(item=item, convert_to_object=True)
 
     def _get_item_helper(self, item, convert_to_object=True):
