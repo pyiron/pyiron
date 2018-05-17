@@ -71,6 +71,7 @@ class JobStatus(object):
         self.REFRESH = 'refresh'
         self.BUSY = 'busy'
         self.FINISHED = 'finished'
+        self.NOT_CONVERGED = 'not_converged'
 
     @property
     def database(self):
@@ -137,6 +138,27 @@ class JobStatus(object):
         """
         self._bool_check(boolean)
         self._status_write(status='initialized')
+
+    @property
+    def not_converged(self):
+        """
+        Check if the status is 'not_converged', meaning the object for the corresponding job was not_converged.
+
+        Returns:
+            (bool): [True/False]
+        """
+        return self._status_validate(status='not_converged')
+
+    @not_converged.setter
+    def not_converged(self, boolean):
+        """
+        Set the status to 'not_converged', meaning the object for the corresponding job was not_converged.
+
+        Args:
+            boolean (bool): [True]
+        """
+        self._bool_check(boolean)
+        self._status_write(status='not_converged')
 
     @property
     def appended(self):
@@ -403,9 +425,9 @@ class JobStatus(object):
                           refresh, busy, finished]
         """
         if status not in ['initialized', 'appended', 'created', 'submitted', 'running', 'aborted', 'collect',
-                          'suspended', 'refresh', 'busy', 'finished']:
+                          'suspended', 'refresh', 'busy', 'finished', 'not_converged']:
             raise ('No valid job status: ', status, ' Instead use [initialized, appended, created, submitted, running,'
-                   'aborted, collect, suspended, refresh, busy, finished].')
+                   'aborted, collect, suspended, refresh, busy, finished, not_converged].')
         if status == 'initialized':
             self.initialized = True
         elif status == 'appended':
@@ -428,6 +450,8 @@ class JobStatus(object):
             self.busy = True
         elif status == 'finished':
             self.finished = True
+        elif status == 'not_converged':
+            self.not_converged = True
 
     def refresh_status(self):
         """
