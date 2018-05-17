@@ -76,5 +76,5 @@
 +------------------------+---------------------------------------+---------------------------------------------------------------------+-----------+-----------+-----------+ 
 
 * N\ :sub:`step` refers to ionic steps and not electronic steps
-* properties preceded by scf\_ contain the values of each electronic step
+* properties preceded by scf\_ contain the values of each electronic step except for scf_convergence
 * if the crosses under VASP, SPHInX or LAMMPS are missing, the corresponding properties are not implemented 
