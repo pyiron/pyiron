@@ -232,9 +232,13 @@ class Lammps(AtomisticGenericJob):
         final_structure = self.get_final_structure()
         with self.project_hdf5.open("output") as hdf_output:
             final_structure.to_hdf(hdf_output)
+
+    def convergence_check(self):
         if self._generic_input['calc_mode'] == 'minimize' and \
                 self._generic_input['max_iter']+1 <= len(self['output/generic/energy_tot']):
-            self.status.not_converged = True
+            return False
+        else:
+            return True
 
     def collect_logfiles(self):
         """
