@@ -58,18 +58,19 @@ class LammpsPotential(GenericParameters):
 
     @property
     def files(self):
-        pot_file_lst = {}
         if list(self._df['Filename'])[0]:
-            for resource_path in s.resource_paths:
-                if os.path.exists(os.path.join(resource_path, 'pyiron_lammps', 'potentials')):
-                    resource_path = os.path.join(resource_path, 'pyiron_lammps', 'potentials')
-                if 'potentials' in resource_path:
-                    for pot_file in list(self._df['Filename'])[0]:
-                        if os.path.exists(os.path.join(resource_path, pot_file)):
-                            pot_file_lst[pot_file] = os.path.join(resource_path, pot_file)
-                        if set(list(self._df['Filename'])[0]) == set(pot_file_lst.keys()):
-                            return list(pot_file_lst.values())
-            raise ValueError('Was not able to locate the potentials.')
+            absolute_file_paths = [files for files in list(self._df['Filename'])[0] if os.path.isabs(files)]
+            relative_file_paths = [files for files in list(self._df['Filename'])[0] if not os.path.isabs(files)]
+            for path in relative_file_paths:
+                for resource_path in s.resource_paths:
+                    if os.path.exists(os.path.join(resource_path, 'pyiron_lammps', 'potentials')):
+                        resource_path = os.path.join(resource_path, 'pyiron_lammps', 'potentials')
+                    if os.path.exists(os.path.join(resource_path, path)):
+                        absolute_file_paths.append(os.path.join(resource_path, path))
+            if len(absolute_file_paths) != len(list(self._df['Filename'])[0]):
+                raise ValueError('Was not able to locate the potentials.')
+            else:
+                return absolute_file_paths
 
     def copy_pot_files(self, working_directory):
         if self.files is not None:
