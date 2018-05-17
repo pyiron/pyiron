@@ -174,6 +174,53 @@ class Logstatus(object):
             del self.status_dict[z_key]
             self.status_dict[combined_key] = combined_lst
 
+    def combine_mat(self, x_key, xy_key, xz_key, y_key, yz_key, z_key, combined_key):
+        """
+        Combine three lists representing the x,y,z coordinates, by accessing them from the status_dict dictionary,
+        combining them, store them under the combined_key and remove the other three keys.
+
+        Args:
+            x_key (str): key of the x coordinates
+            y_key (str): key of the y coordinates
+            z_key (str): key of the z coordinates
+            combined_key (str): name of the combined coordinates
+        """
+        if x_key in self.status_dict and y_key in self.status_dict and z_key in self.status_dict:
+            combined_lst = []
+            for var_xx, var_xy, var_xz, var_yy, var_yz, var_zz in \
+                    zip(self.status_dict[x_key], self.status_dict[xy_key], self.status_dict[xz_key],
+                        self.status_dict[y_key], self.status_dict[yz_key], self.status_dict[z_key]):
+                time_xx, val_xx = var_xx
+                time_xy, val_xy = var_xy
+                time_xz, val_xz = var_xz
+                time_yy, val_yy = var_yy
+                time_yz, val_yz = var_yz
+                time_zz, val_zz = var_zz
+                combined_lst.append([time_xx, [[[var_t_xx, var_t_xy, var_t_xz],
+                                                [var_t_yx, var_t_yy, var_t_yz],
+                                                [var_t_zx, var_t_zy, var_t_zz]]
+                                               for var_t_xx, var_t_xy, var_t_xz,
+                                                   var_t_yx, var_t_yy, var_t_yz,
+                                                   var_t_zx, var_t_zy, var_t_zz in
+                                               zip(val_xx, val_xy, val_xz,
+                                                   val_xy, val_yy, val_yz,
+                                                   val_xz, val_yz, val_zz)]])
+            del self.status_dict[x_key]
+            del self.status_dict[xy_key]
+            del self.status_dict[xz_key]
+            del self.status_dict[y_key]
+            del self.status_dict[yz_key]
+            del self.status_dict[z_key]
+            self.status_dict[combined_key] = combined_lst
+
+    def convert_unit(self, key, factor):
+        if key in self.status_dict:
+            return_lst = []
+            for step in self.status_dict[key]:
+                time, values = step
+                return_lst.append([time, (np.array(values)*factor).tolist()])
+            self.status_dict[key] = return_lst
+
     @staticmethod
     def extract_item(l_item):
         """
