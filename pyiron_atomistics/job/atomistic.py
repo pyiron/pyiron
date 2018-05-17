@@ -511,3 +511,10 @@ class GenericOutput(object):
     @property
     def volume(self):
         return self._job['output/generic/volume']
+
+    def __dir__(self):
+        hdf5_path = self._job['output/generic']
+        if hdf5_path is not None:
+            return hdf5_path.list_nodes()
+        else:
+            return []
