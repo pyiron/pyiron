@@ -64,7 +64,7 @@ initially developed at the Max Planck Institut für Eisenforschung (iron researc
 Which output quantities are stored in pyiron?
 =============================================
 
-.. include:: output.rst
+.. include:: outputformats.rst
 
 
 .. toctree::
