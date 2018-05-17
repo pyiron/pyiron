@@ -720,6 +720,15 @@ class GenericJob(JobCore):
         self.refresh_job_status()
         return job_id
 
+    def convergence_check(self):
+        """
+        Validate the convergence of the calculation.
+
+        Returns:
+             (bool): If the calculation is converged
+        """
+        return True
+
     def db_entry(self):
         """
         Generate the initial database entry for the current GenericJob
@@ -900,7 +909,10 @@ class GenericJob(JobCore):
         self.collect_logfiles()
         self.project.db.item_update(self._runtime(), self.job_id)
         if self.status.collect:
-            self.status.finished = True
+            if not self.convergence_check():
+                self.status.not_converged = True
+            else:
+                self.status.finished = True
         self.update_master()
         self._calculate_successor()
         self.send_to_database()
