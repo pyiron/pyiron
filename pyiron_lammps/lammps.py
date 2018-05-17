@@ -373,9 +373,7 @@ class Lammps(AtomisticGenericJob):
 
         lf.combine_mat('pressure_x', 'pressure_xy', 'pressure_xz',
                        'pressure_y', 'pressure_yz', 'pressure_z', 'pressures')
-        print(lf.status_dict['pressures'])
-        lf.convert_unit('pressures', 1 / (const.electron_volt / const.angstrom ** 3))  # GPa -> ev/ A**3
-        print(lf.status_dict['pressures'])
+        lf.convert_unit('pressures', 1 / (const.electron_volt / const.angstrom ** 3 / 10 ** 4))  # bar -> ev/ A**3
 
         if 'minimize' not in attr:
             del lf.status_dict['thermo_style']
