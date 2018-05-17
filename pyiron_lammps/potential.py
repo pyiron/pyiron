@@ -45,7 +45,11 @@ class LammpsPotential(GenericParameters):
     def df(self, new_dataframe):
         self._df = new_dataframe
         # ToDo: In future lammps should also support more than one potential file - that is currently not implemented.
-        self.load_string(''.join(list(new_dataframe['Config'])[0]))
+        try:
+            self.load_string(''.join(list(new_dataframe['Config'])[0]))
+        except IndexError:
+            raise ValueError('Potential not found! '
+                             'Validate the potential name by self.potential in self.list_potentials().')
 
     def remove_structure_block(self):
         self.remove_keys(["units"])
