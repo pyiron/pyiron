@@ -10,6 +10,7 @@ import posixpath
 import h5py
 import numpy as np
 import pandas as pd
+import scipy.constants as const
 
 from pyiron_lammps.potential import LammpsPotentialFile
 from pyiron_atomistics.job.atomistic import AtomisticGenericJob
@@ -365,6 +366,7 @@ class Lammps(AtomisticGenericJob):
         # print ("lf_keys: ", lf.status_dict['energy_tot'])
 
         lf.combine_xyz('pressure_x', 'pressure_y', 'pressure_z', 'pressures', as_vector=True)
+        lf.status_dict['pressures'] /= (const.electron_volt / const.angstrom ** 3 /const.giga)  # GPa -> ev/ A**3
 
         if 'minimize' not in attr:
             del lf.status_dict['thermo_style']
