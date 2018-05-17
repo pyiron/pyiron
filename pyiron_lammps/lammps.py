@@ -339,7 +339,10 @@ class Lammps(AtomisticGenericJob):
                    "PotEng": "energy_pot",
                    "TotEng": "energy_tot",
                    "Pxx": "pressure_x",
+                   "Pxy": "pressure_xy",
+                   "Pxz": "pressure_xz",
                    "Pyy": "pressure_y",
+                   "Pyz": "pressure_yz",
                    "Pzz": "pressure_z",
                    "Volume": "volume",
                    "E_pair": "E_pair",
@@ -351,7 +354,10 @@ class Lammps(AtomisticGenericJob):
                        "pe": "PotEng",
                        "etotal": "TotEng",
                        "pxx": "Pxx",
+                       "pxy": "Pxy",
+                       "pxz": "Pxz",
                        "pyy": "Pyy",
+                       "pyz": "Pyz",
                        "pzz": "Pzz",
                        "vol": "Volume"
                        }
@@ -365,8 +371,11 @@ class Lammps(AtomisticGenericJob):
         lf.store_as_vector = ['energy_tot', 'temperatures', 'steps', 'volume', 'energy_pot']
         # print ("lf_keys: ", lf.status_dict['energy_tot'])
 
-        lf.combine_xyz('pressure_x', 'pressure_y', 'pressure_z', 'pressures', as_vector=True)
-        lf.status_dict['pressures'] /= (const.electron_volt / const.angstrom ** 3 /const.giga)  # GPa -> ev/ A**3
+        lf.combine_mat('pressure_x', 'pressure_xy', 'pressure_xz',
+                       'pressure_y', 'pressure_yz', 'pressure_z', 'pressures')
+        print(lf.status_dict['pressures'])
+        lf.convert_unit('pressures', 1 / (const.electron_volt / const.angstrom ** 3))  # GPa -> ev/ A**3
+        print(lf.status_dict['pressures'])
 
         if 'minimize' not in attr:
             del lf.status_dict['thermo_style']

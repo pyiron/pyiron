@@ -54,7 +54,7 @@ fix 1 all nve
 variable dumptime equal 100
 dump 1 all custom ${dumptime} dump.out id type xsu ysu zsu fx fy fz
 dump_modify 1 sort id format line "%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g"
-thermo_style custom step temp pe etotal pxx pyy pzz vol
+thermo_style custom step temp pe etotal pxx pxy pxz pyy pyz pzz vol
 thermo_modify format  float %20.15g
 thermo 100
 run 0
