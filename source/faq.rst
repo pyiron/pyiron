@@ -61,6 +61,11 @@ What is the meaning of the name - pyiron?
 pyiron is the combination of **py** + **iron** connecting Python, the programming language with iron as pyiron was
 initially developed at the Max Planck Institut für Eisenforschung (iron research).
 
+Which output quantities are stored in pyiron?
+=============================================
+
+.. include:: outputformats.rst
+
 
 .. toctree::
    :maxdepth:2
