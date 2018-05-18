@@ -890,7 +890,7 @@ class Vasp(GenericDFTJob):
 
     def copy_wavecar(self, old_vasp_job):
         """
-        Copy WAVECAR from previous VASP calcualtion to the new VASP job.
+        Copy WAVECAR from previous VASP calculation to the new VASP job.
         (Sets ICHARG = 1)
 
         Args:
@@ -1004,6 +1004,7 @@ class Input:
     def from_hdf(self, hdf):
         """
         Reads the attributes and reconstructs the object from a hdf file
+
         Args:
             hdf: The hdf5 instance
         """
@@ -1016,6 +1017,7 @@ class Input:
 class Output:
     """
     Handles the output from a VASP simulation.
+
     Attributes:
         electronic_structure: Gives the electronic structure of the system
         electrostatic_potential: Gives the electrostatic/local potential of the system
@@ -1051,6 +1053,7 @@ class Output:
     def collect(self, directory=os.getcwd()):
         """
         Collects output from the working directory
+
         Args:
             directory (str): Path to the directory
         """
@@ -1144,12 +1147,19 @@ class Output:
 
             self.generic_output.dft_log_dict["scf_dipole_mom"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
             self.generic_output.dft_log_dict["dipole_mom"] = total_dipole_moments
-            self.generic_output.dft_log_dict["energy_int"] = self.vp_new.vasprun_dict["total_energies"]
-            self.generic_output.dft_log_dict["energy_free"] = self.vp_new.vasprun_dict["total_fr_energies"]
-            self.generic_output.dft_log_dict["energy_zero"] = self.vp_new.vasprun_dict["total_0_energies"]
+
             self.generic_output.dft_log_dict["scf_energy_int"] = self.vp_new.vasprun_dict["scf_energies"]
             self.generic_output.dft_log_dict["scf_energy_free"] = self.vp_new.vasprun_dict["scf_fr_energies"]
             self.generic_output.dft_log_dict["scf_energy_zero"] = self.vp_new.vasprun_dict["scf_0_energies"]
+            self.generic_output.dft_log_dict["energy_int"] = np.array(e_int[-1] for e_int in
+                                                                      self.generic_output.dft_log_dict
+                                                                      ["scf_energy_int"])
+            self.generic_output.dft_log_dict["energy_free"] = np.array(e_free[-1] for e_free in
+                                                                       self.generic_output.dft_log_dict
+                                                                       ["scf_energy_free"])
+            self.generic_output.dft_log_dict["energy_zero"] = np.array(e_zero[-1] for e_zero in
+                                                                       self.generic_output.dft_log_dict
+                                                                       ["scf_energy_zero"])
             self.generic_output.dft_log_dict["n_elect"] = float(self.vp_new.vasprun_dict["parameters"]["electronic"]
                                                                 ['NELECT'])
 
@@ -1165,6 +1175,7 @@ class Output:
     def to_hdf(self, hdf):
         """
         Writes the important attributes to a hdf file
+
         Args:
             hdf: The hdf5 instance
         """
@@ -1222,8 +1233,10 @@ class Output:
 
 class GenericOutput:
     """
+
     This class stores the generic output like different structures, energies and forces from a simulation in a highly
     generic format. Usually the user does not have to access this class.
+
     Attributes:
         log_dict (dict): A dictionary of all tags and values of generic data (positions, forces, etc)
     """
@@ -1269,6 +1282,7 @@ class GenericOutput:
 class DFTOutput:
     """
     This class stores the DFT specific output
+
     Attributes:
         log_dict (dict): A dictionary of all tags and values of DFT data
     """
