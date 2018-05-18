@@ -23,11 +23,10 @@ class ElectronicStructure(object):
     """
     This is a generic module to store electronic structure data in a clean way. Kpoint and Band classes are used to
     store information related to kpoints and bands respectively. Every spin configuration has a set of k-points and
-    every k-point has a set of bands associated with it. This is loosely adapted from the pymatgen electronic_structure
-    modules. Many of the functions have been substantially modified for pyiron
+    every k-point has a set of bands associated with it. This is loosely adapted from the `pymatgen electronic_structure
+    modules`_. Many of the functions have been substantially modified for pyiron
 
-    http://pymatgen.org/pymatgen.electronic_structure.bandstructure.html
-
+    .. _pymatgen electronic_structure modules: http://pymatgen.org/pymatgen.electronic_structure.bandstructure.html
     """
     def __init__(self):
         self.kpoints = list()
@@ -465,6 +464,63 @@ class ElectronicStructure(object):
         Setter for grand_dos_matrix
         """
         self._grand_dos_matrix = val
+
+    def to_hdf_new(self, hdf, group_name="band"):
+        """
+        Store the object to hdf5 file
+
+        Args:
+            hdf: Path to the hdf5 file/group in the file
+            group_name: Name of the group under which the attributes are o be stored
+        """
+        with hdf.open(group_name) as h_es:
+            h_es["TYPE"] = str(type(self))
+            if self.structure is not None:
+                self.structure.to_hdf(h_es)
+            h_es["k_points"] = self.kpoint_list
+            h_es["k_weights"] = self.kpoint_weights
+            h_es["eig_matrix"] = self.eigenvalue_matrix
+            h_es["occ_matrix"] = self.occupancy_matrix
+            if self.efermi is not None:
+                h_es["efermi"] = self.efermi
+            with h_es.open("dos") as h_dos:
+                h_dos["energies"] = self.dos_energies
+                h_dos["tot_densities"] = self.dos_densities
+                h_dos["int_densities"] = self.dos_idensities
+                if self.grand_dos_matrix is not None:
+                    h_dos["grand_dos_matrix"] = self.grand_dos_matrix
+                if self.resolved_densities is not None:
+                    h_dos["resolved_densities"] = self.resolved_densities
+
+    def from_hdf_new(self, hdf, group_name="bands"):
+        """
+        Retrieve the object from the hdf5 file
+
+        Args:
+            hdf: Path to the hdf5 file/group in the file
+            group_name: Name of the group under which the attributes are stored
+        """
+        with hdf.open(group_name) as h_es:
+            h_es["TYPE"] = str(type(self))
+            nodes = h_es.list_nodes()
+            if self.structure is not None:
+                self.structure.to_hdf(h_es)
+            self.kpoint_list = h_es["k_points"]
+            self.kpoint_weights = h_es["k_weights"]
+            self.eigenvalue_matrix = h_es["eig_matrix"]
+            self.occupancy_matrix = h_es["occ_matrix"]
+            if "efermi" in nodes:
+                self.efermi = h_es["efermi"]
+            with h_es.open("dos") as h_dos:
+                nodes = h_es.list_nodes()
+                self.dos_energies = h_dos["energies"]
+                self.dos_densities = h_dos["tot_densities"]
+                self.dos_idensities = h_dos["int_densities"]
+                if "grand_dos_matrix" in nodes:
+                    self.grand_dos_matrix = h_dos["grand_dos_matrix"]
+                if "resolved_densities" in nodes:
+                    self.resolved_densities = h_dos["resolved_densities"]
+        self.generate_from_matrices()
 
     def to_hdf(self, hdf, group_name="electronic_structure"):
         """
