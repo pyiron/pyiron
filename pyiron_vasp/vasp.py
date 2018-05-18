@@ -1258,7 +1258,6 @@ class GenericOutput:
                 hdf_go[key] = val
             with hdf_go.open("dft") as hdf_dft:
                 for key, val in self.dft_log_dict.items():
-                    print(key)
                     hdf_dft[key] = val
 
     def from_hdf(self, hdf):
