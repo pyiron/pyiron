@@ -1163,7 +1163,6 @@ class Output:
             self.generic_output.dft_log_dict["n_elect"] = float(self.vp_new.vasprun_dict["parameters"]["electronic"]
                                                                 ['NELECT'])
             print('assignment')
-            self.generic_output.bands = self.electronic_structure
             if "kinetic_energies" in self.vp_new.vasprun_dict.keys():
                 self.dft_output.log_dict["kinetic_energies"] = self.vp_new.vasprun_dict["kinetic_energies"]
                 self.generic_output.dft_log_dict["scf_energy_kin"] = self.vp_new.vasprun_dict["kinetic_energies"]
@@ -1172,6 +1171,7 @@ class Output:
             self.electrostatic_potential.from_file(filename=posixpath.join(directory, "LOCPOT"), normalize=False)
         if "CHGCAR" in files_present:
             self.charge_density.from_file(filename=posixpath.join(directory, "CHGCAR"), normalize=True)
+        self.generic_output.bands = self.electronic_structure
 
     def to_hdf(self, hdf):
         """
