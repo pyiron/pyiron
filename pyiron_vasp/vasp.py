@@ -1269,7 +1269,8 @@ class GenericOutput:
             with hdf_go.open("dft") as hdf_dft:
                 for key, val in self.dft_log_dict.items():
                     hdf_dft[key] = val
-                self.bands.to_hdf_new(hdf_dft, "bands")
+                if self.bands.eigenvalue_matrix is not None:
+                    self.bands.to_hdf_new(hdf_dft, "bands")
 
     def from_hdf(self, hdf):
         """
