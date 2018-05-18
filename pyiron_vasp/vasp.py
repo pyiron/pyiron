@@ -1151,15 +1151,15 @@ class Output:
             self.generic_output.dft_log_dict["scf_energy_int"] = self.vp_new.vasprun_dict["scf_energies"]
             self.generic_output.dft_log_dict["scf_energy_free"] = self.vp_new.vasprun_dict["scf_fr_energies"]
             self.generic_output.dft_log_dict["scf_energy_zero"] = self.vp_new.vasprun_dict["scf_0_energies"]
-            self.generic_output.dft_log_dict["energy_int"] = np.array(e_int[-1] for e_int in
+            self.generic_output.dft_log_dict["energy_int"] = np.array([e_int[-1] for e_int in
                                                                       self.generic_output.dft_log_dict
-                                                                      ["scf_energy_int"])
-            self.generic_output.dft_log_dict["energy_free"] = np.array(e_free[-1] for e_free in
+                                                                      ["scf_energy_int"]])
+            self.generic_output.dft_log_dict["energy_free"] = np.array([e_free[-1] for e_free in
                                                                        self.generic_output.dft_log_dict
-                                                                       ["scf_energy_free"])
-            self.generic_output.dft_log_dict["energy_zero"] = np.array(e_zero[-1] for e_zero in
+                                                                       ["scf_energy_free"]])
+            self.generic_output.dft_log_dict["energy_zero"] = np.array([e_zero[-1] for e_zero in
                                                                        self.generic_output.dft_log_dict
-                                                                       ["scf_energy_zero"])
+                                                                       ["scf_energy_zero"]])
             self.generic_output.dft_log_dict["n_elect"] = float(self.vp_new.vasprun_dict["parameters"]["electronic"]
                                                                 ['NELECT'])
 
