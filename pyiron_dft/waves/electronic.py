@@ -492,7 +492,7 @@ class ElectronicStructure(object):
                 if self.resolved_densities is not None:
                     h_dos["resolved_densities"] = self.resolved_densities
 
-    def to_hdf(self, hdf, group_name="electronic_structure"):
+    def to_hdf_new(self, hdf, group_name="band"):
         """
         Store the object to hdf5 file
 
@@ -505,18 +505,46 @@ class ElectronicStructure(object):
             if self.structure is not None:
                 self.structure.to_hdf(h_es)
             h_es["k_points"] = self.kpoint_list
-            h_es["k_point_weights"] = self.kpoint_weights
-            h_es["eigenvalue_matrix"] = self.eigenvalue_matrix
-            h_es["occupancy_matrix"] = self.occupancy_matrix
-            h_es["dos_energies"] = self.dos_energies
-            h_es["dos_densities"] = self.dos_densities
-            h_es["dos_idensities"] = self.dos_idensities
+            h_es["k_weights"] = self.kpoint_weights
+            h_es["eig_matrix"] = self.eigenvalue_matrix
+            h_es["occ_matrix"] = self.occupancy_matrix
             if self.efermi is not None:
-                h_es["fermi_level"] = self.efermi
-            if self.grand_dos_matrix is not None:
-                h_es["grand_dos_matrix"] = self.grand_dos_matrix
-            if self.resolved_densities is not None:
-                h_es["resolved_densities"] = self.resolved_densities
+                h_es["efermi"] = self.efermi
+            with h_es.open("dos") as h_dos:
+                h_dos["energies"] = self.dos_energies
+                h_dos["tot_densities"] = self.dos_densities
+                h_dos["int_densities"] = self.dos_idensities
+                if self.grand_dos_matrix is not None:
+                    h_dos["grand_dos_matrix"] = self.grand_dos_matrix
+                if self.resolved_densities is not None:
+                    h_dos["resolved_densities"] = self.resolved_densities
+
+    def from_hdf_new(self, hdf, group_name="bands"):
+        """
+        Retrieve the object from the hdf5 file
+
+        Args:
+            hdf: Path to the hdf5 file/group in the file
+            group_name: Name of the group under which the attributes are stored
+        """
+        with hdf.open(group_name) as h_es:
+            h_es["TYPE"] = str(type(self))
+            if self.structure is not None:
+                self.structure.to_hdf(h_es)
+            self.kpoint_list = h_es["k_points"]
+            self.kpoint_weights = h_es["k_weights"]
+            self.eigenvalue_matrix = h_es["eig_matrix"]
+            self.occupancy_matrix = h_es["occ_matrix"]
+            if h_es["efermi"] is not None:
+                self.efermi = h_es["efermi"]
+            with h_es.open("dos") as h_dos:
+                self.dos_energies = h_dos["energies"]
+                self.dos_densities = h_dos["tot_densities"]
+                self.dos_idensities = h_dos["int_densities"]
+                if self.grand_dos_matrix is not None:
+                    self.grand_dos_matrix = h_dos["grand_dos_matrix"]
+                if self.resolved_densities is not None:
+                    self.resolved_densities = h_dos["resolved_densities"]
 
     def from_hdf(self, hdf, group_name="electronic_structure"):
         """
