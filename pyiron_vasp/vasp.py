@@ -1126,6 +1126,7 @@ class Output:
                 except ValueError:
                     pass
 
+        self.generic_output.bands = self.electronic_structure
         # important that we "reverse sort" the atoms in the vasp format into the atoms in the atoms class
         self.generic_output.log_dict = log_dict
         if "vasprun.xml" in files_present:
@@ -1268,6 +1269,7 @@ class GenericOutput:
             with hdf_go.open("dft") as hdf_dft:
                 for key, val in self.dft_log_dict.items():
                     hdf_dft[key] = val
+                self.bands.to_hdf_new(hdf_dft, "bands")
 
     def from_hdf(self, hdf):
         """
