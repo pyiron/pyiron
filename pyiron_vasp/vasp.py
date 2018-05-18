@@ -1173,7 +1173,6 @@ class Output:
         if "CHGCAR" in files_present:
             self.charge_density.from_file(filename=posixpath.join(directory, "CHGCAR"), normalize=True)
 
-
     def to_hdf(self, hdf):
         """
         Writes the important attributes to a hdf file
@@ -1247,7 +1246,7 @@ class GenericOutput:
         self.log_dict = dict()
         self.dft_log_dict = dict()
         self.description = "generic_output contains generic output static"
-        self._bands = None
+        self._bands = ElectronicStructure()
 
     @property
     def bands(self):
