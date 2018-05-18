@@ -80,7 +80,7 @@ class ElectronicStructure(object):
     @property
     def dos_energies(self):
         """
-        A (1xN) vector containing the energies with N grid points
+        numpy.ndarray: A (1xN) vector containing the energies with N grid points
         """
         return self._dos_energies
 
@@ -91,8 +91,8 @@ class ElectronicStructure(object):
     @property
     def dos_densities(self):
         """
-        A (SxN) vector containing the density of states for every spin configuration with S spin configurationa and N
-        grid points
+        numpy.ndarray: A (SxN) vector containing the density of states for every spin configuration with S spin
+                       configurations and N grid points
 
         """
         return self._dos_densities
@@ -104,8 +104,8 @@ class ElectronicStructure(object):
     @property
     def dos_idensities(self):
         """
-        A (SxN) vector containing the density of states for every spin configuration with S spin configurationa and N
-        grid points
+        numpy.ndarray: A (SxN) vector containing the density of states for every spin configuration with S spin
+                       configurations and N grid points
 
         """
         return self._dos_idensities
@@ -117,8 +117,9 @@ class ElectronicStructure(object):
     @property
     def resolved_densities(self):
         """
-        A (SxAxOxN) vector containing the density of states for every spin configuration with S spin configurationa, 
-        A atoms, O orbitals and N grid points. The labels of the orbitals are found on the orbital_dict
+        numpy.ndarray: A (SxAxOxN) vector containing the density of states for every spin configuration with S spin
+                       configurations, A atoms, O orbitals and N grid points. The labels of the orbitals are found on
+                       the orbital_dict
 
         """
         return self._resolved_densities
@@ -130,7 +131,7 @@ class ElectronicStructure(object):
     @property
     def orbital_dict(self):
         """
-        A dictionary of the
+        dict: A dictionary of the ordering of the orbitals
 
         Examples:
             >>> self.orbital_dict[0]
@@ -146,24 +147,22 @@ class ElectronicStructure(object):
     @property
     def eigenvalues(self):
         """
-        A getter function to return all eigenvalues
-
+        numpy.ndarray: Eigenvalues of the bands
         """
         return self.eigenvalue_matrix.reshape(-1)
 
     @property
     def occupancies(self):
         """
-        A getter function to return all occupancies
-
+        numpy.ndarray: Occupancies of the bands
         """
         return self.occupancy_matrix.reshape(-1)
 
     @property
     def eigenvalue_matrix(self):
         """
-        A getter function to return the eigenvalue_matrix. The eigenvalue for a given kpoint index i and band index j
-        is given by eigenvalue_matrix[i][j]
+        numpy.ndarray: A getter function to return the eigenvalue_matrix. The eigenvalue for a given kpoint index i and band index j
+                       is given by eigenvalue_matrix[i][j]
 
         """
         if self._eigenvalue_matrix is None and len(self.kpoints) > 0:
@@ -174,20 +173,13 @@ class ElectronicStructure(object):
 
     @eigenvalue_matrix.setter
     def eigenvalue_matrix(self, val):
-        """
-        Setter for eigenvalue_matrix
-
-        Args:
-            val (np.ndarray): Array of eigenvalues with len(kpoints) rows and len(bands) columns.
-        """
         self._eigenvalue_matrix = val
 
     @property
     def occupancy_matrix(self):
         """
-        A getter function to return the occupancy_matrix. The occupancy for a given kpoint index i and band index j
-        is given by occupancy_matrix[i][j]
-
+        numpy.ndarray: A getter function to return the occupancy_matrix. The occupancy for a given kpoint index i and band index j
+                       is given by occupancy_matrix[i][j]
         """
         if self._occupancy_matrix is None and len(self.kpoints) > 0:
             self._occupancy_matrix = np.zeros((len(self.kpoints), len(self.kpoints[0].bands)))
@@ -197,67 +189,45 @@ class ElectronicStructure(object):
 
     @occupancy_matrix.setter
     def occupancy_matrix(self, val):
-        """
-        Setter for occupancies
-
-        Args:
-            val (list): Array of occupancies with len(kpoints) rows and len(bands) columns.
-
-        """
         self._occupancy_matrix = val
 
     @property
     def kpoint_list(self):
         """
-        Getter which returns the kpoints of the electronic structure in cartesian coordinates
-
-        Returns:
-            list of kpoints
+        numpy.ndarray: The list of kpoints in cartesian coordinates
         """
         if len(self._kpoint_list) == 0:
             kpt_lst = list()
             for k in self.kpoints:
                 kpt_lst.append(k.value)
             self._kpoint_list = kpt_lst
-        return self._kpoint_list
+        return np.array(self._kpoint_list)
 
     @kpoint_list.setter
     def kpoint_list(self, val):
-        """
-        Setter for kpoint_list
-
-        Args:
-            val: list of kpoint values
-        """
         self._kpoint_list = val
 
     @property
     def kpoint_weights(self):
         """
-        Getter which returns the weights of the kpoints of the electronic structure in cartesian coordinates
-
-        Returns:
-            list of kpoint
+        numpy.ndarray: The weights of the kpoints of the electronic structure in cartesian coordinates
         """
         if len(self._kpoint_weights) == 0:
             kpt_lst = list()
             for k in self.kpoints:
                 kpt_lst.append(k.weight)
             self._kpoint_weights = kpt_lst
-        return self._kpoint_weights
+        return np.ndarray(self._kpoint_weights)
 
     @kpoint_weights.setter
     def kpoint_weights(self, val):
-        """
-        Setter for kpoint_weights
-
-        Args:
-            val: list of kpoint weights
-        """
         self._kpoint_weights = val
 
     @property
     def structure(self):
+        """
+        pyiron_atomistics.structure.atoms.Atoms: The structure associated with the electronic structure object
+        """
         return self._structure
 
     @structure.setter
@@ -272,7 +242,7 @@ class ElectronicStructure(object):
             resolution (float): An occupancy below this value is considered unoccupied
 
         Returns:
-            vbm_dict (dict):
+            dict:
                 "value" (float): Absolute energy value of the VBM (eV)
                 "kpoint": The Kpoint instance associated with the VBM
                 "band": The Band instance associated with the VBM
@@ -303,7 +273,7 @@ class ElectronicStructure(object):
             resolution (float): An occupancy above this value is considered occupied
 
         Returns:
-            cbm_dict (dict):
+            dict:
                 "value" (float): Absolute energy value of the CBM (eV)
                  "kpoint": The Kpoint instance associated with the CBM
                  "band": The Band instance associated with the CBM
@@ -334,7 +304,7 @@ class ElectronicStructure(object):
             resolution (float): An occupancy above this value is considered occupied
 
         Returns:
-            gap_dict (dict):
+            dict:
                 "band gap" (float): The band gap (eV)
                  "vbm": The dictionary associated with the VBM
                  "cbm": The dictionary associated with the CBM
@@ -352,70 +322,56 @@ class ElectronicStructure(object):
     @property
     def eg(self):
         """
-        Getter for the band gap (value only) (eV)
+        float: The band gap (eV)
         """
         self._eg = self.get_band_gap()["band_gap"]
         return self._eg
 
     @eg.setter
     def eg(self, val):
-        """
-        Setter for the band gap
-        """
         self._eg = val
 
     @property
     def vbm(self):
         """
-        Getter for the VBM (value only) (eV)
+        float: The Kohn-Sham VBM (value only) (eV)
         """
         self._vbm = self.get_vbm()["value"]
         return self._vbm
 
     @vbm.setter
     def vbm(self, val):
-        """
-        Setter for the VBM
-        """
         self._vbm = val
 
     @property
     def cbm(self):
         """
-        Getter for the CBM (value only) (eV)
+        float: The Kohn-Sham CBM (value only) (eV)
         """
         self._cbm = self.get_cbm()["value"]
         return self._cbm
 
     @cbm.setter
     def cbm(self, val):
-        """
-        Setter for the CBM
-        """
         self._cbm = val
 
     @property
     def efermi(self):
         """
-        The fermi-level of the system (eV). Please note that in the case of DFT this level is the Kohn-Sham fermi
-        level computed by the DFT code.
+        float: The Fermi-level of the system (eV). Please note that in the case of DFT this level is the Kohn-Sham Fermi
+               level computed by the DFT code.
         """
         return self._efermi
 
     @efermi.setter
     def efermi(self, val):
-        """
-        Setter for the fermi level
-        """
         self._efermi = val
 
     @property
     def is_metal(self):
         """
-        Tells if the given system is metallic or not. The Fermi level crosses bands in the cas of metals but is present
-        in the band gap in the case of semi-conductors.
-        Returns:
-            Boolean: True if the Fermi-level crosses any bands
+        bool: Tells if the given system is metallic or not. The Fermi level crosses bands in the cas of metals but is
+              present in the band gap in the case of semi-conductors.
         """
         try:
             assert(self._efermi is not None)
@@ -758,14 +714,6 @@ class Kpoint(object):
 class Band(object):
     """
     All data related to a single band for every k-point is stored in this module
-
-    Attributes:
-
-        .. eigenvalue (float): The eigenvalue of a given band at a given k-point
-        .. occupancy (float): The occupancy of a given band at a given k-point
-        .. resolved_dos_matrix (numpy.ndarray instance): 2D matrix with n rows and m columns; n being the unmber of
-        atoms and m being the number of orbitals
-
     """
     def __init__(self):
         self._eigenvalue = None
@@ -774,6 +722,9 @@ class Band(object):
 
     @property
     def eigenvalue(self):
+        """
+        float: The eigenvalue of a given band at a given k-point
+        """
         return self._eigenvalue
 
     @eigenvalue.setter
@@ -782,6 +733,9 @@ class Band(object):
 
     @property
     def occupancy(self):
+        """
+        float: The occupancy of a given band at a given k-point
+        """
         return self._occupancy
 
     @occupancy.setter
@@ -790,6 +744,10 @@ class Band(object):
 
     @property
     def resolved_dos_matrix(self):
+        """
+        numpy.ndarray instance: 2D matrix with n rows and m columns; n being the unmber of
+                                atoms and m being the number of orbitals
+        """
         return self._resolved_dos_matrix
 
     @resolved_dos_matrix.setter
