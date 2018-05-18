@@ -1126,7 +1126,6 @@ class Output:
                 except ValueError:
                     pass
 
-        self.generic_output.bands = self.electronic_structure
         # important that we "reverse sort" the atoms in the vasp format into the atoms in the atoms class
         self.generic_output.log_dict = log_dict
         if "vasprun.xml" in files_present:
@@ -1172,6 +1171,8 @@ class Output:
             self.electrostatic_potential.from_file(filename=posixpath.join(directory, "LOCPOT"), normalize=False)
         if "CHGCAR" in files_present:
             self.charge_density.from_file(filename=posixpath.join(directory, "CHGCAR"), normalize=True)
+        print('assignment')
+        self.generic_output.bands = self.electronic_structure
 
     def to_hdf(self, hdf):
         """
