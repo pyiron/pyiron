@@ -1016,7 +1016,7 @@ class Atoms(object):
         warnings.filterwarnings("ignore")
         return analyse_ovito_cna_adaptive(atoms=self, mode=mode)
 
-    def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5, background='white', color_scheme='value', show_axes=True):
+    def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5, background='white', color_scheme='element', show_axes=True):
         """
 
         Returns:
@@ -1030,7 +1030,7 @@ class Atoms(object):
         parent_basis = self.get_parent_basis()
         view = nglview.show_ase(parent_basis)
         if spacefill:
-            view.add_spacefill(radius_type='vdw', scale=0.5)
+            view.add_spacefill(radius_type='vdw', color_scheme=color_scheme, scale=particle_size)
             # view.add_spacefill(radius=1.0)
             view.remove_ball_and_stick()
         else:
