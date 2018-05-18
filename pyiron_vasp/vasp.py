@@ -1289,6 +1289,8 @@ class GenericOutput:
                 with hdf_go.open("dft") as hdf_dft:
                     for node in hdf_dft.list_nodes():
                         self.dft_log_dict[node] = hdf_dft[node]
+                    if 'bands' in hdf_dft.list_groups():
+                        self.bands.from_hdf(hdf_dft, "bands")
 
 
 class DFTOutput:
