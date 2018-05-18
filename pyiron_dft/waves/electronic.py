@@ -520,6 +520,7 @@ class ElectronicStructure(object):
                     self.grand_dos_matrix = h_dos["grand_dos_matrix"]
                 if "resolved_densities" in nodes:
                     self.resolved_densities = h_dos["resolved_densities"]
+        self.generate_from_matrices()
 
     def to_hdf(self, hdf, group_name="electronic_structure"):
         """
