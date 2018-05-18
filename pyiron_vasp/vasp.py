@@ -1245,6 +1245,15 @@ class GenericOutput:
         self.log_dict = dict()
         self.dft_log_dict = dict()
         self.description = "generic_output contains generic output static"
+        self._bands = None
+
+    @property
+    def bands(self):
+        return self._bands
+
+    @bands.setter
+    def bands(self, val):
+        self._bands = val
 
     def to_hdf(self, hdf):
         """
