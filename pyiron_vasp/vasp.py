@@ -1162,7 +1162,6 @@ class Output:
                                                                        ["scf_energy_zero"]])
             self.generic_output.dft_log_dict["n_elect"] = float(self.vp_new.vasprun_dict["parameters"]["electronic"]
                                                                 ['NELECT'])
-            print('assignment')
             if "kinetic_energies" in self.vp_new.vasprun_dict.keys():
                 self.dft_output.log_dict["kinetic_energies"] = self.vp_new.vasprun_dict["kinetic_energies"]
                 self.generic_output.dft_log_dict["scf_energy_kin"] = self.vp_new.vasprun_dict["kinetic_energies"]
