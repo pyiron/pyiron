@@ -134,6 +134,7 @@ class ParallelMaster(GenericMaster):
         self.__version__ = "0.3"
         self._ref_job = None
         self._output = GenericOutput()
+        self._job_generator = None
         self.submission_status = SubmissionStatus(db=project.db, job_id=self.job_id)
         self.refresh_submission_status()
 
@@ -234,7 +235,7 @@ class ParallelMaster(GenericMaster):
         Collect the output files of the external executable and store the information in the HDF5 file. This method has
         to be implemented in the individual meta jobs derived from the ParallelMaster.
         """
-        raise ValueError("Implement in derived class")
+        raise NotImplementedError("Implement in derived class")
 
     def collect_logfiles(self):
         """
@@ -336,13 +337,6 @@ class ParallelMaster(GenericMaster):
         new_generic_job.submission_status = SubmissionStatus(db=new_generic_job._hdf5.project.db,
                                                              job_id=new_generic_job.job_id)
         return new_generic_job
-
-    def create_jobs(self):
-        """
-        The create_jobs method needs to be implemented in the derived classes to define the rules how to create the job
-        series which should then be executed in parallel.
-        """
-        raise NotImplementedError('define in derived class to create jobs')
 
     def is_finished(self):
         """
@@ -471,6 +465,29 @@ class ParallelMaster(GenericMaster):
         self.send_to_database()
         self._logger.info("{}, status: {}, parallel master".format(self.job_info_str, self.status))
 
+    def create_jobs(self):
+        """
+        The create_jobs method defines the rules how to create the job series which should then be executed in parallel.
+        """
+        job_lst = []
+        self.submission_status.submitted_jobs = 0
+        if self.job_id and self.project.db.get_item_by_id(self.job_id)['status'] not in ['finished', 'aborted']:
+            self._logger.debug("{} child project {}".format(self.job_name, self.project.__str__()))
+            ham = next(self._job_generator, None)
+            while ham is not None:
+                self._logger.debug('create job: %s %s', ham.job_info_str, ham.master_id)
+                self.submission_status.submit_next()
+                if not ham.status.finished:
+                    ham.run()
+                self._logger.info('{}: finished job {}'.format(self.job_name, ham.job_name))
+                if ham.server.run_mode.thread:
+                    job_lst.append(ham._process)
+                ham = next(self._job_generator, None)
+        else:
+            self.refresh_job_status()
+        process_lst = [process.communicate() for process in job_lst if process]
+        self.status.suspended = True
+
     def _create_child_job(self, job_name):
         """
         Internal helper function to create the next child job from the reference job template - usually this is called
@@ -518,6 +535,9 @@ class ParallelMaster(GenericMaster):
             job.server.run_mode.non_modal = True
         elif self.server.run_mode.queue:
             job.server.run_mode.thread = True
+        self._logger.info('{}: run job {}'.format(self.job_name, job.job_name))
+        if job.server.run_mode.non_modal and self.get_child_cores() + job.server.cores > self.server.cores:
+            return None
         return job
 
     def _db_server_entry(self):
@@ -542,3 +562,46 @@ class GenericOutput(OrderedDict):
     """
     def __init__(self):
         super(GenericOutput, self).__init__()
+
+
+class JobGenerator(object):
+    def __init__(self, job):
+        self._job = job
+        self._childcounter = 0
+
+    @property
+    def parameter_list(self):
+        raise NotImplementedError("Implement in derived class")
+
+    @staticmethod
+    def job_name(parameter):
+        raise NotImplementedError("Implement in derived class")
+
+    @staticmethod
+    def modify_job(job, parameter):
+        raise NotImplementedError("Implement in derived class")
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return self.next()
+
+    def _create_job(self, job_name):
+        job = self._job._create_child_job(job_name)
+        self._childcounter += 1
+        return job
+
+    def next(self):
+        if len(self.parameter_list) > self._childcounter:
+            current_paramenter = self.parameter_list[self._childcounter]
+            job = self._job._create_child_job(self.job_name(parameter=current_paramenter))
+            self._childcounter += 1
+            if job is not None:
+                job = self.modify_job(job=job, parameter=current_paramenter)
+                return job
+            else:
+                raise StopIteration()
+        else:
+            self._job.refresh_job_status()
+            raise StopIteration()
