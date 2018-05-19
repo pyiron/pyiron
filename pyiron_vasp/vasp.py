@@ -1023,10 +1023,11 @@ class Input:
 
     def to_hdf(self, hdf):
         """
-        Writes the important attributes to a hdf file
+        Save the object in a HDF5 file
 
         Args:
-            hdf: The hdf5 instance
+            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+
         """
 
         with hdf.open("input") as hdf5_input:
@@ -1207,10 +1208,11 @@ class Output:
 
     def to_hdf(self, hdf):
         """
-        Writes the important attributes to a hdf file
+        Save the object in a HDF5 file
 
         Args:
-            hdf: The hdf5 instance
+            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+
         """
         with hdf.open("output") as hdf5_output:
             hdf5_output["description"] = self.description
@@ -1290,9 +1292,11 @@ class GenericOutput:
 
     def to_hdf(self, hdf):
         """
-        Writes the important attributes to a hdf file
+        Save the object in a HDF5 file
+
         Args:
-            hdf: The hdf5 instance
+            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+
         """
         with hdf.open("generic") as hdf_go:
             # hdf_go["description"] = self.description
@@ -1339,9 +1343,11 @@ class DFTOutput:
 
     def to_hdf(self, hdf):
         """
-        Writes the important attributes to a hdf file
+        Save the object in a HDF5 file
+
         Args:
-            hdf: The hdf5 instance
+            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+
         """
         with hdf.open("dft") as hdf_dft:
             # hdf_go["description"] = self.description
