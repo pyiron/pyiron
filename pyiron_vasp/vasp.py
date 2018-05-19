@@ -188,6 +188,9 @@ class Vasp(GenericDFTJob):
 
     @property
     def fix_spin_constraint(self):
+        """
+        bool: Tells if the type of constraints the spins have for this calculation
+        """
         return self.spin_constraints
 
     @fix_spin_constraint.setter
@@ -920,7 +923,7 @@ class Vasp(GenericDFTJob):
 
     def copy_wavecar(self, old_vasp_job):
         """
-        Copy WAVECAR from previous VASP calcualtion to the new VASP job.
+        Copy WAVECAR from previous VASP calculation to the new VASP job.
         (Sets ICHARG = 1)
 
         Args:
@@ -1020,10 +1023,11 @@ class Input:
 
     def to_hdf(self, hdf):
         """
-        Writes the important attributes to a hdf file
+        Save the object in a HDF5 file
 
         Args:
-            hdf: The hdf5 instance
+            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+
         """
 
         with hdf.open("input") as hdf5_input:
@@ -1034,6 +1038,7 @@ class Input:
     def from_hdf(self, hdf):
         """
         Reads the attributes and reconstructs the object from a hdf file
+
         Args:
             hdf: The hdf5 instance
         """
@@ -1046,6 +1051,7 @@ class Input:
 class Output:
     """
     Handles the output from a VASP simulation.
+
     Attributes:
         electronic_structure: Gives the electronic structure of the system
         electrostatic_potential: Gives the electrostatic/local potential of the system
@@ -1081,6 +1087,7 @@ class Output:
     def collect(self, directory=os.getcwd()):
         """
         Collects output from the working directory
+
         Args:
             directory (str): Path to the directory
         """
@@ -1089,7 +1096,7 @@ class Output:
         log_dict = dict()
         if "OUTCAR" in files_present:
             self.outcar.from_file(filename=posixpath.join(directory, "OUTCAR"))
-            log_dict["temperatures"] = self.outcar.parse_dict["temperatures"]
+            log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
 
         if "vasprun.xml" in files_present:
@@ -1110,11 +1117,11 @@ class Output:
             log_dict["positions"] = self.vp_new.vasprun_dict["positions"]
             log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
             log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
-            log_dict["unwrapped_positions"] = unwrap_coordinates(positions=log_dict["positions"], cell=None,
+            log_dict["positions_unwrapped"] = unwrap_coordinates(positions=log_dict["positions"], cell=None,
                                                                  is_relative=True)
             for i, pos in enumerate(log_dict["positions"]):
                 log_dict["positions"][i] = np.dot(pos, log_dict["cells"][i])
-                log_dict["unwrapped_positions"][i] = np.dot(log_dict["unwrapped_positions"][i].copy(),
+                log_dict["positions_unwrapped"][i] = np.dot(log_dict["positions_unwrapped"][i].copy(),
                                                             log_dict["cells"][i])
             # log_dict["scf_energies"] = self.vp_new.vasprun_dict["scf_energies"]
             # log_dict["scf_dipole_moments"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
@@ -1171,18 +1178,41 @@ class Output:
             self.dft_output.log_dict["total_energies"] = self.vp_new.vasprun_dict["total_energies"]
             self.dft_output.log_dict["total_fr_energies"] = self.vp_new.vasprun_dict["total_fr_energies"]
             self.dft_output.log_dict["total_0_energies"] = self.vp_new.vasprun_dict["total_0_energies"]
+
+            self.generic_output.dft_log_dict["scf_dipole_mom"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
+            self.generic_output.dft_log_dict["dipole_mom"] = total_dipole_moments
+
+            self.generic_output.dft_log_dict["scf_energy_int"] = self.vp_new.vasprun_dict["scf_energies"]
+            self.generic_output.dft_log_dict["scf_energy_free"] = self.vp_new.vasprun_dict["scf_fr_energies"]
+            self.generic_output.dft_log_dict["scf_energy_zero"] = self.vp_new.vasprun_dict["scf_0_energies"]
+            self.generic_output.dft_log_dict["energy_int"] = np.array([e_int[-1] for e_int in
+                                                                      self.generic_output.dft_log_dict
+                                                                      ["scf_energy_int"]])
+            self.generic_output.dft_log_dict["energy_free"] = np.array([e_free[-1] for e_free in
+                                                                       self.generic_output.dft_log_dict
+                                                                       ["scf_energy_free"]])
+            self.generic_output.dft_log_dict["energy_zero"] = np.array([e_zero[-1] for e_zero in
+                                                                       self.generic_output.dft_log_dict
+                                                                       ["scf_energy_zero"]])
+            self.generic_output.dft_log_dict["n_elect"] = float(self.vp_new.vasprun_dict["parameters"]["electronic"]
+                                                                ['NELECT'])
             if "kinetic_energies" in self.vp_new.vasprun_dict.keys():
                 self.dft_output.log_dict["kinetic_energies"] = self.vp_new.vasprun_dict["kinetic_energies"]
+                self.generic_output.dft_log_dict["scf_energy_kin"] = self.vp_new.vasprun_dict["kinetic_energies"]
+
         if "LOCPOT" in files_present:
             self.electrostatic_potential.from_file(filename=posixpath.join(directory, "LOCPOT"), normalize=False)
         if "CHGCAR" in files_present:
             self.charge_density.from_file(filename=posixpath.join(directory, "CHGCAR"), normalize=True)
+        self.generic_output.bands = self.electronic_structure
 
     def to_hdf(self, hdf):
         """
-        Writes the important attributes to a hdf file
+        Save the object in a HDF5 file
+
         Args:
-            hdf: The hdf5 instance
+            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+
         """
         with hdf.open("output") as hdf5_output:
             hdf5_output["description"] = self.description
@@ -1238,26 +1268,45 @@ class Output:
 
 class GenericOutput:
     """
+
     This class stores the generic output like different structures, energies and forces from a simulation in a highly
     generic format. Usually the user does not have to access this class.
+
     Attributes:
         log_dict (dict): A dictionary of all tags and values of generic data (positions, forces, etc)
     """
 
     def __init__(self):
         self.log_dict = dict()
+        self.dft_log_dict = dict()
         self.description = "generic_output contains generic output static"
+        self._bands = ElectronicStructure()
+
+    @property
+    def bands(self):
+        return self._bands
+
+    @bands.setter
+    def bands(self, val):
+        self._bands = val
 
     def to_hdf(self, hdf):
         """
-        Writes the important attributes to a hdf file
+        Save the object in a HDF5 file
+
         Args:
-            hdf: The hdf5 instance
+            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+
         """
         with hdf.open("generic") as hdf_go:
             # hdf_go["description"] = self.description
             for key, val in self.log_dict.items():
                 hdf_go[key] = val
+            with hdf_go.open("dft") as hdf_dft:
+                for key, val in self.dft_log_dict.items():
+                    hdf_dft[key] = val
+                if self.bands.eigenvalue_matrix is not None:
+                    self.bands.to_hdf_new(hdf_dft, "bands")
 
     def from_hdf(self, hdf):
         """
@@ -1272,11 +1321,18 @@ class GenericOutput:
                     pass
                 else:
                     self.log_dict[node] = hdf_go[node]
+            if 'dft' in hdf_go.list_groups():
+                with hdf_go.open("dft") as hdf_dft:
+                    for node in hdf_dft.list_nodes():
+                        self.dft_log_dict[node] = hdf_dft[node]
+                    if 'bands' in hdf_dft.list_groups():
+                        self.bands.from_hdf_new(hdf_dft, "bands")
 
 
 class DFTOutput:
     """
     This class stores the DFT specific output
+
     Attributes:
         log_dict (dict): A dictionary of all tags and values of DFT data
     """
@@ -1287,9 +1343,11 @@ class DFTOutput:
 
     def to_hdf(self, hdf):
         """
-        Writes the important attributes to a hdf file
+        Save the object in a HDF5 file
+
         Args:
-            hdf: The hdf5 instance
+            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+
         """
         with hdf.open("dft") as hdf_dft:
             # hdf_go["description"] = self.description
