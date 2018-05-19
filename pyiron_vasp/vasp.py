@@ -188,6 +188,9 @@ class Vasp(GenericDFTJob):
 
     @property
     def fix_spin_constraint(self):
+        """
+        bool: Tells if the type of constraints the spins have for this calculation
+        """
         return self.spin_constraints
 
     @fix_spin_constraint.setter
