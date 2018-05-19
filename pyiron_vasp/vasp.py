@@ -236,6 +236,36 @@ class Vasp(GenericDFTJob):
             return
         self._output_parser.to_hdf(self._hdf5)
 
+    def convergence_check(self):
+        if 'IBRION' in self['input/incar/data_dict']['Parameter']:
+            ind = self['input/incar/data_dict']['Parameter'].index('NELM')
+            ibrion = int(self['input/incar/data_dict']['Value'][ind])
+        else:
+            ibrion = 0
+        if 'NELM' in self['input/incar/data_dict']['Parameter']:
+            ind = self['input/incar/data_dict']['Parameter'].index('NELM')
+            max_e_steps = int(self['input/incar/data_dict']['Value'][ind])
+        else:
+            max_e_steps = 60
+        if 'NSW' in self['input/incar/data_dict']['Parameter']:
+            ind = self['input/incar/data_dict']['Parameter'].index('NSW')
+            max_i_steps = int(self['input/incar/data_dict']['Value'][ind])
+        else:
+            max_i_steps = 0
+        scf_energies = self['output/outcar/scf_energies']
+        e_steps_converged = [len(step) < max_e_steps for step in scf_energies]
+        # For calc_md() we do not care about convergence.
+        if ibrion == 0 and max_i_steps != 0:
+            return True
+        # For calc_static only the electronic convergence matters.
+        elif max_i_steps == 0 and np.all(e_steps_converged):
+            return True
+        # For calc_minimize only the last ionic step has to be converged!
+        elif 0 < max_i_steps and len(scf_energies) < max_i_steps and e_steps_converged[-1]:
+            return True
+        else:
+            return False
+
     def cleanup(self, files_to_remove=("WAVECAR", "CHGCAR", "CHG", "vasprun.xml")):
         """
         Removes excess files (by default: WAVECAR, CHGCAR, CHG)
