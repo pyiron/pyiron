@@ -194,14 +194,14 @@ class ElectronicStructure(object):
     @property
     def kpoint_list(self):
         """
-        numpy.ndarray: The list of kpoints in cartesian coordinates
+        list: The list of kpoints in cartesian coordinates
         """
         if len(self._kpoint_list) == 0:
             kpt_lst = list()
             for k in self.kpoints:
                 kpt_lst.append(k.value)
             self._kpoint_list = kpt_lst
-        return np.array(self._kpoint_list)
+        return self._kpoint_list
 
     @kpoint_list.setter
     def kpoint_list(self, val):
@@ -210,14 +210,14 @@ class ElectronicStructure(object):
     @property
     def kpoint_weights(self):
         """
-        numpy.ndarray: The weights of the kpoints of the electronic structure in cartesian coordinates
+        list: The weights of the kpoints of the electronic structure in cartesian coordinates
         """
         if len(self._kpoint_weights) == 0:
             kpt_lst = list()
             for k in self.kpoints:
                 kpt_lst.append(k.weight)
             self._kpoint_weights = kpt_lst
-        return np.ndarray(self._kpoint_weights)
+        return self._kpoint_weights
 
     @kpoint_weights.setter
     def kpoint_weights(self, val):
