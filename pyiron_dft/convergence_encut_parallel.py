@@ -4,6 +4,7 @@
 
 from __future__ import print_function
 from pyiron_atomistics.job.parallel import AtomisticParallelMaster
+from pyiron_base.objects.job.parallel import JobGenerator
 import numpy as np
 try:
     import pylab as plt
@@ -22,14 +23,36 @@ __status__ = "development"
 __date__ = "Sep 1, 2017"
 
 
+class EncutConvergenceJobGenerator(JobGenerator):
+    @property
+    def parameter_list(self):
+        """
+
+        Returns:
+            (list)
+        """
+        return [np.round(encut, 7) for encut in np.linspace(self._job.input['min'],
+                                                            self._job.input['max'],
+                                                            self._job.input['num_points'])]
+
+    @staticmethod
+    def job_name(parameter):
+        return "encut_" + str(parameter).replace('.', '_')
+
+    @staticmethod
+    def modify_job(job, parameter):
+        job.set_encut(encut=parameter)
+        return job
+
+
 # ToDo: not all abstract methods implemented
 class ConvergenceEncutParallel(AtomisticParallelMaster):
     def __init__(self, project, job_name='encut_conv'):
         """
 
-        :param project:
-        :param job_name:
-        :return:
+        Args:
+            project:
+            job_name:
         """
         super(ConvergenceEncutParallel, self).__init__(project, job_name)
         self.__name__ = 'ConvergenceEncutParallel'
@@ -39,30 +62,7 @@ class ConvergenceEncutParallel(AtomisticParallelMaster):
         self.input['num_points'] = (11, 'number of sample points')
         self.input['min'] = (200, 'EnCut Minimum')
         self.input['max'] = (800, 'EnCut Maximum')
-
-    def create_jobs(self):
-        job_lst = []
-
-        self.submission_status.submitted_jobs = 0
-        for encut in np.linspace(self.input['min'], self.input['max'], self.input['num_points']):
-            if self.job_id and self.project.db.get_item_by_id(self.job_id)['status'] not in ['finished', 'aborted']:
-                self._logger.debug("EnCutConvergence child project {}".format(self.project.__str__()))
-                ham = self._create_child_job("encut_" + str(encut).replace('.', '_'))
-                if ham.server.run_mode.non_modal and self.get_child_cores() + ham.server.cores > self.server.cores:
-                    break
-                self._logger.debug('create job: %s %s', ham.job_info_str, ham.master_id)
-                ham.set_encut(encut=encut)
-                self._logger.info('EnCutConvergence: run job {}'.format(ham.job_name))
-                self.submission_status.submit_next()
-                if not ham.status.finished:
-                    ham.run()
-                self._logger.info('EnCutConvergence: finished job {}'.format(ham.job_name))
-                if ham.server.run_mode.thread:
-                    job_lst.append(ham._process)
-            else:
-                self.refresh_job_status()
-        process_lst = [process.communicate() for process in job_lst if process]
-        self.status.suspended = True
+        self._job_generator = EncutConvergenceJobGenerator(self)
 
     def collect_output(self):
         eng_lst, encut_lst = [], []

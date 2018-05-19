@@ -4,6 +4,7 @@
 
 from __future__ import print_function
 from pyiron_atomistics.job.parallel import AtomisticParallelMaster
+from pyiron_base.objects.job.parallel import JobGenerator
 import numpy as np
 try:
     import pylab as plt
@@ -22,14 +23,36 @@ __status__ = "development"
 __date__ = "Sep 1, 2017"
 
 
+class KpointConvergenceJobGenerator(JobGenerator):
+    @property
+    def parameter_list(self):
+        """
+
+        Returns:
+            (list)
+        """
+        return [kpoint for kpoint in range(self.input['min'],
+                                           self.input['max']+self.input['steps'],
+                                           self.input['steps'])]
+
+    @staticmethod
+    def job_name(parameter):
+        return "kpoint_mesh_" + str(parameter)
+
+    @staticmethod
+    def modify_job(job, parameter):
+        job.set_kpoints(mesh=[parameter, parameter, parameter])
+        return job
+
+
 # ToDo: not all abstract methods implemented
 class ConvergenceKpointParallel(AtomisticParallelMaster):
     def __init__(self, project, job_name='encut_conv'):
         """
 
-        :param project:
-        :param job_name:
-        :return:
+        Args:
+            project:
+            job_name:
         """
         super(ConvergenceKpointParallel, self).__init__(project, job_name)
         self.__name__ = 'ConvergenceKpointParallel'
@@ -39,34 +62,11 @@ class ConvergenceKpointParallel(AtomisticParallelMaster):
         self.input['steps'] = (2, 'increase of kpoints')
         self.input['min'] = (4, 'Kpoint Minimum')
         self.input['max'] = (8, 'Kpoint Maximum')
+        self._job_generator = KpointConvergenceJobGenerator(self)
 
     def write_input(self):
         self.input['num_points'] = len(range(self.input['min'], self.input['max']+self.input['steps'], self.input['steps']))
         super(ConvergenceKpointParallel, self).write_input()
-
-    def create_jobs(self):
-        job_lst = []
-
-        self.submission_status.submitted_jobs = 0
-        for kpoint in range(self.input['min'], self.input['max']+self.input['steps'], self.input['steps']):
-            if self.job_id and self.project.db.get_item_by_id(self.job_id)['status'] not in ['finished', 'aborted']:
-                self._logger.debug("KpointConvergence child project {}".format(self.project.__str__()))
-                ham = self._create_child_job("kpoint_mesh_" + str(kpoint))
-                if ham.server.run_mode.non_modal and self.get_child_cores() + ham.server.cores > self.server.cores:
-                    break
-                self._logger.debug('create job: %s %s', ham.job_info_str, ham.master_id)
-                ham.set_kpoints(mesh=[kpoint, kpoint, kpoint])
-                self._logger.info('KpointConvergence: run job {}'.format(ham.job_name))
-                self.submission_status.submit_next()
-                if not ham.status.finished:
-                    ham.run()
-                self._logger.info('KpointConvergence: finished job {}'.format(ham.job_name))
-                if ham.server.run_mode.thread:
-                    job_lst.append(ham._process)
-            else:
-                self.refresh_job_status()
-        process_lst = [process.communicate() for process in job_lst if process]
-        self.status.suspended = True
 
     def collect_output(self):
         eng_lst, kpoint_lst = [], []
