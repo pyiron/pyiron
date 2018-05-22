@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import unittest
 import os
 from pyiron_base.core.settings.generic import Settings
@@ -13,6 +14,7 @@ from pyiron_atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron_atomistics.structure.sparse_list import SparseList
 from pyiron_atomistics.structure.periodic_table import PeriodicTable
 from pyiron_base.objects.generic.hdfio import FileHDFio
+
 
 class TestAtoms(unittest.TestCase):
 
