@@ -121,6 +121,14 @@ class TestAtoms(unittest.TestCase):
         basis_copy[:] = "Pt"
         self.assertNotEqual(basis, basis_copy)
 
+    def test_numbers_to_elements(self):
+        num_list = [1, 12, 13, 6]
+        self.assertTrue(np.array_equal([el.Abbreviation for el in self.CO2.numbers_to_elements(num_list)],
+                                       ['H', 'Mg', 'Al', 'C']))
+
+    def test_to_hdf(self):
+        pass
+
     def create_Fe_bcc(self):
         self.pse = PeriodicTable()
         self.pse.add_element("Fe", "Fe_up", spin="up", pseudo_name='GGA')
