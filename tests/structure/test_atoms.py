@@ -7,11 +7,12 @@ s = Settings(config={'sql_file': 'atoms.db',
                      'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
 
 import numpy as np
+import os
 from pyiron_atomistics.structure.atom import Atom
 from pyiron_atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron_atomistics.structure.sparse_list import SparseList
 from pyiron_atomistics.structure.periodic_table import PeriodicTable
-
+from pyiron_base.objects.generic.hdfio import FileHDFio
 
 class TestAtoms(unittest.TestCase):
 
@@ -128,6 +129,15 @@ class TestAtoms(unittest.TestCase):
 
     def test_to_hdf(self):
         pass
+
+    def test_from_hdf(self):
+        filename = "../static/pyiron_atomistics/structure_hdf"
+        abs_filename = os.path.abspath(filename)
+        hdf_obj = FileHDFio(abs_filename)
+        basis = Atoms().from_hdf(hdf_obj, group_name="simple_structure")
+        self.assertEqual(len(basis), 8)
+        self.assertEqual(basis.get_majority_species()[1], "Al")
+        self.assertEqual(basis.get_spacegroup()['Number'], 225)
 
     def create_Fe_bcc(self):
         self.pse = PeriodicTable()
