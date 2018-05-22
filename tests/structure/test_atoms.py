@@ -1,5 +1,6 @@
 import unittest
 import os
+import sys
 from pyiron_base.core.settings.generic import Settings
 
 s = Settings(config={'sql_file': 'atoms.db',
@@ -133,24 +134,26 @@ class TestAtoms(unittest.TestCase):
                                        ['H', 'Mg', 'Al', 'C']))
 
     def test_to_hdf(self):
-        filename = "../static/pyiron_atomistics/test_hdf"
-        abs_filename = os.path.abspath(filename)
-        hdf_obj = FileHDFio(abs_filename)
-        pos, cell = generate_fcc_lattice()
-        basis = Atoms(symbols='Al', positions=pos, cell=cell)
-        basis.set_repeat([2, 2, 2])
-        basis.to_hdf(hdf_obj, "test_structure")
-        basis_new = Atoms().from_hdf(hdf_obj, "test_structure")
-        self.assertEqual(basis, basis_new)
+        if sys.version_info[0] >= 3:
+            filename = "../static/pyiron_atomistics/test_hdf"
+            abs_filename = os.path.abspath(filename)
+            hdf_obj = FileHDFio(abs_filename)
+            pos, cell = generate_fcc_lattice()
+            basis = Atoms(symbols='Al', positions=pos, cell=cell)
+            basis.set_repeat([2, 2, 2])
+            basis.to_hdf(hdf_obj, "test_structure")
+            basis_new = Atoms().from_hdf(hdf_obj, "test_structure")
+            self.assertEqual(basis, basis_new)
 
     def test_from_hdf(self):
-        filename = "../static/pyiron_atomistics/structure_hdf"
-        abs_filename = os.path.abspath(filename)
-        hdf_obj = FileHDFio(abs_filename)
-        basis = Atoms().from_hdf(hdf_obj, group_name="simple_structure")
-        self.assertEqual(len(basis), 8)
-        self.assertEqual(basis.get_majority_species()[1], "Al")
-        self.assertEqual(basis.get_spacegroup()['Number'], 225)
+        if sys.version_info[0] >= 3:
+            filename = "../static/pyiron_atomistics/structure_hdf"
+            abs_filename = os.path.abspath(filename)
+            hdf_obj = FileHDFio(abs_filename)
+            basis = Atoms().from_hdf(hdf_obj, group_name="simple_structure")
+            self.assertEqual(len(basis), 8)
+            self.assertEqual(basis.get_majority_species()[1], "Al")
+            self.assertEqual(basis.get_spacegroup()['Number'], 225)
 
     def create_Fe_bcc(self):
         self.pse = PeriodicTable()
