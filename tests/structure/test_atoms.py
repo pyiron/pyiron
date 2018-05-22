@@ -20,7 +20,8 @@ class TestAtoms(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        os.remove("../static/pyiron_atomistics/test_hdf")
+        if sys.version_info[0] >= 3:
+            os.remove("../static/pyiron_atomistics/test_hdf")
 
     def setUp(self):
         pass
