@@ -86,7 +86,8 @@ class Lammps(AtomisticGenericJob):
     @property
     def potential(self):
         """
-        
+        Execute view_potential() or list_potential() in order to see the pre-defined potential files
+
         Returns:
 
         """
@@ -95,7 +96,8 @@ class Lammps(AtomisticGenericJob):
     @potential.setter
     def potential(self, potential_filename):
         """
-        
+        Execute view_potential() or list_potential() in order to see the pre-defined potential files
+
         Args:
             potential_filename: 
 
