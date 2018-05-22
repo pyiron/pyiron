@@ -67,6 +67,7 @@ class LammpsPotential(GenericParameters):
                         resource_path = os.path.join(resource_path, 'pyiron_lammps', 'potentials')
                     if os.path.exists(os.path.join(resource_path, path)):
                         absolute_file_paths.append(os.path.join(resource_path, path))
+                        break
             if len(absolute_file_paths) != len(list(self._df['Filename'])[0]):
                 raise ValueError('Was not able to locate the potentials.')
             else:
