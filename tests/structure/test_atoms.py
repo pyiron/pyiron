@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import unittest
 import os
 from pyiron_base.core.settings.generic import Settings
