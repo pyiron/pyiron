@@ -2,7 +2,7 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-from __future__ import division, print_function
+from __future__ import division, print_function, unicode_literals
 from copy import copy
 from collections import OrderedDict
 from math import cos, sin
