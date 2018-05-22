@@ -16,6 +16,10 @@ from pyiron_base.objects.generic.hdfio import FileHDFio
 
 class TestAtoms(unittest.TestCase):
 
+    @classmethod
+    def tearDownClass(cls):
+        os.remove("../static/pyiron_atomistics/test_hdf")
+
     def setUp(self):
         pass
         self.CO2 = Atoms("CO2", positions=[[0, 0, 0], [0, 0, 1.5], [0, 1.5, 0]])
@@ -128,7 +132,15 @@ class TestAtoms(unittest.TestCase):
                                        ['H', 'Mg', 'Al', 'C']))
 
     def test_to_hdf(self):
-        pass
+        filename = "../static/pyiron_atomistics/test_hdf"
+        abs_filename = os.path.abspath(filename)
+        hdf_obj = FileHDFio(abs_filename)
+        pos, cell = generate_fcc_lattice()
+        basis = Atoms(symbols='Al', positions=pos, cell=cell)
+        basis.set_repeat([2, 2, 2])
+        basis.to_hdf(hdf_obj, "test_structure")
+        basis_new = Atoms().from_hdf(hdf_obj, "test_structure")
+        self.assertEqual(basis, basis_new)
 
     def test_from_hdf(self):
         filename = "../static/pyiron_atomistics/structure_hdf"
