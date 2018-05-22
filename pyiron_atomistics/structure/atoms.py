@@ -594,19 +594,18 @@ class Atoms(object):
 
     def center(self, vacuum=None, axis=(0, 1, 2)):
         """
-        Adopted from ASE code (https://wiki.fysik.dtu.dk/ase/_modules/ase/atoms.html#Atoms.center)
         Center atoms in unit cell.
 
-        Centers the atoms in the unit cell, so there is the same
-        amount of vacuum on all sides.
+        Adopted from ASE code (https://wiki.fysik.dtu.dk/ase/_modules/ase/atoms.html#Atoms.center)
 
-        vacuum: float (default: None)
-            If specified adjust the amount of vacuum when centering.
-            If vacuum=10.0 there will thus be 10 Angstrom of vacuum
-            on each side.
-        axis: int or sequence of ints
-            Axis or axes to act on.  Default: Act on all axes.
+        Args:
+            vacuum (float): If specified adjust the amount of vacuum when centering. If vacuum=10.0 there will thus be
+                            10 Angstrom of vacuum on each side.
+            axis (tuple/list): List or turple of integers specifying the axis along which the atoms should be centered
+
+
         """
+
         # Find the orientations of the faces of the unit cell
         c = self.cell
         if c is None:
