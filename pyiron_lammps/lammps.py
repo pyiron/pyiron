@@ -316,9 +316,9 @@ class Lammps(AtomisticGenericJob):
                     }
 
         if 'minimize' in attr:
-            tag_dict["Step Temp PotEng TotEng Pxx Pyy Pzz Volume"] = {"arg": ":,:",
-                                                                      "rows": "Loop",
-                                                                      "splitTag": True}
+            tag_dict["Step Temp PotEng TotEng Pxx Pxy Pxz Pyy Pyz Pzz Volume"] = {"arg": ":,:",
+                                                                                  "rows": "Loop",
+                                                                                  "splitTag": True}
 
 
         elif 'run' in attr:
