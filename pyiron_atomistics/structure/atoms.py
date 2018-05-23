@@ -281,7 +281,7 @@ class Atoms(object):
     @property
     def info(self):
         """
-        This dictionary is merely used to be compatible with the ASE Atoms class.
+        dict: This dictionary is merely used to be compatible with the ASE Atoms class.
 
         """
         return self._info
@@ -653,11 +653,10 @@ class Atoms(object):
 
     def set_positions(self, positions):
         """
-        
-        Args:
-            positions: 
+        Set positions. This function is for compatability with ASE
 
-        Returns:
+        Args:
+            positions (numpy.ndarray): Positions in absolute coordinates
 
         """
         self.positions = positions
@@ -665,19 +664,23 @@ class Atoms(object):
 
     def get_positions(self):
         """
-        
+        Get positions. This function is for compatability with ASE
+
         Returns:
+            numpy.ndarray: Positions in absolute coordinates
 
         """
         return self.positions
 
     def select_index(self, el):
         """
-        
-        Args:
-            el: 
+        Returns the indices of a given element in the structure
 
+        Args:
+            el (str/pyiron_atomistics.structures.periodic_table.ChemicalElement): Element for which the indices should
+                                                                                  be returned
         Returns:
+            numpy.ndarray: An array of indices of the atoms of the given element
 
         """
         if isinstance(el, str):
@@ -687,11 +690,13 @@ class Atoms(object):
 
     def select_parent_index(self, el):
         """
+        Returns the indices of a given element in the structure ignoring user defined elements
 
         Args:
-            el:
-
+            el (str/pyiron_atomistics.structures.periodic_table.ChemicalElement): Element for which the indices should
+                                                                                  be returned
         Returns:
+            numpy.ndarray: An array of indices of the atoms of the given element
 
         """
         parent_basis = self.get_parent_basis()
