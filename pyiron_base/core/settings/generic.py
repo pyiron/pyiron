@@ -227,10 +227,12 @@ class Settings(with_metaclass(Singleton)):
         Returns:
             str: path
         """
+        if full_path[-1] != '/':
+            full_path += '/'
         for path in self._configuration['project_paths']:
             if path in full_path:
                 return path
-        raise ValueError('the current path {0} is not included in the .pyiron configuration.'.format(full_path))
+        raise ValueError('the current path {0} is not included in the .pyiron configuration. {1}'.format(full_path, self._configuration['project_paths']))
 
     # private functions
     def _config_parse_file(self, config_file):
