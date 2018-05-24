@@ -4,6 +4,6 @@
 _Travis_
 [![Build Status](https://travis-ci.org/pyiron/pyiron_base.svg?branch=master)](https://travis-ci.org/pyiron/pyiron_base)
 _AppVeyor_
-[![Build status](https://ci.appveyor.com/api/projects/status/sh2wnbwl6dr5nd2f/branch/master?svg=true)](https://ci.appveyor.com/project/jan-janssen/pyiron-base/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/c9w3tjyffnw1d47x/branch/master?svg=true)](https://ci.appveyor.com/project/pyiron-runner/pyiron-base/branch/master)
 _Anaconda_
 [![Downloads](https://anaconda.org/pyiron/pyiron_base/badges/downloads.svg)](https://anaconda.org/pyiron/pyiron_base)
