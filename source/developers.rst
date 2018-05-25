@@ -94,6 +94,54 @@ pyiron_example_job
 .. image:: https://ci.appveyor.com/api/projects/status/4gs490vgif1bl0v5/branch/master?svg=true
 
 
+pyiron release
+==============
+
+For the pyiron release management we use git tags::
+
+   https://git-scm.com/book/en/v2/Git-Basics-Tagging
+
+The tag format consists of a tag_prefix (<package name>-) and the release version, for example::
+
+   pyiron_base-0.1.6
+
+For the automated versioning we use::
+
+   https://github.com/warner/python-versioneer/
+
+So the configuration of the release is included in setup.cfg::
+
+   https://github.com/pyiron/pyiron_base/blob/master/setup.cfg
+
+As the pyiron packages are pure python packages – we use only the Linux Python 3.6 job to build the packages, as defined in the .travis.yml file::
+
+   https://github.com/pyiron/pyiron_base/blob/master/.travis.yml
+
+The python 3.6 linux tests therefore takes more time, compared to the other tests on travis.
+
+Just like each other commit to the master branch the tagged releases are pushed to pypi.org and anaconda.org::
+
+   https://pypi.org/project/pyiron-base/#history
+   https://anaconda.org/pyiron/pyiron_base
+
+The major difference for pypi (pip) is that tagged releases are the default for pip while installing prerelease versions using pip requires the `--pre` flag.
+`pip install --pre pyiron_base`
+
+Those prerelease versions are named `<version_number>.post0.dev<release number>` ::
+
+   0.1.6.post0.dev11
+
+For anaconda the prereleases are pushed to the pyiron channel and can be installed using:
+conda install -c pyiron pyiron_base
+
+On the other hand the tagged releases are available through conda-forge, as soon as the corresponding packages are merged::
+
+
+   https://github.com/conda-forge/pyiron_base-feedstock
+   conda install -c conda-forge pyiron_base
+
+So for both conda and pip both the prereleases as well as the official releases are available.
+
 .. toctree::
    :maxdepth:3
 
