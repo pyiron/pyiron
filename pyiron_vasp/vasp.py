@@ -241,7 +241,7 @@ class Vasp(GenericDFTJob):
 
     def convergence_check(self):
         if 'IBRION' in self['input/incar/data_dict']['Parameter']:
-            ind = self['input/incar/data_dict']['Parameter'].index('NELM')
+            ind = self['input/incar/data_dict']['Parameter'].index('IBRION')
             ibrion = int(self['input/incar/data_dict']['Value'][ind])
         else:
             ibrion = 0
