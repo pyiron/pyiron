@@ -70,8 +70,8 @@ deploy:
     on:
       branch: master
       condition: "${PYTHONVER} = 3.6 && ${TRAVIS_OS_NAME} = linux"
- - provider: script
-    script: ./.ci_support/build_docker_on_tags.sh 
+  - provider: script
+    script: ./.ci_support/build_docker_on_master.sh 
     on:
       tags: true
       condition: "${PYTHONVER} = 3.6 && ${TRAVIS_OS_NAME} = linux"
