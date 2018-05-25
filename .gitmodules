@@ -1,3 +1,4 @@
 [submodule ".ci_support"]
 	path = .ci_support
 	url = https://github.com/pyiron/continuous_integration_support.git
+	branch = master
