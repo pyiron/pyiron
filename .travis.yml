@@ -23,6 +23,7 @@ install:
   - wget ${MINICONDA} -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
+  - git clone https://github.com/pyiron/continuous_integration_support.git .ci_support
   - conda info -a
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
