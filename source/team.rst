@@ -1,4 +1,4 @@
-.. _developers:
+.. _team:
 
 
 ====
