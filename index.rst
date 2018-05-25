@@ -95,7 +95,7 @@ Read more about `citing individual modules/ plugins of pyiron and the implemente
    source/about.rst
    source/installation.rst
    source/examples.rst
-   source/developers.rst
+   source/team.rst
    source/citation.rst
    source/faq.rst
    License (BSD) <https://github.com/pyiron/pyiron/blob/master/LICENSE>
