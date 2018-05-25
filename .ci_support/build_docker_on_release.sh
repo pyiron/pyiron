@@ -26,7 +26,7 @@ elif [ -n "$TRAVIS_REPO_SLUG" ] ; then
     MESSAGE=",\"message\": \"Triggered from upstream build of $TRAVIS_REPO_SLUG by commit "`git rev-parse --short HEAD`"\""
 fi
 
-for BRANCH in master
+for BRANCH in binder notebook
 	do
         # for debugging
         echo "USER=$USER"
