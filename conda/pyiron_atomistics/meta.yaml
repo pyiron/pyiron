@@ -7,44 +7,43 @@ package:
 source:
   path: ../../
 
+build:
+  noarch: python
+  number: 0
+  script: python -m pip install --pre --no-deps --ignore-installed .
+
 requirements:
   build:
     - python
-    - h5py
-    - matplotlib
-    - numpy
-    - pandas
-    - six
-    - sqlalchemy
-    - pytables
-    - ase
-    - spglib
-    - pyiron_base
+    - pip
 
   run:
     - python
-    - h5py
-    - matplotlib
-    - numpy
-    - pandas
-    - six
-    - sqlalchemy
-    - pytables
+    - pyiron_base
     - ase
     - spglib
-    - pyiron_base
-
-build:
-  noarch: python
-  script_env:
-   - TRAVIS
-   - APPVEYOR
 
 test:
   imports:
     - pyiron_atomistics
 
 about:
-  home: http://pyiron.org
-  license: BSD
-  summary: "pyiron atomistics plugin"
+  home: https://github.com/pyiron/pyiron_atomistics
+  license: BSD-3-Clause
+  license_family: BSD
+  license_file: '{{ environ["RECIPE_DIR"] }}/LICENSE.txt'
+  summary: 'Atomistics plugin for pyiron - an integrated development environment (IDE) for computational materials science.'
+  description: |
+    pyiron was initially developed in the Computational Materials Design department of Joerg Neugebauer at the
+    Max Planck Insitut für Eisenforschung (Max Planck Insitute for iron research) as a framework for ab initio
+    thermodynamics. In collaboration with the Interdisciplinary Centre for Advanced Materials Simulation (ICAMS)
+    the framework was recently extended for high throughput applications resulting in the opensource release of
+    pyiron.
+  doc_url: https://pyiron.org
+  dev_url: https://github.com/pyiron
+
+extra:
+  recipe-maintainers:
+    - pyiron-runner
+    - jan-janssen
+    - sudarsan1989

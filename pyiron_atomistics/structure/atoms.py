@@ -1060,6 +1060,17 @@ class Atoms(object):
         z = self.positions[:, 2]
         return x, y, z
 
+    def scaled_pos_xyz(self):
+        """
+
+        Returns:
+
+        """
+        x = self.scaled_positions[:, 0]
+        y = self.scaled_positions[:, 1]
+        z = self.scaled_positions[:, 2]
+        return x, y, z
+
     def __select_slice(self, i_dim, i_flag, dist):
         """
         

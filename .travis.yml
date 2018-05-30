@@ -23,6 +23,7 @@ install:
   - wget ${MINICONDA} -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
+  - git clone https://github.com/pyiron/continuous_integration_support.git .ci_support
   - conda info -a
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
@@ -38,6 +39,9 @@ install:
 script:
   - cd tests
   - python find_tests.py
+  - cd ..
+  - ./.ci_support/build_notebooks_on_master.sh
+  - cd tests
 
 after_success:
   - coveralls
@@ -68,3 +72,13 @@ deploy:
     on:
       tags: true
       condition: "${PYTHONVER} = 3.6 && ${TRAVIS_OS_NAME} = linux"
+#  - provider: script
+#    script: ./.ci_support/build_docker_on_master.sh
+#    on:
+#      branch: master
+#      condition: "${PYTHONVER} = 3.6 && ${TRAVIS_OS_NAME} = linux"
+#  - provider: script
+#    script: ./.ci_support/build_docker_on_release.sh
+#    on:
+#      tags: true
+#      condition: "${PYTHONVER} = 3.6 && ${TRAVIS_OS_NAME} = linux"
