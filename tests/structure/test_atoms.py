@@ -230,23 +230,6 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue((CO.pbc == np.array([True, True, True])).all())
         CO.set_pbc((True, True, False))
 
-    # def test_atomic_numbers(self):
-    #     # print self.CO2.get_atomic_numbers()
-    #     # print self.CO2.get_chemical_symbols()
-    #     # print self.CO2.get_masses()
-    #     # print self.CO2.get_chemical_elements()
-    #     self.CO2[1] = "Fe"
-    #     # print self.CO2.get_chemical_symbols()
-    #     self.CO2[0] = self.CO2[1]
-    #     # print self.CO2.get_chemical_symbols()
-    #     self.CO2[0] = self.CO2[2].element
-    #     # print self.CO2.get_chemical_symbols()
-    #
-    #     self.CO2[:] = ['Fe', 'Fe', 'Fe']
-    #     # print self.CO2.get_chemical_symbols()
-    #     self.CO2[:] = "O"
-    #     # print self.CO2.get_chemical_symbols()
-
     def test_get_masses_DOF(self):
         self.assertEqual(len(self.CO2.get_masses_dof()), len(self.CO2.positions.flatten()))
 
@@ -685,9 +668,9 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(len(basis.get_species_symbols()), 1)
 
 
-def generate_fcc_lattice():
+def generate_fcc_lattice(a=4.2):
     positions = [[0, 0, 0]]
-    cell = (np.ones((3, 3)) - np.eye(3)) * 0.5 * 4.2
+    cell = (np.ones((3, 3)) - np.eye(3)) * 0.5 * a
     return positions, cell
 
 
