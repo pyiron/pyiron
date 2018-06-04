@@ -424,9 +424,11 @@ class Trajectory(object):
         structure (pyiron_atomistics.structure.atoms.Atoms): The initial structure instance from which the species info
                                                              is derived
         center_of_mass (bool): False (default) if the specified positions are w.r.t. the origin
+        cells (numpy.ndarray): Optional argument of the cell shape at every time step (Nx3x3 array) when the volume
+                                varies
     """
 
-    def __init__(self, positions, structure, center_of_mass=False):
+    def __init__(self, positions, structure, center_of_mass=False, cells=None):
         if center_of_mass:
             pos = np.copy(positions)
             pos[:, :, 0] = (pos[:, :, 0].T - np.mean(pos[:, :, 0], axis=1)).T
@@ -436,9 +438,12 @@ class Trajectory(object):
         else:
             self._positions = positions
         self._structure = structure
+        self._cells = cells
 
     def __getitem__(self, item):
         new_structure = self._structure.copy()
+        if self._cells is not None:
+            new_structure.cell = self._cells[item]
         new_structure.positions = self._positions[item]
         # This step is necessary for using ase.io.write for trajectories
         new_structure.arrays['positions'] = new_structure.positions
