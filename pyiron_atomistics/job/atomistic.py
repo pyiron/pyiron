@@ -307,7 +307,7 @@ class AtomisticGenericJob(GenericJobCore):
 
         """
         return Trajectory(self['output/generic/positions'][::stride], self.structure.get_parent_basis(),
-                          center_of_mass=center_of_mass)
+                          center_of_mass=center_of_mass, cells=self['output/generic/cells'][::stride])
 
     def write_traj(self, filename, format=None, parallel=True, append=False, stride=1, center_of_mass=False, **kwargs):
         """
