@@ -14,7 +14,8 @@ Jobclass to execute python scripts and jupyter notebooks
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \
+                "- Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -32,7 +33,7 @@ class ScriptJob(GenericJob):
 
     Attributes:
 
-        .. attribute:: job_name
+        attribute: job_name
 
             name of the job, which has to be unique within the project
 
@@ -120,8 +121,7 @@ class ScriptJob(GenericJob):
         self.__version__ = "0.1"
         self.__name__ = "Script"
         self._script_path = None
-        self._custom_dict = dict()
-        self.input = GenericParameters('custom_dict')
+        self.input = GenericParameters(table_name='custom_dict')
 
     @property
     def script_path(self):
@@ -173,6 +173,7 @@ class ScriptJob(GenericJob):
         with self.project_hdf5.open("input") as hdf5_input:
             try:
                 self.script_path = hdf5_input['path']
+                self.input.from_hdf(hdf5_input, group_name)
             except TypeError:
                 pass
 
