@@ -173,7 +173,7 @@ class ScriptJob(GenericJob):
         with self.project_hdf5.open("input") as hdf5_input:
             try:
                 self.script_path = hdf5_input['path']
-                self.input.from_hdf(hdf5_input, group_name)
+                self.input.from_hdf(hdf5_input)
             except TypeError:
                 pass
 
