@@ -2518,7 +2518,9 @@ class Atoms(object):
 
         """
         from ase.io import write
-        write(filename, self, format, **kwargs)
+        atoms = self.copy()
+        atoms.arrays["positions"] = atoms.positions
+        write(filename, atoms, format, **kwargs)
 
 
 class _CrystalStructure(Atoms):
