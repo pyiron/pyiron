@@ -21,7 +21,8 @@ class TestAtoms(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if sys.version_info[0] >= 3:
-            os.remove("../static/pyiron_atomistics/test_hdf")
+            if os.path.isfile("../static/pyiron_atomistics/test_hdf"):
+                os.remove("../static/pyiron_atomistics/test_hdf")
 
     def setUp(self):
         pass
@@ -203,6 +204,12 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(self.CO2[1:].positions[1:].tolist(), [[0.0, 1.5, 0.0]])
         self.CO2.positions[1][0] = 5.
         self.assertEqual(self.CO2.positions[1].tolist(), [5.0, 0, 1.5])
+
+    def test_set_positions(self):
+        pos, cell = generate_fcc_lattice()
+        basis = Atoms(symbols='Al', positions=pos, cell=cell)
+        basis.set_positions(np.array([[2.5, 2.5, 2.5]]))
+        self.assertTrue(np.array_equal(basis.positions, [[2.5, 2.5, 2.5]]))
 
     def test_cell(self):
         CO = Atoms("CO",
