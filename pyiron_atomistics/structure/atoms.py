@@ -656,10 +656,10 @@ class Atoms(object):
         Set positions. This function is for compatability with ASE
 
         Args:
-            positions (numpy.ndarray): Positions in absolute coordinates
+            positions (numpy.ndarray/list): Positions in absolute coordinates
 
         """
-        self.positions = positions
+        self.positions = np.array(positions)
         self._tag_list._length = len(self)
 
     def get_positions(self):
@@ -704,8 +704,10 @@ class Atoms(object):
 
     def get_tags(self):
         """
+        Returns the keys of the stored tags of the structure
 
         Returns:
+            dict_keys: Keys of the stored
 
         """
         return self._tag_list.keys()
