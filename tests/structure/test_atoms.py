@@ -211,6 +211,13 @@ class TestAtoms(unittest.TestCase):
         basis.set_positions(np.array([[2.5, 2.5, 2.5]]))
         self.assertTrue(np.array_equal(basis.positions, [[2.5, 2.5, 2.5]]))
 
+    def test_set_scaled_positions(self):
+        pos, cell = generate_fcc_lattice()
+        basis = Atoms(symbols='Al', positions=pos, cell=cell, a=4.2)
+        basis.set_scaled_positions(np.array([[0.5, 0.5, 0.5]]))
+        self.assertTrue(np.array_equal(basis.scaled_positions, [[0.5, 0.5, 0.5]]))
+        self.assertTrue(np.array_equal(basis.positions, np.dot([[0.5, 0.5, 0.5]], basis.cell)))
+
     def test_cell(self):
         CO = Atoms("CO",
                    positions=[[0, 0, 0], [0, 0, 2]],
