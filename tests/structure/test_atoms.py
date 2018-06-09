@@ -450,31 +450,21 @@ class TestAtoms(unittest.TestCase):
         cell = 2.2 * np.identity(3)
         Al_sc = Atoms('AlFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
         Al_sc.set_repeat([2, 2, 2])
-        # print Al_sc.get_equivalent_atoms()
-
-    # def test_ase(self):
-    #     from ase.lattice.cubic import FaceCenteredCubic
-    #
-    #     Cu_bulk = FaceCenteredCubic(directions=[[1, -1, 0], [1, 1, -2], [1, 1, 1]],
-    #                                 size=(2, 2, 3), symbol='Cu', pbc=(True, True, True))
-    #     Cu_bulk.cell[2, 2] += 5.
-    #     shift = [0, 0, Cu_bulk.cell[2, 2] - 4]
-    #     self.CO2.positions += shift
-    #     Cu_CO2 = Cu_bulk + self.CO2
-    #     # Cu_CO2.plot3d(show_bonds=True)
-    #
-    #     # print isinstance(Cu_CO2, Atoms)
 
     def test_center(self):
+        old_pos = self.CO2.positions.copy()
         self.CO2.center(vacuum=5)
-        # self.CO2.plot3d(show_bonds=True)
+        new_array = old_pos + 5 * np.ones(3)
+        self.assertTrue(np.array_equal(self.CO2.positions, new_array))
 
-    # def test_ase_surface(self):
-    #     from ase.lattice.surface import fcc111
-    #     slab = fcc111('Al', size=(2, 2, 5), vacuum=10.0)
-    #     slab.center_coordinates_in_unit_cell()
-    #
-    #     # slab.plot3d(scale_radius=2)
+    def test_get_positions(self):
+        basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
+        self.assertTrue(np.array_equal(basis_Mg.positions, basis_Mg.get_positions()))
+
+    def test_get_scaled_positions(self):
+        basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
+        self.assertTrue(np.array_equal(basis_Mg.scaled_positions, basis_Mg.get_scaled_positions()))
+
     def test_occupy_lattice(self):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
         basis_O = CrystalStructure("O", bravais_basis="fcc", lattice_constant=4.2)
