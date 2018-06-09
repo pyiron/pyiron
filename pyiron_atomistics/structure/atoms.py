@@ -603,7 +603,6 @@ class Atoms(object):
                             10 Angstrom of vacuum on each side.
             axis (tuple/list): List or turple of integers specifying the axis along which the atoms should be centered
 
-
         """
 
         # Find the orientations of the faces of the unit cell
@@ -714,8 +713,10 @@ class Atoms(object):
 
     def get_pbc(self):
         """
+        Returns a loolean array of the periodic boundary conditions along the x, y and z axis respectively
 
         Returns:
+            numpy.ndarray: Boolean array of length 3
 
         """
         if not isinstance(self._pbc, np.ndarray):
@@ -944,9 +945,10 @@ class Atoms(object):
 
     def get_density(self):
         """
-        density in g/cm^3
+        Returns the density in g/cm^3
         
         Returns:
+            float: Density of the structure
 
         """
         # conv_factor = Ang3_to_cm3/scipi.constants.Avogadro
@@ -956,7 +958,7 @@ class Atoms(object):
 
     def get_scaled_positions(self, wrap=True):
         """
-        
+
         Returns:
 
         """
@@ -1913,7 +1915,6 @@ class Atoms(object):
     def __len__(self):
         return len(self.indices)
 
-
     def __repr__(self):
         return self.__str__()
 
@@ -2392,15 +2393,14 @@ class Atoms(object):
         Set positions relative to unit cell.
 
         Args:
-            scaled:
-
-        Returns:
+            scaled (numpy.ndarray/list): The relative coordinates
 
         """
         self.scaled_positions = scaled
 
     def set_cell(self, cell, scale_atoms=False):
-        """Set unit cell vectors.
+        """
+        Set unit cell vectors.
 
         Parameters:
 
