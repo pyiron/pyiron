@@ -706,14 +706,14 @@ class Atoms(object):
         Returns the keys of the stored tags of the structure
 
         Returns:
-            dict_keys: Keys of the stored
+            dict_keys: Keys of the stored tags
 
         """
         return self._tag_list.keys()
 
     def get_pbc(self):
         """
-        Returns a loolean array of the periodic boundary conditions along the x, y and z axis respectively
+        Returns a boolean array of the periodic boundary conditions along the x, y and z axis respectively
 
         Returns:
             numpy.ndarray: Boolean array of length 3
@@ -725,11 +725,10 @@ class Atoms(object):
 
     def set_pbc(self, value):
         """
-        
-        Args:
-            value: 
+        Sets the perioic boundary conditions on all three axis
 
-        Returns:
+        Args:
+            value (numpy.ndarray/list): An array of bool type with length 3
 
         """
         if value is None:
@@ -741,24 +740,6 @@ class Atoms(object):
                 value = self.dimension * [value]
             assert (np.shape(np.array(value)) == (self.dimension,))
             self._pbc = np.array(value, bool)
-
-    def _return_element(self, **qwargs):
-        """
-        
-        Args:
-            **qwargs: 
-
-        Returns:
-
-        """
-        # has to be adopted for derived class
-        element = qwargs['indices']
-        # print ('element: ', element)
-        qwargs['element'] = self.species[element]
-        qwargs['position'] = qwargs['positions']
-        del qwargs['indices']
-        del qwargs['positions']
-        return Atom(**qwargs)
 
     def convert_element(self, el, pse=None):
         """
