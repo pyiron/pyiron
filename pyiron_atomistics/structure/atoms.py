@@ -743,12 +743,17 @@ class Atoms(object):
 
     def convert_element(self, el, pse=None):
         """
-        
+        Convert a string or an atom instance into a ChemicalElement instance
+
         Args:
-            el: 
-            pse: 
+            el (str/pyiron_atomistics.structure.atom.Atom): String or atom instance from which the element should
+                                                            be generated
+            pse (pyiron_atomistics.structure.periodictable.PeriodicTable): PeriodicTable instance from which the element
+                                                                           is generated (optional)
 
         Returns:
+
+            pyiron_atomistics.structure.periodictable.ChemicalElement: The required chemical element
 
         """
         if el in list(self._store_elements.keys()):
@@ -774,18 +779,19 @@ class Atoms(object):
 
     def get_chemical_formula(self):
         """
-        return chemical formula of structure
+        Returns the chemical formula of structure
         
         Returns:
+            str: The chemical formula as a string
 
         """
         species = self.get_number_species_atoms()
         formula = ""
-        for s, num in species.items():
+        for string_sym, num in species.items():
             if num == 1:
-                formula += str(s)
+                formula += str(string_sym)
             else:
-                formula += str(s) + str(num)
+                formula += str(string_sym) + str(num)
         return formula
 
     def get_chemical_indices(self):
