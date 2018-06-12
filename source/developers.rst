@@ -74,7 +74,7 @@ pyiron_vasp
 
 .. image:: https://travis-ci.org/pyiron/pyiron_vasp.svg?branch=master
 
-.. image:: (https://ci.appveyor.com/api/projects/status/h7w6b1m3pd7hc4n9/branch/master?svg=true
+.. image:: https://ci.appveyor.com/api/projects/status/h7w6b1m3pd7hc4n9/branch/master?svg=true
 
 
 
@@ -127,7 +127,7 @@ Just like each other commit to the master branch the tagged releases are pushed 
 The major difference for pypi (pip) is that tagged releases are the default for pip while installing prerelease versions using pip requires the `--pre` flag.
 `pip install --pre pyiron_base`
 
-Those prerelease versions are named `<version_number>.post0.dev<release number>` ::
+Those pre-release versions are named `<version_number>.post0.dev<release number>` ::
 
    0.1.6.post0.dev11
 
