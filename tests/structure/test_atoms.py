@@ -12,7 +12,7 @@ import os
 from pyiron_atomistics.structure.atom import Atom
 from pyiron_atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron_atomistics.structure.sparse_list import SparseList
-from pyiron_atomistics.structure.periodic_table import PeriodicTable
+from pyiron_atomistics.structure.periodic_table import PeriodicTable, ChemicalElement
 from pyiron_base.objects.generic.hdfio import FileHDFio
 
 
@@ -121,6 +121,27 @@ class TestAtoms(unittest.TestCase):
         self.CO2.selective_dynamics[1] = [True, False, True]
         self.assertEqual(self.CO2.selective_dynamics[1], [True, False, True])
         self.assertIsInstance(self.CO2.selective_dynamics.list(), list)
+
+    def test_get_tags(self):
+        self.CO2.add_tag(test_tag="a")
+        self.assertIsInstance(self.CO2.test_tag, SparseList)
+        self.assertIsInstance(self.CO2.get_tags(), type(dict().keys()))
+
+    def test_get_pbc(self):
+        self.assertTrue(np.array_equal(self.CO2.pbc, self.CO2.get_pbc()))
+        self.assertEqual(len(self.CO2.get_pbc()), 3)
+
+    def test_set_pbc(self):
+        self.CO2.set_pbc(value=[True, True, False])
+        self.assertTrue(np.array_equal(self.CO2.pbc, self.CO2.get_pbc()))
+        self.assertTrue(np.array_equal([True, True, False], self.CO2.get_pbc()))
+        self.CO2.set_pbc(value=False)
+        self.assertTrue(np.array_equal([False, False, False], self.CO2.get_pbc()))
+        self.assertTrue(np.array_equal(self.CO2.pbc, self.CO2.get_pbc()))
+
+    def test_chemical_element(self):
+        self.assertIsInstance(self.CO2.convert_element('C'), ChemicalElement)
+        self.assertEqual(len(self.CO2.species), 2)
 
     def test_copy(self):
         pos, cell = generate_fcc_lattice()
@@ -464,6 +485,9 @@ class TestAtoms(unittest.TestCase):
     def test_get_scaled_positions(self):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
         self.assertTrue(np.array_equal(basis_Mg.scaled_positions, basis_Mg.get_scaled_positions()))
+
+
+
 
     def test_occupy_lattice(self):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
