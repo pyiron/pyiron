@@ -465,7 +465,8 @@ class Atoms(object):
                     hdf_cell["cell"] = self.cell
                     hdf_cell["pbc"] = self.pbc
 
-            hdf_structure["coordinates"] = self.positions  # "Atomic coordinates"
+            # hdf_structure["coordinates"] = self.positions  # "Atomic coordinates"
+            hdf_structure["positions"] = self.positions  # "Atomic coordinates"
 
             # potentials with explicit bonds (TIP3P, harmonic, etc.)
             if self.bonds is not None:
@@ -526,13 +527,16 @@ class Atoms(object):
                         self.pbc = hdf_cell["pbc"]
 
                 # Backward compatibility
+                position_tag = "positions"
+                if position_tag not in hdf_atoms.list_nodes():
+                    position_tag = "coordinates"
                 if "is_absolute" in hdf_atoms.list_nodes():
                     if not tr_dict[hdf_atoms["is_absolute"]]:
-                        self.scaled_positions = hdf_atoms["coordinates"]
+                        self.scaled_positions = hdf_atoms[position_tag]
                     else:
-                        self.positions = hdf_atoms["coordinates"]
+                        self.positions = hdf_atoms[position_tag]
                 else:
-                    self.positions = hdf_atoms["coordinates"]
+                    self.positions = hdf_atoms[position_tag]
 
                 if "bonds" in hdf_atoms.list_nodes():
                     self.bonds = hdf_atoms["explicit_bonds"]
