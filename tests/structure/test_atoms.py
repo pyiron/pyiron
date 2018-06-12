@@ -165,6 +165,7 @@ class TestAtoms(unittest.TestCase):
             basis = Atoms(symbols='Al', positions=pos, cell=cell)
             basis.set_repeat([2, 2, 2])
             basis.to_hdf(hdf_obj, "test_structure")
+            self.assertTrue(np.array_equal(hdf_obj["test_structure/positions"], basis.positions))
             basis_new = Atoms().from_hdf(hdf_obj, "test_structure")
             self.assertEqual(basis, basis_new)
 
