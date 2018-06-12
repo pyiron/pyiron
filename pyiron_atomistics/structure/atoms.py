@@ -281,7 +281,7 @@ class Atoms(object):
     @property
     def info(self):
         """
-        This dictionary is merely used to be compatible with the ASE Atoms class.
+        dict: This dictionary is merely used to be compatible with the ASE Atoms class.
 
         """
         return self._info
@@ -436,7 +436,7 @@ class Atoms(object):
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.objects.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
             group_name (str):
                 Group name with which the object should be stored. This same name should be used to retrieve the object
 
@@ -465,7 +465,8 @@ class Atoms(object):
                     hdf_cell["cell"] = self.cell
                     hdf_cell["pbc"] = self.pbc
 
-            hdf_structure["coordinates"] = self.positions  # "Atomic coordinates"
+            # hdf_structure["coordinates"] = self.positions  # "Atomic coordinates"
+            hdf_structure["positions"] = self.positions  # "Atomic coordinates"
 
             # potentials with explicit bonds (TIP3P, harmonic, etc.)
             if self.bonds is not None:
@@ -478,7 +479,7 @@ class Atoms(object):
         Retrieve the object from a HDF5 file
 
         Args:
-            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.objects.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
             group_name (str): Group name from which the Atoms object is retreived.
 
         Returns:
@@ -526,13 +527,16 @@ class Atoms(object):
                         self.pbc = hdf_cell["pbc"]
 
                 # Backward compatibility
+                position_tag = "positions"
+                if position_tag not in hdf_atoms.list_nodes():
+                    position_tag = "coordinates"
                 if "is_absolute" in hdf_atoms.list_nodes():
                     if not tr_dict[hdf_atoms["is_absolute"]]:
-                        self.scaled_positions = hdf_atoms["coordinates"]
+                        self.scaled_positions = hdf_atoms[position_tag]
                     else:
-                        self.positions = hdf_atoms["coordinates"]
+                        self.positions = hdf_atoms[position_tag]
                 else:
-                    self.positions = hdf_atoms["coordinates"]
+                    self.positions = hdf_atoms[position_tag]
 
                 if "bonds" in hdf_atoms.list_nodes():
                     self.bonds = hdf_atoms["explicit_bonds"]
@@ -594,19 +598,17 @@ class Atoms(object):
 
     def center(self, vacuum=None, axis=(0, 1, 2)):
         """
-        Adopted from ASE code (https://wiki.fysik.dtu.dk/ase/_modules/ase/atoms.html#Atoms.center)
         Center atoms in unit cell.
 
-        Centers the atoms in the unit cell, so there is the same
-        amount of vacuum on all sides.
+        Adopted from ASE code (https://wiki.fysik.dtu.dk/ase/_modules/ase/atoms.html#Atoms.center)
 
-        vacuum: float (default: None)
-            If specified adjust the amount of vacuum when centering.
-            If vacuum=10.0 there will thus be 10 Angstrom of vacuum
-            on each side.
-        axis: int or sequence of ints
-            Axis or axes to act on.  Default: Act on all axes.
+        Args:
+            vacuum (float): If specified adjust the amount of vacuum when centering. If vacuum=10.0 there will thus be
+                            10 Angstrom of vacuum on each side.
+            axis (tuple/list): List or turple of integers specifying the axis along which the atoms should be centered
+
         """
+
         # Find the orientations of the faces of the unit cell
         c = self.cell
         if c is None:
@@ -654,31 +656,34 @@ class Atoms(object):
 
     def set_positions(self, positions):
         """
-        
-        Args:
-            positions: 
+        Set positions. This function is for compatability with ASE
 
-        Returns:
+        Args:
+            positions (numpy.ndarray/list): Positions in absolute coordinates
 
         """
-        self.positions = positions
+        self.positions = np.array(positions)
         self._tag_list._length = len(self)
 
     def get_positions(self):
         """
-        
+        Get positions. This function is for compatability with ASE
+
         Returns:
+            numpy.ndarray: Positions in absolute coordinates
 
         """
         return self.positions
 
     def select_index(self, el):
         """
-        
-        Args:
-            el: 
+        Returns the indices of a given element in the structure
 
+        Args:
+            el (str/pyiron_atomistics.structures.periodic_table.ChemicalElement): Element for which the indices should
+                                                                                  be returned
         Returns:
+            numpy.ndarray: An array of indices of the atoms of the given element
 
         """
         if isinstance(el, str):
@@ -688,11 +693,13 @@ class Atoms(object):
 
     def select_parent_index(self, el):
         """
+        Returns the indices of a given element in the structure ignoring user defined elements
 
         Args:
-            el:
-
+            el (str/pyiron_atomistics.structures.periodic_table.ChemicalElement): Element for which the indices should
+                                                                                  be returned
         Returns:
+            numpy.ndarray: An array of indices of the atoms of the given element
 
         """
         parent_basis = self.get_parent_basis()
@@ -700,16 +707,20 @@ class Atoms(object):
 
     def get_tags(self):
         """
+        Returns the keys of the stored tags of the structure
 
         Returns:
+            dict_keys: Keys of the stored tags
 
         """
         return self._tag_list.keys()
 
     def get_pbc(self):
         """
+        Returns a boolean array of the periodic boundary conditions along the x, y and z axis respectively
 
         Returns:
+            numpy.ndarray: Boolean array of length 3
 
         """
         if not isinstance(self._pbc, np.ndarray):
@@ -718,11 +729,10 @@ class Atoms(object):
 
     def set_pbc(self, value):
         """
-        
-        Args:
-            value: 
+        Sets the perioic boundary conditions on all three axis
 
-        Returns:
+        Args:
+            value (numpy.ndarray/list): An array of bool type with length 3
 
         """
         if value is None:
@@ -735,32 +745,19 @@ class Atoms(object):
             assert (np.shape(np.array(value)) == (self.dimension,))
             self._pbc = np.array(value, bool)
 
-    def _return_element(self, **qwargs):
-        """
-        
-        Args:
-            **qwargs: 
-
-        Returns:
-
-        """
-        # has to be adopted for derived class
-        element = qwargs['indices']
-        # print ('element: ', element)
-        qwargs['element'] = self.species[element]
-        qwargs['position'] = qwargs['positions']
-        del qwargs['indices']
-        del qwargs['positions']
-        return Atom(**qwargs)
-
     def convert_element(self, el, pse=None):
         """
-        
+        Convert a string or an atom instance into a ChemicalElement instance
+
         Args:
-            el: 
-            pse: 
+            el (str/pyiron_atomistics.structure.atom.Atom): String or atom instance from which the element should
+                                                            be generated
+            pse (pyiron_atomistics.structure.periodictable.PeriodicTable): PeriodicTable instance from which the element
+                                                                           is generated (optional)
 
         Returns:
+
+            pyiron_atomistics.structure.periodictable.ChemicalElement: The required chemical element
 
         """
         if el in list(self._store_elements.keys()):
@@ -786,18 +783,19 @@ class Atoms(object):
 
     def get_chemical_formula(self):
         """
-        return chemical formula of structure
+        Returns the chemical formula of structure
         
         Returns:
+            str: The chemical formula as a string
 
         """
         species = self.get_number_species_atoms()
         formula = ""
-        for s, num in species.items():
+        for string_sym, num in species.items():
             if num == 1:
-                formula += str(s)
+                formula += str(string_sym)
             else:
-                formula += str(s) + str(num)
+                formula += str(string_sym) + str(num)
         return formula
 
     def get_chemical_indices(self):
@@ -938,9 +936,10 @@ class Atoms(object):
 
     def get_density(self):
         """
-        density in g/cm^3
+        Returns the density in g/cm^3
         
         Returns:
+            float: Density of the structure
 
         """
         # conv_factor = Ang3_to_cm3/scipi.constants.Avogadro
@@ -950,7 +949,7 @@ class Atoms(object):
 
     def get_scaled_positions(self, wrap=True):
         """
-        
+
         Returns:
 
         """
@@ -1907,7 +1906,6 @@ class Atoms(object):
     def __len__(self):
         return len(self.indices)
 
-
     def __repr__(self):
         return self.__str__()
 
@@ -2386,15 +2384,14 @@ class Atoms(object):
         Set positions relative to unit cell.
 
         Args:
-            scaled:
-
-        Returns:
+            scaled (numpy.ndarray/list): The relative coordinates
 
         """
         self.scaled_positions = scaled
 
     def set_cell(self, cell, scale_atoms=False):
-        """Set unit cell vectors.
+        """
+        Set unit cell vectors.
 
         Parameters:
 
@@ -2514,7 +2511,9 @@ class Atoms(object):
 
         """
         from ase.io import write
-        write(filename, self, format, **kwargs)
+        atoms = self.copy()
+        atoms.arrays["positions"] = atoms.positions
+        write(filename, atoms, format, **kwargs)
 
 
 class _CrystalStructure(Atoms):
