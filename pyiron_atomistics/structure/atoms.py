@@ -1018,6 +1018,10 @@ class Atoms(object):
 
     def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5, background='white', color_scheme='element', show_axes=True):
         """
+        Possible color schemes: 
+          " ", "picking", "random", "uniform", "atomindex", "residueindex",
+          "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
+          "hydrophobicity", "value", "volume", "occupancy"
 
         Returns:
 
