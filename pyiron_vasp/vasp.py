@@ -311,7 +311,7 @@ class Vasp(GenericDFTJob):
             # _ = s.top_path(directory)
             files = os.listdir(directory)
             vp_new = Vr()
-            if "OUTCAR.gz" in files:
+            if "OUTCAR.gz" in files and "OUTCAR" not in files:
                 _ = subprocess.check_output(['gzip', '-d', 'OUTCAR.gz'], cwd=directory, shell=False,
                                             universal_newlines=True)
                 files = os.listdir(directory)
