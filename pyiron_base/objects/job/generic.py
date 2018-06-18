@@ -530,6 +530,9 @@ class GenericJob(JobCore):
         use subprocess.check_output()
         """
         self._logger.info('{}, status: {}, run job (modal)'.format(self.job_info_str, self.status))
+        if self.executable.executable_path == '':
+            self.status.aborted = True
+            raise ValueError('No executable set!')
         self.status.running = True
         self.project.db.item_update({"timestart": datetime.now()}, self.job_id)
         try:
