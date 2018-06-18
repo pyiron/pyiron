@@ -118,6 +118,7 @@ class ScriptJob(GenericJob):
         self.__version__ = "0.1"
         self.__name__ = "Script"
         self._script_path = None
+        self._custom_dict = dict()
 
     @property
     def script_path(self):
@@ -155,6 +156,8 @@ class ScriptJob(GenericJob):
         super(ScriptJob, self).to_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input") as hdf5_input:
             hdf5_input['path'] = self._script_path
+            if len(self.custom_dict.keys()) > 0:
+                hdf5_input['custom_dict'] = self.custom_dict
 
     def from_hdf(self, hdf=None, group_name=None):
         """
@@ -170,6 +173,16 @@ class ScriptJob(GenericJob):
                 self.script_path = hdf5_input['path']
             except TypeError:
                 pass
+            if 'custom_dict' in hdf5_input.list_groups():
+                self.custom_dict = hdf5_input['custom_dict']
+
+    @property
+    def custom_dict(self):
+        return self._custom_dict
+
+    @custom_dict.setter
+    def custom_dict(self, c_dict):
+        self._custom_dict = c_dict
 
     def write_input(self):
         """
