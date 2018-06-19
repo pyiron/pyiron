@@ -235,6 +235,12 @@ class ScriptJob(GenericJob):
         else:
             raise ValueError('Filename not recognized: ', path)
 
+    def _executable_activate_mpi(self):
+        """
+        Internal helper function to switch the executable to MPI mode
+        """
+        pass
+
     @staticmethod
     def _get_abs_path(path):
         """
