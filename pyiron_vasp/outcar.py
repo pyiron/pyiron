@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import numpy as np
+import warnings
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \
@@ -404,7 +405,7 @@ class Outcar(object):
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
-            list: A list withthe mgnetization values
+            list: A list with the mgnetization values
         """
         ionic_trigger = "FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)"
         electronic_trigger = "eigenvalue-minimisations"
@@ -433,7 +434,8 @@ class Outcar(object):
                         elif spin_str_len == 3:
                             ene = [float(spin_str_lst[0]), float(spin_str_lst[1]), float(spin_str_lst[2])]
                         else:
-                            raise ValueError('Unrecognized spin configuration.')
+                            warnings.warn('Unrecognized spin configuration.')
+                            return mag_lst, final_magmom_lst
                         istep_energies.append(ene)
                 if n_atoms is None:
                     if nion_trigger in line:
