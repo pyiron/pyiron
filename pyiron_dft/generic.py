@@ -92,12 +92,12 @@ class GenericDFTJob(AtomisticGenericJob):
                     weights=None, reciprocal=True):
         raise NotImplementedError("The set_kpoints function is not implemented for this code.")
 
-    def calc_static(self, electronic_steps=60, algorithm=None, retain_charge_density=False,
+    def calc_static(self, electronic_steps=400, algorithm=None, retain_charge_density=False,
                     retain_electrostatic_potential=False):
         self._generic_input['fix_symmetry'] = True
         super(GenericDFTJob, self).calc_static()
 
-    def calc_minimize(self, electronic_steps=60, ionic_steps=100, max_iter=None, pressure=None, algorithm=None,
+    def calc_minimize(self, electronic_steps=400, ionic_steps=100, max_iter=None, pressure=None, algorithm=None,
                       retain_charge_density=False, retain_electrostatic_potential=False, ionic_energy=None,
                       ionic_forces=None, volume_only=False):
         self._generic_input['fix_symmetry'] = True
