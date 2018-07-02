@@ -506,7 +506,7 @@ class Vasp(GenericDFTJob):
                 s.logger.warn(msg="Algorithm {} is unusual for VASP. "
                                   "I hope you know what you are up to".format(algorithm))
 
-    def calc_minimize(self, electronic_steps=60, ionic_steps=100, max_iter=None, pressure=None, algorithm=None,
+    def calc_minimize(self, electronic_steps=400, ionic_steps=100, max_iter=None, pressure=None, algorithm=None,
                       retain_charge_density=False, retain_electrostatic_potential=False, ionic_energy=None,
                       ionic_forces=None, volume_only=False):
         """
@@ -553,7 +553,7 @@ class Vasp(GenericDFTJob):
             self.write_electrostatic_potential = retain_electrostatic_potential
         return
 
-    def calc_static(self, electronic_steps=60, algorithm=None, retain_charge_density=False,
+    def calc_static(self, electronic_steps=400, algorithm=None, retain_charge_density=False,
                     retain_electrostatic_potential=False):
         """
         Function to setup the hamiltonian to perform static SCF DFT runs.
