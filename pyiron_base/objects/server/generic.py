@@ -182,7 +182,8 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         if new_scheduler:
             cores = self.cores
             self._scheduler.active_scheduler = new_scheduler
-            self.run_mode = 'queue'
+            if not self.run_mode.manual:
+                self.run_mode.queue = True
             if self._scheduler.active_scheduler.minimum_number_of_cores < cores and \
                     cores < self._scheduler.active_scheduler.maximum_number_of_cores:
                 self.cores = cores
