@@ -37,7 +37,7 @@ script:
   - for d in $(ls -d pyiron*); do sphinx-apidoc -f -o ../pyiron_docs/apidoc $d/$d; done
   - mkdir uml 
   - cd uml
-  - for d in $(ls -d ../pyiron*); do cp -r ../$d/$d $d; done
+  - for d in $(ls -d ../pyiron*/pyiron*/); do cp -r $d $(basename $d); done
   - pyreverse -p pyiron -o png pyiron
   - cp *.png ../../pyiron.github.io
   - cd ../../pyiron_docs
