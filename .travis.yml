@@ -38,7 +38,7 @@ script:
   - mkdir uml 
   - cd uml
   - for d in $(ls -d ../pyiron*/pyiron*/); do cp -r $d $(basename $d); done
-  - pyreverse -p pyiron -o png pyiron
+  - pyreverse -p pyiron* -o png pyiron
   - cp *.png ../../pyiron.github.io
   - cd ../../pyiron_docs
   - sphinx-build -b html ./ ../pyiron.github.io
