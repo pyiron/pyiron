@@ -6,6 +6,7 @@ from __future__ import print_function
 import os
 import posixpath
 import shutil
+import pandas
 from pyiron_base.core.project.path import ProjectPath
 from pyiron_base.core.settings.generic import Settings
 from pyiron_base.core.settings.jobtable import get_db_columns, get_job_ids, get_job_id, get_jobs, job_table, \
@@ -632,6 +633,19 @@ class Project(ProjectPath):
             pandas.DataFrame: Output from the queuing system - optimized for the Sun grid engine
         """
         return queue_table(job_ids=self.get_job_ids(recursive=recursive), project_only=project_only)
+
+    def queue_table_global(self):
+        """
+        Display the queuing system table as pandas.Dataframe
+
+        Args:
+            project_only (bool): Query only for jobs within the current project - True by default
+            recursive (bool): Include jobs from sub projects
+
+        Returns:
+            pandas.DataFrame: Output from the queuing system - optimized for the Sun grid engine
+        """
+        return pandas.DataFrame([self.db.get_item_by_id(int(str(ID).replace('pi_', ''))) for ID in self.queue_table(project_only=False)['name'] if str(ID).startswith('pi_')])
 
     def refresh_job_status_based_on_queue_status(self, job_specifier, status='running'):
         """
