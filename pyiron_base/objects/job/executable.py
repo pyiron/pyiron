@@ -102,6 +102,8 @@ class Executable(object):
             raise TypeError('MPI can either be enabled or disabled: [True/False]')
         if self.version and '_mpi' not in self.version:
             self.version += '_mpi'
+        if self.version is None and self.executable_path is None:
+            raise ValueError('No executable set!')
 
     @property
     def available_versions(self):

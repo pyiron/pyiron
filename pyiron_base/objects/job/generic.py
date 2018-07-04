@@ -15,6 +15,7 @@ from pyiron_base.objects.job.jobstatus import JobStatus
 from pyiron_base.objects.job.core import JobCore
 from pyiron_base.objects.server.generic import Server
 import subprocess
+import warnings
 
 """
 Generic Job class extends the JobCore class with all the functionality to run the job object.
@@ -530,6 +531,9 @@ class GenericJob(JobCore):
         use subprocess.check_output()
         """
         self._logger.info('{}, status: {}, run job (modal)'.format(self.job_info_str, self.status))
+        if self.executable.executable_path == '':
+            self.status.aborted = True
+            raise ValueError('No executable set!')
         self.status.running = True
         self.project.db.item_update({"timestart": datetime.now()}, self.job_id)
         try:
@@ -1007,7 +1011,8 @@ class GenericJob(JobCore):
             if self.server.cores > 1:
                 self.executable.mpi = True
         except ValueError:
-            pass
+            self.server.cores = 1
+            warnings.warn('No multi core executable found falling back to the single core executable.', RuntimeWarning)
 
     def _write_run_wrapper(self, debug=False):
         """

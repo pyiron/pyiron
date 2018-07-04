@@ -316,6 +316,12 @@ class GenericMaster(GenericJob):
                     self.project.db.get_items_dict({'masterid': self.job_id})
                     if db_entry['status'] not in ['finished', 'aborted']])
 
+    def _executable_activate_mpi(self):
+        """
+        Internal helper function to switch the executable to MPI mode
+        """
+        pass
+
     def __len__(self):
         """
         Length of the GenericMaster equal the number of childs appended.
