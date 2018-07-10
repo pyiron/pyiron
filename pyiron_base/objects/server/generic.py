@@ -278,7 +278,9 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         Args:
             new_mode (str): ['modal', 'non_modal', 'queue', 'manual'] 
         """
+        cores = self.cores
         self._run_mode.mode = new_mode
+        self.cores = cores
 
     @property
     def new_hdf(self):
