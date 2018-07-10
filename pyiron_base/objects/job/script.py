@@ -6,13 +6,16 @@ from __future__ import print_function
 import os
 import shutil
 from pyiron_base.objects.job.generic import GenericJob
+from pyiron_base.objects.generic.parameters import GenericParameters
+
 
 """
 Jobclass to execute python scripts and jupyter notebooks
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \
+                "- Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -30,7 +33,7 @@ class ScriptJob(GenericJob):
 
     Attributes:
 
-        .. attribute:: job_name
+        attribute: job_name
 
             name of the job, which has to be unique within the project
 
@@ -118,7 +121,7 @@ class ScriptJob(GenericJob):
         self.__version__ = "0.1"
         self.__name__ = "Script"
         self._script_path = None
-        self._custom_dict = dict()
+        self.input = GenericParameters(table_name='custom_dict')
 
     @property
     def script_path(self):
@@ -156,8 +159,7 @@ class ScriptJob(GenericJob):
         super(ScriptJob, self).to_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input") as hdf5_input:
             hdf5_input['path'] = self._script_path
-            if len(self.custom_dict.keys()) > 0:
-                hdf5_input['custom_dict'] = self.custom_dict
+            self.input.to_hdf(hdf5_input)
 
     def from_hdf(self, hdf=None, group_name=None):
         """
@@ -171,18 +173,9 @@ class ScriptJob(GenericJob):
         with self.project_hdf5.open("input") as hdf5_input:
             try:
                 self.script_path = hdf5_input['path']
+                self.input.from_hdf(hdf5_input)
             except TypeError:
                 pass
-            if 'custom_dict' in hdf5_input.list_groups():
-                self.custom_dict = hdf5_input['custom_dict']
-
-    @property
-    def custom_dict(self):
-        return self._custom_dict
-
-    @custom_dict.setter
-    def custom_dict(self, c_dict):
-        self._custom_dict = c_dict
 
     def write_input(self):
         """
@@ -254,3 +247,5 @@ class ScriptJob(GenericJob):
             str: absolute path
         """
         return os.path.normpath(os.path.join(os.path.abspath(os.path.curdir), path))
+
+
