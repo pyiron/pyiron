@@ -927,7 +927,7 @@ class Project(ProjectPath):
             print("slice: ", item)
             raise NotImplementedError("Implement if needed, e.g. for [:]")
         else:
-            item_lst = item.split("/")
+            item_lst = [sub_item.replace(' ', '') for sub_item in item.split("/")]
             if len(item_lst) > 1:
                 try:
                     return self._get_item_helper(item=item_lst[0],
