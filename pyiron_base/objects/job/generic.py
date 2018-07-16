@@ -312,7 +312,7 @@ class GenericJob(JobCore):
         Collect the log files of the external executable and store the information in the HDF5 file. This method has
         to be implemented in the individual hamiltonians.
         """
-        raise NotImplementedError("collect_logfiles() should be implemented in the derived class")
+        pass
 
     def write_input(self):
         """
