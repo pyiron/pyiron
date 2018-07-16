@@ -167,6 +167,14 @@ class SerialMasterBase(GenericMaster):
         self.append(job)
 
     @property
+    def ref_job(self):
+        return self.start_job
+
+    @ref_job.setter
+    def ref_job(self, job):
+        self.start_job = job
+
+    @property
     def input(self):
         """
         Get the input of the start job - the first job of the series.
