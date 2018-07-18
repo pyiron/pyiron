@@ -98,7 +98,8 @@ class Vasprun(object):
         d["cells"] = np.array(d["cells"])
         d["positions"] = np.array(d["positions"])
         # Check if the parsed coordinates are in absolute/relative coordinates. If absolute, convert to relative
-        if len(np.argwhere(d["positions"].flatten() > 1).flatten()) / len(d["positions"].flatten()) > 0.01:
+        total_positions = d["positions"].flatten()
+        if len(np.argwhere(total_positions > 1)) / len(total_positions) > 0.01:
             pos_new = d["positions"].copy()
             for i, pos in enumerate(pos_new):
                 d["positions"][i] = np.dot(pos, np.linalg.inv(d["cells"][i]))
