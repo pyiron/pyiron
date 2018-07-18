@@ -98,10 +98,11 @@ class Vasprun(object):
         d["cells"] = np.array(d["cells"])
         d["positions"] = np.array(d["positions"])
         # Check if the parsed coordinates are in absolute/relative coordinates. If absolute, convert to relative
-        if d["positions"][d["positions"] > 1.01]:
+        total_positions = d["positions"].flatten()
+        if len(np.argwhere(total_positions > 1)) / len(total_positions) > 0.01:
             pos_new = d["positions"].copy()
-            for i, pos in pos_new:
-                d["positions"][i] = np.dot(pos_new, np.linalg.inv(d["cells"][i]))
+            for i, pos in enumerate(pos_new):
+                d["positions"][i] = np.dot(pos, np.linalg.inv(d["cells"][i]))
         d["forces"] = np.array(d["forces"])
         d["total_energies"] = np.array(d["total_energies"])
         d["total_fr_energies"] = np.array(d["total_fr_energies"])
