@@ -1,8 +1,11 @@
 from pyiron_base.objects.generic.hdfio import FileHDFio
 from pyiron_base.objects.generic.parameters import GenericParameters
-from pathlib import Path
+from pathlib2 import Path
 
 class Notebook(object):
+    """
+    class for pyiron notebook objects 
+    """
     def get_custom_dict(self):
         folder = Path('.').cwd().parts[-1]
         hdf_file = Path('.').cwd().parents[1]/folder
