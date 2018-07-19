@@ -114,6 +114,26 @@ class Runmode(str):
         self._mode_setter(mode='interactive', var_bool=var_bool)
 
     @property
+    def interactive_non_modal(self):
+        """
+        Check if job is set for 'non_modal' mode - non_modal: sending the job to the background on the same machine
+
+        Returns:
+            bool: [True/False]
+        """
+        return self._mode['interactive_non_modal']
+
+    @interactive_non_modal.setter
+    def interactive_non_modal(self, var_bool):
+        """
+        Set the job to 'non_modal' mode - non_modal: sending the job to the background on the same machine
+
+        Args:
+            var_bool (bool): [True/False]
+        """
+        self._mode_setter(mode='interactive_non_modal', var_bool=var_bool)
+
+    @property
     def queue(self):
         """
         Check if job is set for 'queue' mode - queue: submit the job to the queuing system
@@ -202,7 +222,8 @@ class Runmode(str):
                       'queue': False,
                       'manual': False,
                       'thread': False,
-                      'interactive': False}
+                      'interactive': False,
+                      'interactive_non_modal': False}
 
     def __repr__(self):
         return repr(self.mode)

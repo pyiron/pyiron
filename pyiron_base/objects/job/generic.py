@@ -566,6 +566,13 @@ class GenericJob(JobCore):
         """
         raise NotImplementedError("This function needs to be implemented in the specific class.")
 
+    def run_if_interactive_non_modal(self):
+        """
+        For jobs which executables are available as Python library, those can also be executed with a library call
+        instead of calling an external executable. This is usually faster than a single core python job.
+        """
+        raise NotImplementedError("This function needs to be implemented in the specific class.")
+
     def run_if_non_modal(self):
         """
         The run if non modal function is called by run to execute the simulation in the background. For this we use
@@ -866,6 +873,8 @@ class GenericJob(JobCore):
             return self.run_if_scheduler(que_wait_for)
         elif self.server.run_mode.interactive:
             self.run_if_interactive()
+        elif self.server.run_mode.interactive_non_modal:
+            self.run_if_interactive_non_modal()
         return None
 
     def _run_if_submitted(self):  # Submitted jobs are handled by the job wrapper!
@@ -887,6 +896,8 @@ class GenericJob(JobCore):
             self.run(run_again=True)
         elif self.server.run_mode.interactive:
             self.run_if_interactive()
+        elif self.server.run_mode.interactive_non_modal:
+            self.run_if_interactive_non_modal()
         else:
             print('Job ' + str(self.job_id) + ' is running!')
 
