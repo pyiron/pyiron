@@ -2,6 +2,7 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
+import six
 from pyiron_base.core.settings.database import DatabaseAccess
 
 """
@@ -145,7 +146,7 @@ class JobStatus(object):
                           refresh, busy, finished]
         """
         self._reset()
-        if isinstance(status, str) and status in self._status_dict.keys():
+        if isinstance(status, six.string_types) and status in self._status_dict.keys():
             self._status_dict[status] = True
             self._status_write()
         else:
