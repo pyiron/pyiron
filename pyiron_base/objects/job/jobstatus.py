@@ -223,7 +223,7 @@ class JobStatus(object):
             self.refresh_status()
             return self._status_dict[name]
         else:
-            super(object, self).__getattr__(name)
+            super(JobStatus, self).__getattr__(name)
 
     def __setattr__(self, name, value):
         if name in self._status_dict.keys():
