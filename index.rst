@@ -68,11 +68,12 @@ Please contact us if you are interested in using pyiron:
 ****
 News
 ****
-* **Tomorrow:** The pyiron paper is submitted 
-* **05.04.2018:** test pyiron on mybinder.org (beta)
-* **27.03.2018:** pyiron is available on `anaconda.org <https://anaconda.org/pyiron/>`_ install pyiron using: :code:`conda install -c pyiron -c conda-forge pyiron`
-* **27.02.2018:** pyiron is available on `pypi.org <https://pypi.org/user/pyiron/>`_ install pyiron using: :code:`pip install pyiron` 
-* **05.12.2017:** The pyiron website goes online. 
+* **21st July 2018:** pyiron paper accepted
+* **07th May 2018:** pyiron paper submitted 
+* **05th April 2018:** test pyiron on mybinder.org (beta)
+* **27th March 2018:** pyiron is available on `anaconda.org <https://anaconda.org/pyiron/>`_ install pyiron using: :code:`conda install -c pyiron -c conda-forge pyiron`
+* **27th February 2018:** pyiron is available on `pypi.org <https://pypi.org/user/pyiron/>`_ install pyiron using: :code:`pip install pyiron` 
+* **05th December 2017:** The pyiron website goes online. 
 
 ******
 Citing 
