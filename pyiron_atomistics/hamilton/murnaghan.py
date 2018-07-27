@@ -384,6 +384,10 @@ class Murnaghan(AtomisticParallelMaster):
         return fit_dict
 
     def _fit_leastsq(self, volume_lst, energy_lst, fittype='birchmurnaghan'):
+        try:
+            import matplotlib.pylab as plt
+        except ImportError:
+            import matplotlib.pyplot as plt
         vol_lst = np.array(volume_lst).flatten()
         eng_lst = np.array(energy_lst).flatten()
         a, b, c = plt.polyfit(vol_lst, eng_lst, 2)
