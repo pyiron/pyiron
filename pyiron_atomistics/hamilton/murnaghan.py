@@ -361,7 +361,6 @@ class Murnaghan(AtomisticParallelMaster):
         return pfit_leastsq, perr_leastsq
 
     def _fit_eos_general(self, vol_erg_dic=None, fittype='birchmurnaghan'):
-        eV_div_A3_to_GPa = 160.21766208
         fit_dict = {}
         df = self.output_to_pandas()
         if vol_erg_dic is not None:
@@ -370,14 +369,14 @@ class Murnaghan(AtomisticParallelMaster):
                                                        fittype=fittype)
         fit_dict["volume_eq"] = pfit_leastsq[3]
         fit_dict["energy_eq"] = pfit_leastsq[0]
-        fit_dict["bulkmodul_eq"] = eV_div_A3_to_GPa * pfit_leastsq[1]
+        fit_dict["bulkmodul_eq"] = pfit_leastsq[1]
         fit_dict["b_prime_eq"] = pfit_leastsq[2]
         fit_dict["least_square_error"] = perr_leastsq  # [e0, b0, bP, v0]
 
         with self.project_hdf5.open("output") as hdf5:
             hdf5["equilibrium_energy"] = pfit_leastsq[0]
             hdf5["equilibrium_volume"] = pfit_leastsq[3]
-            hdf5["equilibrium_bulk_modulus"] = eV_div_A3_to_GPa * pfit_leastsq[1]
+            hdf5["equilibrium_bulk_modulus"] = pfit_leastsq[1]
             hdf5["equilibrium_b_prime"] = pfit_leastsq[2]
 
         self.fit_dict = fit_dict
