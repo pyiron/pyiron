@@ -799,12 +799,21 @@ class Atoms(object):
         return formula
 
     def get_chemical_indices(self):
+        """
+        Returns the list of chemical indices as ordered in self.species
+
+        Returns:
+            numpy.ndarray: A list of chemical indices
+
+        """
         return self.indices
 
     def get_atomic_numbers(self):
         """
+        Returns the atomic numbers of all the atoms in the structure
 
         Returns:
+            numpy.ndarray: A list of atomic numbers
 
         """
         el_lst = [el.AtomicNumber for el in self.species]
@@ -812,8 +821,10 @@ class Atoms(object):
 
     def get_chemical_symbols(self):
         """
+        Returns the chemical symbols for all the atoms in the structure
 
         Returns:
+            numpy.ndarray: A list of chemical symbols
 
         """
         el_lst = [el.Abbreviation for el in self.species]
@@ -821,8 +832,10 @@ class Atoms(object):
 
     def get_parent_elements(self):
         """
-        
+        Returns the chemical symbols for all the atoms in the structure even for user defined elements
+
         Returns:
+            numpy.ndarray: A list of chemical symbols
 
         """
         sp_parent_list = list()
@@ -838,7 +851,7 @@ class Atoms(object):
         Returns the basis with all user defined/special elements as the it's parent
 
         Returns:
-            (pyiron_atomistics.structure.atoms.Atoms) instance
+            pyiron_atomistics.structure.atoms.Atoms: Structure without any user defined elements
 
         """
         parent_basis = copy(self)
@@ -852,16 +865,20 @@ class Atoms(object):
 
     def get_chemical_elements(self):
         """
+        Returns the list of chemical element instances
 
         Returns:
+            numpy.ndarray: A list of chemical element instances
 
         """
         return self.elements
 
     def get_number_species_atoms(self):
         """
-        
+        Returns a dictionary with the species in the structure and the corresponding count in the structure
+
         Returns:
+            collections.OrderedDict: An ordered dictionary with the species and the corresponding count
 
         """
         count = OrderedDict()
@@ -875,14 +892,17 @@ class Atoms(object):
 
     def get_species_symbols(self):
         """
+        Returns the symbols of the present species
 
         Returns:
+            numpy.ndarray: List of the symbols of the species
 
         """
         return np.array(sorted([el.Abbreviation for el in self.species]))
 
     def get_species_objects(self):
         """
+
 
         Returns:
 
