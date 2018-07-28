@@ -2231,7 +2231,8 @@ class Atoms(object):
 
     def rotate(self, vector, angle=None, center=(0, 0, 0), rotate_cell=False, index_list=None):
         """
-        Rotate atoms based on a vector and an angle, or two vectors.
+        Rotate atoms based on a vector and an angle, or two vectors. This function is completely adopted from ASE code
+        (https://wiki.fysik.dtu.dk/ase/_modules/ase/atoms.html#Atoms.rotate)
 
         Args:
 
