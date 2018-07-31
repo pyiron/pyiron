@@ -273,12 +273,24 @@ class TestAtoms(unittest.TestCase):
         periodic_table = PeriodicTable()
         periodic_table.add_element(parent_element="O", new_element="O_up")
         O_up = periodic_table.element("O_up")
+
         O_basis = Atoms([O_up], cell=10.0 * np.eye(3), scaled_positions=[[0.5, 0.5, 0.5]])
         O_simple = Atoms(["O"], cell=10.0 * np.eye(3), scaled_positions=[[0.5, 0.5, 0.5]])
         O_parent = O_basis.get_parent_basis()
         self.assertNotEqual(O_basis, O_parent)
         self.assertEqual(O_simple, O_parent)
         self.assertEqual(O_parent[0].symbol, "O")
+        periodic_table.add_element(parent_element="O", new_element="O_down")
+        O_down = periodic_table.element("O_down")
+        O_basis = Atoms([O_up, O_down], cell=10.0 * np.eye(3), scaled_positions=[[0.5, 0.5, 0.5], [0, 0, 0]])
+        O_simple = Atoms(["O", "O"], cell=10.0 * np.eye(3), scaled_positions=[[0.5, 0.5, 0.5]])
+        O_parent = O_basis.get_parent_basis()
+        self.assertNotEqual(O_basis, O_parent)
+        self.assertEqual(O_simple, O_parent)
+        self.assertEqual(O_parent.get_chemical_formula(), "O2")
+        self.assertEqual(len(O_basis.species), 2)
+        self.assertEqual(len(O_simple.species), 1)
+        self.assertEqual(len(O_parent.species), 1)
 
     def test_profiling(self):
         num = 1000
