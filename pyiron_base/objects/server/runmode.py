@@ -55,7 +55,8 @@ class Runmode(str):
                       'queue': False,
                       'manual': False,
                       'thread': False,
-                      'interactive': False}
+                      'interactive': False,
+                      'interactive_non_modal': False}
         if isinstance(new_mode, str) and new_mode in self._mode.keys():
             self._mode[new_mode] = True
 
