@@ -27,8 +27,6 @@ Application Developer (alphabetical)
 
 * `Markus Tautschnig (MPIE) <https://www.mpie.de/person/59813/2768816>`_ – Structure Optimisation with VASP – since 2018. 
 
-* Murali Uddagiri (MPIE) - Generation of Special quasirandom structures - since 2017.
-
 * `Osamu Waseda (MPIE) <https://www.mpie.de/person/51628/2768816>`_ – Run-time coupling of simulation codes – since 2017. 
 
 * `Lifang Zhu (MPIE) <https://www.mpie.de/person/43027/2768816>`_ - Efficient approach to compute melting properties fully from ab initio - since 2017.  
@@ -62,6 +60,8 @@ Alumni (chronological)
 * Navid Shayanfar (MPIE) - Parser for the in-house DFT code `S/PHI/nX <https://www.mpie.de/3389199/Optimized-key-algorithms>`_ - 2017.
 
 * Martin Boeckmann (MPIE) – Metropolis Monte Carlo implementation – 2017-2018.
+
+* Murali Uddagiri (MPIE) - Generation of special quasirandom structures - 2017-2018.
 
 
 **********************
