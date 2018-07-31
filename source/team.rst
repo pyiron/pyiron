@@ -23,6 +23,8 @@ Core Developer (alphabetical)
 Application Developer (alphabetical)
 ************************************
 
+* Ahmed Aslam (MPIE) - Parameterisation of interatomic potentials - since 2018.
+
 * Uday Gajera (MPIE) - Automated analysis of existing DFT data sets - since 2017. 
 
 * `Markus Tautschnig (MPIE) <https://www.mpie.de/person/59813/2768816>`_ – Structure Optimisation with VASP – since 2018. 
