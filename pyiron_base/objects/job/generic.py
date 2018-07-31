@@ -481,7 +481,6 @@ class GenericJob(JobCore):
             que_wait_for (int): Que ID to wait for before this job is executed.
         """
         try:
-            self.validate_ready_to_run()
             self._logger.info('run {}, status: {}'.format(self.job_info_str, self.status))
             status = self.status.string
             if run_mode:
@@ -842,6 +841,7 @@ class GenericJob(JobCore):
             debug (bool): Debug Mode
             que_wait_for (int): Que ID to wait for before this job is executed.
         """
+        self.validate_ready_to_run()
         if self.check_if_job_exists():
             print('job exists already and therefore was not created!')
         else:
