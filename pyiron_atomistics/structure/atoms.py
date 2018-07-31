@@ -860,6 +860,14 @@ class Atoms(object):
             if not isinstance(sp.Parent, (float, np.float, type(None))):
                 pse = PeriodicTable()
                 new_species[i] = pse.element(sp.Parent)
+        sym_list = [el.Abbreviation for el in new_species]
+        if len(sym_list) != len(np.unique(sym_list)):
+            uni, ind, inv_ind = np.unique(sym_list, return_index=True, return_inverse=True)
+            new_species = new_species[ind][ind].copy()
+            parent_basis.set_species(list(new_species))
+            for i, ind_ind in enumerate(ind[inv_ind]):
+                parent_basis.indices[parent_basis.indices == i] = ind_ind
+            return parent_basis
         parent_basis.set_species(list(new_species))
         return parent_basis
 
