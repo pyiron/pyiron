@@ -61,7 +61,7 @@ run 0
 '''
         self.load_string(file_content)
 
-    def calc_minimize(self, e_tol=1e-8, f_tol=1e-8, max_iter=1000, pressure=None, n_print=1):
+    def calc_minimize(self, e_tol, f_tol, max_iter, pressure, n_print):
         max_evaluations = 10 * max_iter
         if pressure is not None:
             self.set(fix___1=r'all box/relax aniso ' + str(pressure))
@@ -75,8 +75,8 @@ run 0
         self.set(run='0')
         self.remove_keys(['minimize', 'velocity'])
 
-    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100, delta_temp=1.0,
-                delta_press=None, seed=None, tloop=None, rescale_velocity=True):
+    def calc_md(self, temperature, pressure, n_ionic_steps, time_step, n_print, delta_temp,
+                delta_press, seed, tloop, rescale_velocity):
 
         if time_step is not None:
             # time_step in fs
@@ -94,15 +94,17 @@ run 0
         if pressure is not None:
             pressure = float(pressure)  # TODO; why needed?
             ensamble = 'npt'
-            if not delta_press:
-                delta_press = delta_temp
-            if not temperature or temperature == 0.0:
+            if delta_press is None:
+                delta_press = delta_temp*10
+            if temperature is None or temperature == 0.0:
                 raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
             fix_str = 'all {0} temp {1} {2} {3} aniso {4} {5} {6}'.format(ensamble, str(temperature), str(temperature),
                                                                           str(delta_temp), str(pressure), str(pressure),
                                                                           str(delta_press))
         elif temperature is not None:
             temperature = float(temperature)  # TODO; why needed?
+            if temperature == 0.0:
+                raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
             ensamble = 'nvt'
             fix_str = 'all {0} temp {1} {2} {3}'.format(ensamble, str(temperature), str(temperature), str(delta_temp))
         else:
