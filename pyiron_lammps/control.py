@@ -98,7 +98,7 @@ run 0
                 delta_press = delta_temp
             if not temperature or temperature == 0.0:
                 raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
-            fix_str = 'all {0} temp {1} {2} {3} iso {4} {5} {6}'.format(ensamble, str(temperature), str(temperature),
+            fix_str = 'all {0} temp {1} {2} {3} aniso {4} {5} {6}'.format(ensamble, str(temperature), str(temperature),
                                                                           str(delta_temp), str(pressure), str(pressure),
                                                                           str(delta_press))
         elif temperature is not None:
