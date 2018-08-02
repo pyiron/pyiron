@@ -412,8 +412,8 @@ class Lammps(AtomisticGenericJob):
         super(Lammps, self).calc_static()
         self.input.control.calc_static()
 
-    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, dt=None, time_step=None, n_print=1,
-                delta_temp=1.0, delta_press=None, seed=None, tloop=None, rescale_velocity=True):
+    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, dt=None, time_step=None, n_print=100,
+                delta_temp=100.0, delta_press=None, seed=None, tloop=None, rescale_velocity=True):
         """
         
         Args:
