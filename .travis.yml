@@ -5,25 +5,13 @@ matrix:
       env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh" PYTHONVER="2.7"
     - os: linux
       language: python
-      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.5"
-    - os: linux
-      language: python
       env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.6"
-    - os: linux
-      language: python
-      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.7"
     - os: osx
       language: generic
       env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh" PYTHONVER="2.7"
     - os: osx
       language: generic
-      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" PYTHONVER="3.5"
-    - os: osx
-      language: generic
       env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" PYTHONVER="3.6"
-    - os: osx
-      language: generic
-      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" PYTHONVER="3.7"
 
 install:
   - wget ${MINICONDA} -O miniconda.sh
@@ -58,24 +46,24 @@ deploy:
     allow_failure: true
     on:
       branch: master
-      condition: "${PYTHONVER} = 3.7 && ${TRAVIS_OS_NAME} = linux"
+      condition: "${PYTHONVER} = 3.6 && ${TRAVIS_OS_NAME} = linux"
   - provider: pypi
     user: pyiron
     password: ${PYPI_UPLOAD_TOKEN}
     allow_failure: true
     on:
       tags: true
-      condition: "${PYTHONVER} = 3.7 && ${TRAVIS_OS_NAME} = linux"
+      condition: "${PYTHONVER} = 3.6 && ${TRAVIS_OS_NAME} = linux"
   - provider: script
     script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_base
     on:
       branch: master
-      condition: "${PYTHONVER} = 3.7 && ${TRAVIS_OS_NAME} = linux"
+      condition: "${PYTHONVER} = 3.6 && ${TRAVIS_OS_NAME} = linux"
   - provider: script
     script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_base
     on:
       tags: true
-      condition: "${PYTHONVER} = 3.7 && ${TRAVIS_OS_NAME} = linux"
+      condition: "${PYTHONVER} = 3.6 && ${TRAVIS_OS_NAME} = linux"
 #  - provider: script
 #    script: ./.ci_support/build_docker_on_master.sh
 #    on:
