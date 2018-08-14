@@ -20,7 +20,7 @@ requirements:
   run:
     - python
     - h5py
-    - h5io
+    - h5io >=0.1.1
     - matplotlib
     - numpy
     - pandas
