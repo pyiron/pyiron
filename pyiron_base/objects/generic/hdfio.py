@@ -629,7 +629,7 @@ class FileHDFio(object):
         else:
             h5io.write_hdf5(self.file_name, value,
                             title=posixpath.join(self.h5_path, key),
-                            overwrite="update")
+                            overwrite="update", use_json=True)
 
     def __delitem__(self, key):
         """
