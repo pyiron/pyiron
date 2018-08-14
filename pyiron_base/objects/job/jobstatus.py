@@ -236,3 +236,7 @@ class JobStatus(object):
                 raise ValueError('A run mode can only be activated using [True].')
         else:
             super(JobStatus, self).__setattr__(name, value)
+
+    def __dir__(self):
+        return list(self._status_dict.keys())     
+   
