@@ -626,6 +626,10 @@ class FileHDFio(object):
         """
         if hasattr(value, "to_hdf") & (not isinstance(value, (pandas.DataFrame, pandas.Series))):
             value.to_hdf(self, key)
+        elif isinstance(value, list) and isinstance(value[0], list):  # multi dimension numpy arrays
+            h5io.write_hdf5(self.file_name, np.array([np.array(v) for v in value]),
+                            title=posixpath.join(self.h5_path, key),
+                            overwrite="update", use_json=True)
         else:
             h5io.write_hdf5(self.file_name, value,
                             title=posixpath.join(self.h5_path, key),
