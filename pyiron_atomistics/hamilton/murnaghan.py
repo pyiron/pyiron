@@ -9,6 +9,7 @@ import scipy.integrate
 import scipy.optimize as spy
 import scipy.constants
 from pyiron_atomistics.job.parallel import AtomisticParallelMaster
+from pyiron_base.objects.job.parallel import JobGenerator
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
@@ -153,14 +154,37 @@ class FitMurnaghan(object):
         #     return [e0_lst + self.energy_vib(Ti) for Ti in T]
 
 
+class MurnaghanJobGenerator(JobGenerator):
+    @property
+    def parameter_list(self):
+        """
+
+        Returns:
+            (list)
+        """
+        return [np.round(strain, 7) for strain in np.linspace(1 - self._job.input['vol_range'],
+                                                              1 + self._job.input['vol_range'],
+                                                              self._job.input['num_points'])]
+
+    @staticmethod
+    def job_name(parameter):
+        return "strain_" + str(parameter).replace('.', '_')
+
+    def modify_job(self, job, parameter):
+        basis = self._job.ref_job.structure.copy()
+        basis.set_cell(basis.cell * parameter ** (1. / 3.), scale_atoms=True)
+        job.structure = basis
+        return job
+
+
 # ToDo: not all abstract methods implemented
 class Murnaghan(AtomisticParallelMaster):
     def __init__(self, project, job_name='murnaghan'):
         """
 
-        :param project:
-        :param job_name:
-        :return:
+        Args:
+            project:
+            job_name:
         """
         super(Murnaghan, self).__init__(project, job_name)
         self.__name__ = 'Murnaghan'
@@ -177,6 +201,7 @@ class Murnaghan(AtomisticParallelMaster):
 
         self.fit_dict = None
         self._debye_T = None
+        self._job_generator = MurnaghanJobGenerator(self)
 
     @property
     def equilibrium_volume(self):
@@ -185,42 +210,6 @@ class Murnaghan(AtomisticParallelMaster):
     @property
     def equilibrium_energy(self):
         return self.fit_dict["energy_eq"]
-
-    def create_jobs(self):
-        ham = self.ref_job.copy()
-        basis_ref = ham.structure
-
-        vol_min = 1 - self.input['vol_range']
-        vol_max = 1 + self.input['vol_range']
-        job_lst = []
-
-        self.submission_status.submitted_jobs = 0
-        for strain in np.linspace(vol_min, vol_max, self.input['num_points']):
-            if self.job_id and self.project.db.get_item_by_id(self.job_id)['status'] not in ['finished', 'aborted']:
-                strain = np.round(strain, 7) # prevent too long job_names
-                self._logger.debug("Murnaghan child project {}".format(self.project.__str__()))
-                ham = self._create_child_job("strain_" + str(strain).replace('.', '_'))
-                if ham.server.run_mode.non_modal and self.get_child_cores() + ham.server.cores > self.server.cores:
-                    break
-                self._logger.debug('create job: %s %s', ham.job_info_str, ham.master_id)
-                basis = basis_ref.copy()
-                # basis.set_relative()
-                basis.set_cell(basis.cell * strain**(1./3.), scale_atoms=True)
-                # basis.cell *= strain**(1./3.)
-                ham.structure = basis
-                self._logger.info('Murnaghan: run job {}'.format(ham.job_name))
-                self.submission_status.submit_next()
-                if not ham.status.finished:
-                    ham.run()
-                self._logger.info('Murnaghan: finished job {}'.format(ham.job_name))
-                self.ref_job.structure = basis_ref
-                if ham.server.run_mode.thread:
-                    job_lst.append(ham._process)
-            else:
-                self.refresh_job_status()
-        self.structure = basis_ref
-        process_lst = [process.communicate() for process in job_lst if process]
-        self.status.suspended = True
 
     def collect_output(self):
         erg_lst, vol_lst, err_lst, id_lst = [], [], [], []
@@ -372,7 +361,6 @@ class Murnaghan(AtomisticParallelMaster):
         return pfit_leastsq, perr_leastsq
 
     def _fit_eos_general(self, vol_erg_dic=None, fittype='birchmurnaghan'):
-        eV_div_A3_to_GPa = 160.21766208
         fit_dict = {}
         df = self.output_to_pandas()
         if vol_erg_dic is not None:
@@ -381,20 +369,24 @@ class Murnaghan(AtomisticParallelMaster):
                                                        fittype=fittype)
         fit_dict["volume_eq"] = pfit_leastsq[3]
         fit_dict["energy_eq"] = pfit_leastsq[0]
-        fit_dict["bulkmodul_eq"] = eV_div_A3_to_GPa * pfit_leastsq[1]
+        fit_dict["bulkmodul_eq"] = pfit_leastsq[1]
         fit_dict["b_prime_eq"] = pfit_leastsq[2]
         fit_dict["least_square_error"] = perr_leastsq  # [e0, b0, bP, v0]
 
         with self.project_hdf5.open("output") as hdf5:
             hdf5["equilibrium_energy"] = pfit_leastsq[0]
             hdf5["equilibrium_volume"] = pfit_leastsq[3]
-            hdf5["equilibrium_bulk_modulus"] = eV_div_A3_to_GPa * pfit_leastsq[1]
+            hdf5["equilibrium_bulk_modulus"] = pfit_leastsq[1]
             hdf5["equilibrium_b_prime"] = pfit_leastsq[2]
 
         self.fit_dict = fit_dict
         return fit_dict
 
     def _fit_leastsq(self, volume_lst, energy_lst, fittype='birchmurnaghan'):
+        try:
+            import matplotlib.pylab as plt
+        except ImportError:
+            import matplotlib.pyplot as plt
         vol_lst = np.array(volume_lst).flatten()
         eng_lst = np.array(energy_lst).flatten()
         a, b, c = plt.polyfit(vol_lst, eng_lst, 2)

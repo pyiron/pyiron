@@ -2,6 +2,7 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
+from ase.io import write as ase_write
 import copy
 
 import numpy as np
@@ -32,6 +33,7 @@ class AtomisticGenericJob(GenericJobCore):
         self.__version__ = "0.1"
         self._structure = None
         self._generic_input = GenericInput()
+        self.output = GenericOutput(job=self)
 
     @property
     def structure(self):
@@ -55,7 +57,7 @@ class AtomisticGenericJob(GenericJobCore):
         self._generic_input['structure'] = 'atoms'
         self._structure = basis
 
-    def copy_to(self, project, new_job_name=None, input_only=False, new_database_entry=True):
+    def copy_to(self, project=None, new_job_name=None, input_only=False, new_database_entry=True):
         """
 
         Args:
@@ -305,7 +307,26 @@ class AtomisticGenericJob(GenericJobCore):
 
         """
         return Trajectory(self['output/generic/positions'][::stride], self.structure.get_parent_basis(),
-                          center_of_mass=center_of_mass)
+                          center_of_mass=center_of_mass, cells=self['output/generic/cells'][::stride])
+
+    def write_traj(self, filename, format=None, parallel=True, append=False, stride=1, center_of_mass=False, **kwargs):
+        """
+        Writes the trajectory in a given file format based on the `ase.io.write`_ function.
+
+        Args:
+            filename (str): Filename of the output
+            format (str): The specific format of the output
+            parallel (bool):
+            append (bool):
+            stride (int): Writes trajectory every `stride` steps
+            center_of_mass (bool): True if the positions are centered on the COM
+            **kwargs: Additional ase arguments
+
+        .. _ase.io.write: https://wiki.fysik.dtu.dk/ase/_modules/ase/io/formats.html#write
+        """
+        traj = self.trajectory(stride=stride, center_of_mass=center_of_mass)
+        # Using thr ASE output writer
+        ase_write(filename=filename, images=traj, format=format,  parallel=parallel, append=append, **kwargs)
 
     def _run_if_lib_save(self, job_name=None, structure=None, db_entry=True):
         """
@@ -396,14 +417,18 @@ class AtomisticGenericJob(GenericJobCore):
 
 class Trajectory(object):
     """
+    A trajectory instance compatible with the ase.io class
 
     Args:
-        positions:
-        structure:
-        center_of_mass (bool): False (default)
+        positions (numpy.ndarray): The array of the trajectory in cartesian coordinates
+        structure (pyiron_atomistics.structure.atoms.Atoms): The initial structure instance from which the species info
+                                                             is derived
+        center_of_mass (bool): False (default) if the specified positions are w.r.t. the origin
+        cells (numpy.ndarray): Optional argument of the cell shape at every time step (Nx3x3 array) when the volume
+                                varies
     """
 
-    def __init__(self, positions, structure, center_of_mass=False):
+    def __init__(self, positions, structure, center_of_mass=False, cells=None):
         if center_of_mass:
             pos = np.copy(positions)
             pos[:, :, 0] = (pos[:, :, 0].T - np.mean(pos[:, :, 0], axis=1)).T
@@ -413,10 +438,16 @@ class Trajectory(object):
         else:
             self._positions = positions
         self._structure = structure
+        self._cells = cells
 
     def __getitem__(self, item):
         new_structure = self._structure.copy()
+        if self._cells is not None:
+            new_structure.cell = self._cells[item]
         new_structure.positions = self._positions[item]
+        # This step is necessary for using ase.io.write for trajectories
+        new_structure.arrays['positions'] = new_structure.positions
+        new_structure.arrays['cells'] = new_structure.cell
         return new_structure
 
     def __len__(self):
@@ -437,3 +468,59 @@ calc_mode=static # static, minimize, md
 structure=atoms # atoms, continue_final
 '''
         self.load_string(file_content)
+
+
+class GenericOutput(object):
+    def __init__(self, job):
+        self._job = job
+
+    @property
+    def cells(self):
+        return self._job['output/generic/cells']
+
+    @property
+    def energy_pot(self):
+        return self._job['output/generic/energy_pot']
+
+    @property
+    def energy_tot(self):
+        return self._job['output/generic/energy_tot']
+
+    @property
+    def forces(self):
+        return self._job['output/generic/forces']
+
+    @property
+    def positions(self):
+        return self._job['output/generic/positions']
+
+    @property
+    def pressures(self):
+        return self._job['output/generic/pressures']
+
+    @property
+    def steps(self):
+        return self._job['output/generic/steps']
+
+    @property
+    def temperatures(self):
+        return self._job['output/generic/temperatures']
+
+    @property
+    def time(self):
+        return self._job['output/generic/time']
+
+    @property
+    def unwrapped_positions(self):
+        return self._job['output/generic/unwrapped_positions']
+
+    @property
+    def volume(self):
+        return self._job['output/generic/volume']
+
+    def __dir__(self):
+        hdf5_path = self._job['output/generic']
+        if hdf5_path is not None:
+            return hdf5_path.list_nodes()
+        else:
+            return []

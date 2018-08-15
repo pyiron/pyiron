@@ -20,7 +20,7 @@ class StructureContainer(AtomisticGenericJob):
         super(StructureContainer, self).__init__(project, job_name)
         self.__version__ = "0.1"
         self.__name__ = "StructureContainer"
-        self._lib = {'available': True, 'enabled': True}
+        self.server.run_mode.interactive = True
 
     @property
     def structure(self):
@@ -44,11 +44,8 @@ class StructureContainer(AtomisticGenericJob):
     def append(self, structure_to_append):
         self.structure = structure_to_append
 
-    def run_if_lib(self):
-        job_id = self.save()
+    def run_if_interactive(self):
         self.status.finished = True
-        print('The structure was stored in the database and received the id: ', str(job_id))
-        return job_id
 
     def to_hdf(self, hdf=None, group_name=None):
         super(StructureContainer, self).to_hdf(hdf=hdf, group_name=group_name)

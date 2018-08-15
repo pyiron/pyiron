@@ -1,24 +1,183 @@
 import unittest
 import os
+import sys
 from pyiron_base.core.settings.generic import Settings
+
 s = Settings(config={'sql_file': 'atoms.db',
                      'project_paths': os.path.abspath(os.getcwd()),
                      'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
 
 import numpy as np
+import os
 from pyiron_atomistics.structure.atom import Atom
 from pyiron_atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron_atomistics.structure.sparse_list import SparseList
-from pyiron_atomistics.structure.periodic_table import PeriodicTable
+from pyiron_atomistics.structure.periodic_table import PeriodicTable, ChemicalElement
+from pyiron_base.objects.generic.hdfio import FileHDFio
 
 
 class TestAtoms(unittest.TestCase):
+
+    @classmethod
+    def tearDownClass(cls):
+        if sys.version_info[0] >= 3:
+            if os.path.isfile("../static/pyiron_atomistics/test_hdf"):
+                os.remove("../static/pyiron_atomistics/test_hdf")
+
     def setUp(self):
         pass
         self.CO2 = Atoms("CO2", positions=[[0, 0, 0], [0, 0, 1.5], [0, 1.5, 0]])
         C = Atom('C').element
         self.C3 = Atoms([C, C, C], positions=[[0, 0, 0], [0, 0, 2], [0, 2, 0]])
         self.C2 = Atoms(2 * [Atom('C')])
+
+    def test__init__(self):
+        pos, cell = generate_fcc_lattice()
+        pse = PeriodicTable()
+        el = pse.element("Al")
+        basis = Atoms()
+        self.assertIsInstance(basis, Atoms)
+        self.assertIsInstance(basis.info, dict)
+        self.assertIsInstance(basis.arrays, dict)
+        self.assertIsInstance(basis.adsorbate_info, dict)
+        self.assertIsInstance(basis.units, dict)
+        self.assertIsInstance(basis.pbc, (bool, list, np.ndarray))
+        self.assertIsInstance(basis.indices, np.ndarray)
+        self.assertIsNone(basis._internal_positions)
+        self.assertIsNone(basis.positions)
+        self.assertIsNone(basis.scaled_positions)
+        self.assertIsInstance(basis.species, list)
+        self.assertIsInstance(basis.elements, np.ndarray)
+        self.assertIsNone(basis.cell)
+        basis = Atoms(symbols='Al', positions=pos, cell=cell)
+        self.assertIsInstance(basis, Atoms)
+        self.assertEqual(basis.get_spacegroup()["Number"], 225)
+        basis = Atoms(elements='Al', positions=pos, cell=cell)
+        self.assertIsInstance(basis, Atoms)
+        basis = Atoms(elements=['Al'], positions=pos, cell=cell)
+        self.assertIsInstance(basis, Atoms)
+        self.assertRaises(ValueError, Atoms, symbols="Pt", elements='Al', positions=pos, cell=cell)
+        basis = Atoms(numbers=[13], positions=pos, cell=cell)
+        self.assertEqual(basis.get_majority_species()[1], "Al")
+        basis = Atoms(species=[el], indices=[0], positions=pos, cell=cell)
+        self.assertEqual(basis.get_majority_species()[1], "Al")
+        self.assertIsInstance(basis, Atoms)
+        self.assertIsInstance(basis.info, dict)
+        self.assertIsInstance(basis.arrays, dict)
+        self.assertIsInstance(basis.adsorbate_info, dict)
+        self.assertIsInstance(basis.units, dict)
+        self.assertIsInstance(basis.pbc, (bool, list, np.ndarray))
+        self.assertIsInstance(basis.indices, np.ndarray)
+        self.assertIsInstance(basis.species, list)
+        self.assertIsInstance(basis.cell, np.ndarray)
+        self.assertIsInstance(basis._internal_positions, np.ndarray)
+        self.assertIsInstance(basis.positions, np.ndarray)
+        self.assertIsInstance(basis.scaled_positions, np.ndarray)
+        self.assertIsInstance(basis.elements, np.ndarray)
+
+    def test_set_species(self):
+        pos, cell = generate_fcc_lattice()
+        pse = PeriodicTable()
+        el = pse.element("Pt")
+        basis = Atoms(symbols='Al', positions=pos, cell=cell)
+        self.assertEqual(basis.get_chemical_formula(), "Al")
+        basis.set_species([el])
+        self.assertEqual(basis.get_chemical_formula(), "Pt")
+        self.assertTrue("Al" not in [sp.Abbreviation] for sp in basis._species_to_index_dict.keys())
+        self.assertTrue("Pt" in [sp.Abbreviation] for sp in basis._species_to_index_dict.keys())
+
+    def test_new_array(self):
+        pos, cell = generate_fcc_lattice()
+        basis = Atoms(symbols='Al', positions=pos, cell=cell)
+        basis.set_repeat([10, 10, 10])
+        spins = np.ones(len(basis))
+        basis.new_array(name="spins", a=spins)
+        self.assertTrue(np.array_equal(basis.arrays['spins'], spins))
+
+    def test_set_array(self):
+        pos, cell = generate_fcc_lattice()
+        basis = Atoms(symbols='Al', positions=pos, cell=cell)
+        basis.set_repeat([10, 10, 10])
+        spins = np.ones(len(basis), dtype=float)
+        basis.set_array(name="spins", a=2*spins, dtype=int)
+        self.assertTrue(np.array_equal(basis.arrays['spins'], 2 * spins))
+
+    def test_get_array(self):
+        pos, cell = generate_fcc_lattice()
+        basis = Atoms(symbols='Al', positions=pos, cell=cell)
+        basis.set_repeat([10, 10, 10])
+        spins = np.ones(len(basis), dtype=float)
+        basis.set_array(name="spins", a=2*spins, dtype=int)
+        self.assertTrue(np.array_equal(basis.arrays['spins'], 2 * spins))
+        self.assertTrue(np.array_equal(basis.get_array(name="spins"), 2 * spins))
+
+    def test_add_tags(self):
+        self.CO2.add_tag(test_tag="a")
+        self.assertIsInstance(self.CO2.test_tag, SparseList)
+        self.assertEqual(self.CO2.test_tag[0], "a")
+        self.assertEqual(self.CO2.test_tag[0], self.CO2.test_tag[2])
+        self.assertIsInstance(self.CO2.test_tag.list(), list)
+        self.CO2.add_tag(selective_dynamics=[True, True, True])
+        self.CO2.selective_dynamics[1] = [True, False, True]
+        self.assertEqual(self.CO2.selective_dynamics[1], [True, False, True])
+        self.assertIsInstance(self.CO2.selective_dynamics.list(), list)
+
+    def test_get_tags(self):
+        self.CO2.add_tag(test_tag="a")
+        self.assertIsInstance(self.CO2.test_tag, SparseList)
+        self.assertIsInstance(self.CO2.get_tags(), type(dict().keys()))
+
+    def test_get_pbc(self):
+        self.assertTrue(np.array_equal(self.CO2.pbc, self.CO2.get_pbc()))
+        self.assertEqual(len(self.CO2.get_pbc()), 3)
+
+    def test_set_pbc(self):
+        self.CO2.set_pbc(value=[True, True, False])
+        self.assertTrue(np.array_equal(self.CO2.pbc, self.CO2.get_pbc()))
+        self.assertTrue(np.array_equal([True, True, False], self.CO2.get_pbc()))
+        self.CO2.set_pbc(value=False)
+        self.assertTrue(np.array_equal([False, False, False], self.CO2.get_pbc()))
+        self.assertTrue(np.array_equal(self.CO2.pbc, self.CO2.get_pbc()))
+
+    def test_chemical_element(self):
+        self.assertIsInstance(self.CO2.convert_element('C'), ChemicalElement)
+        self.assertEqual(len(self.CO2.species), 2)
+
+    def test_copy(self):
+        pos, cell = generate_fcc_lattice()
+        basis = Atoms(symbols='Al', positions=pos, cell=cell)
+        basis_copy = basis.copy()
+        self.assertEqual(basis, basis_copy)
+        basis_copy[:] = "Pt"
+        self.assertNotEqual(basis, basis_copy)
+
+    def test_numbers_to_elements(self):
+        num_list = [1, 12, 13, 6]
+        self.assertTrue(np.array_equal([el.Abbreviation for el in self.CO2.numbers_to_elements(num_list)],
+                                       ['H', 'Mg', 'Al', 'C']))
+
+    def test_to_hdf(self):
+        if sys.version_info[0] >= 3:
+            filename = "../static/pyiron_atomistics/test_hdf"
+            abs_filename = os.path.abspath(filename)
+            hdf_obj = FileHDFio(abs_filename)
+            pos, cell = generate_fcc_lattice()
+            basis = Atoms(symbols='Al', positions=pos, cell=cell)
+            basis.set_repeat([2, 2, 2])
+            basis.to_hdf(hdf_obj, "test_structure")
+            self.assertTrue(np.array_equal(hdf_obj["test_structure/positions"], basis.positions))
+            basis_new = Atoms().from_hdf(hdf_obj, "test_structure")
+            self.assertEqual(basis, basis_new)
+
+    def test_from_hdf(self):
+        if sys.version_info[0] >= 3:
+            filename = "../static/pyiron_atomistics/structure_hdf"
+            abs_filename = os.path.abspath(filename)
+            hdf_obj = FileHDFio(abs_filename)
+            basis = Atoms().from_hdf(hdf_obj, group_name="simple_structure")
+            self.assertEqual(len(basis), 8)
+            self.assertEqual(basis.get_majority_species()[1], "Al")
+            self.assertEqual(basis.get_spacegroup()['Number'], 225)
 
     def create_Fe_bcc(self):
         self.pse = PeriodicTable()
@@ -68,6 +227,19 @@ class TestAtoms(unittest.TestCase):
         self.CO2.positions[1][0] = 5.
         self.assertEqual(self.CO2.positions[1].tolist(), [5.0, 0, 1.5])
 
+    def test_set_positions(self):
+        pos, cell = generate_fcc_lattice()
+        basis = Atoms(symbols='Al', positions=pos, cell=cell)
+        basis.set_positions(np.array([[2.5, 2.5, 2.5]]))
+        self.assertTrue(np.array_equal(basis.positions, [[2.5, 2.5, 2.5]]))
+
+    def test_set_scaled_positions(self):
+        pos, cell = generate_fcc_lattice()
+        basis = Atoms(symbols='Al', positions=pos, cell=cell, a=4.2)
+        basis.set_scaled_positions(np.array([[0.5, 0.5, 0.5]]))
+        self.assertTrue(np.array_equal(basis.scaled_positions, [[0.5, 0.5, 0.5]]))
+        self.assertTrue(np.array_equal(basis.positions, np.dot([[0.5, 0.5, 0.5]], basis.cell)))
+
     def test_cell(self):
         CO = Atoms("CO",
                    positions=[[0, 0, 0], [0, 0, 2]],
@@ -94,23 +266,6 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue((CO.pbc == np.array([True, True, True])).all())
         CO.set_pbc((True, True, False))
 
-    # def test_atomic_numbers(self):
-    #     # print self.CO2.get_atomic_numbers()
-    #     # print self.CO2.get_chemical_symbols()
-    #     # print self.CO2.get_masses()
-    #     # print self.CO2.get_chemical_elements()
-    #     self.CO2[1] = "Fe"
-    #     # print self.CO2.get_chemical_symbols()
-    #     self.CO2[0] = self.CO2[1]
-    #     # print self.CO2.get_chemical_symbols()
-    #     self.CO2[0] = self.CO2[2].element
-    #     # print self.CO2.get_chemical_symbols()
-    #
-    #     self.CO2[:] = ['Fe', 'Fe', 'Fe']
-    #     # print self.CO2.get_chemical_symbols()
-    #     self.CO2[:] = "O"
-    #     # print self.CO2.get_chemical_symbols()
-
     def test_get_masses_DOF(self):
         self.assertEqual(len(self.CO2.get_masses_dof()), len(self.CO2.positions.flatten()))
 
@@ -118,12 +273,24 @@ class TestAtoms(unittest.TestCase):
         periodic_table = PeriodicTable()
         periodic_table.add_element(parent_element="O", new_element="O_up")
         O_up = periodic_table.element("O_up")
+
         O_basis = Atoms([O_up], cell=10.0 * np.eye(3), scaled_positions=[[0.5, 0.5, 0.5]])
         O_simple = Atoms(["O"], cell=10.0 * np.eye(3), scaled_positions=[[0.5, 0.5, 0.5]])
         O_parent = O_basis.get_parent_basis()
         self.assertNotEqual(O_basis, O_parent)
         self.assertEqual(O_simple, O_parent)
         self.assertEqual(O_parent[0].symbol, "O")
+        periodic_table.add_element(parent_element="O", new_element="O_down")
+        O_down = periodic_table.element("O_down")
+        O_basis = Atoms([O_up, O_down], cell=10.0 * np.eye(3), scaled_positions=[[0.5, 0.5, 0.5], [0, 0, 0]])
+        O_simple = Atoms(["O", "O"], cell=10.0 * np.eye(3), scaled_positions=[[0.5, 0.5, 0.5]])
+        O_parent = O_basis.get_parent_basis()
+        self.assertNotEqual(O_basis, O_parent)
+        self.assertEqual(O_simple, O_parent)
+        self.assertEqual(O_parent.get_chemical_formula(), "O2")
+        self.assertEqual(len(O_basis.species), 2)
+        self.assertEqual(len(O_simple.species), 1)
+        self.assertEqual(len(O_parent.species), 1)
 
     def test_profiling(self):
         num = 1000
@@ -317,31 +484,24 @@ class TestAtoms(unittest.TestCase):
         cell = 2.2 * np.identity(3)
         Al_sc = Atoms('AlFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
         Al_sc.set_repeat([2, 2, 2])
-        # print Al_sc.get_equivalent_atoms()
-
-    # def test_ase(self):
-    #     from ase.lattice.cubic import FaceCenteredCubic
-    #
-    #     Cu_bulk = FaceCenteredCubic(directions=[[1, -1, 0], [1, 1, -2], [1, 1, 1]],
-    #                                 size=(2, 2, 3), symbol='Cu', pbc=(True, True, True))
-    #     Cu_bulk.cell[2, 2] += 5.
-    #     shift = [0, 0, Cu_bulk.cell[2, 2] - 4]
-    #     self.CO2.positions += shift
-    #     Cu_CO2 = Cu_bulk + self.CO2
-    #     # Cu_CO2.plot3d(show_bonds=True)
-    #
-    #     # print isinstance(Cu_CO2, Atoms)
 
     def test_center(self):
+        old_pos = self.CO2.positions.copy()
         self.CO2.center(vacuum=5)
-        # self.CO2.plot3d(show_bonds=True)
+        new_array = old_pos + 5 * np.ones(3)
+        self.assertTrue(np.array_equal(self.CO2.positions, new_array))
 
-    # def test_ase_surface(self):
-    #     from ase.lattice.surface import fcc111
-    #     slab = fcc111('Al', size=(2, 2, 5), vacuum=10.0)
-    #     slab.center_coordinates_in_unit_cell()
-    #
-    #     # slab.plot3d(scale_radius=2)
+    def test_get_positions(self):
+        basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
+        self.assertTrue(np.array_equal(basis_Mg.positions, basis_Mg.get_positions()))
+
+    def test_get_scaled_positions(self):
+        basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
+        self.assertTrue(np.array_equal(basis_Mg.scaled_positions, basis_Mg.get_scaled_positions()))
+
+
+
+
     def test_occupy_lattice(self):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
         basis_O = CrystalStructure("O", bravais_basis="fcc", lattice_constant=4.2)
@@ -385,17 +545,6 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(np.array_equal(o_indices, basis.select_index(o_up)))
         self.assertEqual(len(basis.select_index("O")), 0)
         self.assertTrue(np.array_equal(o_indices, basis.select_parent_index("O")))
-
-    def test_adding_tags(self):
-        self.CO2.add_tag(test_tag="a")
-        self.assertIsInstance(self.CO2.test_tag, SparseList)
-        self.assertEqual(self.CO2.test_tag[0], "a")
-        self.assertEqual(self.CO2.test_tag[0], self.CO2.test_tag[2])
-        self.assertIsInstance(self.CO2.test_tag.list(), list)
-        self.CO2.add_tag(selective_dynamics=[True, True, True])
-        self.CO2.selective_dynamics[1] = [True, False, True]
-        self.assertEqual(self.CO2.selective_dynamics[1], [True, False, True])
-        self.assertIsInstance(self.CO2.selective_dynamics.list(), list)
 
     def test__eq__(self):
         test_basis = self.CO2.copy()
@@ -558,6 +707,12 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(basis.get_chemical_formula(), "O3")
         self.assertEqual(len(basis.species), 1)
         self.assertEqual(len(basis.get_species_symbols()), 1)
+
+
+def generate_fcc_lattice(a=4.2):
+    positions = [[0, 0, 0]]
+    cell = (np.ones((3, 3)) - np.eye(3)) * 0.5 * a
+    return positions, cell
 
 
 if __name__ == '__main__':

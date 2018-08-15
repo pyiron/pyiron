@@ -44,12 +44,12 @@ class Atoms(object):
     on the corresponding implementation in the ASE package
 
     Args:
-        elements (list/numpy.ndarray instance): List of strings containing the elements or a list of
+        elements (list/numpy.ndarray): List of strings containing the elements or a list of
                             pyiron_atomistics.structure.periodic_table.ChemicalElement instances
-        numbers (list/numpy.ndarray instance): List of atomic numbers of elements
-        symbols (list/numpy.ndarray instance): List of chemical symbols
+        numbers (list/numpy.ndarray): List of atomic numbers of elements
+        symbols (list/numpy.ndarray): List of chemical symbols
         positions (list/numpy.ndarray): List of positions
-        scaled_positions (list/numpy.ndarray instance): List of scaled positions (relative coordinates)
+        scaled_positions (list/numpy.ndarray): List of scaled positions (relative coordinates)
         pbc (list/numpy.ndarray/boolean): Tells if periodic boundary conditions should be applied on the three axes
         cell (list/numpy.ndarray instance): A 3x3 array representing the lattice vectors of the structure
 
@@ -82,11 +82,22 @@ class Atoms(object):
             # make it ASE compatible
             if np.linalg.matrix_rank(cell) == 1:
                 cell = np.eye(len(cell)) * cell
-        self.cell = cell
+            else:
+                cell = np.array(cell)
+        self._cell = cell
+        self._species = list()
         self._internal_positions = None
         self._pse = PeriodicTable()
         self._tag_list = SparseArray()
         self.indices = np.array([])
+        self._info = dict()
+        self.arrays = dict()
+        self.adsorbate_info = {}
+        self.bonds = None
+        self._pbc = False
+        self.dimension = 3  # Default
+        self.units = {"length": "A", "mass": "u"}
+
         el_index_lst = list()
         element_list = None
 
@@ -168,26 +179,20 @@ class Atoms(object):
         self._tag_list._length = len(positions)
 
         for key, val in qwargs.items():
-            print ('set qwargs (ASE): ', key, val)
+            print('set qwargs (ASE): ', key, val)
             setattr(self, key, val)
 
-        self.units = {"length": "A", "mass": "u"}
         if len(positions) > 0:
             self.dimension = len(positions[0])
         else:
             self.dimension = 3
         if dimension is not None:
             self.dimension = dimension
-        self.adsorbate_info = {}
-        self.bonds = None
-        self.pbc = False
         if cell is not None:
             if pbc is None:
                 self.pbc = True  # default setting
             else:
                 self.pbc = pbc
-        self._info = dict()
-        self.arrays = dict()
         self.set_initial_magnetic_moments(magmoms)
 
     @property
@@ -217,9 +222,11 @@ class Atoms(object):
 
         if self._is_scaled:
             return self._internal_positions
-        else:
+        elif self.cell is not None:
             b_mat = np.linalg.inv(self.cell)
             return np.dot(b_mat.T, np.array(self.positions).T).T
+        else:
+            return None
 
     @property
     def positions(self):
@@ -274,7 +281,7 @@ class Atoms(object):
     @property
     def info(self):
         """
-        This function is merely used to be compatible with the ASE Atoms class
+        dict: This dictionary is merely used to be compatible with the ASE Atoms class.
 
         """
         return self._info
@@ -287,7 +294,7 @@ class Atoms(object):
     def pbc(self):
         """
         list: A list of boolean values which gives the periodic boundary consitions along the three axes.
-        The default value is [True, True, True]
+              The default value is [True, True, True]
 
         """
         if not isinstance(self._pbc, np.ndarray):
@@ -302,7 +309,7 @@ class Atoms(object):
     def elements(self):
         """
         numpy.ndarray: A size N list of pyiron_atomistics.structure.periodic_table.ChemicalElement instances according
-        to the ordering of the atoms in the instance
+                       to the ordering of the atoms in the instance
 
         """
         return np.array([self.species[el] for el in self.indices])
@@ -415,6 +422,13 @@ class Atoms(object):
         return [atom_number_to_element[i_el] for i_el in numbers]
 
     def copy(self):
+        """
+        Returns a copy of the instance
+
+        Returns:
+            pyiron_atomistics.structure.atoms.Atoms: A copy of the instance
+
+        """
         return self.__copy__()
 
     def to_hdf(self, hdf, group_name="structure"):
@@ -422,7 +436,7 @@ class Atoms(object):
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.objects.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
             group_name (str):
                 Group name with which the object should be stored. This same name should be used to retrieve the object
 
@@ -451,7 +465,8 @@ class Atoms(object):
                     hdf_cell["cell"] = self.cell
                     hdf_cell["pbc"] = self.pbc
 
-            hdf_structure["coordinates"] = self.positions  # "Atomic coordinates"
+            # hdf_structure["coordinates"] = self.positions  # "Atomic coordinates"
+            hdf_structure["positions"] = self.positions  # "Atomic coordinates"
 
             # potentials with explicit bonds (TIP3P, harmonic, etc.)
             if self.bonds is not None:
@@ -464,7 +479,7 @@ class Atoms(object):
         Retrieve the object from a HDF5 file
 
         Args:
-            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.objects.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
             group_name (str): Group name from which the Atoms object is retreived.
 
         Returns:
@@ -512,13 +527,16 @@ class Atoms(object):
                         self.pbc = hdf_cell["pbc"]
 
                 # Backward compatibility
+                position_tag = "positions"
+                if position_tag not in hdf_atoms.list_nodes():
+                    position_tag = "coordinates"
                 if "is_absolute" in hdf_atoms.list_nodes():
                     if not tr_dict[hdf_atoms["is_absolute"]]:
-                        self.scaled_positions = hdf_atoms["coordinates"]
+                        self.scaled_positions = hdf_atoms[position_tag]
                     else:
-                        self.positions = hdf_atoms["coordinates"]
+                        self.positions = hdf_atoms[position_tag]
                 else:
-                    self.positions = hdf_atoms["coordinates"]
+                    self.positions = hdf_atoms[position_tag]
 
                 if "bonds" in hdf_atoms.list_nodes():
                     self.bonds = hdf_atoms["explicit_bonds"]
@@ -580,19 +598,17 @@ class Atoms(object):
 
     def center(self, vacuum=None, axis=(0, 1, 2)):
         """
-        Adopted from ASE code (https://wiki.fysik.dtu.dk/ase/_modules/ase/atoms.html#Atoms.center)
         Center atoms in unit cell.
 
-        Centers the atoms in the unit cell, so there is the same
-        amount of vacuum on all sides.
+        Adopted from ASE code (https://wiki.fysik.dtu.dk/ase/_modules/ase/atoms.html#Atoms.center)
 
-        vacuum: float (default: None)
-            If specified adjust the amount of vacuum when centering.
-            If vacuum=10.0 there will thus be 10 Angstrom of vacuum
-            on each side.
-        axis: int or sequence of ints
-            Axis or axes to act on.  Default: Act on all axes.
+        Args:
+            vacuum (float): If specified adjust the amount of vacuum when centering. If vacuum=10.0 there will thus be
+                            10 Angstrom of vacuum on each side.
+            axis (tuple/list): List or turple of integers specifying the axis along which the atoms should be centered
+
         """
+
         # Find the orientations of the faces of the unit cell
         c = self.cell
         if c is None:
@@ -640,31 +656,34 @@ class Atoms(object):
 
     def set_positions(self, positions):
         """
-        
-        Args:
-            positions: 
+        Set positions. This function is for compatability with ASE
 
-        Returns:
+        Args:
+            positions (numpy.ndarray/list): Positions in absolute coordinates
 
         """
-        self.positions = positions
+        self.positions = np.array(positions)
         self._tag_list._length = len(self)
 
     def get_positions(self):
         """
-        
+        Get positions. This function is for compatability with ASE
+
         Returns:
+            numpy.ndarray: Positions in absolute coordinates
 
         """
         return self.positions
 
     def select_index(self, el):
         """
-        
-        Args:
-            el: 
+        Returns the indices of a given element in the structure
 
+        Args:
+            el (str/pyiron_atomistics.structures.periodic_table.ChemicalElement): Element for which the indices should
+                                                                                  be returned
         Returns:
+            numpy.ndarray: An array of indices of the atoms of the given element
 
         """
         if isinstance(el, str):
@@ -674,11 +693,13 @@ class Atoms(object):
 
     def select_parent_index(self, el):
         """
+        Returns the indices of a given element in the structure ignoring user defined elements
 
         Args:
-            el:
-
+            el (str/pyiron_atomistics.structures.periodic_table.ChemicalElement): Element for which the indices should
+                                                                                  be returned
         Returns:
+            numpy.ndarray: An array of indices of the atoms of the given element
 
         """
         parent_basis = self.get_parent_basis()
@@ -686,16 +707,20 @@ class Atoms(object):
 
     def get_tags(self):
         """
+        Returns the keys of the stored tags of the structure
 
         Returns:
+            dict_keys: Keys of the stored tags
 
         """
         return self._tag_list.keys()
 
     def get_pbc(self):
         """
+        Returns a boolean array of the periodic boundary conditions along the x, y and z axis respectively
 
         Returns:
+            numpy.ndarray: Boolean array of length 3
 
         """
         if not isinstance(self._pbc, np.ndarray):
@@ -704,11 +729,10 @@ class Atoms(object):
 
     def set_pbc(self, value):
         """
-        
-        Args:
-            value: 
+        Sets the perioic boundary conditions on all three axis
 
-        Returns:
+        Args:
+            value (numpy.ndarray/list): An array of bool type with length 3
 
         """
         if value is None:
@@ -721,32 +745,19 @@ class Atoms(object):
             assert (np.shape(np.array(value)) == (self.dimension,))
             self._pbc = np.array(value, bool)
 
-    def _return_element(self, **qwargs):
-        """
-        
-        Args:
-            **qwargs: 
-
-        Returns:
-
-        """
-        # has to be adopted for derived class
-        element = qwargs['indices']
-        # print ('element: ', element)
-        qwargs['element'] = self.species[element]
-        qwargs['position'] = qwargs['positions']
-        del qwargs['indices']
-        del qwargs['positions']
-        return Atom(**qwargs)
-
     def convert_element(self, el, pse=None):
         """
-        
+        Convert a string or an atom instance into a ChemicalElement instance
+
         Args:
-            el: 
-            pse: 
+            el (str/pyiron_atomistics.structure.atom.Atom): String or atom instance from which the element should
+                                                            be generated
+            pse (pyiron_atomistics.structure.periodictable.PeriodicTable): PeriodicTable instance from which the element
+                                                                           is generated (optional)
 
         Returns:
+
+            pyiron_atomistics.structure.periodictable.ChemicalElement: The required chemical element
 
         """
         if el in list(self._store_elements.keys()):
@@ -772,27 +783,37 @@ class Atoms(object):
 
     def get_chemical_formula(self):
         """
-        return chemical formula of structure
+        Returns the chemical formula of structure
         
         Returns:
+            str: The chemical formula as a string
 
         """
         species = self.get_number_species_atoms()
         formula = ""
-        for s, num in species.items():
+        for string_sym, num in species.items():
             if num == 1:
-                formula += str(s)
+                formula += str(string_sym)
             else:
-                formula += str(s) + str(num)
+                formula += str(string_sym) + str(num)
         return formula
 
     def get_chemical_indices(self):
+        """
+        Returns the list of chemical indices as ordered in self.species
+
+        Returns:
+            numpy.ndarray: A list of chemical indices
+
+        """
         return self.indices
 
     def get_atomic_numbers(self):
         """
+        Returns the atomic numbers of all the atoms in the structure
 
         Returns:
+            numpy.ndarray: A list of atomic numbers
 
         """
         el_lst = [el.AtomicNumber for el in self.species]
@@ -800,8 +821,10 @@ class Atoms(object):
 
     def get_chemical_symbols(self):
         """
+        Returns the chemical symbols for all the atoms in the structure
 
         Returns:
+            numpy.ndarray: A list of chemical symbols
 
         """
         el_lst = [el.Abbreviation for el in self.species]
@@ -809,8 +832,10 @@ class Atoms(object):
 
     def get_parent_elements(self):
         """
-        
+        Returns the chemical symbols for all the atoms in the structure even for user defined elements
+
         Returns:
+            numpy.ndarray: A list of chemical symbols
 
         """
         sp_parent_list = list()
@@ -826,7 +851,7 @@ class Atoms(object):
         Returns the basis with all user defined/special elements as the it's parent
 
         Returns:
-            (pyiron_atomistics.structure.atoms.Atoms) instance
+            pyiron_atomistics.structure.atoms.Atoms: Structure without any user defined elements
 
         """
         parent_basis = copy(self)
@@ -835,21 +860,33 @@ class Atoms(object):
             if not isinstance(sp.Parent, (float, np.float, type(None))):
                 pse = PeriodicTable()
                 new_species[i] = pse.element(sp.Parent)
+        sym_list = [el.Abbreviation for el in new_species]
+        if len(sym_list) != len(np.unique(sym_list)):
+            uni, ind, inv_ind = np.unique(sym_list, return_index=True, return_inverse=True)
+            new_species = new_species[ind][ind].copy()
+            parent_basis.set_species(list(new_species))
+            for i, ind_ind in enumerate(ind[inv_ind]):
+                parent_basis.indices[parent_basis.indices == i] = ind_ind
+            return parent_basis
         parent_basis.set_species(list(new_species))
         return parent_basis
 
     def get_chemical_elements(self):
         """
+        Returns the list of chemical element instances
 
         Returns:
+            numpy.ndarray: A list of chemical element instances
 
         """
         return self.elements
 
     def get_number_species_atoms(self):
         """
-        
+        Returns a dictionary with the species in the structure and the corresponding count in the structure
+
         Returns:
+            collections.OrderedDict: An ordered dictionary with the species and the corresponding count
 
         """
         count = OrderedDict()
@@ -863,14 +900,17 @@ class Atoms(object):
 
     def get_species_symbols(self):
         """
+        Returns the symbols of the present species
 
         Returns:
+            numpy.ndarray: List of the symbols of the species
 
         """
         return np.array(sorted([el.Abbreviation for el in self.species]))
 
     def get_species_objects(self):
         """
+
 
         Returns:
 
@@ -924,9 +964,10 @@ class Atoms(object):
 
     def get_density(self):
         """
-        density in g/cm^3
+        Returns the density in g/cm^3
         
         Returns:
+            float: Density of the structure
 
         """
         # conv_factor = Ang3_to_cm3/scipi.constants.Avogadro
@@ -936,7 +977,7 @@ class Atoms(object):
 
     def get_scaled_positions(self, wrap=True):
         """
-        
+
         Returns:
 
         """
@@ -1004,6 +1045,10 @@ class Atoms(object):
 
     def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5, background='white', color_scheme='element', show_axes=True):
         """
+        Possible color schemes: 
+          " ", "picking", "random", "uniform", "atomindex", "residueindex",
+          "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
+          "hydrophobicity", "value", "volume", "occupancy"
 
         Returns:
 
@@ -1016,7 +1061,7 @@ class Atoms(object):
         parent_basis = self.get_parent_basis()
         view = nglview.show_ase(parent_basis)
         if spacefill:
-            view.add_spacefill(radius_type='vdw', scale=particle_size, color_scheme=color_scheme)
+            view.add_spacefill(radius_type='vdw', color_scheme=color_scheme, scale=particle_size)
             # view.add_spacefill(radius=1.0)
             view.remove_ball_and_stick()
         else:
@@ -1044,6 +1089,17 @@ class Atoms(object):
         x = self.positions[:, 0]
         y = self.positions[:, 1]
         z = self.positions[:, 2]
+        return x, y, z
+
+    def scaled_pos_xyz(self):
+        """
+
+        Returns:
+
+        """
+        x = self.scaled_positions[:, 0]
+        y = self.scaled_positions[:, 1]
+        z = self.scaled_positions[:, 2]
         return x, y, z
 
     def __select_slice(self, i_dim, i_flag, dist):
@@ -1882,7 +1938,6 @@ class Atoms(object):
     def __len__(self):
         return len(self.indices)
 
-
     def __repr__(self):
         return self.__str__()
 
@@ -2204,7 +2259,8 @@ class Atoms(object):
 
     def rotate(self, vector, angle=None, center=(0, 0, 0), rotate_cell=False, index_list=None):
         """
-        Rotate atoms based on a vector and an angle, or two vectors.
+        Rotate atoms based on a vector and an angle, or two vectors. This function is completely adopted from ASE code
+        (https://wiki.fysik.dtu.dk/ase/_modules/ase/atoms.html#Atoms.rotate)
 
         Args:
 
@@ -2361,15 +2417,14 @@ class Atoms(object):
         Set positions relative to unit cell.
 
         Args:
-            scaled:
-
-        Returns:
+            scaled (numpy.ndarray/list): The relative coordinates
 
         """
         self.scaled_positions = scaled
 
     def set_cell(self, cell, scale_atoms=False):
-        """Set unit cell vectors.
+        """
+        Set unit cell vectors.
 
         Parameters:
 
@@ -2489,7 +2544,9 @@ class Atoms(object):
 
         """
         from ase.io import write
-        write(filename, self, format, **kwargs)
+        atoms = self.copy()
+        atoms.arrays["positions"] = atoms.positions
+        write(filename, atoms, format, **kwargs)
 
 
 class _CrystalStructure(Atoms):
