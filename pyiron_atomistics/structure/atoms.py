@@ -863,10 +863,12 @@ class Atoms(object):
         sym_list = [el.Abbreviation for el in new_species]
         if len(sym_list) != len(np.unique(sym_list)):
             uni, ind, inv_ind = np.unique(sym_list, return_index=True, return_inverse=True)
-            new_species = new_species[ind][ind].copy()
+            new_species = new_species[ind].copy()
             parent_basis.set_species(list(new_species))
-            for i, ind_ind in enumerate(ind[inv_ind]):
-                parent_basis.indices[parent_basis.indices == i] = ind_ind
+            indices_copy = parent_basis.indices.copy()
+            for i, ind_ind in enumerate(inv_ind):
+                indices_copy[parent_basis.indices == i] = ind_ind
+            parent_basis.indices = indices_copy
             return parent_basis
         parent_basis.set_species(list(new_species))
         return parent_basis
