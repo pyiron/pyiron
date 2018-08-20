@@ -92,8 +92,8 @@ class TestGenericJob(unittest.TestCase):
         ham_2.move_to(pr_b)
         self.assertEqual('test_genericjob/project_b/', ham_2.project_hdf5.project_path)
         ham_2.project_hdf5.remove_file()
-        pr_a.remove()
-        pr_b.remove()
+        pr_a.remove(enable=True)
+        pr_b.remove(enable=True)
 
     # def test_sub_job_name(self):
     #     pass
