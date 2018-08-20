@@ -747,13 +747,16 @@ class Project(ProjectPath):
         else:
             raise EnvironmentError('copy_to: is not available in Viewermode !')
 
-    def remove(self, enforce=False):
+    def remove(self, enable=False, enforce=False):
         """
         Delete all the whole project including all jobs in the project and its subprojects
 
         Args:
             enforce (bool): [True/False] delete jobs even though they are used in other projects - default=False
+            enable (bool): [True/False] enable this command.
         """
+        if not enable:
+            raise ValueError('To prevent users from accidentally deleting files - enable has to be set to True.')
         if not self.view_mode:
             for sub_project_name in self.list_groups():
                 if "_hdf5" not in sub_project_name:
