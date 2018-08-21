@@ -34,7 +34,7 @@ class TestSerialMaster(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         project = Project('testing_serial')
-        project.remove()
+        project.remove(enable=True)
         s.close_connection()
         os.remove('serial.db')
 
