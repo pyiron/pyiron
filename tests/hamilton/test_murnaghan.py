@@ -35,7 +35,7 @@ class TestMurnaghan(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         project = Project('testing_murnaghan')
-        project.remove(enforce=True)
+        project.remove(enable=True, enforce=True)
         s.close_connection()
         if os.path.isfile('../murnaghan.db'):
             project.remove_file('../murnaghan.db')
