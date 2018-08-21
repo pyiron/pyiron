@@ -19,7 +19,7 @@ class TestVaspImport(unittest.TestCase):
     def tearDownClass(cls):
         project = Project('vasp_import_testing')
         project.remove_jobs(recursive=True)
-        project.remove()
+        project.remove(enable=True)
         s.close_connection()
         os.remove('import.db')
 
