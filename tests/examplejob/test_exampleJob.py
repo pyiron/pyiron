@@ -24,7 +24,7 @@ class TestExampleJob(unittest.TestCase):
         project = Project('random_testing')
         ham = project.load(1)
         ham.remove()
-        project.remove()
+        project.remove(enable=True)
         s.close_connection()
         os.remove('example.db')
 
