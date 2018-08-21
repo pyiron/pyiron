@@ -9,6 +9,7 @@ import pandas
 import posixpath
 import time
 import h5io
+import numpy as np
 from tables.exceptions import NoSuchNodeError
 from pandas.io.pytables import ClosedFileError
 import warnings
@@ -626,10 +627,18 @@ class FileHDFio(object):
         """
         if hasattr(value, "to_hdf") & (not isinstance(value, (pandas.DataFrame, pandas.Series))):
             value.to_hdf(self, key)
+        elif isinstance(value, list) and len(value) > 0 and isinstance(value[0], (list, np.ndarray)):
+            h5io.write_hdf5(self.file_name, np.array([np.array(v) for v in value]),
+                            title=posixpath.join(self.h5_path, key),
+                            overwrite="update", use_json=False)
+        elif isinstance(value, tuple): 
+            h5io.write_hdf5(self.file_name, list(value),
+                            title=posixpath.join(self.h5_path, key),
+                            overwrite="update", use_json=True)
         else:
             h5io.write_hdf5(self.file_name, value,
                             title=posixpath.join(self.h5_path, key),
-                            overwrite="update")
+                            overwrite="update", use_json=True)
 
     def __delitem__(self, key):
         """
@@ -806,7 +815,7 @@ class FileHDFio(object):
         Returns:
             set: h5io objects
         """
-        h5io_types = ("dict", "list", "tuple", "pd_dataframe", "pd_series")
+        h5io_types = ("dict", "list", "tuple", "pd_dataframe", "pd_series", "multiarray", "json")
         group_h5io = set([group for group in groups if self._get_h5io_type(group) in h5io_types])
         return group_h5io
 
