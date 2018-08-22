@@ -1015,6 +1015,12 @@ class Atoms(object):
         warnings.filterwarnings("ignore")
         return analyse_ovito_cna_adaptive(atoms=self, mode=mode)
 
+    def analyse_ovito_centro_symmetry(atoms, num_neighbors=12):
+        import warnings
+        from pyiron_atomistics.structure.ovito import analyse_ovito_centro_symmetry
+        warnings.filterwarnings("ignore")
+        return analyse_ovito_centro_symmetry(atoms, num_neighbors=num_neighbors)
+
     @staticmethod
     def _ngl_write_cell(a1, a2, a3, f1=90, f2=90, f3=90):
         return 'CRYST1 {:8.3f} {:8.3f} {:8.3f}  90.00  90.00  90.00 P 1 \n'.format(a1, a2, a3)
