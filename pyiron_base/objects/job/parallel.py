@@ -355,9 +355,9 @@ class ParallelMaster(GenericMaster):
             return set([self.project.db.get_item_by_id(child_id)['status'] for child_id in self.child_ids])\
                    <{'finished', 'busy', 'refresh'}
 
-    def run_if_modal(self):
+    def run_static(self):
         """
-        The run if modal function is called by run to execute the simulation, while waiting for the output. For the
+        The run static function is called by run to execute the simulation, while waiting for the output. For the
         ParallelMaster this means executing all the childs appened in parallel.
         """
         self._logger.info('{} run parallel master (modal)'.format(self.job_info_str))
