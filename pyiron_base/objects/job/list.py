@@ -214,9 +214,9 @@ class ListMaster(GenericMaster):
             else:
                 return False
 
-    def run_if_modal(self):
+    def run_static(self):
         """
-        The run if modal function is called by run to execute the simulation, while waiting for the output. For the
+        The run static function is called by run to execute the simulation. For the
         ListMaster this means executing all the childs appened in parallel.
         """
         self._input['num_points'] = len(self)
