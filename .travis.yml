@@ -59,4 +59,4 @@ deploy:
   github_token: $GH_TOKEN
   local_dir: pyiron.github.io
   on:
-    branch: code
+    branch: master
