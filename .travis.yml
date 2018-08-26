@@ -57,6 +57,6 @@ deploy:
   target_branch: master
   skip_cleanup: true
   github_token: $GH_TOKEN
-  local_dir: pyiron.github.io
+  local_dir: ../pyiron.github.io
   on:
     branch: master
