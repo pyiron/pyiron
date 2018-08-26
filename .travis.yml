@@ -17,19 +17,20 @@ install:
   - conda install -y -c conda-forge numpy pytables git sphinx nbsphinx ipywidgets sphinx_rtd_theme pathlib2 pandas h5py sqlalchemy h5io ase spglib pylint Graphviz
 
 script:
-  - git config --global user.email "${GH_EMAIL}"
-  - git config --global user.name "${GH_USER}"
+  # - git config --global user.email "${GH_EMAIL}"
+  # - git config --global user.name "${GH_USER}"
   - git submodule update --init --recursive
   - git submodule foreach git pull origin master
   - cd .. 
   - git clone --recurse-submodules https://github.com/pyiron/MetaRepo.git
-  - git clone https://${GH_USER}:${GH_TOKEN}@github.com/pyiron/pyiron.github.io.git
+  # - git clone https://${GH_USER}:${GH_TOKEN}@github.com/pyiron/pyiron.github.io.git
   - git clone https://github.com/pyiron/pyiron-resources.git
-  - cd pyiron.github.io
-  - git rm -r *
-  - touch .nojekyll
-  - echo -e "[DEFAULT]\nPROJECT_PATHS = $PWD\nRESOURCE_PATHS = $PWD/pyiron-resources" > ~/.pyiron
-  - echo -e "# Build Status\n\nThis repository is automatically updated based on the changes in https://github.com/pyiron/pyiron_docs .\n[![Build Status](https://travis-ci.org/pyiron/pyiron_docs.svg?branch=master)](https://travis-ci.org/pyiron/pyiron_docs)" > README.md
+  # - cd pyiron.github.io
+  # - git rm -r *
+  # - touch .nojekyll
+  # - echo -e "[DEFAULT]\nPROJECT_PATHS = $PWD\nRESOURCE_PATHS = $PWD/pyiron-resources" > ~/.pyiron
+  # - echo -e "# Build Status\n\nThis repository is automatically updated based on the changes in https://github.com/pyiron/pyiron_docs .\n[![Build Status](https://travis-ci.org/pyiron/pyiron_docs.svg?branch=master)](https://travis-ci.org/pyiron/pyiron_docs)" > README.md
+  - mkdir pyiron.github.io
   - cd ../MetaRepo
   - git submodule update --init --recursive
   - git submodule foreach git pull origin master
@@ -44,8 +45,18 @@ script:
   - sphinx-build -b html ./ ../pyiron.github.io
   - cd ..
   
-after_success:
-  - cd pyiron.github.io
-  - git add -A 
-  - git commit -m "${TRAVIS_COMMIT_MESSAGE}" 
-  - git push
+# after_success:
+#   - cd pyiron.github.io
+#   - git add -A 
+#   - git commit -m "${TRAVIS_COMMIT_MESSAGE}" 
+#   - git push
+
+deploy:
+  provider: pages
+  repo: pyiron/pyiron.github.io.git
+  target_branch: master
+  skip_cleanup: true
+  github_token: $GH_TOKEN
+  local_dir: pyiron.github.io
+  on:
+    branch: code
