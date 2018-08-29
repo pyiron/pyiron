@@ -529,6 +529,12 @@ class GenericJob(JobCore):
         The run if modal function is called by run to execute the simulation, while waiting for the output. For this we
         use subprocess.check_output()
         """
+        self.run_static()
+        
+    def run_static(self):
+        """
+        The run static function is called by run to execute the simulation.
+        """
         self._logger.info('{}, status: {}, run job (modal)'.format(self.job_info_str, self.status))
         if self.executable.executable_path == '':
             self.status.aborted = True

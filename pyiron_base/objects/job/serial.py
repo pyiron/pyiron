@@ -305,7 +305,7 @@ class SerialMasterBase(GenericMaster):
         for job_id in self.child_ids:
             yield self.project.load(job_id, convert_to_object=convert_to_object)
 
-    def run_if_modal(self, **qwargs):
+    def run_static(self, **qwargs):
         """
         The run if modal function is called by run to execute the simulation, while waiting for the output. For the
         SerialMaster this means executing the child job check whether is fulfills the convergence goal and create a
@@ -448,7 +448,7 @@ class SerialMasterBase(GenericMaster):
             if ham is not True:
                 self.append(ham)
                 self.to_hdf()
-                self.run_if_modal()
+                self.run_static()
             else:
                 self.status.collect = True
                 self.run()

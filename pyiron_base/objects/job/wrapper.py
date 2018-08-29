@@ -62,4 +62,4 @@ class JobWrapper(object):
         """
         The job wrapper run command, sets the job status to 'running' and executes run_if_modal().
         """
-        self.job.run_if_modal()
+        self.job.run_static()
