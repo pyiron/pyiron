@@ -2,7 +2,6 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-from builtins import FileExistsError
 import inspect
 from pyiron_base.objects.job.generic import GenericJob
 
@@ -18,6 +17,12 @@ __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
 
+
+try:
+    FileExistsError = FileExistsError
+except NameError:
+    class FileExistsError(OSError):
+        pass
 
 class GenericMaster(GenericJob):
     """
