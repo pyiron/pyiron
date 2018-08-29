@@ -216,10 +216,10 @@ class PeriodicTable(object):
 
         """
 
-        # if sys.version_info.major == 2:
-        #    stringtypes = (str, )
-        # else:
-        stringtypes = (str, np.str_, np.string_)
+        if sys.version_info.major == 2:
+            stringtypes = (str, unicode)
+        else:
+            stringtypes = str
         if isinstance(arg, stringtypes):
             if arg in self.dataframe.index.values:
                 self.el = arg
