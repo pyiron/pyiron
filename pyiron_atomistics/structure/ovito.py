@@ -5,7 +5,7 @@
 import numpy as np
 from ovito import ObjectNode
 from ovito.data import Bonds, DataCollection
-from ovito.modifiers import CreateBondsModifier, CommonNeighborAnalysisModifier
+from ovito.modifiers import CreateBondsModifier, CommonNeighborAnalysisModifier, CentroSymmetryModifier
 
 __author__ = "Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
@@ -37,3 +37,15 @@ def analyse_ovito_cna_adaptive(atoms, mode='total'):
         elif mode == 'str':
             cna_property = output.particle_properties.structure_type
             return np.array([cna_property.get_type_by_id(cnatype).name for cnatype in atoms_output.get_array("Structure Type")])
+
+def analyse_ovito_centro_symmetry(atoms, num_neighbors=12):
+    """
+    Args:
+        mode (str): ['total', 'numeric', 'str']
+    """
+    data = DataCollection.create_from_ase_atoms(atoms.copy())
+    node = ObjectNode()
+    node.source = data
+    node.modifiers.append(CentroSymmetryModifier(num_neighbors = num_neighbors))
+    output = node.compute()
+    return output.particle_properties['Centrosymmetry'].array

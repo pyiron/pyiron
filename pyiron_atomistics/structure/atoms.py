@@ -1045,15 +1045,42 @@ class Atoms(object):
         warnings.filterwarnings("ignore")
         return analyse_ovito_cna_adaptive(atoms=self, mode=mode)
 
-    def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5, background='white', color_scheme='element', show_axes=True):
+    def analyse_ovito_centro_symmetry(atoms, num_neighbors=12):
+        import warnings
+        from pyiron_atomistics.structure.ovito import analyse_ovito_centro_symmetry
+        warnings.filterwarnings("ignore")
+        return analyse_ovito_centro_symmetry(atoms, num_neighbors=num_neighbors)
+
+    @staticmethod
+    def _ngl_write_cell(a1, a2, a3, f1=90, f2=90, f3=90):
+        return 'CRYST1 {:8.3f} {:8.3f} {:8.3f}  90.00  90.00  90.00 P 1 \n'.format(a1, a2, a3)
+    
+    @staticmethod
+    def _ngl_write_atom(num, species, group, num2, coords=None, c0=None, c1=None):
+        x, y, z = coords
+        return 'ATOM {:>6} {:>2} {:>5} {:>5} {:10.3f} {:7.3f} {:7.3f} {:5.2f} {:5.2f} \n'.format(num, species, group, num2, x, y, z, c0, c1)
+    
+    def _ngl_write_structure(self, elements, positions, cell, custom_array=None):
+        pdb_str = self._ngl_write_cell(cell[0,0], cell[1,1], cell[2,2])
+        pdb_str += 'MODEL     1\n'
+        if custom_array is None:
+            custom_array = np.ones(len(positions))
+        else:
+            custom_array = (custom_array-np.min(custom_array))/(np.max(custom_array)-np.min(custom_array))
+        for i, p in enumerate(positions):
+            pdb_str += self._ngl_write_atom(i, elements[i], group=elements[i], num2=i, coords=p, c0=custom_array[i], c1=0.0)
+        pdb_str += 'ENDMDL \n'
+        return pdb_str 
+    
+    def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5, background='white', color_scheme=None, show_axes=True, custom_array=None):
         """
         Possible color schemes: 
           " ", "picking", "random", "uniform", "atomindex", "residueindex",
           "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
           "hydrophobicity", "value", "volume", "occupancy"
-
+    
         Returns:
-
+    
         """
         try:  # If the graphical packages are not available, the GUI will not work.
             import nglview
@@ -1061,9 +1088,14 @@ class Atoms(object):
             raise ImportError("The package nglview needs to be installed for the plot3d() function!")
         # Always visualize the parent basis
         parent_basis = self.get_parent_basis()
-        view = nglview.show_ase(parent_basis)
+        struct = nglview.TextStructure(self._ngl_write_structure(parent_basis.get_chemical_symbols(), self.positions, self.cell, custom_array=custom_array))
+        view = nglview.NGLWidget(struct)
         if spacefill:
-            view.add_spacefill(radius_type='vdw', color_scheme=color_scheme, scale=particle_size)
+            if color_scheme is None and custom_array is not None:
+                color_scheme = 'occupancy'
+            elif color_scheme is None:
+                color_scheme = 'element'
+            view.add_spacefill(radius_type='vdw', color_scheme=color_scheme, radius=particle_size)
             # view.add_spacefill(radius=1.0)
             view.remove_ball_and_stick()
         else:
@@ -1072,15 +1104,17 @@ class Atoms(object):
             if parent_basis.cell is not None:
                 view.add_unitcell()
         if show_axes:
-            view.shape.add_arrow([-2, -2, -2], [2, -2, -2], [1, 0, 0], 0.5)
-            view.shape.add_arrow([-2, -2, -2], [-2, 2, -2], [0, 1, 0], 0.5)
-            view.shape.add_arrow([-2, -2, -2], [-2, -2, 2], [0, 0, 1], 0.5)
+            axes_origin = -np.ones(3)
+            view.shape.add_arrow(list(axes_origin), list(axes_origin+np.array([1, 0, 0])), [1, 0, 0], 0.1)
+            view.shape.add_arrow(list(axes_origin), list(axes_origin+np.array([0, 1, 0])), [0, 1, 0], 0.1)
+            view.shape.add_arrow(list(axes_origin), list(axes_origin+np.array([0, 0, 1])), [0, 0, 1], 0.1)
         if camera!='perspective' and camera!='orthographic':
             print('Only perspective or orthographic is permitted')
             return None
         view.camera = camera
         view.background = background
         return view
+
 
     def pos_xyz(self):
         """
