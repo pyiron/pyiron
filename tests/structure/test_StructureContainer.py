@@ -22,7 +22,7 @@ class TestStructureContainer(unittest.TestCase):
         project = Project('structure_testing')
         ham = project.load(1)
         ham.remove()
-        project.remove()
+        project.remove(enable=True)
         s.close_connection()
         os.remove('container.db')
 
