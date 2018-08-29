@@ -18,9 +18,9 @@ class TestChildids(unittest.TestCase):
     def tearDownClass(cls):
         project = Project('testing_copyto')
         sub_project = project.open('sub_project_ex')
-        sub_project.remove()
+        sub_project.remove(enable=True)
         sub_project = project.open('sub_project')
-        sub_project.remove()
+        sub_project.remove(enable=True)
         s.close_connection()
         os.remove('copyto.db')
 

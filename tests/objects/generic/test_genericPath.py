@@ -32,7 +32,7 @@ class TestProject(unittest.TestCase):
         self.project = Project('sub_folder')
 
     def tearDown(self):
-        self.project.remove()
+        self.project.remove(enable=True)
 
     def test_repr(self):
         self.assertEqual([], self.project.list_groups())
