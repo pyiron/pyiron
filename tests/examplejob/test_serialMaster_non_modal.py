@@ -31,7 +31,7 @@ class TestSerialMaster(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         project = Project('testing_serial_non_modal')
-        project.remove(enforce=True)
+        project.remove(enable=True, enforce=True)
 
     def test_single_job_non_modal(self):
         ham = self.project.create_job(self.project.job_type.ExampleJob, "job_single_nm")

@@ -19,7 +19,7 @@ class TestExampleJob(unittest.TestCase):
         # print('tear down')
         project = Project('random_testing_non_modal')
         project.remove_jobs()
-        project.remove()
+        project.remove(enable=True)
 
     def test_non_modal_run(self):
         ham_non_modal = self.project.create_job("ExampleJob", "job_non_modal")
