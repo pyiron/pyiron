@@ -761,7 +761,7 @@ class Project(ProjectPath):
             for sub_project_name in self.list_groups():
                 if "_hdf5" not in sub_project_name:
                     sub_project = self.open(sub_project_name)
-                    sub_project.remove(enforce=enforce)
+                    sub_project.remove(enable=enable, enforce=enforce)
             self.remove_jobs(recursive=True)
             for file in self.list_files():
                 os.remove(os.path.join(self.path, file))
