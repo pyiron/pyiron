@@ -56,7 +56,7 @@ class TestMurnaghan(unittest.TestCase):
         self.assertTrue(murn.status.finished)
         murn.remove()
         job_ser.remove()
-        self.project.remove(enforce=True)
+        self.project.remove(enable=True, enforce=True)
 
 
 if __name__ == '__main__':
