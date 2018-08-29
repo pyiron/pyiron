@@ -31,7 +31,13 @@ class Runmode(str):
 
     def __init__(self, mode='modal'):
         super(Runmode, self).__init__()
-        super(Runmode, self).__setattr__('_mode', {})
+        super(Runmode, self).__setattr__('_mode', {'modal': False,
+                                                   'non_modal': False,
+                                                   'queue': False,
+                                                   'manual': False,
+                                                   'thread': False,
+                                                   'interactive': False,
+                                                   'interactive_non_modal': False})
         self.mode = mode
 
     @property
@@ -50,14 +56,10 @@ class Runmode(str):
         Args:
             new_mode (str): ['modal', 'non_modal', 'queue', 'manual', 'thread', 'interactive']
         """
-        self._mode = {'modal': False,
-                      'non_modal': False,
-                      'queue': False,
-                      'manual': False,
-                      'thread': False,
-                      'interactive': False,
-                      'interactive_non_modal': False}
         if isinstance(new_mode, str) and new_mode in self._mode.keys():
+            for key, val in self._mode.items():
+                if val:
+                    self._mode[key] = False
             self._mode[new_mode] = True
 
     def __repr__(self):
