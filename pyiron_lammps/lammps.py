@@ -413,7 +413,7 @@ class Lammps(AtomisticGenericJob):
         self.input.control.calc_static()
 
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, dt=None, time_step=None, n_print=100,
-                delta_temp=100.0, delta_press=None, seed=None, tloop=None, rescale_velocity=True):
+                delta_temp=100.0, delta_press=None, seed=None, tloop=None, rescale_velocity=True, langevin=False):
         """
         
         Args:
@@ -434,10 +434,10 @@ class Lammps(AtomisticGenericJob):
             time_step = dt
         super(Lammps, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps, 
                                     time_step=time_step, n_print=n_print, delta_temp=delta_temp, delta_press=delta_press,
-                                    seed=seed, tloop=tloop, rescale_velocity=rescale_velocity)
+                                    seed=seed, tloop=tloop, rescale_velocity=rescale_velocity, langevin=langevin)
         self.input.control.calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
                                    time_step=time_step, n_print=n_print, delta_temp=delta_temp, delta_press=delta_press,
-                                   seed=seed, tloop=tloop, rescale_velocity=rescale_velocity)
+                                   seed=seed, tloop=tloop, rescale_velocity=rescale_velocity, langevin=langevin)
 
     # define hdf5 input and output
     def to_hdf(self, hdf=None, group_name=None):
