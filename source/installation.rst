@@ -149,23 +149,23 @@ Mybinder.org (beta)
 
 .. warning:: Mybinder.org is currently in beta stage, it should not take longer than a minute to load. We are sorry for the inconvenience.
 
-You can test pyiron on `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/pyiron-mybinder/master?urlpath=lab>`_, without the need of a local installation. This installation comes with the following limitations:
+You can test pyiron on `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/examples.git/master?urlpath=lab>`_, without the need of a local installation. This installation comes with the following limitations:
 
 * No `VASP <https://www.vasp.at>`_ license, DFT calculation can be imported and loaded but the execution is disabled.
 
 * No visualization of atomistic structures using `NGLview <https://github.com/arose/nglview>`_.
 
-* Only temporary data storage, when you leave your session on `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/pyiron-mybinder/master?urlpath=lab>`_ the environment is reset.
+* Only temporary data storage, when you leave your session on `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/examples.git/master?urlpath=lab>`_ the environment is reset.
 
 The `Mybinder service <https://mybinder.org>`_ is the most flexible way to test pyiron and get a first impression.
-`Start pyiron on MyBinder.org to test your first pyiron examples. <https://mybinder.org/v2/gh/pyiron/pyiron-mybinder/master?urlpath=lab>`_
+`Start pyiron on MyBinder.org to test your first pyiron examples. <https://mybinder.org/v2/gh/pyiron/examples.git/master?urlpath=lab>`_
 
 .. _InstallDocker:
 
 **************************
 Docker (for demonstration)
 **************************
-Commonly it is easier to install pyiron directly using anaconda following the `Local Installation (Workstation) <InstallLocal>`_ instead of installing Docker. If you already setup Docker on your system, you might still be interested in downloading the pyiron container. While `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/pyiron-mybinder/master?urlpath=lab>`_ is based on a similar `Docker <https://www.docker.com>`_ image, running the Docker image locally enables more flexibility. In particular the graphical user interface is fully supported in this version. Still the following limitations remain:
+Commonly it is easier to install pyiron directly using anaconda following the `Local Installation (Workstation) <InstallLocal>`_ instead of installing Docker. If you already setup Docker on your system, you might still be interested in downloading the pyiron container. While `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/examples.git/master?urlpath=lab>`_ is based on a similar `Docker <https://www.docker.com>`_ image, running the Docker image locally enables more flexibility. In particular the graphical user interface is fully supported in this version. Still the following limitations remain:
 
 * No `VASP <https://www.vasp.at>`_ license, DFT calculation can be imported and loaded but the execution is disabled.
 
