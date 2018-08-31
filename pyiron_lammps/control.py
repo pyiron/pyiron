@@ -61,7 +61,7 @@ run 0
 '''
         self.load_string(file_content)
 
-    def calc_minimize(self, e_tol, f_tol, max_iter, pressure, n_print):
+    def calc_minimize(self, e_tol=0.0, f_tol=1e-8, max_iter=100000, pressure=None, n_print=100):
         max_evaluations = 10 * max_iter
         if pressure is not None:
             if type(pressure) == float or type(pressure) == int:
