@@ -66,8 +66,15 @@ run 0
         if pressure is not None:
             if type(pressure) == float or type(pressure) == int:
                 pressure = pressure*np.ones(3)
-            pressure = 1.0e4*np.array(pressure)
-            self.set(fix___1=r'all box/relax x ' + str(pressure[0]) + ' y ' + str(pressure[1]) + ' z ' + str(pressure[2]) + ' couple none')
+            str_press = ''
+            for press, str_axis in zip(pressure, [' x ', ' y ', ' z ']):
+                if press is not None:
+                    str_press += str_axis+str(press*1.0e4)
+            if len(str_press) == 0:
+                raise ValueError('Pressure values cannot be three times None')
+            elif len(str_press)>1:
+                str_press += ' couple none'
+            self.set(fix___1=r'all box/relax' + str_press)
         else:
             self.remove_keys(["fix"])
         self.set(minimize=str(e_tol) + ' ' + str(f_tol) + ' ' + str(max_iter) + " " + str(max_evaluations))
