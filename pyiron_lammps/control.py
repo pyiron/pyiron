@@ -64,7 +64,10 @@ run 0
     def calc_minimize(self, e_tol, f_tol, max_iter, pressure, n_print):
         max_evaluations = 10 * max_iter
         if pressure is not None:
-            self.set(fix___1=r'all box/relax aniso ' + str(pressure))
+            if type(pressure) == float or type(pressure) == int:
+                pressure = pressure*np.ones(3)
+            pressure = 1.0e4*np.array(pressure)
+            self.set(fix___1=r'all box/relax x ' + str(pressure[0]) + ' y ' + str(pressure[1]) + ' z ' + str(pressure[2]) + ' couple none')
         else:
             self.remove_keys(["fix"])
         self.set(minimize=str(e_tol) + ' ' + str(f_tol) + ' ' + str(max_iter) + " " + str(max_evaluations))
@@ -92,7 +95,7 @@ run 0
         if seed is None:
             seed = np.random.randint(99999)
         if pressure is not None:
-            pressure = float(pressure)  # TODO; why needed?
+            pressure = float(pressure)*1.0e4  # TODO; why needed?
             if delta_press is None:
                 delta_press = delta_temp*10
             if temperature is None or temperature == 0.0:
