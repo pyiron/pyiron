@@ -1058,7 +1058,7 @@ class Atoms(object):
     @staticmethod
     def _ngl_write_atom(num, species, group, num2, coords=None, c0=None, c1=None):
         x, y, z = coords
-        return 'ATOM {:>6} {:>2} {:>5} {:>5} {:10.3f} {:7.3f} {:7.3f} {:5.2f} {:5.2f} \n'.format(num, species, group, num2, x, y, z, c0, c1)
+        return 'ATOM {:>6} {:>4} {:>4} {:>5} {:10.3f} {:7.3f} {:7.3f} {:5.2f} {:5.2f} {:>11} \n'.format(num, species, group, num2, x, y, z, c0, c1, species)
     
     def _ngl_write_structure(self, elements, positions, cell, custom_array=None):
         pdb_str = self._ngl_write_cell(cell[0,0], cell[1,1], cell[2,2])
