@@ -238,7 +238,7 @@ class Lammps(AtomisticGenericJob):
 
     def convergence_check(self):
         if self._generic_input['calc_mode'] == 'minimize':
-            if self._generic_input['max_iter']+1 <= len(self['output/generic/energy_tot']) or 
+            if self._generic_input['max_iter']+1 <= len(self['output/generic/energy_tot']) or \
                     [l for l in self['log.lammps'] if 'linesearch alpha is zero' in l] is not []:
                 return False
         else:
