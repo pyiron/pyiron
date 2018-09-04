@@ -53,7 +53,7 @@ script:
 
 deploy:
   provider: pages
-  repo: pyiron/pyiron.github.io.git
+  repo: pyiron/pyiron.github.io
   target_branch: master
   skip_cleanup: true
   github_token: $GH_TOKEN
