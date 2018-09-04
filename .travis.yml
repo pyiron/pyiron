@@ -23,11 +23,11 @@ script:
   - git submodule foreach git pull origin master
   - cd .. 
   - git clone --recurse-submodules https://github.com/pyiron/MetaRepo.git
-  # - git clone https://${GH_USER}:${GH_TOKEN}@github.com/pyiron/pyiron.github.io.git
+  - git clone https://${GH_USER}:${GH_TOKEN}@github.com/pyiron/pyiron.github.io.git
   - git clone https://github.com/pyiron/pyiron-resources.git
-  - mkdir pyiron.github.io
+  # - mkdir pyiron.github.io
   - cd pyiron.github.io
-  # - git rm -r *
+  - git rm -r *
   - touch .nojekyll
   - echo -e "[DEFAULT]\nPROJECT_PATHS = $PWD\nRESOURCE_PATHS = $PWD/pyiron-resources" > ~/.pyiron
   - echo -e "# Build Status\n\nThis repository is automatically updated based on the changes in https://github.com/pyiron/pyiron_docs .\n[![Build Status](https://travis-ci.org/pyiron/pyiron_docs.svg?branch=master)](https://travis-ci.org/pyiron/pyiron_docs)" > README.md
@@ -45,18 +45,18 @@ script:
   - sphinx-build -b html ./ ../pyiron.github.io
   - cd ..
   
-# after_success:
-#   - cd pyiron.github.io
-#   - git add -A 
-#   - git commit -m "${TRAVIS_COMMIT_MESSAGE}" 
-#   - git push
+after_success:
+  - cd pyiron.github.io
+  - git add -A 
+  - git commit -m "${TRAVIS_COMMIT_MESSAGE}" 
+  - git push
 
-deploy:
-  provider: pages
-  repo: pyiron/pyiron.github.io.git
-  target_branch: master
-  skip_cleanup: true
-  github_token: $GH_TOKEN
-  local_dir: ../pyiron.github.io
-  on:
-     branch: master
+# deploy:
+#   provider: pages
+#   repo: pyiron/pyiron.github.io.git
+#   target_branch: master
+#   skip_cleanup: true
+#   github_token: $GH_TOKEN
+#   local_dir: ../pyiron.github.io
+#   on:
+#      branch: master
