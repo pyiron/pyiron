@@ -241,6 +241,8 @@ class Lammps(AtomisticGenericJob):
             if self._generic_input['max_iter']+1 <= len(self['output/generic/energy_tot']) or \
                     len([l for l in self['log.lammps'] if 'linesearch alpha is zero' in l]) != 0:
                 return False
+            else: 
+                return True
         else:
             return True
 
