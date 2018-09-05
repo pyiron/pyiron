@@ -1061,16 +1061,23 @@ class Atoms(object):
         return 'ATOM {:>6} {:>4} {:>4} {:>5} {:10.3f} {:7.3f} {:7.3f} {:5.2f} {:5.2f} {:>11} \n'.format(num, species, group, num2, x, y, z, c0, c1, species)
     
     def _ngl_write_structure(self, elements, positions, cell, custom_array=None):
-        pdb_str = self._ngl_write_cell(cell[0,0], cell[1,1], cell[2,2])
+        from ase.geometry import cell_to_cellpar, cellpar_to_cell
+        cellpar = cell_to_cellpar(cell)
+        exportedcell = cellpar_to_cell(cellpar)
+        rotation = np.linalg.solve(cell, exportedcell)
+    
+        pdb_str = _ngl_write_cell(cellpar[0], cellpar[1], cellpar[2], cellpar[3], cellpar[4], cellpar[5])
         pdb_str += 'MODEL     1\n'
         if custom_array is None:
             custom_array = np.ones(len(positions))
         else:
             custom_array = (custom_array-np.min(custom_array))/(np.max(custom_array)-np.min(custom_array))
         for i, p in enumerate(positions):
-            pdb_str += self._ngl_write_atom(i, elements[i], group=elements[i], num2=i, coords=p, c0=custom_array[i], c1=0.0)
+            if rotation is not None:
+                p = p.dot(rotation)
+            pdb_str += _ngl_write_atom(i, elements[i], group=elements[i], num2=i, coords=p, c0=custom_array[i], c1=0.0)
         pdb_str += 'ENDMDL \n'
-        return pdb_str 
+        return pdb_str
     
     def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5, background='white', color_scheme=None, show_axes=True, custom_array=None):
         """
