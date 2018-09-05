@@ -1464,10 +1464,12 @@ class Potcar(GenericParameters):
         self.electrons_per_atom_lst = list()
         self.max_cutoff_lst = list()
         self.el_path_lst = list()
+        self.el_path_dict = dict()
 
     def potcar_set_structure(self, structure):
         self._structure = structure
         self._set_potential_paths()
+        self._set_default_path_dict()
 
     def modify(self, **modify):
         if "xc" in modify:
@@ -1477,6 +1479,13 @@ class Potcar(GenericParameters):
         GenericParameters.modify(self, **modify)
         if self._structure is not None:
             self._set_potential_paths()
+
+    def _set_default_path_dict(self):
+        vasp_potentials = VaspPotentialFile(xc=self.get("xc"))
+        for sp in self._structure.get_species_symbols():
+            key = vasp_potentials.find_default(sp).Species.values[0][0]
+            val = vasp_potentials.find_default(sp).Name.values[0]
+            self[key] = val
 
     def _set_potential_paths(self):
         element_list = self._structure.get_species_symbols()  # .ElementList.getSpecies()
