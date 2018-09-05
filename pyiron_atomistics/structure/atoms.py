@@ -1061,16 +1061,23 @@ class Atoms(object):
         return 'ATOM {:>6} {:>4} {:>4} {:>5} {:10.3f} {:7.3f} {:7.3f} {:5.2f} {:5.2f} {:>11} \n'.format(num, species, group, num2, x, y, z, c0, c1, species)
     
     def _ngl_write_structure(self, elements, positions, cell, custom_array=None):
-        pdb_str = self._ngl_write_cell(cell[0,0], cell[1,1], cell[2,2])
+        from ase.geometry import cell_to_cellpar, cellpar_to_cell
+        cellpar = cell_to_cellpar(cell)
+        exportedcell = cellpar_to_cell(cellpar)
+        rotation = np.linalg.solve(cell, exportedcell)
+    
+        pdb_str = _ngl_write_cell(cellpar[0], cellpar[1], cellpar[2], cellpar[3], cellpar[4], cellpar[5])
         pdb_str += 'MODEL     1\n'
         if custom_array is None:
             custom_array = np.ones(len(positions))
         else:
             custom_array = (custom_array-np.min(custom_array))/(np.max(custom_array)-np.min(custom_array))
         for i, p in enumerate(positions):
-            pdb_str += self._ngl_write_atom(i, elements[i], group=elements[i], num2=i, coords=p, c0=custom_array[i], c1=0.0)
+            if rotation is not None:
+                p = p.dot(rotation)
+            pdb_str += _ngl_write_atom(i, elements[i], group=elements[i], num2=i, coords=p, c0=custom_array[i], c1=0.0)
         pdb_str += 'ENDMDL \n'
-        return pdb_str 
+        return pdb_str
     
     def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5, background='white', color_scheme=None, show_axes=True, custom_array=None):
         """
@@ -1114,6 +1121,41 @@ class Atoms(object):
         view.camera = camera
         view.background = background
         return view
+    
+    def plot3d_ase(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5, background='white', color_scheme='element', show_axes=True):
+         """
+         Possible color schemes: 
+           " ", "picking", "random", "uniform", "atomindex", "residueindex",
+           "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
+           "hydrophobicity", "value", "volume", "occupancy"
+         Returns:
+         """
+         try:  # If the graphical packages are not available, the GUI will not work.
+             import nglview
+         except ImportError:
+             raise ImportError("The package nglview needs to be installed for the plot3d() function!")
+         # Always visualize the parent basis
+         parent_basis = self.get_parent_basis()
+         view = nglview.show_ase(parent_basis)
+         if spacefill:
+             view.add_spacefill(radius_type='vdw', color_scheme=color_scheme, radius=particle_size)
+             # view.add_spacefill(radius=1.0)
+             view.remove_ball_and_stick()
+         else:
+             view.add_ball_and_stick()
+         if show_cell:
+             if parent_basis.cell is not None:
+                 view.add_unitcell()
+         if show_axes:
+             view.shape.add_arrow([-2, -2, -2], [2, -2, -2], [1, 0, 0], 0.5)
+             view.shape.add_arrow([-2, -2, -2], [-2, 2, -2], [0, 1, 0], 0.5)
+             view.shape.add_arrow([-2, -2, -2], [-2, -2, 2], [0, 0, 1], 0.5)
+         if camera!='perspective' and camera!='orthographic':
+             print('Only perspective or orthographic is permitted')
+             return None
+         view.camera = camera
+         view.background = background
+         return view
     
     def pos_xyz(self):
         """
