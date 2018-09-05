@@ -979,6 +979,8 @@ class Vasp(GenericDFTJob):
         """
         if self.structure is None:
             raise ValueError("Can't list potentials unless a structure is set")
+        else:
+            return VaspPotentialFile(xc=self.input.potcar['xc']).find(self.structure.get_species_symbols().tolist())
 
     def __del__(self):
         pass
