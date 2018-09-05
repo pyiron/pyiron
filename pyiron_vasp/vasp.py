@@ -1468,8 +1468,8 @@ class Potcar(GenericParameters):
 
     def potcar_set_structure(self, structure):
         self._structure = structure
-        self._set_potential_paths()
         self._set_default_path_dict()
+        self._set_potential_paths()
 
     def modify(self, **modify):
         if "xc" in modify:
@@ -1478,6 +1478,7 @@ class Potcar(GenericParameters):
                 raise ValueError("xc type not implemented: " + xc_type)
         GenericParameters.modify(self, **modify)
         if self._structure is not None:
+            self._set_default_path_dict()
             self._set_potential_paths()
 
     def _set_default_path_dict(self):
