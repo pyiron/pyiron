@@ -1474,18 +1474,26 @@ class Potcar(GenericParameters):
     def modify(self, **modify):
         if "xc" in modify:
             xc_type = modify['xc']
+            self._set_default_path_dict()
             if xc_type not in self.pot_path_dict:
                 raise ValueError("xc type not implemented: " + xc_type)
         GenericParameters.modify(self, **modify)
         if self._structure is not None:
-            self._set_default_path_dict()
             self._set_potential_paths()
 
     def _set_default_path_dict(self):
         vasp_potentials = VaspPotentialFile(xc=self.get("xc"))
-        for sp in self._structure.get_species_symbols():
-            key = vasp_potentials.find_default(sp).Species.values[0][0]
-            val = vasp_potentials.find_default(sp).Name.values[0]
+        for i, el_obj in enumerate(self._structure.get_species_objects()):
+            if isinstance(el_obj.Parent, str):
+                el = el_obj.Parent
+            else:
+                el = el_obj.Abbreviation
+            if isinstance(el_obj.tags, dict):
+                if 'pseudo_potcar_file' in el_obj.tags.keys():
+                    new_element = el_obj.tags['pseudo_potcar_file']
+                    vasp_potentials.add_new_element(parent_element=el, new_element=new_element)
+            key = vasp_potentials.find_default(el).Species.values[0][0]
+            val = vasp_potentials.find_default(el).Name.values[0]
             self[key] = val
 
     def _set_potential_paths(self):
