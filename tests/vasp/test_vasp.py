@@ -55,8 +55,7 @@ class TestVasp(unittest.TestCase):
     def test_list_potenitals(self):
         self.assertRaises(ValueError, self.job.list_potentials)
         atoms = CrystalStructure("Pt", BravaisBasis="fcc", a=3.98)
-        self.job.structure = atoms
-        self.assertIsInstance(self.job.list_potentials(), VaspPotentialFile)
+
 
     def tearDown(self):
         pass
