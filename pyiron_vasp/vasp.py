@@ -970,6 +970,16 @@ class Vasp(GenericDFTJob):
         elif direction:
             self.input.incar['I_CONSTRAINED_M'] = 1
 
+    def list_potentials(self):
+        """
+        Lists all the possible POTCAR files for the elements in the structure depending on the XC functional
+
+        Returns:
+            pyiron_vasp.potential.VaspPotentialFile: A pandas datafrome like object
+        """
+        if self.structure is None:
+            raise ValueError("Can't list potentials unless a structure is set")
+
     def __del__(self):
         pass
 
