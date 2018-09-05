@@ -1451,6 +1451,7 @@ class Potcar(GenericParameters):
         self._structure = None
         self.electrons_per_atom_lst = list()
         self.max_cutoff_lst = list()
+        self.el_path_lst = list()
 
     def potcar_set_structure(self, structure):
         self._structure = structure
@@ -1469,7 +1470,7 @@ class Potcar(GenericParameters):
         element_list = self._structure.get_species_symbols()  # .ElementList.getSpecies()
         object_list = self._structure.get_species_objects()
         s.logger.debug("element list: {0}".format(element_list))
-        self.el_path_lst = []
+        self.el_path_lst = list()
         try:
             xc = self.get("xc")
         except tables.exceptions.NoSuchNodeError:
