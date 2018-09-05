@@ -1482,6 +1482,8 @@ class Potcar(GenericParameters):
             self._set_potential_paths()
 
     def _set_default_path_dict(self):
+        if self._structure is None:
+            return
         vasp_potentials = VaspPotentialFile(xc=self.get("xc"))
         for i, el_obj in enumerate(self._structure.get_species_objects()):
             if isinstance(el_obj.Parent, str):
