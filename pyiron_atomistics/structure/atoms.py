@@ -1066,7 +1066,7 @@ class Atoms(object):
         exportedcell = cellpar_to_cell(cellpar)
         rotation = np.linalg.solve(cell, exportedcell)
     
-        pdb_str = _ngl_write_cell(cellpar[0], cellpar[1], cellpar[2], cellpar[3], cellpar[4], cellpar[5])
+        pdb_str = self._ngl_write_cell(cellpar[0], cellpar[1], cellpar[2], cellpar[3], cellpar[4], cellpar[5])
         pdb_str += 'MODEL     1\n'
         if custom_array is None:
             custom_array = np.ones(len(positions))
@@ -1075,7 +1075,7 @@ class Atoms(object):
         for i, p in enumerate(positions):
             if rotation is not None:
                 p = p.dot(rotation)
-            pdb_str += _ngl_write_atom(i, elements[i], group=elements[i], num2=i, coords=p, c0=custom_array[i], c1=0.0)
+            pdb_str += self._ngl_write_atom(i, elements[i], group=elements[i], num2=i, coords=p, c0=custom_array[i], c1=0.0)
         pdb_str += 'ENDMDL \n'
         return pdb_str
     
