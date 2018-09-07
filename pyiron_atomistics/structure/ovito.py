@@ -5,7 +5,7 @@
 import numpy as np
 from ovito import ObjectNode
 from ovito.data import Bonds, DataCollection
-from ovito.modifiers import CreateBondsModifier, CommonNeighborAnalysisModifier, CentroSymmetryModifier
+from ovito.modifiers import CreateBondsModifier, CommonNeighborAnalysisModifier, CentroSymmetryModifier, VoronoiAnalysisModifier
 
 __author__ = "Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
@@ -49,3 +49,15 @@ def analyse_ovito_centro_symmetry(atoms, num_neighbors=12):
     node.modifiers.append(CentroSymmetryModifier(num_neighbors = num_neighbors))
     output = node.compute()
     return output.particle_properties['Centrosymmetry'].array
+
+def analyse_ovito_voronoi_volume(atoms):
+    """
+    Args:
+        mode (str): ['total', 'numeric', 'str']
+    """
+    data = DataCollection.create_from_ase_atoms(atoms.copy())
+    node = ObjectNode()
+    node.source = data
+    node.modifiers.append(VoronoiAnalysisModifier())
+    output = node.compute()
+    return output.particle_properties['Atomic Volume'].array
