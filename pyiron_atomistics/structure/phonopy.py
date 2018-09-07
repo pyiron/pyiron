@@ -15,10 +15,16 @@ __status__ = "development"
 __date__ = "Sep 1, 2017"
 
 
-def analyse_phonopy_equivalent_atoms(atoms):
+def analyse_phonopy_equivalent_atoms(atoms, symprec=1e-5, angle_tolerance=-1.0):
     """
-    Args:
-        mode (str): ['total', 'numeric', 'str']
+    Args: (read phonopy.structure.spglib for more details)
+        symprec:
+            float: Symmetry search tolerance in the unit of length.
+        angle_tolerance:
+            float: Symmetry search tolerance in the unit of angle deg.
+                If the value is negative, an internally optimized routine
+                is used to judge symmetry.
+
     """
 
     positions = atoms.positions
@@ -31,5 +37,5 @@ def analyse_phonopy_equivalent_atoms(atoms):
     for i in range(3):
         xs = np.dot(np.array(positions), np.linalg.inv(np.array(cell)))
         unitcell = PhonopyAtoms(symbols=types, cell=cell, scaled_positions=xs)
-        ops = spg.get_symmetry(unitcell)
+        ops = spg.get_symmetry(unitcell, symprec=1e-5, angle_tolerance=-1.0)
     return ops['equivalent_atoms']
