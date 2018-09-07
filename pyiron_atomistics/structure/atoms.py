@@ -1059,7 +1059,7 @@ class Atoms(object):
 
     @staticmethod
     def _ngl_write_cell(a1, a2, a3, f1=90, f2=90, f3=90):
-        return 'CRYST1 {:8.3f} {:8.3f} {:8.3f}  90.00  90.00  90.00 P 1 \n'.format(a1, a2, a3)
+        return 'CRYST1 {:8.3f} {:8.3f} {:8.3f}  {:7.2f} {:7.2f} {:7.2f} P 1 \n'.format(a1, a2, a3, f1, f2, f3)
     
     @staticmethod
     def _ngl_write_atom(num, species, group, num2, coords=None, c0=None, c1=None):
