@@ -1057,6 +1057,12 @@ class Atoms(object):
         warnings.filterwarnings("ignore")
         return analyse_ovito_voronoi_volume(atoms)
 
+    def analyse_phonopy_equivalent_atoms(atoms):
+        import warnings
+        from pyiron_atomistics.structure.phonopy import analyse_phonopy_equivalent_atoms
+        warnings.filterwarnings("ignore")
+        return analyse_phonopy_equivalent_atoms(atoms)
+
     @staticmethod
     def _ngl_write_cell(a1, a2, a3, f1=90, f2=90, f3=90):
         return 'CRYST1 {:8.3f} {:8.3f} {:8.3f}  {:7.2f} {:7.2f} {:7.2f} P 1 \n'.format(a1, a2, a3, f1, f2, f3)
