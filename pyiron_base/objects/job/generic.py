@@ -9,6 +9,7 @@ from datetime import datetime
 import os
 import sys
 import posixpath
+import psutil
 from pyiron_base.core.settings.generic import Settings
 from pyiron_base.objects.job.executable import Executable
 from pyiron_base.objects.job.jobstatus import JobStatus
@@ -454,6 +455,35 @@ class GenericJob(JobCore):
         """
         return self.copy_to(project=project, new_job_name=new_job_name, input_only=True, new_database_entry=False)
 
+    def _kill_child(self):
+        if not self.server.run_mode.queue and (self.status.running or self.status.submitted):
+            for proc in psutil.process_iter():
+                try:
+                    pinfo = proc.as_dict(attrs=['pid', 'cwd'])
+                except psutil.NoSuchProcess:
+                    pass
+                else:
+                    if pinfo['cwd'] is not None and pinfo['cwd'].startswith(self.working_directory):
+                        job_process = psutil.Process(pinfo['pid'])
+                        job_process.kill()     
+    
+    def remove_child(self):
+        """
+        internal function to remove command that removes also child jobs.
+        Do never use this command, since it will destroy the integrity of your project.
+        """
+        self._kill_child()
+        super(GenericJob, self).remove_child()
+    
+    def kill(self): 
+        if self.status.running or self.status.submitted: 
+            master_id, parent_id = self.master_id, self.parent_id
+            self.remove()
+            self.reset_job_id()
+            self.master_id, self.parent_id = master_id, parent_id
+        else: 
+            raise ValueError('The kill() function is only available during the execution of the job.')
+    
     def validate_ready_to_run(self):
         """
         Validate that the calculation is ready to be executed. By default no generic checks are performed, but one could
