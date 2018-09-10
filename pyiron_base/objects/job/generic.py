@@ -456,7 +456,7 @@ class GenericJob(JobCore):
         return self.copy_to(project=project, new_job_name=new_job_name, input_only=True, new_database_entry=False)
 
     def kill(self): 
-        if self.job_status.running or self.job_status.submitted: 
+        if self.status.running or self.status.submitted: 
             if not self.server.run_mode.queue:
                 for proc in psutil.process_iter():
                     try:
@@ -467,12 +467,12 @@ class GenericJob(JobCore):
                         if pinfo['cwd'] == self.working_directory:
                             job_process = psutil.Process(pinfo['pid'])
                             job_process.kill()
-                master_id, parent_id = self.master_id, self.parent_id
-                self.remove()
-                self.reset_job_id()
-                self.master_id, self.parent_id = master_id, parent_id
             else:
                 self.project.queue_delete_job(self)
+            master_id, parent_id = self.master_id, self.parent_id
+            self.remove()
+            self.reset_job_id()
+            self.master_id, self.parent_id = master_id, parent_id
         else: 
             raise ValueError('The kill() function is only available during the execution of the job.')
     
