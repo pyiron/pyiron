@@ -1306,15 +1306,18 @@ class Atoms(object):
             else:
                 neighbors = tree.query(self.positions, k=num_neighbors, distance_upper_bound=cutoff)
 
-            distances = neighbors[0]
-            neighbor_obj.indices = []
-            neighbor_obj.distances = []
-            indices = list(map(lambda x: filter(f_ind, x), neighbors[1]))
-            for i, ind in enumerate(indices):
-                ind = list(ind)
-                neighbor_obj.indices = np.append(neighbor_obj.indices, ind[i_start:])
-                neighbor_obj.distances = np.append(neighbor_obj.distances, distances[i][i_start:len(ind)])
-            neighbor_obj.indices = neighbor_obj.indices.astype(int)
+            d_lst, ind_lst, v_lst = [], [], []
+            ic = 0
+            for d_i, ind_i in zip(neighbors[0], neighbors[1]):
+                ff = (ind_i < len(self)) & (ind_i != ic)
+                ind_l = ind_i[ff]
+                ind_lst.append(ind_l)
+                d_lst.append(d_i[ff])
+                v_lst.append(self.positions[ind_l] - self.positions[ic])
+                ic += 1
+            neighbor_obj.indices = ind_lst
+            neighbor_obj.distances = d_lst
+            neighbor_obj.vecs = v_lst
             return neighbor_obj
 
         # include periodic boundaries
@@ -2476,7 +2479,11 @@ class Atoms(object):
         # First move the molecule to the origin In contrast to MATLAB,
         # numpy broadcasts the smaller array to the larger row-wise,
         # so there is no need to play with the Kronecker product.
-        rcoords = self.positions - center
+        if self._is_scaled:
+            rcoords = self.scaled_positions - center
+        else:
+            rcoords = self.positions - center
+
         # First Euler rotation about z in matrix form
         d = np.array(((cos(phi), sin(phi), 0.),
                       (-sin(phi), cos(phi), 0.),
@@ -2494,7 +2501,10 @@ class Atoms(object):
         # Do the rotation
         rcoords = np.dot(a, np.transpose(rcoords))
         # Move back to the rotation point
-        self.positions = np.transpose(rcoords) + center
+        if self._is_scaled:
+            self.scaled_positions = np.transpose(rcoords) + center
+        else:
+            self.positions = np.transpose(rcoords) + center
 
     def set_scaled_positions(self, scaled):
         """
