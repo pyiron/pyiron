@@ -457,6 +457,7 @@ class GenericJob(JobCore):
 
     def kill(self): 
         if self.status.running or self.status.submitted: 
+            master_id, parent_id = self.master_id, self.parent_id
             if not self.server.run_mode.queue:
                 for proc in psutil.process_iter():
                     try:
@@ -467,10 +468,8 @@ class GenericJob(JobCore):
                         if pinfo['cwd'] == self.working_directory:
                             job_process = psutil.Process(pinfo['pid'])
                             job_process.kill()
-            else:
-                self.project.queue_delete_job(self)
-            master_id, parent_id = self.master_id, self.parent_id
-            self.remove()
+            else:          
+                self.remove()
             self.reset_job_id()
             self.master_id, self.parent_id = master_id, parent_id
         else: 
