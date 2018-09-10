@@ -463,7 +463,7 @@ class GenericJob(JobCore):
                 except psutil.NoSuchProcess:
                     pass
                 else:
-                    if pinfo['cwd'].startswith(self.working_directory+os.sep):
+                    if pinfo['cwd'] is not None and pinfo['cwd'].startswith(self.working_directory):
                         job_process = psutil.Process(pinfo['pid'])
                         job_process.kill()     
     
