@@ -467,9 +467,8 @@ class GenericJob(JobCore):
                     else:
                         if pinfo['cwd'] == self.working_directory:
                             job_process = psutil.Process(pinfo['pid'])
-                            job_process.kill()
-            else:          
-                self.remove()
+                            job_process.kill()     
+            self.remove()
             self.reset_job_id()
             self.master_id, self.parent_id = master_id, parent_id
         else: 
