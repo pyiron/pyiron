@@ -16,6 +16,7 @@ from pyiron_base.objects.job.jobstatus import JobStatus
 from pyiron_base.objects.job.core import JobCore
 from pyiron_base.objects.server.generic import Server
 import subprocess
+import shutil
 import warnings
 
 """
@@ -441,6 +442,11 @@ class GenericJob(JobCore):
             new_generic_job.job_name = new_job_name
         return new_generic_job
 
+    def copy_file_to_working_directory(self, file): 
+        if not os.path.exists(self.working_directory):
+            self._create_working_directory()
+        shutil.copy(file, self.working_directory)
+    
     def copy_template(self, project, new_job_name=None):
         """
         Copy the content of the job including the HDF5 file but without the output data to a new location
