@@ -9,6 +9,7 @@ from datetime import datetime
 import os
 import sys
 import posixpath
+import psutil
 from pyiron_base.core.settings.generic import Settings
 from pyiron_base.objects.job.executable import Executable
 from pyiron_base.objects.job.jobstatus import JobStatus
@@ -454,6 +455,27 @@ class GenericJob(JobCore):
         """
         return self.copy_to(project=project, new_job_name=new_job_name, input_only=True, new_database_entry=False)
 
+    def kill(self): 
+        if self.job_status.running or self.job_status.submitted: 
+            if not self.server.run_mode.queue:
+                for proc in psutil.process_iter():
+                    try:
+                        pinfo = proc.as_dict(attrs=['pid', 'name', 'username', 'cwd'])
+                    except psutil.NoSuchProcess:
+                        pass
+                    else:
+                        if pinfo['cwd'] == self.working_directory:
+                            job_process = psutil.Process(pinfo['pid'])
+                            job_process.kill()
+                master_id, parent_id = self.master_id, self.parent_id
+                self.remove()
+                self.reset_job_id()
+                self.master_id, self.parent_id = master_id, parent_id
+            else:
+                self.project.queue_delete_job(self)
+        else: 
+            raise ValueError('The kill() function is only available during the execution of the job.')
+    
     def validate_ready_to_run(self):
         """
         Validate that the calculation is ready to be executed. By default no generic checks are performed, but one could
