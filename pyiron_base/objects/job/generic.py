@@ -455,19 +455,29 @@ class GenericJob(JobCore):
         """
         return self.copy_to(project=project, new_job_name=new_job_name, input_only=True, new_database_entry=False)
 
+    def _kill_child(self):
+        if not self.server.run_mode.queue and (self.status.running or self.status.submitted):
+            for proc in psutil.process_iter():
+                try:
+                    pinfo = proc.as_dict(attrs=['pid', 'cwd'])
+                except psutil.NoSuchProcess:
+                    pass
+                else:
+                    if pinfo['cwd'].startswith(self.working_directory+os.sep):
+                        job_process = psutil.Process(pinfo['pid'])
+                        job_process.kill()     
+    
+    def remove_child(self):
+        """
+        internal function to remove command that removes also child jobs.
+        Do never use this command, since it will destroy the integrity of your project.
+        """
+        self._kill_child()
+        super(GenericJob, self).remove_child()
+    
     def kill(self): 
         if self.status.running or self.status.submitted: 
             master_id, parent_id = self.master_id, self.parent_id
-            if not self.server.run_mode.queue:
-                for proc in psutil.process_iter():
-                    try:
-                        pinfo = proc.as_dict(attrs=['pid', 'name', 'username', 'cwd'])
-                    except psutil.NoSuchProcess:
-                        pass
-                    else:
-                        if pinfo['cwd'] == self.working_directory:
-                            job_process = psutil.Process(pinfo['pid'])
-                            job_process.kill()     
             self.remove()
             self.reset_job_id()
             self.master_id, self.parent_id = master_id, parent_id
