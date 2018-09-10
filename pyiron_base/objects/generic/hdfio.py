@@ -733,7 +733,9 @@ class FileHDFio(object):
                     item_abs_lst = os.path.normpath(os.path.join(self.h5_path, item)).replace('\\', '/').split("/")
                     # print(item, item_abs_lst)
                     # item_abs_lst = os.path.normpath(os.path.join(self.h5_path, item)).replace('\\', '/').split("/")
-                if item_abs_lst[1] == '..':  # leaving the HDF5 file
+                if item_abs_lst[1] == '' and len(item_abs_lst) == 2:  # leaving the HDF5 file
+                    return self._create_project_from_hdf5()
+                elif item_abs_lst[1] == '':
                     return self._create_project_from_hdf5()['/'.join(item_abs_lst[2:])]
                 else:
                     hdf_object = self.copy()
