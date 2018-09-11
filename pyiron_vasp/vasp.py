@@ -79,11 +79,20 @@ class Vasp(GenericDFTJob):
         self.input = Input()
         self.input.incar["SYSTEM"] = self.job_name
         self._output_parser = Output()
-        self._potential = VaspPotentialFile(xc=self.input.potcar["xc"])
+        # self._potential = VaspPotentialFile(xc=self.input.potcar["xc"])
+        self._potential = None
 
     @property
     def potential(self):
-        return self._potential
+        if self.structure is None:
+            return self._potential
+        else:
+            try:
+                vasp_pot = VaspPotentialFile(xc=self.input.potcar["xc"])
+                sp_list = [sp.Abbreviation for sp in self.structure.get_species_objects()]
+                return vasp_pot.find_default(sp_list)
+            except ValueError:
+                return self._potential
 
     @potential.setter
     def potential(self, val):
