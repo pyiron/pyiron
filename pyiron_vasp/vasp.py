@@ -79,6 +79,15 @@ class Vasp(GenericDFTJob):
         self.input = Input()
         self.input.incar["SYSTEM"] = self.job_name
         self._output_parser = Output()
+        self._potential = VaspPotentialFile(xc=self.input.potcar["xc"])
+
+    @property
+    def potential(self):
+        return self._potential
+
+    @potential.setter
+    def potential(self, val):
+        self._potential = val
 
     @property
     def plane_wave_cutoff(self):
