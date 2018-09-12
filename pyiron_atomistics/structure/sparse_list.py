@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
+# import os
 import sys
 import copy
 import numpy as np
@@ -240,6 +241,7 @@ class SparseList(object):
         if self._default is None:
             return "[" + " ".join([str(el) for el in self]) + "]"
         else:
+            # return "[" + " ".join([str(el) + os.sep for el in self.list()]) + "]"
             return "[" + " ".join([str(el) for el in self.list()]) + "]"
 
     def __repr__(self):
