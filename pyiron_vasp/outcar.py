@@ -397,67 +397,6 @@ class Outcar(object):
         return scf_energies
 
     @staticmethod
-    def get_magnetization_old(filename="OUTCAR"):
-        """
-        Gets the magnetization
-
-        Args:
-            filename (str): Filename of the OUTCAR file to parse
-
-        Returns:
-            list: A list with the mgnetization values
-        """
-        ionic_trigger = "FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)"
-        electronic_trigger = "eigenvalue-minimisations"
-        nion_trigger = "NIONS ="
-        mag_lst = list()
-        local_spin_trigger = False
-        n_atoms = None
-        with open(filename, 'r') as f:
-            lines = f.readlines()
-            istep_energies = list()
-            final_magmom_lst = list()
-            for i, line in enumerate(lines):
-                line = line.strip()
-                if ionic_trigger in line:
-                    mag_lst.append(np.array(istep_energies))
-                    istep_energies = list()
-                if 'Atomic Wigner-Seitz radii' in line:
-                    local_spin_trigger = True
-                if electronic_trigger in line:
-                    line = lines[i + 2].split('magnetization')[-1]
-                    if line != ' \n':
-                        spin_str_lst = line.split()
-                        spin_str_len = len(spin_str_lst)
-                        if spin_str_len == 1:
-                            ene = float(line)
-                        elif spin_str_len == 3:
-                            ene = [float(spin_str_lst[0]), float(spin_str_lst[1]), float(spin_str_lst[2])]
-                        else:
-                            warnings.warn('Unrecognized spin configuration.')
-                            return mag_lst, final_magmom_lst
-                        istep_energies.append(ene)
-                if n_atoms is None:
-                    if nion_trigger in line:
-                        n_atoms = int(line.split(nion_trigger)[-1])
-                if local_spin_trigger:
-                    try:
-                        if 'magnetization (z)' in line:
-                            # Maybe a more efficient parser
-                            shift_1 = 11
-                            shift_2 = 4
-                            final_magmom_lst.append([[float(lines[i - shift_1 - 2 * atom_index].split()[-1]),
-                                                      float(lines[i - shift_2 - atom_index].split()[-1]),
-                                                      float(lines[i + shift_2 + atom_index].split()[-1])]
-                                                     for atom_index in range(n_atoms)])
-                        elif 'magnetization (x)' in line and 'magnetization (y)' not in lines[i + 4 + n_atoms + 3]:
-                            final_magmom_lst.append([float(lines[i + 4 + atom_index].split()[-1]) for atom_index in
-                                                     range(n_atoms)])
-                    except ValueError:
-                        pass
-        return mag_lst, final_magmom_lst
-
-    @staticmethod
     def get_magnetization(filename="OUTCAR"):
         """
         Gets the magnetization
