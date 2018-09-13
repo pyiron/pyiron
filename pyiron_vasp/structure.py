@@ -196,21 +196,21 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
             atoms_dict["positions"] *= (-atoms_dict["scaling_factor"]) ** (1. / 3.)
 
     assert (len(atoms_dict["positions"]) == n_atoms)
-    forces = list()
+    velocities = list()
     if read_velocities:
-        forces_index = position_index + n_atoms + 1
-        for i in range(forces_index, forces_index + n_atoms):
+        velocity_index = position_index + n_atoms + 1
+        for i in range(velocity_index, velocity_index + n_atoms):
             vec = list()
             for j in range(3):
                 vec.append(float(string[i].split()[j]))
-            forces.append(vec)
-        assert (len(forces) == n_atoms)
+            velocities.append(vec)
+        assert (len(velocities) == n_atoms)
         atoms = _dict_to_atoms(atoms_dict, species_list=species_list)
         if atoms_dict["selective_dynamics"]:
             selective_dynamics = np.array(selective_dynamics)
             atoms.add_tag(selective_dynamics=[True, True, True])
             atoms.selective_dynamics[:] = selective_dynamics
-        return atoms, forces
+        return atoms, velocities
     else:
         atoms = _dict_to_atoms(atoms_dict, species_list=species_list)
         if atoms_dict["selective_dynamics"]:
