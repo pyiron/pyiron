@@ -293,7 +293,10 @@ class GenericJob(JobCore):
 
     @restart_file_dict.setter
     def restart_file_dict(self, val):
-        self._restart_file_dict = val
+        if not isinstance(val, dict):
+            raise ValueError("restart_file_dict should be a dictionary!")
+        else:
+            self._restart_file_dict = val
 
     @property
     def job_type(self):
