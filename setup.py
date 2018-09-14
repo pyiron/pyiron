@@ -39,6 +39,7 @@ setup(
                       'numpy',
                       'pandas',
                       'pathlib2',
+                      'psutil',
                       'six',
                       'sqlalchemy',
                       'tables'],
