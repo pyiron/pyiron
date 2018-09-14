@@ -279,7 +279,7 @@ class GenericJob(JobCore):
                 assert(os.path.isfile(f))
                 self.restart_file_list.append(f)
                 actual_name = f.split("/")[-1]
-                self.restart_file_dict[actual_name] = actual_name
+                self._restart_file_dict[actual_name] = actual_name
             except AssertionError:
                 raise IOError("File: {} does not exist".format(f))
 
