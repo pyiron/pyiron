@@ -3,11 +3,11 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
-import copy
+# import copy
 import signal
 from datetime import datetime
 import os
-import sys
+# import sys
 import posixpath
 import psutil
 from pyiron_base.core.settings.generic import Settings
@@ -137,11 +137,11 @@ class GenericJob(JobCore):
         self._status = JobStatus(db=project.db, job_id=self.job_id)
         self.refresh_job_status()
         self._restart_file_list = list()
+        self._restart_file_dict = dict()
         self._process = None
 
         for sig in intercepted_signals:
             signal.signal(sig,  self.signal_intercept)
-
 
     def signal_intercept(self,sig,frame):
         try:
@@ -282,6 +282,23 @@ class GenericJob(JobCore):
                 raise IOError("File: {} does not exist".format(f))
 
     @property
+    def restart_file_dict(self):
+        """
+        A dictionary of the new name of the copied restart files
+        """
+        for actual_name in [os.path.basename(f) for f in self._restart_file_list]:
+            if actual_name not in self._restart_file_dict.keys():
+                self._restart_file_dict[actual_name] = actual_name
+        return self._restart_file_dict
+
+    @restart_file_dict.setter
+    def restart_file_dict(self, val):
+        if not isinstance(val, dict):
+            raise ValueError("restart_file_dict should be a dictionary!")
+        else:
+            self._restart_file_dict = val
+
+    @property
     def job_type(self):
         """
         Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster', 'ScriptJob',
@@ -370,6 +387,7 @@ class GenericJob(JobCore):
         del self._import_directory
         del self._status
         del self._restart_file_list
+        del self._restart_file_dict
         # del self._process
         # del self._hdf5
         del self._job_id
@@ -745,6 +763,7 @@ class GenericJob(JobCore):
         self._server.to_hdf(self._hdf5)
         with self._hdf5.open('input') as hdf_input:
             hdf_input["restart_file_list"] = self._restart_file_list
+            hdf_input["restart_file_dict"] = self._restart_file_dict
 
     def from_hdf(self, hdf=None, group_name=None):
         """
@@ -759,6 +778,8 @@ class GenericJob(JobCore):
         with self._hdf5.open('input') as hdf_input:
             if "restart_file_list" in hdf_input.list_nodes():
                 self._restart_file_list = hdf_input["restart_file_list"]
+            if "restart_file_dict" in hdf_input.list_nodes():
+                self._restart_file_dict = hdf_input["restart_file_dict"]
 
     def save(self):
         """
@@ -831,6 +852,7 @@ class GenericJob(JobCore):
         new_ham.parent_id = self.job_id
         # ensuring that the new job does not inherit the restart_file_list from the old job
         new_ham._restart_file_list = list()
+        new_ham._restart_file_dict = dict()
         return new_ham
 
     def create_job(self, job_type, job_name):
@@ -859,9 +881,12 @@ class GenericJob(JobCore):
             assert (os.path.isdir(self.working_directory))
         except AssertionError:
             raise ValueError("The working directory is not yet available to copy restart files")
-        for f in self.restart_file_list:
-            import shutil
-            shutil.copy(f, self.working_directory)
+        for i, actual_name in enumerate([os.path.basename(f) for f in self._restart_file_list]):
+            if actual_name in self.restart_file_dict.keys():
+                new_name = self.restart_file_dict[actual_name]
+                shutil.copy(self.restart_file_list[i], posixpath.join(self.working_directory, new_name))
+            else:
+                shutil.copy(self.restart_file_list[i], self.working_directory)
 
     def _run_manually(self, _manually_print=True):
         """
@@ -1128,8 +1153,8 @@ class GenericJob(JobCore):
         print('The job ' + self.job_name + ' was saved and received the ID: ' + str(self._job_id))
         if not self.server.run_mode.interactive:
             self.project_hdf5.create_working_directory()
-            self._copy_restart_files()
             self.write_input()
+            self._copy_restart_files()
             self._write_run_wrapper(debug=debug)
         self.status.created = True
         self._calculate_predecessor()
