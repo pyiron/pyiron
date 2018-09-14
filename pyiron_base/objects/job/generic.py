@@ -285,7 +285,7 @@ class GenericJob(JobCore):
     def restart_file_dict(self):
         if len(self._restart_file_list) > 0:
             for f in self._restart_file_list:
-                actual_name = f.split("/")[-1]
+                actual_name = os.path.basename(f)
                 if actual_name not in self._restart_file_dict.keys():
                     self._restart_file_dict[actual_name] = actual_name
         return self._restart_file_dict
@@ -879,7 +879,7 @@ class GenericJob(JobCore):
             raise ValueError("The working directory is not yet available to copy restart files")
         import shutil
         for f in self.restart_file_list:
-            actual_name = f.split("/")[-1]
+            actual_name = os.path.basename(f)
             if actual_name in self.restart_file_dict.keys():
                 new_name = self.restart_file_dict[actual_name]
                 shutil.copy(f, posixpath.join(self.working_directory, new_name))
