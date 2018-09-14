@@ -878,13 +878,12 @@ class GenericJob(JobCore):
             assert (os.path.isdir(self.working_directory))
         except AssertionError:
             raise ValueError("The working directory is not yet available to copy restart files")
-        for f in self.restart_file_list:
-            actual_name = os.path.basename(f)
+        for i, actual_name in enumerate([os.path.basename(f) for f in self._restart_file_list]):
             if actual_name in self.restart_file_dict.keys():
                 new_name = self.restart_file_dict[actual_name]
-                shutil.copy(f, posixpath.join(self.working_directory, new_name))
+                shutil.copy(self.restart_file_list[i], posixpath.join(self.working_directory, new_name))
             else:
-                shutil.copy(f, self.working_directory)
+                shutil.copy(self.restart_file_list[i], self.working_directory)
 
     def _run_manually(self, _manually_print=True):
         """
