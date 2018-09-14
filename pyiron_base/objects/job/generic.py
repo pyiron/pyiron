@@ -774,6 +774,7 @@ class GenericJob(JobCore):
         with self._hdf5.open('input') as hdf_input:
             if "restart_file_list" in hdf_input.list_nodes():
                 self._restart_file_list = hdf_input["restart_file_list"]
+            if "restart_file_dict" in hdf_input.list_nodes():
                 self._restart_file_dict = hdf_input["restart_file_dict"]
 
     def save(self):
