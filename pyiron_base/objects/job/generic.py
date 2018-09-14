@@ -1151,8 +1151,8 @@ class GenericJob(JobCore):
         print('The job ' + self.job_name + ' was saved and received the ID: ' + str(self._job_id))
         if not self.server.run_mode.interactive:
             self.project_hdf5.create_working_directory()
-            self._copy_restart_files()
             self.write_input()
+            self._copy_restart_files()
             self._write_run_wrapper(debug=debug)
         self.status.created = True
         self._calculate_predecessor()
