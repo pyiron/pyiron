@@ -3,11 +3,11 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
-import copy
+# import copy
 import signal
 from datetime import datetime
 import os
-import sys
+# import sys
 import posixpath
 import psutil
 from pyiron_base.core.settings.generic import Settings
@@ -16,7 +16,7 @@ from pyiron_base.objects.job.jobstatus import JobStatus
 from pyiron_base.objects.job.core import JobCore
 from pyiron_base.objects.server.generic import Server
 import subprocess
-import shutil
+# import shutil
 import warnings
 
 """
@@ -137,11 +137,11 @@ class GenericJob(JobCore):
         self._status = JobStatus(db=project.db, job_id=self.job_id)
         self.refresh_job_status()
         self._restart_file_list = list()
+        self._restart_file_dict = dict()
         self._process = None
 
         for sig in intercepted_signals:
             signal.signal(sig,  self.signal_intercept)
-
 
     def signal_intercept(self,sig,frame):
         try:
@@ -278,8 +278,18 @@ class GenericJob(JobCore):
             try:
                 assert(os.path.isfile(f))
                 self.restart_file_list.append(f)
+                actual_name = f.split("/")[-1]
+                self.restart_file_dict[actual_name] = actual_name
             except AssertionError:
                 raise IOError("File: {} does not exist".format(f))
+
+    @property
+    def restart_file_dict(self):
+        return self._restart_file_dict
+
+    @restart_file_dict.setter
+    def restart_file_dict(self, val):
+        self._restart_file_dict = val
 
     @property
     def job_type(self):
@@ -370,6 +380,7 @@ class GenericJob(JobCore):
         del self._import_directory
         del self._status
         del self._restart_file_list
+        del self._restart_file_dict
         # del self._process
         # del self._hdf5
         del self._job_id
@@ -745,6 +756,7 @@ class GenericJob(JobCore):
         self._server.to_hdf(self._hdf5)
         with self._hdf5.open('input') as hdf_input:
             hdf_input["restart_file_list"] = self._restart_file_list
+            hdf_input["restart_file_dict"] = self._restart_file_dict
 
     def from_hdf(self, hdf=None, group_name=None):
         """
@@ -759,6 +771,7 @@ class GenericJob(JobCore):
         with self._hdf5.open('input') as hdf_input:
             if "restart_file_list" in hdf_input.list_nodes():
                 self._restart_file_list = hdf_input["restart_file_list"]
+                self._restart_file_dict = hdf_input["restart_file_dict"]
 
     def save(self):
         """
