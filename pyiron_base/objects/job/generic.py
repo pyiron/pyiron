@@ -876,8 +876,11 @@ class GenericJob(JobCore):
         import shutil
         for f in self.restart_file_list:
             actual_name = f.split("/")[-1]
-            new_name = self.restart_file_dict[actual_name]
-            shutil.copy(f, posixpath.join(self.working_directory, new_name))
+            if actual_name in self.restart_file_dict.keys():
+                new_name = self.restart_file_dict[actual_name]
+                shutil.copy(f, posixpath.join(self.working_directory, new_name))
+            else:
+                shutil.copy(f, self.working_directory)
 
     def _run_manually(self, _manually_print=True):
         """
