@@ -442,10 +442,11 @@ class GenericJob(JobCore):
             new_generic_job.job_name = new_job_name
         return new_generic_job
 
-    def copy_file_to_working_directory(self, file): 
-        if not os.path.exists(self.working_directory):
-            self._create_working_directory()
-        shutil.copy(file, self.working_directory)
+    def copy_file_to_working_directory(self, file):
+        if os.path.isabs(file):
+            self.restart_file_list.append(file)
+        else: 
+            self.restart_file_list.append(file)
     
     def copy_template(self, project, new_job_name=None):
         """
