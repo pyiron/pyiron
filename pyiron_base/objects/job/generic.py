@@ -844,6 +844,7 @@ class GenericJob(JobCore):
         new_ham.parent_id = self.job_id
         # ensuring that the new job does not inherit the restart_file_list from the old job
         new_ham._restart_file_list = list()
+        new_ham._restart_file_dict = dict()
         return new_ham
 
     def create_job(self, job_type, job_name):
@@ -872,9 +873,11 @@ class GenericJob(JobCore):
             assert (os.path.isdir(self.working_directory))
         except AssertionError:
             raise ValueError("The working directory is not yet available to copy restart files")
+        import shutil
         for f in self.restart_file_list:
-            import shutil
-            shutil.copy(f, self.working_directory)
+            actual_name = f.split("/")[-1]
+            new_name = self.restart_file_dict[actual_name]
+            shutil.copy(f, posixpath.join(self.working_directory, new_name))
 
     def _run_manually(self, _manually_print=True):
         """
