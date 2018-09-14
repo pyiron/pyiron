@@ -830,7 +830,7 @@ class Atoms(object):
         el_lst = [el.Abbreviation for el in self.species]
         return np.array([el_lst[el] for el in self.indices])
 
-    def get_parent_elements(self):
+    def get_parent_symbols(self):
         """
         Returns the chemical symbols for all the atoms in the structure even for user defined elements
 
@@ -3160,8 +3160,7 @@ def pyiron_to_ase(pyiron_obj):
         from pyiron_atomistics.structure.pyironase import ASEAtoms
     except ImportError:
         raise ValueError('ASE package not yet installed')
-    element_list = [elem.Parent if elem.Parent is not None else elem.Abbreviation 
-                    for elem in pyiron_obj.get_chemical_elements()]
+    element_list = pyiron_obj.get_parent_symbols()
     cell = pyiron_obj.cell
     positions = pyiron_obj.positions
     pbc = pyiron_obj.get_pbc()
