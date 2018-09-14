@@ -16,7 +16,7 @@ from pyiron_base.objects.job.jobstatus import JobStatus
 from pyiron_base.objects.job.core import JobCore
 from pyiron_base.objects.server.generic import Server
 import subprocess
-# import shutil
+import shutil
 import warnings
 
 """
@@ -877,7 +877,6 @@ class GenericJob(JobCore):
             assert (os.path.isdir(self.working_directory))
         except AssertionError:
             raise ValueError("The working directory is not yet available to copy restart files")
-        import shutil
         for f in self.restart_file_list:
             actual_name = os.path.basename(f)
             if actual_name in self.restart_file_dict.keys():
