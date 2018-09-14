@@ -3154,6 +3154,7 @@ def ase_to_pyiron(ase_obj):
     pbc = ase_obj.get_pbc()
     return Atoms(elements=element_list, positions=positions, pbc=pbc, cell=cell)
 
+
 def pyiron_to_ase(pyiron_obj):
     try:
         from pyiron_atomistics.structure.pyironase import ASEAtoms
