@@ -3159,7 +3159,8 @@ def pyiron_to_ase(pyiron_obj):
         from pyiron_atomistics.structure.pyironase import ASEAtoms
     except ImportError:
         raise ValueError('ASE package not yet installed')
-    element_list = pyiron_obj.get_chemical_symbols()
+    element_list = [elem.Parent if elem.Parent is not None else elem.Abbreviation 
+                    for elem in pyiron_obj.get_chemical_elements()]
     cell = pyiron_obj.cell
     positions = pyiron_obj.positions
     pbc = pyiron_obj.get_pbc()
