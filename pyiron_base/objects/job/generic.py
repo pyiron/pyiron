@@ -283,11 +283,12 @@ class GenericJob(JobCore):
 
     @property
     def restart_file_dict(self):
-        if len(self._restart_file_list) > 0:
-            for f in self._restart_file_list:
-                actual_name = os.path.basename(f)
-                if actual_name not in self._restart_file_dict.keys():
-                    self._restart_file_dict[actual_name] = actual_name
+        """
+        A dictionary of the new name of the copied restart files
+        """
+        for actual_name in [os.path.basename(f) for f in self._restart_file_list]:
+            if actual_name not in self._restart_file_dict.keys():
+                self._restart_file_dict[actual_name] = actual_name
         return self._restart_file_dict
 
     @restart_file_dict.setter
