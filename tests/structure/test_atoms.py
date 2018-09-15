@@ -409,16 +409,16 @@ class TestAtoms(unittest.TestCase):
     #     Al_sc.repeat([2, 2, 2])
     #     self.assertEqual(len(Al_sc.get_symmetry()['translations']), 768)
 
-    def test_get_parent_elements(self):
-        self.assertTrue(np.array_equal(self.CO2.get_parent_elements(), ["C", "O", "O"]))
-        self.assertTrue(np.array_equal(self.CO2.get_parent_elements(), self.CO2.get_chemical_symbols()))
+    def test_get_parent_symbols(self):
+        self.assertTrue(np.array_equal(self.CO2.get_parent_symbols(), ["C", "O", "O"]))
+        self.assertTrue(np.array_equal(self.CO2.get_parent_symbols(), self.CO2.get_chemical_symbols()))
         cell = np.eye(3) * 10.0
         pse = PeriodicTable()
         pse.add_element("O", "O_up", spin="up")
         o_up = pse.element("O_up")
         basis = Atoms([o_up], scaled_positions=[[0.27, 0.27, 0.27]], cell=cell)
-        self.assertTrue(np.array_equal(basis.get_parent_elements(), ["O"]))
-        self.assertFalse(np.array_equal(basis.get_parent_elements(), basis.get_chemical_symbols()))
+        self.assertTrue(np.array_equal(basis.get_parent_symbols(), ["O"]))
+        self.assertFalse(np.array_equal(basis.get_parent_symbols(), basis.get_chemical_symbols()))
 
     def test_get_chemical_symbols(self):
         self.assertTrue(np.array_equal(self.CO2.get_chemical_symbols(), ["C", "O", "O"]))
