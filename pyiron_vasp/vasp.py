@@ -22,6 +22,7 @@ from pyiron_vasp.vasprun import Vasprun as Vr
 from pyiron_vasp.vasprun import VasprunError
 from pyiron_vasp.volumetric_data import VaspVolumetricData
 from pyiron_dft.waves.electronic import ElectronicStructure
+import warnings
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -230,7 +231,11 @@ class Vasp(GenericDFTJob):
         self.set_coulomb_interactions()
         if "CONTCAR" in self.restart_file_dict.keys():
             if self.restart_file_dict["CONTCAR"] == "POSCAR":
-                self.logger.info("The POSCAR file will be overwritten by the CONTCAR file specified in "
+                if self.server.run_mode.modal:
+                    warnings.warn("The POSCAR file will be overwritten by the CONTCAR file specified in "
+                                 "restart_file_list.")
+                else:
+                    self.logger.info("The POSCAR file will be overwritten by the CONTCAR file specified in "
                                  "restart_file_list.")
         self.input.write(structure=self.structure, directory=self.working_directory)
 
