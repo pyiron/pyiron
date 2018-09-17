@@ -79,20 +79,11 @@ class Vasp(GenericDFTJob):
         self.input = Input()
         self.input.incar["SYSTEM"] = self.job_name
         self._output_parser = Output()
-        # self._potential = VaspPotentialFile(xc=self.input.potcar["xc"])
-        self._potential = None
+        self._potential = VaspPotentialFile(xc=self.input.potcar["xc"])
 
     @property
     def potential(self):
-        if self.structure is None:
-            return self._potential
-        else:
-            try:
-                vasp_pot = VaspPotentialFile(xc=self.input.potcar["xc"])
-                sp_list = [sp.Abbreviation for sp in self.structure.get_species_objects()]
-                return vasp_pot.find_default(sp_list)
-            except ValueError:
-                return self._potential
+        return self._potential
 
     @potential.setter
     def potential(self, val):
@@ -432,7 +423,7 @@ class Vasp(GenericDFTJob):
         filename = posixpath.join(self.working_directory, filename)
         input_structure = self.structure.copy()
         try:
-            output_structure = read_atoms(filename=filename, species_list=input_structure.get_parent_symbols())
+            output_structure = read_atoms(filename=filename, species_list=input_structure.get_parent_elements())
         except (IndexError, ValueError, IOError):
             s.logger.warning("Unable to read output structure")
             return
