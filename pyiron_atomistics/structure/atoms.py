@@ -1594,11 +1594,12 @@ class Atoms(object):
         return ind_shell
 
     # spglib calls
-    def get_symmetry(self, use_magmoms=False, symprec=1e-5, angle_tolerance=-1.0):
+    def get_symmetry(self, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0):
         """
         
         Args:
             use_magmoms: 
+            use_elements: True or False. If False, chemical elements will be ignored
             symprec: 
             angle_tolerance: 
 
@@ -1608,7 +1609,10 @@ class Atoms(object):
         """
         lattice = np.array(self.get_cell().T, dtype='double', order='C')
         positions = np.array(self.get_scaled_positions(), dtype='double', order='C')
-        numbers = np.array(self.get_atomic_numbers(), dtype='intc')
+        if use_elements:
+            numbers = np.array(self.get_atomic_numbers(), dtype='intc')
+        else:
+            numbers = np.ones_like(self.get_atomic_numbers(), dtype='intc')
         if use_magmoms:
             magmoms = self.get_initial_magnetic_moments()
             return spglib.get_symmetry(cell=(lattice, positions, numbers, magmoms),
