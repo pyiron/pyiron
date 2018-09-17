@@ -413,6 +413,10 @@ class Outcar(object):
         mag_lst = list()
         local_spin_trigger = False
         n_atoms = None
+        mag_dict = dict()
+        mag_dict['x'] = list()
+        mag_dict['y'] = list()
+        mag_dict['z'] = list()
         with open(filename, 'r') as f:
             lines = f.readlines()
             istep_energies = list()
@@ -441,14 +445,20 @@ class Outcar(object):
                     if nion_trigger in line:
                         n_atoms = int(line.split(nion_trigger)[-1])
                 if local_spin_trigger:
-                    if 'magnetization (z)' in line:
-                        final_magmom_lst.append([[float(lines[i - 11 - 2 * atom_index].split()[-1]),
-                                                  float(lines[i - 4 - atom_index].split()[-1]),
-                                                  float(lines[i + 4 + atom_index].split()[-1])]
-                                                 for atom_index in range(n_atoms)])
-                    elif 'magnetization (x)' in line and 'magnetization (y)' not in lines[i + 4 + n_atoms + 3]:
-                        final_magmom_lst.append([float(lines[i + 4 + atom_index].split()[-1]) for atom_index in
-                                                 range(n_atoms)])
+                    for ind_dir, direc in enumerate(['x', 'y', 'z']):
+                        if 'magnetization ({})'.format(direc) in line:
+                            mag_dict[direc].append([float(lines[i + 4 + atom_index].split()[-1])
+                                                    for atom_index in range(n_atoms)])
+            if len(mag_dict['x']) > 0:
+                if len(mag_dict['y']) == 0:
+                    final_mag = np.array(mag_dict['x'])
+                else:
+                    n_ionic_steps = np.array(mag_dict['x']).shape[0]
+                    final_mag = np.abs(np.zeros((n_ionic_steps, n_atoms, 3)))
+                    final_mag[:, :, 0] = np.array(mag_dict['x'])
+                    final_mag[:, :, 1] = np.array(mag_dict['y'])
+                    final_mag[:, :, 2] = np.array(mag_dict['z'])
+                final_magmom_lst = final_mag.tolist()
         return mag_lst, final_magmom_lst
 
     @staticmethod
