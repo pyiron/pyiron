@@ -541,6 +541,7 @@ class GenericJob(JobCore):
             if run_mode:
                 self.server.run_mode = run_mode
             if run_again and self.job_id:
+                self._logger.info("run repair "+str(self.job_id))
                 status = 'initialized'
                 master_id, parent_id = self.master_id, self.parent_id
                 self.remove()
