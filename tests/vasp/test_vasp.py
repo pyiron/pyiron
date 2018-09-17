@@ -10,6 +10,7 @@ s = Settings(config={'sql_file': 'vasp.db',
 from pyiron_atomistics.structure.atoms import CrystalStructure
 from pyiron_vasp.vasp import Input, Output
 from pyiron.project import Project
+from pyiron_vasp.potential import VaspPotentialFile
 
 __author__ = "surendralal"
 
@@ -50,6 +51,9 @@ class TestVasp(unittest.TestCase):
         self.assertEqual(self.job.structure, None)
         self.job.structure = atoms
         self.assertEqual(self.job.structure, atoms)
+
+    def test_list_potenitals(self):
+        self.assertRaises(ValueError, self.job.list_potentials)
 
     def tearDown(self):
         pass

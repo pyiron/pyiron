@@ -79,6 +79,15 @@ class Vasp(GenericDFTJob):
         self.input = Input()
         self.input.incar["SYSTEM"] = self.job_name
         self._output_parser = Output()
+        self._potential = VaspPotentialFile(xc=self.input.potcar["xc"])
+
+    @property
+    def potential(self):
+        return self._potential
+
+    @potential.setter
+    def potential(self, val):
+        self._potential = val
 
     @property
     def plane_wave_cutoff(self):
@@ -414,7 +423,7 @@ class Vasp(GenericDFTJob):
         filename = posixpath.join(self.working_directory, filename)
         input_structure = self.structure.copy()
         try:
-            output_structure = read_atoms(filename=filename, species_list=input_structure.get_parent_symbols())
+            output_structure = read_atoms(filename=filename, species_list=input_structure.get_parent_elements())
         except (IndexError, ValueError, IOError):
             s.logger.warning("Unable to read output structure")
             return
@@ -970,6 +979,18 @@ class Vasp(GenericDFTJob):
         elif direction:
             self.input.incar['I_CONSTRAINED_M'] = 1
 
+    def list_potentials(self):
+        """
+        Lists all the possible POTCAR files for the elements in the structure depending on the XC functional
+
+        Returns:
+            pyiron_vasp.potential.VaspPotentialFile: A pandas datafrome like object
+        """
+        if self.structure is None:
+            raise ValueError("Can't list potentials unless a structure is set")
+        else:
+            return VaspPotentialFile(xc=self.input.potcar['xc']).find(self.structure.get_species_symbols().tolist())
+
     def __del__(self):
         pass
 
@@ -1451,25 +1472,46 @@ class Potcar(GenericParameters):
         self._structure = None
         self.electrons_per_atom_lst = list()
         self.max_cutoff_lst = list()
+        self.el_path_lst = list()
+        self.el_path_dict = dict()
 
     def potcar_set_structure(self, structure):
         self._structure = structure
+        self._set_default_path_dict()
         self._set_potential_paths()
 
     def modify(self, **modify):
         if "xc" in modify:
             xc_type = modify['xc']
+            self._set_default_path_dict()
             if xc_type not in self.pot_path_dict:
                 raise ValueError("xc type not implemented: " + xc_type)
         GenericParameters.modify(self, **modify)
         if self._structure is not None:
             self._set_potential_paths()
 
+    def _set_default_path_dict(self):
+        if self._structure is None:
+            return
+        vasp_potentials = VaspPotentialFile(xc=self.get("xc"))
+        for i, el_obj in enumerate(self._structure.get_species_objects()):
+            if isinstance(el_obj.Parent, str):
+                el = el_obj.Parent
+            else:
+                el = el_obj.Abbreviation
+            if isinstance(el_obj.tags, dict):
+                if 'pseudo_potcar_file' in el_obj.tags.keys():
+                    new_element = el_obj.tags['pseudo_potcar_file']
+                    vasp_potentials.add_new_element(parent_element=el, new_element=new_element)
+            key = vasp_potentials.find_default(el).Species.values[0][0]
+            val = vasp_potentials.find_default(el).Name.values[0]
+            self[key] = val
+
     def _set_potential_paths(self):
         element_list = self._structure.get_species_symbols()  # .ElementList.getSpecies()
         object_list = self._structure.get_species_objects()
         s.logger.debug("element list: {0}".format(element_list))
-        self.el_path_lst = []
+        self.el_path_lst = list()
         try:
             xc = self.get("xc")
         except tables.exceptions.NoSuchNodeError:
