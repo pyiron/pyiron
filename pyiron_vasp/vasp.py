@@ -432,7 +432,7 @@ class Vasp(GenericDFTJob):
         filename = posixpath.join(self.working_directory, filename)
         input_structure = self.structure.copy()
         try:
-            output_structure = read_atoms(filename=filename, species_list=input_structure.get_parent_elements())
+            output_structure = read_atoms(filename=filename, species_list=input_structure.get_parent_symbols())
         except (IndexError, ValueError, IOError):
             s.logger.warning("Unable to read output structure")
             return
