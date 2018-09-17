@@ -228,6 +228,10 @@ class Vasp(GenericDFTJob):
             self.input.incar['SYSTEM'] = self.job_name
         self.write_magmoms()
         self.set_coulomb_interactions()
+        if "CONTCAR" in self.restart_file_dict.keys():
+            if self.restart_file_dict["CONTCAR"] == "POSCAR":
+                self.logger.info("The POSCAR file will be overwritten by the CONTCAR file specified in "
+                                 "restart_file_list.")
         self.input.write(structure=self.structure, directory=self.working_directory)
 
     # define routines that collect all output files
