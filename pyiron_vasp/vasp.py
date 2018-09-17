@@ -232,11 +232,11 @@ class Vasp(GenericDFTJob):
         if "CONTCAR" in self.restart_file_dict.keys():
             if self.restart_file_dict["CONTCAR"] == "POSCAR":
                 if self.server.run_mode.modal:
-                    warnings.warn("The POSCAR file will be overwritten by the CONTCAR file specified in "
-                                 "restart_file_list.")
+                    warnings.warn(
+                        "The POSCAR file will be overwritten by the CONTCAR file specified in restart_file_list.")
                 else:
-                    self.logger.info("The POSCAR file will be overwritten by the CONTCAR file specified in "
-                                 "restart_file_list.")
+                    self.logger.info(
+                        "The POSCAR file will be overwritten by the CONTCAR file specified in restart_file_list.")
         self.input.write(structure=self.structure, directory=self.working_directory)
 
     # define routines that collect all output files
