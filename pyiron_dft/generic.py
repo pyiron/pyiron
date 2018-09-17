@@ -63,7 +63,7 @@ class GenericDFTJob(AtomisticGenericJob):
     def _get_k_mesh_by_cell(cell, kspace_per_in_ang=0.10):
         latlens = [np.linalg.norm(lat) for lat in cell]
         kmesh = np.floor(np.array([2 * np.pi / ll for ll in latlens]) / kspace_per_in_ang)
-        return kmesh
+        return [int(k) for k in kmesh]
 
     @property
     def fix_spin_constraint(self):
