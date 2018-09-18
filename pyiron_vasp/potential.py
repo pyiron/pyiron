@@ -107,6 +107,29 @@ class VaspPotentialFile(VaspPotentialAbstract):
             raise ValueError('The exchange correlation functional has to be set and it can either be "LDA" or "PBE"')
         super(VaspPotentialFile, self).__init__(potential_df=potential_df, default_df=default_df, selected_atoms=[])
 
+    def add_new_element(self, parent_element, new_element):
+        """
+        Adding a new user defined element with a different POTCAR file. It is assumed that the file exists
+
+        Args:
+            parent_element (str): Parent element
+            new_element (str): Name of the new element (the name of the folder where the new POTCAR file exists
+
+        """
+        ds = self.find_default(element=parent_element)
+        ds["Species"].values[0][0] = new_element
+        path_list = ds["Filename"].values[0][0].split("/")
+        path_list[-2] = new_element
+        name_list = ds["Name"].values[0].split("-")
+        name_list[0] = new_element
+        ds["Name"].values[0] = "-".join(name_list)
+        ds["Filename"].values[0][0] = "/".join(path_list)
+        self._potential_df = self._potential_df.append(ds)
+        ds = pandas.Series()
+        ds.name = new_element
+        ds["Name"] = "-".join(name_list)
+        self._default_df = self._default_df.append(ds)
+
 
 class VaspPotential(object):
     """

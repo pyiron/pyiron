@@ -3,9 +3,11 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import numpy as np
+import warnings
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \
+                "- Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -18,6 +20,12 @@ KBAR_TO_EVA = 6.241509125883258e-4
 class Outcar(object):
     """
     This module is used to parse VASP OUTCAR files.
+
+    Attributes:
+
+        parse_dict (dict): A dictionary with all the useful quantities parsed from an OUTCAR file after from_file() is
+                           executed
+
     """
 
     def __init__(self):
@@ -25,7 +33,7 @@ class Outcar(object):
 
     def from_file(self, filename="OUTCAR"):
         """
-        Store relevant quantities from the OUTCAR file into parse_dict.
+        Parse and store relevant quantities from the OUTCAR file into parse_dict.
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
@@ -77,8 +85,8 @@ class Outcar(object):
         Store output in an HDF5 file
 
         Args:
-            hdf: HDF5 group or file
-            group_name (str): HDF5 group
+            hdf (pyiron_base.objects.generic.hdfio.FileHDFio): HDF5 group or file
+            group_name (str): Name of the HDF5 group
         """
         with hdf.open(group_name) as hdf5_output:
             for key in self.parse_dict.keys():
@@ -89,8 +97,8 @@ class Outcar(object):
         Load output from an HDF5 file
 
         Args:
-            hdf: HDF5 group or file
-            group_name (str): HDF5 group
+            hdf (pyiron_base.objects.generic.hdfio.FileHDFio): HDF5 group or file
+            group_name (str): Name of the HDF5 group
         """
         with hdf.open(group_name) as hdf5_output:
             for key in hdf5_output.list_nodes():
@@ -106,8 +114,8 @@ class Outcar(object):
 
         Returns:
             [positions, forces] (sequence)
-            positions (numpy.ndarray): A Nx3xM array of positions in $\AA$
-            forces (numpy.ndarray): A Nx3xM array of forces in $eV / \AA$
+            numpy.ndarray: A Nx3xM array of positions in $\AA$
+            numpy.ndarray: A Nx3xM array of forces in $eV / \AA$
 
             where N is the number of atoms and M is the number of time steps
         """
@@ -148,7 +156,7 @@ class Outcar(object):
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
-            positions (numpy.ndarray): A Nx3xM array of positions in $\AA$
+            numpy.ndarray: A Nx3xM array of positions in $\AA$
 
             where N is the number of atoms and M is the number of time steps
         """
@@ -185,7 +193,7 @@ class Outcar(object):
 
         Returns:
 
-            forces (numpy.ndarray): A Nx3xM array of forces in $eV / \AA$
+            numpy.ndarray: A Nx3xM array of forces in $eV / \AA$
 
             where N is the number of atoms and M is the number of time steps
         """
@@ -221,7 +229,7 @@ class Outcar(object):
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
-            cells (numpy.ndarray): A 3x3xM array of the cell shape in $\AA$
+            numpy.ndarray: A 3x3xM array of the cell shape in $\AA$
 
             where M is the number of time steps
         """
@@ -245,6 +253,16 @@ class Outcar(object):
 
     @staticmethod
     def get_stresses(filename="OUTCAR", si_unit=True):
+        """
+
+        Args:
+            filename (str): Input filename
+            si_unit (bool): True SI units are used
+
+        Returns:
+            numpy.ndarray: An array of stress values
+
+        """
         trigger = "FORCE on cell =-STRESS in cart. coord.  units (eV):"
         pullay_stress_lst = []
         trigger_indices = []
@@ -279,7 +297,7 @@ class Outcar(object):
             planewaves (bool): Get the planewaves assigned to the irreducible kpoints
 
         Returns:
-            set: (numpy.ndarray)
+            numpy.ndarray: An array of k-points
         """
         kpoint_lst = []
         weight_lst = []
@@ -331,7 +349,7 @@ class Outcar(object):
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
-            energies (numpy.ndarray): A 1xM array of the total energies in $eV$
+            numpy.ndarray: A 1xM array of the total energies in $eV$
 
             where M is the number of time steps
         """
@@ -353,12 +371,13 @@ class Outcar(object):
     @staticmethod
     def get_all_total_energies(filename="OUTCAR"):
         """
+        Gets the energy at every electronic step
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
-            scf_energies (list)
+            list: A list of energie for every electronic step at every ionic step
         """
         ionic_trigger = "FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)"
         electronic_trigger = "free energy    TOTEN  ="
@@ -380,20 +399,24 @@ class Outcar(object):
     @staticmethod
     def get_magnetization(filename="OUTCAR"):
         """
+        Gets the magnetization
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
-            magnetization (list)
+            list: A list with the mgnetization values
         """
-        final_magmom_lst = []
         ionic_trigger = "FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)"
         electronic_trigger = "eigenvalue-minimisations"
         nion_trigger = "NIONS ="
         mag_lst = list()
         local_spin_trigger = False
         n_atoms = None
+        mag_dict = dict()
+        mag_dict['x'] = list()
+        mag_dict['y'] = list()
+        mag_dict['z'] = list()
         with open(filename, 'r') as f:
             lines = f.readlines()
             istep_energies = list()
@@ -415,30 +438,39 @@ class Outcar(object):
                         elif spin_str_len == 3:
                             ene = [float(spin_str_lst[0]), float(spin_str_lst[1]), float(spin_str_lst[2])]
                         else:
-                            raise ValueError('Unrecognized spin configuration.')
+                            warnings.warn('Unrecognized spin configuration.')
+                            return mag_lst, final_magmom_lst
                         istep_energies.append(ene)
                 if n_atoms is None:
                     if nion_trigger in line:
                         n_atoms = int(line.split(nion_trigger)[-1])
                 if local_spin_trigger:
-                    if 'magnetization (z)' in line:
-                        final_magmom_lst.append([[float(lines[i - 11 - 2 * atom_index].split()[-1]),
-                                                  float(lines[i - 4 - atom_index].split()[-1]),
-                                                  float(lines[i + 4 + atom_index].split()[-1])]
-                                                 for atom_index in range(n_atoms)])
-                    elif 'magnetization (x)' in line and not 'magnetization (y)' in lines[i + 4 + n_atoms + 3]:
-                        final_magmom_lst.append([float(lines[i + 4 + atom_index].split()[-1]) for atom_index in range(n_atoms)])
+                    for ind_dir, direc in enumerate(['x', 'y', 'z']):
+                        if 'magnetization ({})'.format(direc) in line:
+                            mag_dict[direc].append([float(lines[i + 4 + atom_index].split()[-1])
+                                                    for atom_index in range(n_atoms)])
+            if len(mag_dict['x']) > 0:
+                if len(mag_dict['y']) == 0:
+                    final_mag = np.array(mag_dict['x'])
+                else:
+                    n_ionic_steps = np.array(mag_dict['x']).shape[0]
+                    final_mag = np.abs(np.zeros((n_ionic_steps, n_atoms, 3)))
+                    final_mag[:, :, 0] = np.array(mag_dict['x'])
+                    final_mag[:, :, 1] = np.array(mag_dict['y'])
+                    final_mag[:, :, 2] = np.array(mag_dict['z'])
+                final_magmom_lst = final_mag.tolist()
         return mag_lst, final_magmom_lst
 
     @staticmethod
     def get_broyden_mixing_mesh(filename="OUTCAR"):
         """
+        Gets the Broyden mixing mesh size
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
-            int
+            int: Mesh size
         """
         trigger = "gives a total of "
         with open(filename, 'r') as f:
@@ -449,12 +481,13 @@ class Outcar(object):
     @staticmethod
     def get_temperatures(filename="OUTCAR"):
         """
+        Gets the temperature at each ionic step (applicable for MD)
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
-            numpy.ndarray
+            numpy.ndarray: An array of temperatures in Kelvin
         """
         temperatures = []
         trigger_indices = []
@@ -487,7 +520,7 @@ class Outcar(object):
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
-            np.linspace
+            numpy.ndarray: Steps during the simulation
         """
         nblock_trigger = "NBLOCK ="
         trigger = "FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)"
@@ -508,11 +541,13 @@ class Outcar(object):
 
     def get_time(self, filename="OUTCAR"):
         """
+        Time after each simulation step (for MD)
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
+            numpy.ndarray: An array of time values in fs
 
         """
         potim_trigger = "POTIM  ="
@@ -538,7 +573,7 @@ class Outcar(object):
             total (bool): Get either the total correction or the correction per atom
 
         Returns:
-            float:
+            float: The kinetic energy error in eV
         """
         trigger = "kinetic energy error for atom="
         e_kin_err = None
@@ -567,12 +602,13 @@ class Outcar(object):
     @staticmethod
     def get_fermi_level(filename="OUTCAR"):
         """
+        Getting the Fermi-level (Kohn_Sham) from the OUTCAR file
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
-            float:
+            float: The Kohn-Sham Fermi level in eV
         """
         trigger = "E-fermi :"
         e_fermi = None
@@ -590,11 +626,13 @@ class Outcar(object):
     @staticmethod
     def get_dipole_moments(filename="OUTCAR"):
         """
+        Get the electric dipole moment at every electronic step
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
 
         Returns:
+            list: A list of dipole moments in (eA) for each electronic step
 
         """
         moment_trigger = "dipolmoment"

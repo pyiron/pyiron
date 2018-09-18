@@ -11,7 +11,8 @@ from pyiron_vasp.structure import atoms_from_string, get_species_list_from_potca
 from pyiron_base.objects.volumetric.generic import VolumetricData
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -21,7 +22,11 @@ __date__ = "Sep 1, 2017"
 
 class VaspVolumetricData(VolumetricData):
     """
-    General class for parsing and manipulating volumetric static within VASP.
+    General class for parsing and manipulating volumetric static within VASP. The basic idea of the Base class is
+    adapted from the pymatgen vasp VolumtricData class
+
+    http://pymatgen.org/_modules/pymatgen/io/vasp/outputs.html#VolumetricData
+
     """
 
     def __init__(self):
@@ -31,14 +36,16 @@ class VaspVolumetricData(VolumetricData):
 
     def from_file(self, filename, normalize=True):
         """
-        Convenience method to parse a generic volumetric static file in the pyiron_vasp
-        like format. Used by subclasses for parsing file. This routine is copied from pymatgen.
+        Convenience method to parse a generic volumetric static file in the pyiron_vasp like format.
+        Used by subclasses for parsing the file. This routine is adapted from the pymatgen vasp VolumetricData
+        class with very minor modifications
+
+        http://pymatgen.org/_modules/pymatgen/io/vasp/outputs.html#VolumetricData.
 
         Args:
             filename (str): Path of file to parse
             normalize (boolean): Flag to normalize by the volume of the cell
-        Returns:
-            (pyiron.structure.Atoms instance, static)
+
         """
         poscar_read = False
         poscar_string = list()
@@ -109,6 +116,9 @@ class VaspVolumetricData(VolumetricData):
 
     @property
     def diff_data(self):
+        """
+        numpy.ndarray: Volumtric difference data (3D)
+        """
         return self._diff_data
 
     @diff_data.setter
@@ -116,6 +126,14 @@ class VaspVolumetricData(VolumetricData):
         self._diff_data = val
 
     def to_hdf(self, hdf5, group_name="volumetric_data"):
+        """
+        Writes the data as a group to a HDF5 file
+
+        Args:
+            hdf5 (pyiron_base.objects.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
+            group_name (str): The name of the group under which the data must be stored as
+
+        """
         with hdf5.open(group_name) as hdf_vd:
             hdf_vd["TYPE"] = str(type(self))
             hdf_vd["total"] = self.total_data
@@ -123,6 +141,17 @@ class VaspVolumetricData(VolumetricData):
                 hdf_vd["diff"] = self.diff_data
 
     def from_hdf(self, hdf5, group_name="volumetric_data"):
+        """
+        Recreating the VolumetricData instance by reading data from the HDF5 files
+
+        Args:
+            hdf5 (pyiron_base.objects.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
+            group_name (str): The name of the group under which the data must be stored as
+
+        Returns:
+            pyiron_base.objects.volumetric.generic.VolumetricData: The VolumetricData instance
+
+        """
         with hdf5.open(group_name) as hdf_vd:
             self.total_data = hdf_vd["total"]
             if "diff" in hdf_vd.list_nodes():

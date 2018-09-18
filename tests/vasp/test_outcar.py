@@ -14,7 +14,8 @@ class TestOutcar(unittest.TestCase):
     def setUp(self):
         self.file_list = list()
         self.outcar_parser = Outcar()
-        file_list = ["OUTCAR_1", "OUTCAR_2", "OUTCAR_3", "OUTCAR_4", "OUTCAR_5", "OUTCAR_6"]
+        # file_list = ["OUTCAR_1", "OUTCAR_2", "OUTCAR_3", "OUTCAR_4", "OUTCAR_5", "OUTCAR_6", "OUTCAR_7"]
+        file_list = os.listdir("../static/vasp_test_files/outcar_samples")
         for f in file_list:
             direc = os.path.abspath(os.path.join(file_location,
                                                  "../static/vasp_test_files/outcar_samples"))
@@ -236,6 +237,7 @@ class TestOutcar(unittest.TestCase):
                                            [-0., 4.2043676, 0.], [0., 4.2128061, 0.], [0., 4.2128061, 0.]])]
                 self.assertEqual(magnetization.__str__(), output.__str__())
                 self.assertFalse(final_magmoms)
+
             if int(filename.split('/OUTCAR_')[-1]) == 6:
                 magnetization = [np.array([[0., 4., 0.], [0., 4., 0.], [0., 4., 0.], [0., 4., 0.], [-0., 3.1360688, -0.],
                                            [-0., 4.1168471, 0.], [0., 4.2261074, -0.], [-0., 4.2517361, 0.],
@@ -243,6 +245,10 @@ class TestOutcar(unittest.TestCase):
                 final_mag_lst = [[[0.0, 2.111, -0.0], [0.0, 2.111, 0.0]]]
                 self.assertEqual(magnetization.__str__(), output.__str__())
                 self.assertEqual(final_magmoms, final_mag_lst)
+
+            if int(filename.split('/OUTCAR_')[-1]) == 7:
+                self.assertEqual((1, 49, 3), np.array(output).shape)
+                self.assertEqual((11, 32, 3), np.array(final_magmoms).shape)
 
     def test_get_broyden_mixing_mesh(self):
         for filename in self.file_list:

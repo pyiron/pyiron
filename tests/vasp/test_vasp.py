@@ -34,7 +34,7 @@ class TestVasp(unittest.TestCase):
         self.assertEqual(self.job.__name__, "Vasp")
         self.assertEqual(self.job._sorted_indices, None)
         self.assertIsInstance(self.job.input, Input)
-        self.assertIsInstance(self.job.output, Output)
+        self.assertIsInstance(self.job._output_parser, Output)
 
     def test_calc_static(self):
         self.job.calc_static(electronic_steps=90, retain_charge_density=True, retain_electrostatic_potential=True)

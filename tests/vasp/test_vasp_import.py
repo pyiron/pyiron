@@ -19,9 +19,9 @@ class TestVaspImport(unittest.TestCase):
     def tearDownClass(cls):
         project = Project(os.path.join(file_location, 'vasp_import_testing'))
         project.remove_jobs(recursive=True)
-        project.remove()
-        # s.close_connection()
-        # os.remove(s._configuration['sql_file'])
+        project.remove(enable=True)
+        s.close_connection()
+        os.remove('import.db')
 
     def test_import(self):
         self.project.import_from_path(path=os.path.join(file_location, '../static/vasp_test_files/full_job_sample'),

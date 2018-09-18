@@ -16,24 +16,44 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 
-def read_atoms(filename='CONTCAR', return_forces=False, species_list=None, species_from_potcar=False):
+def read_atoms(filename='CONTCAR', return_velocities=False, species_list=None, species_from_potcar=False):
     """
-    Routine to read structural static from a POSCAR or CONTCAR file
+    Routine to read structural static from a POSCAR type file
+
+    Args:
+        filename (str): Input filename
+        return_velocities (bool): True if the predictor corrector velocities are read (only from MD output)
+        species_list (list/numpy.ndarray): A list of the species (if not present in the POSCAR file or a POTCAR in the
+        same directory)
+        species_from_potcar (bool): True if the species list should be read from the POTCAR file in the same directory
+
+    Returns:
+        pyiron_atomistics.structure.atoms.Atoms: The generated structure object
 
     """
     directory = "/".join(filename.split("/")[0:-1])
     potcar_file = "/".join([directory, "POTCAR"])
     if (species_list is None) and species_from_potcar:
         species_list = get_species_list_from_potcar(potcar_file)
-    file_string = []
+    file_string = list()
     with open(filename) as f:
         for line in f:
             line = line.strip()
             file_string.append(line)
-    return atoms_from_string(file_string, read_forces=return_forces, species_list=species_list)
+    return atoms_from_string(file_string, read_velocities=return_velocities, species_list=species_list)
 
 
 def get_species_list_from_potcar(filename="POTCAR"):
+    """
+    Generates the species list from a POTCAR type file
+
+    Args:
+        filename (str): Input filename
+
+    Returns:
+        list: A list of species symbols
+
+    """
     trigger = "VRHFIN ="
     species_list = list()
     with open(filename) as potcar_file:
@@ -49,7 +69,13 @@ def get_species_list_from_potcar(filename="POTCAR"):
 
 def write_poscar(structure, filename="POSCAR", write_species=True, cartesian=True):
     """
-    generates the POSCAR file from structure
+    Writes a POSCAR type file from a structure object
+
+    Args:
+        structure (pyiron_atomistics.structure.atoms.Atoms): The structure instance to be written to the POSCAR format
+        filename (str): Output filename
+        write_species (bool): True if the species should be written to the file
+        cartesian (bool): True if the positions are written in Cartesian coordinates
 
     """
     endline = "\n"
@@ -99,9 +125,18 @@ def write_poscar(structure, filename="POSCAR", write_species=True, cartesian=Tru
                 f.write('{0:.15f} {1:.15f} {2:.15f}'.format(x, y, z) + endline)
 
 
-def atoms_from_string(string, read_forces=False, species_list=None):
+def atoms_from_string(string, read_velocities=False, species_list=None):
     """
     Routine to convert a string list read from a input/output structure file and convert into Atoms instance
+
+    Args:
+        string (list): A list of strings (lines) read from the POSCAR/CONTCAR/CHGCAR/LOCPOT file
+        read_velocities (bool): True if the velocities from a CONTCAR file should be read (predictor corrector)
+        species_list (list/numpy.ndarray): A list of species of the atoms
+
+    Returns:
+        pyiron_atomistics.structure.atoms.Atoms: The required structure object
+
     """
     string = [s.strip() for s in string]
     atoms_dict = dict()
@@ -162,7 +197,7 @@ def atoms_from_string(string, read_forces=False, species_list=None):
 
     assert (len(atoms_dict["positions"]) == n_atoms)
     forces = list()
-    if read_forces:
+    if read_velocities:
         forces_index = position_index + n_atoms + 1
         for i in range(forces_index, forces_index + n_atoms):
             vec = list()
@@ -187,15 +222,15 @@ def atoms_from_string(string, read_forces=False, species_list=None):
 
 def _dict_to_atoms(atoms_dict, species_list=None, read_from_first_line=False):
     """
-    Function to convert a generated dict (from my function) into an atoms object
+    Function to convert a generated dict into an structure object
 
     Args:
-        atoms_dict:
-        species_list:
-        read_from_first_line:
+        atoms_dict (dict): Dictionary with the details (from string_to_atom)
+        species_list (list/numpy.ndarray): List of species
+        read_from_first_line (bool): True if we are to read the species information from the first line in the file
 
     Returns:
-        atoms (pyiron.objects.structure.atoms.Atoms instance)
+        pyiron_atomistics.structure.atoms.Atoms: The required structure object
     """
     is_absolute = not (atoms_dict["relative"])
     positions = atoms_dict["positions"]
@@ -208,7 +243,10 @@ def _dict_to_atoms(atoms_dict, species_list=None, read_from_first_line=False):
             try:
                 el_list = np.array([species_list[i]])
                 el_list = np.tile(el_list, atoms_dict["species_dict"][sp_key]["count"])
-                symbol += species_list[i] + str(atoms_dict["species_dict"][sp_key]["count"])
+                if isinstance(species_list[i], str):
+                    symbol += species_list[i] + str(atoms_dict["species_dict"][sp_key]["count"])
+                else: 
+                    symbol += species_list[i].Abbreviation + str(atoms_dict["species_dict"][sp_key]["count"])
             except IndexError:
                 raise ValueError("Number of species in the specified species list does not match that in the file")
         elif "species" in atoms_dict["species_dict"][sp_key].keys():
@@ -238,6 +276,16 @@ def _dict_to_atoms(atoms_dict, species_list=None, read_from_first_line=False):
 
 
 def vasp_sorter(structure):
+    """
+    Routine to sort the indices of a structure as it would be when written to a POSCAR file
+
+    Args:
+        structure (pyiron_atomistics.structure.atoms.Atoms): The structure whose indices need to be sorted
+
+    Returns:
+        list: A list of indices which is sorted by the corresponding species for writing to POSCAR
+
+    """
     atom_numbers = structure.get_number_species_atoms()
     sorted_indices = list()
     for species in atom_numbers.keys():
