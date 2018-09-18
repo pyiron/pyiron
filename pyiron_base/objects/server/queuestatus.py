@@ -24,6 +24,41 @@ __date__ = "Sep 1, 2017"
 s = Settings()
 
 
+def _queue_status_command(user):
+    return ['qstat', '-u', str(user)]
+
+
+def _queue_del_command(que_id):
+    return ['qdel', str(que_id)]
+
+
+def _queue_enable_reservation(que_id):
+    return ['qalter', '-R', 'y', str(que_id)]
+
+
+def _queue_job_status_command(que_id):
+    return ['qstat', '-j', str(que_id)]
+
+
+def _queue_job_details_command(user, que_id):
+    return ['qacct', '-o', str(user), '-j', str(que_id)]
+
+
+def _queue_function(funct, user=None, que_id=None):
+    if user is not None and que_id is not None:
+        return subprocess.check_output(funct(user=user, que_id=que_id), stderr=subprocess.STDOUT, 
+                                       universal_newlines=True).split('\n')
+    elif user is not None:
+        return subprocess.check_output(funct(user=user), stderr=subprocess.STDOUT, 
+                                       universal_newlines=True).split('\n')
+    elif que_id is not None:
+        return subprocess.check_output(funct(que_id=que_id), stderr=subprocess.STDOUT, 
+                                       universal_newlines=True).split('\n')
+    else: 
+        return subprocess.check_output(funct(), stderr=subprocess.STDOUT, 
+                                       universal_newlines=True).split('\n')
+
+    
 def queue_table(job_ids=[], project_only=True):
     """
     Display the queuing system table as pandas.Dataframe
@@ -37,8 +72,7 @@ def queue_table(job_ids=[], project_only=True):
     """
     if project_only and not job_ids:
         return []
-    output = subprocess.check_output(['qstat', '-u', str(s.login_user)], stderr=subprocess.STDOUT,
-                                     universal_newlines=True).split('\n')
+    output = _queue_function(funct=_queue_status_command, user=s.login_user)
     if not output == ['']:
         job_dict_lst = []
         job_title = output[0].split()
@@ -70,8 +104,7 @@ def queue_id_table(requested_id=None):
     Returns:
         dict: Dictionary with the output from the queuing system - optimized for the Sun grid engine
     """
-    output = subprocess.check_output(['qstat', '-u', str(s.login_user)], stderr=subprocess.STDOUT,
-                                     universal_newlines=True).split('\n')
+    output = _queue_function(funct=_queue_status_command, user=s.login_user)
     if not output == ['']:
         jobs_dict = {}
         for line in output[2:]:
@@ -133,8 +166,7 @@ def queue_is_empty():
     Returns:
         bool: True if the table is empty, else False - optimized for the Sun grid engine
     """
-    output = subprocess.check_output(['qstat', '-u', str(s.login_user)], stderr=subprocess.STDOUT,
-                                     universal_newlines=True).split('\n')
+    output = _queue_function(funct=_queue_status_command, user=s.login_user)
     if output == ['']:
         return True
     else:
@@ -152,8 +184,7 @@ def queue_delete_job(item):
         str: Output from the queuing system as string - optimized for the Sun grid engine
     """
     que_id = _validate_que_request(item)
-    output = subprocess.check_output(['qdel', str(que_id)], stderr=subprocess.STDOUT, universal_newlines=True)
-    return output
+    return _queue_function(funct=_queue_del_command, que_id=que_id)[0]
 
 
 def queue_enable_reservation(item):
@@ -167,8 +198,7 @@ def queue_enable_reservation(item):
         str: Output from the queuing system as string - optimized for the Sun grid engine
     """
     que_id = _validate_que_request(item)
-    output = subprocess.check_output(['qalter', '-R', 'y', str(que_id)], stderr=subprocess.STDOUT, universal_newlines=True)
-    return output
+    return _queue_function(funct=_queue_enable_reservation, que_id=que_id)[0]
 
 
 def queue_report(item):
@@ -183,8 +213,7 @@ def queue_report(item):
     """
     que_id = _validate_que_request(item)
     try:
-        output = subprocess.check_output(['qacct', '-o', str(s.login_user), '-j', str(que_id)],
-                                         stderr=subprocess.STDOUT, universal_newlines=True).split('\n')
+        output = _queue_function(funct=_queue_job_details_command, user=s.login_user, que_id=que_id)
         return pandas.DataFrame(
             [[line.split()[0], line.split()[1:]] for line in output[1:]])
     except subprocess.CalledProcessError:
@@ -203,8 +232,7 @@ def queue_job_info(item):
     """
     que_id = _validate_que_request(item)
     try:
-        output = subprocess.check_output(['qstat', '-j', str(que_id)], stderr=subprocess.STDOUT,
-                                         universal_newlines=True).split('\n')
+        output = _queue_function(funct=_queue_job_status_command, que_id=que_id)
         return pandas.DataFrame(
             [[line_arg.replace('  ', '') for line_arg in line.split(': ')] for line in output[1:]][0:24])
     except subprocess.CalledProcessError:
