@@ -15,7 +15,8 @@ class TestOutcar(unittest.TestCase):
         self.file_list = list()
         self.outcar_parser = Outcar()
         # file_list = ["OUTCAR_1", "OUTCAR_2", "OUTCAR_3", "OUTCAR_4", "OUTCAR_5", "OUTCAR_6", "OUTCAR_7"]
-        file_list = os.listdir("../static/vasp_test_files/outcar_samples")
+        file_list = os.listdir(os.path.abspath(os.path.join(file_location,
+                                                            "../static/vasp_test_files/outcar_samples")))
         for f in file_list:
             direc = os.path.abspath(os.path.join(file_location,
                                                  "../static/vasp_test_files/outcar_samples"))

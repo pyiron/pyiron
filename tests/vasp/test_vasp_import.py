@@ -21,7 +21,7 @@ class TestVaspImport(unittest.TestCase):
         project.remove_jobs(recursive=True)
         project.remove(enable=True)
         s.close_connection()
-        os.remove('import.db')
+        # os.remove(os.path.join(file_location, 'import.db'))
 
     def test_import(self):
         self.project.import_from_path(path=os.path.join(file_location, '../static/vasp_test_files/full_job_sample'),
