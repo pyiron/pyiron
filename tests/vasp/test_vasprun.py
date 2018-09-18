@@ -24,8 +24,8 @@ class TestVasprun(unittest.TestCase):
 
     def setUp(self):
         self.vp_list = list()
-        file_list = ["vasprun_1.xml", "vasprun_2.xml", "vasprun_3.xml", "vasprun_4.xml", "vasprun_5.xml",
-                     "vasprun_6.xml"]
+        file_list = sorted(os.listdir("../static/vasp_test_files/vasprun_samples"))
+        del file_list[file_list.index("vasprun_spoilt.xml")]
         self.num_species = [3, 1, 2, 2, 3, 4]
         direc = os.path.abspath("../static/vasp_test_files/vasprun_samples")
         for f in file_list:
