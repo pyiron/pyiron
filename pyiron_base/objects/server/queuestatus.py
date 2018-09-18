@@ -7,7 +7,7 @@ import pandas
 import time
 from pyiron_base.core.settings.generic import Settings
 from pyiron_base.objects.job.generic import GenericJob
-from pyironbase.objects.server.scheduler.generic import QUEUE_SCRIPT_PREFIX, QUEUE_SCRIPT_SUFFIX
+from pyiron_base.objects.server.scheduler.generic import QUEUE_SCRIPT_PREFIX, QUEUE_SCRIPT_SUFFIX
 
 """
 Set of functions to interact with the queuing system directly from within pyiron - optimized for the Sun grid engine.
