@@ -988,6 +988,11 @@ class Vasp(GenericDFTJob):
         elif direction:
             self.input.incar['I_CONSTRAINED_M'] = 1
 
+    def validate_ready_to_run(self):
+        super(Vasp, self).validate_ready_to_run()
+        if 'spin_constraint' in self.structure._tag_list.keys():
+            raise NotImplementedError('The spin_constraint tag is not supported by VASP.')
+            
     def list_potentials(self):
         """
         Lists all the possible POTCAR files for the elements in the structure depending on the XC functional
