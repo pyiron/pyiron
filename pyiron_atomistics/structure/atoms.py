@@ -2266,12 +2266,12 @@ class Atoms(object):
         from ase.geometry import find_mic
 
         positions = self.positions
-        if type(a0)==int:
+        if isinstance(a0, int) or np.issubdtype(a0, np.integer):
             a0 = positions[a0]
         else:
             assert len(a0)==3
             a0 = np.array(a0)
-        if type(a1)==int:
+        if isinstance(a1, int) or np.issubdtype(a1, np.integer):
             a1 = positions[a1]
         else:
             assert len(a1)==3
