@@ -6,6 +6,10 @@ from collections import OrderedDict
 import os
 from pyiron_base.objects.server.shelloption import ShellOption
 
+QUEUE_SCRIPT_PREFIX = 'pi_'
+QUEUE_SCRIPT_SUFFIX = '.sh'
+
+
 """
 JobScheduler class - template for job schedulers 
 """
@@ -402,7 +406,7 @@ class JobScheduler(object):
         """
         if self.working_directory:
             if job_id:
-                self.script_name = 'pi_'+str(job_id)+'.sh'
+                self.script_name = QUEUE_SCRIPT_PREFIX + str(job_id) + QUEUE_SCRIPT_SUFFIX
             file_name = os.path.join(self.working_directory, self.script_name)
             if self.wrapper:
                 with open(file_name, "w") as f:

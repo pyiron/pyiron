@@ -7,6 +7,7 @@ import pandas
 import time
 from pyiron_base.core.settings.generic import Settings
 from pyiron_base.objects.job.generic import GenericJob
+from pyiron_base.objects.server.scheduler.generic import QUEUE_SCRIPT_PREFIX, QUEUE_SCRIPT_SUFFIX
 
 """
 Set of functions to interact with the queuing system directly from within pyiron - optimized for the Sun grid engine.
@@ -108,8 +109,8 @@ def queue_id_table(requested_id=None):
         jobs_dict = {}
         for line in output[2:]:
             job = line.split()
-            if len(job) > 4 and job[2].startswith('pi_'):
-                job_id = job[2].split('.sh')[0].split('py_')[1]
+            if len(job) > 4 and job[2].startswith(QUEUE_SCRIPT_PREFIX):
+                job_id = job[2].split(QUEUE_SCRIPT_SUFFIX)[0].split(QUEUE_SCRIPT_PREFIX)[1]
                 job_status = job[4]
                 jobs_dict[job_id] = (int(job[0]), job_status)
                 if requested_id is not None and job_id == requested_id:
@@ -119,6 +120,45 @@ def queue_id_table(requested_id=None):
         return {}
 
 
+def queue_info_by_job_id(job_id):
+    """
+    Display the queuing system info of job by qstat | grep  shell command
+    as dictionary
+
+    Args:
+        requested_id (int): query for a specific job_id
+
+    Returns:
+        dict: Dictionary with the output from the queuing system - optimized for the Sun grid engine
+    """
+    # qstat with detailed information (Full jobname)
+    proc1 = subprocess.Popen(
+        ['qstat', '-u', str(s.login_user), '-r'], stdout=subprocess.PIPE)
+    # grep by full job name and return one line before (-B1 flag)
+    proc2 = subprocess.Popen(
+        [
+            'grep', '{prefix}{job_id}{suffix}'.format(
+                prefix=QUEUE_SCRIPT_PREFIX,
+                suffix=QUEUE_SCRIPT_SUFFIX,
+                job_id=job_id),
+            '-B1'
+        ],
+        stdin=proc1.stdout,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True)
+
+    proc1.stdout.close()  # Allow proc1 to receive a SIGPIPE if proc2 exits.
+    out, err = proc2.communicate()
+    if out:
+        summary_line, _ = out.split("\n")[:2]
+        # summary_line=['QUE_ID', 'PRIORITY', 'FIXED_LENGTH_JOBNAME', 'USERNAME', 'QUEUESTATUS', 'DATE', 'TIME', 'CORES']
+        qid, priority, _, user, job_status = summary_line.split()[:5]
+        return {job_id: (int(qid), job_status)}
+    else:
+        return None
+
+    
 def queue_is_empty():
     """
     Check if the queue table is currently empty - no more jobs to wait for.

@@ -444,14 +444,16 @@ class SerialMasterBase(GenericMaster):
             self.run()
         # here the new convergence goals have to be implemented - after the append I should try to parse the existing output!
         else:
-            ham = self._convergence_goal(self, **self._convergence_goal_qwargs)
-            if ham is not True:
-                self.append(ham)
-                self.to_hdf()
-                self.run_static()
-            else:
-                self.status.collect = True
-                self.run()
+            subjobs_statuses = set([self.project.db.get_item_by_id(child_id)['status'] for child_id in self.child_ids])
+            if len(subjobs_statuses)==0 or subjobs_statuses == {'finished'}:
+                ham = self._convergence_goal(self, **self._convergence_goal_qwargs)
+                if ham is not True:
+                    self.append(ham)
+                    self.to_hdf()
+                    self.run_static()
+                else:
+                    self.status.collect = True
+                    self.run()
 
 
 class GenericOutput(OrderedDict):
