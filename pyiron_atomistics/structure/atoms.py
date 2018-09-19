@@ -2263,10 +2263,20 @@ class Atoms(object):
         Returns:
 
         """
-        from ase.utils.geometry import find_mic
+        from ase.geometry import find_mic
 
         positions = self.positions
-        distance = np.array([positions[a1] - positions[a0]])
+        if type(a0)==int:
+            a0 = positions[a0]
+        else:
+            assert len(a0)==3
+            a0 = np.array(a0)
+        if type(a1)==int:
+            a1 = positions[a1]
+        else:
+            assert len(a1)==3
+            a1 = np.array(a1)
+        distance = np.array([a1 - a0])
         if mic:
             distance, d_len = find_mic(distance, self.cell, self.pbc)
         else:
