@@ -1124,7 +1124,7 @@ class Atoms(object):
         if show_cell:
             if parent_basis.cell is not None:
                 view.add_unitcell()
-        if custom_vector is not None:
+        if custom_3darray is not None:
             for arr, pos in zip(custom_3darray, self.positions):
                 view.shape.add_arrow(list(pos), list(pos+arr), list(np.absolute(arr)/np.linalg.norm(arr)), 0.2)
         if show_axes:
