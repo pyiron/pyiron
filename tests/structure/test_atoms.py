@@ -336,6 +336,13 @@ class TestAtoms(unittest.TestCase):
         NaCl_bound = NaCl.get_boundary_region(0.2)
         # NaCl_bound.plot3d()
 
+    def test_get_distance(self):
+        cell = 2.2 * np.identity(3)
+        NaCl = Atoms('NaCl', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
+        self.assertAlmostEqual(NaCl.get_distance(0, 1), 2.2*0.5*np.sqrt(3))
+        self.assertAlmostEqual(NaCl.get_distance(0, [0, 0, 0.5]), 0.5)
+        self.assertAlmostEqual(NaCl.get_distance([0, 0, 0], [0, 0, 0.5]), 0.5)
+
     def test_get_neighbors(self):
         cell = 2.2 * np.identity(3)
         NaCl = Atoms('NaCl', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)

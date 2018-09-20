@@ -1092,7 +1092,8 @@ class Atoms(object):
         pdb_str += 'ENDMDL \n'
         return pdb_str
     
-    def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5, background='white', color_scheme=None, show_axes=True, custom_array=None):
+    def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5,
+               background='white', color_scheme=None, show_axes=True, custom_array=None, custom_3darray=None):
         """
         Possible color schemes: 
           " ", "picking", "random", "uniform", "atomindex", "residueindex",
@@ -1123,6 +1124,9 @@ class Atoms(object):
         if show_cell:
             if parent_basis.cell is not None:
                 view.add_unitcell()
+        if custom_vector is not None:
+            for arr, pos in zip(custom_3darray, self.positions):
+                view.shape.add_arrow(list(pos), list(pos+arr), list(np.absolute(arr)/np.linalg.norm(arr)), 0.2)
         if show_axes:
             axes_origin = -np.ones(3)
             view.shape.add_arrow(list(axes_origin), list(axes_origin+np.array([1, 0, 0])), [1, 0, 0], 0.1)
@@ -2263,10 +2267,20 @@ class Atoms(object):
         Returns:
 
         """
-        from ase.utils.geometry import find_mic
+        from ase.geometry import find_mic
 
         positions = self.positions
-        distance = np.array([positions[a1] - positions[a0]])
+        if isinstance(a0, list) or isinstance(a0, np.ndarray):
+            assert len(a0)==3
+            a0 = np.array(a0)
+        else:
+            a0 = positions[a0]
+        if isinstance(a1, list) or isinstance(a1, np.ndarray):
+            assert len(a1)==3
+            a1 = np.array(a1)
+        else:
+            a1 = positions[a1]
+        distance = np.array([a1 - a0])
         if mic:
             distance, d_len = find_mic(distance, self.cell, self.pbc)
         else:
