@@ -339,9 +339,9 @@ class TestAtoms(unittest.TestCase):
     def test_get_distance(self):
         cell = 2.2 * np.identity(3)
         NaCl = Atoms('NaCl', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
-        self.assertEqual(NaCl.get_distance(0, 1), 0.5*np.sqrt(3))
-        self.assertEqual(NaCl.get_distance(0, [0, 0, 0.5]), 0.5)
-        self.assertEqual(NaCl.get_distance([0, 0, 0], [0, 0, 0.5]), 0.5)
+        self.assertAlmostEqual(NaCl.get_distance(0, 1), 2.2*0.5*np.sqrt(3))
+        self.assertAlmostEqual(NaCl.get_distance(0, [0, 0, 0.5]), 0.5)
+        self.assertAlmostEqual(NaCl.get_distance([0, 0, 0], [0, 0, 0.5]), 0.5)
 
     def test_get_neighbors(self):
         cell = 2.2 * np.identity(3)
