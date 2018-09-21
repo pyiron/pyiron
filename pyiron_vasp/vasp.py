@@ -1133,6 +1133,13 @@ class Output:
             self.outcar.from_file(filename=posixpath.join(directory, "OUTCAR"))
             log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
+            if len(self.outcar.parse_dict["magnetization"]) == len(sorted_indices):
+                magnetization = np.array(self.outcar.parse_dict["magnetization"]).copy()
+                final_magmoms = np.array(self.outcar.parse_dict["final_magmoms"]).copy()
+                magnetization[sorted_indices] = magnetization.copy()
+                final_magmoms[sorted_indices] = final_magmoms.copy()
+                self.generic_output.dft_log_dict["magnetization"] = magnetization.to_list()
+                self.generic_output.dft_log_dict["final_magmoms"] = final_magmoms.to_list()
 
         if "vasprun.xml" in files_present:
             try:
