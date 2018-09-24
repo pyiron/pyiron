@@ -1137,9 +1137,10 @@ class Output:
                 magnetization = np.array(self.outcar.parse_dict["magnetization"]).copy()
                 final_magmoms = np.array(self.outcar.parse_dict["final_magmoms"]).copy()
                 magnetization[sorted_indices] = magnetization.copy()
-                final_magmoms[sorted_indices] = final_magmoms.copy()
-                self.generic_output.dft_log_dict["magnetization"] = magnetization.to_list()
-                self.generic_output.dft_log_dict["final_magmoms"] = final_magmoms.to_list()
+                if len(final_magmoms) != 0:
+                    final_magmoms[sorted_indices] = final_magmoms.copy()
+                self.generic_output.dft_log_dict["magnetization"] = magnetization.tolist()
+                self.generic_output.dft_log_dict["final_magmoms"] = final_magmoms.tolist()
 
         if "vasprun.xml" in files_present:
             try:
@@ -1185,9 +1186,10 @@ class Output:
                 magnetization = np.array(log_dict["magnetization"]).copy()
                 final_magmoms = np.array(log_dict["final_magmoms"]).copy()
                 magnetization[sorted_indices] = magnetization.copy()
-                final_magmoms[sorted_indices] = final_magmoms.copy()
-                log_dict["magnetization"] = magnetization.to_list()
-                log_dict["final_magmoms"] = final_magmoms.to_list()
+                if len(final_magmoms) != 0:
+                    final_magmoms[sorted_indices] = final_magmoms.copy()
+                log_dict["magnetization"] = magnetization.tolist()
+                log_dict["final_magmoms"] = final_magmoms.tolist()
             del log_dict["fermi_level"]
             if "PROCAR" in files_present:
                 try:
