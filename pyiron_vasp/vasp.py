@@ -1143,7 +1143,7 @@ class Output:
                 final_magmoms = np.array(self.outcar.parse_dict["final_magmoms"]).copy()
                 # magnetization[sorted_indices] = magnetization.copy()
                 if len(final_magmoms) != 0:
-                    final_magmoms[sorted_indices] = final_magmoms.copy()
+                    final_magmoms[:, sorted_indices, :] = final_magmoms.copy()
                 self.generic_output.dft_log_dict["magnetization"] = magnetization.tolist()
                 self.generic_output.dft_log_dict["final_magmoms"] = final_magmoms.tolist()
 
@@ -1187,14 +1187,14 @@ class Output:
             assert ("OUTCAR" in files_present)
             log_dict = self.outcar.parse_dict.copy()
             log_dict["energy_tot"] = log_dict["energies"].copy()
-            if len(log_dict["magnetization"]) == len(sorted_indices):
+            if len(log_dict["magnetization"]) > 0:
                 magnetization = np.array(log_dict["magnetization"]).copy()
                 final_magmoms = np.array(log_dict["final_magmoms"]).copy()
-                magnetization[sorted_indices] = magnetization.copy()
+                # magnetization[sorted_indices] = magnetization.copy()
                 if len(final_magmoms) != 0:
                     final_magmoms[sorted_indices] = final_magmoms.copy()
-                log_dict["magnetization"] = magnetization.tolist()
-                log_dict["final_magmoms"] = final_magmoms.tolist()
+                self.generic_output.dft_log_dict["magnetization"] = magnetization.tolist()
+                self.generic_output.dft_log_dict["final_magmoms"] = final_magmoms.tolist()
             del log_dict["fermi_level"]
             if "PROCAR" in files_present:
                 try:
