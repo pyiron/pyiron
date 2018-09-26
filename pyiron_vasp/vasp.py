@@ -463,6 +463,8 @@ class Vasp(GenericDFTJob):
                         self.input.incar['ISYM'] = 0
                 if self.spin_constraints and 'LAMBDA' not in self.input.incar._dataset['Parameter']:
                     raise ValueError('LAMBDA is not specified but it is necessary for non collinear calculations.')
+                if self.spin_constraints and 'RWIGS' not in self.input.incar._dataset['Parameter']:
+                    raise ValueError('Parameter RWIGS has to be set for spin constraint calculations')
             if self.spin_constraints and not self.input.incar['LNONCOLLINEAR']:
                 raise ValueError('Spin constraints are only avilable for non collinear calculations.')
         else:
@@ -1136,10 +1138,10 @@ class Output:
             self.outcar.from_file(filename=posixpath.join(directory, "OUTCAR"))
             log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
-            if len(self.outcar.parse_dict["magnetization"]) == len(sorted_indices):
+            if len(self.outcar.parse_dict["magnetization"]) > 0:
                 magnetization = np.array(self.outcar.parse_dict["magnetization"]).copy()
                 final_magmoms = np.array(self.outcar.parse_dict["final_magmoms"]).copy()
-                magnetization[sorted_indices] = magnetization.copy()
+                # magnetization[sorted_indices] = magnetization.copy()
                 if len(final_magmoms) != 0:
                     final_magmoms[sorted_indices] = final_magmoms.copy()
                 self.generic_output.dft_log_dict["magnetization"] = magnetization.tolist()
