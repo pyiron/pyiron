@@ -458,6 +458,9 @@ class Vasp(GenericDFTJob):
                 self.input.incar['LNONCOLLINEAR'] = True
                 if self.spin_constraints and 'M_CONSTR' not in self.input.incar._dataset['Parameter']:
                     self.input.incar['M_CONSTR'] = final_cmd
+                if self.spin_constraints or 'M_CONSTR' in self.input.incar._dataset['Parameter']:
+                    if 'ISYM' not in self.input.incar._dataset['Parameter']:
+                        self.input.incar['ISYM'] = 0
                 if self.spin_constraints and 'LAMBDA' not in self.input.incar._dataset['Parameter']:
                     raise ValueError('LAMBDA is not specified but it is necessary for non collinear calculations.')
             if self.spin_constraints and not self.input.incar['LNONCOLLINEAR']:
