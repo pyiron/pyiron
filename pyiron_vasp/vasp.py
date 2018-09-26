@@ -458,8 +458,13 @@ class Vasp(GenericDFTJob):
                 self.input.incar['LNONCOLLINEAR'] = True
                 if self.spin_constraints and 'M_CONSTR' not in self.input.incar._dataset['Parameter']:
                     self.input.incar['M_CONSTR'] = final_cmd
+                if self.spin_constraints or 'M_CONSTR' in self.input.incar._dataset['Parameter']:
+                    if 'ISYM' not in self.input.incar._dataset['Parameter']:
+                        self.input.incar['ISYM'] = 0
                 if self.spin_constraints and 'LAMBDA' not in self.input.incar._dataset['Parameter']:
                     raise ValueError('LAMBDA is not specified but it is necessary for non collinear calculations.')
+                if self.spin_constraints and 'RWIGS' not in self.input.incar._dataset['Parameter']:
+                    raise ValueError('Parameter RWIGS has to be set for spin constraint calculations')
             if self.spin_constraints and not self.input.incar['LNONCOLLINEAR']:
                 raise ValueError('Spin constraints are only avilable for non collinear calculations.')
         else:
@@ -1133,12 +1138,15 @@ class Output:
             self.outcar.from_file(filename=posixpath.join(directory, "OUTCAR"))
             log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
-            if len(self.outcar.parse_dict["magnetization"]) == len(sorted_indices):
+            if len(self.outcar.parse_dict["magnetization"]) > 0:
                 magnetization = np.array(self.outcar.parse_dict["magnetization"]).copy()
                 final_magmoms = np.array(self.outcar.parse_dict["final_magmoms"]).copy()
-                magnetization[sorted_indices] = magnetization.copy()
+                # magnetization[sorted_indices] = magnetization.copy()
                 if len(final_magmoms) != 0:
-                    final_magmoms[sorted_indices] = final_magmoms.copy()
+                    if len(final_magmoms.shape) == 3:
+                        final_magmoms[:, sorted_indices, :] = final_magmoms.copy()
+                    else:
+                        final_magmoms[:, sorted_indices] = final_magmoms.copy()
                 self.generic_output.dft_log_dict["magnetization"] = magnetization.tolist()
                 self.generic_output.dft_log_dict["final_magmoms"] = final_magmoms.tolist()
 
@@ -1182,14 +1190,17 @@ class Output:
             assert ("OUTCAR" in files_present)
             log_dict = self.outcar.parse_dict.copy()
             log_dict["energy_tot"] = log_dict["energies"].copy()
-            if len(log_dict["magnetization"]) == len(sorted_indices):
+            if len(log_dict["magnetization"]) > 0:
                 magnetization = np.array(log_dict["magnetization"]).copy()
                 final_magmoms = np.array(log_dict["final_magmoms"]).copy()
-                magnetization[sorted_indices] = magnetization.copy()
+                # magnetization[sorted_indices] = magnetization.copy()
                 if len(final_magmoms) != 0:
-                    final_magmoms[sorted_indices] = final_magmoms.copy()
-                log_dict["magnetization"] = magnetization.tolist()
-                log_dict["final_magmoms"] = final_magmoms.tolist()
+                    if len(final_magmoms.shape) == 3:
+                        final_magmoms[:, sorted_indices, :] = final_magmoms.copy()
+                    else:
+                        final_magmoms[:, sorted_indices] = final_magmoms.copy()
+                self.generic_output.dft_log_dict["magnetization"] = magnetization.tolist()
+                self.generic_output.dft_log_dict["final_magmoms"] = final_magmoms.tolist()
             del log_dict["fermi_level"]
             if "PROCAR" in files_present:
                 try:
