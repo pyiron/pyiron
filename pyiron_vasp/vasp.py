@@ -1143,7 +1143,10 @@ class Output:
                 final_magmoms = np.array(self.outcar.parse_dict["final_magmoms"]).copy()
                 # magnetization[sorted_indices] = magnetization.copy()
                 if len(final_magmoms) != 0:
-                    final_magmoms[:, sorted_indices, :] = final_magmoms.copy()
+                    if len(final_magmoms.shape) == 3:
+                        final_magmoms[:, sorted_indices, :] = final_magmoms.copy()
+                    else:
+                        final_magmoms[:, sorted_indices] = final_magmoms.copy()
                 self.generic_output.dft_log_dict["magnetization"] = magnetization.tolist()
                 self.generic_output.dft_log_dict["final_magmoms"] = final_magmoms.tolist()
 
@@ -1192,7 +1195,10 @@ class Output:
                 final_magmoms = np.array(log_dict["final_magmoms"]).copy()
                 # magnetization[sorted_indices] = magnetization.copy()
                 if len(final_magmoms) != 0:
-                    final_magmoms[:, sorted_indices, :] = final_magmoms.copy()
+                    if len(final_magmoms.shape) == 3:
+                        final_magmoms[:, sorted_indices, :] = final_magmoms.copy()
+                    else:
+                        final_magmoms[:, sorted_indices] = final_magmoms.copy()
                 self.generic_output.dft_log_dict["magnetization"] = magnetization.tolist()
                 self.generic_output.dft_log_dict["final_magmoms"] = final_magmoms.tolist()
             del log_dict["fermi_level"]
