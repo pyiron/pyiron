@@ -782,7 +782,7 @@ class Vasp(GenericDFTJob):
         if dipole_center is not None:
             self.input.incar["DIPOL"] = " ".join(str(val) for val in dipole_center)
 
-    def set_occupancy_smearing(self, smearing="fermi", width=0.1, ismear=None):
+    def set_occupancy_smearing(self, smearing="fermi", width=0.2, ismear=None):
         """
         Set how the finite temperature smearing is applied in determining partial occupancies
 
