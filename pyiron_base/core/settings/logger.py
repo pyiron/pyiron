@@ -42,7 +42,7 @@ def setup_logger():
     Returns:
         logging.getLogger: Logger
     """
-    logger = logging.getLogger('PyIron_log')
+    logger = logging.getLogger('pyiron_log')
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler('pyiron.log')
     ch = logging.StreamHandler()
