@@ -1136,39 +1136,42 @@ class Atoms(object):
         return view
     
     def plot3d_ase(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5, background='white', color_scheme='element', show_axes=True):
-         """
-         Possible color schemes: 
-           " ", "picking", "random", "uniform", "atomindex", "residueindex",
-           "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
-           "hydrophobicity", "value", "volume", "occupancy"
-         Returns:
-         """
-         try:  # If the graphical packages are not available, the GUI will not work.
-             import nglview
-         except ImportError:
-             raise ImportError("The package nglview needs to be installed for the plot3d() function!")
-         # Always visualize the parent basis
-         parent_basis = self.get_parent_basis()
-         view = nglview.show_ase(parent_basis)
-         if spacefill:
-             view.add_spacefill(radius_type='vdw', color_scheme=color_scheme, radius=particle_size)
-             # view.add_spacefill(radius=1.0)
-             view.remove_ball_and_stick()
-         else:
-             view.add_ball_and_stick()
-         if show_cell:
-             if parent_basis.cell is not None:
-                 view.add_unitcell()
-         if show_axes:
-             view.shape.add_arrow([-2, -2, -2], [2, -2, -2], [1, 0, 0], 0.5)
-             view.shape.add_arrow([-2, -2, -2], [-2, 2, -2], [0, 1, 0], 0.5)
-             view.shape.add_arrow([-2, -2, -2], [-2, -2, 2], [0, 0, 1], 0.5)
-         if camera!='perspective' and camera!='orthographic':
-             print('Only perspective or orthographic is permitted')
-             return None
-         view.camera = camera
-         view.background = background
-         return view
+        """
+        Possible color schemes: 
+          " ", "picking", "random", "uniform", "atomindex", "residueindex",
+          "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
+          "hydrophobicity", "value", "volume", "occupancy"
+        Returns:
+        """
+        try:  # If the graphical packages are not available, the GUI will not work.
+            import nglview
+        except ImportError:
+            raise ImportError("The package nglview needs to be installed for the plot3d() function!")
+        # Always visualize the parent basis
+        parent_basis = self.get_parent_basis()
+        view = nglview.show_ase(parent_basis)
+        if spacefill:
+            view.add_spacefill(radius_type='vdw', color_scheme=color_scheme, radius=particle_size)
+            # view.add_spacefill(radius=1.0)
+            view.remove_ball_and_stick()
+        else:
+            view.add_ball_and_stick()
+        if show_cell:
+            if parent_basis.cell is not None:
+                view.add_unitcell()
+        if show_axes:
+            view.shape.add_arrow([-2, -2, -2], [2, -2, -2], [1, 0, 0], 0.5)
+            view.shape.add_arrow([-2, -2, -2], [-2, 2, -2], [0, 1, 0], 0.5)
+            view.shape.add_arrow([-2, -2, -2], [-2, -2, 2], [0, 0, 1], 0.5)
+            view.shape.add_text(list(axes_origin+np.array([0, 0, 1])), [0, 0, 0], 1, 'z')
+            view.shape.add_text(list(axes_origin+np.array([0, 1, 0])), [0, 0, 0], 1, 'y')
+            view.shape.add_text(list(axes_origin+np.array([1, 0, 0])), [0, 0, 0], 1, 'x')
+        if camera!='perspective' and camera!='orthographic':
+            print('Only perspective or orthographic is permitted')
+            return None
+        view.camera = camera
+        view.background = background
+        return view
     
     def pos_xyz(self):
         """
