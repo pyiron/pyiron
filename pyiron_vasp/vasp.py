@@ -339,7 +339,7 @@ class Vasp(GenericDFTJob):
                 files = os.listdir(directory)
             try:
                 if not ("OUTCAR" in files or "vasprun.xml" in files):
-                    pass
+                    raise IOError("This file isn't present")
                     # raise AssertionError("OUTCAR/vasprun.xml should be present in order to import from directory")
                 if "vasprun.xml" in files:
                     vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
