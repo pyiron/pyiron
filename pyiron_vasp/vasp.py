@@ -344,8 +344,8 @@ class Vasp(GenericDFTJob):
                 if "vasprun.xml" in files:
                     vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
                     self.structure = vp_new.get_initial_structure()
-                except: 
-                    pass
+            except: 
+                pass
             if "INCAR" in files:
                 try:
                     self.input.incar.read_input(posixpath.join(directory, "INCAR"), ignore_trigger="!")
