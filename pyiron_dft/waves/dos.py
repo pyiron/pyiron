@@ -76,10 +76,9 @@ class Dos(object):
             import matplotlib.pylab as plt
         except ImportError:
             import matplotlib.pyplot as plt
-        try:
-            if not (self.es_obj.grand_dos_matrix is not None):
-                raise NoResolvedDosError("Can not plot the orbital resolved dos since resolved dos values are not"
-                                         " available")
+        if not (self.es_obj.grand_dos_matrix is not None):
+            raise NoResolvedDosError("Can not plot the orbital resolved dos since resolved dos values are not"
+                                     " available")
         plot = self.plot_total_dos()
         for key, val in self.orbital_dict.items():
             r_dos = self.get_orbital_resolved_dos(val)
