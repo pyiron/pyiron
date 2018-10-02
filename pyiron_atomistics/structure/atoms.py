@@ -1128,6 +1128,9 @@ class Atoms(object):
             view.shape.add_arrow(list(axes_origin), list(axes_origin+np.array([1, 0, 0])), [1, 0, 0], 0.1)
             view.shape.add_arrow(list(axes_origin), list(axes_origin+np.array([0, 1, 0])), [0, 1, 0], 0.1)
             view.shape.add_arrow(list(axes_origin), list(axes_origin+np.array([0, 0, 1])), [0, 0, 1], 0.1)
+            view.shape.add_text(list(axes_origin+np.array([0, 0, 1])), [0, 0, 0], 1, 'z')
+            view.shape.add_text(list(axes_origin+np.array([0, 1, 0])), [0, 0, 0], 1, 'y')
+            view.shape.add_text(list(axes_origin+np.array([1, 0, 0])), [0, 0, 0], 1, 'x')
         if camera!='perspective' and camera!='orthographic':
             print('Only perspective or orthographic is permitted')
             return None
@@ -1163,9 +1166,6 @@ class Atoms(object):
             view.shape.add_arrow([-2, -2, -2], [2, -2, -2], [1, 0, 0], 0.5)
             view.shape.add_arrow([-2, -2, -2], [-2, 2, -2], [0, 1, 0], 0.5)
             view.shape.add_arrow([-2, -2, -2], [-2, -2, 2], [0, 0, 1], 0.5)
-            view.shape.add_text(list(axes_origin+np.array([0, 0, 1])), [0, 0, 0], 1, 'z')
-            view.shape.add_text(list(axes_origin+np.array([0, 1, 0])), [0, 0, 0], 1, 'y')
-            view.shape.add_text(list(axes_origin+np.array([1, 0, 0])), [0, 0, 0], 1, 'x')
         if camera!='perspective' and camera!='orthographic':
             print('Only perspective or orthographic is permitted')
             return None
