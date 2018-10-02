@@ -275,11 +275,9 @@ class GenericJob(JobCore):
             filenames (list):
         """
         for f in filenames:
-            try:
-                assert(os.path.isfile(f))
-                self.restart_file_list.append(f)
-            except AssertionError:
+            if not (os.path.isfile(f)):
                 raise IOError("File: {} does not exist".format(f))
+            self.restart_file_list.append(f)
 
     @property
     def restart_file_dict(self):
@@ -878,9 +876,7 @@ class GenericJob(JobCore):
         """
         Internal helper function to copy the files required for the restart job.
         """
-        try:
-            assert (os.path.isdir(self.working_directory))
-        except AssertionError:
+        if not (os.path.isdir(self.working_directory)):
             raise ValueError("The working directory is not yet available to copy restart files")
         for i, actual_name in enumerate([os.path.basename(f) for f in self._restart_file_list]):
             if actual_name in self.restart_file_dict.keys():
