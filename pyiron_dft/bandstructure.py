@@ -32,7 +32,8 @@ class BandPath(object):
         self.q_dist = np.zeros(n_points)
 
     def _generate_points(self):
-        assert(self.bs_obj.structure is not None)
+        if not (self.bs_obj.structure is not None):
+            raise AssertionError()
         spl_distances = list()
         for i, sp in enumerate(self.special_points):
             if i < len(self.special_points) - 1:

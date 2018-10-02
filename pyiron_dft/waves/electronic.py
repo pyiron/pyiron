@@ -373,9 +373,7 @@ class ElectronicStructure(object):
         bool: Tells if the given system is metallic or not. The Fermi level crosses bands in the cas of metals but is
               present in the band gap in the case of semi-conductors.
         """
-        try:
-            assert(self._efermi is not None)
-        except AssertionError:
+        if not (self._efermi is not None):
             raise ValueError("e_fermi has to be set before you can determine if the system is metallic or not")
         fermi_crossed = False
         _, n_bands = np.shape(self.eigenvalue_matrix)
@@ -560,9 +558,7 @@ class ElectronicStructure(object):
             Spin resolved dos (numpy.ndarray instance)
 
         """
-        try:
-            assert(len(self.dos_energies) > 0)
-        except AssertionError:
+        if not (len(self.dos_energies) > 0):
             raise ValueError("The DOS is not computed/saved for this vasp run")
         return self.dos_densities[spin_indices]
 
