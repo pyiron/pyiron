@@ -211,8 +211,10 @@ class SparseList(object):
         self._default = new_list._default
 
     def __add__(self, other):
-        assert (isinstance(other, SparseList))
-        assert (self._default == other._default)
+        if not (isinstance(other, SparseList)):
+            raise AssertionError()
+        if not (self._default == other._default):
+            raise AssertionError()
         new_list = self.__copy__()
         shifted_dict = {i + self._length: val for i, val in other._dict.items()}
         new_list._dict.update(shifted_dict)
@@ -286,7 +288,8 @@ class SparseArrayElement(object):
         return out_str
 
     def __eq__(self, other):
-        assert (isinstance(other, SparseArrayElement))
+        if not (isinstance(other, SparseArrayElement)):
+            raise AssertionError()
         conditions = []
         for key in self._lists.keys():
             try:
@@ -383,7 +386,8 @@ class SparseArray(object):
         for key, val in self._lists.items():
             # for val in self._lists.values():
             #     print ("consistency: ", key, len(val), len(self))
-            assert (len(val) == self._length)
+            if not (len(val) == self._length):
+                raise AssertionError()
 
     def __str__(self):
         out_str = "\n"

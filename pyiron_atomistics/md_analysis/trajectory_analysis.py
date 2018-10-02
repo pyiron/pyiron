@@ -37,8 +37,10 @@ class TrajectoryAnalysis(object):
 
     @job.setter
     def job(self, val):
-        assert isinstance(val, (AtomisticGenericJob, JobPath))
-        assert (val.status == "finished")
+        if not (isinstance(val, (AtomisticGenericJob, JobPath))):
+            raise AssertionError()
+        if not (val.status == "finished"):
+            raise AssertionError()
         self._job = val
         self._set_trajectory()
 
@@ -67,7 +69,8 @@ def unwrap_coordinates(positions, cell=None, is_relative=False):
     unwrapped_positions = positions.copy()
     if len(unwrapped_positions) > 1:
         if not is_relative:
-            assert (cell is not None)
+            if not (cell is not None):
+                raise AssertionError()
             rel_positions = np.dot(unwrapped_positions, np.linalg.inv(cell))
         else:
             rel_positions = unwrapped_positions.copy()

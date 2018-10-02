@@ -426,7 +426,8 @@ class Murnaghan(AtomisticParallelMaster):
         Returns: Structure with equilibrium volume
 
         """
-        assert (self.structure is not None)
+        if not (self.structure is not None):
+            raise AssertionError()
         snapshot = self.structure.copy()
         old_vol = snapshot.get_volume()
         new_vol = self["output/equilibrium_volume"]

@@ -104,7 +104,8 @@ class Atoms(object):
         if (elements is None) and (numbers is None) and (indices is None):
             return
         if numbers is not None:  # for ASE compatibility
-            assert (elements is None)
+            if not (elements is None):
+                raise AssertionError()
             elements = self.numbers_to_elements(numbers)
         if elements is not None:
             el_object_list = None
@@ -742,7 +743,8 @@ class Atoms(object):
                 self._pbc = value
             elif value in (True, False):
                 value = self.dimension * [value]
-            assert (np.shape(np.array(value)) == (self.dimension,))
+            if not (np.shape(np.array(value)) == (self.dimension,)):
+                raise AssertionError()
             self._pbc = np.array(value, bool)
 
     def convert_element(self, el, pse=None):
@@ -1400,7 +1402,8 @@ class Atoms(object):
 
                     dd0 = neighbors[0][i][i_nbr + i_start]
                     dd = np.sqrt(np.dot(vec_r_ij, vec_r_ij))
-                    assert (dd - dd0 < 0.001)
+                    if not (dd - dd0 < 0.001):
+                        raise AssertionError()
                     # if (dd - dd0 > 0.001):
                     #     print "wrong: ", vec_r_ij, dd,dd0,i_nbr,ind,ind0,i
                     #     print self.positions[ind0], extended_cell.positions[ind], vec0
@@ -1447,7 +1450,8 @@ class Atoms(object):
                 break
             shell_dict[i_shell] = np.mean(dist[shells == i_shell])
             # print ("shells: ", i_shell, shell_dict[i_shell])
-        assert (max(shell_dict.keys()) == max_shell)
+        if not (max(shell_dict.keys()) == max_shell):
+            raise AssertionError()
         return shell_dict
 
     def get_shell_radius(self, shell=1, id_list=None):
@@ -1991,7 +1995,8 @@ class Atoms(object):
         self.indices = new_indices
 
     def __eq__(self, other):
-        assert (isinstance(other, Atoms))
+        if not (isinstance(other, Atoms)):
+            raise AssertionError()
         conditions = []
         for a_1, a_2 in zip(self, other):
             conditions.append(a_1 == a_2)
@@ -2166,7 +2171,8 @@ class Atoms(object):
         if isinstance(vec, int):
             vec = [vec] * self.dimension
 
-        assert (len(vec) == self.dimension)
+        if not (len(vec) == self.dimension):
+            raise AssertionError()
 
         i_vec = np.array([vec[0], 1, 1])
         if self.dimension > 1:
@@ -2271,12 +2277,14 @@ class Atoms(object):
 
         positions = self.positions
         if isinstance(a0, list) or isinstance(a0, np.ndarray):
-            assert len(a0)==3
+            if not (len(a0) == 3):
+                raise AssertionError()
             a0 = np.array(a0)
         else:
             a0 = positions[a0]
         if isinstance(a1, list) or isinstance(a1, np.ndarray):
-            assert len(a1)==3
+            if not (len(a1) == 3):
+                raise AssertionError()
             a1 = np.array(a1)
         else:
             a1 = positions[a1]
@@ -2435,7 +2443,8 @@ class Atoms(object):
                 vector = np.cross((0, 0, 1), v2)
                 if norm(vector) < eps:
                     vector = np.cross((1, 0, 0), v2)
-                assert norm(vector) >= eps
+                if not (norm(vector) >= eps):
+                    raise AssertionError()
             elif s > 0:
                 vector /= s
 
@@ -2452,7 +2461,8 @@ class Atoms(object):
             center = np.array(center)
 
         if index_list is not None:
-            assert (len(index_list) > 0)
+            if not (len(index_list) > 0):
+                raise AssertionError()
             rotate_list = index_list
         else:
             rotate_list = [range(len(self))]
