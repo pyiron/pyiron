@@ -19,7 +19,7 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 
-job_status_lst = ['initialized', 'appended', 'created', 'submitted', 'running', 'aborted', 'collect', 'suspended', 
+job_status_lst = ['initialized', 'appended', 'created', 'submitted', 'running', 'aborted', 'collect', 'suspended',
                   'refresh', 'busy', 'finished', 'not_converged']
 
 
