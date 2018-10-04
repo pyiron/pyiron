@@ -59,7 +59,7 @@ class Runmode(str):
 
     def _reset_mode(self):
         super(Runmode, self).__setattr__('_mode', {run_mode: False for run_mode in run_mode_lst})
-            
+
     def __repr__(self):
         return repr(self.mode)
 
