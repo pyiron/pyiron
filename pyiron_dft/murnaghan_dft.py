@@ -43,8 +43,10 @@ class MurnaghanDFT(Murnaghan):
         Returns: Structure with equilibrium volume
 
         """
-        assert iteration_step == -1
-        assert (self.structure is not None)
+        if not (iteration_step == -1):
+            raise AssertionError()
+        if not (self.structure is not None):
+            raise AssertionError()
         snapshot = self.structure.copy()
         old_vol = snapshot.get_volume()
         new_vol = self["output/equilibrium_volume"]
