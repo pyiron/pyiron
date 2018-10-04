@@ -38,19 +38,14 @@ class VolumetricData(object):
 
     @total_data.setter
     def total_data(self, val):
-        try:
-            assert(isinstance(val, (np.ndarray, list)))
-            try:
-                val = np.array(val)
-                shape = np.array(np.shape(val))
-                assert(len(shape) == 3)
-                self._total_data = val
-            except AssertionError:
-                raise ValueError("Attribute total_data should be a 3D array")
-
-        except AssertionError:
+        if not (isinstance(val, (np.ndarray, list))):
             raise TypeError("Attribute total_data should be a numpy.ndarray instance or a list and "
                             "not {}".format(type(val)))
+        val = np.array(val)
+        shape = np.array(np.shape(val))
+        if not (len(shape) == 3):
+            raise ValueError("Attribute total_data should be a 3D array")
+        self._total_data = val
 
     def get_average_along_axis(self, ind=2):
         """

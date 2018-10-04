@@ -461,7 +461,8 @@ class GenericParameters(PyironObject):
         Args:
             block_dict (dict): dictionary to define the block
         """
-        assert isinstance(block_dict, OrderedDict)
+        if not isinstance(block_dict, OrderedDict):
+            raise AssertionError()
         self._block_dict = block_dict
 
     def to_hdf(self, hdf, group_name=None):
