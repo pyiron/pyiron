@@ -338,7 +338,9 @@ class Vasp(GenericDFTJob):
                                             universal_newlines=True)
                 files = os.listdir(directory)
             try:
-                assert ("OUTCAR" in files or "vasprun.xml" in files)
+                if not ("OUTCAR" in files or "vasprun.xml" in files):
+                    raise IOError("This file isn't present")
+                    # raise AssertionError("OUTCAR/vasprun.xml should be present in order to import from directory")
                 if "vasprun.xml" in files:
                     vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
                     self.structure = vp_new.get_initial_structure()
@@ -657,7 +659,8 @@ class Vasp(GenericDFTJob):
         if not symmetry_reduction:
             self.input.incar["ISYM"] = -1
         scheme_list = ["MP", "GP", "Line", "Manual"]
-        assert (scheme in scheme_list)
+        if not (scheme in scheme_list):
+            raise AssertionError()
         if scheme == "MP":
             if mesh is None:
                 if kmesh_density is not None:
@@ -674,7 +677,8 @@ class Vasp(GenericDFTJob):
                 raise ValueError("For the manual mode, the kpoints list should be specified")
             else:
                 if weights is not None:
-                    assert (len(manual_kpoints) == len(weights))
+                    if not (len(manual_kpoints) == len(weights)):
+                        raise AssertionError()
                 self.input.kpoints.set_value(line=1, val=str(len(manual_kpoints)))
                 if reciprocal:
                     self.input.kpoints.set_value(line=2, val="Reciprocal")
@@ -705,7 +709,8 @@ class Vasp(GenericDFTJob):
         if read_charge_density:
             self.input.incar["ICHARG"] = 11
         if structure is None:
-            assert (self._output_parser.structure is not None)
+            if not (self._output_parser.structure is not None):
+                raise AssertionError()
             structure = self._output_parser.structure
         from pyiron_dft.bandstructure import Bandstructure
         bs_obj = Bandstructure(structure)
@@ -725,7 +730,8 @@ class Vasp(GenericDFTJob):
         Returns:
             pyiron_atomistics.structure.atoms.Atoms: The required structure
         """
-        assert (self.structure is not None)
+        if not (self.structure is not None):
+            raise AssertionError()
         snapshot = self.structure.copy()
         snapshot.cell = self.get("output/generic/cells")[iteration_step]
         snapshot.positions = self.get("output/generic/positions")[iteration_step]
@@ -773,7 +779,8 @@ class Vasp(GenericDFTJob):
         .. _Neugebauer & Scheffler: https://doi.org/10.1103/PhysRevB.46.16067
 
         """
-        assert (direction in range(3))
+        if not (direction in range(3)):
+            raise AssertionError()
         self.input.incar["ISYM"] = 0
         self.input.incar["LORBIT"] = 11
         self.input.incar["IDIPOL"] = direction + 1
@@ -986,8 +993,10 @@ class Vasp(GenericDFTJob):
         Returns:
 
         """
-        assert isinstance(direction, bool)
-        assert isinstance(norm, bool)
+        if not isinstance(direction, bool):
+            raise AssertionError()
+        if not isinstance(norm, bool):
+            raise AssertionError()
         if direction and norm:
             self.input.incar['I_CONSTRAINED_M'] = 2
         elif direction:
@@ -1187,7 +1196,8 @@ class Output:
             self.structure.cell = log_dict["cells"][-1]
 
         else:
-            assert ("OUTCAR" in files_present)
+            if not ("OUTCAR" in files_present):
+                raise AssertionError()
             log_dict = self.outcar.parse_dict.copy()
             log_dict["energy_tot"] = log_dict["energies"].copy()
             if len(log_dict["magnetization"]) > 0:
@@ -1573,7 +1583,8 @@ class Potcar(GenericParameters):
             else:
                 el_path = self._find_potential_file(path=vasp_potentials.find_default(el)['Filename'].values[0][0])
 
-            assert (os.path.isfile(el_path))
+            if not (os.path.isfile(el_path)):
+                raise AssertionError()
             pot_name = "pot_" + str(i)
 
             if pot_name in self._dataset["Parameter"]:
