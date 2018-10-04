@@ -16,6 +16,9 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 
+run_mode_lst = ['modal', 'non_modal', 'queue', 'manual', 'thread', 'interactive', 'interactive_non_modal']
+
+
 class Runmode(str):
     """
     Run mode describes how the job is going to be executed:
@@ -31,13 +34,7 @@ class Runmode(str):
 
     def __init__(self, mode='modal'):
         super(Runmode, self).__init__()
-        super(Runmode, self).__setattr__('_mode', {'modal': False,
-                                                   'non_modal': False,
-                                                   'queue': False,
-                                                   'manual': False,
-                                                   'thread': False,
-                                                   'interactive': False,
-                                                   'interactive_non_modal': False})
+        super(Runmode, self).__setattr__('_mode', {run_mode: False for run_mode in run_mode_lst})
         self.mode = mode
 
     @property
