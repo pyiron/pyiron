@@ -380,7 +380,8 @@ class AtomisticGenericJob(GenericJobCore):
 
 
         """
-        assert (self.structure is not None)
+        if not (self.structure is not None):
+            raise AssertionError()
         snapshot = self.structure.copy()
         snapshot.cell = self.get("output/generic/cells")[iteration_step]
         snapshot.positions = self.get("output/generic/positions")[iteration_step]

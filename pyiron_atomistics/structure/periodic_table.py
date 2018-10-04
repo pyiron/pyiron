@@ -192,7 +192,8 @@ class PeriodicTable(object):
                     del new_element.tags['sub_tags']
 
             if new_element.Parent is None:
-                assert (el in self.dataframe.index.values)
+                if not (el in self.dataframe.index.values):
+                    raise AssertionError()
                 if len(new_element.sub['tags']) > 0:
                     raise ValueError('Element cannot get tag-assignment twice')
                 if 'tags' not in self.dataframe.keys():
