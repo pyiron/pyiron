@@ -19,6 +19,10 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 
+job_status_lst = ['initialized', 'appended', 'created', 'submitted', 'running', 'aborted', 'collect', 'suspended',
+                  'refresh', 'busy', 'finished', 'not_converged']
+
+
 class JobStatus(object):
     """
     The JobStatus object handles the different states a job could have. The available states are:
@@ -178,18 +182,7 @@ class JobStatus(object):
         """
         internal function to reset the run mode - sets all run modes to false.
         """
-        self._status_dict = {'initialized': False,
-                             'appended': False,
-                             'created': False,
-                             'submitted': False,
-                             'running': False,
-                             'aborted': False,
-                             'collect': False,
-                             'suspended': False,
-                             'refresh': False,
-                             'busy': False,
-                             'finished': False,
-                             'not_converged': False}
+        self._status_dict = {status: False for status in job_status_lst}
 
     @staticmethod
     def _bool_check(boolean):
