@@ -26,7 +26,7 @@ class TestVasprun(unittest.TestCase):
         self.vp_list = list()
         file_list = sorted(os.listdir("../static/vasp_test_files/vasprun_samples"))
         del file_list[file_list.index("vasprun_spoilt.xml")]
-        self.num_species = [3, 1, 2, 2, 3, 4]
+        self.num_species = [3, 1, 2, 2, 3, 4, 2]
         direc = os.path.abspath("../static/vasp_test_files/vasprun_samples")
         for f in file_list:
             vp = Vasprun()
@@ -112,6 +112,7 @@ class TestVasprun(unittest.TestCase):
             self.assertEqual(len(d["forces"].T), 3)
             self.assertEqual(len(d["positions"].T), 3)
             self.assertFalse(len(d["positions"][d["positions"] > 1.01]) > 0)
+            self.assertFalse(np.max(d["positions"]) > 1.01)
             self.assertEqual(np.shape(d["cells"][0]), np.shape(np.eye(3)))
             self.assertIsInstance(d["grand_eigenvalue_matrix"], np.ndarray)
             self.assertIsInstance(d["grand_occupancy_matrix"], np.ndarray)
@@ -131,7 +132,6 @@ class TestVasprun(unittest.TestCase):
                 [n_spin0, n_kpts0, n_bands0] = np.shape(d["grand_occupancy_matrix"])
                 [n_spin, n_kpts, n_bands, n_atoms, n_orbitals] = np.shape(d["grand_dos_matrix"])
                 self.assertEqual(len(d["kpoints"]["kpoint_list"]), n_kpts)
-
                 self.assertEqual(len(d["positions"][0]), n_atoms)
                 self.assertEqual(n_spin, n_spin0)
                 self.assertEqual(n_bands, n_bands0)
