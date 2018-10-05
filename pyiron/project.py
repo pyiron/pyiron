@@ -33,7 +33,8 @@ __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
 
-assert (isinstance(ase.__file__, str))
+if not (isinstance(ase.__file__, str)):
+    raise AssertionError()
 
 s = Settings()
 
