@@ -504,12 +504,12 @@ class GenericOutput(object):
         return self._job['output/generic/steps']
 
     @property
-    def temperatures(self):
-        return self._job['output/generic/temperatures']
+    def temperature(self):
+        return self._job['output/generic/temperature']
 
     @property
-    def time(self):
-        return self._job['output/generic/time']
+    def computation_time(self):
+        return self._job['output/generic/computation_time']
 
     @property
     def unwrapped_positions(self):
