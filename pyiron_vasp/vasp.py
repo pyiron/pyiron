@@ -47,8 +47,7 @@ class Vasp(GenericDFTJob):
         job_name (str): Name of the job
 
     Attributes:
-        input (pyiron_vasp.vasp.Input instance): Instance which handles the input
-        output (pyiron_vasp.vasp.Input instance): Instance which handles the output
+        input (pyiron_vasp.vasp.Input): Instance which handles the input
 
     Examples:
         Let's say you need to run a vasp simulation where you would like to control the input parameters manually. To
