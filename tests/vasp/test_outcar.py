@@ -363,9 +363,9 @@ class TestOutcar(unittest.TestCase):
 
     def test_get_nelect(self):
         n_elect_list = [40.0, 16.0, 16.0, 16.0, 16.0, 16.0, 224.0]
-        for i, filename in enumerate(self.file_list):
+        for filename in self.file_list:
+            i = int(filename.split("_")[-1]) - 1
             self.assertEqual(n_elect_list[i], self.outcar_parser.get_nelect(filename))
-
 
 
 if __name__ == '__main__':
