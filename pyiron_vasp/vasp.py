@@ -1197,7 +1197,7 @@ class Output:
 
         else:
             if not ("OUTCAR" in files_present):
-                raise AssertionError()
+                raise IOError("Either the OUTCAR or vasprun.xml files need to be present")
             log_dict = self.outcar.parse_dict.copy()
             log_dict["energy_tot"] = log_dict["energies"].copy()
             if len(log_dict["magnetization"]) > 0:
