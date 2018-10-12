@@ -51,6 +51,7 @@ class Outcar(object):
         scf_moments = self.get_dipole_moments(filename)
         kin_energy_error = self.get_kinetic_energy_error(filename)
         stresses = self.get_stresses(filename, si_unit=False)
+        n_elect = self.get_nelect(filename)
         try:
             irreducible_kpoints = self.get_irreducible_kpoints(filename)
         except ValueError:
@@ -75,6 +76,8 @@ class Outcar(object):
         self.parse_dict["magnetization"] = magnetization
         self.parse_dict["final_magmoms"] = final_magmom_lst
         self.parse_dict["broyden_mixing"] = broyden_mixing
+        self.parse_dict["n_elect"] = n_elect
+
         try:
             self.parse_dict["pressures"] = np.average(stresses[:, 0:3], axis=1) * KBAR_TO_EVA
         except IndexError:
