@@ -1111,7 +1111,6 @@ class Output:
         self._structure = None
         self.outcar = Outcar()
         self.generic_output = GenericOutput()
-        self.dft_output = DFTOutput()
         self.description = "This contains all the output static from this particular vasp run"
         self.charge_density = VaspVolumetricData()
         self.electrostatic_potential = VaspVolumetricData()
@@ -1250,7 +1249,6 @@ class Output:
             self.generic_output.dft_log_dict["n_elect"] = float(self.vp_new.vasprun_dict["parameters"]["electronic"]
                                                                 ['NELECT'])
             if "kinetic_energies" in self.vp_new.vasprun_dict.keys():
-                self.dft_output.log_dict["kinetic_energies"] = self.vp_new.vasprun_dict["kinetic_energies"]
                 self.generic_output.dft_log_dict["scf_energy_kin"] = self.vp_new.vasprun_dict["kinetic_energies"]
 
         if "LOCPOT" in files_present:
@@ -1270,7 +1268,6 @@ class Output:
         with hdf.open("output") as hdf5_output:
             hdf5_output["description"] = self.description
             self.generic_output.to_hdf(hdf5_output)
-            self.dft_output.to_hdf(hdf5_output)
             try:
                 self.structure.to_hdf(hdf5_output)
             except AttributeError:
@@ -1305,7 +1302,6 @@ class Output:
                 self.structure = Atoms()
             self.structure.from_hdf(hdf5_output)
             self.generic_output.from_hdf(hdf5_output)
-            self.dft_output.from_hdf(hdf5_output)
             try:
                 if "electrostatic_potential" in hdf5_output.list_groups():
                     self.electrostatic_potential.from_hdf(hdf5_output, group_name="electrostatic_potential")
