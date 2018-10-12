@@ -652,6 +652,16 @@ class Outcar(object):
                     istep_mom.append(mom)
         return dip_moms
 
+    @staticmethod
+    def get_nelect(filename="OUTCAR"):
+        nelect_trigger = "NELECT"
+        with open(filename, 'r') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                line = line.strip()
+                if nelect_trigger in line:
+                    return float(line.split()[2])
+
 
 def _clean_line(line):
     return line.replace("-", " -")
