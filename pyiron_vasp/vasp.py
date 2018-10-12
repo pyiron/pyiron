@@ -1145,6 +1145,7 @@ class Output:
             self.outcar.from_file(filename=posixpath.join(directory, "OUTCAR"))
             log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
+            self.generic_output.dft_log_dict["n_elect"] = self.outcar.parse_dict["n_elect"]
             if len(self.outcar.parse_dict["magnetization"]) > 0:
                 magnetization = np.array(self.outcar.parse_dict["magnetization"]).copy()
                 final_magmoms = np.array(self.outcar.parse_dict["final_magmoms"]).copy()
@@ -1198,6 +1199,7 @@ class Output:
                 raise IOError("Either the OUTCAR or vasprun.xml files need to be present")
             log_dict = self.outcar.parse_dict.copy()
             log_dict["energy_tot"] = log_dict["energies"].copy()
+            self.generic_output.dft_log_dict["n_elect"] = self.outcar.parse_dict["n_elect"]
             if len(log_dict["magnetization"]) > 0:
                 magnetization = np.array(log_dict["magnetization"]).copy()
                 final_magmoms = np.array(log_dict["final_magmoms"]).copy()
