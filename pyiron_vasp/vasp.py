@@ -1228,25 +1228,13 @@ class Output:
         # important that we "reverse sort" the atoms in the vasp format into the atoms in the atoms class
         self.generic_output.log_dict = log_dict
         if "vasprun.xml" in files_present:
-            self.dft_output.log_dict["parameters"] = self.vp_new.vasprun_dict["parameters"]
-            self.dft_output.log_dict["scf_energies"] = self.vp_new.vasprun_dict["scf_energies"]
-            self.dft_output.log_dict["scf_fr_energies"] = self.vp_new.vasprun_dict["scf_fr_energies"]
-            self.dft_output.log_dict["scf_0_energies"] = self.vp_new.vasprun_dict["scf_0_energies"]
-            self.dft_output.log_dict["scf_dipole_moments"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
-            total_dipole_moments = list()
-            if len(self.dft_output.log_dict["scf_dipole_moments"][0]) > 0:
-                for dip in self.dft_output.log_dict["scf_dipole_moments"]:
-                    total_dipole_moments.append(np.array(dip[-1]))
-
-            total_dipole_moments = np.array(total_dipole_moments)
-            self.dft_output.log_dict["total_dipole_moments"] = total_dipole_moments
-            self.dft_output.log_dict["total_energies"] = self.vp_new.vasprun_dict["total_energies"]
-            self.dft_output.log_dict["total_fr_energies"] = self.vp_new.vasprun_dict["total_fr_energies"]
-            self.dft_output.log_dict["total_0_energies"] = self.vp_new.vasprun_dict["total_0_energies"]
-
+            # self.dft_output.log_dict["parameters"] = self.vp_new.vasprun_dict["parameters"]
             self.generic_output.dft_log_dict["scf_dipole_mom"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
+            total_dipole_moments = list()
+            if len(self.generic_output.dft_log_dict["scf_dipole_mom"][0]) > 0:
+                for dip in self.generic_output.dft_log_dict["scf_dipole_mom"]:
+                    total_dipole_moments.append(np.array(dip[-1]))
             self.generic_output.dft_log_dict["dipole_mom"] = total_dipole_moments
-
             self.generic_output.dft_log_dict["scf_energy_int"] = self.vp_new.vasprun_dict["scf_energies"]
             self.generic_output.dft_log_dict["scf_energy_free"] = self.vp_new.vasprun_dict["scf_fr_energies"]
             self.generic_output.dft_log_dict["scf_energy_zero"] = self.vp_new.vasprun_dict["scf_0_energies"]
