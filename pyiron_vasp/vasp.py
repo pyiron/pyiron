@@ -1230,8 +1230,10 @@ class Output:
         if "vasprun.xml" in files_present:
             # self.dft_output.log_dict["parameters"] = self.vp_new.vasprun_dict["parameters"]
             self.generic_output.dft_log_dict["scf_dipole_mom"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
-            total_dipole_moments = np.array([dip[-1] for dip in self.generic_output.dft_log_dict["scf_dipole_mom"]])
-            self.generic_output.dft_log_dict["dipole_mom"] = total_dipole_moments
+            total_dipole_moments = list()
+            if len(self.generic_output.dft_log_dict["scf_dipole_mom"]) > 0:
+                total_dipole_moments = np.array([dip[-1] for dip in self.generic_output.dft_log_dict["scf_dipole_mom"]])
+                self.generic_output.dft_log_dict["dipole_mom"] = total_dipole_moments
             self.generic_output.dft_log_dict["scf_energy_int"] = self.vp_new.vasprun_dict["scf_energies"]
             self.generic_output.dft_log_dict["scf_energy_free"] = self.vp_new.vasprun_dict["scf_fr_energies"]
             self.generic_output.dft_log_dict["scf_energy_zero"] = self.vp_new.vasprun_dict["scf_0_energies"]
