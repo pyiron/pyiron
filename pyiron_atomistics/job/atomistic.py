@@ -147,7 +147,7 @@ class AtomisticGenericJob(GenericJobCore):
         else:
             ValueError('There is no structure attached to the current Job.')
 
-    def animate_structure(self, spacefill=True, show_cell=True, stride=1, center_of_mass=False):
+    def animate_structure(self, spacefill=True, show_cell=True, stride=1, center_of_mass=False, particle_size=0.5):
         """
         Animates the job if a trajectory is present
 
@@ -172,7 +172,7 @@ class AtomisticGenericJob(GenericJobCore):
 
         animation = nglview.show_asetraj(self.trajectory(stride=stride, center_of_mass=center_of_mass))
         if spacefill:
-            animation.add_spacefill(radius_type='vdw', scale=0.5)
+            animation.add_spacefill(radius_type='vdw', scale=0.5, radius=particle_size)
             animation.remove_ball_and_stick()
         else:
             animation.add_ball_and_stick()
