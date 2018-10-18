@@ -187,7 +187,6 @@ class ParallelMaster(GenericMaster):
         Args:
             num_jobs (int): number of submitted jobs
         """
-        self.input['num_points'] = num_jobs
         self.submission_status.total_jobs = num_jobs
 
     def reset_job_id(self, job_id=None):
@@ -226,7 +225,6 @@ class ParallelMaster(GenericMaster):
         Write the input files - this contains the GenericInput of the ParallelMaster as well as reseting the submission
         status.
         """
-        self.submission_status.total_jobs = self.input['num_points']
         self.submission_status.submitted_jobs = 0
         self.input.write_file(file_name="input.inp", cwd=self.working_directory)
 
@@ -470,6 +468,7 @@ class ParallelMaster(GenericMaster):
         The create_jobs method defines the rules how to create the job series which should then be executed in parallel.
         """
         job_lst = []
+        self.submission_status.total_jobs = len(self._job_generator)
         self.submission_status.submitted_jobs = 0
         if self.job_id and self.project.db.get_item_by_id(self.job_id)['status'] not in ['finished', 'aborted']:
             self._logger.debug("{} child project {}".format(self.job_name, self.project.__str__()))
@@ -568,6 +567,13 @@ class JobGenerator(object):
     def __init__(self, job):
         self._job = job
         self._childcounter = 0
+        self._parameter_lst_cached = []
+
+    @property
+    def parameter_list_cached(self):
+        if len(self._parameter_lst_cached) == 0:
+            self._parameter_lst_cached = self.parameter_list
+        return self._parameter_lst_cached
 
     @property
     def parameter_list(self):
@@ -587,14 +593,17 @@ class JobGenerator(object):
     def __next__(self):
         return self.next()
 
+    def __len__(self):
+        return len(self.parameter_list_cached)
+
     def _create_job(self, job_name):
         job = self._job._create_child_job(job_name)
         self._childcounter += 1
         return job
 
     def next(self):
-        if len(self.parameter_list) > self._childcounter:
-            current_paramenter = self.parameter_list[self._childcounter]
+        if len(self.parameter_list_cached) > self._childcounter:
+            current_paramenter = self.parameter_list_cached[self._childcounter]
             job = self._job._create_child_job(self.job_name(parameter=current_paramenter))
             self._childcounter += 1
             if job is not None:
