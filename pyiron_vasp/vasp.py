@@ -1288,7 +1288,7 @@ class Output:
                 self.electronic_structure.to_hdf(hdf=hdf5_output, group_name="electronic_structure")
 
             if self.outcar.parse_dict:
-                self.outcar.to_hdf(hdf=hdf5_output, group_name="outcar")
+                self.outcar.to_hdf_minimal(hdf=hdf5_output, group_name="outcar")
 
     def from_hdf(self, hdf):
         """
