@@ -95,6 +95,20 @@ class Outcar(object):
             for key in self.parse_dict.keys():
                 hdf5_output[key] = self.parse_dict[key]
 
+    def to_hdf_minimal(self, hdf, group_name="outcar"):
+        """
+        Store minimal output in an HDF5 file (output unique to OUTCAR)
+
+        Args:
+            hdf (pyiron_base.objects.generic.hdfio.FileHDFio): HDF5 group or file
+            group_name (str): Name of the HDF5 group
+        """
+        unique_quantities = ["kin_energy_error", "broyden_mixing", "stresses", "irreducible_kpoints"]
+        with hdf.open(group_name) as hdf5_output:
+            for key in self.parse_dict.keys():
+                if key in unique_quantities:
+                    hdf5_output[key] = self.parse_dict[key]
+
     def from_hdf(self, hdf, group_name="outcar"):
         """
         Load output from an HDF5 file
