@@ -272,10 +272,9 @@ class Vasp(GenericDFTJob):
             max_i_steps = int(self['input/incar/data_dict']['Value'][ind])
         else:
             max_i_steps = 0
-        try:
+        scf_energies = self['output/generic/dft/scf_energy_free']
+        if scf_energies is None:
             scf_energies = self['output/outcar/scf_energies']
-        except TypeError:
-            scf_energies = self['output/generic/dft/scf_energy_free']
         e_steps_converged = [len(step) < max_e_steps for step in scf_energies]
         # For calc_md() we do not care about convergence.
         if ibrion == 0 and max_i_steps != 0:
