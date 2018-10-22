@@ -233,3 +233,18 @@ class JobStatus(object):
     def __dir__(self):
         return list(self._status_dict.keys())     
    
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return other._status_dict == self._status_dict
+        elif isinstance(other, str):
+            return other == self.string
+        else:
+            return super(JobStatus, self).__eq__(other)
+
+    def __ne__(self, other):
+        if isinstance(other, self.__class__):
+            return other._status_dict != self._status_dict
+        elif isinstance(other, str):
+            return other != self.string
+        else:
+            return super(JobStatus, self).__ne__(other)
