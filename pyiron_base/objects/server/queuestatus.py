@@ -275,9 +275,12 @@ def _validate_que_request(item):
         else:
             raise ValueError('This job does not have a queue ID.')
     elif isinstance(item, JobCore):
-        server_dict = item['server']
-        if 'qid' in server_dict: 
-            que_id = server_dict['qid']
+        if "server" in item.project_hdf5.list_nodes():
+            server_hdf_dict = item.project_hdf5["server"]
+            if "qid" in server_hdf_dict.keys():
+                que_id = server_hdf_dict["qid"]
+            else:
+                raise ValueError('This job does not have a queue ID.')
         else:
             raise ValueError('This job does not have a queue ID.')
     else:
