@@ -661,19 +661,19 @@ class Lammps(AtomisticGenericJob):
                 [], [], [], [], [], [], []
             for atom_ind in range(len(self.structure)):
                 sel = list(self.structure.selective_dynamics[atom_ind])
-                if sel == [True, True, True]:
+                if sel == [False, False, False]:
                     constraint_xyz.append(atom_ind + 1)
-                elif sel == [True, True, False]:
-                    constraint_xy.append(atom_ind + 1)
-                elif sel == [False, True, True]:
-                    constraint_yz.append(atom_ind + 1)
-                elif sel == [True, False, True]:
-                    constraint_xz.append(atom_ind + 1)
-                elif sel == [True, False, False]:
-                    constraint_x.append(atom_ind + 1)
-                elif sel == [False, True, False]:
-                    constraint_y.append(atom_ind + 1)
                 elif sel == [False, False, True]:
+                    constraint_xy.append(atom_ind + 1)
+                elif sel == [True, False, False]:
+                    constraint_yz.append(atom_ind + 1)
+                elif sel == [False, True, False]:
+                    constraint_xz.append(atom_ind + 1)
+                elif sel == [False, True, True]:
+                    constraint_x.append(atom_ind + 1)
+                elif sel == [True, False, True]:
+                    constraint_y.append(atom_ind + 1)
+                elif sel == [True, True, False]:
                     constraint_z.append(atom_ind + 1)
             if constraint_xyz:
                 print('constraint (xyz): {}'.format(len(constraint_xyz)))
