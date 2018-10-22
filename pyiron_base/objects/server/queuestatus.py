@@ -7,6 +7,7 @@ import pandas
 import time
 from pyiron_base.core.settings.generic import Settings
 from pyiron_base.objects.job.generic import GenericJob
+from pyiron_base.objects.job.core import JobCore
 from pyiron_base.objects.server.scheduler.generic import QUEUE_SCRIPT_PREFIX, QUEUE_SCRIPT_SUFFIX
 
 """
@@ -265,11 +266,18 @@ def _validate_que_request(item):
     Returns:
         int: queuing system ID
     """
+    
     if isinstance(item, int):
         que_id = item
     elif isinstance(item, GenericJob):
         if item.server.queue_id:
             que_id = item.server.queue_id
+        else:
+            raise ValueError('This job does not have a queue ID.')
+    elif isinstance(item, JobCore):
+        server_dict = item['server']
+        if 'qid' in server_dict: 
+            que_id = server_dict['qid']
         else:
             raise ValueError('This job does not have a queue ID.')
     else:
