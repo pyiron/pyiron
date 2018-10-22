@@ -417,8 +417,8 @@ class JobCore(PyironObject):
                     print('Library jobs have no job folder {}'.format(dir_name))
         if "server" in self.project_hdf5.list_nodes():
             server_hdf_dict = self.project_hdf5["server"]
-            if "qid" in server_hdf_dict.keys() and self.status in ['submitted', 'running', 'collect']:
-                self.project._queue_delete_job(int(server_hdf_dict["qid"]))
+            if "qid" in server_hdf_dict.keys() and str(self.status) in ['submitted', 'running', 'collect']:
+                self.project._queue_delete_job(server_hdf_dict["qid"])
         if self.job_id:
             self.project.db.delete_item(self.job_id)
 
