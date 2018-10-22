@@ -54,17 +54,27 @@ fix 1 all nve
 variable dumptime equal 100
 dump 1 all custom ${dumptime} dump.out id type xsu ysu zsu fx fy fz
 dump_modify 1 sort id format line "%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g"
-thermo_style custom step temp pe etotal pxx pyy pzz vol
+thermo_style custom step temp pe etotal pxx pxy pxz pyy pyz pzz vol
 thermo_modify format  float %20.15g
 thermo 100
 run 0
 '''
         self.load_string(file_content)
 
-    def calc_minimize(self, e_tol=1e-8, f_tol=1e-8, max_iter=1000, pressure=None, n_print=1):
+    def calc_minimize(self, e_tol=0.0, f_tol=1e-8, max_iter=100000, pressure=None, n_print=100):
         max_evaluations = 10 * max_iter
         if pressure is not None:
-            self.set(fix___1=r'all box/relax aniso ' + str(pressure))
+            if type(pressure) == float or type(pressure) == int:
+                pressure = pressure*np.ones(3)
+            str_press = ''
+            for press, str_axis in zip(pressure, [' x ', ' y ', ' z ']):
+                if press is not None:
+                    str_press += str_axis+str(press*1.0e4)
+            if len(str_press) == 0:
+                raise ValueError('Pressure values cannot be three times None')
+            elif len(str_press)>1:
+                str_press += ' couple none'
+            self.set(fix___1=r'all box/relax' + str_press)
         else:
             self.remove_keys(["fix"])
         self.set(minimize=str(e_tol) + ' ' + str(f_tol) + ' ' + str(max_iter) + " " + str(max_evaluations))
@@ -75,8 +85,8 @@ run 0
         self.set(run='0')
         self.remove_keys(['minimize', 'velocity'])
 
-    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100, delta_temp=1.0,
-                delta_press=None, seed=None, tloop=None, rescale_velocity=True):
+    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, dt=None, time_step=None, n_print=100,
+                delta_temp=100.0, delta_press=None, seed=None, tloop=None, rescale_velocity=True, langevin=False):
 
         if time_step is not None:
             # time_step in fs
@@ -92,26 +102,42 @@ run 0
         if seed is None:
             seed = np.random.randint(99999)
         if pressure is not None:
-            pressure = float(pressure)  # TODO; why needed?
-            ensamble = 'npt'
-            if not delta_press:
-                delta_press = delta_temp
-            if not temperature or temperature == 0.0:
+            pressure = float(pressure)*1.0e4  # TODO; why needed?
+            if delta_press is None:
+                delta_press = delta_temp*10
+            if temperature is None or temperature == 0.0:
                 raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
-            fix_str = 'all {0} temp {1} {2} {3} iso {4} {5} {6}'.format(ensamble, str(temperature), str(temperature),
-                                                                          str(delta_temp), str(pressure), str(pressure),
-                                                                          str(delta_press))
+            if langevin:
+                ensamble = 'nph'
+
+                fix_str = 'all {0} aniso {1} {2} {3}'.format(ensamble, str(temperature), str(temperature), str(delta_temp),
+                                                                              str(pressure), str(pressure), str(delta_press))
+                self.modify(fix___langevin='all langevin {0} {1} {2} {3}'.format(str(temperature), str(temperature), str(delta_temp), str(seed)),
+                            append_if_not_present=True)
+            else:
+                ensamble = 'npt'
+                fix_str = 'all {0} temp {1} {2} {3} aniso {4} {5} {6}'.format(ensamble, str(temperature), str(temperature),
+                                                                              str(delta_temp), str(pressure), str(pressure),
+                                                                              str(delta_press))
         elif temperature is not None:
             temperature = float(temperature)  # TODO; why needed?
-            ensamble = 'nvt'
-            fix_str = 'all {0} temp {1} {2} {3}'.format(ensamble, str(temperature), str(temperature), str(delta_temp))
+            if temperature == 0.0:
+                raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
+            if langevin:
+                ensamble = 'nve'
+                fix_str = 'all {0}'.format(ensamble)
+                self.modify(fix___langevin='all langevin {0} {1} {2} {3}'.format(str(temperature), str(temperature), str(delta_temp), str(seed)),
+                            velocity='all create ' + str(2 * temperature) + ' ' + str(seed) + ' dist gaussian ', append_if_not_present=True)
+            else:
+                ensamble = 'nvt'
+                fix_str = 'all {0} temp {1} {2} {3}'.format(ensamble, str(temperature), str(temperature), str(delta_temp))
         else:
             ensamble = 'nve'
             fix_str = 'all {0}'.format(ensamble)
         if tloop is not None:
             fix_str += " tloop " + str(tloop)
         self.remove_keys(["minimize"])
-        if rescale_velocity and ensamble in ['npt', 'nvt']:
+        if rescale_velocity and ensamble in ['npt', 'nvt', 'nph']:
             self.modify(fix___1=fix_str,
                         variable=' dumptime equal {} '.format(n_print),
                         thermo=int(n_print),

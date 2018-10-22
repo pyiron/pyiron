@@ -6,11 +6,11 @@ from __future__ import print_function
 
 import os
 import posixpath
-import tempfile
 
 import h5py
 import numpy as np
 import pandas as pd
+import scipy.constants as const
 
 from pyiron_lammps.potential import LammpsPotentialFile
 from pyiron_atomistics.job.atomistic import AtomisticGenericJob
@@ -22,7 +22,8 @@ from pyiron_lammps.structure import LammpsStructure, UnfoldingPrism
 from pyiron_atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \
+                "- Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -60,7 +61,6 @@ class Lammps(AtomisticGenericJob):
         self.input = Input()
         self._cutoff_radius = None
         self._is_continuation = None
-        self._lib['available'] = True
 
     @property
     def cutoff_radius(self):
@@ -76,7 +76,7 @@ class Lammps(AtomisticGenericJob):
         """
         
         Args:
-            cutoff: 
+            cutoff:
 
         Returns:
 
@@ -86,7 +86,8 @@ class Lammps(AtomisticGenericJob):
     @property
     def potential(self):
         """
-        
+        Execute view_potential() or list_potential() in order to see the pre-defined potential files
+
         Returns:
 
         """
@@ -95,9 +96,10 @@ class Lammps(AtomisticGenericJob):
     @potential.setter
     def potential(self, potential_filename):
         """
-        
+        Execute view_potential() or list_potential() in order to see the pre-defined potential files
+
         Args:
-            potential_filename: 
+            potential_filename:
 
         Returns:
 
@@ -134,7 +136,7 @@ class Lammps(AtomisticGenericJob):
         Returns:
 
         """
-        return self.get_available_potentials()
+        return self.list_potentials()
 
     def get_final_structure(self):
         """
@@ -148,12 +150,13 @@ class Lammps(AtomisticGenericJob):
         """
         
         Args:
-            iteration_step: 
+            iteration_step:
 
         Returns:
 
         """
-        assert (self.structure is not None)
+        if not (self.structure is not None):
+            raise AssertionError()
         snapshot = self.structure.copy()
         snapshot.cell = self.get("output/generic/cells")[iteration_step]
         snapshot.positions = self.get("output/generic/positions")[iteration_step]
@@ -204,9 +207,9 @@ class Lammps(AtomisticGenericJob):
             raise ValueError("Input structure not set. Use method set_structure()")
         lmp_structure = self._get_lammps_structure(structure=self.structure, cutoff_radius=self.cutoff_radius)
         lmp_structure.write_file(file_name="structure.inp", cwd=self.working_directory)
-        if int(self.executable.version.split('.')[0]) > 2016 or \
-                (int(self.executable.version.split('.')[0]) == 2016 and
-                         int(self.executable.version.split('.')[1]) == 11):
+        if self.executable.version and int(self.executable.version.split('.')[0]) > 2016 or \
+                (self.executable.version and int(self.executable.version.split('.')[0]) == 2016 and
+                 int(self.executable.version.split('.')[1]) == 11):
             self.input.control['dump_modify'] = \
                 '1 sort id format line "%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g"'
         else:
@@ -235,6 +238,16 @@ class Lammps(AtomisticGenericJob):
         with self.project_hdf5.open("output") as hdf_output:
             final_structure.to_hdf(hdf_output)
 
+    def convergence_check(self):
+        if self._generic_input['calc_mode'] == 'minimize':
+            if self._generic_input['max_iter']+1 <= len(self['output/generic/energy_tot']) or \
+                    len([l for l in self['log.lammps'] if 'linesearch alpha is zero' in l]) != 0:
+                return False
+            else: 
+                return True
+        else:
+            return True
+
     def collect_logfiles(self):
         """
         
@@ -248,8 +261,8 @@ class Lammps(AtomisticGenericJob):
         """
         
         Args:
-            file_name: 
-            cwd: 
+            file_name:
+            cwd:
 
         Returns:
 
@@ -271,8 +284,8 @@ class Lammps(AtomisticGenericJob):
         """
         
         Args:
-            file_name: 
-            cwd: 
+            file_name:
+            cwd:
 
         Returns:
 
@@ -290,8 +303,8 @@ class Lammps(AtomisticGenericJob):
         general purpose routine to extract static from a lammps log file
         
         Args:
-            file_name: 
-            cwd: 
+            file_name:
+            cwd:
 
         Returns:
 
@@ -310,9 +323,9 @@ class Lammps(AtomisticGenericJob):
                     }
 
         if 'minimize' in attr:
-            tag_dict["Step Temp PotEng TotEng Pxx Pyy Pzz Volume"] = {"arg": ":,:",
-                                                                      "rows": "Loop",
-                                                                      "splitTag": True}
+            tag_dict["Step Temp PotEng TotEng Pxx Pxy Pxz Pyy Pyz Pzz Volume"] = {"arg": ":,:",
+                                                                                  "rows": "Loop",
+                                                                                  "splitTag": True}
 
 
         elif 'run' in attr:
@@ -333,7 +346,10 @@ class Lammps(AtomisticGenericJob):
                    "PotEng": "energy_pot",
                    "TotEng": "energy_tot",
                    "Pxx": "pressure_x",
+                   "Pxy": "pressure_xy",
+                   "Pxz": "pressure_xz",
                    "Pyy": "pressure_y",
+                   "Pyz": "pressure_yz",
                    "Pzz": "pressure_z",
                    "Volume": "volume",
                    "E_pair": "E_pair",
@@ -345,7 +361,10 @@ class Lammps(AtomisticGenericJob):
                        "pe": "PotEng",
                        "etotal": "TotEng",
                        "pxx": "Pxx",
+                       "pxy": "Pxy",
+                       "pxz": "Pxz",
                        "pyy": "Pyy",
+                       "pyz": "Pyz",
                        "pzz": "Pzz",
                        "vol": "Volume"
                        }
@@ -359,7 +378,9 @@ class Lammps(AtomisticGenericJob):
         lf.store_as_vector = ['energy_tot', 'temperatures', 'steps', 'volume', 'energy_pot']
         # print ("lf_keys: ", lf.status_dict['energy_tot'])
 
-        lf.combine_xyz('pressure_x', 'pressure_y', 'pressure_z', 'pressures', as_vector=True)
+        lf.combine_mat('pressure_x', 'pressure_xy', 'pressure_xz',
+                       'pressure_y', 'pressure_yz', 'pressure_z', 'pressures')
+        lf.convert_unit('pressures', 0.0001)  # bar -> GPa
 
         if 'minimize' not in attr:
             del lf.status_dict['thermo_style']
@@ -371,21 +392,21 @@ class Lammps(AtomisticGenericJob):
         with self.project_hdf5.open("output/generic") as hdf_output:
             lf.to_hdf(hdf_output)
 
-    def calc_minimize(self, e_tol=0.0, f_tol=1e-8, max_iter=1000, pressure=None, n_print=1):
+    def calc_minimize(self, e_tol=0.0, f_tol=1e-8, max_iter=100000, pressure=None, n_print=100):
         """
         
         Args:
-            e_tol: 
-            f_tol: 
-            max_iter: 
-            pressure: 
-            n_print: 
+            e_tol:
+            f_tol:
+            max_iter:
+            pressure:
+            n_print:
 
         Returns:
 
         """
-        super(Lammps, self).calc_minimize(e_tol, f_tol, max_iter, pressure, n_print)
-        self.input.control.calc_minimize(e_tol, f_tol, max_iter, pressure, n_print)
+        super(Lammps, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure, n_print=n_print)
+        self.input.control.calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure, n_print=n_print)
 
     def calc_static(self):
         """
@@ -396,41 +417,40 @@ class Lammps(AtomisticGenericJob):
         super(Lammps, self).calc_static()
         self.input.control.calc_static()
 
-    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, dt=None, time_step=None, n_print=100, delta_temp=1.0,
-                delta_press=None, seed=None, tloop=None, rescale_velocity=True):
+    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, dt=None, time_step=None, n_print=100,
+                delta_temp=100.0, delta_press=None, seed=None, tloop=None, rescale_velocity=True, langevin=False):
         """
         
         Args:
-            temperature: 
-            pressure: 
-            n_ionic_steps: 
+            temperature:
+            pressure:
+            n_ionic_steps:
             dt:
             time_step:
-            n_print: 
-            delta_temp: 
-            delta_press: 
-            seed: 
-            tloop: 
-            rescale_velocity: 
-
-        Returns:
+            n_print:
+            delta_temp:
+            delta_press:
+            seed:
+            tloop:
+            rescale_velocity:
 
         """
         if dt is not None:
             time_step = dt
-        super(Lammps, self).calc_md(temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100,
-                                    delta_temp=1.0, delta_press=None, seed=None, tloop=None, rescale_velocity=True)
+        super(Lammps, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps, 
+                                    time_step=time_step, n_print=n_print, delta_temp=delta_temp, delta_press=delta_press,
+                                    seed=seed, tloop=tloop, rescale_velocity=rescale_velocity, langevin=langevin)
         self.input.control.calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
                                    time_step=time_step, n_print=n_print, delta_temp=delta_temp, delta_press=delta_press,
-                                   seed=seed, tloop=tloop, rescale_velocity=rescale_velocity)
+                                   seed=seed, tloop=tloop, rescale_velocity=rescale_velocity, langevin=langevin)
 
     # define hdf5 input and output
     def to_hdf(self, hdf=None, group_name=None):
         """
         
         Args:
-            hdf: 
-            group_name: 
+            hdf:
+            group_name:
 
         Returns:
 
@@ -443,8 +463,8 @@ class Lammps(AtomisticGenericJob):
         """
         
         Args:
-            hdf: 
-            group_name: 
+            hdf:
+            group_name:
 
         Returns:
 
@@ -457,7 +477,7 @@ class Lammps(AtomisticGenericJob):
         """
         
         Args:
-            filename: 
+            filename:
 
         Returns:
 
@@ -468,7 +488,7 @@ class Lammps(AtomisticGenericJob):
         """
         
         Args:
-            filename: 
+            filename:
 
         Returns:
 
@@ -482,8 +502,8 @@ class Lammps(AtomisticGenericJob):
         general purpose routine to extract static from a lammps dump file
         
         Args:
-            file_name: 
-            cwd: 
+            file_name:
+            cwd:
 
         Returns:
 
@@ -569,13 +589,14 @@ class Lammps(AtomisticGenericJob):
             lf.status_dict["unwrapped_positions"].append([[0], pos])
         with self.project_hdf5.open("output/generic") as hdf_output:
             lf.to_hdf(hdf_output)
+        return lf
 
     # Outdated functions:
     def set_potential(self, file_name):
         """
         
         Args:
-            file_name: 
+            file_name:
 
         Returns:
 
@@ -617,31 +638,6 @@ class Lammps(AtomisticGenericJob):
                 new_ham.restart_file_list.append(posixpath.join(self.working_directory, "restart.out"))
         return new_ham
 
-    def run_if_lib(self, job_name=None, structure=None, db_entry=True):
-        """
-
-        Args:
-            job_name:
-            structure:
-            db_entry:
-
-        Returns:
-
-        """
-        job_id = self._run_if_lib_save(job_name=job_name, structure=structure, db_entry=db_entry)
-        lammps_instance = PyLammps()
-        if structure:
-            self._set_structure_for_lib(lammps=lammps_instance, structure=structure)
-        else:
-            self._set_structure_for_lib(lammps=lammps_instance)
-        self._set_potential_for_lib(lammps=lammps_instance)
-        self._set_selective_dynamics()
-        self._collect_thermo_output_from_lib(self._set_control(lammps=lammps_instance), hdf5_prefix=job_name)
-        self._collect_dump_from_lib(lammps=lammps_instance, hdf5_prefix=job_name)
-        lammps_instance.close()
-        self._run_if_lib_finished(job_id)
-        return job_id
-
     def _get_lammps_structure(self, structure=None, cutoff_radius=None):
         lmp_structure = LammpsStructure()
         lmp_structure.potential = self.input.potential
@@ -659,228 +655,119 @@ class Lammps(AtomisticGenericJob):
             raise ValueError('The selected potentials do not support the given combination of elements.')
         return lmp_structure
 
-    def _set_structure_for_lib(self, lammps, structure=None):
-        lammps.units(self.input.control['units'])
-        lammps.dimension(self.input.control['dimension'])
-        lammps.boundary(self.input.control['boundary'])
-        lammps.atom_style(self.input.control['atom_style'])
-        lammps.atom_modify("map array")
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as tfile:
-            for line in self._get_lammps_structure(structure=structure, cutoff_radius=None).get_string_lst():
-                tfile.write(line)
-        lammps.read_data(tfile.name)
-        try:
-            os.remove(tfile.name)
-        except FileNotFoundError:
-            pass
-
-    def _set_potential_for_lib(self, lammps):
-        potential_lst = []
-        for potential in self.input.potential.files:
-            potential_lst.append([potential.split('/')[-1], potential])
-        for line in self.input.potential.get_string_lst():
-            if len(line) > 2:
-                for potential in potential_lst:
-                    if potential[0] in line:
-                        line = line.replace(potential[0], potential[1])
-                lammps.command(line.split('\n')[0])
-
-    def _set_control(self, lammps):
-        output = None
-        for line in self.input.control.get_string_lst()[6:-1]:
-            if 'dump' not in line:
-                lammps.command(line.split('\n')[0])
-        last_line = self.input.control.get_string_lst()[-1]
-        if 'run' in last_line:
-            output = lammps.run(int(last_line.split()[1]))
-        elif 'minimize' in last_line:
-            mini_line = last_line.split()[1:]
-            output = lammps.minimize(float(mini_line[0]), float(mini_line[1]), int(mini_line[2]), int(mini_line[3]))
-        return output
-
-    def _set_selective_dynamics(self):
-        if 'selective_dynamics' in self.structure._tag_list._lists.keys() and \
-                any(np.array(list(self.structure.selective_dynamics.values())).flatten()):
-            constraint_xyz, constraint_xy, constraint_yz, constraint_xz, constraint_x, constraint_y, constraint_z =\
+    def _set_selective_dynamics_old(self):
+        if 'selective_dynamics' in self.structure._tag_list.keys() and \
+                any(np.array(self.structure.selective_dynamics.list()).flatten()):
+            constraint_xyz, constraint_xy, constraint_yz, constraint_xz, constraint_x, constraint_y, constraint_z = \
                 [], [], [], [], [], [], []
             for atom_ind in range(len(self.structure)):
-                if self.structure.selective_dynamics[atom_ind] == [True, True, True]:
+                sel = list(self.structure.selective_dynamics[atom_ind])
+                if sel == [False, False, False]:
                     constraint_xyz.append(atom_ind + 1)
-                elif self.structure.selective_dynamics[atom_ind] == [True, True, False]:
+                elif sel == [False, False, True]:
                     constraint_xy.append(atom_ind + 1)
-                elif self.structure.selective_dynamics[atom_ind] == [False, True, True]:
+                elif sel == [True, False, False]:
                     constraint_yz.append(atom_ind + 1)
-                elif self.structure.selective_dynamics[atom_ind] == [True, False, True]:
+                elif sel == [False, True, False]:
                     constraint_xz.append(atom_ind + 1)
-                elif self.structure.selective_dynamics[atom_ind] == [True, False, False]:
+                elif sel == [False, True, True]:
                     constraint_x.append(atom_ind + 1)
-                elif self.structure.selective_dynamics[atom_ind] == [False, True, False]:
+                elif sel == [True, False, True]:
                     constraint_y.append(atom_ind + 1)
-                elif self.structure.selective_dynamics[atom_ind] == [False, False, True]:
+                elif sel == [True, True, False]:
                     constraint_z.append(atom_ind + 1)
             if constraint_xyz:
+                print('constraint (xyz): {}'.format(len(constraint_xyz)))
                 self.input.control['group___constraintxyz'] = 'id ' + ' '.join([str(ind) for ind in constraint_xyz])
                 self.input.control['fix___constraintxyz'] = 'constraintxyz setforce 0.0 0.0 0.0'
-                self.input.control['velocity___constraintxyz'] = 'set 0.0 0.0 0.0'
+                if self._generic_input['calc_mode'] == 'md':
+                    self.input.control['velocity___constraintxyz'] = 'set 0.0 0.0 0.0'
             if constraint_xy:
                 self.input.control['group___constraintxy'] = 'id ' + ' '.join([str(ind) for ind in constraint_xy])
                 self.input.control['fix___constraintxy'] = 'constraintxy setforce 0.0 0.0 NULL'
-                self.input.control['velocity___constraintxy'] = 'set 0.0 0.0 NULL'
+                if self._generic_input['calc_mode'] == 'md':
+                    self.input.control['velocity___constraintxy'] = 'set 0.0 0.0 NULL'
             if constraint_yz:
                 self.input.control['group___constraintyz'] = 'id ' + ' '.join([str(ind) for ind in constraint_yz])
                 self.input.control['fix___constraintyz'] = 'constraintyz setforce NULL 0.0 0.0'
-                self.input.control['velocity___constraintyz'] = 'set NULL 0.0 0.0'
+                if self._generic_input['calc_mode'] == 'md':
+                    self.input.control['velocity___constraintyz'] = 'set NULL 0.0 0.0'
             if constraint_xz:
                 self.input.control['group___constraintxz'] = 'id ' + ' '.join([str(ind) for ind in constraint_xz])
                 self.input.control['fix___constraintxz'] = 'constraintxz setforce 0.0 NULL 0.0'
-                self.input.control['velocity___constraintxz'] = 'set 0.0 NULL 0.0'
+                if self._generic_input['calc_mode'] == 'md':
+                    self.input.control['velocity___constraintxz'] = 'set 0.0 NULL 0.0'
             if constraint_x:
                 self.input.control['group___constraintx'] = 'id ' + ' '.join([str(ind) for ind in constraint_x])
                 self.input.control['fix___constraintx'] = 'constraintx setforce 0.0 NULL NULL'
-                self.input.control['velocity___constraintx'] = 'set 0.0 NULL NULL'
+                if self._generic_input['calc_mode'] == 'md':
+                    self.input.control['velocity___constraintx'] = 'set 0.0 NULL NULL'
             if constraint_y:
                 self.input.control['group___constrainty'] = 'id ' + ' '.join([str(ind) for ind in constraint_y])
                 self.input.control['fix___constrainty'] = 'constrainty setforce NULL 0.0 NULL'
-                self.input.control['velocity___constrainty'] = 'set NULL 0.0 NULL'
+                if self._generic_input['calc_mode'] == 'md':
+                    self.input.control['velocity___constrainty'] = 'set NULL 0.0 NULL'
             if constraint_z:
                 self.input.control['group___constraintz'] = 'id ' + ' '.join([str(ind) for ind in constraint_z])
                 self.input.control['fix___constraintz'] = 'constraintz setforce NULL NULL 0.0'
-                self.input.control['velocity___constraintz'] = 'set NULL NULL 0.0'
+                if self._generic_input['calc_mode'] == 'md':
+                    self.input.control['velocity___constraintz'] = 'set NULL NULL 0.0'
 
-    def _collect_thermo_output_from_lib(self, output, hdf5_prefix=None):
-        attr = self.input.control.dataset["Parameter"]
-        tag_dict = {"Loop time of": {"arg": "0",
-                                     "type": "float",
-                                     "h5": "time_loop"},
-
-                    "Memory usage per processor": {"arg": "1",
-                                                   "h5": "memory"}
-                    }
-
-        tag_dict["Step Temp PotEng TotEng Pxx Pyy Pzz Volume"] = {"arg": ":,:",
-                                                                  "rows": "Loop",
-                                                                  "splitTag": True}
-
-        h5_dict = {"Step": "steps",
-                   "Temp": "temperatures",
-                   "PotEng": "energy_pot",
-                   "TotEng": "energy_tot",
-                   "Pxx": "pressure_x",
-                   "Pyy": "pressure_y",
-                   "Pzz": "pressure_z",
-                   "Volume": "volume",
-                   "E_pair": "E_pair",
-                   "E_mol": "E_mol"
-                   }
-
-        lammps_dict = {"step": "Step",
-                       "temp": "Temp",
-                       "pe": "PotEng",
-                       "etotal": "TotEng",
-                       "pxx": "Pxx",
-                       "pyy": "Pyy",
-                       "pzz": "Pzz",
-                       "vol": "Volume"
-                       }
-
-        lf = Logstatus()
-        lf.extract_from_list(list_of_lines=output,
-                             tag_dict=tag_dict,
-                             h5_dict=h5_dict,
-                             key_dict=lammps_dict)
-
-        lf.store_as_vector = ['energy_tot', 'temperatures', 'steps', 'volume', 'energy_pot']
-        # print ("lf_keys: ", lf.status_dict['energy_tot'])
-
-        lf.combine_xyz('pressure_x', 'pressure_y', 'pressure_z', 'pressures', as_vector=True)
-
-        del lf.status_dict['time_loop']
-        try:
-            del lf.status_dict['memory']
-        except KeyError:
-            pass
-        if hdf5_prefix:
-            hdf5_path = hdf5_prefix + "/output/generic"
-        else:
-            hdf5_path = "output/generic"
-        with self.project_hdf5.open(hdf5_path) as hdf_output:
-            lf.to_hdf(hdf_output)
-
-    def _collect_dump_from_lib(self, lammps, hdf5_prefix=None):
-        cell, ind_arr, atm_arr, pos_arr, force_arr = self._get_final_dump(lammps=lammps)
-        lf = Logstatus()
-        lf.status_dict['positions'] = [[[0], pos_arr]]
-        lf.status_dict['forces'] = [[[0], force_arr]]
-        lf.status_dict['cells'] = [[[0], cell]]
-
-        prism = UnfoldingPrism(self.structure.cell, digits=15)
-
-        for ind, (pos, forc, cel) in enumerate(
-                zip(lf.status_dict["positions"], lf.status_dict["forces"], lf.status_dict["cells"])):
-            cell = cel[1]
-            positions = pos[1]
-            forces = forc[1]
-
-            # rotation matrix from lammps(unfolded) cell to original cell
-            rotation_lammps2orig = np.linalg.inv(prism.R)
-
-            # convert from scaled positions to absolute in lammps cell
-            positions = np.array([np.dot(cell.T, r) for r in positions])
-            # rotate positions from lammps to original
-            positions_atoms = np.array([np.dot(np.array(r), rotation_lammps2orig) for r in positions])
-
-            # rotate forces from lammps to original cell
-            forces_atoms = np.array([np.dot(np.array(f), rotation_lammps2orig) for f in forces])
-
-            # unfold cell
-            cell = prism.unfold_cell(cell)
-            # rotate cell from unfolded lammps to original
-            cell_atoms = np.array([np.dot(np.array(f), rotation_lammps2orig) for f in cell])
-
-            lf.status_dict["positions"][ind][1] = positions_atoms
-            lf.status_dict["forces"][ind][1] = forces_atoms
-            lf.status_dict["cells"][ind][1] = cell_atoms
-
-        if hdf5_prefix:
-            hdf5_path = hdf5_prefix + "/output/generic"
-        else:
-            hdf5_path = "output/generic"
-        with self.project_hdf5.open(hdf5_path) as hdf_output:
-            lf.to_hdf(hdf_output)
-
-    @staticmethod
-    def _get_final_dump(lammps):
-        xhi, xlo, yhi, ylo, zhi, zlo = lammps.system.xhi, lammps.system.xlo, lammps.system.yhi, lammps.system.ylo, lammps.system.zhi, lammps.system.zlo
-        xy, xz, yz = lammps.lmp.extract_global('xy', 1), lammps.lmp.extract_global('xz', 1), lammps.lmp.extract_global(
-            'yz', 1)
-        index_lst, atom_type_lst, positions_lst, forces_lst = [], [], [], []
-        for i in range(lammps.atoms.natoms):
-            atom = lammps.atoms[i]
-            pos = atom.position
-            index_lst.append(atom.id)
-            atom_type_lst.append(atom.type)
-            positions_lst.append(
-                [(pos[0] - xlo) / (xhi - xlo), (pos[1] - ylo) / (yhi - ylo), (pos[2] - zlo) / (zhi - zlo)])
-            forces_lst.append(atom.force)
-        ind_arr, atm_arr, pos_arr, force_arr = np.array(index_lst), np.array(atom_type_lst), np.array(
-            positions_lst), np.array(forces_lst)
-        index = np.argsort(ind_arr)
-        cell = to_amat(np.array([xlo, xhi, xy, ylo, yhi, xz, zlo, zhi, yz]))
-        return np.array(cell), ind_arr[index], atm_arr[index], pos_arr[index], force_arr[index]
-
-    @staticmethod
-    def _conv_box(line):
-        return [float(number) for number in line.split()[0:2]]
-
-    @staticmethod
-    def _conv_mass(line):
-        mass_type, mass_weight = line.split()
-        return int(mass_type), float(mass_weight)
-
-    @staticmethod
-    def _conv_atoms(line):
-        index, atom_type, pos_x, pos_y, pos_z = line.split()
-        return int(atom_type), float(pos_x), float(pos_y), float(pos_z)
+    def _set_selective_dynamics(self):
+        if 'selective_dynamics' in self.structure._tag_list.keys():
+            sel_dyn = np.logical_not(self.structure.selective_dynamics)
+            # Enter loop only if constraints present
+            if any(np.argwhere(np.any(sel_dyn, axis=1)).flatten()):
+                all_indices = np.arange(len(self.structure), dtype=int)
+                constraint_xyz = np.argwhere(np.all(sel_dyn, axis=1)).flatten()
+                not_constrained_xyz = np.setdiff1d(all_indices, constraint_xyz)
+                # LAMMPS starts counting from 1
+                constraint_xyz += 1
+                ind_x = np.argwhere(sel_dyn[not_constrained_xyz, 0]).flatten()
+                ind_y = np.argwhere(sel_dyn[not_constrained_xyz, 1]).flatten()
+                ind_z = np.argwhere(sel_dyn[not_constrained_xyz, 2]).flatten()
+                constraint_xy = not_constrained_xyz[np.intersect1d(ind_x, ind_y)] + 1
+                constraint_yz = not_constrained_xyz[np.intersect1d(ind_y, ind_z)] + 1
+                constraint_zx = not_constrained_xyz[np.intersect1d(ind_z, ind_x)] + 1
+                constraint_x = not_constrained_xyz[np.setdiff1d(np.setdiff1d(ind_x, ind_y), ind_z)] + 1
+                constraint_y = not_constrained_xyz[np.setdiff1d(np.setdiff1d(ind_y, ind_z), ind_x)] + 1
+                constraint_z = not_constrained_xyz[np.setdiff1d(np.setdiff1d(ind_z, ind_x), ind_y)] + 1
+                if len(constraint_xyz) > 0:
+                    print('constraint (xyz): {}'.format(len(constraint_xyz)))
+                    self.input.control['group___constraintxyz'] = 'id ' + ' '.join([str(ind) for ind in constraint_xyz])
+                    self.input.control['fix___constraintxyz'] = 'constraintxyz setforce 0.0 0.0 0.0'
+                    if self._generic_input['calc_mode'] == 'md':
+                        self.input.control['velocity___constraintxyz'] = 'set 0.0 0.0 0.0'
+                if len(constraint_xy) > 0:
+                    self.input.control['group___constraintxy'] = 'id ' + ' '.join([str(ind) for ind in constraint_xy])
+                    self.input.control['fix___constraintxy'] = 'constraintxy setforce 0.0 0.0 NULL'
+                    if self._generic_input['calc_mode'] == 'md':
+                        self.input.control['velocity___constraintxy'] = 'set 0.0 0.0 NULL'
+                if len(constraint_yz) > 0:
+                    self.input.control['group___constraintyz'] = 'id ' + ' '.join([str(ind) for ind in constraint_yz])
+                    self.input.control['fix___constraintyz'] = 'constraintyz setforce NULL 0.0 0.0'
+                    if self._generic_input['calc_mode'] == 'md':
+                        self.input.control['velocity___constraintyz'] = 'set NULL 0.0 0.0'
+                if len(constraint_zx) > 0:
+                    self.input.control['group___constraintxz'] = 'id ' + ' '.join([str(ind) for ind in constraint_zx])
+                    self.input.control['fix___constraintxz'] = 'constraintxz setforce 0.0 NULL 0.0'
+                    if self._generic_input['calc_mode'] == 'md':
+                        self.input.control['velocity___constraintxz'] = 'set 0.0 NULL 0.0'
+                if len(constraint_x) > 0:
+                    self.input.control['group___constraintx'] = 'id ' + ' '.join([str(ind) for ind in constraint_x])
+                    self.input.control['fix___constraintx'] = 'constraintx setforce 0.0 NULL NULL'
+                    if self._generic_input['calc_mode'] == 'md':
+                        self.input.control['velocity___constraintx'] = 'set 0.0 NULL NULL'
+                if len(constraint_y) > 0:
+                    self.input.control['group___constrainty'] = 'id ' + ' '.join([str(ind) for ind in constraint_y])
+                    self.input.control['fix___constrainty'] = 'constrainty setforce NULL 0.0 NULL'
+                    if self._generic_input['calc_mode'] == 'md':
+                        self.input.control['velocity___constrainty'] = 'set NULL 0.0 NULL'
+                if len(constraint_z) > 0:
+                    self.input.control['group___constraintz'] = 'id ' + ' '.join([str(ind) for ind in constraint_z])
+                    self.input.control['fix___constraintz'] = 'constraintz setforce NULL NULL 0.0'
+                    if self._generic_input['calc_mode'] == 'md':
+                        self.input.control['velocity___constraintz'] = 'set NULL NULL 0.0'
 
 
 class Input:
@@ -892,7 +779,7 @@ class Input:
         """
         
         Args:
-            hdf5: 
+            hdf5:
 
         Returns:
 
@@ -905,7 +792,7 @@ class Input:
         """
         
         Args:
-            hdf5: 
+            hdf5:
 
         Returns:
 
@@ -919,7 +806,7 @@ def to_amat(l_list):
     """
     
     Args:
-        l_list: 
+        l_list:
 
     Returns:
 

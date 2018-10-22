@@ -5,16 +5,10 @@ matrix:
       env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh" PYTHONVER="2.7"
     - os: linux
       language: python
-      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.5"
-    - os: linux
-      language: python
       env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.6"
     - os: osx
       language: generic
       env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh" PYTHONVER="2.7"
-    - os: osx
-      language: generic
-      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" PYTHONVER="3.5"
     - os: osx
       language: generic
       env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" PYTHONVER="3.6"
@@ -23,26 +17,57 @@ install:
   - wget ${MINICONDA} -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
+  - git clone https://github.com/pyiron/continuous_integration_support.git .ci_support
   - conda info -a
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
-  - conda install conda-build anaconda-client numpy pytables
+  - conda install conda-build conda-verify anaconda-client pytables numpy
   - conda config --add channels conda-forge
   - conda config --add channels pyiron
   - conda config --set anaconda_upload yes
+  - conda install -y -c conda-forge coveralls coverage
+  - pip install --pre --no-deps pyiron_base pyiron_atomistics
   - pip install .
 
 script:
   - python --version
+  - ./.ci_support/build_notebooks_on_master.sh
+
+after_success:
+  - coveralls
 
 deploy:
-  - provider: script
-    script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_lammps
-    on:
-      branch: master
   - provider: pypi
     user: pyiron
     password: ${PYPI_UPLOAD_TOKEN}
     allow_failure: true
     on:
       branch: master
+      condition: "${PYTHONVER} = 3.6 && ${TRAVIS_OS_NAME} = linux"
+  - provider: pypi
+    user: pyiron
+    password: ${PYPI_UPLOAD_TOKEN}
+    allow_failure: true
+    on:
+      tags: true
+      condition: "${PYTHONVER} = 3.6 && ${TRAVIS_OS_NAME} = linux"
+  - provider: script
+    script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_lammps
+    on:
+      branch: master
+      condition: "${PYTHONVER} = 3.6 && ${TRAVIS_OS_NAME} = linux"
+  - provider: script
+    script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron_lammps
+    on:
+      tags: true
+      condition: "${PYTHONVER} = 3.6 && ${TRAVIS_OS_NAME} = linux"
+#  - provider: script
+#    script: ./.ci_support/build_docker_on_master.sh
+#    on:
+#      branch: master
+#      condition: "${PYTHONVER} = 3.6 && ${TRAVIS_OS_NAME} = linux"
+#  - provider: script
+#    script: ./.ci_support/build_docker_on_release.sh
+#    on:
+#      tags: true
+#      condition: "${PYTHONVER} = 3.6 && ${TRAVIS_OS_NAME} = linux"

@@ -45,7 +45,11 @@ class LammpsPotential(GenericParameters):
     def df(self, new_dataframe):
         self._df = new_dataframe
         # ToDo: In future lammps should also support more than one potential file - that is currently not implemented.
-        self.load_string(''.join(list(new_dataframe['Config'])[0]))
+        try:
+            self.load_string(''.join(list(new_dataframe['Config'])[0]))
+        except IndexError:
+            raise ValueError('Potential not found! '
+                             'Validate the potential name by self.potential in self.list_potentials().')
 
     def remove_structure_block(self):
         self.remove_keys(["units"])
@@ -54,20 +58,24 @@ class LammpsPotential(GenericParameters):
 
     @property
     def files(self):
-        pot_file_lst = {}
-        for resource_path in s.resource_paths:
-            if os.path.exists(os.path.join(resource_path, 'pyiron_lammps', 'potentials')):
-                resource_path = os.path.join(resource_path, 'pyiron_lammps', 'potentials')
-            if 'potentials' in resource_path:
-                for pot_file in list(self._df['Filename'])[0]:
-                    if os.path.exists(os.path.join(resource_path, pot_file)):
-                        pot_file_lst[pot_file] = os.path.join(resource_path, pot_file)
-                    if set(list(self._df['Filename'])[0]) == set(pot_file_lst.keys()):
-                        return list(pot_file_lst.values())
-        raise ValueError('Was not able to locate the potentials.')
+        if list(self._df['Filename'])[0]:
+            absolute_file_paths = [files for files in list(self._df['Filename'])[0] if os.path.isabs(files)]
+            relative_file_paths = [files for files in list(self._df['Filename'])[0] if not os.path.isabs(files)]
+            for path in relative_file_paths:
+                for resource_path in s.resource_paths:
+                    if os.path.exists(os.path.join(resource_path, 'pyiron_lammps', 'potentials')):
+                        resource_path = os.path.join(resource_path, 'pyiron_lammps', 'potentials')
+                    if os.path.exists(os.path.join(resource_path, path)):
+                        absolute_file_paths.append(os.path.join(resource_path, path))
+                        break
+            if len(absolute_file_paths) != len(list(self._df['Filename'])[0]):
+                raise ValueError('Was not able to locate the potentials.')
+            else:
+                return absolute_file_paths
 
     def copy_pot_files(self, working_directory):
-        _ = [shutil.copy(path_pot, working_directory) for path_pot in self.files]
+        if self.files is not None:
+            _ = [shutil.copy(path_pot, working_directory) for path_pot in self.files]
 
     def get_element_lst(self):
         return list(self._df['Species'])[0]

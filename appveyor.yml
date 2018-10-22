@@ -4,8 +4,6 @@ environment:
     # /E:ON and /V:ON options are not enabled in the batch script intepreter
     # See: http://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: 'cmd /E:ON /V:ON /C .\tools\appveyor\run_with_env.cmd'
-    ANACONDA_TOKEN:
-      secure: bzajjHETqXIrFqGaMGNGFHl1gFP0VSrDIbg8hcKc21uhlgzMmDr3/LU2DYCBYTDY
     PROJECT_NAME: pyiron_lammps
 
   matrix:
@@ -44,12 +42,14 @@ install:
 # Load the conda root environment, configure and install some packages
 - '"%CONDA%\Scripts\activate.bat"'
 - "conda config --set always_yes yes --set changeps1 no"
+- "conda install -c anaconda hdf5"
 - "conda update -q conda"
 - "conda install conda-build anaconda-client numpy pytables"
 - "conda config --add channels conda-forge"
 - "conda config --add channels pyiron"
 - "conda config --set anaconda_upload yes"
 - "conda info -a"
+- "pip install --pre --no-deps pyiron_base pyiron_atomistics"
 - "pip install ."
 
 build: false
@@ -57,6 +57,3 @@ build: false
 test_script:
   # Build the package
   - "python --version"
-
-on_success:
-  - bash -c "if [ $APPVEYOR_REPO_BRANCH = 'master' ]; then conda build --python $PYTHON_VERSION --user pyiron --token $ANACONDA_TOKEN conda/pyiron_lammps; fi"
