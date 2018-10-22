@@ -113,13 +113,7 @@ def write_poscar(structure, filename="POSCAR", write_species=True, cartesian=Tru
         for i, vec in enumerate(sorted_coords):
             x, y, z = vec
             if selec_dyn:
-                sd_vec = []
-                for sd in selec_dyn_lst[i]:
-                    if sd:
-                        sd_vec.append('T')
-                    else:
-                        sd_vec.append('F')
-                sd_string = ' '.join(sd_vec)
+                sd_string = ' '.join(['T' if sd else 'F' for sd in selec_dyn_lst[i]])
                 f.write('{0:.15f} {1:.15f} {2:.15f}'.format(x, y, z) + ' ' + sd_string + endline)
             else:
                 f.write('{0:.15f} {1:.15f} {2:.15f}'.format(x, y, z) + endline)
