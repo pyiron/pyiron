@@ -22,7 +22,8 @@ from pyiron_lammps.structure import LammpsStructure, UnfoldingPrism
 from pyiron_atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \
+                "- Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -655,62 +656,59 @@ class Lammps(AtomisticGenericJob):
         return lmp_structure
 
     def _set_selective_dynamics(self):
-        if 'selective_dynamics' in self.structure._tag_list.keys() and \
-                any(np.array(self.structure.selective_dynamics.list()).flatten()):
-            constraint_xyz, constraint_xy, constraint_yz, constraint_xz, constraint_x, constraint_y, constraint_z = \
-                [], [], [], [], [], [], []
-            for atom_ind in range(len(self.structure)):
-                sel = list(self.structure.selective_dynamics[atom_ind])
-                if sel == [False, False, False]:
-                    constraint_xyz.append(atom_ind + 1)
-                elif sel == [False, False, True]:
-                    constraint_xy.append(atom_ind + 1)
-                elif sel == [True, False, False]:
-                    constraint_yz.append(atom_ind + 1)
-                elif sel == [False, True, False]:
-                    constraint_xz.append(atom_ind + 1)
-                elif sel == [False, True, True]:
-                    constraint_x.append(atom_ind + 1)
-                elif sel == [True, False, True]:
-                    constraint_y.append(atom_ind + 1)
-                elif sel == [True, True, False]:
-                    constraint_z.append(atom_ind + 1)
-            if constraint_xyz:
-                print('constraint (xyz): {}'.format(len(constraint_xyz)))
-                self.input.control['group___constraintxyz'] = 'id ' + ' '.join([str(ind) for ind in constraint_xyz])
-                self.input.control['fix___constraintxyz'] = 'constraintxyz setforce 0.0 0.0 0.0'
-                if self._generic_input['calc_mode'] == 'md':
-                    self.input.control['velocity___constraintxyz'] = 'set 0.0 0.0 0.0'
-            if constraint_xy:
-                self.input.control['group___constraintxy'] = 'id ' + ' '.join([str(ind) for ind in constraint_xy])
-                self.input.control['fix___constraintxy'] = 'constraintxy setforce 0.0 0.0 NULL'
-                if self._generic_input['calc_mode'] == 'md':
-                    self.input.control['velocity___constraintxy'] = 'set 0.0 0.0 NULL'
-            if constraint_yz:
-                self.input.control['group___constraintyz'] = 'id ' + ' '.join([str(ind) for ind in constraint_yz])
-                self.input.control['fix___constraintyz'] = 'constraintyz setforce NULL 0.0 0.0'
-                if self._generic_input['calc_mode'] == 'md':
-                    self.input.control['velocity___constraintyz'] = 'set NULL 0.0 0.0'
-            if constraint_xz:
-                self.input.control['group___constraintxz'] = 'id ' + ' '.join([str(ind) for ind in constraint_xz])
-                self.input.control['fix___constraintxz'] = 'constraintxz setforce 0.0 NULL 0.0'
-                if self._generic_input['calc_mode'] == 'md':
-                    self.input.control['velocity___constraintxz'] = 'set 0.0 NULL 0.0'
-            if constraint_x:
-                self.input.control['group___constraintx'] = 'id ' + ' '.join([str(ind) for ind in constraint_x])
-                self.input.control['fix___constraintx'] = 'constraintx setforce 0.0 NULL NULL'
-                if self._generic_input['calc_mode'] == 'md':
-                    self.input.control['velocity___constraintx'] = 'set 0.0 NULL NULL'
-            if constraint_y:
-                self.input.control['group___constrainty'] = 'id ' + ' '.join([str(ind) for ind in constraint_y])
-                self.input.control['fix___constrainty'] = 'constrainty setforce NULL 0.0 NULL'
-                if self._generic_input['calc_mode'] == 'md':
-                    self.input.control['velocity___constrainty'] = 'set NULL 0.0 NULL'
-            if constraint_z:
-                self.input.control['group___constraintz'] = 'id ' + ' '.join([str(ind) for ind in constraint_z])
-                self.input.control['fix___constraintz'] = 'constraintz setforce NULL NULL 0.0'
-                if self._generic_input['calc_mode'] == 'md':
-                    self.input.control['velocity___constraintz'] = 'set NULL NULL 0.0'
+        if 'selective_dynamics' in self.structure._tag_list.keys():
+            sel_dyn = np.logical_not(self.structure.selective_dynamics)
+            # Enter loop only if constraints present
+            if any(np.argwhere(np.any(sel_dyn, axis=1)).flatten()):
+                all_indices = np.arange(len(self.structure), dtype=int)
+                constraint_xyz = np.argwhere(np.all(sel_dyn, axis=1)).flatten()
+                not_constrained_xyz = np.setdiff1d(all_indices, constraint_xyz)
+                # LAMMPS starts counting from 1
+                constraint_xyz += 1
+                ind_x = np.argwhere(sel_dyn[not_constrained_xyz, 0]).flatten()
+                ind_y = np.argwhere(sel_dyn[not_constrained_xyz, 1]).flatten()
+                ind_z = np.argwhere(sel_dyn[not_constrained_xyz, 2]).flatten()
+                constraint_xy = not_constrained_xyz[np.intersect1d(ind_x, ind_y)] + 1
+                constraint_yz = not_constrained_xyz[np.intersect1d(ind_y, ind_z)] + 1
+                constraint_zx = not_constrained_xyz[np.intersect1d(ind_z, ind_x)] + 1
+                constraint_x = not_constrained_xyz[np.setdiff1d(np.setdiff1d(ind_x, ind_y), ind_z)] + 1
+                constraint_y = not_constrained_xyz[np.setdiff1d(np.setdiff1d(ind_y, ind_z), ind_x)] + 1
+                constraint_z = not_constrained_xyz[np.setdiff1d(np.setdiff1d(ind_z, ind_x), ind_y)] + 1
+                if len(constraint_xyz) > 0:
+                    self.input.control['group___constraintxyz'] = 'id ' + ' '.join([str(ind) for ind in constraint_xyz])
+                    self.input.control['fix___constraintxyz'] = 'constraintxyz setforce 0.0 0.0 0.0'
+                    if self._generic_input['calc_mode'] == 'md':
+                        self.input.control['velocity___constraintxyz'] = 'set 0.0 0.0 0.0'
+                if len(constraint_xy) > 0:
+                    self.input.control['group___constraintxy'] = 'id ' + ' '.join([str(ind) for ind in constraint_xy])
+                    self.input.control['fix___constraintxy'] = 'constraintxy setforce 0.0 0.0 NULL'
+                    if self._generic_input['calc_mode'] == 'md':
+                        self.input.control['velocity___constraintxy'] = 'set 0.0 0.0 NULL'
+                if len(constraint_yz) > 0:
+                    self.input.control['group___constraintyz'] = 'id ' + ' '.join([str(ind) for ind in constraint_yz])
+                    self.input.control['fix___constraintyz'] = 'constraintyz setforce NULL 0.0 0.0'
+                    if self._generic_input['calc_mode'] == 'md':
+                        self.input.control['velocity___constraintyz'] = 'set NULL 0.0 0.0'
+                if len(constraint_zx) > 0:
+                    self.input.control['group___constraintxz'] = 'id ' + ' '.join([str(ind) for ind in constraint_zx])
+                    self.input.control['fix___constraintxz'] = 'constraintxz setforce 0.0 NULL 0.0'
+                    if self._generic_input['calc_mode'] == 'md':
+                        self.input.control['velocity___constraintxz'] = 'set 0.0 NULL 0.0'
+                if len(constraint_x) > 0:
+                    self.input.control['group___constraintx'] = 'id ' + ' '.join([str(ind) for ind in constraint_x])
+                    self.input.control['fix___constraintx'] = 'constraintx setforce 0.0 NULL NULL'
+                    if self._generic_input['calc_mode'] == 'md':
+                        self.input.control['velocity___constraintx'] = 'set 0.0 NULL NULL'
+                if len(constraint_y) > 0:
+                    self.input.control['group___constrainty'] = 'id ' + ' '.join([str(ind) for ind in constraint_y])
+                    self.input.control['fix___constrainty'] = 'constrainty setforce NULL 0.0 NULL'
+                    if self._generic_input['calc_mode'] == 'md':
+                        self.input.control['velocity___constrainty'] = 'set NULL 0.0 NULL'
+                if len(constraint_z) > 0:
+                    self.input.control['group___constraintz'] = 'id ' + ' '.join([str(ind) for ind in constraint_z])
+                    self.input.control['fix___constraintz'] = 'constraintz setforce NULL NULL 0.0'
+                    if self._generic_input['calc_mode'] == 'md':
+                        self.input.control['velocity___constraintz'] = 'set NULL NULL 0.0'
 
 
 class Input:
