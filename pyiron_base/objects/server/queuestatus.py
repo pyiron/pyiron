@@ -47,17 +47,29 @@ def _queue_job_details_command(user, que_id):
 
 def _queue_function(funct, user=None, que_id=None):
     if user is not None and que_id is not None:
-        return subprocess.check_output(funct(user=user, que_id=que_id), stderr=subprocess.STDOUT, 
-                                       universal_newlines=True).split('\n')
+        try:
+            return subprocess.check_output(funct(user=user, que_id=que_id), stderr=subprocess.STDOUT, 
+                                           universal_newlines=True).split('\n')
+        except subprocess.CalledProcessError:
+            return None
     elif user is not None:
-        return subprocess.check_output(funct(user=user), stderr=subprocess.STDOUT, 
-                                       universal_newlines=True).split('\n')
+        try:
+            return subprocess.check_output(funct(user=user), stderr=subprocess.STDOUT, 
+                                           universal_newlines=True).split('\n')
+        except subprocess.CalledProcessError:
+            return None
     elif que_id is not None:
-        return subprocess.check_output(funct(que_id=que_id), stderr=subprocess.STDOUT, 
-                                       universal_newlines=True).split('\n')
+        try:
+            return subprocess.check_output(funct(que_id=que_id), stderr=subprocess.STDOUT, 
+                                           universal_newlines=True).split('\n')
+        except subprocess.CalledProcessError:
+            return None
     else: 
-        return subprocess.check_output(funct(), stderr=subprocess.STDOUT, 
-                                       universal_newlines=True).split('\n')
+        try:
+            return subprocess.check_output(funct(), stderr=subprocess.STDOUT, 
+                                           universal_newlines=True).split('\n')
+        except subprocess.CalledProcessError:
+            return None
 
     
 def queue_table(job_ids=[], project_only=True):

@@ -401,6 +401,10 @@ class JobCore(PyironObject):
         internal function to remove command that removes also child jobs.
         Do never use this command, since it will destroy the integrity of your project.
         """
+        if "server" in self.project_hdf5.list_nodes():
+            server_hdf_dict = self.project_hdf5["server"]
+            if "qid" in server_hdf_dict.keys() and str(self.status) in ['submitted', 'running', 'collect']:
+                self.project._queue_delete_job(server_hdf_dict["qid"])
         with self.project_hdf5.open('..') as hdf_parent:
             try:
                 del hdf_parent[self.job_name]
@@ -415,10 +419,6 @@ class JobCore(PyironObject):
                     os.rmdir(dir_name)
                 except OSError:
                     print('Library jobs have no job folder {}'.format(dir_name))
-        if "server" in self.project_hdf5.list_nodes():
-            server_hdf_dict = self.project_hdf5["server"]
-            if "qid" in server_hdf_dict.keys() and str(self.status) in ['submitted', 'running', 'collect']:
-                self.project._queue_delete_job(server_hdf_dict["qid"])
         if self.job_id:
             self.project.db.delete_item(self.job_id)
 
