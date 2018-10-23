@@ -26,7 +26,7 @@ class TestVasprun(unittest.TestCase):
         self.vp_list = list()
         file_list = sorted(os.listdir("../static/vasp_test_files/vasprun_samples"))
         del file_list[file_list.index("vasprun_spoilt.xml")]
-        self.num_species = [3, 1, 2, 2, 3, 4, 2]
+        self.num_species = [3, 1, 2, 2, 3, 4]
         direc = os.path.abspath("../static/vasp_test_files/vasprun_samples")
         for f in file_list:
             vp = Vasprun()

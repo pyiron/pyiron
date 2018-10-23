@@ -6,6 +6,7 @@ import numpy as np
 
 from pyiron_vasp.vasp import Outcar
 
+
 class TestOutcar(unittest.TestCase):
     def setUp(self):
         self.file_list = list()
@@ -359,6 +360,12 @@ class TestOutcar(unittest.TestCase):
                           np.array([8., 8., 8., 8., 8., 8., 8., 8.]),
                           np.array([392., 398., 398., 398., 392., 392., 392., 380.]))
                 self.assertEqual(output_all.__str__(), output.__str__())
+
+    def test_get_nelect(self):
+        n_elect_list = [40.0, 16.0, 16.0, 16.0, 16.0, 16.0, 224.0]
+        for filename in self.file_list:
+            i = int(filename.split("_")[-1]) - 1
+            self.assertEqual(n_elect_list[i], self.outcar_parser.get_nelect(filename))
 
 
 if __name__ == '__main__':

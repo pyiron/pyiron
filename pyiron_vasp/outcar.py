@@ -51,6 +51,7 @@ class Outcar(object):
         scf_moments = self.get_dipole_moments(filename)
         kin_energy_error = self.get_kinetic_energy_error(filename)
         stresses = self.get_stresses(filename, si_unit=False)
+        n_elect = self.get_nelect(filename)
         try:
             irreducible_kpoints = self.get_irreducible_kpoints(filename)
         except ValueError:
@@ -75,6 +76,8 @@ class Outcar(object):
         self.parse_dict["magnetization"] = magnetization
         self.parse_dict["final_magmoms"] = final_magmom_lst
         self.parse_dict["broyden_mixing"] = broyden_mixing
+        self.parse_dict["n_elect"] = n_elect
+
         try:
             self.parse_dict["pressures"] = np.average(stresses[:, 0:3], axis=1) * KBAR_TO_EVA
         except IndexError:
@@ -91,6 +94,20 @@ class Outcar(object):
         with hdf.open(group_name) as hdf5_output:
             for key in self.parse_dict.keys():
                 hdf5_output[key] = self.parse_dict[key]
+
+    def to_hdf_minimal(self, hdf, group_name="outcar"):
+        """
+        Store minimal output in an HDF5 file (output unique to OUTCAR)
+
+        Args:
+            hdf (pyiron_base.objects.generic.hdfio.FileHDFio): HDF5 group or file
+            group_name (str): Name of the HDF5 group
+        """
+        unique_quantities = ["kin_energy_error", "broyden_mixing", "stresses", "irreducible_kpoints"]
+        with hdf.open(group_name) as hdf5_output:
+            for key in self.parse_dict.keys():
+                if key in unique_quantities:
+                    hdf5_output[key] = self.parse_dict[key]
 
     def from_hdf(self, hdf, group_name="outcar"):
         """
@@ -651,6 +668,16 @@ class Outcar(object):
                     mom = np.array([float(val) for val in line.split()[1:4]])
                     istep_mom.append(mom)
         return dip_moms
+
+    @staticmethod
+    def get_nelect(filename="OUTCAR"):
+        nelect_trigger = "NELECT"
+        with open(filename, 'r') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                line = line.strip()
+                if nelect_trigger in line:
+                    return float(line.split()[2])
 
 
 def _clean_line(line):

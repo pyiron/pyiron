@@ -47,8 +47,7 @@ class Vasp(GenericDFTJob):
         job_name (str): Name of the job
 
     Attributes:
-        input (pyiron_vasp.vasp.Input instance): Instance which handles the input
-        output (pyiron_vasp.vasp.Input instance): Instance which handles the output
+        input (pyiron_vasp.vasp.Input): Instance which handles the input
 
     Examples:
         Let's say you need to run a vasp simulation where you would like to control the input parameters manually. To
@@ -273,7 +272,9 @@ class Vasp(GenericDFTJob):
             max_i_steps = int(self['input/incar/data_dict']['Value'][ind])
         else:
             max_i_steps = 0
-        scf_energies = self['output/outcar/scf_energies']
+        scf_energies = self['output/generic/dft/scf_energy_free']
+        if scf_energies is None:
+            scf_energies = self['output/outcar/scf_energies']
         e_steps_converged = [len(step) < max_e_steps for step in scf_energies]
         # For calc_md() we do not care about convergence.
         if ibrion == 0 and max_i_steps != 0:
@@ -344,7 +345,7 @@ class Vasp(GenericDFTJob):
                 if "vasprun.xml" in files:
                     vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
                     self.structure = vp_new.get_initial_structure()
-            except: # except AssertionError:
+            except IOError:  # except AssertionError:
                 pass
                 # raise AssertionError("OUTCAR/vasprun.xml should be present in order to import from directory")
             if "INCAR" in files:
@@ -1111,7 +1112,6 @@ class Output:
         self._structure = None
         self.outcar = Outcar()
         self.generic_output = GenericOutput()
-        self.dft_output = DFTOutput()
         self.description = "This contains all the output static from this particular vasp run"
         self.charge_density = VaspVolumetricData()
         self.electrostatic_potential = VaspVolumetricData()
@@ -1147,6 +1147,7 @@ class Output:
             self.outcar.from_file(filename=posixpath.join(directory, "OUTCAR"))
             log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
+            self.generic_output.dft_log_dict["n_elect"] = self.outcar.parse_dict["n_elect"]
             if len(self.outcar.parse_dict["magnetization"]) > 0:
                 magnetization = np.array(self.outcar.parse_dict["magnetization"]).copy()
                 final_magmoms = np.array(self.outcar.parse_dict["final_magmoms"]).copy()
@@ -1197,21 +1198,22 @@ class Output:
 
         else:
             if not ("OUTCAR" in files_present):
-                raise AssertionError()
-            log_dict = self.outcar.parse_dict.copy()
-            log_dict["energy_tot"] = log_dict["energies"].copy()
-            if len(log_dict["magnetization"]) > 0:
-                magnetization = np.array(log_dict["magnetization"]).copy()
-                final_magmoms = np.array(log_dict["final_magmoms"]).copy()
-                # magnetization[sorted_indices] = magnetization.copy()
-                if len(final_magmoms) != 0:
-                    if len(final_magmoms.shape) == 3:
-                        final_magmoms[:, sorted_indices, :] = final_magmoms.copy()
-                    else:
-                        final_magmoms[:, sorted_indices] = final_magmoms.copy()
-                self.generic_output.dft_log_dict["magnetization"] = magnetization.tolist()
-                self.generic_output.dft_log_dict["final_magmoms"] = final_magmoms.tolist()
-            del log_dict["fermi_level"]
+                raise IOError("Either the OUTCAR or vasprun.xml files need to be present")
+            # log_dict = self.outcar.parse_dict.copy()
+            log_dict["energy_tot"] = self.outcar.parse_dict["energies"]
+            log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
+            log_dict["pressures"] = self.outcar.parse_dict["pressures"]
+            log_dict["forces"] = self.outcar.parse_dict["forces"]
+            log_dict["positions"] = self.outcar.parse_dict["positions"]
+            log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
+            log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
+            log_dict["time"] = self.outcar.parse_dict["time"]
+            log_dict["steps"] = self.outcar.parse_dict["steps"]
+            log_dict["cells"] = self.outcar.parse_dict["cells"]
+            log_dict["volume"] = np.array([np.linalg.det(cell) for cell in self.outcar.parse_dict["cells"]])
+            self.generic_output.dft_log_dict["scf_energy_free"] = self.outcar.parse_dict["scf_energies"]
+            self.generic_output.dft_log_dict["scf_dipole_mom"] = self.outcar.parse_dict["scf_dipole_moments"]
+            self.generic_output.dft_log_dict["n_elect"] = self.outcar.parse_dict["n_elect"]
             if "PROCAR" in files_present:
                 try:
                     self.electronic_structure = self.procar.from_file(filename=posixpath.join(directory, "PROCAR"))
@@ -1228,25 +1230,12 @@ class Output:
         # important that we "reverse sort" the atoms in the vasp format into the atoms in the atoms class
         self.generic_output.log_dict = log_dict
         if "vasprun.xml" in files_present:
-            self.dft_output.log_dict["parameters"] = self.vp_new.vasprun_dict["parameters"]
-            self.dft_output.log_dict["scf_energies"] = self.vp_new.vasprun_dict["scf_energies"]
-            self.dft_output.log_dict["scf_fr_energies"] = self.vp_new.vasprun_dict["scf_fr_energies"]
-            self.dft_output.log_dict["scf_0_energies"] = self.vp_new.vasprun_dict["scf_0_energies"]
-            self.dft_output.log_dict["scf_dipole_moments"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
-            total_dipole_moments = list()
-            if len(self.dft_output.log_dict["scf_dipole_moments"][0]) > 0:
-                for dip in self.dft_output.log_dict["scf_dipole_moments"]:
-                    total_dipole_moments.append(np.array(dip[-1]))
-
-            total_dipole_moments = np.array(total_dipole_moments)
-            self.dft_output.log_dict["total_dipole_moments"] = total_dipole_moments
-            self.dft_output.log_dict["total_energies"] = self.vp_new.vasprun_dict["total_energies"]
-            self.dft_output.log_dict["total_fr_energies"] = self.vp_new.vasprun_dict["total_fr_energies"]
-            self.dft_output.log_dict["total_0_energies"] = self.vp_new.vasprun_dict["total_0_energies"]
-
+            # self.dft_output.log_dict["parameters"] = self.vp_new.vasprun_dict["parameters"]
             self.generic_output.dft_log_dict["scf_dipole_mom"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
-            self.generic_output.dft_log_dict["dipole_mom"] = total_dipole_moments
-
+            total_dipole_moments = list()
+            if len(self.generic_output.dft_log_dict["scf_dipole_mom"][0]) > 0:
+                total_dipole_moments = np.array([dip[-1] for dip in self.generic_output.dft_log_dict["scf_dipole_mom"]])
+                self.generic_output.dft_log_dict["dipole_mom"] = total_dipole_moments
             self.generic_output.dft_log_dict["scf_energy_int"] = self.vp_new.vasprun_dict["scf_energies"]
             self.generic_output.dft_log_dict["scf_energy_free"] = self.vp_new.vasprun_dict["scf_fr_energies"]
             self.generic_output.dft_log_dict["scf_energy_zero"] = self.vp_new.vasprun_dict["scf_0_energies"]
@@ -1262,7 +1251,6 @@ class Output:
             self.generic_output.dft_log_dict["n_elect"] = float(self.vp_new.vasprun_dict["parameters"]["electronic"]
                                                                 ['NELECT'])
             if "kinetic_energies" in self.vp_new.vasprun_dict.keys():
-                self.dft_output.log_dict["kinetic_energies"] = self.vp_new.vasprun_dict["kinetic_energies"]
                 self.generic_output.dft_log_dict["scf_energy_kin"] = self.vp_new.vasprun_dict["kinetic_energies"]
 
         if "LOCPOT" in files_present:
@@ -1282,7 +1270,6 @@ class Output:
         with hdf.open("output") as hdf5_output:
             hdf5_output["description"] = self.description
             self.generic_output.to_hdf(hdf5_output)
-            self.dft_output.to_hdf(hdf5_output)
             try:
                 self.structure.to_hdf(hdf5_output)
             except AttributeError:
@@ -1303,7 +1290,7 @@ class Output:
                 self.electronic_structure.to_hdf(hdf=hdf5_output, group_name="electronic_structure")
 
             if self.outcar.parse_dict:
-                self.outcar.to_hdf(hdf=hdf5_output, group_name="outcar")
+                self.outcar.to_hdf_minimal(hdf=hdf5_output, group_name="outcar")
 
     def from_hdf(self, hdf):
         """
@@ -1317,7 +1304,6 @@ class Output:
                 self.structure = Atoms()
             self.structure.from_hdf(hdf5_output)
             self.generic_output.from_hdf(hdf5_output)
-            self.dft_output.from_hdf(hdf5_output)
             try:
                 if "electrostatic_potential" in hdf5_output.list_groups():
                     self.electrostatic_potential.from_hdf(hdf5_output, group_name="electrostatic_potential")
