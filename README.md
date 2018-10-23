@@ -1,5 +1,6 @@
 # Build Status 
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/d27dcf0e99b543abb0c44cfd0ef91347)](https://app.codacy.com/app/pyiron-runner/pyiron_base?utm_source=github.com&utm_medium=referral&utm_content=pyiron/pyiron_base&utm_campaign=Badge_Grade_Settings)
 [![Release_Date](https://anaconda.org/pyiron/pyiron_base/badges/latest_release_date.svg)](https://anaconda.org/pyiron/pyiron_base)
 _Travis_
 [![Build Status](https://travis-ci.org/pyiron/pyiron_base.svg?branch=master)](https://travis-ci.org/pyiron/pyiron_base)
