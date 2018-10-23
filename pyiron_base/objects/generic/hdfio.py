@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
+import ast
 import h5py
 import os
 import pandas
@@ -224,8 +225,8 @@ class FileHDFio(object):
         if self.file_exists:
             store = HDFStoreIO(self.file_name, mode='r')
             with store.open(mode='r'):
-                len_nodes = len(eval("store.root._v_children.keys()"))
-                len_groups = len(eval("store.root._v_groups.keys()"))
+                len_nodes = len(ast.literal_eval("store.root._v_children.keys()"))
+                len_groups = len(ast.literal_eval("store.root._v_groups.keys()"))
                 return len_groups + len_nodes == 0
         else:
             return True
@@ -434,8 +435,8 @@ class FileHDFio(object):
             store = HDFStoreIO(self.file_name, mode='r')
             with store.open(mode="r"):
                 try:
-                    groups = set(eval(self._h5_group + "_v_groups.keys()"))
-                    nodes = set(eval(self._h5_group + "_v_children.keys()"))
+                    groups = set(ast.literal_eval(self._h5_group + "_v_groups.keys()"))
+                    nodes = set(ast.literal_eval(self._h5_group + "_v_children.keys()"))
                 except NoSuchNodeError:
                     groups = set()
                     nodes = set()
@@ -615,7 +616,7 @@ class FileHDFio(object):
             if import_path == 'pyiron.objects.addon.atatsqs' or import_path == 'pyironplugins.atatsqs':
                 import_path = 'pyiron_atat_sqs.atatsqs'
             exec("from {} import {}".format(import_path, class_name))
-        return eval(class_name + "(**qwargs)")
+        return ast.literal_eval(class_name + "(**qwargs)")
 
     def __setitem__(self, key, value):
         """
@@ -811,7 +812,7 @@ class FileHDFio(object):
         """
         store = HDFStoreIO(self.file_name, mode='r')
         with store.open(mode='r'):
-            return str(eval(''.join([self._h5_group, name, "._v_title"])))
+            return str(ast.literal_eval(''.join([self._h5_group, name, "._v_title"])))
 
     def _filter_io_objects(self, groups):
         """
