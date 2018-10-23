@@ -1197,6 +1197,7 @@ class Output:
             self.structure.cell = log_dict["cells"][-1]
 
         else:
+            print("Entering OUTCAR only loop")
             if not ("OUTCAR" in files_present):
                 raise IOError("Either the OUTCAR or vasprun.xml files need to be present")
             # log_dict = self.outcar.parse_dict.copy()
@@ -1239,6 +1240,7 @@ class Output:
 
         # important that we "reverse sort" the atoms in the vasp format into the atoms in the atoms class
         self.generic_output.log_dict = log_dict
+        print(self.generic_output.log_dict.keys())
         if "vasprun.xml" in files_present:
             # self.dft_output.log_dict["parameters"] = self.vp_new.vasprun_dict["parameters"]
             self.generic_output.dft_log_dict["scf_dipole_mom"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
