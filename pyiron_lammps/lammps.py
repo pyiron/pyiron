@@ -4,6 +4,7 @@
 
 from __future__ import print_function
 
+import ast
 import os
 import posixpath
 
@@ -328,8 +329,8 @@ class Lammps(AtomisticGenericJob):
 
 
         elif 'run' in attr:
-            num_iterations = eval(extract_data_from_file(log_file, tag="run")[0])
-            num_thermo = eval(extract_data_from_file(log_file, tag="thermo")[0])
+            num_iterations = ast.literal_eval(extract_data_from_file(log_file, tag="run")[0])
+            num_thermo = ast.literal_eval(extract_data_from_file(log_file, tag="thermo")[0])
             num_iterations = num_iterations / num_thermo + 1
 
             tag_dict["thermo_style custom"] = {"arg": ":",
