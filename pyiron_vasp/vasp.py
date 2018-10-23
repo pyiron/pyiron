@@ -1197,7 +1197,6 @@ class Output:
             self.structure.cell = log_dict["cells"][-1]
 
         else:
-            print("Entering OUTCAR only loop")
             if not ("OUTCAR" in files_present):
                 raise IOError("Either the OUTCAR or vasprun.xml files need to be present")
             # log_dict = self.outcar.parse_dict.copy()
@@ -1206,6 +1205,8 @@ class Output:
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
             log_dict["forces"] = self.outcar.parse_dict["forces"]
             log_dict["positions"] = self.outcar.parse_dict["positions"]
+            log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
+            log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
             log_dict["time"] = self.outcar.parse_dict["time"]
             log_dict["steps"] = self.outcar.parse_dict["steps"]
             log_dict["cells"] = self.outcar.parse_dict["cells"]
@@ -1213,17 +1214,6 @@ class Output:
             self.generic_output.dft_log_dict["scf_energy_free"] = self.outcar.parse_dict["scf_energies"]
             self.generic_output.dft_log_dict["scf_dipole_mom"] = self.outcar.parse_dict["scf_dipole_moments"]
             self.generic_output.dft_log_dict["n_elect"] = self.outcar.parse_dict["n_elect"]
-            if len(log_dict["magnetization"]) > 0:
-                magnetization = np.array(log_dict["magnetization"]).copy()
-                final_magmoms = np.array(log_dict["final_magmoms"]).copy()
-                # magnetization[sorted_indices] = magnetization.copy()
-                if len(final_magmoms) != 0:
-                    if len(final_magmoms.shape) == 3:
-                        final_magmoms[:, sorted_indices, :] = final_magmoms.copy()
-                    else:
-                        final_magmoms[:, sorted_indices] = final_magmoms.copy()
-                self.generic_output.dft_log_dict["magnetization"] = magnetization.tolist()
-                self.generic_output.dft_log_dict["final_magmoms"] = final_magmoms.tolist()
             del log_dict["fermi_level"]
             if "PROCAR" in files_present:
                 try:
@@ -1240,7 +1230,6 @@ class Output:
 
         # important that we "reverse sort" the atoms in the vasp format into the atoms in the atoms class
         self.generic_output.log_dict = log_dict
-        print(self.generic_output.log_dict.keys())
         if "vasprun.xml" in files_present:
             # self.dft_output.log_dict["parameters"] = self.vp_new.vasprun_dict["parameters"]
             self.generic_output.dft_log_dict["scf_dipole_mom"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
