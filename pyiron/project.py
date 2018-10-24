@@ -6,6 +6,7 @@ from __future__ import print_function
 import os
 import posixpath
 import numpy as np
+import types
 from string import punctuation
 from pyiron_base.project import Project as ProjectCore
 try:
@@ -387,14 +388,17 @@ class Project(ProjectCore):
                                hcp0001, hcp10m10, mx2,
                                hcp0001_root, fcc111_root, bcc111_root,
                                root_surface, root_surface_analysis, surface)
-        if surface_type in [add_adsorbate.__name__, add_vacuum.__name__,
-                            bcc100.__name__, bcc110.__name__, bcc111.__name__,
-                            diamond100.__name__, diamond111.__name__,
-                            fcc100.__name__, fcc110.__name__, fcc111.__name__, fcc211.__name__,
-                            hcp0001.__name__, hcp10m10.__name__, mx2.__name__,
-                            hcp0001_root.__name__, fcc111_root.__name__, bcc111_root.__name__,
-                            root_surface.__name__, root_surface_analysis.__name__, surface.__name__]:
-            surface_type = eval(surface_type)
+        for surface_class in [add_adsorbate, add_vacuum,
+                              bcc100, bcc110, bcc111,
+                              diamond100, diamond111,
+                              fcc100, fcc110, fcc111, fcc211,
+                              hcp0001, hcp10m10, mx2,
+                              hcp0001_root, fcc111_root, bcc111_root,
+                              root_surface, root_surface_analysis, surface]:
+            if surface_type == surface_class.__name__:
+                surface_type = surface_class
+                break
+        if isinstance(surface_type, types.FunctionType):
             if center:
                 surface = surface_type(symbol=element, size=size, vacuum=vacuum, **kwargs)
             else:
