@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import division, print_function
+import ast
 from copy import copy
 from collections import OrderedDict
 from math import cos, sin
@@ -1670,10 +1671,10 @@ class Atoms(object):
                                             symprec=symprec,
                                             angle_tolerance=angle_tolerance).split()
         if len(space_group) == 1:
-            return {"Number": eval(space_group[0])}
+            return {"Number": ast.literal_eval(space_group[0])}
         else:
             return {"InternationalTableSymbol": space_group[0],
-                    "Number": eval(space_group[1])}
+                    "Number": ast.literal_eval(space_group[1])}
 
     def refine_cell(self, symprec=1e-5, angle_tolerance=-1.0):
         """
@@ -2225,7 +2226,7 @@ class Atoms(object):
             is_last = (i == len(elements) - 1)
             if len(num_list) > 0:
                 if (not char.isdigit()) or is_last:
-                    el_fac = eval(num_list) * el_list[-1]
+                    el_fac = ast.literal_eval(num_list) * el_list[-1]
                     for el in el_fac[1:]:
                         el_list.append(el)
                     num_list = ""
@@ -2240,7 +2241,7 @@ class Atoms(object):
             if len(num_list) > 0:
                 # print "num_list: ", el_list, num_list, el_list[-1], (not char.isdigit()) or is_last
                 if (not char.isdigit()) or is_last:
-                    el_fac = eval(num_list) * [el_list[-1]]
+                    el_fac = ast.literal_eval(num_list) * [el_list[-1]]
                     # print "el_fac: ", el_fac
                     for el in el_fac[1:]:
                         el_list.append(el)
