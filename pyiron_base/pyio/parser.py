@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
+import ast
 import numpy as np
 
 """
@@ -292,7 +293,7 @@ class Logstatus(object):
                                 line_read = next(iterate_over_lines)
                                 if line_read.find(tag.rows().strip()) > -1:
                                     break
-                                val_line = [[eval(l) for l in line_read.split()]]
+                                val_line = [[ast.literal_eval(l) for l in line_read.split()]]
                                 if i_line == 0:
                                     val_array = np.array(val_line)
                                 else:
@@ -302,7 +303,7 @@ class Logstatus(object):
                         else:
                             for i_line in range(tag.rows()):
                                 line_read = next(iterate_over_lines)
-                                val_line = [[eval(l) for l in line_read.split()]]
+                                val_line = [[ast.literal_eval(l) for l in line_read.split()]]
                                 if i_line == 0:
                                     val_array = np.array(val_line)
                                 else:
@@ -695,12 +696,12 @@ class LogTag(object):
         if self.rows() == 0:
             if not len(self.arg()) == 1:
                 val = []
-                for i_item in eval(self.arg()):
-                    val.append(eval("self.val_list[" + i_item + "]"))
+                for i_item in ast.literal_eval(self.arg()):
+                    val.append(ast.literal_eval("self.val_list[" + i_item + "]"))
             else:  # input is an array
-                val = eval("self.val_list[" + self.arg() + "]")
+                val = ast.literal_eval("self.val_list[" + self.arg() + "]")
             if isinstance(val, str):
-                val = eval(val)
+                val = ast.literal_eval(val)
             tag_vals[tag_name] = val
             if len(self.arg()) == 1:
                 log_file.append(self.h5(), data_to_append=val)
