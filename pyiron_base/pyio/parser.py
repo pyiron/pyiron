@@ -699,7 +699,7 @@ class LogTag(object):
                 for i_item in ast.literal_eval(self.arg()):
                     val.append(ast.literal_eval("self.val_list[" + i_item + "]"))
             else:  # input is an array
-                val = ast.literal_eval("self.val_list[" + self.arg() + "]")
+                val = eval("self.val_list[" + self.arg() + "]")
             if isinstance(val, str):
                 val = ast.literal_eval(val)
             tag_vals[tag_name] = val
@@ -721,7 +721,7 @@ class LogTag(object):
         """
         d_name = self.dyn_tags[self.tag_name]
         if self.key_dict is not None:
-            val = [self.key_dict[v] for v in val]
+            val = [self.key_dict[v] for v in val if v in self.key_dict.keys()]
         resolved_name = " ".join(val)
 
         v = self.tag_dict[d_name]
