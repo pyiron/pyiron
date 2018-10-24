@@ -4,7 +4,6 @@
 
 from __future__ import print_function
 
-import ast
 import h5py
 import os
 import pandas
@@ -617,7 +616,7 @@ class FileHDFio(object):
             if import_path == 'pyiron.objects.addon.atatsqs' or import_path == 'pyironplugins.atatsqs':
                 import_path = 'pyiron_atat_sqs.atatsqs'
             exec("from {} import {}".format(import_path, class_name))
-        return ast.literal_eval(class_name + "(**qwargs)")
+        return eval(class_name + "(**qwargs)")
 
     def __setitem__(self, key, value):
         """
