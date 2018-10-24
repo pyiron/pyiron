@@ -6,6 +6,7 @@ from __future__ import print_function
 import os
 import posixpath
 import numpy as np
+import types
 from string import punctuation
 from pyiron_base.project import Project as ProjectCore
 try:
@@ -394,7 +395,7 @@ class Project(ProjectCore):
             if surface_type == surface_class.__name__:
                 surface_type = surface_class
                 break
-        if isinstance(surface_type, function):
+        if isinstance(surface_type, types.FunctionType):
             if center:
                 surface = surface_type(symbol=element, size=size, vacuum=vacuum, **kwargs)
             else:
