@@ -1165,6 +1165,8 @@ class Output:
                 self.vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
             except VasprunError:
                 raise VaspCollectError("The vasprun file is either corrupted or the simulation crashed")
+            if len(self.vp_new.vasprun_dict["forces"]) == 0:
+                raise VaspCollectError("Error in parsing vasprun.xml")
             log_dict["forces"] = self.vp_new.vasprun_dict["forces"]
             log_dict["cells"] = self.vp_new.vasprun_dict["cells"]
             log_dict["volume"] = [np.linalg.det(cell) for cell in self.vp_new.vasprun_dict["cells"]]
@@ -1200,6 +1202,8 @@ class Output:
             if not ("OUTCAR" in files_present):
                 raise IOError("Either the OUTCAR or vasprun.xml files need to be present")
             # log_dict = self.outcar.parse_dict.copy()
+            if len(self.outcar.parse_dict["energies"]) == 0:
+                raise VaspCollectError("Error in parsing OUTCAR")
             log_dict["energy_tot"] = self.outcar.parse_dict["energies"]
             log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
