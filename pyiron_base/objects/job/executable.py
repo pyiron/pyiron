@@ -18,7 +18,7 @@ __date__ = "Sep 1, 2017"
 
 
 class Executable(object):
-    def __init__(self, path_binary_codes, codename=None, code=None, overwrite_nt_flag=False):
+    def __init__(self, path_binary_codes, codename=None, module=None, code=None, overwrite_nt_flag=False):
         """
         Handle the path to the executable, as well as the version selection.
 
@@ -28,15 +28,18 @@ class Executable(object):
             overwrite_nt_flag (bool):
         """
         self.__version__ = None
-        if code is not None:
+        if code is not None:  # Backwards compatibility
             if not isinstance(code.__name__, str):
                 raise TypeError('The codename should be a string.')
-            self.__name__ = code.__name__.lower()
-            code_path_lst = [os.path.join(path, code.__module__.split('.')[0], 'bin') for path in path_binary_codes]
+            codename = code.__name__
+            module = code.__module__.split('.')[0]
+        if codename is not None and module is not None:
+            self.__name__ = codename.lower()
+            code_path_lst = [os.path.join(path, module, 'bin') for path in path_binary_codes]
             backwards_compatible_path_lst = [os.path.join(path, self.__name__) for path in path_binary_codes]
             self._path_bin = [exe_path for exe_path in (code_path_lst + backwards_compatible_path_lst)
                               if os.path.exists(exe_path)]
-        else:
+        else:  # Backwards compatibility
             self.__name__ = codename.lower()
             self._path_bin = [os.path.join(path, self.__name__) for path in path_binary_codes
                               if os.path.exists(os.path.join(path, self.__name__))]
