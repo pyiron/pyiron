@@ -81,7 +81,7 @@ def write_poscar(structure, filename="POSCAR", write_species=True, cartesian=Tru
     endline = "\n"
     with open(filename, 'w') as f:
         selec_dyn = False
-        f.write('Poscar file generated with pyCMW' + endline)
+        f.write('Poscar file generated with pyiron' + endline)
         f.write('1.0' + endline)
         for a_i in structure.get_cell():
             x, y, z = a_i
