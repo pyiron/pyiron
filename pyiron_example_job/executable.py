@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
+import ast
 import logging
 import numpy as np
 
@@ -61,7 +62,7 @@ class ExampleExecutable(object):
         with open("restart.inp", "r") as f:
             line = f.readline()
             _, count = line.split()
-            self._count = eval(count)
+            self._count = ast.literal_eval(count)
 
     def get_energy(self, alat):
         """
@@ -148,7 +149,7 @@ class ExampleExecutable(object):
 
         # all values in input_dict are str
         # only the actual code knows which type is needed, i.e., the conversion is done here
-        if eval(input_dict["read_restart"]):
+        if ast.literal_eval(input_dict["read_restart"]):
             self.logger.info("read restart file")
             self.read_restart()
             self.logger.info("restart file has been successfully read")
@@ -157,7 +158,7 @@ class ExampleExecutable(object):
         energy = self.get_energy(alat=self._alat)
 
         self.logger.info("Program has been successfully terminated")
-        if eval(input_dict["write_restart"]):
+        if ast.literal_eval(input_dict["write_restart"]):
             self.logger.info("Write restart file")
             self.write_restart()
 
