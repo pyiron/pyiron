@@ -236,7 +236,10 @@ class Project(ProjectCore):
             ham._job_id = self.db.add_item_dict(ham.db_entry())
             ham.refresh_job_status()
             print('job was stored with the job ID ', str(ham._job_id))
-            ham.from_directory(os.path.join(self.path, project_to_import_from).replace('\\', '/'))
+            try:
+                ham.from_directory(os.path.join(self.path, project_to_import_from).replace('\\', '/'))
+            except IndexError:
+                ham.status.aborted = True
 
     def import_from_path(self, path, recursive=True):
         """
