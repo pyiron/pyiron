@@ -3,7 +3,6 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from collections import OrderedDict
-import ast
 import numpy as np
 import os
 import pandas
@@ -336,7 +335,7 @@ class GenericParameters(PyironObject):
                 val = val.split(" ")
                 val = " ".join(val[(num_words - 1):])
             try:
-                val_v = ast.literal_eval(val)
+                val_v = eval(val)
             except (TypeError, NameError, SyntaxError):
                 val_v = val
             return val_v
