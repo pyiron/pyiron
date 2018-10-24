@@ -4,6 +4,7 @@
 
 from __future__ import print_function
 
+import ast
 import h5py
 import os
 import pandas
