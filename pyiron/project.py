@@ -443,13 +443,13 @@ class Project(ProjectCore):
         if potential_file is not None:
             if spin is not None:
                 periodic_table.add_element(parent_element=parent_element, new_element=new_element_name,
-                                                         spin=str(spin), pseudo_potcar_file=potential_file)
+                                           spin=str(spin), pseudo_potcar_file=potential_file)
             else:
                 periodic_table.add_element(parent_element=parent_element, new_element=new_element_name,
-                                                         pseudo_potcar_file=potential_file)
+                                           pseudo_potcar_file=potential_file)
         elif spin is not None:
             periodic_table.add_element(parent_element=parent_element, new_element=new_element_name,
-                                                     spin=str(spin))
+                                       spin=str(spin))
         else:
             periodic_table.add_element(parent_element=parent_element, new_element=new_element_name)
         return periodic_table.element(new_element_name)
