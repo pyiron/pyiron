@@ -1209,8 +1209,8 @@ class Output:
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
             log_dict["forces"] = self.outcar.parse_dict["forces"]
             log_dict["positions"] = self.outcar.parse_dict["positions"]
-            log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
-            log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
+            # log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
+            # log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
             log_dict["time"] = self.outcar.parse_dict["time"]
             log_dict["steps"] = self.outcar.parse_dict["steps"]
             log_dict["cells"] = self.outcar.parse_dict["cells"]
