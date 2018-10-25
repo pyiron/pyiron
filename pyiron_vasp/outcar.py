@@ -445,27 +445,34 @@ class Outcar(object):
                     istep_energies = list()
                 if 'Atomic Wigner-Seitz radii' in line:
                     local_spin_trigger = True
+
                 if electronic_trigger in line:
-                    line = lines[i + 2].split('magnetization')[-1]
-                    if line != ' \n':
-                        spin_str_lst = line.split()
-                        spin_str_len = len(spin_str_lst)
-                        if spin_str_len == 1:
-                            ene = float(line)
-                        elif spin_str_len == 3:
-                            ene = [float(spin_str_lst[0]), float(spin_str_lst[1]), float(spin_str_lst[2])]
-                        else:
-                            warnings.warn('Unrecognized spin configuration.')
-                            return mag_lst, final_magmom_lst
-                        istep_energies.append(ene)
+                    try:
+                        line = lines[i + 2].split('magnetization')[-1]
+                        if line != ' \n':
+                            spin_str_lst = line.split()
+                            spin_str_len = len(spin_str_lst)
+                            if spin_str_len == 1:
+                                ene = float(line)
+                            elif spin_str_len == 3:
+                                ene = [float(spin_str_lst[0]), float(spin_str_lst[1]), float(spin_str_lst[2])]
+                            else:
+                                warnings.warn('Unrecognized spin configuration.')
+                                return mag_lst, final_magmom_lst
+                            istep_energies.append(ene)
+                    except ValueError:
+                        warnings.warn("Something went wrong in parsing the magnetization")
                 if n_atoms is None:
                     if nion_trigger in line:
                         n_atoms = int(line.split(nion_trigger)[-1])
                 if local_spin_trigger:
-                    for ind_dir, direc in enumerate(['x', 'y', 'z']):
-                        if 'magnetization ({})'.format(direc) in line:
-                            mag_dict[direc].append([float(lines[i + 4 + atom_index].split()[-1])
-                                                    for atom_index in range(n_atoms)])
+                    try:
+                        for ind_dir, direc in enumerate(['x', 'y', 'z']):
+                            if 'magnetization ({})'.format(direc) in line:
+                                mag_dict[direc].append([float(lines[i + 4 + atom_index].split()[-1])
+                                                        for atom_index in range(n_atoms)])
+                    except ValueError:
+                        warnings.warn("Something went wrong in parsing the magnetic moments")
             if len(mag_dict['x']) > 0:
                 if len(mag_dict['y']) == 0:
                     final_mag = np.array(mag_dict['x'])
