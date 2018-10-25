@@ -48,7 +48,8 @@ class Vasprun(object):
         Args:
             filename (str): Path to the vasprun file
         """
-        assert(os.path.isfile(filename))
+        if not (os.path.isfile(filename)):
+            raise AssertionError()
         try:
             self.root = ETree.parse(filename).getroot()
         except ETree.ParseError:
@@ -99,7 +100,7 @@ class Vasprun(object):
         d["positions"] = np.array(d["positions"])
         # Check if the parsed coordinates are in absolute/relative coordinates. If absolute, convert to relative
         total_positions = d["positions"].flatten()
-        if len(np.argwhere(total_positions > 1)) / len(total_positions) > 0.01:
+        if len(np.argwhere(total_positions > 1)) / len(total_positions) > 0.2:
             pos_new = d["positions"].copy()
             for i, pos in enumerate(pos_new):
                 d["positions"][i] = np.dot(pos, np.linalg.inv(d["cells"][i]))
@@ -121,7 +122,8 @@ class Vasprun(object):
             node (lxml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
         """
-        assert(node.tag == "kpoints")
+        if not (node.tag == "kpoints"):
+            raise AssertionError()
         for leaf in node:
             if leaf.tag == "generation":
                 d[leaf.tag] = dict()
@@ -155,7 +157,8 @@ class Vasprun(object):
             node (lxml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
         """
-        assert (node.tag == "atominfo")
+        if not (node.tag == "atominfo"):
+            raise AssertionError()
         species_dict = OrderedDict()
         for leaf in node:
             if leaf.tag == "atoms":
@@ -203,7 +206,8 @@ class Vasprun(object):
             node (lxml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
         """
-        assert(node.tag == "dos")
+        if not (node.tag == "dos"):
+            raise AssertionError()
         for item in node:
             if item.tag == "i":
                 self.parse_item_to_dict(item, d)
@@ -216,7 +220,8 @@ class Vasprun(object):
             node (lxml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
         """
-        assert(node.tag == "total")
+        if not (node.tag == "total"):
+            raise AssertionError()
         for item in node:
             if item.tag == "array":
                 for ii in item:
@@ -248,7 +253,8 @@ class Vasprun(object):
             node (lxml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
         """
-        assert (node.tag == "partial")
+        if not (node.tag == "partial"):
+            raise AssertionError()
         orbital_dict = dict()
         orbital_index = 0
         for item in node:
@@ -286,7 +292,8 @@ class Vasprun(object):
             node (lxml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
         """
-        assert(node.tag == "projected")
+        if not (node.tag == "projected"):
+            raise AssertionError()
         orbital_dict = dict()
         orbital_index = 0
         for item in node:
@@ -322,7 +329,8 @@ class Vasprun(object):
             d (dict): Dictionary to containing parsed data
         """
         d = dict()
-        assert(node.tag == "scstep")
+        if not (node.tag == "scstep"):
+            raise AssertionError()
         for item in node:
             if item.tag == "energy":
                 for i in item:
@@ -411,7 +419,8 @@ class Vasprun(object):
             node (lxml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
         """
-        assert(node.tag == "eigenvalues")
+        if not (node.tag == "eigenvalues"):
+            raise AssertionError()
         grand_eigenvalue_matrix = list()
         grand_occupancy_matrix = list()
         for item in node:
@@ -445,7 +454,8 @@ class Vasprun(object):
             node (lxml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
         """
-        assert(node.tag == "structure")
+        if not (node.tag == "structure"):
+            raise AssertionError()
         for leaf in node:
             if leaf.tag == "crystal":
                 for item in leaf:
@@ -487,7 +497,8 @@ class Vasprun(object):
             node (lxml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
         """
-        assert (node.tag == "parameters")
+        if not (node.tag == "parameters"):
+            raise AssertionError()
         self.parse_recursively(node, d, key_name="parameters")
 
     def parse_recursively(self, node, d, key_name=None):

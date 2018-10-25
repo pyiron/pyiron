@@ -113,13 +113,7 @@ def write_poscar(structure, filename="POSCAR", write_species=True, cartesian=Tru
         for i, vec in enumerate(sorted_coords):
             x, y, z = vec
             if selec_dyn:
-                sd_vec = []
-                for sd in selec_dyn_lst[i]:
-                    if sd:
-                        sd_vec.append('T')
-                    else:
-                        sd_vec.append('F')
-                sd_string = ' '.join(sd_vec)
+                sd_string = ' '.join(['T' if sd else 'F' for sd in selec_dyn_lst[i]])
                 f.write('{0:.15f} {1:.15f} {2:.15f}'.format(x, y, z) + ' ' + sd_string + endline)
             else:
                 f.write('{0:.15f} {1:.15f} {2:.15f}'.format(x, y, z) + endline)
@@ -195,22 +189,24 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
         else:
             atoms_dict["positions"] *= (-atoms_dict["scaling_factor"]) ** (1. / 3.)
 
-    assert (len(atoms_dict["positions"]) == n_atoms)
-    forces = list()
+    if not (len(atoms_dict["positions"]) == n_atoms):
+        raise AssertionError()
+    velocities = list()
     if read_velocities:
-        forces_index = position_index + n_atoms + 1
-        for i in range(forces_index, forces_index + n_atoms):
+        velocity_index = position_index + n_atoms + 1
+        for i in range(velocity_index, velocity_index + n_atoms):
             vec = list()
             for j in range(3):
                 vec.append(float(string[i].split()[j]))
-            forces.append(vec)
-        assert (len(forces) == n_atoms)
+            velocities.append(vec)
+        if not (len(velocities) == n_atoms):
+            raise AssertionError()
         atoms = _dict_to_atoms(atoms_dict, species_list=species_list)
         if atoms_dict["selective_dynamics"]:
             selective_dynamics = np.array(selective_dynamics)
             atoms.add_tag(selective_dynamics=[True, True, True])
             atoms.selective_dynamics[:] = selective_dynamics
-        return atoms, forces
+        return atoms, velocities
     else:
         atoms = _dict_to_atoms(atoms_dict, species_list=species_list)
         if atoms_dict["selective_dynamics"]:
@@ -255,7 +251,8 @@ def _dict_to_atoms(atoms_dict, species_list=None, read_from_first_line=False):
             symbol += atoms_dict["species_dict"][sp_key]["species"]
             symbol += str(atoms_dict["species_dict"][sp_key]["count"])
         elif read_from_first_line:
-            assert (len(atoms_dict["first_line"].split()) == len(atoms_dict["species_dict"].keys()))
+            if not (len(atoms_dict["first_line"].split()) == len(atoms_dict["species_dict"].keys())):
+                raise AssertionError()
             el_list = np.array(atoms_dict["first_line"].split()[i])
             el_list = np.tile(el_list, atoms_dict["species_dict"][sp_key]["count"])
             symbol += atoms_dict["first_line"].split()[i]

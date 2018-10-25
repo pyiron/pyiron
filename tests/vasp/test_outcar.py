@@ -213,6 +213,7 @@ class TestOutcar(unittest.TestCase):
     def test_get_magnetization(self):
         for filename in self.file_list:
             output, final_magmoms = self.outcar_parser.get_magnetization(filename)
+            positions = self.outcar_parser.get_positions(filename)
             if int(filename.split('/OUTCAR_')[-1]) == 1:
                 magnetization = [np.array([])]
                 self.assertEqual(magnetization.__str__(), output.__str__())
@@ -246,10 +247,16 @@ class TestOutcar(unittest.TestCase):
                 final_mag_lst = [[[0.0, 2.111, -0.0], [0.0, 2.111, 0.0]]]
                 self.assertEqual(magnetization.__str__(), output.__str__())
                 self.assertEqual(final_magmoms, final_mag_lst)
+                final_magmoms = np.array(final_magmoms)
+                final_magmoms[:, np.arange(len(positions[0]), dtype=int), :] = final_magmoms.copy()
+                self.assertEqual(np.array(final_magmoms).shape[1], positions.shape[1])
 
             if int(filename.split('/OUTCAR_')[-1]) == 7:
                 self.assertEqual((1, 49, 3), np.array(output).shape)
                 self.assertEqual((11, 32, 3), np.array(final_magmoms).shape)
+                final_magmoms = np.array(final_magmoms)
+                final_magmoms[:, np.arange(len(positions[0]), dtype=int), :] = final_magmoms.copy()
+                self.assertEqual(np.array(final_magmoms).shape[1], positions.shape[1])
 
     def test_get_broyden_mixing_mesh(self):
         for filename in self.file_list:
@@ -358,6 +365,12 @@ class TestOutcar(unittest.TestCase):
                           np.array([8., 8., 8., 8., 8., 8., 8., 8.]),
                           np.array([392., 398., 398., 398., 392., 392., 392., 380.]))
                 self.assertEqual(output_all.__str__(), output.__str__())
+
+    def test_get_nelect(self):
+        n_elect_list = [40.0, 16.0, 16.0, 16.0, 16.0, 16.0, 224.0]
+        for filename in self.file_list:
+            i = int(filename.split("_")[-1]) - 1
+            self.assertEqual(n_elect_list[i], self.outcar_parser.get_nelect(filename))
 
 
 if __name__ == '__main__':

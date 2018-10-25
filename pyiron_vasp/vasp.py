@@ -22,6 +22,7 @@ from pyiron_vasp.vasprun import Vasprun as Vr
 from pyiron_vasp.vasprun import VasprunError
 from pyiron_vasp.volumetric_data import VaspVolumetricData
 from pyiron_dft.waves.electronic import ElectronicStructure
+import warnings
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -46,8 +47,7 @@ class Vasp(GenericDFTJob):
         job_name (str): Name of the job
 
     Attributes:
-        input (pyiron_vasp.vasp.Input instance): Instance which handles the input
-        output (pyiron_vasp.vasp.Input instance): Instance which handles the output
+        input (pyiron_vasp.vasp.Input): Instance which handles the input
 
     Examples:
         Let's say you need to run a vasp simulation where you would like to control the input parameters manually. To
@@ -79,6 +79,15 @@ class Vasp(GenericDFTJob):
         self.input = Input()
         self.input.incar["SYSTEM"] = self.job_name
         self._output_parser = Output()
+        self._potential = VaspPotentialFile(xc=self.input.potcar["xc"])
+
+    @property
+    def potential(self):
+        return self._potential
+
+    @potential.setter
+    def potential(self, val):
+        self._potential = val
 
     @property
     def plane_wave_cutoff(self):
@@ -219,6 +228,14 @@ class Vasp(GenericDFTJob):
             self.input.incar['SYSTEM'] = self.job_name
         self.write_magmoms()
         self.set_coulomb_interactions()
+        if "CONTCAR" in self.restart_file_dict.keys():
+            if self.restart_file_dict["CONTCAR"] == "POSCAR":
+                if self.server.run_mode.modal:
+                    warnings.warn(
+                        "The POSCAR file will be overwritten by the CONTCAR file specified in restart_file_list.")
+                else:
+                    self.logger.info(
+                        "The POSCAR file will be overwritten by the CONTCAR file specified in restart_file_list.")
         self.input.write(structure=self.structure, directory=self.working_directory)
 
     # define routines that collect all output files
@@ -255,7 +272,9 @@ class Vasp(GenericDFTJob):
             max_i_steps = int(self['input/incar/data_dict']['Value'][ind])
         else:
             max_i_steps = 0
-        scf_energies = self['output/outcar/scf_energies']
+        scf_energies = self['output/generic/dft/scf_energy_free']
+        if scf_energies is None:
+            scf_energies = self['output/outcar/scf_energies']
         e_steps_converged = [len(step) < max_e_steps for step in scf_energies]
         # For calc_md() we do not care about convergence.
         if ibrion == 0 and max_i_steps != 0:
@@ -320,11 +339,13 @@ class Vasp(GenericDFTJob):
                                             universal_newlines=True)
                 files = os.listdir(directory)
             try:
-                assert ("OUTCAR" in files or "vasprun.xml" in files)
+                if not ("OUTCAR" in files or "vasprun.xml" in files):
+                    raise IOError("This file isn't present")
+                    # raise AssertionError("OUTCAR/vasprun.xml should be present in order to import from directory")
                 if "vasprun.xml" in files:
                     vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
                     self.structure = vp_new.get_initial_structure()
-            except: # except AssertionError:
+            except IOError:  # except AssertionError:
                 pass
                 # raise AssertionError("OUTCAR/vasprun.xml should be present in order to import from directory")
             if "INCAR" in files:
@@ -440,8 +461,13 @@ class Vasp(GenericDFTJob):
                 self.input.incar['LNONCOLLINEAR'] = True
                 if self.spin_constraints and 'M_CONSTR' not in self.input.incar._dataset['Parameter']:
                     self.input.incar['M_CONSTR'] = final_cmd
+                if self.spin_constraints or 'M_CONSTR' in self.input.incar._dataset['Parameter']:
+                    if 'ISYM' not in self.input.incar._dataset['Parameter']:
+                        self.input.incar['ISYM'] = 0
                 if self.spin_constraints and 'LAMBDA' not in self.input.incar._dataset['Parameter']:
                     raise ValueError('LAMBDA is not specified but it is necessary for non collinear calculations.')
+                if self.spin_constraints and 'RWIGS' not in self.input.incar._dataset['Parameter']:
+                    raise ValueError('Parameter RWIGS has to be set for spin constraint calculations')
             if self.spin_constraints and not self.input.incar['LNONCOLLINEAR']:
                 raise ValueError('Spin constraints are only avilable for non collinear calculations.')
         else:
@@ -634,7 +660,8 @@ class Vasp(GenericDFTJob):
         if not symmetry_reduction:
             self.input.incar["ISYM"] = -1
         scheme_list = ["MP", "GP", "Line", "Manual"]
-        assert (scheme in scheme_list)
+        if not (scheme in scheme_list):
+            raise AssertionError()
         if scheme == "MP":
             if mesh is None:
                 if kmesh_density is not None:
@@ -651,7 +678,8 @@ class Vasp(GenericDFTJob):
                 raise ValueError("For the manual mode, the kpoints list should be specified")
             else:
                 if weights is not None:
-                    assert (len(manual_kpoints) == len(weights))
+                    if not (len(manual_kpoints) == len(weights)):
+                        raise AssertionError()
                 self.input.kpoints.set_value(line=1, val=str(len(manual_kpoints)))
                 if reciprocal:
                     self.input.kpoints.set_value(line=2, val="Reciprocal")
@@ -682,7 +710,8 @@ class Vasp(GenericDFTJob):
         if read_charge_density:
             self.input.incar["ICHARG"] = 11
         if structure is None:
-            assert (self._output_parser.structure is not None)
+            if not (self._output_parser.structure is not None):
+                raise AssertionError()
             structure = self._output_parser.structure
         from pyiron_dft.bandstructure import Bandstructure
         bs_obj = Bandstructure(structure)
@@ -702,7 +731,8 @@ class Vasp(GenericDFTJob):
         Returns:
             pyiron_atomistics.structure.atoms.Atoms: The required structure
         """
-        assert (self.structure is not None)
+        if not (self.structure is not None):
+            raise AssertionError()
         snapshot = self.structure.copy()
         snapshot.cell = self.get("output/generic/cells")[iteration_step]
         snapshot.positions = self.get("output/generic/positions")[iteration_step]
@@ -750,7 +780,8 @@ class Vasp(GenericDFTJob):
         .. _Neugebauer & Scheffler: https://doi.org/10.1103/PhysRevB.46.16067
 
         """
-        assert (direction in range(3))
+        if not (direction in range(3)):
+            raise AssertionError()
         self.input.incar["ISYM"] = 0
         self.input.incar["LORBIT"] = 11
         self.input.incar["IDIPOL"] = direction + 1
@@ -759,7 +790,7 @@ class Vasp(GenericDFTJob):
         if dipole_center is not None:
             self.input.incar["DIPOL"] = " ".join(str(val) for val in dipole_center)
 
-    def set_occupancy_smearing(self, smearing="fermi", width=0.1, ismear=None):
+    def set_occupancy_smearing(self, smearing="fermi", width=0.2, ismear=None):
         """
         Set how the finite temperature smearing is applied in determining partial occupancies
 
@@ -963,12 +994,31 @@ class Vasp(GenericDFTJob):
         Returns:
 
         """
-        assert isinstance(direction, bool)
-        assert isinstance(norm, bool)
+        if not isinstance(direction, bool):
+            raise AssertionError()
+        if not isinstance(norm, bool):
+            raise AssertionError()
         if direction and norm:
             self.input.incar['I_CONSTRAINED_M'] = 2
         elif direction:
             self.input.incar['I_CONSTRAINED_M'] = 1
+
+    def validate_ready_to_run(self):
+        super(Vasp, self).validate_ready_to_run()
+        if 'spin_constraint' in self.structure._tag_list.keys():
+            raise NotImplementedError('The spin_constraint tag is not supported by VASP.')
+            
+    def list_potentials(self):
+        """
+        Lists all the possible POTCAR files for the elements in the structure depending on the XC functional
+
+        Returns:
+            pyiron_vasp.potential.VaspPotentialFile: A pandas datafrome like object
+        """
+        if self.structure is None:
+            raise ValueError("Can't list potentials unless a structure is set")
+        else:
+            return VaspPotentialFile(xc=self.input.potcar['xc']).find(self.structure.get_species_symbols().tolist())
 
     def __del__(self):
         pass
@@ -1062,7 +1112,6 @@ class Output:
         self._structure = None
         self.outcar = Outcar()
         self.generic_output = GenericOutput()
-        self.dft_output = DFTOutput()
         self.description = "This contains all the output static from this particular vasp run"
         self.charge_density = VaspVolumetricData()
         self.electrostatic_potential = VaspVolumetricData()
@@ -1098,6 +1147,18 @@ class Output:
             self.outcar.from_file(filename=posixpath.join(directory, "OUTCAR"))
             log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
+            self.generic_output.dft_log_dict["n_elect"] = self.outcar.parse_dict["n_elect"]
+            if len(self.outcar.parse_dict["magnetization"]) > 0:
+                magnetization = np.array(self.outcar.parse_dict["magnetization"]).copy()
+                final_magmoms = np.array(self.outcar.parse_dict["final_magmoms"]).copy()
+                # magnetization[sorted_indices] = magnetization.copy()
+                if len(final_magmoms) != 0:
+                    if len(final_magmoms.shape) == 3:
+                        final_magmoms[:, sorted_indices, :] = final_magmoms.copy()
+                    else:
+                        final_magmoms[:, sorted_indices] = final_magmoms.copy()
+                self.generic_output.dft_log_dict["magnetization"] = magnetization.tolist()
+                self.generic_output.dft_log_dict["final_magmoms"] = final_magmoms.tolist()
 
         if "vasprun.xml" in files_present:
             try:
@@ -1136,17 +1197,23 @@ class Output:
             self.structure.cell = log_dict["cells"][-1]
 
         else:
-            assert ("OUTCAR" in files_present)
-            log_dict = self.outcar.parse_dict.copy()
-            log_dict["energy_tot"] = log_dict["energies"].copy()
-            if len(log_dict["magnetization"]) == len(sorted_indices):
-                magnetization = np.array(log_dict["magnetization"]).copy()
-                final_magmoms = np.array(log_dict["final_magmoms"]).copy()
-                magnetization[sorted_indices] = magnetization.copy()
-                final_magmoms[sorted_indices] = final_magmoms.copy()
-                log_dict["magnetization"] = magnetization.to_list()
-                log_dict["final_magmoms"] = final_magmoms.to_list()
-            del log_dict["fermi_level"]
+            if not ("OUTCAR" in files_present):
+                raise IOError("Either the OUTCAR or vasprun.xml files need to be present")
+            # log_dict = self.outcar.parse_dict.copy()
+            log_dict["energy_tot"] = self.outcar.parse_dict["energies"]
+            log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
+            log_dict["pressures"] = self.outcar.parse_dict["pressures"]
+            log_dict["forces"] = self.outcar.parse_dict["forces"]
+            log_dict["positions"] = self.outcar.parse_dict["positions"]
+            log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
+            log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
+            log_dict["time"] = self.outcar.parse_dict["time"]
+            log_dict["steps"] = self.outcar.parse_dict["steps"]
+            log_dict["cells"] = self.outcar.parse_dict["cells"]
+            log_dict["volume"] = np.array([np.linalg.det(cell) for cell in self.outcar.parse_dict["cells"]])
+            self.generic_output.dft_log_dict["scf_energy_free"] = self.outcar.parse_dict["scf_energies"]
+            self.generic_output.dft_log_dict["scf_dipole_mom"] = self.outcar.parse_dict["scf_dipole_moments"]
+            self.generic_output.dft_log_dict["n_elect"] = self.outcar.parse_dict["n_elect"]
             if "PROCAR" in files_present:
                 try:
                     self.electronic_structure = self.procar.from_file(filename=posixpath.join(directory, "PROCAR"))
@@ -1163,25 +1230,12 @@ class Output:
         # important that we "reverse sort" the atoms in the vasp format into the atoms in the atoms class
         self.generic_output.log_dict = log_dict
         if "vasprun.xml" in files_present:
-            self.dft_output.log_dict["parameters"] = self.vp_new.vasprun_dict["parameters"]
-            self.dft_output.log_dict["scf_energies"] = self.vp_new.vasprun_dict["scf_energies"]
-            self.dft_output.log_dict["scf_fr_energies"] = self.vp_new.vasprun_dict["scf_fr_energies"]
-            self.dft_output.log_dict["scf_0_energies"] = self.vp_new.vasprun_dict["scf_0_energies"]
-            self.dft_output.log_dict["scf_dipole_moments"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
-            total_dipole_moments = list()
-            if len(self.dft_output.log_dict["scf_dipole_moments"][0]) > 0:
-                for dip in self.dft_output.log_dict["scf_dipole_moments"]:
-                    total_dipole_moments.append(np.array(dip[-1]))
-
-            total_dipole_moments = np.array(total_dipole_moments)
-            self.dft_output.log_dict["total_dipole_moments"] = total_dipole_moments
-            self.dft_output.log_dict["total_energies"] = self.vp_new.vasprun_dict["total_energies"]
-            self.dft_output.log_dict["total_fr_energies"] = self.vp_new.vasprun_dict["total_fr_energies"]
-            self.dft_output.log_dict["total_0_energies"] = self.vp_new.vasprun_dict["total_0_energies"]
-
+            # self.dft_output.log_dict["parameters"] = self.vp_new.vasprun_dict["parameters"]
             self.generic_output.dft_log_dict["scf_dipole_mom"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
-            self.generic_output.dft_log_dict["dipole_mom"] = total_dipole_moments
-
+            total_dipole_moments = list()
+            if len(self.generic_output.dft_log_dict["scf_dipole_mom"][0]) > 0:
+                total_dipole_moments = np.array([dip[-1] for dip in self.generic_output.dft_log_dict["scf_dipole_mom"]])
+                self.generic_output.dft_log_dict["dipole_mom"] = total_dipole_moments
             self.generic_output.dft_log_dict["scf_energy_int"] = self.vp_new.vasprun_dict["scf_energies"]
             self.generic_output.dft_log_dict["scf_energy_free"] = self.vp_new.vasprun_dict["scf_fr_energies"]
             self.generic_output.dft_log_dict["scf_energy_zero"] = self.vp_new.vasprun_dict["scf_0_energies"]
@@ -1197,7 +1251,6 @@ class Output:
             self.generic_output.dft_log_dict["n_elect"] = float(self.vp_new.vasprun_dict["parameters"]["electronic"]
                                                                 ['NELECT'])
             if "kinetic_energies" in self.vp_new.vasprun_dict.keys():
-                self.dft_output.log_dict["kinetic_energies"] = self.vp_new.vasprun_dict["kinetic_energies"]
                 self.generic_output.dft_log_dict["scf_energy_kin"] = self.vp_new.vasprun_dict["kinetic_energies"]
 
         if "LOCPOT" in files_present:
@@ -1217,7 +1270,6 @@ class Output:
         with hdf.open("output") as hdf5_output:
             hdf5_output["description"] = self.description
             self.generic_output.to_hdf(hdf5_output)
-            self.dft_output.to_hdf(hdf5_output)
             try:
                 self.structure.to_hdf(hdf5_output)
             except AttributeError:
@@ -1238,7 +1290,7 @@ class Output:
                 self.electronic_structure.to_hdf(hdf=hdf5_output, group_name="electronic_structure")
 
             if self.outcar.parse_dict:
-                self.outcar.to_hdf(hdf=hdf5_output, group_name="outcar")
+                self.outcar.to_hdf_minimal(hdf=hdf5_output, group_name="outcar")
 
     def from_hdf(self, hdf):
         """
@@ -1252,7 +1304,6 @@ class Output:
                 self.structure = Atoms()
             self.structure.from_hdf(hdf5_output)
             self.generic_output.from_hdf(hdf5_output)
-            self.dft_output.from_hdf(hdf5_output)
             try:
                 if "electrostatic_potential" in hdf5_output.list_groups():
                     self.electrostatic_potential.from_hdf(hdf5_output, group_name="electrostatic_potential")
@@ -1451,25 +1502,46 @@ class Potcar(GenericParameters):
         self._structure = None
         self.electrons_per_atom_lst = list()
         self.max_cutoff_lst = list()
+        self.el_path_lst = list()
+        self.el_path_dict = dict()
 
     def potcar_set_structure(self, structure):
         self._structure = structure
+        self._set_default_path_dict()
         self._set_potential_paths()
 
     def modify(self, **modify):
         if "xc" in modify:
             xc_type = modify['xc']
+            self._set_default_path_dict()
             if xc_type not in self.pot_path_dict:
                 raise ValueError("xc type not implemented: " + xc_type)
         GenericParameters.modify(self, **modify)
         if self._structure is not None:
             self._set_potential_paths()
 
+    def _set_default_path_dict(self):
+        if self._structure is None:
+            return
+        vasp_potentials = VaspPotentialFile(xc=self.get("xc"))
+        for i, el_obj in enumerate(self._structure.get_species_objects()):
+            if isinstance(el_obj.Parent, str):
+                el = el_obj.Parent
+            else:
+                el = el_obj.Abbreviation
+            if isinstance(el_obj.tags, dict):
+                if 'pseudo_potcar_file' in el_obj.tags.keys():
+                    new_element = el_obj.tags['pseudo_potcar_file']
+                    vasp_potentials.add_new_element(parent_element=el, new_element=new_element)
+            key = vasp_potentials.find_default(el).Species.values[0][0]
+            val = vasp_potentials.find_default(el).Name.values[0]
+            self[key] = val
+
     def _set_potential_paths(self):
         element_list = self._structure.get_species_symbols()  # .ElementList.getSpecies()
         object_list = self._structure.get_species_objects()
         s.logger.debug("element list: {0}".format(element_list))
-        self.el_path_lst = []
+        self.el_path_lst = list()
         try:
             xc = self.get("xc")
         except tables.exceptions.NoSuchNodeError:
@@ -1497,7 +1569,8 @@ class Potcar(GenericParameters):
             else:
                 el_path = self._find_potential_file(path=vasp_potentials.find_default(el)['Filename'].values[0][0])
 
-            assert (os.path.isfile(el_path))
+            if not (os.path.isfile(el_path)):
+                raise AssertionError()
             pot_name = "pot_" + str(i)
 
             if pot_name in self._dataset["Parameter"]:
