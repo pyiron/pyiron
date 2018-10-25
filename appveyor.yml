@@ -56,4 +56,6 @@ build: false
 
 test_script:
   # Build the package
-  - "python --version"
+  - "cd tests"
+  - "python -m unittest 'test_lammps.py'"
+  - "cd .."
