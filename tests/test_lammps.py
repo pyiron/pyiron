@@ -3,7 +3,7 @@ from pyiron_base.core.settings.generic import Settings
 import numpy as np
 import os
 
-execution_path = os.path.normpath(os.path.abspath(os.path.join(__file__, '..')))
+execution_path = os.path.dirname(os.path.abspath(__file__))
 
 s = Settings(config={'sql_file': 'import.db',
                      'project_paths': execution_path,
