@@ -30,7 +30,9 @@ install:
   - pip install .
 
 script:
-  - python --version
+  - cd tests
+  - python -m unittest 'test_lammps.py'
+  cd ..
   - ./.ci_support/build_notebooks_on_master.sh
 
 after_success:
