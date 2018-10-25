@@ -3,9 +3,11 @@ from pyiron_base.core.settings.generic import Settings
 import numpy as np
 import os
 
+execution_path = os.path.normpath(os.path.abspath(os.path.join(__file__, '..')))
+
 s = Settings(config={'sql_file': 'import.db',
-                     'project_paths': os.path.normpath(os.path.abspath(os.path.join(os.getcwd(), '..'))),
-                     'resource_paths': os.path.join(os.path.abspath(os.getcwd()), 'static')})
+                     'project_paths': execution_path,
+                     'resource_paths': os.path.join(execution_path, 'static')})
 
 from pyiron_base.project import Project
 from pyiron_atomistics.structure.atoms import Atoms
@@ -16,12 +18,12 @@ from pyiron_lammps.lammps import Lammps
 class TestLammps(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.project = Project('lammps')
+        cls.project = Project(os.path.join(execution_path, 'lammps'))
         cls.job = Lammps(project=ProjectHDFio(project=cls.project, file_name='lammps'), job_name='lammps')
 
     @classmethod
     def tearDownClass(cls):
-        project = Project('lammps')
+        project = Project(os.path.join(execution_path, 'lammps'))
         project.remove_jobs(recursive=True)
         project.remove(enable=True)
         s.close_connection()
