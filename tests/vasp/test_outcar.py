@@ -1,10 +1,18 @@
-import os
-import posixpath
 import unittest
+from pyiron_base.core.settings.generic import Settings
+import os
 
+file_location = os.path.dirname(os.path.abspath(__file__))
+s = Settings(config={'sql_file': os.path.join(file_location, 'outcar.db'),
+                     'project_paths': os.path.abspath(file_location),
+                     'resource_paths': os.path.join(file_location, '../static')})
+
+import posixpath
 import numpy as np
-
 from pyiron_vasp.vasp import Outcar
+
+
+file_location = os.path.dirname(os.path.abspath(__file__))
 
 
 class TestOutcar(unittest.TestCase):
@@ -12,9 +20,11 @@ class TestOutcar(unittest.TestCase):
         self.file_list = list()
         self.outcar_parser = Outcar()
         # file_list = ["OUTCAR_1", "OUTCAR_2", "OUTCAR_3", "OUTCAR_4", "OUTCAR_5", "OUTCAR_6", "OUTCAR_7"]
-        file_list = os.listdir("../static/vasp_test_files/outcar_samples")
+        file_list = os.listdir(os.path.abspath(os.path.join(file_location,
+                                                            "../static/vasp_test_files/outcar_samples")))
         for f in file_list:
-            direc = os.path.abspath("../static/vasp_test_files/outcar_samples")
+            direc = os.path.abspath(os.path.join(file_location,
+                                                 "../static/vasp_test_files/outcar_samples"))
             filename = posixpath.join(direc, f)
             self.file_list.append(filename)
 
