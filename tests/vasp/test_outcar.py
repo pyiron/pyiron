@@ -11,7 +11,7 @@ class TestOutcar(unittest.TestCase):
     def setUp(self):
         self.file_list = list()
         self.outcar_parser = Outcar()
-        # file_list = ["OUTCAR_1", "OUTCAR_2", "OUTCAR_3", "OUTCAR_4", "OUTCAR_5", "OUTCAR_6", "OUTCAR_7"]
+        # OUTCAR_8 is damaged. Additional tests might fail
         file_list = os.listdir("../static/vasp_test_files/outcar_samples")
         for f in file_list:
             direc = os.path.abspath("../static/vasp_test_files/outcar_samples")
@@ -42,8 +42,11 @@ class TestOutcar(unittest.TestCase):
                 try:
                     self.assertIsInstance(self.outcar_parser.parse_dict[key], value)
                 except AssertionError:
-                    print(key, self.outcar_parser.parse_dict[key])
-                    raise AssertionError
+                    if int(filename.split('/OUTCAR_')[-1]) == 8:
+                        self.assertEqual(key, "fermi_level")
+                    else:
+                        print(key, self.outcar_parser.parse_dict[key])
+                        raise AssertionError("{} has the wrong type".format(key))
 
     def test_get_positions_and_forces(self):
         for filename in self.file_list:
@@ -191,7 +194,10 @@ class TestOutcar(unittest.TestCase):
     def test_get_fermi_level(self):
         for filename in self.file_list:
             output = self.outcar_parser.get_fermi_level(filename)
-            self.assertIsInstance(output, float)
+            try:
+                self.assertIsInstance(output, float)
+            except AssertionError:
+                self.assertEqual(int(filename.split('/OUTCAR_')[-1]), 8)
             if int(filename.split('/OUTCAR_')[-1]) == 1:
                 fermi_level = 2.9738
                 self.assertEqual(fermi_level, output)
@@ -362,7 +368,7 @@ class TestOutcar(unittest.TestCase):
                 self.assertEqual(output_all.__str__(), output.__str__())
 
     def test_get_nelect(self):
-        n_elect_list = [40.0, 16.0, 16.0, 16.0, 16.0, 16.0, 224.0]
+        n_elect_list = [40.0, 16.0, 16.0, 16.0, 16.0, 16.0, 224.0, 358.0]
         for filename in self.file_list:
             i = int(filename.split("_")[-1]) - 1
             self.assertEqual(n_elect_list[i], self.outcar_parser.get_nelect(filename))
