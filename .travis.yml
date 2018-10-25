@@ -32,11 +32,9 @@ install:
 script:
   - coverage run -m unittest discover tests
   - ./.ci_support/build_notebooks_on_master.sh
-  - cd tests
 
 after_success:
   - coveralls
-  - cd ..
 
 deploy:
   - provider: pypi
