@@ -28,6 +28,7 @@ install:
   - conda install -y -c conda-forge coveralls coverage
   - pip install --pre --no-deps pyiron_base pyiron_atomistics
   - pip install .
+  - pip install --pre --no-deps pyiron pyiron_dft pyiron_vasp pyiron_example_job
 
 script:
   - coverage run -m unittest discover tests
