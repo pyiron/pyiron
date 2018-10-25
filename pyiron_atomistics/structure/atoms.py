@@ -1128,7 +1128,7 @@ class Atoms(object):
             if parent_basis.cell is not None:
                 view.add_unitcell()
         if custom_3darray is not None:
-            for arr, pos in zip(custom_3darray, self.positions+particle_size*np.array([0,0,1])):
+            for arr, pos in zip(custom_3darray, self.positions):
                 view.shape.add_arrow(list(pos), list(pos+arr), list(0.5*arr/np.linalg.norm(arr)+0.5), 0.2)
         if show_axes:
             axes_origin = -np.ones(3)
