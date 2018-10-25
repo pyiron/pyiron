@@ -1,9 +1,14 @@
-import os
-import posixpath
 import unittest
+from pyiron_base.core.settings.generic import Settings
+import os
 
+file_location = os.path.dirname(os.path.abspath(__file__))
+s = Settings(config={'sql_file': os.path.join(file_location, 'outcar.db'),
+                     'project_paths': os.path.abspath(file_location),
+                     'resource_paths': os.path.join(file_location, '../static')})
+
+import posixpath
 import numpy as np
-
 from pyiron_vasp.vasp import Outcar
 
 
