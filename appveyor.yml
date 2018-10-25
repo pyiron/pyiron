@@ -57,6 +57,4 @@ build: false
 
 test_script:
   # Build the package
-  - "cd tests"
-  - "python find_tests.py"
-  - "cd .."
+  - "coverage run -m unittest discover tests"

@@ -1488,7 +1488,7 @@ class Kpoints(GenericParameters):
         Loads the default file content
         """
         file_content = '''\
-Kpoints file generated with pyCMW
+Kpoints file generated with pyiron
 0
 Monkhorst_Pack
 4 4 4

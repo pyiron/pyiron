@@ -2,9 +2,10 @@ import unittest
 from pyiron_base.core.settings.generic import Settings
 import os
 
-s = Settings(config={'sql_file': 'vasprun.db',
-                     'project_paths': os.path.abspath(os.getcwd()),
-                     'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
+file_location = os.path.dirname(os.path.abspath(__file__))
+s = Settings(config={'sql_file': os.path.join(file_location, 'vasprun.db'),
+                     'project_paths': os.path.abspath(file_location),
+                     'resource_paths': os.path.join(file_location, '../static')})
 
 import posixpath
 import numpy as np
@@ -24,10 +25,11 @@ class TestVasprun(unittest.TestCase):
 
     def setUp(self):
         self.vp_list = list()
-        file_list = sorted(os.listdir("../static/vasp_test_files/vasprun_samples"))
+        direc = os.path.join(file_location, "../static/vasp_test_files/vasprun_samples")
+        file_list = sorted(os.listdir(direc))
         del file_list[file_list.index("vasprun_spoilt.xml")]
         self.num_species = [3, 1, 2, 2, 3, 4]
-        direc = os.path.abspath("../static/vasp_test_files/vasprun_samples")
+
         for f in file_list:
             vp = Vasprun()
             self.assertIsInstance(vp.vasprun_dict, dict)
