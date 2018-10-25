@@ -678,6 +678,16 @@ class Outcar(object):
 
     @staticmethod
     def get_nelect(filename="OUTCAR"):
+        """
+        Returns the number of electrons in the simulation
+
+        Args:
+            filename (str): OUTCAR filename
+
+        Returns:
+            float: The number of electrons in the simulation
+
+        """
         nelect_trigger = "NELECT"
         with open(filename, 'r') as f:
             lines = f.readlines()
