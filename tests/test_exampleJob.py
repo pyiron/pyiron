@@ -45,7 +45,7 @@ class TestExampleJob(unittest.TestCase):
     def test_output(self):
         energy_lst = self.ham.get("output/generic/energy_tot")
         self.assertEqual(len(energy_lst), self.count)
-        with open('random_testing/job_test_run_hdf5/job_test_run/output.log') as output_file:
+        with open(os.path.join(self.file_location, 'random_testing/job_test_run_hdf5/job_test_run/output.log')) as output_file:
             lines = output_file.readlines()
         output_lst = ["exampleExecutable logFile \n",
                       "alat 3.2 \n",
