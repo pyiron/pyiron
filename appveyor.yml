@@ -57,6 +57,5 @@ build: false
 
 test_script:
   # Build the package
-  - "cd tests"
-  - "python find_tests.py"
-  - "cd .."
+  - 'echo -e "[DEFAULT]\nTOP_LEVEL_DIRS =  %cd%\nRESOURCE_PATHS =  %cd%/tests/static" > ~/.pyiron'
+  - "python -m unittest discover tests"

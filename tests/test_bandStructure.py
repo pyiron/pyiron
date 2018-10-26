@@ -1,10 +1,4 @@
 import unittest
-import os
-from pyiron_base.core.settings.generic import Settings
-s = Settings(config={'sql_file': 'bandstructure.db',
-                     'project_paths': os.path.abspath(os.getcwd()),
-                     'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
-
 import numpy as np
 from pyiron_atomistics.structure.atoms import CrystalStructure
 from pyiron_dft.bandstructure import Bandstructure
