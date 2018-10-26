@@ -1,10 +1,5 @@
 import unittest
 import os
-from pyiron_base.core.settings.generic import Settings
-s = Settings(config={'sql_file': 'periodictable.db',
-                     'project_paths': os.path.abspath(os.getcwd()),
-                     'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
-
 from pyiron_atomistics.structure.periodic_table import PeriodicTable
 from pyiron.project import Project
 
@@ -15,11 +10,6 @@ class TestPeriodicTable(unittest.TestCase):
     these tests should run fast (a few 10 ms)
     TODO: add write and load to h5 (e.g. addElement needs respective changes in read/load routines)
     """
-    @classmethod
-    def tearDownClass(cls):
-        s.close_connection()
-        if os.path.isfile('periodictable.db'):
-            os.remove('periodictable.db')
 
     def setUp(self):
         self.pse = PeriodicTable()
@@ -80,7 +70,7 @@ class TestPeriodicTable(unittest.TestCase):
 
     def test_Chemical_Element_to_and_from_hdf(self):
         ni_up = self.pse.add_element("Ni", "Ni_up", spin="up")
-        pr = Project('test_periodic_table')
+        pr = Project(os.path.join(os.path.dirname(os.path.abspath(__file__), 'test_periodic_table')))
         basis = pr.create_structure(element=ni_up, bravais_basis='fcc', lattice_constant=3.7)
         ham = pr.create_job(pr.job_type.Lammps, 'lammps_test_1')
         test_ham = pr.create_job(pr.job_type.Lammps, 'lammps_test_1')
@@ -91,7 +81,7 @@ class TestPeriodicTable(unittest.TestCase):
         ham.remove()
 
     def test_Chemical_Element_to_and_from_hdf_with_None_Parent(self):
-        pr = Project('test_periodic_table')
+        pr = Project(os.path.join(os.path.dirname(os.path.abspath(__file__), 'test_periodic_table')))
         basis = pr.create_structure(element='Ni', bravais_basis='fcc', lattice_constant=3.7)
         ham = pr.create_job(pr.job_type.Lammps, 'lammps_test_2')
         test_ham = pr.create_job(pr.job_type.Lammps, 'lammps_test_2')
@@ -143,8 +133,6 @@ class TestPeriodicTable(unittest.TestCase):
         o_2 = pse.element("O")
         self.assertTrue(o_1 <= o_2)
         self.assertTrue(o_1 >= o_2)
-
-
 
 
 if __name__ == '__main__':

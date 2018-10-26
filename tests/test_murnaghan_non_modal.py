@@ -25,7 +25,8 @@ def convergence_goal(self, **qwargs):
 class TestMurnaghan(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.project = Project('testing_murnaghan_non_modal')
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        cls.project = Project(os.path.join(cls.file_location, 'testing_murnaghan_non_modal'))
         cls.basis = cls.project.create_structure(element="Fe", bravais_basis='bcc', lattice_constant=2.8)
         cls.project.remove_jobs(recursive=True)
         # cls.project.remove_jobs(recursive=True)
@@ -33,7 +34,8 @@ class TestMurnaghan(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        project = Project('testing_murnaghan_non_modal')
+        file_location = os.path.dirname(os.path.abspath(__file__))
+        project = Project(os.path.join(file_location, 'testing_murnaghan_non_modal'))
         project.remove_jobs(recursive=True)
         project.remove(enable=True, enforce=True)
 
