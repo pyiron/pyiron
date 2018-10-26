@@ -21,10 +21,10 @@ install:
   - conda info -a
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
-  - conda install conda-build conda-verify anaconda-client pytables numpy h5io h5py cycler pyparsing kiwisolver matplotlib pandas pathlib2 sqlalchemy
+  - conda install conda-build conda-verify anaconda-client pytables numpy h5py cycler pyparsing kiwisolver matplotlib pandas pathlib2 sqlalchemy
   - conda config --add channels pyiron
   - conda config --add channels conda-forge
-  - conda install -y coveralls coverage
+  - conda install -y coveralls coverage h5io
   - conda config --set anaconda_upload yes
   - pip install .
 
