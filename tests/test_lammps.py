@@ -1,14 +1,6 @@
 import unittest
-from pyiron_base.core.settings.generic import Settings
 import numpy as np
 import os
-
-execution_path = os.path.dirname(os.path.abspath(__file__))
-
-s = Settings(config={'sql_file': 'import.db',
-                     'project_paths': execution_path,
-                     'resource_paths': os.path.join(execution_path, 'static')})
-
 from pyiron_base.project import Project
 from pyiron_atomistics.structure.atoms import Atoms
 from pyiron_base.objects.generic.hdfio import ProjectHDFio
@@ -18,12 +10,14 @@ from pyiron_lammps.lammps import Lammps
 class TestLammps(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.project = Project(os.path.join(execution_path, 'lammps'))
+        cls.execution_path = os.path.dirname(os.path.abspath(__file__))
+        cls.project = Project(os.path.join(cls.execution_path, 'lammps'))
         cls.job = Lammps(project=ProjectHDFio(project=cls.project, file_name='lammps'), job_name='lammps')
 
     @classmethod
     def tearDownClass(cls):
-        project = Project(os.path.join(execution_path, 'lammps'))
+        cls.execution_path = os.path.dirname(os.path.abspath(__file__))
+        project = Project(os.path.join(cls.execution_path, 'lammps'))
         project.remove_jobs(recursive=True)
         project.remove(enable=True)
         s.close_connection()
