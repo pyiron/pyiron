@@ -20,8 +20,6 @@ class TestLammps(unittest.TestCase):
         project = Project(os.path.join(cls.execution_path, 'lammps'))
         project.remove_jobs(recursive=True)
         project.remove(enable=True)
-        s.close_connection()
-        os.remove('import.db')
 
     def test_selective_dynamics(self):
         atoms = Atoms('Fe8', positions=np.zeros((8, 3)), cell=np.eye(3))
