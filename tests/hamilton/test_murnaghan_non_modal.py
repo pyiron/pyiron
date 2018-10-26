@@ -1,7 +1,3 @@
-"""
-In contrast to many other tests, the non modal tests require a central database and can not be executed with the testing
-configuration. Therefore these tests will use your default configuration.
-"""
 import os
 from pyiron.project import Project
 import unittest
