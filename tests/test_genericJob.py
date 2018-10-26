@@ -1,22 +1,18 @@
 import unittest
-from pyiron_base.core.settings.generic import Settings
 import os
-
-s = Settings(config={'sql_file': 'genericjob.db',
-                     'project_paths': os.path.abspath(os.getcwd()),
-                     'resource_paths': os.path.abspath(os.getcwd())})
-
 from pyiron_base.project import Project
 
 
 class TestGenericJob(unittest.TestCase):
     def setUp(self):
-        self.project = Project('test_genericjob')
+        self.file_location = os.path.dirname(os.path.abspath(__file__))
+        self.project = Project(os.path.join(self.file_location, 'test_genericjob'))
 
     @classmethod
     def tearDownClass(cls):
-        s.close_connection()
-        os.remove('genericjob.db')
+        file_location = os.path.dirname(os.path.abspath(__file__))
+        project = Project(os.path.join(file_location, 'test_genericjob'))
+        project.remove(enable=True)
 
     def test_db_entry(self):
         ham = self.project.create_job('ScriptJob', "job_single_debug")

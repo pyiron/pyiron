@@ -1,5 +1,4 @@
 import unittest
-
 from pyiron_base.core.project.readmode import ReadMode
 
 

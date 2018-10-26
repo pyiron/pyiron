@@ -1,18 +1,12 @@
 import os
-from pyiron_base.core.settings.generic import Settings
 import unittest
-
-s = Settings(config={'sql_file': 'genericpath.db',
-                     'project_paths': os.path.abspath(os.getcwd()),
-                     'resource_paths': os.path.abspath(os.getcwd())})
-
 from pyiron_base.project import Project
 from pyiron_base.core.project.path import GenericPath
 
 
 class TestGenericPath(unittest.TestCase):
     def setUp(self):
-        self.current_dir = os.getcwd().replace('\\', '/')
+        self.current_dir = os.path.dirname(os.path.abspath(__file__))
         self.path_project = GenericPath(root_path=self.current_dir,
                                         project_path='project/path/')
 
@@ -28,8 +22,8 @@ class TestGenericPath(unittest.TestCase):
 
 class TestProject(unittest.TestCase):
     def setUp(self):
-        self.current_dir = os.getcwd()
-        self.project = Project('sub_folder')
+        self.current_dir = os.path.dirname(os.path.abspath(__file__))
+        self.project = Project(os.path.join(self.current_dir, 'sub_folder'))
 
     def tearDown(self):
         self.project.remove(enable=True)
@@ -47,6 +41,7 @@ class TestProject(unittest.TestCase):
                                  if not os.path.isfile(os.path.join('..', directory))]),
                          pr_down_two.list_groups())
         self.assertEqual(pr_down_two.list_groups(), pr_down_twice.list_groups())
+
 
 if __name__ == '__main__':
     unittest.main()

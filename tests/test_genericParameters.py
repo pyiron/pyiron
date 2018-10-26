@@ -1,10 +1,3 @@
-import os
-from pyiron_base.core.settings.generic import Settings
-
-s = Settings(config={'sql_file': 'genericparameters.db',
-                     'project_paths': os.path.abspath(os.getcwd()),
-                     'resource_paths': os.path.abspath(os.getcwd())})
-
 from copy import deepcopy
 import pandas
 from pyiron_base.objects.generic.parameters import GenericParameters
