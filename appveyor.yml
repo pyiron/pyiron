@@ -57,6 +57,6 @@ build: false
 
 test_script:
   # Build the package
-  - ps: echo "[DEFAULT]\nTOP_LEVEL_DIRS = C:/Users/appveyor/%APPVEYOR_REPO_NAME%\nRESOURCE_PATHS = C:/Users/appveyor/%APPVEYOR_REPO_NAME%/static" > C:/Users/appveyor/.pyiron
+  - ps: echo -e "[DEFAULT]\nTOP_LEVEL_DIRS = C:/Users/appveyor/%APPVEYOR_REPO_NAME%\nRESOURCE_PATHS = C:/Users/appveyor/%APPVEYOR_REPO_NAME%/static" > C:/Users/appveyor/.pyiron
   - "cat C:/Users/appveyor/.pyiron"
   - "python -m unittest discover tests"
