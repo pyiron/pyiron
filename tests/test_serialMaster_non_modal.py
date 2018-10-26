@@ -1,8 +1,5 @@
-"""
-In contrast to many other tests, the non modal tests require a central database and can not be executed with the testing
-configuration. Therefore these tests will use your default configuration.
-"""
 import unittest
+import os
 from pyiron.project import Project
 
 
@@ -25,12 +22,14 @@ def convergence_goal(self, **qwargs):
 class TestSerialMaster(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.project = Project('testing_serial_non_modal')
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        cls.project = Project(os.path.join(cls.file_location, 'testing_serial_non_modal'))
         cls.project.remove_jobs(recursive=True)
 
     @classmethod
     def tearDownClass(cls):
-        project = Project('testing_serial_non_modal')
+        file_location = os.path.dirname(os.path.abspath(__file__))
+        project = Project(os.path.join(file_location, 'testing_serial_non_modal'))
         project.remove(enable=True, enforce=True)
 
     def test_single_job_non_modal(self):

@@ -1,36 +1,29 @@
-"""
-In contrast to many other tests, the non modal tests require a central database and can not be executed with the testing
-configuration. Therefore these tests will use your default configuration.
-"""
+import os
 import unittest
 import numpy as np
 from pyiron.project import Project
 
 
 class TestExampleJob(unittest.TestCase):
-    def setUp(self):
-        self.count = 12
-        self.project = Project('random_testing_non_modal')
-        self.project.remove_jobs(recursive=True)
-        self.project.set_logging_level('INFO')
+    @classmethod
+    def setUpClass(cls):
+        cls.count = 12
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        cls.project = Project(os.path.join(cls.file_location, 'random_testing'))
+        cls.ham = cls.project.create_job("ExampleJob", "job_test_run")
+        cls.ham.input['count'] = cls.count
+        cls.ham.run()
 
     @classmethod
     def tearDownClass(cls):
-        # print('tear down')
-        project = Project('random_testing_non_modal')
-        project.remove_jobs()
+        project = Project(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'random_testing'))
+        ham = project.load(project.get_job_ids()[0])
+        ham.remove()
         project.remove(enable=True)
 
-    def test_non_modal_run(self):
-        ham_non_modal = self.project.create_job("ExampleJob", "job_non_modal")
-        ham_non_modal.input['count'] = self.count
-        ham_non_modal.server.run_mode.non_modal = True
-        ham_non_modal.run()
-        self.assertFalse(ham_non_modal.status.finished)
-        self.project.wait_for_job(ham_non_modal, interval_in_s=5, max_iterations=3)
-        self.assertTrue(ham_non_modal.status.finished)
-
-        lines = self.project['job_non_modal/input.inp']
+    def test_input(self):
+        with open(os.path.join(self.file_location, 'random_testing/job_test_run_hdf5/job_test_run/input.inp')) as input_file:
+            lines = input_file.readlines()
         input_lst = ["alat 3.2 #lattice constant (would be in a more realistic example in the structure file)\n",
                      "alpha 0.1 #noise amplitude\n",
                      "a_0 3 #equilibrium lattice constant\n",
@@ -43,13 +36,17 @@ class TestExampleJob(unittest.TestCase):
                      "read_restart False\n"]
         self.assertEqual(input_lst, lines)
 
-        lines = self.project['job_non_modal/restart.out']
+    def test_restart_file(self):
+        with open(os.path.join(self.file_location, 'random_testing/job_test_run_hdf5/job_test_run/restart.out')) as restart_file:
+            lines = restart_file.readlines()
         restart_lst = ["count " + str(self.count) + " \n"]
         self.assertEqual(restart_lst, lines)
-        energy_lst = ham_non_modal.get("output/generic/energy_tot")
-        self.assertEqual(len(energy_lst), self.count)
 
-        lines = self.project['job_non_modal/output.log']
+    def test_output(self):
+        energy_lst = self.ham.get("output/generic/energy_tot")
+        self.assertEqual(len(energy_lst), self.count)
+        with open('random_testing/job_test_run_hdf5/job_test_run/output.log') as output_file:
+            lines = output_file.readlines()
         output_lst = ["exampleExecutable logFile \n",
                       "alat 3.2 \n",
                       "count " + str(self.count) + " \n"]
@@ -58,8 +55,6 @@ class TestExampleJob(unittest.TestCase):
         for e_1, e_2 in zip(energy_lst, energy_output_lst):
             self.assertTrue(1 > e_1 > 0)
             self.assertEqual(e_1, e_2)
-
-        ham_non_modal.remove()
 
 
 if __name__ == '__main__':
