@@ -13,7 +13,7 @@ Unittests for the pyiron.objects.electronic module
 """
 
 
-class TestElectronicStructure(unittest.TestCase):
+class TestDos(unittest.TestCase):
 
     def setUp(self):
         self.es_list = list()
@@ -21,7 +21,7 @@ class TestElectronicStructure(unittest.TestCase):
         for f in file_list:
             vp = Vasprun()
             self.assertIsInstance(vp.vasprun_dict, dict)
-            direc = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "static/vasprun_samples"))
+            direc = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../static/vasprun_samples"))
             filename = posixpath.join(direc, f)
             vp.from_file(filename)
             es = vp.get_electronic_structure()
