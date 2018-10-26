@@ -36,6 +36,7 @@ script:
 
 after_success:
   - coveralls
+  - coverage report
 
 deploy:
   - provider: pypi
