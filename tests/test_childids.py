@@ -14,7 +14,7 @@ class TestChildids(unittest.TestCase):
         file_location = os.path.dirname(os.path.abspath(__file__))
         project = Project(os.path.join(file_location, 'testing_childids'))
         project.remove_jobs(recursive=True)
-        project.remove()
+        project.remove(enable=True)
 
     def test_childids(self):
         ham_master_1 = self.project.create_job('ScriptJob', "master")

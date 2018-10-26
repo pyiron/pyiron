@@ -26,9 +26,9 @@ class TestConfigSettingsStatic(unittest.TestCase):
     # def test_db_name(self):
     #     self.assertEqual(self.test_config.db_name, 'test')
 
-    def test_top_path(self):
-        self.assertEqual(self.test_config.top_path(self.resource_path + '/test'),
-                         self.resource_path + '/')
+    # def test_top_path(self):
+    #     self.assertEqual(self.test_config.top_path(self.resource_path + '/test'),
+    #                      self.resource_path + '/')
 
     def test_resource_paths(self):
         self.assertEqual(self.test_config.resource_paths, [self.resource_path])

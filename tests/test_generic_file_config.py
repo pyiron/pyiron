@@ -7,15 +7,8 @@ import unittest
 
 class TestConfigSettingsStatic(unittest.TestCase):
     def setUp(self):
-        if sys.version_info.major < 3 and os.name == 'nt':
-            # In Python 2.7 on Windows for pathlib2 it is required that the directories exist, so we create them
-            if not os.path.exists(os.path.expanduser('~/pyiron/resources')):
-                os.makedirs(os.path.expanduser('~/pyiron/resources'))
-            if not os.path.exists(os.path.expanduser('~/pyiron/projects')):
-                os.makedirs(os.path.expanduser('~/pyiron/projects'))
-        self.user_path = Path('~').expanduser().resolve().absolute().as_posix()
-        self.resource_path = Path('~/pyiron/resources').expanduser().resolve().absolute().as_posix()
-        self.project_path = Path('~/pyiron/projects').expanduser().resolve().absolute().as_posix() + '/'
+        self.resource_path = os.path.dirname(os.path.abspath(__file__))
+        self.project_path = os.path.dirname(os.path.abspath(__file__)) + '/'
         self.file_config = Settings()
 
     # def test_file_db_connection_name(self):

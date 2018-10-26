@@ -3,7 +3,7 @@ import unittest
 from pyiron_base.project import Project
 
 
-class TestChildids(unittest.TestCase):
+class TestCopyTo(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
@@ -30,7 +30,7 @@ class TestChildids(unittest.TestCase):
         sub_project = sub_project.open('sub_project')
         ham = self.project.create_job('ScriptJob', "job_single_pr")
         ham.copy_to(sub_project)
-        os.remove('testing_copyto/sub_project/job_single_pr.h5')
+        os.remove(os.path.join(self.file_location, 'testing_copyto/sub_project/job_single_pr.h5'))
 
     # def test_copy_to_job_ex(self):
     #     job_ser = self.project.create_job("SerialMaster", "sequence_single_ex")
@@ -49,7 +49,7 @@ class TestChildids(unittest.TestCase):
         ham.to_hdf()
         ham.copy_to(sub_project)
         ham.remove()
-        os.remove('testing_copyto/sub_project_ex/job_single_pr_ex.h5')
+        os.remove(os.path.join(self.file_location, 'testing_copyto/sub_project_ex/job_single_pr_ex.h5'))
 
 if __name__ == '__main__':
     unittest.main()
