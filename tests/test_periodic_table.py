@@ -70,7 +70,7 @@ class TestPeriodicTable(unittest.TestCase):
 
     def test_Chemical_Element_to_and_from_hdf(self):
         ni_up = self.pse.add_element("Ni", "Ni_up", spin="up")
-        pr = Project(os.path.join(os.path.dirname(os.path.abspath(__file__), 'test_periodic_table')))
+        pr = Project(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_periodic_table'))
         basis = pr.create_structure(element=ni_up, bravais_basis='fcc', lattice_constant=3.7)
         ham = pr.create_job(pr.job_type.Lammps, 'lammps_test_1')
         test_ham = pr.create_job(pr.job_type.Lammps, 'lammps_test_1')
@@ -81,7 +81,7 @@ class TestPeriodicTable(unittest.TestCase):
         ham.remove()
 
     def test_Chemical_Element_to_and_from_hdf_with_None_Parent(self):
-        pr = Project(os.path.join(os.path.dirname(os.path.abspath(__file__), 'test_periodic_table')))
+        pr = Project(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_periodic_table'))
         basis = pr.create_structure(element='Ni', bravais_basis='fcc', lattice_constant=3.7)
         ham = pr.create_job(pr.job_type.Lammps, 'lammps_test_2')
         test_ham = pr.create_job(pr.job_type.Lammps, 'lammps_test_2')

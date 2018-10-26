@@ -10,7 +10,7 @@ def convergence_goal(self, **qwargs):
         eps = qwargs["eps"]
     erg_lst = self.get_from_childs("output/generic/energy")
     var = 1000 * np.var(erg_lst)
-    print(var / len(erg_lst))
+    # print(var / len(erg_lst))
     if var / len(erg_lst) < eps:
         return True
     ham_prev = self[-1]

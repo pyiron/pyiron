@@ -24,6 +24,6 @@ class TestTrajectoryAnalysis(unittest.TestCase):
         expected_positions = np.array([[[0.2, 0.2, -0.01], [0., 0., 0.]], [[0.2, 0.2, 0.03], [0., 0., 0.]],
                   [[0.2, 0.2, 0.02], [0., 0., 0.]], [[0.2, 0.2, -0.02], [0., 0., 0.]],
                   [[0.2, -0.01, -0.01], [0., 0., 0.]], [[0.2, 0.01, 0.02], [0., 0., 0.]]])
-        print(unwrapped_positions[:, 0], expected_positions[:, 0])
+        # print(unwrapped_positions[:, 0], expected_positions[:, 0])
         self.assertTrue(np.allclose(unwrapped_positions, expected_positions))
 
