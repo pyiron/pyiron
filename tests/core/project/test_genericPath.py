@@ -35,7 +35,7 @@ class TestProject(unittest.TestCase):
         pr_down_twice = self.project['..']['..']
         self.assertEqual(pr_down_two.__repr__(), pr_down_twice.__repr__())
         self.assertEqual(sorted([directory for directory in os.listdir(self.current_dir)
-                                 if not os.path.isfile(os.path.join('.', directory))]),
+                                 if not os.path.isfile(os.path.join(self.current_dir, directory))]),
                          pr_down_one.list_groups())
         self.assertEqual(sorted([directory for directory in os.listdir(os.path.join(self.current_dir, '..'))
                                  if not os.path.isfile(os.path.join(self.current_dir, '..', directory))]),
