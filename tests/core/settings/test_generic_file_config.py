@@ -7,8 +7,8 @@ import unittest
 
 class TestConfigSettingsStatic(unittest.TestCase):
     def setUp(self):
-        self.resource_path = os.path.dirname(os.path.abspath(__file__))
-        self.project_path = os.path.dirname(os.path.abspath(__file__)) + '/'
+        self.resource_path = os.path.dirname(os.path.abspath(__file__)) + '../../static'
+        self.project_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
         self.file_config = Settings()
 
     # def test_file_db_connection_name(self):
