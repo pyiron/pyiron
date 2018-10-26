@@ -25,7 +25,7 @@ class TestStructureContainer(unittest.TestCase):
         structure_container = self.project.load(self.project.get_job_ids()[0])
         self.assertEqual(structure_container.job_id, self.project.get_job_ids()[0])
         self.assertEqual(structure_container.job_name, 'structure_container')
-        self.assertEqual(structure_container.project_hdf5.project_path, 'tests/structure_testing/')
+        self.assertTrue('tests/structure/structure_testing/' in structure_container.project_hdf5.project_path)
         self.assertTrue(structure_container.status.finished)
         self.assertEqual(structure_container.structure, self.basis)
 
