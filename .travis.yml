@@ -21,11 +21,11 @@ install:
   - conda info -a
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
-  - conda install conda-build conda-verify anaconda-client pytables numpy
+  - conda install conda-build conda-verify anaconda-client pytables numpy lxml scipy cycler pyparsing kiwisolver matplotlib Werkzeug itsdangerous flask sqlalchemy pathlib2 pandas h5py
   - conda config --add channels conda-forge
   - conda config --add channels pyiron
   - conda config --set anaconda_upload yes
-  - conda install -y -c conda-forge coveralls coverage
+  - conda install -y -c conda-forge coveralls coverage ase spglib h5io
   - pip install --pre --no-deps pyiron_base pyiron_atomistics pyiron_dft
   - pip install .
   - pip install --pre --no-deps pyiron pyiron_lammps pyiron_example_job
@@ -36,6 +36,7 @@ script:
 
 after_success:
   - coveralls
+  - coverage report
 
 deploy:
   - provider: pypi
