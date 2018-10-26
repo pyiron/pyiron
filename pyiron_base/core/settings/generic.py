@@ -68,17 +68,15 @@ class Settings(with_metaclass(Singleton)):
                                'sql_type': 'SQLite',
                                'sql_user_key': None,
                                'sql_database': None}
-
-        if 'PYIRONCONFIG' in os.environ.keys():
-            config_file = os.environ['PYIRONCONFIG']
+        environment_keys = os.environ.keys()
+        if 'PYIRONCONFIG' in environment_keys:
+            config_file = environment_keys['PYIRONCONFIG']
         else:
             config_file = os.path.expanduser(os.path.join("~", ".pyiron"))
         if os.path.isfile(config_file):
             self._config_parse_file(config_file)
-        elif not ('TRAVIS' in os.environ.keys() or 
-                  'APPVEYOR' in os.environ.keys() or 
-                  'CIRCLECI' in os.environ.keys() or 
-                  'CONDA_BUILD' in os.environ.keys()):
+        elif not any([env in environment_keys
+                      for env in ['TRAVIS', 'APPVEYOR', 'CIRCLECI', 'CONDA_BUILD', 'GITLAB_CI']]):
             user_input = None
             while user_input not in ['yes', 'no']:
                 if sys.version_info.major > 2:
