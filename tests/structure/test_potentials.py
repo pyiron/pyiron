@@ -7,7 +7,7 @@ from pyiron_vasp.potential import VaspPotential
 class TestOpenKimPotential(unittest.TestCase):
     def setUp(self):
         self.kim = LammpsPotentialFile()
-        self.potential_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/pyiron_lammps/potentials')
+        self.potential_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../static/pyiron_lammps/potentials')
 
     def test_find(self):
         Fe_lst = ['Al_Fe_eam_fs',
@@ -39,7 +39,7 @@ class TestOpenKimPotential(unittest.TestCase):
 class TestVaspPotential(unittest.TestCase):
     def setUp(self):
         self.vasp = VaspPotential()
-        self.potential_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/pyiron_vasp/potentials')
+        self.potential_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../static/pyiron_vasp/potentials')
 
     def test_find(self):
         self.assertEqual(list(self.vasp.pbe.find('Fe')['Name']), ['Fe-gga-pbe', 'Fe_GW-gga-pbe', 'Fe_pv-gga-pbe',
