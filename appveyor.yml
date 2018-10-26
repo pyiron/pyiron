@@ -57,7 +57,7 @@ build: false
 
 test_script:
   # Build the package
-  - "echo -e "[DEFAULT]\nTOP_LEVEL_DIRS = $PWD\nRESOURCE_PATHS = $PWD/tests/static" > ~/.pyiron"
+  - 'echo -e "[DEFAULT]\nTOP_LEVEL_DIRS = $PWD\nRESOURCE_PATHS = $PWD/tests/static" > ~/.pyiron'
   - "cd tests"
   - "python -m unittest 'test_lammps.py'"
   - "cd .."
