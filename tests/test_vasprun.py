@@ -1,16 +1,8 @@
 import unittest
-from pyiron_base.core.settings.generic import Settings
 import os
-
-file_location = os.path.dirname(os.path.abspath(__file__))
-s = Settings(config={'sql_file': os.path.join(file_location, 'vasprun.db'),
-                     'project_paths': os.path.abspath(file_location),
-                     'resource_paths': os.path.join(file_location, '../static')})
-
 import posixpath
 import numpy as np
 from pyiron_vasp.vasprun import Vasprun, VasprunError
-
 from pyiron_atomistics.structure.atoms import Atoms
 from pyiron_dft.waves.electronic import ElectronicStructure
 
@@ -24,8 +16,9 @@ class TestVasprun(unittest.TestCase):
     """
 
     def setUp(self):
+        self.file_location = os.path.dirname(os.path.abspath(__file__))
         self.vp_list = list()
-        direc = os.path.join(file_location, "../static/vasp_test_files/vasprun_samples")
+        direc = os.path.join(self.file_location, "../static/vasp_test_files/vasprun_samples")
         file_list = sorted(os.listdir(direc))
         del file_list[file_list.index("vasprun_spoilt.xml")]
         self.num_species = [3, 1, 2, 2, 3, 4]
