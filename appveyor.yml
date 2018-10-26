@@ -58,5 +58,5 @@ build: false
 
 test_script:
   # Build the package
-  - 'echo "[DEFAULT] `nTOP_LEVEL_DIRS = $PWD `nRESOURCE_PATHS = $PWD/static" > C:/Users/appveyor/.pyironconfig'
+  - 'echo "[DEFAULT] `nTOP_LEVEL_DIRS = $PWD `nRESOURCE_PATHS = $PWD/static" > C:/Users/appveyor/.pyiron'
   - "python -m unittest discover tests"
