@@ -535,89 +535,6 @@ class FileHDFio(object):
         new._filter = ["nodes"]
         return new
 
-    @staticmethod
-    def create_object(class_name, **qwargs):
-        """
-        Internal function to create a pyiron object
-
-        Args:
-            class_name (str): name of a pyiron class
-            **qwargs: object parameters
-
-        Returns:
-            pyiron object: defined by the pyiron class in class_name with the input from **qwargs
-        """
-        job_type_lst = class_name.split(".")
-        if len(job_type_lst) > 1:
-            class_name = class_name.split()[-1][1:-2]
-            job_type_lst = class_name.split(".")
-            import_path, class_name = ".".join(job_type_lst[:-1]), job_type_lst[-1]
-            # Backwards compatibility
-            if import_path == 'pyiron.objects.addon.structurecontainer' or import_path == 'pyiron.objects.structure.structurecontainer':
-                import_path = 'pyiron_atomistics.structure.structurecontainer'
-            if import_path == 'pyiron.objects.addon.structurepipeline' or import_path == 'pyironplugins.pipeline.structurepipeline':
-                import_path = 'pyiron_icams_pipelines.structurepipeline'
-            if import_path == 'pyiron.objects.hamilton.example.randomatomistic' or import_path == 'pyironplugins.example.randomatomistic':
-                import_path = 'pyiron_example_job.randomatomistic'
-            if import_path == 'pyiron_base.objects.hamilton.example.random' or import_path == 'pyironplugins.example.randomatomistic':
-                import_path = 'pyiron_example_job.randomatomistic'
-            if import_path == 'pyiron.objects.hamilton.md.lammps' or import_path == 'pyironplugins.lammps.lammps':
-                import_path = 'pyiron_lammps.lammps'
-            if import_path == 'pyiron.objects.hamilton.kmc.kmc' or import_path == 'pyironplugins.kmc.kmc':
-                import_path = 'pyiron_mpie_kmc.kmc'
-            if import_path == 'pyiron.objects.hamilton.dft.sphinx' or import_path == 'pyironplugins.sphinx.sphinx':
-                import_path = 'pyiron_mpie_sphinx.sphinx'
-            if import_path == 'pyiron.objects.hamilton.dft.vasp' or import_path == 'pyironplugins.vasp.vasp':
-                import_path = 'pyiron_vasp.vasp'
-            if import_path == 'pyiron.objects.addon.kmcmaster' or import_path == 'pyironplugins.kmc.kmcmaster':
-                import_path = 'pyiron_mpie_kmc.kmcmaster'
-            if import_path == 'pyiron.objects.addon.thermolambdamaster' or import_path == 'pyironplugins.thermodynamics.thermolambdamaster':
-                import_path = 'pyiron_mpie_thermodynamics.thermolambdamaster'
-            if import_path == 'pyiron.objects.addon.randomseedmaster' or import_path == 'pyironplugins.thermodynamics.randomseedmaster':
-                import_path = 'pyiron_mpie_thermodynamics.randomseedmaster'
-            if import_path == 'pyiron.objects.addon.meamfit' or import_path == 'pyironplugins.thermodynamics.meamfit':
-                import_path = 'pyiron_mpie_thermodynamics.meamfit'
-            if import_path == 'pyiron.objects.addon.murnaghan' or import_path == 'pyiron.objects.hamilton.murnaghan':
-                import_path = 'pyiron_atomistics.hamilton.murnaghan'
-            if import_path == 'pyiron.objects.addon.minimurn' or import_path == 'pyironplugins.pipeline.minimurn':
-                import_path = 'pyiron_icams_pipelines.minimurn'
-            if import_path == 'pyiron.objects.addon.elasticmatrix' or import_path == 'pyironplugins.pipeline.elasticmatrix':
-                import_path = 'pyiron_icams_pipelines.elasticmatrix'
-            if import_path == 'pyiron.objects.addon.convergence_volume' or import_path == 'pyiron.objects.hamilton.convergence_volume':
-                import_path = 'pyiron_atomistics.hamilton.convergence_volume'
-            if import_path == 'pyiron.objects.addon.convergence_encut_serial' or import_path == 'pyiron.objects.hamilton.dft.convergence_encut_serial':
-                import_path = 'pyiron_dft.convergence_encut_serial'
-            if import_path == 'pyiron.objects.addon.convergence_encut_parallel' or import_path == 'pyiron.objects.hamilton.dft.convergence_encut_parallel':
-                import_path = 'pyiron_dft.convergence_encut_parallel'
-            if import_path == 'pyiron.objects.addon.convergence_kpoint_parallel' or import_path == 'pyiron.objects.hamilton.dft.convergence_kpoint_parallel':
-                import_path = 'pyiron_dft.convergence_kpoint_parallel'
-            if import_path == 'pyiron.objects.addon.phonopy' or import_path == 'pyironplugins.pipeline.phonopy':
-                import_path = 'pyiron_icams_pipelines.phonopy'
-            if import_path == 'pyiron.objects.addon.defectformation' or import_path == 'pyironplugins.pipeline.defectformation':
-                import_path = 'pyiron_icams_pipelines.defectformation'
-            if import_path == 'pyiron.objects.hamilton.md.lammpsase' or import_path == 'pyironplugins.lammps.lammpsase':
-                import_path = 'pyiron_lammps.lammpsase'
-            if import_path == 'pyiron.objects.addon.serial_pipeline' or import_path == 'pyironplugins.pipeline.serial_pipeline':
-                import_path = 'pyiron_icams_pipelines.serial_pipeline'
-            if import_path == 'pyiron.objects.addon.transformation_path' or import_path == 'pyironplugins.pipeline.transformation_path':
-                import_path = 'pyiron_icams_pipelines.transformation_path'
-            if import_path == 'pyiron.objects.addon.thermointeamqh' or import_path == 'pyironplugins.thermodynamics.thermointeamqh':
-                import_path = 'pyiron_mpie_thermodynamics.thermointeamqh'
-            if import_path == 'pyiron.objects.addon.thermointdfteam' or import_path == 'pyironplugins.thermodynamics.thermointdfteam':
-                import_path = 'pyiron_mpie_thermodynamics.thermointdfteam'
-            if import_path == 'pyiron.objects.addon.thermointeameam' or import_path == 'pyironplugins.thermodynamics.thermointeameam':
-                import_path = 'pyiron_mpie_thermodynamics.thermointeameam'
-            if import_path == 'pyiron.objects.addon.electrochemistry.potential_ramp' or import_path == 'pyironplugins.electrochemistry.potential_ramp':
-                import_path = 'pyiron_mpie_electrochemistry.potential_ramp'
-            if import_path == 'pyiron.objects.addon.randspg' or import_path == 'pyironplugins.randspg':
-                import_path = 'pyiron_randspg.randspg'
-            if import_path == 'pyiron.objects.hamilton.md.lammpslib' or import_path == 'pyironplugins.lammps.lammps':
-                import_path = 'pyiron_lammps.lammps'
-            if import_path == 'pyiron.objects.addon.atatsqs' or import_path == 'pyironplugins.atatsqs':
-                import_path = 'pyiron_atat_sqs.atatsqs'
-            exec("from {} import {}".format(import_path, class_name))
-        return eval(class_name + "(**qwargs)")
-
     def __setitem__(self, key, value):
         """
         Store data inside the HDF5 file
@@ -1128,6 +1045,24 @@ class ProjectHDFio(FileHDFio):
         """
         if not os.path.isdir(self.working_directory):
             os.makedirs(self.working_directory)
+
+    def create_object(self, class_name, **qwargs):
+        """
+        Internal function to create a pyiron object
+
+        Args:
+            class_name (str): name of a pyiron class
+            **qwargs: object parameters
+
+        Returns:
+            pyiron object: defined by the pyiron class in class_name with the input from **qwargs
+        """
+        job_type_lst = class_name.split(".")
+        if len(job_type_lst) > 1:
+            class_name = class_name.split()[-1][1:-2].split(".")[-1]
+            import_path = self._project.job_type.job_class_dict[class_name]
+            exec("from {} import {}".format(import_path, class_name))
+        return eval(class_name + "(**qwargs)")
 
     def to_object(self, object_type=None, **qwargs):
         """
