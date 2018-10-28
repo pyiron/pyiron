@@ -1059,7 +1059,7 @@ class ProjectHDFio(FileHDFio):
         """
         job_type_lst = class_name.split(".")
         if len(job_type_lst) > 1:
-            class_name = class_name.split()[-1][1:-2].split(".")[-1]
+            class_name = class_name.split('.')[-1][:-2]
             import_path = self._project.job_type.job_class_dict[class_name]
             exec("from {} import {}".format(import_path, class_name))
         return eval(class_name + "(**qwargs)")
