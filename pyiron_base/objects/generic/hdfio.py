@@ -1055,7 +1055,7 @@ class ProjectHDFio(FileHDFio):
             if name.startswith('pyiron_'):
                 for name, obj in inspect.getmembers(importlib.import_module(name)):
                     if name == search_name:
-                        return name, obj.__module__
+                        return obj.__module__
 
     def create_object(self, class_name, **qwargs):
         """
