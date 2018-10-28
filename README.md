@@ -1,5 +1,6 @@
 # Build Status 
 
+[![Coverage Status](https://coveralls.io/repos/github/pyiron/pyiron_lammps/badge.svg?branch=master)](https://coveralls.io/github/pyiron/pyiron_lammps?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/b21672314eed486ca147a1e16531fc0b)](https://app.codacy.com/app/pyiron-runner/pyiron_lammps?utm_source=github.com&utm_medium=referral&utm_content=pyiron/pyiron_lammps&utm_campaign=Badge_Grade_Settings)
 [![Release_Date](https://anaconda.org/pyiron/pyiron_lammps/badges/latest_release_date.svg)](https://anaconda.org/pyiron/pyiron_lammps)
 _Travis_
