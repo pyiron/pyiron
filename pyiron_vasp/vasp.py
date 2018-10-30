@@ -1147,8 +1147,20 @@ class Output:
         sorted_indices = vasp_sorter(self.structure)
         files_present = os.listdir(directory)
         log_dict = dict()
+        vasprun_working, outcar_working = False, False
+        if not ("OUTCAR" in files_present or "vasprun.xml" in files_present):
+            raise IOError("Either the OUTCAR or vasprun.xml files need to be present")
         if "OUTCAR" in files_present:
             self.outcar.from_file(filename=posixpath.join(directory, "OUTCAR"))
+            outcar_working = True
+        if "vasprun.xml" in files_present:
+            try:
+                self.vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
+            except VasprunError:
+                pass
+            vasprun_working = True
+
+        if outcar_working:
             log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
             self.generic_output.dft_log_dict["n_elect"] = self.outcar.parse_dict["n_elect"]
@@ -1164,11 +1176,7 @@ class Output:
                 self.generic_output.dft_log_dict["magnetization"] = magnetization.tolist()
                 self.generic_output.dft_log_dict["final_magmoms"] = final_magmoms.tolist()
 
-        if "vasprun.xml" in files_present:
-            try:
-                self.vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
-            except VasprunError:
-                raise VaspCollectError("The vasprun file is either corrupted or the simulation crashed")
+        if vasprun_working:
             log_dict["forces"] = self.vp_new.vasprun_dict["forces"]
             log_dict["cells"] = self.vp_new.vasprun_dict["cells"]
             log_dict["volume"] = [np.linalg.det(cell) for cell in self.vp_new.vasprun_dict["cells"]]
@@ -1200,9 +1208,7 @@ class Output:
             self.structure.positions = log_dict["positions"][-1]
             self.structure.cell = log_dict["cells"][-1]
 
-        else:
-            if not ("OUTCAR" in files_present):
-                raise IOError("Either the OUTCAR or vasprun.xml files need to be present")
+        elif outcar_working:
             # log_dict = self.outcar.parse_dict.copy()
             log_dict["energy_tot"] = self.outcar.parse_dict["energies"]
             log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
@@ -1236,7 +1242,7 @@ class Output:
 
         # important that we "reverse sort" the atoms in the vasp format into the atoms in the atoms class
         self.generic_output.log_dict = log_dict
-        if "vasprun.xml" in files_present:
+        if vasprun_working:
             # self.dft_output.log_dict["parameters"] = self.vp_new.vasprun_dict["parameters"]
             self.generic_output.dft_log_dict["scf_dipole_mom"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
             total_dipole_moments = list()
