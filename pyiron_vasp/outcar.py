@@ -414,7 +414,7 @@ class Outcar(object):
         for j in trigger_indices:
             line = lines[j + 4].strip()
             line = _clean_line(line)
-            energies.append(float(line.split()[4]))
+            energies.append(float(line.split()[3]))
         return np.array(energies)
 
     @staticmethod
