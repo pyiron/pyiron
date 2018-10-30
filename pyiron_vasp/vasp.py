@@ -1218,6 +1218,9 @@ class Output:
             self.generic_output.dft_log_dict["scf_energy_free"] = self.outcar.parse_dict["scf_energies"]
             self.generic_output.dft_log_dict["scf_dipole_mom"] = self.outcar.parse_dict["scf_dipole_moments"]
             self.generic_output.dft_log_dict["n_elect"] = self.outcar.parse_dict["n_elect"]
+            self.generic_output.dft_log_dict["energy_int"] = self.outcar.parse_dict["energies"]
+            self.generic_output.dft_log_dict["energy_free"] = self.outcar.parse_dict["energies_free"]
+            self.generic_output.dft_log_dict["energy_zero"] = self.outcar.parse_dict["energies_zero"]
             if "PROCAR" in files_present:
                 try:
                     self.electronic_structure = self.procar.from_file(filename=posixpath.join(directory, "PROCAR"))
