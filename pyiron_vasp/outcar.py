@@ -4,6 +4,7 @@
 
 import numpy as np
 import warnings
+import scipy.constants
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \
@@ -14,7 +15,7 @@ __email__ = "surendralal@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
 
-KBAR_TO_EVA = 6.241509125883258e-4
+KBAR_TO_EVA = scipy.constants.physical_constants['joule-electron volt relationship'][0] / 1e22
 
 
 class Outcar(object):
