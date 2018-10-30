@@ -338,6 +338,10 @@ class Vasp(GenericDFTJob):
                 _ = subprocess.check_output(['bzip2', '-d', 'vasprun.xml.bz2'], cwd=directory, shell=False,
                                             universal_newlines=True)
                 files = os.listdir(directory)
+            if "vasprun.xml.gz" in files:
+                _ = subprocess.check_output(['gzip', '-d', 'vasprun.xml.bz2'], cwd=directory, shell=False,
+                                            universal_newlines=True)
+                files = os.listdir(directory)
             try:
                 if not ("OUTCAR" in files or "vasprun.xml" in files):
                     raise IOError("This file isn't present")
