@@ -1158,7 +1158,8 @@ class Output:
                 self.vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
             except VasprunError:
                 pass
-            vasprun_working = True
+            else:
+                vasprun_working = True
 
         if outcar_working:
             log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
