@@ -40,7 +40,7 @@ class Outcar(object):
 
         """
         energies = self.get_total_energies(filename)
-        energies_free = self.get_energy_without_entropy(filename)
+        energies_int = self.get_energy_without_entropy(filename)
         energies_zero = self.get_energy_sigma_0(filename)
         scf_energies = self.get_all_total_energies(filename)
         forces = self.get_forces(filename)
@@ -63,7 +63,7 @@ class Outcar(object):
         broyden_mixing = self.get_broyden_mixing_mesh(filename)
 
         self.parse_dict["energies"] = energies
-        self.parse_dict["energies_free"] = energies_free
+        self.parse_dict["energies_int"] = energies_int
         self.parse_dict["energies_zero"] = energies_zero
         self.parse_dict["scf_energies"] = scf_energies
         self.parse_dict["forces"] = forces
