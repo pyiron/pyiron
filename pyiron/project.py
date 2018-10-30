@@ -270,7 +270,7 @@ class Project(ProjectCore):
 
         """
         if "OUTCAR" in files_available or "vasprun.xml" in files_available or "OUTCAR.gz" in files_available or \
-                        "vasprun.xml.bz2" in files_available:
+                        "vasprun.xml.bz2" in files_available or "vasprun.xml.gz" in files_available:
             self.import_single_calculation(path, rel_path=rel_path, job_type="Vasp")
         if "incontrol.dat" in files_available and "lattice.out" in files_available and "lattice.inp" in files_available:
             self.import_single_calculation(path, rel_path=rel_path, job_type="KMC")
