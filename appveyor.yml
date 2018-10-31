@@ -44,10 +44,11 @@ install:
 - "conda config --set always_yes yes --set changeps1 no"
 - "conda install -c anaconda hdf5"
 - "conda update -q conda"
-- "conda install conda-build anaconda-client numpy pytables psutil"
+- "conda install conda-build anaconda-client numpy pytables psutil itsdangerous click Werkzeug flask cycler kiwisolver pyparsing matplotlib scipy h5py pathlib2 sqlalchemy pandas"
 - "conda config --add channels conda-forge"
 - "conda config --add channels pyiron"
 - "conda config --set anaconda_upload yes"
+- "conda install spglib ase h5io"
 - "conda info -a"
 - "pip install --pre --no-deps pyiron_base pyiron_atomistics"
 - "pip install ."
@@ -57,6 +58,8 @@ build: false
 
 test_script:
   # Build the package
-  - "cd tests"
-  - "python find_tests.py"
-  - "cd .."
+  - "echo [DEFAULT] > C:/Users/appveyor/.pyiron"
+  - "echo TOP_LEVEL_DIRS = %APPVEYOR_BUILD_FOLDER% >> C:/Users/appveyor/.pyiron"
+  - "echo RESOURCE_PATHS = %APPVEYOR_BUILD_FOLDER%/static >> C:/Users/appveyor/.pyiron"
+  - "cat C:/Users/appveyor/.pyiron"
+  - "python -m unittest discover tests"

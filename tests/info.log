@@ -1,6 +1,0 @@
-02-23 12:33 exampleExecutable.module INFO     creating an instance
-02-23 12:33 exampleExecutable.module DEBUG    type: alpha <class 'float'>
-02-23 12:33 exampleExecutable.module INFO     Execute program
-02-23 12:33 PyIron_log   INFO     run job: job_test_run id: 1, status: finished
-02-23 12:33 PyIron_log   INFO     update master: None 1
-02-23 12:33 PyIron_log   DEBUG    sql_query: {'project': 'random_testing_lib/%'}

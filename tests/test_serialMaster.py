@@ -1,11 +1,5 @@
 import os
 import unittest
-from pyiron_base.core.settings.generic import Settings, convert_path
-
-s = Settings(config={'sql_file': 'serial.db',
-                     'project_paths': convert_path(os.getcwd()),
-                     'resource_paths': convert_path(os.getcwd())})
-
 from pyiron.project import Project
 
 
@@ -28,15 +22,15 @@ def convergence_goal(self, **qwargs):
 class TestSerialMaster(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.project = Project('testing_serial')
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        cls.project = Project(os.path.join(cls.file_location, 'testing_serial'))
         cls.project.remove_jobs(recursive=True)
 
     @classmethod
     def tearDownClass(cls):
-        project = Project('testing_serial')
+        file_location = os.path.dirname(os.path.abspath(__file__))
+        project = Project(os.path.join(file_location, 'testing_serial'))
         project.remove(enable=True)
-        s.close_connection()
-        os.remove('serial.db')
 
     def test_single_job(self):
         ham = self.project.create_job(self.project.job_type.ExampleJob, "job_single")

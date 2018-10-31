@@ -1,11 +1,5 @@
 import os
 import unittest
-from pyiron_base.core.settings.generic import Settings, convert_path
-
-s = Settings(config={'sql_file': 'library.db',
-                     'project_paths': convert_path(os.getcwd()),
-                     'resource_paths': convert_path(os.getcwd())})
-
 from pyiron.project import Project
 
 
@@ -13,7 +7,8 @@ class TestExampleJob(unittest.TestCase):
     def setUp(self):
         self.count_run_one = 12
         self.count_run_two = 12
-        self.project = Project('random_testing_lib')
+        self.file_location = os.path.dirname(os.path.abspath(__file__))
+        self.project = Project(os.path.join(self.file_location, 'random_testing_lib'))
         self.ham = self.project.create_job("ExampleJob", "job_test_run")
         self.ham.input['count'] = self.count_run_one
         self.ham.server.run_mode.interactive = True
@@ -24,12 +19,11 @@ class TestExampleJob(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        project = Project('random_testing_lib')
-        ham = project.load(1)
+        file_location = os.path.dirname(os.path.abspath(__file__))
+        project = Project(os.path.join(file_location, 'random_testing_lib'))
+        ham = project.load(project.get_job_ids()[0])
         ham.remove()
         project.remove(enable=True)
-        s.close_connection()
-        os.remove('library.db')
 
     def test_output(self):
         count = self.ham.get("output/generic/count")
