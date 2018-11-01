@@ -4,6 +4,7 @@
 
 import numpy as np
 import warnings
+import scipy.constants
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \
@@ -14,7 +15,7 @@ __email__ = "surendralal@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
 
-KBAR_TO_EVA = 6.241509125883258e-4
+KBAR_TO_EVA = scipy.constants.physical_constants['joule-electron volt relationship'][0] / 1e22
 
 
 class Outcar(object):
@@ -40,6 +41,8 @@ class Outcar(object):
 
         """
         energies = self.get_total_energies(filename)
+        energies_int = self.get_energy_without_entropy(filename)
+        energies_zero = self.get_energy_sigma_0(filename)
         scf_energies = self.get_all_total_energies(filename)
         forces = self.get_forces(filename)
         positions = self.get_positions(filename)
@@ -61,6 +64,8 @@ class Outcar(object):
         broyden_mixing = self.get_broyden_mixing_mesh(filename)
 
         self.parse_dict["energies"] = energies
+        self.parse_dict["energies_int"] = energies_int
+        self.parse_dict["energies_zero"] = energies_zero
         self.parse_dict["scf_energies"] = scf_energies
         self.parse_dict["forces"] = forces
         self.parse_dict["positions"] = positions
@@ -383,6 +388,62 @@ class Outcar(object):
             line = lines[j + 2].strip()
             line = _clean_line(line)
             energies.append(float(line.split()[-2]))
+        return np.array(energies)
+
+    @staticmethod
+    def get_energy_without_entropy(filename="OUTCAR"):
+        """
+        Gets the total energy for every ionic step from the OUTCAR file
+
+        Args:
+            filename (str): Filename of the OUTCAR file to parse
+
+        Returns:
+            numpy.ndarray: A 1xM array of the total energies in $eV$
+
+            where M is the number of time steps
+        """
+        energies = []
+        trigger_indices = []
+        trigger = "FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)"
+        with open(filename, 'r') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                line = line.strip()
+                if trigger in line:
+                    trigger_indices.append(i)
+        for j in trigger_indices:
+            line = lines[j + 4].strip()
+            line = _clean_line(line)
+            energies.append(float(line.split()[3]))
+        return np.array(energies)
+
+    @staticmethod
+    def get_energy_sigma_0(filename="OUTCAR"):
+        """
+        Gets the total energy for every ionic step from the OUTCAR file
+
+        Args:
+            filename (str): Filename of the OUTCAR file to parse
+
+        Returns:
+            numpy.ndarray: A 1xM array of the total energies in $eV$
+
+            where M is the number of time steps
+        """
+        energies = []
+        trigger_indices = []
+        trigger = "FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)"
+        with open(filename, 'r') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                line = line.strip()
+                if trigger in line:
+                    trigger_indices.append(i)
+        for j in trigger_indices:
+            line = lines[j + 4].strip()
+            line = _clean_line(line)
+            energies.append(float(line.split()[-1]))
         return np.array(energies)
 
     @staticmethod
