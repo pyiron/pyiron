@@ -46,6 +46,8 @@ class TestOutcar(unittest.TestCase):
             type_dict["stresses"] = np.ndarray
             type_dict["irreducible_kpoints"] = tuple
             type_dict["pressures"] = np.ndarray
+            type_dict["energies_int"] = np.ndarray
+            type_dict["energies_zero"] = np.ndarray
             parse_keys = self.outcar_parser.parse_dict.keys()
             for key, value in type_dict.items():
                 self.assertTrue(key in parse_keys)
@@ -164,6 +166,20 @@ class TestOutcar(unittest.TestCase):
                 energies = np.array([ 69.15405871, -18.00103756, -20.85032272, -20.87198829, -20.87222361, -18.51305208,
                                       -18.43873509, -18.41390999, -18.40387841, -18.40222137, -18.40218607])
                 self.assertEqual(energies.__str__(), output[0].__str__())
+
+    def test_get_energy_without_entropy(self):
+        for filename in self.file_list:
+            output = self.outcar_parser.get_energy_without_entropy(filename)
+            energy_tot = self.outcar_parser.get_total_energies(filename)
+            self.assertIsInstance(output, np.ndarray)
+            self.assertEqual(len(energy_tot), len(output))
+
+    def test_get_energy_sigma_0(self):
+        for filename in self.file_list:
+            output = self.outcar_parser.get_energy_sigma_0(filename)
+            energy_tot = self.outcar_parser.get_total_energies(filename)
+            self.assertIsInstance(output, np.ndarray)
+            self.assertEqual(len(energy_tot), len(output))
 
     def test_get_temperatures(self):
         for filename in self.file_list:
