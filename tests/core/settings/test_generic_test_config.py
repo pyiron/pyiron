@@ -32,7 +32,7 @@ class TestConfigSettingsStatic(unittest.TestCase):
     #                      self.resource_path + '/')
 
     def test_resource_paths(self):
-        self.assertEqual(self.test_config.resource_paths, [self.resource_path])
+        self.assertEqual(self.test_config.resource_paths, [os.path.join(self.resource_path, '../../../static')])
 
     def test_login_user(self):
         self.assertEqual(self.test_config.login_user, 'pyiron')
