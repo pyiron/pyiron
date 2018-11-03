@@ -249,7 +249,10 @@ class Project(ProjectCore):
         Returns:
 
         """
-        search_path = posixpath.normpath(posixpath.join(self.path, path))
+        if os.path.abspath(path):
+            search_path = posixpath.normpath(path.replace('//', '/'))
+        else:
+            search_path = posixpath.normpath(posixpath.join(self.path, path.replace('//', '/')))
         if recursive:
             for x in os.walk(search_path):
                 self._calculation_validation(x[0], x[2], rel_path=posixpath.relpath(x[0], search_path))
