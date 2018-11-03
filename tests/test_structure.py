@@ -1,18 +1,10 @@
 import unittest
-from pyiron_base.core.settings.generic import Settings
 import os
-
-file_location = os.path.dirname(os.path.abspath(__file__))
-s = Settings(config={'sql_file': os.path.join(file_location, 'structure.db'),
-                     'project_paths': file_location,
-                     'resource_paths': os.path.join(file_location, '../static')})
-
 import posixpath
 import numpy as np
 
 from pyiron_atomistics.structure.atoms import Atoms
-from pyiron_vasp.structure import read_atoms, write_poscar, vasp_sorter, \
-    atoms_from_string
+from pyiron_vasp.structure import read_atoms, write_poscar, vasp_sorter, atoms_from_string
 
 
 class TestVaspStructure(unittest.TestCase):
@@ -22,7 +14,8 @@ class TestVaspStructure(unittest.TestCase):
     """
 
     def setUp(self):
-        poscar_directory = os.path.join(file_location, "../static/vasp_test_files/poscar_samples")
+        self.file_location = os.path.dirname(os.path.abspath(__file__))
+        poscar_directory = os.path.join(self.file_location, "static/vasp_test_files/poscar_samples")
         file_list = os.listdir(poscar_directory)
         self.file_list = [posixpath.join(poscar_directory, f) for f in file_list]
         atom_numbers = np.random.randint(low=1, high=99, size=(1, 3)).flatten()
