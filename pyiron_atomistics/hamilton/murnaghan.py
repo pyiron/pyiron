@@ -391,7 +391,8 @@ class Murnaghan(AtomisticParallelMaster):
         eng_lst = np.array(energy_lst).flatten()
         a, b, c = plt.polyfit(vol_lst, eng_lst, 2)
         v0 = -b / (2 * a)
-        pfit_leastsq, perr_leastsq = self.fit_leastsq([a * v0 ** 2 + b * v0 + c, 2 * a * v0 * 160.21766208, 4, v0],
+        ev_angs_to_gpa = 1e21 / scipy.constants.physical_constants['joule-electron volt relationship'][0]
+        pfit_leastsq, perr_leastsq = self.fit_leastsq([a * v0 ** 2 + b * v0 + c, 2 * a * v0 * ev_angs_to_gpa, 4, v0],
                                                       vol_lst, eng_lst, self.fitfunction, fittype)
         return pfit_leastsq, perr_leastsq  # [e0, b0, bP, v0]
 
