@@ -5,7 +5,7 @@ from pyiron_base.core.settings.generic import Settings
 
 class TestConfigSettingsStatic(unittest.TestCase):
     def setUp(self):
-        self.resource_path = Path('.').expanduser().resolve().absolute().as_posix()
+        self.resource_path = Path(__file__).expanduser().resolve().absolute().as_posix().replace('\\', '/')
         self.test_config = Settings(config={'sql_file': 'sqlite.db',
                                             'project_paths': self.resource_path,
                                             'resource_paths': self.resource_path})
