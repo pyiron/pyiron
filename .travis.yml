@@ -31,15 +31,13 @@ install:
   - pip install --pre --no-deps pyiron pyiron_dft pyiron_vasp pyiron_lammps pyiron_example_job
 
 script:
-  - cd tests
-  - python find_tests.py
-  - cd ..
+  - echo -e "[DEFAULT]\nTOP_LEVEL_DIRS = $PWD\nRESOURCE_PATHS = $PWD/tests/static" > ~/.pyiron
+  - coverage run -m unittest discover tests
   - ./.ci_support/build_notebooks_on_master.sh
-  - cd tests
 
 after_success:
   - coveralls
-  - cd ..
+  - coverage report
 
 deploy:
   - provider: pypi

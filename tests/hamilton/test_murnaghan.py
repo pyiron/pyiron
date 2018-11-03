@@ -1,11 +1,5 @@
 import os
 import unittest
-from pyiron_base.core.settings.generic import Settings, convert_path
-
-s = Settings(config={'sql_file': 'murnaghan.db',
-                     'project_paths': convert_path(os.getcwd()),
-                     'resource_paths': os.path.join(convert_path(os.getcwd()), '../static')})
-
 from pyiron.project import Project
 
 
@@ -16,7 +10,7 @@ def convergence_goal(self, **qwargs):
         eps = qwargs["eps"]
     erg_lst = self.get_from_childs("output/generic/energy")
     var = 1000 * np.var(erg_lst)
-    print(var / len(erg_lst))
+    # print(var / len(erg_lst))
     if var / len(erg_lst) < eps:
         return True
     ham_prev = self[-1]
@@ -28,17 +22,16 @@ def convergence_goal(self, **qwargs):
 class TestMurnaghan(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.project = Project('testing_murnaghan')
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        cls.project = Project(os.path.join(cls.file_location, 'testing_murnaghan'))
         cls.basis = cls.project.create_structure(element="Fe", bravais_basis='fcc', lattice_constant=3.5)
         cls.project.remove_jobs(recursive=True)
 
     @classmethod
     def tearDownClass(cls):
-        project = Project('testing_murnaghan')
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        project = Project(os.path.join(cls.file_location, 'testing_murnaghan'))
         project.remove(enable=True, enforce=True)
-        s.close_connection()
-        if os.path.isfile('../murnaghan.db'):
-            project.remove_file('../murnaghan.db')
 
     def test_run(self):
         ham = self.project.create_job(self.project.job_type.AtomisticExampleJob, "job_test")

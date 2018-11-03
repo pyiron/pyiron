@@ -1,7 +1,3 @@
-"""
-In contrast to many other tests, the non modal tests require a central database and can not be executed with the testing
-configuration. Therefore these tests will use your default configuration.
-"""
 import os
 from pyiron.project import Project
 import unittest
@@ -14,7 +10,7 @@ def convergence_goal(self, **qwargs):
         eps = qwargs["eps"]
     erg_lst = self.get_from_childs("output/generic/energy")
     var = 1000 * np.var(erg_lst)
-    print(var / len(erg_lst))
+    # print(var / len(erg_lst))
     if var / len(erg_lst) < eps:
         return True
     ham_prev = self[-1]
@@ -25,7 +21,8 @@ def convergence_goal(self, **qwargs):
 class TestMurnaghan(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.project = Project('testing_murnaghan_non_modal')
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        cls.project = Project(os.path.join(cls.file_location, 'testing_murnaghan_non_modal'))
         cls.basis = cls.project.create_structure(element="Fe", bravais_basis='bcc', lattice_constant=2.8)
         cls.project.remove_jobs(recursive=True)
         # cls.project.remove_jobs(recursive=True)
@@ -33,7 +30,8 @@ class TestMurnaghan(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        project = Project('testing_murnaghan_non_modal')
+        file_location = os.path.dirname(os.path.abspath(__file__))
+        project = Project(os.path.join(file_location, 'testing_murnaghan_non_modal'))
         project.remove_jobs(recursive=True)
         project.remove(enable=True, enforce=True)
 

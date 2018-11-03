@@ -1,12 +1,5 @@
 import unittest
-import os
 import sys
-from pyiron_base.core.settings.generic import Settings
-
-s = Settings(config={'sql_file': 'atoms.db',
-                     'project_paths': os.path.abspath(os.getcwd()),
-                     'resource_paths': os.path.join(os.path.abspath(os.getcwd()), '../static')})
-
 import numpy as np
 import os
 from pyiron_atomistics.structure.atom import Atom
@@ -21,8 +14,9 @@ class TestAtoms(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if sys.version_info[0] >= 3:
-            if os.path.isfile("../static/pyiron_atomistics/test_hdf"):
-                os.remove("../static/pyiron_atomistics/test_hdf")
+            file_location = os.path.dirname(os.path.abspath(__file__))
+            if os.path.isfile(os.path.join(file_location, "../static/pyiron_atomistics/test_hdf")):
+                os.remove(os.path.join(file_location, "../static/pyiron_atomistics/test_hdf"))
 
     def setUp(self):
         pass
@@ -158,7 +152,7 @@ class TestAtoms(unittest.TestCase):
 
     def test_to_hdf(self):
         if sys.version_info[0] >= 3:
-            filename = "../static/pyiron_atomistics/test_hdf"
+            filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../static/pyiron_atomistics/test_hdf")
             abs_filename = os.path.abspath(filename)
             hdf_obj = FileHDFio(abs_filename)
             pos, cell = generate_fcc_lattice()
@@ -171,9 +165,13 @@ class TestAtoms(unittest.TestCase):
 
     def test_from_hdf(self):
         if sys.version_info[0] >= 3:
-            filename = "../static/pyiron_atomistics/structure_hdf"
+            filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../static/pyiron_atomistics/test_hdf")
             abs_filename = os.path.abspath(filename)
             hdf_obj = FileHDFio(abs_filename)
+            pos, cell = generate_fcc_lattice()
+            basis_store = Atoms(symbols='Al', positions=pos, cell=cell)
+            basis_store.set_repeat([2, 2, 2])
+            basis_store.to_hdf(hdf_obj, "simple_structure")
             basis = Atoms().from_hdf(hdf_obj, group_name="simple_structure")
             self.assertEqual(len(basis), 8)
             self.assertEqual(basis.get_majority_species()[1], "Al")
@@ -505,9 +503,6 @@ class TestAtoms(unittest.TestCase):
     def test_get_scaled_positions(self):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
         self.assertTrue(np.array_equal(basis_Mg.scaled_positions, basis_Mg.get_scaled_positions()))
-
-
-
 
     def test_occupy_lattice(self):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
