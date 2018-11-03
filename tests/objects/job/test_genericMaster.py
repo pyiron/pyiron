@@ -1,24 +1,18 @@
 import unittest
-from pyiron_base.core.settings.generic import Settings
 import os
-
-s = Settings(config={'sql_file': 'genericmaster.db',
-                     'project_paths': os.path.abspath(os.getcwd()),
-                     'resource_paths': os.path.abspath(os.getcwd())})
-
 from pyiron_base.project import Project
 
 
 class TestGenericJob(unittest.TestCase):
     def setUp(self):
-        self.project = Project('jobs_testing')
+        self.file_location = os.path.dirname(os.path.abspath(__file__))
+        self.project = Project(os.path.join(self.file_location, 'jobs_testing'))
 
     @classmethod
     def tearDownClass(cls):
-        project = Project('jobs_testing')
+        file_location = os.path.dirname(os.path.abspath(__file__))
+        project = Project(os.path.join(file_location, 'jobs_testing'))
         project.remove(enforce=True)
-        s.close_connection()
-        os.remove('testing_jobs.db')
 
     # def test_generic_jobs(self):
     #     ham = self.project.create_job("ExampleJob", "job_single")

@@ -1,28 +1,22 @@
 import os
-from pyiron_base.core.settings.generic import Settings
 import unittest
-
-s = Settings(config={'sql_file': 'copyto.db',
-                     'project_paths': os.path.abspath(os.getcwd()),
-                     'resource_paths': os.path.abspath(os.getcwd())})
-
 from pyiron_base.project import Project
 
 
-class TestChildids(unittest.TestCase):
+class TestCopyTo(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.project = Project('testing_copyto')
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        cls.project = Project(os.path.join(cls.file_location, 'testing_copyto'))
 
     @classmethod
     def tearDownClass(cls):
-        project = Project('testing_copyto')
+        file_location = os.path.dirname(os.path.abspath(__file__))
+        project = Project(os.path.join(file_location, 'testing_copyto'))
         sub_project = project.open('sub_project_ex')
         sub_project.remove(enable=True)
         sub_project = project.open('sub_project')
         sub_project.remove(enable=True)
-        s.close_connection()
-        os.remove('copyto.db')
 
     # def test_copy_to_job(self):
     #     job_ser = self.project.create_job("SerialMaster", "sequence_single")
@@ -36,7 +30,7 @@ class TestChildids(unittest.TestCase):
         sub_project = sub_project.open('sub_project')
         ham = self.project.create_job('ScriptJob', "job_single_pr")
         ham.copy_to(sub_project)
-        os.remove('testing_copyto/sub_project/job_single_pr.h5')
+        os.remove(os.path.join(self.file_location, 'testing_copyto/sub_project/job_single_pr.h5'))
 
     # def test_copy_to_job_ex(self):
     #     job_ser = self.project.create_job("SerialMaster", "sequence_single_ex")
@@ -55,7 +49,7 @@ class TestChildids(unittest.TestCase):
         ham.to_hdf()
         ham.copy_to(sub_project)
         ham.remove()
-        os.remove('testing_copyto/sub_project_ex/job_single_pr_ex.h5')
+        os.remove(os.path.join(self.file_location, 'testing_copyto/sub_project_ex/job_single_pr_ex.h5'))
 
 if __name__ == '__main__':
     unittest.main()

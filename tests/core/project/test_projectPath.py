@@ -1,20 +1,14 @@
 import os
-from pyiron_base.core.settings.generic import Settings
 import unittest
-
-s = Settings(config={'sql_file': 'projectpath.db',
-                     'project_paths': os.path.abspath(os.getcwd()),
-                     'resource_paths': os.path.abspath(os.getcwd())})
-
 from pyiron_base.core.project.path import ProjectPath
 
 
 class TestProjectPath(unittest.TestCase):
     def setUp(self):
         if os.name == 'nt':
-            self.current_dir = os.getcwd().replace('\\', '/')
+            self.current_dir = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
         else:
-            self.current_dir = os.getcwd()
+            self.current_dir = os.path.dirname(os.path.abspath(__file__))
         self.project_path = ProjectPath(path=self.current_dir)
         self.project_path = self.project_path.open('test_project_path')
 

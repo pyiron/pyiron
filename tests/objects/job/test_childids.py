@@ -1,26 +1,20 @@
 import os
-from pyiron_base.core.settings.generic import Settings
 import unittest
-
-s = Settings(config={'sql_file': 'childids.db',
-                     'project_paths': os.path.abspath(os.getcwd()),
-                     'resource_paths': os.path.abspath(os.getcwd())})
-
 from pyiron_base.project import Project
 
 
 class TestChildids(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.project = Project('testing_childids')
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        cls.project = Project(os.path.join(cls.file_location, 'testing_childids'))
 
     @classmethod
     def tearDownClass(cls):
-        project = Project('testing_childids')
+        file_location = os.path.dirname(os.path.abspath(__file__))
+        project = Project(os.path.join(file_location, 'testing_childids'))
         project.remove_jobs(recursive=True)
-        project.remove()
-        s.close_connection()
-        os.remove('testing_childids.db')
+        project.remove(enable=True)
 
     def test_childids(self):
         ham_master_1 = self.project.create_job('ScriptJob', "master")
