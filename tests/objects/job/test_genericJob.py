@@ -5,7 +5,7 @@ from pyiron_base.project import Project
 
 class TestGenericJob(unittest.TestCase):
     def setUp(self):
-        self.file_location = os.path.dirname(os.path.abspath(__file__))
+        self.file_location = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
         self.project = Project(os.path.join(self.file_location, 'test_genericjob'))
 
     @classmethod
