@@ -6,7 +6,7 @@ from pyiron_base.core.project.path import GenericPath
 
 class TestGenericPath(unittest.TestCase):
     def setUp(self):
-        self.current_dir = os.path.dirname(os.path.abspath(__file__))
+        self.current_dir = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
         self.path_project = GenericPath(root_path=self.current_dir,
                                         project_path='project/path/')
 
@@ -22,7 +22,7 @@ class TestGenericPath(unittest.TestCase):
 
 class TestProject(unittest.TestCase):
     def setUp(self):
-        self.current_dir = os.path.dirname(os.path.abspath(__file__))
+        self.current_dir = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
         self.project = Project(os.path.join(self.current_dir, 'sub_folder'))
 
     def tearDown(self):
