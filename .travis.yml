@@ -21,11 +21,11 @@ install:
   - conda info -a
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
-  - conda install conda-build conda-verify anaconda-client pytables numpy
+  - conda install conda-build conda-verify anaconda-client pytables numpy pyparsing cycler kiwisolver matplotlib scipy Werkzeug itsdangerous flask pandas pathlib2 h5py sqlalchemy
   - conda config --add channels conda-forge
   - conda config --add channels pyiron
   - conda config --set anaconda_upload yes
-  - conda install -y -c conda-forge coveralls coverage
+  - conda install -y -c conda-forge coveralls coverage ase spglib h5io
   - pip install --pre --no-deps pyiron_base
   - pip install .
   - pip install --pre --no-deps pyiron pyiron_dft pyiron_vasp pyiron_lammps pyiron_example_job
