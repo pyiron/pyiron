@@ -57,6 +57,8 @@ build: false
 
 test_script:
   # Build the package
-  - "cd tests"
-  - "python -m unittest 'test_lammps.py'"
-  - "cd .."
+  - "echo [DEFAULT] > C:/Users/appveyor/.pyiron"
+  - "echo TOP_LEVEL_DIRS = %APPVEYOR_BUILD_FOLDER% >> C:/Users/appveyor/.pyiron"
+  - "echo RESOURCE_PATHS = %APPVEYOR_BUILD_FOLDER%/tests/static >> C:/Users/appveyor/.pyiron"
+  - "cat C:/Users/appveyor/.pyiron"
+  - "python -m unittest discover tests"
