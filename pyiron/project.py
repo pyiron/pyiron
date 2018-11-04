@@ -260,7 +260,7 @@ class Project(ProjectCore):
             for x in os.walk(search_path):
                 self._calculation_validation(x[0], x[2], rel_path=posixpath.relpath(x[0], search_path))
         else:
-            abs_path = '/'.join(search_path.split("/")[:-1])
+            abs_path = '/'.join(search_path.replace('\\', '/').split("/")[:-1])
             rel_path = posixpath.relpath(abs_path, self.path)
             self._calculation_validation(search_path, os.listdir(search_path), rel_path=rel_path)
 
