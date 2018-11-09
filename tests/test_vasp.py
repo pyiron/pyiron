@@ -1,17 +1,8 @@
 import unittest
-from pyiron_base.core.settings.generic import Settings
 import os
-
-file_location = os.path.dirname(os.path.abspath(__file__))
-s = Settings(config={'sql_file': os.path.join(file_location, 'vasp.db'),
-                     'project_paths': file_location,
-                     'resource_paths': os.path.join(file_location, '../static')})
-
-
 from pyiron_atomistics.structure.atoms import CrystalStructure
 from pyiron_vasp.vasp import Input, Output
 from pyiron.project import Project
-from pyiron_vasp.potential import VaspPotentialFile
 
 __author__ = "surendralal"
 
@@ -22,13 +13,12 @@ class TestVasp(unittest.TestCase):
     """
 
     def setUp(self):
-        self.project = Project(os.path.join(file_location, 'test_vasp'))
+        self.file_location = os.path.dirname(os.path.abspath(__file__))
+        self.project = Project(os.path.join(self.file_location, 'test_vasp'))
         self.job = self.project.create_job("Vasp", "trial")
 
     @classmethod
     def tearDownClass(cls):
-        # s.close_connection()
-        # os.remove(s._configuration['sql_file'])
         pass
 
     def test_init(self):
