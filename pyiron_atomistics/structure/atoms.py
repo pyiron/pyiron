@@ -9,6 +9,7 @@ from collections import OrderedDict
 from math import cos, sin
 import numpy as np
 from six import string_types
+import warnings
 from ase.geometry import cellpar_to_cell, complete_cell
 
 from pyiron_atomistics.structure.atom import Atom
@@ -3169,9 +3170,9 @@ class CrystalStructure(object):
 
 def ase_to_pyiron(ase_obj):
     """
-    
+
     Args:
-        ase_obj: 
+        ase_obj:
 
     Returns:
 
@@ -3184,7 +3185,21 @@ def ase_to_pyiron(ase_obj):
     cell = ase_obj.cell
     positions = ase_obj.get_positions()
     pbc = ase_obj.get_pbc()
-    return Atoms(elements=element_list, positions=positions, pbc=pbc, cell=cell)
+    pyiron_atoms = Atoms(elements=element_list, positions=positions, pbc=pbc, cell=cell)
+    if len(ase_obj.constraints) != 0:
+        for constraint in ase_obj.constraints:
+            constraint_dict = constraint.todict()
+            if constraint_dict['name'] == 'FixAtoms':
+                if 'selective_dynamics' not in pyiron_atoms._tag_list.keys():
+                    pyiron_atoms.add_tag(selective_dynamics=[True, True, True])
+                pyiron_atoms.selective_dynamics[constraint_dict['kwargs']['indices']] = [False, False, False]
+            elif constraint_dict['name'] == 'FixScaled':
+                if 'selective_dynamics' not in pyiron_atoms._tag_list.keys():
+                    pyiron_atoms.add_tag(selective_dynamics=[True, True, True])
+                pyiron_atoms.selective_dynamics[constraint_dict['kwargs']['a']] = constraint_dict['kwargs']['mask']
+            else:
+                warnings.warn('Unsupported ASE constraint: ' + constraint_dict['name'])
+    return pyiron_atoms
 
 
 def pyiron_to_ase(pyiron_obj):
