@@ -246,8 +246,9 @@ def queue_job_info(item):
     que_id = _validate_que_request(item)
     try:
         output = _queue_function(funct=_queue_job_status_command, que_id=que_id)
-        return pandas.DataFrame(
-            [[line_arg.replace('  ', '') for line_arg in line.split(': ')] for line in output[1:]][0:24])
+        if output is not None:
+            return pandas.DataFrame(
+                [[line_arg.replace('  ', '') for line_arg in line.split(': ')] for line in output[1:]][0:24])
     except subprocess.CalledProcessError:
         pass
 
