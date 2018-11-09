@@ -290,7 +290,10 @@ class Logstatus(object):
                         if isinstance(tag.rows(), str):
                             i_line = 0
                             while True:
-                                line_read = next(iterate_over_lines)
+                                try:
+                                    line_read = next(iterate_over_lines)
+                                except StopIteration:
+                                    break
                                 if line_read.find(tag.rows().strip()) > -1:
                                     break
                                 val_line = [[ast.literal_eval(l) for l in line_read.split()]]
@@ -302,7 +305,10 @@ class Logstatus(object):
 
                         else:
                             for i_line in range(tag.rows()):
-                                line_read = next(iterate_over_lines)
+                                try:
+                                    line_read = next(iterate_over_lines)
+                                except StopIteration:
+                                    break
                                 val_line = [[ast.literal_eval(l) for l in line_read.split()]]
                                 if i_line == 0:
                                     val_array = np.array(val_line)
