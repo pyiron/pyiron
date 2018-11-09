@@ -381,12 +381,12 @@ class Lammps(AtomisticGenericJob):
         lf.convert_unit('pressures', 0.0001)  # bar -> GPa
 
         if 'minimize' not in attr:
-            del lf.status_dict['thermo_style']
-        del lf.status_dict['time_loop']
-        try:
+            if 'thermo_style' in lf.status_dict.keys():
+                del lf.status_dict['thermo_style']
+        if 'time_loop' in lf.status_dict.keys():
+            del lf.status_dict['time_loop']
+        if 'memory' in lf.status_dict.keys():
             del lf.status_dict['memory']
-        except KeyError:
-            pass
         with self.project_hdf5.open("output/generic") as hdf_output:
             lf.to_hdf(hdf_output)
 
