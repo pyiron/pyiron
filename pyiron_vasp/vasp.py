@@ -1211,13 +1211,23 @@ class Output:
 
         elif outcar_working:
             # log_dict = self.outcar.parse_dict.copy()
+            if len(self.outcar.parse_dict["energies"]) == 0:
+                raise VaspCollectError("Error in parsing OUTCAR")
             log_dict["energy_tot"] = self.outcar.parse_dict["energies"]
             log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
             log_dict["forces"] = self.outcar.parse_dict["forces"]
             log_dict["positions"] = self.outcar.parse_dict["positions"]
-            log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
-            log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
+            # log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
+            # log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
+            if len(log_dict["positions"].shape) != 3:
+                raise VaspCollectError("Improper OUTCAR parsing")
+            elif log_dict["positions"].shape[1] != len(sorted_indices):
+                raise VaspCollectError("Improper OUTCAR parsing")
+            if len(log_dict["forces"].shape) != 3:
+                raise VaspCollectError("Improper OUTCAR parsing")
+            elif log_dict["forces"].shape[1] != len(sorted_indices):
+                raise VaspCollectError("Improper OUTCAR parsing")
             log_dict["time"] = self.outcar.parse_dict["time"]
             log_dict["steps"] = self.outcar.parse_dict["steps"]
             log_dict["cells"] = self.outcar.parse_dict["cells"]
@@ -1246,7 +1256,6 @@ class Output:
         if vasprun_working:
             # self.dft_output.log_dict["parameters"] = self.vp_new.vasprun_dict["parameters"]
             self.generic_output.dft_log_dict["scf_dipole_mom"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
-            total_dipole_moments = list()
             if len(self.generic_output.dft_log_dict["scf_dipole_mom"][0]) > 0:
                 total_dipole_moments = np.array([dip[-1] for dip in self.generic_output.dft_log_dict["scf_dipole_mom"]])
                 self.generic_output.dft_log_dict["dipole_mom"] = total_dipole_moments

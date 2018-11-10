@@ -39,14 +39,19 @@ class TestOutcar(unittest.TestCase):
             type_dict["stresses"] = np.ndarray
             type_dict["irreducible_kpoints"] = tuple
             type_dict["pressures"] = np.ndarray
+            type_dict["energies_int"] = np.ndarray
+            type_dict["energies_zero"] = np.ndarray
             parse_keys = self.outcar_parser.parse_dict.keys()
             for key, value in type_dict.items():
                 self.assertTrue(key in parse_keys)
                 try:
                     self.assertIsInstance(self.outcar_parser.parse_dict[key], value)
                 except AssertionError:
-                    print(key, self.outcar_parser.parse_dict[key])
-                    raise AssertionError
+                    if int(filename.split('/OUTCAR_')[-1]) == 8:
+                        self.assertEqual(key, "fermi_level")
+                    else:
+                        print(key, self.outcar_parser.parse_dict[key])
+                        raise AssertionError("{} has the wrong type".format(key))
 
     def test_get_positions_and_forces(self):
         for filename in self.file_list:
@@ -155,6 +160,20 @@ class TestOutcar(unittest.TestCase):
                                       -18.43873509, -18.41390999, -18.40387841, -18.40222137, -18.40218607])
                 self.assertEqual(energies.__str__(), output[0].__str__())
 
+    def test_get_energy_without_entropy(self):
+        for filename in self.file_list:
+            output = self.outcar_parser.get_energy_without_entropy(filename)
+            energy_tot = self.outcar_parser.get_total_energies(filename)
+            self.assertIsInstance(output, np.ndarray)
+            self.assertEqual(len(energy_tot), len(output))
+
+    def test_get_energy_sigma_0(self):
+        for filename in self.file_list:
+            output = self.outcar_parser.get_energy_sigma_0(filename)
+            energy_tot = self.outcar_parser.get_total_energies(filename)
+            self.assertIsInstance(output, np.ndarray)
+            self.assertEqual(len(energy_tot), len(output))
+
     def test_get_temperatures(self):
         for filename in self.file_list:
             output = self.outcar_parser.get_temperatures(filename)
@@ -194,7 +213,10 @@ class TestOutcar(unittest.TestCase):
     def test_get_fermi_level(self):
         for filename in self.file_list:
             output = self.outcar_parser.get_fermi_level(filename)
-            self.assertIsInstance(output, float)
+            try:
+                self.assertIsInstance(output, float)
+            except AssertionError:
+                self.assertEqual(int(filename.split('/OUTCAR_')[-1]), 8)
             if int(filename.split('/OUTCAR_')[-1]) == 1:
                 fermi_level = 2.9738
                 self.assertEqual(fermi_level, output)
@@ -365,7 +387,7 @@ class TestOutcar(unittest.TestCase):
                 self.assertEqual(output_all.__str__(), output.__str__())
 
     def test_get_nelect(self):
-        n_elect_list = [40.0, 16.0, 16.0, 16.0, 16.0, 16.0, 224.0]
+        n_elect_list = [40.0, 16.0, 16.0, 16.0, 16.0, 16.0, 224.0, 358.0]
         for filename in self.file_list:
             i = int(filename.split("_")[-1]) - 1
             self.assertEqual(n_elect_list[i], self.outcar_parser.get_nelect(filename))
