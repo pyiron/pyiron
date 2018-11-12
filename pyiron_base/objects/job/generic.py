@@ -595,6 +595,7 @@ class GenericJob(JobCore):
             raise ValueError('No executable set!')
         self.status.running = True
         self.project.db.item_update({"timestart": datetime.now()}, self.job_id)
+        job_crashed = False
         try:
             if self.server.cores == 1 or not self.executable.mpi:
                 out = subprocess.check_output(str(self.executable), cwd=self.project_hdf5.working_directory, shell=True,
@@ -604,19 +605,24 @@ class GenericJob(JobCore):
                                               cwd=self.project_hdf5.working_directory, shell=False,
                                               stderr=subprocess.STDOUT, universal_newlines=True)
         except subprocess.CalledProcessError as e:
-            self._logger.warn("Job aborted")
-            self._logger.warn(e.output)
-            self.status.aborted = True
-            error_file = posixpath.join(self.project_hdf5.working_directory, "error.msg")
-            with open(error_file, "w") as f:
-                f.write(e.output)
-            if self.server.run_mode.non_modal:
-                s.close_connection()
-            raise RuntimeError("Job aborted")
+            if not self.server.accept_crash:
+                self._logger.warn("Job aborted")
+                self._logger.warn(e.output)
+                self.status.aborted = True
+                error_file = posixpath.join(self.project_hdf5.working_directory, "error.msg")
+                with open(error_file, "w") as f:
+                    f.write(e.output)
+                if self.server.run_mode.non_modal:
+                    s.close_connection()
+                raise RuntimeError("Job aborted")
+            else:
+                job_crashed = True
 
         self.status.collect = True
         self._logger.info('{}, status: {}, output: {}'.format(self.job_info_str, self.status, out))
         self.run()
+        if job_crashed:
+            self.status.aborted = True
 
     def run_if_interactive(self):
         """
