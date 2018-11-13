@@ -1459,6 +1459,31 @@ class Atoms(object):
             raise AssertionError()
         return shell_dict
 
+    def get_shell_matrix(self, shell, neigh_list=None, id_list=None, radius=None, max_num_neighbors=100):
+        """
+        
+        Args:
+            neigh_list: user defined get_neighbors (recommended if atoms are displaced from the ideal positions) 
+            id_list: cf. get_neighbors
+            radius: cf. get_neighbors
+            max_num_neighbors: cf. get_neighbors
+
+        Returns:
+            NxN matrix with 1 for the pairs of atoms in the given shell
+
+        """
+        assert type(shell)==int
+        assert shell>0
+        if neigh_list is None:
+            neigh_list = self.get_neighbors(radius=radius,
+                                            num_neighbors=max_num_neighbors,
+                                            id_list=id_list)
+        Natom = len(neigh_list.shells)
+        shell_matrix = np.zeros((Natom,Natom))
+        for ii, ss in enumerate(neigh_list.shells):
+            shell_matrix[ii][neigh_list.indices[ii, ss==shell]] = 1
+        return shell_matrix
+
     def get_shell_radius(self, shell=1, id_list=None):
         """
         
