@@ -1459,7 +1459,7 @@ class Atoms(object):
             raise AssertionError()
         return shell_dict
 
-    def get_shell_matrix(self, shell, neigh_list=None, id_list=None, radius=None, max_num_neighbors=100):
+    def get_shell_matrix(self, shell, neigh_list=None, id_list=None, restraint_matrix=None, radius=None, max_num_neighbors=100):
         """
         
         Args:
@@ -1467,6 +1467,9 @@ class Atoms(object):
             id_list: cf. get_neighbors
             radius: cf. get_neighbors
             max_num_neighbors: cf. get_neighbors
+            restraint_matrix: NxN matrix with True or False, where False will remove the entries.
+                              If an integer is given the sum of the chemical indices corresponding to the number will
+                              be set to True and the rest to False
 
         Returns:
             NxN matrix with 1 for the pairs of atoms in the given shell
@@ -1479,9 +1482,14 @@ class Atoms(object):
                                             num_neighbors=max_num_neighbors,
                                             id_list=id_list)
         Natom = len(neigh_list.shells)
+        if restraint_matrix is None:
+            restraint_matrix = (np.ones((Natom, Natom))==1)
+        elif type(restraint_matrix)==int:
+            restraint_matrix = (np.add.outer(self.get_chemical_indices(), self.get_chemical_indices())==restraint_matrix)
         shell_matrix = np.zeros((Natom,Natom))
         for ii, ss in enumerate(neigh_list.shells):
             shell_matrix[ii][neigh_list.indices[ii, ss==shell]] = 1
+        shell_matrix[restraint_matrix==False] = 0
         return shell_matrix
 
     def get_shell_radius(self, shell=1, id_list=None):
