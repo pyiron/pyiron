@@ -2336,6 +2336,12 @@ class Atoms(object):
 
         return d_len[0]
 
+    def get_distance_matrix(self, mic=True, vector=False):
+        """
+        Return distances between all atoms in a matrix. cf. get_distance
+        """
+        return np.array([np.array([self.get_distance(i, j, mic, vector) for i in range(len(self))]) for j in range(len(self))])
+
     def get_constraint(self):
         if 'selective_dynamics' in self._tag_list._lists.keys():
             from ase.constraints import FixAtoms
