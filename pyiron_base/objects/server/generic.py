@@ -118,7 +118,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
 
     @accept_crash.setter
     def accept_crash(self, accept):
-        accept_crash = accept
+        self._accept_crash = accept
 
     @property
     def structure_id(self):
@@ -417,7 +417,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         if "run_time" in hdf_dict.keys():
             self.run_time = hdf_dict["run_time"]
         if "accept_crash" in hdf_dict.keys():
-            self.accept_crash = hdf_dict["accept_crash"]
+            self.accept_crash = (hdf_dict["accept_crash"] == 1)
         self.new_hdf = (hdf_dict["new_h5"] == 1)
 
 
