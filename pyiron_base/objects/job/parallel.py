@@ -364,6 +364,9 @@ class ParallelMaster(GenericMaster):
         if self.is_finished():
             self.status.collect = True
             self.run()
+        elif self.status.busy:
+            self.status.refresh = True
+            self._run_if_refresh()
 
     def iter_jobs(self, convert_to_object=True):
         """
