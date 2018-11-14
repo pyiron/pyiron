@@ -485,7 +485,9 @@ class ParallelMaster(GenericMaster):
         else:
             self.refresh_job_status()
         process_lst = [process.communicate() for process in job_lst if process]
-        self.status.suspended = True
+        self.refresh_job_status()
+        if self.status.running:
+            self.status.suspended = True
 
     def _create_child_job(self, job_name):
         """
