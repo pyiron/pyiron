@@ -138,6 +138,7 @@ class Settings(with_metaclass(Singleton)):
                                                            self._configuration['sql_file'].replace('\\', '/')
 
         self._database = None
+        self._use_local_database = False
         self.logger = setup_logger()
 
     @property
@@ -179,6 +180,26 @@ class Settings(with_metaclass(Singleton)):
             self._database = DatabaseAccess(self._configuration['sql_connection_string'],
                                             self._configuration['sql_table_name'])
 
+    def switch_to_local_database(self, file_name='pyiron.db', cwd=None):
+        if not self._use_local_database:
+            if cwd is None and not os.path.isabs(file_name):
+                file_name = os.path.join(os.path.abspath(os.path.curdir), file_name)
+            self.close_connection()
+            self._database = DatabaseAccess('sqlite:///' + file_name),
+                                            self._configuration['sql_table_name'])
+            self._use_local_database = True 
+        else:
+            print('Database is already in local mode!')
+            
+    def switch_to_central_database(self):
+        if self._use_local_database:
+            self.close_connection()
+            self._database = DatabaseAccess(self._configuration['sql_connection_string'],
+                                            self._configuration['sql_table_name'])
+            self._use_local_database = False
+        else:
+            print('Database is already in central mode!')
+            
     def switch_to_viewer_mode(self):
         """
         Switch from user mode to viewer mode - if viewer_mode is enable pyiron has read only access to the database.
