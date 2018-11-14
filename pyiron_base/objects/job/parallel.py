@@ -6,6 +6,7 @@ from __future__ import print_function
 from collections import OrderedDict
 from datetime import datetime
 import pandas
+import time
 from pyiron_base.objects.job.generic import GenericJob
 from pyiron_base.objects.job.master import GenericMaster
 from pyiron_base.objects.job.submissionstatus import SubmissionStatus
@@ -476,7 +477,7 @@ class ParallelMaster(GenericMaster):
         if self.job_id and self.project.db.get_item_by_id(self.job_id)['status'] not in ['finished', 'aborted']:
             self._logger.debug("{} child project {}".format(self.job_name, self.project.__str__()))
             ham = next(self._job_generator, None)
-            while ham is not None:
+            while ham is not None or self.server.run_mode.modal:
                 self._logger.debug('create job: %s %s', ham.job_info_str, ham.master_id)
                 self.submission_status.submit_next()
                 if not ham.status.finished:
@@ -485,6 +486,8 @@ class ParallelMaster(GenericMaster):
                 if ham.server.run_mode.thread:
                     job_lst.append(ham._process)
                 ham = next(self._job_generator, None)
+                if ham is None and self.server.run_mode.modal:
+                    time.sleep(10)
         else:
             self.refresh_job_status()
         process_lst = [process.communicate() for process in job_lst if process]
