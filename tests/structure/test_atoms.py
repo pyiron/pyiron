@@ -379,6 +379,13 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(np.sum(output)==2)
         self.assertTrue(np.all(np.dot(output, output)==np.identity(2)))
 
+    def test_get_distance_matrix(self):
+        basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
+        output = basis.get_distance_matrix()
+        self.assertIstype(output, np.ndarray)
+        output = np.rint(output*2/np.sqrt(3))
+        self.assertTrue(np.all(np.dot(output, output)==np.identity(2)))
+
     def test_cluster_analysis(self):
         import random
         cell = 2.2 * np.identity(3)
