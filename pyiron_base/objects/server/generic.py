@@ -82,6 +82,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         self._queue_id = None
         self._send_to_db = None
         self._run_time = None
+        self._accept_crash = False
 
         self.host = host
         self.queue = queue
@@ -110,6 +111,14 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
             send (bool): [True/False]
         """
         self._send_to_db = send
+
+    @property
+    def accept_crash(self):
+        return self._accept_crash
+
+    @accept_crash.setter
+    def accept_crash(self, accept):
+        self._accept_crash = accept
 
     @property
     def structure_id(self):
@@ -370,6 +379,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         hdf_dict["new_h5"] = self.new_hdf
         hdf_dict["structure_id"] = self.structure_id
         hdf_dict["run_time"] = self.run_time
+        hdf_dict["accept_crash"] = self.accept_crash
 
         if group_name:
             with hdf.open(group_name) as hdf_group:
@@ -406,6 +416,8 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         self.cores = hdf_dict["cores"]
         if "run_time" in hdf_dict.keys():
             self.run_time = hdf_dict["run_time"]
+        if "accept_crash" in hdf_dict.keys():
+            self.accept_crash = (hdf_dict["accept_crash"] == 1)
         self.new_hdf = (hdf_dict["new_h5"] == 1)
 
 
