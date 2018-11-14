@@ -817,6 +817,19 @@ class Project(ProjectPath):
         s.open_connection()
         self.db = s.database
 
+    def switch_to_local_database(self, file_name='pyiron.db', cwd=None):
+        s.switch_to_local_database(file_name=file_name, cwd=cwd)
+        s.open_connection()
+        self.db = s.database
+
+    def switch_to_central_database(self):
+        """
+        Switch from viewer mode to user mode - if viewer_mode is enable pyiron has read only access to the database.
+        """
+        s.switch_to_central_database()
+        s.open_connection()
+        self.db = s.database
+        
     def queue_delete_job(self, item):
         """
         Delete a job from the queuing system
