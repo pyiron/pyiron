@@ -477,7 +477,7 @@ class ParallelMaster(GenericMaster):
         if self.job_id and self.project.db.get_item_by_id(self.job_id)['status'] not in ['finished', 'aborted']:
             self._logger.debug("{} child project {}".format(self.job_name, self.project.__str__()))
             ham = next(self._job_generator, None)
-            while ham is not None or self.server.run_mode.modal:
+            while ham is not None:
                 self._logger.debug('create job: %s %s', ham.job_info_str, ham.master_id)
                 self.submission_status.submit_next()
                 if not ham.status.finished:
@@ -487,7 +487,9 @@ class ParallelMaster(GenericMaster):
                     job_lst.append(ham._process)
                 ham = next(self._job_generator, None)
                 if ham is None and self.server.run_mode.modal:
-                    time.sleep(10)
+                    while ham is not None:
+                        time.sleep(10)
+                        ham = next(self._job_generator, None)
         else:
             self.refresh_job_status()
         process_lst = [process.communicate() for process in job_lst if process]
@@ -613,8 +615,8 @@ class JobGenerator(object):
         if len(self.parameter_list_cached) > self._childcounter:
             current_paramenter = self.parameter_list_cached[self._childcounter]
             job = self._job._create_child_job(self.job_name(parameter=current_paramenter))
-            self._childcounter += 1
             if job is not None:
+                self._childcounter += 1
                 job = self.modify_job(job=job, parameter=current_paramenter)
                 return job
             else:
