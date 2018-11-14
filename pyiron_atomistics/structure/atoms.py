@@ -1484,8 +1484,10 @@ class Atoms(object):
         Natom = len(neigh_list.shells)
         if restraint_matrix is None:
             restraint_matrix = (np.ones((Natom, Natom))==1)
-        elif type(restraint_matrix)==int:
-            restraint_matrix = (np.add.outer(self.get_chemical_indices(), self.get_chemical_indices())==restraint_matrix)
+        elif type(restraint_matrix)==list and len(restraint_matrix)==2:
+            restraint_matrix = np.outer(1*(self.get_chemical_symbols()==restraint_matrix[0]),
+                                        1*(self.get_chemical_symbols()==restraint_matrix[1]))
+            restraint_matrix = ((restraint_matrix+restraint_matrix.transpose())>0)
         shell_matrix = np.zeros((Natom,Natom))
         for ii, ss in enumerate(neigh_list.shells):
             shell_matrix[ii][neigh_list.indices[ii, ss==shell]] = 1
