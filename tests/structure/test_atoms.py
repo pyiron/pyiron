@@ -372,6 +372,13 @@ class TestAtoms(unittest.TestCase):
         Al_sc.set_repeat([3, 3, 3])
         self.assertEqual(np.round(Al_sc.get_shells()[2], 6), 2.2)
 
+    def test_get_shell_matrix(self):
+        basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
+        output = basis.get_shell_matrix(shell=1)
+        self.assertIstype(output, np.ndarray)
+        self.assertTrue(np.sum(output)==2)
+        self.assertTrue(np.all(np.dot(output, output)==np.identity(2)))
+
     def test_cluster_analysis(self):
         import random
         cell = 2.2 * np.identity(3)
