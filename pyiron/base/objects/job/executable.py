@@ -32,7 +32,7 @@ class Executable(object):
             if not isinstance(code.__name__, str):
                 raise TypeError('The codename should be a string.')
             codename = code.__name__
-            module = code.__module__.split('.')[0]
+            module = code.__module__.split('.')[0] + '/' + code.__module__.split('.')[1]
         if codename is not None and module is not None:
             self.__name__ = codename.lower()
             code_path_lst = [os.path.join(path, module, 'bin') for path in path_binary_codes]
