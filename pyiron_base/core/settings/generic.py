@@ -184,6 +184,8 @@ class Settings(with_metaclass(Singleton)):
         if not self._use_local_database:
             if cwd is None and not os.path.isabs(file_name):
                 file_name = os.path.join(os.path.abspath(os.path.curdir), file_name)
+            elif cwd is not None:
+                file_name = os.path.join(cwd, file_name)
             self.close_connection()
             self._database = DatabaseAccess('sqlite:///' + file_name,
                                             self._configuration['sql_table_name'])
