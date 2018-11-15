@@ -595,7 +595,7 @@ class GenericJob(JobCore):
             raise ValueError('No executable set!')
         self.status.running = True
         self.project.db.item_update({"timestart": datetime.now()}, self.job_id)
-        job_crashed = False
+        job_crashed, out = False, None
         try:
             if self.server.cores == 1 or not self.executable.mpi:
                 out = subprocess.check_output(str(self.executable), cwd=self.project_hdf5.working_directory, shell=True,
