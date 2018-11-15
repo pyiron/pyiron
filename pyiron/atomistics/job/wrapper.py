@@ -1,0 +1,1 @@
+from base.objects.job.wrapper import JobWrapper

@@ -1,5 +1,5 @@
-from pyiron_base.objects.generic.hdfio import FileHDFio
-from pyiron_base.objects.generic.parameters import GenericParameters
+from base.objects.generic.hdfio import FileHDFio
+from base.objects.generic.parameters import GenericParameters
 from pathlib2 import Path
 
 

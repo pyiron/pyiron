@@ -8,21 +8,21 @@ import posixpath
 import numpy as np
 import types
 from string import punctuation
-from pyiron_base.project import Project as ProjectCore
+from base.project import Project as ProjectCore
 try:
-    from pyiron_base.core.project.gui import ProjectGUI
+    from base.core.project.gui import ProjectGUI
 except (ImportError, TypeError, AttributeError):
     pass
-from pyiron_base.core.settings.generic import Settings
-from pyiron_base.objects.generic.hdfio import ProjectHDFio
-from pyiron_atomistics.job.jobtype import JobType, JobTypeChoice
-from pyiron_atomistics.job.object_type import ObjectType, ObjectTypeChoice
-from pyiron_atomistics.structure.periodic_table import PeriodicTable
-from pyiron_lammps.potential import LammpsPotentialFile
+from base.core.settings.generic import Settings
+from base.objects.generic.hdfio import ProjectHDFio
+from atomistics.job.jobtype import JobType, JobTypeChoice
+from atomistics.job.object_type import ObjectType, ObjectTypeChoice
+from atomistics.structure.periodic_table import PeriodicTable
+from lammps.potential import LammpsPotentialFile
 from pyiron_vasp.potential import VaspPotential
-from pyiron_atomistics.structure.atoms import CrystalStructure
-import pyiron_atomistics.structure.pyironase as ase
-from pyiron_atomistics.structure.atoms import Atoms
+from atomistics.structure.atoms import CrystalStructure
+import atomistics.structure.pyironase as ase
+from atomistics.structure.atoms import Atoms
 
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
@@ -335,11 +335,11 @@ class Project(ProjectCore):
                  calculator=None, info=None, indices=None, elements=None, dimension=None, species=None,
                  **qwargs):
         """
-        Creates a pyiron_atomistics.structure.atoms.Atoms instance.
+        Creates a atomistics.structure.atoms.Atoms instance.
 
         Args:
             elements (list/numpy.ndarray): List of strings containing the elements or a list of
-                                pyiron_atomistics.structure.periodic_table.ChemicalElement instances
+                                atomistics.structure.periodic_table.ChemicalElement instances
             numbers (list/numpy.ndarray): List of atomic numbers of elements
             symbols (list/numpy.ndarray): List of chemical symbols
             positions (list/numpy.ndarray): List of positions
@@ -383,7 +383,7 @@ class Project(ProjectCore):
             'orthogonal' etc.
 
         Returns:
-            surface (pyiron_atomistics.structure.atoms.Atoms instance)
+            surface (atomistics.structure.atoms.Atoms instance)
 
         """
         # https://gitlab.com/ase/ase/blob/master/ase/lattice/surface.py
@@ -438,7 +438,7 @@ class Project(ProjectCore):
             potential_file (str): Location of the new potential file if necessary
 
         Returns:
-            pyiron_atomistics.structure.periodic_table.ChemicalElement instance
+            atomistics.structure.periodic_table.ChemicalElement instance
         """
         periodic_table = PeriodicTable()
         if new_element_name is None:

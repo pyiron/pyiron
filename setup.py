@@ -32,11 +32,11 @@ setup(
 
     keywords='pyiron',
     packages=find_packages(exclude=["*tests*"]),
-    install_requires=['pyiron_base',
-                      'pyiron_atomistics',
-                      'pyiron_dft',
-                      'pyiron_example_job',
-                      'pyiron_lammps',
-                      'pyiron_vasp'],
+    install_requires=['base',
+                      'atomistics',
+                      'dft',
+                      'testing',
+                      'lammps',
+                      'vasp'],
     cmdclass=versioneer.get_cmdclass(),
     )
