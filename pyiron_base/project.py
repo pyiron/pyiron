@@ -818,6 +818,8 @@ class Project(ProjectPath):
         self.db = s.database
 
     def switch_to_local_database(self, file_name='pyiron.db', cwd=None):
+        if cwd is None: 
+            cwd = self.path
         s.switch_to_local_database(file_name=file_name, cwd=cwd)
         s.open_connection()
         self.db = s.database
