@@ -95,7 +95,7 @@ class PhonopyJobGenerator(JobGenerator):
         return job
 
 
-class PhonopyMaster2(AtomisticParallelMaster):
+class PhonopyJob(AtomisticParallelMaster):
     """
 
     Args:
@@ -103,8 +103,8 @@ class PhonopyMaster2(AtomisticParallelMaster):
         job_name:
     """
     def __init__(self, project, job_name):
-        super(PhonopyMaster2, self).__init__(project, job_name)
-        self.__name__ = "PhonopyMaster2"
+        super(PhonopyJob, self).__init__(project, job_name)
+        self.__name__ = "PhonopyJob"
         self.__version__ = '0.0.1'
         self.input['interaction_range'] = (10., 'Minimal size of supercell, Ang')
         self.input['factor'] = (VaspToTHz, 'Frequency unit conversion factor (default for VASP)')
@@ -137,16 +137,16 @@ class PhonopyMaster2(AtomisticParallelMaster):
                                    factor=self.input['factor'])
             self.phonopy.generate_displacements(distance=self.input['displacement'])
             self.to_hdf()
-        super(PhonopyMaster2, self).create_jobs()
+        super(PhonopyJob, self).create_jobs()
 
     def to_hdf(self, hdf=None, group_name=None):
-        super(PhonopyMaster2, self).to_hdf(hdf=hdf, group_name=group_name)
+        super(PhonopyJob, self).to_hdf(hdf=hdf, group_name=group_name)
         if self.phonopy is not None:
             with self.project_hdf5.open("output") as hdf5_output:
                 hdf5_output['phonopy_pickeled'] = codecs.encode(pickle.dumps(self.phonopy), "base64").decode()
 
     def from_hdf(self, hdf=None, group_name=None):
-        super(PhonopyMaster2, self).from_hdf(hdf=hdf, group_name=group_name)
+        super(PhonopyJob, self).from_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("output") as hdf5_output:
             if 'phonopy_pickeled' in hdf5_output.list_nodes():
                 self.phonopy = pickle.loads(codecs.decode(hdf5_output['phonopy_pickeled'].encode(), 'base64'))

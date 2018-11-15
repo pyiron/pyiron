@@ -11,9 +11,9 @@ from pyiron.lammps.structure import UnfoldingPrism
 from pyiron.interactive.generic import GenericInteractive
 
 
-class LammpsInt2(GenericInteractive, Lammps):
+class LammpsInt(GenericInteractive, Lammps):
     def __init__(self, project, job_name):
-        super(LammpsInt2, self).__init__(project, job_name)
+        super(LammpsInt, self).__init__(project, job_name)
         self._check_opened = False
         self._interactive_prism = None
         self._interactive_run_command = None
@@ -139,19 +139,19 @@ class LammpsInt2(GenericInteractive, Lammps):
         self.interactive_structure_setter(self.structure)
 
     def calc_minimize(self, e_tol=1e-8, f_tol=1e-8, max_iter=1000, pressure=None, n_print=1):
-        super(LammpsInt2, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure, n_print=n_print)
+        super(LammpsInt, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure, n_print=n_print)
 
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100, delta_temp=1.0,
                 delta_press=None, seed=None, tloop=None, rescale_velocity=True):
-        super(LammpsInt2, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
-                                        time_step=time_step, n_print=n_print, delta_temp=delta_temp,
-                                        delta_press=delta_press, seed=seed, tloop=tloop,
-                                        rescale_velocity=rescale_velocity)
+        super(LammpsInt, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
+                                       time_step=time_step, n_print=n_print, delta_temp=delta_temp,
+                                       delta_press=delta_press, seed=seed, tloop=tloop,
+                                       rescale_velocity=rescale_velocity)
 
     def run_if_interactive(self):
         if self._generic_input['calc_mode'] == 'md':
             self.input.control['run'] = self._generic_input['n_print']
-            super(LammpsInt2, self).run_if_interactive()
+            super(LammpsInt, self).run_if_interactive()
             self._reset_interactive_run_command()
 
             counter = 0
@@ -162,7 +162,7 @@ class LammpsInt2(GenericInteractive, Lammps):
                 counter += 1
 
         else:
-            super(LammpsInt2, self).run_if_interactive()
+            super(LammpsInt, self).run_if_interactive()
             self._interactive_lib_command(self._interactive_run_command)
             self.interactive_collect()
 
@@ -212,14 +212,14 @@ class LammpsInt2(GenericInteractive, Lammps):
         if self.server.run_mode.interactive:
             pass
         else:
-            super(LammpsInt2, self).collect_output()
+            super(LammpsInt, self).collect_output()
 
     def update_potential(self):
         self._interactive_lib_command(self.potential.Config[0][0])
         self._interactive_lib_command(self.potential.Config[0][1])
 
     def interactive_indices_getter(self):
-        return super(LammpsInt2, self).interactive_indices_getter().tolist()
+        return super(LammpsInt, self).interactive_indices_getter().tolist()
 
     def interactive_energy_pot_getter(self):
         return self._interactive_library.get_thermo("pe")
@@ -273,4 +273,4 @@ class LammpsInt2(GenericInteractive, Lammps):
                 if 'interactive' in h5.list_groups():
                     for key in h5['interactive'].list_nodes():
                         h5['generic/' + key] = h5['interactive/' + key]
-            super(LammpsInt2, self).interactive_close()
+            super(LammpsInt, self).interactive_close()

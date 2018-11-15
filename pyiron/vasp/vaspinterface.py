@@ -11,9 +11,9 @@ from pyiron.vasp.vasp import Output as OutputBase
 from pyiron.interactive.generic import GenericInteractive
 
 
-class VaspInt2(GenericInteractive, Vasp):
+class VaspInt(GenericInteractive, Vasp):
     def __init__(self, project, job_name):
-        super(VaspInt2, self).__init__(project, job_name)
+        super(VaspInt, self).__init__(project, job_name)
         self._interactive_write_input_files = True
         self._interactive_vasprun = None
         self.interactive_cache = {'cells': [],
@@ -49,7 +49,7 @@ class VaspInt2(GenericInteractive, Vasp):
             for key in self.interactive_cache.keys():
                 if isinstance(self.interactive_cache[key], list):
                     self.interactive_cache[key] = self.interactive_cache[key][:-2]
-            super(VaspInt2, self).interactive_close()
+            super(VaspInt, self).interactive_close()
             self.status.collect = True
             self._output_parser = Output()
             if self['vasprun.xml'] is not None:
@@ -68,7 +68,7 @@ class VaspInt2(GenericInteractive, Vasp):
     def validate_ready_to_run(self):
         if self.server.run_mode.interactive and 'EDIFFG' in self.input.incar._dataset["Parameter"]:
             raise ValueError('If EDIFFG is defined VASP interrupts the interactive run_mode.')
-        super(VaspInt2, self).validate_ready_to_run()
+        super(VaspInt, self).validate_ready_to_run()
 
     def interactive_forces_getter(self):
         if self._interactive_vasprun is not None:
@@ -108,7 +108,7 @@ class VaspInt2(GenericInteractive, Vasp):
 
     def run_if_interactive(self):
         initial_run = not self.interactive_is_activated()
-        super(VaspInt2, self).run_if_interactive()
+        super(VaspInt, self).run_if_interactive()
         if not initial_run:
             atom_numbers = self.current_structure.get_number_species_atoms()
             for species in atom_numbers.keys():
@@ -142,7 +142,7 @@ class VaspInt2(GenericInteractive, Vasp):
             self._check_incar_parameter(parameter='POTIM', value=0.0)
             self._check_incar_parameter(parameter='NSW', value=1000)
             self._check_incar_parameter(parameter='ISYM', value=0)
-        super(VaspInt2, self)._run_if_created(que_wait_for=que_wait_for)
+        super(VaspInt, self)._run_if_created(que_wait_for=que_wait_for)
 
 
 class Output(OutputBase):
