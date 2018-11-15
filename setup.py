@@ -32,11 +32,17 @@ setup(
 
     keywords='pyiron',
     packages=find_packages(exclude=["*tests*"]),
-    install_requires=['base',
-                      'atomistics',
-                      'dft',
-                      'testing',
-                      'lammps',
-                      'vasp'],
+    install_requires=['ase',
+                      'h5io>=0.1.1',
+                      'h5py',
+                      'matplotlib',
+                      'numpy',
+                      'pandas',
+                      'pathlib2',
+                      'phonopy'
+                      'psutil',
+                      'six',
+                      'sqlalchemy',
+                      'tables'],
     cmdclass=versioneer.get_cmdclass(),
     )
