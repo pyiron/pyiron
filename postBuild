@@ -1,0 +1,14 @@
+# ngl install 
+jupyter labextension install @jupyter-widgets/jupyterlab-manager@0.36.0 --no-build
+git clone --single-branch -b jupyterlab https://github.com/jan-janssen/nglview.git ~/nglview
+jupyter labextension install ~/nglview/js --no-build
+jupyter lab build
+rm -rf ~/nglview
+
+# modern version - but currently not working
+# jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build
+# jupyter labextension install nglview-js-widgets --no-build   # the version number is incorrect!!!
+# jupyter lab build
+
+# remove binder folder
+rm -r ~/binder
