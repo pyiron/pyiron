@@ -3,7 +3,7 @@ __all__ = []
 
 from pyiron.project import Project
 from pyiron.notebook import Notebook
-from atomistics.structure.atoms import ase_to_pyiron
+from pyiron.atomistics.structure.atoms import ase_to_pyiron
 
 from ._version import get_versions
 __version__ = get_versions()['version']

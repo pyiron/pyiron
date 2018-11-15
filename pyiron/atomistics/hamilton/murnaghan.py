@@ -8,8 +8,8 @@ import numpy as np
 import scipy.integrate
 import scipy.optimize as spy
 import scipy.constants
-from atomistics.job.parallel import AtomisticParallelMaster
-from base.objects.job.parallel import JobGenerator
+from pyiron.atomistics.job.parallel import AtomisticParallelMaster
+from pyiron.base.objects.job.parallel import JobGenerator
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"

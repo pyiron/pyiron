@@ -3,8 +3,8 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
-from atomistics.job.parallel import AtomisticParallelMaster
-from base.objects.job.parallel import JobGenerator
+from pyiron.atomistics.job.parallel import AtomisticParallelMaster
+from pyiron.base.objects.job.parallel import JobGenerator
 import numpy as np
 try:
     import pylab as plt

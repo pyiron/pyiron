@@ -1,4 +1,4 @@
-from lammps.lammps import Lammps
+from pyiron.lammps.lammps import Lammps
 __all__ = ['Lammps']
 
 from ._version import get_versions

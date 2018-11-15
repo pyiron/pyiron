@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
-from base.objects.job.jobtypebase import JobTypeChoiceBase, JobTypeBase
+from pyiron.base.objects.job.jobtypebase import JobTypeChoiceBase, JobTypeBase
 
 """
 Jobtype class to create GenericJob type objects - the choice of job types is limited to the JOB_CLASS_DICT

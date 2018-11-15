@@ -1,5 +1,5 @@
 import unittest
-from atomistics.structure.sparse_list import SparseList, SparseArray
+from pyiron.atomistics.structure.sparse_list import SparseList, SparseArray
 
 
 class TestSparseList(unittest.TestCase):

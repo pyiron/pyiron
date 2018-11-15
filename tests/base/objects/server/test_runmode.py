@@ -1,5 +1,5 @@
 import unittest
-from base.objects.server.runmode import Runmode
+from pyiron.base.objects.server.runmode import Runmode
 
 
 class TestRunmode(unittest.TestCase):

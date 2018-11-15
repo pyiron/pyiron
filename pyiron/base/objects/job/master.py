@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import inspect
-from base.objects.job.generic import GenericJob
+from pyiron.base.objects.job.generic import GenericJob
 
 """
 The GenericMaster is the template class for all meta jobs

@@ -1,4 +1,4 @@
-from pyiron_vasp.vasp import Vasp
+from pyiron.vasp.vasp import Vasp
 __all__ = ['Vasp']
 
 from ._version import get_versions

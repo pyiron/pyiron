@@ -1,6 +1,6 @@
 import unittest
 import os
-from base.project import Project
+from pyiron.base.project import Project
 
 
 class TestGenericJob(unittest.TestCase):

@@ -3,8 +3,8 @@ import os
 import posixpath
 import numpy as np
 
-from pyiron_vasp.vasprun import Vasprun
-from dft.waves.dos import Dos, NoResolvedDosError
+from pyiron.vasp.vasprun import Vasprun
+from pyiron.dft.waves.dos import Dos, NoResolvedDosError
 
 """
 @author: surendralal

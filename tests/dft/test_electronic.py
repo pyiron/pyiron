@@ -3,10 +3,10 @@ import os
 import posixpath
 import numpy as np
 
-from atomistics.structure.atoms import Atoms
-from pyiron_vasp.vasprun import Vasprun
-from dft.waves.dos import Dos
-from dft.waves.electronic import ElectronicStructure
+from pyiron.atomistics.structure.atoms import Atoms
+from pyiron.vasp.vasprun import Vasprun
+from pyiron.dft.waves.dos import Dos
+from pyiron.dft.waves.electronic import ElectronicStructure
 
 """
 @author: surendralal

@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
+from pyiron.atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
 
 __author__ = "surendralal"
 

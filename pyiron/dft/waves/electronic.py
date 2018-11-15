@@ -6,8 +6,8 @@ from __future__ import print_function
 
 import numpy as np
 
-from atomistics.structure.atoms import Atoms
-from dft.waves.dos import Dos
+from pyiron.atomistics.structure.atoms import Atoms
+from pyiron.dft.waves.dos import Dos
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \

@@ -1,6 +1,6 @@
 import os
 import unittest
-from base.project import Project
+from pyiron.base.project import Project
 
 
 class TestChildids(unittest.TestCase):

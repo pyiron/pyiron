@@ -6,9 +6,9 @@ import os
 from six import with_metaclass
 import sys
 from pathlib2 import Path
-from base.core.settings.logger import setup_logger
-from base.core.settings.database import DatabaseAccess
-from base.core.settings.install import install_pyiron
+from pyiron.base.core.settings.logger import setup_logger
+from pyiron.base.core.settings.database import DatabaseAccess
+from pyiron.base.core.settings.install import install_pyiron
 
 """
 The settings file provides the attributes of the configuration as properties.

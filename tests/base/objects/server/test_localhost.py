@@ -1,5 +1,5 @@
 import os
-from base.objects.server.scheduler.localhost import Localhost
+from pyiron.base.objects.server.scheduler.localhost import Localhost
 import unittest
 
 

@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
-from atomistics.structure.atoms import CrystalStructure
-from dft.bandstructure import Bandstructure
+from pyiron.atomistics.structure.atoms import CrystalStructure
+from pyiron.dft.bandstructure import Bandstructure
 
 
 class TestBandStructure(unittest.TestCase):

@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import pandas
-from atomistics.hamilton.potentials import PotentialAbstract
+from pyiron.atomistics.hamilton.potentials import PotentialAbstract
 
 __author__ = "Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"

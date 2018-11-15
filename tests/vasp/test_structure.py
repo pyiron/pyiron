@@ -3,8 +3,8 @@ import os
 import posixpath
 import numpy as np
 
-from atomistics.structure.atoms import Atoms
-from pyiron_vasp.structure import read_atoms, write_poscar, vasp_sorter, atoms_from_string
+from pyiron.atomistics.structure.atoms import Atoms
+from pyiron.vasp.structure import read_atoms, write_poscar, vasp_sorter, atoms_from_string
 
 
 class TestVaspStructure(unittest.TestCase):

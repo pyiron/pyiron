@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
-from base.core.settings.generic import Settings
+from pyiron.base.core.settings.generic import Settings
 
 """
 Functions to update existing pyiron installations - mainly modify the database columns. 

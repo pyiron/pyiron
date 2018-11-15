@@ -705,7 +705,7 @@ class FileHDFio(object):
         Returns:
             Project: pyiron project object
         """
-        from base.project import Project
+        from pyiron.base.project import Project
         return Project(path=self.file_path)
 
     def _get_h5_path(self, name):

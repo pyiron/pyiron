@@ -1,7 +1,7 @@
 from pathlib2 import Path
 import os
 import unittest
-from base.core.settings.generic import Settings
+from pyiron.base.core.settings.generic import Settings
 
 
 class TestConfigSettingsStatic(unittest.TestCase):

@@ -4,7 +4,7 @@
 
 from collections import OrderedDict
 import os
-from base.objects.server.shelloption import ShellOption
+from pyiron.base.objects.server.shelloption import ShellOption
 
 QUEUE_SCRIPT_PREFIX = 'pi_'
 QUEUE_SCRIPT_SUFFIX = '.sh'

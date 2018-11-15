@@ -9,19 +9,19 @@ import subprocess
 import numpy as np
 import tables
 
-from dft.generic import GenericDFTJob
-from pyiron_vasp.potential import VaspPotentialFile
-from atomistics.structure.atoms import Atoms, CrystalStructure
-from base.core.settings.generic import Settings
-from base.objects.generic.parameters import GenericParameters
-from atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
-from pyiron_vasp.outcar import Outcar
-from pyiron_vasp.procar import Procar
-from pyiron_vasp.structure import read_atoms, write_poscar, vasp_sorter
-from pyiron_vasp.vasprun import Vasprun as Vr
-from pyiron_vasp.vasprun import VasprunError
-from pyiron_vasp.volumetric_data import VaspVolumetricData
-from dft.waves.electronic import ElectronicStructure
+from pyiron.dft.generic import GenericDFTJob
+from pyiron.vasp.potential import VaspPotentialFile
+from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
+from pyiron.base.core.settings.generic import Settings
+from pyiron.base.objects.generic.parameters import GenericParameters
+from pyiron.atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
+from pyiron.vasp.outcar import Outcar
+from pyiron.vasp.procar import Procar
+from pyiron.vasp.structure import read_atoms, write_poscar, vasp_sorter
+from pyiron.vasp.vasprun import Vasprun as Vr
+from pyiron.vasp.vasprun import VasprunError
+from pyiron.vasp.volumetric_data import VaspVolumetricData
+from pyiron.dft.waves.electronic import ElectronicStructure
 import warnings
 
 __author__ = "Sudarsan Surendralal"
@@ -717,7 +717,7 @@ class Vasp(GenericDFTJob):
             if not (self._output_parser.structure is not None):
                 raise AssertionError()
             structure = self._output_parser.structure
-        from dft.bandstructure import Bandstructure
+        from pyiron.dft.bandstructure import Bandstructure
         bs_obj = Bandstructure(structure)
         _, q_point_list, [_, _] = bs_obj.get_path(num_points=num_points, path_type="full")
         q_point_list = np.array(q_point_list)

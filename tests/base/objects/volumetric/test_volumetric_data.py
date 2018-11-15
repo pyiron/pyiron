@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from base.objects.volumetric.generic import VolumetricData
+from pyiron.base.objects.volumetric.generic import VolumetricData
 
 """
 @author: surendralal

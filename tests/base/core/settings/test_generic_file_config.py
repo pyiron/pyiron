@@ -1,4 +1,4 @@
-from base.core.settings.generic import Settings
+from pyiron.base.core.settings.generic import Settings
 from pathlib2 import Path
 import os
 import sys

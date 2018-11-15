@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
-from atomistics.job.serial import SerialMaster
+from pyiron.atomistics.job.serial import SerialMaster
 
 __author__ = "Yury Lysogorskiy"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"

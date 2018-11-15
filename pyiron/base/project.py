@@ -7,14 +7,14 @@ import os
 import posixpath
 import shutil
 import pandas
-from base.core.project.path import ProjectPath
-from base.core.settings.generic import Settings
-from base.core.settings.jobtable import get_db_columns, get_job_ids, get_job_id, get_jobs, job_table, \
+from pyiron.base.core.project.path import ProjectPath
+from pyiron.base.core.settings.generic import Settings
+from pyiron.base.core.settings.jobtable import get_db_columns, get_job_ids, get_job_id, get_jobs, job_table, \
     get_job_status, set_job_status, get_job_working_directory, get_child_ids
-from base.core.settings.logger import set_logging_level
-from base.objects.generic.hdfio import ProjectHDFio
-from base.objects.job.jobtype import JobType, JobTypeChoice
-from base.objects.server.queuestatus import queue_delete_job, queue_is_empty, queue_job_info, queue_table, \
+from pyiron.base.core.settings.logger import set_logging_level
+from pyiron.base.objects.generic.hdfio import ProjectHDFio
+from pyiron.base.objects.job.jobtype import JobType, JobTypeChoice
+from pyiron.base.objects.server.queuestatus import queue_delete_job, queue_is_empty, queue_job_info, queue_table, \
     wait_for_job, queue_report, queue_id_table, queue_enable_reservation
 
 """
@@ -571,7 +571,7 @@ class Project(ProjectPath):
         Returns:
             GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
         """
-        from base.objects.job.path import JobPath
+        from pyiron.base.objects.job.path import JobPath
         if job_id:
             job = JobPath(db=self.db, job_id=job_id, user=self.user)
             job = job.load_object(convert_to_object=convert_to_object, project=job.project_hdf5.copy())

@@ -1,10 +1,10 @@
 import unittest
 import numpy as np
 import os
-from base.project import Project
-from atomistics.structure.atoms import Atoms
-from base.objects.generic.hdfio import ProjectHDFio
-from lammps.lammps import Lammps
+from pyiron.base.project import Project
+from pyiron.atomistics.structure.atoms import Atoms
+from pyiron.base.objects.generic.hdfio import ProjectHDFio
+from pyiron.lammps.lammps import Lammps
 
 
 class TestLammps(unittest.TestCase):

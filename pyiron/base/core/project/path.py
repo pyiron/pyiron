@@ -7,7 +7,7 @@ from __future__ import print_function
 from copy import copy
 import os
 import posixpath
-from base.core.settings.generic import Settings
+from pyiron.base.core.settings.generic import Settings
 from six import string_types
 
 """

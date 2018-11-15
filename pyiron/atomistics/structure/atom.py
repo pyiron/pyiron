@@ -3,8 +3,8 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import numpy as np
-from atomistics.structure.periodic_table import PeriodicTable, ChemicalElement
-from atomistics.structure.sparse_list import SparseArrayElement
+from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement
+from pyiron.atomistics.structure.sparse_list import SparseArrayElement
 from six import string_types
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal"

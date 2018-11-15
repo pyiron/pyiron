@@ -6,10 +6,10 @@ import os
 import xml.etree.cElementTree as ETree
 import numpy as np
 from collections import OrderedDict
-from atomistics.structure.atoms import Atoms
-from atomistics.structure.periodic_table import PeriodicTable
-from base.core.settings.generic import Settings
-from dft.waves.electronic import ElectronicStructure
+from pyiron.atomistics.structure.atoms import Atoms
+from pyiron.atomistics.structure.periodic_table import PeriodicTable
+from pyiron.base.core.settings.generic import Settings
+from pyiron.dft.waves.electronic import ElectronicStructure
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \

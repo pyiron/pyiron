@@ -3,8 +3,8 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
-from atomistics.structure.atoms import Atoms
-from atomistics.job.atomistic import AtomisticGenericJob
+from pyiron.atomistics.structure.atoms import Atoms
+from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 
 __author__ = "Yury Lysogorskiy"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"

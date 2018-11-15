@@ -4,7 +4,7 @@
 
 from __future__ import print_function
 import importlib
-from base.core.settings.generic import Settings
+from pyiron.base.core.settings.generic import Settings
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"

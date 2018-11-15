@@ -8,21 +8,21 @@ import posixpath
 import numpy as np
 import types
 from string import punctuation
-from base.project import Project as ProjectCore
+from pyiron.base.project import Project as ProjectCore
 try:
-    from base.core.project.gui import ProjectGUI
+    from pyiron.base.core.project.gui import ProjectGUI
 except (ImportError, TypeError, AttributeError):
     pass
-from base.core.settings.generic import Settings
-from base.objects.generic.hdfio import ProjectHDFio
-from atomistics.job.jobtype import JobType, JobTypeChoice
-from atomistics.job.object_type import ObjectType, ObjectTypeChoice
-from atomistics.structure.periodic_table import PeriodicTable
-from lammps.potential import LammpsPotentialFile
-from pyiron_vasp.potential import VaspPotential
-from atomistics.structure.atoms import CrystalStructure
-import atomistics.structure.pyironase as ase
-from atomistics.structure.atoms import Atoms
+from pyiron.base.core.settings.generic import Settings
+from pyiron.base.objects.generic.hdfio import ProjectHDFio
+from pyiron.atomistics.job.jobtype import JobType, JobTypeChoice
+from pyiron.atomistics.job.object_type import ObjectType, ObjectTypeChoice
+from pyiron.atomistics.structure.periodic_table import PeriodicTable
+from pyiron.lammps.potential import LammpsPotentialFile
+from pyiron.vasp.potential import VaspPotential
+from pyiron.atomistics.structure.atoms import CrystalStructure
+import pyiron.atomistics.structure.pyironase as ase
+from pyiron.atomistics.structure.atoms import Atoms
 
 
 __author__ = "Joerg Neugebauer, Jan Janssen"

@@ -1,6 +1,6 @@
 import unittest
-from atomistics.structure.atom import Atom
-from atomistics.structure.periodic_table import PeriodicTable
+from pyiron.atomistics.structure.atom import Atom
+from pyiron.atomistics.structure.periodic_table import PeriodicTable
 
 
 class TestAtom(unittest.TestCase):

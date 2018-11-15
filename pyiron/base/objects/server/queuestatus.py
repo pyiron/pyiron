@@ -5,10 +5,10 @@
 import subprocess
 import pandas
 import time
-from base.core.settings.generic import Settings
-from base.objects.job.generic import GenericJob
-from base.objects.job.core import JobCore
-from base.objects.server.scheduler.generic import QUEUE_SCRIPT_PREFIX, QUEUE_SCRIPT_SUFFIX
+from pyiron.base.core.settings.generic import Settings
+from pyiron.base.objects.job.generic import GenericJob
+from pyiron.base.objects.job.core import JobCore
+from pyiron.base.objects.server.scheduler.generic import QUEUE_SCRIPT_PREFIX, QUEUE_SCRIPT_SUFFIX
 
 """
 Set of functions to interact with the queuing system directly from within pyiron - optimized for the Sun grid engine.

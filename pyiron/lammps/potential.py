@@ -7,9 +7,9 @@ import posixpath
 import pandas as pd
 import shutil
 import os
-from base.core.settings.generic import Settings
-from base.objects.generic.parameters import GenericParameters
-from atomistics.hamilton.potentials import PotentialAbstract
+from pyiron.base.core.settings.generic import Settings
+from pyiron.base.objects.generic.parameters import GenericParameters
+from pyiron.atomistics.hamilton.potentials import PotentialAbstract
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"

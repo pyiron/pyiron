@@ -13,14 +13,14 @@ import numpy as np
 import pandas as pd
 import scipy.constants as const
 
-from lammps.potential import LammpsPotentialFile
-from atomistics.job.atomistic import AtomisticGenericJob
-from base.core.settings.generic import Settings
-from base.pyio.parser import Logstatus, extract_data_from_file
-from lammps.control import LammpsControl
-from lammps.potential import LammpsPotential
-from lammps.structure import LammpsStructure, UnfoldingPrism
-from atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
+from pyiron.lammps.potential import LammpsPotentialFile
+from pyiron.atomistics.job.atomistic import AtomisticGenericJob
+from pyiron.base.core.settings.generic import Settings
+from pyiron.base.pyio.parser import Logstatus, extract_data_from_file
+from pyiron.lammps.control import LammpsControl
+from pyiron.lammps.potential import LammpsPotential
+from pyiron.lammps.structure import LammpsStructure, UnfoldingPrism
+from pyiron.atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \
@@ -169,7 +169,7 @@ class Lammps(AtomisticGenericJob):
         Returns:
 
         """
-        from lammps.potential import LammpsPotentialFile
+        from pyiron.lammps.potential import LammpsPotentialFile
         if not self.structure:
             raise ValueError('No structure set.')
         list_of_elements = set(self.structure.get_chemical_symbols())

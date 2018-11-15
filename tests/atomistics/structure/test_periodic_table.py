@@ -1,6 +1,6 @@
 import unittest
 import os
-from atomistics.structure.periodic_table import PeriodicTable
+from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.project import Project
 
 

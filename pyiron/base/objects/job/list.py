@@ -3,11 +3,11 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
-from base.objects.generic.parameters import GenericParameters
-from base.objects.job.core import JobCore
-from base.objects.job.generic import GenericJob
-from base.objects.job.master import GenericMaster
-from base.objects.job.submissionstatus import SubmissionStatus
+from pyiron.base.objects.generic.parameters import GenericParameters
+from pyiron.base.objects.job.core import JobCore
+from pyiron.base.objects.job.generic import GenericJob
+from pyiron.base.objects.job.master import GenericMaster
+from pyiron.base.objects.job.submissionstatus import SubmissionStatus
 
 """
 The ListMaster behaves like a list, just for job objects. 

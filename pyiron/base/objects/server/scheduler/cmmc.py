@@ -2,9 +2,9 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-from base.objects.server.scheduler.generic import JobScheduler
-from base.objects.server.queue import Queue
-from base.objects.server.shelloption import ShellOption
+from pyiron.base.objects.server.scheduler.generic import JobScheduler
+from pyiron.base.objects.server.queue import Queue
+from pyiron.base.objects.server.shelloption import ShellOption
 
 """
 JobScheduler class - for the CMMC cluster of the Max Planck Institute fuer Eisenforschung

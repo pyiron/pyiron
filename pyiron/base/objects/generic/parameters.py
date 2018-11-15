@@ -7,8 +7,8 @@ import numpy as np
 import os
 import pandas
 import posixpath
-from base.core.settings.generic import Settings
-from base.objects.generic.template import PyironObject
+from pyiron.base.core.settings.generic import Settings
+from pyiron.base.objects.generic.template import PyironObject
 
 """
 GenericParameters class defines the typical input file with a key value structure plus an additional column for comments.

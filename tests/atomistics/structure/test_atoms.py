@@ -2,11 +2,11 @@ import unittest
 import sys
 import numpy as np
 import os
-from atomistics.structure.atom import Atom
-from atomistics.structure.atoms import Atoms, CrystalStructure
-from atomistics.structure.sparse_list import SparseList
-from atomistics.structure.periodic_table import PeriodicTable, ChemicalElement
-from base.objects.generic.hdfio import FileHDFio
+from pyiron.atomistics.structure.atom import Atom
+from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
+from pyiron.atomistics.structure.sparse_list import SparseList
+from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement
+from pyiron.base.objects.generic.hdfio import FileHDFio
 
 
 class TestAtoms(unittest.TestCase):

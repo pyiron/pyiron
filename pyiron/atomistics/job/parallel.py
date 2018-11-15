@@ -4,8 +4,8 @@
 
 from __future__ import print_function
 from collections import OrderedDict
-from base.objects.job.parallel import ParallelMaster
-from atomistics.job.atomistic import AtomisticGenericJob
+from pyiron.base.objects.job.parallel import ParallelMaster
+from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 
 __author__ = "Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"

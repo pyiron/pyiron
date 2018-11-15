@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import logging
-from base.project import Project
+from pyiron.base.project import Project
 
 """
 The job wrapper is called from the run_job.py script, it restores the job from hdf5 and executes it.

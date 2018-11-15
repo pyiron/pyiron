@@ -6,7 +6,7 @@ from collections import OrderedDict
 
 import numpy as np
 
-from dft.waves.electronic import ElectronicStructure
+from pyiron.dft.waves.electronic import ElectronicStructure
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"

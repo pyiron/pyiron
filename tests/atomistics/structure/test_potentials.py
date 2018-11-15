@@ -1,7 +1,7 @@
 import os
 import unittest
-from lammps.potential import LammpsPotentialFile
-from pyiron_vasp.potential import VaspPotential
+from pyiron.lammps.potential import LammpsPotentialFile
+from pyiron.vasp.potential import VaspPotential
 
 
 class TestOpenKimPotential(unittest.TestCase):

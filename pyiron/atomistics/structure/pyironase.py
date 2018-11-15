@@ -7,8 +7,8 @@ try:
     from ase.atoms import Atoms as ASEAtoms
 except ImportError:
     pass
-import atomistics.structure.atom as atom
-import atomistics.structure.atoms as atoms
+import pyiron.atomistics.structure.atom as atom
+import pyiron.atomistics.structure.atoms as atoms
 
 __author__ = "Joerg Neugebauer"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \

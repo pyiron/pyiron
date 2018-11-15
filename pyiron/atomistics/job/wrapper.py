@@ -1,1 +1,1 @@
-from base.objects.job.wrapper import JobWrapper
+from pyiron.base.objects.job.wrapper import JobWrapper

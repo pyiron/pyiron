@@ -3,10 +3,10 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import posixpath
-from base.core.project.path import GenericPath
-from base.objects.generic.hdfio import ProjectHDFio
-from base.objects.job.core import JobCore
-from base.project import Project
+from pyiron.base.core.project.path import GenericPath
+from pyiron.base.objects.generic.hdfio import ProjectHDFio
+from pyiron.base.objects.job.core import JobCore
+from pyiron.base.project import Project
 
 """
 The JobPath class enables quick access to the HDF5 data file without loading the full object 

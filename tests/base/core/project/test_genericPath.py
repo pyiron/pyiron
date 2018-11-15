@@ -1,7 +1,7 @@
 import os
 import unittest
-from base.project import Project
-from base.core.project.path import GenericPath
+from pyiron.base.project import Project
+from pyiron.base.core.project.path import GenericPath
 
 
 class TestGenericPath(unittest.TestCase):

@@ -4,7 +4,7 @@
 
 from collections import OrderedDict
 import numpy as np
-from atomistics.structure.atoms import Atoms
+from pyiron.atomistics.structure.atoms import Atoms
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \

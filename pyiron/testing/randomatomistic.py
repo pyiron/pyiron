@@ -6,10 +6,10 @@ from __future__ import print_function
 import numpy as np
 import os
 import posixpath
-from base.objects.generic.parameters import GenericParameters
-from base.objects.job.generic import GenericJob
-from base.pyio.parser import Logstatus
-from atomistics.job.atomistic import AtomisticGenericJob
+from pyiron.base.objects.generic.parameters import GenericParameters
+from pyiron.base.objects.job.generic import GenericJob
+from pyiron.base.pyio.parser import Logstatus
+from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 
 """
 Example Job class for testing the pyiron classes  

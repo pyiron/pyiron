@@ -1,7 +1,7 @@
 import unittest
 import os
 from pyiron.project import Project
-from pyiron_vasp.vasp import Vasp
+from pyiron.vasp.vasp import Vasp
 
 
 class TestVaspImport(unittest.TestCase):

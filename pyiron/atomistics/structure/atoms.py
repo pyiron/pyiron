@@ -12,10 +12,10 @@ from six import string_types
 import warnings
 from ase.geometry import cellpar_to_cell, complete_cell
 
-from atomistics.structure.atom import Atom
-from atomistics.structure.sparse_list import SparseArray, SparseList
-from atomistics.structure.periodic_table import PeriodicTable, ChemicalElement, ElementColorDictionary
-from base.core.settings.generic import Settings
+from pyiron.atomistics.structure.atom import Atom
+from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
+from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement, ElementColorDictionary
+from pyiron.base.core.settings.generic import Settings
 from scipy.spatial import cKDTree
 
 try:
@@ -1045,25 +1045,25 @@ class Atoms(object):
 
     def analyse_ovito_cna_adaptive(self, mode='total'):
         import warnings
-        from atomistics.structure.ovito import analyse_ovito_cna_adaptive
+        from pyiron.atomistics.structure.ovito import analyse_ovito_cna_adaptive
         warnings.filterwarnings("ignore")
         return analyse_ovito_cna_adaptive(atoms=self, mode=mode)
 
     def analyse_ovito_centro_symmetry(atoms, num_neighbors=12):
         import warnings
-        from atomistics.structure.ovito import analyse_ovito_centro_symmetry
+        from pyiron.atomistics.structure.ovito import analyse_ovito_centro_symmetry
         warnings.filterwarnings("ignore")
         return analyse_ovito_centro_symmetry(atoms, num_neighbors=num_neighbors)
 
     def analyse_ovito_voronoi_volume(atoms):
         import warnings
-        from atomistics.structure.ovito import analyse_ovito_voronoi_volume
+        from pyiron.atomistics.structure.ovito import analyse_ovito_voronoi_volume
         warnings.filterwarnings("ignore")
         return analyse_ovito_voronoi_volume(atoms)
 
     def analyse_phonopy_equivalent_atoms(atoms):
         import warnings
-        from atomistics.structure.phonopy import analyse_phonopy_equivalent_atoms
+        from pyiron.atomistics.structure.phonopy import analyse_phonopy_equivalent_atoms
         warnings.filterwarnings("ignore")
         return analyse_phonopy_equivalent_atoms(atoms)
 
@@ -3245,7 +3245,7 @@ def ase_to_pyiron(ase_obj):
 
 def pyiron_to_ase(pyiron_obj):
     try:
-        from atomistics.structure.pyironase import ASEAtoms
+        from pyiron.atomistics.structure.pyironase import ASEAtoms
     except ImportError:
         raise ValueError('ASE package not yet installed')
     element_list = pyiron_obj.get_parent_symbols()

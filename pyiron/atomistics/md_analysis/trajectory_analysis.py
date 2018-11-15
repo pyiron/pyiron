@@ -4,9 +4,9 @@
 
 from __future__ import print_function, unicode_literals
 import numpy as np
-from atomistics.job.atomistic import AtomisticGenericJob
-from base.objects.job.path import JobPath
-from atomistics.structure.atoms import Atoms
+from pyiron.atomistics.job.atomistic import AtomisticGenericJob
+from pyiron.base.objects.job.path import JobPath
+from pyiron.atomistics.structure.atoms import Atoms
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"

@@ -1,5 +1,5 @@
 import unittest
-from base.objects.server.queue import Queue
+from pyiron.base.objects.server.queue import Queue
 
 
 class TestQue(unittest.TestCase):

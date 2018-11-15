@@ -10,11 +10,11 @@ import os
 # import sys
 import posixpath
 import psutil
-from base.core.settings.generic import Settings
-from base.objects.job.executable import Executable
-from base.objects.job.jobstatus import JobStatus
-from base.objects.job.core import JobCore
-from base.objects.server.generic import Server
+from pyiron.base.core.settings.generic import Settings
+from pyiron.base.objects.job.executable import Executable
+from pyiron.base.objects.job.jobstatus import JobStatus
+from pyiron.base.objects.job.core import JobCore
+from pyiron.base.objects.server.generic import Server
 import subprocess
 import shutil
 import warnings
@@ -1112,7 +1112,7 @@ class GenericJob(JobCore):
                 return f.write(arg + '\n')
 
             wl('import sys')
-            wl('from base.objects.job.wrapper import JobWrapper')
+            wl('from pyiron.base.objects.job.wrapper import JobWrapper')
             wl('')
             wl('debug = {0}'.format(debug))
             wl('job = JobWrapper(working_directory=\'{0}\','.format(self.project_hdf5.working_directory))

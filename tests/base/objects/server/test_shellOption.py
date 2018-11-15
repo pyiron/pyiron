@@ -1,5 +1,5 @@
 import unittest
-from base.objects.server.shelloption import ShellOption
+from pyiron.base.objects.server.shelloption import ShellOption
 
 
 class TestShellOption(unittest.TestCase):
