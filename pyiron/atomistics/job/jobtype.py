@@ -21,11 +21,27 @@ __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
 
-JOB_CLASS_DICT = {'GenericMaster': 'base.objects.job.master',
-                  'ListMaster': 'base.objects.job.list',
-                  'ParallelMaster': 'base.objects.job.parallel',
-                  'ScriptJob': 'base.objects.job.script',
-                  'SerialMasterBase': 'base.objects.job.serial'}
+JOB_CLASS_DICT = {'GenericMaster': 'pyiron.base.objects.job.master',
+                  'ListMaster': 'pyiron.base.objects.job.list',
+                  'ScriptJob': 'pyiron.base.objects.job.script',
+                  'SerialMaster': 'pyiron.atomistics.job.serial',
+                  'ParallelMaster': 'pyiron.atomistics.job.parallel',
+                  'Murnaghan': 'pyiron.atomistics.hamilton.murnaghan',
+                  'MurnaghanInt': 'pyiron.atomistics.hamilton.murninterface',
+                  'PhonopyJob': 'pyiron.atomistics.hamilton.phonopy',
+                  'ConvergenceVolume': 'pyiron.atomistics.hamilton.convergence_volume',
+                  'StructureContainer': 'pyiron.atomistics.structure.structurecontainer',
+                  'ConvergenceEncutParallel': 'pyiron.dft.convergence_encut_parallel',
+                  'ConvergenceEncutSerial': 'pyiron.dft.convergence_encut_serial',
+                  'ConvergenceKpointParallel': 'pyiron.dft.convergence_kpoint_parallel',
+                  'MurnaghanDFT': 'pyiron.dft.murnaghan_dft',
+                  'Lammps': 'pyiron.lammps.lammps',
+                  'LammpsInt': 'pyiron.lammps.lammpsinterface',
+                  'AtomisticExampleJob': 'pyiron.testing.randomatomistic',
+                  'ExampleJob': 'pyiron.testing.randomatomistic',
+                  'Vasp': 'pyiron.vasp.vasp',
+                  'VaspInt': 'pyiron.vasp.vaspinterface',
+}
 
 for d in [{name: obj.__module__
            for name, obj in inspect.getmembers(importlib.import_module(name))
