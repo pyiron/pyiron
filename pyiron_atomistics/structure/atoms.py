@@ -1459,6 +1459,41 @@ class Atoms(object):
             raise AssertionError()
         return shell_dict
 
+    def get_shell_matrix(self, shell, neigh_list=None, id_list=None, restraint_matrix=None, radius=None, max_num_neighbors=100):
+        """
+        
+        Args:
+            neigh_list: user defined get_neighbors (recommended if atoms are displaced from the ideal positions) 
+            id_list: cf. get_neighbors
+            radius: cf. get_neighbors
+            max_num_neighbors: cf. get_neighbors
+            restraint_matrix: NxN matrix with True or False, where False will remove the entries.
+                              If an integer is given the sum of the chemical indices corresponding to the number will
+                              be set to True and the rest to False
+
+        Returns:
+            NxN matrix with 1 for the pairs of atoms in the given shell
+
+        """
+        if not isinstance(shell, int) or not shell>0:
+            raise ValueError("Parameter 'shell' must be an integer greater than 0")
+        if neigh_list is None:
+            neigh_list = self.get_neighbors(radius=radius,
+                                            num_neighbors=max_num_neighbors,
+                                            id_list=id_list)
+        Natom = len(neigh_list.shells)
+        if restraint_matrix is None:
+            restraint_matrix = (np.ones((Natom, Natom))==1)
+        elif type(restraint_matrix)==list and len(restraint_matrix)==2:
+            restraint_matrix = np.outer(1*(self.get_chemical_symbols()==restraint_matrix[0]),
+                                        1*(self.get_chemical_symbols()==restraint_matrix[1]))
+            restraint_matrix = ((restraint_matrix+restraint_matrix.transpose())>0)
+        shell_matrix = np.zeros((Natom,Natom))
+        for ii, ss in enumerate(neigh_list.shells):
+            shell_matrix[ii][neigh_list.indices[ii][ss==np.array(shell)]] = 1
+        shell_matrix[restraint_matrix==False] = 0
+        return shell_matrix
+
     def get_shell_radius(self, shell=1, id_list=None):
         """
         
@@ -2302,6 +2337,12 @@ class Atoms(object):
             return distance[0]
 
         return d_len[0]
+
+    def get_distance_matrix(self, mic=True, vector=False):
+        """
+        Return distances between all atoms in a matrix. cf. get_distance
+        """
+        return np.array([np.array([self.get_distance(i, j, mic, vector) for i in range(len(self))]) for j in range(len(self))])
 
     def get_constraint(self):
         if 'selective_dynamics' in self._tag_list._lists.keys():
