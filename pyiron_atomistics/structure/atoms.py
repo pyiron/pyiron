@@ -1490,7 +1490,7 @@ class Atoms(object):
             restraint_matrix = ((restraint_matrix+restraint_matrix.transpose())>0)
         shell_matrix = np.zeros((Natom,Natom))
         for ii, ss in enumerate(neigh_list.shells):
-            shell_matrix[ii][neigh_list.indices[ii, ss==np.array(shell)]] = 1
+            shell_matrix[ii][neigh_list.indices[ii][ss==np.array(shell)]] = 1
         shell_matrix[restraint_matrix==False] = 0
         return shell_matrix
 
