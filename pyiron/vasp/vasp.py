@@ -47,7 +47,7 @@ class Vasp(GenericDFTJob):
         job_name (str): Name of the job
 
     Attributes:
-        input (pyiron_vasp.vasp.Input): Instance which handles the input
+        input (pyiron.vasp.vasp.Input): Instance which handles the input
 
     Examples:
         Let's say you need to run a vasp simulation where you would like to control the input parameters manually. To
@@ -396,7 +396,7 @@ class Vasp(GenericDFTJob):
         Stores the instance attributes into the hdf5 file
 
         Args:
-            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
+            hdf (pyiron.base.objects.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
             group_name (str): The name of the group under which the data must be stored as
 
         """
@@ -410,7 +410,7 @@ class Vasp(GenericDFTJob):
         Recreates instance from the hdf5 file
 
         Args:
-            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): The HDF file/path to read the data from
+            hdf (pyiron.base.objects.generic.hdfio.ProjectHDFio): The HDF file/path to read the data from
             group_name (str): The name of the group under which the data must be stored as
 
         """
@@ -434,7 +434,7 @@ class Vasp(GenericDFTJob):
             filename (str): Path to the CONTCAR file in VASP
 
         Returns:
-            pyiron_atomistics.structure.atoms.Atoms: The final structure
+            pyiron.atomistics.structure.atoms.Atoms: The final structure
         """
         filename = posixpath.join(self.working_directory, filename)
         input_structure = self.structure.copy()
@@ -733,7 +733,7 @@ class Vasp(GenericDFTJob):
             iteration_step (int): Step for which the structure is requested
 
         Returns:
-            pyiron_atomistics.structure.atoms.Atoms: The required structure
+            pyiron.atomistics.structure.atoms.Atoms: The required structure
         """
         if not (self.structure is not None):
             raise AssertionError()
@@ -950,7 +950,7 @@ class Vasp(GenericDFTJob):
         (Sets ICHARG = 1)
 
         Args:
-            old_vasp_job (pyiron_vasp.vasp.Vasp): Finished Vasp job instance
+            old_vasp_job (pyiron.vasp.vasp.Vasp): Finished Vasp job instance
 
         """
         self.copy_file(old_vasp_job)
@@ -962,7 +962,7 @@ class Vasp(GenericDFTJob):
         (Sets ICHARG = 1)
 
         Args:
-            (vasp.vasp.Vasp): Finished Vasp job instance
+            (pyiron.vasp.vasp.Vasp): Finished Vasp job instance
 
         """
         self.copy_file(old_vasp_job, filename="WAVECAR")
@@ -973,7 +973,7 @@ class Vasp(GenericDFTJob):
         Copy a file from a previous vasp job
 
         Args:
-            old_vasp_job (pyiron_vasp.vasp.Vasp): Finished Vasp job instance
+            old_vasp_job (pyiron.vasp.vasp.Vasp): Finished Vasp job instance
             filename (str): Destination to copy the file
 
         """
@@ -1017,7 +1017,7 @@ class Vasp(GenericDFTJob):
         Lists all the possible POTCAR files for the elements in the structure depending on the XC functional
 
         Returns:
-            pyiron_vasp.potential.VaspPotentialFile: A pandas datafrome like object
+            pyiron.vasp.potential.VaspPotentialFile: A pandas datafrome like object
         """
         if self.structure is None:
             raise ValueError("Can't list potentials unless a structure is set")
@@ -1080,7 +1080,7 @@ class Input:
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron.base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
 
@@ -1287,7 +1287,7 @@ class Output:
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron.base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
         with hdf.open("output") as hdf5_output:
@@ -1369,7 +1369,7 @@ class GenericOutput:
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron.base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
         with hdf.open("generic") as hdf_go:
@@ -1420,7 +1420,7 @@ class DFTOutput:
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron_base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron.base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
         with hdf.open("dft") as hdf_dft:

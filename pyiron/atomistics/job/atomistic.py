@@ -422,7 +422,7 @@ class Trajectory(object):
 
     Args:
         positions (numpy.ndarray): The array of the trajectory in cartesian coordinates
-        structure (pyiron_atomistics.structure.atoms.Atoms): The initial structure instance from which the species info
+        structure (pyiron.atomistics.structure.atoms.Atoms): The initial structure instance from which the species info
                                                              is derived
         center_of_mass (bool): False (default) if the specified positions are w.r.t. the origin
         cells (numpy.ndarray): Optional argument of the cell shape at every time step (Nx3x3 array) when the volume

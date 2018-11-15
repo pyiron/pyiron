@@ -28,7 +28,7 @@ def read_atoms(filename='CONTCAR', return_velocities=False, species_list=None, s
         species_from_potcar (bool): True if the species list should be read from the POTCAR file in the same directory
 
     Returns:
-        pyiron_atomistics.structure.atoms.Atoms: The generated structure object
+        pyiron.atomistics.structure.atoms.Atoms: The generated structure object
 
     """
     directory = "/".join(filename.split("/")[0:-1])
@@ -72,7 +72,7 @@ def write_poscar(structure, filename="POSCAR", write_species=True, cartesian=Tru
     Writes a POSCAR type file from a structure object
 
     Args:
-        structure (pyiron_atomistics.structure.atoms.Atoms): The structure instance to be written to the POSCAR format
+        structure (pyiron.atomistics.structure.atoms.Atoms): The structure instance to be written to the POSCAR format
         filename (str): Output filename
         write_species (bool): True if the species should be written to the file
         cartesian (bool): True if the positions are written in Cartesian coordinates
@@ -129,7 +129,7 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
         species_list (list/numpy.ndarray): A list of species of the atoms
 
     Returns:
-        pyiron_atomistics.structure.atoms.Atoms: The required structure object
+        pyiron.atomistics.structure.atoms.Atoms: The required structure object
 
     """
     string = [s.strip() for s in string]
@@ -226,7 +226,7 @@ def _dict_to_atoms(atoms_dict, species_list=None, read_from_first_line=False):
         read_from_first_line (bool): True if we are to read the species information from the first line in the file
 
     Returns:
-        pyiron_atomistics.structure.atoms.Atoms: The required structure object
+        pyiron.atomistics.structure.atoms.Atoms: The required structure object
     """
     is_absolute = not (atoms_dict["relative"])
     positions = atoms_dict["positions"]
@@ -277,7 +277,7 @@ def vasp_sorter(structure):
     Routine to sort the indices of a structure as it would be when written to a POSCAR file
 
     Args:
-        structure (pyiron_atomistics.structure.atoms.Atoms): The structure whose indices need to be sorted
+        structure (pyiron.atomistics.structure.atoms.Atoms): The structure whose indices need to be sorted
 
     Returns:
         list: A list of indices which is sorted by the corresponding species for writing to POSCAR

@@ -360,7 +360,7 @@ class Project(ProjectCore):
             species (list): List of species
 
         Returns:
-            pyiron_atomistics.structure.atoms.Atoms: The required structure instance
+            pyiron.atomistics.structure.atoms.Atoms: The required structure instance
 
         """
         return Atoms(symbols=symbols, positions=positions, numbers=numbers, tags=tags, momenta=momenta, masses=masses,

@@ -429,7 +429,7 @@ class Atoms(object):
         Returns a copy of the instance
 
         Returns:
-            pyiron_atomistics.structure.atoms.Atoms: A copy of the instance
+            pyiron.atomistics.structure.atoms.Atoms: A copy of the instance
 
         """
         return self.__copy__()
@@ -439,7 +439,7 @@ class Atoms(object):
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron_base.objects.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
+            hdf (pyiron.base.objects.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
             group_name (str):
                 Group name with which the object should be stored. This same name should be used to retrieve the object
 
@@ -482,7 +482,7 @@ class Atoms(object):
         Retrieve the object from a HDF5 file
 
         Args:
-            hdf (pyiron_base.objects.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
+            hdf (pyiron.base.objects.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
             group_name (str): Group name from which the Atoms object is retreived.
 
         Returns:
@@ -855,7 +855,7 @@ class Atoms(object):
         Returns the basis with all user defined/special elements as the it's parent
 
         Returns:
-            pyiron_atomistics.structure.atoms.Atoms: Structure without any user defined elements
+            pyiron.atomistics.structure.atoms.Atoms: Structure without any user defined elements
 
         """
         parent_basis = copy(self)
@@ -1302,7 +1302,7 @@ class Atoms(object):
 
         Returns:
 
-            pyiron_atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor indices, distances
+            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor indices, distances
             and vectors
 
         """
