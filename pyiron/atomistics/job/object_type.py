@@ -17,7 +17,7 @@ __date__ = "Sep 1, 2017"
 
 s = Settings()
 
-OBJECT_CLASS_DICT = {'ThermoBulk': 'pyiron_mpie_thermodynamics.thermo_bulk'}
+OBJECT_CLASS_DICT = {'ThermoBulk': 'pyiron.atomistics.thermodynamics.thermo_bulk'}
 
 
 class ObjectTypeChoice(object):
