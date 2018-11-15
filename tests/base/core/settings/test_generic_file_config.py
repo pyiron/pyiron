@@ -7,7 +7,7 @@ import unittest
 
 class TestConfigSettingsStatic(unittest.TestCase):
     def setUp(self):
-        self.resource_path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../static')).replace('\\', '/')
+        self.resource_path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../../static')).replace('\\', '/')
         self.project_path = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
         self.file_config = Settings()
 

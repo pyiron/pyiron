@@ -14,10 +14,10 @@ class TestOutcar(unittest.TestCase):
         self.outcar_parser = Outcar()
         # file_list = ["OUTCAR_1", "OUTCAR_2", "OUTCAR_3", "OUTCAR_4", "OUTCAR_5", "OUTCAR_6", "OUTCAR_7"]
         file_list = os.listdir(os.path.abspath(os.path.join(self.file_location,
-                                                            "static/vasp_test_files/outcar_samples")))
+                                                            "../static/vasp_test_files/outcar_samples")))
         for f in file_list:
             direc = os.path.abspath(os.path.join(self.file_location,
-                                                 "static/vasp_test_files/outcar_samples"))
+                                                 "../static/vasp_test_files/outcar_samples"))
             filename = posixpath.join(direc, f)
             self.file_list.append(filename)
 

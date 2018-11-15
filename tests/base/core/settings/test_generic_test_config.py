@@ -8,8 +8,8 @@ class TestConfigSettingsStatic(unittest.TestCase):
     def setUp(self):
         self.resource_path = Path(__file__).expanduser().resolve().absolute().as_posix().replace('\\', '/')
         self.test_config = Settings(config={'sql_file': 'sqlite.db',
-                                            'project_paths': os.path.join(self.resource_path, '../../..'),
-                                            'resource_paths': os.path.join(self.resource_path, '../../..')})
+                                            'project_paths': os.path.join(self.resource_path, '../../../..'),
+                                            'resource_paths': os.path.join(self.resource_path, '../../../..')})
 
     # def test_db_connection_name(self):
     #     self.assertEqual(self.test_config.db_connection_name, 'test')

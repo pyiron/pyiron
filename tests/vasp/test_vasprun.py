@@ -18,7 +18,7 @@ class TestVasprun(unittest.TestCase):
     def setUp(self):
         self.file_location = os.path.dirname(os.path.abspath(__file__))
         self.vp_list = list()
-        direc = os.path.join(self.file_location, "static/vasp_test_files/vasprun_samples")
+        direc = os.path.join(self.file_location, "../static/vasp_test_files/vasprun_samples")
         file_list = sorted(os.listdir(direc))
         del file_list[file_list.index("vasprun_spoilt.xml")]
         self.num_species = [3, 1, 2, 2, 3, 4]

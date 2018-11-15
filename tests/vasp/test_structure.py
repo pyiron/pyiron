@@ -15,7 +15,7 @@ class TestVaspStructure(unittest.TestCase):
 
     def setUp(self):
         self.file_location = os.path.dirname(os.path.abspath(__file__))
-        poscar_directory = os.path.join(self.file_location, "static/vasp_test_files/poscar_samples")
+        poscar_directory = os.path.join(self.file_location, "../static/vasp_test_files/poscar_samples")
         file_list = os.listdir(poscar_directory)
         self.file_list = [posixpath.join(poscar_directory, f) for f in file_list]
         atom_numbers = np.random.randint(low=1, high=99, size=(1, 3)).flatten()

@@ -15,8 +15,8 @@ class TestAtoms(unittest.TestCase):
     def tearDownClass(cls):
         if sys.version_info[0] >= 3:
             file_location = os.path.dirname(os.path.abspath(__file__))
-            if os.path.isfile(os.path.join(file_location, "../static/atomistics/test_hdf")):
-                os.remove(os.path.join(file_location, "../static/atomistics/test_hdf"))
+            if os.path.isfile(os.path.join(file_location, "../../static/atomistics/test_hdf")):
+                os.remove(os.path.join(file_location, "../../static/atomistics/test_hdf"))
 
     def setUp(self):
         pass
@@ -152,7 +152,7 @@ class TestAtoms(unittest.TestCase):
 
     def test_to_hdf(self):
         if sys.version_info[0] >= 3:
-            filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../static/atomistics/test_hdf")
+            filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../static/atomistics/test_hdf")
             abs_filename = os.path.abspath(filename)
             hdf_obj = FileHDFio(abs_filename)
             pos, cell = generate_fcc_lattice()
@@ -165,7 +165,7 @@ class TestAtoms(unittest.TestCase):
 
     def test_from_hdf(self):
         if sys.version_info[0] >= 3:
-            filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../static/atomistics/test_hdf")
+            filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../static/atomistics/test_hdf")
             abs_filename = os.path.abspath(filename)
             hdf_obj = FileHDFio(abs_filename)
             pos, cell = generate_fcc_lattice()

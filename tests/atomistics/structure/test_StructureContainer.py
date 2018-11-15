@@ -10,7 +10,8 @@ class TestStructureContainer(unittest.TestCase):
         self.project = Project(os.path.join(self.file_location, 'structure_testing'))
         self.basis = self.project.create_structure(element="Fe", bravais_basis='fcc',
                                                    lattice_constant=self.lattice_constant)
-        self.structure_container = self.project.create_job("StructureContainer", "structure_container")
+        self.structure_container = self.project.create_job(self.project.job_type.StructureContainer,
+                                                           "structure_container")
         self.structure_container.structure = self.basis
 
     @classmethod
