@@ -39,7 +39,7 @@ setup(
                       'numpy',
                       'pandas',
                       'pathlib2',
-                      'phonopy'
+                      'phonopy',
                       'psutil',
                       'six',
                       'sqlalchemy',
