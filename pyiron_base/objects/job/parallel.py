@@ -6,6 +6,7 @@ from __future__ import print_function
 from collections import OrderedDict
 from datetime import datetime
 import pandas
+import time
 from pyiron_base.objects.job.generic import GenericJob
 from pyiron_base.objects.job.master import GenericMaster
 from pyiron_base.objects.job.submissionstatus import SubmissionStatus
@@ -364,6 +365,9 @@ class ParallelMaster(GenericMaster):
         if self.is_finished():
             self.status.collect = True
             self.run()
+        elif self.status.busy:
+            self.status.refresh = True
+            self._run_if_refresh()
 
     def iter_jobs(self, convert_to_object=True):
         """
@@ -482,10 +486,16 @@ class ParallelMaster(GenericMaster):
                 if ham.server.run_mode.thread:
                     job_lst.append(ham._process)
                 ham = next(self._job_generator, None)
+                if ham is None and self.server.run_mode.modal:
+                    while ham is None:
+                        time.sleep(10)
+                        ham = next(self._job_generator, None)
         else:
             self.refresh_job_status()
         process_lst = [process.communicate() for process in job_lst if process]
-        self.status.suspended = True
+        self.refresh_job_status()
+        if self.status.running:
+            self.status.suspended = True
 
     def _create_child_job(self, job_name):
         """
@@ -605,8 +615,8 @@ class JobGenerator(object):
         if len(self.parameter_list_cached) > self._childcounter:
             current_paramenter = self.parameter_list_cached[self._childcounter]
             job = self._job._create_child_job(self.job_name(parameter=current_paramenter))
-            self._childcounter += 1
             if job is not None:
+                self._childcounter += 1
                 job = self.modify_job(job=job, parameter=current_paramenter)
                 return job
             else:
