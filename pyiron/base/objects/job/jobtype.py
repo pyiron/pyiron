@@ -25,6 +25,7 @@ __date__ = "Sep 1, 2017"
 JOB_CLASS_DICT = {'GenericMaster': 'pyiron.base.objects.job.master',
                   'ListMaster': 'pyiron.base.objects.job.list',
                   'ScriptJob': 'pyiron.base.objects.job.script',
+                  'SerialMasterBase': 'pyiron.base.objects.job.serial',
                   'SerialMaster': 'pyiron.atomistics.job.serial',
                   'ParallelMaster': 'pyiron.atomistics.job.parallel',
                   'Murnaghan': 'pyiron.atomistics.hamilton.murnaghan',

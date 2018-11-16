@@ -220,7 +220,7 @@ class ExampleJob(GenericJob):
         Returns:
             int: job ID
         """
-        from testing.executable import ExampleExecutable
+        from pyiron.testing.executable import ExampleExecutable
         self.status.running = True
         alat, count, energy = ExampleExecutable().run_lib(self.input)
         self._interactive_cache['alat'].append(alat)
