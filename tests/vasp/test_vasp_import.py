@@ -21,7 +21,7 @@ class TestVaspImport(unittest.TestCase):
         self.project.import_from_path(path=os.path.join(self.file_location,
                                                         '../static/vasp_test_files/full_job_sample'),
                                       recursive=False)
-        ham = self.project.load(1)
+        ham = self.project.load('full_job_sample')
         self.assertTrue(isinstance(ham, Vasp))
 
 
