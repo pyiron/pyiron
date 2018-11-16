@@ -26,7 +26,7 @@ class TestExampleJob(unittest.TestCase):
         ham_non_modal.server.run_mode.non_modal = True
         ham_non_modal.run()
         self.assertFalse(ham_non_modal.status.finished)
-        self.project.wait_for_job(ham_non_modal, interval_in_s=5, max_iterations=3)
+        self.project.wait_for_job(ham_non_modal, interval_in_s=5, max_iterations=10)
         self.assertTrue(ham_non_modal.status.finished)
 
         lines = self.project['job_non_modal/input.inp']
