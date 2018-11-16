@@ -1058,7 +1058,7 @@ class ProjectHDFio(FileHDFio):
             class_name = class_name.split('.')[-1][:-2]
             if class_name in self._project.job_type.job_class_dict.keys():
                 import_path = self._project.job_type.job_class_dict[class_name]
-            exec("from {} import {}".format(import_path, class_name))
+                exec("from {} import {}".format(import_path, class_name))
         return eval(class_name + "(**qwargs)")
 
     def to_object(self, object_type=None, **qwargs):
