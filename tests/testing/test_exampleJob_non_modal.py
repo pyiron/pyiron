@@ -21,12 +21,12 @@ class TestExampleJob(unittest.TestCase):
         project.remove(enable=True)
 
     def test_non_modal_run(self):
-        ham_non_modal = self.project.create_job("ExampleJob", "job_non_modal")
+        ham_non_modal = self.project.create_job(self.project.job_type.ExampleJob, "job_non_modal")
         ham_non_modal.input['count'] = self.count
         ham_non_modal.server.run_mode.non_modal = True
         ham_non_modal.run()
         self.assertFalse(ham_non_modal.status.finished)
-        self.project.wait_for_job(ham_non_modal, interval_in_s=5, max_iterations=10)
+        self.project.wait_for_job(ham_non_modal, interval_in_s=5, max_iterations=50)
         self.assertTrue(ham_non_modal.status.finished)
 
         lines = self.project['job_non_modal/input.inp']
