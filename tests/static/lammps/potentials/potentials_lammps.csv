@@ -1,17 +1,11 @@
 ,Config,Filename,Model,Name,Species
-0,"['pair_style eam/fs \n', 'pair_coeff * * Fe.eam.fs Fe\n']",['nist-potentials/2017--Wang-P-Xu-S-Liu-J-Li-X-Wei-Y-Wang-H-Gao-H-Yang-Y--Fe/Fe.eam.fs'],EAM,Fe_eam_fs,['Fe']
-0,"['pair_style eam/fs \n', 'pair_coeff * * Al-Fe.eam.fs Al Fe\n']",['nist-potentials/Al-Fe-MIM/Al-Fe.eam.fs'],EAM,Al_Fe_eam_fs,"['Al', 'Fe']"
-0,"['pair_style eam/alloy \n', 'pair_coeff * * mg-al-set.eam.alloy Mg Al\n']",['nist-potentials/Al-Mg-LOARH/mg-al-set.eam.alloy'],EAM,mg_al_set_eam_alloy,"['Mg', 'Al']"
-0,"['pair_style eam/fs \n', 'pair_coeff * * Al-Mg.eam.fs Al Mg\n']",['nist-potentials/Al-Mg-MIM/Al-Mg.eam.fs'],EAM,Al_Mg_eam_fs,"['Al', 'Mg']"
-0,"['pair_style eam/fs \n', 'pair_coeff * * Fe.eam.fs Fe\n']",['nist-potentials/Fe-ATVF/Fe.eam.fs'],EAM,Fe_eam_fs,['Fe']
-0,"['pair_style eam/alloy \n', 'pair_coeff * * FeCuNi.eam.alloy Fe Cu Ni\n']",['nist-potentials/Fe-Cu-Ni-GB/FeCuNi.eam.alloy'],EAM,FeCuNi_eam_alloy,"['Fe', 'Cu', 'Ni']"
-0,"['pair_style eam/fs \n', 'pair_coeff * * Fe_2.eam.fs Fe\n']",['nist-potentials/Fe-MIM/Fe_2.eam.fs'],EAM,Fe_2_eam_fs,['Fe']
-0,"['pair_style eam/fs \n', 'pair_coeff * * Fe_5.eam.fs Fe\n']",['nist-potentials/Fe-MIM/Fe_5.eam.fs'],EAM,Fe_5_eam_fs,['Fe']
-0,"['pair_style eam/fs \n', 'pair_coeff * * Fe_2.eam.fs Fe\n']",['nist-potentials/Fe-MIM2/Fe_2.eam.fs'],EAM,Fe_2_eam_fs,['Fe']
-0,"['pair_style eam/alloy \n', 'pair_coeff * * FeNiCr_Bonny_2013_ptDef.eam.alloy Fe Ni Cr\n']",['nist-potentials/Fe-Ni-Cr-GB-2013/FeNiCr_Bonny_2013_ptDef.eam.alloy'],EAM,FeNiCr_Bonny_2013_ptDef_eam_alloy,"['Fe', 'Ni', 'Cr']"
-0,"['pair_style eam/alloy \n', 'pair_coeff * * FeNiCr.eam.alloy Fe Ni Cr\n']",['nist-potentials/Fe-Ni-Cr-GB/FeNiCr.eam.alloy'],EAM,FeNiCr_eam_alloy,"['Fe', 'Ni', 'Cr']"
-0,"['pair_style eam/alloy \n', 'pair_coeff * * Fe-Ni.eam.alloy Fe Ni\n']",['nist-potentials/Fe-Ni-GB/Fe-Ni.eam.alloy'],EAM,Fe_Ni_eam_alloy,"['Fe', 'Ni']"
-0,"['pair_style eam/fs \n', 'pair_coeff * * Fe-P.eam.fs Fe P\n']",['nist-potentials/Fe-P-MIM/Fe-P.eam.fs'],EAM,Fe_P_eam_fs,"['Fe', 'P']"
-0,"['pair_style eam/alloy \n', 'pair_coeff * * Fe_Mishin2006.eam.alloy Fe\n']",['nist-potentials/Fe-YM/Fe_Mishin2006.eam.alloy'],EAM,Fe_Mishin2006_eam_alloy,['Fe']
-0,"['pair_style eam/fs \n', 'pair_coeff * * Fe-C_Hepburn_Ackland.eam.fs Fe C\n']",['nist-potentials/FeC-GJA/Fe-C_Hepburn_Ackland.eam.fs'],EAM,Fe_C_Hepburn_Ackland_eam_fs,"['Fe', 'C']"
-0,"['pair_style eam/fs \n', 'pair_coeff * * V-Fe.eam.fs V Fe\n']",['nist-potentials/V-Fe-MIM/V-Fe.eam.fs'],EAM,V_Fe_eam_fs,"['V', 'Fe']"
+0,"['pair_style eam/fs \n', 'pair_coeff * * Al-Mg.eam.fs Al Mg\n']",['nist-potentials/Al-Mg-MIM/Al-Mg.eam.fs'],EAM,Al_Mg_Mendelev_eam,"['Al', 'Mg']"
+0,"['pair_style eam/alloy \n', 'pair_coeff * * Zope-Ti-Al-2003.eam.alloy Ti Al\n']",['nist-potentials/Ti-Al-RRZ03/Zope-Ti-Al-2003.eam.alloy'],EAM,Zope_Ti_Al_2003_eam,"['Ti', 'Al']"
+0,"['pair_style eam/alloy \n', 'pair_coeff * * NiAlH_jea.eam.alloy Ni Al H\n']",['nist-potentials/Ni-Al-H-AMB/NiAlH_jea.eam.alloy'],EAM,Al_H_Ni_Angelo_eam,"['Ni', 'Al', 'H']"
+0,"['pair_style eam/fs \n', 'pair_coeff * * Fe-C_Hepburn_Ackland.eam.fs Fe C\n']",['nist-potentials/FeC-GJA/Fe-C_Hepburn_Ackland.eam.fs'],EAM,Fe_C_Hepburn_Ackland_eam,"['Fe', 'C']"
+0,"['pair_style eam/fs \n', 'pair_coeff * * Mg1.eam.fs Mg\n']",['nist-potentials/Mg-Mendelev-2015/Mg1.eam.fs'],EAM,Mg_Mendelev_eam,['Mg']
+0,"['pair_style eam/fs \n', 'pair_coeff * * Na_MendelevM_2014.eam.fs Na\n']",['nist-potentials/Na-MIM/Na_MendelevM_2014.eam.fs'],EAM,Na_Mendelev_eam,['Na']
+0,"['pair_style eam/fs \n', 'pair_coeff * * Mendelev_Cu2_2012.eam.fs Cu\n']",['nist-potentials/Cu-MIM/Mendelev_Cu2_2012.eam.fs'],EAM,Cu_Mendelev_eam,['Cu']
+0,"['# @potential_species H_O  ### species in potential\n', '# W.L. Jorgensen et.al., The Journal of Chemical Physics 79, 926 (1983); https://doi.org/10.1063/1.445869\n', '#\n', '\n', 'units      real\n', 'dimension  3\n', 'atom_style full\n', '\n', '# create groups ###\n', 'group O type 2\n', 'group H type 1\n', '\n', '## set charges - beside manually ###\n', 'set group O charge -0.830\n', 'set group H charge 0.415\n', '\n', '### TIP3P Potential Parameters ###\n', 'pair_style lj/cut/coul/long 10.0\n', 'pair_coeff * * 0.0 0.0 \n', 'pair_coeff 2 2 0.102 3.188 \n', 'bond_style  harmonic\n', 'bond_coeff  1 450 0.9572\n', 'angle_style harmonic\n', 'angle_coeff 1 55 104.52\n', 'kspace_style pppm 1.0e-5\n', '\n']",['water_potentials/H2_O_tip3p.lmp'],TIP3P,H2O_tip3p,"['H', 'O']"
+0,"['# @potential_species H_O  ### species in potential\n', '# W.L. Jorgensen, The Journal of Chemical Physics 79, 926 (1983); https://doi.org/10.1063/1.445869 \n', '#\n', '\n', 'units      real\n', 'dimension  3\n', 'atom_style full\n', '\n', '# create groups ###\n', 'group O type 2\n', 'group H type 1\n', '\n', '## set charges - beside manually ###\n', 'set group O charge -0.830\n', 'set group H charge 0.415\n', '\n', '### TIP3P Potential Parameters ###\n', 'pair_style lj/cut/coul/long 10.0\n', 'pair_coeff * * 0.000 0.000 \n', 'pair_coeff 2 2 0.102 3.188 \n', 'bond_style  harmonic\n', 'bond_coeff  1 450 0.9572\n', 'angle_style harmonic\n', 'angle_coeff 1 55 104.52\n', 'kspace_style pppm 1.0e-5   # final npt relaxation\n', 'kspace_modify slab 3.0\n', '\n', '\n']",['water_potentials/H2_O_tip3p_slab.lmp'],TIP3P,H2O_tip3p_slab,"['H', 'O']"
+0,"['pair_style eam/alloy \n', 'pair_coeff * * Fe-C-Bec07.eam Fe C\n']",['becquart_potential/Fe-C-Bec07.eam'],EAM,Fe_C_Becquart_eam,"['Fe', 'C']"

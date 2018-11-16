@@ -10,23 +10,10 @@ class TestOpenKimPotential(unittest.TestCase):
         self.potential_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../static/lammps/potentials')
 
     def test_find(self):
-        Fe_lst = ['Al_Fe_eam_fs',
-                  'FeCuNi_eam_alloy',
-                  'FeNiCr_Bonny_2013_ptDef_eam_alloy',
-                  'FeNiCr_eam_alloy',
-                  'Fe_2_eam_fs',
-                  'Fe_2_eam_fs',
-                  'Fe_5_eam_fs',
-                  'Fe_C_Hepburn_Ackland_eam_fs',
-                  'Fe_Mishin2006_eam_alloy',
-                  'Fe_Ni_eam_alloy',
-                  'Fe_P_eam_fs',
-                  'Fe_eam_fs',
-                  'Fe_eam_fs',
-                  'V_Fe_eam_fs']
+        Fe_lst = ['Fe_C_Becquart_eam', 'Fe_C_Hepburn_Ackland_eam']
 
         self.assertEqual(sorted(list(self.kim.find("Fe")['Name'])), sorted(Fe_lst))
-        AlMg_lst = ['Al_Mg_eam_fs', 'mg_al_set_eam_alloy']
+        AlMg_lst = ['Al_Mg_Mendelev_eam']
         self.assertEqual(sorted(list(self.kim.find({"Al", "Mg"})['Name'])), AlMg_lst)
 
     def test_pythonic_functions(self):
