@@ -18,6 +18,7 @@ def convergence_goal(self, **qwargs):
     ham_next = ham_prev.restart(job_name=job_name)
     return ham_next
 
+
 class TestMurnaghan(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
