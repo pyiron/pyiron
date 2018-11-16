@@ -306,7 +306,7 @@ class AtomisticGenericJob(GenericJobCore):
             snapshot_indices (list/numpy.ndarray): The snapshots for which the trajectory should be generated
 
         Returns:
-            pyiron_atomistics.job.atomistic.Trajectory: Trajectory instance
+            pyiron.atomistics.job.atomistic.Trajectory: Trajectory instance
 
         """
         if snapshot_indices is None:
