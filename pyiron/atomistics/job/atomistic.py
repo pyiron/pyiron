@@ -296,18 +296,32 @@ class AtomisticGenericJob(GenericJobCore):
             new_ham._generic_input['structure'] = 'continue_final'
         return new_ham
 
-    def trajectory(self, stride=1, center_of_mass=False):
+    def trajectory(self, stride=1, center_of_mass=False, atom_indices=None, snapshot_indices=None):
         """
 
         Args:
-            stride:
-            center_of_mass:
+            stride (int): The trajectories are generated with every 'stride' steps
+            center_of_mass (list/numpy.ndarray): The center of mass
+            atom_indices (list/numpy.ndarray): The atom indices for which the trajectory should be generated
+            snapshot_indices (list/numpy.ndarray): The snapshots for which the trajectory should be generated
 
         Returns:
+            pyiron_atomistics.job.atomistic.Trajectory: Trajectory instance
 
         """
-        return Trajectory(self['output/generic/positions'][::stride], self.structure.get_parent_basis(),
-                          center_of_mass=center_of_mass, cells=self['output/generic/cells'][::stride])
+        if snapshot_indices is None:
+            positions = self['output/generic/positions']
+            cells = self['output/generic/cells']
+        else:
+            positions = self['output/generic/positions'][snapshot_indices]
+            cells = self['output/generic/cells'][snapshot_indices]
+        if atom_indices is None:
+            return Trajectory(positions[::stride], self.structure.get_parent_basis(),
+                              center_of_mass=center_of_mass, cells=cells[::stride])
+        else:
+            return Trajectory(positions[::stride, atom_indices, :],
+                              self.structure.get_parent_basis(), center_of_mass=center_of_mass,
+                              cells=cells[::stride])
 
     def write_traj(self, filename, format=None, parallel=True, append=False, stride=1, center_of_mass=False, **kwargs):
         """
