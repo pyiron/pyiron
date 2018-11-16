@@ -72,7 +72,7 @@ class TestSerialMaster(unittest.TestCase):
         job_ser.set_goal(convergence_goal=convergence_goal, eps=0.2)
         job_ser.run()
         self.assertFalse(job_ser.status.finished)
-        self.project.wait_for_job(job_ser, interval_in_s=5, max_iterations=200)
+        self.project.wait_for_job(job_ser, interval_in_s=5, max_iterations=50)
         self.assertTrue(job_ser.status.finished)
         self.assertTrue(len(job_ser) > 0)
         job_ser.remove()
