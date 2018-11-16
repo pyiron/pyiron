@@ -315,7 +315,7 @@ class SerialMasterBase(GenericMaster):
             self.status.running = True
             self._logger.info("run serial master {}".format(self.job_info_str))
             job = self.pop(-1)
-            job._master_id = self.get_job_id()
+            job._master_id = self.job_id
             self.status.suspended = True
             if self.server.new_hdf:
                 job._hdf5 = self.project_hdf5.create_hdf(path=self._hdf5._project.open(self.job_name + '_hdf5').path,
