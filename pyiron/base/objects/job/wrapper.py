@@ -31,7 +31,7 @@ class JobWrapper(object):
         self.working_directory = working_directory
 
         pr = Project(path=working_directory)
-        self.job = pr.load(job_id)
+        self.job = pr.load(int(job_id))
 
         # setup logger
         self._logger = self.setup_logger(debug=debug)
