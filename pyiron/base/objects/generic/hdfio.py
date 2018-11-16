@@ -8,16 +8,9 @@ import h5py
 import os
 import pandas
 import posixpath
-import time
-import inspect
-import pkgutil
-import importlib
 import h5io
 import numpy as np
 from tables.exceptions import NoSuchNodeError
-from pandas.io.pytables import ClosedFileError
-import warnings
-
 """
 Classes to map the Python objects to HDF5 data structures 
 """
@@ -1049,14 +1042,6 @@ class ProjectHDFio(FileHDFio):
         if not os.path.isdir(self.working_directory):
             os.makedirs(self.working_directory)
 
-    @staticmethod
-    def _find_class(search_name):
-        for finder, name, ispkg in pkgutil.iter_modules():
-            if name.startswith('pyiron_'):
-                for name, obj in inspect.getmembers(importlib.import_module(name)):
-                    if name == search_name:
-                        return obj.__module__
-
     def create_object(self, class_name, **qwargs):
         """
         Internal function to create a pyiron object
@@ -1073,8 +1058,6 @@ class ProjectHDFio(FileHDFio):
             class_name = class_name.split('.')[-1][:-2]
             if class_name in self._project.job_type.job_class_dict.keys():
                 import_path = self._project.job_type.job_class_dict[class_name]
-            else:
-                import_path = self._find_class(search_name=class_name)
             exec("from {} import {}".format(import_path, class_name))
         return eval(class_name + "(**qwargs)")
 

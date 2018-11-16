@@ -15,7 +15,7 @@ except (ImportError, TypeError, AttributeError):
     pass
 from pyiron.base.core.settings.generic import Settings
 from pyiron.base.objects.generic.hdfio import ProjectHDFio
-from pyiron.atomistics.job.jobtype import JobType, JobTypeChoice
+from pyiron.base.objects.job.jobtype import JobType, JobTypeChoice
 from pyiron.atomistics.job.object_type import ObjectType, ObjectTypeChoice
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.lammps.potential import LammpsPotentialFile
@@ -157,7 +157,7 @@ class Project(ProjectCore):
             GenericJob: job object depending on the job_type selected
         """
         job = JobType(job_type, project=ProjectHDFio(project=self.copy(), file_name=job_name),
-                      job_name=job_name)
+                      job_name=job_name, job_class_dict=self.job_type.job_class_dict)
         if self.user is not None:
             job.user = self.user
         return job
