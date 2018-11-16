@@ -493,12 +493,19 @@ class DatabaseAccess(object):
         """
         # convert item_id to int type
         # needed since psycopg2 gives otherwise an error for np.int64 type (bigint in database)
-        try:
-            return self.__get_items('id', int(item_id))[-1]
-        except TypeError as except_msg:
-            raise TypeError("Wrong data type given as parameter. item_id has to be Integer or String: ", except_msg)
-        except IndexError as except_msg:
-            raise IndexError("Error when trying to find elements by given Job ID: ", except_msg)
+        if item_id is None:
+            return None
+        if isinstance(item_id, str, float):
+            item_id = int(item_id)
+        if isinstance(item_id, int):
+            try:
+                return self.__get_items('id', int(item_id))[-1]
+            except TypeError as except_msg:
+                raise TypeError("Wrong data type given as parameter. item_id has to be Integer or String: ", except_msg)
+            except IndexError as except_msg:
+                raise IndexError("Error when trying to find elements by given Job ID: ", except_msg)
+        else:
+            raise TypeError('THE SQL database ID has to be an integer.')
 
     def query_for_element(self, element):
         return or_(
