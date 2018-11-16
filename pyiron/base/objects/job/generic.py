@@ -1116,8 +1116,8 @@ class GenericJob(JobCore):
             wl('')
             wl('debug = {0}'.format(debug))
             wl('job = JobWrapper(working_directory=\'{0}\','.format(self.project_hdf5.working_directory))
-            wl('                 job_id= {} ,'.format(self.get_job_id()))
-            wl('                 debug={} )'.format(debug))
+            wl('                 job_id={},'.format(self.get_job_id()))
+            wl('                 debug={})'.format(debug))
             wl('job.run()')
 
     def _calculate_predecessor(self):
