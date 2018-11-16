@@ -495,7 +495,7 @@ class DatabaseAccess(object):
         # needed since psycopg2 gives otherwise an error for np.int64 type (bigint in database)
         if item_id is None:
             return None
-        if isinstance(item_id, str, float):
+        if isinstance(item_id, (str, float)):
             item_id = int(item_id)
         if isinstance(item_id, int):
             try:
