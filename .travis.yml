@@ -20,7 +20,7 @@ install:
   - conda info -a
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
-  - conda install conda-build conda-verify anaconda-client pytables numpy lxml scipy cycler pyparsing kiwisolver matplotlib Werkzeug itsdangerous flask sqlalchemy pathlib2 pandas h5py
+  - conda install conda-build conda-verify anaconda-client psutil pytables numpy lxml scipy cycler pyparsing kiwisolver matplotlib Werkzeug itsdangerous flask sqlalchemy pathlib2 pandas h5py
   - conda config --add channels conda-forge
   - conda config --add channels pyiron
   - conda config --set anaconda_upload yes
@@ -31,6 +31,7 @@ script:
   - echo -e "[DEFAULT]\nTOP_LEVEL_DIRS = $PWD\nRESOURCE_PATHS = $PWD/tests/static" > ~/.pyiron
   - coverage run -m unittest discover tests
   - ./.ci_support/build_notebooks_on_master.sh
+  - ./.ci_support/build_docs_on_master.sh
 
 after_success:
   - coveralls
@@ -59,6 +60,15 @@ deploy:
     script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
     on:
       tags: true
+      condition: "${PYTHONVER} = 3.6 && ${TRAVIS_OS_NAME} = linux"
+  - provider: pages
+    repo: pyiron/pyiron.github.io
+    target_branch: master
+    skip_cleanup: true
+    github_token: $GH_TOKEN
+    local_dir: ../pyiron.github.io
+    on:
+      branch: master
       condition: "${PYTHONVER} = 3.6 && ${TRAVIS_OS_NAME} = linux"
 #  - provider: script
 #    script: ./.ci_support/build_docker_on_master.sh 
