@@ -15,36 +15,36 @@ matrix:
       language: python
       env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.6"
       install:
-      - ./.ci_support/setup_miniconda.sh ${MINICONDA}
+        - ./.ci_support/setup_miniconda.sh ${MINICONDA}
 
       script:
-      - coverage run -m unittest discover tests
-      - ./.ci_support/build_notebooks_on_master.sh
+        - coverage run -m unittest discover tests
+        - ./.ci_support/build_notebooks_on_master.sh
 
       after_success:
-      - coveralls
+        - coveralls
 
       deploy:
-      - provider: pypi
-        user: pyiron
-        password: ${PYPI_UPLOAD_TOKEN}
-        allow_failure: true
-        on:
-          branch: master
-      - provider: pypi
-        user: pyiron
-        password: ${PYPI_UPLOAD_TOKEN}
-        allow_failure: true
-        on:
-          tags: true
-      - provider: script
-        script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
-        on:
-          branch: master
-      - provider: script
-        script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
-        on:
-          tags: true
+        - provider: pypi
+          user: pyiron
+          password: ${PYPI_UPLOAD_TOKEN}
+          allow_failure: true
+          on:
+            branch: master
+        - provider: pypi
+          user: pyiron
+          password: ${PYPI_UPLOAD_TOKEN}
+          allow_failure: true
+          on:
+            tags: true
+        - provider: script
+          script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
+          on:
+            branch: master
+        - provider: script
+          script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
+          on:
+            tags: true
 
     - name: test_osx_2_7
       os: osx
