@@ -10,7 +10,7 @@ matrix:
         - ./.ci_support/setup_miniconda.sh ${MINICONDA}
       script:
         - coverage run -m unittest discover tests
-        - ./.ci_support/build_notebooks_on_master.sh
+        # - ./.ci_support/build_notebooks_on_master.sh
 
     - name: test_linux_3_6
       os: linux
@@ -21,7 +21,7 @@ matrix:
         - ./.ci_support/setup_miniconda.sh ${MINICONDA}
       script:
         - coverage run -m unittest discover tests
-        - ./.ci_support/build_notebooks_on_master.sh
+        # - ./.ci_support/build_notebooks_on_master.sh
       after_success:
         - coveralls
       deploy:
@@ -55,7 +55,7 @@ matrix:
         - ./.ci_support/setup_miniconda.sh ${MINICONDA}
       script:
         - coverage run -m unittest discover tests
-        - ./.ci_support/build_notebooks_on_master.sh
+        # - ./.ci_support/build_notebooks_on_master.sh
 
     - name: test_osx_3_6
       os: osx
@@ -66,7 +66,7 @@ matrix:
         - ./.ci_support/setup_miniconda.sh ${MINICONDA}
       script:
         - coverage run -m unittest discover tests
-        - ./.ci_support/build_notebooks_on_master.sh
+        # - ./.ci_support/build_notebooks_on_master.sh
 
     - stage: documentation
       if: branch = master
