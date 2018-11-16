@@ -72,7 +72,7 @@ class JobTypeChoice(with_metaclass(Singleton)):
     def __init__(self):
         for d in [{name: obj.__module__
                    for name, obj in inspect.getmembers(importlib.import_module(name))
-                   if inspect.isclass(obj) and 'pyiron.base.objects.job.generic.GenericJob' in obj.__mro__}
+                   if inspect.isclass(obj) and 'GenericJob' in [subcls.__name__ for subcls in obj.__mro__]}
                   for finder, name, ispkg in pkgutil.iter_modules()
                   if name.startswith('pyiron_')]:
             JOB_CLASS_DICT.update(d)
