@@ -486,7 +486,7 @@ class ParallelMaster(GenericMaster):
                 if ham.server.run_mode.thread:
                     job_lst.append(ham._process)
                 ham = next(self._job_generator, None)
-                if ham is None and self.server.run_mode.modal:
+                if ham is None and self.server.run_mode.modal and not self.is_finished():
                     while ham is None:
                         time.sleep(10)
                         ham = next(self._job_generator, None)
