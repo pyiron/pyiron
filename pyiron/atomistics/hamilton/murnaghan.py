@@ -282,7 +282,7 @@ class Murnaghan(AtomisticParallelMaster):
         e_eq = e_eq_lst[arg][0]
         volume_eq = volume_eq_lst[arg][0]
 
-        eV_div_A3_to_GPa = 160.21766208
+        eV_div_A3_to_GPa = 1e21 / scipy.constants.physical_constants['joule-electron volt relationship'][0]
 
         # get bulk modulus at equ. lattice const.
         p_2deriv = np.polyder(p_fit, 2)
@@ -328,7 +328,7 @@ class Murnaghan(AtomisticParallelMaster):
     def fitfunction(self, parameters, vol, fittype='birchmurnaghan'):
         [E0, b0, bp, V0] = parameters
         # Unit correction
-        B0 = b0 / 160.21766208
+        B0 = b0 / 1e21 / scipy.constants.physical_constants['joule-electron volt relationship'][0]
         BP = bp
         V = vol
         if fittype in 'birchmurnaghan':
