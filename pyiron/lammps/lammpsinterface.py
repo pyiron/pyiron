@@ -6,9 +6,9 @@ try:
     from lammps import lammps
 except ImportError:
     pass
-from pyiron.lammps import Lammps
+from pyiron.lammps.lammps import Lammps
 from pyiron.lammps.structure import UnfoldingPrism
-from pyiron.interactive.generic import GenericInteractive
+from pyiron.base.objects.job.interactive import GenericInteractive
 
 
 class LammpsInt(GenericInteractive, Lammps):
