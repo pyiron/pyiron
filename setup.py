@@ -43,6 +43,7 @@ setup(
                       'psutil',
                       'six',
                       'sqlalchemy',
-                      'tables'],
+                      'tables',
+                      'spglib'],
     cmdclass=versioneer.get_cmdclass(),
     )

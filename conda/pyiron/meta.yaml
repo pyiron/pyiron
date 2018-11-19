@@ -31,6 +31,7 @@ requirements:
     - pytables
     - pathlib2
     - psutil
+    - spglib
 
 test:
   imports:
