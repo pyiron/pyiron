@@ -8,21 +8,21 @@ import posixpath
 import numpy as np
 import types
 from string import punctuation
-from pyiron_base.project import Project as ProjectCore
+from pyiron.base.project import Project as ProjectCore
 try:
-    from pyiron_base.core.project.gui import ProjectGUI
+    from pyiron.base.core.project.gui import ProjectGUI
 except (ImportError, TypeError, AttributeError):
     pass
-from pyiron_base.core.settings.generic import Settings
-from pyiron_base.objects.generic.hdfio import ProjectHDFio
-from pyiron_atomistics.job.jobtype import JobType, JobTypeChoice
-from pyiron_atomistics.job.object_type import ObjectType, ObjectTypeChoice
-from pyiron_atomistics.structure.periodic_table import PeriodicTable
-from pyiron_lammps.potential import LammpsPotentialFile
-from pyiron_vasp.potential import VaspPotential
-from pyiron_atomistics.structure.atoms import CrystalStructure
-import pyiron_atomistics.structure.pyironase as ase
-from pyiron_atomistics.structure.atoms import Atoms
+from pyiron.base.core.settings.generic import Settings
+from pyiron.base.objects.generic.hdfio import ProjectHDFio
+from pyiron.base.objects.job.jobtype import JobType, JobTypeChoice
+from pyiron.atomistics.job.object_type import ObjectType, ObjectTypeChoice
+from pyiron.atomistics.structure.periodic_table import PeriodicTable
+from pyiron.lammps.potential import LammpsPotentialFile
+from pyiron.vasp.potential import VaspPotential
+from pyiron.atomistics.structure.atoms import CrystalStructure
+import pyiron.atomistics.structure.pyironase as ase
+from pyiron.atomistics.structure.atoms import Atoms
 
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
@@ -157,7 +157,7 @@ class Project(ProjectCore):
             GenericJob: job object depending on the job_type selected
         """
         job = JobType(job_type, project=ProjectHDFio(project=self.copy(), file_name=job_name),
-                      job_name=job_name)
+                      job_name=job_name, job_class_dict=self.job_type.job_class_dict)
         if self.user is not None:
             job.user = self.user
         return job
@@ -335,11 +335,11 @@ class Project(ProjectCore):
                  calculator=None, info=None, indices=None, elements=None, dimension=None, species=None,
                  **qwargs):
         """
-        Creates a pyiron_atomistics.structure.atoms.Atoms instance.
+        Creates a atomistics.structure.atoms.Atoms instance.
 
         Args:
             elements (list/numpy.ndarray): List of strings containing the elements or a list of
-                                pyiron_atomistics.structure.periodic_table.ChemicalElement instances
+                                atomistics.structure.periodic_table.ChemicalElement instances
             numbers (list/numpy.ndarray): List of atomic numbers of elements
             symbols (list/numpy.ndarray): List of chemical symbols
             positions (list/numpy.ndarray): List of positions
@@ -360,7 +360,7 @@ class Project(ProjectCore):
             species (list): List of species
 
         Returns:
-            pyiron_atomistics.structure.atoms.Atoms: The required structure instance
+            pyiron.atomistics.structure.atoms.Atoms: The required structure instance
 
         """
         return Atoms(symbols=symbols, positions=positions, numbers=numbers, tags=tags, momenta=momenta, masses=masses,
@@ -383,7 +383,7 @@ class Project(ProjectCore):
             'orthogonal' etc.
 
         Returns:
-            surface (pyiron_atomistics.structure.atoms.Atoms instance)
+            surface (atomistics.structure.atoms.Atoms instance)
 
         """
         # https://gitlab.com/ase/ase/blob/master/ase/lattice/surface.py
@@ -438,7 +438,7 @@ class Project(ProjectCore):
             potential_file (str): Location of the new potential file if necessary
 
         Returns:
-            pyiron_atomistics.structure.periodic_table.ChemicalElement instance
+            atomistics.structure.periodic_table.ChemicalElement instance
         """
         periodic_table = PeriodicTable()
         if new_element_name is None:
