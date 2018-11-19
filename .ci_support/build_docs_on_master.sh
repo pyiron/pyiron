@@ -11,7 +11,7 @@ if [ "$TRAVIS_BRANCH" = "master" ]; then
     mkdir pyiron.github.io
     cd pyiron.github.io
     touch .nojekyll
-    echo -e "# Build Status\n\nThis repository is automatically updated based on the changes in https://github.com/pyiron/pyiron_docs .\n[![Build Status](https://travis-ci.org/pyiron/pyiron_docs.svg?branch=master)](https://travis-ci.org/pyiron/pyiron_docs)" > README.md
+    echo -e "# Build Status\n\nThis repository is automatically updated based on the changes in https://github.com/pyiron/pyiron .\n[![Build Status](https://travis-ci.org/pyiron/pyiron.svg?branch=master)](https://travis-ci.org/pyiron/pyiron)" > README.md
     cd ..
 
     cd pyiron
