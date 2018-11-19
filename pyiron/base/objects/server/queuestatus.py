@@ -197,7 +197,11 @@ def queue_delete_job(item):
         str: Output from the queuing system as string - optimized for the Sun grid engine
     """
     que_id = _validate_que_request(item)
-    return _queue_function(funct=_queue_del_command, que_id=que_id)[0]
+    queue_response = _queue_function(funct=_queue_del_command, que_id=que_id)
+    if queue_response is not None:
+        return queue_response[0]
+    else:
+        return None
 
 
 def queue_enable_reservation(item):
@@ -211,7 +215,11 @@ def queue_enable_reservation(item):
         str: Output from the queuing system as string - optimized for the Sun grid engine
     """
     que_id = _validate_que_request(item)
-    return _queue_function(funct=_queue_enable_reservation, que_id=que_id)[0]
+    queue_response = _queue_function(funct=_queue_enable_reservation, que_id=que_id)
+    if queue_response is not None:
+        return queue_response[0]
+    else:
+        return None
 
 
 def queue_report(item):
@@ -227,8 +235,9 @@ def queue_report(item):
     que_id = _validate_que_request(item)
     try:
         output = _queue_function(funct=_queue_job_details_command, user=s.login_user, que_id=que_id)
-        return pandas.DataFrame(
-            [[line.split()[0], line.split()[1:]] for line in output[1:]])
+        if output is not None:
+            return pandas.DataFrame(
+                [[line.split()[0], line.split()[1:]] for line in output[1:]])
     except subprocess.CalledProcessError:
         pass
 
