@@ -1,6 +1,7 @@
 import numpy as np
 import os
 from subprocess import Popen, PIPE
+import warnings
 
 from pyiron.vasp.outcar import Outcar
 from pyiron.vasp.vasp import Vasp
@@ -225,3 +226,9 @@ class DFTOutput(DFTOutputBase):
                     hdf_dft[key] = val[:-1]
                 else:
                     hdf_dft[key] = val
+
+
+class VaspInt2(VaspInt):
+    def __init__(self, project, job_name):
+        warnings.warn('Please use VaspInt instead of ')
+        super(VaspInt2, self).__init__(project=project, job_name=job_name)

@@ -1,6 +1,7 @@
 from ctypes import *
 import numpy as np
 import pandas as pd
+import warnings
 
 try:
     from lammps import lammps
@@ -274,3 +275,9 @@ class LammpsInt(GenericInteractive, Lammps):
                     for key in h5['interactive'].list_nodes():
                         h5['generic/' + key] = h5['interactive/' + key]
             super(LammpsInt, self).interactive_close()
+
+
+class LammpsInt2(LammpsInt):
+    def __init__(self, project, job_name):
+        warnings.warn('Please use LammpsInt instead of ')
+        super(LammpsInt2, self).__init__(project=project, job_name=job_name)
