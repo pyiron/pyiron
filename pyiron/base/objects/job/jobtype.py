@@ -39,10 +39,12 @@ JOB_CLASS_DICT = {'GenericMaster': 'pyiron.base.objects.job.master',
                   'MurnaghanDFT': 'pyiron.dft.murnaghan_dft',
                   'Lammps': 'pyiron.lammps.lammps',
                   'LammpsInt': 'pyiron.lammps.lammpsinterface',
+                  'LammpsInt2': 'pyiron.lammps.lammpsinterface',
                   'AtomisticExampleJob': 'pyiron.testing.randomatomistic',
                   'ExampleJob': 'pyiron.testing.randomatomistic',
                   'Vasp': 'pyiron.vasp.vasp',
                   'VaspInt': 'pyiron.vasp.vaspinterface',
+                  'VaspInt2': 'pyiron.vasp.vaspinterface',
 }
 
 
