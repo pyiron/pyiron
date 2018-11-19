@@ -18,7 +18,10 @@ requirements:
     - pip
 
   run:
+    - ase
+    - h5io
     - python
+    - phonopy
     - h5py
     - matplotlib
     - numpy
@@ -26,6 +29,8 @@ requirements:
     - six
     - sqlalchemy
     - pytables
+    - pathlib2
+    - psutil
 
 test:
   imports:
