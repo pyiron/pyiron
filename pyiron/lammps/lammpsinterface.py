@@ -279,5 +279,5 @@ class LammpsInt(GenericInteractive, Lammps):
 
 class LammpsInt2(LammpsInt):
     def __init__(self, project, job_name):
-        warnings.warn('Please use LammpsInt instead of ')
+        warnings.warn('Please use LammpsInt instead of LammpsInt2')
         super(LammpsInt2, self).__init__(project=project, job_name=job_name)

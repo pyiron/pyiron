@@ -230,5 +230,5 @@ class DFTOutput(DFTOutputBase):
 
 class VaspInt2(VaspInt):
     def __init__(self, project, job_name):
-        warnings.warn('Please use VaspInt instead of ')
+        warnings.warn('Please use VaspInt instead of VaspInt2')
         super(VaspInt2, self).__init__(project=project, job_name=job_name)
