@@ -1,5 +1,5 @@
 import numpy as np
-from pyiron.atomistics.hamilton.murnaghan import Murnaghan
+from pyiron.atomistics.master.murnaghan import Murnaghan
 
 
 class MurnaghanInt(Murnaghan):

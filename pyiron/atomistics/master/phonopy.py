@@ -269,3 +269,25 @@ class PhonopyJob(AtomisticParallelMaster):
         ax.set_ylabel('DOS')
         ax.set_title('Phonon DOS vs Energy')
         return ax
+
+
+class PhonopyMaster2(PhonopyJob):
+    """
+
+    Args:
+        project:
+        job_name:
+    """
+    def __init__(self, project, job_name):
+        super(PhonopyMaster2, self).__init__(project, job_name)
+
+
+class PhonopyMaster(PhonopyJob):
+    """
+
+    Args:
+        project:
+        job_name:
+    """
+    def __init__(self, project, job_name):
+        super(PhonopyMaster, self).__init__(project, job_name)
