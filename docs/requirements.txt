@@ -1,0 +1,13 @@
+ase
+h5io
+h5py
+matplotlib
+numpy
+pandas
+pathlib2
+phonopy
+psutil
+six
+sqlalchemy
+tables
+spglib
