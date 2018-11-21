@@ -1,8 +1,8 @@
 ase
+numpy
 h5io
 h5py
 matplotlib
-numpy
 pandas
 pathlib2
 phonopy
