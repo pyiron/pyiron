@@ -7,10 +7,10 @@ import versioneer
 setup(
     name='pyiron',
     version=versioneer.get_version(),
-    description='pyiron IDE base',
+    description='pyiron - an integrated development environment (IDE) for computational materials science.',
     long_description='http://pyiron.org',
 
-    url='https://github.com/pyiron/pyirondist',
+    url='https://github.com/pyiron/pyiron',
     author='Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department',
     author_email='janssen@mpie.de',
     license='BSD',
