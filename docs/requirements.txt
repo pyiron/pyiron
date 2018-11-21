@@ -11,3 +11,4 @@ six
 sqlalchemy
 tables
 spglib
+nbsphinx
