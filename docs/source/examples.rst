@@ -7,8 +7,8 @@ Tutorials
 .. toctree::
    :maxdepth:10
 
-   examples/first_steps.ipynb
-   examples/structures.ipynb
-   examples/hcp_workfunction.ipynb
-   examples/water_MD.ipynb
+   ../../notebooks/first_steps.ipynb
+   ../../notebooks/structures.ipynb
+   ../../notebooks/hcp_workfunction.ipynb
+   ../../notebooks/water_MD.ipynb
    import.rst
