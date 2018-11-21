@@ -36,9 +36,9 @@ class Dos(object):
         if bin_density is not None:
             n_bins = int((dos_max - dos_min) * bin_density)
         if es_obj is not None:
-            self.t_dos, self.energies = np.histogram(self.es_obj.eigenvalues, bins=int(n_bins), normed=True)
+            self.t_dos, self.energies = np.histogram(self.es_obj.eigenvalues, bins=int(n_bins), density=True)
         else:
-            self.t_dos, self.energies = np.histogram(eigenvalues, bins=int(n_bins), normed=True)
+            self.t_dos, self.energies = np.histogram(eigenvalues, bins=int(n_bins), density=True)
         self.energies = self.energies[1:] - ((self.energies[1] - self.energies[0]) / 2.)
 
     def plot_total_dos(self, **kwargs):
