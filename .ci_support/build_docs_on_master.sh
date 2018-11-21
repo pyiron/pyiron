@@ -17,6 +17,7 @@ if [ "$TRAVIS_BRANCH" = "master" ]; then
     cd pyiron
     sphinx-apidoc -f -o docs/apidoc pyiron
     cd docs
+    cp -r ../notebooks source
     sphinx-build -b html ./ ../../pyiron.github.io
     cd ..
 
