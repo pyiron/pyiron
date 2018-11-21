@@ -31,7 +31,7 @@ setup(
     ],
 
     keywords='pyiron',
-    packages=find_packages(exclude=["*tests*"]),
+    packages=find_packages(exclude=["*tests*", "*docs*"]),
     install_requires=['ase',
                       'h5io>=0.1.1',
                       'h5py',
