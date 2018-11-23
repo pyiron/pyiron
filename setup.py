@@ -16,7 +16,6 @@ setup(
     license='BSD',
 
     classifiers=['Development Status :: 5 - Production/Stable',
-                 'Intended Audience :: Science/Research',
                  'Topic :: Scientific/Engineering :: Physics',
                  'License :: OSI Approved :: BSD License',
                  'Intended Audience :: Science/Research',
