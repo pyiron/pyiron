@@ -4,7 +4,7 @@ bash miniconda.sh -b -p $HOME/miniconda
 conda info -a
 conda config --set always_yes yes --set changeps1 no
 conda update -q conda
-conda install conda-build conda-verify anaconda-client psutil pytables numpy lxml scipy cycler pyparsing kiwisolver matplotlib Werkzeug itsdangerous flask sqlalchemy pathlib2 pandas h5py
+conda install conda-build conda-verify anaconda-client psutil pytables numpy matplotlib scipy sqlalchemy pathlib2 pandas h5py
 conda config --add channels conda-forge
 conda config --add channels pyiron
 conda config --set anaconda_upload yes
