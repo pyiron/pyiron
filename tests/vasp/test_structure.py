@@ -64,23 +64,25 @@ class TestVaspStructure(unittest.TestCase):
                 self.assertTrue(np.array_equal(atoms.selective_dynamics[-4], [False, False, False]))
 
     def test_write_poscar(self):
-        write_poscar(structure=self.structure, filename="POSCAR_test")
-        test_atoms = read_atoms("POSCAR_test")
+        write_poscar(structure=self.structure, filename=posixpath.join(self.file_location, "POSCAR_test"))
+        test_atoms = read_atoms(posixpath.join(self.file_location, "POSCAR_test"))
         self.assertEqual(self.structure.get_chemical_formula(), test_atoms.get_chemical_formula())
         struct = self.structure.copy()
         struct.add_tag(selective_dynamics=[True, True, True])
-        write_poscar(structure=struct, filename="POSCAR_test")
-        test_atoms = read_atoms("POSCAR_test")
+        write_poscar(structure=struct, filename=posixpath.join(self.file_location, "POSCAR_test"))
+        test_atoms = read_atoms(posixpath.join(self.file_location, "POSCAR_test"))
         truth_array = np.empty_like(struct.positions, dtype=bool)
         truth_array[:] = [True, True, True]
         self.assertTrue(np.array_equal(np.array(test_atoms.selective_dynamics), truth_array))
+        os.remove(posixpath.join(self.file_location, "POSCAR_test"))
 
     def test_vasp_sorter(self):
-        write_poscar(structure=self.structure, filename="POSCAR_test")
-        test_atoms = read_atoms("POSCAR_test")
+        write_poscar(structure=self.structure, filename=posixpath.join(self.file_location, "POSCAR_test"))
+        test_atoms = read_atoms(posixpath.join(self.file_location, "POSCAR_test"))
         vasp_order = vasp_sorter(self.structure)
         self.assertEqual(len(self.structure), len(test_atoms))
         self.assertEqual(self.structure[vasp_order], test_atoms)
+        os.remove(posixpath.join(self.file_location, "POSCAR_test"))
 
     def tearDown(self):
         pass
