@@ -10,6 +10,7 @@ import os
 # import sys
 import posixpath
 import psutil
+import multiprocessing
 from pyiron.base.core.settings.generic import Settings
 from pyiron.base.objects.job.executable import Executable
 from pyiron.base.objects.job.jobstatus import JobStatus
@@ -639,26 +640,11 @@ class GenericJob(JobCore):
         raise NotImplementedError("This function needs to be implemented in the specific class.")
 
     def run_if_non_modal(self):
-        """
-        The run if non modal function is called by run to execute the simulation in the background. For this we use
-        subprocess.Popen()
-        """
-        shell = (os.name == 'nt')
-        try:
-            file_name = posixpath.join(self.project_hdf5.working_directory, "run_job.py")
-            self._logger.info("{}, status: {}, script: {}".format(self.job_info_str, self.status, file_name))
-            with open(posixpath.join(self.project_hdf5.working_directory, 'out.txt'), mode='w') as f_out:
-                with open(posixpath.join(self.project_hdf5.working_directory, 'error.txt'), mode='w') as f_err:
-                    self._process = subprocess.Popen(['python', file_name], cwd=self.project_hdf5.working_directory,
-                                                     shell=shell, stdout=f_out, stderr=f_err, universal_newlines=True)
-            self._logger.info("{}, status: {}, job submitted".format(self.job_info_str, self.status))
-        except subprocess.CalledProcessError as e:
-            self._logger.warn("Job aborted")
-            self._logger.warn(e.output)
-            self.status.aborted = True
-            raise ValueError("run_job.py crashed")
-        s.logger.info('submitted run %s', self.job_name)
-        self._logger.info('job status: %s', self.status)
+        p = multiprocessing.Process(target=multiprocess_wrapper, args=(self.job_id,
+                                                                       self.project_hdf5.working_directory,
+                                                                       False))
+        del self
+        p.start()
 
     def run_if_manually(self, _manually_print=True):
         """
@@ -705,13 +691,13 @@ class GenericJob(JobCore):
         self._logger.debug('job status: %s', self.status)
         return que_id
 
-    def send_to_database(self):
-        """
-        if the jobs should be store in the external/public database this could be implemented here, but currently it is
-        just a placeholder.
-        """
-        if self.server.send_to_db:
-            pass
+    # def send_to_database(self):
+    #     """
+    #     if the jobs should be store in the external/public database this could be implemented here, but currently it is
+    #     just a placeholder.
+    #     """
+    #     if self.server.send_to_db:
+    #         pass
 
     def update_master(self):
         """
@@ -724,21 +710,23 @@ class GenericJob(JobCore):
         """
         master_id = self.master_id
         self._logger.info("update master: {} {}".format(master_id, self.get_job_id()))
-        if master_id is not None:
-            if self.project.db.get_item_by_id(master_id)['status'] == 'suspended':
+        if master_id is not None and not self.server.run_mode.modal and not self.server.run_mode.interactive:
+            master_db_entry = self.project.db.get_item_by_id(master_id)
+            if master_db_entry['status'] == 'suspended':
                 self.project.db.item_update({'status': 'refresh'}, master_id)
-                master_job = self.project.load(master_id)
                 self._logger.info("run_if_refresh() called")
-                master_job._run_if_refresh()
-                if self.server.run_mode.thread and master_job._process:
-                    master_job._process.communicate()
-                if self.project.db.get_item_by_id(master_id)['status'] == 'busy':
-                    self._logger.info("reload master: {} {}".format(master_id, self.get_job_id()))
-                    self.project.db.item_update({'status': 'suspended'}, master_id)
-                    self.update_master()
-            elif self.project.db.get_item_by_id(master_id)['status'] == 'refresh':
+                p = multiprocessing.Process(target=multiprocess_master, args=(master_id,
+                                                                              self.project.path,
+                                                                              self.server.run_mode.thread,
+                                                                              False))
+                del self
+                p.start()
+            elif master_db_entry['status'] == 'refresh':
                 self.project.db.item_update({'status': 'busy'}, master_id)
                 self._logger.info("busy master: {} {}".format(master_id, self.get_job_id()))
+                del self
+        else:
+            self._calculate_successor()
 
     def job_file_name(self, file_name, cwd=None):
         """
@@ -1000,9 +988,6 @@ class GenericJob(JobCore):
             else:
                 self.status.finished = True
         self.update_master()
-        self._calculate_successor()
-        self.send_to_database()
-        self._logger.info("{}, status: {}, job".format(self.job_info_str, self.status))
 
     def _run_if_suspended(self):
         """
@@ -1030,7 +1015,6 @@ class GenericJob(JobCore):
             self.run()
         else:
             self.from_hdf()
-            self.update_master()  # Usually the update to the master is only done at the collect stage.
 
     def _executable_activate(self):
         """
@@ -1200,3 +1184,17 @@ class GenericJob(JobCore):
         """
         if job_id is not None:
             self.project.db.item_update(self._runtime(), job_id)
+
+
+def multiprocess_wrapper(job_id, working_dir, debug=False):
+    from pyiron.base.objects.job.wrapper import JobWrapper
+    job_wrap = JobWrapper(working_directory=str(working_dir), job_id=int(job_id), debug=debug)
+    job_wrap.job.run_if_modal()
+
+
+def multiprocess_master(job_id, working_dir, is_thread_mode=False, debug=False):
+    from pyiron.base.objects.job.wrapper import JobWrapper
+    job_wrap = JobWrapper(working_directory=str(working_dir), job_id=int(job_id), debug=debug)
+    job_wrap.job._run_if_refresh()
+    if is_thread_mode and job_wrap.job._process:
+        job_wrap.job._process.communicate()
