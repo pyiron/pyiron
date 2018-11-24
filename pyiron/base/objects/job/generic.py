@@ -641,11 +641,33 @@ class GenericJob(JobCore):
         raise NotImplementedError("This function needs to be implemented in the specific class.")
 
     def run_if_non_modal(self):
-        p = multiprocessing.Process(target=multiprocess_wrapper, args=(self.job_id,
-                                                                       self.project_hdf5.working_directory,
-                                                                       False))
-        del self
-        p.start()
+        """
+        The run if non modal function is called by run to execute the simulation in the background. For this we use
+        subprocess.Popen()
+        """
+        shell = (os.name == 'nt')
+        try:
+            file_name = posixpath.join(self.project_hdf5.working_directory, "run_job.py")
+            self._logger.info("{}, status: {}, script: {}".format(self.job_info_str, self.status, file_name))
+            with open(posixpath.join(self.project_hdf5.working_directory, 'out.txt'), mode='w') as f_out:
+                with open(posixpath.join(self.project_hdf5.working_directory, 'error.txt'), mode='w') as f_err:
+                    self._process = subprocess.Popen(['python', file_name], cwd=self.project_hdf5.working_directory,
+                                                     shell=shell, stdout=f_out, stderr=f_err, universal_newlines=True)
+            self._logger.info("{}, status: {}, job submitted".format(self.job_info_str, self.status))
+        except subprocess.CalledProcessError as e:
+            self._logger.warn("Job aborted")
+            self._logger.warn(e.output)
+            self.status.aborted = True
+            raise ValueError("run_job.py crashed")
+        s.logger.info('submitted run %s', self.job_name)
+        self._logger.info('job status: %s', self.status)
+
+    # def run_if_non_modal(self):
+    #     p = multiprocessing.Process(target=multiprocess_wrapper, args=(self.job_id,
+    #                                                                    self.project_hdf5.working_directory,
+    #                                                                    False))
+    #     del self
+    #     p.start()
 
     def run_if_manually(self, _manually_print=True):
         """
@@ -716,12 +738,16 @@ class GenericJob(JobCore):
             if master_db_entry['status'] == 'suspended':
                 self.project.db.item_update({'status': 'refresh'}, master_id)
                 self._logger.info("run_if_refresh() called")
-                p = multiprocessing.Process(target=multiprocess_master, args=(master_id,
-                                                                              self.project.path,
-                                                                              self.server.run_mode.thread,
-                                                                              False))
-                del self
-                p.start()
+                # p = multiprocessing.Process(target=multiprocess_master, args=(master_id,
+                #                                                               self.project.path,
+                #                                                               self.server.run_mode.thread,
+                #                                                               False))
+                # del self
+                # p.start()
+                master = self.project.load(master_id)
+                master._run_if_refresh()
+                if self.server.run_mode.thread and master._process:
+                    master._process.communicate()
             elif master_db_entry['status'] == 'refresh':
                 self.project.db.item_update({'status': 'busy'}, master_id)
                 self._logger.info("busy master: {} {}".format(master_id, self.get_job_id()))
