@@ -11,6 +11,7 @@ import os
 import posixpath
 import psutil
 import multiprocessing
+from pyiron.base.objects.job.wrapper import JobWrapper
 from pyiron.base.core.settings.generic import Settings
 from pyiron.base.objects.job.executable import Executable
 from pyiron.base.objects.job.jobstatus import JobStatus
@@ -1187,13 +1188,11 @@ class GenericJob(JobCore):
 
 
 def multiprocess_wrapper(job_id, working_dir, debug=False):
-    from pyiron.base.objects.job.wrapper import JobWrapper
     job_wrap = JobWrapper(working_directory=str(working_dir), job_id=int(job_id), debug=debug)
-    job_wrap.job.run_if_modal()
+    job_wrap.job.run_static()
 
 
 def multiprocess_master(job_id, working_dir, is_thread_mode=False, debug=False):
-    from pyiron.base.objects.job.wrapper import JobWrapper
     job_wrap = JobWrapper(working_directory=str(working_dir), job_id=int(job_id), debug=debug)
     job_wrap.job._run_if_refresh()
     if is_thread_mode and job_wrap.job._process:
