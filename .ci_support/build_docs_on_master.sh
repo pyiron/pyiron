@@ -2,7 +2,7 @@
 
 if [ "$TRAVIS_BRANCH" = "master" ]; then
     # install
-    conda install -y -c conda-forge sphinx nbsphinx ipywidgets sphinx_rtd_theme pylint Graphviz ovito
+    conda install -y -c conda-forge sphinx nbsphinx ipywidgets sphinx_rtd_theme pylint Graphviz # ovito
 
     git config --global user.email "${GH_EMAIL}"
     git config --global user.name "${GH_USER}"
