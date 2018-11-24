@@ -316,7 +316,6 @@ class SerialMasterBase(GenericMaster):
             self._logger.info("run serial master {}".format(self.job_info_str))
             job = self.pop(-1)
             job._master_id = self.job_id
-            self.status.suspended = True
             if self.server.new_hdf:
                 job._hdf5 = self.project_hdf5.create_hdf(path=self._hdf5._project.open(self.job_name + '_hdf5').path,
                                                          job_name=job.job_name)
@@ -325,10 +324,13 @@ class SerialMasterBase(GenericMaster):
             self._logger.info('SerialMaster: run job {}'.format(job.job_name))
             if self.server.run_mode.queue:
                 job.server.run_mode.thread = True
+            self.status.suspended = True
             job.run()
             if job.server.run_mode.thread and job._process:
                 job._process.communicate()
-            self._logger.info('SerialMaster: finished job {}'.format(job.job_name))
+            # self._logger.info('SerialMaster: finished job {}'.format(job.job_name))
+            if job.server.run_mode.modal:
+                self._run_if_refresh()
         else:
             if set([self.project.db.get_item_by_id(child_id)['status'] for child_id in self.child_ids]) != {'finished'}:
                 child_lst = [self.project.load(child_id).run(repair=True) for child_id in self.child_ids if
