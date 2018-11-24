@@ -127,9 +127,9 @@ class InteractiveWrapper(GenericMaster):
     def _finish_job(self):
         self.status.finished = True
         self._db_entry_update_run_time()
-        self.update_master()
-        self.send_to_database()
         self._logger.info("{}, status: {}, monte carlo master".format(self.job_info_str, self.status))
+        self.update_master()
+        # self.send_to_database()
 
     def __getitem__(self, item):
         """
