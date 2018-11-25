@@ -6,7 +6,8 @@ from __future__ import print_function
 import numpy as np
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -19,12 +20,12 @@ class Dos(object):
     """
     The DOS class stores all information to store and retrieve the total and resolved density of states from an
     electronic structure calculation.
+
     Args:
         n_bins (int): Number of histogram bins required to calculate the DOS
         es_obj: The pyiron.objects.waves.core.ElectronicStructure instance for which the DOS has to be computed
-        eigenvalues (list): If es-obj is None, the eigenvalues could be specified as a list
+        eigenvalues (list/numpy.ndarray): If es-obj is None, the eigenvalues could be specified as a list
 
-    ToDO: Implement for various spin configurations as well
     """
 
     def __init__(self, n_bins=100, es_obj=None, eigenvalues=None, bin_density=None):
@@ -36,9 +37,9 @@ class Dos(object):
         if bin_density is not None:
             n_bins = int((dos_max - dos_min) * bin_density)
         if es_obj is not None:
-            self.t_dos, self.energies = np.histogram(self.es_obj.eigenvalues, bins=int(n_bins), normed=True)
+            self.t_dos, self.energies = np.histogram(self.es_obj.eigenvalues, bins=int(n_bins), density=True)
         else:
-            self.t_dos, self.energies = np.histogram(eigenvalues, bins=int(n_bins), normed=True)
+            self.t_dos, self.energies = np.histogram(eigenvalues, bins=int(n_bins), density=True)
         self.energies = self.energies[1:] - ((self.energies[1] - self.energies[0]) / 2.)
 
     def plot_total_dos(self, **kwargs):
@@ -49,7 +50,7 @@ class Dos(object):
             **kwargs: Variables for matplotlib.pylab.plot customization (linewidth, linestyle, etc.)
 
         Returns:
-            plt (matplotlib.pylab.plot instance)
+            matplotlib.pylab.plot
         """
         try:
             import matplotlib.pylab as plt
@@ -70,7 +71,7 @@ class Dos(object):
             **kwargs: Variable for matplotlib.pylab.plot customization (linewidth, linestyle, etc.)
 
         Returns:
-            plt (matplotlib.pylab.plot instance)
+            matplotlib.pylab.plot
         """
         try:
             import matplotlib.pylab as plt
@@ -92,10 +93,10 @@ class Dos(object):
         pyiron.objects.waves.ElectronicStructure instance.
 
         Args:
-            spin_indices (list): The index/indices of the spins for which the dos contribution is required
+            spin_indices (list/numpy.ndarray): The index/indices of the spins for which the dos contribution is required
 
         Returns:
-            numpy.ndarray instance containing the required dos
+            numpy.ndarray: The required dos
 
         """
         if not (self.es_obj.grand_dos_matrix is not None):
@@ -136,11 +137,11 @@ class Dos(object):
         pyiron.objects.waves.ElectronicStructure instance.
 
         Args:
-            atom_indices (list): The index/indices of the atoms for which the dos contribution is required
-            spin_indices (list): The index/indices of the spins for which the dos contribution is required
+            atom_indices (list/numpy.ndarray): The index/indices of the atoms for which the dos contribution is required
+            spin_indices (list/numpy.ndarray): The index/indices of the spins for which the dos contribution is required
 
         Returns:
-            numpy.ndarray instance containing the required dos
+            numpy.ndarray: The required dos
 
         """
         if not (self.es_obj.grand_dos_matrix is not None):
@@ -180,11 +181,11 @@ class Dos(object):
         pyiron.objects.waves.ElectronicStructure instance.
 
         Args:
-            orbital_indices (list): The index/indices of the orbitals for which the dos contribution is required
-            spin_indices (list): The index/indices of the spins for which the dos contribution is required
+            orbital_indices (list/numpy.ndarray): The index/indices of the orbitals for which the dos contribution is required
+            spin_indices (list/numpy.ndarray): The index/indices of the spins for which the dos contribution is required
 
         Returns:
-            numpy.ndaray instance containing the required dos
+            numpy.ndaray: The required dos
 
         """
         if not (self.es_obj.grand_dos_matrix is not None):
@@ -224,12 +225,12 @@ class Dos(object):
         pyiron.objects.waves.ElectronicStructure instance.
 
         Args:
-            atom_indices (list): The index/indices of the atoms for which the dos contribution is required
-            orbital_indices (list): The index/indices of the orbitals for which the dos contribution is required
-            spin_indices (list): The index/indices of the spins for which the dos contribution is required
+            atom_indices (list/numpy.ndarray): The index/indices of the atoms for which the dos contribution is required
+            orbital_indices (list/numpy.ndarray): The index/indices of the orbitals for which the dos contribution is required
+            spin_indices (list/numpy.ndarray): The index/indices of the spins for which the dos contribution is required
 
         Returns:
-            numpy.ndaray instance containing the required dos
+            numpy.ndaray: The required dos
         """
         if not (self.es_obj.grand_dos_matrix is not None):
             raise NoResolvedDosError("Can not get the resolved dos since resolved dos values are not"
