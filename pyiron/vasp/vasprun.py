@@ -510,7 +510,6 @@ class Vasprun(object):
             d (dict): The dictionary to which data is to be parsed
             key_name (str): Forcefully assign a key name in case it is not present in the xml file
         """
-        # test commit
         if not len(node) > 0:
             d[clean_key(node.attrib["name"])] = clean_character(node.text)
             return
