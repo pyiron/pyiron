@@ -170,7 +170,7 @@ class Vasprun(object):
                     for item in leaf:
                         if item.tag == "set":
                             for sp in item:
-                                elements = sp.getchildren()
+                                elements = sp
                                 if elements[1].text in species_dict.keys():
                                     pse = PeriodicTable()
                                     count = 1
@@ -510,7 +510,9 @@ class Vasprun(object):
             d (dict): The dictionary to which data is to be parsed
             key_name (str): Forcefully assign a key name in case it is not present in the xml file
         """
-        if not len(node.getchildren()) > 0:
+        # Test commit to check configuration dsnskdjng
+        print(len(node))
+        if not len(node) > 0:
             d[clean_key(node.attrib["name"])] = clean_character(node.text)
             return
         else:
