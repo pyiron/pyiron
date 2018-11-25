@@ -1037,9 +1037,10 @@ class GenericJob(JobCore):
         Internal helper function to koad the executable object, if it was not loaded already.
         """
         if not self._executable:
-            self._executable = Executable(codename=self.__name__,
-                                          module=self.__module__.split('.')[1],
-                                          path_binary_codes=s.resource_paths)
+            if len(self.__module__.split('.')) > 1:
+                self._executable = Executable(codename=self.__name__,
+                                              module=self.__module__.split('.')[1],
+                                              path_binary_codes=s.resource_paths)
 
     def _type_to_hdf(self):
         """
