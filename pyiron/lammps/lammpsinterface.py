@@ -1,4 +1,4 @@
-from ctypes import *
+from ctypes import c_double, c_int
 import numpy as np
 import pandas as pd
 import warnings
