@@ -5,9 +5,10 @@
 from __future__ import print_function, unicode_literals
 import numpy as np
 import os
-from pyiron.base.core.settings.generic import Settings
-import sys
 import pandas
+from pyiron.base.core.settings.generic import Settings
+from six import with_metaclass
+import sys
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Martin Boeckmann"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -20,6 +21,21 @@ __date__ = "Sep 1, 2017"
 
 s = Settings()
 pandas.options.mode.chained_assignment = None
+
+
+class Singleton(type):
+    """
+    Implemented with suggestions from
+
+    http://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
+
+    """
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
 
 
 class ChemicalElement(object):
@@ -138,7 +154,7 @@ class ChemicalElement(object):
                         self.sub['tags'] = tag_dic
 
 
-class PeriodicTable(object):
+class PeriodicTable(with_metaclass(Singleton)):
     """
     An Object which stores an elementary table which can be modified for the current session
     """
