@@ -171,7 +171,10 @@ class GenericJob(JobCore):
             return self.__version__
         else:
             self._executable_activate()
-            return self._executable.version
+            if self._executable is not None:
+                return self._executable.version
+            else:
+                return None
 
     @version.setter
     def version(self, new_version):
