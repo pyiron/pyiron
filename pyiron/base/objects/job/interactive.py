@@ -226,8 +226,9 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         if not self.interactive_is_activated():
             self.interactive_open()
         if self._structure_previous is None:
-            if self.get("output/generic/cells") is not None and len(self.get("output/generic/cells")) != 0:
-                self._structure_previous = self.get_structure(-1)
+            pre_struct = self.get_structure(-1)
+            if pre_struct is not None:
+                self._structure_previous = pre_struct
             else:
                 self._structure_previous = self.structure.copy()
         if self._structure_current is not None:
@@ -330,7 +331,10 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
                          positions=self.output.positions[iteration_step],
                          cell=self.output.cells[iteration_step])
         else:
-            return super(GenericInteractive, self).get_structure(iteration_step=iteration_step)
+            if self.get("output/generic/cells") is not None and len(self.get("output/generic/cells")) != 0:
+                return super(GenericInteractive, self).get_structure(iteration_step=iteration_step)
+            else:
+                return None
 
     # Functions which have to be implemented by the fin
     def interactive_cells_setter(self, cell):
