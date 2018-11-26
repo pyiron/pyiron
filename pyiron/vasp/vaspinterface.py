@@ -120,6 +120,7 @@ class VaspInt(GenericInteractive, Vasp):
                     self._logger.debug('Vasp library: ' + text)
                     self._interactive_library.stdin.write(text + '\n')
             self._interactive_library.stdin.flush()
+        self._interactive_fetch_completed = False
 
     def run_if_interactive(self):
         self.run_if_interactive_non_modal()
