@@ -577,7 +577,7 @@ class Project(ProjectPath):
             job = job.load_object(convert_to_object=convert_to_object, project=job.project_hdf5.copy())
             job._job_id = job_id
             if convert_to_object:
-                job.refresh_job_status()
+                job.reset_job_id(job_id=job_id)
             return job
         elif db_entry:
             job = JobPath(db=self.db, db_entry=db_entry)
