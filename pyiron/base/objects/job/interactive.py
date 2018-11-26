@@ -160,6 +160,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         self._structure_current = None
         self._interactive_enforce_structure_reset = False
         self._interactive_grand_canonical = False
+        self._interactive_fetch_completed = True
         self.interactive_cache = {'cells': [],
                                   'energy_pot': [],
                                   'energy_tot': [],
