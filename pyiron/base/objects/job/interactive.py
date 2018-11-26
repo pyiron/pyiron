@@ -326,10 +326,13 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
     def get_structure(self, iteration_step=-1):
         if self.server.run_mode.interactive and self.interactive_is_activated():
             # Warning: We only copy symbols, positions and cell information - no tags.
-            el_lst = [el.Abbreviation for el in self.structure.species]
-            return Atoms(symbols=np.array([el_lst[el] for el in self.output.indices[iteration_step]]),
-                         positions=self.output.positions[iteration_step],
-                         cell=self.output.cells[iteration_step])
+            if len(self.output.indices) != 0:
+                el_lst = [el.Abbreviation for el in self.structure.species]
+                return Atoms(symbols=np.array([el_lst[el] for el in self.output.indices[iteration_step]]),
+                             positions=self.output.positions[iteration_step],
+                             cell=self.output.cells[iteration_step])
+            else:
+                return None
         else:
             if self.get("output/generic/cells") is not None and len(self.get("output/generic/cells")) != 0:
                 return super(GenericInteractive, self).get_structure(iteration_step=iteration_step)
