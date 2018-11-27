@@ -124,6 +124,7 @@ class VaspInt(GenericInteractive, Vasp):
 
     def run_if_interactive(self):
         self.run_if_interactive_non_modal()
+        self._interactive_check_output()
         self._interactive_vasprun = Outcar()
         self.interactive_collect()
 
