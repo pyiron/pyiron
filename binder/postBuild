@@ -6,10 +6,10 @@ jupyter lab build
 rm -rf ~/nglview
 
 # pyiron setup
-echo -e "[DEFAULT]\nTOP_LEVEL_DIRS = ${HOME}\nRESOURCE_PATHS = ${HOME}/resources" > ~/.pyiron
+echo "[DEFAULT]\nTOP_LEVEL_DIRS = ${HOME}\nRESOURCE_PATHS = ${HOME}/resources" > ~/.pyiron
 git clone git@github.com:pyiron/pyiron-resources.git resources
 
 # clean up
 mv notebooks/* .
-rm -r ~/binder ~/.ci_support ~/conda ~/docs ~/pyiron ~/tests ~/notebooks
-rm .travis.yml appveyor.yml LICENSE MANIFEST.in README.md setup.cfg setup.py versioneer.py
+rm -r ${HOME}/binder ${HOME}/.ci_support ${HOME}/conda ${HOME}/docs ${HOME}/pyiron ${HOME}/tests ${HOME}/notebooks ${HOME}/conda-bld
+rm ${HOME}/.travis.yml ${HOME}/appveyor.yml ${HOME}/LICENSE ${HOME}/MANIFEST.in ${HOME}/README.md ${HOME}/setup.cfg ${HOME}/setup.py ${HOME}/versioneer.py
