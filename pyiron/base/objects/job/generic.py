@@ -1078,7 +1078,7 @@ class GenericJob(JobCore):
         """
         start_time = self.project.db.get_item_by_id(self.job_id)["timestart"]
         stop_time = datetime.now()
-        return {"timestop": stop_time, "totalcputime": (stop_time - start_time).seconds}
+        return {"timestop": stop_time, "totalcputime": int((stop_time - start_time).total_seconds())}
 
     def _db_server_entry(self):
         """
