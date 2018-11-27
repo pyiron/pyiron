@@ -498,7 +498,7 @@ class DatabaseAccess(object):
             return None
         if isinstance(item_id, (str, float)):
             item_id = int(item_id)
-        if np.issubdtype(item_id, np.integer):
+        if np.issubdtype(type(item_id), np.integer):
             try:
                 return self.__get_items('id', int(item_id))[-1]
             except TypeError as except_msg:
