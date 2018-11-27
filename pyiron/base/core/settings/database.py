@@ -2,6 +2,7 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
+import numpy as np
 import re
 from datetime import datetime
 from sqlalchemy import Column, create_engine, DateTime, Float, Integer, MetaData, String, Table, text, and_, or_
@@ -497,7 +498,7 @@ class DatabaseAccess(object):
             return None
         if isinstance(item_id, (str, float)):
             item_id = int(item_id)
-        if isinstance(item_id, int):
+        if np.issubdtype(item_id, np.integer):
             try:
                 return self.__get_items('id', int(item_id))[-1]
             except TypeError as except_msg:
