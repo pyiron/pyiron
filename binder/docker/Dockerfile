@@ -30,7 +30,7 @@ RUN echo "@testing http://nl.alpinelinux.org/alpine/edge/testing" >> /etc/apk/re
 
 # Configure environment
 ENV CONDA_DIR /opt/conda
-ENV PATH $CONDA_DIR/bin:$PATH
+ENV PATH ${CONDA_DIR}/bin:${PATH}
 ENV SHELL /bin/bash
 ENV PYIRON_USER pyiron
 ENV PYIRON_UID 1000
@@ -41,8 +41,8 @@ ENV HOME /home/${PYIRON_USER}
 
 # Configure Miniconda
 ENV MINICONDA_VER 4.5.1
-ENV MINICONDA Miniconda3-$MINICONDA_VER-Linux-x86_64.sh
-ENV MINICONDA_URL https://repo.continuum.io/miniconda/$MINICONDA
+ENV MINICONDA Miniconda3-${MINICONDA_VER}-Linux-x86_64.sh
+ENV MINICONDA_URL https://repo.continuum.io/miniconda/${MINICONDA}
 ENV MINICONDA_MD5_SUM 0c28787e3126238df24c5d4858bd0744
 
 COPY . ${HOME}
@@ -57,12 +57,12 @@ USER ${PYIRON_USER}
 
 # Install 
 RUN cd /tmp \
-    && mkdir -p $CONDA_DIR \
-    && curl -L $MINICONDA_URL  -o miniconda.sh \
-    && echo "$MINICONDA_MD5_SUM  miniconda.sh" | md5sum -c - \
-    && ${SHELL} miniconda.sh -f -b -p $CONDA_DIR \
+    && mkdir -p ${CONDA_DIR} \
+    && curl -L ${MINICONDA_URL}  -o miniconda.sh \
+    && echo "${MINICONDA_MD5_SUM}  miniconda.sh" | md5sum -c - \
+    && ${SHELL} miniconda.sh -f -b -p ${CONDA_DIR} \
     && rm miniconda.sh \
-    && $CONDA_DIR/bin/conda install --yes conda==$MINICONDA_VER \
+    && ${CONDA_DIR}/bin/conda install --yes conda==${MINICONDA_VER} \
     && conda env update -n root -f "${HOME}/binder/environment.yml" \
     && ${SHELL} ${HOME}/binder/postBuild \
     && conda clean --all -y \
