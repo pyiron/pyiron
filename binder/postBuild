@@ -7,7 +7,7 @@ rm -rf ${HOME}/nglview
 
 # pyiron setup
 echo "[DEFAULT]\nTOP_LEVEL_DIRS = ${HOME}\nRESOURCE_PATHS = ${HOME}/resources" > ${HOME}/.pyiron
-git clone git@github.com:pyiron/pyiron-resources.git ${HOME}/resources
+git clone https://github.com/pyiron/pyiron-resources.git ${HOME}/resources
 
 # clean up
 mv notebooks/* .
