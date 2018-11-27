@@ -36,6 +36,8 @@ class InteractiveBase(GenericJob):
     def _run_if_running(self):
         if self.server.run_mode.interactive:
             self.run_if_interactive()
+        elif self.server.run_mode.interactive_non_modal:
+            self.run_if_interactive_non_modal()
         else:
             super(InteractiveBase, self)._run_if_running()
 
@@ -204,7 +206,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
     def structure(self):
         if self._structure_current is not None:
             return self._structure_current
-        elif self.server.run_mode.interactive:
+        elif self.server.run_mode.interactive or self.server.run_mode.interactive:
             self._structure_current = AtomisticGenericJob.structure.fget(self)
             return self._structure_current
         else:
@@ -212,7 +214,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
 
     @structure.setter
     def structure(self, structure):
-        if self.server.run_mode.interactive:
+        if self.server.run_mode.interactive or self.server.run_mode.interactive:
             # only overwrite the initial structure if it is not set already.
             if AtomisticGenericJob.structure.fget(self) is None:
                 AtomisticGenericJob.structure.fset(self, structure.copy())
@@ -325,7 +327,8 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         return self.initial_structure.get_volume()
 
     def get_structure(self, iteration_step=-1):
-        if self.server.run_mode.interactive and self.interactive_is_activated():
+        if (self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal) \
+                and self.interactive_is_activated():
             # Warning: We only copy symbols, positions and cell information - no tags.
             if len(self.output.indices) != 0:
                 el_lst = [el.Abbreviation for el in self.structure.species]
