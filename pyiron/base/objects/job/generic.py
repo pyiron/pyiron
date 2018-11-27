@@ -1162,7 +1162,7 @@ class GenericJob(JobCore):
         """
         self._job_id = self.save()
         print('The job ' + self.job_name + ' was saved and received the ID: ' + str(self._job_id))
-        if not self.server.run_mode.interactive:
+        if not (self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal):
             self.project_hdf5.create_working_directory()
             self.write_input()
             self._copy_restart_files()
