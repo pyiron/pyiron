@@ -521,7 +521,9 @@ class GenericJob(JobCore):
         """
         Reset the job id sets the job_id to None in the GenericJob as well as all connected modules like JobStatus.
         """
-        self._job_id = int(job_id)
+        if job_id is not None:
+            job_id = int(job_id)
+        self._job_id = job_id
         self._status = JobStatus(db=self.project.db, job_id=self._job_id)
 
     def run(self, run_again=False, repair=False, debug=False, run_mode=None, que_wait_for=None,):
