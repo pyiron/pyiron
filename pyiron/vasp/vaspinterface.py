@@ -67,7 +67,8 @@ class VaspInt(GenericInteractive, Vasp):
             return None
 
     def validate_ready_to_run(self):
-        if self.server.run_mode.interactive and 'EDIFFG' in self.input.incar._dataset["Parameter"]:
+        if (self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal)\
+                and 'EDIFFG' in self.input.incar._dataset["Parameter"]:
             raise ValueError('If EDIFFG is defined VASP interrupts the interactive run_mode.')
         super(VaspInt, self).validate_ready_to_run()
 
@@ -107,7 +108,7 @@ class VaspInt(GenericInteractive, Vasp):
                 delta_press=None, seed=None, tloop=None, rescale_velocity=True):
         raise NotImplementedError('calc_md() is not implemented for the interactive mode use calc_static()!')
 
-    def run_if_interactive(self):
+    def run_if_interactive_non_modal(self):
         initial_run = not self.interactive_is_activated()
         super(VaspInt, self).run_if_interactive()
         if not initial_run:
@@ -119,9 +120,21 @@ class VaspInt(GenericInteractive, Vasp):
                     self._logger.debug('Vasp library: ' + text)
                     self._interactive_library.stdin.write(text + '\n')
             self._interactive_library.stdin.flush()
-        self._interactive_check_output()
+        self._interactive_fetch_completed = False
+
+    def run_if_interactive(self):
+        self.run_if_interactive_non_modal()
         self._interactive_vasprun = Outcar()
         self.interactive_collect()
+
+    def interactive_fetch(self):
+        if self._interactive_fetch_completed and self.server.run_mode.interactive_non_modal:
+            print('First run and then fetch')
+        else:
+            self._interactive_check_output()
+            self._interactive_vasprun = Outcar()
+            super(VaspInt, self).interactive_collect()
+            self._logger.debug('interactive run - done')
 
     def interactive_positions_setter(self, positions):
         pass
@@ -137,7 +150,7 @@ class VaspInt(GenericInteractive, Vasp):
                 return
 
     def _run_if_created(self, que_wait_for=None):
-        if self.server.run_mode.interactive:
+        if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
             self._check_incar_parameter(parameter='INTERACTIVE', value=True)
             self._check_incar_parameter(parameter='IBRION', value=-1)
             self._check_incar_parameter(parameter='POTIM', value=0.0)

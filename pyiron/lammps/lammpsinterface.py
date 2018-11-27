@@ -1,4 +1,5 @@
 from ctypes import c_double, c_int
+from multiprocessing import Process, Pipe
 import numpy as np
 import pandas as pd
 import warnings
@@ -47,7 +48,10 @@ class LammpsInt(GenericInteractive, Lammps):
             positions = np.array(positions).reshape(-1, 3)
             positions = np.dot(positions, self._interactive_prism.R)
         positions = np.array(positions).flatten()
-        self._interactive_library.scatter_atoms("x", 1, 3, (len(positions) * c_double)(*positions))
+        if self.server.run_mode.interactive_non_modal:
+            self._interactive_library.scatter_atoms("x", 1, 3, positions)
+        else:
+            self._interactive_library.scatter_atoms("x", 1, 3, (len(positions) * c_double)(*positions))
         self._interactive_lib_command('change_box all remap')
 
     def interactive_cells_getter(self):
@@ -95,7 +99,10 @@ class LammpsInt(GenericInteractive, Lammps):
                 el = el_obj_lst[id_el]
                 el_dict[el] = id_eam + 1
         elem_all = np.array([el_dict[self._structure_current.species[el]] for el in indices])
-        self._interactive_library.scatter_atoms('type', 0, 1, (len(elem_all) * c_int)(*elem_all))
+        if self.server.run_mode.interactive_non_modal:
+            self._interactive_library.scatter_atoms('type', 0, 1, elem_all)
+        else:
+            self._interactive_library.scatter_atoms('type', 0, 1, (len(elem_all) * c_int)(*elem_all))
 
     def interactive_volume_getter(self):
         return self._interactive_library.get_thermo('vol')
@@ -133,17 +140,25 @@ class LammpsInt(GenericInteractive, Lammps):
         self._interactive_run_command = " ".join(df.T[df.index[-1]].values)
 
     def interactive_open(self):
-        self._interactive_library = lammps()
+        if self.server.run_mode.interactive_non_modal:
+            self._interactive_library = LammpsLibrary()
+        else:
+            self._interactive_library = lammps()
         if not all(self.structure.pbc):
             self.input.control['boundary'] = ' '.join(['p' if coord else 'f' for coord in self.structure.pbc])
         self._reset_interactive_run_command()
         self.interactive_structure_setter(self.structure)
 
     def calc_minimize(self, e_tol=1e-8, f_tol=1e-8, max_iter=1000, pressure=None, n_print=1):
-        super(LammpsInt, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure, n_print=n_print)
+        if self.server.run_mode.interactive_non_modal:
+            warnings.warn('calc_minimize() is not implemented for the non modal interactive mode use calc_static()!')
+        super(LammpsInt, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure,
+                                             n_print=n_print)
 
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100, delta_temp=1.0,
                 delta_press=None, seed=None, tloop=None, rescale_velocity=True):
+        if self.server.run_mode.interactive_non_modal:
+            warnings.warn('calc_md() is not implemented for the non modal interactive mode use calc_static()!')
         super(LammpsInt, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
                                        time_step=time_step, n_print=n_print, delta_temp=delta_temp,
                                        delta_press=delta_press, seed=seed, tloop=tloop,
@@ -166,6 +181,21 @@ class LammpsInt(GenericInteractive, Lammps):
             super(LammpsInt, self).run_if_interactive()
             self._interactive_lib_command(self._interactive_run_command)
             self.interactive_collect()
+
+    def run_if_interactive_non_modal(self):
+        if not self._interactive_fetch_completed:
+            print('Warning: interactive_fetch being effectuated')
+            self.interactive_fetch()
+        super(LammpsInt, self).run_if_interactive()
+        self._interactive_lib_command(self._interactive_run_command)
+        self._interactive_fetch_completed = False
+
+    def interactive_fetch(self):
+        if self._interactive_fetch_completed and self.server.run_mode.interactive_non_modal:
+            print('First run and then fetch')
+        else:
+            self.interactive_collect()
+            self._logger.debug('interactive run - done')
 
     def interactive_structure_setter(self, structure):
         self._interactive_lib_command('clear')
@@ -210,7 +240,7 @@ class LammpsInt(GenericInteractive, Lammps):
         self._interactive_set_potential()
 
     def collect_output(self):
-        if self.server.run_mode.interactive:
+        if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
             pass
         else:
             super(LammpsInt, self).collect_output()
@@ -245,11 +275,11 @@ class LammpsInt(GenericInteractive, Lammps):
             self._interactive_lib_command('compute st all stress/atom NULL')
             self._interactive_lib_command('run 0')
             self.interactive_cache['stress'] = []
-        ss = np.array([self._interactive_library.extract_compute('st', 1, 2)[i][j+(j!=k)*(k+2)]
-                        for i in range(len(self.structure))
-                        for j in range(3)
-                        for k in range(3)]).reshape(len(self.structure), 3, 3)/1.602e6
-        if np.matrix.trace(self._interactive_prism.R)!=3:
+        ss = np.array([self._interactive_library.extract_compute('st', 1, 2)[i][j + (j != k) * (k + 2)]
+                       for i in range(len(self.structure))
+                       for j in range(3)
+                       for k in range(3)]).reshape(len(self.structure), 3, 3)/1.602e6
+        if np.matrix.trace(self._interactive_prism.R) != 3:
             ss = np.dot(np.dot(self._interactive_prism.R, ss), self._interactive_prism.R.T)
         return ss
 
@@ -275,6 +305,82 @@ class LammpsInt(GenericInteractive, Lammps):
                     for key in h5['interactive'].list_nodes():
                         h5['generic/' + key] = h5['interactive/' + key]
             super(LammpsInt, self).interactive_close()
+
+
+class LammpsLibrary(object):
+    def __init__(self):
+        lmp_interface = lammps()
+        parent_conn, child_conn = Pipe()
+        lammps_process = Process(target=self.interactive_run, args=(child_conn, lmp_interface))
+        lammps_process.start()
+        self._interactive_library = parent_conn
+
+    def command(self, command):
+        self._interactive_library.send([self.interactive_lib_command, command])
+
+    def gather_atoms(self, *args):
+        self._interactive_library.send([self.interative_gather_atoms, *args])
+        return self._interactive_library.recv()
+
+    def scatter_atoms(self, *args):
+        self._interactive_library.send([self.interactive_scatter_atoms, *args])
+
+    def get_thermo(self, *args):
+        self._interactive_library.send([self.interactive_get_thermo, *args])
+        return self._interactive_library.recv()
+
+    def extract_compute(self, *args):
+        self._interactive_library.send([self.interactive_extract_compute, *args])
+        return self._interactive_library.recv()
+
+    def close(self):
+        self._interactive_library.send([self.interactive_close])
+
+    @staticmethod
+    def interactive_lib_command(conn, job, command):
+        job.command(command)
+
+    @staticmethod
+    def interative_gather_atoms(conn, job, *args):
+        return np.array(job.gather_atoms(*args))
+
+    @staticmethod
+    def interactive_scatter_atoms(conn, job, *args):
+        py_vector = args[3]
+        if isinstance(py_vector[0], int):
+            c_vector = (len(py_vector) * c_int)(*py_vector)
+        else:
+            c_vector = (len(py_vector) * c_double)(*py_vector)
+        job.scatter_atoms(args[0], args[1], args[2], c_vector)
+
+    @staticmethod
+    def interactive_get_thermo(conn, job, *args):
+        return np.array(job.get_thermo(*args))
+
+    @staticmethod
+    def interactive_extract_compute(conn, job, *args):
+        return np.array(job.extract_compute(*args))
+
+    @staticmethod
+    def interactive_close(conn, job):
+        job.close()
+        conn.close()
+        return 'exit'
+
+    @staticmethod
+    def interactive_run(conn, job):
+        while True:
+            input_info = conn.recv()
+            if isinstance(input_info, list):
+                input_function = input_info[0]
+                input_args = input_info[1:]
+                answer = input_function(conn, job, *input_args)
+            else:
+                answer = input_info(conn, job)
+            if isinstance(answer, str) and answer == 'exit':
+                break
+            elif answer is not None:
+                conn.send(answer)
 
 
 class LammpsInt2(LammpsInt):
