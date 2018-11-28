@@ -6,10 +6,9 @@
 An abstract Potential class to provide an easy access for the available potentials. Currently implemented for the
 OpenKim https://openkim.org database.
 """
-import posixpath
 import pandas
 import os
-from pyiron.base.core.settings.generic import Settings
+from pyiron.base.settings.generic import Settings
 
 __author__ = "Martin Boeckmann, Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"

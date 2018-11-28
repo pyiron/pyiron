@@ -15,7 +15,7 @@ from ase.geometry import cellpar_to_cell, complete_cell
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
 from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement, ElementColorDictionary
-from pyiron.base.core.settings.generic import Settings
+from pyiron.base.settings.generic import Settings
 from scipy.spatial import cKDTree
 
 try:
@@ -1129,9 +1129,10 @@ class Atoms(object):
             select_atoms = np.array(len(parent_basis)*[True])
         else:
             select_atoms = np.array(select_atoms)
+            if custom_array is not None:
+                custom_array = custom_array[select_atoms]
         struct = nglview.TextStructure(self._ngl_write_structure(parent_basis.get_chemical_symbols()[select_atoms],
-                                                                 self.positions[select_atoms], self.cell[select_atoms],
-                                                                 custom_array=custom_array[select_atoms]))
+                                                                 self.positions[select_atoms], self.cell, custom_array=custom_array))
         view = nglview.NGLWidget(struct)
         if spacefill:
             if color_scheme is None and custom_array is not None:
@@ -1163,7 +1164,7 @@ class Atoms(object):
         view.camera = camera
         view.background = background
         return view
-    
+
     def plot3d_ase(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5, background='white', color_scheme='element', show_axes=True):
         """
         Possible color schemes: 

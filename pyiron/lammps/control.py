@@ -5,7 +5,7 @@
 from __future__ import print_function
 from collections import OrderedDict
 import numpy as np
-from pyiron.base.objects.generic.parameters import GenericParameters
+from pyiron.base.generic.parameters import GenericParameters
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"

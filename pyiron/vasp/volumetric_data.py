@@ -6,9 +6,9 @@ import math
 
 import numpy as np
 
-from pyiron.base.core.settings.generic import Settings
+from pyiron.base.settings.generic import Settings
 from pyiron.vasp.structure import atoms_from_string, get_species_list_from_potcar
-from pyiron.base.objects.volumetric.generic import VolumetricData
+from pyiron.atomistics.volumetric.generic import VolumetricData
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
