@@ -5,7 +5,7 @@
 from __future__ import print_function, unicode_literals
 import numpy as np
 import os
-from pyiron.base.core.settings.generic import Settings
+from pyiron.base.settings.generic import Settings
 import sys
 import pandas
 

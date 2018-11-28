@@ -15,7 +15,7 @@ from ase.geometry import cellpar_to_cell, complete_cell
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
 from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement, ElementColorDictionary
-from pyiron.base.core.settings.generic import Settings
+from pyiron.base.settings.generic import Settings
 from scipy.spatial import cKDTree
 
 try:

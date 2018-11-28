@@ -8,15 +8,15 @@ import posixpath
 import numpy as np
 import types
 from string import punctuation
-from pyiron.base.project import Project as ProjectCore
+from pyiron.base.project.generic import Project as ProjectCore
 try:
-    from pyiron.base.core.project.gui import ProjectGUI
+    from pyiron.base.project import ProjectGUI
 except (ImportError, TypeError, AttributeError):
     pass
-from pyiron.base.core.settings.generic import Settings
-from pyiron.base.objects.generic.hdfio import ProjectHDFio
-from pyiron.base.objects.job.jobtype import JobType, JobTypeChoice
-from pyiron.atomistics.job.object_type import ObjectType, ObjectTypeChoice
+from pyiron.base.settings.generic import Settings
+from pyiron.base.generic.hdfio import ProjectHDFio
+from pyiron.base.job.jobtype import JobType, JobTypeChoice
+from pyiron.atomistics.generic.object_type import ObjectType, ObjectTypeChoice
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.lammps.potential import LammpsPotentialFile
 from pyiron.vasp.potential import VaspPotential

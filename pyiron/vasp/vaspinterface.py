@@ -9,7 +9,7 @@ from pyiron.vasp.structure import vasp_sorter
 from pyiron.vasp.vasp import GenericOutput as GenericOutputBase
 from pyiron.vasp.vasp import DFTOutput as DFTOutputBase
 from pyiron.vasp.vasp import Output as OutputBase
-from pyiron.base.objects.job.interactive import GenericInteractive
+from pyiron.atomistics.job.interactive import GenericInteractive
 
 
 class VaspInt(GenericInteractive, Vasp):

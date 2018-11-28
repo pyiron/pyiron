@@ -14,8 +14,8 @@ from phonopy.units import VaspToTHz
 from phonopy.file_IO import write_FORCE_CONSTANTS
 
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.atomistics.job.parallel import AtomisticParallelMaster
-from pyiron.base.objects.job.parallel import JobGenerator
+from pyiron.atomistics.master.parallel import AtomisticParallelMaster
+from pyiron.base.master.parallel import JobGenerator
 
 __author__ = "Jan Janssen, Yury Lysogorskiy"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"

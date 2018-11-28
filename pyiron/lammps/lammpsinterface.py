@@ -10,7 +10,7 @@ except ImportError:
     pass
 from pyiron.lammps.lammps import Lammps
 from pyiron.lammps.structure import UnfoldingPrism
-from pyiron.base.objects.job.interactive import GenericInteractive
+from pyiron.atomistics.job.interactive import GenericInteractive
 
 
 class LammpsInt(GenericInteractive, Lammps):

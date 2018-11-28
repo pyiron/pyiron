@@ -3,12 +3,11 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
-import posixpath
 import pandas as pd
 import shutil
 import os
-from pyiron.base.core.settings.generic import Settings
-from pyiron.base.objects.generic.parameters import GenericParameters
+from pyiron.base.settings.generic import Settings
+from pyiron.base.generic.parameters import GenericParameters
 from pyiron.atomistics.job.potentials import PotentialAbstract
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
