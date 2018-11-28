@@ -430,6 +430,8 @@ class DatabaseAccess(object):
         if not self._viewer_mode:
             if type(item_id) is list:
                 item_id = item_id[-1]                                           # sometimes a list is given, make it int
+            if np.issubdtype(type(item_id), np.integer):
+                item_id = int(item_id)
             # all items must be lower case, ensured here
             par_dict = dict((key.lower(), value) for key, value in par_dict.items())
             query = self.simulation_table.update(self.simulation_table.c['id'] == item_id).values()
