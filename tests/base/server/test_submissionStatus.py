@@ -1,6 +1,6 @@
 from datetime import datetime
-from pyiron.base.settings import DatabaseAccess
-from pyiron.base.job import SubmissionStatus
+from pyiron.base.database.generic import DatabaseAccess
+from pyiron.base.master.submissionstatus import SubmissionStatus
 import unittest
 import os
 

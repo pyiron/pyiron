@@ -11,8 +11,8 @@ import os
 import posixpath
 import psutil
 from pyiron.base.settings.generic import Settings
-from pyiron.base.job import Executable
-from pyiron.base.job import JobStatus
+from pyiron.base.job.executable import Executable
+from pyiron.base.job.jobstatus import JobStatus
 from pyiron.base.job.core import JobCore
 from pyiron.base.server.generic import Server
 import subprocess

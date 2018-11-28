@@ -1,6 +1,6 @@
 import os
 import unittest
-from pyiron.base.project import ProjectPath
+from pyiron.base.project.path import ProjectPath
 
 
 class TestProjectPath(unittest.TestCase):

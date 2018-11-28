@@ -1,5 +1,5 @@
 import unittest
-from pyiron.base.project import ReadMode
+from pyiron.base.project.readmode import ReadMode
 
 
 class TestReadMode(unittest.TestCase):
