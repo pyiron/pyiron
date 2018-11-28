@@ -229,7 +229,7 @@ class LammpsInt(GenericInteractive, Lammps):
                 self._interactive_lib_command('mass {0:3d} {1:f}'.format(id_eam + 1, el.AtomicMass))
             else:
                 self._interactive_lib_command('mass {0:3d} {1:f}'.format(id_eam + 1, 1.00))
-        self._interactive_lib_command('create_atoms 1 random ' + len(structure) + ' 12345 1')
+        self._interactive_lib_command('create_atoms 1 random ' + str(len(structure)) + ' 12345 1')
         positions = structure.positions.flatten()
         elem_all = np.array([el_dict[el] for el in structure.get_chemical_elements()])
         if self.server.run_mode.interactive_non_modal:
@@ -350,7 +350,7 @@ class LammpsLibrary(object):
     @staticmethod
     def interactive_scatter_atoms(conn, job, *args):
         py_vector = args[3]
-        if isinstance(py_vector[0], int):
+        if issubclass(type(py_vector[0]), np.integer):
             c_vector = (len(py_vector) * c_int)(*py_vector)
         else:
             c_vector = (len(py_vector) * c_double)(*py_vector)
