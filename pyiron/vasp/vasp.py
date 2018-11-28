@@ -9,11 +9,11 @@ import subprocess
 import numpy as np
 import tables
 
-from pyiron.dft.generic import GenericDFTJob
+from pyiron.dft.job.generic import GenericDFTJob
 from pyiron.vasp.potential import VaspPotentialFile
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
-from pyiron.base.core.settings.generic import Settings
-from pyiron.base.objects.generic.parameters import GenericParameters
+from pyiron.base.settings.generic import Settings
+from pyiron.base.generic.parameters import GenericParameters
 from pyiron.atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
 from pyiron.vasp.outcar import Outcar
 from pyiron.vasp.procar import Procar
@@ -717,7 +717,7 @@ class Vasp(GenericDFTJob):
             if not (self._output_parser.structure is not None):
                 raise AssertionError()
             structure = self._output_parser.structure
-        from pyiron.dft.bandstructure import Bandstructure
+        from pyiron.dft.waves.bandstructure import Bandstructure
         bs_obj = Bandstructure(structure)
         _, q_point_list, [_, _] = bs_obj.get_path(num_points=num_points, path_type="full")
         q_point_list = np.array(q_point_list)

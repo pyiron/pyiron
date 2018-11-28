@@ -11,11 +11,10 @@ import posixpath
 import h5py
 import numpy as np
 import pandas as pd
-import scipy.constants as const
 
 from pyiron.lammps.potential import LammpsPotentialFile
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
-from pyiron.base.core.settings.generic import Settings
+from pyiron.base.settings.generic import Settings
 from pyiron.base.pyio.parser import Logstatus, extract_data_from_file
 from pyiron.lammps.control import LammpsControl
 from pyiron.lammps.potential import LammpsPotential

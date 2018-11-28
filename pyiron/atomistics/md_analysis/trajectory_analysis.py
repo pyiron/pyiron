@@ -5,7 +5,7 @@
 from __future__ import print_function, unicode_literals
 import numpy as np
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
-from pyiron.base.objects.job.path import JobPath
+from pyiron.base.job.path import JobPath
 from pyiron.atomistics.structure.atoms import Atoms
 
 __author__ = "Sudarsan Surendralal"
