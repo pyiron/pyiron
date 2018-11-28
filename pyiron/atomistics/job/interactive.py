@@ -170,9 +170,9 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             self.interactive_cache['unwrapped_positions'].append(self.interactive_unwrapped_positions_getter())
         if 'volume' in self.interactive_cache.keys():
             self.interactive_cache['volume'].append(self.interactive_volume_getter())
-        if len(list(self.interactive_cache.keys())) > 0 and len(self.interactive_cache[
-                                                                    list(self.interactive_cache.keys())[
-                                                                        0]]) % self._interactive_flush_frequency == 0:
+        if len(list(self.interactive_cache.keys())) > 0 and \
+                len(self.interactive_cache[list(self.interactive_cache.keys())[0]]) \
+                % self._interactive_flush_frequency == 0:
             self.interactive_flush(path="interactive")
 
     def interactive_indices_getter(self):
@@ -262,8 +262,8 @@ class GenericInteractiveOutput(GenericOutput):
         self._job = job
 
     def _key_from_cache(self, key):
-        if key in self._job.interactive_cache.keys() and self._job.interactive_is_activated() and len(
-                self._job.interactive_cache[key]) != 0:
+        if key in self._job.interactive_cache.keys() and self._job.interactive_is_activated() \
+                and len(self._job.interactive_cache[key]) != 0:
             return self._job.interactive_cache[key]
         else:
             return []

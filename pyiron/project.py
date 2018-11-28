@@ -10,7 +10,7 @@ import types
 from string import punctuation
 from pyiron.base.project.generic import Project as ProjectCore
 try:
-    from pyiron.base.project import ProjectGUI
+    from pyiron.base.project.gui import ProjectGUI
 except (ImportError, TypeError, AttributeError):
     pass
 from pyiron.base.settings.generic import Settings
