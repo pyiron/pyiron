@@ -1118,7 +1118,7 @@ class GenericJob(JobCore):
                 return f.write(arg + '\n')
 
             wl('import sys')
-            wl('from pyiron.base.objects.job.wrapper import JobWrapper')
+            wl('from pyiron.base.job.wrapper import JobWrapper')
             wl('')
             wl('debug = {0}'.format(debug))
             wl('job = JobWrapper(working_directory=\'{0}\','.format(self.project_hdf5.working_directory))
