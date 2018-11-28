@@ -68,7 +68,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
     def structure(self):
         if self._structure_current is not None:
             return self._structure_current
-        elif self.server.run_mode.interactive or self.server.run_mode.interactive:
+        elif self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
             self._structure_current = AtomisticGenericJob.structure.fget(self)
             return self._structure_current
         else:
@@ -76,7 +76,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
 
     @structure.setter
     def structure(self, structure):
-        if self.server.run_mode.interactive or self.server.run_mode.interactive:
+        if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
             # only overwrite the initial structure if it is not set already.
             if AtomisticGenericJob.structure.fget(self) is None:
                 AtomisticGenericJob.structure.fset(self, structure.copy())
@@ -174,6 +174,8 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
                 len(self.interactive_cache[list(self.interactive_cache.keys())[0]]) \
                 % self._interactive_flush_frequency == 0:
             self.interactive_flush(path="interactive")
+        if self.server.run_mode.interactive_non_modal:
+            self._interactive_fetch_completed = True
 
     def interactive_indices_getter(self):
         return self.current_structure.get_chemical_indices()
