@@ -310,6 +310,8 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             self.interactive_cache['volume'].append(self.interactive_volume_getter())
         if len(list(self.interactive_cache.keys()))>0 and len(self.interactive_cache[list(self.interactive_cache.keys())[0]]) % self._interactive_flush_frequency == 0:
             self.interactive_flush(path="interactive")
+        if self.server.run_mode.interactive_non_modal:
+            self._interactive_fetch_completed = True
 
     def interactive_indices_getter(self):
         return self.current_structure.get_chemical_indices()
