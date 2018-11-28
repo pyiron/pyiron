@@ -571,7 +571,7 @@ class Project(ProjectPath):
         Returns:
             GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
         """
-        from pyiron.base.job import JobPath
+        from pyiron.base.job.path import JobPath
         if job_id:
             job = JobPath(db=self.db, job_id=job_id, user=self.user)
             job = job.load_object(convert_to_object=convert_to_object, project=job.project_hdf5.copy())
