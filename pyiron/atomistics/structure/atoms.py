@@ -439,7 +439,7 @@ class Atoms(object):
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.objects.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
+            hdf (pyiron.base.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
             group_name (str):
                 Group name with which the object should be stored. This same name should be used to retrieve the object
 
@@ -482,7 +482,7 @@ class Atoms(object):
         Retrieve the object from a HDF5 file
 
         Args:
-            hdf (pyiron.base.objects.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
+            hdf (pyiron.base.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
             group_name (str): Group name from which the Atoms object is retreived.
 
         Returns:

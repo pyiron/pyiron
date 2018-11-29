@@ -189,7 +189,7 @@ def queue_delete_job(item):
     Delete a job from the queuing system
 
     Args:
-        item (int, pyiron.base.objects.job.generic.GenericJob): Provide either the job_ID or the full hamiltonian
+        item (int, pyiron.base.job.generic.GenericJob): Provide either the job_ID or the full hamiltonian
 
     Returns:
         str: Output from the queuing system as string - optimized for the Sun grid engine
@@ -207,7 +207,7 @@ def queue_enable_reservation(item):
     Enable a reservation for a particular job within the queuing system
 
     Args:
-        item (int, pyiron.base.objects.job.generic.GenericJob): Provide either the job_ID or the full hamiltonian
+        item (int, pyiron.base.job.generic.GenericJob): Provide either the job_ID or the full hamiltonian
 
     Returns:
         str: Output from the queuing system as string - optimized for the Sun grid engine
@@ -225,7 +225,7 @@ def queue_report(item):
     Detailed reporting for a particular job - using the qacct command of the sun grid engine.
 
     Args:
-        item (int, pyiron.base.objects.job.generic.GenericJob): Provide either the job_ID or the full hamiltonian
+        item (int, pyiron.base.job.generic.GenericJob): Provide either the job_ID or the full hamiltonian
 
     Returns:
         pandas.DataFrame: Detailed report returned from the queuing system - optimized for the Sun grid engine
@@ -245,7 +245,7 @@ def queue_job_info(item):
     Short reporting for a particular job - using the qstat command of the sun grid engine.
 
     Args:
-        item (int, pyiron.base.objects.job.generic.GenericJob): Provide either the job_ID or the full hamiltonian
+        item (int, pyiron.base.job.generic.GenericJob): Provide either the job_ID or the full hamiltonian
 
     Returns:
         pandas.DataFrame: Short report returned from the queuing system - optimized for the Sun grid engine
@@ -265,7 +265,7 @@ def wait_for_job(job, interval_in_s=5, max_iterations=100):
     Sleep until the job is finished but maximum interval_in_s * max_iterations seconds.
 
     Args:
-        job (pyiron.base.objects.job.generic.GenericJob): Job to wait for
+        job (pyiron.base.job.generic.GenericJob): Job to wait for
         interval_in_s (int): interval when the job status is queried from the database - default 5 sec.
         max_iterations (int): maximum number of iterations - default 100
     """
@@ -281,7 +281,7 @@ def _validate_que_request(item):
     Internal function to convert the job_ID or hamiltonian to the queuing system ID.
 
     Args:
-        item (int, pyiron.base.objects.job.generic.GenericJob): Provide either the job_ID or the full hamiltonian
+        item (int, pyiron.base.job.generic.GenericJob): Provide either the job_ID or the full hamiltonian
 
     Returns:
         int: queuing system ID
