@@ -289,13 +289,13 @@ def _validate_que_request(item):
     
     if isinstance(item, int):
         que_id = item
-    elif 'pyiron.base.objects.job.generic.GenericJob' in ['.'.join([c.__module__, c.__name__])
+    elif 'pyiron.base.job.generic.GenericJob' in ['.'.join([c.__module__, c.__name__])
                                                           for c in item.__class__.__mro__]:
         if item.server.queue_id:
             que_id = item.server.queue_id
         else:
             raise ValueError('This job does not have a queue ID.')
-    elif 'pyiron.base.objects.job.core.JobCore' in ['.'.join([c.__module__, c.__name__])
+    elif 'pyiron.base.job.core.JobCore' in ['.'.join([c.__module__, c.__name__])
                                                     for c in item.__class__.__mro__]:
         if "server" in item.project_hdf5.list_nodes():
             server_hdf_dict = item.project_hdf5["server"]
