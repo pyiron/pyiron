@@ -143,4 +143,4 @@ class JobType(object):
                     Settings().logger.info("job_exists -> load from hdf")
                     job.from_hdf()
                 return job
-        raise ValueError("Unknown job type: ", class_name, [job.__name__ for job in list(cls.job_class_dict.keys())])
+        raise ValueError("Unknown job type: ", class_name, [job for job in list(cls.job_class_dict.keys())])
