@@ -90,8 +90,8 @@ class JobTypeChoice(with_metaclass(Singleton)):
     @staticmethod
     def _extend_job_dict(job_dict):
         def derived_from_generic_job(obj):
-            return 'pyiron.base.objects.job.generic.GenericJob' in [subcls.__module__ + '.' + subcls.__name__
-                                                                    for subcls in obj.__mro__]
+            return 'pyiron.base.job.generic.GenericJob' in [subcls.__module__ + '.' + subcls.__name__
+                                                            for subcls in obj.__mro__]
 
         for d in [{name: obj.__module__
                    for name, obj in inspect.getmembers(importlib.import_module(name))
