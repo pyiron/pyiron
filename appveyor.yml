@@ -10,11 +10,11 @@ environment:
     - PYTHON_VERSION: 2.7
       CONDA: C:\Miniconda
 
-    - PYTHON_VERSION: 3.5
-      CONDA: C:\Miniconda35
-
     - PYTHON_VERSION: 3.6
       CONDA: C:\Miniconda36
+
+    - PYTHON_VERSION: 3.7
+        CONDA: C:\Miniconda37
 
 version: '{build}'
 image: Visual Studio 2015
@@ -23,7 +23,6 @@ image: Visual Studio 2015
 #skip_non_tags: true
 
 platform:
-- x86
 - x64
 
 init:
