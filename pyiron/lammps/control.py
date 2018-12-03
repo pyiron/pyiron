@@ -110,7 +110,7 @@ run 0
             if langevin:
                 ensamble = 'nph'
 
-                fix_str = 'all {0} aniso {1} {2} {3}'.format(ensamble, str(temperature), str(temperature), str(delta_temp),
+                fix_str = 'all {0} aniso {4} {5} {6}'.format(ensamble, str(temperature), str(temperature), str(delta_temp),
                                                                               str(pressure), str(pressure), str(delta_press))
                 self.modify(fix___langevin='all langevin {0} {1} {2} {3}'.format(str(temperature), str(temperature), str(delta_temp), str(seed)),
                             append_if_not_present=True)
