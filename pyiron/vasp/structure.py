@@ -89,14 +89,14 @@ def write_poscar(structure, filename="POSCAR", write_species=True, cartesian=Tru
         atom_numbers = structure.get_number_species_atoms()
         if write_species:
             f.write(" ".join(atom_numbers.keys()) + endline)
-        for num in atom_numbers.values():
-            f.write('{0:d} '.format(num))
+        num_str = [str(val) for val in atom_numbers.values()]
+        f.write(" ".join(num_str))
         f.write(endline)
         if 'selective_dynamics' in structure.get_tags():
             selec_dyn = True
             f.write("Selective dynamics" + endline)
-        sorted_coords = []
-        selec_dyn_lst = []
+        sorted_coords = list()
+        selec_dyn_lst = list()
         for species in atom_numbers.keys():
             indices = structure.select_index(species)
             for i in indices:
