@@ -325,6 +325,8 @@ class SerialMasterBase(GenericMaster):
             if self.server.run_mode.queue:
                 job.server.run_mode.thread = True
             self.status.suspended = True
+            if job.server.run_mode.non_modal and self.master_id:
+                del self
             job.run()
             if job.server.run_mode.thread and job._process:
                 job._process.communicate()

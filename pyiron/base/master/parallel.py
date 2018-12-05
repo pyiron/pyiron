@@ -481,6 +481,8 @@ class ParallelMaster(GenericMaster):
             if len(job_to_be_run_lst) != 0:
                 if self.project.db.get_item_by_id(self.job_id)['status'] != 'busy':
                     self.status.suspended = True
+                    if self.server.run_mode.non_modal and self.master_id:
+                        del self
                     job_lst = []
                     for job in job_to_be_run_lst:
                         job.run()
