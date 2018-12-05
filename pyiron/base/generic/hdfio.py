@@ -593,11 +593,12 @@ class FileHDFio(object):
         """
         return str(self.list_all())
 
-    # def __del__(self):
-    #     """
-    #     When the object is deleted the HDF5 file has to be closed
-    #     """
-    #     self._close_store()
+    def __del__(self):
+        del self._file_name
+        del self.history
+        del self._h5_path
+        del self._filter
+        del self._h5_group
 
     def __enter__(self):
         """
