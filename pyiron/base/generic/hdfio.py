@@ -597,7 +597,6 @@ class FileHDFio(object):
         del self._file_name
         del self.history
         del self._h5_path
-        del self._filter
         del self._h5_group
 
     def __enter__(self):
