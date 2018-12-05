@@ -667,10 +667,15 @@ class GenericJob(JobCore):
         self._logger.info('job status: %s', self.status)
 
     # def run_if_non_modal(self):
+    #     """
+    #     The run if non modal function is called by run to execute the simulation in the background. For this we use
+    #     multiprocessing.Process()
+    #     """
     #     p = multiprocessing.Process(target=multiprocess_wrapper, args=(self.job_id,
     #                                                                    self.project_hdf5.working_directory,
     #                                                                    False))
-    #     del self
+    #     if self.master_id:
+    #         del self
     #     p.start()
 
     def run_if_manually(self, _manually_print=True):
@@ -960,7 +965,7 @@ class GenericJob(JobCore):
         if self.server.run_mode.manual:
             self.run_if_manually()
         elif self.server.run_mode.modal:
-            self.run_if_modal()
+            self.run_static()
         elif self.server.run_mode.non_modal or self.server.run_mode.thread:
             self.run_if_non_modal()
         elif self.server.run_mode.queue:
@@ -1227,8 +1232,8 @@ def multiprocess_wrapper(job_id, working_dir, debug=False):
     job_wrap.job.run_static()
 
 
-def multiprocess_master(job_id, working_dir, is_thread_mode=False, debug=False):
-    job_wrap = JobWrapper(working_directory=str(working_dir), job_id=int(job_id), debug=debug)
-    job_wrap.job._run_if_refresh()
-    if is_thread_mode and job_wrap.job._process:
-        job_wrap.job._process.communicate()
+# def multiprocess_master(job_id, working_dir, is_thread_mode=False, debug=False):
+#     job_wrap = JobWrapper(working_directory=str(working_dir), job_id=int(job_id), debug=debug)
+#     job_wrap.job._run_if_refresh()
+#     if is_thread_mode and job_wrap.job._process:
+#         job_wrap.job._process.communicate()
