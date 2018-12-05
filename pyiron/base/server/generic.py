@@ -10,6 +10,7 @@ from pyiron.base.server.scheduler.cmmc import Cmmc
 from pyiron.base.server.scheduler.localhost import Localhost
 import socket
 import pandas
+import warnings
 
 """
 Server object class which is connected to each job containing the technical details how the job is executed.
@@ -193,9 +194,11 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
             run_time = self.run_time
             self._scheduler.active_scheduler = new_scheduler
             self.run_mode.queue = True
-            if self._scheduler.active_scheduler.minimum_number_of_cores < cores < \
+            if self._scheduler.active_scheduler.minimum_number_of_cores <= cores <= \
                     self._scheduler.active_scheduler.maximum_number_of_cores:
                 self.cores = cores
+            else:
+                warnings.warn('The number of cores was reset to ' + str(self.cores))
             if run_time is not None:
                 self.run_time = run_time
 
