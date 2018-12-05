@@ -357,9 +357,6 @@ class SerialMasterBase(GenericMaster):
                 self._run_if_master_modal_child_non_modal(job)
             else:
                 raise TypeError()
-            job.run()
-            if self.master_id:
-                del self
         else:
             self.status.collect = True
             self.run()
