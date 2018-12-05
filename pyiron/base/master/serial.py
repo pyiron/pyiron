@@ -5,6 +5,7 @@
 from __future__ import print_function
 from collections import OrderedDict
 import inspect
+import time
 import numpy as np
 from pyiron.base.master.generic import GenericMaster
 from pyiron.base.generic.parameters import GenericParameters
@@ -328,9 +329,12 @@ class SerialMasterBase(GenericMaster):
             job.run()
             if job.server.run_mode.thread and job._process:
                 job._process.communicate()
-            elif job.server.run_mode.non_modal and self.master_id:
+            elif job.server.run_mode.non_modal and self.server.run_mode.non_modal and self.master_id:
                 del self
-            elif job.server.run_mode.modal:
+            elif job.server.run_mode.modal or self.server.run_mode.modal:
+                while not job.status.finished and not job.status.aborted:
+                    job.refresh_job_status()
+                    time.sleep(5)
                 self._run_if_refresh()
         else:
             if set([self.project.db.get_item_by_id(child_id)['status'] for child_id in self.child_ids]) != {'finished'}:
