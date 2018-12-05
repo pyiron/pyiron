@@ -736,11 +736,12 @@ class GenericJob(JobCore):
         triggered.
         """
         master_id = self.master_id
+        project = self.project
         self._logger.info("update master: {} {}".format(master_id, self.get_job_id()))
         if master_id is not None and not self.server.run_mode.modal and not self.server.run_mode.interactive:
-            master_db_entry = self.project.db.get_item_by_id(master_id)
+            master_db_entry = project.db.get_item_by_id(master_id)
             if master_db_entry['status'] == 'suspended':
-                self.project.db.item_update({'status': 'refresh'}, master_id)
+                project.db.item_update({'status': 'refresh'}, master_id)
                 self._logger.info("run_if_refresh() called")
                 # p = multiprocessing.Process(target=multiprocess_master, args=(master_id,
                 #                                                               self.project.path,
@@ -748,15 +749,14 @@ class GenericJob(JobCore):
                 #                                                               False))
                 # del self
                 # p.start()
-                run_mode_thread = self.server.run_mode.thread
-                project = self.project
                 del self
                 master = project.load(master_id)
-                master._run_if_refresh()
-                if run_mode_thread and master._process:
-                    master._process.communicate()
+                if master.server.run_mode.non_modal or master.server.run_mode.queue:
+                    master._run_if_refresh()
+                    if master.server.run_mode.queue and master._process:
+                        master._process.communicate()
             elif master_db_entry['status'] == 'refresh':
-                self.project.db.item_update({'status': 'busy'}, master_id)
+                project.db.item_update({'status': 'busy'}, master_id)
                 self._logger.info("busy master: {} {}".format(master_id, self.get_job_id()))
                 del self
         else:
