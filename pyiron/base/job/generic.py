@@ -395,7 +395,6 @@ class GenericJob(JobCore):
         # del self._hdf5
         del self._job_id
         del self._status
-        del self
 
     def copy(self):
         """
