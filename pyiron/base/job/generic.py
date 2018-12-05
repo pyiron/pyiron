@@ -748,9 +748,12 @@ class GenericJob(JobCore):
                 #                                                               False))
                 # del self
                 # p.start()
-                master = self.project.load(master_id)
+                run_mode_thread = self.server.run_mode.thread
+                project = self.project
+                del self
+                master = project.load(master_id)
                 master._run_if_refresh()
-                if self.server.run_mode.thread and master._process:
+                if run_mode_thread and master._process:
                     master._process.communicate()
             elif master_db_entry['status'] == 'refresh':
                 self.project.db.item_update({'status': 'busy'}, master_id)
