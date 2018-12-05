@@ -325,13 +325,12 @@ class SerialMasterBase(GenericMaster):
             if self.server.run_mode.queue:
                 job.server.run_mode.thread = True
             self.status.suspended = True
-            if job.server.run_mode.non_modal and self.master_id:
-                del self
             job.run()
             if job.server.run_mode.thread and job._process:
                 job._process.communicate()
-            # self._logger.info('SerialMaster: finished job {}'.format(job.job_name))
-            if job.server.run_mode.modal:
+            elif job.server.run_mode.non_modal and self.master_id:
+                del self
+            elif job.server.run_mode.modal:
                 self._run_if_refresh()
         else:
             if set([self.project.db.get_item_by_id(child_id)['status'] for child_id in self.child_ids]) != {'finished'}:
