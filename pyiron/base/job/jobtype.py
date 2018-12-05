@@ -126,21 +126,31 @@ class JobType(object):
             GenericJob: object of type class_name
         """
         cls.job_class_dict = job_class_dict
+        if isinstance(class_name, str):
+            job_class = cls.convert_str_to_class(job_class_dict=cls.job_class_dict, class_name=class_name)
+        elif inspect.isclass(class_name):
+            job_class = class_name
+        else:
+            raise TypeError()
+        job = job_class(project, job_name)
+        if job.status.aborted:
+            job.logger.warn('Job aborted - please remove it and run again! {}'.format(job.job_name))
+        if not job.status.initialized:
+            Settings().logger.info("job_exists -> load from hdf")
+            job.from_hdf()
+        return job
+
+    @staticmethod
+    def convert_str_to_class(job_class_dict, class_name):
         job_type_lst = class_name.split(".")
         if len(job_type_lst) > 1:
             class_name = class_name.split()[-1][1:-2]
             job_type = class_name.split(".")[-1]
         else:
             job_type = job_type_lst[-1]
-        for job_class_name in list(cls.job_class_dict.keys()):  # for job_class in cls.JOB_CLASSES:
+        for job_class_name in list(job_class_dict.keys()):  # for job_class in cls.JOB_CLASSES:
             if job_type == job_class_name:
-                job_module = importlib.import_module(cls.job_class_dict[job_class_name])
+                job_module = importlib.import_module(job_class_dict[job_class_name])
                 job_class = getattr(job_module, job_class_name)
-                job = job_class(project, job_name)
-                if job.status.aborted:
-                    job.logger.warn('Job aborted - please remove it and run again! {}'.format(job.job_name))
-                if not job.status.initialized:
-                    Settings().logger.info("job_exists -> load from hdf")
-                    job.from_hdf()
-                return job
-        raise ValueError("Unknown job type: ", class_name, [job for job in list(cls.job_class_dict.keys())])
+                return job_class
+        raise ValueError("Unknown job type: ", class_name, [job for job in list(job_class_dict.keys())])
