@@ -6,7 +6,7 @@ from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron.atomistics.structure.sparse_list import SparseList
 from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement
-from pyiron.base.objects.generic.hdfio import FileHDFio
+from pyiron.base.generic.hdfio import FileHDFio
 
 
 class TestAtoms(unittest.TestCase):

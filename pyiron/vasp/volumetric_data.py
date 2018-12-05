@@ -6,9 +6,9 @@ import math
 
 import numpy as np
 
-from pyiron.base.core.settings.generic import Settings
+from pyiron.base.settings.generic import Settings
 from pyiron.vasp.structure import atoms_from_string, get_species_list_from_potcar
-from pyiron.base.objects.volumetric.generic import VolumetricData
+from pyiron.atomistics.volumetric.generic import VolumetricData
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -130,7 +130,7 @@ class VaspVolumetricData(VolumetricData):
         Writes the data as a group to a HDF5 file
 
         Args:
-            hdf5 (pyiron.base.objects.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
+            hdf5 (pyiron.base.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
             group_name (str): The name of the group under which the data must be stored as
 
         """
@@ -145,11 +145,11 @@ class VaspVolumetricData(VolumetricData):
         Recreating the VolumetricData instance by reading data from the HDF5 files
 
         Args:
-            hdf5 (pyiron.base.objects.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
+            hdf5 (pyiron.base.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
             group_name (str): The name of the group under which the data must be stored as
 
         Returns:
-            pyiron.base.objects.volumetric.generic.VolumetricData: The VolumetricData instance
+            pyiron.atomistics.volumetric.generic.VolumetricData: The VolumetricData instance
 
         """
         with hdf5.open(group_name) as hdf_vd:

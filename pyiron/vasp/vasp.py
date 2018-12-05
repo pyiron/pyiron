@@ -9,11 +9,11 @@ import subprocess
 import numpy as np
 import tables
 
-from pyiron.dft.generic import GenericDFTJob
+from pyiron.dft.job.generic import GenericDFTJob
 from pyiron.vasp.potential import VaspPotentialFile
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
-from pyiron.base.core.settings.generic import Settings
-from pyiron.base.objects.generic.parameters import GenericParameters
+from pyiron.base.settings.generic import Settings
+from pyiron.base.generic.parameters import GenericParameters
 from pyiron.atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
 from pyiron.vasp.outcar import Outcar
 from pyiron.vasp.procar import Procar
@@ -396,7 +396,7 @@ class Vasp(GenericDFTJob):
         Stores the instance attributes into the hdf5 file
 
         Args:
-            hdf (pyiron.base.objects.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
+            hdf (pyiron.base.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
             group_name (str): The name of the group under which the data must be stored as
 
         """
@@ -410,7 +410,7 @@ class Vasp(GenericDFTJob):
         Recreates instance from the hdf5 file
 
         Args:
-            hdf (pyiron.base.objects.generic.hdfio.ProjectHDFio): The HDF file/path to read the data from
+            hdf (pyiron.base.generic.hdfio.ProjectHDFio): The HDF file/path to read the data from
             group_name (str): The name of the group under which the data must be stored as
 
         """
@@ -717,7 +717,7 @@ class Vasp(GenericDFTJob):
             if not (self._output_parser.structure is not None):
                 raise AssertionError()
             structure = self._output_parser.structure
-        from pyiron.dft.bandstructure import Bandstructure
+        from pyiron.dft.waves.bandstructure import Bandstructure
         bs_obj = Bandstructure(structure)
         _, q_point_list, [_, _] = bs_obj.get_path(num_points=num_points, path_type="full")
         q_point_list = np.array(q_point_list)
@@ -1080,7 +1080,7 @@ class Input:
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
 
@@ -1287,7 +1287,7 @@ class Output:
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
         with hdf.open("output") as hdf5_output:
@@ -1369,7 +1369,7 @@ class GenericOutput:
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
         with hdf.open("generic") as hdf_go:
@@ -1420,7 +1420,7 @@ class DFTOutput:
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.objects.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
         with hdf.open("dft") as hdf_dft:

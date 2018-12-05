@@ -15,7 +15,7 @@ from ase.geometry import cellpar_to_cell, complete_cell
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
 from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement, ElementColorDictionary
-from pyiron.base.core.settings.generic import Settings
+from pyiron.base.settings.generic import Settings
 from scipy.spatial import cKDTree
 
 try:
@@ -439,7 +439,7 @@ class Atoms(object):
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.objects.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
+            hdf (pyiron.base.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
             group_name (str):
                 Group name with which the object should be stored. This same name should be used to retrieve the object
 
@@ -482,7 +482,7 @@ class Atoms(object):
         Retrieve the object from a HDF5 file
 
         Args:
-            hdf (pyiron.base.objects.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
+            hdf (pyiron.base.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
             group_name (str): Group name from which the Atoms object is retreived.
 
         Returns:
@@ -1097,12 +1097,24 @@ class Atoms(object):
         return pdb_str
     
     def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5,
-               background='white', color_scheme=None, show_axes=True, custom_array=None, custom_3darray=None):
+               background='white', color_scheme=None, show_axes=True, custom_array=None, custom_3darray=None, select_atoms=None):
         """
-        Possible color schemes: 
-          " ", "picking", "random", "uniform", "atomindex", "residueindex",
-          "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
-          "hydrophobicity", "value", "volume", "occupancy"
+
+        Args:
+            spacefill:
+            show_cell: whether to show the frame or not (default: True)
+            camera: 'perspective' or 'orthographic'
+            particle_size:
+            background:
+            color_scheme: v.i.
+            custom_array: color for each atom according to the array value
+            custom_3darray: vectors for each atom according to the array values (3 values for each atom)
+            select_atoms: atoms to show (1d array with ID's or True for atoms to show)
+
+            Possible color schemes: 
+              " ", "picking", "random", "uniform", "atomindex", "residueindex",
+              "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
+              "hydrophobicity", "value", "volume", "occupancy"
     
         Returns:
     
@@ -1113,7 +1125,14 @@ class Atoms(object):
             raise ImportError("The package nglview needs to be installed for the plot3d() function!")
         # Always visualize the parent basis
         parent_basis = self.get_parent_basis()
-        struct = nglview.TextStructure(self._ngl_write_structure(parent_basis.get_chemical_symbols(), self.positions, self.cell, custom_array=custom_array))
+        if select_atoms is None:
+            select_atoms = np.array(len(parent_basis)*[True])
+        else:
+            select_atoms = np.array(select_atoms)
+            if custom_array is not None:
+                custom_array = custom_array[select_atoms]
+        struct = nglview.TextStructure(self._ngl_write_structure(parent_basis.get_chemical_symbols()[select_atoms],
+                                                                 self.positions[select_atoms], self.cell, custom_array=custom_array))
         view = nglview.NGLWidget(struct)
         if spacefill:
             if color_scheme is None and custom_array is not None:
@@ -1129,7 +1148,7 @@ class Atoms(object):
             if parent_basis.cell is not None:
                 view.add_unitcell()
         if custom_3darray is not None:
-            for arr, pos in zip(custom_3darray, self.positions):
+            for arr, pos in zip(custom_3darray[select_atoms], self.positions[select_atoms]):
                 view.shape.add_arrow(list(pos), list(pos+arr), list(0.5*arr/np.linalg.norm(arr)+0.5), 0.2)
         if show_axes:
             axes_origin = -np.ones(3)
@@ -1145,7 +1164,7 @@ class Atoms(object):
         view.camera = camera
         view.background = background
         return view
-    
+
     def plot3d_ase(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5, background='white', color_scheme='element', show_axes=True):
         """
         Possible color schemes: 

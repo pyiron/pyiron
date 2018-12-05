@@ -5,7 +5,7 @@
 from __future__ import print_function
 from collections import OrderedDict
 import numpy as np
-from pyiron.base.objects.generic.parameters import GenericParameters
+from pyiron.base.generic.parameters import GenericParameters
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
@@ -110,7 +110,7 @@ run 0
             if langevin:
                 ensamble = 'nph'
 
-                fix_str = 'all {0} aniso {1} {2} {3}'.format(ensamble, str(temperature), str(temperature), str(delta_temp),
+                fix_str = 'all {0} aniso {4} {5} {6}'.format(ensamble, str(temperature), str(temperature), str(delta_temp),
                                                                               str(pressure), str(pressure), str(delta_press))
                 self.modify(fix___langevin='all langevin {0} {1} {2} {3}'.format(str(temperature), str(temperature), str(delta_temp), str(seed)),
                             append_if_not_present=True)
