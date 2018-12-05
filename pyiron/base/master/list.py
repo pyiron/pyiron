@@ -325,7 +325,7 @@ class ListMaster(GenericMaster):
         if self.is_finished() and not self.server.run_mode.modal:
             self.status.finished = True
         elif (self.server.run_mode.non_modal or self.server.run_mode.queue) and not self.submission_status.finished:
-            self.run_if_modal()
+            self.run_static()
         else:
             self.refresh_job_status()
             if self.status.refresh:
