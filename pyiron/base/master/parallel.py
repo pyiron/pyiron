@@ -453,6 +453,75 @@ class ParallelMaster(GenericMaster):
         self.update_master()
         # self.send_to_database()
 
+    def _validate_cores(self, job, cores_for_session):
+        return self.get_child_cores() + job.server.cores + sum(cores_for_session) > self.server.cores
+
+    def _next_job_series(self, job):
+        job_to_be_run_lst, cores_for_session = [], []
+        while job is not None:
+            self._logger.debug('create job: %s %s', job.job_info_str, job.master_id)
+            if not job.status.finished:
+                self.submission_status.submit_next()
+                job_to_be_run_lst.append(job)
+                cores_for_session.append(job.server.cores)
+                self._logger.info('{}: finished job {}'.format(self.job_name, job.job_name))
+            job = next(self._job_generator, None)
+            if job is not None and self._validate_cores(job, cores_for_session):
+                job = None
+        return job_to_be_run_lst
+
+    def _run_if_master_queue(self, job):
+        job_to_be_run_lst = self._next_job_series(job)
+        if self.project.db.get_item_by_id(self.job_id)['status'] != 'busy':
+            self.status.suspended = True
+            job_lst = []
+            for job in job_to_be_run_lst:
+                job.run()
+                if job.server.run_mode.thread:
+                    job_lst.append(job._process)
+            process_lst = [process.communicate() for process in job_lst if process]
+        else:
+            self.run_static()
+
+    def _run_if_master_non_modal_child_non_modal(self, job):
+        job_to_be_run_lst = self._next_job_series(job)
+        if self.project.db.get_item_by_id(self.job_id)['status'] != 'busy':
+            self.status.suspended = True
+            job_lst = []
+            for job in job_to_be_run_lst:
+                job.run()
+            if self.master_id:
+                del self
+        else:
+            self.run_static()
+
+    def _run_if_master_modal_child_modal(self, job):
+        while job is not None:
+            self._logger.debug('create job: %s %s', job.job_info_str, job.master_id)
+            if not job.status.finished:
+                self.submission_status.submit_next()
+                job.run()
+                self._logger.info('{}: finished job {}'.format(self.job_name, job.job_name))
+            job = next(self._job_generator, None)
+        if self.is_finished():
+            self.status.collect = True
+            self.run()
+
+    def _run_if_master_modal_child_non_modal(self, job):
+        while job is not None:
+            self._logger.debug('create job: %s %s', job.job_info_str, job.master_id)
+            if not job.status.finished:
+                self.submission_status.submit_next()
+                job.run()
+                self._logger.info('{}: finished job {}'.format(self.job_name, job.job_name))
+            job = next(self._job_generator, None)
+            if job is None and not self.is_finished():
+                time.sleep(5)
+                job = next(self._job_generator, None)
+        if self.is_finished():
+            self.status.collect = True
+            self.run()
+
     def run_static(self):
         self._logger.info('{} run parallel master (modal)'.format(self.job_info_str))
         self.status.running = True
@@ -460,40 +529,17 @@ class ParallelMaster(GenericMaster):
         self.submission_status.submitted_jobs = 0
         if self.job_id and not self.is_finished():
             self._logger.debug("{} child project {}".format(self.job_name, self.project.__str__()))
-            ham = next(self._job_generator, None)
-            job_to_be_run_lst, cores_for_session = [], []
-            while ham is not None:
-                self._logger.debug('create job: %s %s', ham.job_info_str, ham.master_id)
-                if not ham.status.finished:
-                    if ham.server.run_mode.non_modal or ham.server.run_mode.thread:
-                        self.submission_status.submit_next()
-                        job_to_be_run_lst.append(ham)
-                        cores_for_session.append(ham.server.cores)
-                        self._logger.info('{}: finished job {}'.format(self.job_name, ham.job_name))
-                    else:
-                        self.submission_status.submit_next()
-                        ham.run()
-                        self._logger.info('{}: finished job {}'.format(self.job_name, ham.job_name))
-                ham = next(self._job_generator, None)
-                if ham is not None and ham.server.run_mode.non_modal and \
-                        self.get_child_cores() + ham.server.cores + sum(cores_for_session) > self.server.cores:
-                    ham = None
-            if len(job_to_be_run_lst) != 0:
-                if self.project.db.get_item_by_id(self.job_id)['status'] != 'busy':
-                    self.status.suspended = True
-                    job_lst = []
-                    for job in job_to_be_run_lst:
-                        job.run()
-                        if job.server.run_mode.thread:
-                            job_lst.append(job._process)
-                    process_lst = [process.communicate() for process in job_lst if process]
-                    if self.server.run_mode.non_modal and self.master_id:
-                        del self
-                else:
-                    self.run_static()
-            elif self.is_finished():
-                self.status.collect = True
-                self.run()
+            job = next(self._job_generator, None)
+            if self.server.run_mode.queue:
+                self._run_if_master_queue(job)
+            elif self.server.run_mode.non_modal and job.server.run_mode.non_modal:
+                self._run_if_master_non_modal_child_non_modal(job)
+            elif self.server.run_mode.modal and job.server.run_mode.modal:
+                self._run_if_master_modal_child_modal(job)
+            elif self.server.run_mode.modal and job.server.run_mode.non_modal:
+                self._run_if_master_modal_child_non_modal(job)
+            else:
+                raise TypeError()
         else:
             self.status.collect = True
             self.run()
