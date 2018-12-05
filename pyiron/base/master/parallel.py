@@ -353,7 +353,8 @@ class ParallelMaster(GenericMaster):
             return False
         return set([self.project.db.get_item_by_id(child_id)['status'] for child_id in self.child_ids]) < {'finished',
                                                                                                            'busy',
-                                                                                                           'refresh'}
+                                                                                                           'refresh',
+                                                                                                           'aborted'}
 
     def iter_jobs(self, convert_to_object=True):
         """
