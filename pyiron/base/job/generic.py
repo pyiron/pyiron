@@ -764,9 +764,6 @@ class GenericJob(JobCore):
                 project.db.item_update({'status': 'busy'}, master_id)
                 self._logger.info("busy master: {} {}".format(master_id, self.get_job_id()))
                 del self
-        else:
-            self._calculate_successor()
-            self.send_to_database()
 
     def job_file_name(self, file_name, cwd=None):
         """
@@ -1027,6 +1024,8 @@ class GenericJob(JobCore):
                 self.status.not_converged = True
             else:
                 self.status.finished = True
+        self._calculate_successor()
+        self.send_to_database()
         self.update_master()
 
     def _run_if_suspended(self):
