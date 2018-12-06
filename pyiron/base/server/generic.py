@@ -197,6 +197,8 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
             if self._scheduler.active_scheduler.minimum_number_of_cores <= cores <= \
                     self._scheduler.active_scheduler.maximum_number_of_cores:
                 self.cores = cores
+            elif cores == 1:
+                pass
             else:
                 warnings.warn('The number of cores was reset to ' + str(self.cores))
             if run_time is not None:
