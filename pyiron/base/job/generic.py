@@ -325,7 +325,7 @@ class GenericJob(JobCore):
         """
         if self._import_directory:
             return self._import_directory
-        elif not self.project_hdf5.working_directory:
+        elif not os.path.exists(self.project_hdf5.working_directory):
             self._create_working_directory()
         return self.project_hdf5.working_directory
 
