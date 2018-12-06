@@ -65,6 +65,9 @@ class InteractiveWrapper(GenericMaster):
         """
         self.append(ref_job)
 
+    def validate_ready_to_run(self):
+        self.ref_job.validate_ready_to_run()
+
     def ref_job_initialize(self):
         if len(self._job_list) > 0:
             self._ref_job = self.pop(-1)
