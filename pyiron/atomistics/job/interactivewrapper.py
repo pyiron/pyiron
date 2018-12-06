@@ -65,6 +65,9 @@ class InteractiveWrapper(GenericMaster):
         """
         self.append(ref_job)
 
+    def validate_ready_to_run(self):
+        self.ref_job.validate_ready_to_run()
+
     def ref_job_initialize(self):
         if len(self._job_list) > 0:
             self._ref_job = self.pop(-1)
@@ -138,9 +141,10 @@ class InteractiveWrapper(GenericMaster):
     def _finish_job(self):
         self.status.finished = True
         self._db_entry_update_run_time()
-        self.update_master()
-        self.send_to_database()
         self._logger.info("{}, status: {}, monte carlo master".format(self.job_info_str, self.status))
+        self._calculate_successor()
+        self.send_to_database()
+        self.update_master()
 
     def __getitem__(self, item):
         """

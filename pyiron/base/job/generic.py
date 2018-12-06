@@ -10,6 +10,8 @@ import os
 # import sys
 import posixpath
 import psutil
+# import multiprocessing
+from pyiron.base.job.wrapper import JobWrapper
 from pyiron.base.settings.generic import Settings
 from pyiron.base.job.executable import Executable
 from pyiron.base.job.jobstatus import JobStatus
@@ -393,7 +395,6 @@ class GenericJob(JobCore):
         # del self._hdf5
         del self._job_id
         del self._status
-        del self
 
     def copy(self):
         """
@@ -665,6 +666,18 @@ class GenericJob(JobCore):
         s.logger.info('submitted run %s', self.job_name)
         self._logger.info('job status: %s', self.status)
 
+    # def run_if_non_modal(self):
+    #     """
+    #     The run if non modal function is called by run to execute the simulation in the background. For this we use
+    #     multiprocessing.Process()
+    #     """
+    #     p = multiprocessing.Process(target=multiprocess_wrapper, args=(self.job_id,
+    #                                                                    self.project_hdf5.working_directory,
+    #                                                                    False))
+    #     if self.master_id:
+    #         del self
+    #     p.start()
+
     def run_if_manually(self, _manually_print=True):
         """
         The run if manually function is called by run if the user decides to execute the simulation manually - this
@@ -728,22 +741,29 @@ class GenericJob(JobCore):
         triggered.
         """
         master_id = self.master_id
+        project = self.project
         self._logger.info("update master: {} {}".format(master_id, self.get_job_id()))
-        if master_id is not None:
-            if self.project.db.get_item_by_id(master_id)['status'] == 'suspended':
-                self.project.db.item_update({'status': 'refresh'}, master_id)
-                master_job = self.project.load(master_id)
+        if master_id is not None and not self.server.run_mode.modal and not self.server.run_mode.interactive:
+            master_db_entry = project.db.get_item_by_id(master_id)
+            if master_db_entry['status'] == 'suspended':
+                project.db.item_update({'status': 'refresh'}, master_id)
                 self._logger.info("run_if_refresh() called")
-                master_job._run_if_refresh()
-                if self.server.run_mode.thread and master_job._process:
-                    master_job._process.communicate()
-                if self.project.db.get_item_by_id(master_id)['status'] == 'busy':
-                    self._logger.info("reload master: {} {}".format(master_id, self.get_job_id()))
-                    self.project.db.item_update({'status': 'suspended'}, master_id)
-                    self.update_master()
-            elif self.project.db.get_item_by_id(master_id)['status'] == 'refresh':
-                self.project.db.item_update({'status': 'busy'}, master_id)
+                # p = multiprocessing.Process(target=multiprocess_master, args=(master_id,
+                #                                                               self.project.path,
+                #                                                               self.server.run_mode.thread,
+                #                                                               False))
+                # del self
+                # p.start()
+                del self
+                master = project.load(master_id)
+                if master.server.run_mode.non_modal or master.server.run_mode.queue:
+                    master._run_if_refresh()
+                    if master.server.run_mode.queue and master._process:
+                        master._process.communicate()
+            elif master_db_entry['status'] == 'refresh':
+                project.db.item_update({'status': 'busy'}, master_id)
                 self._logger.info("busy master: {} {}".format(master_id, self.get_job_id()))
+                del self
 
     def job_file_name(self, file_name, cwd=None):
         """
@@ -942,7 +962,7 @@ class GenericJob(JobCore):
         if self.server.run_mode.manual:
             self.run_if_manually()
         elif self.server.run_mode.modal:
-            self.run_if_modal()
+            self.run_static()
         elif self.server.run_mode.non_modal or self.server.run_mode.thread:
             self.run_if_non_modal()
         elif self.server.run_mode.queue:
@@ -1004,10 +1024,9 @@ class GenericJob(JobCore):
                 self.status.not_converged = True
             else:
                 self.status.finished = True
-        self.update_master()
         self._calculate_successor()
         self.send_to_database()
-        self._logger.info("{}, status: {}, job".format(self.job_info_str, self.status))
+        self.update_master()
 
     def _run_if_suspended(self):
         """
@@ -1035,7 +1054,6 @@ class GenericJob(JobCore):
             self.run()
         else:
             self.from_hdf()
-            self.update_master()  # Usually the update to the master is only done at the collect stage.
 
     def _executable_activate(self):
         """
@@ -1206,3 +1224,15 @@ class GenericJob(JobCore):
         """
         if job_id is not None:
             self.project.db.item_update(self._runtime(), job_id)
+
+
+def multiprocess_wrapper(job_id, working_dir, debug=False):
+    job_wrap = JobWrapper(working_directory=str(working_dir), job_id=int(job_id), debug=debug)
+    job_wrap.job.run_static()
+
+
+# def multiprocess_master(job_id, working_dir, is_thread_mode=False, debug=False):
+#     job_wrap = JobWrapper(working_directory=str(working_dir), job_id=int(job_id), debug=debug)
+#     job_wrap.job._run_if_refresh()
+#     if is_thread_mode and job_wrap.job._process:
+#         job_wrap.job._process.communicate()

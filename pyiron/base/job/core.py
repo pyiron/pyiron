@@ -711,7 +711,12 @@ class JobCore(PyironObject):
         """
         The delete function is just implemented for compatibilty
         """
-        pass
+        del self._name
+        del self._hdf5
+        del self._job_id
+        del self._parent_id
+        del self._master_id
+        del self._status
 
     def __getitem__(self, item):
         """

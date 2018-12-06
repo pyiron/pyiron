@@ -5,6 +5,7 @@
 from __future__ import print_function
 from collections import OrderedDict
 import inspect
+import time
 import numpy as np
 from pyiron.base.master.generic import GenericMaster
 from pyiron.base.generic.parameters import GenericParameters
@@ -305,36 +306,60 @@ class SerialMasterBase(GenericMaster):
         for job_id in self.child_ids:
             yield self.project.load(job_id, convert_to_object=convert_to_object)
 
-    def run_static(self, **qwargs):
-        """
-        The run if modal function is called by run to execute the simulation, while waiting for the output. For the
-        SerialMaster this means executing the child job check whether is fulfills the convergence goal and create a
-        new child job if required.
-        """
-        if len(self) > len(self.child_ids):
-            self.status.running = True
-            self._logger.info("run serial master {}".format(self.job_info_str))
-            job = self.pop(-1)
-            job._master_id = self.job_id
-            self.status.suspended = True
-            if self.server.new_hdf:
-                job._hdf5 = self.project_hdf5.create_hdf(path=self._hdf5._project.open(self.job_name + '_hdf5').path,
-                                                         job_name=job.job_name)
-            else:
-                job._hdf5 = self.project_hdf5.open(job.job_name)
-            self._logger.info('SerialMaster: run job {}'.format(job.job_name))
-            if self.server.run_mode.queue:
-                job.server.run_mode.thread = True
-            job.run()
-            if job.server.run_mode.thread and job._process:
-                job._process.communicate()
-            self._logger.info('SerialMaster: finished job {}'.format(job.job_name))
+    def _get_job_template(self):
+        self._logger.info("run serial master {}".format(self.job_info_str))
+        job = self.pop(-1)
+        job._master_id = self.job_id
+        if self.server.new_hdf:
+            job._hdf5 = self.project_hdf5.create_hdf(path=self._hdf5._project.open(self.job_name + '_hdf5').path,
+                                                     job_name=job.job_name)
         else:
-            if set([self.project.db.get_item_by_id(child_id)['status'] for child_id in self.child_ids]) != {'finished'}:
-                child_lst = [self.project.load(child_id).run(repair=True) for child_id in self.child_ids if
-                             self.project.db.get_item_by_id(child_id)['status'] != 'finished']
+            job._hdf5 = self.project_hdf5.open(job.job_name)
+        self._logger.info('SerialMaster: run job {}'.format(job.job_name))
+        return job
+
+    def _run_child_job(self, job):
+        job.run()
+
+    def _run_if_master_queue(self, job):
+        job.run()
+        if job._process:
+            job._process.communicate()
+
+    def _run_if_master_non_modal_child_non_modal(self, job):
+        job.run()
+        if self.master_id:
+            del self
+
+    def _run_if_master_modal_child_modal(self, job):
+        job.run()
+        self._run_if_refresh()
+
+    def _run_if_master_modal_child_non_modal(self, job):
+        job.run()
+        while not job.status.finished and not job.status.aborted:
+            job.refresh_job_status()
+            time.sleep(5)
+        self._run_if_refresh()
+
+    def run_static(self, **qwargs):
+        self.status.running = True
+        if len(self) > len(self.child_ids):
+            job = self._get_job_template()
+            self.status.suspended = True
+            if self.server.run_mode.queue:
+                self._run_if_master_queue(job)
+            elif self.server.run_mode.non_modal and job.server.run_mode.non_modal:
+                self._run_if_master_non_modal_child_non_modal(job)
+            elif self.server.run_mode.modal and job.server.run_mode.modal:
+                self._run_if_master_modal_child_modal(job)
+            elif self.server.run_mode.modal and job.server.run_mode.non_modal:
+                self._run_if_master_modal_child_non_modal(job)
+            else:
+                raise TypeError()
+        else:
             self.status.collect = True
-            self.run()  # self.run_if_collect()
+            self.run()
 
     def set_goal(self, convergence_goal, **qwargs):
         """
@@ -442,10 +467,9 @@ class SerialMasterBase(GenericMaster):
         if not conv_goal_exists:
             self.status.collect = True
             self.run()
-        # here the new convergence goals have to be implemented - after the append I should try to parse the existing output!
         else:
             subjobs_statuses = set([self.project.db.get_item_by_id(child_id)['status'] for child_id in self.child_ids])
-            if len(subjobs_statuses)==0 or subjobs_statuses == {'finished'}:
+            if len(subjobs_statuses) == 0 or subjobs_statuses == {'finished'}:
                 ham = self._convergence_goal(self, **self._convergence_goal_qwargs)
                 if ham is not True:
                     self.append(ham)

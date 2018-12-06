@@ -38,8 +38,6 @@ class TestSerialMaster(unittest.TestCase):
         job_ser = self.project.create_job(self.project.job_type.SerialMasterBase, "sequence_single_nm")
         job_ser.append(ham)
         job_ser.run()
-        self.assertFalse(job_ser.status.finished)
-        self.project.wait_for_job(job_ser, interval_in_s=5, max_iterations=50)
         job_ser.from_hdf()
         self.assertTrue(job_ser.status.finished)
         self.assertTrue(job_ser[0].status.finished)

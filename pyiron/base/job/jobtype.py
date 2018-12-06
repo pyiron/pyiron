@@ -7,7 +7,6 @@ import importlib
 import inspect
 import pkgutil
 from six import with_metaclass
-from pyiron.base.settings.generic import Settings
 
 """
 Jobtype class to create GenericJob type objects 
@@ -136,7 +135,6 @@ class JobType(object):
         if job.status.aborted:
             job.logger.warn('Job aborted - please remove it and run again! {}'.format(job.job_name))
         if not job.status.initialized:
-            Settings().logger.info("job_exists -> load from hdf")
             job.from_hdf()
         return job
 

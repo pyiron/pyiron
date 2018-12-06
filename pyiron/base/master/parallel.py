@@ -195,7 +195,10 @@ class ParallelMaster(GenericMaster):
         Reset the job id sets the job_id to None as well as all connected modules like JobStatus and SubmissionStatus.
         """
         super(ParallelMaster, self).reset_job_id(job_id=job_id)
-        self.submission_status = SubmissionStatus(db=self.project.db, job_id=self.job_id)
+        if job_id is not None:
+            self.submission_status = SubmissionStatus(db=self.project.db, job_id=job_id)
+        else:
+            self.submission_status = SubmissionStatus(db=self.project.db, job_id=self.job_id)
 
     def to_hdf(self, hdf=None, group_name=None):
         """
@@ -346,28 +349,12 @@ class ParallelMaster(GenericMaster):
         """
         if self.status.finished:
             return True
-        # self.status.busy = True
-        self.submission_status.refresh()
-        if not self.submission_status.finished:
+        if len(self.child_ids) < len(self._job_generator):
             return False
-        else:
-            return set([self.project.db.get_item_by_id(child_id)['status'] for child_id in self.child_ids])\
-                   <{'finished', 'busy', 'refresh'}
-
-    def run_static(self):
-        """
-        The run static function is called by run to execute the simulation, while waiting for the output. For the
-        ParallelMaster this means executing all the childs appened in parallel.
-        """
-        self._logger.info('{} run parallel master (modal)'.format(self.job_info_str))
-        self.status.running = True
-        self.create_jobs()
-        if self.is_finished():
-            self.status.collect = True
-            self.run()
-        elif self.status.busy:
-            self.status.refresh = True
-            self._run_if_refresh()
+        return set([self.project.db.get_item_by_id(child_id)['status'] for child_id in self.child_ids]) < {'finished',
+                                                                                                           'busy',
+                                                                                                           'refresh',
+                                                                                                           'aborted'}
 
     def iter_jobs(self, convert_to_object=True):
         """
@@ -441,7 +428,7 @@ class ParallelMaster(GenericMaster):
             self.status.collect = True
             self.run()  # self.run_if_collect()
         elif (self.server.run_mode.non_modal or self.server.run_mode.queue) and not self.submission_status.finished:
-            self.run_if_modal()
+            self.run_static()
         else:
             self.refresh_job_status()
             if self.status.refresh:
@@ -463,39 +450,100 @@ class ParallelMaster(GenericMaster):
         db_dict["totalcputime"] = (db_dict["timestop"] - start_time).seconds
         self.project.db.item_update(db_dict, job_id)
         self.status.finished = True
-        self.update_master()
-        self.send_to_database()
         self._logger.info("{}, status: {}, parallel master".format(self.job_info_str, self.status))
+        self.update_master()
+        # self.send_to_database()
 
-    def create_jobs(self):
-        """
-        The create_jobs method defines the rules how to create the job series which should then be executed in parallel.
-        """
-        job_lst = []
+    def _validate_cores(self, job, cores_for_session):
+        return self.get_child_cores() + job.server.cores + sum(cores_for_session) > self.server.cores
+
+    def _next_job_series(self, job):
+        job_to_be_run_lst, cores_for_session = [], []
+        while job is not None:
+            self._logger.debug('create job: %s %s', job.job_info_str, job.master_id)
+            if not job.status.finished:
+                self.submission_status.submit_next()
+                job_to_be_run_lst.append(job)
+                cores_for_session.append(job.server.cores)
+                self._logger.info('{}: finished job {}'.format(self.job_name, job.job_name))
+            job = next(self._job_generator, None)
+            if job is not None and self._validate_cores(job, cores_for_session):
+                job = None
+        return job_to_be_run_lst
+
+    def _run_if_master_queue(self, job):
+        job_to_be_run_lst = self._next_job_series(job)
+        if self.project.db.get_item_by_id(self.job_id)['status'] != 'busy':
+            self.status.suspended = True
+            job_lst = []
+            for job in job_to_be_run_lst:
+                job.run()
+                if job.server.run_mode.thread:
+                    job_lst.append(job._process)
+            process_lst = [process.communicate() for process in job_lst if process]
+        else:
+            self.run_static()
+
+    def _run_if_master_non_modal_child_non_modal(self, job):
+        job_to_be_run_lst = self._next_job_series(job)
+        if self.project.db.get_item_by_id(self.job_id)['status'] != 'busy':
+            self.status.suspended = True
+            job_lst = []
+            for job in job_to_be_run_lst:
+                job.run()
+            if self.master_id:
+                del self
+        else:
+            self.run_static()
+
+    def _run_if_master_modal_child_modal(self, job):
+        while job is not None:
+            self._logger.debug('create job: %s %s', job.job_info_str, job.master_id)
+            if not job.status.finished:
+                self.submission_status.submit_next()
+                job.run()
+                self._logger.info('{}: finished job {}'.format(self.job_name, job.job_name))
+            job = next(self._job_generator, None)
+        if self.is_finished():
+            self.status.collect = True
+            self.run()
+
+    def _run_if_master_modal_child_non_modal(self, job):
+        while job is not None:
+            self._logger.debug('create job: %s %s', job.job_info_str, job.master_id)
+            if not job.status.finished:
+                self.submission_status.submit_next()
+                job.run()
+                self._logger.info('{}: finished job {}'.format(self.job_name, job.job_name))
+            job = next(self._job_generator, None)
+            if job is None and not self.is_finished():
+                time.sleep(5)
+                job = next(self._job_generator, None)
+        if self.is_finished():
+            self.status.collect = True
+            self.run()
+
+    def run_static(self):
+        self._logger.info('{} run parallel master (modal)'.format(self.job_info_str))
+        self.status.running = True
         self.submission_status.total_jobs = len(self._job_generator)
         self.submission_status.submitted_jobs = 0
-        if self.job_id and self.project.db.get_item_by_id(self.job_id)['status'] not in ['finished', 'aborted']:
+        if self.job_id and not self.is_finished():
             self._logger.debug("{} child project {}".format(self.job_name, self.project.__str__()))
-            ham = next(self._job_generator, None)
-            while ham is not None:
-                self._logger.debug('create job: %s %s', ham.job_info_str, ham.master_id)
-                self.submission_status.submit_next()
-                if not ham.status.finished:
-                    ham.run()
-                self._logger.info('{}: finished job {}'.format(self.job_name, ham.job_name))
-                if ham.server.run_mode.thread:
-                    job_lst.append(ham._process)
-                ham = next(self._job_generator, None)
-                if ham is None and self.server.run_mode.modal and not self.is_finished():
-                    while ham is None and not self.is_finished():
-                        time.sleep(10)
-                        ham = next(self._job_generator, None)
+            job = next(self._job_generator, None)
+            if self.server.run_mode.queue:
+                self._run_if_master_queue(job)
+            elif self.server.run_mode.non_modal and job.server.run_mode.non_modal:
+                self._run_if_master_non_modal_child_non_modal(job)
+            elif self.server.run_mode.modal and job.server.run_mode.modal:
+                self._run_if_master_modal_child_modal(job)
+            elif self.server.run_mode.modal and job.server.run_mode.non_modal:
+                self._run_if_master_modal_child_non_modal(job)
+            else:
+                raise TypeError()
         else:
-            self.refresh_job_status()
-        process_lst = [process.communicate() for process in job_lst if process]
-        self.refresh_job_status()
-        if self.status.running:
-            self.status.suspended = True
+            self.status.collect = True
+            self.run()
 
     def _create_child_job(self, job_name):
         """
@@ -534,9 +582,10 @@ class ParallelMaster(GenericMaster):
             self.ref_job.project_hdf5.copy_to(job._hdf5, maintain_name=False)
         except ValueError:
             pass
-        self._logger.debug(
-            "create_job:: {} {} {} {}".format(self.project_hdf5.path, self._name, self.project_hdf5.h5_path,
-                                              str(self.get_job_id())))
+        self._logger.debug("create_job:: {} {} {} {}".format(self.project_hdf5.path,
+                                                             self._name,
+                                                             self.project_hdf5.h5_path,
+                                                             str(self.get_job_id())))
         job._name = job_name
         job.master_id = self.get_job_id()
         job.status.initialized = True
@@ -545,8 +594,8 @@ class ParallelMaster(GenericMaster):
         elif self.server.run_mode.queue:
             job.server.run_mode.thread = True
         self._logger.info('{}: run job {}'.format(self.job_name, job.job_name))
-        if job.server.run_mode.non_modal and self.get_child_cores() + job.server.cores > self.server.cores:
-            return None
+        # if job.server.run_mode.non_modal and self.get_child_cores() + job.server.cores > self.server.cores:
+        #     return None
         return job
 
     def _db_server_entry(self):
