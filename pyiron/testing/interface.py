@@ -16,15 +16,15 @@ class RandomInterface(JobInterface):
         """
         Parse the output files of the example job and store the results in the HDF5 File.
         """
-        self.collect_output_log(project_hdf5=job.project_hdf5,
-                                working_directory=job.working_directory,
-                                file_name="output.log")
-        self.collect_warnings(project_hdf5=job.project_hdf5,
-                              working_directory=job.working_directory,
-                              file_name="info.log")
+        self._collect_output_log(project_hdf5=job.project_hdf5,
+                                 working_directory=job.working_directory,
+                                 file_name="output.log")
+        self._collect_warnings(project_hdf5=job.project_hdf5,
+                               working_directory=job.working_directory,
+                               file_name="info.log")
 
     @staticmethod
-    def collect_output_log(project_hdf5, working_directory, file_name="output.log"):
+    def _collect_output_log(project_hdf5, working_directory, file_name="output.log"):
         """
         general purpose routine to extract output from logfile
 
@@ -45,7 +45,7 @@ class RandomInterface(JobInterface):
             h5["volume"] = np.array(h5["alat"])
 
     @staticmethod
-    def collect_warnings(project_hdf5, working_directory, file_name="info.log"):
+    def _collect_warnings(project_hdf5, working_directory, file_name="info.log"):
         """
         Collect the warnings if any were written to the info.log file and store them in the HDF5 file
         """
