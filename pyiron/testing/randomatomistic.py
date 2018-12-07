@@ -121,6 +121,33 @@ class ExampleJob(GenericJob):
                           "/executable.py"
         self._interface = InteractiveRandomInterface(job=self)
 
+    def collect_logfiles(self):
+        """
+        Collect the log files of the external executable and store the information in the HDF5 file. This method has
+        to be implemented in the individual hamiltonians.
+        """
+        self._interface.collect_logfiles(job=self)
+
+    def write_input(self):
+        """
+        Write the input files for the external executable. This method has to be implemented in the individual
+        hamiltonians.
+        """
+        self._interface.write_input(job=self)
+
+    def collect_output(self):
+        """
+        Collect the output files of the external executable and store the information in the HDF5 file. This method has
+        to be implemented in the individual hamiltonians.
+        """
+        self._interface.collect_output(job=self)
+
+    def run_if_interactive(self):
+        self._interface.run_if_interactive(job=self)
+
+    def interactive_close(self):
+        self._interface.interactive_close(job=self)
+
     def to_hdf(self, hdf=None, group_name=None):
         """
         Store the ExampleJob object in the HDF5 File
