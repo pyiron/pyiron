@@ -104,7 +104,7 @@ class InteractiveBase(GenericJob):
         if len(list(self.interactive_cache.keys())) > 0 and \
                 len(self.interactive_cache[list(self.interactive_cache.keys())[0]]) != 0:
             self.interactive_flush(path="interactive", include_last_step=True)
-        self.project.db.item_update(self._runtime(), self._job_id)
+        self.project.db.item_update(self.runtime(), self._job_id)
         self.status.finished = True
         self.interactive_cache = {}
 

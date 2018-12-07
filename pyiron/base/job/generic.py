@@ -1018,7 +1018,7 @@ class GenericJob(JobCore):
         """
         self.collect_output()
         self.collect_logfiles()
-        self.project.db.item_update(self._runtime(), self.job_id)
+        self.project.db.item_update(self.runtime(), self.job_id)
         if self.status.collect:
             if not self.convergence_check():
                 self.status.not_converged = True
@@ -1089,7 +1089,7 @@ class GenericJob(JobCore):
         else:
             self.__obj_version__ = self._hdf5["VERSION"]
 
-    def _runtime(self):
+    def runtime(self):
         """
         Internal helper function to calculate runtime by substracting the starttime, from the stoptime.
 
@@ -1223,7 +1223,7 @@ class GenericJob(JobCore):
 
         """
         if job_id is not None:
-            self.project.db.item_update(self._runtime(), job_id)
+            self.project.db.item_update(self.runtime(), job_id)
 
 
 def multiprocess_wrapper(job_id, working_dir, debug=False):

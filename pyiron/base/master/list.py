@@ -186,7 +186,7 @@ class ListMaster(GenericMaster):
                     self.submission_status.submit_next()
                     if len(self._job_list) == 0:
                         self.status.finished = True
-                        self.project.db.item_update(self._runtime(), self.job_id)
+                        self.project.db.item_update(self.runtime(), self.job_id)
                 else:
                     raise ValueError('This job ', job.job_name, ' is already connected to a master ', job.master_id,
                                      ' and can not be appended here.')
