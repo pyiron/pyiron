@@ -27,6 +27,12 @@ class MurnaghanInt(Murnaghan):
         self.status.collect = True
         self.run()
 
+    def ref_job_initialize(self):
+        if len(self._job_list) > 0:
+            self._ref_job = self.pop(-1)
+            if self._job_id is not None and self._ref_job._master_id is None:
+                self._ref_job.master_id = self.job_id
+
     def collect_output(self):
         if self.server.run_mode.interactive:
             ham = self.project_hdf5.inspect(self.child_ids[0])
