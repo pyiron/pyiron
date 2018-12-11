@@ -8,6 +8,7 @@ import numpy as np
 import scipy.integrate
 import scipy.optimize as spy
 import scipy.constants
+import warnings
 from pyiron.atomistics.master.parallel import AtomisticParallelMaster
 from pyiron.base.master.parallel import JobGenerator
 
@@ -465,3 +466,9 @@ class Murnaghan(AtomisticParallelMaster):
         new_cell = snapshot.cell * k
         snapshot.set_cell(new_cell, scale_atoms=True)
         return snapshot
+
+class MurnaghanInt(Murnaghan):
+    def __init__(self, project, job_name):
+        warnings.warn('Please use Murnaghan instead of MurnaghanInt')
+        super(MurnaghanInt, self).__init__(project=project, job_name=job_name)
+
