@@ -31,21 +31,19 @@ class MurnaghanInt(Murnaghan):
             super(MurnaghanInt, self).run_static()
 
     def collect_output(self):
-        erg_lst, vol_lst, err_lst, id_lst = [], [], [], []
-        for job_id in self.child_ids:
-            ham = self.project_hdf5.inspect(job_id)
-            print('job_id: ', job_id, ham.status)
-            energy = ham["output/generic/energy_tot"]
-            volume = ham["output/generic/volume"]
-            erg_lst = [np.mean(eng) for eng in energy]
-            err_lst = [np.var(eng) for eng in energy]
-            vol_lst = volume
-            id_lst.append(job_id)
-        vol_lst = np.array(vol_lst)
-        erg_lst = np.array(erg_lst)
-        err_lst = np.array(err_lst)
-        arg_lst = np.argsort(vol_lst)
+        if self.ref_job.server.run_mode.interactive:
+            ham = self.project_hdf5.inspect(self.child_ids[0])
+            erg_lst = ham["output/generic/energy_tot"]
+            vol_lst = ham["output/generic/volume"]
+            arg_lst = np.argsort(vol_lst)
 
-        self._output["volume"] = vol_lst[arg_lst]
-        self._output["energy"] = erg_lst[arg_lst]
-        self._output["error"] = err_lst[arg_lst]
+            self._output["volume"] = vol_lst[arg_lst]
+            self._output["energy"] = erg_lst[arg_lst]
+
+            with self.project_hdf5.open("output") as hdf5_out:
+                for key, val in self._output.items():
+                    hdf5_out[key] = val
+
+            self.fit_murnaghan(self.input['fit_order'])
+        else:
+            super(MurnaghanInt, self).collect_output()
