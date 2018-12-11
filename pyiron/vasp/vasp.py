@@ -694,11 +694,12 @@ class Vasp(GenericDFTJob):
                         wt = weights[i]
                     else:
                         wt = 1.0
-                    qpt_str = np.array([kpt[0], kpt[1], kpt[2], wt])
-                    qpt_str = np.array(qpt_str, dtype=str)
-                    qpt_str = [a for a in qpt_str]
+                    # qpt_str = np.array([kpt[0], kpt[1], kpt[2], wt])
+                    # qpt_str = np.array(qpt_str, dtype=str)
+                    # qpt_str = [a for a in qpt_str]
+                    qpt_str = [str(kpt[0]), str(kpt[1]), str(kpt[2]), str(wt)]
                     qpt_str = " ".join(qpt_str)
-                    qpt_str = qpt_str.encode("utf8")
+                    # qpt_str = qpt_str.encode("utf8")
                     self.input.kpoints.set_value(line=3 + i, val=qpt_str)
 
     def set_for_band_structure_calc(self, num_points, structure=None, read_charge_density=True):
