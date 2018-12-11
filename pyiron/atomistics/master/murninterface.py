@@ -23,7 +23,7 @@ class MurnaghanInt(Murnaghan):
             self.ref_job = self._job_generator.modify_job(job=self.ref_job, parameter=strain)
             self.ref_job.run()
 
-            self.ref_job.interactive_close()
+        self.ref_job.interactive_close()
         self.status.collect = True
         self.run()
 
