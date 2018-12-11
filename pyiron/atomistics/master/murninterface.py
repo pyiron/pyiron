@@ -16,14 +16,14 @@ __date__ = "Sep 1, 2017"
 
 class MurnaghanInt(Murnaghan):
     def run_if_interactive(self):
-        ham = self.ref_job.copy()
-        ham.master_id = self.job_id
-        ham.server.run_mode.interactive = True
+        self.ref_job_initialize()
+        self.ref_job.master_id = self.job_id
+        self.ref_job.server.run_mode.interactive = True
         for strain in self._job_generator.parameter_list:
-            ham = self._job_generator.modify_job(job=ham, parameter=strain)
-            ham.run()
+            self.ref_job = self._job_generator.modify_job(job=self.ref_job, parameter=strain)
+            self.ref_job.run()
 
-        ham.interactive_close()
+            self.ref_job.interactive_close()
         self.status.collect = True
         self.run()
 
