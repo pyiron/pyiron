@@ -19,7 +19,7 @@ class MurnaghanInt(Murnaghan):
         if self.ref_job.server.run_mode.interactive:
             ham = self.ref_job.copy()
             ham.master_id = self.job_id
-
+            ham.server.run_mode.interactive = True
             for strain in self._job_generator.parameter_list:
                 ham = self._job_generator.modify_job(job=ham, parameter=strain)
                 ham.run()
