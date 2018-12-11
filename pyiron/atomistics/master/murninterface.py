@@ -16,7 +16,7 @@ __date__ = "Sep 1, 2017"
 
 class MurnaghanInt(Murnaghan):
     def run_if_interactive(self):
-        start_structure = self._job.ref_job.structure
+        start_structure = self.ref_job.structure
         self.ref_job_initialize()
         self.ref_job.server.run_mode.interactive = True
         for strain in self._job_generator.parameter_list:
