@@ -516,7 +516,7 @@ class ParallelMaster(GenericMaster):
                 job.run()
                 self._logger.info('{}: finished job {}'.format(self.job_name, job.job_name))
             job = next(self._job_generator, None)
-            if job is None and not self.is_finished():
+            while job is None and not self.is_finished():
                 time.sleep(5)
                 job = next(self._job_generator, None)
         if self.is_finished():
