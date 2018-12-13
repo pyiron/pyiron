@@ -18,7 +18,8 @@ except (ImportError, TypeError, AttributeError):
     pass
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \
+                "- Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -320,7 +321,7 @@ class AtomisticGenericJob(GenericJobCore):
                               center_of_mass=center_of_mass, cells=cells[::stride])
         else:
             return Trajectory(positions[::stride, atom_indices, :],
-                              self.structure.get_parent_basis(), center_of_mass=center_of_mass,
+                              self.structure.get_parent_basis()[atom_indices], center_of_mass=center_of_mass,
                               cells=cells[::stride])
 
     def write_traj(self, filename, format=None, parallel=True, append=False, stride=1, center_of_mass=False, **kwargs):
