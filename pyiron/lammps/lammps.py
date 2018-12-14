@@ -18,6 +18,7 @@ from pyiron.base.settings.generic import Settings
 from pyiron.base.pyio.parser import Logstatus, extract_data_from_file
 from pyiron.lammps.control import LammpsControl
 from pyiron.lammps.potential import LammpsPotential
+from pyiron.lammps.potential import CustomPotential
 from pyiron.lammps.structure import LammpsStructure, UnfoldingPrism
 from pyiron.atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
 
@@ -61,6 +62,7 @@ class Lammps(AtomisticGenericJob):
         self.input = Input()
         self._cutoff_radius = None
         self._is_continuation = None
+        self._custom_potential = None
 
     @property
     def cutoff_radius(self):
@@ -105,15 +107,20 @@ class Lammps(AtomisticGenericJob):
 
         """
         if isinstance(potential_filename, str):
-            if '.lmp' in potential_filename:
-                potential_filename = potential_filename.split('.lmp')[0]
-            potential_db = LammpsPotentialFile()
-            potential = potential_db.find_by_name(potential_filename)
+            if potential_filename in ['lj','morse','buckingham','mie','yukawa','born','gauss']:
+                self.custom_potential = CustomPotential(self.structure, pot_type = potential_filename)
+                self.input.potential.df = self.custom_potential.potential
+            else:
+                if '.lmp' in potential_filename:
+                    potential_filename = potential_filename.split('.lmp')[0]
+                potential_db = LammpsPotentialFile()
+                self.input.potential.df = potential_db.find_by_name(potential_filename)
+                #self._custom_potential = CustomPotential(self.structure, pot_type = potential_filename)
         elif isinstance(potential_filename, pd.DataFrame):
-            potential = potential_filename
+            self.input.potential.df = potential_filename
         else:
             raise TypeError('Potentials have to be strings or pandas dataframes.')
-        self.input.potential.df = potential
+        #self.input.potential.df = potential
         for val in ["units", "atom_style", "dimension"]:
             v = self.input.potential[val]
             if v is not None:
@@ -162,7 +169,7 @@ class Lammps(AtomisticGenericJob):
         snapshot.positions = self.get("output/generic/positions")[iteration_step]
         return snapshot
 
-    def view_potentials(self):
+    def view_potentials(self, list_of_elements=[]):
         """
 
         Returns:
@@ -171,20 +178,21 @@ class Lammps(AtomisticGenericJob):
         from pyiron.lammps.potential import LammpsPotentialFile
         if not self.structure:
             raise ValueError('No structure set.')
-        list_of_elements = set(self.structure.get_chemical_symbols())
+        if len(list_of_elements)==0:
+            list_of_elements = set(self.structure.get_chemical_symbols())
         list_of_potentials = LammpsPotentialFile().find(list_of_elements)
         if list_of_potentials is not None:
             return list_of_potentials
         else:
             raise TypeError('No potentials found for this kind of structure: ', str(list_of_elements))
 
-    def list_potentials(self):
+    def list_potentials(self, list_of_elements=[]):
         """
 
         Returns:
             list:
         """
-        return list(self.view_potentials()['Name'].values)
+        return list(self.view_potentials(list_of_elements)['Name'].values)
 
     def enable_h5md(self):
         """
