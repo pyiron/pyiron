@@ -1044,25 +1044,21 @@ class Atoms(object):
         raise NotImplementedError('This function was removed!')
 
     def analyse_ovito_cna_adaptive(self, mode='total'):
-        import warnings
         from pyiron.atomistics.structure.ovito import analyse_ovito_cna_adaptive
         warnings.filterwarnings("ignore")
         return analyse_ovito_cna_adaptive(atoms=self, mode=mode)
 
     def analyse_ovito_centro_symmetry(atoms, num_neighbors=12):
-        import warnings
         from pyiron.atomistics.structure.ovito import analyse_ovito_centro_symmetry
         warnings.filterwarnings("ignore")
         return analyse_ovito_centro_symmetry(atoms, num_neighbors=num_neighbors)
 
     def analyse_ovito_voronoi_volume(atoms):
-        import warnings
         from pyiron.atomistics.structure.ovito import analyse_ovito_voronoi_volume
         warnings.filterwarnings("ignore")
         return analyse_ovito_voronoi_volume(atoms)
 
     def analyse_phonopy_equivalent_atoms(atoms):
-        import warnings
         from pyiron.atomistics.structure.phonopy import analyse_phonopy_equivalent_atoms
         #warnings.filterwarnings("ignore")
         warnings.warn("analyse_phonopy_equivalent_atoms() is obsolete use get_symmetry()['equivalent_atoms'] instead")
