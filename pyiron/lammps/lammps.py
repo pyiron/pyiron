@@ -8,11 +8,13 @@ import os
 import posixpath
 import numpy as np
 import pandas as pd
+import warnings
 
 from pyiron.lammps.potential import LammpsPotentialFile
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
+from pyiron.atomistics.job.interactive import GenericInteractive
 from pyiron.base.settings.generic import Settings
-from pyiron.lammps.interface import LammpsInterface
+from pyiron.lammps.interface import InteractiveLammpsInterface
 from pyiron.lammps.control import LammpsControl
 from pyiron.lammps.potential import LammpsPotential
 
@@ -33,7 +35,7 @@ except ImportError:
 s = Settings()
 
 
-class Lammps(AtomisticGenericJob):
+class Lammps(GenericInteractive, AtomisticGenericJob):
     """
     Class to setup and run and analyze LAMMPS simulations which is a derivative of
     atomistics.job.generic.GenericJob. The functions in these modules are written in such the function names and
@@ -56,7 +58,7 @@ class Lammps(AtomisticGenericJob):
         self.input = Input()
         self._cutoff_radius = None
         self._is_continuation = None
-        self._interface = LammpsInterface()
+        self._interface = InteractiveLammpsInterface(job=self)
 
     @property
     def cutoff_radius(self):
@@ -207,7 +209,10 @@ class Lammps(AtomisticGenericJob):
         Returns:
 
         """
-        self._interface.collect_output(job=self)
+        if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
+            pass
+        else:
+            self._interface.collect_output(job=self)
 
     def convergence_check(self):
         if self._generic_input['calc_mode'] == 'minimize':
@@ -240,6 +245,8 @@ class Lammps(AtomisticGenericJob):
         Returns:
 
         """
+        if self.server.run_mode.interactive_non_modal:
+            warnings.warn('calc_minimize() is not implemented for the non modal interactive mode use calc_static()!')
         super(Lammps, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure, n_print=n_print)
         self.input.control.calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure, n_print=n_print)
 
@@ -270,6 +277,8 @@ class Lammps(AtomisticGenericJob):
             rescale_velocity:
 
         """
+        if self.server.run_mode.interactive_non_modal:
+            warnings.warn('calc_md() is not implemented for the non modal interactive mode use calc_static()!')
         if dt is not None:
             time_step = dt
         super(Lammps, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps, 
@@ -436,6 +445,105 @@ class Lammps(AtomisticGenericJob):
                     if self._generic_input['calc_mode'] == 'md':
                         self.input.control['velocity___constraintz'] = 'set NULL NULL 0.0'
 
+    def interactive_positions_getter(self):
+        return self._interface.interactive_positions_getter(job=self)
+
+    def interactive_positions_setter(self, positions):
+        self._interface.interactive_positions_setter(job=self, positions=positions)
+
+    def interactive_cells_getter(self):
+        return self._interface.interactive_cells_getter(job=self)
+
+    def interactive_cells_setter(self, cell):
+        self._interface.interactive_cells_setter(job=self, cell=cell)
+
+    def interactive_indices_setter(self, indices):
+        self._interface.interactive_indices_setter(job=self, indices=indices)
+
+    def interactive_volume_getter(self):
+        return self._interface.interactive_volume_getter(job=self)
+
+    def interactive_forces_getter(self):
+        return self._interface.interactive_forces_getter(job=self)
+
+    def interactive_open(self):
+        self._interface.interactive_open(job=self)
+
+    def run_if_interactive(self):
+        if self._generic_input['calc_mode'] == 'md':
+            self.input.control['run'] = self._generic_input['n_print']
+            super(Lammps, self).run_if_interactive()
+            self._interface._reset_interactive_run_command(job=self)
+
+            counter = 0
+            iteration_max = int(self._generic_input['n_ionic_steps'] / self._generic_input['n_print'])
+            while counter < iteration_max:
+                self._interface._interactive_lib_command(job=self, command=self._interactive_run_command)
+                self.interactive_collect()
+                counter += 1
+
+        else:
+            super(Lammps, self).run_if_interactive()
+            self._interface._interactive_lib_command(job=self, command=self._interactive_run_command)
+            self.interactive_collect()
+
+    def run_if_interactive_non_modal(self):
+        if not self._interactive_fetch_completed:
+            print('Warning: interactive_fetch being effectuated')
+            self.interactive_fetch()
+        super(Lammps, self).run_if_interactive()
+        self._interface._interactive_lib_command(job=self, command=self._interactive_run_command)
+        self._interactive_fetch_completed = False
+
+    def interactive_fetch(self):
+        if self._interactive_fetch_completed and self.server.run_mode.interactive_non_modal:
+            print('First run and then fetch')
+        else:
+            self.interactive_collect()
+            self._logger.debug('interactive run - done')
+
+    def interactive_structure_setter(self, structure):
+        self._interface.interactive_structure_setter(job=self, structure=structure)
+
+    def update_potential(self):
+        self._interface.update_potential(job=self)
+
+    def interactive_indices_getter(self):
+        return super(Lammps, self).interactive_indices_getter().tolist()
+
+    def interactive_energy_pot_getter(self):
+        return self._interface.interactive_energy_pot_getter(job=self)
+
+    def interactive_energy_tot_getter(self):
+        return self._interface.interactive_energy_tot_getter(job=self)
+
+    def interactive_steps_getter(self):
+        return self._interface.interactive_steps_getter(job=self)
+
+    def interactive_temperatures_getter(self):
+        return self._interface.interactive_temperatures_getter(job=self)
+
+    def interactive_stress_getter(self):
+        """
+        This gives back an Nx3x3 np array of stress/atom defined in
+        http://lammps.sandia.gov/doc/compute_stress_atom.html
+        Keep in mind that it is stress*volume in eV.
+        Further discussion can be found on the website above.
+        """
+        return self._interface.interactive_stress_getter(job=self)
+
+    def interactive_pressures_getter(self):
+        return self._interface.interactive_pressures_getter(job=self)
+
+    def interactive_close(self):
+        if self.interactive_is_activated():
+            self._interactive_library.close()
+            with self.project_hdf5.open("output") as h5:
+                if 'interactive' in h5.list_groups():
+                    for key in h5['interactive'].list_nodes():
+                        h5['generic/' + key] = h5['interactive/' + key]
+            super(Lammps, self).interactive_close()
+
 
 class Input:
     def __init__(self):
@@ -467,3 +575,15 @@ class Input:
         with hdf5.open("input") as hdf5_input:
             self.control.from_hdf(hdf5_input)
             self.potential.from_hdf(hdf5_input)
+
+
+class LammpsInt(Lammps):
+    def __init__(self, project, job_name):
+        warnings.warn('Please use Lammps instead of LammpsInt')
+        super(LammpsInt, self).__init__(project=project, job_name=job_name)
+
+
+class LammpsInt2(LammpsInt):
+    def __init__(self, project, job_name):
+        warnings.warn('Please use Lammps instead of LammpsInt2')
+        super(LammpsInt2, self).__init__(project=project, job_name=job_name)
