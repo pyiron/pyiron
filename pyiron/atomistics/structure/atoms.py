@@ -1064,7 +1064,8 @@ class Atoms(object):
     def analyse_phonopy_equivalent_atoms(atoms):
         import warnings
         from pyiron.atomistics.structure.phonopy import analyse_phonopy_equivalent_atoms
-        warnings.filterwarnings("ignore")
+        #warnings.filterwarnings("ignore")
+        warnings.warn("analyse_phonopy_equivalent_atoms() is obsolete use get_symmetry()['equivalent_atoms'] instead")
         return analyse_phonopy_equivalent_atoms(atoms)
 
     @staticmethod
