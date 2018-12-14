@@ -5,24 +5,19 @@
 from __future__ import print_function
 import os
 import posixpath
-import subprocess
 import numpy as np
 import tables
+import warnings
 
 from pyiron.dft.job.generic import GenericDFTJob
+from pyiron.vasp.interface import InteractiveVaspInterface
 from pyiron.vasp.potential import VaspPotentialFile
-from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
+from pyiron.atomistics.structure.atoms import CrystalStructure
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
-from pyiron.atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
-from pyiron.vasp.outcar import Outcar
-from pyiron.vasp.procar import Procar
-from pyiron.vasp.structure import read_atoms, write_poscar, vasp_sorter
-from pyiron.vasp.vasprun import Vasprun as Vr
-from pyiron.vasp.vasprun import VasprunError
+from pyiron.vasp.structure import write_poscar, vasp_sorter
 from pyiron.vasp.volumetric_data import VaspVolumetricData
 from pyiron.dft.waves.electronic import ElectronicStructure
-import warnings
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -78,7 +73,7 @@ class Vasp(GenericDFTJob):
         self._executable_activate()
         self.input = Input()
         self.input.incar["SYSTEM"] = self.job_name
-        self._output_parser = Output()
+        self._interface = InteractiveVaspInterface()
         self._potential = VaspPotentialFile(xc=self.input.potcar["xc"])
 
     @property
@@ -224,37 +219,14 @@ class Vasp(GenericDFTJob):
         """
         Call routines that generate the INCAR, POTCAR, KPOINTS and POSCAR input files
         """
-        if self.input.incar['SYSTEM'] == 'pyiron_jobname':
-            self.input.incar['SYSTEM'] = self.job_name
-        self.write_magmoms()
-        self.set_coulomb_interactions()
-        if "CONTCAR" in self.restart_file_dict.keys():
-            if self.restart_file_dict["CONTCAR"] == "POSCAR":
-                if self.server.run_mode.modal:
-                    warnings.warn(
-                        "The POSCAR file will be overwritten by the CONTCAR file specified in restart_file_list.")
-                else:
-                    self.logger.info(
-                        "The POSCAR file will be overwritten by the CONTCAR file specified in restart_file_list.")
-        self.input.write(structure=self.structure, directory=self.working_directory)
+        self._interface.write_input(job=self)
 
     # define routines that collect all output files
     def collect_output(self):
         """
         Collects the outputs and stores them to the hdf file
         """
-        if self.structure is None or len(self.structure) == 0:
-            try:
-                self.structure = self.get_final_structure_from_file(filename="CONTCAR")
-            except IOError:
-                self.structure = self.get_final_structure_from_file(filename="POSCAR")
-        self._output_parser.structure = self.structure.copy()
-        try:
-            self._output_parser.collect(directory=self.working_directory)
-        except VaspCollectError:
-            self.status.aborted = True
-            return
-        self._output_parser.to_hdf(self._hdf5)
+        self._interface.collect_output(job=self)
 
     def convergence_check(self):
         if 'IBRION' in self['input/incar/data_dict']['Parameter']:
@@ -292,32 +264,13 @@ class Vasp(GenericDFTJob):
         """
         Removes excess files (by default: WAVECAR, CHGCAR, CHG)
         """
-        list_files = self.list_files()
-        for file in list_files:
-            if file in files_to_remove:
-                abs_file_path = os.path.join(self.working_directory, file)
-                os.remove(abs_file_path)
+        self._interface.cleanup(job=self, files_to_remove=files_to_remove)
 
     def collect_logfiles(self):
         """
         Collect errors and warnings.
         """
-        self.collect_errors()
-        self.collect_warnings()
-
-    def collect_warnings(self):
-        """
-        Collects warnings from the VASP run
-        """
-        # TODO: implement for VASP
-        self._logger.info("collect_warnings() is not yet implemented for VASP")
-
-    def collect_errors(self):
-        """
-        Collects errors from the VASP run
-        """
-        # TODO: implement for vasp
-        self._logger.info("collect_errors() is not yet implemented for VASP")
+        self._interface.collect_logfiles(job=self)
 
     def from_directory(self, directory):
         """
@@ -326,55 +279,7 @@ class Vasp(GenericDFTJob):
         Args:
             directory (str): Path to the directory
         """
-        if not self.status.finished:
-            # _ = s.top_path(directory)
-            files = os.listdir(directory)
-            vp_new = Vr()
-            if "OUTCAR.gz" in files and "OUTCAR" not in files:
-                _ = subprocess.check_output(['gzip', '-d', 'OUTCAR.gz'], cwd=directory, shell=False,
-                                            universal_newlines=True)
-                files = os.listdir(directory)
-            if "vasprun.xml.bz2" in files:
-                _ = subprocess.check_output(['bzip2', '-d', 'vasprun.xml.bz2'], cwd=directory, shell=False,
-                                            universal_newlines=True)
-                files = os.listdir(directory)
-            if "vasprun.xml.gz" in files:
-                _ = subprocess.check_output(['gzip', '-d', 'vasprun.xml.gz'], cwd=directory, shell=False,
-                                            universal_newlines=True)
-                files = os.listdir(directory)
-            try:
-                if not ("OUTCAR" in files or "vasprun.xml" in files):
-                    raise IOError("This file isn't present")
-                    # raise AssertionError("OUTCAR/vasprun.xml should be present in order to import from directory")
-                if "vasprun.xml" in files:
-                    vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
-                    self.structure = vp_new.get_initial_structure()
-            except (IOError, VasprunError):  # except AssertionError:
-                pass
-                # raise AssertionError("OUTCAR/vasprun.xml should be present in order to import from directory")
-            if "INCAR" in files:
-                try:
-                    self.input.incar.read_input(posixpath.join(directory, "INCAR"), ignore_trigger="!")
-                except (IndexError, TypeError, ValueError):
-                    pass
-            if "KPOINTS" in files:
-                try:
-                    self.input.kpoints.read_input(posixpath.join(directory, "KPOINTS"), ignore_trigger="!")
-                except (IndexError, TypeError, ValueError):
-                    pass
-            if "POSCAR" in files and "POTCAR" in files:
-                structure = read_atoms(posixpath.join(directory, "POSCAR"), species_from_potcar=True)
-            else:
-                structure = vp_new.get_initial_structure()
-            self.structure = structure
-            self._write_chemical_formular_to_database()
-            self._import_directory = directory
-            self.status.collect = True
-            self.to_hdf()
-            self.collect_output()
-            self.status.finished = True
-        else:
-            return
+        self._interface.from_directory(job=self, directory=directory)
 
     def stop_calculation(self, next_electronic_step=False):
         """
@@ -384,12 +289,7 @@ class Vasp(GenericDFTJob):
             next_electronic_step (bool): True if the next electronic step should be calculated
 
         """
-        filename = os.path.join(self.working_directory, 'STOPCAR')
-        with open(filename, 'w') as f:
-            if not next_electronic_step:
-                f.write('LSTOP = .TRUE.\n')
-            else:
-                f.write('LABORT =.TRUE.\n')
+        self._interface.stop_calculation(job=self, next_electronic_step=next_electronic_step)
 
     def to_hdf(self, hdf=None, group_name=None):
         """
@@ -403,7 +303,7 @@ class Vasp(GenericDFTJob):
         super(Vasp, self).to_hdf(hdf=hdf, group_name=group_name)
         self._structure_to_hdf()
         self.input.to_hdf(self._hdf5)
-        self._output_parser.to_hdf(self._hdf5)
+        self._interface.output_parser.to_hdf(self._hdf5)
 
     def from_hdf(self, hdf=None, group_name=None):
         """
@@ -418,13 +318,16 @@ class Vasp(GenericDFTJob):
         self._structure_from_hdf()
         self.input.from_hdf(self._hdf5)
         if "output" in self.project_hdf5.list_groups() and "structure" in self["output"].list_groups():
-                self._output_parser.from_hdf(self._hdf5)
+            try:
+                self._interface.output_parser.from_hdf(self._hdf5)
+            except (TypeError, IOError, ValueError):
+                self._logger.warning("Routine from_hdf() not completely successful")
 
     def reset_output(self):
         """
         Resets the output instance
         """
-        self._output_parser = Output()
+        self._interface.reset_output()
 
     def get_final_structure_from_file(self, filename="CONTCAR"):
         """
@@ -436,16 +339,7 @@ class Vasp(GenericDFTJob):
         Returns:
             pyiron.atomistics.structure.atoms.Atoms: The final structure
         """
-        filename = posixpath.join(self.working_directory, filename)
-        input_structure = self.structure.copy()
-        try:
-            output_structure = read_atoms(filename=filename, species_list=input_structure.get_parent_elements())
-        except (IndexError, ValueError, IOError):
-            s.logger.warning("Unable to read output structure")
-            return
-        input_structure.cell = output_structure.cell.copy()
-        input_structure.positions[self.sorted_indices] = output_structure.positions
-        return input_structure
+        return self._interface.get_final_structure_from_file(job=self, filename=filename)
 
     def write_magmoms(self):
         """
@@ -555,6 +449,8 @@ class Vasp(GenericDFTJob):
             ionic_forces (float): Ionic forces convergence criteria (overwrites ionic energy) (ev/A)
             volume_only (bool): Option to relax only the volume (keeping the relative coordinates fixed
         """
+        if self.server.run_mode.interactive or self.server.run_mode.interactive_no_modal:
+            raise NotImplementedError('calc_minimize() is not implemented for the interactive mode use calc_static()!')
         super(Vasp, self).calc_minimize(electronic_steps=electronic_steps, ionic_steps=ionic_steps, max_iter=max_iter,
                                         pressure=pressure, algorithm=algorithm,
                                         retain_charge_density=retain_charge_density,
@@ -620,6 +516,8 @@ class Vasp(GenericDFTJob):
             retain_charge_density (bool): True id the charge density should be written
             retain_electrostatic_potential (bool): True if the electrostatic potential should be written
         """
+        if self.server.run_mode.interactive or self.server.run_mode.interactive_no_modal:
+            raise NotImplementedError('calc_md() is not implemented for the interactive mode use calc_static()!')
         super(Vasp, self).calc_md(temperature=temperature, n_ionic_steps=n_ionic_steps, n_print=n_print, dt=dt,
                                   retain_charge_density=retain_charge_density,
                                   retain_electrostatic_potential=retain_electrostatic_potential, **kwargs)
@@ -949,8 +847,9 @@ class Vasp(GenericDFTJob):
             old_vasp_job (pyiron.vasp.vasp.Vasp): Finished Vasp job instance
 
         """
-        self.copy_file(old_vasp_job)
-        self.input.incar["ICHARG"] = 1
+        if not isinstance(old_vasp_job, Vasp):
+            raise ValueError("old_vasp_job is not Vasp job type")
+        self._interface.copy_chgcar(job=self, old_vasp_job=old_vasp_job)
 
     def copy_wavecar(self, old_vasp_job):
         """
@@ -961,27 +860,9 @@ class Vasp(GenericDFTJob):
             (pyiron.vasp.vasp.Vasp): Finished Vasp job instance
 
         """
-        self.copy_file(old_vasp_job, filename="WAVECAR")
-        self.input.incar["ISTART"] = 1
-
-    def copy_file(self, old_vasp_job, filename="CHGCAR"):
-        """
-        Copy a file from a previous vasp job
-
-        Args:
-            old_vasp_job (pyiron.vasp.vasp.Vasp): Finished Vasp job instance
-            filename (str): Destination to copy the file
-
-        """
         if not isinstance(old_vasp_job, Vasp):
             raise ValueError("old_vasp_job is not Vasp job type")
-        import os
-        old_path = os.path.join(old_vasp_job.working_directory, filename)
-        new_path = os.path.join(self.working_directory, filename)
-        from shutil import copyfile
-        if not os.path.isdir(self.working_directory):
-            os.makedirs(self.working_directory)
-        copyfile(old_path, new_path)
+        self._interface.copy_wavecar(job=self, old_vasp_job=old_vasp_job)
 
     def set_spin_constraint(self, direction=False, norm=False):
         """
@@ -1005,6 +886,9 @@ class Vasp(GenericDFTJob):
 
     def validate_ready_to_run(self):
         super(Vasp, self).validate_ready_to_run()
+        if (self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal) \
+                and 'EDIFFG' in self.input.incar._dataset["Parameter"]:
+            raise ValueError('If EDIFFG is defined VASP interrupts the interactive run_mode.')
         if 'spin_constraint' in self.structure._tag_list.keys():
             raise NotImplementedError('The spin_constraint tag is not supported by VASP.')
             
@@ -1022,6 +906,19 @@ class Vasp(GenericDFTJob):
 
     def __del__(self):
         pass
+
+    def _check_incar_parameter(self, parameter, value):
+        if parameter not in self.input.incar._dataset['Parameter']:
+            self.input.incar[parameter] = value
+
+    def _run_if_created(self, que_wait_for=None):
+        if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
+            self._check_incar_parameter(parameter='INTERACTIVE', value=True)
+            self._check_incar_parameter(parameter='IBRION', value=-1)
+            self._check_incar_parameter(parameter='POTIM', value=0.0)
+            self._check_incar_parameter(parameter='NSW', value=1000)
+            self._check_incar_parameter(parameter='ISYM', value=0)
+        super(Vasp, self)._run_if_created(que_wait_for=que_wait_for)
 
 
 class Input:
@@ -1096,347 +993,6 @@ class Input:
             self.incar.from_hdf(hdf5_input)
             self.kpoints.from_hdf(hdf5_input)
             self.potcar.from_hdf(hdf5_input)
-
-
-class Output:
-    """
-    Handles the output from a VASP simulation.
-
-    Attributes:
-        electronic_structure: Gives the electronic structure of the system
-        electrostatic_potential: Gives the electrostatic/local potential of the system
-        charge_density: Gives the charge density of the system
-    """
-
-    def __init__(self):
-        self._structure = None
-        self.outcar = Outcar()
-        self.generic_output = GenericOutput()
-        self.description = "This contains all the output static from this particular vasp run"
-        self.charge_density = VaspVolumetricData()
-        self.electrostatic_potential = VaspVolumetricData()
-        self.procar = Procar()
-        self.electronic_structure = ElectronicStructure()
-        self.vp_new = Vr()
-
-    @property
-    def structure(self):
-        """
-        Getter for the output structure
-        """
-        return self._structure
-
-    @structure.setter
-    def structure(self, atoms):
-        """
-        Setter for the output structure
-        """
-        self._structure = atoms
-
-    def collect(self, directory=os.getcwd()):
-        """
-        Collects output from the working directory
-
-        Args:
-            directory (str): Path to the directory
-        """
-        sorted_indices = vasp_sorter(self.structure)
-        files_present = os.listdir(directory)
-        log_dict = dict()
-        vasprun_working, outcar_working = False, False
-        if not ("OUTCAR" in files_present or "vasprun.xml" in files_present):
-            raise IOError("Either the OUTCAR or vasprun.xml files need to be present")
-        if "OUTCAR" in files_present:
-            self.outcar.from_file(filename=posixpath.join(directory, "OUTCAR"))
-            outcar_working = True
-        if "vasprun.xml" in files_present:
-            try:
-                self.vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
-            except VasprunError:
-                pass
-            else:
-                vasprun_working = True
-
-        if outcar_working:
-            log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
-            log_dict["pressures"] = self.outcar.parse_dict["pressures"]
-            self.generic_output.dft_log_dict["n_elect"] = self.outcar.parse_dict["n_elect"]
-            if len(self.outcar.parse_dict["magnetization"]) > 0:
-                magnetization = np.array(self.outcar.parse_dict["magnetization"]).copy()
-                final_magmoms = np.array(self.outcar.parse_dict["final_magmoms"]).copy()
-                # magnetization[sorted_indices] = magnetization.copy()
-                if len(final_magmoms) != 0:
-                    if len(final_magmoms.shape) == 3:
-                        final_magmoms[:, sorted_indices, :] = final_magmoms.copy()
-                    else:
-                        final_magmoms[:, sorted_indices] = final_magmoms.copy()
-                self.generic_output.dft_log_dict["magnetization"] = magnetization.tolist()
-                self.generic_output.dft_log_dict["final_magmoms"] = final_magmoms.tolist()
-
-        if vasprun_working:
-            log_dict["forces"] = self.vp_new.vasprun_dict["forces"]
-            log_dict["cells"] = self.vp_new.vasprun_dict["cells"]
-            log_dict["volume"] = [np.linalg.det(cell) for cell in self.vp_new.vasprun_dict["cells"]]
-            # log_dict["total_energies"] = self.vp_new.vasprun_dict["total_energies"]
-            log_dict["energy_tot"] = self.vp_new.vasprun_dict["total_energies"]
-            if "kinetic_energies" in self.vp_new.vasprun_dict.keys():
-                log_dict["energy_pot"] = log_dict["energy_tot"] - self.vp_new.vasprun_dict["kinetic_energies"]
-            else:
-                log_dict["energy_pot"] = log_dict["energy_tot"]
-            log_dict["steps"] = np.arange(len(log_dict["energy_tot"]))
-            log_dict["positions"] = self.vp_new.vasprun_dict["positions"]
-            log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
-            log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
-            log_dict["positions_unwrapped"] = unwrap_coordinates(positions=log_dict["positions"], cell=None,
-                                                                 is_relative=True)
-            for i, pos in enumerate(log_dict["positions"]):
-                log_dict["positions"][i] = np.dot(pos, log_dict["cells"][i])
-                log_dict["positions_unwrapped"][i] = np.dot(log_dict["positions_unwrapped"][i].copy(),
-                                                            log_dict["cells"][i])
-            # log_dict["scf_energies"] = self.vp_new.vasprun_dict["scf_energies"]
-            # log_dict["scf_dipole_moments"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
-            self.electronic_structure = self.vp_new.get_electronic_structure()
-            if self.electronic_structure.grand_dos_matrix is not None:
-                self.electronic_structure.grand_dos_matrix[:, :, :, sorted_indices, :] = \
-                    self.electronic_structure.grand_dos_matrix[:, :, :, :, :].copy()
-            if self.electronic_structure.resolved_densities is not None:
-                self.electronic_structure.resolved_densities[:, sorted_indices, :, :] = \
-                    self.electronic_structure.resolved_densities[:, :, :, :].copy()
-            self.structure.positions = log_dict["positions"][-1]
-            self.structure.cell = log_dict["cells"][-1]
-
-        elif outcar_working:
-            # log_dict = self.outcar.parse_dict.copy()
-            if len(self.outcar.parse_dict["energies"]) == 0:
-                raise VaspCollectError("Error in parsing OUTCAR")
-            log_dict["energy_tot"] = self.outcar.parse_dict["energies"]
-            log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
-            log_dict["pressures"] = self.outcar.parse_dict["pressures"]
-            log_dict["forces"] = self.outcar.parse_dict["forces"]
-            log_dict["positions"] = self.outcar.parse_dict["positions"]
-            # log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
-            # log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
-            if len(log_dict["positions"].shape) != 3:
-                raise VaspCollectError("Improper OUTCAR parsing")
-            elif log_dict["positions"].shape[1] != len(sorted_indices):
-                raise VaspCollectError("Improper OUTCAR parsing")
-            if len(log_dict["forces"].shape) != 3:
-                raise VaspCollectError("Improper OUTCAR parsing")
-            elif log_dict["forces"].shape[1] != len(sorted_indices):
-                raise VaspCollectError("Improper OUTCAR parsing")
-            log_dict["time"] = self.outcar.parse_dict["time"]
-            log_dict["steps"] = self.outcar.parse_dict["steps"]
-            log_dict["cells"] = self.outcar.parse_dict["cells"]
-            log_dict["volume"] = np.array([np.linalg.det(cell) for cell in self.outcar.parse_dict["cells"]])
-            self.generic_output.dft_log_dict["scf_energy_free"] = self.outcar.parse_dict["scf_energies"]
-            self.generic_output.dft_log_dict["scf_dipole_mom"] = self.outcar.parse_dict["scf_dipole_moments"]
-            self.generic_output.dft_log_dict["n_elect"] = self.outcar.parse_dict["n_elect"]
-            self.generic_output.dft_log_dict["energy_int"] = self.outcar.parse_dict["energies_int"]
-            self.generic_output.dft_log_dict["energy_free"] = self.outcar.parse_dict["energies"]
-            self.generic_output.dft_log_dict["energy_zero"] = self.outcar.parse_dict["energies_zero"]
-            if "PROCAR" in files_present:
-                try:
-                    self.electronic_structure = self.procar.from_file(filename=posixpath.join(directory, "PROCAR"))
-                    #  Even the atom resolved values have to be sorted from the vasp atoms order to the Atoms order
-                    self.electronic_structure.grand_dos_matrix[:, :, :, sorted_indices, :] = \
-                        self.electronic_structure.grand_dos_matrix[:, :, :, :, :].copy()
-                    try:
-                        self.electronic_structure.efermi = self.outcar.parse_dict["fermi_level"]
-                    except KeyError:
-                        self.electronic_structure.efermi = self.vp_new.vasprun_dict["efermi"]
-                except ValueError:
-                    pass
-
-        # important that we "reverse sort" the atoms in the vasp format into the atoms in the atoms class
-        self.generic_output.log_dict = log_dict
-        if vasprun_working:
-            # self.dft_output.log_dict["parameters"] = self.vp_new.vasprun_dict["parameters"]
-            self.generic_output.dft_log_dict["scf_dipole_mom"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
-            if len(self.generic_output.dft_log_dict["scf_dipole_mom"][0]) > 0:
-                total_dipole_moments = np.array([dip[-1] for dip in self.generic_output.dft_log_dict["scf_dipole_mom"]])
-                self.generic_output.dft_log_dict["dipole_mom"] = total_dipole_moments
-            self.generic_output.dft_log_dict["scf_energy_int"] = self.vp_new.vasprun_dict["scf_energies"]
-            self.generic_output.dft_log_dict["scf_energy_free"] = self.vp_new.vasprun_dict["scf_fr_energies"]
-            self.generic_output.dft_log_dict["scf_energy_zero"] = self.vp_new.vasprun_dict["scf_0_energies"]
-            self.generic_output.dft_log_dict["energy_int"] = np.array([e_int[-1] for e_int in
-                                                                      self.generic_output.dft_log_dict
-                                                                      ["scf_energy_int"]])
-            self.generic_output.dft_log_dict["energy_free"] = np.array([e_free[-1] for e_free in
-                                                                       self.generic_output.dft_log_dict
-                                                                       ["scf_energy_free"]])
-            self.generic_output.dft_log_dict["energy_zero"] = np.array([e_zero[-1] for e_zero in
-                                                                       self.generic_output.dft_log_dict
-                                                                       ["scf_energy_zero"]])
-            self.generic_output.dft_log_dict["n_elect"] = float(self.vp_new.vasprun_dict["parameters"]["electronic"]
-                                                                ['NELECT'])
-            if "kinetic_energies" in self.vp_new.vasprun_dict.keys():
-                self.generic_output.dft_log_dict["scf_energy_kin"] = self.vp_new.vasprun_dict["kinetic_energies"]
-
-        if "LOCPOT" in files_present:
-            self.electrostatic_potential.from_file(filename=posixpath.join(directory, "LOCPOT"), normalize=False)
-        if "CHGCAR" in files_present:
-            self.charge_density.from_file(filename=posixpath.join(directory, "CHGCAR"), normalize=True)
-        self.generic_output.bands = self.electronic_structure
-
-    def to_hdf(self, hdf):
-        """
-        Save the object in a HDF5 file
-
-        Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
-
-        """
-        with hdf.open("output") as hdf5_output:
-            hdf5_output["description"] = self.description
-            self.generic_output.to_hdf(hdf5_output)
-            try:
-                self.structure.to_hdf(hdf5_output)
-            except AttributeError:
-                pass
-
-            # with hdf5_output.open("vasprun") as hvr:
-            #  if self.vasprun.dict_vasprun is not None:
-            #     for key, val in self.vasprun.dict_vasprun.items():
-            #        hvr[key] = val
-
-            if self.electrostatic_potential.total_data is not None:
-                self.electrostatic_potential.to_hdf(hdf5_output, group_name="electrostatic_potential")
-
-            if self.charge_density.total_data is not None:
-                self.charge_density.to_hdf(hdf5_output, group_name="charge_density")
-
-            if len(self.electronic_structure.kpoint_list) > 0:
-                self.electronic_structure.to_hdf(hdf=hdf5_output, group_name="electronic_structure")
-
-            if self.outcar.parse_dict:
-                self.outcar.to_hdf_minimal(hdf=hdf5_output, group_name="outcar")
-
-    def from_hdf(self, hdf):
-        """
-        Reads the attributes and reconstructs the object from a hdf file
-        Args:
-            hdf: The hdf5 instance
-        """
-        with hdf.open("output") as hdf5_output:
-            # self.description = hdf5_output["description"]
-            if self.structure is None:
-                self.structure = Atoms()
-            self.structure.from_hdf(hdf5_output)
-            self.generic_output.from_hdf(hdf5_output)
-            try:
-                if "electrostatic_potential" in hdf5_output.list_groups():
-                    self.electrostatic_potential.from_hdf(hdf5_output, group_name="electrostatic_potential")
-                if "charge_density" in hdf5_output.list_groups():
-                    self.charge_density.from_hdf(hdf5_output, group_name="charge_density")
-                if "electronic_structure" in hdf5_output.list_groups():
-                    self.electronic_structure.from_hdf(hdf=hdf5_output)
-                if "outcar" in hdf5_output.list_groups():
-                    self.outcar.from_hdf(hdf=hdf5_output, group_name="outcar")
-            except (TypeError, IOError, ValueError):
-                s.logger.warning("Routine from_hdf() not completely successful")
-
-
-class GenericOutput:
-    """
-
-    This class stores the generic output like different structures, energies and forces from a simulation in a highly
-    generic format. Usually the user does not have to access this class.
-
-    Attributes:
-        log_dict (dict): A dictionary of all tags and values of generic data (positions, forces, etc)
-    """
-
-    def __init__(self):
-        self.log_dict = dict()
-        self.dft_log_dict = dict()
-        self.description = "generic_output contains generic output static"
-        self._bands = ElectronicStructure()
-
-    @property
-    def bands(self):
-        return self._bands
-
-    @bands.setter
-    def bands(self, val):
-        self._bands = val
-
-    def to_hdf(self, hdf):
-        """
-        Save the object in a HDF5 file
-
-        Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
-
-        """
-        with hdf.open("generic") as hdf_go:
-            # hdf_go["description"] = self.description
-            for key, val in self.log_dict.items():
-                hdf_go[key] = val
-            with hdf_go.open("dft") as hdf_dft:
-                for key, val in self.dft_log_dict.items():
-                    hdf_dft[key] = val
-                if self.bands.eigenvalue_matrix is not None:
-                    self.bands.to_hdf_new(hdf_dft, "bands")
-
-    def from_hdf(self, hdf):
-        """
-        Reads the attributes and reconstructs the object from a hdf file
-        Args:
-            hdf: The hdf5 instance
-        """
-        with hdf.open("generic") as hdf_go:
-            for node in hdf_go.list_nodes():
-                if node == "description":
-                    # self.description = hdf_go[node]
-                    pass
-                else:
-                    self.log_dict[node] = hdf_go[node]
-            if 'dft' in hdf_go.list_groups():
-                with hdf_go.open("dft") as hdf_dft:
-                    for node in hdf_dft.list_nodes():
-                        self.dft_log_dict[node] = hdf_dft[node]
-                    if 'bands' in hdf_dft.list_groups():
-                        self.bands.from_hdf_new(hdf_dft, "bands")
-
-
-class DFTOutput:
-    """
-    This class stores the DFT specific output
-
-    Attributes:
-        log_dict (dict): A dictionary of all tags and values of DFT data
-    """
-
-    def __init__(self):
-        self.log_dict = dict()
-        self.description = "contains DFT specific output"
-
-    def to_hdf(self, hdf):
-        """
-        Save the object in a HDF5 file
-
-        Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
-
-        """
-        with hdf.open("dft") as hdf_dft:
-            # hdf_go["description"] = self.description
-            for key, val in self.log_dict.items():
-                hdf_dft[key] = val
-
-    def from_hdf(self, hdf):
-        """
-        Reads the attributes and reconstructs the object from a hdf file
-        Args:
-            hdf: The hdf5 instance
-        """
-        with hdf.open("dft") as hdf_dft:
-            for node in hdf_dft.list_nodes():
-                if node == "description":
-                    # self.description = hdf_go[node]
-                    pass
-                else:
-                    self.log_dict[node] = hdf_dft[node]
 
 
 class Incar(GenericParameters):
@@ -1646,6 +1202,18 @@ xc  GGA  # LDA, GGA
         self.load_string(file_content)
 
 
+class VaspInt(Vasp):
+    def __init__(self, project, job_name):
+        warnings.warn('Please use Vasp instead of VaspInt')
+        super(VaspInt, self).__init__(project=project, job_name=job_name)
+
+
+class VaspInt2(Vasp):
+    def __init__(self, project, job_name):
+        warnings.warn('Please use Vasp instead of VaspInt2')
+        super(VaspInt2, self).__init__(project=project, job_name=job_name)
+
+
 def get_k_mesh_by_cell(cell, kspace_per_in_ang=0.10):
     """
     Args:
@@ -1657,7 +1225,3 @@ def get_k_mesh_by_cell(cell, kspace_per_in_ang=0.10):
     kmesh = np.ceil(np.array([2*np.pi/ll for ll in latlens]) / kspace_per_in_ang)
     kmesh[kmesh < 1] = 1
     return kmesh
-
-
-class VaspCollectError(ValueError):
-    pass

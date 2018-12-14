@@ -44,8 +44,8 @@ JOB_CLASS_DICT = {'GenericMaster': 'pyiron.base.master.generic',
                   'AtomisticExampleJob': 'pyiron.testing.randomatomistic',
                   'ExampleJob': 'pyiron.testing.randomatomistic',
                   'Vasp': 'pyiron.vasp.vasp',
-                  'VaspInt': 'pyiron.vasp.vaspinterface',
-                  'VaspInt2': 'pyiron.vasp.vaspinterface',
+                  'VaspInt': 'pyiron.vasp.vasp',
+                  'VaspInt2': 'pyiron.vasp.vasp',
 }
 
 
