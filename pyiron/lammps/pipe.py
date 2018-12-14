@@ -20,18 +20,18 @@ class LammpsLibrary(object):
         self._interactive_library.send([self.interactive_lib_command, command])
 
     def gather_atoms(self, *args):
-        self._interactive_library.send([self.interative_gather_atoms, *args])
+        self._interactive_library.send([self.interative_gather_atoms, args])
         return self._interactive_library.recv()
 
     def scatter_atoms(self, *args):
-        self._interactive_library.send([self.interactive_scatter_atoms, *args])
+        self._interactive_library.send([self.interactive_scatter_atoms, args])
 
     def get_thermo(self, *args):
-        self._interactive_library.send([self.interactive_get_thermo, *args])
+        self._interactive_library.send([self.interactive_get_thermo, args])
         return self._interactive_library.recv()
 
     def extract_compute(self, *args):
-        self._interactive_library.send([self.interactive_extract_compute, *args])
+        self._interactive_library.send([self.interactive_extract_compute, args])
         return self._interactive_library.recv()
 
     def close(self):
