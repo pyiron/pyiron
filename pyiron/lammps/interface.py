@@ -1,7 +1,6 @@
 import ast
 from ctypes import c_double, c_int
 import h5py
-from multiprocessing import Process, Pipe
 import numpy as np
 import os
 import pandas as pd
@@ -12,7 +11,9 @@ except ImportError:
     pass
 
 from pyiron.lammps.structure import LammpsStructure, UnfoldingPrism
-from pyiron.base.job.interface import JobInterface, InteractiveInterface
+from pyiron.lammps.pipe import LammpsLibrary
+from pyiron.base.job.interface import JobInterface
+from pyiron.atomistics.job.interface import AtomisticInteractiveInterface
 from pyiron.base.pyio.parser import Logstatus, extract_data_from_file
 from pyiron.atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
 
@@ -309,65 +310,63 @@ class LammpsInterface(JobInterface):
             lf.to_hdf(hdf_output)
 
 
-class InteractiveLammpsInterface(LammpsInterface, InteractiveInterface):
-    def __init__(self, job):
-        job._check_opened = False
-        job._interactive_prism = None
-        job._interactive_run_command = None
-        job._interactive_grand_canonical = True
-        job.interactive_cache = {'cells': [],
-                                 'energy_pot': [],
-                                 'energy_tot': [],
-                                 'forces': [],
-                                 'positions': [],
-                                 'pressures': [],
-                                 'steps': [],
-                                 'indices': [],
-                                 'temperature': [],
-                                 'computation_time': [],
-                                 'volume': []}
+class InteractiveLammpsInterface(LammpsInterface, AtomisticInteractiveInterface):
+    def __init__(self):
+        super(InteractiveLammpsInterface, self).__init__()
+        self._check_opened = False
+        self._interactive_prism = None
+        self._interactive_run_command = None
+        self._interactive_grand_canonical = True
+        self.interactive_cache = {'cells': [],
+                                  'energy_pot': [],
+                                  'energy_tot': [],
+                                  'forces': [],
+                                  'positions': [],
+                                  'pressures': [],
+                                  'steps': [],
+                                  'indices': [],
+                                  'temperature': [],
+                                  'computation_time': [],
+                                  'volume': []}
 
-    @staticmethod
-    def _interactive_lib_command(job, command):
+    def _interactive_lib_command(self, job, command):
         job._logger.debug('Lammps library: ' + command)
-        job._interactive_library.command(command)
+        self._interactive_library.command(command)
 
-    @staticmethod
-    def interactive_positions_getter(job):
-        positions = np.reshape(np.array(job._interactive_library.gather_atoms("x", 1, 3)),
+    def interactive_positions_getter(self, job):
+        positions = np.reshape(np.array(self._interactive_library.gather_atoms("x", 1, 3)),
                                (len(job.structure), 3))
-        if np.matrix.trace(job._interactive_prism.R) != 3:
-            positions = np.dot(positions, job._interactive_prism.R.T)
+        if np.matrix.trace(self._interactive_prism.R) != 3:
+            positions = np.dot(positions, self._interactive_prism.R.T)
         return positions.tolist()
 
     def interactive_positions_setter(self, job, positions):
-        if np.matrix.trace(job._interactive_prism.R) != 3:
+        if np.matrix.trace(self._interactive_prism.R) != 3:
             positions = np.array(positions).reshape(-1, 3)
-            positions = np.dot(positions, job._interactive_prism.R)
+            positions = np.dot(positions, self._interactive_prism.R)
         positions = np.array(positions).flatten()
         if job.server.run_mode.interactive_non_modal:
-            job._interactive_library.scatter_atoms("x", 1, 3, positions)
+            self._interactive_library.scatter_atoms("x", 1, 3, positions)
         else:
-            job._interactive_library.scatter_atoms("x", 1, 3, (len(positions) * c_double)(*positions))
+            self._interactive_library.scatter_atoms("x", 1, 3, (len(positions) * c_double)(*positions))
         self._interactive_lib_command(job=job, command='change_box all remap')
 
-    @staticmethod
-    def interactive_cells_getter(job):
-        cc = np.array([[job._interactive_library.get_thermo('lx'),
+    def interactive_cells_getter(self, job):
+        cc = np.array([[self._interactive_library.get_thermo('lx'),
                         0,
                         0],
-                       [job._interactive_library.get_thermo('xy'),
-                        job._interactive_library.get_thermo('ly'),
+                       [self._interactive_library.get_thermo('xy'),
+                        self._interactive_library.get_thermo('ly'),
                         0],
-                       [job._interactive_library.get_thermo('xz'),
-                        job._interactive_library.get_thermo('yz'),
-                        job._interactive_library.get_thermo('lz')]])
-        return job._interactive_prism.unfold_cell(cc)
+                       [self._interactive_library.get_thermo('xz'),
+                        self._interactive_library.get_thermo('yz'),
+                        self._interactive_library.get_thermo('lz')]])
+        return self._interactive_prism.unfold_cell(cc)
 
     def interactive_cells_setter(self, job, cell):
-        job._interactive_prism = UnfoldingPrism(cell)
-        lx, ly, lz, xy, xz, yz = job._interactive_prism.get_lammps_prism()
-        if np.matrix.trace(job._interactive_prism.R) != 3:
+        self._interactive_prism = UnfoldingPrism(cell)
+        lx, ly, lz, xy, xz, yz = self._interactive_prism.get_lammps_prism()
+        if np.matrix.trace(self._interactive_prism.R) != 3:
             print('Warning: setting upper trangular matrix might slow down the calculation')
         if abs(xy) + abs(xz) + abs(yz) > 1.0e-6:
             if job.structure._is_scaled:
@@ -388,10 +387,9 @@ class InteractiveLammpsInterface(LammpsInterface, InteractiveInterface):
                                               command='change_box all x final 0 %f y final 0 %f z final 0 %f \
                                               units box' % (lx, ly, lz))
 
-    @staticmethod
-    def interactive_indices_setter(job, indices):
-        el_struct_lst = job._structure_current.get_species_symbols()
-        el_obj_lst = job._structure_current.get_species_objects()
+    def interactive_indices_setter(self, job, indices):
+        el_struct_lst = self.structure_current.get_species_symbols()
+        el_obj_lst = self.structure_current.get_species_objects()
         el_eam_lst = job.input.potential.get_element_lst()
         el_dict = {}
         for id_eam, el_eam in enumerate(el_eam_lst):
@@ -399,21 +397,19 @@ class InteractiveLammpsInterface(LammpsInterface, InteractiveInterface):
                 id_el = list(el_struct_lst).index(el_eam)
                 el = el_obj_lst[id_el]
                 el_dict[el] = id_eam + 1
-        elem_all = np.array([el_dict[job._structure_current.species[el]] for el in indices])
+        elem_all = np.array([el_dict[self.structure_current.species[el]] for el in indices])
         if job.server.run_mode.interactive_non_modal:
-            job._interactive_library.scatter_atoms('type', 0, 1, elem_all)
+            self._interactive_library.scatter_atoms('type', 0, 1, elem_all)
         else:
-            job._interactive_library.scatter_atoms('type', 0, 1, (len(elem_all) * c_int)(*elem_all))
+            self._interactive_library.scatter_atoms('type', 0, 1, (len(elem_all) * c_int)(*elem_all))
 
-    @staticmethod
-    def interactive_volume_getter(job):
-        return job._interactive_library.get_thermo('vol')
+    def interactive_volume_getter(self, job):
+        return self._interactive_library.get_thermo('vol')
 
-    @staticmethod
-    def interactive_forces_getter(job):
-        ff = np.reshape(np.array(job._interactive_library.gather_atoms("f", 1, 3)), (len(job.structure), 3))
-        if np.matrix.trace(job._interactive_prism.R) != 3:
-            ff = np.dot(ff, job._interactive_prism.R.T)
+    def interactive_forces_getter(self, job):
+        ff = np.reshape(np.array(self._interactive_library.gather_atoms("f", 1, 3)), (len(job.structure), 3))
+        if np.matrix.trace(self._interactive_prism.R) != 3:
+            ff = np.dot(ff, self._interactive_prism.R.T)
         return ff.tolist()
 
     def _interactive_lammps_input(self, job):
@@ -438,16 +434,15 @@ class InteractiveLammpsInterface(LammpsInterface, InteractiveInterface):
                         line = line.replace(potential[0], potential[1])
                 self._interactive_lib_command(job=job, command=line.split('\n')[0])
 
-    @staticmethod
-    def _reset_interactive_run_command(job):
+    def _reset_interactive_run_command(self, job):
         df = pd.DataFrame(job.input.control.dataset)
-        job._interactive_run_command = " ".join(df.T[df.index[-1]].values)
+        self._interactive_run_command = " ".join(df.T[df.index[-1]].values)
 
     def interactive_open(self, job):
         if job.server.run_mode.interactive_non_modal:
-            job._interactive_library = LammpsLibrary()
+            self._interactive_library = LammpsLibrary()
         else:
-            job._interactive_library = lammps()
+            self._interactive_library = lammps()
         if not all(job.structure.pbc):
             job.input.control['boundary'] = ' '.join(['p' if coord else 'f' for coord in job.structure.pbc])
         self._reset_interactive_run_command(job=job)
@@ -461,16 +456,16 @@ class InteractiveLammpsInterface(LammpsInterface, InteractiveInterface):
         self._interactive_lib_command(job=job, command='boundary ' + job.input.control['boundary'])
         self._interactive_lib_command(job=job, command='atom_style ' + job.input.control['atom_style'])
         self._interactive_lib_command(job=job, command="atom_modify map array")
-        job._interactive_prism = UnfoldingPrism(structure.cell)
-        if np.matrix.trace(job._interactive_prism.R) != 3:
+        self._interactive_prism = UnfoldingPrism(structure.cell)
+        if np.matrix.trace(self._interactive_prism.R) != 3:
             print('Warning: setting upper trangular matrix might slow down the calculation')
-        xhi, yhi, zhi, xy, xz, yz = job._interactive_prism.get_lammps_prism()
-        if job._interactive_prism.is_skewed():
-            job._interactive_lib_command(job=job, command='region 1 prism' +
+        xhi, yhi, zhi, xy, xz, yz = self._interactive_prism.get_lammps_prism()
+        if self._interactive_prism.is_skewed():
+            self._interactive_lib_command(job=job, command='region 1 prism' +
                                           ' 0.0 ' + str(xhi) + ' 0.0 ' + str(yhi) + ' 0.0 ' + str(zhi) +
                                           ' ' + str(xy) + ' ' + str(xz) + ' ' + str(yz) + ' units box')
         else:
-            job._interactive_lib_command(job=job, command='region 1 block' +
+            self._interactive_lib_command(job=job, command='region 1 block' +
                                           ' 0.0 ' + str(xhi) + ' 0.0 ' + str(yhi) + ' 0.0 ' + str(zhi) + ' units box')
         el_struct_lst = job.structure.get_species_symbols()
         el_obj_lst = job.structure.get_species_objects()
@@ -489,34 +484,30 @@ class InteractiveLammpsInterface(LammpsInterface, InteractiveInterface):
         positions = structure.positions.flatten()
         elem_all = np.array([el_dict[el] for el in structure.get_chemical_elements()])
         if job.server.run_mode.interactive_non_modal:
-            job._interactive_library.scatter_atoms("x", 1, 3, positions)
-            job._interactive_library.scatter_atoms('type', 0, 1, elem_all)
+            self._interactive_library.scatter_atoms("x", 1, 3, positions)
+            self._interactive_library.scatter_atoms('type', 0, 1, elem_all)
         else:
-            job._interactive_library.scatter_atoms("x", 1, 3, (len(positions) * c_double)(*positions))
-            job._interactive_library.scatter_atoms('type', 0, 1, (len(elem_all) * c_int)(*elem_all))
+            self._interactive_library.scatter_atoms("x", 1, 3, (len(positions) * c_double)(*positions))
+            self._interactive_library.scatter_atoms('type', 0, 1, (len(elem_all) * c_int)(*elem_all))
         self._interactive_lib_command(job=job, command='change_box all remap')
         self._interactive_lammps_input(job=job)
         self._interactive_set_potential(job=job)
 
     def update_potential(self, job):
-        self._interactive_lib_command(job=job, command=self.potential.Config[0][0])
-        self._interactive_lib_command(job=job, command=self.potential.Config[0][1])
+        self._interactive_lib_command(job=job, command=job.potential.Config[0][0])
+        self._interactive_lib_command(job=job, command=job.potential.Config[0][1])
 
-    @staticmethod
-    def interactive_energy_pot_getter(job):
-        return job._interactive_library.get_thermo("pe")
+    def interactive_energy_pot_getter(self, job):
+        return self._interactive_library.get_thermo("pe")
 
-    @staticmethod
-    def interactive_energy_tot_getter(job):
-        return job._interactive_library.get_thermo("etotal")
+    def interactive_energy_tot_getter(self, job):
+        return self._interactive_library.get_thermo("etotal")
 
-    @staticmethod
-    def interactive_steps_getter(job):
-        return job._interactive_library.get_thermo("step")
+    def interactive_steps_getter(self, job):
+        return self._interactive_library.get_thermo("step")
 
-    @staticmethod
-    def interactive_temperatures_getter(job):
-        return job._interactive_library.get_thermo("temp")
+    def interactive_temperatures_getter(self, job):
+        return self._interactive_library.get_thermo("temp")
 
     def interactive_stress_getter(self, job):
         '''
@@ -525,108 +516,74 @@ class InteractiveLammpsInterface(LammpsInterface, InteractiveInterface):
         Keep in mind that it is stress*volume in eV.
         Further discussion can be found on the website above.
         '''
-        if not 'stress' in job.interactive_cache.keys():
+        if not 'stress' in self.interactive_cache.keys():
             self._interactive_lib_command(job=job, command='compute st all stress/atom NULL')
             self._interactive_lib_command(job=job, command='run 0')
-            job.interactive_cache['stress'] = []
-        ss = np.array([job._interactive_library.extract_compute('st', 1, 2)[i][j + (j != k) * (k + 2)]
+            self.interactive_cache['stress'] = []
+        ss = np.array([self._interactive_library.extract_compute('st', 1, 2)[i][j + (j != k) * (k + 2)]
                        for i in range(len(job.structure))
                        for j in range(3)
                        for k in range(3)]).reshape(len(job.structure), 3, 3) / 1.602e6
-        if np.matrix.trace(job._interactive_prism.R) != 3:
-            ss = np.dot(np.dot(job._interactive_prism.R, ss), job._interactive_prism.R.T)
+        if np.matrix.trace(self._interactive_prism.R) != 3:
+            ss = np.dot(np.dot(self._interactive_prism.R, ss), self._interactive_prism.R.T)
         return ss
 
-    @staticmethod
-    def interactive_pressures_getter(job):
-        pp = np.array([[job._interactive_library.get_thermo('pxx'),
-                        job._interactive_library.get_thermo('pxy'),
-                        job._interactive_library.get_thermo('pxz')],
-                       [job._interactive_library.get_thermo('pxy'),
-                        job._interactive_library.get_thermo('pyy'),
-                        job._interactive_library.get_thermo('pyz')],
-                       [job._interactive_library.get_thermo('pxz'),
-                        job._interactive_library.get_thermo('pyz'),
-                        job._interactive_library.get_thermo('pzz')]])
-        if np.matrix.trace(job._interactive_prism.R) != 3:
-            pp = np.dot(np.dot(job._interactive_prism.R, pp), job._interactive_prism.R.T)
+    def interactive_pressures_getter(self, job):
+        pp = np.array([[self._interactive_library.get_thermo('pxx'),
+                        self._interactive_library.get_thermo('pxy'),
+                        self._interactive_library.get_thermo('pxz')],
+                       [self._interactive_library.get_thermo('pxy'),
+                        self._interactive_library.get_thermo('pyy'),
+                        self._interactive_library.get_thermo('pyz')],
+                       [self._interactive_library.get_thermo('pxz'),
+                        self._interactive_library.get_thermo('pyz'),
+                        self._interactive_library.get_thermo('pzz')]])
+        if np.matrix.trace(self._interactive_prism.R) != 3:
+            pp = np.dot(np.dot(self._interactive_prism.R, pp), self._interactive_prism.R.T)
         return pp / 10000  # bar -> GPa
 
+    def run_if_interactive(self, job):
+        if job._generic_input['calc_mode'] == 'md':
+            job.input.control['run'] = job._generic_input['n_print']
+            super(InteractiveLammpsInterface, self).run_if_interactive(job=job)
+            self._reset_interactive_run_command(job=job)
 
-class LammpsLibrary(object):
-    def __init__(self):
-        lmp_interface = lammps()
-        parent_conn, child_conn = Pipe()
-        lammps_process = Process(target=self.interactive_run, args=(child_conn, lmp_interface))
-        lammps_process.start()
-        self._interactive_library = parent_conn
+            counter = 0
+            iteration_max = int(job._generic_input['n_ionic_steps'] / job._generic_input['n_print'])
+            while counter < iteration_max:
+                self._interactive_lib_command(job=job, command=self._interactive_run_command)
+                self.interactive_collect(job=job)
+                counter += 1
 
-    def command(self, command):
-        self._interactive_library.send([self.interactive_lib_command, command])
-
-    def gather_atoms(self, *args):
-        self._interactive_library.send([self.interative_gather_atoms, *args])
-        return self._interactive_library.recv()
-
-    def scatter_atoms(self, *args):
-        self._interactive_library.send([self.interactive_scatter_atoms, *args])
-
-    def get_thermo(self, *args):
-        self._interactive_library.send([self.interactive_get_thermo, *args])
-        return self._interactive_library.recv()
-
-    def extract_compute(self, *args):
-        self._interactive_library.send([self.interactive_extract_compute, *args])
-        return self._interactive_library.recv()
-
-    def close(self):
-        self._interactive_library.send([self.interactive_close])
-
-    @staticmethod
-    def interactive_lib_command(conn, job, command):
-        job.command(command)
-
-    @staticmethod
-    def interative_gather_atoms(conn, job, *args):
-        return np.array(job.gather_atoms(*args))
-
-    @staticmethod
-    def interactive_scatter_atoms(conn, job, *args):
-        py_vector = args[3]
-        if issubclass(type(py_vector[0]), np.integer):
-            c_vector = (len(py_vector) * c_int)(*py_vector)
         else:
-            c_vector = (len(py_vector) * c_double)(*py_vector)
-        job.scatter_atoms(args[0], args[1], args[2], c_vector)
+            super(InteractiveLammpsInterface, self).run_if_interactive(job=job)
+            self._interactive_lib_command(job=job, command=self._interactive_run_command)
+            self.interactive_collect(job=job)
 
-    @staticmethod
-    def interactive_get_thermo(conn, job, *args):
-        return np.array(job.get_thermo(*args))
+    def run_if_interactive_non_modal(self, job):
+        if not self._interactive_fetch_completed:
+            print('Warning: interactive_fetch being effectuated')
+            self.interactive_fetch()
+        super(InteractiveLammpsInterface, self).run_if_interactive(job=job)
+        self._interactive_lib_command(job=job, command=self._interactive_run_command)
+        self._interactive_fetch_completed = False
 
-    @staticmethod
-    def interactive_extract_compute(conn, job, *args):
-        return np.array(job.extract_compute(*args))
+    def interactive_fetch(self, job):
+        if self._interactive_fetch_completed and job.server.run_mode.interactive_non_modal:
+            print('First run and then fetch')
+        else:
+            self.interactive_collect(job=job)
+            job._logger.debug('interactive run - done')
 
-    @staticmethod
-    def interactive_close(conn, job):
-        job.close()
-        conn.close()
-        return 'exit'
+    def interactive_close(self, job):
+        if self.interactive_is_activated():
+            self._interactive_library.close()
+            with job.project_hdf5.open("output") as h5:
+                if 'interactive' in h5.list_groups():
+                    for key in h5['interactive'].list_nodes():
+                        h5['generic/' + key] = h5['interactive/' + key]
+            super(InteractiveLammpsInterface, self).interactive_close(job=job)
 
-    @staticmethod
-    def interactive_run(conn, job):
-        while True:
-            input_info = conn.recv()
-            if isinstance(input_info, list):
-                input_function = input_info[0]
-                input_args = input_info[1:]
-                answer = input_function(conn, job, *input_args)
-            else:
-                answer = input_info(conn, job)
-            if isinstance(answer, str) and answer == 'exit':
-                break
-            elif answer is not None:
-                conn.send(answer)
 
 def to_amat(l_list):
     """

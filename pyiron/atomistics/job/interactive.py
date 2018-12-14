@@ -4,6 +4,7 @@
 
 import numpy as np
 from pyiron.base.job.interactive import InteractiveBase
+from pyiron.atomistics.job.interface import AtomisticInteractiveInterface
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob, GenericOutput
 
@@ -19,38 +20,16 @@ __date__ = "Sep 1, 2017"
 class GenericInteractive(AtomisticGenericJob, InteractiveBase):
     def __init__(self, project, job_name):
         super(GenericInteractive, self).__init__(project, job_name)
+        self._interface = AtomisticInteractiveInterface(job=self)
         self.output = GenericInteractiveOutput(job=self)
-        self._structure_previous = None
-        self._structure_current = None
-        self._interactive_enforce_structure_reset = False
-        self._interactive_grand_canonical = False
-        self._interactive_fetch_completed = True
-        self.interactive_cache = {'cells': [],
-                                  'energy_pot': [],
-                                  'energy_tot': [],
-                                  'forces': [],
-                                  'positions': [],
-                                  'pressures': [],
-                                  'stress': [],
-                                  'steps': [],
-                                  'temperature': [],
-                                  'indices': [],
-                                  'computation_time': [],
-                                  'unwrapped_positions': [],
-                                  'atom_spin_constraints': [],
-                                  'atom_spins': [],
-                                  'magnetic_forces': [],
-                                  'volume': []}
 
     @property
     def interactive_enforce_structure_reset(self):
-        return self._interactive_enforce_structure_reset
+        return self._interface.interactive_enforce_structure_reset
 
     @interactive_enforce_structure_reset.setter
     def interactive_enforce_structure_reset(self, reset):
-        if not isinstance(reset, bool):
-            raise AssertionError()
-        self._interactive_enforce_structure_reset = reset
+        self._interface.interactive_enforce_structure_reset = reset
 
     @property
     def initial_structure(self):
@@ -66,11 +45,11 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
 
     @property
     def structure(self):
-        if self._structure_current is not None:
-            return self._structure_current
+        if self._interface.structure_current is not None:
+            return self._interface.structure_current
         elif self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
-            self._structure_current = AtomisticGenericJob.structure.fget(self)
-            return self._structure_current
+            self._interface.structure_current = AtomisticGenericJob.structure.fget(self)
+            return self._interface.structure_current
         else:
             return AtomisticGenericJob.structure.fget(self)
 
@@ -80,117 +59,9 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             # only overwrite the initial structure if it is not set already.
             if AtomisticGenericJob.structure.fget(self) is None:
                 AtomisticGenericJob.structure.fset(self, structure.copy())
-            self._structure_current = structure
+            self._interface.structure_current = structure
         else:
             AtomisticGenericJob.structure.fset(self, structure)
-
-    def run_if_interactive(self):
-        self.status.running = True
-        if self.structure is None:
-            raise ValueError("Input structure not set. Use method set_structure()")
-        if not self.interactive_is_activated():
-            self.interactive_open()
-        if self._structure_previous is None:
-            pre_struct = self.get_structure(-1)
-            if pre_struct is not None:
-                self._structure_previous = pre_struct
-            else:
-                self._structure_previous = self.structure.copy()
-        if self._structure_current is not None:
-            if len(self._structure_current) != len(self._structure_previous) and not self._interactive_grand_canonical:
-                raise ValueError('The number of atoms changed, this is currently not supported!')
-            el_lst = list(set(list(self._structure_current.get_species_symbols()) +
-                              list(self._structure_previous.get_species_symbols())))
-            current_structure_index = [el_lst.index(el) for el in self._structure_current.get_chemical_symbols()]
-            previous_structure_index = [el_lst.index(el) for el in self._structure_previous.get_chemical_symbols()]
-            if np.array_equal(np.array(current_structure_index), np.array(previous_structure_index)) and \
-                    not self._interactive_enforce_structure_reset:
-                if not np.allclose(self._structure_current.cell, self._structure_previous.cell, rtol=1e-15, atol=1e-15):
-                    self._logger.debug('Generic library: cell changed!')
-                    self.interactive_cells_setter(self._structure_current.cell)
-                if not np.allclose(self._structure_current.scaled_positions,
-                                   self._structure_previous.scaled_positions, rtol=1e-15, atol=1e-15):
-                    self._logger.debug('Generic library: positions changed!')
-                    self.interactive_positions_setter(self._structure_current.positions)
-                if np.any(self._structure_current.get_initial_magnetic_moments()) and \
-                        not np.allclose(self._structure_current.get_initial_magnetic_moments(),
-                                        self._structure_previous.get_initial_magnetic_moments()):
-                    self._logger.debug('Generic library: magnetic moments changed!')
-                    self.interactive_spin_constraints_setter(self._structure_current.get_initial_magnetic_moments())
-            elif not self._interactive_enforce_structure_reset and \
-                    len(self._structure_current) == len(self._structure_previous) and \
-                    np.allclose(self._structure_current.cell, self._structure_previous.cell, rtol=1e-15, atol=1e-15) and \
-                    np.allclose(self._structure_current.scaled_positions,
-                                self._structure_previous.scaled_positions, rtol=1e-15, atol=1e-15) and \
-                    (not np.any(self._structure_current.get_initial_magnetic_moments()) or
-                     np.allclose(self._structure_current.get_initial_magnetic_moments(),
-                                 self._structure_previous.get_initial_magnetic_moments())):
-                self._logger.debug('Generic library: indices changed!')
-                self.interactive_indices_setter(self._structure_current.indices)
-            else:
-                self._logger.debug('Generic library: structure changed!')
-                self.interactive_structure_setter(self._structure_current)
-            self._structure_previous = self._structure_current.copy()
-
-    def interactive_cells_getter(self):
-        return self.initial_structure.cell
-
-    def interactive_collect(self):
-        if 'cells' in self.interactive_cache.keys():
-            self.interactive_cache['cells'].append(self.interactive_cells_getter())
-        if 'energy_pot' in self.interactive_cache.keys():
-            self.interactive_cache['energy_pot'].append(self.interactive_energy_pot_getter())
-        if 'energy_tot' in self.interactive_cache.keys():
-            self.interactive_cache['energy_tot'].append(self.interactive_energy_tot_getter())
-        if 'forces' in self.interactive_cache.keys():
-            self.interactive_cache['forces'].append(self.interactive_forces_getter())
-        if 'positions' in self.interactive_cache.keys():
-            self.interactive_cache['positions'].append(self.interactive_positions_getter())
-        if 'pressures' in self.interactive_cache.keys():
-            self.interactive_cache['pressures'].append(self.interactive_pressures_getter())
-        if 'stress' in self.interactive_cache.keys():
-            self.interactive_cache['stress'].append(self.interactive_stress_getter())
-        if 'steps' in self.interactive_cache.keys():
-            self.interactive_cache['steps'].append(self.interactive_steps_getter())
-        if 'temperature' in self.interactive_cache.keys():
-            self.interactive_cache['temperature'].append(self.interactive_temperatures_getter())
-        if 'computation_time' in self.interactive_cache.keys():
-            self.interactive_cache['computation_time'].append(self.interactive_time_getter())
-        if 'indices' in self.interactive_cache.keys():
-            self.interactive_cache['indices'].append(self.interactive_indices_getter())
-        if 'atom_spins' in self.interactive_cache.keys():
-            self.interactive_cache['atom_spins'].append(self.interactive_spins_getter())
-        if 'atom_spin_constraints' in self.interactive_cache.keys():
-            if self._generic_input['fix_spin_constraint']:
-                self.interactive_cache['atom_spin_constraints'].append(self.interactive_spin_constraints_getter())
-        if 'magnetic_forces' in self.interactive_cache.keys():
-            if self._generic_input['fix_spin_constraint']:
-                self.interactive_cache['magnetic_forces'].append(self.interactive_magnetic_forces_getter())
-        if 'unwrapped_positions' in self.interactive_cache.keys():
-            self.interactive_cache['unwrapped_positions'].append(self.interactive_unwrapped_positions_getter())
-        if 'volume' in self.interactive_cache.keys():
-            self.interactive_cache['volume'].append(self.interactive_volume_getter())
-        if len(list(self.interactive_cache.keys())) > 0 and \
-                len(self.interactive_cache[list(self.interactive_cache.keys())[0]]) \
-                % self._interactive_flush_frequency == 0:
-            self.interactive_flush(path="interactive")
-        if self.server.run_mode.interactive_non_modal:
-            self._interactive_fetch_completed = True
-
-    def interactive_indices_getter(self):
-        return self.current_structure.get_chemical_indices()
-
-    def interactive_positions_getter(self):
-        return self.current_structure.positions
-
-    def interactive_steps_getter(self):
-        return len(self.interactive_cache[list(self.interactive_cache.keys())[0]])
-
-    def interactive_time_getter(self):
-        return self.interactive_steps_getter()
-
-    def interactive_volume_getter(self):
-        return self.initial_structure.get_volume()
 
     def get_structure(self, iteration_step=-1):
         if (self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal) \
@@ -209,54 +80,87 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             else:
                 return None
 
+    def run_if_interactive(self):
+        self._interface.run_if_interactive(job=self)
+
+    def interactive_collect(self):
+        self._interface.interactive_collect(job=self)
+
+    def run_if_interactive_non_modal(self):
+        self._interface.run_if_interactive_non_modal(job=self)
+
+    def interactive_fetch(self):
+        self._interface.interactive_fetch(job=self)
+
+    def interactive_close(self):
+        self._interface.interactive_close(job=self)
+
     # Functions which have to be implemented by the fin
+    def interactive_cells_getter(self):
+        return self.initial_structure.cell
+
+    def interactive_indices_getter(self):
+        return self.current_structure.get_chemical_indices()
+
+    def interactive_positions_getter(self):
+        return self.current_structure.positions
+
+    def interactive_steps_getter(self):
+        return self._interface.interactive_steps_getter()
+
+    def interactive_time_getter(self):
+        return self.interactive_steps_getter()
+
+    def interactive_volume_getter(self):
+        return self.initial_structure.get_volume()
+
     def interactive_cells_setter(self, cell):
-        raise NotImplementedError('interactive_cells_getter() is not implemented!')
+        self._interface.interactive_cells_setter(job=self, cell=cell)
 
     def interactive_energy_pot_getter(self):
-        raise NotImplementedError('interactive_energy_pot_getter() is not implemented!')
+        return self._interface.interactive_energy_pot_getter(job=self)
 
     def interactive_energy_tot_getter(self):
-        raise NotImplementedError('interactive_energy_tot_getter() is not implemented!')
+        return self._interface.interactive_energy_tot_getter(job=self)
 
     def interactive_forces_getter(self):
-        raise NotImplementedError('interactive_forces_getter() is not implemented!')
+        return self._interface.interactive_forces_getter(job=self)
 
     def interactive_indices_setter(self, indices):
-        raise NotImplementedError('interactive_indices_setter() is not implemented!')
+        self._interface.interactive_indices_setter(job=self, indices=indices)
 
     def interactive_spins_getter(self):
-        raise NotImplementedError('interactive_spins_getter() is not implemented!')
+        return self._interface.interactive_spins_getter(job=self)
 
     def interactive_spin_constraints_getter(self):
-        raise NotImplementedError('interactive_spin_constraints_getter() is not implemented!')
+        return self._interface.interactive_spin_constraints_getter(job=self)
 
     def interactive_magnetic_forces_getter(self):
-        raise NotImplementedError('interactive_magnetic_forces_getter() is not implemented!')
+        return self._interface.interactive_magnetic_forces_getter(job=self)
 
     def interactive_spin_constraints_setter(self, spins):
-        raise NotImplementedError('iinteractive_spin_constraints_setter() is not implemented!')
+        self._interface.interactive_spin_constraints_setter(job=self, spins=spins)
 
     def interactive_open(self):
-        raise NotImplementedError('interactive_open() is not implemented!')
+        self._interface.interactive_open(job=self)
 
     def interactive_positions_setter(self, positions):
-        raise NotImplementedError('interactive_positions_setter() is not implemented!')
+        self._interface.interactive_positions_setter(job=self, positions=positions)
 
     def interactive_pressures_getter(self):
-        raise NotImplementedError('interactive_pressures_getter() is not implemented!')
+        return self._interface.interactive_pressures_getter(job=self)
 
     def interactive_stress_getter(self):
-        raise NotImplementedError('interactive_stress_getter() is not implemented!')
+        return self._interface.interactive_stress_getter(job=self)
 
     def interactive_structure_setter(self, structure):
-        raise NotImplementedError('interactive_structure_setter() is not implemented!')
+        self._interface.interactive_structure_setter(job=self, structure=structure)
 
     def interactive_temperatures_getter(self):
-        raise NotImplementedError('interactive_temperatures_getter() is not implemented!')
+        return self._interface.interactive_temperatures_getter(job=self)
 
     def interactive_unwrapped_positions_getter(self):
-        raise NotImplementedError('interactive_unwrapped_positions_getter() is not implemented!')
+        return self._interface.interactive_unwrapped_positions_getter(job=self)
 
 
 class GenericInteractiveOutput(GenericOutput):
@@ -264,9 +168,9 @@ class GenericInteractiveOutput(GenericOutput):
         self._job = job
 
     def _key_from_cache(self, key):
-        if key in self._job.interactive_cache.keys() and self._job.interactive_is_activated() \
-                and len(self._job.interactive_cache[key]) != 0:
-            return self._job.interactive_cache[key]
+        if key in self._job._interface.interactive_cache.keys() and self._job._interface.interactive_is_activated() \
+                and len(self._job._interface.interactive_cache[key]) != 0:
+            return self._job._interface.interactive_cache[key]
         else:
             return []
 
@@ -354,7 +258,7 @@ class GenericInteractiveOutput(GenericOutput):
         return self._key_from_property(key='volume', prop=GenericOutput.volume.fget)
 
     def __dir__(self):
-        return list(set(list(self._job.interactive_cache.keys()) + super(GenericOutput).__dir__()))
+        return list(set(list(self._job._interface.interactive_cache.keys()) + super(GenericOutput).__dir__()))
 
 
 class InteractiveInterface(object):
@@ -403,4 +307,3 @@ class InteractiveInterface(object):
 
     def run_interactive(self):
         raise NotImplementedError
-
