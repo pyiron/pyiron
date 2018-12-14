@@ -8,6 +8,7 @@ import numpy as np
 import scipy.integrate
 import scipy.optimize as spy
 import scipy.constants
+import warnings
 from pyiron.atomistics.master.parallel import AtomisticParallelMaster
 from pyiron.base.master.parallel import JobGenerator
 
@@ -211,27 +212,56 @@ class Murnaghan(AtomisticParallelMaster):
     def equilibrium_energy(self):
         return self.fit_dict["energy_eq"]
 
-    def collect_output(self):
-        erg_lst, vol_lst, err_lst, id_lst = [], [], [], []
-        for job_id in self.child_ids:
-            ham = self.project_hdf5.inspect(job_id)
-            print('job_id: ', job_id, ham.status)
-            energy = ham["output/generic/energy_tot"][-1]
-            volume = ham["output/generic/volume"][-1]
-            erg_lst.append(np.mean(energy))
-            err_lst.append(np.var(energy))
-            vol_lst.append(volume)
-            id_lst.append(job_id)
-        vol_lst = np.array(vol_lst)
-        erg_lst = np.array(erg_lst)
-        err_lst = np.array(err_lst)
-        id_lst = np.array(id_lst)
-        arg_lst = np.argsort(vol_lst)
+    def run_if_interactive(self):
+        start_structure = self.ref_job.structure
+        self.ref_job_initialize()
+        self.ref_job.server.run_mode.interactive = True
+        for strain in self._job_generator.parameter_list:
+            basis = start_structure.copy()
+            basis.set_cell(basis.cell * strain ** (1. / 3.), scale_atoms=True)
+            self.ref_job.structure = basis
+            self.ref_job.run()
 
-        self._output["volume"] = vol_lst[arg_lst]
-        self._output["energy"] = erg_lst[arg_lst]
-        self._output["error"] = err_lst[arg_lst]
-        self._output["id"] = id_lst[arg_lst]
+        self.ref_job.interactive_close()
+        self.status.collect = True
+        self.run()
+
+    def ref_job_initialize(self):
+        if len(self._job_list) > 0:
+            self._ref_job = self.pop(-1)
+            if self._job_id is not None and self._ref_job._master_id is None:
+                self._ref_job.master_id = self.job_id
+
+    def collect_output(self):
+        if self.server.run_mode.interactive:
+            ham = self.project_hdf5.inspect(self.child_ids[0])
+            erg_lst = ham["output/generic/energy_tot"]
+            vol_lst = ham["output/generic/volume"]
+            arg_lst = np.argsort(vol_lst)
+
+            self._output["volume"] = vol_lst[arg_lst]
+            self._output["energy"] = erg_lst[arg_lst]
+        else:
+            erg_lst, vol_lst, err_lst, id_lst = [], [], [], []
+            for job_id in self.child_ids:
+                ham = self.project_hdf5.inspect(job_id)
+                print('job_id: ', job_id, ham.status)
+                energy = ham["output/generic/energy_tot"][-1]
+                volume = ham["output/generic/volume"][-1]
+                erg_lst.append(np.mean(energy))
+                err_lst.append(np.var(energy))
+                vol_lst.append(volume)
+                id_lst.append(job_id)
+            vol_lst = np.array(vol_lst)
+            erg_lst = np.array(erg_lst)
+            err_lst = np.array(err_lst)
+            id_lst = np.array(id_lst)
+            arg_lst = np.argsort(vol_lst)
+
+            self._output["volume"] = vol_lst[arg_lst]
+            self._output["energy"] = erg_lst[arg_lst]
+            self._output["error"] = err_lst[arg_lst]
+            self._output["id"] = id_lst[arg_lst]
 
         with self.project_hdf5.open("output") as hdf5_out:
             for key, val in self._output.items():
@@ -436,3 +466,9 @@ class Murnaghan(AtomisticParallelMaster):
         new_cell = snapshot.cell * k
         snapshot.set_cell(new_cell, scale_atoms=True)
         return snapshot
+
+class MurnaghanInt(Murnaghan):
+    def __init__(self, project, job_name):
+        warnings.warn('Please use Murnaghan instead of MurnaghanInt')
+        super(MurnaghanInt, self).__init__(project=project, job_name=job_name)
+

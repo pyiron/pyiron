@@ -129,7 +129,7 @@ class PhonopyJob(AtomisticParallelMaster):
         else:
             return np.eye(3)
 
-    def create_jobs(self):
+    def run_static(self):
         # Initialise the phonopy object before starting the first calculation.
         if self.phonopy is None:
             self.phonopy = Phonopy(unitcell=self._phonopy_unit_cell,
@@ -137,7 +137,7 @@ class PhonopyJob(AtomisticParallelMaster):
                                    factor=self.input['factor'])
             self.phonopy.generate_displacements(distance=self.input['displacement'])
             self.to_hdf()
-        super(PhonopyJob, self).create_jobs()
+        super(PhonopyJob, self).run_static()
 
     def to_hdf(self, hdf=None, group_name=None):
         super(PhonopyJob, self).to_hdf(hdf=hdf, group_name=group_name)
