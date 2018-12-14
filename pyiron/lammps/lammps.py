@@ -58,7 +58,7 @@ class Lammps(GenericInteractive, AtomisticGenericJob):
         self.input = Input()
         self._cutoff_radius = None
         self._is_continuation = None
-        self._interface = InteractiveLammpsInterface(job=self)
+        self._interface = InteractiveLammpsInterface()
 
     @property
     def cutoff_radius(self):
