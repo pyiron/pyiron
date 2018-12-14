@@ -5,7 +5,7 @@ from pyiron.base.job.interface import InteractiveInterface
 class InteractiveBase(GenericJob):
     def __init__(self, project, job_name):
         super(InteractiveBase, self).__init__(project, job_name)
-        self._interface = InteractiveInterface(job=self)
+        self._interface = InteractiveInterface()
 
     @property
     def interactive_flush_frequency(self):

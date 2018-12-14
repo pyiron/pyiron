@@ -20,7 +20,7 @@ __date__ = "Sep 1, 2017"
 class GenericInteractive(AtomisticGenericJob, InteractiveBase):
     def __init__(self, project, job_name):
         super(GenericInteractive, self).__init__(project, job_name)
-        self._interface = AtomisticInteractiveInterface(job=self)
+        self._interface = AtomisticInteractiveInterface()
         self.output = GenericInteractiveOutput(job=self)
 
     @property
