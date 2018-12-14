@@ -80,11 +80,11 @@ class RandomInterface(JobInterface):
 
 
 class InteractiveRandomInterface(RandomInterface, InteractiveInterface):
-    def __init__(self, job):
-        job.interactive_cache = {'alat': [], 'count': [], 'energy': []}
+    def __init__(self):
+        super(InteractiveRandomInterface, self).__init__()
+        self.interactive_cache = {'alat': [], 'count': [], 'energy': []}
 
-    @staticmethod
-    def run_if_interactive(job):
+    def run_if_interactive(self, job):
         """
         Run the job as Python library and store the result in the HDF5 File.
 
@@ -94,18 +94,17 @@ class InteractiveRandomInterface(RandomInterface, InteractiveInterface):
         from pyiron.testing.executable import ExampleExecutable
         job.status.running = True
         alat, count, energy = ExampleExecutable().run_lib(job.input)
-        job.interactive_cache['alat'].append(alat)
-        job.interactive_cache['count'].append(count)
-        job.interactive_cache['energy'].append(energy)
+        self.interactive_cache['alat'].append(alat)
+        self.interactive_cache['count'].append(count)
+        self.interactive_cache['energy'].append(energy)
 
-    @staticmethod
-    def interactive_close(job):
+    def interactive_close(self, job):
         job.to_hdf()
         with job.project_hdf5.open("output") as h5:
-            h5["generic/energy"] = np.array(job.interactive_cache['energy'])
-            h5["generic/volume"] = np.array(job.interactive_cache['alat'])
-            h5["generic/alat"] = np.array(job.interactive_cache['alat'])
-            h5["generic/count"] = np.array(job.interactive_cache['count'])
-            h5["generic/energy_tot"] = np.array(job.interactive_cache['energy'])
+            h5["generic/energy"] = np.array(self.interactive_cache['energy'])
+            h5["generic/volume"] = np.array(self.interactive_cache['alat'])
+            h5["generic/alat"] = np.array(self.interactive_cache['alat'])
+            h5["generic/count"] = np.array(self.interactive_cache['count'])
+            h5["generic/energy_tot"] = np.array(self.interactive_cache['energy'])
         job.project.db.item_update(job.runtime(), job.job_id)
         job.status.finished = True

@@ -119,7 +119,7 @@ class ExampleJob(GenericJob):
         self.input = ExampleInput()
         self.executable = "python " + str(os.path.dirname(os.path.realpath(__file__))) + \
                           "/executable.py"
-        self._interface = InteractiveRandomInterface(job=self)
+        self._interface = InteractiveRandomInterface()
 
     def collect_logfiles(self):
         """
