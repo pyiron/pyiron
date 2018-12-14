@@ -14,11 +14,11 @@ from pyiron.vasp.vasprun import Vasprun as Vr
 from pyiron.vasp.vasprun import VasprunError
 from pyiron.vasp.volumetric_data import VaspVolumetricData
 from pyiron.dft.waves.electronic import ElectronicStructure
-from pyiron.base.job.interface import JobInterface
+from pyiron.base.job.interface import FileInterface
 from pyiron.atomistics.job.interface import AtomisticInteractiveInterface
 
 
-class VaspInterface(JobInterface):
+class VaspInterface(FileInterface):
     def __init__(self):
         self.output_parser = Output()
 

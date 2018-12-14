@@ -1,10 +1,10 @@
 import numpy as np
 import posixpath
-from pyiron.base.job.interface import JobInterface, InteractiveInterface
+from pyiron.base.job.interface import FileInterface, InteractiveInterface
 from pyiron.base.pyio.parser import Logstatus
 
 
-class RandomInterface(JobInterface):
+class RandomInterface(FileInterface):
     @staticmethod
     def write_input(job):
         """

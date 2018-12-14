@@ -12,13 +12,13 @@ except ImportError:
 
 from pyiron.lammps.structure import LammpsStructure, UnfoldingPrism
 from pyiron.lammps.pipe import LammpsLibrary
-from pyiron.base.job.interface import JobInterface
+from pyiron.base.job.interface import FileInterface
 from pyiron.atomistics.job.interface import AtomisticInteractiveInterface
 from pyiron.base.pyio.parser import Logstatus, extract_data_from_file
 from pyiron.atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
 
 
-class LammpsInterface(JobInterface):
+class LammpsInterface(FileInterface):
     def write_input(self, job):
         """
         Call routines that generate the code specific input files

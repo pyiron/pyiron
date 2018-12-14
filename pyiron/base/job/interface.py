@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class JobInterface(object):
+class FileInterface(object):
     @staticmethod
     def write_input(job):
         """
