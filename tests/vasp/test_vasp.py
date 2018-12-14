@@ -1,7 +1,8 @@
 import unittest
 import os
 from pyiron.atomistics.structure.atoms import CrystalStructure
-from pyiron.vasp.vasp import Input, Output
+from pyiron.vasp.vasp import Input
+from pyiron.vasp.interface import Output
 from pyiron.project import Project
 
 __author__ = "surendralal"
@@ -25,7 +26,7 @@ class TestVasp(unittest.TestCase):
         self.assertEqual(self.job.__name__, "Vasp")
         self.assertEqual(self.job._sorted_indices, None)
         self.assertIsInstance(self.job.input, Input)
-        self.assertIsInstance(self.job._output_parser, Output)
+        self.assertIsInstance(self.job._interface.output_parser, Output)
 
     def test_calc_static(self):
         self.job.calc_static(electronic_steps=90, retain_charge_density=True, retain_electrostatic_potential=True)
