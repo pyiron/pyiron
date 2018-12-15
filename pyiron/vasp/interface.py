@@ -226,9 +226,10 @@ class VaspInterface(FileInterface):
         copyfile(old_path, new_path)
 
 
-class InteractiveVaspInterface(VaspInterface, AtomisticInteractiveInterface):
+class InteractiveVaspInterface(AtomisticInteractiveInterface, VaspInterface):
     def __init__(self):
         super(InteractiveVaspInterface, self).__init__()
+        self.output_parser = Output()
         self._interactive_write_input_files = True
         self._interactive_vasprun = None
         self.interactive_cache = {'cells': [],

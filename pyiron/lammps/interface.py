@@ -310,7 +310,7 @@ class LammpsInterface(FileInterface):
             lf.to_hdf(hdf_output)
 
 
-class InteractiveLammpsInterface(LammpsInterface, AtomisticInteractiveInterface):
+class InteractiveLammpsInterface(AtomisticInteractiveInterface, LammpsInterface):
     def __init__(self):
         super(InteractiveLammpsInterface, self).__init__()
         self._check_opened = False
