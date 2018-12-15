@@ -10,6 +10,7 @@ import tables
 import warnings
 
 from pyiron.dft.job.generic import GenericDFTJob
+from pyiron.atomistics.job.interactive import GenericInteractive
 from pyiron.vasp.interface import InteractiveVaspInterface
 from pyiron.vasp.potential import VaspPotentialFile
 from pyiron.atomistics.structure.atoms import CrystalStructure
@@ -31,7 +32,7 @@ __date__ = "Sep 1, 2017"
 s = Settings()
 
 
-class Vasp(GenericDFTJob):
+class Vasp(GenericInteractive, GenericDFTJob):
     """
     Class to setup and run and analyze VASP simulations which is a derivative of pyiron.objects.job.generic.GenericJob.
     The functions in these modules are written in such the function names and attributes are very generic
