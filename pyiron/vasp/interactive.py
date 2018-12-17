@@ -4,15 +4,15 @@ from subprocess import Popen, PIPE
 import warnings
 
 from pyiron.vasp.outcar import Outcar
-from pyiron.vasp.vasp import Vasp
+from pyiron.vasp.base import VaspBase
 from pyiron.vasp.structure import vasp_sorter
-from pyiron.vasp.vasp import GenericOutput as GenericOutputBase
-from pyiron.vasp.vasp import DFTOutput as DFTOutputBase
-from pyiron.vasp.vasp import Output as OutputBase
+from pyiron.vasp.base import GenericOutput as GenericOutputBase
+from pyiron.vasp.base import DFTOutput as DFTOutputBase
+from pyiron.vasp.base import Output as OutputBase
 from pyiron.atomistics.job.interactive import GenericInteractive
 
 
-class VaspInt(GenericInteractive, Vasp):
+class VaspInt(VaspBase, GenericInteractive):
     def __init__(self, project, job_name):
         super(VaspInt, self).__init__(project, job_name)
         self._interactive_write_input_files = True
@@ -101,12 +101,28 @@ class VaspInt(GenericInteractive, Vasp):
                                               cwd=self.working_directory,
                                               universal_newlines=True)
 
-    def calc_minimize(self, e_tol=1e-8, f_tol=1e-8, max_iter=1000, pressure=None, n_print=1):
-        raise NotImplementedError('calc_minimize() is not implemented for the interactive mode use calc_static()!')
+    def calc_minimize(self, electronic_steps=400, ionic_steps=100, max_iter=None, pressure=None, algorithm=None,
+                      retain_charge_density=False, retain_electrostatic_potential=False, ionic_energy=None,
+                      ionic_forces=None, volume_only=False):
+        if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
+            raise NotImplementedError('calc_minimize() is not implemented for the interactive mode use calc_static()!')
+        else:
+            super(VaspInt, self).calc_minimize(electronic_steps=electronic_steps, ionic_steps=ionic_steps,
+                                               max_iter=max_iter, pressure=pressure, algorithm=algorithm,
+                                               retain_charge_density=retain_charge_density,
+                                               retain_electrostatic_potential=retain_electrostatic_potential,
+                                               ionic_energy=ionic_energy, ionic_forces=ionic_forces,
+                                               volume_only=volume_only)
 
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100, delta_temp=1.0,
-                delta_press=None, seed=None, tloop=None, rescale_velocity=True):
-        raise NotImplementedError('calc_md() is not implemented for the interactive mode use calc_static()!')
+                delta_press=None, seed=None, tloop=None, rescale_velocity=True, langevin=False):
+        if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
+            raise NotImplementedError('calc_md() is not implemented for the interactive mode use calc_static()!')
+        else:
+            super(VaspInt, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
+                                         time_step=time_step, n_print=n_print, delta_temp=delta_temp,
+                                         delta_press=delta_press, seed=seed, tloop=tloop,
+                                         rescale_velocity=rescale_velocity, langevin=langevin)
 
     def run_if_interactive_non_modal(self):
         initial_run = not self.interactive_is_activated()
@@ -240,9 +256,3 @@ class DFTOutput(DFTOutputBase):
                     hdf_dft[key] = val[:-1]
                 else:
                     hdf_dft[key] = val
-
-
-class VaspInt2(VaspInt):
-    def __init__(self, project, job_name):
-        warnings.warn('Please use VaspInt instead of VaspInt2')
-        super(VaspInt2, self).__init__(project=project, job_name=job_name)

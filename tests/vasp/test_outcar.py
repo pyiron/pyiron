@@ -2,9 +2,7 @@ import unittest
 import os
 import posixpath
 import numpy as np
-from pyiron.vasp.vasp import Outcar
-
-
+from pyiron.vasp.outcar import Outcar
 
 
 class TestOutcar(unittest.TestCase):

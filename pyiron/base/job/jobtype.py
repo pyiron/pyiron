@@ -39,13 +39,13 @@ JOB_CLASS_DICT = {'GenericMaster': 'pyiron.base.master.generic',
                   'ConvergenceKpointParallel': 'pyiron.dft.master.convergence_kpoint_parallel',
                   'MurnaghanDFT': 'pyiron.dft.master.murnaghan_dft',
                   'Lammps': 'pyiron.lammps.lammps',
-                  'LammpsInt': 'pyiron.lammps.lammpsinterface',
-                  'LammpsInt2': 'pyiron.lammps.lammpsinterface',
+                  'LammpsInt': 'pyiron.lammps.lammps',
+                  'LammpsInt2': 'pyiron.lammps.lammps',
                   'AtomisticExampleJob': 'pyiron.testing.randomatomistic',
                   'ExampleJob': 'pyiron.testing.randomatomistic',
                   'Vasp': 'pyiron.vasp.vasp',
-                  'VaspInt': 'pyiron.vasp.vaspinterface',
-                  'VaspInt2': 'pyiron.vasp.vaspinterface',
+                  'VaspInt': 'pyiron.vasp.vasp',
+                  'VaspInt2': 'pyiron.vasp.vasp',
 }
 
 
