@@ -20,18 +20,18 @@ class LammpsLibrary(object):
         self._interactive_library.send([self.interactive_lib_command, command])
 
     def gather_atoms(self, *args):
-        self._interactive_library.send([self.interative_gather_atoms, *args])
+        self._interactive_library.send([self.interative_gather_atoms, args])
         return self._interactive_library.recv()
 
     def scatter_atoms(self, *args):
-        self._interactive_library.send([self.interactive_scatter_atoms, *args])
+        self._interactive_library.send([self.interactive_scatter_atoms, args])
 
     def get_thermo(self, *args):
-        self._interactive_library.send([self.interactive_get_thermo, *args])
+        self._interactive_library.send([self.interactive_get_thermo, args])
         return self._interactive_library.recv()
 
     def extract_compute(self, *args):
-        self._interactive_library.send([self.interactive_extract_compute, *args])
+        self._interactive_library.send([self.interactive_extract_compute, args])
         return self._interactive_library.recv()
 
     def close(self):
@@ -43,7 +43,7 @@ class LammpsLibrary(object):
 
     @staticmethod
     def interative_gather_atoms(conn, job, *args):
-        return np.array(job.gather_atoms(*args))
+        return np.array(job.gather_atoms(args))
 
     @staticmethod
     def interactive_scatter_atoms(conn, job, *args):
@@ -56,11 +56,11 @@ class LammpsLibrary(object):
 
     @staticmethod
     def interactive_get_thermo(conn, job, *args):
-        return np.array(job.get_thermo(*args))
+        return np.array(job.get_thermo(args))
 
     @staticmethod
     def interactive_extract_compute(conn, job, *args):
-        return np.array(job.extract_compute(*args))
+        return np.array(job.extract_compute(args))
 
     @staticmethod
     def interactive_close(conn, job):
@@ -75,7 +75,7 @@ class LammpsLibrary(object):
             if isinstance(input_info, list):
                 input_function = input_info[0]
                 input_args = input_info[1:]
-                answer = input_function(conn, job, *input_args)
+                answer = input_function(conn, job, input_args)
             else:
                 answer = input_info(conn, job)
             if isinstance(answer, str) and answer == 'exit':
