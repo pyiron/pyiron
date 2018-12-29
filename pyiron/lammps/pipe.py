@@ -20,18 +20,22 @@ class LammpsLibrary(object):
         self._interactive_library.send([self.interactive_lib_command, command])
 
     def gather_atoms(self, *args):
-        self._interactive_library.send([self.interative_gather_atoms, *args])
+        self._interactive_library.send([self.interative_gather_atoms] + list(args))
+        # self._interactive_library.send([self.interative_gather_atoms, *args])  # Python 3.X only
         return self._interactive_library.recv()
 
     def scatter_atoms(self, *args):
-        self._interactive_library.send([self.interactive_scatter_atoms, *args])
+        self._interactive_library.send([self.interactive_scatter_atoms] + list(args))
+        # self._interactive_library.send([self.interactive_scatter_atoms, *args])  # Python 3.X only
 
     def get_thermo(self, *args):
-        self._interactive_library.send([self.interactive_get_thermo, *args])
+        self._interactive_library.send([self.interactive_get_thermo] + list(args))
+        # self._interactive_library.send([self.interactive_get_thermo, *args])  # Python 3.X only
         return self._interactive_library.recv()
 
     def extract_compute(self, *args):
-        self._interactive_library.send([self.interactive_extract_compute, *args])
+        self._interactive_library.send([self.interactive_extract_compute] + list(args))
+        # self._interactive_library.send([self.interactive_extract_compute, *args])  # Python 3.X only
         return self._interactive_library.recv()
 
     def close(self):
@@ -42,25 +46,25 @@ class LammpsLibrary(object):
         job.command(command)
 
     @staticmethod
-    def interative_gather_atoms(conn, job, *args):
-        return np.array(job.gather_atoms(*args))
+    def interative_gather_atoms(conn, job, funct_args):
+        return np.array(job.gather_atoms(*funct_args))
 
     @staticmethod
-    def interactive_scatter_atoms(conn, job, *args):
-        py_vector = args[3]
+    def interactive_scatter_atoms(conn, job, funct_args):
+        py_vector = funct_args[3]
         if issubclass(type(py_vector[0]), np.integer):
             c_vector = (len(py_vector) * c_int)(*py_vector)
         else:
             c_vector = (len(py_vector) * c_double)(*py_vector)
-        job.scatter_atoms(args[0], args[1], args[2], c_vector)
+        job.scatter_atoms(funct_args[0], funct_args[1], funct_args[2], c_vector)
 
     @staticmethod
-    def interactive_get_thermo(conn, job, *args):
-        return np.array(job.get_thermo(*args))
+    def interactive_get_thermo(conn, job, funct_args):
+        return np.array(job.get_thermo(*funct_args))
 
     @staticmethod
-    def interactive_extract_compute(conn, job, *args):
-        return np.array(job.extract_compute(*args))
+    def interactive_extract_compute(conn, job, funct_args):
+        return np.array(job.extract_compute(*funct_args))
 
     @staticmethod
     def interactive_close(conn, job):
@@ -75,9 +79,9 @@ class LammpsLibrary(object):
             if isinstance(input_info, list):
                 input_function = input_info[0]
                 input_args = input_info[1:]
-                answer = input_function(conn, job, *input_args)
+                answer = input_function(conn=conn, job=job, funct_args=input_args)
             else:
-                answer = input_info(conn, job)
+                answer = input_info(conn=conn, job=job)
             if isinstance(answer, str) and answer == 'exit':
                 break
             elif answer is not None:
