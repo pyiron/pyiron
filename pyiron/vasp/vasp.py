@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import warnings
-from pyiron.vasp.interactive import VaspInt as VaspIntBase
+from pyiron.vasp.interactive import VaspInteractive
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -15,7 +15,7 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 
-class Vasp(VaspIntBase):
+class Vasp(VaspInteractive):
     """
     Class to setup and run and analyze VASP simulations which is a derivative of pyiron.objects.job.generic.GenericJob.
     The functions in these modules are written in such the function names and attributes are very generic
@@ -53,7 +53,6 @@ class Vasp(VaspIntBase):
         super(Vasp, self).__init__(project, job_name)
         self.__name__ = "Vasp"
         self.__version__ = None  # Reset the version number to the executable is set automatically
-        self._sorted_indices = None
         self._executable_activate(enforce=True)
 
 

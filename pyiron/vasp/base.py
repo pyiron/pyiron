@@ -72,10 +72,7 @@ class VaspBase(GenericDFTJob):
 
     def __init__(self, project, job_name):
         super(VaspBase, self).__init__(project, job_name)
-        self.__name__ = "Vasp"
-        self.__version__ = None  # Reset the version number to the executable is set automatically
         self._sorted_indices = None
-        self._executable_activate()
         self.input = Input()
         self.input.incar["SYSTEM"] = self.job_name
         self._output_parser = Output()

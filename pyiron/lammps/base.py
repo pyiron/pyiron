@@ -51,9 +51,6 @@ class LammpsBase(AtomisticGenericJob):
 
     def __init__(self, project, job_name):
         super(LammpsBase, self).__init__(project, job_name)
-        self.__name__ = "LammpsBase"
-        self.__version__ = None  # Reset the version number to the executable is set automatically
-        self._executable_activate()
         self.input = Input()
         self._cutoff_radius = None
         self._is_continuation = None

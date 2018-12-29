@@ -12,9 +12,9 @@ from pyiron.vasp.base import Output as OutputBase
 from pyiron.atomistics.job.interactive import GenericInteractive
 
 
-class VaspInt(VaspBase, GenericInteractive):
+class VaspInteractive(VaspBase, GenericInteractive):
     def __init__(self, project, job_name):
-        super(VaspInt, self).__init__(project, job_name)
+        super(VaspInteractive, self).__init__(project, job_name)
         self._interactive_write_input_files = True
         self._interactive_vasprun = None
         self.interactive_cache = {'cells': [],
@@ -61,7 +61,7 @@ class VaspInt(VaspBase, GenericInteractive):
             for key in self.interactive_cache.keys():
                 if isinstance(self.interactive_cache[key], list):
                     self.interactive_cache[key] = self.interactive_cache[key][:-2]
-            super(VaspInt, self).interactive_close()
+            super(VaspInteractive, self).interactive_close()
             self.status.collect = True
             self._output_parser = Output()
             if self['vasprun.xml'] is not None:
@@ -81,7 +81,7 @@ class VaspInt(VaspBase, GenericInteractive):
         if (self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal)\
                 and 'EDIFFG' in self.input.incar._dataset["Parameter"]:
             raise ValueError('If EDIFFG is defined VASP interrupts the interactive run_mode.')
-        super(VaspInt, self).validate_ready_to_run()
+        super(VaspInteractive, self).validate_ready_to_run()
 
     def interactive_forces_getter(self):
         if self._interactive_vasprun is not None:
@@ -118,26 +118,26 @@ class VaspInt(VaspBase, GenericInteractive):
         if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
             raise NotImplementedError('calc_minimize() is not implemented for the interactive mode use calc_static()!')
         else:
-            super(VaspInt, self).calc_minimize(electronic_steps=electronic_steps, ionic_steps=ionic_steps,
-                                               max_iter=max_iter, pressure=pressure, algorithm=algorithm,
-                                               retain_charge_density=retain_charge_density,
-                                               retain_electrostatic_potential=retain_electrostatic_potential,
-                                               ionic_energy=ionic_energy, ionic_forces=ionic_forces,
-                                               volume_only=volume_only)
+            super(VaspInteractive, self).calc_minimize(electronic_steps=electronic_steps, ionic_steps=ionic_steps,
+                                                       max_iter=max_iter, pressure=pressure, algorithm=algorithm,
+                                                       retain_charge_density=retain_charge_density,
+                                                       retain_electrostatic_potential=retain_electrostatic_potential,
+                                                       ionic_energy=ionic_energy, ionic_forces=ionic_forces,
+                                                       volume_only=volume_only)
 
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100, delta_temp=1.0,
                 delta_press=None, seed=None, tloop=None, rescale_velocity=True, langevin=False):
         if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
             raise NotImplementedError('calc_md() is not implemented for the interactive mode use calc_static()!')
         else:
-            super(VaspInt, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
-                                         time_step=time_step, n_print=n_print, delta_temp=delta_temp,
-                                         delta_press=delta_press, seed=seed, tloop=tloop,
-                                         rescale_velocity=rescale_velocity, langevin=langevin)
+            super(VaspInteractive, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
+                                                 time_step=time_step, n_print=n_print, delta_temp=delta_temp,
+                                                 delta_press=delta_press, seed=seed, tloop=tloop,
+                                                 rescale_velocity=rescale_velocity, langevin=langevin)
 
     def run_if_interactive_non_modal(self):
         initial_run = not self.interactive_is_activated()
-        super(VaspInt, self).run_if_interactive()
+        super(VaspInteractive, self).run_if_interactive()
         if not initial_run:
             atom_numbers = self.current_structure.get_number_species_atoms()
             for species in atom_numbers.keys():
@@ -161,7 +161,7 @@ class VaspInt(VaspBase, GenericInteractive):
         else:
             self._interactive_check_output()
             self._interactive_vasprun = Outcar()
-            super(VaspInt, self).interactive_collect()
+            super(VaspInteractive, self).interactive_collect()
             self._logger.debug('interactive run - done')
 
     def interactive_positions_setter(self, positions):
@@ -184,7 +184,7 @@ class VaspInt(VaspBase, GenericInteractive):
             self._check_incar_parameter(parameter='POTIM', value=0.0)
             self._check_incar_parameter(parameter='NSW', value=1000)
             self._check_incar_parameter(parameter='ISYM', value=0)
-        super(VaspInt, self)._run_if_created(que_wait_for=que_wait_for)
+        super(VaspInteractive, self)._run_if_created(que_wait_for=que_wait_for)
 
 
 class Output(OutputBase):
