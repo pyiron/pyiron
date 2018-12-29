@@ -492,7 +492,7 @@ class GenericJob(JobCore):
                 else:
                     if pinfo['cwd'] is not None and pinfo['cwd'].startswith(self.working_directory):
                         job_process = psutil.Process(pinfo['pid'])
-                        job_process.kill()     
+                        job_process.kill()
     
     def remove_child(self):
         """
@@ -502,13 +502,13 @@ class GenericJob(JobCore):
         self._kill_child()
         super(GenericJob, self).remove_child()
     
-    def kill(self): 
-        if self.status.running or self.status.submitted: 
+    def kill(self):
+        if self.status.running or self.status.submitted:
             master_id, parent_id = self.master_id, self.parent_id
             self.remove()
             self.reset_job_id()
             self.master_id, self.parent_id = master_id, parent_id
-        else: 
+        else:
             raise ValueError('The kill() function is only available during the execution of the job.')
     
     def validate_ready_to_run(self):
@@ -558,7 +558,7 @@ class GenericJob(JobCore):
             elif status == 'created':
                 que_id = self._run_if_created(que_wait_for=que_wait_for)
                 if que_id:
-                    self._logger.info('{}, status: {}, submitted: queue id '.format(self.job_info_str, self.status, que_id))
+                    self._logger.info('{}, status: {}, submitted: queue id {}'.format(self.job_info_str, self.status, que_id))
                     # print('job was submitted, queue id: ', que_id)
             elif status == 'submitted':
                 self._run_if_submitted()
@@ -695,7 +695,7 @@ class GenericJob(JobCore):
         """
         The run if queue function is called by run if the user decides to submit the job to and queing system. The job
         is submitted to the queuing system using subprocess.Popen()
-        
+
         Args:
             que_wait_for (int): Job ID the current job should be waiting for before being submitted.
 
@@ -1055,11 +1055,11 @@ class GenericJob(JobCore):
         else:
             self.from_hdf()
 
-    def _executable_activate(self):
+    def _executable_activate(self, enforce=False):
         """
         Internal helper function to koad the executable object, if it was not loaded already.
         """
-        if not self._executable:
+        if not self._executable or enforce:
             if len(self.__module__.split('.')) > 1:
                 self._executable = Executable(codename=self.__name__,
                                               module=self.__module__.split('.')[1],
