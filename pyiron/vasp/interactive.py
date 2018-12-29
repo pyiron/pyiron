@@ -43,6 +43,9 @@ class VaspInt(VaspBase, GenericInteractive):
     def interactive_enforce_structure_reset(self, reset):
         raise NotImplementedError('interactive_enforce_structure_reset() is not implemented!')
 
+    def get_structure(self, iteration_step=-1):
+        return GenericInteractive.get_structure(self, iteration_step=iteration_step)
+
     def interactive_close(self):
         if self.interactive_is_activated():
             with open(os.path.join(self.working_directory, 'STOPCAR'), 'w') as stopcar:
