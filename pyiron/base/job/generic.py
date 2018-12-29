@@ -1055,11 +1055,11 @@ class GenericJob(JobCore):
         else:
             self.from_hdf()
 
-    def _executable_activate(self):
+    def _executable_activate(self, enforce=False):
         """
         Internal helper function to koad the executable object, if it was not loaded already.
         """
-        if not self._executable:
+        if not self._executable or enforce:
             if len(self.__module__.split('.')) > 1:
                 self._executable = Executable(codename=self.__name__,
                                               module=self.__module__.split('.')[1],

@@ -54,7 +54,7 @@ class Vasp(VaspIntBase):
         self.__name__ = "Vasp"
         self.__version__ = None  # Reset the version number to the executable is set automatically
         self._sorted_indices = None
-        self._executable_activate()
+        self._executable_activate(enforce=True)
 
 
 class VaspInt(Vasp):

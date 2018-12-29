@@ -34,7 +34,7 @@ class Lammps(LammpsInterative):
         super(Lammps, self).__init__(project, job_name)
         self.__name__ = "Lammps"
         self.__version__ = None  # Reset the version number to the executable is set automatically
-        self._executable_activate()
+        self._executable_activate(enforce=True)
 
 
 class LammpsInt(Lammps):
