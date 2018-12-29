@@ -32,6 +32,14 @@ class LammpsInterative(LammpsBase, GenericInteractive):
                                   'computation_time': [],
                                   'volume': []}
 
+    @property
+    def structure(self):
+        return GenericInteractive.structure.fget(self)
+
+    @structure.setter
+    def structure(self, structure):
+        GenericInteractive.structure = structure.fset(self, structure)
+
     def _interactive_lib_command(self, command):
         self._logger.debug('Lammps library: ' + command)
         self._interactive_library.command(command)

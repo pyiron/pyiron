@@ -28,6 +28,14 @@ class VaspInt(VaspBase, GenericInteractive):
                                   'volume': []}
 
     @property
+    def structure(self):
+        return GenericInteractive.structure.fget(self)
+
+    @structure.setter
+    def structure(self, structure):
+        GenericInteractive.structure = structure.fset(self, structure)
+
+    @property
     def interactive_enforce_structure_reset(self):
         return self._interactive_enforce_structure_reset
 
