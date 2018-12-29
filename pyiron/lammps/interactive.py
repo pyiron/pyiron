@@ -13,9 +13,9 @@ from pyiron.atomistics.job.interactive import GenericInteractive
 from pyiron.lammps.pipe import LammpsLibrary
 
 
-class LammpsInt(LammpsBase, GenericInteractive):
+class LammpsInterative(LammpsBase, GenericInteractive):
     def __init__(self, project, job_name):
-        super(LammpsInt, self).__init__(project, job_name)
+        super(LammpsInterative, self).__init__(project, job_name)
         self._check_opened = False
         self._interactive_prism = None
         self._interactive_run_command = None
@@ -152,22 +152,22 @@ class LammpsInt(LammpsBase, GenericInteractive):
     def calc_minimize(self, e_tol=1e-8, f_tol=1e-8, max_iter=1000, pressure=None, n_print=1):
         if self.server.run_mode.interactive_non_modal:
             warnings.warn('calc_minimize() is not implemented for the non modal interactive mode use calc_static()!')
-        super(LammpsInt, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure,
-                                             n_print=n_print)
+        super(LammpsInterative, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure,
+                                                    n_print=n_print)
 
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100, delta_temp=1.0,
                 delta_press=None, seed=None, tloop=None, rescale_velocity=True, langevin=False):
         if self.server.run_mode.interactive_non_modal:
             warnings.warn('calc_md() is not implemented for the non modal interactive mode use calc_static()!')
-        super(LammpsInt, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
-                                       time_step=time_step, n_print=n_print, delta_temp=delta_temp,
-                                       delta_press=delta_press, seed=seed, tloop=tloop,
-                                       rescale_velocity=rescale_velocity, langevin=langevin)
+        super(LammpsInterative, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
+                                              time_step=time_step, n_print=n_print, delta_temp=delta_temp,
+                                              delta_press=delta_press, seed=seed, tloop=tloop,
+                                              rescale_velocity=rescale_velocity, langevin=langevin)
 
     def run_if_interactive(self):
         if self._generic_input['calc_mode'] == 'md':
             self.input.control['run'] = self._generic_input['n_print']
-            super(LammpsInt, self).run_if_interactive()
+            super(LammpsInterative, self).run_if_interactive()
             self._reset_interactive_run_command()
 
             counter = 0
@@ -178,7 +178,7 @@ class LammpsInt(LammpsBase, GenericInteractive):
                 counter += 1
 
         else:
-            super(LammpsInt, self).run_if_interactive()
+            super(LammpsInterative, self).run_if_interactive()
             self._interactive_lib_command(self._interactive_run_command)
             self.interactive_collect()
 
@@ -186,7 +186,7 @@ class LammpsInt(LammpsBase, GenericInteractive):
         if not self._interactive_fetch_completed:
             print('Warning: interactive_fetch being effectuated')
             self.interactive_fetch()
-        super(LammpsInt, self).run_if_interactive()
+        super(LammpsInterative, self).run_if_interactive()
         self._interactive_lib_command(self._interactive_run_command)
         self._interactive_fetch_completed = False
 
@@ -246,14 +246,14 @@ class LammpsInt(LammpsBase, GenericInteractive):
         if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
             pass
         else:
-            super(LammpsInt, self).collect_output()
+            super(LammpsInterative, self).collect_output()
 
     def update_potential(self):
         self._interactive_lib_command(self.potential.Config[0][0])
         self._interactive_lib_command(self.potential.Config[0][1])
 
     def interactive_indices_getter(self):
-        return super(LammpsInt, self).interactive_indices_getter().tolist()
+        return super(LammpsInterative, self).interactive_indices_getter().tolist()
 
     def interactive_energy_pot_getter(self):
         return self._interactive_library.get_thermo("pe")
@@ -307,4 +307,4 @@ class LammpsInt(LammpsBase, GenericInteractive):
                 if 'interactive' in h5.list_groups():
                     for key in h5['interactive'].list_nodes():
                         h5['generic/' + key] = h5['interactive/' + key]
-            super(LammpsInt, self).interactive_close()
+            super(LammpsInterative, self).interactive_close()
