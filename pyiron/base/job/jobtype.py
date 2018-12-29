@@ -9,7 +9,7 @@ import pkgutil
 from six import with_metaclass
 
 """
-Jobtype class to create GenericJob type objects 
+Jobtype class to create GenericJob type objects
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
