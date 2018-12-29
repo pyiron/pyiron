@@ -5,6 +5,7 @@
 from __future__ import print_function
 import os
 import posixpath
+from shutil import copyfile
 import subprocess
 import numpy as np
 import tables
@@ -22,6 +23,7 @@ from pyiron.vasp.vasprun import Vasprun as Vr
 from pyiron.vasp.vasprun import VasprunError
 from pyiron.vasp.volumetric_data import VaspVolumetricData
 from pyiron.dft.waves.electronic import ElectronicStructure
+from pyiron.dft.waves.bandstructure import Bandstructure
 import warnings
 
 __author__ = "Sudarsan Surendralal"
@@ -710,7 +712,6 @@ class VaspBase(GenericDFTJob):
             if not (self._output_parser.structure is not None):
                 raise AssertionError()
             structure = self._output_parser.structure
-        from pyiron.dft.waves.bandstructure import Bandstructure
         bs_obj = Bandstructure(structure)
         _, q_point_list, [_, _] = bs_obj.get_path(num_points=num_points, path_type="full")
         q_point_list = np.array(q_point_list)
@@ -954,10 +955,8 @@ class VaspBase(GenericDFTJob):
         """
         if not isinstance(old_vasp_job, VaspBase):
             raise ValueError("old_vasp_job is not Vasp job type")
-        import os
         old_path = os.path.join(old_vasp_job.working_directory, filename)
         new_path = os.path.join(self.working_directory, filename)
-        from shutil import copyfile
         if not os.path.isdir(self.working_directory):
             os.makedirs(self.working_directory)
         copyfile(old_path, new_path)
