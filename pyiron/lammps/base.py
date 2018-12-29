@@ -142,22 +142,6 @@ class LammpsBase(AtomisticGenericJob):
         """
         return self.get_structure()
 
-    def get_structure(self, iteration_step=-1):
-        """
-
-        Args:
-            iteration_step:
-
-        Returns:
-
-        """
-        if not (self.structure is not None):
-            raise AssertionError()
-        snapshot = self.structure.copy()
-        snapshot.cell = self.get("output/generic/cells")[iteration_step]
-        snapshot.positions = self.get("output/generic/positions")[iteration_step]
-        return snapshot
-
     def view_potentials(self):
         """
 

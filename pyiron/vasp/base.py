@@ -720,24 +720,6 @@ class VaspBase(GenericDFTJob):
         self.set_kpoints(scheme="Manual", symmetry_reduction=False, manual_kpoints=q_point_list, weights=None,
                          reciprocal=False)
 
-    def get_structure(self, iteration_step=-1):
-        """
-        Gets the structure from a given iteration step of the simulation (MD/ionic relaxation). For static calculations
-        there is only one ionic iteration step
-
-        Args:
-            iteration_step (int): Step for which the structure is requested
-
-        Returns:
-            pyiron.atomistics.structure.atoms.Atoms: The required structure
-        """
-        if not (self.structure is not None):
-            raise AssertionError()
-        snapshot = self.structure.copy()
-        snapshot.cell = self.get("output/generic/cells")[iteration_step]
-        snapshot.positions = self.get("output/generic/positions")[iteration_step]
-        return snapshot
-
     def set_convergence_precision(self, ionic_energy=1.E-5, electronic_energy=1.E-7, ionic_forces=None):
         """
         Sets the electronic and ionic convergence precision. For ionic convergence either the energy or the force
