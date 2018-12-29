@@ -42,8 +42,8 @@ class LammpsLibrary(object):
         self._interactive_library.send([self.interactive_close])
 
     @staticmethod
-    def interactive_lib_command(conn, job, command):
-        job.command(command)
+    def interactive_lib_command(conn, job, funct_args):
+        job.command(*funct_args)
 
     @staticmethod
     def interative_gather_atoms(conn, job, funct_args):
@@ -67,7 +67,7 @@ class LammpsLibrary(object):
         return np.array(job.extract_compute(*funct_args))
 
     @staticmethod
-    def interactive_close(conn, job):
+    def interactive_close(conn, job, funct_args):
         job.close()
         conn.close()
         return 'exit'
