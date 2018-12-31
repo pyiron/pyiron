@@ -176,7 +176,7 @@ class CustomPotential(GenericParameters):
         self._value_modified = {}
         self._element_indices = None
         self._eam_comb = eam_combinations
-        self._pair_pots=['lj','morse','buckingham','mie','yukawa','born','gauss']
+        self._pair_pots=['lj','morse','buckingham','mie','yukawa','born','born/coul/long','gauss']
         self['sub_potential'] = pot_sub_style
         if file_name is None:
             self._initialize(self._model)
@@ -261,9 +261,9 @@ class CustomPotential(GenericParameters):
             for k in ['cutoff']+['cutoff_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
                 self[k]=3
             self['kappa']=0.0
-            self._model_lammps= 'yukawa'
+            self._model_lammps = pot
 
-        if pot == 'born':
+        if pot == 'born' or pot == 'born/coul/long':
             for k in ['A']+['A_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
                 self[k]=0
             for k in ['rho']+['rho_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
@@ -277,7 +277,7 @@ class CustomPotential(GenericParameters):
             for k in ['cutoff_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
                 self[k] = None
             self['cutoff'] = 4
-            self._model_lammps= 'born'
+            self._model_lammps = pot
             
         if pot == 'gauss':
             for k in ['A']+['A_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
@@ -401,7 +401,7 @@ class CustomPotential(GenericParameters):
                                          ' '+str(self.get_parameter('cutoff', self.combinations[i,0], self.combinations[i,1]))+'\n')
        
         
-        if pot == 'born':
+        if pot == 'born' or 'born/coul/long':
             pair_style=['pair_style '+self._model_lammps+' '+str(self['cutoff'])+ ' \n']
             for key,value in self._value_modified.items():
                 if not value:

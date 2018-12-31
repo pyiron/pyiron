@@ -107,7 +107,7 @@ class Lammps(AtomisticGenericJob):
 
         """
         if isinstance(potential_filename, str):
-            if potential_filename in ['lj','morse','buckingham','mie','yukawa','born','gauss']:
+            if potential_filename in ['lj','morse','buckingham','mie','yukawa','born','born/coul/long','gauss']:
                 self.custom_potential = CustomPotential(self.structure, pot_type = potential_filename)
                 self.input.potential.df = self.custom_potential.potential
             else:
