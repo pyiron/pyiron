@@ -106,6 +106,7 @@ class InteractiveBase(GenericJob):
             self.interactive_flush(path="interactive", include_last_step=True)
         self.project.db.item_update(self._runtime(), self._job_id)
         self.status.finished = True
+        self._interactive_library = None
         self.interactive_cache = {}
 
     def interactive_store_in_cache(self, key, value):
