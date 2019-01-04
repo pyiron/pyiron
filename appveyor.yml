@@ -10,9 +10,6 @@ environment:
     - PYTHON_VERSION: 2.7
       CONDA: C:\Miniconda
 
-    - PYTHON_VERSION: 3.6
-      CONDA: C:\Miniconda36
-
     - PYTHON_VERSION: 3.7
       CONDA: C:\Miniconda37
 
