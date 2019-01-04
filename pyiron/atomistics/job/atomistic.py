@@ -399,6 +399,9 @@ class AtomisticGenericJob(GenericJobCore):
         snapshot = self.structure.copy()
         snapshot.cell = self.get("output/generic/cells")[iteration_step]
         snapshot.positions = self.get("output/generic/positions")[iteration_step]
+        spins = self.get("output/generic/dft/atom_spins")
+        if spins is not None: 
+            snapshot.set_initial_magnetic_moments(spins[iteration_step])
         return snapshot
 
     def gui(self):
