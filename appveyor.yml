@@ -40,6 +40,7 @@ install:
 
 # Load the conda root environment, configure and install some packages
 - '"%CONDA%\Scripts\activate.bat"'
+- "conda config --set always_yes yes --set changeps1 no"
 - "conda update conda"
 - "conda info"
 - "conda list"
