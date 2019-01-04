@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 
 from pyiron.lammps.potential import LammpsPotentialFile
+from pyiron.lammps.potential import CustomPotential
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 from pyiron.base.settings.generic import Settings
 from pyiron.base.pyio.parser import Logstatus, extract_data_from_file
@@ -98,8 +99,8 @@ class LammpsBase(AtomisticGenericJob):
 
         """
         if isinstance(potential_filename, str):
-            if potential_filename in ['lj','morse','buckingham','mie','yukawa','born','born/coul/long','gauss']:
-                self.custom_potential = CustomPotential(self.structure, pot_type = potential_filename)
+            if potential_filename in ['lj/cut','morse','buck','mie/cut','yukawa','born','born/coul/long','gauss']:
+                self.custom_potential = CustomPotential(self.structure, pot_type=potential_filename, dataframe=self.input.potential)
                 self.input.potential.df = self.custom_potential.potential
             else:
                 if '.lmp' in potential_filename:
