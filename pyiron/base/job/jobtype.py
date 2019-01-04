@@ -9,7 +9,7 @@ import pkgutil
 from six import with_metaclass
 
 """
-Jobtype class to create GenericJob type objects 
+Jobtype class to create GenericJob type objects
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
@@ -39,13 +39,13 @@ JOB_CLASS_DICT = {'GenericMaster': 'pyiron.base.master.generic',
                   'ConvergenceKpointParallel': 'pyiron.dft.master.convergence_kpoint_parallel',
                   'MurnaghanDFT': 'pyiron.dft.master.murnaghan_dft',
                   'Lammps': 'pyiron.lammps.lammps',
-                  'LammpsInt': 'pyiron.lammps.lammpsinterface',
-                  'LammpsInt2': 'pyiron.lammps.lammpsinterface',
+                  'LammpsInt': 'pyiron.lammps.lammps',
+                  'LammpsInt2': 'pyiron.lammps.lammps',
                   'AtomisticExampleJob': 'pyiron.testing.randomatomistic',
                   'ExampleJob': 'pyiron.testing.randomatomistic',
                   'Vasp': 'pyiron.vasp.vasp',
-                  'VaspInt': 'pyiron.vasp.vaspinterface',
-                  'VaspInt2': 'pyiron.vasp.vaspinterface',
+                  'VaspInt': 'pyiron.vasp.vasp',
+                  'VaspInt2': 'pyiron.vasp.vasp',
 }
 
 
@@ -88,13 +88,9 @@ class JobTypeChoice(with_metaclass(Singleton)):
 
     @staticmethod
     def _extend_job_dict(job_dict):
-        def derived_from_generic_job(obj):
-            return 'pyiron.base.job.generic.GenericJob' in [subcls.__module__ + '.' + subcls.__name__
-                                                            for subcls in obj.__mro__]
-
         for d in [{name: obj.__module__
                    for name, obj in inspect.getmembers(importlib.import_module(name))
-                   if inspect.isclass(obj) and derived_from_generic_job(obj)}
+                   if inspect.isclass(obj) and static_isinstance(obj, 'pyiron.base.job.generic.GenericJob')}
                   for finder, name, ispkg in pkgutil.iter_modules()
                   if name.startswith('pyiron_')]:
             job_dict.update(d)
@@ -152,3 +148,7 @@ class JobType(object):
                 job_class = getattr(job_module, job_class_name)
                 return job_class
         raise ValueError("Unknown job type: ", class_name, [job for job in list(job_class_dict.keys())])
+
+
+def static_isinstance(obj, obj_type):
+    return obj_type in ['.'.join([subcls.__module__, subcls.__name__]) for subcls in obj.__mro__]

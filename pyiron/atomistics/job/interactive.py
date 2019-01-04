@@ -113,8 +113,9 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
                     self._logger.debug('Generic library: positions changed!')
                     self.interactive_positions_setter(self._structure_current.positions)
                 if np.any(self._structure_current.get_initial_magnetic_moments()) and \
-                        not np.allclose(self._structure_current.get_initial_magnetic_moments(),
-                                        self._structure_previous.get_initial_magnetic_moments()):
+                        (None in self._structure_previous.get_initial_magnetic_moments() or
+                         not np.allclose(self._structure_current.get_initial_magnetic_moments(),
+                                         self._structure_previous.get_initial_magnetic_moments())):
                     self._logger.debug('Generic library: magnetic moments changed!')
                     self.interactive_spin_constraints_setter(self._structure_current.get_initial_magnetic_moments())
             elif not self._interactive_enforce_structure_reset and \
