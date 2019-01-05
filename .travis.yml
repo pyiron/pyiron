@@ -86,26 +86,26 @@ matrix:
           on:
             branch: master
 
-    - stage: anaconda
-      if: branch = master
-      name: anaconda
-      os: linux
-      language: python
-      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.7"
-      install:
-        - export PATH="$HOME/miniconda/bin:$PATH"
-        - ./.ci_support/setup_miniconda.sh ${MINICONDA} ${PYTHONVER}
-      script:
-        - ./.ci_support/setup_upload.sh
-      deploy:
-        - provider: script
-          script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
-          on:
-            branch: master
-        - provider: script
-          script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
-          on:
-            tags: true
+    # - stage: anaconda
+    #   if: branch = master
+    #   name: anaconda
+    #   os: linux
+    #   language: python
+    #   env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.7"
+    #   install:
+    #     - export PATH="$HOME/miniconda/bin:$PATH"
+    #     - ./.ci_support/setup_miniconda.sh ${MINICONDA} ${PYTHONVER}
+    #   script:
+    #     - ./.ci_support/setup_upload.sh
+    #   deploy:
+    #     - provider: script
+    #       script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
+    #       on:
+    #         branch: master
+    #     - provider: script
+    #       script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
+    #       on:
+    #         tags: true
 
     - stage: docker
       if: branch = master
