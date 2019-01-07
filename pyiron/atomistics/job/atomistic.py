@@ -400,6 +400,7 @@ class AtomisticGenericJob(GenericJobCore):
         snapshot.cell = self.get("output/generic/cells")[iteration_step]
         snapshot.positions = self.get("output/generic/positions")[iteration_step]
         spins = self.get("output/generic/dft/atom_spins")
+        indices = self.get("output/generic/indices")
         if indices is not None: 
             snapshot.indices = indices[iteration_step]
         if spins is not None: 
