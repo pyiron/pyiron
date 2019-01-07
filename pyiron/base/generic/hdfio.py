@@ -541,7 +541,8 @@ class FileHDFio(object):
         """
         if hasattr(value, "to_hdf") & (not isinstance(value, (pandas.DataFrame, pandas.Series))):
             value.to_hdf(self, key)
-        elif isinstance(value, list) and len(value) > 0 and isinstance(value[0], (list, np.ndarray)):
+        elif isinstance(value, list) and len(value) > 0 and isinstance(value[0], (list, np.ndarray)) \
+                and not isinstance(value[0][0], str):
             shape_lst = [np.shape(sub) for sub in value]
             if all([shape_lst[0][1:] == t[1:] for t in shape_lst]):
                 h5io.write_hdf5(self.file_name, np.array([np.array(v) for v in value]),
