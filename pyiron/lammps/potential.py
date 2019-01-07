@@ -163,9 +163,7 @@ class LammpsPotentialFile(PotentialAbstract):
 class PairPotential(GenericParameters):
     """
         Create potential file for user defined "pair_style" and potential parameters.
-        Input: pair_style string, coefficients datastrame
-        
-        The input table pair coefficients need to be mapped onto the LAMMPS atom type labels.
+        Input: pair_style string, coefficients dataframe
     """
     def __init__(self, pair_style, cutoff, coefficient_df, structure):
         self._pair_style = pair_style
