@@ -90,7 +90,6 @@ class LammpsPotential(GenericParameters):
                 hdf_pot['Name'] = self._df['Name'].values[0]
                 hdf_pot['Model'] = self._df['Model'].values[0]
                 hdf_pot['Species'] = self._df['Species'].values[0]
-                #hdf_pot['Content'] = self._df['Content'].values[0]
         super(LammpsPotential, self).to_hdf(hdf, group_name=group_name)
 
     def from_hdf(self, hdf, group_name=None):
@@ -101,7 +100,6 @@ class LammpsPotential(GenericParameters):
                                          'Name': [hdf_pot['Name']],
                                          'Model': [hdf_pot['Model']],
                                          'Species': [hdf_pot['Species']]})
-                                         #'Content': [hdf_pot['Content']]
             except ValueError:
                 pass
         super(LammpsPotential, self).from_hdf(hdf, group_name=group_name)
@@ -188,13 +186,13 @@ class CustomPotential(GenericParameters):
             self._initialized = True
         if file_name is not None:
             self._initialize_hybrid()
-            #if pot_type=='eam':
-            #    self._output_file_eam = file_name
-            #    with open(self._output_file_eam, 'r') as file:
-            #        self._file_eam = file.readlines()
-            #    self._initialize_eam()
-            #if pot_type=='hybrid': 
-            #    self._initialize_hybrid()
+            if pot_type=='eam':
+                self._output_file_eam = file_name
+                with open(self._output_file_eam, 'r') as file:
+                    self._file_eam = file.readlines()
+                self._initialize_eam()
+            if pot_type=='hybrid': 
+                self._initialize_hybrid()
                 
                 
     @property
@@ -490,7 +488,8 @@ class CustomPotential(GenericParameters):
                 'Filename':[[self._output_file_eam]],
                 'Model':[self['model']],
                 'Name':['my_potential'],
-                'Species':[self.elements]
+                'Species':[self.elements],
+                'Content':[self._file_eam]
             })
 
     def _initialize_hybrid(self):
