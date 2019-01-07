@@ -10,9 +10,9 @@ pyiron
 .. image:: https://travis-ci.org/pyiron/pyiron.svg?branch=master
     :target: https://travis-ci.org/pyiron/pyiron
 
-.. image:: https://anaconda.org/pyiron/pyiron/badges/downloads.svg
+.. image:: https://anaconda.org/conda-forge/pyiron/badges/downloads.svg
 
-.. image:: https://anaconda.org/pyiron/pyiron/badges/latest_release_date.svg
+.. image:: https://anaconda.org/conda-forge/pyiron/badges/latest_release_date.svg
 
 
 pyiron is an integrated development environment for implementing, testing, and running simulations in computational materials science. It combines several tools in a common plattform:
