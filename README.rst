@@ -48,7 +48,7 @@ See the `Documentation <http://pyiron.org>`_ page for more details.
 Installation
 ------------
 You can test pyiron on `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/pyiron/master?urlpath=lab>`_.
-Fo a local installation we recommend to install pyiron inside an `anaconda <https://www.anaconda.com>`_  environment::
+For a local installation we recommend to install pyiron inside an `anaconda <https://www.anaconda.com>`_  environment::
 
     conda install -c conda-forge pyiron
 
