@@ -20,6 +20,6 @@ fi
 if [ -d "${HOME}/conda-bld" ]; then
     rm -r ${HOME}/conda-bld
 fi
-if [ -d "${HOME}/README.md" ]; then
+if [ -f "${HOME}/README.md" ]; then
     rm ${HOME}/README.md
 fi
