@@ -61,7 +61,12 @@ class Lammps(AtomisticGenericJob):
         self.input = Input()
         self._cutoff_radius = None
         self._is_continuation = None
-
+        
+        self._lmp_structure = None
+    
+    def _set_lmp_structure(self, lmp_structure):
+        self._lmp_structure = lmp_structure
+    
     @property
     def cutoff_radius(self):
         """
@@ -205,6 +210,7 @@ class Lammps(AtomisticGenericJob):
         """
         if self.structure is None:
             raise ValueError("Input structure not set. Use method set_structure()")
+        
         lmp_structure = self._get_lammps_structure(structure=self.structure, cutoff_radius=self.cutoff_radius)
         lmp_structure.write_file(file_name="structure.inp", cwd=self.working_directory)
         if self.executable.version and 'dump_modify' in self.input.control._dataset['Parameter'] and \
