@@ -90,16 +90,30 @@ class LammpsPotential(GenericParameters):
                 hdf_pot['Name'] = self._df['Name'].values[0]
                 hdf_pot['Model'] = self._df['Model'].values[0]
                 hdf_pot['Species'] = self._df['Species'].values[0]
+                file_list = []
+                if len(self.files)!=0:
+                    for ff in self.files:
+                        with open(ff, 'r') as ff_content:
+                            file_list.append(ff_content.readlines())
+                hdf_pot['Content'] = file_list
         super(LammpsPotential, self).to_hdf(hdf, group_name=group_name)
 
     def from_hdf(self, hdf, group_name=None):
         with hdf.open('potential') as hdf_pot:
             try:
-                self._df = pd.DataFrame({'Config': [hdf_pot['Config']],
-                                         'Filename': [hdf_pot['Filename']],
-                                         'Name': [hdf_pot['Name']],
-                                         'Model': [hdf_pot['Model']],
-                                         'Species': [hdf_pot['Species']]})
+                if "Content" in hdf5.list_nodes():
+                    self._df = pd.DataFrame({'Config': [hdf_pot['Config']],
+                                             'Filename': [hdf_pot['Filename']],
+                                             'Name': [hdf_pot['Name']],
+                                             'Model': [hdf_pot['Model']],
+                                             'Species': [hdf_pot['Species']],
+                                             'Content': [hdf_pot['Content']]})
+                else:
+                    self._df = pd.DataFrame({'Config': [hdf_pot['Config']],
+                                             'Filename': [hdf_pot['Filename']],
+                                             'Name': [hdf_pot['Name']],
+                                             'Model': [hdf_pot['Model']],
+                                             'Species': [hdf_pot['Species']]})
             except ValueError:
                 pass
         super(LammpsPotential, self).from_hdf(hdf, group_name=group_name)

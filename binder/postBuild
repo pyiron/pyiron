@@ -10,6 +10,16 @@ echo "[DEFAULT]\nTOP_LEVEL_DIRS = ${HOME}\nRESOURCE_PATHS = ${HOME}/resources" >
 git clone https://github.com/pyiron/pyiron-resources.git ${HOME}/resources
 
 # clean up
-mv notebooks/* .
-rm -r ${HOME}/binder ${HOME}/.ci_support ${HOME}/conda ${HOME}/docs ${HOME}/pyiron ${HOME}/tests ${HOME}/notebooks ${HOME}/conda-bld
-rm ${HOME}/.travis.yml ${HOME}/appveyor.yml ${HOME}/LICENSE ${HOME}/MANIFEST.in ${HOME}/README.md ${HOME}/setup.cfg ${HOME}/setup.py ${HOME}/versioneer.py
+if [ -d "notebooks" ]; then
+    mv notebooks/* .
+fi
+if [ -d "${HOME}/pyiron" ]; then
+    rm -r ${HOME}/binder ${HOME}/.ci_support ${HOME}/conda ${HOME}/docs ${HOME}/pyiron ${HOME}/tests ${HOME}/notebooks
+    rm ${HOME}/.travis.yml ${HOME}/appveyor.yml ${HOME}/LICENSE ${HOME}/MANIFEST.in ${HOME}/setup.cfg ${HOME}/setup.py ${HOME}/versioneer.py
+fi
+if [ -d "${HOME}/conda-bld" ]; then
+    rm -r ${HOME}/conda-bld
+fi
+if [ -f "${HOME}/README.md" ]; then
+    rm ${HOME}/README.md
+fi
