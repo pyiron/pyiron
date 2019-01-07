@@ -30,7 +30,9 @@ pyiron
     :align: center
     :alt: Screenshot of pyiron running inside jupyterlab.
 
+
 pyiron is an integrated development environment for implementing, testing, and running simulations in computational materials science. It combines several tools in a common plattform:
+
  - Atomic structure objects – compatible to the `Atomic Simulation Environment (ASE) <https://wiki.fysik.dtu.dk/ase/>`_.
  - Atomistic simulation codes – like `LAMMPS <http://lammps.sandia.gov>`_ and `VASP <https://www.vasp.at>`_.
  - Feedback Loops – to construct dynamic simulation life cycles.
