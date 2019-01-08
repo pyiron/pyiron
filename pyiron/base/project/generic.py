@@ -381,7 +381,7 @@ class Project(ProjectPath):
         """
         return self.load(job_specifier=job_specifier, convert_to_object=False)
 
-    def iter_jobs(self, path=None, recursive=True, convert_to_object=True):
+    def iter_jobs(self, path=None, recursive=True, convert_to_object=True, finished_jobs_only=False):
         """
         Iterate over the jobs within the current project and it is sub projects
 
@@ -393,12 +393,21 @@ class Project(ProjectPath):
         Returns:
             yield: Yield of GenericJob or JobCore
         """
-        if path is not None:
-            for job_id in self.get_jobs(recursive)["id"]:
-                yield self.load(job_id, convert_to_object=False)[path]
-        else:  # Backwards compatibility - in future the option convert_to_object should be removed
-            for job_id in self.get_jobs(recursive)["id"]:
-                yield self.load(job_id, convert_to_object=convert_to_object)
+        if not finished_jobs_only:
+            if path is not None:
+                for job_id in self.get_jobs(recursive)["id"]:
+                    yield self.load(job_id, convert_to_object=False)[path]
+            else:  # Backwards compatibility - in future the option convert_to_object should be removed
+                for job_id in self.get_jobs(recursive)["id"]:
+                    yield self.load(job_id, convert_to_object=convert_to_object)
+        else:
+            df = self.job_table(recursive=True)
+            if path is not None:
+                for job_id in list(df[df['status'] == 'finished']['id']):
+                    yield self.load(job_id, convert_to_object=False)[path]
+            else:  # Backwards compatibility - in future the option convert_to_object should be removed
+                for job_id in list(df[df['status'] == 'finished']['id']):
+                    yield self.load(job_id, convert_to_object=convert_to_object)
 
     def iter_output(self, recursive=True):
         """
