@@ -192,7 +192,7 @@ class GenericMaster(GenericJob):
         Returns:
             GenericJob: job
         """
-        job_to_return = self[i]
+        job_to_return = getattr(self, self._job_list[i])
         del self._job_list[i]
         with self.project_hdf5.open("input") as hdf5_input:
             hdf5_input["job_list"] = self._job_list
