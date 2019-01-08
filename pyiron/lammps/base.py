@@ -100,8 +100,8 @@ class LammpsBase(AtomisticGenericJob):
         """
         if isinstance(potential_filename, str):
             if potential_filename in ['lj/cut','morse','buck','mie/cut','yukawa','born','born/coul/long','gauss']:
-                self.custom_potential = CustomPotential(self.structure, pot_type=potential_filename, dataframe=self.input.potential)
-                self.input.potential.df = self.custom_potential.potential
+                self.input.potential.custom_potential = CustomPotential(self.structure, pot_type=potential_filename, dataframe=self.input.potential)
+                self.input.potential.df = self.input.potential.custom_potential.df
             else:
                 if '.lmp' in potential_filename:
                     potential_filename = potential_filename.split('.lmp')[0]

@@ -35,7 +35,7 @@ class LammpsPotential(GenericParameters):
         super(LammpsPotential, self).__init__(input_file_name=input_file_name,
                                               table_name="potential_inp",
                                               comment_char="#")
-        self._potential = None
+        self.custom_potential = None
         self._attributes = {}
         self._df = None
 
@@ -51,7 +51,7 @@ class LammpsPotential(GenericParameters):
             self.load_string(''.join(list(new_dataframe['Config'])[0]))
         except IndexError:
             raise ValueError('Potential not found! '
-                             'Validate the potential name by self.potential in self.list_potentials().')
+                            'Validate the potential name by self.potential in self.list_potentials().')
 
     def remove_structure_block(self):
         self.remove_keys(["units"])
@@ -60,7 +60,7 @@ class LammpsPotential(GenericParameters):
 
     @property
     def files(self):
-        if list(self._df['Filename'])[0]:
+        if self._df is not None and len(self._df['Filename'])>0:
             absolute_file_paths = [files for files in list(self._df['Filename'])[0] if os.path.isabs(files)]
             relative_file_paths = [files for files in list(self._df['Filename'])[0] if not os.path.isabs(files)]
             for path in relative_file_paths:
@@ -83,13 +83,15 @@ class LammpsPotential(GenericParameters):
         return list(self._df['Species'])[0]
 
     def to_hdf(self, hdf, group_name=None):
-        if self._df is not None:
-            with hdf.open('potential') as hdf_pot:
-                hdf_pot['Config'] = self._df['Config'].values[0]
-                hdf_pot['Filename'] = self._df['Filename'].values[0]
-                hdf_pot['Name'] = self._df['Name'].values[0]
-                hdf_pot['Model'] = self._df['Model'].values[0]
-                hdf_pot['Species'] = self._df['Species'].values[0]
+        with hdf.open('potential') as hdf_pot:
+            if self.custom_potential.df is not None:
+                for key in ['Config', 'Filename', 'Name', 'Model', 'Species']:
+                    hdf_pot[key] = self.custom_potential.df[key].values[0]
+                if 'Content' in self.custom_potential.df.columns:
+                    hdf_pot['Content'] = file_list
+            elif self._df is not None:
+                for key in ['Config', 'Filename', 'Name', 'Model', 'Species']:
+                    hdf_pot[key] = self._df[key].values[0]
                 file_list = []
                 if len(self.files)!=0:
                     for ff in self.files:
@@ -101,7 +103,7 @@ class LammpsPotential(GenericParameters):
     def from_hdf(self, hdf, group_name=None):
         with hdf.open('potential') as hdf_pot:
             try:
-                if "Content" in hdf5.list_nodes():
+                if "Content" in hdf.list_nodes():
                     self._df = pd.DataFrame({'Config': [hdf_pot['Config']],
                                              'Filename': [hdf_pot['Filename']],
                                              'Name': [hdf_pot['Name']],
@@ -117,6 +119,385 @@ class LammpsPotential(GenericParameters):
             except ValueError:
                 pass
         super(LammpsPotential, self).from_hdf(hdf, group_name=group_name)
+
+
+class CustomPotential(GenericParameters):
+    def __init__(self, structure, pot_type=None, pot_sub_style=None, file_name=None, meam_library=None, eam_combinations=False, dataframe=None):
+        super(CustomPotential, self).__init__(comment_char="//",
+                    separator_char="=", end_value_char=';')
+        self._initialized = False
+        self._model = pot_type
+        self._file_name = file_name
+        self._structure = structure
+        self._combinations = []
+        self._value_modified = {}
+        self._element_indices = None
+        self._eam_comb = eam_combinations
+        self._dataframe = dataframe
+        self['sub_potential'] = pot_sub_style
+        pair_pots=['lj/cut','morse','buck','mie/cut','yukawa','born','born/coul/long','gauss']
+        if file_name is None:
+            self._initialize(self._model)
+            if self._model not in pair_pots:
+                print('ERROR: Choose a potential type from', pair_pots)
+            self._initialized = True
+        if file_name is not None:
+            self._initialize_hybrid()
+            if pot_type=='eam':
+                self._output_file_eam = file_name
+                with open(self._output_file_eam, 'r') as file:
+                    self._file_eam = file.readlines()
+                self._initialize_eam()
+            if pot_type=='hybrid':
+                self._initialize_hybrid()
+
+
+    @property
+    def elements(self):
+        if self._element_indices is None:
+            self._element_indices=OrderedDict(sorted(zip(self._structure.get_chemical_symbols(),self._structure.get_chemical_indices()), key=lambda x: x[1]))
+        return list(self._element_indices.keys())
+
+
+    @property
+    def combinations(self):
+        if len(self._combinations)==0:
+            self._combinations=np.array([[self.elements[i], self.elements[j]] for i in range(len(self.elements)) for j in range (i+1)])
+        return self._combinations
+
+    def __setitem__(self, key, value):
+        if key not in self._dataset['Parameter'] and self._initialized:
+            warnings.warn('Parameter ('+key+') not found in '+self._model+' Potential. Only Parameters '
+                          +str(list(self._value_modified.keys()))+' can be set.')
+        else:
+            super(CustomPotential, self).__setitem__(key, value)
+        #self._dataframe.df = self.potential
+
+    def _initialize(self,pot):
+
+        if pot == 'lj/cut':
+            for k in ['sigma']+['sigma_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k] = 1
+            for k in ['epsilon']+['epsilon_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k] = 0
+            self['cutoff']=8.0
+
+        if pot == 'morse':
+            for k in ['D0']+['D0_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k]=0
+            for k in ['alpha']+['alpha_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k]=1
+            for k in ['r0']+['r0_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k]=1
+            self['cutoff']=8.0
+
+        if pot == 'buck':
+            for k in ['A']+['A_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k]=0
+            for k in ['rho']+['rho_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k]=1
+            for k in ['C']+['C_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k]=0
+            self['cutoff']=8
+
+        if pot == 'mie/cut':
+            for k in ['epsilon']+['epsilon_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k]=0
+            for k in ['sigma']+['sigma_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k]=1
+            for k in ['gammaR']+['gammaR_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k]=1
+            for k in ['gammaA']+['gammaA_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k]=1
+            self['cutoff']=8.0
+
+        if pot == 'yukawa':
+            for k in ['A']+['A_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k]=1
+            for k in ['cutoff']+['cutoff_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k]=3
+            self['kappa']=0.0
+
+        if pot.startswith('born'):
+            for k in ['A']+['A_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k]=0
+            for k in ['rho']+['rho_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k]=1
+            for k in ['sigma']+['sigma_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k]=1
+            for k in ['C']+['C_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k]=0
+            for k in ['D']+['D_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k]=0
+            for k in ['cutoff_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k] = None
+            self['cutoff'] = 4
+
+        if pot == 'gauss':
+            for k in ['A']+['A_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k]=0
+            for k in ['B']+['B_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k]=0
+            for k in ['cutoff_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
+                self[k] = None
+            self['cutoff'] = 3
+
+        self._value_modified={k:False for k in self.get_pandas()['Parameter']}
+        if 'sub_potential' in list(self._value_modified.keys()):
+            del self._value_modified['sub_potential']
+
+
+    def set_parameter(self, parameter, element_one=None, element_two=None, value=0):
+        if element_one is None and element_two is None:
+            key = parameter
+        else:
+            key = parameter+'_'+element_one+'_'+element_two
+            if key not in list(self.get_pandas()['Parameter']):
+                key = parameter+'_'+element_two+'_'+element_one
+        self[key]=value
+        self._value_modified[key] = True
+
+    def get_parameter(self, parameter, element_one=None, element_two=None):
+        if element_one is None and element_two is None:
+            key = parameter
+        else:
+            key = parameter+'_'+element_one+'_'+element_two
+            if key not in list(self.get_pandas()['Parameter']):
+                key = parameter+'_'+element_two+'_'+element_one
+        if self[key] is None:
+            return ''
+        return self[key]
+
+    def _config_file(self, pot):
+        config_vars = []
+        if pot == 'lj/cut':
+            pair_style=['pair_style '+self._model+' '+str(self['cutoff'])+ ' \n']
+            config_vars.append('pair_coeff * * '+str(self.get_parameter('epsilon'))+
+                               ' '+str(self.get_parameter('sigma'))+'\n')
+            for i in range(len(self.combinations)):
+                if len(self.elements)==1:
+                    break
+                config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)+
+                                   ' '+str(self._element_indices[self.combinations[i,0]]+1)+
+                                   ' '+str(self.get_parameter('epsilon', self.combinations[i,0], self.combinations[i,1]))+
+                                   ' '+str(self.get_parameter('sigma', self.combinations[i,0], self.combinations[i,1]))+'\n')
+
+        if pot == 'morse':
+            pair_style=['pair_style '+self._model+' '+str(self['cutoff'])+ ' \n']
+            config_vars.append('pair_coeff * * '+str(self.get_parameter('D0'))+
+                                             ' '+str(self.get_parameter('alpha'))+' '+str(self.get_parameter('r0'))+'\n')
+            for i in range(len(self.combinations)):
+                if len(self.elements)==1:
+                    break
+                config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)
+                                   +' '+str(self._element_indices[self.combinations[i,0]]+1)
+                                   +' '+str(self.get_parameter('D0', self.combinations[i,0], self.combinations[i,1]))
+                                   +' '+str(self.get_parameter('alpha', self.combinations[i,0], self.combinations[i,1]))
+                                   +' '+str(self.get_parameter('r0', self.combinations[i,0], self.combinations[i,1]))+'\n')
+
+
+        if pot == 'buckingham':
+            pair_style=['pair_style '+self._model+' '+str(self['cutoff'])+ ' \n']
+            config_vars.append('pair_coeff * * '+str(self.get_parameter('A'))+
+                                             ' '+str(self.get_parameter('rho'))+' '+str(self.get_parameter('C'))+'\n')
+            for i in range(len(self.combinations)):
+                if len(self.elements)==1:
+                    break
+                config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)
+                                   +' '+str(self._element_indices[self.combinations[i,0]]+1)
+                                   +' '+str(self.get_parameter('A', self.combinations[i,0], self.combinations[i,1]))
+                                   +' '+str(self.get_parameter('rho', self.combinations[i,0], self.combinations[i,1]))
+                                   +' '+str(self.get_parameter('C', self.combinations[i,0], self.combinations[i,1]))+'\n')
+
+        if pot =='mie/cut':
+            pair_style=['pair_style '+self._model+' '+str(self['cutoff'])+ ' \n']
+            config_vars.append('pair_coeff * * '+str(self.get_parameter('epsilon'))
+                               +' '+str(self.get_parameter('sigma'))+' '+str(self.get_parameter('gammaR'))
+                               +' '+str(self.get_parameter('gammaA'))+'\n')
+            for i in range(len(self.combinations)):
+                if len(self.elements)==1:
+                    break
+                config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)
+                                   +' '+str(self._element_indices[self.combinations[i,0]]+1)
+                                   +' '+str(self.get_parameter('epsilon', self.combinations[i,0], self.combinations[i,1]))
+                                   +' '+str(self.get_parameter('sigma', self.combinations[i,0], self.combinations[i,1]))
+                                   +' '+str(self.get_parameter('gammaR', self.combinations[i,0], self.combinations[i,1]))
+                                   +' '+str(self.get_parameter('gammaA', self.combinations[i,0], self.combinations[i,1]))+'\n')
+
+
+
+        if pot =='yukawa':
+            pair_style=['pair_style '+self._model+' '+str(self['kappa'])+' '+str(self['cutoff'])+'\n']
+            config_vars.append('pair_coeff * * '+str(self.get_parameter('A'))+
+                                     ' '+str(self.get_parameter('cutoff'))+'\n')
+            for i in range(len(self.combinations)):
+                if len(self.elements)==1:
+                    break
+                config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)+
+                                   ' '+str(self._element_indices[self.combinations[i,0]]+1)+
+                                   ' '+str(self.get_parameter('A', self.combinations[i,0], self.combinations[i,1]))+
+                                   ' '+str(self.get_parameter('cutoff', self.combinations[i,0], self.combinations[i,1]))+'\n')
+
+
+        if pot.startswith('born'):
+            pair_style=['pair_style '+self._model+' '+str(self['cutoff'])+ ' \n']
+            config_vars.append('pair_coeff * * '+str(self.get_parameter('A'))+
+                               ' '+str(self.get_parameter('rho'))+' '+str(self.get_parameter('sigma'))+
+                               ' '+str(self.get_parameter('C'))+' '+str(self.get_parameter('D'))+
+                               ' '+str(self.get_parameter('cutoff'))+'\n')
+            for i in range(len(self.combinations)):
+                if len(self.elements)==1:
+                    break
+                config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)
+                                   +' '+str(self._element_indices[self.combinations[i,0]]+1)
+                                   +' '+str(self.get_parameter('A', self.combinations[i,0], self.combinations[i,1]))
+                                   +' '+str(self.get_parameter('rho', self.combinations[i,0], self.combinations[i,1]))
+                                   +' '+str(self.get_parameter('sigma', self.combinations[i,0], self.combinations[i,1]))
+                                   +' '+str(self.get_parameter('C', self.combinations[i,0], self.combinations[i,1]))
+                                   +' '+str(self.get_parameter('D', self.combinations[i,0], self.combinations[i,1]))
+                                   +' '+str(self.get_parameter('cutoff', self.combinations[i,0], self.combinations[i,1]))+'\n')
+
+        if pot == 'gauss':
+            pair_style=['pair_style '+self._model+' '+str(self['cutoff'])+ ' \n']
+            config_vars.append('pair_coeff * * '+str(self.get_parameter('A'))+
+                                             ' '+str(self.get_parameter('B'))+' '+str(self.get_parameter('cutoff'))+'\n')
+            for i in range(len(self.combinations)):
+                if len(self.elements)==1:
+                    break
+                config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)+
+                                   ' '+str(self._element_indices[self.combinations[i,0]]+1)+
+                                   ' '+str(self.get_parameter('A', self.combinations[i,0], self.combinations[i,1]))+
+                                   ' '+str(self.get_parameter('B', self.combinations[i,0], self.combinations[i,1]))+
+                                   ' '+str(self.get_parameter('cutoff', self.combinations[i,0], self.combinations[i,1]))+'\n')
+
+        config_vars=pair_style+config_vars
+        return config_vars
+
+    def _initialize_eam(self):
+        self._keys_eam = [['No_Elements'],
+                          ['Nrho', 'drho', 'Nr', 'dr', 'cutoff_eam'],
+                          ['atomic_number', 'mass', 'lattice_constant', 'lattice_type']]
+        try:
+            for i in range(len(self._file_eam[3].split())-1):
+                self._keys_eam[0].append('Element'+str(i+1))
+            for i in range(3):
+                for k,v in zip(self._keys_eam[i], self._file_eam[i+3].split()):
+                    self[k] = v
+            if len(self._keys_eam[0]) != self['No_Elements']+1:
+                print('WARNING: Number of elements is not consistent in EAM File')
+        except:
+            print('ERROR: Potential file content not valid')
+            raise
+        self._value_modified={k:False for k in self.get_pandas()['Parameter']}
+        self['model']='eam/alloy'
+
+    def _update_eam_file(self):
+        for i, k in enumerate(self._keys_eam):
+            self._file_eam[i+3] = ' '.join([str(self[kk]) for kk in k])
+            self._file_eam[i+3] += '\n'
+
+    def _config_file_eam(self):
+        config_eam = []
+        for key, value in self._value_modified.items():
+            if not value:
+                print('WARNING: '+key+' is not set. Default value: '+str(self[key]))
+        NULL=[]
+        if len(self.elements) <= self['No_Elements']:
+            self['model'] = 'eam/alloy'
+            config_eam=['pair_style '+self['model']+'\n', 'pair_coeff * * '
+                              +self._output_file_eam.split()[-1]+' '+' '
+                              .join([self[k] for i,k in enumerate(self._keys_eam[0]) if i!=0])+'\n']
+        elif len(self.elements) > self['No_Elements']:
+            self['model'] = 'hybrid'
+            for i in range(len(self.elements)-self['No_Elements']):
+                NULL.append('NULL')
+            config_eam=['pair_style '+self['model']+'\n', 'pair_coeff * * '
+                        +self._output_file_eam.split()[-1]+' '+' '
+                        .join([self[k] for i,k in enumerate(self._keys_eam[0]) if i!=0])+' '+' '
+                        .join(NULL)+'\n']
+        return config_eam
+
+    @property
+    def _eam_dataframe(self):
+        return pd.DataFrame({'Config':[self._config_file_eam()],
+                             'Filename':[[self._output_file_eam]],
+                             'Model':[self['model']],
+                             'Name':['my_potential'],
+                             'Species':[self.elements],
+                             'Content':[self._file_eam]})
+
+    def _initialize_hybrid(self):
+        if self['sub_potential'] is None:
+            print ('Error: Substyle for hybrid with EAM is not defined')
+        self._output_file_eam = self._file_name
+        with open(self._output_file_eam, 'r') as file:
+            self._file_eam = file.readlines()
+        self._initialize(self['sub_potential'])
+        self._initialize_eam()
+
+    def _config_file_hybrid(self):
+        if self['sub_potential'] is None:
+            print ('Error : Sub Pair Style for hybrid is not defined')
+        eam_pot_config=self._config_file_eam()[1:]
+        for i in range(len(eam_pot_config)):
+            eam_pot_config[i]=eam_pot_config[i].split()
+            eam_pot_config[i].insert(3, self['model'])
+            eam_pot_config[i].append('\n')
+            eam_pot_config[i]=' '.join(eam_pot_config[i])
+        if not self._eam_comb:
+            pair_pot_config=self._config_file(self['sub_potential'])[5:]
+        elif self._eam_comb:
+            pair_pot_config=self._config_file(self['sub_potential'])[2:]
+        for i in range(len(pair_pot_config)):
+            pair_pot_config[i]=pair_pot_config[i].split()
+            pair_pot_config[i].insert(3, self._model)
+            pair_pot_config[i].append('\n')
+            pair_pot_config[i]=' '.join(pair_pot_config[i])
+
+        pair_style=['pair_style hybrid '+self['model']+' '+self._model+' '+str(self['cutoff'])+' \n']
+        pair_pot_config=pair_style+eam_pot_config+pair_pot_config
+
+        return pair_pot_config
+
+    @property
+    def _hybrid_dataframe(self):
+        return pd.DataFrame({'Config':[self._config_file_hybrid()],
+                             'Filename':[[]],
+                             'Model':[self._model],
+                             'Name':['my_potential'],
+                             'Species':[self.elements]})
+
+    @property
+    def df(self):
+        if self._file_name is None:
+            return pd.DataFrame({'Config':[self._config_file(self._model)],
+                                 'Filename':[[]],
+                                 'Model':[self._model],
+                                 'Name':['my_potential'],
+                                 'Species':[self.elements]})
+        elif self._model == 'eam':
+            self._update_eam_file()
+            return self._eam_dataframe
+        elif self._model == 'hybrid':
+            return self._hybrid_dataframe
+        else:
+            raise ValueError('Potential not found')
+
+    def available_keys(self, pot):
+        if pot.startswith('lj'):
+            return OrderedDict({'sigma': 1, 'epsilon': 0}), OrderedDict({'cutoff': 8.0})
+        if pot.startswith('morse'):
+            return OrderedDict({'D0': 0, 'alpha': 1, 'r0': 1}), OrderedDict({'cutoff': 8.0})
+        if pot.startswith('buck'):
+            return OrderedDict({'A': 0, 'rho': 1, 'C': 0}), OrderedDict({'cutoff': 8.0})
+        if pot.startswith('mie'):
+            return OrderedDict({'epsilon': 0, 'sigma': 1, 'gammaR': 1, 'gammaA': 1}), OrderedDict({'cutoff': 8.0})
+        if pot.startswith('yukawa'):
+            return OrderedDict({'A': 0, 'cutoff': 3}), OrderedDict({'kappa': 1.0, 'cutoff': 8.0})
+        if pot.startswith('born'):
+            return OrderedDict({'A': 0, 'rho': 1, 'sigma': 1, 'C': 0, 'D': 0, 'cutoff': None}), OrderedDict({'cutoff': 4.0})
+        if pot.startswith('gauss'):
+            return OrderedDict({'A': 0, 'B': 0, 'cutoff': None}), OrderedDict({'cutoff': 3.0})
 
 
 class LammpsPotentialFile(PotentialAbstract):
@@ -175,391 +556,3 @@ class LammpsPotentialFile(PotentialAbstract):
         potential_df = self.find(element=item)
         selected_atoms = self._selected_atoms + [item]
         return LammpsPotentialFile(potential_df=potential_df, default_df=self._default_df, selected_atoms=selected_atoms)
-
-class CustomPotential(GenericParameters):
-    def __init__(self, structure, pot_type=None, pot_sub_style=None, file_name=None, meam_library=None, eam_combinations=False, dataframe=None):
-        self._initialized = False
-        super(CustomPotential, self).__init__(comment_char="//",
-                    separator_char="=", end_value_char=';')
-        self._model = pot_type
-        self._file_name = file_name
-        self._structure = structure
-        self._combinations = []
-        self._config_vars = []
-        self._config_eam = []
-        self._value_modified = {}
-        self._element_indices = None
-        self._eam_comb = eam_combinations
-        self._dataframe = dataframe
-        self._pair_pots=['lj/cut','morse','buck','mie/cut','yukawa','born','born/coul/long','gauss']
-        self['sub_potential'] = pot_sub_style
-        if file_name is None:
-            self._initialize(self._model)
-            if self._model not in self._pair_pots:
-                print('ERROR: Choose a potential type from',self._pair_pots) 
-            self._initialized = True
-        if file_name is not None:
-            self._initialize_hybrid()
-            if pot_type=='eam':
-                self._output_file_eam = file_name
-                with open(self._output_file_eam, 'r') as file:
-                    self._file_eam = file.readlines()
-                self._initialize_eam()
-            if pot_type=='hybrid': 
-                self._initialize_hybrid()
-                
-                
-    @property
-    def elements(self):
-        if self._element_indices is None:
-            self._element_indices=OrderedDict(sorted(zip(self._structure.get_chemical_symbols(),self._structure.get_chemical_indices()), key=lambda x: x[1]))
-        return list(self._element_indices.keys())
-
-    
-    @property
-    def combinations(self):
-        if len(self._combinations)==0:
-            self._combinations=np.array([[self.elements[i], self.elements[j]] for i in range(len(self.elements)) for j in range (i+1)])
-        return self._combinations
-        
-    def __setitem__(self, key, value):
-        if key not in self._dataset['Parameter'] and self._initialized:
-            warnings.warn('Parameter ('+key+') not found in '+self._model+' Potential. Only Parameters '
-                          +str(list(self._value_modified.keys()))+' can be set.')
-        super(CustomPotential, self).__setitem__(key, value) 
-        #self._dataframe.df = self.potential
-        
-    def _initialize(self,pot):
-        
-        if pot == 'lj/cut':
-            for k in ['sigma']+['sigma_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k] = 1
-            for k in ['epsilon']+['epsilon_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k] = 0
-            self['cutoff']=8.0
-            
-        if pot == 'morse':
-            for k in ['D0']+['D0_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=0
-            for k in ['alpha']+['alpha_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=1
-            for k in ['r0']+['r0_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=1
-            self['cutoff']=8.0
-            
-        if pot == 'buck':
-            for k in ['A']+['A_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=0
-            for k in ['rho']+['rho_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=1
-            for k in ['C']+['C_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=0
-            self['cutoff']=8
-            
-        if pot == 'mie/cut':
-            for k in ['epsilon']+['epsilon_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=0
-            for k in ['sigma']+['sigma_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=1
-            for k in ['gammaR']+['gammaR_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=1
-            for k in ['gammaA']+['gammaA_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=1
-            self['cutoff']=8.0
-
-        if pot == 'yukawa':
-            for k in ['A']+['A_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=1
-            for k in ['cutoff']+['cutoff_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=3
-            self['kappa']=0.0
-
-        if pot.startswith('born'):
-            for k in ['A']+['A_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=0
-            for k in ['rho']+['rho_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=1
-            for k in ['sigma']+['sigma_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=1
-            for k in ['C']+['C_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=0
-            for k in ['D']+['D_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=0
-            for k in ['cutoff_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k] = None
-            self['cutoff'] = 4
-            
-        if pot == 'gauss':
-            for k in ['A']+['A_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=0
-            for k in ['B']+['B_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=0
-            for k in ['cutoff_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k] = None
-            self['cutoff'] = 3
-            
-        self._value_modified={k:False for k in self.get_pandas()['Parameter']}
-        if 'sub_potential' in list(self._value_modified.keys()):
-            del self._value_modified['sub_potential']
-
-            
-    def set_parameter(self, parameter, element_one=None, element_two=None, value=0):
-        if element_one is None and element_two is None:
-            key = parameter
-        else:
-            key = parameter+'_'+element_one+'_'+element_two
-            if key not in list(self.get_pandas()['Parameter']):
-                key = parameter+'_'+element_two+'_'+element_one
-        self[key]=value
-        self._value_modified[key] = True
-
-    def get_parameter(self, parameter, element_one=None, element_two=None):
-        if element_one is None and element_two is None:
-            key = parameter
-        else:
-            key = parameter+'_'+element_one+'_'+element_two
-            if key not in list(self.get_pandas()['Parameter']):
-                key = parameter+'_'+element_two+'_'+element_one
-        if self[key] is None:
-            return ''
-        return self[key]
-    
-    def _config_file(self,pot):
-        
-        if pot == 'lj/cut':
-            #for key,value in self._value_modified.items():
-            #    if not value:
-            #        print('WARNING: '+key+' is not set. Default value: '+str(self[key]))
-            pair_style=['pair_style '+self._model+' '+str(self['cutoff'])+ ' \n']
-            self._config_vars.append('pair_coeff * * '+str(self.get_parameter('epsilon'))+
-                                             ' '+str(self.get_parameter('sigma'))+'\n')
-            for i in range(len(self.combinations)):  
-                if len(self.elements)==1:
-                    break
-                self._config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)+
-                                         ' '+str(self._element_indices[self.combinations[i,0]]+1)+
-                                         ' '+str(self.get_parameter('epsilon', self.combinations[i,0], self.combinations[i,1]))+
-                                         ' '+str(self.get_parameter('sigma', self.combinations[i,0], self.combinations[i,1]))+'\n')
-        
-        if pot == 'morse':
-            #for key,value in self._value_modified.items():
-            #    if not value:
-            #        print('WARNING: '+key+' is not set. Default value: '+str(self[key]))
-            pair_style=['pair_style '+self._model+' '+str(self['cutoff'])+ ' \n']
-            self._config_vars.append('pair_coeff * * '+str(self.get_parameter('D0'))+
-                                             ' '+str(self.get_parameter('alpha'))+' '+str(self.get_parameter('r0'))+'\n')
-            for i in range(len(self.combinations)):
-                if len(self.elements)==1:
-                    break
-                self._config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)
-                                         +' '+str(self._element_indices[self.combinations[i,0]]+1)
-                                         +' '+str(self.get_parameter('D0', self.combinations[i,0], self.combinations[i,1]))
-                                         +' '+str(self.get_parameter('alpha', self.combinations[i,0], self.combinations[i,1]))
-                                         +' '+str(self.get_parameter('r0', self.combinations[i,0], self.combinations[i,1]))+'\n')
-
-        
-        if pot == 'buckingham':
-            for key,value in self._value_modified.items():
-                if not value:
-                    print('WARNING: '+key+' is not set. Default value: '+str(self[key]))
-            pair_style=['pair_style '+self._model+' '+str(self['cutoff'])+ ' \n']
-            self._config_vars.append('pair_coeff * * '+str(self.get_parameter('A'))+
-                                             ' '+str(self.get_parameter('rho'))+' '+str(self.get_parameter('C'))+'\n')
-            for i in range(len(self.combinations)):
-                if len(self.elements)==1:
-                    break
-                self._config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)
-                                         +' '+str(self._element_indices[self.combinations[i,0]]+1)
-                                         +' '+str(self.get_parameter('A', self.combinations[i,0], self.combinations[i,1]))
-                                         +' '+str(self.get_parameter('rho', self.combinations[i,0], self.combinations[i,1]))
-                                         +' '+str(self.get_parameter('C', self.combinations[i,0], self.combinations[i,1]))+'\n')
-        
-        if pot =='mie/cut':
-            for key,value in self._value_modified.items():
-                if not value:
-                    print('WARNING: '+key+' is not set. Default value: '+str(self[key]))
-            pair_style=['pair_style '+self._model+' '+str(self['cutoff'])+ ' \n']
-            self._config_vars.append('pair_coeff * * '+str(self.get_parameter('epsilon'))
-                                             +' '+str(self.get_parameter('sigma'))+' '+str(self.get_parameter('gammaR'))
-                                             +' '+str(self.get_parameter('gammaA'))+'\n')
-            for i in range(len(self.combinations)):
-                if len(self.elements)==1:
-                    break
-                self._config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)
-                                         +' '+str(self._element_indices[self.combinations[i,0]]+1)
-                                         +' '+str(self.get_parameter('epsilon', self.combinations[i,0], self.combinations[i,1]))
-                                         +' '+str(self.get_parameter('sigma', self.combinations[i,0], self.combinations[i,1]))
-                                         +' '+str(self.get_parameter('gammaR', self.combinations[i,0], self.combinations[i,1]))
-                                         +' '+str(self.get_parameter('gammaA', self.combinations[i,0], self.combinations[i,1]))+'\n')
-
-            
-        
-        if pot =='yukawa':
-            pair_style=['pair_style '+self._model+' '+str(self['kappa'])+' '+str(self['cutoff'])+'\n']
-            for key,value in self._value_modified.items():
-                if not value:
-                    print('WARNING: '+key+' is not set. Default value: '+str(self[key]))
-            self._config_vars.append('pair_coeff * * '+str(self.get_parameter('A'))+
-                                     ' '+str(self.get_parameter('cutoff'))+'\n')
-            for i in range(len(self.combinations)):
-                if len(self.elements)==1:
-                    break
-                self._config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)+
-                                         ' '+str(self._element_indices[self.combinations[i,0]]+1)+
-                                         ' '+str(self.get_parameter('A', self.combinations[i,0], self.combinations[i,1]))+
-                                         ' '+str(self.get_parameter('cutoff', self.combinations[i,0], self.combinations[i,1]))+'\n')
-       
-        
-        if pot.startswith('born'):
-            pair_style=['pair_style '+self._model+' '+str(self['cutoff'])+ ' \n']
-            #for key,value in self._value_modified.items():
-            #    if not value:
-            #        print('WARNING: '+key+' is not set. Default value: '+str(self[key]))
-            self._config_vars.append('pair_coeff * * '+str(self.get_parameter('A'))+
-                                     ' '+str(self.get_parameter('rho'))+' '+str(self.get_parameter('sigma'))+
-                                     ' '+str(self.get_parameter('C'))+' '+str(self.get_parameter('D'))+
-                                     ' '+str(self.get_parameter('cutoff'))+'\n')
-            for i in range(len(self.combinations)):
-                if len(self.elements)==1:
-                    break
-                self._config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)
-                                         +' '+str(self._element_indices[self.combinations[i,0]]+1)
-                                         +' '+str(self.get_parameter('A', self.combinations[i,0], self.combinations[i,1]))
-                                         +' '+str(self.get_parameter('rho', self.combinations[i,0], self.combinations[i,1]))
-                                         +' '+str(self.get_parameter('sigma', self.combinations[i,0], self.combinations[i,1]))
-                                         +' '+str(self.get_parameter('C', self.combinations[i,0], self.combinations[i,1]))
-                                         +' '+str(self.get_parameter('D', self.combinations[i,0], self.combinations[i,1]))
-                                         +' '+str(self.get_parameter('cutoff', self.combinations[i,0], self.combinations[i,1]))+'\n')
-
-        if pot == 'gauss':
-            for key,value in self._value_modified.items():
-                if not value:
-                    print('WARNING: '+key+' is not set. Default value: '+str(self[key]))
-            pair_style=['pair_style '+self._model+' '+str(self['cutoff'])+ ' \n']
-            self._config_vars.append('pair_coeff * * '+str(self.get_parameter('A'))+
-                                             ' '+str(self.get_parameter('B'))+' '+str(self.get_parameter('cutoff'))+'\n')
-            for i in range(len(self.combinations)):
-                if len(self.elements)==1:
-                    break
-                self._config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)+
-                                         ' '+str(self._element_indices[self.combinations[i,0]]+1)+
-                                         ' '+str(self.get_parameter('A', self.combinations[i,0], self.combinations[i,1]))+
-                                         ' '+str(self.get_parameter('B', self.combinations[i,0], self.combinations[i,1]))+
-                                         ' '+str(self.get_parameter('cutoff', self.combinations[i,0], self.combinations[i,1]))+'\n')
-
-        self._config_vars=pair_style+self._config_vars
-        return self._config_vars
-
-    def _initialize_eam(self):
-        self._keys_eam = [['No_Elements'],
-                      ['Nrho', 'drho', 'Nr', 'dr', 'cutoff_eam'],
-                      ['atomic_number', 'mass', 'lattice_constant', 'lattice_type']]
-        try:
-            for i in range(len(self._file_eam[3].split())-1):
-                self._keys_eam[0].append('Element'+str(i+1))
-            for i in range(3):
-                for k,v in zip(self._keys_eam[i], self._file_eam[i+3].split()):
-                    self[k] = v
-            if len(self._keys_eam[0]) != self['No_Elements']+1:
-                print('WARNING: Number of elements is not consistent in EAM File')
-        except:
-            print('ERROR: Potential file content not valid')
-            raise
-        self._value_modified={k:False for k in self.get_pandas()['Parameter']}
-        self['model']='eam/alloy'
-        
-    def _update_eam_file(self):
-        for i, k in enumerate(self._keys_eam):
-            self._file_eam[i+3] = ' '.join([str(self[kk]) for kk in k])
-            self._file_eam[i+3] += '\n'
-    
-    def _config_file_eam(self):
-        #if len(self._elements) < self['No_Elements']:
-         #   print ('Warning : All elements not defines in structure')
-        for key, value in self._value_modified.items():
-            if not value:
-                print('WARNING: '+key+' is not set. Default value: '+str(self[key]))
-        NULL=[]
-        if len(self.elements) <= self['No_Elements']:
-            self['model'] = 'eam/alloy'
-            self._config_eam=['pair_style '+self['model']+'\n', 'pair_coeff * * '
-                              +self._output_file_eam.split()[-1]+' '+' '
-                              .join([self[k] for i,k in enumerate(self._keys_eam[0]) if i!=0])+'\n']
-        elif len(self.elements) > self['No_Elements']:
-            self['model'] = 'hybrid'
-            for i in range(len(self.elements)-self['No_Elements']):
-                NULL.append('NULL')
-            self._config_eam=['pair_style '+self['model']+'\n', 'pair_coeff * * '
-                              +self._output_file_eam.split()[-1]+' '+' '
-                              .join([self[k] for i,k in enumerate(self._keys_eam[0]) if i!=0])+' '+' '
-                              .join(NULL)+'\n']
-        return self._config_eam
-
-    @property
-    def _eam_dataframe(self):
-        return pd.DataFrame({
-                'Config':[self._config_file_eam()],
-                'Filename':[[self._output_file_eam]],
-                'Model':[self['model']],
-                'Name':['my_potential'],
-                'Species':[self.elements],
-                'Content':[self._file_eam]
-            })
-
-    def _initialize_hybrid(self):
-        if self['sub_potential'] is None: 
-            print ('Error: Substyle for hybrid with EAM is not defined')
-        self._output_file_eam = self._file_name
-        with open(self._output_file_eam, 'r') as file:
-            self._file_eam = file.readlines()
-        self._initialize(self['sub_potential'])
-        self._initialize_eam()
-
-    def _config_file_hybrid(self):
-        if self['sub_potential'] is None: 
-            print ('Error : Sub Pair Style for hybrid is not defined')
-        eam_pot_config=self._config_file_eam()[1:]
-        for i in range(len(eam_pot_config)):
-            eam_pot_config[i]=eam_pot_config[i].split()
-            eam_pot_config[i].insert(3,self['model'])
-            eam_pot_config[i].append('\n')
-            eam_pot_config[i]=' '.join(eam_pot_config[i])
-        if not self._eam_comb:
-            pair_pot_config=self._config_file(self['sub_potential'])[5:]
-        elif self._eam_comb:
-            pair_pot_config=self._config_file(self['sub_potential'])[2:]
-        for i in range(len(pair_pot_config)):
-            pair_pot_config[i]=pair_pot_config[i].split()
-            pair_pot_config[i].insert(3,self._model)
-            pair_pot_config[i].append('\n')
-            pair_pot_config[i]=' '.join(pair_pot_config[i])
-    
-        pair_style=['pair_style hybrid '+self['model']+' '+self._model+' '+str(self['cutoff'])+' \n']
-        pair_pot_config=pair_style+eam_pot_config+pair_pot_config
-        
-        return pair_pot_config
-    
-    @property
-    def _hybrid_dataframe(self):
-        return pd.DataFrame({'Config':[self._config_file_hybrid()],
-                                 'Filename':[[]],
-                                 'Model':[self._model],
-                                 'Name':['my_potential'],
-                                 'Species':[self.elements]})
-
-    @property
-    def potential(self):
-        if self._file_name is None:
-            return pd.DataFrame({'Config':[self._config_file(self._model)],
-                                 'Filename':[[]],
-                                 'Model':[self._model],
-                                 'Name':['my_potential'],
-                                 'Species':[self.elements]})
-        elif self._model == 'eam':
-            self._update_eam_file()
-            return self._eam_dataframe
-        elif self._model == 'hybrid':
-            return self._hybrid_dataframe
-        else: 
-            raise ValueError('Potential not found')
-            
