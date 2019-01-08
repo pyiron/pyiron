@@ -416,16 +416,14 @@ class AtomisticGenericJob(GenericJobCore):
         ProjectGUI(self)
 
     def _structure_to_hdf(self):
-        if self.structure is not None:
+        if self.structure is not None and self._generic_input['structure'] == 'atoms':
             with self.project_hdf5.open("input") as hdf5_input:
-                if self._generic_input['structure'] == 'atoms':
-                    self.structure.to_hdf(hdf5_input)
+                self.structure.to_hdf(hdf5_input)
 
     def _structure_from_hdf(self):
-        if 'structure' in self.project_hdf5['input'].list_groups():
+        if 'structure' in self.project_hdf5['input'].list_groups() and self._generic_input['structure'] == 'atoms':
             with self.project_hdf5.open("input") as hdf5_input:
-                if self._generic_input['structure'] == 'atoms':
-                    self.structure = Atoms().from_hdf(hdf5_input)
+                self.structure = Atoms().from_hdf(hdf5_input)
 
     def _write_chemical_formular_to_database(self):
         if self.structure:
