@@ -272,8 +272,7 @@ class SerialMasterBase(GenericMaster):
             else:
                 self._convergence_goal_str = convergence_goal_str
                 exec(convergence_goal_str)
-                func = convergence_goal_str.split("(")[0][4:]  # get function name
-                exec("self._convergence_goal = " + func)
+                self._convergence_goal = exec(convergence_goal_str.split("(")[0][4:])  # get function name
                 self._convergence_goal_qwargs = hdf5_input["convergence_goal_qwargs"]
 
     def get_from_childs(self, path):
