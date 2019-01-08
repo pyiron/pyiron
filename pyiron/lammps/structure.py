@@ -189,7 +189,6 @@ class LammpsStructure(GenericParameters):
         elif self.atom_type == 'bond':
             input_str = self.structure_bond()
         elif self.atom_type == 'charge':
-            print('Create structure file including charges.')
             input_str = self.structure_charge()
         else:  # self.atom_type == 'atomic'
             input_str = self.structure_atomic()
