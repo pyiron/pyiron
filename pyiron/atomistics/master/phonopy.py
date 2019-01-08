@@ -121,6 +121,24 @@ class PhonopyJob(AtomisticParallelMaster):
         else:
             return None
 
+    def _enable_phonopy(self):
+        if self.phonopy is None:
+            if self.structure is not None:
+                self.phonopy = Phonopy(unitcell=self._phonopy_unit_cell,
+                                       supercell_matrix=self._phonopy_supercell_matrix(),
+                                       factor=self.input['factor'])
+                self.phonopy.generate_displacements(distance=self.input['displacement'])
+                self.to_hdf()
+            else:
+                raise ValueError('No reference job/ No reference structure found.')
+
+    def list_structures(self):
+        if self.structure is not None:
+            self._enable_phonopy()
+            return [struct for _, struct in self._job_generator.parameter_list]
+        else:
+            return []
+
     def _phonopy_supercell_matrix(self):
         if self.structure is not None:
             supercell_range = np.ceil(self.input['interaction_range'] /
@@ -131,12 +149,7 @@ class PhonopyJob(AtomisticParallelMaster):
 
     def run_static(self):
         # Initialise the phonopy object before starting the first calculation.
-        if self.phonopy is None:
-            self.phonopy = Phonopy(unitcell=self._phonopy_unit_cell,
-                                   supercell_matrix=self._phonopy_supercell_matrix(),
-                                   factor=self.input['factor'])
-            self.phonopy.generate_displacements(distance=self.input['displacement'])
-            self.to_hdf()
+        self._enable_phonopy()
         super(PhonopyJob, self).run_static()
 
     def to_hdf(self, hdf=None, group_name=None):
