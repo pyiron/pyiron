@@ -7,6 +7,7 @@ import pandas
 import time
 from pyiron.base.settings.generic import Settings
 from pyiron.base.server.scheduler.generic import QUEUE_SCRIPT_PREFIX, QUEUE_SCRIPT_SUFFIX
+from pyiron.base.job.jobtype import static_isinstance
 
 """
 Set of functions to interact with the queuing system directly from within pyiron - optimized for the Sun grid engine.
@@ -289,14 +290,12 @@ def _validate_que_request(item):
     
     if isinstance(item, int):
         que_id = item
-    elif 'pyiron.base.job.generic.GenericJob' in ['.'.join([c.__module__, c.__name__])
-                                                          for c in item.__class__.__mro__]:
+    elif static_isinstance(item.__class__, 'pyiron.base.job.generic.GenericJob'):
         if item.server.queue_id:
             que_id = item.server.queue_id
         else:
             raise ValueError('This job does not have a queue ID.')
-    elif 'pyiron.base.job.core.JobCore' in ['.'.join([c.__module__, c.__name__])
-                                                    for c in item.__class__.__mro__]:
+    elif static_isinstance(item.__class__, 'pyiron.base.job.core.JobCore'):
         if "server" in item.project_hdf5.list_nodes():
             server_hdf_dict = item.project_hdf5["server"]
             if "qid" in server_hdf_dict.keys():

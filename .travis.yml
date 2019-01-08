@@ -8,6 +8,7 @@ matrix:
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
         - ./.ci_support/setup_miniconda.sh ${MINICONDA} ${PYTHONVER}
+        - ./.ci_support/setup_pyiron.sh
       script:
         - coverage run -m unittest discover tests
         # - ./.ci_support/build_notebooks_on_master.sh
@@ -19,6 +20,7 @@ matrix:
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
         - ./.ci_support/setup_miniconda.sh ${MINICONDA} ${PYTHONVER}
+        - ./.ci_support/setup_pyiron.sh
       script:
         - coverage run -m unittest discover tests
         # - ./.ci_support/build_notebooks_on_master.sh
@@ -37,14 +39,6 @@ matrix:
           allow_failure: true
           on:
             tags: true
-        - provider: script
-          script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
-          on:
-            branch: master
-        - provider: script
-          script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
-          on:
-            tags: true
 
     - name: test_osx_2_7
       os: osx
@@ -53,6 +47,7 @@ matrix:
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
         - ./.ci_support/setup_miniconda.sh ${MINICONDA} ${PYTHONVER}
+        - ./.ci_support/setup_pyiron.sh
       script:
         - coverage run -m unittest discover tests
         # - ./.ci_support/build_notebooks_on_master.sh
@@ -64,6 +59,7 @@ matrix:
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
         - ./.ci_support/setup_miniconda.sh ${MINICONDA} ${PYTHONVER}
+        - ./.ci_support/setup_pyiron.sh
       script:
         - coverage run -m unittest discover tests
         # - ./.ci_support/build_notebooks_on_master.sh
@@ -77,6 +73,7 @@ matrix:
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
         - ./.ci_support/setup_miniconda.sh ${MINICONDA} ${PYTHONVER}
+        - ./.ci_support/setup_pyiron.sh
       script:
         - ./.ci_support/build_docs_on_master.sh
       deploy:
@@ -88,6 +85,27 @@ matrix:
           local_dir: ../pyiron.github.io
           on:
             branch: master
+
+    # - stage: anaconda
+    #   if: branch = master
+    #   name: anaconda
+    #   os: linux
+    #   language: python
+    #   env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.7"
+    #   install:
+    #     - export PATH="$HOME/miniconda/bin:$PATH"
+    #     - ./.ci_support/setup_miniconda.sh ${MINICONDA} ${PYTHONVER}
+    #   script:
+    #     - ./.ci_support/setup_upload.sh
+    #   deploy:
+    #     - provider: script
+    #       script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
+    #       on:
+    #         branch: master
+    #     - provider: script
+    #       script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
+    #       on:
+    #         tags: true
 
     - stage: docker
       if: branch = master

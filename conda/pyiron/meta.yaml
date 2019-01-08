@@ -19,6 +19,7 @@ requirements:
 
   run:
     - ase
+    - future
     - h5io
     - python
     - phonopy
