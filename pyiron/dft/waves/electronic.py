@@ -455,7 +455,8 @@ class ElectronicStructure(object):
             group_name: Name of the group under which the attributes are stored
         """
         with hdf.open(group_name) as h_es:
-            h_es["TYPE"] = str(type(self))
+            if "TYPE" not in h_es.list_nodes():
+                h_es["TYPE"] = str(type(self))
             nodes = h_es.list_nodes()
             if self.structure is not None:
                 self.structure.to_hdf(h_es)
