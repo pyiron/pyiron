@@ -84,7 +84,7 @@ class LammpsPotential(GenericParameters):
 
     def to_hdf(self, hdf, group_name=None):
         with hdf.open('potential') as hdf_pot:
-            if self.custom_potential.df is not None:
+            if self.custom_potential is not None:
                 for key in ['Config', 'Filename', 'Name', 'Model', 'Species']:
                     hdf_pot[key] = self.custom_potential.df[key].values[0]
                 if 'Content' in self.custom_potential.df.columns:
@@ -175,87 +175,37 @@ class CustomPotential(GenericParameters):
 
     def _initialize(self,pot):
 
-        if pot == 'lj/cut':
-            for k in ['sigma']+['sigma_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k] = 1
-            for k in ['epsilon']+['epsilon_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k] = 0
-            self['cutoff']=8.0
-
-        if pot == 'morse':
-            for k in ['D0']+['D0_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=0
-            for k in ['alpha']+['alpha_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=1
-            for k in ['r0']+['r0_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=1
-            self['cutoff']=8.0
-
-        if pot == 'buck':
-            for k in ['A']+['A_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=0
-            for k in ['rho']+['rho_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=1
-            for k in ['C']+['C_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=0
-            self['cutoff']=8
-
-        if pot == 'mie/cut':
-            for k in ['epsilon']+['epsilon_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=0
-            for k in ['sigma']+['sigma_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=1
-            for k in ['gammaR']+['gammaR_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=1
-            for k in ['gammaA']+['gammaA_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=1
-            self['cutoff']=8.0
-
-        if pot == 'yukawa':
-            for k in ['A']+['A_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=1
-            for k in ['cutoff']+['cutoff_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=3
-            self['kappa']=0.0
-
-        if pot.startswith('born'):
-            for k in ['A']+['A_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=0
-            for k in ['rho']+['rho_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=1
-            for k in ['sigma']+['sigma_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=1
-            for k in ['C']+['C_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=0
-            for k in ['D']+['D_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=0
-            for k in ['cutoff_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k] = None
-            self['cutoff'] = 4
-
-        if pot == 'gauss':
-            for k in ['A']+['A_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=0
-            for k in ['B']+['B_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k]=0
-            for k in ['cutoff_'+str(value[0])+'_'+str(value[1]) for value in self.combinations]:
-                self[k] = None
-            self['cutoff'] = 3
+        pair_coeff_parameters, pair_style_parameters = self.available_keys(self._model)
+        for k,v in pair_style_parameters.items():
+            self[k] = v
+        for k,v in pair_coeff_parameters.items():
+            self[k] = v
+            for value in self.combinations:
+                self[k+'_'+str(value[0])+'_'+str(value[1])] = None
 
         self._value_modified={k:False for k in self.get_pandas()['Parameter']}
         if 'sub_potential' in list(self._value_modified.keys()):
             del self._value_modified['sub_potential']
 
 
-    def set_parameter(self, parameter, element_one=None, element_two=None, value=0):
-        if element_one is None and element_two is None:
+    def set_parameter(self, parameter, elements=[], value=0):
+        if len(elements)==0:
             key = parameter
         else:
-            key = parameter+'_'+element_one+'_'+element_two
-            if key not in list(self.get_pandas()['Parameter']):
-                key = parameter+'_'+element_two+'_'+element_one
+            key = parameter+'_'+elements[0]+'_'+elements[1]
+            if parameter+'_'+elements[0]+'_'+elements[1] not in list(self.get_pandas()['Parameter']):
+                elements[0], elements[1] = elements[1], elements[0]
+            key = parameter+'_'+elements[0]+'_'+elements[1]
         self[key]=value
         self._value_modified[key] = True
+        if len(elements) != 0:
+            pair_coeff_parameters, _ = self.available_keys(self._model)
+            for keys in pair_coeff_parameters.keys():
+                if keys==parameter:
+                    continue
+                if keys+'_'+elements[0]+'_'+elements[1] in list(self.get_pandas()['Parameter']):
+                    if self[keys+'_'+elements[0]+'_'+elements[1]] is None:
+                        self[keys+'_'+elements[0]+'_'+elements[1]] = self[keys]
 
     def get_parameter(self, parameter, element_one=None, element_two=None):
         if element_one is None and element_two is None:
@@ -269,107 +219,16 @@ class CustomPotential(GenericParameters):
         return self[key]
 
     def _config_file(self, pot):
+        pair_coeff_parameters, pair_style_parameters = self.available_keys(self._model)
         config_vars = []
-        if pot == 'lj/cut':
-            pair_style=['pair_style '+self._model+' '+str(self['cutoff'])+ ' \n']
-            config_vars.append('pair_coeff * * '+str(self.get_parameter('epsilon'))+
-                               ' '+str(self.get_parameter('sigma'))+'\n')
-            for i in range(len(self.combinations)):
-                if len(self.elements)==1:
-                    break
-                config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)+
-                                   ' '+str(self._element_indices[self.combinations[i,0]]+1)+
-                                   ' '+str(self.get_parameter('epsilon', self.combinations[i,0], self.combinations[i,1]))+
-                                   ' '+str(self.get_parameter('sigma', self.combinations[i,0], self.combinations[i,1]))+'\n')
-
-        if pot == 'morse':
-            pair_style=['pair_style '+self._model+' '+str(self['cutoff'])+ ' \n']
-            config_vars.append('pair_coeff * * '+str(self.get_parameter('D0'))+
-                                             ' '+str(self.get_parameter('alpha'))+' '+str(self.get_parameter('r0'))+'\n')
-            for i in range(len(self.combinations)):
-                if len(self.elements)==1:
-                    break
-                config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)
-                                   +' '+str(self._element_indices[self.combinations[i,0]]+1)
-                                   +' '+str(self.get_parameter('D0', self.combinations[i,0], self.combinations[i,1]))
-                                   +' '+str(self.get_parameter('alpha', self.combinations[i,0], self.combinations[i,1]))
-                                   +' '+str(self.get_parameter('r0', self.combinations[i,0], self.combinations[i,1]))+'\n')
-
-
-        if pot == 'buckingham':
-            pair_style=['pair_style '+self._model+' '+str(self['cutoff'])+ ' \n']
-            config_vars.append('pair_coeff * * '+str(self.get_parameter('A'))+
-                                             ' '+str(self.get_parameter('rho'))+' '+str(self.get_parameter('C'))+'\n')
-            for i in range(len(self.combinations)):
-                if len(self.elements)==1:
-                    break
-                config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)
-                                   +' '+str(self._element_indices[self.combinations[i,0]]+1)
-                                   +' '+str(self.get_parameter('A', self.combinations[i,0], self.combinations[i,1]))
-                                   +' '+str(self.get_parameter('rho', self.combinations[i,0], self.combinations[i,1]))
-                                   +' '+str(self.get_parameter('C', self.combinations[i,0], self.combinations[i,1]))+'\n')
-
-        if pot =='mie/cut':
-            pair_style=['pair_style '+self._model+' '+str(self['cutoff'])+ ' \n']
-            config_vars.append('pair_coeff * * '+str(self.get_parameter('epsilon'))
-                               +' '+str(self.get_parameter('sigma'))+' '+str(self.get_parameter('gammaR'))
-                               +' '+str(self.get_parameter('gammaA'))+'\n')
-            for i in range(len(self.combinations)):
-                if len(self.elements)==1:
-                    break
-                config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)
-                                   +' '+str(self._element_indices[self.combinations[i,0]]+1)
-                                   +' '+str(self.get_parameter('epsilon', self.combinations[i,0], self.combinations[i,1]))
-                                   +' '+str(self.get_parameter('sigma', self.combinations[i,0], self.combinations[i,1]))
-                                   +' '+str(self.get_parameter('gammaR', self.combinations[i,0], self.combinations[i,1]))
-                                   +' '+str(self.get_parameter('gammaA', self.combinations[i,0], self.combinations[i,1]))+'\n')
-
-
-
-        if pot =='yukawa':
-            pair_style=['pair_style '+self._model+' '+str(self['kappa'])+' '+str(self['cutoff'])+'\n']
-            config_vars.append('pair_coeff * * '+str(self.get_parameter('A'))+
-                                     ' '+str(self.get_parameter('cutoff'))+'\n')
-            for i in range(len(self.combinations)):
-                if len(self.elements)==1:
-                    break
-                config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)+
-                                   ' '+str(self._element_indices[self.combinations[i,0]]+1)+
-                                   ' '+str(self.get_parameter('A', self.combinations[i,0], self.combinations[i,1]))+
-                                   ' '+str(self.get_parameter('cutoff', self.combinations[i,0], self.combinations[i,1]))+'\n')
-
-
-        if pot.startswith('born'):
-            pair_style=['pair_style '+self._model+' '+str(self['cutoff'])+ ' \n']
-            config_vars.append('pair_coeff * * '+str(self.get_parameter('A'))+
-                               ' '+str(self.get_parameter('rho'))+' '+str(self.get_parameter('sigma'))+
-                               ' '+str(self.get_parameter('C'))+' '+str(self.get_parameter('D'))+
-                               ' '+str(self.get_parameter('cutoff'))+'\n')
-            for i in range(len(self.combinations)):
-                if len(self.elements)==1:
-                    break
-                config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)
-                                   +' '+str(self._element_indices[self.combinations[i,0]]+1)
-                                   +' '+str(self.get_parameter('A', self.combinations[i,0], self.combinations[i,1]))
-                                   +' '+str(self.get_parameter('rho', self.combinations[i,0], self.combinations[i,1]))
-                                   +' '+str(self.get_parameter('sigma', self.combinations[i,0], self.combinations[i,1]))
-                                   +' '+str(self.get_parameter('C', self.combinations[i,0], self.combinations[i,1]))
-                                   +' '+str(self.get_parameter('D', self.combinations[i,0], self.combinations[i,1]))
-                                   +' '+str(self.get_parameter('cutoff', self.combinations[i,0], self.combinations[i,1]))+'\n')
-
-        if pot == 'gauss':
-            pair_style=['pair_style '+self._model+' '+str(self['cutoff'])+ ' \n']
-            config_vars.append('pair_coeff * * '+str(self.get_parameter('A'))+
-                                             ' '+str(self.get_parameter('B'))+' '+str(self.get_parameter('cutoff'))+'\n')
-            for i in range(len(self.combinations)):
-                if len(self.elements)==1:
-                    break
-                config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)+
-                                   ' '+str(self._element_indices[self.combinations[i,0]]+1)+
-                                   ' '+str(self.get_parameter('A', self.combinations[i,0], self.combinations[i,1]))+
-                                   ' '+str(self.get_parameter('B', self.combinations[i,0], self.combinations[i,1]))+
-                                   ' '+str(self.get_parameter('cutoff', self.combinations[i,0], self.combinations[i,1]))+'\n')
-
+        pair_style=['pair_style '+self._model+' '+' '.join([str(self[k]) for k in list(pair_style_parameters.keys())])+ ' \n']
+        config_vars.append('pair_coeff * * '+' '.join([str(self.get_parameter(k)) for k in list(pair_coeff_parameters.keys())])+'\n')
+        for i in range(len(self.combinations)):
+            if len(str(''.join([str(self.get_parameter(k, self.combinations[i,0], self.combinations[i,1])) for k in list(pair_coeff_parameters.keys())])))==0 or len(self.elements)==1:
+                continue
+            config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)+
+                               ' '+str(self._element_indices[self.combinations[i,0]]+1)+' '+
+                               ' '.join([str(self.get_parameter(k, self.combinations[i,0], self.combinations[i,1])) for k in list(pair_coeff_parameters.keys())])+'\n')
         config_vars=pair_style+config_vars
         return config_vars
 
@@ -486,18 +345,20 @@ class CustomPotential(GenericParameters):
     def available_keys(self, pot):
         if pot.startswith('lj'):
             return OrderedDict({'sigma': 1, 'epsilon': 0}), OrderedDict({'cutoff': 8.0})
-        if pot.startswith('morse'):
+        elif pot.startswith('morse'):
             return OrderedDict({'D0': 0, 'alpha': 1, 'r0': 1}), OrderedDict({'cutoff': 8.0})
-        if pot.startswith('buck'):
+        elif pot.startswith('buck'):
             return OrderedDict({'A': 0, 'rho': 1, 'C': 0}), OrderedDict({'cutoff': 8.0})
-        if pot.startswith('mie'):
+        elif pot.startswith('mie'):
             return OrderedDict({'epsilon': 0, 'sigma': 1, 'gammaR': 1, 'gammaA': 1}), OrderedDict({'cutoff': 8.0})
-        if pot.startswith('yukawa'):
+        elif pot.startswith('yukawa'):
             return OrderedDict({'A': 0, 'cutoff': 3}), OrderedDict({'kappa': 1.0, 'cutoff': 8.0})
-        if pot.startswith('born'):
+        elif pot.startswith('born'):
             return OrderedDict({'A': 0, 'rho': 1, 'sigma': 1, 'C': 0, 'D': 0, 'cutoff': None}), OrderedDict({'cutoff': 4.0})
-        if pot.startswith('gauss'):
+        elif pot.startswith('gauss'):
             return OrderedDict({'A': 0, 'B': 0, 'cutoff': None}), OrderedDict({'cutoff': 3.0})
+        else:
+            None, None
 
 
 class LammpsPotentialFile(PotentialAbstract):
