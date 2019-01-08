@@ -179,7 +179,7 @@ class GenericMaster(GenericJob):
             if self.project_hdf5.file_name != job.project_hdf5.file_name or self.project_hdf5.h5_path not in job.project_hdf5.h5_path:
                 try:
                     job.move_to(self._hdf5)
-                except (ValueError, FileExistsError):
+                except (ValueError, FileExistsError, RuntimeError):
                     pass
 
     def pop(self, i):
