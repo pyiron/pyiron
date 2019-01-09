@@ -238,7 +238,7 @@ class GenericOutput(GenericOutputBase):
                     else:
                         hdf_dft[key] = val
                 if self.bands.eigenvalue_matrix is not None:
-                    self.bands.to_hdf_new(hdf_dft, "bands")
+                    self.bands.to_hdf(hdf_dft, "bands")
 
 
 class DFTOutput(DFTOutputBase):
