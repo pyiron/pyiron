@@ -23,8 +23,8 @@ class TestElectronicStructure(unittest.TestCase):
     def tearDownClass(cls):
         if sys.version_info[0] >= 3:
             file_location = os.path.dirname(os.path.abspath(__file__))
-            if os.path.isfile(os.path.join(file_location, "../../static/dft/test_es_hdf")):
-                os.remove(os.path.join(file_location, "../../static/dft/test_es_hdf"))
+            if os.path.isfile(os.path.join(file_location, "../../static/dft/test_es_hdf.h5")):
+                os.remove(os.path.join(file_location, "../../static/dft/test_es_hdf.h5"))
 
     def setUp(self):
         self.es_list = list()
