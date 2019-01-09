@@ -92,7 +92,7 @@ class VaspInteractive(VaspBase, GenericInteractive):
         else:
             return None
 
-    def interactive_open(self):
+    def interactive_initialize_interface(self):
         if self.executable.executable_path == '':
             self.status.aborted = True
             raise ValueError('No executable set!')
