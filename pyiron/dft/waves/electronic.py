@@ -456,29 +456,29 @@ class ElectronicStructure(object):
         """
         if 'dos' not in hdf[group_name].list_groups():
             self.from_hdf_old(hdf=hdf, group_name=group_name)
-            return
-        with hdf.open(group_name) as h_es:
-            if "TYPE" not in h_es.list_nodes():
-                h_es["TYPE"] = str(type(self))
-            nodes = h_es.list_nodes()
-            if self.structure is not None:
-                self.structure.to_hdf(h_es)
-            self.kpoint_list = h_es["k_points"]
-            self.kpoint_weights = h_es["k_weights"]
-            self.eigenvalue_matrix = h_es["eig_matrix"]
-            self.occupancy_matrix = h_es["occ_matrix"]
-            if "efermi" in nodes:
-                self.efermi = h_es["efermi"]
-            with h_es.open("dos") as h_dos:
-                nodes = h_dos.list_nodes()
-                self.dos_energies = h_dos["energies"]
-                self.dos_densities = h_dos["tot_densities"]
-                self.dos_idensities = h_dos["int_densities"]
-                if "grand_dos_matrix" in nodes:
-                    self.grand_dos_matrix = h_dos["grand_dos_matrix"]
-                if "resolved_densities" in nodes:
-                    self.resolved_densities = h_dos["resolved_densities"]
-        self.generate_from_matrices()
+        else:
+            with hdf.open(group_name) as h_es:
+                if "TYPE" not in h_es.list_nodes():
+                    h_es["TYPE"] = str(type(self))
+                nodes = h_es.list_nodes()
+                if self.structure is not None:
+                    self.structure.to_hdf(h_es)
+                self.kpoint_list = h_es["k_points"]
+                self.kpoint_weights = h_es["k_weights"]
+                self.eigenvalue_matrix = h_es["eig_matrix"]
+                self.occupancy_matrix = h_es["occ_matrix"]
+                if "efermi" in nodes:
+                    self.efermi = h_es["efermi"]
+                with h_es.open("dos") as h_dos:
+                    nodes = h_dos.list_nodes()
+                    self.dos_energies = h_dos["energies"]
+                    self.dos_densities = h_dos["tot_densities"]
+                    self.dos_idensities = h_dos["int_densities"]
+                    if "grand_dos_matrix" in nodes:
+                        self.grand_dos_matrix = h_dos["grand_dos_matrix"]
+                    if "resolved_densities" in nodes:
+                        self.resolved_densities = h_dos["resolved_densities"]
+            self.generate_from_matrices()
 
     def to_hdf_old(self, hdf, group_name="electronic_structure"):
         """
