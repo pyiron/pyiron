@@ -393,7 +393,7 @@ class LammpsBase(AtomisticGenericJob):
         super(LammpsBase, self).calc_static()
         self.input.control.calc_static()
 
-    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, dt=None, time_step=None, n_print=100,
+    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100,
                 delta_temp=100.0, delta_press=None, seed=None, tloop=None, rescale_velocity=True, langevin=False):
         """
 
@@ -411,8 +411,6 @@ class LammpsBase(AtomisticGenericJob):
             rescale_velocity:
 
         """
-        if dt is not None:
-            time_step = dt
         super(LammpsBase, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
                                         time_step=time_step, n_print=n_print, delta_temp=delta_temp,
                                         delta_press=delta_press,
