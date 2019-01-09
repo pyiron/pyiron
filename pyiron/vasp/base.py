@@ -1354,7 +1354,7 @@ class GenericOutput:
                 for key, val in self.dft_log_dict.items():
                     hdf_dft[key] = val
                 if self.bands.eigenvalue_matrix is not None:
-                    self.bands.to_hdf_new(hdf_dft, "bands")
+                    self.bands.to_hdf(hdf_dft, "bands")
 
     def from_hdf(self, hdf):
         """
@@ -1374,7 +1374,7 @@ class GenericOutput:
                     for node in hdf_dft.list_nodes():
                         self.dft_log_dict[node] = hdf_dft[node]
                     if 'bands' in hdf_dft.list_groups():
-                        self.bands.from_hdf_new(hdf_dft, "bands")
+                        self.bands.from_hdf(hdf_dft, "bands")
 
 
 class DFTOutput:
