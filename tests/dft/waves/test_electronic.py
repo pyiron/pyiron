@@ -69,7 +69,7 @@ class TestElectronicStructure(unittest.TestCase):
 
     def test_from_hdf(self):
         if sys.version_info[0] >= 3:
-            filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../static/dft/es_hdf")
+            filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../static/dft/es_hdf.h5")
             abs_filename = os.path.abspath(filename)
             hdf_obj = FileHDFio(abs_filename)
             es_obj_old = ElectronicStructure()
@@ -84,7 +84,7 @@ class TestElectronicStructure(unittest.TestCase):
 
     def test_to_hdf(self):
         if sys.version_info[0] >= 3:
-            filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../static/dft/test_es_hdf")
+            filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../static/dft/test_es_hdf.h5")
             abs_filename = os.path.abspath(filename)
             hdf_obj = FileHDFio(abs_filename)
             es_obj_old = self.es_list[1]
