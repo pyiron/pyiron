@@ -26,7 +26,8 @@ class TestElectronicStructure(unittest.TestCase):
         for f in file_list:
             vp = Vasprun()
             self.assertIsInstance(vp.vasprun_dict, dict)
-            direc = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../static/vasprun_samples"))
+            direc = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                 "../../static/vasprun_samples"))
             filename = posixpath.join(direc, f)
             vp.from_file(filename)
             es = vp.get_electronic_structure()
@@ -73,5 +74,31 @@ class TestElectronicStructure(unittest.TestCase):
             self.assertEqual(es_obj_old.vbm, es_obj_new.vbm)
             self.assertEqual(es_obj_old.cbm, es_obj_new.cbm)
             self.assertTrue(np.array_equal(es_obj_new.grand_dos_matrix, es_obj_old.grand_dos_matrix))
+
+    def test_to_hdf(self):
+        if sys.version_info[0] >= 3:
+            filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../static/dft/test_hdf_es")
+            abs_filename = os.path.abspath(filename)
+            hdf_obj = FileHDFio(abs_filename)
+            es_obj_old = self.es_list[1]
+            es_obj_old.to_hdf(hdf_obj, group_name="written_es")
+            es_obj_new = ElectronicStructure()
+            es_obj_new.from_hdf(hdf=hdf_obj, group_name="written_es")
+            self.assertTrue(np.array_equal(hdf_obj["written_es/dos/grand_dos_matrix"], es_obj_old.grand_dos_matrix))
+            self.assertEqual(es_obj_old.efermi, es_obj_new.efermi)
+            self.assertEqual(es_obj_old.is_metal, es_obj_new.is_metal)
+            self.assertEqual(es_obj_old.vbm, es_obj_new.vbm)
+            self.assertEqual(es_obj_old.cbm, es_obj_new.cbm)
+            self.assertTrue(np.array_equal(es_obj_new.grand_dos_matrix, es_obj_old.grand_dos_matrix))
+            self.assertTrue(np.array_equal(es_obj_new.resolved_densities, es_obj_old.resolved_densities))
+
+    def test_is_metal(self):
+        self.assertTrue(self.es_list[1].is_metal)
+
+
+
+
+
+
 
 
