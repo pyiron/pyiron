@@ -470,7 +470,7 @@ class ElectronicStructure(object):
             if "efermi" in nodes:
                 self.efermi = h_es["efermi"]
             with h_es.open("dos") as h_dos:
-                nodes = h_es.list_nodes()
+                nodes = h_dos.list_nodes()
                 self.dos_energies = h_dos["energies"]
                 self.dos_densities = h_dos["tot_densities"]
                 self.dos_idensities = h_dos["int_densities"]
