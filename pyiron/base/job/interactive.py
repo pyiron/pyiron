@@ -100,6 +100,9 @@ class InteractiveBase(GenericJob):
                     self._extend_hdf(h5=h5, path=path, key=key, data=np.array(data))
                 self.interactive_cache[key] = []
 
+    def interactive_open(self):
+        self.server.run_mode.interactive = True
+
     def interactive_close(self):
         if len(list(self.interactive_cache.keys())) > 0 and \
                 len(self.interactive_cache[list(self.interactive_cache.keys())[0]]) != 0:
