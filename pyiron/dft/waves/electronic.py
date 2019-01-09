@@ -419,7 +419,7 @@ class ElectronicStructure(object):
         """
         self._grand_dos_matrix = val
 
-    def to_hdf_new(self, hdf, group_name="band"):
+    def to_hdf(self, hdf, group_name="band"):
         """
         Store the object to hdf5 file
 
@@ -446,7 +446,7 @@ class ElectronicStructure(object):
                 if self.resolved_densities is not None:
                     h_dos["resolved_densities"] = self.resolved_densities
 
-    def from_hdf_new(self, hdf, group_name="bands"):
+    def from_hdf(self, hdf, group_name="bands"):
         """
         Retrieve the object from the hdf5 file
 
@@ -477,7 +477,7 @@ class ElectronicStructure(object):
                     self.resolved_densities = h_dos["resolved_densities"]
         self.generate_from_matrices()
 
-    def to_hdf(self, hdf, group_name="electronic_structure"):
+    def to_hdf_old(self, hdf, group_name="electronic_structure"):
         """
         Store the object to hdf5 file
 
@@ -503,7 +503,7 @@ class ElectronicStructure(object):
             if self.resolved_densities is not None:
                 h_es["resolved_densities"] = self.resolved_densities
 
-    def from_hdf(self, hdf, group_name="electronic_structure"):
+    def from_hdf_old(self, hdf, group_name="electronic_structure"):
         """
         Retrieve the object from the hdf5 file
 
