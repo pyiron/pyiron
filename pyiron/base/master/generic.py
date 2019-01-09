@@ -179,7 +179,7 @@ class GenericMaster(GenericJob):
             if self.project_hdf5.file_name != job.project_hdf5.file_name or self.project_hdf5.h5_path not in job.project_hdf5.h5_path:
                 try:
                     job.move_to(self._hdf5)
-                except (ValueError, FileExistsError):
+                except (ValueError, FileExistsError, RuntimeError):
                     pass
 
     def pop(self, i):
@@ -192,7 +192,7 @@ class GenericMaster(GenericJob):
         Returns:
             GenericJob: job
         """
-        job_to_return = self[i]
+        job_to_return = getattr(self, self._job_list[i])
         del self._job_list[i]
         with self.project_hdf5.open("input") as hdf5_input:
             hdf5_input["job_list"] = self._job_list
