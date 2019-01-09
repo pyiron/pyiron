@@ -12,6 +12,7 @@ from pyiron.atomistics.job.potentials import PotentialAbstract
 from collections import OrderedDict
 import numpy as np
 import warnings
+import posixpath
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
@@ -38,6 +39,19 @@ class LammpsPotential(GenericParameters):
         self.custom_potential = None
         self._attributes = {}
         self._df = None
+        self._potential_content = None
+
+    @property
+    def potential_content(self):
+        if self.custom_potential is not None and 'Content' in self.custom_potential.df.columns:
+            return self.custom_potential.df['Content']
+        if self._potential_content is None:
+            self._potential_content = []
+            if len(self.files)!=0:
+                for ff in self.files:
+                    with open(ff, 'r') as ff_content:
+                        self._potential_content.append(ff_content.readlines())
+        return self._potential_content
 
     @property
     def df(self):
@@ -77,7 +91,11 @@ class LammpsPotential(GenericParameters):
 
     def copy_pot_files(self, working_directory):
         if self.files is not None:
-            _ = [shutil.copy(path_pot, working_directory) for path_pot in self.files]
+            for input_file, output_file in zip(self.potential_content, list(self._df['Filename'])[0]):
+                with open(posixpath.join(working_directory, output_file.split('/')[-1]), 'w') as output_content:
+                    for line in input_file:
+                        output_content.write(line)
+        #    _ = [shutil.copy(path_pot, working_directory) for path_pot in self.files]
 
     def get_element_lst(self):
         return list(self._df['Species'])[0]
@@ -92,12 +110,7 @@ class LammpsPotential(GenericParameters):
             elif self._df is not None:
                 for key in ['Config', 'Filename', 'Name', 'Model', 'Species']:
                     hdf_pot[key] = self._df[key].values[0]
-                file_list = []
-                if len(self.files)!=0:
-                    for ff in self.files:
-                        with open(ff, 'r') as ff_content:
-                            file_list.append(ff_content.readlines())
-                hdf_pot['Content'] = file_list
+                hdf_pot['Content'] = self.potential_content
         super(LammpsPotential, self).to_hdf(hdf, group_name=group_name)
 
     def from_hdf(self, hdf, group_name=None):
@@ -110,6 +123,7 @@ class LammpsPotential(GenericParameters):
                                              'Model': [hdf_pot['Model']],
                                              'Species': [hdf_pot['Species']],
                                              'Content': [hdf_pot['Content']]})
+                    self._potential_content = self._df['Content']
                 else:
                     self._df = pd.DataFrame({'Config': [hdf_pot['Config']],
                                              'Filename': [hdf_pot['Filename']],
@@ -134,6 +148,7 @@ class CustomPotential(GenericParameters):
         self._element_indices = None
         self._eam_comb = eam_combinations
         self._dataframe = dataframe
+        self.overlay = False
         self['sub_potential'] = pot_sub_style
         pair_pots=['lj/cut','morse','buck','mie/cut','yukawa','born','born/coul/long','gauss']
         if file_name is None:
@@ -167,8 +182,15 @@ class CustomPotential(GenericParameters):
 
     def __setitem__(self, key, value):
         if key not in self._dataset['Parameter'] and self._initialized:
-            warnings.warn('Parameter ('+key+') not found in '+self._model+' Potential. Only Parameters '
-                          +str(list(self._value_modified.keys()))+' can be set.')
+            if key.split('_')[0] not in self._dataset['Parameter']:
+                pair_coeff_parameters, pair_style_parameters = self.available_keys(self._model)
+                print('ERROR:\nParameter '+key+' is not defined in '+self._model+' potential.\n'+
+                      'Available parameters are '+', '.join([str(k) for k in pair_coeff_parameters.keys()])+
+                      ', which can be defined globally or for each pair of elements.\n'+
+                      'Furthermore, '+', '.join([str(k) for k in pair_style_parameters.keys()])+' can be defined globally.\n'+
+                      'For more information, please take a look at pair_coeff '+self._model+' on the LAMMPS website.')
+            else:
+                print('ERROR:\nIt seems you chose a pair of elements not given in your structure')
         else:
             super(CustomPotential, self).__setitem__(key, value)
         #self._dataframe.df = self.potential
@@ -183,19 +205,26 @@ class CustomPotential(GenericParameters):
             for value in self.combinations:
                 self[k+'_'+str(value[0])+'_'+str(value[1])] = None
 
-        self._value_modified={k:False for k in self.get_pandas()['Parameter']}
+        self._value_modified={k:False for k in pair_coeff_parameters.keys()}
         if 'sub_potential' in list(self._value_modified.keys()):
             del self._value_modified['sub_potential']
 
 
-    def set_parameter(self, parameter, elements=[], value=0):
-        if len(elements)==0:
+    def set_parameter(self, parameter, elements=[], value='not defined'):
+        if isinstance(elements, list) and len(elements)==0:
             key = parameter
         else:
-            key = parameter+'_'+elements[0]+'_'+elements[1]
-            if parameter+'_'+elements[0]+'_'+elements[1] not in list(self.get_pandas()['Parameter']):
-                elements[0], elements[1] = elements[1], elements[0]
-            key = parameter+'_'+elements[0]+'_'+elements[1]
+            if not isinstance(elements, list) and not isinstance(elements, str) and value=='not defined':
+                value = elements
+                elements = []
+                key = parameter
+            else:
+                key = parameter+'_'+elements[0]+'_'+elements[1]
+                if parameter+'_'+elements[0]+'_'+elements[1] not in list(self.get_pandas()['Parameter']):
+                    elements[0], elements[1] = elements[1], elements[0]
+                key = parameter+'_'+elements[0]+'_'+elements[1]
+        if value=='not defined':
+            raise ValueError('Value not given. Set a number or None, if the parameter should be removed')
         self[key]=value
         self._value_modified[key] = True
         if len(elements) != 0:
@@ -293,6 +322,15 @@ class CustomPotential(GenericParameters):
             self._file_eam = file.readlines()
         self._initialize(self['sub_potential'])
         self._initialize_eam()
+
+    def _lammps_model(self):
+        if isinstance(self._model, list):
+            if self.overlay:
+                return 'hybrid/overlay'
+            else:
+                return 'hybrid'
+        else:
+            return self._model
 
     def _config_file_hybrid(self):
         if self['sub_potential'] is None:
