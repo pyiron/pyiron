@@ -454,6 +454,9 @@ class ElectronicStructure(object):
             hdf: Path to the hdf5 file/group in the file
             group_name: Name of the group under which the attributes are stored
         """
+        if 'dos' not in hdf[group_name].list_groups():
+            self.from_hdf_old(hdf=hdf, group_name=group_name)
+            return
         with hdf.open(group_name) as h_es:
             if "TYPE" not in h_es.list_nodes():
                 h_es["TYPE"] = str(type(self))
