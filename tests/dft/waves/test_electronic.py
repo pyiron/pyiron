@@ -7,6 +7,8 @@ from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.vasp.vasprun import Vasprun
 from pyiron.dft.waves.dos import Dos
 from pyiron.dft.waves.electronic import ElectronicStructure
+from pyiron.base.generic.hdfio import FileHDFio
+import sys
 
 """
 @author: surendralal
@@ -56,4 +58,20 @@ class TestElectronicStructure(unittest.TestCase):
     def test_occupancies(self):
         for es in self.es_list:
             self.assertEqual(len(es.occupancies), np.product(np.shape(es.occupancy_matrix)))
+
+    def test_from_hdf(self):
+        if sys.version_info[0] >= 3:
+            filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../static/dft/test_hdf_es")
+            abs_filename = os.path.abspath(filename)
+            hdf_obj = FileHDFio(abs_filename)
+            es_obj_old = ElectronicStructure()
+            es_obj_old.from_hdf_old(hdf_obj, "es_old")
+            es_obj_new = ElectronicStructure()
+            es_obj_new.from_hdf(hdf=hdf_obj, group_name="es_new")
+            self.assertEqual(es_obj_old.efermi, es_obj_new.efermi)
+            self.assertEqual(es_obj_old.is_metal, es_obj_new.is_metal)
+            self.assertEqual(es_obj_old.vbm, es_obj_new.vbm)
+            self.assertEqual(es_obj_old.cbm, es_obj_new.cbm)
+            self.assertTrue(np.array_equal(es_obj_new.grand_dos_matrix, es_obj_old.grand_dos_matrix))
+
 
