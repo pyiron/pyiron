@@ -19,6 +19,13 @@ Unittests for the pyiron.objects.electronic module
 
 class TestElectronicStructure(unittest.TestCase):
 
+    @classmethod
+    def tearDownClass(cls):
+        if sys.version_info[0] >= 3:
+            file_location = os.path.dirname(os.path.abspath(__file__))
+            if os.path.isfile(os.path.join(file_location, "../../static/dft/test_es_hdf")):
+                os.remove(os.path.join(file_location, "../../static/dft/test_es_hdf"))
+
     def setUp(self):
         self.es_list = list()
         self.es_obj = ElectronicStructure()
