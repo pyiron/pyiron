@@ -92,7 +92,7 @@ class VaspInteractive(VaspBase, GenericInteractive):
         else:
             return None
 
-    def interactive_open(self):
+    def interactive_initialize_interface(self):
         if self.executable.executable_path == '':
             self.status.aborted = True
             raise ValueError('No executable set!')
@@ -238,7 +238,7 @@ class GenericOutput(GenericOutputBase):
                     else:
                         hdf_dft[key] = val
                 if self.bands.eigenvalue_matrix is not None:
-                    self.bands.to_hdf_new(hdf_dft, "bands")
+                    self.bands.to_hdf(hdf_dft, "bands")
 
 
 class DFTOutput(DFTOutputBase):
