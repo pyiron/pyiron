@@ -663,6 +663,7 @@ class Outcar(object):
         e_kin_err = list()
         n_species_list = list()
         nion_trigger = "ions per type ="
+        tot_kin_error = 0.0
         with open(filename, 'r') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
@@ -672,9 +673,8 @@ class Outcar(object):
                 if nion_trigger in line:
                     n_species_list = [float(val) for val in line.split(nion_trigger)[-1].strip().split()]
         if len(n_species_list) > 0 and len(n_species_list) == len(e_kin_err):
-            return np.sum(np.array(n_species_list) * np.array(e_kin_err))
-        else:
-            return 0.0
+            tot_kin_error = np.sum(np.array(n_species_list) * np.array(e_kin_err))
+        return tot_kin_error
 
     @staticmethod
     def get_fermi_level(filename="OUTCAR"):
