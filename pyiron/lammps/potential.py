@@ -4,11 +4,11 @@
 
 from __future__ import print_function
 import pandas as pd
+import shutil
 import os
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
 from pyiron.atomistics.job.potentials import PotentialAbstract
-import posixpath
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
@@ -32,22 +32,9 @@ class LammpsPotential(GenericParameters):
         super(LammpsPotential, self).__init__(input_file_name=input_file_name,
                                               table_name="potential_inp",
                                               comment_char="#")
-        self.custom_potential = None
+        self._potential = None
         self._attributes = {}
         self._df = None
-        self._potential_content = None
-
-    @property
-    def potential_content(self):
-        if self.custom_potential is not None and 'Content' in self.custom_potential.df.columns:
-            return self.custom_potential.df['Content']
-        if self._potential_content is None:
-            self._potential_content = []
-            if len(self.files)!=0:
-                for ff in self.files:
-                    with open(ff, 'r') as ff_content:
-                        self._potential_content.append(ff_content.readlines())
-        return self._potential_content
 
     @property
     def df(self):
@@ -70,7 +57,7 @@ class LammpsPotential(GenericParameters):
 
     @property
     def files(self):
-        if self._df is not None and len(self._df['Filename'])>0:
+        if list(self._df['Filename'])[0]:
             absolute_file_paths = [files for files in list(self._df['Filename'])[0] if os.path.isabs(files)]
             relative_file_paths = [files for files in list(self._df['Filename'])[0] if not os.path.isabs(files)]
             for path in relative_file_paths:
@@ -87,45 +74,29 @@ class LammpsPotential(GenericParameters):
 
     def copy_pot_files(self, working_directory):
         if self.files is not None:
-            for input_file, output_file in zip(self.potential_content, list(self._df['Filename'])[0]):
-                with open(posixpath.join(working_directory, output_file.split('/')[-1]), 'w') as output_content:
-                    for line in input_file:
-                        output_content.write(line)
-        #    _ = [shutil.copy(path_pot, working_directory) for path_pot in self.files]
+            _ = [shutil.copy(path_pot, working_directory) for path_pot in self.files]
 
     def get_element_lst(self):
         return list(self._df['Species'])[0]
 
     def to_hdf(self, hdf, group_name=None):
-        with hdf.open('potential') as hdf_pot:
-            if self.custom_potential is not None:
-                for key in ['Config', 'Filename', 'Name', 'Model', 'Species']:
-                    hdf_pot[key] = self.custom_potential.df[key].values[0]
-                if 'Content' in self.custom_potential.df.columns:
-                    hdf_pot['Content'] = file_list
-            elif self._df is not None:
-                for key in ['Config', 'Filename', 'Name', 'Model', 'Species']:
-                    hdf_pot[key] = self._df[key].values[0]
-                hdf_pot['Content'] = self.potential_content
+        if self._df is not None:
+            with hdf.open('potential') as hdf_pot:
+                hdf_pot['Config'] = self._df['Config'].values[0]
+                hdf_pot['Filename'] = self._df['Filename'].values[0]
+                hdf_pot['Name'] = self._df['Name'].values[0]
+                hdf_pot['Model'] = self._df['Model'].values[0]
+                hdf_pot['Species'] = self._df['Species'].values[0]
         super(LammpsPotential, self).to_hdf(hdf, group_name=group_name)
 
     def from_hdf(self, hdf, group_name=None):
         with hdf.open('potential') as hdf_pot:
             try:
-                if "Content" in hdf.list_nodes():
-                    self._df = pd.DataFrame({'Config': [hdf_pot['Config']],
-                                             'Filename': [hdf_pot['Filename']],
-                                             'Name': [hdf_pot['Name']],
-                                             'Model': [hdf_pot['Model']],
-                                             'Species': [hdf_pot['Species']],
-                                             'Content': [hdf_pot['Content']]})
-                    self._potential_content = self._df['Content']
-                else:
-                    self._df = pd.DataFrame({'Config': [hdf_pot['Config']],
-                                             'Filename': [hdf_pot['Filename']],
-                                             'Name': [hdf_pot['Name']],
-                                             'Model': [hdf_pot['Model']],
-                                             'Species': [hdf_pot['Species']]})
+                self._df = pd.DataFrame({'Config': [hdf_pot['Config']],
+                                         'Filename': [hdf_pot['Filename']],
+                                         'Name': [hdf_pot['Name']],
+                                         'Model': [hdf_pot['Model']],
+                                         'Species': [hdf_pot['Species']]})
             except ValueError:
                 pass
         super(LammpsPotential, self).from_hdf(hdf, group_name=group_name)
