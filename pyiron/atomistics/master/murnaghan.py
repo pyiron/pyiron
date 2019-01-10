@@ -212,6 +212,18 @@ class Murnaghan(AtomisticParallelMaster):
     def equilibrium_energy(self):
         return self.fit_dict["energy_eq"]
 
+    def list_structures(self):
+        if self.ref_job.structure is not None:
+            structure_lst = []
+            start_structure = self.ref_job.structure
+            for strain in self._job_generator.parameter_list:
+                basis = start_structure.copy()
+                basis.set_cell(basis.cell * strain ** (1. / 3.), scale_atoms=True)
+                structure_lst.append(basis)
+            return structure_lst
+        else:
+            return []
+
     def run_if_interactive(self):
         start_structure = self.ref_job.structure
         self.ref_job_initialize()
