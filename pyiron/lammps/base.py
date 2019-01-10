@@ -13,7 +13,6 @@ import numpy as np
 import pandas as pd
 
 from pyiron.lammps.potential import LammpsPotentialFile
-from pyiron.lammps.potential import CustomPotential
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 from pyiron.base.settings.generic import Settings
 from pyiron.base.pyio.parser import Logstatus, extract_data_from_file
@@ -99,20 +98,15 @@ class LammpsBase(AtomisticGenericJob):
 
         """
         if isinstance(potential_filename, str):
-            if potential_filename in ['lj/cut','morse','buck','mie/cut','yukawa','born','born/coul/long','gauss']:
-                self.input.potential.custom_potential = CustomPotential(self.structure, pot_type=potential_filename, dataframe=self.input.potential)
-                self.input.potential.df = self.input.potential.custom_potential.df
-            else:
-                if '.lmp' in potential_filename:
-                    potential_filename = potential_filename.split('.lmp')[0]
-                potential_db = LammpsPotentialFile()
-                self.input.potential.df = potential_db.find_by_name(potential_filename)
-                #self._custom_potential = CustomPotential(self.structure, pot_type = potential_filename)
+            if '.lmp' in potential_filename:
+                potential_filename = potential_filename.split('.lmp')[0]
+            potential_db = LammpsPotentialFile()
+            potential = potential_db.find_by_name(potential_filename)
         elif isinstance(potential_filename, pd.DataFrame):
-            self.input.potential.df = potential_filename
+            potential = potential_filename
         else:
             raise TypeError('Potentials have to be strings or pandas dataframes.')
-        #self.input.potential.df = potential
+        self.input.potential.df = potential
         for val in ["units", "atom_style", "dimension"]:
             v = self.input.potential[val]
             if v is not None:
