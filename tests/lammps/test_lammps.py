@@ -5,6 +5,7 @@ from pyiron.base.project.generic import Project
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.lammps.lammps import Lammps
+from pyiron.lammps.base import LammpsStructure
 
 
 class TestLammps(unittest.TestCase):
@@ -40,6 +41,52 @@ class TestLammps(unittest.TestCase):
         self.assertTrue('group' in self.job.input.control._dataset["Parameter"])
         para_lst = np.array(self.job.input.control._dataset["Parameter"])
         self.assertEqual(len(para_lst[para_lst == 'group']), 7)
+
+    def test_structure_atomic(self):
+        atoms = Atoms('Fe1', positions=np.zeros((1, 3)), cell=np.eye(3))
+        lmp_structure = LammpsStructure()
+        lmp_structure._el_eam_lst = ['Fe']
+        lmp_structure.structure = atoms
+        self.assertEqual(lmp_structure._dataset['Value'], ['File for LAMMPS',
+                                                           'atoms',
+                                                           'atom types',
+                                                           '',
+                                                           '1.000000000000000 xlo xhi',
+                                                           '1.000000000000000 ylo yhi',
+                                                           '1.000000000000000 zlo zhi',
+                                                           '',
+                                                           '',
+                                                           '',
+                                                           '55.845001',
+                                                           '',
+                                                           '',
+                                                           '',
+                                                           '1 0.000000000000000 0.000000000000000 0.000000000000000',
+                                                           ''])
+
+    def test_structure_charge(self):
+        atoms = Atoms('Fe1', positions=np.zeros((1, 3)), cell=np.eye(3))
+        atoms.add_tag(charge=2.0)
+        lmp_structure = LammpsStructure()
+        lmp_structure.atom_type = 'charge'
+        lmp_structure._el_eam_lst = ['Fe']
+        lmp_structure.structure = atoms
+        self.assertEqual(lmp_structure._dataset['Value'], ['File for LAMMPS',
+                                                           'atoms',
+                                                           'atom types',
+                                                           '',
+                                                           '1.000000000000000 xlo xhi',
+                                                           '1.000000000000000 ylo yhi',
+                                                           '1.000000000000000 zlo zhi',
+                                                           '',
+                                                           '',
+                                                           '',
+                                                           '55.845001',
+                                                           '',
+                                                           '',
+                                                           '',
+                                                           '1 2.000000 0.000000000000000 0.000000000000000 0.000000000000000',
+                                                           ''])
 
 
 if __name__ == '__main__':

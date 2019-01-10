@@ -48,7 +48,7 @@ class LammpsPotential(GenericParameters):
             self.load_string(''.join(list(new_dataframe['Config'])[0]))
         except IndexError:
             raise ValueError('Potential not found! '
-                             'Validate the potential name by self.potential in self.list_potentials().')
+                            'Validate the potential name by self.potential in self.list_potentials().')
 
     def remove_structure_block(self):
         self.remove_keys(["units"])
