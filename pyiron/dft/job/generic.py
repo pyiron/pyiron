@@ -85,6 +85,24 @@ class GenericDFTJob(AtomisticGenericJob):
             raise AssertionError()
         self._generic_input['fix_symmetry'] = boolean
 
+    def get_structure(self, iteration_step=-1):
+        """
+        Gets the structure from a given iteration step of the simulation (MD/ionic relaxation). For static calculations
+        there is only one ionic iteration step
+        Args:
+            iteration_step (int): Step for which the structure is requested
+
+        Returns:
+            atomistics.structure.atoms.Atoms object
+
+
+        """
+        snapshot = super(AtomisticGenericJob).get_structure(iteration_step=iteration_step)
+        spins = self.get("output/generic/dft/atom_spins")
+        if spins is not None:
+            snapshot.set_initial_magnetic_moments(spins[iteration_step])
+        return snapshot
+
     def set_kmesh_density(self, kspace_per_in_ang=0.10):
         mesh = self._get_k_mesh_by_cell(self.structure, kspace_per_in_ang)
         self.set_kpoints(mesh=mesh, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
