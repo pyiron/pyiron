@@ -429,20 +429,10 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(len(Al.get_symmetry()['translations']), 96)
         self.assertEqual(len(Al.get_symmetry()['translations']), len(Al.get_symmetry()['rotations']))
 
-    def get_equivalent_voronoi_vertices(self):
-        cell = 2.2 * np.identity(3)
-        Al = Atoms('AlAl', positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell).repeat(2)
-        pos, box = Al.get_equivalent_voronoi_vertices(return_box=True)
-        self.assertEqual(len(Al), 69)
-        self.assertEqual(len(len(Al.get_species_symbols())), 2)
-        Al = Atoms('AlAl', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell).repeat(2)
-        pos = Al.get_equivalent_voronoi_vertices()
-        self.assertEqual(len(pos), 1)
-
     def _get_voronoi_vertices(self):
         cell = 2.2 * np.identity(3)
         Al = Atoms('AlAl', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
-        pos, box = Al.get_equivalent_voronoi_vertices()
+        pos, box = Al._get_voronoi_vertices()
         self.assertEqual(len(pos), 14)
 
     def get_equivalent_voronoi_vertices(self):
