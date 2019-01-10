@@ -97,7 +97,7 @@ class GenericDFTJob(AtomisticGenericJob):
 
 
         """
-        snapshot = super(AtomisticGenericJob).get_structure(iteration_step=iteration_step)
+        snapshot = super(GenericDFTJob).get_structure(iteration_step=iteration_step)
         spins = self.get("output/generic/dft/atom_spins")
         if spins is not None:
             snapshot.set_initial_magnetic_moments(spins[iteration_step])
