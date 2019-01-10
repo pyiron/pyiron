@@ -649,40 +649,32 @@ class Outcar(object):
         return potim * self.get_steps(filename)
 
     @staticmethod
-    def get_kinetic_energy_error(filename="OUTCAR", total=True):
+    def get_kinetic_energy_error(filename="OUTCAR"):
         """
         Get the kinetic energy error
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
-            total (bool): Get either the total correction or the correction per atom
 
         Returns:
             float: The kinetic energy error in eV
         """
         trigger = "kinetic energy error for atom="
-        e_kin_err = None
-        n_atoms = None
-        nion_trigger = "NIONS ="
+        e_kin_err = list()
+        n_species_list = list()
+        nion_trigger = "ions per type ="
         with open(filename, 'r') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
                 line = line.strip()
                 if trigger in line:
-                    e_kin_err = float(line.split()[5])
-                if total:
-                    if nion_trigger in line:
-                        n_atoms = int(line.split(nion_trigger)[-1])
-        with open(filename, 'r') as f:
-            lines = f.readlines()
-            for i, line in enumerate(lines):
-                line = line.strip()
-                if trigger in line:
-                    e_kin_err = float(line.split()[5])
-        if total and e_kin_err:
-            return e_kin_err * n_atoms
+                    e_kin_err.append(float(line.split()[5]))
+                if nion_trigger in line:
+                    n_species_list = [float(val) for val in line.split(nion_trigger)[-1].strip().split()]
+        if len(n_species_list) > 0 and len(n_species_list) == len(e_kin_err):
+            return np.sum(np.array(n_species_list) * np.array(e_kin_err))
         else:
-            return e_kin_err
+            return 0.0
 
     @staticmethod
     def get_fermi_level(filename="OUTCAR"):
