@@ -100,13 +100,18 @@ class LammpsPotential(GenericParameters):
     def get_element_lst(self):
         return list(self._df['Species'])[0]
 
+    def set_parameter(self, parameter, elements=[], value='not defined'):
+        if self.custom_potential is not None:
+            self.custom_potential.set_parameter(parameter=parameter, elements=elements, value=value)
+            self._df = self.custom_potential.df
+
     def to_hdf(self, hdf, group_name=None):
         with hdf.open('potential') as hdf_pot:
             if self.custom_potential is not None:
                 for key in ['Config', 'Filename', 'Name', 'Model', 'Species']:
                     hdf_pot[key] = self.custom_potential.df[key].values[0]
                 if 'Content' in self.custom_potential.df.columns:
-                    hdf_pot['Content'] = file_list
+                    hdf_pot['Content'] = self.custom_potential.df['Content'].values[0]
             elif self._df is not None:
                 for key in ['Config', 'Filename', 'Name', 'Model', 'Species']:
                     hdf_pot[key] = self._df[key].values[0]
@@ -116,27 +121,32 @@ class LammpsPotential(GenericParameters):
     def from_hdf(self, hdf, group_name=None):
         with hdf.open('potential') as hdf_pot:
             try:
+                keys = ['Config', 'Filename', 'Model', 'Species', 'Content']
                 if "Content" in hdf.list_nodes():
-                    self._df = pd.DataFrame({'Config': [hdf_pot['Config']],
-                                             'Filename': [hdf_pot['Filename']],
-                                             'Name': [hdf_pot['Name']],
-                                             'Model': [hdf_pot['Model']],
-                                             'Species': [hdf_pot['Species']],
-                                             'Content': [hdf_pot['Content']]})
-                    self._potential_content = self._df['Content']
-                else:
-                    self._df = pd.DataFrame({'Config': [hdf_pot['Config']],
-                                             'Filename': [hdf_pot['Filename']],
-                                             'Name': [hdf_pot['Name']],
-                                             'Model': [hdf_pot['Model']],
-                                             'Species': [hdf_pot['Species']]})
+                    keys.append('Content')
+                    self._potential_content = hdf_pot['Content']
+                self._df = pd.DataFrame({k: [hdf_pot[k]] for k in keys})
+                #if "Content" in hdf.list_nodes():
+                #    self._df = pd.DataFrame({'Config': [hdf_pot['Config']],
+                #                             'Filename': [hdf_pot['Filename']],
+                #                             'Name': [hdf_pot['Name']],
+                #                             'Model': [hdf_pot['Model']],
+                #                             'Species': [hdf_pot['Species']],
+                #                             'Content': [hdf_pot['Content']]})
+                #    self._potential_content = self._df['Content']
+                #else:
+                #    self._df = pd.DataFrame({'Config': [hdf_pot['Config']],
+                #                             'Filename': [hdf_pot['Filename']],
+                #                             'Name': [hdf_pot['Name']],
+                #                             'Model': [hdf_pot['Model']],
+                #                             'Species': [hdf_pot['Species']]})
             except ValueError:
                 pass
         super(LammpsPotential, self).from_hdf(hdf, group_name=group_name)
 
 
 class CustomPotential(GenericParameters):
-    def __init__(self, structure, pot_type=None, pot_sub_style=None, file_name=None, meam_library=None, eam_combinations=False, dataframe=None):
+    def __init__(self, structure, pot_type=None, pot_sub_style=None, file_name=None, meam_library=None, eam_combinations=False):
         super(CustomPotential, self).__init__(comment_char="//",
                     separator_char="=", end_value_char=';')
         self._initialized = False
@@ -147,25 +157,24 @@ class CustomPotential(GenericParameters):
         self._value_modified = {}
         self._element_indices = None
         self._eam_comb = eam_combinations
-        self._dataframe = dataframe
         self.overlay = False
         self['sub_potential'] = pot_sub_style
+        self._file_eam = []
+        self._output_file_eam = []
         pair_pots=['lj/cut','morse','buck','mie/cut','yukawa','born','born/coul/long','gauss']
         if file_name is None:
             self._initialize(self._model)
             if self._model not in pair_pots:
                 print('ERROR: Choose a potential type from', pair_pots)
             self._initialized = True
-        if file_name is not None:
-            self._initialize_hybrid()
-            if pot_type=='eam':
+        else:
+            if isinstance(pot_type, str) and pot_type=='eam':
                 self._output_file_eam = file_name
                 with open(self._output_file_eam, 'r') as file:
                     self._file_eam = file.readlines()
                 self._initialize_eam()
-            if pot_type=='hybrid':
+            if isinstance(pot_type, list):
                 self._initialize_hybrid()
-
 
     @property
     def elements(self):
@@ -193,7 +202,6 @@ class CustomPotential(GenericParameters):
                 print('ERROR:\nIt seems you chose a pair of elements not given in your structure')
         else:
             super(CustomPotential, self).__setitem__(key, value)
-        #self._dataframe.df = self.potential
 
     def _initialize(self,pot):
 
@@ -306,15 +314,24 @@ class CustomPotential(GenericParameters):
         return config_eam
 
     @property
-    def _eam_dataframe(self):
-        return pd.DataFrame({'Config':[self._config_file_eam()],
-                             'Filename':[[self._output_file_eam]],
-                             'Model':[self['model']],
-                             'Name':['my_potential'],
-                             'Species':[self.elements],
-                             'Content':[self._file_eam]})
+    def _config(self):
+        if self._file_name is None:
+            return self._config_file(self._model)
+        if self._model == 'eam':
+            return self._config_file_eam()
+        if self._model == 'hybrid':
+            return self._config_file_hybrid()
+        return None
 
     def _initialize_hybrid(self):
+        for model in self._model:
+            dict_param, _ = self.available_keys(model)
+            if dict_param is not None:
+                continue
+            if '.lmp' in model:
+                potential_filename = potential_filename.split('.lmp')[0]
+            #potential_db = LammpsPotentialFile()
+            #self.input.potential.df = potential_db.find_by_name(potential_filename)
         if self['sub_potential'] is None:
             print ('Error: Substyle for hybrid with EAM is not defined')
         self._output_file_eam = self._file_name
@@ -357,44 +374,34 @@ class CustomPotential(GenericParameters):
         return pair_pot_config
 
     @property
-    def _hybrid_dataframe(self):
-        return pd.DataFrame({'Config':[self._config_file_hybrid()],
-                             'Filename':[[]],
-                             'Model':[self._model],
-                             'Name':['my_potential'],
-                             'Species':[self.elements]})
-
-    @property
     def df(self):
-        if self._file_name is None:
-            return pd.DataFrame({'Config':[self._config_file(self._model)],
-                                 'Filename':[[]],
-                                 'Model':[self._model],
-                                 'Name':['my_potential'],
-                                 'Species':[self.elements]})
-        elif self._model == 'eam':
+        if self._model == 'eam':
             self._update_eam_file()
-            return self._eam_dataframe
-        elif self._model == 'hybrid':
-            return self._hybrid_dataframe
-        else:
-            raise ValueError('Potential not found')
+        return pd.DataFrame({'Config':[self._config],
+                             'Filename':[self._output_file_eam],
+                             'Model':[self._model],
+                             'Name':['custom_potential'],
+                             'Species':[self.elements],
+                             'Content':[self._file_eam]})
 
     def available_keys(self, pot):
+        '''
+            Return: pairwise parameters, global parameters (with their initial values)
+        '''
         if pot.startswith('lj'):
-            return OrderedDict({'sigma': 1, 'epsilon': 0}), OrderedDict({'cutoff': 8.0})
+            return OrderedDict([('sigma', 1), ('epsilon', 0)]), OrderedDict([('cutoff', 8.0)])
         elif pot.startswith('morse'):
-            return OrderedDict({'D0': 0, 'alpha': 1, 'r0': 1}), OrderedDict({'cutoff': 8.0})
+            return OrderedDict([('D0', 0), ('alpha', 1), ('r0', 1)]), OrderedDict([('cutoff', 8.0)])
         elif pot.startswith('buck'):
-            return OrderedDict({'A': 0, 'rho': 1, 'C': 0}), OrderedDict({'cutoff': 8.0})
+            return OrderedDict([('A', 0), ('rho', 1), ('C', 0)]), OrderedDict([('cutoff', 8.0)])
         elif pot.startswith('mie'):
-            return OrderedDict({'epsilon': 0, 'sigma': 1, 'gammaR': 1, 'gammaA': 1}), OrderedDict({'cutoff': 8.0})
+            return OrderedDict([('epsilon', 0), ('sigma', 1), ('gammaR', 12), ('gammaA', 6)]), OrderedDict([('cutoff', 8.0)])
         elif pot.startswith('yukawa'):
-            return OrderedDict({'A': 0, 'cutoff': 3}), OrderedDict({'kappa': 1.0, 'cutoff': 8.0})
+            return OrderedDict([('A', 0), ('cutoff', 3)]), OrderedDict([('kappa', 1.0), ('cutoff', 8.0)])
         elif pot.startswith('born'):
-            return OrderedDict({'A': 0, 'rho': 1, 'sigma': 1, 'C': 0, 'D': 0, 'cutoff': None}), OrderedDict({'cutoff': 4.0})
+            return OrderedDict([('A', 0), ('rho', 1), ('sigma', 1), ('C', 0), ('D', 0), ('cutoff', 4.0)]), OrderedDict([('cutoff', 4.0)])
         elif pot.startswith('gauss'):
-            return OrderedDict({'A': 0, 'B': 0, 'cutoff': None}), OrderedDict({'cutoff': 3.0})
+            return OrderedDict([('A', 0), ('B', 0), ('cutoff', 3.0)]), OrderedDict([('cutoff', 3.0)])
         else:
             None, None
 
