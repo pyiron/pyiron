@@ -422,11 +422,28 @@ class TestAtoms(unittest.TestCase):
         # print H2O.get_bonds(radius=2.)[0]
         # print np.sum(H2O.get_masses())/H2O.get_volume()
 
-    # def test_get_symmetry(self):
-    #     cell = 2.2 * np.identity(3)
-    #     Al_sc = Atoms('AlAl', positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
-    #     Al_sc.repeat([2, 2, 2])
-    #     self.assertEqual(len(Al_sc.get_symmetry()['translations']), 768)
+    def test_get_symmetry(self):
+        cell = 2.2 * np.identity(3)
+        Al = Atoms('AlAl', positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell).repeat(2)
+        self.assertEqual(len(set(Al.get_symmetry()['equivalent_atoms'])), 1)
+        self.assertEqual(len(Al.get_symmetry()['translations']), 96)
+        self.assertEqual(len(Al.get_symmetry()['translations']), len(Al.get_symmetry()['rotations']))
+
+    def _get_voronoi_vertices(self):
+        cell = 2.2 * np.identity(3)
+        Al = Atoms('AlAl', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
+        pos, box = Al._get_voronoi_vertices()
+        self.assertEqual(len(pos), 14)
+
+    def get_equivalent_voronoi_vertices(self):
+        cell = 2.2 * np.identity(3)
+        Al = Atoms('AlAl', positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell).repeat(2)
+        pos, box = Al._get_voronoi_vertices()
+        self.assertEqual(len(Al), 69)
+        self.assertEqual(len(len(Al.get_species_symbols())), 2)
+        Al = Atoms('AlAl', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell).repeat(2)
+        pos = Al.get_equivalent_voronoi_vertices()
+        self.assertEqual(len(pos), 1)
 
     def test_get_parent_symbols(self):
         self.assertTrue(np.array_equal(self.CO2.get_parent_symbols(), ["C", "O", "O"]))

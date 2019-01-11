@@ -150,7 +150,7 @@ class LammpsInterative(LammpsBase, GenericInteractive):
         df = pd.DataFrame(self.input.control.dataset)
         self._interactive_run_command = " ".join(df.T[df.index[-1]].values)
 
-    def interactive_open(self):
+    def interactive_initialize_interface(self):
         if self.server.run_mode.interactive_non_modal:
             self._interactive_library = LammpsLibrary()
         else:
