@@ -159,6 +159,8 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             self.interactive_cache['computation_time'].append(self.interactive_time_getter())
         if 'indices' in self.interactive_cache.keys():
             self.interactive_cache['indices'].append(self.interactive_indices_getter())
+        if 'atomic_numbers' in self.interactive_cache.keys():
+            self.interactive_cache['atomic_numbers'].append(self.interactive_atomic_numbers_getter())
         if 'atom_spins' in self.interactive_cache.keys():
             self.interactive_cache['atom_spins'].append(self.interactive_spins_getter())
         if 'atom_spin_constraints' in self.interactive_cache.keys():
@@ -180,6 +182,9 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
 
     def interactive_indices_getter(self):
         return self.current_structure.get_chemical_indices()
+
+    def interactive_atomic_numbers_getter(self):
+        return self.current_structure.get_atomic_numbers()
 
     def interactive_positions_getter(self):
         return self.current_structure.positions

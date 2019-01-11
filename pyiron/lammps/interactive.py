@@ -28,6 +28,7 @@ class LammpsInterative(LammpsBase, GenericInteractive):
                                   'pressures': [],
                                   'steps': [],
                                   'indices': [],
+                                  'atomic_numbers': [],
                                   'temperature': [],
                                   'computation_time': [],
                                   'volume': []}
@@ -265,6 +266,9 @@ class LammpsInterative(LammpsBase, GenericInteractive):
 
     def interactive_indices_getter(self):
         return super(LammpsInterative, self).interactive_indices_getter().tolist()
+
+    def interactive_atomic_numbers_getter(self):
+        return super(LammpsInterative, self).interactive_atomic_numbers_getter().tolist()
 
     def interactive_energy_pot_getter(self):
         return self._interactive_library.get_thermo("pe")
