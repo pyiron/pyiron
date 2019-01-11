@@ -802,24 +802,27 @@ class JobCore(PyironObject):
             pass  # no name check in Python 2.7
 
     def compress(self, files_to_compress=None):
-        if files_to_compress is None:
-            files_to_compress = list(self.list_files())
-        cwd = os.getcwd()
-        try:
-            os.chdir(self.working_directory)
-            with tarfile.open(os.path.join(self.working_directory, self.job_name + ".tar.bz2"), "w:bz2") as tar:
+        if not any([".tar.bz2" in file for file in self.list_files()]):
+            if files_to_compress is None:
+                files_to_compress = list(self.list_files())
+            cwd = os.getcwd()
+            try:
+                os.chdir(self.working_directory)
+                with tarfile.open(os.path.join(self.working_directory, self.job_name + ".tar.bz2"), "w:bz2") as tar:
+                    for name in files_to_compress:
+                        if "tar" not in name:
+                            tar.add(name)
                 for name in files_to_compress:
                     if "tar" not in name:
-                        tar.add(name)
-            for name in files_to_compress:
-                if "tar" not in name:
-                    fullname=os.path.join(self.working_directory, name)
-                    if os.path.isfile(fullname):
-                        os.remove(fullname)
-                    elif os.path.isdir(fullname):
-                        os.removedirs(fullname)
-        finally:
-            os.chdir(cwd)
+                        fullname=os.path.join(self.working_directory, name)
+                        if os.path.isfile(fullname):
+                            os.remove(fullname)
+                        elif os.path.isdir(fullname):
+                            os.removedirs(fullname)
+            finally:
+                os.chdir(cwd)
+        else:
+            print('The files are already compressed!')
 
     def decompress(self):
         try:

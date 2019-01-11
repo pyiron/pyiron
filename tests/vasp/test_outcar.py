@@ -330,18 +330,20 @@ class TestOutcar(unittest.TestCase):
 
     def test_get_kinetic_energy_error(self):
         for filename in self.file_list:
-            output_total = self.outcar_parser.get_kinetic_energy_error(filename, total=True)
+            output_total = self.outcar_parser.get_kinetic_energy_error(filename)
             self.assertIsInstance(output_total, float)
-            output_single = self.outcar_parser.get_kinetic_energy_error(filename, total=False)
-            self.assertIsInstance(output_single, float)
             if int(filename.split('/OUTCAR_')[-1]) == 1:
                 kinetic_energy_error = 0.0774
                 self.assertEqual(4 * kinetic_energy_error, output_total)
-                self.assertEqual(kinetic_energy_error, output_single)
             if int(filename.split('/OUTCAR_')[-1]) in [2, 3, 4, 5, 6]:
                 kinetic_energy_error = 0.0664
                 self.assertEqual(2 * kinetic_energy_error, output_total)
-                self.assertEqual(kinetic_energy_error, output_single)
+            if int(filename.split('/OUTCAR_')[-1]) == 7:
+                kinetic_energy_error = 16.0 * 0.0088 + 16.0 * 0.002
+                self.assertEqual(kinetic_energy_error, output_total)
+            if int(filename.split('/OUTCAR_')[-1]) == 8:
+                kinetic_energy_error = 1.0 * 0.0236 + 32.0 * 0.0091
+                self.assertEqual(kinetic_energy_error, output_total)
 
     def test_get_kpoints_irreducible_reciprocal(self):
         for filename in self.file_list:

@@ -89,7 +89,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         if self.structure is None:
             raise ValueError("Input structure not set. Use method set_structure()")
         if not self.interactive_is_activated():
-            self.interactive_open()
+            self.interactive_initialize_interface()
         if self._structure_previous is None:
             pre_struct = self.get_structure(-1)
             if pre_struct is not None:
@@ -238,8 +238,8 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
     def interactive_spin_constraints_setter(self, spins):
         raise NotImplementedError('iinteractive_spin_constraints_setter() is not implemented!')
 
-    def interactive_open(self):
-        raise NotImplementedError('interactive_open() is not implemented!')
+    def interactive_initialize_interface(self):
+        raise NotImplementedError('interactive_initialize_interface() is not implemented!')
 
     def interactive_positions_setter(self, positions):
         raise NotImplementedError('interactive_positions_setter() is not implemented!')
