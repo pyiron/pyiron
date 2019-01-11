@@ -184,12 +184,12 @@ class LammpsStructure(GenericParameters):
 
         """
         self._structure = structure
-        # print('Atom type: ', self.atom_type)
         if self.atom_type == 'full':
-            #input_str = self.structure_full()
             input_str = self.structure_full()
         elif self.atom_type == 'bond':
             input_str = self.structure_bond()
+        elif self.atom_type == 'charge':
+            input_str = self.structure_charge()
         else:  # self.atom_type == 'atomic'
             input_str = self.structure_atomic()
         self.load_string(input_str)
@@ -439,6 +439,46 @@ class LammpsStructure(GenericParameters):
         return atomtypes + '\n' + cell_dimensions + '\n' + masses + '\n' + atoms + '\n' \
                + bonds_str + '\n' + angles_str + '\n'
 
+    def structure_charge(self):
+        """
+        Create atom structure including the atom charges.
+        
+        By convention the LAMMPS atom type numbers are chose alphabetically for the chemical species.
+        
+        Returns: LAMMPS readable structure.
+
+        """
+        atomtypes = 'Start File for LAMMPS \n' + \
+                    '{0:d} atoms'.format(self._structure.get_number_of_atoms()) + ' \n' + \
+                    '{0} atom types'.format(self._structure.get_number_of_species()) + ' \n'
+
+        cell_dimesions = self.simulation_cell()
+
+        masses = 'Masses\n\n'
+        
+        for ind, obj in enumerate(self._structure.get_species_objects()):
+            masses += '{0:3d} {1:f}'.format(ind+1, obj.AtomicMass) + '\n'
+
+
+        atoms = 'Atoms\n\n'
+
+        coords = self.rotate_positions(self._structure)
+
+        el_charge_lst = self._structure.charge
+        el_lst = self._structure.get_chemical_symbols()
+        el_alphabet_dict = {}
+        for ind,el in enumerate(self._structure.get_species_symbols()):
+            el_alphabet_dict[el] = ind+1
+        for id_atom, (el, coord) in enumerate(zip(el_lst, coords)):
+            id_el = el_alphabet_dict[el]
+            dim = self._structure.dimension
+            c = np.zeros(3)
+            c[:dim] = coord
+            atoms += '{0:d} {1:d} {2:f} {3:.15f} {4:.15f} {5:.15f}'.format(
+                id_atom + 1, id_el, el_charge_lst[id_atom], c[0], c[1], c[2]) + '\n'
+        return atomtypes + '\n' + cell_dimesions + '\n' + masses + '\n' + atoms + '\n'
+
+ 
     def structure_atomic(self):
         """
         Write routine to create atom structure static file that can be loaded by LAMMPS

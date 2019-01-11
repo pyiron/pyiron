@@ -16,7 +16,7 @@ from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
 from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement, ElementColorDictionary
 from pyiron.base.settings.generic import Settings
-from scipy.spatial import cKDTree
+from scipy.spatial import cKDTree, Voronoi
 
 try:
     import spglib
@@ -1686,6 +1686,72 @@ class Atoms(object):
             return spglib.get_symmetry(cell=(lattice, positions, numbers),
                                        symprec=symprec,
                                        angle_tolerance=angle_tolerance)
+
+    def _get_voronoi_vertices(self, minimum_dist=0.1):
+        """
+            This function gives the positions of Voronoi vertices
+            This function does not work if there are Hs atoms in the box
+
+            Args:
+                minimum_dist: Minimum distance between two Voronoi vertices to be considered as one
+
+            Returns: Positions of Voronoi vertices, box
+
+        """
+        vor = Voronoi(self.repeat(3*[2]).positions) # Voronoi package does not have periodic boundary conditions
+        b_cell_inv = np.linalg.inv(self.cell)
+        voro_vert = vor.vertices
+        for ind, v in enumerate(voro_vert):
+            pos = np.mean(voro_vert[(np.linalg.norm(voro_vert-v, axis=-1)<minimum_dist)], axis=0) # Find all points which are within minimum_dist
+            voro_vert[(np.linalg.norm(voro_vert-v, axis=-1)<0.5)] = np.array(3*[-10])    # Mark atoms to be deleted afterwards
+            voro_vert[ind] = pos
+        voro_vert = voro_vert[np.min(voro_vert, axis=-1)>-5]
+
+        voro_vert = np.dot(b_cell_inv.T, voro_vert.T).T # get scaled positions
+        voro_vert = voro_vert[(np.min(voro_vert, axis=-1)>0.499) & (np.max(voro_vert, axis=-1)<1.501)]
+        voro_vert = np.dot(self.cell.T, voro_vert.T).T # get true positions
+
+        box_copy = self.copy()
+        new_atoms = Atoms(cell=self.cell, symbols=['Hs']).repeat([len(voro_vert), 1, 1])
+        box_copy += new_atoms
+
+        pos_total = np.append(self.positions, voro_vert)
+        pos_total = pos_total.reshape(-1, 3)
+        box_copy.positions = pos_total
+
+        box_copy.center_coordinates_in_unit_cell();
+
+        neigh = box_copy.get_neighbors() # delete all atoms which lie within minimum_dist (including periodic boundary conditions)
+        while len(neigh.indices.flatten()[neigh.distances.flatten()<minimum_dist])!=0:
+            del box_copy[neigh.indices.flatten()[neigh.distances.flatten()<minimum_dist][0]]
+            neigh = box_copy.get_neighbors()
+        return pos_total, box_copy
+
+    def get_equivalent_voronoi_vertices(self, return_box=False, minimum_dist=0.1):
+        """
+            This function gives the positions of spatially equivalent Voronoi vertices in lists, which
+            most likely represent interstitial points or vacancies (along with other high symmetry points)
+            Each list item contains an array of positions which are spacially equivalent.
+            This function does not work if there are Hs atoms in the box
+
+            Args:
+                return_box: True, if the box containing atoms on the positions of Voronoi vertices
+                            should be returned (which are represented by Hs atoms)
+                minimum_dist: Minimum distance between two Voronoi vertices to be considered as one
+
+            Returns: List of numpy array positions of spacially equivalent Voronoi vertices
+
+        """
+
+        _, box_copy = self._get_voronoi_vertices(minimum_dist = minimum_dist)
+        list_positions = []
+        sym = box_copy.get_symmetry()
+        for ind in set(sym['equivalent_atoms'][box_copy.select_index('Hs')]):
+            list_positions.append(box_copy.positions[sym['equivalent_atoms']==ind])
+        if return_box:
+            return list_positions, box_copy
+        else:
+            return list_positions
 
     def get_symmetry_dataset(self, symprec=1e-5, angle_tolerance=-1.0):
         """
