@@ -283,12 +283,10 @@ class Project(ProjectCore):
         if 'output' in job.project_hdf5.list_groups() and iteration_step != 0:
             snapshot.cell = job.get("output/generic/cells")[iteration_step]
             snapshot.positions = job.get("output/generic/positions")[iteration_step]
-            indices = job.get("output/generic/indices")
-            spins = job.get("output/generic/dft/atom_spins")
-            if indices is not None:
-                snapshot.indices = indices[iteration_step]
-            if spins is not None:
-                snapshot.set_initial_magnetic_moments(spins[iteration_step])
+            if 'indices' in job.get('output/generic').list_nodes():
+                snapshot.indices = job.get("output/generic/indices")[iteration_step]
+            if 'dft' in job['output/generic'].list_groups() and 'atom_spins' in job['output/generic/dft'].list_nodes():
+                snapshot.set_initial_magnetic_moments(job.get("output/generic/dft/atom_spins")[iteration_step])
         return snapshot
 
     def _calculation_validation(self, path, files_available, rel_path=None):
