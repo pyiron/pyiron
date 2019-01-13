@@ -163,8 +163,10 @@ class PhonopyJob(AtomisticParallelMaster):
         with self.project_hdf5.open("output") as hdf5_output:
             if 'phonopy_pickeled' in hdf5_output.list_nodes():
                 self.phonopy = pickle.loads(codecs.decode(hdf5_output['phonopy_pickeled'].encode(), 'base64'))
-                self._dos_total = hdf5_output["dos_total"]
-                self._dos_energies = hdf5_output["dos_energies"]
+                if "dos_total" in hdf5_output.list_nodes():
+                    self._dos_total = hdf5_output["dos_total"]
+                if "dos_energies" in hdf5_output.list_nodes():
+                    self._dos_energies = hdf5_output["dos_energies"]
 
     def collect_output(self):
         """
