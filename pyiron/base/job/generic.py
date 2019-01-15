@@ -463,6 +463,12 @@ class GenericJob(JobCore):
         return new_generic_job
 
     def copy_file_to_working_directory(self, file):
+        """
+        Copy a specific file to the working directory before the job is executed.
+
+        Args:
+            file (str): path of the file to be copied.
+        """
         if os.path.isabs(file):
             self.restart_file_list.append(file)
         else: 

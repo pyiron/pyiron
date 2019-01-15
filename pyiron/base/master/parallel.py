@@ -474,6 +474,19 @@ class ParallelMaster(GenericMaster):
                 job = None
         return job_to_be_run_lst
 
+    def _run_if_child_queue(self, job):
+        while job is not None:
+            self._logger.debug('create job: %s %s', job.job_info_str, job.master_id)
+            if not job.status.finished:
+                job.run()
+                self._logger.info('{}: submitted job {}'.format(self.job_name, job.job_name))
+            job = next(self._job_generator, None)
+        self.submission_status.submitted_jobs = self.submission_status.total_jobs
+        self.status.suspended = True
+        if self.is_finished():
+            self.status.collect = True
+            self.run()
+
     def _run_if_master_queue(self, job):
         job_to_be_run_lst = self._next_job_series(job)
         if self.project.db.get_item_by_id(self.job_id)['status'] != 'busy':
@@ -536,11 +549,13 @@ class ParallelMaster(GenericMaster):
             job = next(self._job_generator, None)
             if self.server.run_mode.queue:
                 self._run_if_master_queue(job)
-            elif self.server.run_mode.non_modal and (job.server.run_mode.non_modal or job.server.run_mode.queue):
+            elif job.server.run_mode.queue:
+                self._run_if_child_queue(job)
+            elif self.server.run_mode.non_modal and job.server.run_mode.non_modal:
                 self._run_if_master_non_modal_child_non_modal(job)
             elif self.server.run_mode.modal and job.server.run_mode.modal:
                 self._run_if_master_modal_child_modal(job)
-            elif self.server.run_mode.modal and (job.server.run_mode.non_modal or job.server.run_mode.queue):
+            elif self.server.run_mode.modal and job.server.run_mode.non_modal:
                 self._run_if_master_modal_child_non_modal(job)
             else:
                 raise TypeError()
