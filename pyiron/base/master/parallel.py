@@ -433,6 +433,9 @@ class ParallelMaster(GenericMaster):
             self.refresh_job_status()
             if self.status.refresh:
                 self.status.suspended = True
+            if self.status.busy:
+                self.status.refresh = True
+                self._run_if_refresh()
 
     def _run_if_collect(self):
         """
