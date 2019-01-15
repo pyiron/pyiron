@@ -536,11 +536,11 @@ class ParallelMaster(GenericMaster):
             job = next(self._job_generator, None)
             if self.server.run_mode.queue:
                 self._run_if_master_queue(job)
-            elif self.server.run_mode.non_modal and job.server.run_mode.non_modal:
+            elif self.server.run_mode.non_modal and (job.server.run_mode.non_modal or job.server.run_mode.queue):
                 self._run_if_master_non_modal_child_non_modal(job)
             elif self.server.run_mode.modal and job.server.run_mode.modal:
                 self._run_if_master_modal_child_modal(job)
-            elif self.server.run_mode.modal and job.server.run_mode.non_modal:
+            elif self.server.run_mode.modal and (job.server.run_mode.non_modal or job.server.run_mode.queue):
                 self._run_if_master_modal_child_non_modal(job)
             else:
                 raise TypeError()
