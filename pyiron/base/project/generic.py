@@ -687,7 +687,7 @@ class Project(ProjectPath):
                     queue_status = None
                 if queue_status:
                     for key, (q_id, q_status) in queue_status.items():
-                        if q_status != 'r':
+                        if q_status in ['r', 'qw']:
                             self.db.item_update({'status': 'aborted'}, job_id)
                 else:
                     self.db.item_update({'status': 'aborted'}, job_id)
