@@ -15,7 +15,7 @@ from pyiron.base.settings.logger import set_logging_level
 from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.base.job.jobtype import JobType, JobTypeChoice
 from pyiron.base.server.queuestatus import queue_delete_job, queue_is_empty, queue_job_info, queue_table, \
-    wait_for_job, queue_report, queue_id_table, queue_enable_reservation
+    wait_for_job, queue_report, queue_id_table, queue_enable_reservation, queue_check_job_is_waiting_or_running
 
 """
 The project object is the central import point of pyiron - all other objects can be created from this one 
@@ -886,6 +886,10 @@ class Project(ProjectPath):
             str: Output from the queuing system as string - optimized for the Sun grid engine
         """
         return queue_enable_reservation(item)
+
+    @staticmethod
+    def queue_check_job_is_waiting_or_running(item):
+        return queue_check_job_is_waiting_or_running(item)
 
     @staticmethod
     def queue_job_info(item):
