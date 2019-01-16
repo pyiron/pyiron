@@ -718,7 +718,7 @@ class VaspBase(GenericDFTJob):
         self.set_kpoints(scheme="Manual", symmetry_reduction=False, manual_kpoints=q_point_list, weights=None,
                          reciprocal=False)
 
-    def set_convergence_precision(self, ionic_energy=1.E-5, electronic_energy=1.E-7, ionic_forces=None):
+    def set_convergence_precision(self, ionic_energy=1.E-3, electronic_energy=1.E-7, ionic_forces=1.E-2):
         """
         Sets the electronic and ionic convergence precision. For ionic convergence either the energy or the force
         precision is required
