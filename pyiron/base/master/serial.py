@@ -208,7 +208,7 @@ class SerialMasterBase(GenericMaster):
         Returns:
             str: name of the initial child
         """
-        return self._job_list[0].job_name
+        return self.project.db.get_item_by_id(self.child_ids[0])["job"]
 
     def create_next(self, job_name=None):
         """
