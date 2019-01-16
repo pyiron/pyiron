@@ -106,6 +106,27 @@ def queue_table(job_ids=[], project_only=True):
         return None
 
 
+def queue_check_job_is_waiting_or_running(item):
+    """
+    Check if a job is still listed in the queue system as either waiting or running.
+
+    Args:
+        item (int, GenericJob): Provide either the job_ID or the full hamiltonian
+
+    Returns:
+        bool: [True/False]
+    """
+    if isinstance(item, int):
+        job_id = item
+    else:
+        job_id = item.job_id
+    queue_dict = queue_id_table(requested_id=job_id)
+    if str(job_id) in queue_dict.keys() and queue_dict[str(job_id)][1] in ['qw', 'r']:
+        return True
+    else:
+        return False
+
+
 def queue_id_table(requested_id=None):
     """
     Display the queuing system table as dictionary
