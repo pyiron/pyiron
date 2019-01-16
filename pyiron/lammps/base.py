@@ -366,7 +366,7 @@ class LammpsBase(AtomisticGenericJob):
         with self.project_hdf5.open("output/generic") as hdf_output:
             lf.to_hdf(hdf_output)
 
-    def calc_minimize(self, e_tol=0.0, f_tol=1e-8, max_iter=100000, pressure=None, n_print=100):
+    def calc_minimize(self, e_tol=0.0, f_tol=1e-2, max_iter=100000, pressure=None, n_print=100):
         """
 
         Args:

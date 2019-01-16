@@ -107,6 +107,15 @@ def queue_table(job_ids=[], project_only=True):
 
 
 def queue_check_job_is_waiting_or_running(item):
+    """
+    Check if a job is still listed in the queue system as either waiting or running.
+
+    Args:
+        item (int, GenericJob): Provide either the job_ID or the full hamiltonian
+
+    Returns:
+        bool: [True/False]
+    """
     if isinstance(item, int):
         job_id = item
     else:
