@@ -153,12 +153,26 @@ class PhonopyJob(AtomisticParallelMaster):
         super(PhonopyJob, self).run_static()
 
     def to_hdf(self, hdf=None, group_name=None):
+        """
+        Store the PhonopyJob in an HDF5 file
+
+        Args:
+            hdf (ProjectHDFio): HDF5 group object - optional
+            group_name (str): HDF5 subgroup name - optional
+        """
         super(PhonopyJob, self).to_hdf(hdf=hdf, group_name=group_name)
         if self.phonopy is not None:
             with self.project_hdf5.open("output") as hdf5_output:
                 hdf5_output['phonopy_pickeled'] = codecs.encode(pickle.dumps(self.phonopy), "base64").decode()
 
     def from_hdf(self, hdf=None, group_name=None):
+        """
+        Restore the PhonopyJob from an HDF5 file
+
+        Args:
+            hdf (ProjectHDFio): HDF5 group object - optional
+            group_name (str): HDF5 subgroup name - optional
+        """
         super(PhonopyJob, self).from_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("output") as hdf5_output:
             if 'phonopy_pickeled' in hdf5_output.list_nodes():
@@ -194,11 +208,25 @@ class PhonopyJob(AtomisticParallelMaster):
             hdf5_out['force_constants'] = self.phonopy.force_constants
 
     def write_phonopy_force_constants(self, file_name="FORCE_CONSTANTS", cwd=None):
+        """
+
+        Args:
+            file_name:
+            cwd:
+
+        Returns:
+
+        """
         if cwd is not None:
             file_name = posixpath.join(cwd, file_name)
         write_FORCE_CONSTANTS(force_constants=self.phonopy.force_constants, filename=file_name)
 
     def get_hesse_matrix(self):
+        """
+
+        Returns:
+
+        """
         unit_conversion = scipy.constants.physical_constants['Hartree energy in eV'][0] / \
                           scipy.constants.physical_constants['Bohr radius'][0] ** 2 * scipy.constants.angstrom ** 2
         force_shape = np.shape(self.phonopy.force_constants)
