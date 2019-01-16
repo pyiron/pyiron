@@ -66,9 +66,16 @@ class InteractiveWrapper(GenericMaster):
         self.append(ref_job)
 
     def validate_ready_to_run(self):
+        """
+        Validate that the calculation is ready to be executed. By default no generic checks are performed, but one could
+        check that the input information is complete or validate the consistency of the input at this point.
+        """
         self.ref_job.validate_ready_to_run()
 
     def ref_job_initialize(self):
+        """
+
+        """
         if len(self._job_list) > 0:
             self._ref_job = self.pop(-1)
             if self._job_id is not None and self._ref_job._master_id is None:
@@ -87,7 +94,7 @@ class InteractiveWrapper(GenericMaster):
 
     def to_hdf(self, hdf=None, group_name=None):
         """
-        Store the ParallelMaster in an HDF5 file
+        Store the InteractiveWrapper in an HDF5 file
 
         Args:
             hdf (ProjectHDFio): HDF5 group object - optional
@@ -101,7 +108,7 @@ class InteractiveWrapper(GenericMaster):
 
     def from_hdf(self, hdf=None, group_name=None):
         """
-        Restore the ParallelMaster from an HDF5 file
+        Restore the InteractiveWrapper from an HDF5 file
 
         Args:
             hdf (ProjectHDFio): HDF5 group object - optional
@@ -131,6 +138,11 @@ class InteractiveWrapper(GenericMaster):
         return db_dict
 
     def _db_entry_update_run_time(self):
+        """
+
+        Returns:
+
+        """
         job_id = self.get_job_id()
         db_dict = {}
         start_time = self.project.db.get_item_by_id(job_id)["timestart"]
@@ -139,6 +151,11 @@ class InteractiveWrapper(GenericMaster):
         self.project.db.item_update(db_dict, job_id)
 
     def _finish_job(self):
+        """
+
+        Returns:
+
+        """
         self.status.finished = True
         self._db_entry_update_run_time()
         self._logger.info("{}, status: {}, monte carlo master".format(self.job_info_str, self.status))
