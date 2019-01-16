@@ -401,7 +401,6 @@ class LammpsBase(AtomisticGenericJob):
             temperature:
             pressure:
             n_ionic_steps:
-            dt:
             time_step:
             n_print:
             delta_temp:
