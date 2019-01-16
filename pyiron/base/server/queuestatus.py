@@ -291,11 +291,15 @@ def wait_for_job(job, interval_in_s=5, max_iterations=100):
         interval_in_s (int): interval when the job status is queried from the database - default 5 sec.
         max_iterations (int): maximum number of iterations - default 100
     """
+    finished = False
     for _ in range(max_iterations):
         job.refresh_job_status()
         if job.status.finished or job.status.aborted:
+            finished = True
             break
         time.sleep(interval_in_s)
+    if not finished:
+        raise ValueError('Maximum iterations reached, but the job was not finished.')
 
 
 def _validate_que_request(item):
