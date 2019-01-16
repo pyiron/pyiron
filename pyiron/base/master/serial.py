@@ -201,6 +201,15 @@ class SerialMasterBase(GenericMaster):
         else:
             raise ValueError('Input can only be set after a start job has been assinged.')
 
+    def get_initial_child_name(self):
+        """
+        Get name of the initial child.
+
+        Returns:
+            str: name of the initial child
+        """
+        return self.project.db.get_item_by_id(self.child_ids[0])["job"]
+
     def create_next(self, job_name=None):
         """
         Create the next job in the series by duplicating the previous job.
@@ -324,6 +333,7 @@ class SerialMasterBase(GenericMaster):
         job.run()
         if job._process:
             job._process.communicate()
+        self._run_if_refresh()
 
     def _run_if_master_non_modal_child_non_modal(self, job):
         job.run()

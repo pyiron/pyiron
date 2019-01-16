@@ -223,7 +223,11 @@ class AtomisticGenericJob(GenericJobCore):
 
     def to_hdf(self, hdf=None, group_name=None):
         """
-        Stores the instance attributes into the hdf5 file
+        Store the GenericJob in an HDF5 file
+
+        Args:
+            hdf (ProjectHDFio): HDF5 group object - optional
+            group_name (str): HDF5 subgroup name - optional
         """
         super(AtomisticGenericJob, self).to_hdf(hdf=hdf, group_name=group_name)
         with self._hdf5.open("input") as hdf5_input:
@@ -512,8 +516,6 @@ class AtomisticGenericJob(GenericJobCore):
 
         Returns:
             atomistics.structure.atoms.Atoms object
-
-
         """
         if not (self.structure is not None):
             raise AssertionError()

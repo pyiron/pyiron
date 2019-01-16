@@ -463,6 +463,12 @@ class GenericJob(JobCore):
         return new_generic_job
 
     def copy_file_to_working_directory(self, file):
+        """
+        Copy a specific file to the working directory before the job is executed.
+
+        Args:
+            file (str): path of the file to be copied.
+        """
         if os.path.isabs(file):
             self.restart_file_list.append(file)
         else: 
@@ -978,7 +984,7 @@ class GenericJob(JobCore):
         Internal helper function the run if submitted function is called when the job status is 'submitted'. It means
         the job is waiting in the queue. ToDo: Display a list of the users jobs in the queue.
         """
-        if self.server.run_mode.queue and self.project.queue_job_info(self) is None:
+        if self.server.run_mode.queue and not self.project.queue_check_job_is_waiting_or_running(self.job_id):
             self.run(run_again=True)
         else:
             print('Job ' + str(self.job_id) + ' is waiting in the que!')
@@ -988,7 +994,7 @@ class GenericJob(JobCore):
         Internal helper function the run if running function is called when the job status is 'running'. It allows the
         user to interact with the simulation while it is running.
         """
-        if self.server.run_mode.queue and self.project.queue_job_info(self) is None:
+        if self.server.run_mode.queue and not self.project.queue_check_job_is_waiting_or_running(self.job_id):
             self.run(run_again=True)
         elif self.server.run_mode.interactive:
             self.run_if_interactive()
