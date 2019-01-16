@@ -31,7 +31,7 @@ def convergence_goal(self):
     return ham_next
 
 
-class ConvergenceEncutSerial(SerialMaster):
+class ConvEncutSerial(SerialMaster):
     """
 
     Args:
@@ -40,8 +40,8 @@ class ConvergenceEncutSerial(SerialMaster):
     """
 
     def __init__(self, project, job_name):
-        super(ConvergenceEncutSerial, self).__init__(project, job_name=job_name)
-        self.__name__ = "ConvergenceEncutSerial"
+        super(ConvEncutSerial, self).__init__(project, job_name=job_name)
+        self.__name__ = "ConvEncutSerial"
         self.__version__ = '0.0.2'
         if not self["input/convergence_goal"]:
             self.set_goal(convergence_goal, eps=0.005)
