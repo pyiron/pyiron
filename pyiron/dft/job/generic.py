@@ -123,10 +123,11 @@ class GenericDFTJob(AtomisticGenericJob):
         self._generic_input['fix_symmetry'] = True
         super(GenericDFTJob, self).calc_minimize(max_iter=max_iter, pressure=pressure)
 
-    def calc_md(self, temperature=None, n_ionic_steps=1000, n_print=1, dt=1.0, retain_charge_density=False,
+    def calc_md(self, temperature=None, n_ionic_steps=1000, n_print=1, time_step=1.0, retain_charge_density=False,
                 retain_electrostatic_potential=False, **kwargs):
         self._generic_input['fix_symmetry'] = False
-        super(GenericDFTJob, self).calc_md(temperature=temperature, n_ionic_steps=n_ionic_steps, n_print=n_print)
+        super(GenericDFTJob, self).calc_md(temperature=temperature, n_ionic_steps=n_ionic_steps, n_print=n_print,
+                                           time_step=time_step)
 
     # Backward compatibility
     def get_encut(self):

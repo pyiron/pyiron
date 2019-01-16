@@ -83,7 +83,7 @@ class LammpsControl(GenericParameters):
         self.set(run='0')
         self.remove_keys(['minimize', 'velocity'])
 
-    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, dt=None, time_step=None, n_print=100,
+    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100,
                 delta_temp=100.0, delta_press=None, seed=None, tloop=None, rescale_velocity=True, langevin=False):
 
         if time_step is not None:

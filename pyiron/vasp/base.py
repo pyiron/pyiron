@@ -606,7 +606,7 @@ class VaspBase(GenericDFTJob):
         if retain_electrostatic_potential:
             self.write_electrostatic_potential = retain_electrostatic_potential
 
-    def calc_md(self, temperature=None, n_ionic_steps=1000, n_print=1, dt=1.0, retain_charge_density=False,
+    def calc_md(self, temperature=None, n_ionic_steps=1000, n_print=1, time_step=1.0, retain_charge_density=False,
                 retain_electrostatic_potential=False, **kwargs):
         """
         Sets appropriate tags for molecular dynamics in VASP
@@ -615,11 +615,11 @@ class VaspBase(GenericDFTJob):
             temperature (int/float/list): Temperature/ range of temperatures in Kelvin
             n_ionic_steps (int): Maximum number of ionic steps
             n_print (int): Prints outputs every n_print steps
-            dt (float): time step (fs)
+            time_step (float): time step (fs)
             retain_charge_density (bool): True id the charge density should be written
             retain_electrostatic_potential (bool): True if the electrostatic potential should be written
         """
-        super(VaspBase, self).calc_md(temperature=temperature, n_ionic_steps=n_ionic_steps, n_print=n_print, dt=dt,
+        super(VaspBase, self).calc_md(temperature=temperature, n_ionic_steps=n_ionic_steps, n_print=n_print, time_step=time_step,
                                       retain_charge_density=retain_charge_density,
                                       retain_electrostatic_potential=retain_electrostatic_potential, **kwargs)
         if temperature is not None:
@@ -635,7 +635,7 @@ class VaspBase(GenericDFTJob):
             self.input.incar["SMASS"] = -3
         self.input.incar["NSW"] = n_ionic_steps
         self.input.incar["NBLOCK"] = int(n_print)
-        self.input.incar["POTIM"] = dt
+        self.input.incar["POTIM"] = time_step
         if retain_charge_density:
             self.write_charge_density = retain_charge_density
         if retain_electrostatic_potential:
