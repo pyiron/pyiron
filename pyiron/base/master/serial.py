@@ -201,6 +201,15 @@ class SerialMasterBase(GenericMaster):
         else:
             raise ValueError('Input can only be set after a start job has been assinged.')
 
+    def get_initial_child_name(self):
+        """
+        Get name of the initial child.
+
+        Returns:
+            str: name of the initial child
+        """
+        return self._job_list[0].job_name
+
     def create_next(self, job_name=None):
         """
         Create the next job in the series by duplicating the previous job.
