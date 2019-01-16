@@ -43,7 +43,7 @@ class ConvEncutSerial(SerialMaster):
         super(ConvEncutSerial, self).__init__(project, job_name=job_name)
         self.__name__ = "ConvEncutSerial"
         self.__version__ = '0.0.2'
-        if not self["input/convergence_goal"]:
+        if not self["input/convergence_goal"] or self["input/convergence_goal"] == 'None':
             self.set_goal(convergence_goal, eps=0.005)
 
     def create_next(self, job_name=None):
