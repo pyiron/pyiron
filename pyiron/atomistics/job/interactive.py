@@ -194,6 +194,15 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         return self.initial_structure.get_volume()
 
     def get_structure(self, iteration_step=-1):
+        """
+        Gets the structure from a given iteration step of the simulation (MD/ionic relaxation). For static calculations
+        there is only one ionic iteration step
+        Args:
+            iteration_step (int): Step for which the structure is requested
+
+        Returns:
+            atomistics.structure.atoms.Atoms object
+        """
         if (self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal) \
                 and self.interactive_is_activated():
             # Warning: We only copy symbols, positions and cell information - no tags.
@@ -262,9 +271,18 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
 
 class GenericInteractiveOutput(GenericOutput):
     def __init__(self, job):
-        self._job = job
+        super(GenericInteractiveOutput, self).__init__(job=job)
 
     def _key_from_cache(self, key):
+        """
+        Get all entries from the interactive cache for a specific key.
+
+        Args:
+            key (str): name of the key
+
+        Returns:
+            list: list of values stored in the interactive cache
+        """
         if key in self._job.interactive_cache.keys() and self._job.interactive_is_activated() \
                 and len(self._job.interactive_cache[key]) != 0:
             return self._job.interactive_cache[key]
@@ -272,6 +290,14 @@ class GenericInteractiveOutput(GenericOutput):
             return []
 
     def _lst_from_cache(self, key):
+        """
+
+        Args:
+            key (str): name of the key
+
+        Returns:
+            list:
+        """
         lst = self._key_from_cache(key)
         if len(lst) != 0 and isinstance(lst[-1], list):
             return [np.array(out) for out in lst]
@@ -279,9 +305,27 @@ class GenericInteractiveOutput(GenericOutput):
             return lst
 
     def _key_from_hdf(self, key):
+        """
+        Get all entries from the HDF5 file for a specific key - stored under 'output/interactive/<key>'
+
+        Args:
+            key (str): name of the key
+
+        Returns:
+
+        """
         return self._job['output/interactive/' + key]
 
     def _key_from_property(self, key, prop):
+        """
+
+        Args:
+            key (str): name of the key
+            prop (function):
+
+        Returns:
+
+        """
         return_lst = self._key_from_cache(key)
         hdf5_output = self._key_from_hdf(key)
         if hdf5_output is not None:
@@ -293,6 +337,15 @@ class GenericInteractiveOutput(GenericOutput):
         return np.array(return_lst)
 
     def _lst_from_property(self, key, prop=None):
+        """
+
+        Args:
+            key (str):
+            prop (function):
+
+        Returns:
+
+        """
         return_lst = self._lst_from_cache(key)
         hdf5_output = self._key_from_hdf(key)
         if hdf5_output is not None and len(hdf5_output) != 0:
