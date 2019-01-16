@@ -15,12 +15,11 @@ __status__ = "development"
 __date__ = "Sep 1, 2017"
 
 
-def convergence_goal(self):
+def convergence_goal(self, eps=0.005):
     import numpy as np
     if len(self) > 1:
         prev_job_eng = self[-2]['output/generic/energy_tot']
         last_job_eng = self[-1]['output/generic/energy_tot']
-        eps = 0.005
         if np.abs(prev_job_eng-last_job_eng) < eps:
             return True
     ham_prev = self[-1]
