@@ -511,8 +511,6 @@ class AtomisticGenericJob(GenericJobCore):
 
         Returns:
             atomistics.structure.atoms.Atoms object
-
-
         """
         if not (self.structure is not None):
             raise AssertionError()
