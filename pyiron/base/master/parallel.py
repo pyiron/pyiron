@@ -458,9 +458,28 @@ class ParallelMaster(GenericMaster):
         # self.send_to_database()
 
     def _validate_cores(self, job, cores_for_session):
+        """
+        Check if enough cores are available to start the next child job.
+
+        Args:
+            job (GenericJob): child job to be started
+            cores_for_session (list): list of currently active cores - list of integers
+
+        Returns:
+            bool: [True/False]
+        """
         return self.get_child_cores() + job.server.cores + sum(cores_for_session) > self.server.cores
 
     def _next_job_series(self, job):
+        """
+        Generate a list of child jobs to be executed in the next iteration.
+
+        Args:
+            job (GenericJob): child job to be started
+
+        Returns:
+            list: list of GenericJob objects
+        """
         job_to_be_run_lst, cores_for_session = [], []
         while job is not None:
             self._logger.debug('create job: %s %s', job.job_info_str, job.master_id)
@@ -475,6 +494,13 @@ class ParallelMaster(GenericMaster):
         return job_to_be_run_lst
 
     def _run_if_child_queue(self, job):
+        """
+        run function which is executed when the child jobs are submitted to the queue. In this case all child jobs are
+        submitted at the same time without considering the number of cores specified for the Parallelmaster.
+
+        Args:
+            job (GenericJob): child job to be started
+        """
         while job is not None:
             self._logger.debug('create job: %s %s', job.job_info_str, job.master_id)
             if not job.status.finished:
@@ -488,6 +514,16 @@ class ParallelMaster(GenericMaster):
             self.run()
 
     def _run_if_master_queue(self, job):
+        """
+        run function which is executed when the Parallelmaster is submitted to the queue. This run mode is similar to
+        the non modal run mode, as the number of cores assigned to the Parallelmaster determines how many subprocesses
+        can be started. But in contrast to the non modal mode where the Parallelmaster is suspended after the submission
+        of the child jobs in the queue the Parallelmaster stays active, as some queuing systems kill the jobs once the
+        primary task exited.
+
+        Args:
+            job (GenericJob): child job to be started
+        """
         job_to_be_run_lst = self._next_job_series(job)
         if self.project.db.get_item_by_id(self.job_id)['status'] != 'busy':
             self.status.suspended = True
@@ -501,6 +537,12 @@ class ParallelMaster(GenericMaster):
             self.run_static()
 
     def _run_if_master_non_modal_child_non_modal(self, job):
+        """
+        run function which is executed when the Parallelmaster as well as its childs are running in non modal mode.
+
+        Args:
+            job (GenericJob): child job to be started
+        """
         job_to_be_run_lst = self._next_job_series(job)
         if self.project.db.get_item_by_id(self.job_id)['status'] != 'busy':
             self.status.suspended = True
@@ -513,6 +555,12 @@ class ParallelMaster(GenericMaster):
             self.run_static()
 
     def _run_if_master_modal_child_modal(self, job):
+        """
+        run function which is executed when the Parallelmaster as well as its childs are running in modal mode.
+
+        Args:
+            job (GenericJob): child job to be started
+        """
         while job is not None:
             self._logger.debug('create job: %s %s', job.job_info_str, job.master_id)
             if not job.status.finished:
@@ -525,6 +573,13 @@ class ParallelMaster(GenericMaster):
             self.run()
 
     def _run_if_master_modal_child_non_modal(self, job):
+        """
+        run function which is executed when the Parallelmaster is running in modal mode and its childs are running in
+        non modal mode.
+
+        Args:
+            job (GenericJob): child job to be started
+        """
         while job is not None:
             self._logger.debug('create job: %s %s', job.job_info_str, job.master_id)
             if not job.status.finished:
@@ -540,6 +595,10 @@ class ParallelMaster(GenericMaster):
             self.run()
 
     def run_static(self):
+        """
+        The run_static function is executed within the GenericJob class and depending on the run_mode of the
+        Parallelmaster and its child jobs a more specific run function is selected.
+        """
         self._logger.info('{} run parallel master (modal)'.format(self.job_info_str))
         self.status.running = True
         self.submission_status.total_jobs = len(self._job_generator)
@@ -674,11 +733,26 @@ class JobGenerator(object):
         return len(self.parameter_list_cached)
 
     def _create_job(self, job_name):
+        """
+        Create the next job to be executed, by calling the _create_child_job() function of the Parallelmaster.
+
+        Args:
+            job_name (str): name of the next child job
+
+        Returns:
+            GenericJob: new job object
+        """
         job = self._job._create_child_job(job_name)
         self._childcounter += 1
         return job
 
     def next(self):
+        """
+        Iterate over the child jobs
+
+        Returns:
+            GenericJob: new job object
+        """
         if len(self.parameter_list_cached) > self._childcounter:
             current_paramenter = self.parameter_list_cached[self._childcounter]
             job = self._job._create_child_job(self.job_name(parameter=current_paramenter))
