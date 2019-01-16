@@ -271,7 +271,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
 
 class GenericInteractiveOutput(GenericOutput):
     def __init__(self, job):
-        super(GenericInteractiveOutput).__init__(job=job)
+        super(GenericInteractiveOutput, self).__init__(job=job)
 
     def _key_from_cache(self, key):
         """
