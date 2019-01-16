@@ -358,7 +358,7 @@ class SerialMasterBase(GenericMaster):
             self.status.suspended = True
             if self.server.run_mode.queue:
                 self._run_if_master_queue(job)
-            elif (self.server.run_mode.non_modal and job.server.run_mode.non_modal) or job.server.run_mode.queue:
+            elif self.server.run_mode.non_modal and job.server.run_mode.non_modal:
                 self._run_if_master_non_modal_child_non_modal(job)
             elif self.server.run_mode.modal and job.server.run_mode.modal:
                 self._run_if_master_modal_child_modal(job)
