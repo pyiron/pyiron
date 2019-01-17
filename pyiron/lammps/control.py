@@ -49,7 +49,7 @@ class LammpsControl(GenericParameters):
                             'atom_style    atomic\n'+
                             'read_data     structure.inp\n'+
                             'include       potential.inp\n'+
-                            'fix           1 all nve\n'+
+                            'fix           ensemble all nve\n'+
                             'variable      dumptime equal 100\n'+
                             'dump          1 all custom ${dumptime} dump.out id type xsu ysu zsu fx fy fz\n'+
                             'dump_modify   1 sort id format line "%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g"\n'+
@@ -72,7 +72,7 @@ class LammpsControl(GenericParameters):
                 raise ValueError('Pressure values cannot be three times None')
             elif len(str_press)>1:
                 str_press += ' couple none'
-            self.set(fix___1=r'all box/relax' + str_press)
+            self.set(fix___ensemble=r'all box/relax' + str_press)
         else:
             self.remove_keys(["fix"])
         self.set(minimize=str(e_tol) + ' ' + str(f_tol) + ' ' + str(max_iter) + " " + str(max_evaluations))
@@ -82,6 +82,35 @@ class LammpsControl(GenericParameters):
     def calc_static(self):
         self.set(run='0')
         self.remove_keys(['minimize', 'velocity'])
+
+    def set_initial_velocity(self, temperature, seed=None, gaussian=False, append_value=False, zero_lin_momentum=True,
+                             zero_rot_momentum=True):
+        """
+            Create initial velocities via velocity all create. More information can be found on LAMMPS website:
+            https://lammps.sandia.gov/doc/velocity.html
+
+            args:
+                temperature: (int or float)
+                seed: (int) Seed for the initial random number generator
+                gaussian: (True/False) Create velocity according to the Gaussian distribution (otherwise uniform)
+                append_value: (True/False) Add the velocity values to the current velocities (probably not functional now)
+                zero_lin_momentum: (True/False) Cancel the total linear momentum
+                zero_rot_momentum: (True/False) Cancel the total angular momentum
+        """
+
+        if seed is None:
+            seed = np.random.randint(99999)
+        arg = ''
+        if gaussian:
+            arg = ' dist gaussian'
+        if append_value:
+            arg += ' sum yes'
+        if not zero_lin_momentum:
+            arg += ' mom no'
+        if not zero_rot_momentum:
+            arg += ' rot no'
+        self.modify(velocity='all create ' + str(temperature) + ' ' + str(seed) + arg,
+                    append_if_not_present=True)
 
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100,
                 delta_temp=100.0, delta_press=None, seed=None, tloop=None, rescale_velocity=True, langevin=False):
@@ -106,45 +135,35 @@ class LammpsControl(GenericParameters):
             if temperature is None or temperature == 0.0:
                 raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
             if langevin:
-                ensamble = 'nph'
-
-                fix_str = 'all {0} aniso {4} {5} {6}'.format(ensamble, str(temperature), str(temperature), str(delta_temp),
-                                                                              str(pressure), str(pressure), str(delta_press))
+                fix_ensemble_str = 'all nph aniso {0} {1} {2}'.format(str(temperature), str(temperature), str(delta_temp),
+                                                                      str(pressure), str(pressure), str(delta_press))
                 self.modify(fix___langevin='all langevin {0} {1} {2} {3}'.format(str(temperature), str(temperature), str(delta_temp), str(seed)),
                             append_if_not_present=True)
             else:
-                ensamble = 'npt'
-                fix_str = 'all {0} temp {1} {2} {3} aniso {4} {5} {6}'.format(ensamble, str(temperature), str(temperature),
-                                                                              str(delta_temp), str(pressure), str(pressure),
-                                                                              str(delta_press))
+                fix_ensemble_str = 'all npt temp {0} {1} {2} aniso {3} {4} {5}'.format(str(temperature), str(temperature),
+                                                                                       str(delta_temp), str(pressure), str(pressure),
+                                                                                       str(delta_press))
         elif temperature is not None:
             temperature = float(temperature)  # TODO; why needed?
             if temperature == 0.0:
                 raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
             if langevin:
-                ensamble = 'nve'
-                fix_str = 'all {0}'.format(ensamble)
+                fix_ensemble_str = 'all nve'
                 self.modify(fix___langevin='all langevin {0} {1} {2} {3}'.format(str(temperature), str(temperature), str(delta_temp), str(seed)),
-                            velocity='all create ' + str(2 * temperature) + ' ' + str(seed) + ' dist gaussian ', append_if_not_present=True)
+                            append_if_not_present=True)
             else:
-                ensamble = 'nvt'
-                fix_str = 'all {0} temp {1} {2} {3}'.format(ensamble, str(temperature), str(temperature), str(delta_temp))
+                fix_ensemble_str = 'all nvt temp {0} {1} {2}'.format(str(temperature), str(temperature), str(delta_temp))
         else:
-            ensamble = 'nve'
-            fix_str = 'all {0}'.format(ensamble)
+            fix_ensemble_str = 'all nve'
+            rescale_velocity = False
         if tloop is not None:
-            fix_str += " tloop " + str(tloop)
+            fix_ensemble_str += " tloop " + str(tloop)
         self.remove_keys(["minimize"])
-        if rescale_velocity and ensamble in ['npt', 'nvt', 'nph']:
-            self.modify(fix___1=fix_str,
-                        variable=' dumptime equal {} '.format(n_print),
-                        thermo=int(n_print),
-                        run=int(n_ionic_steps),
-                        velocity='all create ' + str(2 * temperature) + ' ' + str(seed) + ' dist gaussian ',
-                        append_if_not_present=True)
-        else:
-            self.modify(fix___1=fix_str,
-                        variable=' dumptime equal {} '.format(n_print),
-                        thermo=int(n_print),
-                        run=int(n_ionic_steps),
+        self.modify(fix___ensemble=fix_ensemble_str,
+                    variable=' dumptime equal {} '.format(n_print),
+                    thermo=int(n_print),
+                    run=int(n_ionic_steps),
+                    append_if_not_present=True)
+        if rescale_velocity:
+            self.modify(velocity='all create ' + str(2 * temperature) + ' ' + str(seed) + ' dist gaussian ',
                         append_if_not_present=True)

@@ -166,7 +166,7 @@ class LammpsInterative(LammpsBase, GenericInteractive):
         super(LammpsInterative, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure,
                                                     n_print=n_print)
 
-    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100, delta_temp=1.0,
+    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100, delta_temp=100.0,
                 delta_press=None, seed=None, tloop=None, rescale_velocity=True, langevin=False):
         if self.server.run_mode.interactive_non_modal:
             warnings.warn('calc_md() is not implemented for the non modal interactive mode use calc_static()!')
