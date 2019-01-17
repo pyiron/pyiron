@@ -148,7 +148,7 @@ class LammpsControl(GenericParameters):
             else:
                 raise NotImplementedError()
 
-        if initial_temperature is None:
+        if initial_temperature is None and temperature is not None:
             initial_temperature = 2*temperature
 
         if seed is None:
