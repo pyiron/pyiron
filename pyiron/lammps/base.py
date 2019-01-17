@@ -394,29 +394,36 @@ class LammpsBase(AtomisticGenericJob):
         self.input.control.calc_static()
 
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100,
-                delta_temp=100.0, delta_press=None, seed=None, tloop=None, rescale_velocity=True, langevin=False):
+                delta_temp=100.0, delta_press=None, seed=None, tloop=None, initial_temperature=None, langevin=False):
         """
-
-        Args:
-            temperature:
-            pressure:
-            n_ionic_steps:
-            time_step:
-            n_print:
-            delta_temp:
-            delta_press:
-            seed:
-            tloop:
-            rescale_velocity:
-
+            Set an MD calculation within LAMMPS. Nosé Hoover is used by default
+            args:
+                temperature: (None or float) Target temperature. If set to None, an NVE calculation is performed.
+                             It is required when the pressure is set or langevin is set
+                pressure: (None or float) Target pressure. If set to None, an NVE or an NVT calculation is performed.
+                          (This tag will allow for a list in the future as it is done for calc_minimize())
+                n_ionic_steps: (int) Number of ionic steps
+                time_step: (float) Step size between two steps. In fs if units==metal
+                n_print: (int) Print frequency
+                delta_temp: (float) Temperature damping factor (cf. https://lammps.sandia.gov/doc/fix_nh.html)
+                delta_press: (float) Pressure damping factor (cf. https://lammps.sandia.gov/doc/fix_nh.html)
+                seed: (int) Seed for the random number generation (required for the velocity creation)
+                tloop:
+                initial_temperature: (None or float) Initial temperature according to which the initial velocity field
+                                     is created. If None, the initial temperature will be twice the target temperature
+                                     (which would go immediately down to the target temperature as described in
+                                     equipartition theorem). If 0, the velocity field is not initialized (in which case
+                                     the initial velocity given in structure will be used). If any other number is given,
+                                     this value is going to be used for the initial temperature.
+                langevin: (True or False) Activate Langevin dynamics
         """
         super(LammpsBase, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
                                         time_step=time_step, n_print=n_print, delta_temp=delta_temp,
                                         delta_press=delta_press,
-                                        seed=seed, tloop=tloop, rescale_velocity=rescale_velocity, langevin=langevin)
+                                        seed=seed, tloop=tloop, initial_temperature=initial_temperature, langevin=langevin)
         self.input.control.calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
                                    time_step=time_step, n_print=n_print, delta_temp=delta_temp, delta_press=delta_press,
-                                   seed=seed, tloop=tloop, rescale_velocity=rescale_velocity, langevin=langevin)
+                                   seed=seed, tloop=tloop, initial_temperature=initial_temperature, langevin=langevin)
 
     # define hdf5 input and output
     def to_hdf(self, hdf=None, group_name=None):
