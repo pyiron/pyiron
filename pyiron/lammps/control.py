@@ -86,16 +86,16 @@ class LammpsControl(GenericParameters):
     def set_initial_velocity(self, temperature, seed=None, gaussian=False, append_value=False, zero_lin_momentum=True,
                              zero_rot_momentum=True):
         """
-            Create initial velocities via velocity all create. More information can be found on LAMMPS website:
-            https://lammps.sandia.gov/doc/velocity.html
+        Create initial velocities via velocity all create. More information can be found on LAMMPS website:
+        https://lammps.sandia.gov/doc/velocity.html
 
-            args:
-                temperature: (int or float)
-                seed: (int) Seed for the initial random number generator
-                gaussian: (True/False) Create velocity according to the Gaussian distribution (otherwise uniform)
-                append_value: (True/False) Add the velocity values to the current velocities (probably not functional now)
-                zero_lin_momentum: (True/False) Cancel the total linear momentum
-                zero_rot_momentum: (True/False) Cancel the total angular momentum
+        Args:
+            temperature: (int or float)
+            seed: (int) Seed for the initial random number generator
+            gaussian: (True/False) Create velocity according to the Gaussian distribution (otherwise uniform)
+            append_value: (True/False) Add the velocity values to the current velocities (probably not functional now)
+            zero_lin_momentum: (True/False) Cancel the total linear momentum
+            zero_rot_momentum: (True/False) Cancel the total angular momentum
         """
 
         if seed is None:
@@ -115,26 +115,28 @@ class LammpsControl(GenericParameters):
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100,
                 delta_temp=100.0, delta_press=None, seed=None, tloop=None, initial_temperature=None, langevin=False):
         """
-            Set an MD calculation within LAMMPS. Nosé Hoover is used by default
-            args:
-                temperature: (None or float) Target temperature. If set to None, an NVE calculation is performed.
-                             It is required when the pressure is set or langevin is set
-                pressure: (None or float) Target pressure. If set to None, an NVE or an NVT calculation is performed.
-                          (This tag will allow for a list in the future as it is done for calc_minimize())
-                n_ionic_steps: (int) Number of ionic steps
-                time_step: (float) Step size between two steps. In fs if units==metal
-                n_print: (int) Print frequency
-                delta_temp: (float) Temperature damping factor (cf. https://lammps.sandia.gov/doc/fix_nh.html)
-                delta_press: (float) Pressure damping factor (cf. https://lammps.sandia.gov/doc/fix_nh.html)
-                seed: (int) Seed for the random number generation (required for the velocity creation)
-                tloop:
-                initial_temperature: (None or float) Initial temperature according to which the initial velocity field
-                                     is created. If None, the initial temperature will be twice the target temperature
-                                     (which would go immediately down to the target temperature as described in
-                                     equipartition theorem). If 0, the velocity field is not initialized (in which case
-                                     the initial velocity given in structure will be used). If any other number is given,
-                                     this value is going to be used for the initial temperature.
-                langevin: (True or False) Activate Langevin dynamics
+        Set an MD calculation within LAMMPS. Nose Hoover is used by default
+
+        Args:
+            temperature (None/float): Target temperature. If set to None, an NVE calculation is performed.
+                                      It is required when the pressure is set or langevin is set
+            pressure (None/float): Target pressure. If set to None, an NVE or an NVT calculation is performed.
+                                   (This tag will allow for a list in the future as it is done for calc_minimize())
+            n_ionic_steps (int): Number of ionic steps
+            time_step (float): Step size between two steps. In fs if units==metal
+            n_print (int):  Print frequency
+            delta_temp (float):  Temperature damping factor (cf. https://lammps.sandia.gov/doc/fix_nh.html)
+            delta_press (float): Pressure damping factor (cf. https://lammps.sandia.gov/doc/fix_nh.html)
+            seed (int):  Seed for the random number generation (required for the velocity creation)
+            tloop:
+            initial_temperature (None/float):  Initial temperature according to which the initial velocity field
+                                               is created. If None, the initial temperature will be twice the target
+                                               temperature (which would go immediately down to the target temperature
+                                               as described in equipartition theorem). If 0, the velocity field is not
+                                               initialized (in which case  the initial velocity given in structure will
+                                               be used). If any other number is given, this value is going to be used
+                                               for the initial temperature.
+            langevin (bool): (True or False) Activate Langevin dynamics
         """
 
         if time_step is not None:
