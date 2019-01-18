@@ -641,7 +641,7 @@ class VaspBase(GenericDFTJob):
         if retain_electrostatic_potential:
             self.write_electrostatic_potential = retain_electrostatic_potential
         for key in kwargs.keys():
-            s.logger.warning("{}tag not relevant for vasp".format(key))
+            self.logger.warn("Tag {} not relevant for vasp".format(key))
 
     def set_kpoints(self, mesh=None, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
                     weights=None, reciprocal=True, kmesh_density=None):

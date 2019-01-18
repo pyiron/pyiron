@@ -564,7 +564,7 @@ class GenericParameters(PyironObject):
 
         Args:
             key (str): key to be set of modified
-            value (str): value to be set
+            value (str/int/float): value to be set
         """
         if isinstance(key, int):
             self._dataset["Value"][key] = value
