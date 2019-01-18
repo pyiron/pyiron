@@ -10,7 +10,7 @@ InteractiveBase class extends the Generic Job class with all the functionality t
 """
 
 __author__ = "Osamu Waseda, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -20,7 +20,7 @@ __date__ = "Sep 1, 2018"
 
 class InteractiveBase(GenericJob):
     """
-    InteractiveBase class extends the Generic Job class with all the functionality to run the job object interactivley.
+    InteractiveBase class extends the Generic Job class with all the functionality to run the job object interactively.
     From this class all interactive Hamiltonians are derived. Therefore it should contain the properties/routines common
     to all interactive jobs. The functions in this module should be as generic as possible.
 

@@ -7,7 +7,7 @@ from phonopy.structure.atoms import PhonopyAtoms
 import phonopy.structure.spglib as spg
 
 __author__ = "Osamu Waseda"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Osamu Waseda"
 __email__ = "waseda@mpie.de"

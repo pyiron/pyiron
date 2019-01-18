@@ -1,3 +1,7 @@
+# coding: utf-8
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
+
 from ctypes import c_double, c_int
 import numpy as np
 import pandas as pd
@@ -11,6 +15,14 @@ from pyiron.lammps.base import LammpsBase
 from pyiron.lammps.structure import UnfoldingPrism
 from pyiron.atomistics.job.interactive import GenericInteractive
 from pyiron.lammps.pipe import LammpsLibrary
+
+__author__ = "Osamu Waseda, Jan Janssen"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__version__ = "1.0"
+__maintainer__ = "Jan Janssen"
+__email__ = "janssen@mpie.de"
+__status__ = "production"
+__date__ = "Sep 1, 2018"
 
 
 class LammpsInteractive(LammpsBase, GenericInteractive):
