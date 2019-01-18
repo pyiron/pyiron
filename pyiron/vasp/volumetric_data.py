@@ -11,7 +11,7 @@ from pyiron.vasp.structure import atoms_from_string, get_species_list_from_potca
 from pyiron.atomistics.volumetric.generic import VolumetricData
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
                 "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"

@@ -22,7 +22,7 @@ from pyiron.lammps.structure import LammpsStructure, UnfoldingPrism
 from pyiron.atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH " \
                 "- Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
