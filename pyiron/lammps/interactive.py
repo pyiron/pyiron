@@ -169,7 +169,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100,
                 delta_temp=100.0, delta_press=None, seed=None, tloop=None, initial_temperature=None, langevin=False):
         """
-        Set an MD calculation within LAMMPS. Nose Hooveris used by default
+        Set an MD calculation within LAMMPS. Nosé Hoover is used by default
 
         Args:
             temperature: (None or float) Target temperature. If set to None, an NVE calculation is performed.
