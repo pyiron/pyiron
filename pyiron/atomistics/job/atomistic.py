@@ -199,7 +199,7 @@ class AtomisticGenericJob(GenericJobCore):
         self._generic_input.remove_keys(['max_iter', 'pressure', 'temperature', 'n_ionic_steps', 'n_print', 'velocity'])
 
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100, delta_temp=1.0,
-                delta_press=None, seed=None, tloop=None, rescale_velocity=True, langevin=False):
+                delta_press=None, seed=None, tloop=None, initial_temperature=True, langevin=False):
         self._generic_input['calc_mode'] = 'md'
         self._generic_input['temperature'] = temperature
         self._generic_input['n_ionic_steps'] = n_ionic_steps
