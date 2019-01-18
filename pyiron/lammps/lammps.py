@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import warnings
-from pyiron.lammps.interactive import LammpsInterative
+from pyiron.lammps.interactive import LammpsInteractive
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
 __copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \
@@ -15,7 +15,7 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 
-class Lammps(LammpsInterative):
+class Lammps(LammpsInteractive):
     """
     Class to setup and run and analyze LAMMPS simulations which is a derivative of
     atomistics.job.generic.GenericJob. The functions in these modules are written in such the function names and
