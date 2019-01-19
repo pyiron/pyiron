@@ -226,7 +226,7 @@ class Murnaghan(AtomisticParallelMaster):
 
     def run_if_interactive(self):
         start_structure = self.ref_job.structure
-        self.ref_job_initialize()
+        self.interactive_ref_job_initialize()
         self.ref_job.server.run_mode.interactive = True
         for strain in self._job_generator.parameter_list:
             basis = start_structure.copy()
@@ -237,12 +237,6 @@ class Murnaghan(AtomisticParallelMaster):
         self.ref_job.interactive_close()
         self.status.collect = True
         self.run()
-
-    def ref_job_initialize(self):
-        if len(self._job_list) > 0:
-            self._ref_job = self.pop(-1)
-            if self._job_id is not None and self._ref_job._master_id is None:
-                self._ref_job.master_id = self.job_id
 
     def collect_output(self):
         if self.server.run_mode.interactive:

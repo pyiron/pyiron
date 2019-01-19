@@ -308,6 +308,15 @@ class ParallelMaster(GenericMaster):
             self.submission_status = SubmissionStatus(db=self.project.db, job_id=self.job_id)
             self.submission_status.refresh()
 
+    def interactive_ref_job_initialize(self):
+        """
+        To execute the reference job in interactive mode it is necessary to initialize it.
+        """
+        if len(self._job_list) > 0:
+            self._ref_job = self.pop(-1)
+            if self._job_id is not None and self._ref_job._master_id is None:
+                self._ref_job.master_id = self.job_id
+
     def copy(self):
         """
         Copy the GenericJob object which links to the job and its HDF5 file
