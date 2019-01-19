@@ -46,7 +46,7 @@ class EncutConvergenceJobGenerator(JobGenerator):
 
 
 # ToDo: not all abstract methods implemented
-class ConvergenceEncutParallel(AtomisticParallelMaster):
+class ConvEncutParallel(AtomisticParallelMaster):
     def __init__(self, project, job_name='encut_conv'):
         """
 
@@ -54,8 +54,8 @@ class ConvergenceEncutParallel(AtomisticParallelMaster):
             project:
             job_name:
         """
-        super(ConvergenceEncutParallel, self).__init__(project, job_name)
-        self.__name__ = 'ConvergenceEncutParallel'
+        super(ConvEncutParallel, self).__init__(project, job_name)
+        self.__name__ = 'ConvEncutParallel'
         self.__version__ = '0.0.1'
 
         # define default input

@@ -46,7 +46,7 @@ class KpointConvergenceJobGenerator(JobGenerator):
 
 
 # ToDo: not all abstract methods implemented
-class ConvergenceKpointParallel(AtomisticParallelMaster):
+class ConvKpointParallel(AtomisticParallelMaster):
     def __init__(self, project, job_name='encut_conv'):
         """
 
@@ -54,8 +54,8 @@ class ConvergenceKpointParallel(AtomisticParallelMaster):
             project:
             job_name:
         """
-        super(ConvergenceKpointParallel, self).__init__(project, job_name)
-        self.__name__ = 'ConvergenceKpointParallel'
+        super(ConvKpointParallel, self).__init__(project, job_name)
+        self.__name__ = 'ConvKpointParallel'
         self.__version__ = '0.0.1'
 
         # define default input
@@ -66,7 +66,7 @@ class ConvergenceKpointParallel(AtomisticParallelMaster):
 
     def write_input(self):
         self.input['num_points'] = len(range(self.input['min'], self.input['max']+self.input['steps'], self.input['steps']))
-        super(ConvergenceKpointParallel, self).write_input()
+        super(ConvKpointParallel, self).write_input()
 
     def collect_output(self):
         eng_lst, kpoint_lst = [], []
