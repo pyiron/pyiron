@@ -154,15 +154,7 @@ class PhonopyJob(AtomisticParallelMaster):
 
     def run_if_interactive(self):
         self._enable_phonopy()
-        self.interactive_ref_job_initialize()
-        self.ref_job.server.run_mode.interactive = True
-        for parameter in self._job_generator.parameter_list:
-            self.ref_job.structure = parameter[1]
-            self.ref_job.run()
-
-        self.ref_job.interactive_close()
-        self.status.collect = True
-        self.run()
+        super(PhonopyJob, self).run_if_interactive()
 
     def to_hdf(self, hdf=None, group_name=None):
         """

@@ -225,9 +225,10 @@ class Murnaghan(AtomisticParallelMaster):
             return []
 
     def run_if_interactive(self):
+        if not self.ref_job.server.run_mode.interactive:
+            raise ValueError
         start_structure = self.ref_job.structure
         self.interactive_ref_job_initialize()
-        self.ref_job.server.run_mode.interactive = True
         for strain in self._job_generator.parameter_list:
             basis = start_structure.copy()
             basis.set_cell(basis.cell * strain ** (1. / 3.), scale_atoms=True)

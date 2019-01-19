@@ -631,6 +631,18 @@ class ParallelMaster(GenericMaster):
             self.status.collect = True
             self.run()
 
+    def run_if_interactive(self):
+        if not self.ref_job.server.run_mode.interactive:
+            raise ValueError
+        self.interactive_ref_job_initialize()
+        for parameter in self._job_generator.parameter_list:
+            self._job_generator.modify_job(job=self.ref_job, parameter=parameter)
+            self.ref_job.run()
+
+        self.ref_job.interactive_close()
+        self.status.collect = True
+        self.run()
+
     def _create_child_job(self, job_name):
         """
         Internal helper function to create the next child job from the reference job template - usually this is called

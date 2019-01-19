@@ -58,17 +58,6 @@ class StructureListMaster(ParallelMaster):
     def structure_lst(self, structure_lst):
         self._structure_lst = structure_lst
 
-    def run_if_interactive(self):
-        self.interactive_ref_job_initialize()
-        self.ref_job.server.run_mode.interactive = True
-        for structure in self._job_generator.parameter_list:
-            self.ref_job.structure = structure
-            self.ref_job.run()
-
-        self.ref_job.interactive_close()
-        self.status.collect = True
-        self.run()
-
     def to_hdf(self, hdf=None, group_name=None):
         """
         Store the ExampleJob object in the HDF5 File
