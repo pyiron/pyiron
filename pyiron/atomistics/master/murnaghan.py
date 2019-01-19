@@ -163,11 +163,14 @@ class MurnaghanJobGenerator(JobGenerator):
         Returns:
             (list)
         """
-        basis = self._job.ref_job.structure.copy()
-        return [[np.round(strain, 7), basis.set_cell(basis.cell * strain ** (1. / 3.), scale_atoms=True)]
-                for strain in np.linspace(1 - self._job.input['vol_range'],
-                                          1 + self._job.input['vol_range'],
-                                          self._job.input['num_points'])]
+        parameter_lst = []
+        for strain in np.linspace(1 - self._job.input['vol_range'],
+                                  1 + self._job.input['vol_range'],
+                                  self._job.input['num_points']):
+            basis = self._job.ref_job.structure.copy()
+            basis.set_cell(basis.cell * strain ** (1. / 3.), scale_atoms=True)
+            parameter_lst.append([np.round(strain, 7), basis])
+        return parameter_lst
 
     @staticmethod
     def job_name(parameter):
