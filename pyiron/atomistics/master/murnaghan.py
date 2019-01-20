@@ -164,18 +164,21 @@ class MurnaghanJobGenerator(JobGenerator):
         Returns:
             (list)
         """
-        return [np.round(strain, 7) for strain in np.linspace(1 - self._job.input['vol_range'],
-                                                              1 + self._job.input['vol_range'],
-                                                              self._job.input['num_points'])]
+        parameter_lst = []
+        for strain in np.linspace(1 - self._job.input['vol_range'],
+                                  1 + self._job.input['vol_range'],
+                                  self._job.input['num_points']):
+            basis = self._job.ref_job.structure.copy()
+            basis.set_cell(basis.cell * strain ** (1. / 3.), scale_atoms=True)
+            parameter_lst.append([np.round(strain, 7), basis])
+        return parameter_lst
 
     @staticmethod
     def job_name(parameter):
-        return "strain_" + str(parameter).replace('.', '_')
+        return "strain_" + str(parameter[0]).replace('.', '_')
 
     def modify_job(self, job, parameter):
-        basis = self._job.ref_job.structure.copy()
-        basis.set_cell(basis.cell * parameter ** (1. / 3.), scale_atoms=True)
-        job.structure = basis
+        job.structure = parameter[1]
         return job
 
 
@@ -215,35 +218,9 @@ class Murnaghan(AtomisticParallelMaster):
 
     def list_structures(self):
         if self.ref_job.structure is not None:
-            structure_lst = []
-            start_structure = self.ref_job.structure
-            for strain in self._job_generator.parameter_list:
-                basis = start_structure.copy()
-                basis.set_cell(basis.cell * strain ** (1. / 3.), scale_atoms=True)
-                structure_lst.append(basis)
-            return structure_lst
+            return [parameter[1] for parameter in self._job_generator.parameter_list]
         else:
             return []
-
-    def run_if_interactive(self):
-        start_structure = self.ref_job.structure
-        self.ref_job_initialize()
-        self.ref_job.server.run_mode.interactive = True
-        for strain in self._job_generator.parameter_list:
-            basis = start_structure.copy()
-            basis.set_cell(basis.cell * strain ** (1. / 3.), scale_atoms=True)
-            self.ref_job.structure = basis
-            self.ref_job.run()
-
-        self.ref_job.interactive_close()
-        self.status.collect = True
-        self.run()
-
-    def ref_job_initialize(self):
-        if len(self._job_list) > 0:
-            self._ref_job = self.pop(-1)
-            if self._job_id is not None and self._ref_job._master_id is None:
-                self._ref_job.master_id = self.job_id
 
     def collect_output(self):
         if self.server.run_mode.interactive:
@@ -479,6 +456,7 @@ class Murnaghan(AtomisticParallelMaster):
         new_cell = snapshot.cell * k
         snapshot.set_cell(new_cell, scale_atoms=True)
         return snapshot
+
 
 class MurnaghanInt(Murnaghan):
     def __init__(self, project, job_name):

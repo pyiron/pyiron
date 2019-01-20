@@ -153,8 +153,9 @@ class ParallelMaster(GenericMaster):
         if self._ref_job:
             return self._ref_job
         try:
-            if isinstance(self[0], GenericJob):
-                self._ref_job = self[0]
+            ref_job = self[0]
+            if isinstance(ref_job, GenericJob):
+                self._ref_job = ref_job
                 self._ref_job._job_id = None
                 self._ref_job._status = JobStatus(db=self.project.db)
                 return self._ref_job
@@ -311,6 +312,15 @@ class ParallelMaster(GenericMaster):
             self.submission_status = SubmissionStatus(db=self.project.db, job_id=self.job_id)
             self.submission_status.refresh()
 
+    def interactive_ref_job_initialize(self):
+        """
+        To execute the reference job in interactive mode it is necessary to initialize it.
+        """
+        if len(self._job_name_lst) > 0:
+            self._ref_job = self.pop(-1)
+            if self._job_id is not None and self._ref_job._master_id is None:
+                self._ref_job.master_id = self.job_id
+
     def copy(self):
         """
         Copy the GenericJob object which links to the job and its HDF5 file
@@ -354,10 +364,8 @@ class ParallelMaster(GenericMaster):
             return True
         if len(self.child_ids) < len(self._job_generator):
             return False
-        return set([self.project.db.get_item_by_id(child_id)['status'] for child_id in self.child_ids]) < {'finished',
-                                                                                                           'busy',
-                                                                                                           'refresh',
-                                                                                                           'aborted'}
+        return set([self.project.db.get_item_by_id(child_id)['status']
+                    for child_id in self.child_ids]) < {'finished', 'busy', 'refresh', 'aborted'}
 
     def iter_jobs(self, convert_to_object=True):
         """
@@ -394,7 +402,7 @@ class ParallelMaster(GenericMaster):
                     return child
                 else:
                     return child['/'.join(name_lst[1:])]
-            if item_obj in self._job_list:
+            if item_obj in self._job_name_lst:
                 child = getattr(self, item_obj)
                 if len(name_lst) == 1:
                     return child
@@ -402,11 +410,10 @@ class ParallelMaster(GenericMaster):
                     return child['/'.join(name_lst[1:])]
             return super(GenericMaster, self).__getitem__(item)
         elif isinstance(item, int):
-            total_lst = self._job_list + child_name_lst
+            total_lst = self._job_name_lst + child_name_lst
             job_name = total_lst[item]
-            if job_name in self._job_list:
-                job_name = self._job_list[item]
-                return getattr(self, job_name)
+            if job_name in self._job_name_lst:
+                return self._job_object_lst[item]
             else:
                 child_id = child_id_lst[child_name_lst.index(job_name)]
                 return self.project.load(child_id, convert_to_object=True)
@@ -625,6 +632,18 @@ class ParallelMaster(GenericMaster):
             self.status.collect = True
             self.run()
 
+    def run_if_interactive(self):
+        if not self.ref_job.server.run_mode.interactive:
+            raise ValueError
+        self.interactive_ref_job_initialize()
+        for parameter in self._job_generator.parameter_list:
+            self._job_generator.modify_job(job=self.ref_job, parameter=parameter)
+            self.ref_job.run()
+
+        self.ref_job.interactive_close()
+        self.status.collect = True
+        self.run()
+
     def _create_child_job(self, job_name):
         """
         Internal helper function to create the next child job from the reference job template - usually this is called
@@ -656,6 +675,9 @@ class ParallelMaster(GenericMaster):
         if self.server.new_hdf:
             job._hdf5 = self.project_hdf5.create_hdf(path=self._hdf5._project.open(self.job_name + '_hdf5').path,
                                                      job_name=job_name)
+            if isinstance(job, GenericMaster):
+                for sub_job in job._job_object_lst:
+                    self._child_job_update_hdf(parent_job=job, child_job=sub_job)
         else:
             job._hdf5 = self.project_hdf5.open(job_name)
         try:

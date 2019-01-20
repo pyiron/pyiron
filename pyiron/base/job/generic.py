@@ -795,6 +795,10 @@ class GenericJob(JobCore):
             hdf (ProjectHDFio): HDF5 group object - optional
             group_name (str): HDF5 subgroup name - optional
         """
+        if hdf is not None:
+            self._hdf5 = hdf
+        if group_name is not None:
+            self._hdf5.open(group_name)
         self._executable_activate_mpi()
         self._type_to_hdf()
         self._server.to_hdf(self._hdf5)
@@ -810,6 +814,10 @@ class GenericJob(JobCore):
             hdf (ProjectHDFio): HDF5 group object - optional
             group_name (str): HDF5 subgroup name - optional
         """
+        if hdf is not None:
+            self._hdf5 = hdf
+        if group_name is not None:
+            self._hdf5.open(group_name)
         self._type_from_hdf()
         self._server.from_hdf(self._hdf5)
         with self._hdf5.open('input') as hdf_input:

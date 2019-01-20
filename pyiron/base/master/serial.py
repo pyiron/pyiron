@@ -223,7 +223,7 @@ class SerialMasterBase(GenericMaster):
         """
         if len(self) == 0:
             raise ValueError('No job available in job list, please append a job first.')
-        if len(self._job_list) > len(self.child_ids):
+        if len(self._job_name_lst) > len(self.child_ids):
             return self.pop(-1)
         ham_old = self.project.load(self.child_ids[-1], convert_to_object=True)
 
@@ -383,7 +383,8 @@ class SerialMasterBase(GenericMaster):
         self._convergence_goal = convergence_goal
         self._convergence_goal_qwargs = qwargs
         self._convergence_goal_str = inspect.getsource(convergence_goal)
-        self.to_hdf()
+        if self.project_hdf5.file_exists:
+            self.to_hdf()
 
     def show(self):
         """
@@ -428,7 +429,7 @@ class SerialMasterBase(GenericMaster):
         Returns:
             int: length of the SerialMaster
         """
-        return len(self.child_ids + self._job_list)
+        return len(self.child_ids + self._job_name_lst)
 
     def __getitem__(self, item):
         """
@@ -450,22 +451,21 @@ class SerialMasterBase(GenericMaster):
                     return self.project.inspect(child_id)['/'.join(name_lst[1:])]
                 else:
                     return self.project.load(child_id, convert_to_object=True)
-            if name_lst[0] in self._job_list:
-                child = getattr(self, name_lst[0])
+            if name_lst[0] in self._job_name_lst:
+                child = self._job_object_lst[self._job_name_lst.index(name_lst[0])]
                 if len(name_lst) == 1:
                     return child
                 else:
                     return child['/'.join(name_lst[1:])]
             return super(GenericMaster, self).__getitem__(item)
         elif isinstance(item, int):
-            total_lst = child_name_lst + self._job_list
+            total_lst = child_name_lst + self._job_name_lst
             job_name = total_lst[item]
             if job_name in child_name_lst:
                 child_id = child_id_lst[child_name_lst.index(job_name)]
                 return self.project.load(child_id, convert_to_object=True)
             else:
-                job_name = self._job_list[item]
-                return getattr(self, job_name)
+                return self._job_object_lst[item]
 
     def _run_if_refresh(self):
         """

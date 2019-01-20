@@ -13,7 +13,8 @@ Jobtype class to create GenericJob type objects
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -33,10 +34,11 @@ JOB_CLASS_DICT = {'GenericMaster': 'pyiron.base.master.generic',
                   'PhonopyMaster': 'pyiron.atomistics.master.phonopy',
                   'PhonopyMaster2': 'pyiron.atomistics.master.phonopy',
                   'ConvergenceVolume': 'pyiron.atomistics.master.convergence_volume',
+                  'StructureListMaster': 'pyiron.atomistics.master.structure',
                   'StructureContainer': 'pyiron.atomistics.job.structurecontainer',
-                  'ConvergenceEncutParallel': 'pyiron.dft.master.convergence_encut_parallel',
+                  'ConvEncutParallel': 'pyiron.dft.master.convergence_encut_parallel',
                   'ConvEncutSerial': 'pyiron.dft.master.convergence_encut_serial',
-                  'ConvergenceKpointParallel': 'pyiron.dft.master.convergence_kpoint_parallel',
+                  'ConvKpointParallel': 'pyiron.dft.master.convergence_kpoint_parallel',
                   'MurnaghanDFT': 'pyiron.dft.master.murnaghan_dft',
                   'Lammps': 'pyiron.lammps.lammps',
                   'LammpsInt': 'pyiron.lammps.lammps',
@@ -46,7 +48,7 @@ JOB_CLASS_DICT = {'GenericMaster': 'pyiron.base.master.generic',
                   'Vasp': 'pyiron.vasp.vasp',
                   'VaspInt': 'pyiron.vasp.vasp',
                   'VaspInt2': 'pyiron.vasp.vasp',
-}
+                  }
 
 
 class Singleton(type):
@@ -68,9 +70,6 @@ class JobTypeChoice(with_metaclass(Singleton)):
     """
     Helper class to choose the job type directly from the project, autocompletion is enabled by overwriting the
     __dir__() function.
-
-    Args:
-        job_class_dict: dictionary with the jobtypes to choose from.
     """
     def __init__(self):
         self._job_class_dict = None
