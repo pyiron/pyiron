@@ -180,12 +180,7 @@ class GenericMaster(GenericJob):
         """
         if job.job_name not in self._job_name_lst:
             self._job_name_lst.append(job.job_name)
-            job.project_hdf5.file_name = self.project_hdf5.file_name
-            job.project_hdf5.h5_path = self.project_hdf5.h5_path + '/' + job.job_name
-            if isinstance(job, GenericMaster):
-                for sub_job in job._job_object_lst:
-                    sub_job.project_hdf5.file_name = job.project_hdf5.file_name
-                    sub_job.project_hdf5.h5_path = job.project_hdf5.h5_path + '/' + sub_job.job_name
+            self._child_job_update_hdf(parent_job=self, child_job=job)
             setattr(self, job.job_name, job)
             self._job_object_lst.append(job)
 
@@ -209,8 +204,7 @@ class GenericMaster(GenericJob):
                                                                  h5_path='/' + job_to_return.job_name)
         if isinstance(job_to_return, GenericMaster):
             for sub_job in job_to_return._job_object_lst:
-                sub_job.project_hdf5.file_name = job_to_return.project_hdf5.file_name
-                sub_job.project_hdf5.h5_path = job_to_return.project_hdf5.h5_path + '/' + sub_job.job_name
+                self._child_job_update_hdf(parent_job=job_to_return, child_job=sub_job)
         job_to_return.status.initialized = True
         return job_to_return
 
@@ -335,6 +329,19 @@ class GenericMaster(GenericJob):
         return sum([int(db_entry['computer'].split('#')[1]) for db_entry in
                     self.project.db.get_items_dict({'masterid': self.job_id})
                     if db_entry['status'] not in ['finished', 'aborted']])
+
+    def _child_job_update_hdf(self, parent_job, child_job):
+        """
+
+        Args:
+            parent_job:
+            child_job:
+        """
+        child_job.project_hdf5.file_name = parent_job.project_hdf5.file_name
+        child_job.project_hdf5.h5_path = parent_job.project_hdf5.h5_path + '/' + child_job.job_name
+        if isinstance(child_job, GenericMaster):
+            for sub_job in child_job._job_object_lst:
+                self._child_job_update_hdf(parent_job=child_job, child_job=sub_job)
 
     def _executable_activate_mpi(self):
         """
