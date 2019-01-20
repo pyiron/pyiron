@@ -451,7 +451,7 @@ class SerialMasterBase(GenericMaster):
                 else:
                     return self.project.load(child_id, convert_to_object=True)
             if name_lst[0] in self._job_name_lst:
-                child = getattr(self, name_lst[0])
+                child = self._job_object_lst[self._job_name_lst.index(name_lst[0])]
                 if len(name_lst) == 1:
                     return child
                 else:
