@@ -7,8 +7,8 @@ from pyiron.atomistics.master.parallel import ParallelMaster
 from pyiron.base.master.parallel import JobGenerator
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH " \
-                "- Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -57,6 +57,17 @@ class StructureListMaster(ParallelMaster):
     @structure_lst.setter
     def structure_lst(self, structure_lst):
         self._structure_lst = structure_lst
+
+    def run_if_interactive(self):
+        self.interactive_ref_job_initialize()
+        self.ref_job.server.run_mode.interactive = True
+        for structure in self._job_generator.parameter_list:
+            self.ref_job.structure = structure
+            self.ref_job.run()
+
+        self.ref_job.interactive_close()
+        self.status.collect = True
+        self.run()
 
     def to_hdf(self, hdf=None, group_name=None):
         """

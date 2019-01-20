@@ -8,7 +8,8 @@ from ovito.data import Bonds, DataCollection
 from ovito.modifiers import CreateBondsModifier, CommonNeighborAnalysisModifier, CentroSymmetryModifier, VoronoiAnalysisModifier
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -18,8 +19,13 @@ __date__ = "Sep 1, 2017"
 
 def analyse_ovito_cna_adaptive(atoms, mode='total'):
     """
+
     Args:
-        mode (str): ['total', 'numeric', 'str']
+        atoms:
+        mode:
+
+    Returns:
+
     """
     if not mode in ['total', 'numeric', 'str']:
         raise ValueError('Unsupported mode')
@@ -36,12 +42,19 @@ def analyse_ovito_cna_adaptive(atoms, mode='total'):
             return atoms_output.get_array("Structure Type")
         elif mode == 'str':
             cna_property = output.particle_properties.structure_type
-            return np.array([cna_property.get_type_by_id(cnatype).name for cnatype in atoms_output.get_array("Structure Type")])
+            return np.array([cna_property.get_type_by_id(cnatype).name
+                             for cnatype in atoms_output.get_array("Structure Type")])
+
 
 def analyse_ovito_centro_symmetry(atoms, num_neighbors=12):
     """
+
     Args:
-        mode (str): ['total', 'numeric', 'str']
+        atoms:
+        num_neighbors:
+
+    Returns:
+
     """
     data = DataCollection.create_from_ase_atoms(atoms.copy())
     node = ObjectNode()
@@ -50,10 +63,15 @@ def analyse_ovito_centro_symmetry(atoms, num_neighbors=12):
     output = node.compute()
     return output.particle_properties['Centrosymmetry'].array
 
+
 def analyse_ovito_voronoi_volume(atoms):
     """
+
     Args:
-        mode (str): ['total', 'numeric', 'str']
+        atoms:
+
+    Returns:
+
     """
     data = DataCollection.create_from_ase_atoms(atoms.copy())
     node = ObjectNode()
