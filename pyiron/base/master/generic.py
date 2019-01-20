@@ -124,7 +124,8 @@ class GenericMaster(GenericJob):
     """
     def __init__(self, project, job_name):
         super(GenericMaster, self).__init__(project, job_name=job_name)
-        self._job_list = []
+        self._job_name_lst = []
+        self._job_object_lst = []
         self._child_id_func = None
         self._child_id_func_str = None
 
@@ -177,15 +178,16 @@ class GenericMaster(GenericJob):
         Args:
             job (GenericJob): job to append
         """
-        if job.job_name not in self._job_list:
-            self._job_list.append(job.job_name)
+        if job.job_name not in self._job_name_lst:
+            self._job_name_lst.append(job.job_name)
+            job.project_hdf5.file_name = self.project_hdf5.file_name
+            job.project_hdf5.h5_path = self.project_hdf5.h5_path + '/' + job.job_name
+            if isinstance(job, GenericMaster):
+                for sub_job in job._job_object_lst:
+                    sub_job.project_hdf5.file_name = job.project_hdf5.file_name
+                    sub_job.project_hdf5.h5_path = job.project_hdf5.h5_path + '/' + sub_job.job_name
             setattr(self, job.job_name, job)
-            if self.project_hdf5.file_name != job.project_hdf5.file_name or \
-                    self.project_hdf5.h5_path not in job.project_hdf5.h5_path:
-                try:
-                    job.move_to(self._hdf5)
-                except (ValueError, FileExistsError, RuntimeError):
-                    pass
+            self._job_object_lst.append(job)
 
     def pop(self, i):
         """
@@ -197,13 +199,18 @@ class GenericMaster(GenericJob):
         Returns:
             GenericJob: job
         """
-        job_to_return = getattr(self, self._job_list[i])
-        del self._job_list[i]
+        job_to_return = self._job_object_lst[i]
+        del self._job_name_lst[i]
+        del self._job_object_lst[i]
         with self.project_hdf5.open("input") as hdf5_input:
-            hdf5_input["job_list"] = self._job_list
+            hdf5_input["job_list"] = self._job_name_lst
         job_to_return.project_hdf5.remove_group()
         job_to_return.project_hdf5 = self.project_hdf5.__class__(self.project, job_to_return.job_name,
                                                                  h5_path='/' + job_to_return.job_name)
+        if isinstance(job_to_return, GenericMaster):
+            for sub_job in job_to_return._job_object_lst:
+                sub_job.project_hdf5.file_name = job_to_return.project_hdf5.file_name
+                sub_job.project_hdf5.h5_path = job_to_return.project_hdf5.h5_path + '/' + sub_job.job_name
         job_to_return.status.initialized = True
         return job_to_return
 
@@ -240,16 +247,15 @@ class GenericMaster(GenericJob):
         new_generic_job = super(GenericMaster, self).copy_to(project=project, new_job_name=new_job_name,
                                                              input_only=input_only,
                                                              new_database_entry=new_database_entry)
-        if new_generic_job.job_id and new_database_entry:
-            if self._job_id:
-                for child_id in self.child_ids:
-                    child = self.project.load(child_id)
-                    new_child = child.copy_to(project.open(self.job_name + '_hdf5'),
-                                              new_database_entry=new_database_entry)
-                    if new_database_entry and child.parent_id:
-                        new_child.parent_id = new_generic_job.job_id
-                    if new_database_entry and child.master_id:
-                        new_child.master_id = new_generic_job.job_id
+        if new_generic_job.job_id and new_database_entry and self._job_id:
+            for child_id in self.child_ids:
+                child = self.project.load(child_id)
+                new_child = child.copy_to(project.open(self.job_name + '_hdf5'),
+                                          new_database_entry=new_database_entry)
+                if new_database_entry and child.parent_id:
+                    new_child.parent_id = new_generic_job.job_id
+                if new_database_entry and child.master_id:
+                    new_child.master_id = new_generic_job.job_id
         return new_generic_job
 
     def to_hdf(self, hdf=None, group_name=None):
@@ -262,7 +268,7 @@ class GenericMaster(GenericJob):
         """
         super(GenericMaster, self).to_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input") as hdf5_input:
-            hdf5_input["job_list"] = self._job_list
+            hdf5_input["job_list"] = self._job_name_lst
             if self._child_id_func is not None:
                 try:
                     hdf5_input["child_id_func"] = inspect.getsource(self._child_id_func)
@@ -270,10 +276,8 @@ class GenericMaster(GenericJob):
                     hdf5_input["child_id_func"] = self._child_id_func_str
             else:
                 hdf5_input["child_id_func"] = "None"
-        for ham in self._job_list:
-            ham_obj = self[ham]
-            if ham_obj is not None:
-                ham_obj.to_hdf()
+        for job in self._job_object_lst:
+            job.to_hdf()
 
     def from_hdf(self, hdf=None, group_name=None):
         """
@@ -298,13 +302,16 @@ class GenericMaster(GenericJob):
                 func = child_id_func_str.split("(")[0][4:]  # get function name
                 exec("self._child_id_func = " + func)
         for ham in job_list_tmp:
-            try:
-                ham_obj = self.project_hdf5.create_object(class_name=self._hdf5[ham + '/TYPE'], project=self._hdf5,
-                                                          job_name=ham)
-                ham_obj.from_hdf()
-                self.append(ham_obj)
-            except ValueError:
-                pass
+            # try:
+            ham_obj = self.project_hdf5.create_object(class_name=self._hdf5[ham + '/TYPE'], project=self._hdf5,
+                                                      job_name=ham)
+            ham_obj.from_hdf()
+            setattr(self, ham_obj.job_name, ham_obj)
+            self._job_object_lst.append(ham_obj)
+            self._job_name_lst.append(ham_obj.job_name)
+            # self.append(ham_obj)
+            # except ValueError:
+            #     pass
 
     def set_child_id_func(self, child_id_func):
         """
@@ -342,7 +349,7 @@ class GenericMaster(GenericJob):
         Returns:
             int: length of the GenericMaster
         """
-        return len(self._job_list)
+        return len(self._job_object_lst)
 
     def __getitem__(self, item):
         """
@@ -356,7 +363,7 @@ class GenericMaster(GenericJob):
         """
         if isinstance(item, str):
             name_lst = item.split("/")
-            if name_lst[0] in self._job_list:
+            if name_lst[0] in self._job_name_lst:
                 child = getattr(self, name_lst[0])
                 if len(name_lst) == 1:
                     return child
@@ -364,5 +371,4 @@ class GenericMaster(GenericJob):
                     return child['/'.join(name_lst[1:])]
             return super(GenericMaster, self).__getitem__(item)
         elif isinstance(item, int):
-            job_name = self._job_list[item]
-            return getattr(self, job_name)
+            return self._job_object_lst[item]

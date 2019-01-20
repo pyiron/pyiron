@@ -184,7 +184,7 @@ class ListMaster(GenericMaster):
                     del child_db_entry['masterid']
                     self.project.db.item_update(child_db_entry, job.job_id)
                     self.submission_status.submit_next()
-                    if len(self._job_list) == 0:
+                    if len(self._job_name_lst) == 0:
                         self.status.finished = True
                         self.project.db.item_update(self._runtime(), self.job_id)
                 else:
@@ -222,9 +222,9 @@ class ListMaster(GenericMaster):
         self._input['num_points'] = len(self)
         self._logger.info('{} run parallel master (modal)'.format(self.job_info_str))
         self.status.running = True
-        if len(self._job_list) > 0:
+        if len(self._job_name_lst) > 0:
             job_lst = []
-            for i in range(len(self._job_list)):
+            for i in range(len(self._job_name_lst)):
                 ham = self.pop(i=0)
                 if ham.server.run_mode.non_modal and self.get_child_cores() + ham.server.cores > self.server.cores:
                     break
@@ -289,7 +289,7 @@ class ListMaster(GenericMaster):
             if name_lst[0] in child_name_lst:
                 child_id = child_id_lst[child_name_lst.index(name_lst[0])]
                 return self._hdf5.load(child_id, convert_to_object=True)
-            if name_lst[0] in self._job_list:
+            if name_lst[0] in self._job_name_lst:
                 child = getattr(self, name_lst[0])
                 if len(name_lst) == 1:
                     return child
@@ -297,14 +297,13 @@ class ListMaster(GenericMaster):
                     return child['/'.join(name_lst[1:])]
             return super(GenericMaster, self).__getitem__(item)
         elif isinstance(item, int):
-            total_lst = child_name_lst + self._job_list
+            total_lst = child_name_lst + self._job_name_lst
             job_name = total_lst[item]
             if job_name in child_name_lst:
                 child_id = child_id_lst[child_name_lst.index(job_name)]
                 return self._hdf5.load(child_id, convert_to_object=True)
             else:
-                job_name = self._job_list[item]
-                return getattr(self, job_name)
+                return self._job_object_lst[item]
 
     def __len__(self):
         """
@@ -313,7 +312,7 @@ class ListMaster(GenericMaster):
         Returns:
             int: length of the ListMaster
         """
-        return len(self.child_ids + self._job_list)
+        return len(self.child_ids + self._job_name_lst)
 
     def _run_if_refresh(self):
         """
