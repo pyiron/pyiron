@@ -10,7 +10,8 @@ The GenericMaster is the template class for all meta jobs
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH " \
+                "- Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -23,6 +24,7 @@ try:
 except NameError:
     class FileExistsError(OSError):
         pass
+
 
 class GenericMaster(GenericJob):
     """
@@ -41,8 +43,9 @@ class GenericMaster(GenericJob):
 
         .. attribute:: status
 
-            execution status of the job, can be one of the following [initialized, appended, created, submitted, running,
-                                                                      aborted, collect, suspended, refresh, busy, finished]
+            execution status of the job, can be one of the following [initialized, appended, created, submitted,
+                                                                      running, aborted, collect, suspended, refresh,
+                                                                      busy, finished]
 
         .. attribute:: job_id
 
@@ -54,8 +57,8 @@ class GenericMaster(GenericJob):
 
         .. attribute:: master_id
 
-            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel or in
-            serial.
+            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel
+            or in serial.
 
         .. attribute:: child_ids
 
@@ -91,7 +94,8 @@ class GenericMaster(GenericJob):
 
         .. attribute:: library_activated
 
-            For job types which offer a Python library pyiron can use the python library instead of an external executable.
+            For job types which offer a Python library pyiron can use the python library instead of an external
+            executable.
 
         .. attribute:: server
 
@@ -111,8 +115,8 @@ class GenericMaster(GenericJob):
 
         .. attribute:: job_type
 
-            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster', 'ScriptJob',
-                                                               'ListMaster']
+            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster',
+                                                               'ScriptJob', 'ListMaster']
 
         .. attribute:: child_names
 
@@ -176,7 +180,8 @@ class GenericMaster(GenericJob):
         if job.job_name not in self._job_list:
             self._job_list.append(job.job_name)
             setattr(self, job.job_name, job)
-            if self.project_hdf5.file_name != job.project_hdf5.file_name or self.project_hdf5.h5_path not in job.project_hdf5.h5_path:
+            if self.project_hdf5.file_name != job.project_hdf5.file_name or \
+                    self.project_hdf5.h5_path not in job.project_hdf5.h5_path:
                 try:
                     job.move_to(self._hdf5)
                 except (ValueError, FileExistsError, RuntimeError):
@@ -239,7 +244,8 @@ class GenericMaster(GenericJob):
             if self._job_id:
                 for child_id in self.child_ids:
                     child = self.project.load(child_id)
-                    new_child = child.copy_to(project.open(self.job_name + '_hdf5'), new_database_entry=new_database_entry)
+                    new_child = child.copy_to(project.open(self.job_name + '_hdf5'),
+                                              new_database_entry=new_database_entry)
                     if new_database_entry and child.parent_id:
                         new_child.parent_id = new_generic_job.job_id
                     if new_database_entry and child.master_id:
@@ -313,7 +319,8 @@ class GenericMaster(GenericJob):
 
     def get_child_cores(self):
         """
-        Calculate the currently active number of cores, by summarizing all childs which are neither finished nor aborted.
+        Calculate the currently active number of cores, by summarizing all childs which are neither finished nor
+        aborted.
 
         Returns:
             (int): number of cores used
