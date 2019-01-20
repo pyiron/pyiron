@@ -672,6 +672,9 @@ class ParallelMaster(GenericMaster):
         if self.server.new_hdf:
             job._hdf5 = self.project_hdf5.create_hdf(path=self._hdf5._project.open(self.job_name + '_hdf5').path,
                                                      job_name=job_name)
+            if isinstance(job, GenericMaster):
+                for sub_job in job._job_object_lst:
+                    self._child_job_update_hdf(parent_job=job, child_job=sub_job)
         else:
             job._hdf5 = self.project_hdf5.open(job_name)
         try:
