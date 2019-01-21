@@ -320,11 +320,21 @@ class TestAtoms(unittest.TestCase):
     def test_repeat(self):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
         basis_O = CrystalStructure("O", bravais_basis="fcc", lattice_constant=4.2)
-        basis_O.positions += [0., 0., 0.5]
+        basis_O.scaled_positions += [0., 0., 0.5]
         basis = basis_Mg + basis_O
         basis.center_coordinates_in_unit_cell()
-        basis.set_repeat([3, 3, 3])
+        basis.add_tag(selective_dynamics=[True, True, True])
+        basis.selective_dynamics[basis.select_index("O")] = [False, False, False]
+        len_before = len(basis)
+        sel_dyn_before = np.array(basis.selective_dynamics.list())
+        self.assertFalse(np.alltrue(np.alltrue(sel_dyn_before[basis.select_index("O")], axis=1)))
+        basis.set_repeat([3, 3, 2])
+        sel_dyn_after = np.array(basis.selective_dynamics.list())
+        len_after = len(basis)
         self.assertEqual(basis.get_spacegroup()["Number"], 225)
+        self.assertEqual(len_before * 18, len_after)
+        self.assertEqual(len(sel_dyn_before) * 18, len(sel_dyn_after))
+        self.assertFalse(np.alltrue(np.alltrue(sel_dyn_after[basis.select_index("O")], axis=1)))
 
     def test_boundary(self):
         cell = 2.2 * np.identity(3)
