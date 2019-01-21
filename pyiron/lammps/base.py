@@ -139,11 +139,25 @@ class LammpsBase(AtomisticGenericJob):
         """
         return self.get_structure()
 
-    def view_potentials(self):
+    def potentials_view(self):
         """
+        List all interatomic potentials for the current atomistic sturcture including all potential parameters.
+
+        To quickly get only the names of the potentials you can use: self.potentials_list()
 
         Returns:
+            pandas.Dataframe: Dataframe including all potential parameters.
+        """
+        return self.view_potentials()
 
+    def view_potentials(self):
+        """
+        List all interatomic potentials for the current atomistic sturcture including all potential parameters.
+
+        To quickly get only the names of the potentials you can use: self.potentials_list()
+
+        Returns:
+            pandas.Dataframe: Dataframe including all potential parameters.
         """
         from pyiron.lammps.potential import LammpsPotentialFile
         if not self.structure:
@@ -157,11 +171,25 @@ class LammpsBase(AtomisticGenericJob):
 
     def list_potentials(self):
         """
+        List of interatomic potentials suitable for the current atomic structure.
+
+        use self.potentials_view() to get more details.
 
         Returns:
-            list:
+            list: potential names
         """
         return list(self.view_potentials()['Name'].values)
+
+    def potentials_list(self):
+        """
+        List of interatomic potentials suitable for the current atomic structure.
+
+        use self.potentials_view() to get more details.
+
+        Returns:
+            list: potential names
+        """
+        return self.list_potentials()
 
     def enable_h5md(self):
         """
@@ -393,8 +421,8 @@ class LammpsBase(AtomisticGenericJob):
         super(LammpsBase, self).calc_static()
         self.input.control.calc_static()
 
-    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100,
-                delta_temp=100.0, delta_press=None, seed=None, tloop=None, initial_temperature=None, langevin=False):
+    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=1.0, n_print=100,
+                delta_temp=100.0, delta_press=1000.0, seed=None, tloop=None, initial_temperature=None, langevin=False):
         """
         Set an MD calculation within LAMMPS. Nosé Hoover is used by default
 

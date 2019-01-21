@@ -179,8 +179,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         super(LammpsInteractive, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure,
                                                      n_print=n_print)
 
-    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100,
-                delta_temp=100.0, delta_press=None, seed=None, tloop=None, initial_temperature=None, langevin=False):
+    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=1.0, n_print=100,
+                delta_temp=100.0, delta_press=1000.0, seed=None, tloop=None, initial_temperature=None, langevin=False):
         """
         Set an MD calculation within LAMMPS. Nosé Hoover is used by default
 
