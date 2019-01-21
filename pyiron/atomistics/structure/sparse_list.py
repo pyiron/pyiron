@@ -226,14 +226,11 @@ class SparseList(object):
         if not isinstance(other, (int, np.int32, np.int_, np.int64)):
             raise ValueError('Multiplication defined only for SparseArray*integers')
 
-        len_sparse = len(list(self.keys()))
-        keys = other * list(self.keys())
-        vals = other * list(self._dict.values())[:]
-        for i in range(len(keys)):
-            i_shift = (i % len_sparse) * len(self)
-            keys[i] += i_shift
-
-        new_dic = {key: val for key, val in zip(keys, vals)}
+        overall_list = other * np.arange(len(self)).tolist()
+        new_dic = dict()
+        for k in self.keys():
+            for val in np.argwhere(overall_list == k).flatten():
+                new_dic[val] = self[k]
         return self.__class__(new_dic, default=self._default, length=other * len(self))
 
     def __rmul__(self, other):
