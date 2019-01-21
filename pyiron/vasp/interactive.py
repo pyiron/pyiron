@@ -129,6 +129,22 @@ class VaspInteractive(VaspBase, GenericInteractive):
     def calc_minimize(self, electronic_steps=400, ionic_steps=100, max_iter=None, pressure=None, algorithm=None,
                       retain_charge_density=False, retain_electrostatic_potential=False, ionic_energy=None,
                       ionic_forces=None, volume_only=False):
+        """
+        Function to setup the hamiltonian to perform ionic relaxations using DFT. The ISIF tag has to be supplied
+        separately.
+
+        Args:
+            electronic_steps (int): Maximum number of electronic steps
+            ionic_steps (int): Maximum number of ionic
+            max_iter (int): Maximum number of iterations
+            pressure (float): External pressure to be applied
+            algorithm (str): Type of VASP algorithm to be used "Fast"/"Accurate"
+            retain_charge_density (bool): True if the charge density should be written
+            retain_electrostatic_potential (boolean): True if the electrostatic potential should be written
+            ionic_energy (float): Ionic energy convergence criteria (eV)
+            ionic_forces (float): Ionic forces convergence criteria (overwrites ionic energy) (ev/A)
+            volume_only (bool): Option to relax only the volume (keeping the relative coordinates fixed
+        """
         if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
             raise NotImplementedError('calc_minimize() is not implemented for the interactive mode use calc_static()!')
         else:
@@ -139,15 +155,26 @@ class VaspInteractive(VaspBase, GenericInteractive):
                                                        ionic_energy=ionic_energy, ionic_forces=ionic_forces,
                                                        volume_only=volume_only)
 
-    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100, delta_temp=1.0,
-                delta_press=None, seed=None, tloop=None, rescale_velocity=True, langevin=False):
+    def calc_md(self, temperature=None, n_ionic_steps=1000, n_print=1, time_step=1.0, retain_charge_density=False,
+                retain_electrostatic_potential=False, **kwargs):
+        """
+        Sets appropriate tags for molecular dynamics in VASP
+
+        Args:
+            temperature (int/float/list): Temperature/ range of temperatures in Kelvin
+            n_ionic_steps (int): Maximum number of ionic steps
+            n_print (int): Prints outputs every n_print steps
+            time_step (float): time step (fs)
+            retain_charge_density (bool): True id the charge density should be written
+            retain_electrostatic_potential (bool): True if the electrostatic potential should be written
+        """
         if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
             raise NotImplementedError('calc_md() is not implemented for the interactive mode use calc_static()!')
         else:
-            super(VaspInteractive, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
-                                                 time_step=time_step, n_print=n_print, delta_temp=delta_temp,
-                                                 delta_press=delta_press, seed=seed, tloop=tloop,
-                                                 rescale_velocity=rescale_velocity, langevin=langevin)
+            super(VaspInteractive, self).calc_md(temperature=temperature, n_ionic_steps=n_ionic_steps,
+                                                 time_step=time_step, n_print=n_print,
+                                                 retain_charge_density=retain_charge_density,
+                                                 retain_electrostatic_potential=retain_electrostatic_potential, **kwargs)
 
     def run_if_interactive_non_modal(self):
         initial_run = not self.interactive_is_activated()
