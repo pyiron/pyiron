@@ -725,6 +725,10 @@ class GenericOutput(OrderedDict):
 
 
 class JobGenerator(object):
+    """
+    JobGenerator - this class implements the functions to generate the parameter list, modify the individual jobs
+    according to the parameter list and generate the new job names according to the parameter list.
+    """
     def __init__(self, job):
         self._job = job
         self._childcounter = 0
