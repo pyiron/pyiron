@@ -354,6 +354,24 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         """
         return list(self._scheduler.available_schedulers_dict().keys())
 
+    def queues_list(self):
+        """
+        List the available Job scheduler provided by the system.
+
+        Returns:
+            (list)
+        """
+        return self.list_queues()
+
+    def queues_view(self):
+        """
+        List the available Job scheduler provided by the system.
+
+        Returns:
+            (pandas.DataFrame)
+        """
+        return self.view_queues()
+
     def view_queues(self):
         """
         List the available Job scheduler provided by the system.
