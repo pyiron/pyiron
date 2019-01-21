@@ -194,10 +194,10 @@ class PhonopyJob(AtomisticParallelMaster):
 
         """
         if self.server.run_mode.interactive:
-            froces_lst = self.project_hdf5.inspect(self.child_ids[0])["output/generic/forces"]
+            forces_lst = self.project_hdf5.inspect(self.child_ids[0])["output/generic/forces"]
         else:
-            froces_lst = [self.project_hdf5.inspect(job_id)["output/generic/forces"][-1] for job_id in self.child_ids]
-        self.phonopy.set_forces(froces_lst)
+            forces_lst = [self.project_hdf5.inspect(job_id)["output/generic/forces"][-1] for job_id in self.child_ids]
+        self.phonopy.set_forces(forces_lst)
         self.phonopy.produce_force_constants()
         self.phonopy.set_mesh(mesh=[self.input['dos_mesh']] * 3)
         qpoints, weights, frequencies, eigvecs = self.phonopy.get_mesh()
