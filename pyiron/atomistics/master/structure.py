@@ -42,7 +42,6 @@ class StructureListMaster(ParallelMaster):
         project:
         job_name:
     """
-
     def __init__(self, project, job_name):
         super(StructureListMaster, self).__init__(project, job_name)
         self.__name__ = 'StructureListMaster'
@@ -57,17 +56,6 @@ class StructureListMaster(ParallelMaster):
     @structure_lst.setter
     def structure_lst(self, structure_lst):
         self._structure_lst = structure_lst
-
-    def run_if_interactive(self):
-        self.interactive_ref_job_initialize()
-        self.ref_job.server.run_mode.interactive = True
-        for structure in self._job_generator.parameter_list:
-            self.ref_job.structure = structure
-            self.ref_job.run()
-
-        self.ref_job.interactive_close()
-        self.status.collect = True
-        self.run()
 
     def to_hdf(self, hdf=None, group_name=None):
         """
@@ -96,9 +84,10 @@ class StructureListMaster(ParallelMaster):
                                    for group_name in hdf5_input.list_groups()]
 
     def collect_output(self):
-        """
+        pass
 
-        Returns:
+    def run_if_interactive_non_modal(self):
+        raise TypeError
 
-        """
+    def _run_if_busy(self):
         pass
