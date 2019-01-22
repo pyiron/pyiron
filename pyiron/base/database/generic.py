@@ -4,6 +4,7 @@
 
 import numpy as np
 import re
+import time
 from datetime import datetime
 from sqlalchemy import Column, create_engine, DateTime, Float, Integer, MetaData, String, Table, text, and_, or_
 from sqlalchemy.pool import NullPool
@@ -30,9 +31,13 @@ class AutorestoredConnection:
         self._conn = None
 
     def execute(self, *args, **kwargs):
-        if not self._conn or self._conn.closed:
-            self._conn = self.engine.connect()
-        result = self._conn.execute(*args, **kwargs)
+        try:
+            if not self._conn or self._conn.closed:
+                self._conn = self.engine.connect()
+            result = self._conn.execute(*args, **kwargs)
+        except OperationalError:
+            time.sleep(5)
+            result = self.execute(*args, **kwargs)
         return result
 
     def close(self):
