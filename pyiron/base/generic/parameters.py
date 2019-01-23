@@ -572,6 +572,15 @@ class GenericParameters(PyironObject):
         else:
             self.set(**{key: value})
 
+    def set_dict(self, dictionary):
+        """
+        Set a dictionary of key value pairs
+
+        Args:
+            dictionary (dict): dictionary of key value pairs
+        """
+        self.set(**dictionary)
+
     def __getitem__(self, item):
         """
         Get a value for the corresponding key
