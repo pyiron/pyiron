@@ -261,7 +261,7 @@ class InteractiveBase(GenericJob):
         Returns:
 
         """
-        self.server.run_mode.interactive = True  
+        self.server.run_mode.interactive = True
 
     def interactive_close(self):
         """
