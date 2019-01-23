@@ -113,6 +113,30 @@ class LammpsBase(AtomisticGenericJob):
                 self.input.control[val] = v
         self.input.potential.remove_structure_block()
 
+    @property
+    def potential_list(self):
+        """
+        List of interatomic potentials suitable for the current atomic structure.
+
+        use self.potentials_view() to get more details.
+
+        Returns:
+            list: potential names
+        """
+        return self.list_potentials()
+
+    @property
+    def potential_view(self):
+        """
+        List all interatomic potentials for the current atomistic sturcture including all potential parameters.
+
+        To quickly get only the names of the potentials you can use: self.potentials_list()
+
+        Returns:
+            pandas.Dataframe: Dataframe including all potential parameters.
+        """
+        return self.view_potentials()
+
     def validate_ready_to_run(self):
         """
 
@@ -138,17 +162,6 @@ class LammpsBase(AtomisticGenericJob):
 
         """
         return self.get_structure()
-
-    def potentials_view(self):
-        """
-        List all interatomic potentials for the current atomistic sturcture including all potential parameters.
-
-        To quickly get only the names of the potentials you can use: self.potentials_list()
-
-        Returns:
-            pandas.Dataframe: Dataframe including all potential parameters.
-        """
-        return self.view_potentials()
 
     def view_potentials(self):
         """
@@ -179,17 +192,6 @@ class LammpsBase(AtomisticGenericJob):
             list: potential names
         """
         return list(self.view_potentials()['Name'].values)
-
-    def potentials_list(self):
-        """
-        List of interatomic potentials suitable for the current atomic structure.
-
-        use self.potentials_view() to get more details.
-
-        Returns:
-            list: potential names
-        """
-        return self.list_potentials()
 
     def enable_h5md(self):
         """
