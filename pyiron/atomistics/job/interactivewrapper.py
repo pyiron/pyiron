@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from datetime import datetime
+import warnings
 from pyiron.base.generic.parameters import GenericParameters
 from pyiron.base.job.generic import GenericJob
 from pyiron.base.master.generic import GenericMaster
@@ -88,8 +89,9 @@ class InteractiveWrapper(GenericMaster):
         Returns:
 
         """
+        warnings.warn("get_final_structure() is deprecated - please use get_structure() instead.", DeprecationWarning)
         if self.ref_job:
-            return self._ref_job.get_final_structure()
+            return self._ref_job.get_structure(iteration_step=-1)
         else:
             return None
 

@@ -326,7 +326,7 @@ class Murnaghan(AtomisticParallelMaster):
             hdf5["equilibrium_b_prime"] = b_prime
 
         with self._hdf5.open("output") as hdf5:
-            self.get_final_structure().to_hdf(hdf5)
+            self.get_structure(iteration_step=-1).to_hdf(hdf5)
 
         self.fit_dict = fit_dict
         return fit_dict
@@ -441,7 +441,7 @@ class Murnaghan(AtomisticParallelMaster):
         if plt_show:
             plt.show()
 
-    def get_final_structure(self):
+    def get_structure(self, iteration_step=-1):
         """
 
         Returns: Structure with equilibrium volume
@@ -449,13 +449,18 @@ class Murnaghan(AtomisticParallelMaster):
         """
         if not (self.structure is not None):
             raise AssertionError()
-        snapshot = self.structure.copy()
-        old_vol = snapshot.get_volume()
-        new_vol = self["output/equilibrium_volume"]
-        k = (new_vol / old_vol) ** (1. / 3.)
-        new_cell = snapshot.cell * k
-        snapshot.set_cell(new_cell, scale_atoms=True)
-        return snapshot
+        if iteration_step == -1:
+            snapshot = self.structure.copy()
+            old_vol = snapshot.get_volume()
+            new_vol = self["output/equilibrium_volume"]
+            k = (new_vol / old_vol) ** (1. / 3.)
+            new_cell = snapshot.cell * k
+            snapshot.set_cell(new_cell, scale_atoms=True)
+            return snapshot
+        elif iteration_step == 0:
+            return self.structure
+        else:
+            raise ValueError('iteration_step should be either 0 or -1.')
 
 
 class MurnaghanInt(Murnaghan):
