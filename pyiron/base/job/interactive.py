@@ -261,17 +261,7 @@ class InteractiveBase(GenericJob):
         Returns:
 
         """
-        self.server.run_mode.interactive = True
-
-    def hd_copy(self, hdf_old, hdf_new, exclude_groups = []):
-        for p in hdf_old.list_nodes():
-            hdf_new[p] = hdf_old[p]
-        for p in hdf_old.list_groups():
-            if p in exclude_groups:
-                continue
-            h_new = hdf_new.create_group(p)
-            hd_copy(hdf_old[p], h_new, exclude_groups=exclude_groups)
-        return hdf_new   
+        self.server.run_mode.interactive = True  
 
     def interactive_close(self):
         """
