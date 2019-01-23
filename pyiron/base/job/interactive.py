@@ -266,6 +266,12 @@ class InteractiveBase(GenericJob):
         self.server.run_mode.interactive = True
 
     def hd_copy(self, hdf_old, hdf_new, exclude_groups = []):
+        """
+        args:
+            hdf_old (ProjectHDFio): old hdf
+            hdf_new (ProjectHDFio): new hdf
+            exclude_groups (list): list of groups to delete
+        """
         for p in hdf_old.list_nodes():
             hdf_new[p] = hdf_old[p]
         for p in hdf_old.list_groups():
@@ -276,9 +282,17 @@ class InteractiveBase(GenericJob):
         return hdf_new
 
     def file_size(self, hdf):
+        """
+        args:
+            hdf (ProjectHDFio): hdf file
+        """
         return os.path.getsize(hdf.file_name)
 
     def get_size(self, hdf):
+        """
+        args:
+            hdf (ProjectHDFio): hdf file
+        """
         m = 0
         for p in hdf.list_nodes():
             m += sys.getsizeof(hdf[p])
@@ -287,6 +301,11 @@ class InteractiveBase(GenericJob):
         return m
 
     def rewrite_hdf5(self, info=False, exclude_groups=['interactive']):
+        """
+        args:
+            info (True/False): whether to give the information on how much space has been saved
+            exclude_groups (list): list of groups to delete from hdf
+        """
         hdf = self._hdf5
         file_name = hdf.file_name
         _path, _ = file_name.split('.')
