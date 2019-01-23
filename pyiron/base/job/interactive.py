@@ -4,6 +4,8 @@
 
 import numpy as np
 from pyiron.base.job.generic import GenericJob
+from pyiron.base.generic.hdfio import FileHDFio, ProjectHDFio
+import os, sys
 
 """
 InteractiveBase class extends the Generic Job class with all the functionality to run the job object interactivley.
@@ -191,11 +193,11 @@ class InteractiveBase(GenericJob):
         Returns:
 
         """
-        if path in h5.list_groups() and key in h5[path].list_nodes(): 
+        if path in h5.list_groups() and key in h5[path].list_nodes():
             current_hdf = h5[path + "/" + key]
             if isinstance(data, list):
                 entry = current_hdf.tolist() + data
-            else: 
+            else:
                 entry = current_hdf.tolist() + data.tolist()
             data = np.array(entry)
         h5[path + "/" + key] = data
@@ -263,6 +265,47 @@ class InteractiveBase(GenericJob):
         """
         self.server.run_mode.interactive = True
 
+    def hd_copy(self, hdf_old, hdf_new, exclude_groups = []):
+        for p in hdf_old.list_nodes():
+            hdf_new[p] = hdf_old[p]
+        for p in hdf_old.list_groups():
+            if p in exclude_groups:
+                continue
+            h_new = hdf_new.create_group(p)
+            self.hd_copy(hdf_old[p], h_new, exclude_groups=exclude_groups)
+        return hdf_new
+
+    def file_size(self, hdf):
+        return os.path.getsize(hdf.file_name)
+
+    def get_size(self, hdf):
+        m = 0
+        for p in hdf.list_nodes():
+            m += sys.getsizeof(hdf[p])
+        for p in hdf.list_groups():
+            m += self.get_size(hdf[p])
+        return m
+
+    def rewrite_hdf5(self, info=False, exclude_groups=['interactive']):
+        hdf = self._hdf5
+        file_name = hdf.file_name
+        _path, _ = file_name.split('.')
+        p_lst = _path.split('/')
+        path = '/'.join(p_lst[:-1])
+        new_file = p_lst[-1] + '_rewrite'
+
+        hdf_new = ProjectHDFio(project=self.project, file_name=new_file, h5_path='/' + self.job_name)
+        hdf_new = self.hd_copy(hdf, hdf_new, exclude_groups=exclude_groups)
+
+        if info:
+            print ('job: {}'.format(self.job_name))
+            print ('compression rate from old to new: {}'.format(self.file_size(hdf) / self.file_size(hdf_new)))
+            print ('data size vs file size: {}'.format(self.get_size(hdf_new)/self.file_size(hdf_new)))
+        hdf.remove_file()
+        os.rename(hdf_new.file_name, file_name)
+
+        return hdf
+
     def interactive_close(self):
         """
 
@@ -272,6 +315,7 @@ class InteractiveBase(GenericJob):
         if len(list(self.interactive_cache.keys())) > 0 and \
                 len(self.interactive_cache[list(self.interactive_cache.keys())[0]]) != 0:
             self.interactive_flush(path="interactive", include_last_step=True)
+        self.rewrite_hdf5()
         self.project.db.item_update(self._runtime(), self._job_id)
         self.status.finished = True
         self._interactive_library = None
