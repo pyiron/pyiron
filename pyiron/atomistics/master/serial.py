@@ -141,13 +141,13 @@ class SerialMaster(SerialMasterBase, AtomisticGenericJob):
         else:
             raise ValueError('A structure can only be set after a start job has been assinged.')
 
-    def get_final_structure(self):
+    def get_structure(self, iteration_step=-1):
         """
 
         Returns:
 
         """
         if len(self.child_ids) > 0:
-            return self.project.load(self.child_ids[-1]).get_final_structure()
+            return self.project.load(self.child_ids[-1]).get_structure(iteration_step=iteration_step)
         else:
             return None

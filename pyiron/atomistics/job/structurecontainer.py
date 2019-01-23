@@ -31,7 +31,7 @@ class StructureContainer(AtomisticGenericJob):
     def structure(self, structure):
         if isinstance(structure, AtomisticGenericJob):
             if structure.structure:
-                self._structure = structure.get_final_structure()
+                self._structure = structure.get_structure(iteration_step=-1)
                 self.parent_id = structure.job_id
             else:
                 raise ValueError('The job does not contain any structure to import.')

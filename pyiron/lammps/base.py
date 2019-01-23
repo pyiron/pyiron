@@ -11,6 +11,7 @@ import posixpath
 import h5py
 import numpy as np
 import pandas as pd
+import warnings
 
 from pyiron.lammps.potential import LammpsPotentialFile
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
@@ -137,7 +138,8 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
 
         """
-        return self.get_structure()
+        warnings.warn("get_final_structure() is deprecated - please use get_structure() instead.", DeprecationWarning)
+        return self.get_structure(iteration_step=-1)
 
     def potentials_view(self):
         """
@@ -236,7 +238,7 @@ class LammpsBase(AtomisticGenericJob):
         else:
             self.collect_dump_file(file_name="dump.out", cwd=self.working_directory)
         self.collect_output_log(file_name="log.lammps", cwd=self.working_directory)
-        final_structure = self.get_final_structure()
+        final_structure = self.get_structure(iteration_step=-1)
         with self.project_hdf5.open("output") as hdf_output:
             final_structure.to_hdf(hdf_output)
 

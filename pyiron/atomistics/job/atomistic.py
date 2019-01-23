@@ -6,6 +6,7 @@ from ase.io import write as ase_write
 import copy
 
 import numpy as np
+import warnings
 
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.base.generic.parameters import GenericParameters
@@ -389,7 +390,7 @@ class AtomisticGenericJob(GenericJobCore):
             self._job_id = self.save()
         new_ham.parent_id = self.job_id
         if self.status.finished:
-            new_ham.structure = self.get_final_structure()
+            new_ham.structure = self.get_structure(iteration_step=-1)
             new_ham._generic_input['structure'] = 'atoms'
         else:
             new_ham._generic_input['structure'] = 'continue_final'
@@ -469,7 +470,8 @@ class AtomisticGenericJob(GenericJobCore):
         Returns:
 
         """
-        return self.get_structure()
+        warnings.warn("get_final_structure() is deprecated - please use get_structure() instead.", DeprecationWarning)
+        return self.get_structure(iteration_step=-1)
 
     def set_kpoints(self, mesh=None, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
                     weights=None, reciprocal=True):
@@ -548,7 +550,7 @@ class AtomisticGenericJob(GenericJobCore):
 
     def _before_successor_calc(self, ham):
         if ham._generic_input['structure'] == 'continue_final':
-            ham.structure = self.get_final_structure()
+            ham.structure = self.get_structure(iteration_step=-1)
             ham.to_hdf()
 
 
