@@ -104,6 +104,9 @@ class GenericDFTJob(AtomisticGenericJob):
             snapshot.set_initial_magnetic_moments(spins[iteration_step])
         return snapshot
 
+    def set_mixing_parameters(self, method=None, n_pulay_steps=None, density_mixing_parameter=None, spin_mixing_parameter=None):
+        raise NotImplementedError("set_mixing_parameters is not implemented for this code.")
+
     def set_kmesh_density(self, kspace_per_in_ang=0.10):
         mesh = self._get_k_mesh_by_cell(self.structure, kspace_per_in_ang)
         self.set_kpoints(mesh=mesh, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
