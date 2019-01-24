@@ -25,7 +25,7 @@ __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
 
-
+  
 class HDFStoreIO(pandas.HDFStore):
     """
     dict-like IO interface for storing pandas objects in PyTables either Fixed or Table format.
@@ -69,24 +69,6 @@ class HDFStoreIO(pandas.HDFStore):
         super(HDFStoreIO, self).open(**kwargs)
         return self
 
-def file_size(hdf):
-    """
-    args:
-        hdf (ProjectHDFio): hdf file
-    """
-    return os.path.getsize(hdf.file_name)
-
-def get_size(hdf):
-    """
-    args:
-        hdf (ProjectHDFio): hdf file
-    """
-    m = 0
-    for p in hdf.list_nodes():
-        m += sys.getsizeof(hdf[p])
-    for p in hdf.list_groups():
-        m += get_size(hdf[p])
-    return m
 
 class FileHDFio(object):
     """
@@ -247,6 +229,32 @@ class FileHDFio(object):
         else:
             return True
 
+    @staticmethod
+    def file_size(hdf):
+        """
+        Get size of the HDF5 file 
+
+        Args:
+            hdf (ProjectHDFio): hdf file
+       
+        Returns:
+            float: file size in Bytes
+        """
+        return os.path.getsize(hdf.file_name)
+
+    def get_size(self, hdf):  
+        """
+        Get size of the groups inside the HDF5 file
+    
+        Args:
+            hdf (ProjectHDFio): hdf file
+
+        Returns:
+            float: file size in Bytes
+        """
+        return sum([sys.getsizeof(hdf[p]) for p in hdf.list_nodes()]) + \
+               sum([self.get_size(hdf[p]) for p in hdf.list_groups()])
+          
     def copy(self):
         """
         Copy the Python object which links to the HDF5 file - in contrast to copy_to() which copies the content of the
@@ -589,8 +597,6 @@ class FileHDFio(object):
             print ('data size vs file size: {}'.format(get_size(hdf_new)/file_size(hdf_new)))
         self.remove_file()
         os.rename(hdf_new.file_name, file_name)
-
-        #return self
 
     def __setitem__(self, key, value):
         """
