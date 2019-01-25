@@ -575,7 +575,7 @@ class FileHDFio(object):
             self.hd_copy(hdf_old[p], h_new, exclude_groups=exclude_groups)
         return hdf_new
 
-    def rewrite_hdf5(self, job_name, info=True, exclude_groups=['interactive']):
+    def rewrite_hdf5(self, job_name, info=False, exclude_groups=['interactive']):
         """
         args:
             info (True/False): whether to give the information on how much space has been saved
