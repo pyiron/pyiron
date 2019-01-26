@@ -68,6 +68,10 @@ Please contact us if you are interested in using pyiron:
 ****
 News
 ****
+* **20th January 2019:** pyiron 0.2.1 released.
+* **15th December 2019:** pyiron was downloaded over 2000 times on `conda-forge <https://anaconda.org/conda-forge/pyiron/>`_ .
+* **21st November 2018:** pyiron 0.2.0 released.
+* **2nd August 2018:** pyiron 0.1.8 released.
 * **21st July 2018:** pyiron paper accepted.
 * **20th July 2018:** pyiron 0.1.7 released.
 * **25th May 2018:** pyiron 0.1.5 released.
