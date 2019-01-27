@@ -191,11 +191,11 @@ class InteractiveBase(GenericJob):
         Returns:
 
         """
-        if path in h5.list_groups() and key in h5[path].list_nodes(): 
+        if path in h5.list_groups() and key in h5[path].list_nodes():
             current_hdf = h5[path + "/" + key]
             if isinstance(data, list):
                 entry = current_hdf.tolist() + data
-            else: 
+            else:
                 entry = current_hdf.tolist() + data.tolist()
             data = np.array(entry)
         h5[path + "/" + key] = data
@@ -272,6 +272,7 @@ class InteractiveBase(GenericJob):
         if len(list(self.interactive_cache.keys())) > 0 and \
                 len(self.interactive_cache[list(self.interactive_cache.keys())[0]]) != 0:
             self.interactive_flush(path="interactive", include_last_step=True)
+        self.project_hdf5.rewrite_hdf5(job_name=self.job_name, exclude_groups=['interactive'])
         self.project.db.item_update(self._runtime(), self._job_id)
         self.status.finished = True
         self._interactive_library = None
