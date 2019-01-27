@@ -272,7 +272,7 @@ class InteractiveBase(GenericJob):
         if len(list(self.interactive_cache.keys())) > 0 and \
                 len(self.interactive_cache[list(self.interactive_cache.keys())[0]]) != 0:
             self.interactive_flush(path="interactive", include_last_step=True)
-        self.project_hdf5.rewrite_hdf5(job_name=self.job_name, exclude_groups=['interactive'])
+        self.project_hdf5.rewrite_hdf5(job_name=self.job_name, exclude_groups=[])
         self.project.db.item_update(self._runtime(), self._job_id)
         self.status.finished = True
         self._interactive_library = None
