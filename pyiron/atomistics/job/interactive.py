@@ -99,7 +99,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
                 'interactive' in self.project_hdf5['output'].list_nodes() and \
                 'species' in self.project_hdf5['output/interactive'].list_nodes():
             with self.project_hdf5.open('output/interactive') as hdf:
-                self._interactive_species_lst = hdf['species']
+                self._interactive_species_lst = np.array(hdf['species'])
 
     def run_if_interactive(self):
         self.status.running = True
@@ -207,7 +207,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         """
         with self.project_hdf5.open("output") as hdf_output:
             with hdf_output.open(path) as hdf:
-                hdf['species'] = self._interactive_species_lst
+                hdf['species'] = self._interactive_species_lst.tolist()
         super(GenericInteractive, self).interactive_flush(path=path, include_last_step=include_last_step)
 
     def interactive_indices_getter(self):
