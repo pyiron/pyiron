@@ -246,7 +246,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             # Warning: We only copy symbols, positions and cell information - no tags.
             if len(self.output.indices) != 0:
                 el_lst = [el.Abbreviation for el in self.structure.species]
-                return Atoms(symbols=np.array([el_lst[el] for el in self.output.indices[iteration_step]]),
+                return Atoms(symbols=np.array([self._interactive_species_lst[el] for el in self.output.indices[iteration_step]]),
                              positions=self.output.positions[iteration_step],
                              cell=self.output.cells[iteration_step])
             else:
