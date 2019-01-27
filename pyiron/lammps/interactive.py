@@ -173,7 +173,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._reset_interactive_run_command()
         self.interactive_structure_setter(self.structure)
 
-    def calc_minimize(self, e_tol=1e-8, f_tol=1e-8, max_iter=1000, pressure=None, n_print=1):
+    def calc_minimize(self, e_tol=1e-8, f_tol=1e-8, max_iter=1000, pressure=None, n_print=100):
         if self.server.run_mode.interactive_non_modal:
             warnings.warn('calc_minimize() is not implemented for the non modal interactive mode use calc_static()!')
         super(LammpsInteractive, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure,

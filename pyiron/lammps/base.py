@@ -11,6 +11,7 @@ import posixpath
 import h5py
 import numpy as np
 import pandas as pd
+import warnings
 
 from pyiron.lammps.potential import LammpsPotentialFile
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
@@ -113,6 +114,30 @@ class LammpsBase(AtomisticGenericJob):
                 self.input.control[val] = v
         self.input.potential.remove_structure_block()
 
+    @property
+    def potential_list(self):
+        """
+        List of interatomic potentials suitable for the current atomic structure.
+
+        use self.potentials_view() to get more details.
+
+        Returns:
+            list: potential names
+        """
+        return self.list_potentials()
+
+    @property
+    def potential_view(self):
+        """
+        List all interatomic potentials for the current atomistic sturcture including all potential parameters.
+
+        To quickly get only the names of the potentials you can use: self.potentials_list()
+
+        Returns:
+            pandas.Dataframe: Dataframe including all potential parameters.
+        """
+        return self.view_potentials()
+
     def validate_ready_to_run(self):
         """
 
@@ -137,18 +162,8 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
 
         """
-        return self.get_structure()
-
-    def potentials_view(self):
-        """
-        List all interatomic potentials for the current atomistic sturcture including all potential parameters.
-
-        To quickly get only the names of the potentials you can use: self.potentials_list()
-
-        Returns:
-            pandas.Dataframe: Dataframe including all potential parameters.
-        """
-        return self.view_potentials()
+        warnings.warn("get_final_structure() is deprecated - please use get_structure() instead.", DeprecationWarning)
+        return self.get_structure(iteration_step=-1)
 
     def view_potentials(self):
         """
@@ -179,17 +194,6 @@ class LammpsBase(AtomisticGenericJob):
             list: potential names
         """
         return list(self.view_potentials()['Name'].values)
-
-    def potentials_list(self):
-        """
-        List of interatomic potentials suitable for the current atomic structure.
-
-        use self.potentials_view() to get more details.
-
-        Returns:
-            list: potential names
-        """
-        return self.list_potentials()
 
     def enable_h5md(self):
         """
@@ -236,7 +240,7 @@ class LammpsBase(AtomisticGenericJob):
         else:
             self.collect_dump_file(file_name="dump.out", cwd=self.working_directory)
         self.collect_output_log(file_name="log.lammps", cwd=self.working_directory)
-        final_structure = self.get_final_structure()
+        final_structure = self.get_structure(iteration_step=-1)
         with self.project_hdf5.open("output") as hdf_output:
             final_structure.to_hdf(hdf_output)
 

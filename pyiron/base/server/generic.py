@@ -324,6 +324,26 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         else:
             raise TypeError('The new_hdf5 is a boolean property, defining whether subjobs are stored in the same file.')
 
+    @property
+    def queue_list(self):
+        """
+        List the available Job scheduler provided by the system.
+
+        Returns:
+            (list)
+        """
+        return self.list_queues()
+
+    @property
+    def queue_view(self):
+        """
+        List the available Job scheduler provided by the system.
+
+        Returns:
+            (pandas.DataFrame)
+        """
+        return self.view_queues()
+
     def init_scheduler_run(self, working_dir, wait_for_prev_job=None, job_id=None):
         """
         Setup the job scheduler to return the scheduler options which then can be used for the python subprocess.
@@ -353,24 +373,6 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
             (list)
         """
         return list(self._scheduler.available_schedulers_dict().keys())
-
-    def queues_list(self):
-        """
-        List the available Job scheduler provided by the system.
-
-        Returns:
-            (list)
-        """
-        return self.list_queues()
-
-    def queues_view(self):
-        """
-        List the available Job scheduler provided by the system.
-
-        Returns:
-            (pandas.DataFrame)
-        """
-        return self.view_queues()
 
     def view_queues(self):
         """
