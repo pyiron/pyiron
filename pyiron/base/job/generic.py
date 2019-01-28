@@ -1039,9 +1039,9 @@ class GenericJob(JobCore):
             if not self.convergence_check():
                 self.status.not_converged = True
             else:
+                if self._compress_by_default:
+                    self.compress()
                 self.status.finished = True
-        if self._compress_by_default:
-            self.compress()
         self._calculate_successor()
         self.send_to_database()
         self.update_master()
