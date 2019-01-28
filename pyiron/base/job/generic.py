@@ -142,6 +142,7 @@ class GenericJob(JobCore):
         self._restart_file_list = list()
         self._restart_file_dict = dict()
         self._process = None
+        self._compress_by_default = False
 
         for sig in intercepted_signals:
             signal.signal(sig,  self.signal_intercept)
@@ -1039,6 +1040,8 @@ class GenericJob(JobCore):
                 self.status.not_converged = True
             else:
                 self.status.finished = True
+        if self._compress_by_default:
+            self.compress()
         self._calculate_successor()
         self.send_to_database()
         self.update_master()

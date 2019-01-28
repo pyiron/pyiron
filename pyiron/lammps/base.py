@@ -55,6 +55,7 @@ class LammpsBase(AtomisticGenericJob):
         self.input = Input()
         self._cutoff_radius = None
         self._is_continuation = None
+        self._compress_by_default = True
 
     @property
     def cutoff_radius(self):
@@ -497,6 +498,17 @@ class LammpsBase(AtomisticGenericJob):
 
         """
         self.input.control.modify(write_restart=filename, append_if_not_present=True)
+
+    def compress(self, files_to_compress=None):
+        """
+        Compress the output files of a job object.
+
+        Args:
+            files_to_compress (list):
+        """
+        if files_to_compress is None:
+            files_to_compress = [f for f in list(self.list_files()) if f not in ["restart.out"]]
+        super(LammpsBase, self).compress(files_to_compress=files_to_compress)
 
     def read_restart_file(self, filename="restart.out"):
         """
