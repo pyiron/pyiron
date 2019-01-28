@@ -3,12 +3,14 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from datetime import datetime
+import warnings
 from pyiron.base.generic.parameters import GenericParameters
 from pyiron.base.job.generic import GenericJob
 from pyiron.base.master.generic import GenericMaster
 
 __author__ = "Osamu Waseda, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -76,7 +78,7 @@ class InteractiveWrapper(GenericMaster):
         """
 
         """
-        if len(self._job_list) > 0:
+        if len(self._job_name_lst) > 0:
             self._ref_job = self.pop(-1)
             if self._job_id is not None and self._ref_job._master_id is None:
                 self._ref_job.master_id = self.job_id
@@ -87,8 +89,9 @@ class InteractiveWrapper(GenericMaster):
         Returns:
 
         """
+        warnings.warn("get_final_structure() is deprecated - please use get_structure() instead.", DeprecationWarning)
         if self.ref_job:
-            return self._ref_job.get_final_structure()
+            return self._ref_job.get_structure(iteration_step=-1)
         else:
             return None
 
@@ -183,7 +186,7 @@ class InteractiveWrapper(GenericMaster):
                     return self.project.inspect(child_id)['/'.join(name_lst[1:])]
                 else:
                     return self.project.load(child_id, convert_to_object=True)
-            if name_lst[0] in self._job_list:
+            if name_lst[0] in self._job_name_lst:
                 child = getattr(self, name_lst[0])
                 if len(name_lst) == 1:
                     return child
@@ -191,11 +194,10 @@ class InteractiveWrapper(GenericMaster):
                     return child['/'.join(name_lst[1:])]
             return super(GenericMaster, self).__getitem__(item)
         elif isinstance(item, int):
-            total_lst = child_name_lst + self._job_list
+            total_lst = child_name_lst + self._job_name_lst
             job_name = total_lst[item]
             if job_name in child_name_lst:
                 child_id = child_id_lst[child_name_lst.index(job_name)]
                 return self.project.load(child_id, convert_to_object=True)
             else:
-                job_name = self._job_list[item]
-                return getattr(self, job_name)
+                return self._job_object_lst[item]

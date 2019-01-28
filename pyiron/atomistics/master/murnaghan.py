@@ -13,7 +13,8 @@ from pyiron.atomistics.master.parallel import AtomisticParallelMaster
 from pyiron.base.master.parallel import JobGenerator
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -163,18 +164,21 @@ class MurnaghanJobGenerator(JobGenerator):
         Returns:
             (list)
         """
-        return [np.round(strain, 7) for strain in np.linspace(1 - self._job.input['vol_range'],
-                                                              1 + self._job.input['vol_range'],
-                                                              self._job.input['num_points'])]
+        parameter_lst = []
+        for strain in np.linspace(1 - self._job.input['vol_range'],
+                                  1 + self._job.input['vol_range'],
+                                  self._job.input['num_points']):
+            basis = self._job.ref_job.structure.copy()
+            basis.set_cell(basis.cell * strain ** (1. / 3.), scale_atoms=True)
+            parameter_lst.append([np.round(strain, 7), basis])
+        return parameter_lst
 
     @staticmethod
     def job_name(parameter):
-        return "strain_" + str(parameter).replace('.', '_')
+        return "strain_" + str(parameter[0]).replace('.', '_')
 
     def modify_job(self, job, parameter):
-        basis = self._job.ref_job.structure.copy()
-        basis.set_cell(basis.cell * parameter ** (1. / 3.), scale_atoms=True)
-        job.structure = basis
+        job.structure = parameter[1]
         return job
 
 
@@ -214,35 +218,9 @@ class Murnaghan(AtomisticParallelMaster):
 
     def list_structures(self):
         if self.ref_job.structure is not None:
-            structure_lst = []
-            start_structure = self.ref_job.structure
-            for strain in self._job_generator.parameter_list:
-                basis = start_structure.copy()
-                basis.set_cell(basis.cell * strain ** (1. / 3.), scale_atoms=True)
-                structure_lst.append(basis)
-            return structure_lst
+            return [parameter[1] for parameter in self._job_generator.parameter_list]
         else:
             return []
-
-    def run_if_interactive(self):
-        start_structure = self.ref_job.structure
-        self.ref_job_initialize()
-        self.ref_job.server.run_mode.interactive = True
-        for strain in self._job_generator.parameter_list:
-            basis = start_structure.copy()
-            basis.set_cell(basis.cell * strain ** (1. / 3.), scale_atoms=True)
-            self.ref_job.structure = basis
-            self.ref_job.run()
-
-        self.ref_job.interactive_close()
-        self.status.collect = True
-        self.run()
-
-    def ref_job_initialize(self):
-        if len(self._job_list) > 0:
-            self._ref_job = self.pop(-1)
-            if self._job_id is not None and self._ref_job._master_id is None:
-                self._ref_job.master_id = self.job_id
 
     def collect_output(self):
         if self.server.run_mode.interactive:
@@ -348,7 +326,7 @@ class Murnaghan(AtomisticParallelMaster):
             hdf5["equilibrium_b_prime"] = b_prime
 
         with self._hdf5.open("output") as hdf5:
-            self.get_final_structure().to_hdf(hdf5)
+            self.get_structure(iteration_step=-1).to_hdf(hdf5)
 
         self.fit_dict = fit_dict
         return fit_dict
@@ -463,7 +441,7 @@ class Murnaghan(AtomisticParallelMaster):
         if plt_show:
             plt.show()
 
-    def get_final_structure(self):
+    def get_structure(self, iteration_step=-1):
         """
 
         Returns: Structure with equilibrium volume
@@ -471,13 +449,19 @@ class Murnaghan(AtomisticParallelMaster):
         """
         if not (self.structure is not None):
             raise AssertionError()
-        snapshot = self.structure.copy()
-        old_vol = snapshot.get_volume()
-        new_vol = self["output/equilibrium_volume"]
-        k = (new_vol / old_vol) ** (1. / 3.)
-        new_cell = snapshot.cell * k
-        snapshot.set_cell(new_cell, scale_atoms=True)
-        return snapshot
+        if iteration_step == -1:
+            snapshot = self.structure.copy()
+            old_vol = snapshot.get_volume()
+            new_vol = self["output/equilibrium_volume"]
+            k = (new_vol / old_vol) ** (1. / 3.)
+            new_cell = snapshot.cell * k
+            snapshot.set_cell(new_cell, scale_atoms=True)
+            return snapshot
+        elif iteration_step == 0:
+            return self.structure
+        else:
+            raise ValueError('iteration_step should be either 0 or -1.')
+
 
 class MurnaghanInt(Murnaghan):
     def __init__(self, project, job_name):

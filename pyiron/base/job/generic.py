@@ -26,7 +26,8 @@ Generic Job class extends the JobCore class with all the functionality to run th
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -794,6 +795,10 @@ class GenericJob(JobCore):
             hdf (ProjectHDFio): HDF5 group object - optional
             group_name (str): HDF5 subgroup name - optional
         """
+        if hdf is not None:
+            self._hdf5 = hdf
+        if group_name is not None:
+            self._hdf5.open(group_name)
         self._executable_activate_mpi()
         self._type_to_hdf()
         self._server.to_hdf(self._hdf5)
@@ -809,6 +814,10 @@ class GenericJob(JobCore):
             hdf (ProjectHDFio): HDF5 group object - optional
             group_name (str): HDF5 subgroup name - optional
         """
+        if hdf is not None:
+            self._hdf5 = hdf
+        if group_name is not None:
+            self._hdf5.open(group_name)
         self._type_from_hdf()
         self._server.from_hdf(self._hdf5)
         with self._hdf5.open('input') as hdf_input:

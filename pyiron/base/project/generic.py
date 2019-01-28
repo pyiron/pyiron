@@ -22,7 +22,8 @@ The project object is the central import point of pyiron - all other objects can
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -745,6 +746,35 @@ class Project(ProjectPath):
                         s.logger.debug("Could not remove job with ID {0} ".format(job_id))
         else:
             raise EnvironmentError('copy_to: is not available in Viewermode !')
+
+    def compress_jobs(self, recursive=False):
+        """
+        Compress all finished jobs in the current project and in all subprojects if recursive=True is selected.
+
+        Args:
+            recursive (bool): [True/False] compress all jobs in all subprojects - default=False
+        """
+        for job_id in self.get_job_ids(recursive=recursive):
+            job = self.inspect(job_id)
+            if job.status == 'finished':
+                job.compress()
+
+    def delete_output_files_jobs(self, recursive=False):
+        """
+        Delete the output files of all finished jobs in the current project and in all subprojects if recursive=True is selected.
+
+        Args:
+            recursive (bool): [True/False] delete the output files of all jobs in all subprojects - default=False
+        """
+        for job_id in self.get_job_ids(recursive=recursive):
+            job = self.inspect(job_id)
+            if job.status == 'finished':
+                for file in job.list_files():
+                    fullname = os.path.join(job.working_directory, file)
+                    if os.path.isfile(fullname) and '.h5' not in fullname:
+                        os.remove(fullname)
+                    elif os.path.isdir(fullname):
+                        os.removedirs(fullname)
 
     def remove(self, enable=False, enforce=False):
         """

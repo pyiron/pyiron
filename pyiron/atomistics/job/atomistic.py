@@ -6,6 +6,7 @@ from ase.io import write as ase_write
 import copy
 
 import numpy as np
+import warnings
 
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.base.generic.parameters import GenericParameters
@@ -22,8 +23,8 @@ Atomistic Generic Job class extends the Generic Job class with all the functiona
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \
-                "- Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -200,7 +201,7 @@ class AtomisticGenericJob(GenericJobCore):
         self._generic_input.remove_keys(['max_iter', 'pressure', 'temperature', 'n_ionic_steps', 'n_print', 'velocity'])
 
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100, delta_temp=1.0,
-                delta_press=None, seed=None, tloop=None, rescale_velocity=True, langevin=False):
+                delta_press=None, seed=None, tloop=None, initial_temperature=True, langevin=False):
         self._generic_input['calc_mode'] = 'md'
         self._generic_input['temperature'] = temperature
         self._generic_input['n_ionic_steps'] = n_ionic_steps
@@ -389,7 +390,7 @@ class AtomisticGenericJob(GenericJobCore):
             self._job_id = self.save()
         new_ham.parent_id = self.job_id
         if self.status.finished:
-            new_ham.structure = self.get_final_structure()
+            new_ham.structure = self.get_structure(iteration_step=-1)
             new_ham._generic_input['structure'] = 'atoms'
         else:
             new_ham._generic_input['structure'] = 'continue_final'
@@ -473,7 +474,8 @@ class AtomisticGenericJob(GenericJobCore):
         Returns:
 
         """
-        return self.get_structure()
+        warnings.warn("get_final_structure() is deprecated - please use get_structure() instead.", DeprecationWarning)
+        return self.get_structure(iteration_step=-1)
 
     def set_kpoints(self, mesh=None, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
                     weights=None, reciprocal=True):
@@ -552,7 +554,7 @@ class AtomisticGenericJob(GenericJobCore):
 
     def _before_successor_calc(self, ham):
         if ham._generic_input['structure'] == 'continue_final':
-            ham.structure = self.get_final_structure()
+            ham.structure = self.get_structure(iteration_step=-1)
             ham.to_hdf()
 
 

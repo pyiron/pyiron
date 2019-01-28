@@ -1,3 +1,7 @@
+# coding: utf-8
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
+
 from ctypes import c_double, c_int
 import numpy as np
 import pandas as pd
@@ -12,10 +16,19 @@ from pyiron.lammps.structure import UnfoldingPrism
 from pyiron.atomistics.job.interactive import GenericInteractive
 from pyiron.lammps.pipe import LammpsLibrary
 
+__author__ = "Osamu Waseda, Jan Janssen"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
+__version__ = "1.0"
+__maintainer__ = "Jan Janssen"
+__email__ = "janssen@mpie.de"
+__status__ = "production"
+__date__ = "Sep 1, 2018"
 
-class LammpsInterative(LammpsBase, GenericInteractive):
+
+class LammpsInteractive(LammpsBase, GenericInteractive):
     def __init__(self, project, job_name):
-        super(LammpsInterative, self).__init__(project, job_name)
+        super(LammpsInteractive, self).__init__(project, job_name)
         self._check_opened = False
         self._interactive_prism = None
         self._interactive_run_command = None
@@ -160,25 +173,48 @@ class LammpsInterative(LammpsBase, GenericInteractive):
         self._reset_interactive_run_command()
         self.interactive_structure_setter(self.structure)
 
-    def calc_minimize(self, e_tol=1e-8, f_tol=1e-8, max_iter=1000, pressure=None, n_print=1):
+    def calc_minimize(self, e_tol=1e-8, f_tol=1e-8, max_iter=1000, pressure=None, n_print=100):
         if self.server.run_mode.interactive_non_modal:
             warnings.warn('calc_minimize() is not implemented for the non modal interactive mode use calc_static()!')
-        super(LammpsInterative, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure,
-                                                    n_print=n_print)
+        super(LammpsInteractive, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure,
+                                                     n_print=n_print)
 
-    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100, delta_temp=1.0,
-                delta_press=None, seed=None, tloop=None, rescale_velocity=True, langevin=False):
+    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=1.0, n_print=100,
+                delta_temp=100.0, delta_press=1000.0, seed=None, tloop=None, initial_temperature=None, langevin=False):
+        """
+        Set an MD calculation within LAMMPS. Nosé Hoover is used by default
+
+        Args:
+            temperature: (None or float) Target temperature. If set to None, an NVE calculation is performed.
+                         It is required when the pressure is set or langevin is set
+            pressure: (None or float) Target pressure. If set to None, an NVE or an NVT calculation is performed.
+                      (This tag will allow for a list in the future as it is done for calc_minimize())
+            n_ionic_steps: (int) Number of ionic steps
+            time_step: (float) Step size between two steps. In fs if units==metal
+            n_print: (int) Print frequency
+            delta_temp: (float) Temperature damping factor (cf. https://lammps.sandia.gov/doc/fix_nh.html)
+            delta_press: (float) Pressure damping factor (cf. https://lammps.sandia.gov/doc/fix_nh.html)
+            seed: (int) Seed for the random number generation (required for the velocity creation)
+            tloop:
+            initial_temperature: (None or float) Initial temperature according to which the initial velocity field
+                                 is created. If None, the initial temperature will be twice the target temperature
+                                 (which would go immediately down to the target temperature as described in
+                                 equipartition theorem). If 0, the velocity field is not initialized (in which case
+                                 the initial velocity given in structure will be used). If any other number is given,
+                                 this value is going to be used for the initial temperature.
+            langevin: (True or False) Activate Langevin dynamics
+        """
         if self.server.run_mode.interactive_non_modal:
             warnings.warn('calc_md() is not implemented for the non modal interactive mode use calc_static()!')
-        super(LammpsInterative, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
-                                              time_step=time_step, n_print=n_print, delta_temp=delta_temp,
-                                              delta_press=delta_press, seed=seed, tloop=tloop,
-                                              rescale_velocity=rescale_velocity, langevin=langevin)
+        super(LammpsInteractive, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
+                                               time_step=time_step, n_print=n_print, delta_temp=delta_temp,
+                                               delta_press=delta_press, seed=seed, tloop=tloop,
+                                               initial_temperature=initial_temperature, langevin=langevin)
 
     def run_if_interactive(self):
         if self._generic_input['calc_mode'] == 'md':
             self.input.control['run'] = self._generic_input['n_print']
-            super(LammpsInterative, self).run_if_interactive()
+            super(LammpsInteractive, self).run_if_interactive()
             self._reset_interactive_run_command()
 
             counter = 0
@@ -189,7 +225,7 @@ class LammpsInterative(LammpsBase, GenericInteractive):
                 counter += 1
 
         else:
-            super(LammpsInterative, self).run_if_interactive()
+            super(LammpsInteractive, self).run_if_interactive()
             self._interactive_lib_command(self._interactive_run_command)
             self.interactive_collect()
 
@@ -197,7 +233,7 @@ class LammpsInterative(LammpsBase, GenericInteractive):
         if not self._interactive_fetch_completed:
             print('Warning: interactive_fetch being effectuated')
             self.interactive_fetch()
-        super(LammpsInterative, self).run_if_interactive()
+        super(LammpsInteractive, self).run_if_interactive()
         self._interactive_lib_command(self._interactive_run_command)
         self._interactive_fetch_completed = False
 
@@ -257,14 +293,14 @@ class LammpsInterative(LammpsBase, GenericInteractive):
         if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
             pass
         else:
-            super(LammpsInterative, self).collect_output()
+            super(LammpsInteractive, self).collect_output()
 
     def update_potential(self):
         self._interactive_lib_command(self.potential.Config[0][0])
         self._interactive_lib_command(self.potential.Config[0][1])
 
     def interactive_indices_getter(self):
-        return super(LammpsInterative, self).interactive_indices_getter().tolist()
+        return super(LammpsInteractive, self).interactive_indices_getter().tolist()
 
     def interactive_energy_pot_getter(self):
         return self._interactive_library.get_thermo("pe")
@@ -279,12 +315,13 @@ class LammpsInterative(LammpsBase, GenericInteractive):
         return self._interactive_library.get_thermo("temp")
 
     def interactive_stress_getter(self):
-        '''
-        This gives back an Nx3x3 np array of stress/atom defined in
-        http://lammps.sandia.gov/doc/compute_stress_atom.html
-        Keep in mind that it is stress*volume in eV.
-        Further discussion can be found on the website above.
-        '''
+        """
+        This gives back an Nx3x3 array of stress/atom defined in http://lammps.sandia.gov/doc/compute_stress_atom.html
+        Keep in mind that it is stress*volume in eV. Further discussion can be found on the website above.
+
+        Returns:
+            numpy.array: Nx3x3 np array of stress/atom
+        """
         if not 'stress' in self.interactive_cache.keys():
             self._interactive_lib_command('compute st all stress/atom NULL')
             self._interactive_lib_command('run 0')
@@ -318,4 +355,4 @@ class LammpsInterative(LammpsBase, GenericInteractive):
                 if 'interactive' in h5.list_groups():
                     for key in h5['interactive'].list_nodes():
                         h5['generic/' + key] = h5['interactive/' + key]
-            super(LammpsInterative, self).interactive_close()
+            super(LammpsInteractive, self).interactive_close()

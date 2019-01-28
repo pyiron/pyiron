@@ -28,7 +28,7 @@ except ImportError:
 
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
                 "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
@@ -2379,7 +2379,7 @@ class Atoms(object):
         else:
             return self._cell.copy()
 
-    def get_distance(self, a0, a1, mic=False, vector=False):
+    def get_distance(self, a0, a1, mic=True, vector=False):
         """
         Return distance between two atoms.
 
@@ -2387,12 +2387,12 @@ class Atoms(object):
         vector=True gives the distance vector (from a0 to a1).
 
         Args:
-            a0:
-            a1:
-            mic:
-            vector:
+            a0: position or atom ID
+            a1: position or atom ID
+            mic: minimum image convention (True if periodic boundary conditions should be considered)
+            vector: True, if instead of distnce the vector connecting the two positions should be returned
 
-        Returns:
+        Returns: distance or vectors in length unit
 
         """
         from ase.geometry import find_mic

@@ -18,7 +18,8 @@ from pyiron.atomistics.master.parallel import AtomisticParallelMaster
 from pyiron.base.master.parallel import JobGenerator
 
 __author__ = "Jan Janssen, Yury Lysogorskiy"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -152,6 +153,10 @@ class PhonopyJob(AtomisticParallelMaster):
         self._enable_phonopy()
         super(PhonopyJob, self).run_static()
 
+    def run_if_interactive(self):
+        self._enable_phonopy()
+        super(PhonopyJob, self).run_if_interactive()
+
     def to_hdf(self, hdf=None, group_name=None):
         """
         Store the PhonopyJob in an HDF5 file
@@ -188,8 +193,11 @@ class PhonopyJob(AtomisticParallelMaster):
         Returns:
 
         """
-        self.phonopy.set_forces([self.project_hdf5.inspect(job_id)["output/generic/forces"][-1]
-                                 for job_id in self.child_ids])
+        if self.server.run_mode.interactive:
+            forces_lst = self.project_hdf5.inspect(self.child_ids[0])["output/generic/forces"]
+        else:
+            forces_lst = [self.project_hdf5.inspect(job_id)["output/generic/forces"][-1] for job_id in self.child_ids]
+        self.phonopy.set_forces(forces_lst)
         self.phonopy.produce_force_constants()
         self.phonopy.set_mesh(mesh=[self.input['dos_mesh']] * 3)
         qpoints, weights, frequencies, eigvecs = self.phonopy.get_mesh()
