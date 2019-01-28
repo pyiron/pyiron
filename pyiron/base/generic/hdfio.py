@@ -11,6 +11,7 @@ import posixpath
 import h5io
 import numpy as np
 from tables.exceptions import NoSuchNodeError
+import sys
 """
 Classes to map the Python objects to HDF5 data structures 
 """
@@ -24,7 +25,7 @@ __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
 
-
+  
 class HDFStoreIO(pandas.HDFStore):
     """
     dict-like IO interface for storing pandas objects in PyTables either Fixed or Table format.
@@ -228,6 +229,32 @@ class FileHDFio(object):
         else:
             return True
 
+    @staticmethod
+    def file_size(hdf):
+        """
+        Get size of the HDF5 file 
+
+        Args:
+            hdf (ProjectHDFio): hdf file
+       
+        Returns:
+            float: file size in Bytes
+        """
+        return os.path.getsize(hdf.file_name)
+
+    def get_size(self, hdf):  
+        """
+        Get size of the groups inside the HDF5 file
+    
+        Args:
+            hdf (ProjectHDFio): hdf file
+
+        Returns:
+            float: file size in Bytes
+        """
+        return sum([sys.getsizeof(hdf[p]) for p in hdf.list_nodes()]) + \
+               sum([self.get_size(hdf[p]) for p in hdf.list_groups()])
+          
     def copy(self):
         """
         Copy the Python object which links to the HDF5 file - in contrast to copy_to() which copies the content of the
@@ -531,6 +558,45 @@ class FileHDFio(object):
         new = self.copy()
         new._filter = ["nodes"]
         return new
+
+    def hd_copy(self, hdf_old, hdf_new, exclude_groups = []):
+        """
+        args:
+            hdf_old (ProjectHDFio): old hdf
+            hdf_new (ProjectHDFio): new hdf
+            exclude_groups (list): list of groups to delete
+        """
+        for p in hdf_old.list_nodes():
+            hdf_new[p] = hdf_old[p]
+        for p in hdf_old.list_groups():
+            if p in exclude_groups:
+                continue
+            h_new = hdf_new.create_group(p)
+            self.hd_copy(hdf_old[p], h_new, exclude_groups=exclude_groups)
+        return hdf_new
+
+    def rewrite_hdf5(self, job_name, info=False, exclude_groups=['interactive']):
+        """
+        args:
+            info (True/False): whether to give the information on how much space has been saved
+            exclude_groups (list): list of groups to delete from hdf
+        """
+        #hdf = self._hdf5
+        file_name = self.file_name
+        _path, _ = file_name.split('.')
+        p_lst = _path.split('/')
+        path = '/'.join(p_lst[:-1])
+        new_file = p_lst[-1] + '_rewrite'
+
+        hdf_new = ProjectHDFio(project=self.project, file_name=new_file, h5_path='/' + job_name)
+        hdf_new = self.hd_copy(self, hdf_new, exclude_groups=exclude_groups)
+
+        if info:
+            print ('job: {}'.format(job_name))
+            print ('compression rate from old to new: {}'.format(file_size(self) / file_size(hdf_new)))
+            print ('data size vs file size: {}'.format(get_size(hdf_new)/file_size(hdf_new)))
+        self.remove_file()
+        os.rename(hdf_new.file_name, file_name)
 
     def __setitem__(self, key, value):
         """
