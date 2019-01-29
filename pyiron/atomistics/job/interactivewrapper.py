@@ -201,3 +201,60 @@ class InteractiveWrapper(GenericMaster):
                 return self.project.load(child_id, convert_to_object=True)
             else:
                 return self._job_object_lst[item]
+
+
+class ReferenceJobOutput(object):
+    def __init__(self, job):
+        self._job = job
+
+    @property
+    def indices(self):
+        return self._job.ref_job.output.indices
+
+    @property
+    def cells(self):
+        return self._job.ref_job.output.cells
+
+    @property
+    def energy_pot(self):
+        return self._job.ref_job.output.energy_pot
+
+    @property
+    def energy_tot(self):
+        return self._job.ref_job.output.energy_tot
+
+    @property
+    def forces(self):
+        return self._job.ref_job.output.forces
+
+    @property
+    def positions(self):
+        return self._job.ref_job.output.positions
+
+    @property
+    def pressures(self):
+        return self._job.ref_job.output.pressures
+
+    @property
+    def steps(self):
+        return self._job.ref_job.output.steps
+
+    @property
+    def temperatures(self):
+        return self._job.ref_job.output.temperatures
+
+    @property
+    def time(self):
+        return self._job.ref_job.output.time
+
+    @property
+    def unwrapped_positions(self):
+        return self._job.ref_job.output.unwrapped_positions
+
+    @property
+    def volume(self):
+        return self._job.ref_job.output.volume
+
+    def __dir__(self):
+        return list(set(list(self._job.ref_job.interactive_cache.keys())))
+

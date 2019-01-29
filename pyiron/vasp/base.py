@@ -79,6 +79,7 @@ class VaspBase(GenericDFTJob):
         self.input.incar["SYSTEM"] = self.job_name
         self._output_parser = Output()
         self._potential = VaspPotentialFile(xc=self.input.potcar["xc"])
+        self._compress_by_default = True
 
     @property
     def potential(self):
@@ -895,6 +896,17 @@ class VaspBase(GenericDFTJob):
             else:
                 new_ham.input.incar["ICHARG"] = icharg
         return new_ham
+
+    def compress(self, files_to_compress=None):
+        """
+        Compress the output files of a job object.
+
+        Args:
+            files_to_compress (list):
+        """
+        if files_to_compress is None:
+            files_to_compress = [f for f in list(self.list_files()) if f not in ["CHGCAR", "WAVECAR"]]
+        super(VaspBase, self).compress(files_to_compress=files_to_compress)
 
     def restart_from_wave_functions(self, snapshot=-1, job_name=None, job_type=None, istart=1):
 

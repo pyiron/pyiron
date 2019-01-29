@@ -142,6 +142,7 @@ class GenericJob(JobCore):
         self._restart_file_list = list()
         self._restart_file_dict = dict()
         self._process = None
+        self._compress_by_default = False
 
         for sig in intercepted_signals:
             signal.signal(sig,  self.signal_intercept)
@@ -1038,6 +1039,8 @@ class GenericJob(JobCore):
             if not self.convergence_check():
                 self.status.not_converged = True
             else:
+                if self._compress_by_default:
+                    self.compress()
                 self.status.finished = True
         self._calculate_successor()
         self.send_to_database()
@@ -1079,6 +1082,8 @@ class GenericJob(JobCore):
                 self._executable = Executable(codename=self.__name__,
                                               module=self.__module__.split('.')[1],
                                               path_binary_codes=s.resource_paths)
+            else:
+                self._executable = Executable(codename=self.__name__, path_binary_codes=s.resource_paths)
 
     def _type_to_hdf(self):
         """
