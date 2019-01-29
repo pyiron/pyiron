@@ -285,6 +285,9 @@ class TestOutcar(unittest.TestCase):
             if int(filename.split('/OUTCAR_')[-1]) in [2, 3, 4, 5, 6]:
                 mixing = 343
                 self.assertEqual(mixing, output)
+            if int(filename.split('/OUTCAR_')[-1]) == 9:
+                mixing = 0
+                self.assertEqual(mixing, output)
 
     def test_get_dipole_moments(self):
         for filename in self.file_list:
@@ -387,7 +390,7 @@ class TestOutcar(unittest.TestCase):
                 self.assertEqual(output_all.__str__(), output.__str__())
 
     def test_get_nelect(self):
-        n_elect_list = [40.0, 16.0, 16.0, 16.0, 16.0, 16.0, 224.0, 358.0]
+        n_elect_list = [40.0, 16.0, 16.0, 16.0, 16.0, 16.0, 224.0, 358.0, 40.0]
         for filename in self.file_list:
             i = int(filename.split("_")[-1]) - 1
             self.assertEqual(n_elect_list[i], self.outcar_parser.get_nelect(filename))
