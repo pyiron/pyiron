@@ -1079,6 +1079,8 @@ class GenericJob(JobCore):
                 self._executable = Executable(codename=self.__name__,
                                               module=self.__module__.split('.')[1],
                                               path_binary_codes=s.resource_paths)
+            else:
+                self._executable = Executable(codename=self.__name__, path_binary_codes=s.resource_paths)
 
     def _type_to_hdf(self):
         """
