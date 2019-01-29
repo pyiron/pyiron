@@ -561,7 +561,10 @@ class Outcar(object):
         with open(filename, 'r') as f:
             for line in f.readlines():
                 if trigger in line:
-                    return int(line.split()[4])
+                    try:
+                        return int(line.split()[4])
+                    except ValueError:
+                        return 0
 
     @staticmethod
     def get_temperatures(filename="OUTCAR"):
