@@ -256,5 +256,5 @@ class ReferenceJobOutput(object):
         return self._job.ref_job.output.volume
 
     def __dir__(self):
-        return list(set(list(self._job.interactive_cache.keys())))
+        return list(set(list(self._job.ref_job.interactive_cache.keys())))
 
