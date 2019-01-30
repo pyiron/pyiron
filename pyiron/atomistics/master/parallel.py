@@ -8,7 +8,8 @@ from pyiron.base.master.parallel import ParallelMaster
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -34,8 +35,11 @@ class AtomisticParallelMaster(ParallelMaster, AtomisticGenericJob):
         else:
             raise ValueError('A structure can only be set after a reference job has been assinged.')
 
-    def get_final_structure(self):
-        return self.structure
+    def get_structure(self, iteration_step=-1):
+        if iteration_step == 0:
+            return self.structure
+        else:
+            raise ValueError('iteration_step should be either 0.')
 
 
 class GenericOutput(OrderedDict):

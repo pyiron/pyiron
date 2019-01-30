@@ -17,7 +17,8 @@ Server object class which is connected to each job containing the technical deta
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -322,6 +323,26 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
             self._new_hdf = new_hdf_bool
         else:
             raise TypeError('The new_hdf5 is a boolean property, defining whether subjobs are stored in the same file.')
+
+    @property
+    def queue_list(self):
+        """
+        List the available Job scheduler provided by the system.
+
+        Returns:
+            (list)
+        """
+        return self.list_queues()
+
+    @property
+    def queue_view(self):
+        """
+        List the available Job scheduler provided by the system.
+
+        Returns:
+            (pandas.DataFrame)
+        """
+        return self.view_queues()
 
     def init_scheduler_run(self, working_dir, wait_for_prev_job=None, job_id=None):
         """

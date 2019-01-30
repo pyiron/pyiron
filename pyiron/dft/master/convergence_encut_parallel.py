@@ -15,7 +15,8 @@ except (ImportError, RuntimeError):
         pass
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -46,7 +47,7 @@ class EncutConvergenceJobGenerator(JobGenerator):
 
 
 # ToDo: not all abstract methods implemented
-class ConvergenceEncutParallel(AtomisticParallelMaster):
+class ConvEncutParallel(AtomisticParallelMaster):
     def __init__(self, project, job_name='encut_conv'):
         """
 
@@ -54,8 +55,8 @@ class ConvergenceEncutParallel(AtomisticParallelMaster):
             project:
             job_name:
         """
-        super(ConvergenceEncutParallel, self).__init__(project, job_name)
-        self.__name__ = 'ConvergenceEncutParallel'
+        super(ConvEncutParallel, self).__init__(project, job_name)
+        self.__name__ = 'ConvEncutParallel'
         self.__version__ = '0.0.1'
 
         # define default input

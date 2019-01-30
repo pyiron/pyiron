@@ -27,7 +27,7 @@ from pyiron.dft.waves.bandstructure import Bandstructure
 import warnings
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
                 "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
@@ -79,6 +79,7 @@ class VaspBase(GenericDFTJob):
         self.input.incar["SYSTEM"] = self.job_name
         self._output_parser = Output()
         self._potential = VaspPotentialFile(xc=self.input.potcar["xc"])
+        self._compress_by_default = True
 
     @property
     def potential(self):
@@ -606,7 +607,7 @@ class VaspBase(GenericDFTJob):
         if retain_electrostatic_potential:
             self.write_electrostatic_potential = retain_electrostatic_potential
 
-    def calc_md(self, temperature=None, n_ionic_steps=1000, n_print=1, dt=1.0, retain_charge_density=False,
+    def calc_md(self, temperature=None, n_ionic_steps=1000, n_print=1, time_step=1.0, retain_charge_density=False,
                 retain_electrostatic_potential=False, **kwargs):
         """
         Sets appropriate tags for molecular dynamics in VASP
@@ -615,11 +616,11 @@ class VaspBase(GenericDFTJob):
             temperature (int/float/list): Temperature/ range of temperatures in Kelvin
             n_ionic_steps (int): Maximum number of ionic steps
             n_print (int): Prints outputs every n_print steps
-            dt (float): time step (fs)
+            time_step (float): time step (fs)
             retain_charge_density (bool): True id the charge density should be written
             retain_electrostatic_potential (bool): True if the electrostatic potential should be written
         """
-        super(VaspBase, self).calc_md(temperature=temperature, n_ionic_steps=n_ionic_steps, n_print=n_print, dt=dt,
+        super(VaspBase, self).calc_md(temperature=temperature, n_ionic_steps=n_ionic_steps, n_print=n_print, time_step=time_step,
                                       retain_charge_density=retain_charge_density,
                                       retain_electrostatic_potential=retain_electrostatic_potential, **kwargs)
         if temperature is not None:
@@ -635,13 +636,13 @@ class VaspBase(GenericDFTJob):
             self.input.incar["SMASS"] = -3
         self.input.incar["NSW"] = n_ionic_steps
         self.input.incar["NBLOCK"] = int(n_print)
-        self.input.incar["POTIM"] = dt
+        self.input.incar["POTIM"] = time_step
         if retain_charge_density:
             self.write_charge_density = retain_charge_density
         if retain_electrostatic_potential:
             self.write_electrostatic_potential = retain_electrostatic_potential
         for key in kwargs.keys():
-            s.logger.warning("{}tag not relevant for vasp".format(key))
+            self.logger.warn("Tag {} not relevant for vasp".format(key))
 
     def set_kpoints(self, mesh=None, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
                     weights=None, reciprocal=True, kmesh_density=None):
@@ -718,7 +719,7 @@ class VaspBase(GenericDFTJob):
         self.set_kpoints(scheme="Manual", symmetry_reduction=False, manual_kpoints=q_point_list, weights=None,
                          reciprocal=False)
 
-    def set_convergence_precision(self, ionic_energy=1.E-5, electronic_energy=1.E-7, ionic_forces=None):
+    def set_convergence_precision(self, ionic_energy=1.E-3, electronic_energy=1.E-7, ionic_forces=1.E-2):
         """
         Sets the electronic and ionic convergence precision. For ionic convergence either the energy or the force
         precision is required
@@ -895,6 +896,17 @@ class VaspBase(GenericDFTJob):
             else:
                 new_ham.input.incar["ICHARG"] = icharg
         return new_ham
+
+    def compress(self, files_to_compress=None):
+        """
+        Compress the output files of a job object.
+
+        Args:
+            files_to_compress (list):
+        """
+        if files_to_compress is None:
+            files_to_compress = [f for f in list(self.list_files()) if f not in ["CHGCAR", "WAVECAR"]]
+        super(VaspBase, self).compress(files_to_compress=files_to_compress)
 
     def restart_from_wave_functions(self, snapshot=-1, job_name=None, job_type=None, istart=1):
 

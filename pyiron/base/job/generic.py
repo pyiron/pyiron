@@ -26,7 +26,8 @@ Generic Job class extends the JobCore class with all the functionality to run th
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -141,6 +142,7 @@ class GenericJob(JobCore):
         self._restart_file_list = list()
         self._restart_file_dict = dict()
         self._process = None
+        self._compress_by_default = False
 
         for sig in intercepted_signals:
             signal.signal(sig,  self.signal_intercept)
@@ -463,6 +465,12 @@ class GenericJob(JobCore):
         return new_generic_job
 
     def copy_file_to_working_directory(self, file):
+        """
+        Copy a specific file to the working directory before the job is executed.
+
+        Args:
+            file (str): path of the file to be copied.
+        """
         if os.path.isabs(file):
             self.restart_file_list.append(file)
         else: 
@@ -788,6 +796,10 @@ class GenericJob(JobCore):
             hdf (ProjectHDFio): HDF5 group object - optional
             group_name (str): HDF5 subgroup name - optional
         """
+        if hdf is not None:
+            self._hdf5 = hdf
+        if group_name is not None:
+            self._hdf5.open(group_name)
         self._executable_activate_mpi()
         self._type_to_hdf()
         self._server.to_hdf(self._hdf5)
@@ -803,6 +815,10 @@ class GenericJob(JobCore):
             hdf (ProjectHDFio): HDF5 group object - optional
             group_name (str): HDF5 subgroup name - optional
         """
+        if hdf is not None:
+            self._hdf5 = hdf
+        if group_name is not None:
+            self._hdf5.open(group_name)
         self._type_from_hdf()
         self._server.from_hdf(self._hdf5)
         with self._hdf5.open('input') as hdf_input:
@@ -978,7 +994,7 @@ class GenericJob(JobCore):
         Internal helper function the run if submitted function is called when the job status is 'submitted'. It means
         the job is waiting in the queue. ToDo: Display a list of the users jobs in the queue.
         """
-        if self.server.run_mode.queue and self.project.queue_job_info(self) is None:
+        if self.server.run_mode.queue and not self.project.queue_check_job_is_waiting_or_running(self.job_id):
             self.run(run_again=True)
         else:
             print('Job ' + str(self.job_id) + ' is waiting in the que!')
@@ -988,7 +1004,7 @@ class GenericJob(JobCore):
         Internal helper function the run if running function is called when the job status is 'running'. It allows the
         user to interact with the simulation while it is running.
         """
-        if self.server.run_mode.queue and self.project.queue_job_info(self) is None:
+        if self.server.run_mode.queue and not self.project.queue_check_job_is_waiting_or_running(self.job_id):
             self.run(run_again=True)
         elif self.server.run_mode.interactive:
             self.run_if_interactive()
@@ -1023,6 +1039,8 @@ class GenericJob(JobCore):
             if not self.convergence_check():
                 self.status.not_converged = True
             else:
+                if self._compress_by_default:
+                    self.compress()
                 self.status.finished = True
         self._calculate_successor()
         self.send_to_database()
@@ -1064,6 +1082,8 @@ class GenericJob(JobCore):
                 self._executable = Executable(codename=self.__name__,
                                               module=self.__module__.split('.')[1],
                                               path_binary_codes=s.resource_paths)
+            else:
+                self._executable = Executable(codename=self.__name__, path_binary_codes=s.resource_paths)
 
     def _type_to_hdf(self):
         """

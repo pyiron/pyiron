@@ -3,12 +3,14 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from datetime import datetime
+import warnings
 from pyiron.base.generic.parameters import GenericParameters
 from pyiron.base.job.generic import GenericJob
 from pyiron.base.master.generic import GenericMaster
 
 __author__ = "Osamu Waseda, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -66,10 +68,17 @@ class InteractiveWrapper(GenericMaster):
         self.append(ref_job)
 
     def validate_ready_to_run(self):
+        """
+        Validate that the calculation is ready to be executed. By default no generic checks are performed, but one could
+        check that the input information is complete or validate the consistency of the input at this point.
+        """
         self.ref_job.validate_ready_to_run()
 
     def ref_job_initialize(self):
-        if len(self._job_list) > 0:
+        """
+
+        """
+        if len(self._job_name_lst) > 0:
             self._ref_job = self.pop(-1)
             if self._job_id is not None and self._ref_job._master_id is None:
                 self._ref_job.master_id = self.job_id
@@ -80,14 +89,15 @@ class InteractiveWrapper(GenericMaster):
         Returns:
 
         """
+        warnings.warn("get_final_structure() is deprecated - please use get_structure() instead.", DeprecationWarning)
         if self.ref_job:
-            return self._ref_job.get_final_structure()
+            return self._ref_job.get_structure(iteration_step=-1)
         else:
             return None
 
     def to_hdf(self, hdf=None, group_name=None):
         """
-        Store the ParallelMaster in an HDF5 file
+        Store the InteractiveWrapper in an HDF5 file
 
         Args:
             hdf (ProjectHDFio): HDF5 group object - optional
@@ -101,7 +111,7 @@ class InteractiveWrapper(GenericMaster):
 
     def from_hdf(self, hdf=None, group_name=None):
         """
-        Restore the ParallelMaster from an HDF5 file
+        Restore the InteractiveWrapper from an HDF5 file
 
         Args:
             hdf (ProjectHDFio): HDF5 group object - optional
@@ -131,6 +141,11 @@ class InteractiveWrapper(GenericMaster):
         return db_dict
 
     def _db_entry_update_run_time(self):
+        """
+
+        Returns:
+
+        """
         job_id = self.get_job_id()
         db_dict = {}
         start_time = self.project.db.get_item_by_id(job_id)["timestart"]
@@ -139,6 +154,11 @@ class InteractiveWrapper(GenericMaster):
         self.project.db.item_update(db_dict, job_id)
 
     def _finish_job(self):
+        """
+
+        Returns:
+
+        """
         self.status.finished = True
         self._db_entry_update_run_time()
         self._logger.info("{}, status: {}, monte carlo master".format(self.job_info_str, self.status))
@@ -166,7 +186,7 @@ class InteractiveWrapper(GenericMaster):
                     return self.project.inspect(child_id)['/'.join(name_lst[1:])]
                 else:
                     return self.project.load(child_id, convert_to_object=True)
-            if name_lst[0] in self._job_list:
+            if name_lst[0] in self._job_name_lst:
                 child = getattr(self, name_lst[0])
                 if len(name_lst) == 1:
                     return child
@@ -174,11 +194,67 @@ class InteractiveWrapper(GenericMaster):
                     return child['/'.join(name_lst[1:])]
             return super(GenericMaster, self).__getitem__(item)
         elif isinstance(item, int):
-            total_lst = child_name_lst + self._job_list
+            total_lst = child_name_lst + self._job_name_lst
             job_name = total_lst[item]
             if job_name in child_name_lst:
                 child_id = child_id_lst[child_name_lst.index(job_name)]
                 return self.project.load(child_id, convert_to_object=True)
             else:
-                job_name = self._job_list[item]
-                return getattr(self, job_name)
+                return self._job_object_lst[item]
+
+
+class ReferenceJobOutput(object):
+    def __init__(self, job):
+        self._job = job
+
+    @property
+    def indices(self):
+        return self._job.ref_job.output.indices
+
+    @property
+    def cells(self):
+        return self._job.ref_job.output.cells
+
+    @property
+    def energy_pot(self):
+        return self._job.ref_job.output.energy_pot
+
+    @property
+    def energy_tot(self):
+        return self._job.ref_job.output.energy_tot
+
+    @property
+    def forces(self):
+        return self._job.ref_job.output.forces
+
+    @property
+    def positions(self):
+        return self._job.ref_job.output.positions
+
+    @property
+    def pressures(self):
+        return self._job.ref_job.output.pressures
+
+    @property
+    def steps(self):
+        return self._job.ref_job.output.steps
+
+    @property
+    def temperatures(self):
+        return self._job.ref_job.output.temperatures
+
+    @property
+    def time(self):
+        return self._job.ref_job.output.time
+
+    @property
+    def unwrapped_positions(self):
+        return self._job.ref_job.output.unwrapped_positions
+
+    @property
+    def volume(self):
+        return self._job.ref_job.output.volume
+
+    def __dir__(self):
+        return list(set(list(self._job.ref_job.interactive_cache.keys())))
+

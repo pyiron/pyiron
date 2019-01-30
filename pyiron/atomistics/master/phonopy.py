@@ -18,7 +18,8 @@ from pyiron.atomistics.master.parallel import AtomisticParallelMaster
 from pyiron.base.master.parallel import JobGenerator
 
 __author__ = "Jan Janssen, Yury Lysogorskiy"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -152,19 +153,39 @@ class PhonopyJob(AtomisticParallelMaster):
         self._enable_phonopy()
         super(PhonopyJob, self).run_static()
 
+    def run_if_interactive(self):
+        self._enable_phonopy()
+        super(PhonopyJob, self).run_if_interactive()
+
     def to_hdf(self, hdf=None, group_name=None):
+        """
+        Store the PhonopyJob in an HDF5 file
+
+        Args:
+            hdf (ProjectHDFio): HDF5 group object - optional
+            group_name (str): HDF5 subgroup name - optional
+        """
         super(PhonopyJob, self).to_hdf(hdf=hdf, group_name=group_name)
         if self.phonopy is not None:
             with self.project_hdf5.open("output") as hdf5_output:
                 hdf5_output['phonopy_pickeled'] = codecs.encode(pickle.dumps(self.phonopy), "base64").decode()
 
     def from_hdf(self, hdf=None, group_name=None):
+        """
+        Restore the PhonopyJob from an HDF5 file
+
+        Args:
+            hdf (ProjectHDFio): HDF5 group object - optional
+            group_name (str): HDF5 subgroup name - optional
+        """
         super(PhonopyJob, self).from_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("output") as hdf5_output:
             if 'phonopy_pickeled' in hdf5_output.list_nodes():
                 self.phonopy = pickle.loads(codecs.decode(hdf5_output['phonopy_pickeled'].encode(), 'base64'))
-                self._dos_total = hdf5_output["dos_total"]
-                self._dos_energies = hdf5_output["dos_energies"]
+                if "dos_total" in hdf5_output.list_nodes():
+                    self._dos_total = hdf5_output["dos_total"]
+                if "dos_energies" in hdf5_output.list_nodes():
+                    self._dos_energies = hdf5_output["dos_energies"]
 
     def collect_output(self):
         """
@@ -172,8 +193,11 @@ class PhonopyJob(AtomisticParallelMaster):
         Returns:
 
         """
-        self.phonopy.set_forces([self.project_hdf5.inspect(job_id)["output/generic/forces"][-1]
-                                 for job_id in self.child_ids])
+        if self.server.run_mode.interactive:
+            forces_lst = self.project_hdf5.inspect(self.child_ids[0])["output/generic/forces"]
+        else:
+            forces_lst = [self.project_hdf5.inspect(job_id)["output/generic/forces"][-1] for job_id in self.child_ids]
+        self.phonopy.set_forces(forces_lst)
         self.phonopy.produce_force_constants()
         self.phonopy.set_mesh(mesh=[self.input['dos_mesh']] * 3)
         qpoints, weights, frequencies, eigvecs = self.phonopy.get_mesh()
@@ -192,11 +216,25 @@ class PhonopyJob(AtomisticParallelMaster):
             hdf5_out['force_constants'] = self.phonopy.force_constants
 
     def write_phonopy_force_constants(self, file_name="FORCE_CONSTANTS", cwd=None):
+        """
+
+        Args:
+            file_name:
+            cwd:
+
+        Returns:
+
+        """
         if cwd is not None:
             file_name = posixpath.join(cwd, file_name)
         write_FORCE_CONSTANTS(force_constants=self.phonopy.force_constants, filename=file_name)
 
     def get_hesse_matrix(self):
+        """
+
+        Returns:
+
+        """
         unit_conversion = scipy.constants.physical_constants['Hartree energy in eV'][0] / \
                           scipy.constants.physical_constants['Bohr radius'][0] ** 2 * scipy.constants.angstrom ** 2
         force_shape = np.shape(self.phonopy.force_constants)

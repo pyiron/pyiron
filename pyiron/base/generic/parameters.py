@@ -15,7 +15,8 @@ GenericParameters class defines the typical input file with a key value structur
 """
 
 __author__ = "Joerg Neugebauer"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -564,12 +565,21 @@ class GenericParameters(PyironObject):
 
         Args:
             key (str): key to be set of modified
-            value (str): value to be set
+            value (str/int/float): value to be set
         """
         if isinstance(key, int):
             self._dataset["Value"][key] = value
         else:
             self.set(**{key: value})
+
+    def set_dict(self, dictionary):
+        """
+        Set a dictionary of key value pairs
+
+        Args:
+            dictionary (dict): dictionary of key value pairs
+        """
+        self.set(**dictionary)
 
     def __getitem__(self, item):
         """

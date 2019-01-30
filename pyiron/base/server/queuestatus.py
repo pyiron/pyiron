@@ -14,7 +14,8 @@ Set of functions to interact with the queuing system directly from within pyiron
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -104,6 +105,27 @@ def queue_table(job_ids=[], project_only=True):
             return pandas.DataFrame(job_dict_lst[:-1])
     else:
         return None
+
+
+def queue_check_job_is_waiting_or_running(item):
+    """
+    Check if a job is still listed in the queue system as either waiting or running.
+
+    Args:
+        item (int, GenericJob): Provide either the job_ID or the full hamiltonian
+
+    Returns:
+        bool: [True/False]
+    """
+    if isinstance(item, int):
+        job_id = item
+    else:
+        job_id = item.job_id
+    queue_dict = queue_id_table(requested_id=job_id)
+    if str(job_id) in queue_dict.keys() and queue_dict[str(job_id)][1] in ['qw', 'r']:
+        return True
+    else:
+        return False
 
 
 def queue_id_table(requested_id=None):
@@ -270,11 +292,15 @@ def wait_for_job(job, interval_in_s=5, max_iterations=100):
         interval_in_s (int): interval when the job status is queried from the database - default 5 sec.
         max_iterations (int): maximum number of iterations - default 100
     """
+    finished = False
     for _ in range(max_iterations):
         job.refresh_job_status()
         if job.status.finished or job.status.aborted:
+            finished = True
             break
         time.sleep(interval_in_s)
+    if not finished:
+        raise ValueError('Maximum iterations reached, but the job was not finished.')
 
 
 def _validate_que_request(item):

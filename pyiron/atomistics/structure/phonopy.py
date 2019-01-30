@@ -7,7 +7,8 @@ from phonopy.structure.atoms import PhonopyAtoms
 import phonopy.structure.spglib as spg
 
 __author__ = "Osamu Waseda"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Osamu Waseda"
 __email__ = "waseda@mpie.de"
@@ -35,5 +36,5 @@ def analyse_phonopy_equivalent_atoms(atoms, symprec=1e-5, angle_tolerance=-1.0):
     positions = np.reshape(np.array(positions), (natom, 3))
     cell = np.reshape(np.array(cell), (3, 3))
     unitcell = PhonopyAtoms(symbols=types, cell=cell, scaled_positions=positions)
-    ops = spg.get_symmetry(unitcell, symprec=1e-5, angle_tolerance=-1.0)
+    ops = spg.get_symmetry(unitcell, symprec=symprec, angle_tolerance=angle_tolerance)
     return ops['equivalent_atoms']

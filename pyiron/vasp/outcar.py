@@ -7,8 +7,8 @@ import warnings
 import scipy.constants
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \
-                "- Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -559,9 +559,11 @@ class Outcar(object):
         """
         trigger = "gives a total of "
         with open(filename, 'r') as f:
-            for line in f.readlines():
+            lines = f.readlines()
+            for i, line in enumerate(lines):
                 if trigger in line:
-                    return int(line.split()[4])
+                    line_ngx = lines[i-2].split()
+                    return int(line_ngx[2]) * int(line_ngx[5]) * int(line_ngx[8])
 
     @staticmethod
     def get_temperatures(filename="OUTCAR"):

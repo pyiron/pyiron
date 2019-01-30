@@ -15,14 +15,15 @@ from pyiron.base.settings.logger import set_logging_level
 from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.base.job.jobtype import JobType, JobTypeChoice
 from pyiron.base.server.queuestatus import queue_delete_job, queue_is_empty, queue_job_info, queue_table, \
-    wait_for_job, queue_report, queue_id_table, queue_enable_reservation
+    wait_for_job, queue_report, queue_id_table, queue_enable_reservation, queue_check_job_is_waiting_or_running
 
 """
 The project object is the central import point of pyiron - all other objects can be created from this one 
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -690,15 +691,7 @@ class Project(ProjectPath):
         if job_id:
             if (not que_mode and self.db.get_item_by_id(job_id)['status'] not in ['finished']) or (
                         que_mode and self.db.get_item_by_id(job_id)['status'] in ['running', 'submitted']):
-                try:
-                    queue_status = queue_id_table(job_id)
-                except Exception:
-                    queue_status = None
-                if queue_status:
-                    for key, (q_id, q_status) in queue_status.items():
-                        if q_status != 'r':
-                            self.db.item_update({'status': 'aborted'}, job_id)
-                else:
+                if not self.queue_check_job_is_waiting_or_running(job_id):
                     self.db.item_update({'status': 'aborted'}, job_id)
 
     def remove_file(self, file_name):
@@ -762,6 +755,35 @@ class Project(ProjectPath):
                         s.logger.debug("Could not remove job with ID {0} ".format(job_id))
         else:
             raise EnvironmentError('copy_to: is not available in Viewermode !')
+
+    def compress_jobs(self, recursive=False):
+        """
+        Compress all finished jobs in the current project and in all subprojects if recursive=True is selected.
+
+        Args:
+            recursive (bool): [True/False] compress all jobs in all subprojects - default=False
+        """
+        for job_id in self.get_job_ids(recursive=recursive):
+            job = self.inspect(job_id)
+            if job.status == 'finished':
+                job.compress()
+
+    def delete_output_files_jobs(self, recursive=False):
+        """
+        Delete the output files of all finished jobs in the current project and in all subprojects if recursive=True is selected.
+
+        Args:
+            recursive (bool): [True/False] delete the output files of all jobs in all subprojects - default=False
+        """
+        for job_id in self.get_job_ids(recursive=recursive):
+            job = self.inspect(job_id)
+            if job.status == 'finished':
+                for file in job.list_files():
+                    fullname = os.path.join(job.working_directory, file)
+                    if os.path.isfile(fullname) and '.h5' not in fullname:
+                        os.remove(fullname)
+                    elif os.path.isdir(fullname):
+                        os.removedirs(fullname)
 
     def remove(self, enable=False, enforce=False):
         """
@@ -830,6 +852,13 @@ class Project(ProjectPath):
         self.db = s.database
 
     def switch_to_local_database(self, file_name='pyiron.db', cwd=None):
+        """
+        Switch from central mode to local mode - if local_mode is enable pyiron is using a local database.
+
+        Args:
+            file_name (str): file name or file path for the local database
+            cwd (str): directory where the local database is located
+        """
         if cwd is None: 
             cwd = self.path
         s.switch_to_local_database(file_name=file_name, cwd=cwd)
@@ -838,7 +867,7 @@ class Project(ProjectPath):
 
     def switch_to_central_database(self):
         """
-        Switch from viewer mode to user mode - if viewer_mode is enable pyiron has read only access to the database.
+        Switch from local mode to central mode - if local_mode is enable pyiron is using a local database.
         """
         s.switch_to_central_database()
         s.open_connection()
@@ -895,6 +924,19 @@ class Project(ProjectPath):
             str: Output from the queuing system as string - optimized for the Sun grid engine
         """
         return queue_enable_reservation(item)
+
+    @staticmethod
+    def queue_check_job_is_waiting_or_running(item):
+        """
+        Check if a job is still listed in the queue system as either waiting or running.
+
+        Args:
+            item (int, GenericJob): Provide either the job_ID or the full hamiltonian
+
+        Returns:
+            bool: [True/False]
+        """
+        return queue_check_job_is_waiting_or_running(item)
 
     @staticmethod
     def queue_job_info(item):

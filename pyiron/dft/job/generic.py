@@ -6,7 +6,8 @@ import numpy as np
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -103,6 +104,9 @@ class GenericDFTJob(AtomisticGenericJob):
             snapshot.set_initial_magnetic_moments(spins[iteration_step])
         return snapshot
 
+    def set_mixing_parameters(self, method=None, n_pulay_steps=None, density_mixing_parameter=None, spin_mixing_parameter=None):
+        raise NotImplementedError("set_mixing_parameters is not implemented for this code.")
+
     def set_kmesh_density(self, kspace_per_in_ang=0.10):
         mesh = self._get_k_mesh_by_cell(self.structure, kspace_per_in_ang)
         self.set_kpoints(mesh=mesh, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
@@ -123,10 +127,11 @@ class GenericDFTJob(AtomisticGenericJob):
         self._generic_input['fix_symmetry'] = True
         super(GenericDFTJob, self).calc_minimize(max_iter=max_iter, pressure=pressure)
 
-    def calc_md(self, temperature=None, n_ionic_steps=1000, n_print=1, dt=1.0, retain_charge_density=False,
+    def calc_md(self, temperature=None, n_ionic_steps=1000, n_print=1, time_step=1.0, retain_charge_density=False,
                 retain_electrostatic_potential=False, **kwargs):
         self._generic_input['fix_symmetry'] = False
-        super(GenericDFTJob, self).calc_md(temperature=temperature, n_ionic_steps=n_ionic_steps, n_print=n_print)
+        super(GenericDFTJob, self).calc_md(temperature=temperature, n_ionic_steps=n_ionic_steps, n_print=n_print,
+                                           time_step=time_step)
 
     # Backward compatibility
     def get_encut(self):

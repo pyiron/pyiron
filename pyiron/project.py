@@ -26,8 +26,8 @@ from pyiron.atomistics.structure.atoms import Atoms
 
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \
-                "- Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -266,6 +266,28 @@ class Project(ProjectCore):
             abs_path = '/'.join(search_path.replace('\\', '/').split("/")[:-1])
             rel_path = posixpath.relpath(abs_path, self.path)
             self._calculation_validation(search_path, os.listdir(search_path), rel_path=rel_path)
+
+    def get_structure(self, job_specifier, iteration_step=-1):
+        """
+        Gets the structure from a given iteration step of the simulation (MD/ionic relaxation). For static calculations
+        there is only one ionic iteration step
+        Args:
+            job_specifier (str, int): name of the job or job ID
+            iteration_step (int): Step for which the structure is requested
+
+        Returns:
+            atomistics.structure.atoms.Atoms object
+        """
+        job = self.inspect(job_specifier)
+        snapshot = Atoms().from_hdf(job['input'], 'structure')
+        if 'output' in job.project_hdf5.list_groups() and iteration_step != 0:
+            snapshot.cell = job.get("output/generic/cells")[iteration_step]
+            snapshot.positions = job.get("output/generic/positions")[iteration_step]
+            if 'indices' in job.get('output/generic').list_nodes():
+                snapshot.indices = job.get("output/generic/indices")[iteration_step]
+            if 'dft' in job['output/generic'].list_groups() and 'atom_spins' in job['output/generic/dft'].list_nodes():
+                snapshot.set_initial_magnetic_moments(job.get("output/generic/dft/atom_spins")[iteration_step])
+        return snapshot
 
     def _calculation_validation(self, path, files_available, rel_path=None):
         """

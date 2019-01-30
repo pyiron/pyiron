@@ -10,7 +10,8 @@ InteractiveBase class extends the Generic Job class with all the functionality t
 """
 
 __author__ = "Osamu Waseda, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -20,7 +21,7 @@ __date__ = "Sep 1, 2018"
 
 class InteractiveBase(GenericJob):
     """
-    InteractiveBase class extends the Generic Job class with all the functionality to run the job object interactivley.
+    InteractiveBase class extends the Generic Job class with all the functionality to run the job object interactively.
     From this class all interactive Hamiltonians are derived. Therefore it should contain the properties/routines common
     to all interactive jobs. The functions in this module should be as generic as possible.
 
@@ -190,11 +191,11 @@ class InteractiveBase(GenericJob):
         Returns:
 
         """
-        if path in h5.list_groups() and key in h5[path].list_nodes(): 
+        if path in h5.list_groups() and key in h5[path].list_nodes():
             current_hdf = h5[path + "/" + key]
             if isinstance(data, list):
                 entry = current_hdf.tolist() + data
-            else: 
+            else:
                 entry = current_hdf.tolist() + data.tolist()
             data = np.array(entry)
         h5[path + "/" + key] = data
@@ -271,6 +272,7 @@ class InteractiveBase(GenericJob):
         if len(list(self.interactive_cache.keys())) > 0 and \
                 len(self.interactive_cache[list(self.interactive_cache.keys())[0]]) != 0:
             self.interactive_flush(path="interactive", include_last_step=True)
+        self.project_hdf5.rewrite_hdf5(job_name=self.job_name, exclude_groups=[])
         self.project.db.item_update(self._runtime(), self._job_id)
         self.status.finished = True
         self._interactive_library = None
