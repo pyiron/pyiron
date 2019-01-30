@@ -559,12 +559,11 @@ class Outcar(object):
         """
         trigger = "gives a total of "
         with open(filename, 'r') as f:
-            for line in f.readlines():
+            lines = f.readlines()
+            for i, line in enumerate(lines):
                 if trigger in line:
-                    try:
-                        return int(line.split()[4])
-                    except ValueError:
-                        return 0
+                    line_ngx = lines[i-2].split()
+                    return int(line_ngx[2]) * int(line_ngx[5]) * int(line_ngx[8])
 
     @staticmethod
     def get_temperatures(filename="OUTCAR"):

@@ -289,6 +289,17 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_lammps_input()
         self._interactive_set_potential()
 
+    def from_hdf(self, hdf=None, group_name=None):
+        """
+        Recreates instance from the hdf5 file
+
+        Args:
+            hdf (str): Path to the hdf5 file
+            group_name (str): Name of the group which contains the object
+        """
+        super(LammpsInteractive, self).from_hdf(hdf=hdf, group_name=group_name)
+        self.species_from_hdf()
+
     def collect_output(self):
         if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
             pass

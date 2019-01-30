@@ -26,6 +26,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         self._interactive_enforce_structure_reset = False
         self._interactive_grand_canonical = False
         self._interactive_fetch_completed = True
+        self._interactive_species_lst = np.array([])
         self.interactive_cache = {'cells': [],
                                   'energy_pot': [],
                                   'energy_tot': [],
@@ -84,6 +85,13 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             self._structure_current = structure
         else:
             AtomisticGenericJob.structure.fset(self, structure)
+
+    def species_from_hdf(self):
+        if "output" in self.project_hdf5.list_groups() and \
+                'interactive' in self.project_hdf5['output'].list_groups() and \
+                'species' in self.project_hdf5['output/interactive'].list_nodes():
+            with self.project_hdf5.open('output/interactive') as hdf:
+                self._interactive_species_lst = np.array(hdf['species'])
 
     def run_if_interactive(self):
         self.status.running = True
@@ -179,8 +187,29 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         if self.server.run_mode.interactive_non_modal:
             self._interactive_fetch_completed = True
 
+    def interactive_flush(self, path="interactive", include_last_step=False):
+        """
+
+        Args:
+            path:
+            include_last_step:
+
+        Returns:
+
+        """
+        with self.project_hdf5.open("output") as hdf_output:
+            with hdf_output.open(path) as hdf:
+                hdf['species'] = self._interactive_species_lst.tolist()
+        super(GenericInteractive, self).interactive_flush(path=path, include_last_step=include_last_step)
+
     def interactive_indices_getter(self):
-        return self.current_structure.get_chemical_indices()
+        self._interactive_species_lst = self._extend_species_elements(
+            struct_species=self.current_structure.get_species_symbols(),
+            species_array=self._interactive_species_lst)
+        new_indices = self._new_indicies(struct_species=self.current_structure.get_species_symbols(),
+                                         species_array=self._interactive_species_lst)
+        return self._store_indicies(species_lst=new_indices,
+                                    structure_indicies=self.current_structure.get_chemical_indices())
 
     def interactive_positions_getter(self):
         return self.current_structure.positions
@@ -204,12 +233,18 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         Returns:
             atomistics.structure.atoms.Atoms object
         """
-        if (self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal) \
-                and self.interactive_is_activated():
+        if (self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal):
             # Warning: We only copy symbols, positions and cell information - no tags.
             if len(self.output.indices) != 0:
+                indices = self.output.indices[iteration_step]
+            else:
+                indices = self.get("output/generic/indices")
+            if len(self._interactive_species_lst) == 0:
                 el_lst = [el.Abbreviation for el in self.structure.species]
-                return Atoms(symbols=np.array([el_lst[el] for el in self.output.indices[iteration_step]]),
+            else:
+                el_lst = self._interactive_species_lst.tolist()
+            if indices is not None:
+                return Atoms(symbols=np.array([el_lst[el] for el in indices]),
                              positions=self.output.positions[iteration_step],
                              cell=self.output.cells[iteration_step])
             else:
@@ -219,6 +254,25 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
                 return super(GenericInteractive, self).get_structure(iteration_step=iteration_step)
             else:
                 return None
+
+    @staticmethod
+    def _extend_species_elements(struct_species, species_array):
+        if not any(np.isin(struct_species, species_array)):
+            new_elements_index = np.invert(np.isin(struct_species, species_array))
+            species_array = np.append(species_array, struct_species[new_elements_index])
+        return species_array
+
+    @staticmethod
+    def _store_indicies(species_lst, structure_indicies):
+        structure_indicies_to_store = structure_indicies.copy()
+        for ind, el in enumerate(species_lst):
+            structure_indicies_to_store[np.where(structure_indicies == ind)[0]] = el
+        return structure_indicies_to_store
+
+    @staticmethod
+    def _new_indicies(struct_species, species_array):
+        return np.array([np.where(species_array == el)[0][0] for el in
+                         species_array[np.isin(species_array, struct_species)]])
 
     # Functions which have to be implemented by the fin
     def interactive_cells_setter(self, cell):
