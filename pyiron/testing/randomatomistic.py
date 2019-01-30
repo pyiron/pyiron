@@ -446,7 +446,7 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
         self.interactive_cache['energy_pot'].append(self._interactive_cache['energy'][-1])
         self.interactive_cache['energy_tot'].append(self._interactive_cache['energy'][-1])
         self.interactive_cache['forces'].append(np.random.random((len(self._structure), 3)))
-        self.interactive_cache['positions'].append(np.random.random(self._structure.positions))
+        self.interactive_cache['positions'].append(self._structure.positions)
         self.interactive_cache['pressures'].append(np.random.random((3, 3)))
         self.interactive_cache['stress'].append(np.random.random((len(self._structure), 3, 3)))
         self.interactive_cache['steps'].append(len(self.interactive_cache['steps']))
