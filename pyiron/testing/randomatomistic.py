@@ -453,5 +453,5 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
         self.interactive_cache['temperature'].append(np.random.random())
         self.interactive_cache['indices'].append(self._structure.indices)
         self.interactive_cache['computation_time'].append(np.random.random())
-        self.interactive_cache['unwrapped_positions'].append(np.random.random(self._structure.positions))
+        self.interactive_cache['unwrapped_positions'].append(self._structure.positions)
         self.interactive_cache['volume'].append(self._structure.get_volume())
