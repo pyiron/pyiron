@@ -382,7 +382,7 @@ class Project(ProjectPath):
         """
         return self.load(job_specifier=job_specifier, convert_to_object=False)
 
-    def iter_jobs(self, path=None, recursive=True, convert_to_object=True):
+    def iter_jobs(self, path=None, recursive=True, convert_to_object=True, status=None):
         """
         Iterate over the jobs within the current project and it is sub projects
 
@@ -390,15 +390,20 @@ class Project(ProjectPath):
             path (str): HDF5 path inside each job object
             recursive (bool): search subprojects [True/False] - True by default
             convert_to_object (bool): load the full GenericJob object (default) or just the HDF5 / JobCore object
+            status (str/None): status of the jobs to filter for - ['finished', 'aborted', 'submitted', ...]
 
         Returns:
             yield: Yield of GenericJob or JobCore
         """
-        if path is not None:
-            for job_id in self.get_jobs(recursive)["id"]:
+        if status is None:
+            job_id_lst = self.get_jobs(recursive)["id"]
+        else:
+            df = self.job_table(recursive=True)
+            job_id_lst = list(df[df['status'] == status]['id'])
+        for job_id in job_id_lst:
+            if path is not None:
                 yield self.load(job_id, convert_to_object=False)[path]
-        else:  # Backwards compatibility - in future the option convert_to_object should be removed
-            for job_id in self.get_jobs(recursive)["id"]:
+            else:  # Backwards compatibility - in future the option convert_to_object should be removed
                 yield self.load(job_id, convert_to_object=convert_to_object)
 
     def iter_output(self, recursive=True):
