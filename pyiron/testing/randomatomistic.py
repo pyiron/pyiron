@@ -222,6 +222,7 @@ class ExampleJob(GenericJob):
             int: job ID
         """
         from pyiron.testing.executable import ExampleExecutable
+        self._interactive_library = True
         self.status.running = True
         alat, count, energy = ExampleExecutable().run_lib(self.input)
         self._interactive_cache['alat'].append(alat)
@@ -229,6 +230,7 @@ class ExampleJob(GenericJob):
         self._interactive_cache['energy'].append(energy)
 
     def interactive_close(self):
+        self._interactive_library = False
         self.to_hdf()
         with self.project_hdf5.open("output") as h5:
             h5["generic/energy"] = np.array(self._interactive_cache['energy'])
@@ -443,8 +445,8 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
         """
         super(AtomisticExampleJob, self).run_if_interactive()
         self.interactive_cache['cells'].append(self._structure.cell)
-        self.interactive_cache['energy_pot'].append(self._interactive_cache['energy'][-1])
-        self.interactive_cache['energy_tot'].append(self._interactive_cache['energy'][-1])
+        self.interactive_cache['energy_pot'].append(self._interactive_cache['energy'][-1][-1])
+        self.interactive_cache['energy_tot'].append(self._interactive_cache['energy'][-1][-1])
         self.interactive_cache['forces'].append(np.random.random((len(self._structure), 3)))
         self.interactive_cache['positions'].append(self._structure.positions)
         self.interactive_cache['pressures'].append(np.random.random((3, 3)))
