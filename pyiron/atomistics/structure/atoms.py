@@ -1444,6 +1444,53 @@ class Atoms(object):
         neighbor_obj.shells = self.neighbor_shellOrder
         return neighbor_obj
 
+
+    def get_neighborhood(box, position, radius=None, num_neighbors=12, t_vec=True,
+                         include_boundary=True, exclude_self=True, tolerance=2, id_list=None, cutoff=None):
+        """
+        
+        Args:
+            position: position in a box whose neighborhood information is analysed
+            radius: distance up to which nearest neighbors are searched for
+                    used only for periodic boundary padding
+                   (in absolute units)
+            num_neighbors: 
+            t_vec (bool): True: compute distance vectors
+                        (pbc are automatically taken into account)
+            include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
+                                     False is needed e.g. in plot routines to avoid showing incorrect bonds
+            exclude_self (bool): include central __atom (i.e. distance = 0)
+            tolerance (int): tolerance (round decimal points) used for computing neighbor shells
+            id_list:
+            cutoff (float): Upper bound of the distance to which the search must be done
+
+        Returns:
+
+            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor indices, distances
+            and vectors
+
+        """
+        class NeighTemp(object):
+            pass
+        box = box.copy()
+        box += box[-1]
+        pos = box.positions
+        pos[-1] = np.array(position)
+        box.positions = pos
+        neigh = box.get_neighbors(radius=radius, num_neighbors=num_neighbors, t_vec=t_vec,
+                                  include_boundary=include_boundary, exclude_self=exclude_self,
+                                  tolerance=tolerance, id_list=id_list, cutoff=cutoff)
+        neigh_return = NeighTemp()
+        setattr(neigh_return, 'distances', neigh.distances[-1])
+        setattr(neigh_return, 'shells', neigh.shells[-1])
+        setattr(neigh_return, 'vecs', neigh.vecs[-1])
+        setattr(neigh_return, 'indices', neigh.indices[-1])
+        neigh_return.distances = neigh_return.distances[neigh_return.indices!=len(box)-1]
+        neigh_return.shells = neigh_return.shells[neigh_return.indices!=len(box)-1]
+        neigh_return.vecs = np.array(neigh_return.vecs)[neigh_return.indices!=len(box)-1]
+        neigh_return.indices = neigh_return.indices[neigh_return.indices!=len(box)-1]
+        return neigh_return
+
     def get_shells(self, id_list=None, max_shell=2, radius=None, max_num_neighbors=100):
         """
         
