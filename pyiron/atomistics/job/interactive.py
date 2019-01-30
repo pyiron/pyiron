@@ -86,17 +86,9 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         else:
             AtomisticGenericJob.structure.fset(self, structure)
 
-    def from_hdf(self, hdf=None, group_name=None):
-        """
-        Recreates instance from the hdf5 file
-
-        Args:
-            hdf (str): Path to the hdf5 file
-            group_name (str): Name of the group which contains the object
-        """
-        super(GenericInteractive, self).from_hdf(hdf=hdf, group_name=group_name)
+    def species_from_hdf(self):
         if "output" in self.project_hdf5.list_groups() and \
-                'interactive' in self.project_hdf5['output'].list_nodes() and \
+                'interactive' in self.project_hdf5['output'].list_groups() and \
                 'species' in self.project_hdf5['output/interactive'].list_nodes():
             with self.project_hdf5.open('output/interactive') as hdf:
                 self._interactive_species_lst = np.array(hdf['species'])
@@ -241,12 +233,18 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         Returns:
             atomistics.structure.atoms.Atoms object
         """
-        if (self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal) \
-                and self.interactive_is_activated():
+        if (self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal):
             # Warning: We only copy symbols, positions and cell information - no tags.
             if len(self.output.indices) != 0:
+                indices = self.output.indices[iteration_step]
+            else:
+                indices = self.get("output/generic/indices")
+            if len(self._interactive_species_lst) == 0:
                 el_lst = [el.Abbreviation for el in self.structure.species]
-                return Atoms(symbols=np.array([self._interactive_species_lst[el] for el in self.output.indices[iteration_step]]),
+            else:
+                el_lst = self._interactive_species_lst.tolist()
+            if indices is not None:
+                return Atoms(symbols=np.array([el_lst[el] for el in indices]),
                              positions=self.output.positions[iteration_step],
                              cell=self.output.cells[iteration_step])
             else:
