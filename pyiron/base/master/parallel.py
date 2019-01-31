@@ -5,6 +5,7 @@
 from __future__ import print_function
 from collections import OrderedDict
 from datetime import datetime
+import numpy as np
 import pandas
 import time
 from pyiron.base.job.generic import GenericJob
@@ -633,14 +634,56 @@ class ParallelMaster(GenericMaster):
             self.run()
 
     def run_if_interactive(self):
-        if not self.ref_job.server.run_mode.interactive:
-            raise ValueError
-        self.interactive_ref_job_initialize()
-        for parameter in self._job_generator.parameter_list:
-            self._job_generator.modify_job(job=self.ref_job, parameter=parameter)
+        if not (self.ref_job.server.run_mode.interactive or self.ref_job.server.run_mode.interactive_non_modal):
+            raise ValueError('The child job has to be run_mode interactive or interactive_non_modal.')
+        if self.server.cores == 1:
+            self.interactive_ref_job_initialize()
+            for parameter in self._job_generator.parameter_list:
+                self._job_generator.modify_job(job=self.ref_job, parameter=parameter)
+                self.ref_job.run()
+            self.ref_job.interactive_close()
+        else:
+            if self.server.cores > len(self._job_generator.parameter_list):
+                number_of_jobs = len(self._job_generator.parameter_list)
+            else:
+                number_of_jobs = self.server.cores
+            max_tasks_per_job = int(len(self._job_generator.parameter_list) // number_of_jobs) + 1
+            parameters_sub_lst = [self._job_generator.parameter_list[i:i + max_tasks_per_job]
+                                  for i in range(0, len(self._job_generator.parameter_list), max_tasks_per_job)]
+            list_of_sub_jobs = [self._create_child_job('job_' + str(i)) for i in range(number_of_jobs)]
+            primary_job = list_of_sub_jobs[0]
+            if not primary_job.server.run_mode.interactive_non_modal:
+                raise ValueError('The child job has to be run_mode interactive_non_modal.')
+            if primary_job.server.cores != 1:
+                raise ValueError('The child job can only use a single core.')
+            for iteration in range(len(parameters_sub_lst[0])):
+                for job_ind, job in enumerate(list_of_sub_jobs):
+                    if iteration < len(parameters_sub_lst[job_ind]):
+                        self._job_generator.modify_job(job=job,
+                                                       parameter=parameters_sub_lst[job_ind][iteration])
+                        job.run()
+                for job_ind, job in enumerate(list_of_sub_jobs):
+                    if iteration < len(parameters_sub_lst[job_ind]):
+                        job.interactive_fetch()
+            for job in list_of_sub_jobs:
+                job.interactive_close()
+            self.interactive_ref_job_initialize()
             self.ref_job.run()
-
-        self.ref_job.interactive_close()
+            for key in primary_job.interactive_cache.keys():
+                output_sum = []
+                for job in list_of_sub_jobs:
+                    output = job['output/interactive/' + key]
+                    if isinstance(output, np.ndarray):
+                        output = output.tolist()
+                    if isinstance(output, list):
+                        output_sum += output
+                    else:
+                        raise TypeError('output should be list or numpy.ndarray but it is ', type(output))
+                self.ref_job.interactive_cache[key] = output_sum
+            interactive_cache_backup = self.ref_job.interactive_cache.copy()
+            self.ref_job.interactive_flush(path="generic", include_last_step=True)
+            self.ref_job.interactive_cache = interactive_cache_backup
+            self.ref_job.interactive_close()
         self.status.collect = True
         self.run()
 
