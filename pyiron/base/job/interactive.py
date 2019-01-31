@@ -276,7 +276,8 @@ class InteractiveBase(GenericJob):
         self.project.db.item_update(self._runtime(), self._job_id)
         self.status.finished = True
         self._interactive_library = None
-        self.interactive_cache = {}
+        for key in self.interactive_cache.keys():
+            self.interactive_cache[key] = []
 
     def interactive_store_in_cache(self, key, value):
         """
