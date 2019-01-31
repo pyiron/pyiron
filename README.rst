@@ -82,7 +82,7 @@ Finally a first lammps calculation can be executed by::
 
     job = pr.create_job(job_type=pr.job_type.Lammps, job_name='lammpstestjob')
     job.structure = structure
-    job.potential = ham.list_potentials()[0]
+    job.potential = job.list_potentials()[0]
     job.run()
 
 
