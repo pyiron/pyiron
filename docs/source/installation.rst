@@ -32,7 +32,7 @@ To install `anaconda <https://www.anaconda.com>`_  you can download the `anacond
 
 .. code-block:: bash
 
-    conda install -c pyiron -c conda-forge pyiron lammps
+    conda install -c conda-forge pyiron
 
 Install via pip: 
 ----------------
@@ -66,6 +66,24 @@ Test version 1.1.2 – for jupyter lab
     conda install jupyterlab=0.31.12 -y -c conda-forge
     jupyter-labextension install @jupyter-widgets/jupyterlab-manager@0.33.2
     jupyter-labextension install nglview-js-widgets@1.1.2
+
+Simulation code: Lammps
+=======================
+pyiron supports the simulation codes VASP <https://www.vasp.at>`_ for DFT calculation and Lammps <https://lammps.sandia.gov>`_ for molecular dynamics calculation. While VASP requires a separate license and therefore has to be configured by the user, Lammps is available as opensource code and can be installed from anaconda. 
+
+For Linux and Mac Os X (for Python 2.7, 3.5 and 3.6):
+-----------------------------------------------------
+
+.. code-block:: bash
+
+    conda install -c conda-forge lammps
+    
+For windows: 
+------------
+.. code-block:: bash
+
+    conda install -c pyiron lammps
+
 
 Configuration
 =============
