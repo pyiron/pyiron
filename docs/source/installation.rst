@@ -69,7 +69,7 @@ Test version 1.1.2 – for jupyter lab
 
 Simulation code: Lammps
 =======================
-pyiron supports the simulation codes VASP <https://www.vasp.at>`_ for DFT calculation and Lammps <https://lammps.sandia.gov>`_ for molecular dynamics calculation. While VASP requires a separate license and therefore has to be configured by the user, Lammps is available as opensource code and can be installed from anaconda. 
+pyiron supports the simulation codes VASP <https://www.vasp.at>`_ for DFT calculation and Lammps <https://lammps.sandia.gov>`_  for molecular dynamics calculation. While VASP requires a separate license and therefore has to be configured by the user, Lammps is available as opensource code and can be installed from anaconda. 
 
 For Linux and Mac Os X (for Python 2.7, 3.5 and 3.6):
 -----------------------------------------------------
