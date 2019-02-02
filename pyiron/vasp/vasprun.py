@@ -29,7 +29,7 @@ class Vasprun(object):
 
     Attributes:
 
-        .. vasprun_dict(dict): Dictionary containing all information from the calculation parsed from the vasprun.xml
+        vasprun_dict (dict): Dictionary containing all information from the calculation parsed from the vasprun.xml
                             file. If you consider a simulation with N atoms and M ionic steps
 
                 'positions' (numpy.ndarray): MxNx3 array containing all the relative positions
@@ -45,6 +45,7 @@ class Vasprun(object):
     def from_file(self, filename="vasprun.xml"):
         """
         Parsing vasprun.xml from the working directory
+
         Args:
             filename (str): Path to the vasprun file
         """
@@ -116,10 +117,10 @@ class Vasprun(object):
 
     def parse_kpoints_to_dict(self, node, d):
         """
-        Parses kpoints data from a node to a dictionary
+        Parses k-points data from a node to a dictionary
 
         Args:
-            node (lxml.etree.Element instance): The node to parse
+            node (xml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
         """
         if not (node.tag == "kpoints"):
@@ -154,7 +155,7 @@ class Vasprun(object):
         Parses atom information from a node to a dictionary
 
         Args:
-            node (lxml.etree.Element instance): The node to parse
+            node (xml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
         """
         if not (node.tag == "atominfo"):
@@ -175,17 +176,19 @@ class Vasprun(object):
                                     pse = PeriodicTable()
                                     count = 1
                                     not_unique = True
+                                    species_key = None
                                     while not_unique:
                                         species_key = "_".join([elements[1].text, str(count)])
                                         if species_key not in species_dict.keys():
                                             not_unique = False
                                         else:
                                             count += 1
-                                    pse.add_element(elements[1].text, species_key)
-                                    special_element = pse.element(species_key)
-                                    species_dict[special_element] = dict()
-                                    species_dict[special_element]["n_atoms"] = int(elements[0].text)
-                                    species_dict[special_element]["valence"] = float(elements[3].text)
+                                    if species_key is not None:
+                                        pse.add_element(elements[1].text, species_key)
+                                        special_element = pse.element(species_key)
+                                        species_dict[special_element] = dict()
+                                        species_dict[special_element]["n_atoms"] = int(elements[0].text)
+                                        species_dict[special_element]["valence"] = float(elements[3].text)
                                 else:
                                     species_key = elements[1].text
                                     species_dict[species_key] = dict()
@@ -203,7 +206,7 @@ class Vasprun(object):
         Parses fermi level from a node to a dictionary
 
         Args:
-            node (lxml.etree.Element instance): The node to parse
+            node (xml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
         """
         if not (node.tag == "dos"):
@@ -217,7 +220,7 @@ class Vasprun(object):
         Parses total dos data from a node to a dictionary
 
         Args:
-            node (lxml.etree.Element instance): The node to parse
+            node (xml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
         """
         if not (node.tag == "total"):
@@ -250,7 +253,7 @@ class Vasprun(object):
         Parses partial dos data from a node to a dictionary
     
         Args:
-            node (lxml.etree.Element instance): The node to parse
+            node (xml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
         """
         if not (node.tag == "partial"):
@@ -286,10 +289,10 @@ class Vasprun(object):
 
     def parse_projected_dos_to_dict(self, node, d):
         """
-        Parses pdos data from a node to a dictionary
+        Parses partial dos data from a node to a dictionary
 
         Args:
-            node (lxml.etree.Element instance): The node to parse
+            node (xml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
         """
         if not (node.tag == "projected"):
@@ -320,10 +323,10 @@ class Vasprun(object):
 
     def parse_scf(self, node):
         """
-        Parses the total energy and dipolemoments for a VASP calculation
+        Parses the total energy and dipole moments for a VASP calculation
 
         Args:
-            node: (lxml.etree.Element instance): The node to parse
+            node: (xml.etree.Element instance): The node to parse
 
         Returns:
             d (dict): Dictionary to containing parsed data
@@ -351,7 +354,7 @@ class Vasprun(object):
         Parses ionic step data from a node to a dictionary
 
         Args:
-            node (lxml.etree.Element instance): The node to parse
+            node (xml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
         """
         scf_energies = list()
@@ -416,7 +419,7 @@ class Vasprun(object):
         Parses eigenvalue and occupancy data from a node to a dictionary
 
         Args:
-            node (lxml.etree.Element instance): The node to parse
+            node (xml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
         """
         if not (node.tag == "eigenvalues"):
@@ -451,7 +454,7 @@ class Vasprun(object):
         Parses structure from a node to a dictionary
 
         Args:
-            node (lxml.etree.Element instance): The node to parse
+            node (xml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
         """
         if not (node.tag == "structure"):
@@ -471,6 +474,7 @@ class Vasprun(object):
     def parse_item_to_dict(node, d):
         """
         Parses values from an item to a dictionary
+
         Args:
             node (etree.Element instance): Node to be parsed
             d (dict): The dictionary to which data is to be parsed
@@ -494,7 +498,7 @@ class Vasprun(object):
         Parses parameter data from a node to a dictionary
 
         Args:
-            node (lxml.etree.Element instance): The node to parse
+            node (xml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
         """
         if not (node.tag == "parameters"):
@@ -506,7 +510,7 @@ class Vasprun(object):
         Parses recursively from a node to a dictionary
 
         Args:
-            node (lxml.etree.Element instance): The node to parse
+            node (xml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
             key_name (str): Forcefully assign a key name in case it is not present in the xml file
         """
@@ -536,11 +540,11 @@ class Vasprun(object):
         Parses a 2D vector from a node
 
         Args:
-            node (lxml.etree.Element instance): The node to parse
+            node (xml.etree.Element instance): The node to parse
             vec_type (type): The type of the vector to be parsed
 
         Returns:
-            (numpy.ndarray): The required 2D array/vector
+            numpy.ndarray: The required 2D array/vector
         """
         arr = list()
         for item in node:
@@ -553,11 +557,11 @@ class Vasprun(object):
         Parses a 1D vector from a node
 
         Args:
-            node (lxml.etree.Element instance): The node to parse
+            node (xml.etree.Element instance): The node to parse
             vec_type (type): The type of the vector to be parsed
 
         Returns:
-            (numpy.ndarray): The required 1D array/vector
+            numpy.ndarray: The required 1D array/vector
         """
         txt = node.text
         lst = txt.split()
@@ -575,8 +579,7 @@ class Vasprun(object):
         Gets the initial structure from the simulation
 
         Returns:
-
-            basis (atomistics.structure.atoms.Atoms instance): The initial structure
+            pyiron.atomistics.structure.atoms.Atoms: The initial structure
 
         """
         try:
@@ -602,8 +605,7 @@ class Vasprun(object):
         Gets the final structure from the simulation
 
         Returns:
-
-            basis (atomistics.structure.atoms.Atoms instance): The final structure
+            pyiron.atomistics.structure.atoms.Atoms: The final structure
 
         """
         try:
@@ -623,7 +625,7 @@ class Vasprun(object):
         Get's the electronic structure from the VASP calculation
 
         Returns:
-            atomistics.waves.electronic.ElectronicStructure instance
+            pyiron.atomistics.waves.electronic.ElectronicStructure: The electronic structure object
 
         """
         es_obj = ElectronicStructure()
@@ -663,7 +665,7 @@ def clean_character(a, remove_char=" "):
 
 def clean_key(a, remove_char=" "):
     """
-    Replaces blanck spaces from a string for a dictoionary key with "_"
+    Replaces blanck spaces from a string for a dictionary key with "_"
     
     Args:
         a (str): String to be cleaned
