@@ -247,7 +247,7 @@ class FileHDFio(object):
         Get size of the groups inside the HDF5 file
     
         Args:
-            hdf (ProjectHDFio): hdf file
+            hdf (FileHDFio): hdf file
 
         Returns:
             float: file size in Bytes
