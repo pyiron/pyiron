@@ -15,11 +15,6 @@ class TestFileHDFio(unittest.TestCase):
         # os.remove('filehdfio_full.h5')
         pass
 
-    def test_copy(self):
-        # copy_empty = self.empty_hdf5.copy()
-        # self.assertEqual(self.empty_hdf5, copy_empty)
-        pass
-
     def test_file_name(self):
         print ('cdr: ', self.current_dir)
         print ('file: ', self.empty_hdf5.file_name)
