@@ -232,7 +232,7 @@ class FileHDFio(object):
     @staticmethod
     def file_size(hdf):
         """
-        Get size of the HDF5 file 
+        Get size of the HDF5 file
 
         Args:
             hdf (ProjectHDFio): hdf file
@@ -252,8 +252,8 @@ class FileHDFio(object):
         Returns:
             float: file size in Bytes
         """
-        return sum([sys.getsizeof(hdf[p]) for p in hdf.list_nodes()]) + \
-               sum([self.get_size(hdf[p]) for p in hdf.list_groups()])
+        return sum([sys.getsizeof(hdf[p]) for p in hdf.list_nodes()]) + sum(
+            [self.get_size(hdf[p]) for p in hdf.list_groups()])
           
     def copy(self):
         """
@@ -559,13 +559,15 @@ class FileHDFio(object):
         new._filter = ["nodes"]
         return new
 
-    def hd_copy(self, hdf_old, hdf_new, exclude_groups = []):
+    def hd_copy(self, hdf_old, hdf_new, exclude_groups=None):
         """
         args:
             hdf_old (ProjectHDFio): old hdf
             hdf_new (ProjectHDFio): new hdf
-            exclude_groups (list): list of groups to delete
+            exclude_groups (list/None): list of groups to delete
         """
+        if exclude_groups is None:
+            exclude_groups = list()
         for p in hdf_old.list_nodes():
             hdf_new[p] = hdf_old[p]
         for p in hdf_old.list_groups():
@@ -575,26 +577,28 @@ class FileHDFio(object):
             self.hd_copy(hdf_old[p], h_new, exclude_groups=exclude_groups)
         return hdf_new
 
-    def rewrite_hdf5(self, job_name, info=False, exclude_groups=['interactive']):
+    def rewrite_hdf5(self, job_name, info=False, exclude_groups=None):
         """
         args:
             info (True/False): whether to give the information on how much space has been saved
-            exclude_groups (list): list of groups to delete from hdf
+            exclude_groups (list/None): list of groups to delete from hdf
         """
-        #hdf = self._hdf5
+        # hdf = self._hdf5
+        if exclude_groups is None:
+            exclude_groups = ['interactive']
         file_name = self.file_name
         _path, _ = file_name.split('.')
         p_lst = _path.split('/')
-        path = '/'.join(p_lst[:-1])
+        # path = '/'.join(p_lst[:-1])
         new_file = p_lst[-1] + '_rewrite'
 
         hdf_new = ProjectHDFio(project=self.project, file_name=new_file, h5_path='/' + job_name)
         hdf_new = self.hd_copy(self, hdf_new, exclude_groups=exclude_groups)
 
         if info:
-            print ('job: {}'.format(job_name))
-            print ('compression rate from old to new: {}'.format(file_size(self) / file_size(hdf_new)))
-            print ('data size vs file size: {}'.format(get_size(hdf_new)/file_size(hdf_new)))
+            print('job: {}'.format(job_name))
+            print('compression rate from old to new: {}'.format(self.file_size(self) / self.file_size(hdf_new)))
+            print('data size vs file size: {}'.format(self.get_size(hdf_new)/self.file_size(hdf_new)))
         self.remove_file()
         os.rename(hdf_new.file_name, file_name)
 
@@ -766,7 +770,7 @@ class FileHDFio(object):
         Returns:
             Project: pyiron project object
         """
-        from pyiron.base.project import Project
+        from pyiron.base.project.generic import Project
         return Project(path=self.file_path)
 
     def _get_h5_path(self, name):
