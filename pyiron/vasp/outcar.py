@@ -563,7 +563,7 @@ class Outcar(object):
             lines = f.readlines()
             for i, line in enumerate(lines):
                 if trigger in line:
-                    line_ngx = lines[i - 2]
+                    line_ngx = lines[i-2]
                     # Exclude all alphabets, and spaces. Then split based on '='
                     str_list = re.sub(r'[a-zA-Z]', r'', line_ngx.replace(" ", "").replace("\n", "")).split("=")
                     return np.prod([int(val) for val in str_list[1:]])
