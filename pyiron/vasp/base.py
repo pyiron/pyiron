@@ -902,11 +902,10 @@ class VaspBase(GenericDFTJob):
         Compress the output files of a job object.
 
         Args:
-            files_to_compress (list):
+            files_to_compress (list): A list of files to compress (optional)
         """
         if files_to_compress is None:
-            files_to_compress = [f for f in list(self.list_files()) 
-                                 if f not in ["CHGCAR", "CONTCAR", "WAVECAR"]]
+            files_to_compress = [f for f in list(self.list_files()) if f not in ["CHGCAR", "CONTCAR", "WAVECAR"]]
         super(VaspBase, self).compress(files_to_compress=files_to_compress)
 
     def restart_from_wave_functions(self, snapshot=-1, job_name=None, job_type=None, istart=1):
