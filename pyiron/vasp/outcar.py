@@ -5,6 +5,7 @@
 import numpy as np
 import warnings
 import scipy.constants
+import re
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -562,8 +563,10 @@ class Outcar(object):
             lines = f.readlines()
             for i, line in enumerate(lines):
                 if trigger in line:
-                    line_ngx = lines[i-2].split()
-                    return int(line_ngx[2]) * int(line_ngx[5]) * int(line_ngx[8])
+                    line_ngx = lines[i - 2]
+                    # Exclude all alphabets, and spaces. Then split based on '='
+                    str_list = re.sub(r'[a-zA-Z]', r'', line_ngx.replace(" ", "").replace("\n", "")).split("=")
+                    return np.prod([int(val) for val in str_list[1:]])
 
     @staticmethod
     def get_temperatures(filename="OUTCAR"):
