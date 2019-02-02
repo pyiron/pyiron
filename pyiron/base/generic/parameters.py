@@ -403,7 +403,7 @@ class GenericParameters(PyironObject):
         Set the value of multiple parameters or create new parameter key, if they do not exist already.
         
         Args:
-            separator (str): separator string - optional
+            separator (str/float/int): separator string - optional
             **set_dict (dict): dictionary containing the parameter keys and their corresponding values to be set
         """
         self.modify(separator=separator, append_if_not_present=True, **set_dict)
@@ -413,7 +413,7 @@ class GenericParameters(PyironObject):
         Set the value of a parameter in a specific line
         
         Args:
-            line (int): line number - starting with 0
+            line (str/float/int): line number - starting with 0
             val (str/bytes): value to be set
         """
         if line < len(self._dataset['Value']):
