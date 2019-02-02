@@ -25,9 +25,6 @@ class Vasp(VaspInteractive):
         project (pyiron.project.Project instance):  Specifies the project path among other attributes
         job_name (str): Name of the job
 
-    Attributes:
-        input (pyiron.vasp.vasp.Input): Instance which handles the input
-
     Examples:
         Let's say you need to run a vasp simulation where you would like to control the input parameters manually. To
         set up a static dft run with Gaussian smearing and a k-point MP mesh of [6, 6, 6]. You would have to set it up
