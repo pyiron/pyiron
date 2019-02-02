@@ -285,6 +285,9 @@ class TestOutcar(unittest.TestCase):
             if int(filename.split('/OUTCAR_')[-1]) in [2, 3, 4, 5, 6]:
                 mixing = 343
                 self.assertEqual(mixing, output)
+            if int(filename.split('/OUTCAR_')[-1]) == 8:
+                mixing = 21 ** 3
+                self.assertEqual(mixing, output)
 
     def test_get_dipole_moments(self):
         for filename in self.file_list:
