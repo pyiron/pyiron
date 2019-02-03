@@ -33,6 +33,7 @@ class VaspVolumetricData(VolumetricData):
         super(VaspVolumetricData, self).__init__()
         self.atoms = None
         self._diff_data = None
+        self._total_data = None
 
     def from_file(self, filename, normalize=True):
         """
@@ -108,11 +109,22 @@ class VaspVolumetricData(VolumetricData):
                 return
             if len(all_dataset) == 2:
                 data = {"total": all_dataset[0] / volume, "diff": all_dataset[1] / volume}
-                self.diff_data = data["diff"]
+                self._diff_data = data["diff"]
             else:
                 data = {"total": all_dataset[0] / volume}
             self.atoms = atoms
-            self.total_data = data["total"]
+            self._total_data = data["total"]
+
+    @property
+    def total_data(self):
+        """
+        numpy.ndarray: Total volumtric data (3D)
+        """
+        return self._total_data
+
+    @total_data.setter
+    def total_data(self, val):
+        self._total_data = val
 
     @property
     def diff_data(self):
@@ -153,6 +165,6 @@ class VaspVolumetricData(VolumetricData):
 
         """
         with hdf5.open(group_name) as hdf_vd:
-            self.total_data = hdf_vd["total"]
+            self._total_data = hdf_vd["total"]
             if "diff" in hdf_vd.list_nodes():
-                self.diff_data = hdf_vd["diff"]
+                self._diff_data = hdf_vd["diff"]

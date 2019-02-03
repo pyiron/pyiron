@@ -15,14 +15,9 @@ class TestFileHDFio(unittest.TestCase):
         # os.remove('filehdfio_full.h5')
         pass
 
-    def test_copy(self):
-        # copy_empty = self.empty_hdf5.copy()
-        # self.assertEqual(self.empty_hdf5, copy_empty)
-        pass
-
     def test_file_name(self):
-        print ('cdr: ', self.current_dir)
-        print ('file: ', self.empty_hdf5.file_name)
+        print('cdr: ', self.current_dir)
+        print('file: ', self.empty_hdf5.file_name)
         self.assertEqual(self.empty_hdf5.file_name, self.current_dir + '/filehdfio_empty.h5')
         self.assertEqual(self.full_hdf5.file_name, self.current_dir + '/filehdfio_full.h5')
 
@@ -81,14 +76,14 @@ class TestFileHDFio(unittest.TestCase):
         self.assertTrue(self.full_hdf5.is_empty)
 
     def test_file_size(self):
-        self.assertTrue(self.es_hdf5.file_size(self.es_hdf5)>0)
+        self.assertTrue(self.es_hdf5.file_size(self.es_hdf5) > 0)
 
     def test_get_size(self):
-        self.assertTrue(self.es_hdf5.get_size(self.es_hdf5)>0)
+        self.assertTrue(self.es_hdf5.get_size(self.es_hdf5) > 0)
 
     def test_copy(self):
         self.assertIsInstance(self.es_hdf5.copy(), FileHDFio)
 
+
 if __name__ == '__main__':
     unittest.main()
-

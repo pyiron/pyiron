@@ -57,8 +57,8 @@ class VaspBase(GenericDFTJob):
         as shown below:
 
         >>> ham = VaspBase(job_name="trial_job")
-        >>> ham.input.incar.set(IBRION=-1)
-        >>> ham.input.incar.set(ISMEAR=0)
+        >>> ham.input.incar[IBRION=-1]
+        >>> ham.input.incar[ISMEAR=0]
         >>> ham.input.kpoints.set(size_of_mesh=[6, 6, 6])
 
         However, the according to pyiron's philosophy, it is recommended to avoid using code specific tags like IBRION,
@@ -902,11 +902,10 @@ class VaspBase(GenericDFTJob):
         Compress the output files of a job object.
 
         Args:
-            files_to_compress (list):
+            files_to_compress (list): A list of files to compress (optional)
         """
         if files_to_compress is None:
-            files_to_compress = [f for f in list(self.list_files()) 
-                                 if f not in ["CHGCAR", "CONTCAR", "WAVECAR"]]
+            files_to_compress = [f for f in list(self.list_files()) if f not in ["CHGCAR", "CONTCAR", "WAVECAR"]]
         super(VaspBase, self).compress(files_to_compress=files_to_compress)
 
     def restart_from_wave_functions(self, snapshot=-1, job_name=None, job_type=None, istart=1):
