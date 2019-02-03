@@ -3,13 +3,16 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import os
-import xml.etree.cElementTree as ETree
+# import xml.etree.cElementTree as ETree
 import numpy as np
 from collections import OrderedDict
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.base.settings.generic import Settings
 from pyiron.dft.waves.electronic import ElectronicStructure
+import defusedxml.cElementTree as ETree
+from defusedxml.ElementTree import ParseError
+
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -53,7 +56,7 @@ class Vasprun(object):
             raise AssertionError()
         try:
             self.root = ETree.parse(filename).getroot()
-        except ETree.ParseError:
+        except ParseError:
             raise VasprunError("The vasprun.xml file is either corrupted or the simulation has failed")
 
         self.parse_root_to_dict()
