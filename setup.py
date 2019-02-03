@@ -43,6 +43,7 @@ setup(
                       'scipy',
                       'sqlalchemy',
                       'tables',
-                      'spglib'],
+                      'spglib',
+                      'defusedxml'],
     cmdclass=versioneer.get_cmdclass(),
     )
