@@ -20,7 +20,7 @@ Workstation Installation (recommeded)
 *************************************
 Requirements
 ============
-When you start to develop your own simulation protocols we recommend a local installation. Inside the `pyiron anaconda repository <https://anaconda.org/pyiron>`_ we provide precompiled executables for Linux, Mac OS X and Windows with Python 2.7, 3.5 and 3.6 and the other packages are available inside the `conda-forge <https://conda-forge.org>`_ channel.
+When you start to develop your own simulation protocols we recommend a local installation. Inside the `pyiron anaconda repository <https://anaconda.org/pyiron>`_ we provide precompiled executables for Linux, Mac OS X and Windows with Python 2.7, 3.5, 3.6 and 3.7 and the other packages are available inside the `conda-forge <https://conda-forge.org>`_ channel.
 
 Install pyiron package 
 ======================
@@ -71,7 +71,7 @@ Simulation code: Lammps
 =======================
 pyiron supports the simulation codes `VASP <https://www.vasp.at>`_ for DFT calculation and `Lammps <https://lammps.sandia.gov>`_  for molecular dynamics calculation. While VASP requires a separate license and therefore has to be configured by the user, Lammps is available as opensource code and can be installed from anaconda. 
 
-For Linux and Mac Os X (for Python 2.7, 3.5 and 3.6):
+For Linux and Mac Os X (for Python 2.7, 3.5, 3.6 and 3.7):
 -----------------------------------------------------
 
 .. code-block:: bash
