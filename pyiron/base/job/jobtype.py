@@ -150,4 +150,10 @@ class JobType(object):
 
 
 def static_isinstance(obj, obj_type):
-    return obj_type in ['.'.join([subcls.__module__, subcls.__name__]) for subcls in obj.__mro__]
+    obj_class_lst = ['.'.join([subcls.__module__, subcls.__name__]) for subcls in obj.__mro__]
+    if isinstance(obj_type, list):
+        return any([obj_type_element in obj_class_lst for obj_type_element in obj_type])
+    elif isinstance(obj_type, str):
+        return obj_type in obj_class_lst
+    else:
+        raise TypeError()
