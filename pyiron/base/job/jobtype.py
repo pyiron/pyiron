@@ -171,6 +171,8 @@ def static_isinstance(obj, obj_type):
     Returns:
         bool: [True/False]
     """
+    if not hasattr(obj, '__mro__'):
+        obj = obj.__class__
     obj_class_lst = ['.'.join([subcls.__module__, subcls.__name__]) for subcls in obj.__mro__]
     if isinstance(obj_type, list):
         return any([obj_type_element in obj_class_lst for obj_type_element in obj_type])
