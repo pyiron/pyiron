@@ -28,7 +28,13 @@ You can install pyiron either via `anaconda <https://www.anaconda.com>`_ (recomm
 
 Install via anaconda (recommended):
 ------------------------------------------
-To install `anaconda <https://www.anaconda.com>`_  you can download the `anaconda distribution <https://www.anaconda.com/download/>`_. After the installation of the anaconda environment you can install pyiron using:
+To install `anaconda <https://www.anaconda.com>`_  you can download the `anaconda distribution <https://www.anaconda.com/download/>`_. Following the installation update to the latest version of conda from `conda-forge <https://conda-forge.org>`_.
+
+.. code-block:: bash
+
+    conda update -c conda-forge conda
+
+After the update of the anaconda environment you can install pyiron using:
 
 .. code-block:: bash
 
