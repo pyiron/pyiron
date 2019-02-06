@@ -135,6 +135,16 @@ class JobType(object):
 
     @staticmethod
     def convert_str_to_class(job_class_dict, class_name):
+        """
+        convert the name of a class to the corresponding class object - only for pyiron internal classes.
+
+        Args:
+            job_class_dict (dict):
+            class_name (str):
+
+        Returns:
+            (class):
+        """
         job_type_lst = class_name.split(".")
         if len(job_type_lst) > 1:
             class_name = class_name.split()[-1][1:-2]
@@ -150,4 +160,23 @@ class JobType(object):
 
 
 def static_isinstance(obj, obj_type):
-    return obj_type in ['.'.join([subcls.__module__, subcls.__name__]) for subcls in obj.__mro__]
+    """
+    A static implementation of isinstance() - instead of comparing an object and a class, the object is compared to a
+    string, like 'pyiron.base.job.generic.GenericJob' or a list of strings.
+
+    Args:
+        obj: the object to check
+        obj_type (str/list): object type as string or a list of object types as string.
+
+    Returns:
+        bool: [True/False]
+    """
+    if not hasattr(obj, '__mro__'):
+        obj = obj.__class__
+    obj_class_lst = ['.'.join([subcls.__module__, subcls.__name__]) for subcls in obj.__mro__]
+    if isinstance(obj_type, list):
+        return any([obj_type_element in obj_class_lst for obj_type_element in obj_type])
+    elif isinstance(obj_type, str):
+        return obj_type in obj_class_lst
+    else:
+        raise TypeError()
