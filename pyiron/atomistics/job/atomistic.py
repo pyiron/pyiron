@@ -130,6 +130,7 @@ class AtomisticGenericJob(GenericJobCore):
         self._structure = None
         self._generic_input = GenericInput()
         self.output = GenericOutput(job=self)
+        self.map_functions = MapFunctions()
 
     @property
     def structure(self):
@@ -525,6 +526,12 @@ class AtomisticGenericJob(GenericJobCore):
             snapshot.indices = indices[iteration_step]
         return snapshot
 
+    def map(self, function, parameter_lst):
+        master = self.create_job(job_type=self.project.job_type.MapMaster, job_name='map_' + self.job_name)
+        master.modify_function = function
+        master.parameter_list = parameter_lst
+        return master
+
     def gui(self):
         """
 
@@ -552,6 +559,23 @@ class AtomisticGenericJob(GenericJobCore):
         if ham._generic_input['structure'] == 'continue_final':
             ham.structure = self.get_structure(iteration_step=-1)
             ham.to_hdf()
+
+
+class MapFunctions(object):
+    @staticmethod
+    def set_encut(job, parameter):
+        job.set_encut(parameter)
+        return job
+
+    @staticmethod
+    def set_kpoints(job, parameter):
+        job.set_kpoints(parameter)
+        return job
+
+    @staticmethod
+    def set_structure(job, parameter):
+        job.structure = parameter
+        return job
 
 
 class Trajectory(object):
