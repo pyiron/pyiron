@@ -798,6 +798,8 @@ class GenericJob(JobCore):
             job.ref_job = self
             if self.server.run_mode.non_modal:
                 job.server.run_mode.non_modal = True
+            elif self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
+                job.server.run_mode.interactive = True
         return job
 
     def update_master(self):
