@@ -791,10 +791,13 @@ class GenericJob(JobCore):
             GenericJob: job object depending on the job_type selected
         """
         job = self.project.create_job(job_type=job_type, job_name=job_name)
-        if static_isinstance(obj=job, obj_type=['pyiron.base.master.parallel.ParallelMaster',
-                                                'pyiron.base.master.serial.SerialMasterBase',
-                                                'pyiron.atomistic.job.interactivewrapper.InteractiveWrapper']):
+        if static_isinstance(obj=job.__class__,
+                             obj_type=['pyiron.base.master.parallel.ParallelMaster',
+                                       'pyiron.base.master.serial.SerialMasterBase',
+                                       'pyiron.atomistic.job.interactivewrapper.InteractiveWrapper']):
             job.ref_job = self
+            if self.server.run_mode.non_modal:
+                job.server.run_mode.non_modal = True
         return job
 
     def update_master(self):
@@ -958,24 +961,6 @@ class GenericJob(JobCore):
         new_ham._restart_file_list = list()
         new_ham._restart_file_dict = dict()
         return new_ham
-
-    def create_job(self, job_type, job_name):
-        """
-        Create one of the following jobs:
-        - 'ExampleJob': example job just generating random number
-        - 'SerialMaster': series of jobs run in serial
-        - 'ParallelMaster': series of jobs run in parallel
-        - 'ScriptJob': Python script or jupyter notebook job container
-        - 'ListMaster': list of jobs
-
-        Args:
-            job_type (str): job type can be ['ExampleJob', 'SerialMaster', 'ParallelMaster', 'ScriptJob', 'ListMaster']
-            job_name (str): name of the job
-
-        Returns:
-            GenericJob: job object depending on the job_type selected
-        """
-        return self.project.create_job(job_type=job_type, job_name=job_name)
 
     def _copy_restart_files(self):
         """
