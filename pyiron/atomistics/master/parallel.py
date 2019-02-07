@@ -88,7 +88,7 @@ class MapMaster(AtomisticParallelMaster):
                     with hdf5_input.open('structures') as hdf5_input_str:
                         for ind, struct in enumerate(self.parameter_list):
                             struct.to_hdf(hdf=hdf5_input_str, group_name='s_' + str(ind))
-                elif isinstance(first_element, (int, float, str)):
+                elif isinstance(first_element, (int, float, str, list)):
                     hdf5_input['parameters_list'] = self.parameter_list
                 else:
                     raise TypeError()
