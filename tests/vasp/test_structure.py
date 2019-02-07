@@ -60,10 +60,11 @@ class TestVaspStructure(unittest.TestCase):
                 self.assertEqual(len(atoms.selective_dynamics), 33)
                 self.assertEqual(len(atoms.select_index("Zn")), 1)
                 self.assertIsInstance(atoms.selective_dynamics, SparseList)
-                self.assertFalse(np.array_equal(atoms.selective_dynamics[0], [True, True, True]))
-                self.assertTrue(np.array_equal(atoms.selective_dynamics[0], [False, False, False]))
-                self.assertTrue(np.array_equal(atoms.selective_dynamics[-5], [True, True, True]))
-                self.assertTrue(np.array_equal(atoms.selective_dynamics[-4], [False, False, False]))
+                truth_array = np.empty_like(atoms.positions, dtype=bool)
+                truth_array[:] = [True, True, True]
+                truth_array[0] = [False, False, False]
+                truth_array[-4:] = [False, False, False]
+                self.assertTrue(np.array_equal(atoms.selective_dynamics.list(), truth_array))
 
     def test_write_poscar(self):
         write_poscar(structure=self.structure, filename=posixpath.join(self.file_location, "POSCAR_test"))
