@@ -561,21 +561,26 @@ class AtomisticGenericJob(GenericJobCore):
             ham.to_hdf()
 
 
+def set_encut(job, parameter):
+    job.set_encut(parameter)
+    return job
+
+
+def set_kpoints(job, parameter):
+    job.set_kpoints(parameter)
+    return job
+
+
+def set_structure(job, parameter):
+    job.structure = parameter
+    return job
+
+
 class MapFunctions(object):
-    @staticmethod
-    def set_encut(job, parameter):
-        job.set_encut(parameter)
-        return job
-
-    @staticmethod
-    def set_kpoints(job, parameter):
-        job.set_kpoints(parameter)
-        return job
-
-    @staticmethod
-    def set_structure(job, parameter):
-        job.structure = parameter
-        return job
+    def __init__(self):
+        self.set_structure = set_structure
+        self.set_encut = set_encut
+        self.set_kpoints = set_kpoints
 
 
 class Trajectory(object):
