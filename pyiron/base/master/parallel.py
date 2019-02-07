@@ -409,7 +409,7 @@ class ParallelMaster(GenericMaster):
                     return child
                 else:
                     return child['/'.join(name_lst[1:])]
-            return super(GenericMaster, self).__getitem__(item)
+            return super(ParallelMaster, self).__getitem__(item)
         elif isinstance(item, int):
             total_lst = self._job_name_lst + child_name_lst
             job_name = total_lst[item]
