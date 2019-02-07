@@ -193,7 +193,7 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
             atoms_dict["positions"] *= (-atoms_dict["scaling_factor"]) ** (1. / 3.)
 
     if not (len(atoms_dict["positions"]) == n_atoms):
-        raise AssertionError()
+        raise AssertionError("The number of positions given does not match the number of atoms")
     velocities = list()
     atoms = _dict_to_atoms(atoms_dict, species_list=species_list)
     if atoms_dict["selective_dynamics"]:
