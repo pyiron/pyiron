@@ -5,6 +5,7 @@ import numpy as np
 
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.vasp.structure import read_atoms, write_poscar, vasp_sorter, atoms_from_string
+from pyiron.atomistics.structure.sparse_list import SparseList
 
 
 class TestVaspStructure(unittest.TestCase):
@@ -58,6 +59,7 @@ class TestVaspStructure(unittest.TestCase):
                 self.assertEqual(len(atoms), 33)
                 self.assertEqual(len(atoms.selective_dynamics), 33)
                 self.assertEqual(len(atoms.select_index("Zn")), 1)
+                self.assertIsInstance(atoms.selective_dynamics, SparseList)
                 self.assertFalse(np.array_equal(atoms.selective_dynamics[0], [True, True, True]))
                 self.assertTrue(np.array_equal(atoms.selective_dynamics[0], [False, False, False]))
                 self.assertTrue(np.array_equal(atoms.selective_dynamics[-5], [True, True, True]))
@@ -73,7 +75,7 @@ class TestVaspStructure(unittest.TestCase):
         test_atoms = read_atoms(posixpath.join(self.file_location, "POSCAR_test"))
         truth_array = np.empty_like(struct.positions, dtype=bool)
         truth_array[:] = [True, True, True]
-        self.assertTrue(np.array_equal(np.array(test_atoms.selective_dynamics), truth_array))
+        self.assertTrue(np.array_equal(np.array(test_atoms.selective_dynamics.list()), truth_array))
         os.remove(posixpath.join(self.file_location, "POSCAR_test"))
 
     def test_vasp_sorter(self):
