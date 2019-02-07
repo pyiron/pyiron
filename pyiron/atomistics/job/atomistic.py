@@ -18,10 +18,6 @@ try:
 except (ImportError, TypeError, AttributeError):
     pass
 
-"""
-Atomistic Generic Job class extends the Generic Job class with all the functionality to run jobs containing atomistic structures.
-"""
-
 __author__ = "Jan Janssen"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
                 "Computational Materials Design (CM) Department"
