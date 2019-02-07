@@ -120,8 +120,7 @@ class MapMaster(AtomisticParallelMaster):
             if function_str == "None":
                 self._map_function = None
             else:
-                exec(function_str)
-                self._map_function = eval(function_str.split("(")[0][4:])
+                self._map_function = self.get_function_from_string(function_str)
 
     def collect_output(self):
         pass
