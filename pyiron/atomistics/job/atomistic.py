@@ -502,7 +502,7 @@ class AtomisticGenericJob(GenericJobCore):
         snapshot.cell = self.get("output/generic/cells")[iteration_step]
         snapshot.positions = self.get("output/generic/positions")[iteration_step]
         indices = self.get("output/generic/indices")
-        if indices is not None: 
+        if indices is not None:
             snapshot.indices = indices[iteration_step]
         return snapshot
 
