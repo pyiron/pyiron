@@ -219,7 +219,7 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
                 break
         if not (len(velocities) == n_atoms):
             warnings.warn("The velocities are either not available or they are incomplete/corrupted. Returning empty "
-                          "list instead")
+                          "list instead", UserWarning)
             return atoms, list()
         return atoms, velocities
     else:
