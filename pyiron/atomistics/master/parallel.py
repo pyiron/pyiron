@@ -49,7 +49,6 @@ class GenericOutput(OrderedDict):
         super(GenericOutput, self).__init__()
 
 
-
 class MapMaster(AtomisticParallelMaster):
     def __init__(self, project, job_name):
         """
@@ -61,7 +60,7 @@ class MapMaster(AtomisticParallelMaster):
         super(MapMaster, self).__init__(project, job_name)
         self.__name__ = 'MapMaster'
         self.__version__ = '0.0.1'
-        self._job_generator = JobGenerator(self)
+        self._job_generator = MapJobGenerator(self)
         self._map_function = None
         self.parameter_list = []
 
@@ -72,10 +71,6 @@ class MapMaster(AtomisticParallelMaster):
     @modify_function.setter
     def modify_function(self, funct):
         self._map_function = funct
-
-    def run_static(self):
-        self._job_generator.modify_job = self._map_function
-        super(MapMaster, self).run_static()
 
     def to_hdf(self, hdf=None, group_name=None):
         """
@@ -94,7 +89,7 @@ class MapMaster(AtomisticParallelMaster):
                         for ind, struct in enumerate(self.parameter_list):
                             struct.to_hdf(hdf=hdf5_input_str, group_name='s_' + str(ind))
                 elif isinstance(first_element, (int, float, str)):
-                    hdf5_input['parameters'] = self.parameter_list
+                    hdf5_input['parameters_list'] = self.parameter_list
                 else:
                     raise TypeError()
                 if self._map_function is not None:
@@ -120,7 +115,7 @@ class MapMaster(AtomisticParallelMaster):
                     self.parameter_list = [Atoms().from_hdf(hdf5_input_str, group_name)
                                            for group_name in hdf5_input_str.list_groups()]
             else:
-                self.parameter_list = hdf5_input['parameters']
+                self.parameter_list = hdf5_input['parameters_list']
             function_str = hdf5_input["map_function"]
             if function_str == "None":
                 self._map_function = None
@@ -130,3 +125,17 @@ class MapMaster(AtomisticParallelMaster):
 
     def collect_output(self):
         pass
+
+
+class MapJobGenerator(JobGenerator):
+    @property
+    def parameter_list(self):
+        """
+
+        Returns:
+            (list)
+        """
+        return self._job.parameter_list
+
+    def modify_job(self, job, parameter):
+        return self._job._map_function(job, parameter)
