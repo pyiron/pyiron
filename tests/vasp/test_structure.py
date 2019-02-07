@@ -6,6 +6,7 @@ import numpy as np
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.vasp.structure import read_atoms, write_poscar, vasp_sorter, atoms_from_string
 from pyiron.atomistics.structure.sparse_list import SparseList
+import warnings
 
 
 class TestVaspStructure(unittest.TestCase):
@@ -36,35 +37,68 @@ class TestVaspStructure(unittest.TestCase):
 
     def test_read_atoms(self):
         for f in self.file_list:
-            atoms = read_atoms(filename=f)
-            self.assertIsInstance(atoms, Atoms)
-            if f.split("/")[-1] == "POSCAR_1":
-                self.assertEqual(len(atoms), 744)
-                self.assertEqual(len(atoms.select_index("H")), 432)
-                self.assertEqual(len(atoms.select_index("O")), 216)
-                self.assertEqual(len(atoms.select_index("Mg")), 96)
-            if f.split("/")[-1] == "POSCAR_scaled":
-                self.assertEqual(len(atoms), 256)
-                self.assertEqual(len(atoms.select_index("Cu")), 256)
-                cell = np.eye(3) * 4. * 3.63
-                self.assertTrue(np.array_equal(atoms.cell, cell))
-                self.assertEqual(atoms.get_spacegroup()["Number"], 225)
-            if f.split("/")[-1] == "POSCAR_volume_scaled":
-                self.assertEqual(len(atoms), 256)
-                self.assertEqual(len(atoms.select_index("Cu")), 256)
-                cell = np.eye(3) * 4. * 3.63
-                self.assertTrue(np.array_equal(atoms.cell, cell))
-                self.assertEqual(atoms.get_spacegroup()["Number"], 225)
-            if f.split("/")[-1] == "POSCAR_random":
-                self.assertEqual(len(atoms), 33)
-                self.assertEqual(len(atoms.selective_dynamics), 33)
-                self.assertEqual(len(atoms.select_index("Zn")), 1)
+            if f.split("/")[-1] == "POSCAR_velocity":
+                atoms, velocities = read_atoms(filename=f, return_velocities=True)
+                self.assertEqual(len(atoms), 571)
+                self.assertEqual(np.shape(velocities), (571, 3))
+                self.assertEqual(len(atoms.selective_dynamics), 571)
+                self.assertEqual(len(atoms.select_index("Mg")), 160)
                 self.assertIsInstance(atoms.selective_dynamics, SparseList)
-                truth_array = np.empty_like(atoms.positions, dtype=bool)
-                truth_array[:] = [True, True, True]
-                truth_array[0] = [False, False, False]
-                truth_array[-4:] = [False, False, False]
-                self.assertTrue(np.array_equal(atoms.selective_dynamics.list(), truth_array))
+                neon_indices = atoms.select_index("Ne")
+                hydrogen_indices = atoms.select_index("H")
+                oxygen_indices = atoms.select_index("O")
+                truth_array = np.empty_like(atoms.positions[neon_indices], dtype=bool)
+                truth_array[:, :] = True
+                sel_dyn = np.array(atoms.selective_dynamics.list())
+                self.assertTrue(np.array_equal(sel_dyn[neon_indices], np.logical_not(truth_array)))
+                truth_array = np.empty_like(atoms.positions[oxygen_indices], dtype=bool)
+                truth_array[:, :] = True
+                self.assertTrue(np.array_equal(sel_dyn[oxygen_indices], truth_array))
+                truth_array = np.empty_like(atoms.positions[hydrogen_indices], dtype=bool)
+                truth_array[:, :] = True
+                self.assertTrue(np.array_equal(sel_dyn[hydrogen_indices], truth_array))
+                velocities_neon = np.zeros_like(np.array(velocities)[neon_indices])
+                self.assertTrue(np.array_equal(np.array(velocities)[neon_indices], velocities_neon))
+            else:
+                atoms = read_atoms(filename=f)
+                self.assertIsInstance(atoms, Atoms)
+                if f.split("/")[-1] == "POSCAR_1":
+                    self.assertEqual(len(atoms), 744)
+                    self.assertEqual(len(atoms.select_index("H")), 432)
+                    self.assertEqual(len(atoms.select_index("O")), 216)
+                    self.assertEqual(len(atoms.select_index("Mg")), 96)
+                    with warnings.catch_warnings(record=True) as w:
+                        warnings.simplefilter("always")
+                        atoms_new, velocities = read_atoms(filename=f, return_velocities=True)
+                        self.assertEqual(w[-1].category, UserWarning)
+                        warning_string = "The velocities are either not available or they are incomplete/corrupted. " \
+                                         "Returning empty list instead"
+                        self.assertEqual(str(w[-1].message), warning_string)
+                    self.assertEqual(atoms_new, atoms)
+                    self.assertEqual(velocities, list())
+
+                if f.split("/")[-1] == "POSCAR_scaled":
+                    self.assertEqual(len(atoms), 256)
+                    self.assertEqual(len(atoms.select_index("Cu")), 256)
+                    cell = np.eye(3) * 4. * 3.63
+                    self.assertTrue(np.array_equal(atoms.cell, cell))
+                    self.assertEqual(atoms.get_spacegroup()["Number"], 225)
+                if f.split("/")[-1] == "POSCAR_volume_scaled":
+                    self.assertEqual(len(atoms), 256)
+                    self.assertEqual(len(atoms.select_index("Cu")), 256)
+                    cell = np.eye(3) * 4. * 3.63
+                    self.assertTrue(np.array_equal(atoms.cell, cell))
+                    self.assertEqual(atoms.get_spacegroup()["Number"], 225)
+                if f.split("/")[-1] == "POSCAR_random":
+                    self.assertEqual(len(atoms), 33)
+                    self.assertEqual(len(atoms.selective_dynamics), 33)
+                    self.assertEqual(len(atoms.select_index("Zn")), 1)
+                    self.assertIsInstance(atoms.selective_dynamics, SparseList)
+                    truth_array = np.empty_like(atoms.positions, dtype=bool)
+                    truth_array[:] = [True, True, True]
+                    truth_array[0] = [False, False, False]
+                    truth_array[-4:] = [False, False, False]
+                    self.assertTrue(np.array_equal(atoms.selective_dynamics.list(), truth_array))
 
     def test_write_poscar(self):
         write_poscar(structure=self.structure, filename=posixpath.join(self.file_location, "POSCAR_test"))
