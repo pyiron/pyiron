@@ -590,7 +590,7 @@ class Trajectory(object):
         new_structure.positions = self._positions[item]
         # This step is necessary for using ase.io.write for trajectories
         new_structure.arrays['positions'] = new_structure.positions
-        new_structure.arrays['cells'] = new_structure.cell
+        # new_structure.arrays['cells'] = new_structure.cell
         return new_structure
 
     def __len__(self):
