@@ -513,7 +513,7 @@ class AtomisticGenericJob(GenericJobCore):
             iteration_step (int): Step for which the structure is requested
 
         Returns:
-            atomistics.structure.atoms.Atoms object
+            pyiron.atomistics.structure.atoms.Atoms: The required structure
         """
         if not (self.structure is not None):
             raise AssertionError()
@@ -521,7 +521,7 @@ class AtomisticGenericJob(GenericJobCore):
         snapshot.cell = self.get("output/generic/cells")[iteration_step]
         snapshot.positions = self.get("output/generic/positions")[iteration_step]
         indices = self.get("output/generic/indices")
-        if indices is not None: 
+        if indices is not None:
             snapshot.indices = indices[iteration_step]
         return snapshot
 
