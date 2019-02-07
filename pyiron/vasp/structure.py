@@ -5,6 +5,7 @@
 from collections import OrderedDict
 import numpy as np
 from pyiron.atomistics.structure.atoms import Atoms
+import warnings
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -210,11 +211,16 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
         velocity_index = position_index + n_atoms + 1
         for i in range(velocity_index, velocity_index + n_atoms):
             vec = list()
-            for j in range(3):
-                vec.append(float(string[i].split()[j]))
-            velocities.append(vec)
+            try:
+                for j in range(3):
+                    vec.append(float(string[i].split()[j]))
+                velocities.append(vec)
+            except IndexError:
+                break
         if not (len(velocities) == n_atoms):
-            raise AssertionError()
+            warnings.warn("The velocities are either not available or they are incomplete/corrupted. Returning empty "
+                          "list instead")
+            return atoms, list()
         return atoms, velocities
     else:
         return atoms
