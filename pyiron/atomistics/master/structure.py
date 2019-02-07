@@ -198,7 +198,7 @@ class StructureListMaster(ParallelMaster):
         super(StructureListMaster, self).from_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input/structures") as hdf5_input:
             self._structure_lst = [Atoms().from_hdf(hdf5_input, group_name)
-                                   for group_name in hdf5_input.list_groups()]
+                                   for group_name in sorted(hdf5_input.list_groups())]
 
     def collect_output(self):
         """
