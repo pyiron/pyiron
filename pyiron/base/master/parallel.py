@@ -826,7 +826,7 @@ class JobGenerator(object):
             if hasattr(self, 'job_name'):
                 job = self._job._create_child_job(self.job_name(parameter=current_paramenter))
             else:
-                job = self._job._create_child_job('job_' + str(self._childcounter))
+                job = self._job._create_child_job(self._job.ref_job.job_name + '_' + str(self._childcounter))
             if job is not None:
                 self._childcounter += 1
                 job = self.modify_job(job=job, parameter=current_paramenter)
