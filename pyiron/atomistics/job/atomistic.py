@@ -242,7 +242,8 @@ class AtomisticGenericJob(GenericJobCore):
 
         """
         if self.structure is not None:
-            structure_container = self.create_job(self.project.job_type.StructureContainer)
+            structure_container = self.create_job(job_type=self.project.job_type.StructureContainer,
+                                                  job_name=self.job_name + '_structure')
             structure_container.structure = self.structure
             self.parent_id = structure_container.job_id
         else:
@@ -442,27 +443,6 @@ class AtomisticGenericJob(GenericJobCore):
         traj = self.trajectory(stride=stride, center_of_mass=center_of_mass)
         # Using thr ASE output writer
         ase_write(filename=filename, images=traj, format=format,  parallel=parallel, append=append, **kwargs)
-
-    def _run_if_lib_save(self, job_name=None, structure=None, db_entry=True):
-        """
-
-        Args:
-            job_name:
-            structure:
-            db_entry:
-
-        Returns:
-
-        """
-        if job_name:
-            with self.project_hdf5.open(job_name + '/input') as hdf5_input:
-                if structure:
-                    structure.to_hdf(hdf5_input)
-                else:
-                    self.structure.to_hdf(hdf5_input)
-        else:
-            self.to_hdf()
-        return super(AtomisticGenericJob, self)._run_if_lib_save(job_name=job_name, db_entry=db_entry)
 
     # Compatibility functions
     def get_final_structure(self):
