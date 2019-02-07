@@ -32,8 +32,11 @@ class TestVaspStructure(unittest.TestCase):
         for poscar_file in self.file_list:
             with open(poscar_file, "r") as f:
                 lines = f.readlines()
-                atoms = atoms_from_string(string=lines)
-                self.assertIsInstance(atoms, Atoms)
+                if poscar_file.split("/")[-1] == "POSCAR_spoilt":
+                    self.assertRaises(AssertionError, atoms_from_string, string=lines)
+                else:
+                    atoms = atoms_from_string(string=lines)
+                    self.assertIsInstance(atoms, Atoms)
 
     def test_read_atoms(self):
         for f in self.file_list:
@@ -59,7 +62,7 @@ class TestVaspStructure(unittest.TestCase):
                 self.assertTrue(np.array_equal(sel_dyn[hydrogen_indices], truth_array))
                 velocities_neon = np.zeros_like(np.array(velocities)[neon_indices])
                 self.assertTrue(np.array_equal(np.array(velocities)[neon_indices], velocities_neon))
-            else:
+            elif f.split("/")[-1] != "POSCAR_spoilt":
                 atoms = read_atoms(filename=f)
                 self.assertIsInstance(atoms, Atoms)
                 if f.split("/")[-1] == "POSCAR_1":
