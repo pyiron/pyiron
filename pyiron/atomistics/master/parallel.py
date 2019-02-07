@@ -113,7 +113,7 @@ class MapMaster(AtomisticParallelMaster):
             if 'structures' in hdf5_input.list_groups():
                 with hdf5_input.open("structures") as hdf5_input_str:
                     self.parameter_list = [Atoms().from_hdf(hdf5_input_str, group_name)
-                                           for group_name in hdf5_input_str.list_groups()]
+                                           for group_name in sorted(hdf5_input_str.list_groups())]
             else:
                 self.parameter_list = hdf5_input['parameters_list']
             function_str = hdf5_input["map_function"]
