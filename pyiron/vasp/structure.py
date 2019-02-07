@@ -214,7 +214,7 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
             for i, val in enumerate(unique_sel_dyn):
                 if is_not_majority[i]:
                     for key in np.argwhere(inverse == i).flatten():
-                        atoms.selective_dynamics[key] = val.tolist()
+                        atoms.selective_dynamics[int(key)] = val.tolist()
             # atoms.add_tag(selective_dynamics=[True, True, True])
             # atoms.selective_dynamics[:] = selective_dynamics
         return atoms, velocities
@@ -230,7 +230,7 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
             for i, val in enumerate(unique_sel_dyn):
                 if is_not_majority[i]:
                     for key in np.argwhere(inverse == i).flatten():
-                        atoms.selective_dynamics[key] = val.tolist()
+                        atoms.selective_dynamics[int(key)] = val.tolist()
         return atoms
 
 
