@@ -423,14 +423,14 @@ class AtomisticGenericJob(GenericJobCore):
                               self.structure.get_parent_basis()[atom_indices], center_of_mass=center_of_mass,
                               cells=cells[::stride])
 
-    def write_traj(self, filename, format=None, parallel=True, append=False, stride=1, center_of_mass=False,
+    def write_traj(self, filename, file_format=None, parallel=True, append=False, stride=1, center_of_mass=False,
                    atom_indices=None, snapshot_indices=None, **kwargs):
         """
-        Writes the trajectory in a given file format based on the `ase.io.write`_ function.
+        Writes the trajectory in a given file file_format based on the `ase.io.write`_ function.
 
         Args:
             filename (str): Filename of the output
-            format (str): The specific format of the output
+            file_format (str): The specific file_format of the output
             parallel (bool):
             append (bool):
             stride (int): Writes trajectory every `stride` steps
@@ -444,7 +444,7 @@ class AtomisticGenericJob(GenericJobCore):
         traj = self.trajectory(stride=stride, center_of_mass=center_of_mass, atom_indices=atom_indices,
                                snapshot_indices=snapshot_indices)
         # Using thr ASE output writer
-        ase_write(filename=filename, images=traj, format=format,  parallel=parallel, append=append, **kwargs)
+        ase_write(filename=filename, images=traj, format=file_format, parallel=parallel, append=append, **kwargs)
 
     def _run_if_lib_save(self, job_name=None, structure=None, db_entry=True):
         """
