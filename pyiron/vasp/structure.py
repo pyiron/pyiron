@@ -206,15 +206,31 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
         atoms = _dict_to_atoms(atoms_dict, species_list=species_list)
         if atoms_dict["selective_dynamics"]:
             selective_dynamics = np.array(selective_dynamics)
-            atoms.add_tag(selective_dynamics=[True, True, True])
-            atoms.selective_dynamics[:] = selective_dynamics
+            unique_sel_dyn, inverse, counts = np.unique(selective_dynamics, axis=0, return_counts=True,
+                                                        return_inverse=True)
+            count_index = np.argmax(counts)
+            atoms.add_tag(selective_dynamics=unique_sel_dyn.tolist()[count_index])
+            is_not_majority = np.arange(len(unique_sel_dyn), dtype=int) != count_index
+            for i, val in enumerate(unique_sel_dyn):
+                if is_not_majority[i]:
+                    for key in np.argwhere(inverse == i).flatten():
+                        atoms.selective_dynamics[key] = val.tolist()
+            # atoms.add_tag(selective_dynamics=[True, True, True])
+            # atoms.selective_dynamics[:] = selective_dynamics
         return atoms, velocities
     else:
         atoms = _dict_to_atoms(atoms_dict, species_list=species_list)
         if atoms_dict["selective_dynamics"]:
             selective_dynamics = np.array(selective_dynamics)
-            atoms.add_tag(selective_dynamics=[True, True, True])
-            atoms.selective_dynamics = selective_dynamics
+            unique_sel_dyn, inverse, counts = np.unique(selective_dynamics, axis=0, return_counts=True,
+                                                        return_inverse=True)
+            count_index = np.argmax(counts)
+            atoms.add_tag(selective_dynamics=unique_sel_dyn.tolist()[count_index])
+            is_not_majority = np.arange(len(unique_sel_dyn), dtype=int) != count_index
+            for i, val in enumerate(unique_sel_dyn):
+                if is_not_majority[i]:
+                    for key in np.argwhere(inverse == i).flatten():
+                        atoms.selective_dynamics[key] = val.tolist()
         return atoms
 
 
