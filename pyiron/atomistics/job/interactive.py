@@ -203,7 +203,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         super(GenericInteractive, self).interactive_flush(path=path, include_last_step=include_last_step)
 
     def interactive_indices_getter(self):
-        species_symbols = [e.Abbreviation for e in self.current_structure.species]
+        species_symbols = np.array([e.Abbreviation for e in self.current_structure.species])
         self._interactive_species_lst = self._extend_species_elements(
             struct_species=species_symbols,
             species_array=self._interactive_species_lst)
