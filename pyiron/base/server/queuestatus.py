@@ -47,29 +47,18 @@ def _queue_job_details_command(user, que_id):
 
 def _queue_function(funct, user=None, que_id=None):
     if user is not None and que_id is not None:
-        try:
-            return subprocess.check_output(funct(user=user, que_id=que_id), stderr=subprocess.STDOUT, 
-                                           universal_newlines=True).split('\n')
-        except subprocess.CalledProcessError:
-            return None
+        subprocess_input = funct(user=user, que_id=que_id)
     elif user is not None:
-        try:
-            return subprocess.check_output(funct(user=user), stderr=subprocess.STDOUT, 
-                                           universal_newlines=True).split('\n')
-        except subprocess.CalledProcessError:
-            return None
+        subprocess_input = funct(user=user)
     elif que_id is not None:
-        try:
-            return subprocess.check_output(funct(que_id=que_id), stderr=subprocess.STDOUT, 
-                                           universal_newlines=True).split('\n')
-        except subprocess.CalledProcessError:
-            return None
-    else: 
-        try:
-            return subprocess.check_output(funct(), stderr=subprocess.STDOUT, 
-                                           universal_newlines=True).split('\n')
-        except subprocess.CalledProcessError:
-            return None
+        subprocess_input = funct(que_id=que_id)
+    else:
+        subprocess_input = funct()
+    try:
+        return subprocess.check_output(subprocess_input, stderr=subprocess.STDOUT,
+                                       universal_newlines=True).split('\n')
+    except subprocess.CalledProcessError:
+        return None
 
     
 def queue_table(job_ids=[], project_only=True):
