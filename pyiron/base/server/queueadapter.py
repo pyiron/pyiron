@@ -8,7 +8,7 @@ from yaml import load
 from pyiron.base.server.wrapper.sge import SunGridEngineCommands
 
 
-class Server(object):
+class QueueAdapter(object):
     def __init__(self, directory='.'):
         self._config = self._read_config(file_name=os.path.join(directory, 'queue.yaml'))
         self._fill_queue_dict(queue_lst_dict=self._config['queues'])
