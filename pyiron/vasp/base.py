@@ -319,6 +319,18 @@ class VaspBase(GenericDFTJob):
         # TODO: implement for vasp
         self._logger.info("collect_errors() is not yet implemented for VASP")
 
+    @staticmethod
+    def _decompress_files_in_directory(directory):
+        files = os.listdir(directory)
+        for file_compressed, file, mode in [["OUTCAR.gz", "OUTCAR", 'gzip'],
+                                            ["vasprun.xml.bz2", 'vasprun.xml', 'bzip2'],
+                                            ["vasprun.xml.gz", 'vasprun.xml', 'gzip']]:
+            if file_compressed in files and file not in files:
+                _ = subprocess.check_output([mode, '-d', file_compressed], cwd=directory, shell=False,
+                                            universal_newlines=True)
+                files = os.listdir(directory)
+        return files
+
     def from_directory(self, directory):
         """
         The Vasp instance is created by parsing the input and output from the specified directory
@@ -328,20 +340,8 @@ class VaspBase(GenericDFTJob):
         """
         if not self.status.finished:
             # _ = s.top_path(directory)
-            files = os.listdir(directory)
+            files = self._decompress_files_in_directory(directory)
             vp_new = Vr()
-            if "OUTCAR.gz" in files and "OUTCAR" not in files:
-                _ = subprocess.check_output(['gzip', '-d', 'OUTCAR.gz'], cwd=directory, shell=False,
-                                            universal_newlines=True)
-                files = os.listdir(directory)
-            if "vasprun.xml.bz2" in files:
-                _ = subprocess.check_output(['bzip2', '-d', 'vasprun.xml.bz2'], cwd=directory, shell=False,
-                                            universal_newlines=True)
-                files = os.listdir(directory)
-            if "vasprun.xml.gz" in files:
-                _ = subprocess.check_output(['gzip', '-d', 'vasprun.xml.gz'], cwd=directory, shell=False,
-                                            universal_newlines=True)
-                files = os.listdir(directory)
             try:
                 if not ("OUTCAR" in files or "vasprun.xml" in files):
                     raise IOError("This file isn't present")
