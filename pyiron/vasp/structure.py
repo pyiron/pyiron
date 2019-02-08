@@ -175,9 +175,7 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
         position_index += 1
     positions = list()
     selective_dynamics = list()
-    n_atoms = 0
-    for key in atoms_dict["species_dict"].keys():
-        n_atoms += atoms_dict["species_dict"][key]["count"]
+    n_atoms = sum([atoms_dict["species_dict"][key]["count"] for key in atoms_dict["species_dict"].keys()])
     try:
         for i in range(position_index, position_index + n_atoms):
             string_list = np.array(string[i].split())
