@@ -115,6 +115,11 @@ class TestVaspStructure(unittest.TestCase):
         truth_array[:] = [True, True, True]
         self.assertTrue(np.array_equal(np.array(test_atoms.selective_dynamics.list()), truth_array))
         os.remove(posixpath.join(self.file_location, "POSCAR_test"))
+        struct = self.structure.copy()
+        struct.add_tag(selective_dynamics=[True, True, True])
+        write_poscar(structure=struct, filename=posixpath.join(self.file_location, "POSCAR_test"), cartesian=False)
+        test_atoms_new = read_atoms(posixpath.join(self.file_location, "POSCAR_test"))
+        self.assertEqual(test_atoms, test_atoms_new)
 
     def test_vasp_sorter(self):
         write_poscar(structure=self.structure, filename=posixpath.join(self.file_location, "POSCAR_test"))
