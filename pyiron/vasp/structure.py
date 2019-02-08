@@ -175,19 +175,15 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
         position_index += 1
     positions = list()
     selective_dynamics = list()
-    n_atoms = 0
-    for key in atoms_dict["species_dict"].keys():
-        n_atoms += atoms_dict["species_dict"][key]["count"]
-    try:
-        for i in range(position_index, position_index + n_atoms):
-            vec = list()
-            for j in range(3):
-                vec.append(float(string[i].split()[j]))
+    n_atoms = sum([atoms_dict["species_dict"][key]["count"] for key in atoms_dict["species_dict"].keys()]) 
+    for i in range(position_index, position_index + n_atoms):
+        string_split = string[i].split()
+        if len(string_split) > 6:
+            positions.append([float(string_split[j]) for j in range(3)])
             if atoms_dict["selective_dynamics"]:
-                selective_dynamics.append(["T" in string[i].split()[k] for k in range(3, 6)])
-            positions.append(vec)
-    except (ValueError, IndexError):
-        raise AssertionError("The number of positions given does not match the number of atoms")
+                selective_dynamics.append(["T" in string_split[k] for k in range(3, 6)])
+        else:
+            raise AssertionError("The number of positions given does not match the number of atoms")
     atoms_dict["positions"] = np.array(positions)
     if not atoms_dict["relative"]:
         if atoms_dict["scaling_factor"] > 0.:
