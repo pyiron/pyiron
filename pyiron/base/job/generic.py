@@ -1261,35 +1261,6 @@ class GenericJob(JobCore):
         """
         pass
 
-    def _run_if_lib_save(self, job_name=None, db_entry=True):
-        """
-
-        Args:
-            job_name:
-            db_entry:
-
-        Returns:
-
-        """
-        self.status.running = True
-        if db_entry:
-            job_id = self.project.db.add_item_dict(self.db_entry())
-        else:
-            job_id = None
-        return job_id
-
-    def _run_if_lib_finished(self, job_id):
-        """
-
-        Args:
-            job_id:
-
-        Returns:
-
-        """
-        if job_id is not None:
-            self.project.db.item_update(self._runtime(), job_id)
-
 
 def multiprocess_wrapper(job_id, working_dir, debug=False):
     job_wrap = JobWrapper(working_directory=str(working_dir), job_id=int(job_id), debug=debug)

@@ -18,10 +18,6 @@ try:
 except (ImportError, TypeError, AttributeError):
     pass
 
-"""
-Atomistic Generic Job class extends the Generic Job class with all the functionality to run jobs containing atomistic structures.
-"""
-
 __author__ = "Jan Janssen"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
                 "Computational Materials Design (CM) Department"
@@ -130,6 +126,7 @@ class AtomisticGenericJob(GenericJobCore):
         self._structure = None
         self._generic_input = GenericInput()
         self.output = GenericOutput(job=self)
+        self.map_functions = MapFunctions()
 
     @property
     def structure(self):
@@ -241,7 +238,8 @@ class AtomisticGenericJob(GenericJobCore):
 
         """
         if self.structure is not None:
-            structure_container = self.create_job(self.project.job_type.StructureContainer)
+            structure_container = self.create_job(job_type=self.project.job_type.StructureContainer,
+                                                  job_name=self.job_name + '_structure')
             structure_container.structure = self.structure
             self.parent_id = structure_container.job_id
         else:
@@ -420,48 +418,31 @@ class AtomisticGenericJob(GenericJobCore):
                               center_of_mass=center_of_mass, cells=cells[::stride])
         else:
             return Trajectory(positions[::stride, atom_indices, :],
-                              self.structure.get_parent_basis(), center_of_mass=center_of_mass,
+                              self.structure.get_parent_basis()[atom_indices], center_of_mass=center_of_mass,
                               cells=cells[::stride])
 
-    def write_traj(self, filename, format=None, parallel=True, append=False, stride=1, center_of_mass=False, **kwargs):
+    def write_traj(self, filename, file_format=None, parallel=True, append=False, stride=1, center_of_mass=False,
+                   atom_indices=None, snapshot_indices=None, **kwargs):
         """
-        Writes the trajectory in a given file format based on the `ase.io.write`_ function.
+        Writes the trajectory in a given file file_format based on the `ase.io.write`_ function.
 
         Args:
             filename (str): Filename of the output
-            format (str): The specific format of the output
+            file_format (str): The specific file_format of the output
             parallel (bool):
             append (bool):
             stride (int): Writes trajectory every `stride` steps
             center_of_mass (bool): True if the positions are centered on the COM
+            atom_indices (list/numpy.ndarray): The atom indices for which the trajectory should be generated
+            snapshot_indices (list/numpy.ndarray): The snapshots for which the trajectory should be generated
             **kwargs: Additional ase arguments
 
         .. _ase.io.write: https://wiki.fysik.dtu.dk/ase/_modules/ase/io/formats.html#write
         """
-        traj = self.trajectory(stride=stride, center_of_mass=center_of_mass)
+        traj = self.trajectory(stride=stride, center_of_mass=center_of_mass, atom_indices=atom_indices,
+                               snapshot_indices=snapshot_indices)
         # Using thr ASE output writer
-        ase_write(filename=filename, images=traj, format=format,  parallel=parallel, append=append, **kwargs)
-
-    def _run_if_lib_save(self, job_name=None, structure=None, db_entry=True):
-        """
-
-        Args:
-            job_name:
-            structure:
-            db_entry:
-
-        Returns:
-
-        """
-        if job_name:
-            with self.project_hdf5.open(job_name + '/input') as hdf5_input:
-                if structure:
-                    structure.to_hdf(hdf5_input)
-                else:
-                    self.structure.to_hdf(hdf5_input)
-        else:
-            self.to_hdf()
-        return super(AtomisticGenericJob, self)._run_if_lib_save(job_name=job_name, db_entry=db_entry)
+        ase_write(filename=filename, images=traj, format=file_format, parallel=parallel, append=append, **kwargs)
 
     # Compatibility functions
     def get_final_structure(self):
@@ -513,7 +494,7 @@ class AtomisticGenericJob(GenericJobCore):
             iteration_step (int): Step for which the structure is requested
 
         Returns:
-            atomistics.structure.atoms.Atoms object
+            pyiron.atomistics.structure.atoms.Atoms: The required structure
         """
         if not (self.structure is not None):
             raise AssertionError()
@@ -521,9 +502,15 @@ class AtomisticGenericJob(GenericJobCore):
         snapshot.cell = self.get("output/generic/cells")[iteration_step]
         snapshot.positions = self.get("output/generic/positions")[iteration_step]
         indices = self.get("output/generic/indices")
-        if indices is not None: 
+        if indices is not None:
             snapshot.indices = indices[iteration_step]
         return snapshot
+
+    def map(self, function, parameter_lst):
+        master = self.create_job(job_type=self.project.job_type.MapMaster, job_name='map_' + self.job_name)
+        master.modify_function = function
+        master.parameter_list = parameter_lst
+        return master
 
     def gui(self):
         """
@@ -552,6 +539,28 @@ class AtomisticGenericJob(GenericJobCore):
         if ham._generic_input['structure'] == 'continue_final':
             ham.structure = self.get_structure(iteration_step=-1)
             ham.to_hdf()
+
+
+def set_encut(job, parameter):
+    job.set_encut(parameter)
+    return job
+
+
+def set_kpoints(job, parameter):
+    job.set_kpoints(parameter)
+    return job
+
+
+def set_structure(job, parameter):
+    job.structure = parameter
+    return job
+
+
+class MapFunctions(object):
+    def __init__(self):
+        self.set_structure = set_structure
+        self.set_encut = set_encut
+        self.set_kpoints = set_kpoints
 
 
 class Trajectory(object):
@@ -586,7 +595,7 @@ class Trajectory(object):
         new_structure.positions = self._positions[item]
         # This step is necessary for using ase.io.write for trajectories
         new_structure.arrays['positions'] = new_structure.positions
-        new_structure.arrays['cells'] = new_structure.cell
+        # new_structure.arrays['cells'] = new_structure.cell
         return new_structure
 
     def __len__(self):
