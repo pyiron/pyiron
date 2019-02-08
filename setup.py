@@ -46,6 +46,7 @@ setup(
                       'spglib',
                       'defusedxml',
                       'jinja2',
-                      'yaml'],
+                      'yaml',
+                      'xmltodict'],
     cmdclass=versioneer.get_cmdclass(),
     )
