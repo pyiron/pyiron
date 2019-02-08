@@ -44,6 +44,8 @@ setup(
                       'sqlalchemy',
                       'tables',
                       'spglib',
-                      'defusedxml'],
+                      'defusedxml',
+                      'jinja2',
+                      'yaml'],
     cmdclass=versioneer.get_cmdclass(),
     )
