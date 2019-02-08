@@ -42,9 +42,9 @@ class TestVaspStructure(unittest.TestCase):
         for f in self.file_list:
             if f.split("/")[-1] == "POSCAR_velocity":
                 atoms, velocities = read_atoms(filename=f, return_velocities=True)
-                self.assertEqual(len(atoms), 571)
-                self.assertEqual(np.shape(velocities), (571, 3))
-                self.assertEqual(len(atoms.selective_dynamics), 571)
+                self.assertEqual(len(atoms), 341)
+                self.assertEqual(np.shape(velocities), (341, 3))
+                self.assertEqual(len(atoms.selective_dynamics), 341)
                 self.assertEqual(len(atoms.select_index("Mg")), 160)
                 self.assertIsInstance(atoms.selective_dynamics, SparseList)
                 neon_indices = atoms.select_index("Ne")
