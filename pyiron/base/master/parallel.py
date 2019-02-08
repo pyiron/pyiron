@@ -409,7 +409,7 @@ class ParallelMaster(GenericMaster):
                     return child
                 else:
                     return child['/'.join(name_lst[1:])]
-            return super(GenericMaster, self).__getitem__(item)
+            return super(ParallelMaster, self).__getitem__(item)
         elif isinstance(item, int):
             total_lst = self._job_name_lst + child_name_lst
             job_name = total_lst[item]
@@ -788,10 +788,6 @@ class JobGenerator(object):
         raise NotImplementedError("Implement in derived class")
 
     @staticmethod
-    def job_name(parameter):
-        raise NotImplementedError("Implement in derived class")
-
-    @staticmethod
     def modify_job(job, parameter):
         raise NotImplementedError("Implement in derived class")
 
@@ -827,7 +823,10 @@ class JobGenerator(object):
         """
         if len(self.parameter_list_cached) > self._childcounter:
             current_paramenter = self.parameter_list_cached[self._childcounter]
-            job = self._job._create_child_job(self.job_name(parameter=current_paramenter))
+            if hasattr(self, 'job_name'):
+                job = self._job._create_child_job(self.job_name(parameter=current_paramenter))
+            else:
+                job = self._job._create_child_job(self._job.ref_job.job_name + '_' + str(self._childcounter))
             if job is not None:
                 self._childcounter += 1
                 job = self.modify_job(job=job, parameter=current_paramenter)

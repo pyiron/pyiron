@@ -292,9 +292,7 @@ class GenericMaster(GenericJob):
                 self._child_id_func = None
             else:
                 self._child_id_func_str = child_id_func_str
-                exec(child_id_func_str)
-                func = child_id_func_str.split("(")[0][4:]  # get function name
-                exec("self._child_id_func = " + func)
+                self._child_id_func = self.get_function_from_string(child_id_func_str)
         for ham in job_list_tmp:
             # try:
             ham_obj = self.project_hdf5.create_object(class_name=self._hdf5[ham + '/TYPE'], project=self._hdf5,
@@ -379,3 +377,17 @@ class GenericMaster(GenericJob):
             return super(GenericMaster, self).__getitem__(item)
         elif isinstance(item, int):
             return self._job_object_lst[item]
+
+    @staticmethod
+    def get_function_from_string(function_str):
+        """
+        Convert a string of source code to a function
+
+        Args:
+            function_str: function source code
+
+        Returns:
+            function:
+        """
+        exec(function_str)
+        return eval(function_str.split("(")[0][4:])  # get function name

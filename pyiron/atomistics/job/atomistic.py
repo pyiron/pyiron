@@ -126,6 +126,7 @@ class AtomisticGenericJob(GenericJobCore):
         self._structure = None
         self._generic_input = GenericInput()
         self.output = GenericOutput(job=self)
+        self.map_functions = MapFunctions()
 
     @property
     def structure(self):
@@ -237,7 +238,8 @@ class AtomisticGenericJob(GenericJobCore):
 
         """
         if self.structure is not None:
-            structure_container = self.create_job(self.project.job_type.StructureContainer)
+            structure_container = self.create_job(job_type=self.project.job_type.StructureContainer,
+                                                  job_name=self.job_name + '_structure')
             structure_container.structure = self.structure
             self.parent_id = structure_container.job_id
         else:
@@ -442,27 +444,6 @@ class AtomisticGenericJob(GenericJobCore):
         # Using thr ASE output writer
         ase_write(filename=filename, images=traj, format=file_format, parallel=parallel, append=append, **kwargs)
 
-    def _run_if_lib_save(self, job_name=None, structure=None, db_entry=True):
-        """
-
-        Args:
-            job_name:
-            structure:
-            db_entry:
-
-        Returns:
-
-        """
-        if job_name:
-            with self.project_hdf5.open(job_name + '/input') as hdf5_input:
-                if structure:
-                    structure.to_hdf(hdf5_input)
-                else:
-                    self.structure.to_hdf(hdf5_input)
-        else:
-            self.to_hdf()
-        return super(AtomisticGenericJob, self)._run_if_lib_save(job_name=job_name, db_entry=db_entry)
-
     # Compatibility functions
     def get_final_structure(self):
         """
@@ -525,6 +506,12 @@ class AtomisticGenericJob(GenericJobCore):
             snapshot.indices = indices[iteration_step]
         return snapshot
 
+    def map(self, function, parameter_lst):
+        master = self.create_job(job_type=self.project.job_type.MapMaster, job_name='map_' + self.job_name)
+        master.modify_function = function
+        master.parameter_list = parameter_lst
+        return master
+
     def gui(self):
         """
 
@@ -552,6 +539,28 @@ class AtomisticGenericJob(GenericJobCore):
         if ham._generic_input['structure'] == 'continue_final':
             ham.structure = self.get_structure(iteration_step=-1)
             ham.to_hdf()
+
+
+def set_encut(job, parameter):
+    job.set_encut(parameter)
+    return job
+
+
+def set_kpoints(job, parameter):
+    job.set_kpoints(parameter)
+    return job
+
+
+def set_structure(job, parameter):
+    job.structure = parameter
+    return job
+
+
+class MapFunctions(object):
+    def __init__(self):
+        self.set_structure = set_structure
+        self.set_encut = set_encut
+        self.set_kpoints = set_kpoints
 
 
 class Trajectory(object):
