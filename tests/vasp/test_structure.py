@@ -62,6 +62,12 @@ class TestVaspStructure(unittest.TestCase):
                 self.assertTrue(np.array_equal(sel_dyn[hydrogen_indices], truth_array))
                 velocities_neon = np.zeros_like(np.array(velocities)[neon_indices])
                 self.assertTrue(np.array_equal(np.array(velocities)[neon_indices], velocities_neon))
+
+            if f.split("/")[-1] == "POSCAR_no_species":
+                atoms = read_atoms(filename=f)
+                self.assertEqual(len(atoms), 33)
+                self.assertEqual(len(atoms.selective_dynamics), 33)
+
             elif f.split("/")[-1] != "POSCAR_spoilt":
                 atoms = read_atoms(filename=f)
                 self.assertIsInstance(atoms, Atoms)
@@ -120,6 +126,7 @@ class TestVaspStructure(unittest.TestCase):
         write_poscar(structure=struct, filename=posixpath.join(self.file_location, "POSCAR_test"), cartesian=False)
         test_atoms_new = read_atoms(posixpath.join(self.file_location, "POSCAR_test"))
         self.assertEqual(test_atoms, test_atoms_new)
+        os.remove(posixpath.join(self.file_location, "POSCAR_test"))
 
     def test_vasp_sorter(self):
         write_poscar(structure=self.structure, filename=posixpath.join(self.file_location, "POSCAR_test"))
