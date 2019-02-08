@@ -45,8 +45,8 @@ class QueueAdapter(object):
                                      split_output=True)[0]
 
     def delete_job(self, process_id):
-        return \
-        self._execute_command(commands_lst=self._commands.delete_job_command + [str(process_id)], split_output=True)[0]
+        return self._execute_command(commands_lst=self._commands.delete_job_command + [str(process_id)],
+                                     split_output=True)[0]
 
     def get_queue_status(self, user=None):
         out = self._execute_command(commands_lst=self._commands.get_queue_status_command, split_output=False)
