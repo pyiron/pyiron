@@ -151,11 +151,8 @@ class InteractiveBase(GenericJob):
         else:
             super(InteractiveBase, self)._run_if_running()
 
-    def _run_if_created(self, que_wait_for=None):
+    def _run_if_created(self):
         """
-
-        Args:
-            que_wait_for:
 
         Returns:
 
@@ -165,7 +162,7 @@ class InteractiveBase(GenericJob):
             self.write_input()
             self._copy_restart_files()
             self._write_run_wrapper()
-        super(InteractiveBase, self)._run_if_created(que_wait_for=que_wait_for)
+        super(InteractiveBase, self)._run_if_created()
 
     def interactive_is_activated(self):
         """
