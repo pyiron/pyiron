@@ -711,7 +711,7 @@ class GenericJob(JobCore):
             raise TypeError('No queue adapter defined.')
         try:
             que_id = s.queue_adapter.submit_job(queue=self.server.queue,
-                                                job_name=self.job_name,
+                                                job_name='pi_' + str(self.job_id),
                                                 working_directory=self.project_hdf5.working_directory,
                                                 cores=self.server.cores,
                                                 run_time_max=self.server.run_time,

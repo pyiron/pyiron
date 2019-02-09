@@ -21,7 +21,6 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 QUEUE_SCRIPT_PREFIX = 'pi_'
-QUEUE_SCRIPT_SUFFIX = '.sh'
 
 s = Settings()
 
@@ -42,10 +41,10 @@ def queue_table(job_ids=[], project_only=True):
     if s.queue_adapter is not None:
         df = s.queue_adapter.get_status_of_my_jobs()
         if not project_only:
-            return df[[True if QUEUE_SCRIPT_PREFIX in job_name and QUEUE_SCRIPT_SUFFIX in job_name else False
+            return df[[True if QUEUE_SCRIPT_PREFIX in job_name else False
                        for job_name in list(df.jobname)]]
         else:
-            job_name_lst = [QUEUE_SCRIPT_PREFIX + str(job_id) + QUEUE_SCRIPT_SUFFIX for job_id in job_ids]
+            job_name_lst = [QUEUE_SCRIPT_PREFIX + str(job_id) for job_id in job_ids]
             return df[[True if job_name in job_name_lst else False for job_name in list(df.jobname)]]
     else:
         return None
