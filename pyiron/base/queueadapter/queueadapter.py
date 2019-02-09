@@ -5,11 +5,11 @@ import pandas
 import subprocess
 from yaml import load
 
-from pyiron.base.server.wrapper.sge import SunGridEngineCommands
-from pyiron.base.server.wrapper.torque import TorqueCommands
-from pyiron.base.server.wrapper.lsf import LsfCommands
-from pyiron.base.server.wrapper.moab import MoabCommands
-from pyiron.base.server.wrapper.slurm import SlurmCommands
+from pyiron.base.queueadapter.wrapper.sge import SunGridEngineCommands
+from pyiron.base.queueadapter.wrapper.torque import TorqueCommands
+from pyiron.base.queueadapter.wrapper.lsf import LsfCommands
+from pyiron.base.queueadapter.wrapper.moab import MoabCommands
+from pyiron.base.queueadapter.wrapper.slurm import SlurmCommands
 
 
 class QueueAdapter(object):
@@ -29,6 +29,15 @@ class QueueAdapter(object):
             self._commands = MoabCommands()
         else:
             raise ValueError()
+
+    @property
+    def config(self):
+        """
+
+        Returns:
+            dict:
+        """
+        return self._config
 
     @property
     def queue_list(self):
@@ -136,6 +145,22 @@ class QueueAdapter(object):
         df = self.get_queue_status()
         return df[df['jobid'] == process_id]['status'].values[0]
 
+    def check_queue_parameters(self, queue, cores=1, run_time_max=None, memory_max=None, active_queue=None):
+        """
+
+        Args:
+            queue (str/None):
+            cores (int):
+            run_time_max (int/None):
+            memory_max (int/None):
+            active_queue (dict):
+        """
+        if active_queue is None:
+            active_queue = self._config['queues'][queue]
+        self._value_in_range(value=cores, value_min=active_queue['cores_min'], value_max=active_queue['cores_max'])
+        self._value_in_range(value=run_time_max, value_max=active_queue['run_time_max'])
+        self._value_in_range(value=memory_max, value_max=active_queue['memory_max'])
+
     def _job_submission_template(self, queue=None, job_name=None, working_directory=None, cores=None, memory_max=None,
                                  run_time_max=None, command=None):
         """
@@ -152,14 +177,15 @@ class QueueAdapter(object):
         Returns:
             str:
         """
-        for v in [queue, job_name, working_directory, command]:
+        if queue is None:
+            queue = self._config['queue_primary']
+        for v in [job_name, working_directory, command]:
             self._value_error_if_none(value=v)
         if queue not in self.queue_list:
             raise ValueError()
         active_queue = self._config['queues'][queue]
-        self._value_in_range(value=cores, value_min=active_queue['cores_min'], value_max=active_queue['cores_max'])
-        self._value_in_range(value=run_time_max, value_max=active_queue['run_time_max'])
-        self._value_in_range(value=memory_max, value_max=active_queue['memory_max'])
+        self.check_queue_parameters(queue=None, cores=cores, run_time_max=run_time_max, memory_max=memory_max,
+                                    active_queue=active_queue)
         template = active_queue['template']
         return template.render(job_name=job_name,
                                working_directory=working_directory,
@@ -267,7 +293,7 @@ class QueueAdapter(object):
             value_max (int/float/None):
         """
         if value is not None:
-            if value_min is not None and value < value_min:
+            if value_min is not None and value <= value_min:
                 raise ValueError()
-            if value_max is not None and value > value_max:
+            if value_max is not None and value >= value_max:
                 raise ValueError()
