@@ -6,7 +6,6 @@ import subprocess
 import pandas
 import time
 from pyiron.base.settings.generic import Settings
-from pyiron.base.server.scheduler.generic import QUEUE_SCRIPT_PREFIX, QUEUE_SCRIPT_SUFFIX
 from pyiron.base.job.jobtype import static_isinstance
 
 """
@@ -21,6 +20,9 @@ __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
+
+QUEUE_SCRIPT_PREFIX = 'pi_'
+QUEUE_SCRIPT_SUFFIX = '.sh'
 
 s = Settings()
 
