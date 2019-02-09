@@ -83,9 +83,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
 
         self._queue_id = None
 
-        self._new_hdf = None
-        self.new_hdf = new_hdf
-
+        self._new_hdf = new_hdf
         self._send_to_db = False
         self._structure_id = None
         self._accept_crash = False
@@ -432,7 +430,6 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
             self.accept_crash = (hdf_dict["accept_crash"] == 1)
         self.new_hdf = (hdf_dict["new_h5"] == 1)
 
-
     def db_entry(self):
         """
         connect all the info regarding the server into a single word that can be used e.g. as entry in a database
@@ -451,10 +448,18 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         """
         Delete the Server object from memory
         """
-        del self._scheduler
-        del self._user
+        del self._cores
+        del self._run_time
+        del self._memory_limit
         del self._host
+        del self._active_queue
+        del self._user
         del self._run_mode
+        del self._queue_id
+        del self._new_hdf
+        del self._send_to_db
+        del self._structure_id
+        del self._accept_crash
 
     @staticmethod
     def _init_host(host):
