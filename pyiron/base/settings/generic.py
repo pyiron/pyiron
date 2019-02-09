@@ -10,7 +10,7 @@ from pathlib2 import Path
 from pyiron.base.settings.logger import setup_logger
 from pyiron.base.database.generic import DatabaseAccess
 from pyiron.base.settings.install import install_pyiron
-from pyiron.base.queueadapter.queueadapter import QueueAdapter
+from pyiron.base.server.queueadapter import QueueAdapter
 
 """
 The settings file provides the attributes of the configuration as properties.
