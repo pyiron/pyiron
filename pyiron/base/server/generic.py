@@ -86,7 +86,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         self._new_hdf = None
         self.new_hdf = new_hdf
 
-        self._send_to_db = None
+        self._send_to_db = False
         self._structure_id = None
         self._accept_crash = False
 
@@ -157,6 +157,19 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
             new_scheduler (str): scheduler name
         """
         if s.queue_adapter is not None:
+            cores, run_time_max, memory_max = s.queue_adapter.check_queue_parameters(queue=new_scheduler,
+                                                                                     cores=self.cores,
+                                                                                     run_time_max=self.run_time,
+                                                                                     memory_max=self.memory_limit)
+            if cores != self.cores:
+                self._cores = cores
+                print('Updated the number of cores to: ', cores)
+            if run_time_max != self.run_time:
+                self._run_time = run_time_max
+                print('Updated the run time limit to: ', run_time_max)
+            if memory_max != self.memory_limit:
+                self._memory_limit = memory_max
+                print('Updated the memory limit to: ', memory_max)
             self._active_queue = new_scheduler
         else:
             raise TypeError('No queue adapter defined.')
@@ -199,7 +212,18 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         Args:
             new_cores (int): number of cores
         """
-        self._cores = new_cores
+        if s.queue_adapter is not None:
+            cores, run_time_max, memory_max = s.queue_adapter.check_queue_parameters(queue=self.queue,
+                                                                                     cores=new_cores,
+                                                                                     run_time_max=self.run_time,
+                                                                                     memory_max=self.memory_limit)
+            if cores != new_cores:
+                self._cores = cores
+                print('Updated the number of cores to: ', cores)
+            else:
+                self._cores = new_cores
+        else:
+            self._cores = new_cores
 
     @property
     def run_time(self):
@@ -219,7 +243,18 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         Args:
             new_run_time (int): run time in seconds
         """
-        self._run_time = new_run_time
+        if s.queue_adapter is not None:
+            cores, run_time_max, memory_max = s.queue_adapter.check_queue_parameters(queue=self.queue,
+                                                                                     cores=self.cores,
+                                                                                     run_time_max=new_run_time,
+                                                                                     memory_max=self.memory_limit)
+            if run_time_max != new_run_time:
+                self._run_time = run_time_max
+                print('Updated the run time limit to: ', run_time_max)
+            else:
+                self._run_time = new_run_time
+        else:
+            self._run_time = new_run_time
 
     @property
     def memory_limit(self):
@@ -227,7 +262,18 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
 
     @memory_limit.setter
     def memory_limit(self, limit):
-        self._memory_limit = limit
+        if s.queue_adapter is not None:
+            cores, run_time_max, memory_max = s.queue_adapter.check_queue_parameters(queue=self.queue,
+                                                                                     cores=self.cores,
+                                                                                     run_time_max=self.run_time,
+                                                                                     memory_max=self.memory_limit)
+            if memory_max != limit:
+                self._memory_limit = memory_max
+                print('Updated the memory limit to: ', memory_max)
+            else:
+                self._memory_limit = limit
+        else:
+            self._memory_limit = limit
 
     @property
     def run_mode(self):
@@ -366,18 +412,18 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         self._host = hdf_dict["host"]
         self.run_mode = hdf_dict["run_mode"]
         if self.run_mode.queue:
-            self.queue = hdf_dict["queue"]
+            self._active_queue = hdf_dict["queue"]
             if "qid" in hdf_dict.keys():
                 self._queue_id = hdf_dict["qid"]
             else:
                 self._queue_id = None
         if "structure_id" in hdf_dict.keys():
             self._structure_id = hdf_dict["structure_id"]
-        self.cores = hdf_dict["cores"]
+        self._cores = hdf_dict["cores"]
         if "run_time" in hdf_dict.keys():
-            self.run_time = hdf_dict["run_time"]
+            self._run_time = hdf_dict["run_time"]
         if "memory_limit" in hdf_dict.keys():
-            self.memory_limit = hdf_dict["memory_limit"]
+            self._memory_limit = hdf_dict["memory_limit"]
         if "accept_crash" in hdf_dict.keys():
             self.accept_crash = (hdf_dict["accept_crash"] == 1)
         self.new_hdf = (hdf_dict["new_h5"] == 1)
