@@ -6,11 +6,7 @@ from collections import OrderedDict
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.template import PyironObject
 from pyiron.base.server.runmode import Runmode
-from pyiron.base.server.scheduler.cmmc import Cmmc
-from pyiron.base.server.scheduler.localhost import Localhost
 import socket
-import pandas
-import warnings
 
 """
 Server object class which is connected to each job containing the technical details how the job is executed.
@@ -26,7 +22,6 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 s = Settings()
-server_types = [Cmmc]
 
 
 class Server(PyironObject):  # add the option to return the job id and the hold id to the server object
@@ -75,24 +70,25 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
             defines whether a subjob should be stored in the same HDF5 file or in a new one.
     """
     def __init__(self, host=None, queue=None, cores=1, run_mode='modal', new_hdf=True):
-        self._scheduler = None
-        self._host = None
+        self._cores = cores
+        self._run_time = None
+        self._memory_limit = None
+        self._host = self._init_host(host=host)
+
+        self._active_queue = self._init_queue(queue=queue)
+
         self._user = s.login_user
         self._run_mode = Runmode()
-        self._new_hdf = None
-        self._cores = None
-        self._queue_id = None
-        self._send_to_db = None
-        self._run_time = None
-        self._accept_crash = False
-
-        self.host = host
-        self.queue = queue
-        self.cores = cores
         self.run_mode = run_mode
+
+        self._queue_id = None
+
+        self._new_hdf = None
         self.new_hdf = new_hdf
 
+        self._send_to_db = None
         self._structure_id = None
+        self._accept_crash = False
 
     @property
     def send_to_db(self):
@@ -143,33 +139,6 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         self._structure_id = structure_id
 
     @property
-    def host(self):
-        """
-        Get the hostname of the current system.
-        
-        Returns:
-            (str): hostname
-        """
-        return self._host
-
-    @host.setter
-    def host(self, new_host):
-        """
-        Set the hostname for the current system - this should not be done manually apart from testing purposes. 
-        
-        Args:
-            new_host (str): hostname
-        """
-        if new_host:
-            if isinstance(new_host, str):
-                self._host = new_host
-            else:
-                raise TypeError('The hostname should always be a string ')
-        else:
-            self._host = socket.gethostname()
-        self._scheduler = self._init_scheduler()
-
-    @property
     def queue(self):
         """
         The que selected for a current simulation
@@ -177,10 +146,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         Returns:
             (str): schedulers_name 
         """
-        if self.run_mode.queue:
-            return self._scheduler.active_scheduler.__name__
-        else:
-            return None
+        return self._active_queue
 
     @queue.setter
     def queue(self, new_scheduler):
@@ -190,20 +156,10 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         Args:
             new_scheduler (str): scheduler name
         """
-        if new_scheduler:
-            cores = self.cores
-            run_time = self.run_time
-            self._scheduler.active_scheduler = new_scheduler
-            self.run_mode.queue = True
-            if self._scheduler.active_scheduler.minimum_number_of_cores <= cores <= \
-                    self._scheduler.active_scheduler.maximum_number_of_cores:
-                self.cores = cores
-            elif cores == 1:
-                pass
-            else:
-                warnings.warn('The number of cores was reset to ' + str(self.cores))
-            if run_time is not None:
-                self.run_time = run_time
+        if s.queue_adapter is not None:
+            self._active_queue = new_scheduler
+        else:
+            raise TypeError('No queue adapter defined.')
 
     @property
     def queue_id(self):
@@ -233,10 +189,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         Returns:
             (int): number of cores
         """
-        if self.run_mode.queue:
-            return self._scheduler.cores
-        else:
-            return self._cores
+        return self._cores
 
     @cores.setter
     def cores(self, new_cores):
@@ -246,10 +199,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         Args:
             new_cores (int): number of cores
         """
-        if self.run_mode.queue:
-            self._scheduler.cores = new_cores
-        else:
-            self._cores = new_cores
+        self._cores = new_cores
 
     @property
     def run_time(self):
@@ -259,10 +209,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         Returns:
             (int): run time in seconds
         """
-        if self.run_mode.queue:
-            return self._scheduler.run_time
-        else:
-            return self._run_time
+        return self._run_time
 
     @run_time.setter
     def run_time(self, new_run_time):
@@ -272,11 +219,15 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         Args:
             new_run_time (int): run time in seconds
         """
-        if self.run_mode.queue:
-            if new_run_time:
-                self._scheduler.run_time = new_run_time
-        else:
-            self._run_time = new_run_time
+        self._run_time = new_run_time
+
+    @property
+    def memory_limit(self):
+        return self._memory_limit
+
+    @memory_limit.setter
+    def memory_limit(self, limit):
+        self._memory_limit = limit
 
     @property
     def run_mode(self):
@@ -344,51 +295,31 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         """
         return self.view_queues()
 
-    def init_scheduler_run(self, working_dir, wait_for_prev_job=None, job_id=None):
-        """
-        Setup the job scheduler to return the scheduler options which then can be used for the python subprocess.
-        
-        Args:
-            working_dir (str): 
-            wait_for_prev_job (int): job id to wait for
-            job_id (int): 
-
-        Returns:
-            (list): list of que options, [True/ False] whether the job returns a job id or not.
-        """
-        self._scheduler.working_directory = working_dir
-        self._scheduler.write_wrapper(job_id)
-        if wait_for_prev_job:
-            if self._scheduler.support_wait_for_prev_job:
-                self._scheduler.wait_for_job_id = wait_for_prev_job
-            else:
-                raise ValueError('Waiting for the previous job to be finished is not supported with this scheduler.')
-        return self._scheduler.list_scheduler_options(), self._scheduler.return_scheduler_id
-
-    def list_queues(self):
+    @staticmethod
+    def list_queues():
         """
         List the available Job scheduler provided by the system.
 
         Returns:
             (list)
         """
-        return list(self._scheduler.available_schedulers_dict().keys())
+        if s.queue_adapter is not None:
+            return s.queue_adapter.queue_list
+        else:
+            return None
 
-    def view_queues(self):
+    @staticmethod
+    def view_queues():
         """
         List the available Job scheduler provided by the system.
         
         Returns:
             (pandas.DataFrame)
         """
-        que_names_lst, mini_cores_lst, max_cores_lst, run_time_lst = [], [], [], []
-        for que_name, que in list(self._scheduler.available_schedulers_dict().items()): 
-            que_names_lst.append(que.__name__)
-            mini_cores_lst.append(que.minimum_number_of_cores)
-            max_cores_lst.append(que.maximum_number_of_cores)
-            run_time_lst.append(que.run_time_limit) 
-        return pandas.DataFrame({'minimum cores': mini_cores_lst, 'maximum cores': max_cores_lst,
-                                 'run time limit': run_time_lst}, index=que_names_lst)
+        if s.queue_adapter is not None:
+            return s.queue_adapter.queue_view
+        else:
+            return None
 
     def to_hdf(self, hdf, group_name=None):
         """
@@ -408,6 +339,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         hdf_dict["new_h5"] = self.new_hdf
         hdf_dict["structure_id"] = self.structure_id
         hdf_dict["run_time"] = self.run_time
+        hdf_dict["memory_limit"] = self.memory_limit
         hdf_dict["accept_crash"] = self.accept_crash
 
         if group_name:
@@ -432,7 +364,6 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
             hdf_dict = hdf["server"]
         self._user = hdf_dict["user"]
         self._host = hdf_dict["host"]
-        self._scheduler = self._init_scheduler()
         self.run_mode = hdf_dict["run_mode"]
         if self.run_mode.queue:
             self.queue = hdf_dict["queue"]
@@ -445,6 +376,8 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         self.cores = hdf_dict["cores"]
         if "run_time" in hdf_dict.keys():
             self.run_time = hdf_dict["run_time"]
+        if "memory_limit" in hdf_dict.keys():
+            self.memory_limit = hdf_dict["memory_limit"]
         if "accept_crash" in hdf_dict.keys():
             self.accept_crash = (hdf_dict["accept_crash"] == 1)
         self.new_hdf = (hdf_dict["new_h5"] == 1)
@@ -473,14 +406,15 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         del self._host
         del self._run_mode
 
-    def _init_scheduler(self):
-        """
-        Internal function to initialize the Job scheduler
+    @staticmethod
+    def _init_queue(queue):
+        if queue is None and s.queue_adapter is not None:
+            queue = s.queue_adapter.config['queue_primary']
+        return queue
 
-        Returns:
-            JobScheduler object
-        """
-        for server in server_types:
-            if server.__name__.lower() in self._host:
-                return server()
-        return Localhost()
+    @staticmethod
+    def _init_host(host):
+        if host is None:
+            return socket.gethostname()
+        else:
+            return host
