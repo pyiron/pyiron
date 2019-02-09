@@ -300,9 +300,9 @@ class QueueAdapter(object):
             int/float/None:
         """
         if value is not None:
-            if value_min is not None and value <= value_min:
+            if value_min is not None and value >= value_min:
                 raise ValueError()
-            if value_max is not None and value >= value_max:
+            if value_max is not None and value <= value_max:
                 raise ValueError()
             return value
         else:
