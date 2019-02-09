@@ -267,8 +267,9 @@ class Settings(with_metaclass(Singleton)):
     @staticmethod
     def _init_queue_adapter(resource_path_lst):
         for resource_path in resource_path_lst:
-            if 'queues.yaml' in resource_path:
-                return QueueAdapter(directory=resource_path)
+            if 'queues' in os.listdir(resource_path) and \
+                    'queue.yaml' in os.listdir(os.path.join(resource_path, 'queues')):
+                return QueueAdapter(directory=os.path.join(resource_path, 'queues'))
         return None
 
     def _config_parse_file(self, config_file):
