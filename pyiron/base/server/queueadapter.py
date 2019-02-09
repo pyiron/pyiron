@@ -32,14 +32,38 @@ class QueueAdapter(object):
 
     @property
     def queue_list(self):
+        """
+
+        Returns:
+            list:
+        """
         return list(self._config['queues'].keys())
 
     @property
     def queue_view(self):
+        """
+
+        Returns:
+            pandas.DataFrame:
+        """
         return pandas.DataFrame(self._config['queues']).T.drop(['script', 'template'], axis=1)
 
     def submit_job(self, queue=None, job_name=None, working_directory=None, cores=None, memory_max=None,
                    run_time_max=None, command=None):
+        """
+
+        Args:
+            queue (str/None):
+            job_name (str/None):
+            working_directory (str/None):
+            cores (int/None):
+            memory_max (int/None):
+            run_time_max (int/None):
+            command (str/None):
+
+        Returns:
+            int:
+        """
         if isinstance(command, list):
             command = ''.join(command)
         queue_script = self._job_submission_template(queue=queue, job_name=job_name,
@@ -53,14 +77,38 @@ class QueueAdapter(object):
         return int(out)
 
     def enable_reservation(self, process_id):
+        """
+
+        Args:
+            process_id (int):
+
+        Returns:
+            str:
+        """
         return self._execute_command(commands_lst=self._commands.enable_reservation_command + [str(process_id)],
                                      split_output=True)[0]
 
     def delete_job(self, process_id):
+        """
+
+        Args:
+            process_id (int):
+
+        Returns:
+            str:
+        """
         return self._execute_command(commands_lst=self._commands.delete_job_command + [str(process_id)],
                                      split_output=True)[0]
 
     def get_queue_status(self, user=None):
+        """
+
+        Args:
+            user (str):
+
+        Returns:
+            pandas.DataFrame:
+        """
         out = self._execute_command(commands_lst=self._commands.get_queue_status_command, split_output=False)
         df = self._commands.convert_queue_status(queue_status_output=out)
         if user is None:
@@ -69,14 +117,41 @@ class QueueAdapter(object):
             return df[df['user'] == user]
 
     def get_status_of_my_jobs(self):
+        """
+
+        Returns:
+           pandas.DataFrame:
+        """
         return self.get_queue_status(user=self._get_user())
 
     def get_status_of_job(self, process_id):
+        """
+
+        Args:
+            process_id:
+
+        Returns:
+             str: ['running', 'pending', 'error']
+        """
         df = self.get_queue_status()
         return df[df['jobid'] == process_id]['status'].values[0]
 
     def _job_submission_template(self, queue=None, job_name=None, working_directory=None, cores=None, memory_max=None,
                                  run_time_max=None, command=None):
+        """
+
+        Args:
+            queue (str/None):
+            job_name (str/None):
+            working_directory (str/None):
+            cores (int/None):
+            memory_max (int/None):
+            run_time_max (int/None):
+            command (str/None):
+
+        Returns:
+            str:
+        """
         for v in [queue, job_name, working_directory, command]:
             self._value_error_if_none(value=v)
         if queue not in self.queue_list:
@@ -95,10 +170,25 @@ class QueueAdapter(object):
 
     @staticmethod
     def _get_user():
+        """
+
+        Returns:
+            str:
+        """
         return getpass.getuser()
 
     @staticmethod
     def _execute_command(commands_lst, working_directory=None, split_output=True):
+        """
+
+        Args:
+            commands_lst (list):
+            working_directory (str):
+            split_output (bool):
+
+        Returns:
+            str:
+        """
         if working_directory is None:
             try:
                 out = subprocess.check_output(commands_lst, stderr=subprocess.STDOUT, universal_newlines=True)
@@ -117,11 +207,24 @@ class QueueAdapter(object):
 
     @staticmethod
     def _read_config(file_name='queue.yaml'):
+        """
+
+        Args:
+            file_name (str):
+
+        Returns:
+            dict:
+        """
         with open(file_name, 'r') as f:
             return load(f)
 
     @staticmethod
     def _fill_queue_dict(queue_lst_dict):
+        """
+
+        Args:
+            queue_lst_dict (dict):
+        """
         queue_keys = ['cores_min', 'cores_max', 'run_time_max', 'memory_max']
         for queue_name, queue_dict in queue_lst_dict.items():
             for key in set(queue_keys) - set(queue_dict.keys()):
@@ -129,12 +232,26 @@ class QueueAdapter(object):
 
     @staticmethod
     def _load_templates(queue_lst_dict, directory='.'):
+        """
+
+        Args:
+            queue_lst_dict (dict):
+            directory (str):
+        """
         for queue_name, queue_dict in queue_lst_dict.items():
             with open(os.path.join(directory, queue_dict['script']), 'r') as f:
                 queue_dict['template'] = Template(f.read())
 
     @staticmethod
     def _value_error_if_none(value):
+        """
+
+        Args:
+            value (str/None):
+
+        Returns:
+
+        """
         if value is None:
             raise ValueError()
         if not isinstance(value, str):
@@ -142,6 +259,13 @@ class QueueAdapter(object):
 
     @staticmethod
     def _value_in_range(value, value_min=None, value_max=None):
+        """
+
+        Args:
+            value (int/float/None):
+            value_min (int/float/None):
+            value_max (int/float/None):
+        """
         if value is not None:
             if value_min is not None and value < value_min:
                 raise ValueError()
