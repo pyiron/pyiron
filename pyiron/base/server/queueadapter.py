@@ -6,6 +6,10 @@ import subprocess
 from yaml import load
 
 from pyiron.base.server.wrapper.sge import SunGridEngineCommands
+from pyiron.base.server.wrapper.torque import TorqueCommands
+from pyiron.base.server.wrapper.lsf import LsfCommands
+from pyiron.base.server.wrapper.moab import MoabCommands
+from pyiron.base.server.wrapper.slurm import SlurmCommands
 
 
 class QueueAdapter(object):
@@ -15,6 +19,14 @@ class QueueAdapter(object):
         self._load_templates(queue_lst_dict=self._config['queues'], directory=directory)
         if self._config['queue_type'] == 'SGE':
             self._commands = SunGridEngineCommands()
+        elif self._config['queue_type'] == 'TORQUE':
+            self._commands = TorqueCommands()
+        elif self._config['queue_type'] == 'SLURM':
+            self._commands = SlurmCommands()
+        elif self._config['queue_type'] == 'LSF':
+            self._commands = LsfCommands()
+        elif self._config['queue_type'] == 'MOAB':
+            self._commands = MoabCommands()
         else:
             raise ValueError()
 

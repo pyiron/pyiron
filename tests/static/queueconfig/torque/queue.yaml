@@ -1,0 +1,3 @@
+queue_type: TORQUE
+queues:
+  torque: {cores_max: 100, cores_min: 10, run_time_max: 259200, script: torque.sh}
