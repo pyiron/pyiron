@@ -1,3 +1,7 @@
+# coding: utf-8
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
+
 import getpass
 from jinja2 import Template
 import os
@@ -10,6 +14,15 @@ from pyiron.base.server.wrapper.torque import TorqueCommands
 from pyiron.base.server.wrapper.lsf import LsfCommands
 from pyiron.base.server.wrapper.moab import MoabCommands
 from pyiron.base.server.wrapper.slurm import SlurmCommands
+
+__author__ = "Jan Janssen"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
+__version__ = "1.0"
+__maintainer__ = "Jan Janssen"
+__email__ = "janssen@mpie.de"
+__status__ = "production"
+__date__ = "Feb 9, 2019"
 
 
 class QueueAdapter(object):
@@ -164,9 +177,13 @@ class QueueAdapter(object):
         """
         if active_queue is None:
             active_queue = self._config['queues'][queue]
-        cores = self._value_in_range(value=cores, value_min=active_queue['cores_min'], value_max=active_queue['cores_max'])
-        run_time_max = self._value_in_range(value=run_time_max, value_max=active_queue['run_time_max'])
-        memory_max = self._value_in_range(value=memory_max, value_max=active_queue['memory_max'])
+        cores = self._value_in_range(value=cores,
+                                     value_min=active_queue['cores_min'],
+                                     value_max=active_queue['cores_max'])
+        run_time_max = self._value_in_range(value=run_time_max,
+                                            value_max=active_queue['run_time_max'])
+        memory_max = self._value_in_range(value=memory_max,
+                                          value_max=active_queue['memory_max'])
         return cores, run_time_max, memory_max
 
     def _job_submission_template(self, queue=None, job_name=None, working_directory=None, cores=None, memory_max=None,
