@@ -10,6 +10,7 @@ from pathlib2 import Path
 from pyiron.base.settings.logger import setup_logger
 from pyiron.base.database.generic import DatabaseAccess
 from pyiron.base.settings.install import install_pyiron
+from pyiron.base.queueadapter.queueadapter import QueueAdapter
 
 """
 The settings file provides the attributes of the configuration as properties.
@@ -138,11 +139,17 @@ class Settings(with_metaclass(Singleton)):
 
         self._database = None
         self._use_local_database = False
+        self._queue_adapter = None
+        self._queue_adapter = self._init_queue_adapter(resource_path_lst=self._configuration['resource_paths'])
         self.logger = setup_logger()
 
     @property
     def database(self):
         return self._database
+
+    @property
+    def queue_adapter(self):
+        return self._queue_adapter
 
     @property
     def login_user(self):
@@ -257,6 +264,13 @@ class Settings(with_metaclass(Singleton)):
         raise ValueError('the current path {0} is not included in the .pyiron configuration. {1}'.format(full_path, self._configuration['project_paths']))
 
     # private functions
+    @staticmethod
+    def _init_queue_adapter(resource_path_lst):
+        for resource_path in resource_path_lst:
+            if 'queues.yaml' in resource_path:
+                return QueueAdapter(directory=resource_path)
+        return None
+
     def _config_parse_file(self, config_file):
         """
         Read section in configuration file and return a dictionary with the corresponding parameters.
