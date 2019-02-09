@@ -154,12 +154,16 @@ class QueueAdapter(object):
             run_time_max (int/None):
             memory_max (int/None):
             active_queue (dict):
+
+        Returns:
+            list: [cores, run_time_max, memory_max]
         """
         if active_queue is None:
             active_queue = self._config['queues'][queue]
-        self._value_in_range(value=cores, value_min=active_queue['cores_min'], value_max=active_queue['cores_max'])
-        self._value_in_range(value=run_time_max, value_max=active_queue['run_time_max'])
-        self._value_in_range(value=memory_max, value_max=active_queue['memory_max'])
+        cores = self._value_in_range(value=cores, value_min=active_queue['cores_min'], value_max=active_queue['cores_max'])
+        run_time_max = self._value_in_range(value=run_time_max, value_max=active_queue['run_time_max'])
+        memory_max = self._value_in_range(value=memory_max, value_max=active_queue['memory_max'])
+        return cores, run_time_max, memory_max
 
     def _job_submission_template(self, queue=None, job_name=None, working_directory=None, cores=None, memory_max=None,
                                  run_time_max=None, command=None):
@@ -184,8 +188,11 @@ class QueueAdapter(object):
         if queue not in self.queue_list:
             raise ValueError()
         active_queue = self._config['queues'][queue]
-        self.check_queue_parameters(queue=None, cores=cores, run_time_max=run_time_max, memory_max=memory_max,
-                                    active_queue=active_queue)
+        cores, run_time_max, memory_max = self.check_queue_parameters(queue=None,
+                                                                      cores=cores,
+                                                                      run_time_max=run_time_max,
+                                                                      memory_max=memory_max,
+                                                                      active_queue=active_queue)
         template = active_queue['template']
         return template.render(job_name=job_name,
                                working_directory=working_directory,
@@ -274,9 +281,6 @@ class QueueAdapter(object):
 
         Args:
             value (str/None):
-
-        Returns:
-
         """
         if value is None:
             raise ValueError()
@@ -291,9 +295,19 @@ class QueueAdapter(object):
             value (int/float/None):
             value_min (int/float/None):
             value_max (int/float/None):
+
+        Returns:
+            int/float/None:
         """
         if value is not None:
             if value_min is not None and value <= value_min:
                 raise ValueError()
             if value_max is not None and value >= value_max:
                 raise ValueError()
+            return value
+        else:
+            if value_min is not None:
+                return value_min
+            if value_max is not None:
+                return value_max
+            return value
