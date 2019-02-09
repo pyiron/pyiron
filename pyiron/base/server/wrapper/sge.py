@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import pandas
-import xmltodict
+import defusedxml.cElementTree as ETree
 
 __author__ = "Jan Janssen"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -34,9 +34,12 @@ class SunGridEngineCommands(object):
 
     @staticmethod
     def convert_queue_status(queue_status_output):
-        status_dict = xmltodict.parse(queue_status_output)
-        df_running_jobs = pandas.DataFrame(status_dict['job_info']['queue_info']['job_list'])
-        df_pending_jobs = pandas.DataFrame(status_dict['job_info']['job_info']['job_list'])
+        def leaf_to_dict(leaf):
+            return [{sub_child.tag: sub_child.text for sub_child in child} for child in leaf]
+
+        tree = ETree.fromstring(queue_status_output)
+        df_running_jobs = pandas.DataFrame(leaf_to_dict(leaf=tree[0]))
+        df_pending_jobs = pandas.DataFrame(leaf_to_dict(leaf=tree[1]))
         df_merge = df_running_jobs.append(df_pending_jobs, sort=True)
         df_merge.state[df_merge.state == 'r'] = 'running'
         df_merge.state[df_merge.state == 'qw'] = 'pending'
