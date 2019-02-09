@@ -5,11 +5,11 @@ import pandas
 import subprocess
 from yaml import load
 
-from pyiron.base.queueadapter.wrapper.sge import SunGridEngineCommands
-from pyiron.base.queueadapter.wrapper.torque import TorqueCommands
-from pyiron.base.queueadapter.wrapper.lsf import LsfCommands
-from pyiron.base.queueadapter.wrapper.moab import MoabCommands
-from pyiron.base.queueadapter.wrapper.slurm import SlurmCommands
+from pyiron.base.server.wrapper.sge import SunGridEngineCommands
+from pyiron.base.server.wrapper.torque import TorqueCommands
+from pyiron.base.server.wrapper.lsf import LsfCommands
+from pyiron.base.server.wrapper.moab import MoabCommands
+from pyiron.base.server.wrapper.slurm import SlurmCommands
 
 
 class QueueAdapter(object):
