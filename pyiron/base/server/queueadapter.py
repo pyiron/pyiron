@@ -143,7 +143,11 @@ class QueueAdapter(object):
              str: ['running', 'pending', 'error']
         """
         df = self.get_queue_status()
-        return df[df['jobid'] == process_id]['status'].values[0]
+        df_selected = df[df['jobid'] == process_id]['status']
+        if len(df_selected) != 0:
+            return df_selected.values[0]
+        else:
+            return None
 
     def check_queue_parameters(self, queue, cores=1, run_time_max=None, memory_max=None, active_queue=None):
         """
