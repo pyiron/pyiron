@@ -75,7 +75,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         self._memory_limit = None
         self._host = self._init_host(host=host)
 
-        self._active_queue = self._init_queue(queue=queue)
+        self._active_queue = queue
 
         self._user = s.login_user
         self._run_mode = Runmode()
@@ -171,6 +171,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
                 self._memory_limit = memory_max
                 print('Updated the memory limit to: ', memory_max)
             self._active_queue = new_scheduler
+            self.run_mode = 'queue'
         else:
             raise TypeError('No queue adapter defined.')
 
@@ -212,7 +213,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         Args:
             new_cores (int): number of cores
         """
-        if s.queue_adapter is not None:
+        if s.queue_adapter is not None and self._active_queue is not None:
             cores, run_time_max, memory_max = s.queue_adapter.check_queue_parameters(queue=self.queue,
                                                                                      cores=new_cores,
                                                                                      run_time_max=self.run_time,
@@ -243,7 +244,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         Args:
             new_run_time (int): run time in seconds
         """
-        if s.queue_adapter is not None:
+        if s.queue_adapter is not None and self._active_queue is not None:
             cores, run_time_max, memory_max = s.queue_adapter.check_queue_parameters(queue=self.queue,
                                                                                      cores=self.cores,
                                                                                      run_time_max=new_run_time,
@@ -262,7 +263,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
 
     @memory_limit.setter
     def memory_limit(self, limit):
-        if s.queue_adapter is not None:
+        if s.queue_adapter is not None and self._active_queue is not None:
             cores, run_time_max, memory_max = s.queue_adapter.check_queue_parameters(queue=self.queue,
                                                                                      cores=self.cores,
                                                                                      run_time_max=self.run_time,
@@ -293,9 +294,12 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         Args:
             new_mode (str): ['modal', 'non_modal', 'queue', 'manual'] 
         """
-        cores = self.cores
         self._run_mode.mode = new_mode
-        self.cores = cores
+        if new_mode == 'queue':
+            if s.queue_adapter is None:
+                raise TypeError('No queue adapter defined.')
+            if self._active_queue is None:
+                self.queue = s.queue_adapter.config['queue_primary']
 
     @property
     def new_hdf(self):
@@ -451,12 +455,6 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         del self._user
         del self._host
         del self._run_mode
-
-    @staticmethod
-    def _init_queue(queue):
-        if queue is None and s.queue_adapter is not None:
-            queue = s.queue_adapter.config['queue_primary']
-        return queue
 
     @staticmethod
     def _init_host(host):
