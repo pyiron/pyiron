@@ -1,3 +1,4 @@
 queue_type: SLURM
+queue_primary: slurm
 queues:
-  torque: {cores_max: 100, cores_min: 10, run_time_max: 259200, script: slurm.sh}
+  slurm: {cores_max: 100, cores_min: 10, run_time_max: 259200, script: slurm.sh}
