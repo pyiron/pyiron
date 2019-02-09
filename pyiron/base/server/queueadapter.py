@@ -280,7 +280,7 @@ class QueueAdapter(object):
             queue_lst_dict (dict):
         """
         queue_keys = ['cores_min', 'cores_max', 'run_time_max', 'memory_max']
-        for queue_name, queue_dict in queue_lst_dict.items():
+        for queue_dict in queue_lst_dict.vales():
             for key in set(queue_keys) - set(queue_dict.keys()):
                 queue_dict[key] = None
 
