@@ -186,14 +186,14 @@ class QueueAdapter(object):
                                           value_max=active_queue['memory_max'])
         return cores, run_time_max, memory_max
 
-    def _job_submission_template(self, queue=None, job_name=None, working_directory=None, cores=None, memory_max=None,
-                                 run_time_max=None, command=None):
+    def _job_submission_template(self, queue=None, job_name='job.py', working_directory='.', cores=None,
+                                 memory_max=None, run_time_max=None, command=None):
         """
 
         Args:
             queue (str/None):
-            job_name (str/None):
-            working_directory (str/None):
+            job_name (str):
+            working_directory (str):
             cores (int/None):
             memory_max (int/None):
             run_time_max (int/None):
@@ -204,8 +204,7 @@ class QueueAdapter(object):
         """
         if queue is None:
             queue = self._config['queue_primary']
-        for v in [job_name, working_directory, command]:
-            self._value_error_if_none(value=v)
+        self._value_error_if_none(value=command)
         if queue not in self.queue_list:
             raise ValueError()
         active_queue = self._config['queues'][queue]
@@ -280,7 +279,7 @@ class QueueAdapter(object):
             queue_lst_dict (dict):
         """
         queue_keys = ['cores_min', 'cores_max', 'run_time_max', 'memory_max']
-        for queue_dict in queue_lst_dict.vales():
+        for queue_dict in queue_lst_dict.values():
             for key in set(queue_keys) - set(queue_dict.keys()):
                 queue_dict[key] = None
 
