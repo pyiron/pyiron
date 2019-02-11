@@ -3,17 +3,12 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import getpass
+import importlib
 from jinja2 import Template
 import os
 import pandas
 import subprocess
 from yaml import load
-
-from pyiron.base.server.wrapper.sge import SunGridEngineCommands
-from pyiron.base.server.wrapper.torque import TorqueCommands
-from pyiron.base.server.wrapper.lsf import LsfCommands
-from pyiron.base.server.wrapper.moab import MoabCommands
-from pyiron.base.server.wrapper.slurm import SlurmCommands
 
 __author__ = "Jan Janssen"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -31,17 +26,23 @@ class QueueAdapter(object):
         self._fill_queue_dict(queue_lst_dict=self._config['queues'])
         self._load_templates(queue_lst_dict=self._config['queues'], directory=directory)
         if self._config['queue_type'] == 'SGE':
-            self._commands = SunGridEngineCommands()
+            class_name = 'SunGridEngineCommands'
+            module_name = 'pyiron.base.server.wrapper.sge'
         elif self._config['queue_type'] == 'TORQUE':
-            self._commands = TorqueCommands()
+            class_name = 'TorqueCommands'
+            module_name = 'pyiron.base.server.wrapper.torque'
         elif self._config['queue_type'] == 'SLURM':
-            self._commands = SlurmCommands()
+            class_name = 'SlurmCommands'
+            module_name = 'pyiron.base.server.wrapper.slurm'
         elif self._config['queue_type'] == 'LSF':
-            self._commands = LsfCommands()
+            class_name = 'LsfCommands'
+            module_name = 'pyiron.base.server.wrapper.lsf'
         elif self._config['queue_type'] == 'MOAB':
-            self._commands = MoabCommands()
+            class_name = 'MoabCommands'
+            module_name = 'pyiron.base.server.wrapper.moab'
         else:
             raise ValueError()
+        self._commands = getattr(importlib.import_module(module_name), class_name)()
 
     @property
     def config(self):

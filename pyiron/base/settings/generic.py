@@ -4,13 +4,13 @@
 
 from builtins import input
 import os
+import importlib
 from six import with_metaclass
 import sys
 from pathlib2 import Path
 from pyiron.base.settings.logger import setup_logger
 from pyiron.base.database.generic import DatabaseAccess
 from pyiron.base.settings.install import install_pyiron
-from pyiron.base.server.queueadapter import QueueAdapter
 
 """
 The settings file provides the attributes of the configuration as properties.
@@ -187,6 +187,13 @@ class Settings(with_metaclass(Singleton)):
                                             self._configuration['sql_table_name'])
 
     def switch_to_local_database(self, file_name='pyiron.db', cwd=None):
+        """
+        Swtich to an local SQLite based database.
+
+        Args:
+            file_name (str): SQLite database file name
+            cwd (str/None): directory where the SQLite database file is located in
+        """
         if not self._use_local_database:
             if cwd is None and not os.path.isabs(file_name):
                 file_name = os.path.join(os.path.abspath(os.path.curdir), file_name)
@@ -200,6 +207,9 @@ class Settings(with_metaclass(Singleton)):
             print('Database is already in local mode!')
             
     def switch_to_central_database(self):
+        """
+        Switch to central database
+        """
         if self._use_local_database:
             self.close_connection()
             self._database = DatabaseAccess(self._configuration['sql_connection_string'],
@@ -261,16 +271,28 @@ class Settings(with_metaclass(Singleton)):
         for path in self._configuration['project_paths']:
             if path in full_path:
                 return path
-        raise ValueError('the current path {0} is not included in the .pyiron configuration. {1}'.format(full_path, self._configuration['project_paths']))
+        raise ValueError('the current path {0} is not included in the .pyiron configuration. {1}'
+                         .format(full_path, self._configuration['project_paths']))
 
     # private functions
     @staticmethod
     def _init_queue_adapter(resource_path_lst):
+        """
+        Initialize the queue adapter if a folder queues is found in one of the resource paths which contains a
+        queue configuration file (queue.yaml).
+
+        Args:
+            resource_path_lst (list): List of resource paths
+
+        Returns:
+            pyiron.base.server.queueadapter.QueueAdapter:
+        """
         for resource_path in resource_path_lst:
             if os.path.exists(resource_path) and \
                     'queues' in os.listdir(resource_path) and \
                     'queue.yaml' in os.listdir(os.path.join(resource_path, 'queues')):
-                return QueueAdapter(directory=os.path.join(resource_path, 'queues'))
+                queueadapter = getattr(importlib.import_module('pyiron.base.server.queueadapter'), 'QueueAdapter')
+                return queueadapter(directory=os.path.join(resource_path, 'queues'))
         return None
 
     def _config_parse_file(self, config_file):
@@ -343,6 +365,15 @@ class Settings(with_metaclass(Singleton)):
 
 
 def convert_path(path):
+    """
+    Convert path to POSIX path
+
+    Args:
+        path(str): input path
+
+    Returns:
+        str: absolute path in POSIX format
+    """
     if not (sys.version_info.major < 3 and os.name == 'nt'):
         return Path(path).expanduser().resolve().absolute().as_posix()
     else:
