@@ -65,8 +65,8 @@ class VaspInteractive(VaspBase, GenericInteractive):
             with open(os.path.join(self.working_directory, 'STOPCAR'), 'w') as stopcar:
                 stopcar.write('LABORT = .TRUE.')  # stopcar.write('LSTOP = .TRUE.')
             try:
-                self._trigger_interactive_run()
-                self._trigger_interactive_run()
+                self.run_if_interactive_non_modal()
+                self.run_if_interactive_non_modal()
                 for atom in self.current_structure.scaled_positions:
                     text = ' '.join(map('{:19.16f}'.format, atom))
                     self._interactive_library.stdin.write(text + '\n')
@@ -180,18 +180,15 @@ class VaspInteractive(VaspBase, GenericInteractive):
         initial_run = not self.interactive_is_activated()
         super(VaspInteractive, self).run_if_interactive()
         if not initial_run:
-            self._trigger_interactive_run()
+            atom_numbers = self.current_structure.get_number_species_atoms()
+            for species in atom_numbers.keys():
+                indices = self.current_structure.select_index(species)
+                for i in indices:
+                    text = ' '.join(map('{:19.16f}'.format, self.current_structure.scaled_positions[i]))
+                    self._logger.debug('Vasp library: ' + text)
+                    self._interactive_library.stdin.write(text + '\n')
             self._interactive_library.stdin.flush()
         self._interactive_fetch_completed = False
-
-    def _trigger_interactive_run(self):
-        atom_numbers = self.current_structure.get_number_species_atoms()
-        for species in atom_numbers.keys():
-            indices = self.current_structure.select_index(species)
-            for i in indices:
-                text = ' '.join(map('{:19.16f}'.format, self.current_structure.scaled_positions[i]))
-                self._logger.debug('Vasp library: ' + text)
-                self._interactive_library.stdin.write(text + '\n')
 
     def run_if_interactive(self):
         self.run_if_interactive_non_modal()
