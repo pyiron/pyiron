@@ -177,9 +177,9 @@ class VaspInteractive(VaspBase, GenericInteractive):
                                                  retain_electrostatic_potential=retain_electrostatic_potential, **kwargs)
 
     def run_if_interactive_non_modal(self):
-        initial_run = not self.interactive_is_activated()
+        initial_run = self.interactive_is_activated()
         super(VaspInteractive, self).run_if_interactive()
-        if not initial_run:
+        if initial_run:
             atom_numbers = self.current_structure.get_number_species_atoms()
             for species in atom_numbers.keys():
                 indices = self.current_structure.select_index(species)
