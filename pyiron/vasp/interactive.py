@@ -65,8 +65,8 @@ class VaspInteractive(VaspBase, GenericInteractive):
             with open(os.path.join(self.working_directory, 'STOPCAR'), 'w') as stopcar:
                 stopcar.write('LABORT = .TRUE.')  # stopcar.write('LSTOP = .TRUE.')
             try:
-                self.run_if_interactive()
-                self.run_if_interactive()
+                self._trigger_interactive_run()
+                self._trigger_interactive_run()
                 for atom in self.current_structure.scaled_positions:
                     text = ' '.join(map('{:19.16f}'.format, atom))
                     self._interactive_library.stdin.write(text + '\n')
@@ -180,15 +180,18 @@ class VaspInteractive(VaspBase, GenericInteractive):
         initial_run = not self.interactive_is_activated()
         super(VaspInteractive, self).run_if_interactive()
         if not initial_run:
-            atom_numbers = self.current_structure.get_number_species_atoms()
-            for species in atom_numbers.keys():
-                indices = self.current_structure.select_index(species)
-                for i in indices:
-                    text = ' '.join(map('{:19.16f}'.format, self.current_structure.scaled_positions[i]))
-                    self._logger.debug('Vasp library: ' + text)
-                    self._interactive_library.stdin.write(text + '\n')
+            self._trigger_interactive_run()
             self._interactive_library.stdin.flush()
         self._interactive_fetch_completed = False
+
+    def _trigger_interactive_run(self):
+        atom_numbers = self.current_structure.get_number_species_atoms()
+        for species in atom_numbers.keys():
+            indices = self.current_structure.select_index(species)
+            for i in indices:
+                text = ' '.join(map('{:19.16f}'.format, self.current_structure.scaled_positions[i]))
+                self._logger.debug('Vasp library: ' + text)
+                self._interactive_library.stdin.write(text + '\n')
 
     def run_if_interactive(self):
         self.run_if_interactive_non_modal()
@@ -218,14 +221,14 @@ class VaspInteractive(VaspBase, GenericInteractive):
             if "POSITIONS: reading from stdin" in text:
                 return
 
-    def _run_if_new(self, debug=False):
+    def _run_if_new(self, debug=False, que_wait_for=None):
         if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
             self._check_incar_parameter(parameter='INTERACTIVE', value=True)
             self._check_incar_parameter(parameter='IBRION', value=-1)
             self._check_incar_parameter(parameter='POTIM', value=0.0)
             self._check_incar_parameter(parameter='NSW', value=1000)
             self._check_incar_parameter(parameter='ISYM', value=0)
-        super(VaspInteractive, self)._run_if_new(debug=debug)
+        super(VaspInteractive, self)._run_if_new(debug=debug, que_wait_for=que_wait_for)
 
 
 class Output(OutputBase):
