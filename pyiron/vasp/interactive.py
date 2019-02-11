@@ -218,14 +218,14 @@ class VaspInteractive(VaspBase, GenericInteractive):
             if "POSITIONS: reading from stdin" in text:
                 return
 
-    def _run_if_created(self, que_wait_for=None):
+    def _run_if_new(self, debug=False):
         if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
             self._check_incar_parameter(parameter='INTERACTIVE', value=True)
             self._check_incar_parameter(parameter='IBRION', value=-1)
             self._check_incar_parameter(parameter='POTIM', value=0.0)
             self._check_incar_parameter(parameter='NSW', value=1000)
             self._check_incar_parameter(parameter='ISYM', value=0)
-        super(VaspInteractive, self)._run_if_created(que_wait_for=que_wait_for)
+        super(VaspInteractive, self)._run_if_new(debug=debug)
 
 
 class Output(OutputBase):
