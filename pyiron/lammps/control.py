@@ -173,7 +173,7 @@ class LammpsControl(GenericParameters):
                 fix_ensemble_str = 'all nph aniso {0} {1} {2}'.format(str(pressure),
                                                                       str(pressure),
                                                                       str(pressure_damping))
-                self.modify(fix___langevin='all langevin {0} {1} {2} {3} zero no'.format(str(temperature),
+                self.modify(fix___langevin='all langevin {0} {1} {2} {3} zero yes'.format(str(temperature),
                                                                                           str(temperature),
                                                                                           str(temperature_damping),
                                                                                           str(seed)),
