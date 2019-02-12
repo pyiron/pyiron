@@ -1238,13 +1238,16 @@ class GenericJob(JobCore):
         """
         self._job_id = self.save()
         print('The job ' + self.job_name + ' was saved and received the ID: ' + str(self._job_id))
-        if not (self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal):
+        if self._check_if_input_should_be_written():
             self.project_hdf5.create_working_directory()
             self.write_input()
             self._copy_restart_files()
             self._write_run_wrapper(debug=debug)
         self.status.created = True
         self._calculate_predecessor()
+
+    def _check_if_input_should_be_written(self):
+        return not (self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal)
 
     def _before_successor_calc(self, ham):
         """

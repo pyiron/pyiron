@@ -151,18 +151,8 @@ class InteractiveBase(GenericJob):
         else:
             super(InteractiveBase, self)._run_if_running()
 
-    def _run_if_created(self):
-        """
-
-        Returns:
-
-        """
-        if self._interactive_write_input_files:
-            self.project_hdf5.create_working_directory()
-            self.write_input()
-            self._copy_restart_files()
-            self._write_run_wrapper()
-        super(InteractiveBase, self)._run_if_created()
+    def _check_if_input_should_be_written(self):
+        return super(InteractiveBase, self)._check_if_input_should_be_written() or self._interactive_write_input_files
 
     def interactive_is_activated(self):
         """
