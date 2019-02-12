@@ -615,7 +615,9 @@ class GenericJob(JobCore):
                 out = subprocess.check_output(str(self.executable), cwd=self.project_hdf5.working_directory, shell=True,
                                               stderr=subprocess.STDOUT, universal_newlines=True)
             else:
-                out = subprocess.check_output([self.executable.executable_path, str(self.server.cores)],
+                out = subprocess.check_output([self.executable.executable_path,
+                                               str(self.server.cores),
+                                               str(self.server.threads)],
                                               cwd=self.project_hdf5.working_directory, shell=False,
                                               stderr=subprocess.STDOUT, universal_newlines=True)
         except subprocess.CalledProcessError as e:

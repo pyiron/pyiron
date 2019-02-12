@@ -69,8 +69,9 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
 
             defines whether a subjob should be stored in the same HDF5 file or in a new one.
     """
-    def __init__(self, host=None, queue=None, cores=1, run_mode='modal', new_hdf=True):
+    def __init__(self, host=None, queue=None, cores=1, threads=1, run_mode='modal', new_hdf=True):
         self._cores = cores
+        self._threads = threads
         self._run_time = None
         self._memory_limit = None
         self._host = self._init_host(host=host)
@@ -192,6 +193,14 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
             qid (int): queue ID
         """
         self._queue_id = int(qid)
+
+    @property
+    def threads(self):
+        return self._threads
+
+    @threads.setter
+    def threads(self, number_of_threads):
+        self._threads = number_of_threads
 
     @property
     def cores(self):
@@ -384,6 +393,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         hdf_dict["queue"] = self.queue
         hdf_dict["qid"] = self._queue_id
         hdf_dict["cores"] = self.cores
+        hdf_dict["threads"] = self.threads
         hdf_dict["new_h5"] = self.new_hdf
         hdf_dict["structure_id"] = self.structure_id
         hdf_dict["run_time"] = self.run_time
@@ -427,8 +437,10 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         if "memory_limit" in hdf_dict.keys():
             self._memory_limit = hdf_dict["memory_limit"]
         if "accept_crash" in hdf_dict.keys():
-            self.accept_crash = (hdf_dict["accept_crash"] == 1)
-        self.new_hdf = (hdf_dict["new_h5"] == 1)
+            self._accept_crash = (hdf_dict["accept_crash"] == 1)
+        if "threads" in hdf_dict.keys():
+            self._threads = hdf_dict["threads"]
+        self._new_hdf = (hdf_dict["new_h5"] == 1)
 
     def db_entry(self):
         """
@@ -449,6 +461,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         Delete the Server object from memory
         """
         del self._cores
+        del self._threads
         del self._run_time
         del self._memory_limit
         del self._host
