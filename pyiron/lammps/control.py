@@ -115,8 +115,7 @@ class LammpsControl(GenericParameters):
 
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=1.0, n_print=100,
                 temperature_damping=100.0, pressure_damping=1000.0, seed=None, tloop=None, initial_temperature=None,
-                langevin=False,
-                ):
+                langevin=False, delta_temp=None, delta_press=None):
         """
         Set an MD calculation within LAMMPS. Nosé Hoover is used by default
 
@@ -141,6 +140,12 @@ class LammpsControl(GenericParameters):
                                                for the initial temperature.
             langevin (bool): (True or False) Activate Langevin dynamics
         """
+        if delta_temp is not None:
+            print("WARNING: `delta_temp` is deprecated, please use `temperature_damping`")
+            temperature_damping = delta_temp
+        if delta_press is not None:
+            print("WARNING: `delta_temp` is deprecated, please use `temperature_damping`")
+            temperature_damping = delta_press
 
         if time_step is not None:
             # time_step in fs
