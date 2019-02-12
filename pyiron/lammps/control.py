@@ -114,7 +114,9 @@ class LammpsControl(GenericParameters):
                     append_if_not_present=True)
 
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=1.0, n_print=100,
-                delta_temp=100.0, delta_press=1000.0, seed=None, tloop=None, initial_temperature=None, langevin=False):
+                temperature_damping=100.0, pressure_damping=1000.0, seed=None, tloop=None, initial_temperature=None,
+                langevin=False,
+                ):
         """
         Set an MD calculation within LAMMPS. Nosé Hoover is used by default
 
@@ -126,8 +128,8 @@ class LammpsControl(GenericParameters):
             n_ionic_steps (int): Number of ionic steps
             time_step (float): Step size between two steps. In fs if units==metal
             n_print (int):  Print frequency
-            delta_temp (float):  Temperature damping factor (cf. https://lammps.sandia.gov/doc/fix_nh.html)
-            delta_press (float): Pressure damping factor (cf. https://lammps.sandia.gov/doc/fix_nh.html)
+            temperature_damping (float):  Temperature damping factor (cf. https://lammps.sandia.gov/doc/fix_nh.html)
+            pressure_damping (float): Pressure damping factor (cf. https://lammps.sandia.gov/doc/fix_nh.html)
             seed (int):  Seed for the random number generation (required for the velocity creation)
             tloop:
             initial_temperature (None/float):  Initial temperature according to which the initial velocity field
@@ -158,28 +160,41 @@ class LammpsControl(GenericParameters):
             seed = np.random.randint(99999)
         if pressure is not None:
             pressure = float(pressure)*1.0e4  # TODO; why needed?
-            if delta_press is None:
-                delta_press = delta_temp*10
+            if pressure_damping is None:
+                pressure_damping = temperature_damping * 10
             if temperature is None or temperature == 0.0:
                 raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
             if langevin:
-                fix_ensemble_str = 'all nph aniso {0} {1} {2}'.format(str(pressure), str(pressure), str(delta_press))
-                self.modify(fix___langevin='all langevin {0} {1} {2} {3}'.format(str(temperature), str(temperature), str(delta_temp), str(seed)),
+                fix_ensemble_str = 'all nph aniso {0} {1} {2}'.format(str(pressure),
+                                                                      str(pressure),
+                                                                      str(pressure_damping))
+                self.modify(fix___langevin='all langevin {0} {1} {2} {3} zero yes'.format(str(temperature),
+                                                                                          str(temperature),
+                                                                                          str(temperature_damping),
+                                                                                          str(seed)),
                             append_if_not_present=True)
             else:
-                fix_ensemble_str = 'all npt temp {0} {1} {2} aniso {3} {4} {5}'.format(str(temperature), str(temperature),
-                                                                                       str(delta_temp), str(pressure), str(pressure),
-                                                                                       str(delta_press))
+                fix_ensemble_str = 'all npt temp {0} {1} {2} aniso {3} {4} {5}'.format(str(temperature),
+                                                                                       str(temperature),
+                                                                                       str(temperature_damping),
+                                                                                       str(pressure),
+                                                                                       str(pressure),
+                                                                                       str(pressure_damping))
         elif temperature is not None:
             temperature = float(temperature)  # TODO; why needed?
             if temperature == 0.0:
                 raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
             if langevin:
                 fix_ensemble_str = 'all nve'
-                self.modify(fix___langevin='all langevin {0} {1} {2} {3}'.format(str(temperature), str(temperature), str(delta_temp), str(seed)),
+                self.modify(fix___langevin='all langevin {0} {1} {2} {3}'.format(str(temperature),
+                                                                                 str(temperature),
+                                                                                 str(temperature_damping),
+                                                                                 str(seed)),
                             append_if_not_present=True)
             else:
-                fix_ensemble_str = 'all nvt temp {0} {1} {2}'.format(str(temperature), str(temperature), str(delta_temp))
+                fix_ensemble_str = 'all nvt temp {0} {1} {2}'.format(str(temperature),
+                                                                     str(temperature),
+                                                                     str(temperature_damping))
         else:
             fix_ensemble_str = 'all nve'
             initial_temperature = 0
