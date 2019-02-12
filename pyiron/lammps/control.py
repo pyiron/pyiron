@@ -145,7 +145,7 @@ class LammpsControl(GenericParameters):
             temperature_damping = delta_temp
         if delta_press is not None:
             print("WARNING: `delta_press` is deprecated, please use `pressure_damping`")
-            temperature_damping = delta_press
+            pressure_damping = delta_press
 
         if time_step is not None:
             # time_step in fs
