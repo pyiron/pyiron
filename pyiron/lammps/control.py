@@ -5,6 +5,7 @@
 from __future__ import print_function
 from collections import OrderedDict
 import numpy as np
+import warnings
 from pyiron.base.generic.parameters import GenericParameters
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
@@ -141,10 +142,10 @@ class LammpsControl(GenericParameters):
             langevin (bool): (True or False) Activate Langevin dynamics
         """
         if delta_temp is not None:
-            print("WARNING: `delta_temp` is deprecated, please use `temperature_damping`")
+            warnings.warn("WARNING: `delta_temp` is deprecated, please use `temperature_damping`")
             temperature_damping = delta_temp
         if delta_press is not None:
-            print("WARNING: `delta_press` is deprecated, please use `pressure_damping`")
+            warnings.warn("WARNING: `delta_press` is deprecated, please use `pressure_damping`")
             pressure_damping = delta_press
 
         if time_step is not None:
