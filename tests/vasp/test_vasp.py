@@ -2,7 +2,7 @@ import unittest
 import os
 from pyiron.atomistics.structure.atoms import CrystalStructure
 from pyiron.vasp.base import Input, Output
-from pyiron.project import Project
+from pyiron.base.project.generic import Project
 
 __author__ = "surendralal"
 

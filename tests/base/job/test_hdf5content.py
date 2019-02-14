@@ -1,19 +1,19 @@
 import unittest
 import os
-from pyiron.project import Project
+from pyiron.base.project.generic import Project
 
 
 class DatabasePropertyIntegration(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
-        cls.project = Project(os.path.join(cls.file_location, 'random_testing'))
+        cls.project = Project(os.path.join(cls.file_location, 'hdf5_content'))
         cls.ham = cls.project.create_job("ExampleJob", "job_test_run")
         cls.ham.run()
 
     @classmethod
     def tearDownClass(cls):
-        project = Project(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'random_testing'))
+        project = Project(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'hdf5_content'))
         ham = project.load(project.get_job_ids()[0])
         ham.remove()
         project.remove(enable=True)
