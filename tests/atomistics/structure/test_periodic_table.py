@@ -1,7 +1,7 @@
 import unittest
 import os
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
-from pyiron.base.project.generic import Project
+from pyiron import Project
 
 
 class TestPeriodicTable(unittest.TestCase):

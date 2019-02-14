@@ -1,6 +1,6 @@
 import os
 import unittest
-from pyiron.base.project.generic import Project
+from pyiron import Project
 
 
 def convergence_goal(self, **qwargs):

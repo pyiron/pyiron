@@ -1,5 +1,5 @@
 import os
-from pyiron.base.project.generic import Project
+from pyiron import Project
 import unittest
 
 
