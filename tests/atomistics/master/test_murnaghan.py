@@ -1,6 +1,7 @@
 import os
 import unittest
-from pyiron import Project
+from pyiron.atomistics.structure.atoms import CrystalStructure
+from pyiron.base.project.generic import Project
 
 
 def convergence_goal(self, **qwargs):
@@ -24,7 +25,7 @@ class TestMurnaghan(unittest.TestCase):
     def setUpClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
         cls.project = Project(os.path.join(cls.file_location, 'testing_murnaghan'))
-        cls.basis = cls.project.create_structure(element="Fe", bravais_basis='fcc', lattice_constant=3.5)
+        cls.basis = CrystalStructure(element="Fe", bravais_basis='fcc', lattice_constant=3.5)
         cls.project.remove_jobs(recursive=True)
 
     @classmethod

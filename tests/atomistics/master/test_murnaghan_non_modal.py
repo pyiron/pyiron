@@ -1,5 +1,6 @@
 import os
-from pyiron import Project
+from pyiron.atomistics.structure.atoms import CrystalStructure
+from pyiron.base.project.generic import Project
 import unittest
 
 
@@ -24,7 +25,7 @@ class TestMurnaghan(unittest.TestCase):
     def setUpClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
         cls.project = Project(os.path.join(cls.file_location, 'testing_murnaghan_non_modal'))
-        cls.basis = cls.project.create_structure(element="Fe", bravais_basis='bcc', lattice_constant=2.8)
+        cls.basis = CrystalStructure(element="Fe", bravais_basis='bcc', lattice_constant=2.8)
         cls.project.remove_jobs(recursive=True)
         # cls.project.remove_jobs(recursive=True)
         # self.project.set_logging_level('INFO')
