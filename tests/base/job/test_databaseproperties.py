@@ -70,8 +70,11 @@ class DatabasePropertyIntegration(unittest.TestCase):
         project.remove(enable=True)
 
     def test_properties(self):
-        self.assertEqual(self.ham.database_entry.parentid, None)
-        self.assertEqual(self.ham.database_entry.masterid, None)
+        job_db_entry_dict = self.ham.project.db.get_item_by_id(self.ham.job_id)
+        self.assertIsNotNone(job_db_entry_dict)
+        self.assertEqual(self.ham.database_entry.id, job_db_entry_dict['id'])
+        self.assertEqual(self.ham.database_entry.parentid, job_db_entry_dict['parentid'])
+        self.assertEqual(self.ham.database_entry.masterid, job_db_entry_dict['masterid'])
         self.assertEqual(self.ham.database_entry.projectpath, self.project.root_path)
         self.assertEqual(self.ham.database_entry.project, self.project.project_path)
         self.assertEqual(self.ham.database_entry.job, 'job_test_run')
@@ -83,6 +86,7 @@ class DatabasePropertyIntegration(unittest.TestCase):
 
     def test_inspect_job(self):
         job_inspect = self.project.inspect(self.ham.job_name)
+        self.assertIsNotNone(job_inspect)
         self.assertEqual(job_inspect.database_entry.parentid, None)
         self.assertEqual(job_inspect.database_entry.masterid, None)
         self.assertEqual(job_inspect.database_entry.projectpath, self.project.root_path)

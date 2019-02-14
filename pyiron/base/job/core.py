@@ -907,6 +907,9 @@ class DatabaseProperties(object):
     def __bool__(self):
         return self._job_dict is not None
 
+    def __nonzero__(self):  # __bool__() for Python 2.7
+        return self._job_dict is not None
+
     def __dir__(self):
         return list(self._job_dict.keys())
 
