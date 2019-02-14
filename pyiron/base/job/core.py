@@ -96,6 +96,11 @@ class JobCore(PyironObject):
         self._master_id = None
         self._status = None
         self._database_property = DatabaseProperties()
+        self._hdf5_content = HDF5Content(project_hdf5=self._hdf5)
+
+    @property
+    def content(self):
+        return self._hdf5_content
 
     @property
     def job_name(self):
@@ -918,3 +923,25 @@ class DatabaseProperties(object):
             return self._job_dict[name]
         else:
             raise AttributeError
+
+
+class HDF5Content(object):
+    """
+    Access the HDF5 file of the job
+    """
+    def __init__(self, project_hdf5):
+        self._project_hdf5 = project_hdf5
+
+    def __getattr__(self, name):
+        if name in self._project_hdf5.list_nodes():
+            return self._project_hdf5.__getitem__(name)
+        elif name in self._project_hdf5.list_groups():
+            return HDF5Content(self._project_hdf5.__getitem__(name))
+        else:
+            raise AttributeError
+
+    def __dir__(self):
+        return self._project_hdf5.list_nodes() + self._project_hdf5.list_groups()
+
+    def __repr__(self):
+        return self._project_hdf5.__repr__()

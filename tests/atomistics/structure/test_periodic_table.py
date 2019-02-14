@@ -1,7 +1,8 @@
 import unittest
 import os
+from pyiron.atomistics.structure.atoms import CrystalStructure
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
-from pyiron.project import Project
+from pyiron.base.project.generic import Project
 
 
 class TestPeriodicTable(unittest.TestCase):
@@ -71,7 +72,7 @@ class TestPeriodicTable(unittest.TestCase):
     def test_Chemical_Element_to_and_from_hdf(self):
         ni_up = self.pse.add_element("Ni", "Ni_up", spin="up")
         pr = Project(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_periodic_table'))
-        basis = pr.create_structure(element=ni_up, bravais_basis='fcc', lattice_constant=3.7)
+        basis = CrystalStructure(element=ni_up, bravais_basis='fcc', lattice_constant=3.7)
         ham = pr.create_job(pr.job_type.Lammps, 'lammps_test_1')
         test_ham = pr.create_job(pr.job_type.Lammps, 'lammps_test_1')
         ham.structure = basis
@@ -82,7 +83,7 @@ class TestPeriodicTable(unittest.TestCase):
 
     def test_Chemical_Element_to_and_from_hdf_with_None_Parent(self):
         pr = Project(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'test_periodic_table'))
-        basis = pr.create_structure(element='Ni', bravais_basis='fcc', lattice_constant=3.7)
+        basis = CrystalStructure(element='Ni', bravais_basis='fcc', lattice_constant=3.7)
         ham = pr.create_job(pr.job_type.Lammps, 'lammps_test_2')
         test_ham = pr.create_job(pr.job_type.Lammps, 'lammps_test_2')
         ham.structure = basis
