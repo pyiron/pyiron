@@ -114,7 +114,7 @@ class Atoms(object):
             if isinstance(elements, str):
                 element_list = self.convert_formula(elements)
             elif isinstance(elements, (list, tuple, np.ndarray)):
-                if any([isinstance(el, elements[0].__class__) for el in elements]):
+                if not all([isinstance(el, elements[0].__class__) for el in elements]):
                     object_list = list()
                     for el in elements:
                         if isinstance(el, (str, np.str, np.str_)):
