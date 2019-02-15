@@ -54,6 +54,11 @@ class TestVasp(unittest.TestCase):
         self.assertEqual(self.job.exchange_correlation_functional, "LDA")
         self.assertEqual(self.job.input.potcar["xc"], "LDA")
 
+    def test_get_nelect(self):
+        atoms = CrystalStructure("Pt", BravaisBasis="fcc", a=3.98)
+        self.job.structure = atoms
+        self.assertEqual(self.job.get_nelect(), 10)
+
     def test_calc_static(self):
         self.job.calc_static(electronic_steps=90, retain_charge_density=True, retain_electrostatic_potential=True)
         self.assertEqual(self.job.input.incar["IBRION"], -1)
