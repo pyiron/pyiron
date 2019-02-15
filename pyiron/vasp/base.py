@@ -805,6 +805,22 @@ class VaspBase(GenericDFTJob):
         if nz is not None:
             self.input.incar["NGZF"] = int(nz)
 
+    def set_mixing_parameters(self, method=None, n_pulay_steps=None, density_mixing_parameter=None,
+                              spin_mixing_parameter=None):
+        """
+
+        Args:
+            method (str):
+            n_pulay_steps (int):
+            density_mixing_parameter (float):
+            spin_mixing_parameter (float):
+
+        """
+        if method == "pulay":
+            self.input.incar["IMIX"] = 4
+        if n_pulay_steps is not None:
+            self.input.incar["MAXMIX"] = n_pulay_steps
+
     def get_electronic_structure(self):
         """
         Gets the electronic structure instance from the hdf5 file
