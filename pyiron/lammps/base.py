@@ -462,8 +462,9 @@ class LammpsBase(AtomisticGenericJob):
         if self.server.run_mode.interactive_non_modal:
             warnings.warn('calc_md() is not implemented for the non modal interactive mode use calc_static()!')
         super(LammpsBase, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
-                                        time_step=time_step, n_print=n_print, temperature_damping=temperature_damping_timescale,
-                                        pressure_damping=pressure_damping_timescale,
+                                        time_step=time_step, n_print=n_print,
+                                        temperature_damping_timescale=temperature_damping_timescale,
+                                        pressure_damping_timescale=pressure_damping_timescale,
                                         seed=seed, tloop=tloop, initial_temperature=initial_temperature,
                                         langevin=langevin)
         self.input.control.calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
