@@ -1,6 +1,6 @@
 import os
 import unittest
-from pyiron.project import Project
+from pyiron.base.project.generic import Project
 
 
 class TestExampleJob(unittest.TestCase):

@@ -30,5 +30,6 @@ class TestStructureContainer(unittest.TestCase):
         self.assertTrue(structure_container.status.finished)
         self.assertEqual(structure_container.structure, self.basis)
 
+
 if __name__ == '__main__':
     unittest.main()

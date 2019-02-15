@@ -95,6 +95,12 @@ class JobCore(PyironObject):
         self._parent_id = None
         self._master_id = None
         self._status = None
+        self._database_property = DatabaseProperties()
+        self._hdf5_content = HDF5Content(project_hdf5=self._hdf5)
+
+    @property
+    def content(self):
+        return self._hdf5_content
 
     @property
     def job_name(self):
@@ -190,6 +196,12 @@ class JobCore(PyironObject):
             int: job id
         """
         return self.job_id
+
+    @property
+    def database_entry(self):
+        if not bool(self._database_property):
+            self._database_property = DatabaseProperties(job_dict=self.project.db.get_item_by_id(self.job_id))
+        return self._database_property
 
     @property
     def parent_id(self):
@@ -888,3 +900,48 @@ class JobCore(PyironObject):
 
     def is_self_archived(self):
         return os.path.isfile(os.path.join(self.project_hdf5.file_path, self.job_name + ".tar.bz2"))
+
+
+class DatabaseProperties(object):
+    """
+    Access the database entry of the job
+    """
+    def __init__(self, job_dict=None):
+        self._job_dict = job_dict
+
+    def __bool__(self):
+        return self._job_dict is not None
+
+    def __nonzero__(self):  # __bool__() for Python 2.7
+        return self._job_dict is not None
+
+    def __dir__(self):
+        return list(self._job_dict.keys())
+
+    def __getattr__(self, name):
+        if name in self._job_dict.keys():
+            return self._job_dict[name]
+        else:
+            raise AttributeError
+
+
+class HDF5Content(object):
+    """
+    Access the HDF5 file of the job
+    """
+    def __init__(self, project_hdf5):
+        self._project_hdf5 = project_hdf5
+
+    def __getattr__(self, name):
+        if name in self._project_hdf5.list_nodes():
+            return self._project_hdf5.__getitem__(name)
+        elif name in self._project_hdf5.list_groups():
+            return HDF5Content(self._project_hdf5.__getitem__(name))
+        else:
+            raise AttributeError
+
+    def __dir__(self):
+        return self._project_hdf5.list_nodes() + self._project_hdf5.list_groups()
+
+    def __repr__(self):
+        return self._project_hdf5.__repr__()
