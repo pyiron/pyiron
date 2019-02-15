@@ -23,6 +23,7 @@ class TestVaspImport(unittest.TestCase):
                                       recursive=False)
         ham = self.project.load('full_job_sample')
         self.assertTrue(isinstance(ham, Vasp))
+        self.assertEqual(ham.get_nelect(), 16)
 
 
 if __name__ == '__main__':
