@@ -1,6 +1,5 @@
 import unittest
 import os
-from pyiron.atomistics.structure.atoms import CrystalStructure
 from pyiron.vasp.base import Input, Output
 from pyiron.base.project.generic import Project
 
@@ -23,9 +22,6 @@ class TestVasp(unittest.TestCase):
 
     def test_init(self):
         self.assertEqual(self.job.__name__, "Vasp")
-        self.assertEqual(self.job._sorted_indices, None)
-        self.assertIsInstance(self.job.input, Input)
-        self.assertIsInstance(self.job._output_parser, Output)
 
     def tearDown(self):
         pass
