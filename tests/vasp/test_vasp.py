@@ -59,6 +59,15 @@ class TestVasp(unittest.TestCase):
         self.job.structure = atoms
         self.assertEqual(self.job.get_nelect(), 10)
 
+    def test_set_empty_states(self):
+        atoms = CrystalStructure("Pt", BravaisBasis="fcc", a=3.98)
+        self.job.structure = atoms
+        self.job.set_empty_states(n_empty_states=10)
+        self.assertEqual(self.job.input.incar["NBANDS"], 15)
+        self.job.structure = atoms.repeat([3, 1, 1])
+        self.job.set_empty_states(n_empty_states=10)
+        self.assertEqual(self.job.input.incar["NBANDS"], 25)
+
     def test_calc_static(self):
         self.job.calc_static(electronic_steps=90, retain_charge_density=True, retain_electrostatic_potential=True)
         self.assertEqual(self.job.input.incar["IBRION"], -1)
