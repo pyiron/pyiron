@@ -114,15 +114,7 @@ class Atoms(object):
             if isinstance(elements, str):
                 element_list = self.convert_formula(elements)
             elif isinstance(elements, (list, tuple, np.ndarray)):
-                is_mixed = False
-                init_type = type(elements[0])
-                for el in elements:
-                    if type(el) == init_type:
-                        pass
-                    else:
-                        is_mixed = True
-                        break
-                if is_mixed:
+                if not all([isinstance(el, elements[0].__class__) for el in elements]):
                     object_list = list()
                     for el in elements:
                         if isinstance(el, (str, np.str, np.str_)):
