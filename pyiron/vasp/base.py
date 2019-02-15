@@ -816,10 +816,14 @@ class VaspBase(GenericDFTJob):
             spin_mixing_parameter (float):
 
         """
-        if method == "pulay":
+        if method.upper() == "PULAY":
             self.input.incar["IMIX"] = 4
+        if method.upper() == "KERKER":
+            self.input.incar["IMIX"] = 1
         if n_pulay_steps is not None:
             self.input.incar["MAXMIX"] = n_pulay_steps
+        if density_mixing_parameter is not None:
+            self.input.incar["AMIX"] = density_mixing_parameter
 
     def get_electronic_structure(self):
         """
