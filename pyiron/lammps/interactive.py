@@ -180,7 +180,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                                                      n_print=n_print)
 
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=1.0, n_print=100,
-                temperature_damping=100.0, pressure_damping=1000.0, seed=None, tloop=None, initial_temperature=None,
+                temperature_timescale=100.0, pressure_timescale=1000.0, seed=None, tloop=None, initial_temperature=None,
                 langevin=False, delta_temp=None, delta_press=None):
         """
         Set an MD calculation within LAMMPS. Nosé Hoover is used by default
@@ -193,8 +193,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             n_ionic_steps: (int) Number of ionic steps
             time_step: (float) Step size between two steps. In fs if units==metal
             n_print: (int) Print frequency
-            temperature_damping: (float) Temperature damping factor (cf. https://lammps.sandia.gov/doc/fix_nh.html)
-            pressure_damping: (float) Pressure damping factor (cf. https://lammps.sandia.gov/doc/fix_nh.html)
+            temperature_timescale: (float) Temperature damping factor (cf. https://lammps.sandia.gov/doc/fix_nh.html)
+            pressure_timescale: (float) Pressure damping factor (cf. https://lammps.sandia.gov/doc/fix_nh.html)
             seed: (int) Seed for the random number generation (required for the velocity creation)
             tloop:
             initial_temperature: (None or float) Initial temperature according to which the initial velocity field
@@ -209,8 +209,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             warnings.warn('calc_md() is not implemented for the non modal interactive mode use calc_static()!')
         super(LammpsInteractive, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
                                                time_step=time_step, n_print=n_print,
-                                               temperature_damping=temperature_damping,
-                                               pressure_damping=pressure_damping, seed=seed, tloop=tloop,
+                                               temperature_timescale=temperature_timescale,
+                                               pressure_timescale=pressure_timescale, seed=seed, tloop=tloop,
                                                initial_temperature=initial_temperature, langevin=langevin,
                                                delta_temp=delta_temp, delta_press=delta_press)
 
