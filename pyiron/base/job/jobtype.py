@@ -7,6 +7,7 @@ import importlib
 import inspect
 import pkgutil
 from six import with_metaclass
+from pyiron.base.generic.util import static_isinstance
 
 """
 Jobtype class to create GenericJob type objects
@@ -158,26 +159,3 @@ class JobType(object):
                 job_class = getattr(job_module, job_class_name)
                 return job_class
         raise ValueError("Unknown job type: ", class_name, [job for job in list(job_class_dict.keys())])
-
-
-def static_isinstance(obj, obj_type):
-    """
-    A static implementation of isinstance() - instead of comparing an object and a class, the object is compared to a
-    string, like 'pyiron.base.job.generic.GenericJob' or a list of strings.
-
-    Args:
-        obj: the object to check
-        obj_type (str/list): object type as string or a list of object types as string.
-
-    Returns:
-        bool: [True/False]
-    """
-    if not hasattr(obj, '__mro__'):
-        obj = obj.__class__
-    obj_class_lst = ['.'.join([subcls.__module__, subcls.__name__]) for subcls in obj.__mro__]
-    if isinstance(obj_type, list):
-        return any([obj_type_element in obj_class_lst for obj_type_element in obj_type])
-    elif isinstance(obj_type, str):
-        return obj_type in obj_class_lst
-    else:
-        raise TypeError()
