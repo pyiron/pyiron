@@ -317,8 +317,8 @@ class FileHDFio(object):
 
     def create_group(self, name):
         """
-        Create an HDF5 group - similar to a folder in the filesystem - the HDF5 groups allow the users to structure their
-        data.
+        Create an HDF5 group - similar to a folder in the filesystem - the HDF5 groups allow the users to structure
+        their data.
 
         Args:
             name (str): name of the HDF5 group
@@ -1126,13 +1126,10 @@ class ProjectHDFio(FileHDFio):
         Returns:
             pyiron object: defined by the pyiron class in class_name with the input from **qwargs
         """
-        job_type_lst = class_name.split(".")
-        if len(job_type_lst) > 1:
-            class_name = class_name.split('.')[-1][:-2]
-            if class_name in self._project.job_type.job_class_dict.keys():
-                return getattr(importlib.import_module(self._project.job_type.job_class_dict[class_name]),
-                               class_name)(**qwargs)
-        return eval(class_name + "(**qwargs)")
+        class_name = class_name.split('.')[-1][:-2]
+        if class_name in self._project.job_type.job_class_dict.keys():
+            return getattr(importlib.import_module(self._project.job_type.job_class_dict[class_name]),
+                           class_name)(**qwargs)
 
     def to_object(self, object_type=None, **qwargs):
         """
