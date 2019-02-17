@@ -1,5 +1,5 @@
 import unittest
-from pyiron.base.job.jobtype import static_isinstance
+from pyiron.base.generic.util import static_isinstance
 
 
 class TestJobType(unittest.TestCase):

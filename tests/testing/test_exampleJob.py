@@ -1,7 +1,7 @@
 import os
 import unittest
 import numpy as np
-from pyiron.project import Project
+from pyiron.base.project.generic import Project
 
 
 class TestExampleJob(unittest.TestCase):
