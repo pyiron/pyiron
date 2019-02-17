@@ -285,13 +285,13 @@ class Settings(with_metaclass(Singleton)):
             resource_path_lst (list): List of resource paths
 
         Returns:
-            pyiron.base.server.queueadapter.QueueAdapter:
+            pysqa.QueueAdapter:
         """
         for resource_path in resource_path_lst:
             if os.path.exists(resource_path) and \
                     'queues' in os.listdir(resource_path) and \
                     'queue.yaml' in os.listdir(os.path.join(resource_path, 'queues')):
-                queueadapter = getattr(importlib.import_module('pyiron.base.server.queueadapter'), 'QueueAdapter')
+                queueadapter = getattr(importlib.import_module('pysqa'), 'QueueAdapter')
                 return queueadapter(directory=os.path.join(resource_path, 'queues'))
         return None
 

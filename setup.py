@@ -39,6 +39,7 @@ setup(
                       'pathlib2',
                       'phonopy',
                       'psutil',
+                      'pysqa',
                       'six',
                       'scipy',
                       'sqlalchemy',

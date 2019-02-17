@@ -1,4 +1,0 @@
-queue_type: MOAB
-queue_primary: moab
-queues:
-  moab: {cores_max: 100, cores_min: 10, run_time_max: 259200, script: moab.sh}

@@ -1,7 +1,0 @@
-queue_type: SGE
-queue_primary: impi_hydra_small
-queues:
-  impi_hy: {cores_max: 1280, cores_min: 40, run_time_max: 259200, script: impi_hy.sh}
-  impi_hydra: {cores_max: 4240, cores_min: 20, run_time_max: 259200, script: impi_hydra.sh}
-  impi_hydra_cmfe: {cores_max: 1280, cores_min: 40, run_time_max: 259200, script: impi_hydra_cmfe.sh}
-  impi_hydra_small: {cores_max: 40, cores_min: 1, run_time_max: 604800, script: impi_hydra_small.sh}
