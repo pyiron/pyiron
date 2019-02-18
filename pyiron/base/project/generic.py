@@ -14,8 +14,8 @@ from pyiron.base.database.jobtable import get_db_columns, get_job_ids, get_job_i
 from pyiron.base.settings.logger import set_logging_level
 from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.base.job.jobtype import JobType, JobTypeChoice
-from pyiron.base.server.queuestatus import queue_delete_job, queue_is_empty, queue_job_info, queue_table, \
-    wait_for_job, queue_report, queue_id_table, queue_enable_reservation, queue_check_job_is_waiting_or_running
+from pyiron.base.server.queuestatus import queue_delete_job, queue_is_empty, queue_table, wait_for_job, \
+    queue_enable_reservation, queue_check_job_is_waiting_or_running
 
 """
 The project object is the central import point of pyiron - all other objects can be created from this one 
@@ -654,12 +654,7 @@ class Project(ProjectPath):
         Returns:
             pandas.DataFrame: Output from the queuing system - optimized for the Sun grid engine
         """
-        try:
-            return pandas.DataFrame([self.db.get_item_by_id(int(str(queue_ID).replace('pi_', '')))
-                                     for queue_ID in self.queue_table(project_only=False)['name'] 
-                                     if str(queue_ID).startswith('pi_')])
-        except TypeError:
-            return None
+        return queue_table(job_ids=[], project_only=False)
 
     def refresh_job_status_based_on_queue_status(self, job_specifier, status='running'):
         """
@@ -933,32 +928,6 @@ class Project(ProjectPath):
             bool: [True/False]
         """
         return queue_check_job_is_waiting_or_running(item)
-
-    @staticmethod
-    def queue_job_info(item):
-        """
-        Short reporting for a particular job - using the qstat command of the sun grid engine.
-
-        Args:
-            item (int, GenericJob): Provide either the job_ID or the full hamiltonian
-
-        Returns:
-            pandas.DataFrame: Short report returned from the queuing system - optimized for the Sun grid engine
-        """
-        return queue_job_info(item)
-
-    @staticmethod
-    def queue_report(item):
-        """
-        Detailed reporting for a particular job - using the qacct command of the sun grid engine.
-
-        Args:
-            item (int, GenericJob): Provide either the job_ID or the full hamiltonian
-
-        Returns:
-            pandas.DataFrame: Detailed report returned from the queuing system - optimized for the Sun grid engine
-        """
-        return queue_report(item)
 
     @staticmethod
     def wait_for_job(job, interval_in_s=5, max_iterations=100):
