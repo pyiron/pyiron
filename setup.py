@@ -46,7 +46,6 @@ setup(
                       'tables',
                       'spglib',
                       'defusedxml',
-                      'jinja2',
-                      'pyyaml'],
+                      'pysqa'],
     cmdclass=versioneer.get_cmdclass(),
     )
