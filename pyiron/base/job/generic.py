@@ -16,7 +16,7 @@ from pyiron.base.settings.generic import Settings
 from pyiron.base.job.executable import Executable
 from pyiron.base.job.jobstatus import JobStatus
 from pyiron.base.job.core import JobCore
-from pyiron.base.job.jobtype import static_isinstance
+from pyiron.base.generic.util import static_isinstance
 from pyiron.base.server.generic import Server
 import subprocess
 import shutil
@@ -536,7 +536,7 @@ class GenericJob(JobCore):
         self._job_id = job_id
         self._status = JobStatus(db=self.project.db, job_id=self._job_id)
 
-    def run(self, run_again=False, repair=False, debug=False, run_mode=None, que_wait_for=None,):
+    def run(self, run_again=False, repair=False, debug=False, run_mode=None):
         """
         This is the main run function, depending on the job status ['initialized', 'created', 'submitted', 'running',
         'collect','finished', 'refresh', 'suspended'] the corresponding run mode is chosen.
@@ -546,7 +546,6 @@ class GenericJob(JobCore):
             repair (bool): Set the job status to created and run the simulation again.
             debug (bool): Debug Mode - defines the log level of the subprocess the job is executed in.
             run_mode (str): ['modal', 'non_modal', 'queue', 'manual'] overwrites self.server.run_mode
-            que_wait_for (int): Que ID to wait for before this job is executed.
         """
         try:
             self._logger.info('run {}, status: {}'.format(self.job_info_str, self.status))
@@ -563,9 +562,9 @@ class GenericJob(JobCore):
             if repair and self.job_id and not self.status.finished:
                 status = 'created'
             if status == 'initialized':
-                self._run_if_new(debug=debug, que_wait_for=que_wait_for)
+                self._run_if_new(debug=debug)
             elif status == 'created':
-                que_id = self._run_if_created(que_wait_for=que_wait_for)
+                que_id = self._run_if_created()
                 if que_id:
                     self._logger.info('{}, status: {}, submitted: queue id {}'.format(self.job_info_str, self.status, que_id))
                     # print('job was submitted, queue id: ', que_id)
@@ -616,7 +615,9 @@ class GenericJob(JobCore):
                 out = subprocess.check_output(str(self.executable), cwd=self.project_hdf5.working_directory, shell=True,
                                               stderr=subprocess.STDOUT, universal_newlines=True)
             else:
-                out = subprocess.check_output([self.executable.executable_path, str(self.server.cores)],
+                out = subprocess.check_output([self.executable.executable_path,
+                                               str(self.server.cores),
+                                               str(self.server.threads)],
                                               cwd=self.project_hdf5.working_directory, shell=False,
                                               stderr=subprocess.STDOUT, universal_newlines=True)
         except subprocess.CalledProcessError as e:
@@ -700,29 +701,27 @@ class GenericJob(JobCore):
                   'To run it, go into the working directory {} and ' +
                   'call \'python run_job.py\' '.format(posixpath.abspath(self.project_hdf5.working_directory)))
 
-    def run_if_scheduler(self, que_wait_for=None):
+    def run_if_scheduler(self):
         """
         The run if queue function is called by run if the user decides to submit the job to and queing system. The job
         is submitted to the queuing system using subprocess.Popen()
 
-        Args:
-            que_wait_for (int): Job ID the current job should be waiting for before being submitted.
-
         Returns:
             int: Returns the queue ID for the job.
         """
-        queue_options, return_job_id = self.server.init_scheduler_run(working_dir=self.project_hdf5.working_directory,
-                                                                      wait_for_prev_job=que_wait_for,
-                                                                      job_id=self.job_id)
-        que_id = None
+        if s.queue_adapter is None:
+            raise TypeError('No queue adapter defined.')
         try:
-            self._logger.debug("SUMBIT SCHEDULED JOB: "+str(queue_options))
-            p = subprocess.Popen(queue_options, stdout=subprocess.PIPE, universal_newlines=True)
-            if return_job_id:
-                self.server.queue_id = p.communicate()[0]
-                que_id = self.server.queue_id
-                self._server.to_hdf(self._hdf5)
-                print('Queue system id: ', que_id)
+            que_id = s.queue_adapter.submit_job(queue=self.server.queue,
+                                                job_name='pi_' + str(self.job_id),
+                                                working_directory=self.project_hdf5.working_directory,
+                                                cores=self.server.cores,
+                                                run_time_max=self.server.run_time,
+                                                memory_max=self.server.memory_limit,
+                                                command='python run_job.py')
+            self.server.queue_id = que_id
+            self._server.to_hdf(self._hdf5)
+            print('Queue system id: ', que_id)
         except subprocess.CalledProcessError as e:
             self._logger.warn("Job aborted")
             self._logger.warn(e.output)
@@ -989,30 +988,26 @@ class GenericJob(JobCore):
                   'To run it, go into the working directory {} and ' +
                   'call \'python run_job.py\' '.format(posixpath.abspath(self.project_hdf5.working_directory)))
 
-    def _run_if_new(self, debug=False, que_wait_for=None):
+    def _run_if_new(self, debug=False):
         """
         Internal helper function the run if new function is called when the job status is 'initialized'. It prepares
         the hdf5 file and the corresponding directory structure.
 
         Args:
             debug (bool): Debug Mode
-            que_wait_for (int): Que ID to wait for before this job is executed.
         """
         self.validate_ready_to_run()
         if self.check_if_job_exists():
             print('job exists already and therefore was not created!')
         else:
             self._create_job_structure(debug=debug)
-            self.run(que_wait_for=que_wait_for)
+            self.run()
 
-    def _run_if_created(self, que_wait_for=None):
+    def _run_if_created(self):
         """
         Internal helper function the run if created function is called when the job status is 'created'. It executes
         the simulation, either in modal mode, meaning waiting for the simulation to finish, manually, or submits the
         simulation to the que.
-
-        Args:
-            que_wait_for (int): Queue ID to wait for before this job is executed.
 
         Returns:
             int: Queue ID - if the job was send to the queue
@@ -1027,7 +1022,7 @@ class GenericJob(JobCore):
         elif self.server.run_mode.non_modal or self.server.run_mode.thread:
             self.run_if_non_modal()
         elif self.server.run_mode.queue:
-            return self.run_if_scheduler(que_wait_for)
+            return self.run_if_scheduler()
         elif self.server.run_mode.interactive:
             self.run_if_interactive()
         elif self.server.run_mode.interactive_non_modal:

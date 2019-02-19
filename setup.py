@@ -28,7 +28,7 @@ setup(
                  'Programming Language :: Python :: 3.7'],
 
     keywords='pyiron',
-    packages=find_packages(exclude=["*tests*", "*docs*"]),
+    packages=find_packages(exclude=["*tests*", "*docs*", "*binder*", "*conda*", "*notebooks*", "*.ci_support*"]),
     install_requires=['ase',
                       'future',
                       'h5io>=0.1.1',
@@ -39,11 +39,13 @@ setup(
                       'pathlib2',
                       'phonopy',
                       'psutil',
+                      'pysqa',
                       'six',
                       'scipy',
                       'sqlalchemy',
                       'tables',
                       'spglib',
-                      'defusedxml'],
+                      'defusedxml',
+                      'pysqa'],
     cmdclass=versioneer.get_cmdclass(),
     )
