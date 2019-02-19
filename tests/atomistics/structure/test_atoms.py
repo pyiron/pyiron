@@ -382,18 +382,22 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(0 <= np.min(NaCl.positions))
         self.assertTrue(np.max(NaCl.scaled_positions < 1))
 
-    # def test_analyse_ovito_cna_adaptive(self):
-	#     basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
-	#     basis.analyse_ovito_cna_adaptive()['CommonNeighborAnalysis.counts.BCC']==2
+    @unittest.skip
+    def test_analyse_ovito_cna_adaptive(self):
+	basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
+	basis.analyse_ovito_cna_adaptive()['CommonNeighborAnalysis.counts.BCC']==2
 	
-    # def test_analyse_ovito_centro_symmetry(self):
-	#     basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
-	#     self.assertTrue(all(basis.analyse_ovito_centro_symmetry()==np.array([0.75, 0.75])))
+    @unittest.skip
+    def test_analyse_ovito_centro_symmetry(self):
+        basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
+        self.assertTrue(all(basis.analyse_ovito_centro_symmetry()==np.array([0.75, 0.75])))
 	
-	# def test_analyse_ovito_voronoi_volume(self):
-	#     basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
-	#     self.assertTrue(all(basis.analyse_ovito_centro_symmetry()==np.array([0.5, 0.5])))
-        
+    @unittest.skip
+    def test_analyse_ovito_voronoi_volume(self):
+	basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
+	self.assertTrue(all(basis.analyse_ovito_centro_symmetry()==np.array([0.5, 0.5])))
+
+    @unittest.skip
     def test_plot3d(self):
         basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
         view = basis.plot3d()
