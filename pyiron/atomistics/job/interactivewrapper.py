@@ -82,6 +82,7 @@ class InteractiveWrapper(GenericMaster):
             self._ref_job = self.pop(-1)
             if self._job_id is not None and self._ref_job._master_id is None:
                 self._ref_job.master_id = self.job_id
+                self._ref_job.server.cores = self.server.cores
 
     def get_final_structure(self):
         """

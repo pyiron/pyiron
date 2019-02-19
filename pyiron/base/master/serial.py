@@ -234,7 +234,9 @@ class SerialMasterBase(GenericMaster):
             return None
         if job_name is None:
             job_name = '_'.join(ham_old.job_name.split('_')[:-1] + [str(len(self.child_ids))])
-        return ham_old.restart(job_name=job_name)
+        new_job = ham_old.restart(job_name=job_name)
+        new_job.server.cores = self.server.cores
+        return new_job
 
     def collect_output(self):
         """
