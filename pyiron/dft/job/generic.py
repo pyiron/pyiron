@@ -147,3 +147,6 @@ class GenericDFTJob(AtomisticGenericJob):
 
     def set_exchange_correlation_functional(self, exchange_correlation_functional):
         self.exchange_correlation_functional = exchange_correlation_functional
+
+    def set_empty_states(self, n_empty_states=None):
+        raise NotImplementedError("The set_empty_states function is not implemented for this code.")

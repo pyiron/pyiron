@@ -805,6 +805,51 @@ class VaspBase(GenericDFTJob):
         if nz is not None:
             self.input.incar["NGZF"] = int(nz)
 
+    def set_mixing_parameters(self, method=None, n_pulay_steps=None, density_mixing_parameter=None,
+                              spin_mixing_parameter=None):
+        """
+
+        Args:
+            method (str):
+            n_pulay_steps (int):
+            density_mixing_parameter (float):
+            spin_mixing_parameter (float):
+
+        """
+        if method.upper() == "PULAY":
+            self.input.incar["IMIX"] = 4
+        if method.upper() == "KERKER":
+            self.input.incar["IMIX"] = 1
+        if n_pulay_steps is not None:
+            self.input.incar["MAXMIX"] = n_pulay_steps
+        if density_mixing_parameter is not None:
+            self.input.incar["AMIX"] = density_mixing_parameter
+
+    def set_empty_states(self, n_empty_states=None):
+        """
+        Sets the number of empty states in the calculation
+        Args:
+            n_empty_states (int): Required number of empty states
+
+        """
+        n_elect = self.get_nelect()
+        if n_empty_states is not None:
+            self.input.incar["NBANDS"] = int(round(n_elect / 2)) + int(n_empty_states)
+
+    def get_nelect(self):
+        """
+        Returns the number of electrons in the systems
+
+        Returns:
+            float: Number of electrons in the system
+
+        """
+        if not self.status.finished and self.structure is not None:
+            return sum([self.potential.find_default(el).n_elect.values[-1] * n_atoms
+                        for el, n_atoms in self.structure.get_parent_basis().get_number_species_atoms().items()])
+        else:
+            return self["output/generic/dft/n_elect"]
+
     def get_electronic_structure(self):
         """
         Gets the electronic structure instance from the hdf5 file
