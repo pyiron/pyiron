@@ -427,39 +427,49 @@ class LammpsBase(AtomisticGenericJob):
         self.input.control.calc_static()
 
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=1.0, n_print=100,
-                temperature_damping=100.0, pressure_damping=1000.0, seed=None, tloop=None, initial_temperature=None,
+                temperature_damping_timescale=100.0, pressure_damping_timescale=1000.0, seed=None, tloop=None, initial_temperature=None,
                 langevin=False, delta_temp=None, delta_press=None):
         """
-        Set an MD calculation within LAMMPS. Nosé Hoover is used by default
+        Set an MD calculation within LAMMPS. Nosé Hoover is used by default.
 
         Args:
-            temperature: (None or float) Target temperature. If set to None, an NVE calculation is performed.
-                         It is required when the pressure is set or langevin is set
-            pressure: (None or float) Target pressure. If set to None, an NVE or an NVT calculation is performed.
-                      (This tag will allow for a list in the future as it is done for calc_minimize())
-            n_ionic_steps: (int) Number of ionic steps
-            time_step: (float) Step size between two steps. In fs if units==metal
-            n_print: (int) Print frequency
-            temperature_damping: (float) Temperature damping factor (cf. https://lammps.sandia.gov/doc/fix_nh.html)
-            pressure_damping: (float) Pressure damping factor (cf. https://lammps.sandia.gov/doc/fix_nh.html)
-            seed: (int) Seed for the random number generation (required for the velocity creation)
+            temperature (None/float): Target temperature. If set to None, an NVE calculation is performed.
+                                      It is required when the pressure is set or langevin is set
+            pressure (None/float): Target pressure. If set to None, an NVE or an NVT calculation is performed.
+                                   (This tag will allow for a list in the future as it is done for calc_minimize())
+            n_ionic_steps (int): Number of ionic steps
+            time_step (float): Step size between two steps. In fs if units==metal
+            n_print (int):  Print frequency
+            temperature_damping_timescale (float): The time associated with the thermostat adjusting the temperature.
+                                                   (In fs. After rescaling to appropriate time units, is equivalent to
+                                                   Lammps' `Tdamp`.)
+            pressure_damping_timescale (float): The time associated with the barostat adjusting the temperature.
+                                                (In fs. After rescaling to appropriate time units, is equivalent to
+                                                Lammps' `Pdamp`.)
+            seed (int):  Seed for the random number generation (required for the velocity creation)
             tloop:
-            initial_temperature: (None or float) Initial temperature according to which the initial velocity field
-                                 is created. If None, the initial temperature will be twice the target temperature
-                                 (which would go immediately down to the target temperature as described in
-                                 equipartition theorem). If 0, the velocity field is not initialized (in which case
-                                 the initial velocity given in structure will be used). If any other number is given,
-                                 this value is going to be used for the initial temperature.
-            langevin: (True or False) Activate Langevin dynamics
+            initial_temperature (None/float):  Initial temperature according to which the initial velocity field
+                                               is created. If None, the initial temperature will be twice the target
+                                               temperature (which would go immediately down to the target temperature
+                                               as described in equipartition theorem). If 0, the velocity field is not
+                                               initialized (in which case  the initial velocity given in structure will
+                                               be used). If any other number is given, this value is going to be used
+                                               for the initial temperature.
+            langevin (bool): (True or False) Activate Langevin dynamics
+            delta_temp (float): Thermostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
+            delta_press (float): Barostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
         """
+        if self.server.run_mode.interactive_non_modal:
+            warnings.warn('calc_md() is not implemented for the non modal interactive mode use calc_static()!')
         super(LammpsBase, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
-                                        time_step=time_step, n_print=n_print, temperature_damping=temperature_damping,
-                                        pressure_damping=pressure_damping,
+                                        time_step=time_step, n_print=n_print,
+                                        temperature_damping_timescale=temperature_damping_timescale,
+                                        pressure_damping_timescale=pressure_damping_timescale,
                                         seed=seed, tloop=tloop, initial_temperature=initial_temperature,
                                         langevin=langevin)
         self.input.control.calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
-                                   time_step=time_step, n_print=n_print, temperature_damping=temperature_damping,
-                                   pressure_damping=pressure_damping,
+                                   time_step=time_step, n_print=n_print, temperature_damping_timescale=temperature_damping_timescale,
+                                   pressure_damping_timescale=pressure_damping_timescale,
                                    seed=seed, tloop=tloop, initial_temperature=initial_temperature, langevin=langevin,
                                    delta_temp=delta_temp, delta_press=delta_press)
 
