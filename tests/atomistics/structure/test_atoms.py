@@ -384,8 +384,8 @@ class TestAtoms(unittest.TestCase):
 
     @unittest.skip("skip ovito because it is not installed in the test environment")
     def test_analyse_ovito_cna_adaptive(self):
-	    basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
-	    basis.analyse_ovito_cna_adaptive()['CommonNeighborAnalysis.counts.BCC']==2
+        basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
+        basis.analyse_ovito_cna_adaptive()['CommonNeighborAnalysis.counts.BCC']==2
 	
     @unittest.skip("skip ovito because it is not installed in the test environment")
     def test_analyse_ovito_centro_symmetry(self):
@@ -394,8 +394,8 @@ class TestAtoms(unittest.TestCase):
 	
     @unittest.skip("skip ovito because it is not installed in the test environment")
     def test_analyse_ovito_voronoi_volume(self):
-	    basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
-	    self.assertTrue(all(basis.analyse_ovito_centro_symmetry()==np.array([0.5, 0.5])))
+        basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
+        self.assertTrue(all(basis.analyse_ovito_centro_symmetry()==np.array([0.5, 0.5])))
 
     @unittest.skip("skip nglview because it is not installed in the test environment")
     def test_plot3d(self):
