@@ -1530,8 +1530,7 @@ class Atoms(object):
             NxN matrix with 1 for the pairs of atoms in the given shell
 
         """
-        if not isinstance(shell, int) or not shell > 0:
-            raise ValueError("Parameter 'shell' must be an integer greater than 0")
+        assert isinstance(shell, int) and shell > 0, "Parameter 'shell' must be an integer greater than 0"
         neigh_list = self.get_neighbors(radius=radius,
                                         num_neighbors=max_num_neighbors,
                                         id_list=id_list)

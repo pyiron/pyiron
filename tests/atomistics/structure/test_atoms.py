@@ -353,6 +353,11 @@ class TestAtoms(unittest.TestCase):
         self.assertAlmostEqual(NaCl.get_distance(0, [0, 0, 0.5]), 0.5)
         self.assertAlmostEqual(NaCl.get_distance([0, 0, 0], [0, 0, 0.5]), 0.5)
 
+    def test_get_neighborhood(self):
+        basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
+        neigh = basis.get_neighborhood([0, 0, 0.1])
+        self.assertEqual(neigh.distances[0], 0.1)
+
     def test_get_neighbors(self):
         cell = 2.2 * np.identity(3)
         NaCl = Atoms('NaCl', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
@@ -377,6 +382,26 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(0 <= np.min(NaCl.positions))
         self.assertTrue(np.max(NaCl.scaled_positions < 1))
 
+    @unittest.skip("skip ovito because it is not installed in the test environment")
+    def test_analyse_ovito_cna_adaptive(self):
+        basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
+        basis.analyse_ovito_cna_adaptive()['CommonNeighborAnalysis.counts.BCC']==2
+	
+    @unittest.skip("skip ovito because it is not installed in the test environment")
+    def test_analyse_ovito_centro_symmetry(self):
+        basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
+        self.assertTrue(all(basis.analyse_ovito_centro_symmetry()==np.array([0.75, 0.75])))
+	
+    @unittest.skip("skip ovito because it is not installed in the test environment")
+    def test_analyse_ovito_voronoi_volume(self):
+        basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
+        self.assertTrue(all(basis.analyse_ovito_centro_symmetry()==np.array([0.5, 0.5])))
+
+    @unittest.skip("skip nglview because it is not installed in the test environment")
+    def test_plot3d(self):
+        basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
+        view = basis.plot3d()
+
     def test_get_shells(self):
         dim = 3
         cell = 2.2 * np.identity(dim)
@@ -386,7 +411,7 @@ class TestAtoms(unittest.TestCase):
 
     def test_get_shell_matrix(self):
         basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
-        output = basis.get_shell_matrix(shell=1)
+        output = basis.get_shell_matrix(shell=1, restraint_matrix=['Fe', 'Fe'])
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(np.sum(output), 16)
         self.assertTrue(np.all(np.dot(output, output) == np.identity(2)*64))
