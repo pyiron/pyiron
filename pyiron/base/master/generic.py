@@ -178,6 +178,8 @@ class GenericMaster(GenericJob):
         Args:
             job (GenericJob): job to append
         """
+        if job.server.cores >= self.server.cores:
+            self.server.cores = job.server.cores
         if job.job_name not in self._job_name_lst:
             self._job_name_lst.append(job.job_name)
             self._child_job_update_hdf(parent_job=self, child_job=job)
