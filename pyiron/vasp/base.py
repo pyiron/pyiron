@@ -101,7 +101,8 @@ class VaspBase(GenericDFTJob):
 
         """
         GenericDFTJob.structure.fset(self, structure)
-        self._potential = VaspPotentialSetter(element_lst=structure.get_species_symbols().tolist())
+        if structure is not None:
+            self._potential = VaspPotentialSetter(element_lst=structure.get_species_symbols().tolist())
 
     @property
     def potential(self):
