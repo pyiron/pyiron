@@ -240,7 +240,10 @@ class VaspBase(GenericDFTJob):
 
     @property
     def potential_available(self):
-        return VaspPotential()
+        if self.structure is not None:
+            return VaspPotential(selected_atoms=self.structure.get_species_symbols().tolist())
+        else:
+            return VaspPotential()
 
     @property
     def potential_view(self):

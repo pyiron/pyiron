@@ -114,7 +114,7 @@ class VaspPotentialFile(VaspPotentialAbstract):
     Args:
         xc (str): Exchange correlation functional ['PBE', 'LDA']
     """
-    def __init__(self, xc=None):
+    def __init__(self, xc=None, selected_atoms=[]):
         potential_df = self._get_potential_df(plugin_name='vasp',
                                               file_name_lst={'potentials_vasp.csv'},
                                               backward_compatibility_name='vasppotentials')
@@ -135,7 +135,9 @@ class VaspPotentialFile(VaspPotentialAbstract):
             potential_df = potential_df[(potential_df['Model'] == 'lda')]
         else:
             raise ValueError('The exchange correlation functional has to be set and it can either be "LDA" or "PBE"')
-        super(VaspPotentialFile, self).__init__(potential_df=potential_df, default_df=default_df, selected_atoms=[])
+        super(VaspPotentialFile, self).__init__(potential_df=potential_df,
+                                                default_df=default_df,
+                                                selected_atoms=selected_atoms)
 
     def add_new_element(self, parent_element, new_element):
         """
@@ -170,9 +172,9 @@ class VaspPotential(object):
         path (str): path to the potential list
     """
 
-    def __init__(self):
-        self.pbe = VaspPotentialFile(xc="PBE")
-        self.lda = VaspPotentialFile(xc="LDA")
+    def __init__(self, selected_atoms=[]):
+        self.pbe = VaspPotentialFile(xc="PBE", selected_atoms=selected_atoms)
+        self.lda = VaspPotentialFile(xc="LDA", selected_atoms=selected_atoms)
 
 
 class VaspPotentialSetter(object):
