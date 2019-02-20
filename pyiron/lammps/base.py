@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import warnings
 
-from pyiron.lammps.potential import LammpsPotentialFile
+from pyiron.lammps.potential import LammpsPotentialFile, PotentialAvailable
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 from pyiron.base.settings.generic import Settings
 from pyiron.base.pyio.parser import Logstatus, extract_data_from_file
@@ -114,6 +114,10 @@ class LammpsBase(AtomisticGenericJob):
             if v is not None:
                 self.input.control[val] = v
         self.input.potential.remove_structure_block()
+
+    @property
+    def potential_availabe(self):
+        return PotentialAvailable(self.list_potentials())
 
     @property
     def potential_list(self):
