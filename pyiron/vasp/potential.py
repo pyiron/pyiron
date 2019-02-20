@@ -85,7 +85,8 @@ class VaspPotentialAbstract(PotentialAbstract):
         else:
             return []
 
-    def _return_potential_file(self, file_name):
+    @staticmethod
+    def _return_potential_file(file_name):
         for resource_path in s.resource_paths:
             resource_path_potcar = os.path.join(resource_path, 'vasp', 'potentials', file_name)
             if os.path.exists(resource_path_potcar):
