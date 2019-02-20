@@ -114,7 +114,7 @@ class VaspPotentialFile(VaspPotentialAbstract):
     Args:
         xc (str): Exchange correlation functional ['PBE', 'LDA']
     """
-    def __init__(self, xc=None, selected_atoms=[]):
+    def __init__(self, xc=None, selected_atoms=None):
         potential_df = self._get_potential_df(plugin_name='vasp',
                                               file_name_lst={'potentials_vasp.csv'},
                                               backward_compatibility_name='vasppotentials')
@@ -172,7 +172,7 @@ class VaspPotential(object):
         path (str): path to the potential list
     """
 
-    def __init__(self, selected_atoms=[]):
+    def __init__(self, selected_atoms=None):
         self.pbe = VaspPotentialFile(xc="PBE", selected_atoms=selected_atoms)
         self.lda = VaspPotentialFile(xc="LDA", selected_atoms=selected_atoms)
 
