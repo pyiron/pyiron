@@ -173,3 +173,27 @@ class VaspPotential(object):
     def __init__(self):
         self.pbe = VaspPotentialFile(xc="PBE")
         self.lda = VaspPotentialFile(xc="LDA")
+
+
+class VaspPotentialSetter(object):
+    def __init__(self, element_lst):
+        super(VaspPotentialSetter, self).__setattr__('_element_lst', element_lst)
+        super(VaspPotentialSetter, self).__setattr__('_potential_dict', {el: None for el in element_lst})
+
+    def __getattr__(self, item):
+        if item in self._element_lst:
+            return item
+        else:
+            raise AttributeError
+
+    def __setattr__(self, key, value):
+        if key in self._element_lst:
+            self._potential_dict[key] = value
+        else:
+            raise AttributeError
+
+    def to_dict(self):
+        return self._potential_dict
+
+    def __repr__(self):
+        return self._potential_dict.__repr__()

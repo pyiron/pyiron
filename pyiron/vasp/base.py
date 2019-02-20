@@ -11,7 +11,7 @@ import numpy as np
 import tables
 
 from pyiron.dft.job.generic import GenericDFTJob
-from pyiron.vasp.potential import VaspPotentialFile
+from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentialSetter
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
@@ -78,16 +78,34 @@ class VaspBase(GenericDFTJob):
         self.input = Input()
         self.input.incar["SYSTEM"] = self.job_name
         self._output_parser = Output()
-        self._potential = VaspPotentialFile(xc=self.input.potcar["xc"])
+        self._potential = VaspPotentialSetter([])
         self._compress_by_default = True
+
+    @property
+    def structure(self):
+        """
+
+        Returns:
+
+        """
+        return GenericDFTJob.structure.fget(self)
+
+    @structure.setter
+    def structure(self, structure):
+        """
+
+        Args:
+            structure:
+
+        Returns:
+
+        """
+        GenericDFTJob.structure.fset(self, structure)
+        self._potential = VaspPotentialSetter(element_lst=structure.get_species_symbols().tolist())
 
     @property
     def potential(self):
         return self._potential
-
-    @potential.setter
-    def potential(self, val):
-        self._potential = val
 
     @property
     def plane_wave_cutoff(self):
@@ -219,6 +237,28 @@ class VaspBase(GenericDFTJob):
         raise NotImplementedError("The fix_symmetry property is not implemented for this code. "
                                   "Instead use ham.input.incar['ISYM'].")
 
+    @property
+    def potential_available(self):
+        return VaspPotential()
+
+    @property
+    def potential_view(self):
+        if self.structure is None:
+            raise ValueError("Can't list potentials unless a structure is set")
+        else:
+            return VaspPotentialFile(xc=self.input.potcar['xc']).find(self.structure.get_species_symbols().tolist())
+
+    @property
+    def potential_list(self):
+        if self.structure is None:
+            raise ValueError("Can't list potentials unless a structure is set")
+        else:
+            df = VaspPotentialFile(xc=self.input.potcar['xc']).find(self.structure.get_species_symbols().tolist())
+            if len(df) != 0:
+                return df['Name']
+            else:
+                return []
+
     # Compatibility functions
     def write_input(self):
         """
@@ -226,6 +266,7 @@ class VaspBase(GenericDFTJob):
         """
         if self.input.incar['SYSTEM'] == 'pyiron_jobname':
             self.input.incar['SYSTEM'] = self.job_name
+        modified_elements = {key: value for key, value in self._potential.to_dict().items() if value is not None}
         self.write_magmoms()
         self.set_coulomb_interactions()
         if "CONTCAR" in self.restart_file_dict.keys():
@@ -236,7 +277,9 @@ class VaspBase(GenericDFTJob):
                 else:
                     self.logger.info(
                         "The POSCAR file will be overwritten by the CONTCAR file specified in restart_file_list.")
-        self.input.write(structure=self.structure, directory=self.working_directory)
+        self.input.write(structure=self.structure,
+                         directory=self.working_directory,
+                         modified_elements=modified_elements)
 
     # define routines that collect all output files
     def collect_output(self):
@@ -1048,12 +1091,9 @@ class VaspBase(GenericDFTJob):
         Lists all the possible POTCAR files for the elements in the structure depending on the XC functional
 
         Returns:
-            pyiron.vasp.potential.VaspPotentialFile: A pandas datafrome like object
+           list: a list of available potentials
         """
-        if self.structure is None:
-            raise ValueError("Can't list potentials unless a structure is set")
-        else:
-            return VaspPotentialFile(xc=self.input.potcar['xc']).find(self.structure.get_species_symbols().tolist())
+        return self.potential_list()
 
     def __del__(self):
         pass
@@ -1086,7 +1126,7 @@ class Input:
         self.kpoints = Kpoints(table_name="kpoints")
         self.potcar = Potcar(table_name="potcar")
 
-    def write(self, structure, directory=None):
+    def write(self, structure, modified_elements, directory=None):
         """
         Writes all the input files to a specified directory
 
@@ -1096,7 +1136,7 @@ class Input:
         """
         self.incar.write_file(file_name="INCAR", cwd=directory)
         self.kpoints.write_file(file_name="KPOINTS", cwd=directory)
-        self.potcar.potcar_set_structure(structure)
+        self.potcar.potcar_set_structure(structure, modified_elements)
         self.potcar.write_file(file_name="POTCAR", cwd=directory)
         # Write the species info in the POSCAR file only if there are no user defined species
         is_user_defined = list()
@@ -1558,11 +1598,13 @@ class Potcar(GenericParameters):
         self.max_cutoff_lst = list()
         self.el_path_lst = list()
         self.el_path_dict = dict()
+        self.modified_elements = dict()
 
-    def potcar_set_structure(self, structure):
+    def potcar_set_structure(self, structure, modified_elements):
         self._structure = structure
         self._set_default_path_dict()
         self._set_potential_paths()
+        self.modified_elements = modified_elements
 
     def modify(self, **modify):
         if "xc" in modify:
@@ -1633,7 +1675,10 @@ class Potcar(GenericParameters):
                 self._dataset["Parameter"].append("pot_" + str(i))
                 self._dataset["Value"].append(el_path)
                 self._dataset["Comment"].append("")
-            self.el_path_lst.append(el_path)
+            if el_obj.Abbreviation in self.modified_elements.keys():
+                self.el_path_lst.append(self.modified_elements[el_obj.Abbreviation])
+            else:
+                self.el_path_lst.append(el_path)
 
     def _find_potential_file(self, file_name=None, xc=None, path=None):
         if path is not None:
