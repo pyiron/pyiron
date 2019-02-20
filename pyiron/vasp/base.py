@@ -889,7 +889,8 @@ class VaspBase(GenericDFTJob):
 
         """
         if not self.status.finished and self.structure is not None:
-            return sum([self.potential.find_default(el).n_elect.values[-1] * n_atoms
+            potential = VaspPotentialFile(xc=self.input.potcar['xc'])
+            return sum([potential.find_default(el).n_elect.values[-1] * n_atoms
                         for el, n_atoms in self.structure.get_parent_basis().get_number_species_atoms().items()])
         else:
             return self["output/generic/dft/n_elect"]
