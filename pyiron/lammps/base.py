@@ -116,8 +116,8 @@ class LammpsBase(AtomisticGenericJob):
         self.input.potential.remove_structure_block()
 
     @property
-    def potential_availabe(self):
-        return PotentialAvailable(self)
+    def potential_available(self):
+        return PotentialAvailable(list_of_potentials=self.potential_list)
 
     @property
     def potential_list(self):
