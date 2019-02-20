@@ -117,7 +117,7 @@ class LammpsBase(AtomisticGenericJob):
 
     @property
     def potential_availabe(self):
-        return PotentialAvailable(self.list_potentials())
+        return PotentialAvailable(self)
 
     @property
     def potential_list(self):

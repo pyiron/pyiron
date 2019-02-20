@@ -162,12 +162,16 @@ class LammpsPotentialFile(PotentialAbstract):
 
 
 class PotentialAvailable(object):
-    def __init__(self, list_of_potentials):
-        self._list_of_potentials = list_of_potentials
+    def __init__(self, job):
+        self._list_of_potentials = job.potential_list
+        self._job = job
 
     def __getattr__(self, name):
         if name in self._list_of_potentials:
-            return name
+            self._job.potential = name
+            print('The ' + name + ' was set.')
+            df = self._job.potential_view
+            return df[df['Name'] == name]
         else:
             raise AttributeError
 
