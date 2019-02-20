@@ -2,7 +2,9 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
+import os
 import pandas
+from pyiron.base.settings.generic import Settings
 from pyiron.atomistics.job.potentials import PotentialAbstract
 
 __author__ = "Jan Janssen"
@@ -13,6 +15,8 @@ __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
 __status__ = "development"
 __date__ = "Sep 1, 2017"
+
+s = Settings()
 
 
 class VaspPotentialAbstract(PotentialAbstract):
@@ -81,6 +85,13 @@ class VaspPotentialAbstract(PotentialAbstract):
         else:
             return []
 
+    def _return_potential_file(self, file_name):
+        for resource_path in s.resource_paths:
+            resource_path_potcar = os.path.join(resource_path, 'vasp', 'potentials', file_name)
+            if os.path.exists(resource_path_potcar):
+                return resource_path_potcar
+        return None
+
     def __dir__(self):
         return self.list_potential_names()
 
@@ -88,7 +99,7 @@ class VaspPotentialAbstract(PotentialAbstract):
         item_replace = item.replace('_gga_pbe', '-gga-pbe').replace('_lda', '-lda')
         if item_replace in self.list_potential_names():
             df = self.list()
-            return df[df['Name'] == item_replace]
+            return self._return_potential_file(file_name=list(df[df['Name'] == item_replace]['Filename'])[0][0])
         selected_atoms = self._selected_atoms + [item]
         return VaspPotentialAbstract(potential_df=self._potential_df, default_df=self._default_df,
                                      selected_atoms=selected_atoms)
