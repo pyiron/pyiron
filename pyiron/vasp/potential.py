@@ -69,9 +69,26 @@ class VaspPotentialAbstract(PotentialAbstract):
         return pandas.concat([super(VaspPotentialAbstract, self).find({atom}) for atom in merged_lst])
 
     def list(self):
-        return pandas.concat([super(VaspPotentialAbstract, self).find({atom}) for atom in self._selected_atoms])
+        if len(self._selected_atoms) != 0:
+            return pandas.concat([super(VaspPotentialAbstract, self).find({atom}) for atom in self._selected_atoms])
+        else:
+            return pandas.DataFrame({})
+
+    def list_potential_names(self):
+        df = self.list()
+        if len(df) != 0:
+            return list(self.list()['Name'])
+        else:
+            return []
+
+    def __dir__(self):
+        return self.list_potential_names()
 
     def __getitem__(self, item):
+        item_replace = item.replace('_gga_pbe', '-gga-pbe').replace('_lda', '-lda')
+        if item_replace in self.list_potential_names():
+            df = self.list()
+            return df[df['Name'] == item_replace]
         selected_atoms = self._selected_atoms + [item]
         return VaspPotentialAbstract(potential_df=self._potential_df, default_df=self._default_df,
                                      selected_atoms=selected_atoms)
