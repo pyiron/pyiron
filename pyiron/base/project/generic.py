@@ -656,7 +656,7 @@ class Project(ProjectPath):
         """
         df = queue_table(job_ids=[], project_only=False)
         if len(df) != 0:
-            return pandas.DataFrame([self.db.get_item_by_id(int(str(queue_ID).replace('pi_', '')))
+            return pandas.DataFrame([self.db.get_item_by_id(int(str(queue_ID).replace('pi_', '').replace('.sh', '')))
                                      for queue_ID in df['jobname']
                                      if str(queue_ID).startswith('pi_')])
         else:
