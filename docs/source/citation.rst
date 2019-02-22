@@ -6,7 +6,7 @@ Citing
 The pyiron integrated development environment (IDE) for computational materials science - pyiron IDE - is based on a flexible plugin infrastructure. So depending on which modules are used please cite the corresponding papers.
 
 *****************************
-pyiron paper (in preparation)
+pyiron paper (accepted)
 *****************************
 
 .. code-block:: bibtex 
@@ -14,6 +14,9 @@ pyiron paper (in preparation)
   @article{pyiron-paper,
     author={Jan Janssen and Sudarsan Surendralal and Yury Lysogorskiy and Mira Todorova and Tilmann Hickel and Ralf Drautz and Jörg Neugebauer},
     title={pyiron: An integrated development environment for computational materials science},
+    journal={Computational Materials Science},
+    volume={161},
+    url={https://doi.org/10.1016/j.commatsci.2018.07.043},
     year={2018}
   }
 
