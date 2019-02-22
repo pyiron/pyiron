@@ -1,9 +1,6 @@
 # ngl install 
-jupyter labextension install @jupyter-widgets/jupyterlab-manager@0.36.0 --no-build
-git clone --single-branch -b jupyterlab https://github.com/jan-janssen/nglview.git ${HOME}/nglview
-jupyter labextension install ~/nglview/js --no-build
-jupyter lab build
-rm -rf ${HOME}/nglview
+jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build
+jupyter labextension install nglview-js-widgets@1.1.9
 
 # pyiron setup
 echo "[DEFAULT]\nTOP_LEVEL_DIRS = ${HOME}\nRESOURCE_PATHS = ${HOME}/resources" > ${HOME}/.pyiron

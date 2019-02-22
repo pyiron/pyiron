@@ -422,7 +422,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
             hdf_dict = hdf["server"]
         self._user = hdf_dict["user"]
         self._host = hdf_dict["host"]
-        self.run_mode = hdf_dict["run_mode"]
+        self._run_mode.mode = hdf_dict["run_mode"]
         if self.run_mode.queue:
             self._active_queue = hdf_dict["queue"]
             if "qid" in hdf_dict.keys():
