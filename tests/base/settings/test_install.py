@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 from pyiron.base.settings.install import command_line
 import unittest
 
@@ -29,6 +30,14 @@ class TestInstall(unittest.TestCase):
         self.assertIn('RESOURCE_PATHS', content[2])
         self.assertTrue(os.path.exists(os.path.join(self.execution_path, 'project')))
         self.assertTrue(os.path.exists(os.path.join(self.execution_path, 'resources')))
+
+    def test_install_help(self):
+        out = subprocess.check_output(['python', self.install_script, '--error'],
+                                      cwd=self.execution_path, shell=False, universal_newlines=True)
+        self.assertEqual(out, 'install.py -c <config_file> -p <project_path> -r <resource_dir> -u <url>\n')
+        out = subprocess.check_output(['python', self.install_script, '-h'],
+                                      cwd=self.execution_path, shell=False, universal_newlines=True)
+        self.assertEqual(out, 'install.py -c <config_file> -p <project_path> -r <resource_dir> -u <url>\n')
 
 
 if __name__ == '__main__':
