@@ -5,11 +5,11 @@
 import numpy as np
 import os
 from subprocess import Popen, PIPE
-import warnings
 
 from pyiron.vasp.outcar import Outcar
 from pyiron.vasp.base import VaspBase
 from pyiron.vasp.structure import vasp_sorter
+from pyiron.vasp.potential import VaspPotentialSetter
 from pyiron.vasp.base import GenericOutput as GenericOutputBase
 from pyiron.vasp.base import DFTOutput as DFTOutputBase
 from pyiron.vasp.base import Output as OutputBase
@@ -48,6 +48,8 @@ class VaspInteractive(VaspBase, GenericInteractive):
     @structure.setter
     def structure(self, structure):
         GenericInteractive.structure.fset(self, structure)
+        if structure is not None:
+            self._potential = VaspPotentialSetter(element_lst=structure.get_species_symbols().tolist())
 
     @property
     def interactive_enforce_structure_reset(self):

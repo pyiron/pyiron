@@ -3,7 +3,7 @@ import os
 from pyiron.atomistics.structure.atoms import CrystalStructure
 from pyiron.vasp.base import Input, Output
 from pyiron.base.project.generic import Project
-from pyiron.vasp.potential import VaspPotentialFile
+from pyiron.vasp.potential import VaspPotentialSetter
 
 __author__ = "surendralal"
 
@@ -30,7 +30,7 @@ class TestVasp(unittest.TestCase):
         self.assertEqual(self.job._sorted_indices, None)
         self.assertIsInstance(self.job.input, Input)
         self.assertIsInstance(self.job._output_parser, Output)
-        self.assertIsInstance(self.job._potential, VaspPotentialFile)
+        self.assertIsInstance(self.job._potential, VaspPotentialSetter)
         self.assertTrue(self.job._compress_by_default)
 
     def test_potential(self):
