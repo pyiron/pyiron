@@ -114,6 +114,7 @@ def command_line(argv):
     config_file_name = '~/.pyiron'
     zip_file = "resources.zip"
     resource_path = "~/pyiron/resources"
+    project_path = "~/pyiron/projects"
     giturl_for_zip_file = "https://github.com/pyiron/pyiron-resources/archive/master.zip"
     git_folder_name = "pyiron-resources-master"
     try:
