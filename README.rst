@@ -96,5 +96,8 @@ If you use pyiron in your scientific work, please consider citing::
   @article{pyiron-paper,
     author={Jan Janssen and Sudarsan Surendralal and Yury Lysogorskiy and Mira Todorova and Tilmann Hickel and Ralf Drautz and Jörg Neugebauer},
     title={pyiron: An integrated development environment for computational materials science},
+    journal={Computational Materials Science},
+    volume={161},
+    url={https://doi.org/10.1016/j.commatsci.2018.07.043},
     year={2018}
   }
