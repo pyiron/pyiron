@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import os
+import getopt
 from zipfile import ZipFile
 from shutil import copytree, rmtree
 import tempfile
@@ -70,3 +71,35 @@ def install_pyiron(config_file_name='~/.pyiron',
                         resource_directory=resource_directory,
                         giturl_for_zip_file=giturl_for_zip_file,
                         git_folder_name=git_folder_name)
+
+
+def command_line(argv):
+    config_file_name = '~/.pyiron'
+    zip_file = "resources.zip"
+    resource_directory = "~/pyiron/resources"
+    giturl_for_zip_file = "https://github.com/pyiron/pyiron-resources/archive/master.zip"
+    git_folder_name = "pyiron-resources-master"
+    try:
+        opts, args = getopt.getopt(argv, "c:r:u:h", ["config=", "resource_dir=", "url="])
+    except getopt.GetoptError:
+        print('install.py -c <config_file> -r <resource_dir> -u <url>')
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print('install.py -c <config_file> -r <resource_dir> -u <url>')
+            sys.exit()
+        elif opt in ("-c", "--config"):
+            config_file_name = arg
+        elif opt in ("-r", "--resource_dir"):
+            resource_directory = arg
+        elif opt in ("-u", "--url"):
+            giturl_for_zip_file = arg
+    install_pyiron(config_file_name=config_file_name,
+                   zip_file=zip_file,
+                   resource_directory=resource_directory,
+                   giturl_for_zip_file=giturl_for_zip_file,
+                   git_folder_name=git_folder_name)
+
+
+if __name__ == "__main__":
+    command_line(sys.argv[1:])
