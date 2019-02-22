@@ -167,7 +167,7 @@ class VaspPotential(object):
     """
     The Potential class is derived from the PotentialAbstract class, but instead of loading the potentials from a list,
     the potentials are loaded from a file.
-
+i
     Args:
         path (str): path to the potential list
     """
