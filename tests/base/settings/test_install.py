@@ -1,6 +1,6 @@
 import os
 import shutil
-import subprocess
+from pyiron.base.settings.install import command_line
 import unittest
 
 
@@ -18,11 +18,10 @@ class TestInstall(unittest.TestCase):
         os.remove(os.path.join(execution_path, 'config'))
 
     def test_install(self):
-        subprocess.check_output(['python', self.install_script,
-                                 '-c', os.path.join(self.execution_path, 'config'),
-                                 '-r', os.path.join(self.execution_path, 'resources'),
-                                 '-p', os.path.join(self.execution_path, 'project')],
-                                cwd=self.execution_path, shell=False)
+        command_line(['-c', os.path.join(self.execution_path, 'config'),
+                      '-r', os.path.join(self.execution_path, 'resources'),
+                      '-p', os.path.join(self.execution_path, 'project')])
+
         with open(os.path.join(self.execution_path, 'config'), 'r') as f:
             content = f.readlines()
         self.assertEqual(content[0], '[DEFAULT]\n')
