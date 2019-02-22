@@ -94,7 +94,7 @@ class VaspPotentialAbstract(PotentialAbstract):
         return None
 
     def __dir__(self):
-        return [val.replace('_gga_pbe', '-gga-pbe').replace('_lda', '-lda') for val in self.list_potential_names()]
+        return [val.replace('-', '_') for val in self.list_potential_names()]
 
     def __getitem__(self, item):
         item_replace = item.replace('_gga_pbe', '-gga-pbe').replace('_lda', '-lda')
