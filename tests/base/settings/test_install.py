@@ -15,7 +15,7 @@ class TestInstall(unittest.TestCase):
         execution_path = os.path.dirname(os.path.abspath(__file__))
         shutil.rmtree(os.path.join(execution_path, 'resources'))
         shutil.rmtree(os.path.join(execution_path, 'project'))
-        os.remove('config')
+        os.remove(os.path.join(execution_path, 'config'))
 
     def test_install(self):
         subprocess.check_output(['python', self.install_script,
