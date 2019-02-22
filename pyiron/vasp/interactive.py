@@ -74,7 +74,7 @@ class VaspInteractive(VaspBase, GenericInteractive):
                 self._logger.warn('VASP calculation exited before interactive_close() - already converged?')
             for key in self.interactive_cache.keys():
                 if isinstance(self.interactive_cache[key], list):
-                    self.interactive_cache[key] = self.interactive_cache[key][:-2]
+                    self.interactive_cache[key] = self.interactive_cache[key]
             super(VaspInteractive, self).interactive_close()
             self.status.collect = True
             self._output_parser = Output()
@@ -268,16 +268,10 @@ class GenericOutput(GenericOutputBase):
         with hdf.open("generic") as hdf_go:
             # hdf_go["description"] = self.description
             for key, val in self.log_dict.items():
-                if isinstance(val, list) or isinstance(val, np.ndarray):
-                    hdf_go[key] = val[:-1]
-                else:
-                    hdf_go[key] = val
+                hdf_go[key] = val
             with hdf_go.open("dft") as hdf_dft:
                 for key, val in self.dft_log_dict.items():
-                    if isinstance(val, list) or isinstance(val, np.ndarray):
-                        hdf_dft[key] = val[:-1]
-                    else:
-                        hdf_dft[key] = val
+                    hdf_dft[key] = val
                 if self.bands.eigenvalue_matrix is not None:
                     self.bands.to_hdf(hdf_dft, "bands")
 
@@ -302,9 +296,5 @@ class DFTOutput(DFTOutputBase):
 
         """
         with hdf.open("dft") as hdf_dft:
-            # hdf_go["description"] = self.description
             for key, val in self.log_dict.items():
-                if isinstance(val, list) or isinstance(val, np.ndarray):
-                    hdf_dft[key] = val[:-1]
-                else:
-                    hdf_dft[key] = val
+                hdf_dft[key] = val
