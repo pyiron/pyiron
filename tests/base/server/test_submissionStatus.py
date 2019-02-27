@@ -26,8 +26,8 @@ class TestSubmissionStatus(unittest.TestCase):
         cls.job_id = cls.database.add_item_dict(par_dict)
         cls.sub_status_database = SubmissionStatus(db=cls.database, job_id=cls.job_id)
 
-    def doCleanups(self):
-        self.database.conn.close()
+    @classmethod
+    def tearDownClass(cls):
         os.remove('test_sub_status.db')
 
     def test_submit_next(self):

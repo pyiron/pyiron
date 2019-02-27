@@ -32,7 +32,6 @@ class TestJobStatus(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.database.conn.close()
         os.remove('test_job_status.db')
 
     def test_initialized(self):

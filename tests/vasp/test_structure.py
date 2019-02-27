@@ -25,7 +25,6 @@ class TestVaspStructure(unittest.TestCase):
         cell = 10.0 * np.eye(3)
         pos = 0.5 * np.ones((3, 3)) - 0.5 * np.eye(3)
         cls.structure = Atoms(numbers=atom_numbers, cell=cell, positions=pos)
-        cls.assertIsInstance(cls.structure, Atoms)
         cls.structure.repeat([2, 2, 2])
         cls.element_list = cls.structure.get_chemical_elements()
 

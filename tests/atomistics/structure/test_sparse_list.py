@@ -3,10 +3,9 @@ from pyiron.atomistics.structure.sparse_list import SparseList, SparseArray
 
 
 class TestSparseList(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.aList = SparseList({1: True, 4: True}, length=7)
-        cls.cList = SparseList({1: 0.2, 3: 0.5}, default=0, length=5)
+    def setUp(self):
+        self.aList = SparseList({1: True, 4: True}, length=7)
+        self.cList = SparseList({1: 0.2, 3: 0.5}, default=0, length=5)
 
     def test__len__(self):
         self.assertEqual(len(self.aList), 7)

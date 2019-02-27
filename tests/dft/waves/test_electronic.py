@@ -25,7 +25,6 @@ class TestElectronicStructure(unittest.TestCase):
         file_list = ["vasprun_1.xml", "vasprun_2.xml"]
         for f in file_list:
             vp = Vasprun()
-            cls.assertIsInstance(vp.vasprun_dict, dict)
             direc = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                                  "../../static/vasprun_samples"))
             filename = posixpath.join(direc, f)
