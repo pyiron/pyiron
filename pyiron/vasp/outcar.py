@@ -148,7 +148,8 @@ class Outcar(object):
         if n_atoms is None:
             n_atoms = self.get_number_of_atoms(filename=filename, lines=lines)
         trigger_indices = _get_trigger(lines=lines, trigger="TOTAL-FORCE (eV/Angst)")
-        return self._get_positions_and_forces_parser(lines=lines, trigger_indices=trigger_indices, n_atoms=n_atoms)
+        return self._get_positions_and_forces_parser(lines=lines, trigger_indices=trigger_indices, n_atoms=n_atoms,
+                                                     pos_flag=True, force_flag=True)
 
     def get_positions(self, filename="OUTCAR", lines=None, n_atoms=None):
 
@@ -168,7 +169,8 @@ class Outcar(object):
         if n_atoms is None:
             n_atoms = self.get_number_of_atoms(filename=filename, lines=lines)
         trigger_indices = _get_trigger(lines=lines, trigger="TOTAL-FORCE (eV/Angst)")
-        return self._get_positions_parser(lines=lines, trigger_indices=trigger_indices, n_atoms=n_atoms)
+        return self._get_positions_and_forces_parser(lines=lines, trigger_indices=trigger_indices, n_atoms=n_atoms,
+                                                     pos_flag=True, force_flag=False)
 
     def get_forces(self, filename="OUTCAR", lines=None, n_atoms=None):
         """
@@ -188,7 +190,8 @@ class Outcar(object):
         if n_atoms is None:
             n_atoms = self.get_number_of_atoms(filename=filename, lines=lines)
         trigger_indices = _get_trigger(lines=lines, trigger="TOTAL-FORCE (eV/Angst)")
-        return self._get_forces_parser(lines, trigger_indices, n_atoms)
+        return self._get_positions_and_forces_parser(lines=lines, trigger_indices=trigger_indices, n_atoms=n_atoms,
+                                                     pos_flag=False, force_flag=True)
 
     def get_cells(self, filename="OUTCAR", lines=None):
         """
@@ -472,14 +475,12 @@ class Outcar(object):
         Returns:
             int: Mesh size
         """
-        trigger = "gives a total of "
         lines = _get_lines_from_file(filename=filename, lines=lines)
-        for i, line in enumerate(lines):
-            if trigger in line:
-                line_ngx = lines[i-2]
-                # Exclude all alphabets, and spaces. Then split based on '='
-                str_list = re.sub(r'[a-zA-Z]', r'', line_ngx.replace(" ", "").replace("\n", "")).split("=")
-                return np.prod([int(val) for val in str_list[1:]])
+        trigger_indices = _get_trigger(lines=lines, trigger="gives a total of ")
+        line_ngx = lines[trigger_indices[0]-2]
+        # Exclude all alphabets, and spaces. Then split based on '='
+        str_list = re.sub(r'[a-zA-Z]', r'', line_ngx.replace(" ", "").replace("\n", "")).split("=")
+        return np.prod([int(val) for val in str_list[1:]])
 
     @staticmethod
     def get_temperatures(filename="OUTCAR", lines=None):
@@ -679,14 +680,16 @@ class Outcar(object):
             raise ValueError()
 
     @staticmethod
-    def _get_positions_and_forces_parser(lines, trigger_indices, n_atoms):
+    def _get_positions_and_forces_parser(lines, trigger_indices, n_atoms, pos_flag=True, force_flag=True):
         """
-        Parser to get the forces and positions for every ionic step from the OUTCAR file
+        Parser to get the forces and or positions for every ionic step from the OUTCAR file
 
         Args:
             lines (list): lines read from the file
             trigger_indices (list): list of line indices where the trigger was found.
             n_atoms (int): number of atoms
+            pos_flag (bool): parse position
+            force_flag (bool): parse forces
 
         Returns:
             [positions, forces] (sequence)
@@ -704,63 +707,18 @@ class Outcar(object):
             for line in lines[j + 2: j + n_atoms + 2]:
                 line = line.strip()
                 line = _clean_line(line)
-                pos.append([float(l) for l in line.split()[0:3]])
-                force.append([float(l) for l in line.split()[3:]])
+                if pos_flag:
+                    pos.append([float(l) for l in line.split()[0:3]])
+                if force_flag:
+                    force.append([float(l) for l in line.split()[3:]])
             forces.append(force)
             positions.append(pos)
-        return np.array(positions), np.array(forces)
-
-    @staticmethod
-    def _get_positions_parser(lines, trigger_indices, n_atoms):
-        """
-        Parser to get the forces and positions for every ionic step from the OUTCAR file
-
-        Args:
-            lines (list): lines read from the file
-            trigger_indices (list): list of line indices where the trigger was found.
-            n_atoms (int): number of atoms
-
-        Returns:
-            numpy.ndarray: A Nx3xM array of positions in $\AA$
-
-            where N is the number of atoms and M is the number of time steps
-
-        """
-        positions = []
-        for j in trigger_indices:
-            pos = []
-            for line in lines[j + 2: j + n_atoms + 2]:
-                line = line.strip()
-                line = _clean_line(line)
-                pos.append([float(l) for l in line.split()[0:3]])
-            positions.append(pos)
-        return np.array(positions)
-
-    @staticmethod
-    def _get_forces_parser(lines, trigger_indices, n_atoms):
-        """
-        Parser to get the forces and positions for every ionic step from the OUTCAR file
-
-        Args:
-            lines (list): lines read from the file
-            trigger_indices (list): list of line indices where the trigger was found.
-            n_atoms (int): number of atoms
-
-        Returns:
-            numpy.ndarray: A Nx3xM array of forces in $eV / \AA$
-
-            where N is the number of atoms and M is the number of time steps
-
-        """
-        forces = []
-        for j in trigger_indices:
-            force = []
-            for line in lines[j + 2: j + n_atoms + 2]:
-                line = line.strip()
-                line = _clean_line(line)
-                force.append([float(l) for l in line.split()[3:]])
-            forces.append(force)
-        return np.array(forces)
+        if pos_flag and force_flag:
+            return np.array(positions), np.array(forces)
+        elif pos_flag:
+            return np.array(positions)
+        elif force_flag:
+            return np.array(forces)
 
     @staticmethod
     def _get_cells_praser(lines, trigger_indices):
