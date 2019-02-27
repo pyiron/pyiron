@@ -50,27 +50,21 @@ class TestFileHDFio(unittest.TestCase):
         pass
 
     def test_list_all(self):
-        pass
+        empty_file_dict = self.empty_hdf5.list_all()
+        self.assertEqual(empty_file_dict['groups'], [])
+        self.assertEqual(empty_file_dict['nodes'], [])
 
     def test_list_nodes(self):
-        pass
+        self.assertEqual(self.empty_hdf5.list_nodes(), [])
 
     def test_list_groups(self):
-        pass
+        self.assertEqual(self.empty_hdf5.list_groups(), [])
 
     def test_listdirs(self):
-        pass
+        self.assertEqual(self.empty_hdf5.listdirs(), [])
 
     def test_show_hdf(self):
         pass
-
-    # def test_is_open(self):
-    #     self.assertFalse(self.empty_hdf5.is_open)
-    #     self.assertFalse(self.full_hdf5.is_open)
-    #     # with self.empty_hdf5.open(h5_rel_path='test') as empty_test:
-    #     #     self.assertTrue(empty_test.is_open)
-    #     # with self.full_hdf5.open(h5_rel_path='.') as full_test:
-    #     #     self.assertTrue(full_test.is_open)
 
     def test_is_empty(self):
         self.assertTrue(self.empty_hdf5.is_empty)
