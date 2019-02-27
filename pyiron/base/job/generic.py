@@ -527,6 +527,14 @@ class GenericJob(JobCore):
         """
         pass
 
+    def check_setup(self):
+        """
+        Checks whether certain parameters (such as plane wave cutoff radius in DFT) are changed from the pyiron standard
+        values to allow for a physically meaningful results. This function is called manually or only when the job is
+        submitted to the queueing system.
+        """
+        pass
+
     def reset_job_id(self, job_id=None):
         """
         Reset the job id sets the job_id to None in the GenericJob as well as all connected modules like JobStatus.
@@ -997,6 +1005,8 @@ class GenericJob(JobCore):
             debug (bool): Debug Mode
         """
         self.validate_ready_to_run()
+        if self.server.run_mode.queue:
+            self.check_setup()
         if self.check_if_job_exists():
             print('job exists already and therefore was not created!')
         else:

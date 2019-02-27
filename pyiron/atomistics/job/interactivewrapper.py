@@ -74,6 +74,17 @@ class InteractiveWrapper(GenericMaster):
         """
         self.ref_job.validate_ready_to_run()
 
+    def check_setup(self):
+        """
+        Checks whether certain parameters (such as plane wave cutoff radius in DFT) are changed from the pyiron standard
+        values to allow for a physically meaningful results. This function is called manually or only when the job is
+        submitted to the queueing system.
+        """
+        try:
+            self.ref_job.check_setup()
+        except AttributeError:
+            pass
+
     def ref_job_initialize(self):
         """
 
