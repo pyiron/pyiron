@@ -137,6 +137,7 @@ class Outcar(object):
         Args:
             filename (str): Filename of the OUTCAR file to parse
             lines (list/None): lines read from the file
+            n_atoms (int/None): number of ions in OUTCAR
 
         Returns:
             [positions, forces] (sequence)
@@ -160,6 +161,7 @@ class Outcar(object):
         Args:
             filename (str): Filename of the OUTCAR file to parse
             lines (list/None): lines read from the file
+            n_atoms (int/None): number of ions in OUTCAR
 
         Returns:
             numpy.ndarray: A Nx3xM array of positions in $\AA$
@@ -180,6 +182,7 @@ class Outcar(object):
         Args:
             filename (str): Filename of the OUTCAR file to parse
             lines (list/None): lines read from the file
+            n_atoms (int/None): number of ions in OUTCAR
 
         Returns:
 
