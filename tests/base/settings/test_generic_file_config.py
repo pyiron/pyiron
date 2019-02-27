@@ -4,10 +4,12 @@ import unittest
 
 
 class TestConfigSettingsStatic(unittest.TestCase):
-    def setUp(self):
-        self.resource_path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../static')).replace('\\', '/')
-        self.project_path = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
-        self.file_config = Settings()
+    @classmethod
+    def setUpClass(cls):
+        cls.resource_path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                         '../../static')).replace('\\', '/')
+        cls.project_path = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
+        cls.file_config = Settings()
 
     # def test_file_db_connection_name(self):
     #     self.assertEqual(self.file_config.db_connection_name, 'DEFAULT')

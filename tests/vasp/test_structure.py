@@ -15,18 +15,18 @@ class TestVaspStructure(unittest.TestCase):
     Testing routines in the vasp/structure module.
     """
 
-    def setUp(self):
-        self.file_location = os.path.dirname(os.path.abspath(__file__))
-        poscar_directory = os.path.join(self.file_location, "../static/vasp_test_files/poscar_samples")
+    @classmethod
+    def setUpClass(cls):
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        poscar_directory = os.path.join(cls.file_location, "../static/vasp_test_files/poscar_samples")
         file_list = os.listdir(poscar_directory)
-        self.file_list = [posixpath.join(poscar_directory, f) for f in file_list]
+        cls.file_list = [posixpath.join(poscar_directory, f) for f in file_list]
         atom_numbers = np.random.randint(low=1, high=99, size=(1, 3)).flatten()
         cell = 10.0 * np.eye(3)
         pos = 0.5 * np.ones((3, 3)) - 0.5 * np.eye(3)
-        self.structure = Atoms(numbers=atom_numbers, cell=cell, positions=pos)
-        self.assertIsInstance(self.structure, Atoms)
-        self.structure.repeat([2, 2, 2])
-        self.element_list = self.structure.get_chemical_elements()
+        cls.structure = Atoms(numbers=atom_numbers, cell=cell, positions=pos)
+        cls.structure.repeat([2, 2, 2])
+        cls.element_list = cls.structure.get_chemical_elements()
 
     def test_atoms_from_string(self):
         for poscar_file in self.file_list:

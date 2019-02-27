@@ -4,11 +4,12 @@ from pyiron.atomistics.structure.periodic_table import PeriodicTable
 
 
 class TestAtom(unittest.TestCase):
-    def setUp(self):
-        self.Fe_atom = Atom("Fe")
+    @classmethod
+    def setUpClass(cls):
+        cls.Fe_atom = Atom("Fe")
         pse = PeriodicTable()
-        Al = pse.element("Al", spin=-1)
-        self.Al_atom = Atom(Al)
+        al = pse.element("Al", spin=-1)
+        cls.Al_atom = Atom(al)
 
     def test__init__(self):
         self.Fe_atom.rel = True

@@ -15,17 +15,17 @@ Unittests for the pyiron.objects.electronic module
 
 class TestDos(unittest.TestCase):
 
-    def setUp(self):
-        self.es_list = list()
+    @classmethod
+    def setUpClass(cls):
+        cls.es_list = list()
         file_list = ["vasprun_1.xml", "vasprun_2.xml"]
         for f in file_list:
             vp = Vasprun()
-            self.assertIsInstance(vp.vasprun_dict, dict)
             direc = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../static/vasprun_samples"))
             filename = posixpath.join(direc, f)
             vp.from_file(filename)
             es = vp.get_electronic_structure()
-            self.es_list.append(es)
+            cls.es_list.append(es)
 
     def test_init_from_es(self):
         for es in self.es_list:
