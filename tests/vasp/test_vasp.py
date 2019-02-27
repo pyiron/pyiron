@@ -86,6 +86,7 @@ class TestVasp(unittest.TestCase):
         self.assertEqual(self.job.structure, atoms)
 
     def test_list_potenitals(self):
+        self.job.structure = None
         self.assertRaises(ValueError, self.job.list_potentials)
 
 
