@@ -4,11 +4,12 @@ import unittest
 
 
 class TestFileHDFio(unittest.TestCase):
-    def setUp(self):
-        self.current_dir = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
-        self.empty_hdf5 = FileHDFio(file_name=self.current_dir + '/filehdfio_empty.h5')
-        self.full_hdf5 = FileHDFio(file_name=self.current_dir + '/filehdfio_full.h5')
-        self.es_hdf5 = FileHDFio(file_name=self.current_dir + "/../../static/dft/es_hdf.h5")
+    @classmethod
+    def setUpClass(cls):
+        cls.current_dir = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
+        cls.empty_hdf5 = FileHDFio(file_name=cls.current_dir + '/filehdfio_empty.h5')
+        cls.full_hdf5 = FileHDFio(file_name=cls.current_dir + '/filehdfio_full.h5')
+        cls.es_hdf5 = FileHDFio(file_name=cls.current_dir + "/../../static/dft/es_hdf.h5")
 
     def doCleanups(self):
         # os.remove('filehdfio_empty.h5')

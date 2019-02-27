@@ -18,6 +18,20 @@ Unittests for the pyiron.objects.electronic module
 
 
 class TestElectronicStructure(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.es_list = list()
+        cls.es_obj = ElectronicStructure()
+        file_list = ["vasprun_1.xml", "vasprun_2.xml"]
+        for f in file_list:
+            vp = Vasprun()
+            cls.assertIsInstance(vp.vasprun_dict, dict)
+            direc = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                 "../../static/vasprun_samples"))
+            filename = posixpath.join(direc, f)
+            vp.from_file(filename)
+            es = vp.get_electronic_structure()
+            cls.es_list.append(es)
 
     @classmethod
     def tearDownClass(cls):
@@ -25,20 +39,6 @@ class TestElectronicStructure(unittest.TestCase):
             file_location = os.path.dirname(os.path.abspath(__file__))
             if os.path.isfile(os.path.join(file_location, "../../static/dft/test_es_hdf.h5")):
                 os.remove(os.path.join(file_location, "../../static/dft/test_es_hdf.h5"))
-
-    def setUp(self):
-        self.es_list = list()
-        self.es_obj = ElectronicStructure()
-        file_list = ["vasprun_1.xml", "vasprun_2.xml"]
-        for f in file_list:
-            vp = Vasprun()
-            self.assertIsInstance(vp.vasprun_dict, dict)
-            direc = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                 "../../static/vasprun_samples"))
-            filename = posixpath.join(direc, f)
-            vp.from_file(filename)
-            es = vp.get_electronic_structure()
-            self.es_list.append(es)
 
     def test_init(self):
         for es in self.es_list:

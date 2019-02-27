@@ -12,8 +12,9 @@ class TestPeriodicTable(unittest.TestCase):
     TODO: add write and load to h5 (e.g. addElement needs respective changes in read/load routines)
     """
 
-    def setUp(self):
-        self.pse = PeriodicTable()
+    @classmethod
+    def setUpClass(cls):
+        cls.pse = PeriodicTable()
 
     def test_numbertechnic(self):
         el1 = self.pse.element(1)

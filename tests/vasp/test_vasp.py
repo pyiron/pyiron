@@ -13,10 +13,11 @@ class TestVasp(unittest.TestCase):
     Tests the pyiron.objects.hamilton.dft.vasp.Vasp class
     """
 
-    def setUp(self):
-        self.file_location = os.path.dirname(os.path.abspath(__file__))
-        self.project = Project(os.path.join(self.file_location, 'test_vasp'))
-        self.job = self.project.create_job("Vasp", "trial")
+    @classmethod
+    def setUpClass(cls):
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        cls.project = Project(os.path.join(cls.file_location, 'test_vasp'))
+        cls.job = cls.project.create_job("Vasp", "trial")
 
     @classmethod
     def tearDownClass(cls):

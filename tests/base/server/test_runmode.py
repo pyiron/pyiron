@@ -3,16 +3,17 @@ from pyiron.base.server.runmode import Runmode
 
 
 class TestRunmode(unittest.TestCase):
-    def setUp(self):
-        self.run_mode_default = Runmode()
-        self.run_mode_modal = Runmode()
-        self.run_mode_modal.mode = 'modal'
-        self.run_mode_non_modal = Runmode()
-        self.run_mode_non_modal.mode = 'non_modal'
-        self.run_mode_queue = Runmode()
-        self.run_mode_queue.mode = 'queue'
-        self.run_mode_manual = Runmode()
-        self.run_mode_manual.mode = 'manual'
+    @classmethod
+    def setUpClass(cls):
+        cls.run_mode_default = Runmode()
+        cls.run_mode_modal = Runmode()
+        cls.run_mode_modal.mode = 'modal'
+        cls.run_mode_non_modal = Runmode()
+        cls.run_mode_non_modal.mode = 'non_modal'
+        cls.run_mode_queue = Runmode()
+        cls.run_mode_queue.mode = 'queue'
+        cls.run_mode_manual = Runmode()
+        cls.run_mode_manual.mode = 'manual'
 
     def test_modal(self):
         self.assertTrue(self.run_mode_default.modal)

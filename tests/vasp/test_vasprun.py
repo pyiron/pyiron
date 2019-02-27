@@ -15,23 +15,24 @@ class TestVasprun(unittest.TestCase):
     Testing the Vasprun() module.
     """
 
-    def setUp(self):
-        self.file_location = os.path.dirname(os.path.abspath(__file__))
-        self.vp_list = list()
-        direc = os.path.join(self.file_location, "../static/vasp_test_files/vasprun_samples")
+    @classmethod
+    def setUpClass(cls):
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        cls.vp_list = list()
+        direc = os.path.join(cls.file_location, "../static/vasp_test_files/vasprun_samples")
         file_list = sorted(os.listdir(direc))
         del file_list[file_list.index("vasprun_spoilt.xml")]
-        self.num_species = [3, 1, 2, 2, 3, 4]
+        cls.num_species = [3, 1, 2, 2, 3, 4]
 
         for f in file_list:
             vp = Vasprun()
-            self.assertIsInstance(vp.vasprun_dict, dict)
+            cls.assertIsInstance(vp.vasprun_dict, dict)
             filename = posixpath.join(direc, f)
             vp.from_file(filename)
-            self.vp_list.append(vp)
+            cls.vp_list.append(vp)
         vp = Vasprun()
         filename = posixpath.join(direc, "vasprun_spoilt.xml")
-        self.assertRaises(VasprunError, vp.from_file, filename)
+        cls.assertRaises(VasprunError, vp.from_file, filename)
 
     def test_parse_generator(self):
         for vp in self.vp_list:

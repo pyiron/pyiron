@@ -12,11 +12,11 @@ Unittests for the pyiron.objects.volumetric module
 
 
 class TestVolumetricData(unittest.TestCase):
-
-    def setUp(self):
-        self.data_dict = dict()
-        self.data_dict["cubic"] = np.ones((100, 100, 100))
-        self.data_dict["non_cubic"] = np.zeros((200, 50, 100))
+    @classmethod
+    def setUpClass(cls):
+        cls.data_dict = dict()
+        cls.data_dict["cubic"] = np.ones((100, 100, 100))
+        cls.data_dict["non_cubic"] = np.zeros((200, 50, 100))
 
     def test_total_data_assertion(self):
         vd = VolumetricData()
