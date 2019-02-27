@@ -7,9 +7,10 @@ import unittest
 
 
 class TestJobStatus(unittest.TestCase):
-    def setUp(self):
-        self.jobstatus = JobStatus()
-        self.database = DatabaseAccess('sqlite:///test_job_status.db', 'simulation')
+    @classmethod
+    def setUpClass(cls):
+        cls.jobstatus = JobStatus()
+        cls.database = DatabaseAccess('sqlite:///test_job_status.db', 'simulation')
         par_dict = {'chemicalformula': 'H',
                     'computer': 'localhost',
                     'hamilton': 'Test',
@@ -23,12 +24,18 @@ class TestJobStatus(unittest.TestCase):
                     'timestop': datetime(2016, 5, 2, 11, 31, 4, 371165),
                     'totalcputime': 0.117788,
                     'username': 'Test'}
-        self.job_id = self.database.add_item_dict(par_dict)
-        self.jobstatus_database = JobStatus(db=self.database, job_id=self.job_id)
+        cls.job_id = cls.database.add_item_dict(par_dict)
+        cls.jobstatus_database = JobStatus(db=cls.database, job_id=cls.job_id)
 
-    def doCleanups(self):
-        self.database.conn.close()
-        os.remove('test_job_status.db')
+    def setUp(self):
+        self.jobstatus.initialized = True
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            os.remove('test_job_status.db')
+        except (WindowsError, OSError):
+            pass
 
     def test_initialized(self):
         self.assertTrue(self.jobstatus.initialized)

@@ -18,12 +18,15 @@ class TestAtoms(unittest.TestCase):
             if os.path.isfile(os.path.join(file_location, "../../static/atomistics/test_hdf")):
                 os.remove(os.path.join(file_location, "../../static/atomistics/test_hdf"))
 
-    def setUp(self):
-        pass
-        self.CO2 = Atoms("CO2", positions=[[0, 0, 0], [0, 0, 1.5], [0, 1.5, 0]])
+    @classmethod
+    def setUpClass(cls):
         C = Atom('C').element
-        self.C3 = Atoms([C, C, C], positions=[[0, 0, 0], [0, 0, 2], [0, 2, 0]])
-        self.C2 = Atoms(2 * [Atom('C')])
+        cls.C3 = Atoms([C, C, C], positions=[[0, 0, 0], [0, 0, 2], [0, 2, 0]])
+        cls.C2 = Atoms(2 * [Atom('C')])
+
+    def setUp(self):
+        # These atoms are reset before every test.
+        self.CO2 = Atoms("CO2", positions=[[0, 0, 0], [0, 0, 1.5], [0, 1.5, 0]])
 
     def test__init__(self):
         pos, cell = generate_fcc_lattice()

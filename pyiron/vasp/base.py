@@ -1098,7 +1098,7 @@ class VaspBase(GenericDFTJob):
         Returns:
            list: a list of available potentials
         """
-        return self.potential_list()
+        return self.potential_list
 
     def __del__(self):
         pass

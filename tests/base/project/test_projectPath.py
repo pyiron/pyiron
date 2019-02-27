@@ -4,13 +4,14 @@ from pyiron.base.project.path import ProjectPath
 
 
 class TestProjectPath(unittest.TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         if os.name == 'nt':
-            self.current_dir = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
+            cls.current_dir = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
         else:
-            self.current_dir = os.path.dirname(os.path.abspath(__file__))
-        self.project_path = ProjectPath(path=self.current_dir)
-        self.project_path = self.project_path.open('test_project_path')
+            cls.current_dir = os.path.dirname(os.path.abspath(__file__))
+        cls.project_path = ProjectPath(path=cls.current_dir)
+        cls.project_path = cls.project_path.open('test_project_path')
 
     def test_open(self):
         with self.project_path.open('test_open') as test_open:

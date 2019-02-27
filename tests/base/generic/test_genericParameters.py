@@ -5,16 +5,17 @@ import unittest
 
 
 class TestGenericParameters(unittest.TestCase):
-    def setUp(self):
-        self.generic_parameters_empty = GenericParameters()
-        self.generic_parameters_str = GenericParameters()
+    @classmethod
+    def setUpClass(cls):
+        cls.generic_parameters_empty = GenericParameters()
+        cls.generic_parameters_str = GenericParameters()
         my_str = '''\
                 par_1 1
                 par_2 ab
                 count 0
                 write_restart True
                 read_restart False'''
-        self.generic_parameters_str.load_string(my_str)
+        cls.generic_parameters_str.load_string(my_str)
 
     def test_load_string(self):
         self.assertEqual(self.generic_parameters_str.get("par_1"), 1)
