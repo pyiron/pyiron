@@ -19,6 +19,9 @@ class TestVasp(unittest.TestCase):
         cls.project = Project(os.path.join(cls.file_location, 'test_vasp'))
         cls.job = cls.project.create_job("Vasp", "trial")
 
+    def setUp(self):
+        self.job.structure = None
+
     @classmethod
     def tearDownClass(cls):
         pass
@@ -77,6 +80,7 @@ class TestVasp(unittest.TestCase):
         self.assertEqual(self.job.input.incar["LCHARG"], True)
 
     def test_set_structure(self):
+        self.assertEqual(self.job.structure, None)
         atoms = CrystalStructure("Pt", BravaisBasis="fcc", a=3.98)
         self.job.structure = atoms
         self.assertEqual(self.job.structure, atoms)
@@ -86,7 +90,6 @@ class TestVasp(unittest.TestCase):
         self.assertEqual(self.job.structure, atoms)
 
     def test_list_potenitals(self):
-        self.job.structure = None
         self.assertRaises(ValueError, self.job.list_potentials)
 
 
