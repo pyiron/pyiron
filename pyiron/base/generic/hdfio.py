@@ -467,8 +467,8 @@ class FileHDFio(object):
                     nodes = set()
             iopy_nodes = self._filter_io_objects(groups)
             store.close()
-            return {"groups": list(groups - iopy_nodes),
-                    "nodes": list((nodes - groups).union(iopy_nodes))}
+            return {"groups": sorted(list(groups - iopy_nodes)),
+                    "nodes": sorted(list((nodes - groups).union(iopy_nodes)))}
         else:
             return {"groups": [], "nodes": []}
 
