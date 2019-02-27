@@ -30,8 +30,9 @@ class TestJobStatus(unittest.TestCase):
     def setUp(self):
         self.jobstatus.initialized = True
 
-    def doCleanups(self):
-        self.database.conn.close()
+    @classmethod
+    def tearDownClass(cls):
+        cls.database.conn.close()
         os.remove('test_job_status.db')
 
     def test_initialized(self):
