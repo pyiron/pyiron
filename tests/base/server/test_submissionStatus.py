@@ -28,7 +28,10 @@ class TestSubmissionStatus(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        os.remove('test_sub_status.db')
+        try:
+            os.remove('test_sub_status.db')
+        except (WindowsError, OSError):
+            pass
 
     def test_submit_next(self):
         before = self.sub_status.submitted_jobs

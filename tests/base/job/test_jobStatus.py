@@ -32,7 +32,10 @@ class TestJobStatus(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        os.remove('test_job_status.db')
+        try:
+            os.remove('test_job_status.db')
+        except (WindowsError, OSError):
+            pass
 
     def test_initialized(self):
         self.assertTrue(self.jobstatus.initialized)
