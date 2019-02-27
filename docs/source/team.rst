@@ -17,6 +17,7 @@ Core Developer (alphabetical)
 
 * `Sudarsan Surendralal (MPIE) <https://www.mpie.de/person/41328/2768816>`_ – Leading the electronic structure code development – since 2015.
 
+* `Osamu Waseda (MPIE) <https://www.mpie.de/person/51628/2768816>`_ – Leading the run-time coupling of simulation codes – since 2017. 
 
 
 ************************************
@@ -27,9 +28,9 @@ Application Developer (alphabetical)
 
 * Uday Gajera (MPIE) - Automated analysis of existing DFT data sets - since 2017. 
 
-* `Markus Tautschnig (MPIE) <https://www.mpie.de/person/59813/2768816>`_ – Structure Optimisation with VASP – since 2018. 
+* `Liam Huber (MPIE) <https://www.mpie.de/person/47229/3098843>`_ - Implementation of flexible simulation protocols - since 2019.
 
-* `Osamu Waseda (MPIE) <https://www.mpie.de/person/51628/2768816>`_ – Run-time coupling of simulation codes – since 2017. 
+* `Markus Tautschnig (MPIE) <https://www.mpie.de/person/59813/2768816>`_ – Structure Optimisation with VASP – since 2018. 
 
 * `Lifang Zhu (MPIE) <https://www.mpie.de/person/43027/2768816>`_ - Efficient approach to compute melting properties fully from ab initio - since 2017.  
 
