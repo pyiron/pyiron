@@ -11,10 +11,11 @@ class TestFileHDFio(unittest.TestCase):
         cls.full_hdf5 = FileHDFio(file_name=cls.current_dir + '/filehdfio_full.h5')
         cls.es_hdf5 = FileHDFio(file_name=cls.current_dir + "/../../static/dft/es_hdf.h5")
 
-    def doCleanups(self):
-        # os.remove('filehdfio_empty.h5')
-        # os.remove('filehdfio_full.h5')
-        pass
+    # @classmethod
+    # def tearDownClass(cls):
+    #     cls.current_dir = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
+    #     os.remove(cls.current_dir + '/filehdfio_empty.h5')
+    #     os.remove(cls.current_dir + '/filehdfio_full.h5')
 
     def test_file_name(self):
         print('cdr: ', self.current_dir)
@@ -53,15 +54,26 @@ class TestFileHDFio(unittest.TestCase):
         empty_file_dict = self.empty_hdf5.list_all()
         self.assertEqual(empty_file_dict['groups'], [])
         self.assertEqual(empty_file_dict['nodes'], [])
+        es_file_dict = self.es_hdf5.list_all()
+        self.assertEqual(sorted(es_file_dict['groups']), sorted(['es_new', 'es_old']))
+        self.assertEqual(es_file_dict['nodes'], [])
+        es_group_dict = self.es_hdf5['es_new'].list_all()
+        self.assertEqual(es_group_dict['groups'], ['dos'])
+        self.assertEqual(sorted(es_group_dict['nodes']),
+                         sorted(['efermi', 'k_weights', 'occ_matrix', 'eig_matrix', 'TYPE', 'k_points']))
 
     def test_list_nodes(self):
         self.assertEqual(self.empty_hdf5.list_nodes(), [])
+        self.assertEqual(sorted(self.es_hdf5['es_new'].list_nodes()),
+                         sorted(['efermi', 'k_weights', 'occ_matrix', 'eig_matrix', 'TYPE', 'k_points']))
 
     def test_list_groups(self):
         self.assertEqual(self.empty_hdf5.list_groups(), [])
+        self.assertEqual(sorted(self.es_hdf5.list_groups()), sorted(['es_new', 'es_old']))
 
     def test_listdirs(self):
         self.assertEqual(self.empty_hdf5.listdirs(), [])
+        self.assertEqual(sorted(self.es_hdf5.listdirs()), sorted(['es_new', 'es_old']))
 
     def test_show_hdf(self):
         pass
