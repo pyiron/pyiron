@@ -77,7 +77,6 @@ class TestVasp(unittest.TestCase):
         self.assertEqual(self.job.input.incar["LCHARG"], True)
 
     def test_set_structure(self):
-        self.assertEqual(self.job.structure, None)
         atoms = CrystalStructure("Pt", BravaisBasis="fcc", a=3.98)
         self.job.structure = atoms
         self.assertEqual(self.job.structure, atoms)
