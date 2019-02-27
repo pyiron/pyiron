@@ -146,10 +146,9 @@ class Outcar(object):
 
             where N is the number of atoms and M is the number of time steps
         """
-        lines = _get_lines_from_file(filename=filename, lines=lines)
         if n_atoms is None:
             n_atoms = self.get_number_of_atoms(filename=filename, lines=lines)
-        trigger_indices = _get_trigger(lines=lines, trigger="TOTAL-FORCE (eV/Angst)")
+        trigger_indices, lines = _get_trigger(lines=lines, filename=filename, trigger="TOTAL-FORCE (eV/Angst)")
         return self._get_positions_and_forces_parser(lines=lines, trigger_indices=trigger_indices, n_atoms=n_atoms,
                                                      pos_flag=True, force_flag=True)
 
@@ -168,10 +167,9 @@ class Outcar(object):
 
             where N is the number of atoms and M is the number of time steps
         """
-        lines = _get_lines_from_file(filename=filename, lines=lines)
         if n_atoms is None:
             n_atoms = self.get_number_of_atoms(filename=filename, lines=lines)
-        trigger_indices = _get_trigger(lines=lines, trigger="TOTAL-FORCE (eV/Angst)")
+        trigger_indices, lines = _get_trigger(lines=lines, filename=filename, trigger="TOTAL-FORCE (eV/Angst)")
         return self._get_positions_and_forces_parser(lines=lines, trigger_indices=trigger_indices, n_atoms=n_atoms,
                                                      pos_flag=True, force_flag=False)
 
@@ -190,10 +188,9 @@ class Outcar(object):
 
             where N is the number of atoms and M is the number of time steps
         """
-        lines = _get_lines_from_file(filename=filename, lines=lines)
         if n_atoms is None:
             n_atoms = self.get_number_of_atoms(filename=filename, lines=lines)
-        trigger_indices = _get_trigger(lines=lines, trigger="TOTAL-FORCE (eV/Angst)")
+        trigger_indices, lines = _get_trigger(lines=lines, filename=filename, trigger="TOTAL-FORCE (eV/Angst)")
         return self._get_positions_and_forces_parser(lines=lines, trigger_indices=trigger_indices, n_atoms=n_atoms,
                                                      pos_flag=False, force_flag=True)
 
@@ -210,8 +207,7 @@ class Outcar(object):
 
             where M is the number of time steps
         """
-        lines = _get_lines_from_file(filename=filename, lines=lines)
-        trigger_indices = _get_trigger(lines=lines, trigger="VOLUME and BASIS-vectors are now :")
+        trigger_indices, lines = _get_trigger(lines=lines, filename=filename, trigger="VOLUME and BASIS-vectors are now :")
         return self._get_cells_praser(lines=lines, trigger_indices=trigger_indices)
 
     @staticmethod
@@ -227,8 +223,9 @@ class Outcar(object):
             numpy.ndarray: An array of stress values
 
         """
-        lines = _get_lines_from_file(filename=filename, lines=lines)
-        trigger_indices = _get_trigger(lines=lines, trigger="FORCE on cell =-STRESS in cart. coord.  units (eV):")
+        trigger_indices, lines = _get_trigger(lines=lines,
+                                              filename=filename,
+                                              trigger="FORCE on cell =-STRESS in cart. coord.  units (eV):")
         pullay_stress_lst = []
         for j in trigger_indices:
             try:
@@ -312,14 +309,13 @@ class Outcar(object):
 
             where M is the number of time steps
         """
-        lines = _get_lines_from_file(filename=filename, lines=lines)
-        trigger_indices = _get_trigger(lines=lines, trigger="FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)")
-        energies = []
-        for j in trigger_indices:
-            line = lines[j + 2].strip()
-            line = _clean_line(line)
-            energies.append(float(line.split()[-2]))
-        return np.array(energies)
+        def get_total_energies_from_line(line):
+            return float(_clean_line(line.strip()).split()[-2])
+
+        trigger_indices, lines = _get_trigger(lines=lines,
+                                              filename=filename,
+                                              trigger="FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)")
+        return np.array([get_total_energies_from_line(lines[j + 2]) for j in trigger_indices])
 
     @staticmethod
     def get_energy_without_entropy(filename="OUTCAR", lines=None):
@@ -335,14 +331,13 @@ class Outcar(object):
 
             where M is the number of time steps
         """
-        lines = _get_lines_from_file(filename=filename, lines=lines)
-        trigger_indices = _get_trigger(lines=lines, trigger="FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)")
-        energies = []
-        for j in trigger_indices:
-            line = lines[j + 4].strip()
-            line = _clean_line(line)
-            energies.append(float(line.split()[3]))
-        return np.array(energies)
+        def get_energy_without_entropy_from_line(line):
+            return float(_clean_line(line.strip()).split()[3])
+
+        trigger_indices, lines = _get_trigger(lines=lines,
+                                              filename=filename,
+                                              trigger="FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)")
+        return np.array([get_energy_without_entropy_from_line(lines[j + 4]) for j in trigger_indices])
 
     @staticmethod
     def get_energy_sigma_0(filename="OUTCAR", lines=None):
@@ -358,14 +353,13 @@ class Outcar(object):
 
             where M is the number of time steps
         """
-        lines = _get_lines_from_file(filename=filename, lines=lines)
-        trigger_indices = _get_trigger(lines=lines, trigger="FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)")
-        energies = []
-        for j in trigger_indices:
-            line = lines[j + 4].strip()
-            line = _clean_line(line)
-            energies.append(float(line.split()[-1]))
-        return np.array(energies)
+        def get_energy_sigma_0_from_line(line):
+            return float(_clean_line(line.strip()).split()[-1])
+
+        trigger_indices, lines = _get_trigger(lines=lines,
+                                              filename=filename,
+                                              trigger="FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)")
+        return np.array([get_energy_sigma_0_from_line(lines[j + 4]) for j in trigger_indices])
 
     @staticmethod
     def get_all_total_energies(filename="OUTCAR", lines=None):
@@ -479,8 +473,7 @@ class Outcar(object):
         Returns:
             int: Mesh size
         """
-        lines = _get_lines_from_file(filename=filename, lines=lines)
-        trigger_indices = _get_trigger(lines=lines, trigger="gives a total of ")
+        trigger_indices, lines = _get_trigger(lines=lines, filename=filename, trigger="gives a total of ")
         line_ngx = lines[trigger_indices[0]-2]
         # Exclude all alphabets, and spaces. Then split based on '='
         str_list = re.sub(r'[a-zA-Z]', r'', line_ngx.replace(" ", "").replace("\n", "")).split("=")
@@ -498,8 +491,7 @@ class Outcar(object):
         Returns:
             numpy.ndarray: An array of temperatures in Kelvin
         """
-        lines = _get_lines_from_file(filename=filename, lines=lines)
-        trigger_indices = _get_trigger(lines=lines, trigger="kin. lattice  EKIN_LAT= ")
+        trigger_indices, lines = _get_trigger(lines=lines, filename=filename, trigger="kin. lattice  EKIN_LAT= ")
         temperatures = []
         if len(trigger_indices) > 0:
             for j in trigger_indices:
@@ -508,7 +500,8 @@ class Outcar(object):
                 temperatures.append(float(line.split()[-2]))
         else:
             temperatures = np.zeros(len(_get_trigger(lines=lines,
-                                                     trigger="FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)")))
+                                                     trigger="FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)",
+                                                     return_lines=False)))
         return np.array(temperatures)
 
     @staticmethod
@@ -602,9 +595,8 @@ class Outcar(object):
         Returns:
             float: The Kohn-Sham Fermi level in eV
         """
-        lines = _get_lines_from_file(filename=filename, lines=lines)
         trigger = "E-fermi :"
-        trigger_indices = _get_trigger(lines=lines, trigger=trigger)
+        trigger_indices, lines = _get_trigger(lines=lines, filename=filename, trigger=trigger)
         if len(trigger_indices) != 0:
             try:
                 return float(lines[trigger_indices[-1]].split(trigger)[-1].split()[0])
@@ -675,9 +667,8 @@ class Outcar(object):
             int: The number of ions in the simulation
 
         """
-        lines = _get_lines_from_file(filename=filename, lines=lines)
         ions_trigger = "NIONS ="
-        trigger_indices = _get_trigger(lines, trigger=ions_trigger)
+        trigger_indices, lines = _get_trigger(lines=lines, filename=filename, trigger=ions_trigger)
         if len(trigger_indices) != 0:
             return int(lines[trigger_indices[0]].split(ions_trigger)[-1])
         else:
@@ -755,23 +746,24 @@ def _clean_line(line):
     return line.replace("-", " -")
 
 
-def _get_trigger(lines, trigger):
+def _get_trigger(trigger, filename=None, lines=None, return_lines=True):
     """
     Find the lines where a specific trigger appears.
 
     Args:
-        lines (list): list of lines
         trigger (str): string pattern to search for
+        lines (list/None): list of lines
+        filename (str/None): file to read lines from
 
     Returns:
-        list: indicies of the lines where the trigger string was found
+        list: indicies of the lines where the trigger string was found and list of lines
     """
-    trigger_indices = []
-    for i, line in enumerate(lines):
-        line = line.strip()
-        if trigger in line:
-            trigger_indices.append(i)
-    return trigger_indices
+    lines = _get_lines_from_file(filename=filename, lines=lines)
+    trigger_indicies = [i for i, line in enumerate(lines) if trigger in line.strip()]
+    if return_lines:
+        return trigger_indicies, lines
+    else:
+        return trigger_indicies
 
 
 def _get_lines_from_file(filename, lines=None):
