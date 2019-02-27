@@ -135,6 +135,7 @@ class Outcar(object):
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
+            lines (list/None): lines read from the file
 
         Returns:
             [positions, forces] (sequence)
@@ -156,6 +157,7 @@ class Outcar(object):
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
+            lines (list/None): lines read from the file
 
         Returns:
             numpy.ndarray: A Nx3xM array of positions in $\AA$
@@ -174,6 +176,7 @@ class Outcar(object):
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
+            lines (list/None): lines read from the file
 
         Returns:
 
@@ -193,6 +196,7 @@ class Outcar(object):
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
+            lines (list/None): lines read from the file
 
         Returns:
             numpy.ndarray: A 3x3xM array of the cell shape in $\AA$
@@ -209,6 +213,7 @@ class Outcar(object):
 
         Args:
             filename (str): Input filename
+            lines (list/None): lines read from the file
             si_unit (bool): True SI units are used
 
         Returns:
@@ -241,6 +246,7 @@ class Outcar(object):
             reciprocal (bool): Get either the reciprocal or the cartesian coordinates
             weight (bool): Get the weight assigned to the irreducible kpoints
             planewaves (bool): Get the planewaves assigned to the irreducible kpoints
+            lines (list/None): lines read from the file
 
         Returns:
             numpy.ndarray: An array of k-points
@@ -292,6 +298,7 @@ class Outcar(object):
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
+            lines (list/None): lines read from the file
 
         Returns:
             numpy.ndarray: A 1xM array of the total energies in $eV$
@@ -314,6 +321,7 @@ class Outcar(object):
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
+            lines (list/None): lines read from the file
 
         Returns:
             numpy.ndarray: A 1xM array of the total energies in $eV$
@@ -336,6 +344,7 @@ class Outcar(object):
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
+            lines (list/None): lines read from the file
 
         Returns:
             numpy.ndarray: A 1xM array of the total energies in $eV$
@@ -358,6 +367,7 @@ class Outcar(object):
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
+            lines (list/None): lines read from the file
 
         Returns:
             list: A list of energie for every electronic step at every ionic step
@@ -385,6 +395,7 @@ class Outcar(object):
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
+            lines (list/None): lines read from the file
 
         Returns:
             list: A list with the mgnetization values
@@ -456,6 +467,7 @@ class Outcar(object):
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
+            lines (list/None): lines read from the file
 
         Returns:
             int: Mesh size
@@ -476,6 +488,7 @@ class Outcar(object):
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
+            lines (list/None): lines read from the file
 
         Returns:
             numpy.ndarray: An array of temperatures in Kelvin
@@ -499,6 +512,7 @@ class Outcar(object):
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
+            lines (list/None): lines read from the file
 
         Returns:
             numpy.ndarray: Steps during the simulation
@@ -525,6 +539,7 @@ class Outcar(object):
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
+            lines (list/None): lines read from the file
 
         Returns:
             numpy.ndarray: An array of time values in fs
@@ -549,6 +564,7 @@ class Outcar(object):
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
+            lines (list/None): lines read from the file
 
         Returns:
             float: The kinetic energy error in eV
@@ -576,21 +592,21 @@ class Outcar(object):
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
+            lines (list/None): lines read from the file
 
         Returns:
             float: The Kohn-Sham Fermi level in eV
         """
-        trigger = "E-fermi :"
-        e_fermi = None
         lines = _get_lines_from_file(filename=filename, lines=lines)
-        for i, line in enumerate(lines):
-            line = line.strip()
-            if trigger in line:
-                try:
-                    e_fermi = float(line.split(trigger)[-1].split()[0])
-                except ValueError:
-                    return
-        return e_fermi
+        trigger = "E-fermi :"
+        trigger_indices = _get_trigger(lines=lines, trigger=trigger)
+        if len(trigger_indices) != 0:
+            try:
+                return float(lines[trigger_indices[-1]].split(trigger)[-1].split()[0])
+            except ValueError:
+                return
+        else:
+            return
 
     @staticmethod
     def get_dipole_moments(filename="OUTCAR", lines=None):
@@ -599,6 +615,7 @@ class Outcar(object):
 
         Args:
             filename (str): Filename of the OUTCAR file to parse
+            lines (list/None): lines read from the file
 
         Returns:
             list: A list of dipole moments in (eA) for each electronic step
@@ -627,6 +644,7 @@ class Outcar(object):
 
         Args:
             filename (str): OUTCAR filename
+            lines (list/None): lines read from the file
 
         Returns:
             float: The number of electrons in the simulation
@@ -641,6 +659,17 @@ class Outcar(object):
 
     @staticmethod
     def get_number_of_atoms(filename="OUTCAR", lines=None):
+        """
+        Returns the number of ions in the simulation
+
+        Args:
+            filename (str): OUTCAR filename
+            lines (list/None): lines read from the file
+
+        Returns:
+            int: The number of ions in the simulation
+
+        """
         lines = _get_lines_from_file(filename=filename, lines=lines)
         ions_trigger = "NIONS ="
         trigger_indices = _get_trigger(lines, trigger=ions_trigger)
@@ -651,6 +680,22 @@ class Outcar(object):
 
     @staticmethod
     def _get_positions_and_forces_parser(lines, trigger_indices, n_atoms):
+        """
+        Parser to get the forces and positions for every ionic step from the OUTCAR file
+
+        Args:
+            lines (list): lines read from the file
+            trigger_indices (list): list of line indices where the trigger was found.
+            n_atoms (int): number of atoms
+
+        Returns:
+            [positions, forces] (sequence)
+            numpy.ndarray: A Nx3xM array of positions in $\AA$
+            numpy.ndarray: A Nx3xM array of forces in $eV / \AA$
+
+            where N is the number of atoms and M is the number of time steps
+
+        """
         positions = []
         forces = []
         for j in trigger_indices:
@@ -667,6 +712,20 @@ class Outcar(object):
 
     @staticmethod
     def _get_positions_parser(lines, trigger_indices, n_atoms):
+        """
+        Parser to get the forces and positions for every ionic step from the OUTCAR file
+
+        Args:
+            lines (list): lines read from the file
+            trigger_indices (list): list of line indices where the trigger was found.
+            n_atoms (int): number of atoms
+
+        Returns:
+            numpy.ndarray: A Nx3xM array of positions in $\AA$
+
+            where N is the number of atoms and M is the number of time steps
+
+        """
         positions = []
         for j in trigger_indices:
             pos = []
@@ -679,6 +738,20 @@ class Outcar(object):
 
     @staticmethod
     def _get_forces_parser(lines, trigger_indices, n_atoms):
+        """
+        Parser to get the forces and positions for every ionic step from the OUTCAR file
+
+        Args:
+            lines (list): lines read from the file
+            trigger_indices (list): list of line indices where the trigger was found.
+            n_atoms (int): number of atoms
+
+        Returns:
+            numpy.ndarray: A Nx3xM array of forces in $eV / \AA$
+
+            where N is the number of atoms and M is the number of time steps
+
+        """
         forces = []
         for j in trigger_indices:
             force = []
@@ -691,6 +764,20 @@ class Outcar(object):
 
     @staticmethod
     def _get_cells_praser(lines, trigger_indices):
+        """
+        Parser to get the cell size and shape for every ionic step from the OUTCAR file
+
+        Args:
+            lines (list): lines read from the file
+            trigger_indices (list): list of line indices where the trigger was found.
+            n_atoms (int): number of atoms
+
+        Returns:
+            numpy.ndarray: A 3x3xM array of the cell shape in $\AA$
+
+            where M is the number of time steps
+
+        """
         cells = []
         for j in trigger_indices:
             cell = []
@@ -707,6 +794,16 @@ def _clean_line(line):
 
 
 def _get_trigger(lines, trigger):
+    """
+    Find the lines where a specific trigger appears.
+
+    Args:
+        lines (list): list of lines
+        trigger (str): string pattern to search for
+
+    Returns:
+        list: indicies of the lines where the trigger string was found
+    """
     trigger_indices = []
     for i, line in enumerate(lines):
         line = line.strip()
@@ -715,7 +812,17 @@ def _get_trigger(lines, trigger):
     return trigger_indices
 
 
-def _get_lines_from_file(filename, lines):
+def _get_lines_from_file(filename, lines=None):
+    """
+    If lines is None read the lines from the file with the filename filename.
+
+    Args:
+        filename (str): file to read lines from
+        lines (list/ None): list of lines
+
+    Returns:
+        list: list of lines
+    """
     if lines is None:
         with open(filename, 'r') as f:
             lines = f.readlines()
