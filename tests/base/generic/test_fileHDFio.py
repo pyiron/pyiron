@@ -1,4 +1,5 @@
 import os
+import numpy as np
 from pyiron.base.generic.hdfio import FileHDFio
 import unittest
 
@@ -10,16 +11,32 @@ class TestFileHDFio(unittest.TestCase):
         cls.empty_hdf5 = FileHDFio(file_name=cls.current_dir + '/filehdfio_empty.h5')
         cls.full_hdf5 = FileHDFio(file_name=cls.current_dir + '/filehdfio_full.h5')
         cls.es_hdf5 = FileHDFio(file_name=cls.current_dir + "/../../static/dft/es_hdf.h5")
+        with cls.full_hdf5.open('content') as hdf:
+            hdf['array'] = np.array([1, 2, 3, 4, 5, 6])
+            hdf['array_3d'] = np.array([[1, 2, 3], [4, 5, 6]])
+            hdf['traj'] = np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9]]])
+            hdf['dict'] = {'key_1': 1, 'key_2': 'hallo'}
+            hdf['dict_numpy'] = {'key_1': 1, 'key_2': np.array([1, 2, 3, 4, 5, 6])}
 
-    # @classmethod
-    # def tearDownClass(cls):
-    #     cls.current_dir = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
-    #     os.remove(cls.current_dir + '/filehdfio_empty.h5')
-    #     os.remove(cls.current_dir + '/filehdfio_full.h5')
+    @classmethod
+    def tearDownClass(cls):
+        cls.current_dir = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
+        os.remove(cls.current_dir + '/filehdfio_full.h5')
+
+    def test_get_item(self):
+        self.assertTrue(all(np.equal(self.full_hdf5['content/array'], np.array([1, 2, 3, 4, 5, 6]))))
+        self.assertTrue(all(np.equal(self.full_hdf5['content']['array_3d'],
+                                     np.array([[1, 2, 3], [4, 5, 6]])).flatten()))
+        self.assertTrue(all(np.equal(self.full_hdf5['content/traj'][0],
+                                     np.array([[1, 2, 3], [4, 5, 6]])).flatten()))
+        self.assertTrue(all(np.equal(self.full_hdf5['content/traj'][1],
+                                     np.array([[7, 8, 9]])).flatten()))
+        self.assertEqual(self.full_hdf5['content/dict']['key_1'], 1)
+        self.assertEqual(self.full_hdf5['content/dict']['key_2'], 'hallo')
+        self.assertEqual(self.full_hdf5['content/dict_numpy']['key_1'], 1)
+        self.assertTrue(all(np.equal(self.full_hdf5['content/dict_numpy']['key_2'], np.array([1, 2, 3, 4, 5, 6]))))
 
     def test_file_name(self):
-        print('cdr: ', self.current_dir)
-        print('file: ', self.empty_hdf5.file_name)
         self.assertEqual(self.empty_hdf5.file_name, self.current_dir + '/filehdfio_empty.h5')
         self.assertEqual(self.full_hdf5.file_name, self.current_dir + '/filehdfio_full.h5')
 
@@ -80,7 +97,7 @@ class TestFileHDFio(unittest.TestCase):
 
     def test_is_empty(self):
         self.assertTrue(self.empty_hdf5.is_empty)
-        self.assertTrue(self.full_hdf5.is_empty)
+        self.assertFalse(self.full_hdf5.is_empty)
 
     def test_file_size(self):
         self.assertTrue(self.es_hdf5.file_size(self.es_hdf5) > 0)
