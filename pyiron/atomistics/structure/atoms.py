@@ -1765,7 +1765,7 @@ class Atoms(object):
             neigh = box_copy.get_neighbors()
         return pos_total, box_copy
 
-    def get_equivalent_voronoi_vertices(self, return_box=False, minimum_dist=0.1):
+    def get_equivalent_voronoi_vertices(self, return_box=False, minimum_dist=0.1, symprec=1e-5, angle_tolerance=-1.0):
         """
             This function gives the positions of spatially equivalent Voronoi vertices in lists, which
             most likely represent interstitial points or vacancies (along with other high symmetry points)
@@ -1783,7 +1783,7 @@ class Atoms(object):
 
         _, box_copy = self._get_voronoi_vertices(minimum_dist = minimum_dist)
         list_positions = []
-        sym = box_copy.get_symmetry()
+        sym = box_copy.get_symmetry(symprec=symprec, angle_tolerance=angle_tolerance)
         for ind in set(sym['equivalent_atoms'][box_copy.select_index('Hs')]):
             list_positions.append(box_copy.positions[sym['equivalent_atoms']==ind])
         if return_box:
