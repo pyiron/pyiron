@@ -186,12 +186,12 @@ class GenericMaster(GenericJob):
             setattr(self, job.job_name, job)
             self._job_object_lst.append(job)
 
-    def pop(self, i):
+    def pop(self, i=-1):
         """
         Pop a job from the GenericMaster - just like you would pop an element from a list
 
         Args:
-            i (int): position of the job
+            i (int): position of the job. (Default is last element, -1.)
 
         Returns:
             GenericJob: job
