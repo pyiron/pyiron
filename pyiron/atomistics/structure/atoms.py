@@ -1344,8 +1344,7 @@ class Atoms(object):
         # include periodic boundaries
         # translate radius in boundary layer with relative coordinates
         # TODO: introduce more rigoros definition
-        if radius is None:
-            radius = 3 * num_neighbors ** (1. / 3.)
+        radius = 3 * num_neighbors ** (1. / 3.)
         rel_width = [radius / np.sqrt(np.dot(a_i, a_i)) for a_i in self.cell]
         rel_width_scalar = np.max(rel_width)
 
