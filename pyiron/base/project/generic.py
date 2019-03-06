@@ -225,7 +225,7 @@ class Project(ProjectPath):
         Returns:
             GenericJob: job object depending on the job_type selected
         """
-        job_name = job_name.replace('.','_')
+        job_name = job_name.replace('.', '_')
         job = JobType(job_type, project=ProjectHDFio(project=self.copy(), file_name=job_name),
                       job_name=job_name, job_class_dict=self.job_type.job_class_dict)
         if self.user is not None:

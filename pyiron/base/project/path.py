@@ -9,6 +9,7 @@ import os
 import posixpath
 from pyiron.base.settings.generic import Settings
 from six import string_types
+import warnings
 
 """
 Classes for representing the file system path in pyiron
@@ -215,6 +216,8 @@ class ProjectPath(GenericPath):
         """
         if path == "":
             raise ValueError('ProjectPath: path is not allowed to be empty!')
+        if not os.path.abspath(os.path.expanduser(path)).replace('/', '').replace('\\', '').isidentifier():
+            warnings.warn('Please do not use special characters in your project names: ' + path)
         generic_path = self._convert_str_to_generic_path(path)
         super(ProjectPath, self).__init__(generic_path.root_path, generic_path.project_path)
         self._history = []
