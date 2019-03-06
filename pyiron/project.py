@@ -22,6 +22,7 @@ from pyiron.lammps.potential import LammpsPotentialFile
 from pyiron.vasp.potential import VaspPotential
 from pyiron.atomistics.structure.atoms import CrystalStructure
 import pyiron.atomistics.structure.pyironase as ase
+from pyiron.atomistics.structure.pyironase import publication as publication_ase
 from pyiron.atomistics.structure.atoms import Atoms
 
 
@@ -307,6 +308,16 @@ class Project(ProjectCore):
             self.import_single_calculation(path, rel_path=rel_path, job_type="KMC")
 
     @staticmethod
+    def list_publications():
+        """
+        List the publications used in this project.
+
+        Returns:
+            list: list of publications in Bibtex format.
+        """
+        return s.publication_lst
+
+    @staticmethod
     def create_structure(element, bravais_basis, lattice_constant):
         """
         
@@ -347,6 +358,7 @@ class Project(ProjectCore):
             cubic: bool
                 Construct cubic unit cell if possible.
             """
+            s.publication_add(publication_ase())
             from ase.build import bulk
             return bulk(name=name, crystalstructure=crystalstructure, a=a, c=c, covera=covera, u=u,
                         orthorhombic=orthorhombic, cubic=cubic)
@@ -409,6 +421,7 @@ class Project(ProjectCore):
 
         """
         # https://gitlab.com/ase/ase/blob/master/ase/lattice/surface.py
+        s.publication_add(publication_ase())
         from ase.build import (add_adsorbate, add_vacuum,
                                bcc100, bcc110, bcc111,
                                diamond100, diamond111,

@@ -56,6 +56,7 @@ class LammpsBase(AtomisticGenericJob):
         self._cutoff_radius = None
         self._is_continuation = None
         self._compress_by_default = True
+        s.publication_add(self.publication)
 
     @property
     def cutoff_radius(self):
@@ -232,6 +233,22 @@ class LammpsBase(AtomisticGenericJob):
         self.input.control.write_file(file_name="control.inp", cwd=self.working_directory)
         self.input.potential.write_file(file_name="potential.inp", cwd=self.working_directory)
         self.input.potential.copy_pot_files(self.working_directory)
+
+    @property
+    def publication(self):
+        return {'lammps': """\
+article{lammps,
+  title = {Fast Parallel Algorithms for Short-Range Molecular Dynamics},
+  journal = {Journal of Computational Physics},
+  volume = {117},
+  number = {1},
+  pages = {1-19},
+  year = {1995},
+  issn = {0021-9991},
+  doi = {https://doi.org/10.1006/jcph.1995.1039},
+  url = {http://www.sciencedirect.com/science/article/pii/S002199918571039X},
+  author = {Steve Plimpton}
+}"""}
 
     def collect_output(self):
         """

@@ -21,3 +21,17 @@ __date__ = "Sep 1, 2017"
 
 sys.modules['ase.atom'] = atom
 sys.modules['ase.atoms'] = atoms
+
+
+def publication():
+    return {'ase': """\
+@article{ase-paper,
+  author={Ask Hjorth Larsen and Jens Jørgen Mortensen and Jakob Blomqvist and Ivano E Castelli and Rune Christensen and Marcin Dułak and Jesper Friis and Michael N Groves and Bjørk Hammer and Cory Hargus and Eric D Hermes and Paul C Jennings and Peter Bjerre Jensen and James Kermode and John R Kitchin and Esben Leonhard Kolsbjerg and Joseph Kubal and Kristen Kaasbjerg and Steen Lysgaard and Jón Bergmann Maronsson and Tristan Maxson and Thomas Olsen and Lars Pastewka and Andrew Peterson and Carsten Rostgaard and Jakob Schiøtz and Ole Schütt and Mikkel Strange and Kristian S Thygesen and Tejs Vegge and Lasse Vilhelmsen and Michael Walter and Zhenhua Zeng and Karsten W Jacobsen},
+  title={The atomic simulation environment—a Python library for working with atoms},
+  journal={Journal of Physics: Condensed Matter},
+  volume={29},
+  number={27},
+  pages={273002},
+  url={http://stacks.iop.org/0953-8984/29/i=27/a=273002},
+  year={2017}
+}"""}
