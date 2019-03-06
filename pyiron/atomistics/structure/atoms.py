@@ -1285,7 +1285,6 @@ class Atoms(object):
                      dimension=len(cell), species=self.species)
 
     def get_neighbors(self,
-                      radius=None,
                       num_neighbors=12,
                       t_vec=True,
                       include_boundary=True,
@@ -1295,9 +1294,6 @@ class Atoms(object):
         """
         
         Args:
-            radius: distance up to which nearest neighbors are searched for
-                    used only for periodic boundary padding
-                   (in absolute units)
             num_neighbors: 
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
@@ -1437,15 +1433,12 @@ class Atoms(object):
         return neighbor_obj
 
 
-    def get_neighborhood(box, position, radius=None, num_neighbors=12, t_vec=True,
+    def get_neighborhood(box, position, num_neighbors=12, t_vec=True,
                          include_boundary=True, exclude_self=True, tolerance=2, id_list=None, cutoff=None):
         """
         
         Args:
             position: position in a box whose neighborhood information is analysed
-            radius: distance up to which nearest neighbors are searched for
-                    used only for periodic boundary padding
-                   (in absolute units)
             num_neighbors: 
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
@@ -1469,7 +1462,7 @@ class Atoms(object):
         pos = box.positions
         pos[-1] = np.array(position)
         box.positions = pos
-        neigh = box.get_neighbors(radius=radius, num_neighbors=num_neighbors, t_vec=t_vec,
+        neigh = box.get_neighbors(num_neighbors=num_neighbors, t_vec=t_vec,
                                   include_boundary=include_boundary, exclude_self=exclude_self,
                                   tolerance=tolerance, id_list=id_list, cutoff=cutoff)
         neigh_return = NeighTemp()
@@ -1483,13 +1476,12 @@ class Atoms(object):
         neigh_return.indices = neigh_return.indices[neigh_return.indices!=len(box)-1]
         return neigh_return
 
-    def get_shells(self, id_list=None, max_shell=2, radius=None, max_num_neighbors=100):
+    def get_shells(self, id_list=None, max_shell=2, max_num_neighbors=100):
         """
         
         Args:
             id_list: 
-            max_shell: 
-            radius: 
+            max_shell:
             max_num_neighbors: 
 
         Returns:
@@ -1497,8 +1489,7 @@ class Atoms(object):
         """
         if id_list is None:
             id_list = [0]
-        neighbors = self.get_neighbors(radius=radius,
-                                       num_neighbors=max_num_neighbors,
+        neighbors = self.get_neighbors(num_neighbors=max_num_neighbors,
                                        id_list=id_list)
 
         shells = neighbors.shells[0]
@@ -1514,7 +1505,7 @@ class Atoms(object):
             raise AssertionError()
         return shell_dict
 
-    def get_shell_matrix(self, shell, id_list=None, restraint_matrix=None, radius=None, max_num_neighbors=100):
+    def get_shell_matrix(self, shell, id_list=None, restraint_matrix=None, max_num_neighbors=100):
         """
 
         Args:
@@ -1531,8 +1522,7 @@ class Atoms(object):
 
         """
         assert isinstance(shell, int) and shell > 0, "Parameter 'shell' must be an integer greater than 0"
-        neigh_list = self.get_neighbors(radius=radius,
-                                        num_neighbors=max_num_neighbors,
+        neigh_list = self.get_neighbors(num_neighbors=max_num_neighbors,
                                         id_list=id_list)
         Natom = len(neigh_list.shells)
         if restraint_matrix is None:
