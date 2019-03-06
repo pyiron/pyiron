@@ -1065,7 +1065,7 @@ class Atoms(object):
         x, y, z = coords
         return 'ATOM {:>6} {:>4} {:>4} {:>5} {:10.3f} {:7.3f} {:7.3f} {:5.2f} {:5.2f} {:>11} \n'.format(num, species, group, num2, x, y, z, c0, c1, species)
     
-    def _ngl_write_structure(self, elements, positions, cell, custom_array=None):
+    def _ngl_write_structure(self, elements, positions, cell, scalar_field=None):
         from ase.geometry import cell_to_cellpar, cellpar_to_cell
         cellpar = cell_to_cellpar(cell)
         exportedcell = cellpar_to_cell(cellpar)
@@ -1073,20 +1073,21 @@ class Atoms(object):
   
         pdb_str = self._ngl_write_cell(cellpar[0], cellpar[1], cellpar[2], cellpar[3], cellpar[4], cellpar[5])
         pdb_str += 'MODEL     1\n'
-        if custom_array is None:
-            custom_array = np.ones(len(positions))
+        if scalar_field is None:
+            scalar_field = np.ones(len(positions))
         else:
-            custom_array = (custom_array-np.min(custom_array))/(np.max(custom_array)-np.min(custom_array))
+            scalar_field = (scalar_field-np.min(scalar_field))/(np.max(scalar_field)-np.min(scalar_field))
         for i, p in enumerate(positions):
             if rotation is not None:
                 p = p.dot(rotation)
                 
-            pdb_str += self._ngl_write_atom(i, elements[i], group=elements[i], num2=i, coords=p, c0=custom_array[i], c1=0.0)
+            pdb_str += self._ngl_write_atom(i, elements[i], group=elements[i], num2=i, coords=p, c0=scalar_field[i], c1=0.0)
         pdb_str += 'ENDMDL \n'
         return pdb_str
     
     def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5,
-               background='white', color_scheme=None, show_axes=True, custom_array=None, custom_3darray=None, select_atoms=None):
+               background='white', color_scheme=None, show_axes=True, custom_array=None, custom_3darray=None,
+               scalar_field=None, vector_field=None, vector_color=None, select_atoms=None):
         """
 
         Args:
@@ -1096,8 +1097,9 @@ class Atoms(object):
             particle_size:
             background:
             color_scheme: v.i.
-            custom_array: color for each atom according to the array value
-            custom_3darray: vectors for each atom according to the array values (3 values for each atom)
+            scalar_field: color for each atom according to the array value
+            vector_field: vectors for each atom according to the array values (3 values for each atom)
+            vector_color: vector for color coding (only available with vector_field)
             select_atoms: atoms to show (1d array with ID's or True for atoms to show)
 
             Possible color schemes: 
@@ -1112,19 +1114,25 @@ class Atoms(object):
             import nglview
         except ImportError:
             raise ImportError("The package nglview needs to be installed for the plot3d() function!")
+        if custom_array is not None:
+            warnings.warn('custom_array is deprecated. Use scalar_field instead', DeprecationWarning)
+            scalar_field = custom_array
+        if custom_3darray is not None:
+            warnings.warn('custom_3darray is deprecated. Use vector_field instead', DeprecationWarning)
+            vector_field = custom_3darray
         # Always visualize the parent basis
         parent_basis = self.get_parent_basis()
         if select_atoms is None:
             select_atoms = np.array(len(parent_basis)*[True])
         else:
             select_atoms = np.array(select_atoms)
-            if custom_array is not None:
-                custom_array = custom_array[select_atoms]
+            if scalar_field is not None:
+                scalar_field = scalar_field[select_atoms]
         struct = nglview.TextStructure(self._ngl_write_structure(parent_basis.get_chemical_symbols()[select_atoms],
-                                                                 self.positions[select_atoms], self.cell, custom_array=custom_array))
+                                                                 self.positions[select_atoms], self.cell, scalar_field=scalar_field))
         view = nglview.NGLWidget(struct)
         if spacefill:
-            if color_scheme is None and custom_array is not None:
+            if color_scheme is None and scalar_field is not None:
                 color_scheme = 'occupancy'
             elif color_scheme is None:
                 color_scheme = 'element'
@@ -1136,9 +1144,17 @@ class Atoms(object):
         if show_cell:
             if parent_basis.cell is not None:
                 view.add_unitcell()
-        if custom_3darray is not None:
-            for arr, pos in zip(custom_3darray[select_atoms], self.positions[select_atoms]):
-                view.shape.add_arrow(list(pos), list(pos+arr), list(0.5*arr/np.linalg.norm(arr)+0.5), 0.2)
+        if vector_color is None and vector_field is not None:
+            vector_color = 0.5*vector_field/np.linalg.norm(vector_field, axis=-1)[:, np.newaxis]+0.5
+        elif vector_field is not None and vector_field is not None:
+            try:
+                if vector_color.shape != np.ones((len(self), 3)).shape:
+                    vector_color = np.outer(np.ones(len(self)), vector_color/np.linalg.norm(vector_color))
+            except AttributeError:
+                vector_color = np.ones((len(self), 3))*vector_color
+        if vector_field is not None:
+            for arr, pos, col in zip(vector_field[select_atoms], self.positions[select_atoms], vector_color):
+                view.shape.add_arrow(list(pos), list(pos+arr), list(col), 0.2)
         if show_axes:
             axes_origin = -np.ones(3)
             view.shape.add_arrow(list(axes_origin), list(axes_origin+np.array([1, 0, 0])), [1, 0, 0], 0.1)
