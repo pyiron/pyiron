@@ -5,6 +5,7 @@
 import numpy as np
 from phonopy.structure.atoms import PhonopyAtoms
 import phonopy.structure.spglib as spg
+from pyiron.base.settings.generic import Settings
 
 __author__ = "Osamu Waseda"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -14,6 +15,8 @@ __maintainer__ = "Osamu Waseda"
 __email__ = "waseda@mpie.de"
 __status__ = "development"
 __date__ = "Sep 1, 2018"
+
+s = Settings()
 
 
 def analyse_phonopy_equivalent_atoms(atoms, symprec=1e-5, angle_tolerance=-1.0):
@@ -27,7 +30,7 @@ def analyse_phonopy_equivalent_atoms(atoms, symprec=1e-5, angle_tolerance=-1.0):
                 is used to judge symmetry.
 
     """
-
+    s.publication_add(publication())
     positions = atoms.scaled_positions
     cell = atoms.cell
     types = atoms.get_chemical_symbols()
@@ -38,3 +41,17 @@ def analyse_phonopy_equivalent_atoms(atoms, symprec=1e-5, angle_tolerance=-1.0):
     unitcell = PhonopyAtoms(symbols=types, cell=cell, scaled_positions=positions)
     ops = spg.get_symmetry(unitcell, symprec=symprec, angle_tolerance=angle_tolerance)
     return ops['equivalent_atoms']
+
+
+def publication():
+        return {'phonopy':
+"""\
+@article {phonopy,
+     Journal = {Scr. Mater.},
+     Year = {2015},
+     Title = {First principles phonon calculations in materials science},
+     Author = {Togo, A and Tanaka, I},
+     Pages = {1--5},
+     Volume = {108},
+     Month = {Nov}
+}"""}
