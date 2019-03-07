@@ -1136,7 +1136,9 @@ class Atoms(object):
                 color_scheme = 'occupancy'
             elif color_scheme is None:
                 color_scheme = 'element'
-            view.add_spacefill(radius_type='vdw', color_scheme=color_scheme, radius=particle_size)
+            #view.add_spacefill(radius_type='vdw', color_scheme=color_scheme, radius=particle_size)
+            for elem, num in set(list(zip(parent_basis.get_chemical_symbols(), parent_basis.get_atomic_numbers()))):
+                view.add_spacefill(selection='#'+elem, radius_type='vdw', color_scheme='element', radius=particle_size*(0.4+0.2*np.sqrt(num)))
             # view.add_spacefill(radius=1.0)
             view.remove_ball_and_stick()
         else:
