@@ -1153,7 +1153,7 @@ class Atoms(object):
             except AttributeError:
                 vector_color = np.ones((len(self), 3))*vector_color
         if vector_field is not None:
-            for arr, pos, col in zip(vector_field[select_atoms], self.positions[select_atoms], vector_color):
+            for arr, pos, col in zip(vector_field[select_atoms], self.positions[select_atoms], vector_color[select_atoms]):
                 view.shape.add_arrow(list(pos), list(pos+arr), list(col), 0.2)
         if show_axes:
             axes_origin = -np.ones(3)
