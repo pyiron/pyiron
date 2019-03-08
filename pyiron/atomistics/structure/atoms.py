@@ -1085,7 +1085,7 @@ class Atoms(object):
         pdb_str += 'ENDMDL \n'
         return pdb_str
     
-    def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5,
+    def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=1.0,
                background='white', color_scheme=None, show_axes=True, custom_array=None, custom_3darray=None,
                scalar_field=None, vector_field=None, vector_color=None, select_atoms=None):
         """
@@ -1094,8 +1094,8 @@ class Atoms(object):
             spacefill:
             show_cell: whether to show the frame or not (default: True)
             camera: 'perspective' or 'orthographic'
-            particle_size:
-            background:
+            particle_size: particle size
+            background: back ground color
             color_scheme: v.i.
             scalar_field: color for each atom according to the array value
             vector_field: vectors for each atom according to the array values (3 values for each atom)
@@ -1138,7 +1138,7 @@ class Atoms(object):
                 color_scheme = 'element'
             #view.add_spacefill(radius_type='vdw', color_scheme=color_scheme, radius=particle_size)
             for elem, num in set(list(zip(parent_basis.get_chemical_symbols(), parent_basis.get_atomic_numbers()))):
-                view.add_spacefill(selection='#'+elem, radius_type='vdw', color_scheme='element', radius=particle_size*(0.4+0.2*np.sqrt(num)))
+                view.add_spacefill(selection='#'+elem, radius_type='vdw', color_scheme='element', radius=particle_size*(0.2+0.1*np.sqrt(num)))
             # view.add_spacefill(radius=1.0)
             view.remove_ball_and_stick()
         else:
@@ -1166,8 +1166,7 @@ class Atoms(object):
             view.shape.add_text(list(axes_origin+np.array([0, 1, 0])), [0, 0, 0], 1, 'y')
             view.shape.add_text(list(axes_origin+np.array([1, 0, 0])), [0, 0, 0], 1, 'x')
         if camera!='perspective' and camera!='orthographic':
-            print('Only perspective or orthographic is permitted')
-            return None
+            warnings.warn('Only perspective or orthographic is (likely to be) permitted for camera')
         view.camera = camera
         view.background = background
         return view
