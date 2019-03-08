@@ -11,6 +11,7 @@ import os
 import posixpath
 import psutil
 # import multiprocessing
+import time
 from pyiron.base.job.wrapper import JobWrapper
 from pyiron.base.settings.generic import Settings
 from pyiron.base.job.executable import Executable
@@ -618,16 +619,21 @@ class GenericJob(JobCore):
         self.status.running = True
         self.project.db.item_update({"timestart": datetime.now()}, self.job_id)
         job_crashed, out = False, None
+        if self.server.cores == 1 or not self.executable.mpi:
+            command = [str(self.executable)]
+        else:
+            command = [self.executable.executable_path, str(self.server.cores), str(self.server.threads)]
         try:
-            if self.server.cores == 1 or not self.executable.mpi:
-                out = subprocess.check_output(str(self.executable), cwd=self.project_hdf5.working_directory, shell=True,
+            if self.server.heartbeat is None:
+                out = subprocess.check_output(command, cwd=self.project_hdf5.working_directory, shell=False,
                                               stderr=subprocess.STDOUT, universal_newlines=True)
             else:
-                out = subprocess.check_output([self.executable.executable_path,
-                                               str(self.server.cores),
-                                               str(self.server.threads)],
-                                              cwd=self.project_hdf5.working_directory, shell=False,
-                                              stderr=subprocess.STDOUT, universal_newlines=True)
+                process = subprocess.Popen(command, cwd=self.project_hdf5.working_directory, shell=False,
+                                           stderr=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True)
+                while process.poll() is None:
+                    time.sleep(int(self.server.heartbeat))
+                    self.project.db.item_update({"timestop": datetime.now()}, self.job_id)
+                out, error = process.communicate()
         except subprocess.CalledProcessError as e:
             if not self.server.accept_crash:
                 self._logger.warn("Job aborted")

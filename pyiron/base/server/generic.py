@@ -88,6 +88,27 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         self._send_to_db = False
         self._structure_id = None
         self._accept_crash = False
+        self._heartbeat = None
+
+    @property
+    def heartbeat(self):
+        """
+        The heartbeat gives the interval in seconds which pyiron uses to check if the job is still alive.
+
+        Returns:
+            int: seconds
+        """
+        return self._heartbeat
+
+    @heartbeat.setter
+    def heartbeat(self, timeinterval):
+        """
+        The heartbeat gives the interval in seconds which pyiron uses to check if the job is still alive.
+
+        Args:
+            timeinterval (int): seconds
+        """
+        self._heartbeat = timeinterval
 
     @property
     def send_to_db(self):
@@ -399,6 +420,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         hdf_dict["run_time"] = self.run_time
         hdf_dict["memory_limit"] = self.memory_limit
         hdf_dict["accept_crash"] = self.accept_crash
+        hdf_dict["heartbeat"] = self.heartbeat
 
         if group_name:
             with hdf.open(group_name) as hdf_group:
@@ -440,6 +462,8 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
             self._accept_crash = (hdf_dict["accept_crash"] == 1)
         if "threads" in hdf_dict.keys():
             self._threads = hdf_dict["threads"]
+        if "heartbeat" in hdf_dict.keys():
+            self.heartbeat = hdf_dict["heartbeat"]
         self._new_hdf = (hdf_dict["new_h5"] == 1)
 
     def db_entry(self):
