@@ -222,9 +222,9 @@ class LammpsBase(AtomisticGenericJob):
         lmp_structure = self._get_lammps_structure(structure=self.structure, cutoff_radius=self.cutoff_radius)
         lmp_structure.write_file(file_name="structure.inp", cwd=self.working_directory)
         if self.executable.version and 'dump_modify' in self.input.control._dataset['Parameter'] and \
-                (int(self.executable.version.split('.')[0]) < 2016 or
-                 (int(self.executable.version.split('.')[0]) == 2016 and
-                  int(self.executable.version.split('.')[1]) < 11)):
+                (int(self.executable.version.split('_')[-1].split('.')[0]) < 2016 or
+                 (int(self.executable.version.split('_')[-1].split('.')[0]) == 2016 and
+                  int(self.executable.version.split('_')[-1].split('.')[1]) < 11)):
             self.input.control['dump_modify'] = self.input.control['dump_modify'].replace(' line ', ' ')
         if not all(self.structure.pbc):
             self.input.control['boundary'] = ' '.join(['p' if coord else 'f' for coord in self.structure.pbc])
