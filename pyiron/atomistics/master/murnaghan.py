@@ -36,6 +36,97 @@ def debye_function(x):
     return 3 / x ** 3 * debye_integral(x)
 
 
+# https://gitlab.com/ase/ase/blob/master/ase/eos.py
+def birchmurnaghan_energy(V, E0, B0, BP, V0):
+    'BirchMurnaghan equation from PRB 70, 224107'
+    eta = (V0 / V) ** (1 / 3)
+    return E0 + 9 * B0 * V0 / 16 * (eta ** 2 - 1) ** 2 * (6 + BP * (eta ** 2 - 1) - 4 * eta ** 2)
+
+
+def vinet_energy(V, E0, B0, BP, V0):
+    'Vinet equation from PRB 70, 224107'
+    eta = (V / V0) ** (1 / 3)
+    return (E0 + 2 * B0 * V0 / (BP - 1) ** 2 * (
+            2 - (5 + 3 * BP * (eta - 1) - 3 * eta) * np.exp(-3 * (BP - 1) * (eta - 1) / 2)))
+
+
+def murnaghan(V, E0, B0, BP, V0):
+    'From PRB 28,5480 (1983'
+
+    E = E0 + B0 * V / BP * (((V0 / V) ** BP) / (BP - 1) + 1) - V0 * B0 / (BP - 1)
+    return E
+
+
+def birch(V, E0, B0, BP, V0):
+    """
+    From Intermetallic compounds: Principles and Practice, Vol. I: Principles
+    Chapter 9 pages 195-210 by M. Mehl. B. Klein, D. Papaconstantopoulos
+    paper downloaded from Web
+
+    case where n=0
+    """
+
+    E = (E0 +
+         9 / 8 * B0 * V0 * ((V0 / V) ** (2 / 3) - 1) ** 2 +
+         9 / 16 * B0 * V0 * (BP - 4) * ((V0 / V) ** (2 / 3) - 1) ** 3)
+    return E
+
+
+def pouriertarantola(V, E0, B0, BP, V0):
+    'Pourier-Tarantola equation from PRB 70, 224107'
+
+    eta = (V / V0) ** (1 / 3)
+    squiggle = -3 * np.log(eta)
+
+    E = E0 + B0 * V0 * squiggle ** 2 / 6 * (3 + squiggle * (BP - 2))
+    return E
+
+
+def fitfunction(parameters, vol, fittype='vinet'):
+    [E0, b0, bp, V0] = parameters
+    # Unit correction
+    B0 = b0 / 160.21766208
+    BP = bp
+    V = vol
+    if fittype.lower() == 'birchmurnaghan':
+        return birchmurnaghan_energy(V, E0, B0, BP, V0)
+    elif fittype.lower() == 'vinet':
+        return vinet_energy(V, E0, B0, BP, V0)
+    elif fittype.lower() == 'murnaghan':
+        return murnaghan(V, E0, B0, BP, V0)
+    elif fittype.lower() == 'pouriertarantola':
+        return pouriertarantola(V, E0, B0, BP, V0)
+    elif fittype.lower() == 'birch':
+        return birch(V, E0, B0, BP, V0)
+    else:
+        raise ValueError
+
+
+def fit_leastsq(p0, datax, datay, fittype='vinet'):
+    # http://stackoverflow.com/questions/14581358/getting-standard-errors-on-fitted-parameters-using-the-optimize-leastsq-method-i
+
+    errfunc = lambda p, x, y, fittype: fitfunction(p, x, fittype) - y
+
+    pfit, pcov, infodict, errmsg, success = \
+        spy.leastsq(errfunc, p0, args=(datax, datay, fittype), full_output=1, epsfcn=0.0001)
+
+    if (len(datay) > len(p0)) and pcov is not None:
+        s_sq = (errfunc(pfit, datax, datay, fittype)**2).sum()/(len(datay)-len(p0))
+        pcov = pcov * s_sq
+    else:
+        pcov = np.inf
+
+    error = []
+    for i in range(len(pfit)):
+        try:
+          error.append(np.absolute(pcov[i][i])**0.5)
+        except:
+          error.append( 0.00 )
+    pfit_leastsq = pfit
+    perr_leastsq = np.array(error)
+    return pfit_leastsq, perr_leastsq
+
+
 class DebyeModel(object):
     def __init__(self, murnaghan, num_steps=50):
         self._murnaghan = murnaghan
@@ -271,25 +362,6 @@ class EnergyVolumeFit(object):
         fit_dict["least_square_error"] = self.get_error(volume_lst, energy_lst, p_fit)
         return fit_dict
 
-    def _fitfunction(self, parameters, vol, fittype='birchmurnaghan'):
-        [E0, b0, bp, V0] = parameters
-        # Unit correction
-        B0 = b0 / 1e21 / scipy.constants.physical_constants['joule-electron volt relationship'][0]
-        BP = bp
-        V = vol
-        if fittype.lower() == 'birchmurnaghan':
-            return self.birchmurnaghan_energy(V, E0, B0, BP, V0)
-        elif fittype.lower() == 'vinet':
-            return self.vinet_energy(V, E0, B0, BP, V0)
-        elif fittype.lower() == 'murnaghan':
-            return self.murnaghan(V, E0, B0, BP, V0)
-        elif fittype.lower() == 'pouriertarantola':
-            return self.pouriertarantola(V, E0, B0, BP, V0)
-        elif fittype.lower() == 'birch':
-            return self.birch(V, E0, B0, BP, V0)
-        else:
-            raise ValueError
-
     def _fit_leastsq(self, volume_lst, energy_lst, fittype='birchmurnaghan'):
         try:
             import matplotlib.pylab as plt
@@ -301,7 +373,7 @@ class EnergyVolumeFit(object):
         v0 = -b / (2 * a)
         ev_angs_to_gpa = 1e21 / scipy.constants.physical_constants['joule-electron volt relationship'][0]
         pfit_leastsq, perr_leastsq = self._fit_leastsq_funct([a * v0 ** 2 + b * v0 + c, 2 * a * v0 * ev_angs_to_gpa, 4, v0],
-                                                              vol_lst, eng_lst, self._fitfunction, fittype)
+                                                              vol_lst, eng_lst, fitfunction, fittype)
         return pfit_leastsq, perr_leastsq  # [e0, b0, bP, v0]
 
     @staticmethod
@@ -334,52 +406,6 @@ class EnergyVolumeFit(object):
         y_fit_lst = np.array(p_fit(x_lst))
         error_lst = (y_lst - y_fit_lst) ** 2
         return np.mean(error_lst)
-
-    # https://gitlab.com/ase/ase/blob/master/ase/eos.py
-    @staticmethod
-    def birchmurnaghan_energy(V, E0, B0, BP, V0):
-        'BirchMurnaghan equation from PRB 70, 224107'
-        eta = (V0 / V) ** (1 / 3)
-        return E0 + 9 * B0 * V0 / 16 * (eta ** 2 - 1) ** 2 * (6 + BP * (eta ** 2 - 1) - 4 * eta ** 2)
-
-    @staticmethod
-    def vinet_energy(V, E0, B0, BP, V0):
-        'Vinet equation from PRB 70, 224107'
-        eta = (V / V0) ** (1 / 3)
-        return (E0 + 2 * B0 * V0 / (BP - 1) ** 2 * (
-                2 - (5 + 3 * BP * (eta - 1) - 3 * eta) * np.exp(-3 * (BP - 1) * (eta - 1) / 2)))
-
-    @staticmethod
-    def murnaghan(V, E0, B0, BP, V0):
-        'From PRB 28,5480 (1983'
-
-        E = E0 + B0 * V / BP * (((V0 / V) ** BP) / (BP - 1) + 1) - V0 * B0 / (BP - 1)
-        return E
-
-    @staticmethod
-    def birch(V, E0, B0, BP, V0):
-        """
-        From Intermetallic compounds: Principles and Practice, Vol. I: Principles
-        Chapter 9 pages 195-210 by M. Mehl. B. Klein, D. Papaconstantopoulos
-        paper downloaded from Web
-
-        case where n=0
-        """
-
-        E = (E0 +
-             9 / 8 * B0 * V0 * ((V0 / V) ** (2 / 3) - 1) ** 2 +
-             9 / 16 * B0 * V0 * (BP - 4) * ((V0 / V) ** (2 / 3) - 1) ** 3)
-        return E
-
-    @staticmethod
-    def pouriertarantola(V, E0, B0, BP, V0):
-        'Pourier-Tarantola equation from PRB 70, 224107'
-
-        eta = (V / V0) ** (1 / 3)
-        squiggle = -3 * np.log(eta)
-
-        E = E0 + B0 * V0 * squiggle ** 2 / 6 * (3 + squiggle * (BP - 2))
-        return E
 
 
 # ToDo: not all abstract methods implemented
