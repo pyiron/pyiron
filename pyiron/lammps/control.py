@@ -147,13 +147,6 @@ class LammpsControl(GenericParameters):
             delta_temp (float): Thermostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
             delta_press (float): Barostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
         """
-        if delta_temp is not None:
-            warnings.warn("WARNING: `delta_temp` is deprecated, please use `temperature_damping_timescale`")
-            temperature_damping_timescale = delta_temp
-        if delta_press is not None:
-            warnings.warn("WARNING: `delta_press` is deprecated, please use `pressure_damping_timescale`")
-            pressure_damping_timescale = delta_press
-
         time_rescaling_factors = {'metal': 1e-3,
                                   'si': 1e-12,
                                   'cgs': 1e-12,
@@ -174,7 +167,7 @@ class LammpsControl(GenericParameters):
 
         if delta_press is not None:
             warnings.warn("WARNING: `delta_press` is deprecated, please use `pressure_damping_timescale`.")
-            pressure_damping_timescale = delta_press / time_rescaling_factors[self['units']]
+            pressure_damping_timescale = delta_press
         else:
             pressure_damping_timescale *= time_rescaling_factors[self['units']]
 
