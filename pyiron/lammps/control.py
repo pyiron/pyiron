@@ -167,6 +167,10 @@ class LammpsControl(GenericParameters):
                                                 'pressure': GPa_to_Pa}}
         time_units = lammps_unit_conversions[self['units']['time']]
         pressure_units = lammps_unit_conversions[self['units']]['pressure']
+        # No need for temperature conversion; pyiron and all available Lammps units are both in Kelvin
+        # (well, except unitless Lennard-Jones units...)
+        if self['units'] == 'lj':
+            raise NotImplementedError
 
         if time_step is not None:
             try:
