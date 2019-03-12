@@ -218,7 +218,6 @@ class LammpsControl(GenericParameters):
                                                                                        str(pressure),
                                                                                        str(pressure_damping_timescale))
         elif temperature is not None:
-            temperature = float(temperature)  # TODO; why needed?
             if temperature == 0.0:
                 raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
             if langevin:
