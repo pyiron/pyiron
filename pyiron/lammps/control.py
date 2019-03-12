@@ -198,10 +198,13 @@ class LammpsControl(GenericParameters):
 
         if seed is None:
             seed = np.random.randint(99999)
+
         if pressure is not None:  # NPT
             pressure = float(pressure) * pressure_units
+
             if temperature is None or temperature == 0.0:
                 raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
+
             if langevin:  # NPT(Langevin)
                 fix_ensemble_str = 'all nph aniso {0} {1} {2}'.format(str(pressure),
                                                                       str(pressure),
@@ -221,6 +224,7 @@ class LammpsControl(GenericParameters):
         elif temperature is not None:  # NVT
             if temperature == 0.0:
                 raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
+
             if langevin:  # NVT(Langevin)
                 fix_ensemble_str = 'all nve'
                 self.modify(fix___langevin='all langevin {0} {1} {2} {3} zero yes'.format(str(temperature),
@@ -238,11 +242,13 @@ class LammpsControl(GenericParameters):
 
         if tloop is not None:
             fix_ensemble_str += " tloop " + str(tloop)
+
         self.remove_keys(["minimize"])
         self.modify(fix___ensemble=fix_ensemble_str,
                     variable=' dumptime equal {} '.format(n_print),
                     thermo=int(n_print),
                     run=int(n_ionic_steps),
                     append_if_not_present=True)
+
         if initial_temperature > 0:
             self.set_initial_velocity(initial_temperature, gaussian=True)
