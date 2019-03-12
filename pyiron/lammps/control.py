@@ -7,6 +7,7 @@ from collections import OrderedDict
 import numpy as np
 import warnings
 from pyiron.base.generic.parameters import GenericParameters
+import scipy.constants as spc
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -148,12 +149,12 @@ class LammpsControl(GenericParameters):
             delta_press (float): Barostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
         """
         # Conversion factors for transfroming pyiron units to Lammps units
-        fs_to_ps = 1.e-3
-        fs_to_s = 1.e-12
-        GPa_to_bar = 1.e4
-        GPa_to_Pa = 1.e9
-        GPa_to_barye = 1.e10
-        GPa_to_atm = 9869.232667160128  # digits c.f. http://www.kylesconverter.com/pressure/gigapascals-to-atmospheres
+        fs_to_ps = spc.femto / spc.pico
+        fs_to_s = spc.femto / 1.
+        GPa_to_bar = spc.giga * 1. / spc.bar
+        GPa_to_Pa = spc.giga
+        GPa_to_barye = spc.giga * 1. / (1.e-6 * spc.bar)  # Lammps is in "barye"
+        GPa_to_atm = spc.giga * 1. / spc.atm
         lammps_unit_conversions = {'metal': {'time': fs_to_ps,
                                              'pressure': GPa_to_bar},
                                    'si': {'time': fs_to_s,
