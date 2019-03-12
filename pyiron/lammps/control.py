@@ -199,6 +199,7 @@ class LammpsControl(GenericParameters):
         if seed is None:
             seed = np.random.randint(99999)
 
+        # Set thermodynamic ensemble
         if pressure is not None:  # NPT
             pressure *= pressure_units
 
