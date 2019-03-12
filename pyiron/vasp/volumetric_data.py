@@ -104,8 +104,8 @@ class VaspVolumetricData(VolumetricData):
             if not normalize:
                 volume = 1.0
             if len(all_dataset) == 0:
-                s = Settings()
-                if os.path.exists(filename) and not os.stat(filename).st_size == 0:
+                if not os.stat(filename).st_size == 0:
+                    s = Settings()
                     s.logger.warning("File:" + filename + "seems to be corrupted/empty")
                 return
             if len(all_dataset) == 2:
