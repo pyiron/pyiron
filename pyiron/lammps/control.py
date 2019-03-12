@@ -200,7 +200,7 @@ class LammpsControl(GenericParameters):
             seed = np.random.randint(99999)
 
         if pressure is not None:  # NPT
-            pressure = float(pressure) * pressure_units
+            pressure *= pressure_units
 
             if temperature is None or temperature == 0.0:
                 raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
