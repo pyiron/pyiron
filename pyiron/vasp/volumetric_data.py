@@ -5,7 +5,7 @@
 import math
 
 import numpy as np
-
+import os
 from pyiron.base.settings.generic import Settings
 from pyiron.vasp.structure import atoms_from_string, get_species_list_from_potcar
 from pyiron.atomistics.volumetric.generic import VolumetricData
@@ -105,7 +105,8 @@ class VaspVolumetricData(VolumetricData):
                 volume = 1.0
             if len(all_dataset) == 0:
                 s = Settings()
-                s.logger.warning("File:" + filename + "seems to be corrupted/empty")
+                if os.path.exists(filename) and not os.stat(filename).st_size == 0:
+                    s.logger.warning("File:" + filename + "seems to be corrupted/empty")
                 return
             if len(all_dataset) == 2:
                 data = {"total": all_dataset[0] / volume, "diff": all_dataset[1] / volume}
