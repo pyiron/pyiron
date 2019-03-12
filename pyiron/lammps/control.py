@@ -200,8 +200,6 @@ class LammpsControl(GenericParameters):
             seed = np.random.randint(99999)
         if pressure is not None:  # NPT
             pressure = float(pressure) * pressure_units
-            if pressure_damping_timescale is None:
-                pressure_damping_timescale = temperature_damping_timescale * 10
             if temperature is None or temperature == 0.0:
                 raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
             if langevin:  # NPT(Langevin)
