@@ -191,7 +191,7 @@ class LammpsControl(GenericParameters):
             pressure_damping_timescale *= time_units
 
         if initial_temperature is None and temperature is not None:
-            initial_temperature = 2*temperature
+            initial_temperature = 2 * temperature
 
         if seed is None:
             seed = np.random.randint(99999)
