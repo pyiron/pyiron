@@ -7,6 +7,7 @@ from collections import OrderedDict
 import numpy as np
 import warnings
 from pyiron.base.generic.parameters import GenericParameters
+import scipy.constants as spc
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -147,49 +148,66 @@ class LammpsControl(GenericParameters):
             delta_temp (float): Thermostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
             delta_press (float): Barostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
         """
-        if delta_temp is not None:
-            warnings.warn("WARNING: `delta_temp` is deprecated, please use `temperature_damping_timescale`")
-            temperature_damping_timescale = delta_temp
-        if delta_press is not None:
-            warnings.warn("WARNING: `delta_press` is deprecated, please use `pressure_damping_timescale`")
-            pressure_damping_timescale = delta_press
+        # Conversion factors for transfroming pyiron units to Lammps units
+        fs_to_ps = spc.femto / spc.pico
+        fs_to_s = spc.femto / 1.
+        GPa_to_bar = spc.giga * 1. / spc.bar
+        GPa_to_Pa = spc.giga
+        GPa_to_barye = spc.giga * 1. / (1.e-6 * spc.bar)  # Lammps is in "barye"
+        GPa_to_atm = spc.giga * 1. / spc.atm
+        lammps_unit_conversions = {'metal': {'time': fs_to_ps,
+                                             'pressure': GPa_to_bar},
+                                   'si': {'time': fs_to_s,
+                                          'pressure': GPa_to_Pa},
+                                   'cgs': {'time': fs_to_s,
+                                           'pressure': GPa_to_barye},
+                                   'real': {'time': 1,
+                                            'pressure': GPa_to_atm},
+                                   'electron': {'time': 1,
+                                                'pressure': GPa_to_Pa}}
+        time_units = lammps_unit_conversions[self['units']['time']]
+        pressure_units = lammps_unit_conversions[self['units']]['pressure']
+        # No need for temperature conversion; pyiron and all available Lammps units are both in Kelvin
+        # (well, except unitless Lennard-Jones units...)
+        if self['units'] == 'lj':
+            raise NotImplementedError
 
-        time_rescaling_factors = {'metal': 1e-3,
-                                  'si': 1e-12,
-                                  'cgs': 1e-12,
-                                  'real': 1,
-                                  'electron': 1}
-
+        # Transform time
         if time_step is not None:
             try:
-                self['timestep'] = time_step * time_rescaling_factors[self['units']]
+                self['timestep'] = time_step * time_units
             except KeyError:
                 raise NotImplementedError()
 
+        # Transform thermostat strength
         if delta_temp is not None:
             warnings.warn("WARNING: `delta_temp` is deprecated, please use `temperature_damping_timescale`.")
             temperature_damping_timescale = delta_temp
         else:
-            temperature_damping_timescale *= time_rescaling_factors[self['units']]
+            temperature_damping_timescale *= time_units
 
+        # Transform barostat strength
         if delta_press is not None:
             warnings.warn("WARNING: `delta_press` is deprecated, please use `pressure_damping_timescale`.")
-            pressure_damping_timescale = delta_press / time_rescaling_factors[self['units']]
+            pressure_damping_timescale = delta_press
         else:
-            pressure_damping_timescale *= time_rescaling_factors[self['units']]
+            pressure_damping_timescale *= time_units
 
+        # Apply initial overheating (default uses the theorem of equipartition of energy between KE and PE)
         if initial_temperature is None and temperature is not None:
-            initial_temperature = 2*temperature
+            initial_temperature = 2 * temperature
 
         if seed is None:
             seed = np.random.randint(99999)
-        if pressure is not None:
-            pressure = float(pressure)*1.0e4  # TODO; why needed?
-            if pressure_damping_timescale is None:
-                pressure_damping_timescale = temperature_damping_timescale * 10
+
+        # Set thermodynamic ensemble
+        if pressure is not None:  # NPT
+            pressure *= pressure_units
+
             if temperature is None or temperature == 0.0:
                 raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
-            if langevin:
+
+            if langevin:  # NPT(Langevin)
                 fix_ensemble_str = 'all nph aniso {0} {1} {2}'.format(str(pressure),
                                                                       str(pressure),
                                                                       str(pressure_damping_timescale))
@@ -198,38 +216,41 @@ class LammpsControl(GenericParameters):
                                                                                           str(temperature_damping_timescale),
                                                                                           str(seed)),
                             append_if_not_present=True)
-            else:
+            else:  #NPT(Nose-Hoover)
                 fix_ensemble_str = 'all npt temp {0} {1} {2} aniso {3} {4} {5}'.format(str(temperature),
                                                                                        str(temperature),
                                                                                        str(temperature_damping_timescale),
                                                                                        str(pressure),
                                                                                        str(pressure),
                                                                                        str(pressure_damping_timescale))
-        elif temperature is not None:
-            temperature = float(temperature)  # TODO; why needed?
+        elif temperature is not None:  # NVT
             if temperature == 0.0:
                 raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
-            if langevin:
+
+            if langevin:  # NVT(Langevin)
                 fix_ensemble_str = 'all nve'
                 self.modify(fix___langevin='all langevin {0} {1} {2} {3} zero yes'.format(str(temperature),
                                                                                           str(temperature),
                                                                                           str(temperature_damping_timescale),
                                                                                           str(seed)),
                             append_if_not_present=True)
-            else:
+            else:  # NVT(Nose-Hoover)
                 fix_ensemble_str = 'all nvt temp {0} {1} {2}'.format(str(temperature),
                                                                      str(temperature),
                                                                      str(temperature_damping_timescale))
-        else:
+        else:  # NVE
             fix_ensemble_str = 'all nve'
             initial_temperature = 0
+
         if tloop is not None:
             fix_ensemble_str += " tloop " + str(tloop)
+
         self.remove_keys(["minimize"])
         self.modify(fix___ensemble=fix_ensemble_str,
                     variable=' dumptime equal {} '.format(n_print),
                     thermo=int(n_print),
                     run=int(n_ionic_steps),
                     append_if_not_present=True)
-        if initial_temperature>0:
+
+        if initial_temperature > 0:
             self.set_initial_velocity(initial_temperature, gaussian=True)
