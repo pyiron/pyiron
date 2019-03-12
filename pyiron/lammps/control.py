@@ -147,15 +147,30 @@ class LammpsControl(GenericParameters):
             delta_temp (float): Thermostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
             delta_press (float): Barostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
         """
-        time_rescaling_factors = {'metal': 1e-3,
-                                  'si': 1e-12,
-                                  'cgs': 1e-12,
-                                  'real': 1,
-                                  'electron': 1}
+        # Conversion factors for transfroming pyiron units to Lammps units
+        fs_to_ps = 1.e-3
+        fs_to_s = 1.e-12
+        GPa_to_bar = 1.e4
+        GPa_to_Pa = 1.e9
+        GPa_to_barye = 1.e10
+        GPa_to_atm = 9869.232667160128  # digits c.f. http://www.kylesconverter.com/pressure/gigapascals-to-atmospheres
+
+        lammps_unit_conversions = {'metal': {'time': fs_to_ps,
+                                             'pressure': GPa_to_bar},
+                                   'si': {'time': fs_to_s,
+                                          'pressure': GPa_to_Pa},
+                                   'cgs': {'time': fs_to_s,
+                                           'pressure': GPa_to_barye},
+                                   'real': {'time': 1,
+                                            'pressure': GPa_to_atm},
+                                   'electron': {'time': 1,
+                                                'pressure': GPa_to_Pa}}
+        time_units = lammps_unit_conversions[self['units']['time']]
+        pressure_units = lammps_unit_conversions[self['units']]['pressure']
 
         if time_step is not None:
             try:
-                self['timestep'] = time_step * time_rescaling_factors[self['units']]
+                self['timestep'] = time_step * time_units
             except KeyError:
                 raise NotImplementedError()
 
@@ -163,13 +178,13 @@ class LammpsControl(GenericParameters):
             warnings.warn("WARNING: `delta_temp` is deprecated, please use `temperature_damping_timescale`.")
             temperature_damping_timescale = delta_temp
         else:
-            temperature_damping_timescale *= time_rescaling_factors[self['units']]
+            temperature_damping_timescale *= time_units
 
         if delta_press is not None:
             warnings.warn("WARNING: `delta_press` is deprecated, please use `pressure_damping_timescale`.")
             pressure_damping_timescale = delta_press
         else:
-            pressure_damping_timescale *= time_rescaling_factors[self['units']]
+            pressure_damping_timescale *= time_units
 
         if initial_temperature is None and temperature is not None:
             initial_temperature = 2*temperature
@@ -177,7 +192,7 @@ class LammpsControl(GenericParameters):
         if seed is None:
             seed = np.random.randint(99999)
         if pressure is not None:
-            pressure = float(pressure)*1.0e4  # TODO; why needed?
+            pressure = float(pressure) * pressure_units
             if pressure_damping_timescale is None:
                 pressure_damping_timescale = temperature_damping_timescale * 10
             if temperature is None or temperature == 0.0:
