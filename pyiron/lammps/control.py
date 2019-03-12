@@ -223,7 +223,7 @@ class LammpsControl(GenericParameters):
         elif temperature is not None:  # NVT
             if temperature == 0.0:
                 raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
-            if langevin: # NVT(Langevin)
+            if langevin:  # NVT(Langevin)
                 fix_ensemble_str = 'all nve'
                 self.modify(fix___langevin='all langevin {0} {1} {2} {3} zero yes'.format(str(temperature),
                                                                                           str(temperature),
