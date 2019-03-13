@@ -1037,17 +1037,17 @@ class Atoms(object):
 
     def analyse_ovito_cna_adaptive(self, mode='total'):
         from pyiron.atomistics.structure.ovito import analyse_ovito_cna_adaptive
-        #warnings.filterwarnings("ignore")
+        warnings.filterwarnings("ignore")
         return analyse_ovito_cna_adaptive(atoms=self, mode=mode)
 
     def analyse_ovito_centro_symmetry(atoms, num_neighbors=12):
         from pyiron.atomistics.structure.ovito import analyse_ovito_centro_symmetry
-        #warnings.filterwarnings("ignore")
+        warnings.filterwarnings("ignore")
         return analyse_ovito_centro_symmetry(atoms, num_neighbors=num_neighbors)
 
     def analyse_ovito_voronoi_volume(atoms):
         from pyiron.atomistics.structure.ovito import analyse_ovito_voronoi_volume
-        #warnings.filterwarnings("ignore")
+        warnings.filterwarnings("ignore")
         return analyse_ovito_voronoi_volume(atoms)
 
     def analyse_phonopy_equivalent_atoms(atoms):
