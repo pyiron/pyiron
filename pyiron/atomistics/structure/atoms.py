@@ -1302,20 +1302,18 @@ class Atoms(object):
                      dimension=len(cell), species=self.species)
 
     def get_neighbors(self,
-                      radius=None,
                       num_neighbors=12,
                       t_vec=True,
                       include_boundary=True,
                       exclude_self=True,
                       tolerance=2,
-                      id_list=None, cutoff=None):
+                      id_list=None,
+                      cutoff_radius=None,
+                      cutoff=None):
         """
         
         Args:
-            radius: distance up to which nearest neighbors are searched for
-                    used only for periodic boundary padding
-                   (in absolute units)
-            num_neighbors: 
+            num_neighbors (int): number of neighbors
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
             include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
@@ -1323,7 +1321,10 @@ class Atoms(object):
             exclude_self (bool): include central __atom (i.e. distance = 0)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list:
-            cutoff (float): Upper bound of the distance to which the search must be done
+            cutoff (float/None): Upper bound of the distance to which the search must be done - by default search for
+                                 upto 100 neighbors unless num_neighbors is defined explicitly.
+            cutoff_radius (float/None): Upper bound of the distance to which the search must be done - by default search
+                                        for upto 100 neighbors unless num_neighbors is defined explicitly.
 
         Returns:
 
@@ -1331,6 +1332,11 @@ class Atoms(object):
             and vectors
 
         """
+        if cutoff is not None and cutoff_radius is None:
+            warnings.warn('Please use cutoff_radius, rather than cutoff', DeprecationWarning)
+            cutoff_radius = cutoff
+        if cutoff_radius is not None and num_neighbors == 12:
+            num_neighbors = 100
         # eps = 1e-4
         i_start = 0
         if exclude_self:
@@ -1343,10 +1349,10 @@ class Atoms(object):
         neighbor_obj = Neighbors()
         if not include_boundary:  # periodic boundaries are NOT included
             tree = cKDTree(self.positions)
-            if cutoff is None:
+            if cutoff_radius is None:
                 neighbors = tree.query(self.positions, k=num_neighbors)
             else:
-                neighbors = tree.query(self.positions, k=num_neighbors, distance_upper_bound=cutoff)
+                neighbors = tree.query(self.positions, k=num_neighbors, distance_upper_bound=cutoff_radius)
 
             d_lst, ind_lst, v_lst = [], [], []
             ic = 0
@@ -1365,8 +1371,7 @@ class Atoms(object):
         # include periodic boundaries
         # translate radius in boundary layer with relative coordinates
         # TODO: introduce more rigoros definition
-        if radius is None:
-            radius = 3 * num_neighbors ** (1. / 3.)
+        radius = 3 * num_neighbors ** (1. / 3.)
         rel_width = [radius / np.sqrt(np.dot(a_i, a_i)) for a_i in self.cell]
         rel_width_scalar = np.max(rel_width)
 
@@ -1384,10 +1389,10 @@ class Atoms(object):
         else:
             positions = np.array([self.positions[i] for i in id_list])
         # print ("len positions: ", len(positions))
-        if cutoff is None:
+        if cutoff_radius is None:
             neighbors = tree.query(positions, k=num_neighbors)
         else:
-            neighbors = tree.query(positions, k=num_neighbors, distance_upper_bound=cutoff)
+            neighbors = tree.query(positions, k=num_neighbors, distance_upper_bound=cutoff_radius)
 
         # print ("neighbors: ", neighbors)
 
@@ -1453,16 +1458,12 @@ class Atoms(object):
         neighbor_obj.shells = self.neighbor_shellOrder
         return neighbor_obj
 
-
-    def get_neighborhood(box, position, radius=None, num_neighbors=12, t_vec=True,
-                         include_boundary=True, exclude_self=True, tolerance=2, id_list=None, cutoff=None):
+    def get_neighborhood(box, position, num_neighbors=12, t_vec=True, include_boundary=True, exclude_self=True,
+                         tolerance=2, id_list=None, cutoff=None, cutoff_radius=None):
         """
         
         Args:
             position: position in a box whose neighborhood information is analysed
-            radius: distance up to which nearest neighbors are searched for
-                    used only for periodic boundary padding
-                   (in absolute units)
             num_neighbors: 
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
@@ -1471,7 +1472,8 @@ class Atoms(object):
             exclude_self (bool): include central __atom (i.e. distance = 0)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list:
-            cutoff (float): Upper bound of the distance to which the search must be done
+            cutoff (float/ None): Upper bound of the distance to which the search must be done
+            cutoff_radius (float/ None): Upper bound of the distance to which the search must be done
 
         Returns:
 
@@ -1486,9 +1488,9 @@ class Atoms(object):
         pos = box.positions
         pos[-1] = np.array(position)
         box.positions = pos
-        neigh = box.get_neighbors(radius=radius, num_neighbors=num_neighbors, t_vec=t_vec,
+        neigh = box.get_neighbors(num_neighbors=num_neighbors, t_vec=t_vec,
                                   include_boundary=include_boundary, exclude_self=exclude_self,
-                                  tolerance=tolerance, id_list=id_list, cutoff=cutoff)
+                                  tolerance=tolerance, id_list=id_list, cutoff=cutoff, cutoff_radius=cutoff_radius)
         neigh_return = NeighTemp()
         setattr(neigh_return, 'distances', neigh.distances[-1])
         setattr(neigh_return, 'shells', neigh.shells[-1])
@@ -1500,13 +1502,12 @@ class Atoms(object):
         neigh_return.indices = neigh_return.indices[neigh_return.indices!=len(box)-1]
         return neigh_return
 
-    def get_shells(self, id_list=None, max_shell=2, radius=None, max_num_neighbors=100):
+    def get_shells(self, id_list=None, max_shell=2, max_num_neighbors=100):
         """
         
         Args:
             id_list: 
-            max_shell: 
-            radius: 
+            max_shell:
             max_num_neighbors: 
 
         Returns:
@@ -1514,8 +1515,7 @@ class Atoms(object):
         """
         if id_list is None:
             id_list = [0]
-        neighbors = self.get_neighbors(radius=radius,
-                                       num_neighbors=max_num_neighbors,
+        neighbors = self.get_neighbors(num_neighbors=max_num_neighbors,
                                        id_list=id_list)
 
         shells = neighbors.shells[0]
@@ -1531,7 +1531,7 @@ class Atoms(object):
             raise AssertionError()
         return shell_dict
 
-    def get_shell_matrix(self, shell, id_list=None, restraint_matrix=None, radius=None, max_num_neighbors=100):
+    def get_shell_matrix(self, shell, id_list=None, restraint_matrix=None, max_num_neighbors=100):
         """
 
         Args:
@@ -1548,8 +1548,7 @@ class Atoms(object):
 
         """
         assert isinstance(shell, int) and shell > 0, "Parameter 'shell' must be an integer greater than 0"
-        neigh_list = self.get_neighbors(radius=radius,
-                                        num_neighbors=max_num_neighbors,
+        neigh_list = self.get_neighbors(num_neighbors=max_num_neighbors,
                                         id_list=id_list)
         Natom = len(neigh_list.shells)
         if restraint_matrix is None:
