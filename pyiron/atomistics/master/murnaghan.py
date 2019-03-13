@@ -52,7 +52,6 @@ def vinet_energy(V, E0, B0, BP, V0):
 
 def murnaghan(V, E0, B0, BP, V0):
     'From PRB 28,5480 (1983'
-
     E = E0 + B0 * V / BP * (((V0 / V) ** BP) / (BP - 1) + 1) - V0 * B0 / (BP - 1)
     return E
 
@@ -65,7 +64,6 @@ def birch(V, E0, B0, BP, V0):
 
     case where n=0
     """
-
     E = (E0 +
          9 / 8 * B0 * V0 * ((V0 / V) ** (2 / 3) - 1) ** 2 +
          9 / 16 * B0 * V0 * (BP - 4) * ((V0 / V) ** (2 / 3) - 1) ** 3)
@@ -74,7 +72,6 @@ def birch(V, E0, B0, BP, V0):
 
 def pouriertarantola(V, E0, B0, BP, V0):
     'Pourier-Tarantola equation from PRB 70, 224107'
-
     eta = (V / V0) ** (1 / 3)
     squiggle = -3 * np.log(eta)
 
@@ -83,6 +80,17 @@ def pouriertarantola(V, E0, B0, BP, V0):
 
 
 def fitfunction(parameters, vol, fittype='vinet'):
+    """
+    Fit the energy volume curve
+
+    Args:
+        parameters (list): [E0, B0, BP, V0] list of fit parameters
+        vol (float/numpy.dnarray): single volume or a vector of volumes as numpy array
+        fittype (str): on of the following ['birch', 'birchmurnaghan', 'murnaghan', 'pouriertarantola', 'vinet']
+
+    Returns:
+        (float/numpy.dnarray): single energy as float or a vector of energies as numpy array
+    """
     [E0, b0, bp, V0] = parameters
     # Unit correction
     B0 = b0 / 160.21766208
@@ -103,6 +111,18 @@ def fitfunction(parameters, vol, fittype='vinet'):
 
 
 def fit_leastsq(p0, datax, datay, fittype='vinet'):
+    """
+    Least square fit
+
+    Args:
+        p0 (list): [E0, B0, BP, V0] list of fit parameters
+        datax (float/numpy.dnarray): volumes to fit
+        datay (float/numpy.dnarray): energies corresponding to the volumes
+        fittype (str): on of the following ['birch', 'birchmurnaghan', 'murnaghan', 'pouriertarantola', 'vinet']
+
+    Returns:
+        list: [E0, B0, BP, V0], [E0_err, B0_err, BP_err, V0_err]
+    """
     # http://stackoverflow.com/questions/14581358/getting-standard-errors-on-fitted-parameters-using-the-optimize-leastsq-method-i
 
     errfunc = lambda p, x, y, fittype: fitfunction(p, x, fittype) - y
@@ -128,6 +148,9 @@ def fit_leastsq(p0, datax, datay, fittype='vinet'):
 
 
 class DebyeModel(object):
+    """
+    Calculate Thermodynamic Properties based on the Murnaghan output
+    """
     def __init__(self, murnaghan, num_steps=50):
         self._murnaghan = murnaghan
 
@@ -274,6 +297,23 @@ class MurnaghanJobGenerator(JobGenerator):
 
 
 class EnergyVolumeFit(object):
+    """
+    Fit energy volume curves
+
+    Args:
+        volume_lst (list/numpy.dnarray): vector of volumes
+        energy_lst (list/numpy.dnarray): vector of energies
+
+    Attributes:
+
+        .. attribute:: volume_lst
+
+            vector of volumes
+
+        .. attribute:: energy_lst
+
+            vector of energies
+    """
     def __init__(self, volume_lst=None, energy_lst=None):
         self._volume_lst = volume_lst
         self._energy_lst = energy_lst
@@ -295,6 +335,16 @@ class EnergyVolumeFit(object):
         self._energy_lst = eng_lst
 
     def _get_volume_and_energy_lst(self, volume_lst=None, energy_lst=None):
+        """
+        Internal function to get the vector of volumes and the vector of energies
+
+        Args:
+            volume_lst (list/numpy.dnarray/None): vector of volumes
+            energy_lst (list/numpy.dnarray/None): vector of energies
+
+        Returns:
+            list: vector of volumes and vector of energies
+        """
         if volume_lst is None:
             if self._volume_lst is None:
                 raise ValueError('Volume list not set.')
@@ -306,6 +356,17 @@ class EnergyVolumeFit(object):
         return volume_lst, energy_lst
 
     def fit_eos_general(self, volume_lst=None, energy_lst=None, fittype='birchmurnaghan'):
+        """
+        Fit on of the equations of state
+
+        Args:
+            volume_lst (list/numpy.dnarray/None): vector of volumes
+            energy_lst (list/numpy.dnarray/None): vector of energies
+            fittype (str): on of the following ['birch', 'birchmurnaghan', 'murnaghan', 'pouriertarantola', 'vinet']
+
+        Returns:
+            dict: dictionary with fit results
+        """
         volume_lst, energy_lst = self._get_volume_and_energy_lst(volume_lst=volume_lst, energy_lst=energy_lst)
         fit_dict = {}
         pfit_leastsq, perr_leastsq = self._fit_leastsq(volume_lst=volume_lst, energy_lst=energy_lst, fittype=fittype)
@@ -318,6 +379,17 @@ class EnergyVolumeFit(object):
         return fit_dict
 
     def fit_polynomial(self, volume_lst=None, energy_lst=None, fit_order=3):
+        """
+        Fit a polynomial
+
+        Args:
+            volume_lst (list/numpy.dnarray/None): vector of volumes
+            energy_lst (list/numpy.dnarray/None): vector of energies
+            fit_order (int): Degree of the polynomial
+
+        Returns:
+            dict: dictionary with fit results
+        """
         volume_lst, energy_lst = self._get_volume_and_energy_lst(volume_lst=volume_lst, energy_lst=energy_lst)
         fit_dict = {}
 
@@ -363,6 +435,17 @@ class EnergyVolumeFit(object):
         return fit_dict
 
     def _fit_leastsq(self, volume_lst, energy_lst, fittype='birchmurnaghan'):
+        """
+        Internal helper function for the least square fit
+
+        Args:
+            volume_lst (list/numpy.dnarray/None): vector of volumes
+            energy_lst (list/numpy.dnarray/None): vector of energies
+            fittype (str): on of the following ['birch', 'birchmurnaghan', 'murnaghan', 'pouriertarantola', 'vinet']
+
+        Returns:
+            list: [E0, B0, BP, V0], [E0_err, B0_err, BP_err, V0_err]
+        """
         try:
             import matplotlib.pylab as plt
         except ImportError:
@@ -378,6 +461,18 @@ class EnergyVolumeFit(object):
 
     @staticmethod
     def _fit_leastsq_funct(p0, datax, datay, function, fittype):
+        """
+        Internal least square fit function
+
+        Args:
+            p0 (list): [E0, B0, BP, V0] list of fit parameters
+            datax (float/numpy.dnarray): volumes to fit
+            datay (float/numpy.dnarray): energies corresponding to the volumes
+            fittype (str): on of the following ['birch', 'birchmurnaghan', 'murnaghan', 'pouriertarantola', 'vinet']
+
+        Returns:
+            list: [E0, B0, BP, V0], [E0_err, B0_err, BP_err, V0_err]
+        """
         # http://stackoverflow.com/questions/14581358/getting-standard-errors-on-fitted-parameters-using-the-optimize-leastsq-method-i
 
         errfunc = lambda p, x, y, fittype: function(p, x, fittype) - y
@@ -403,6 +498,16 @@ class EnergyVolumeFit(object):
 
     @staticmethod
     def get_error(x_lst, y_lst, p_fit):
+        """
+
+        Args:
+            x_lst:
+            y_lst:
+            p_fit:
+
+        Returns:
+            numpy.dnarray
+        """
         y_fit_lst = np.array(p_fit(x_lst))
         error_lst = (y_lst - y_fit_lst) ** 2
         return np.mean(error_lst)
