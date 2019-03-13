@@ -1047,7 +1047,7 @@ class Atoms(object):
 
     def analyse_ovito_voronoi_volume(atoms):
         from pyiron.atomistics.structure.ovito import analyse_ovito_voronoi_volume
-        warnings.filterwarnings("ignore")
+        warnings.filterwarnings("module")
         return analyse_ovito_voronoi_volume(atoms)
 
     def analyse_phonopy_equivalent_atoms(atoms):
@@ -2041,63 +2041,10 @@ class Atoms(object):
         Returns:
 
         """
-        # adopted from http://stackoverflow.com/questions/19634993/volume-of-voronoi-cell-python
-        from scipy.spatial import Voronoi, Delaunay
-        def tetravol(a, b, c, d):
-            """
-            Calculates the volume of a tetrahedron, given vertices a,b,c and d (triplets)
-            
-            Args:
-                a: 
-                b: 
-                c: 
-                d: 
-
-            Returns:
-
-            """
-            tetravol = abs(np.dot((a - d), np.cross((b - d), (c - d)))) / 6
-            return tetravol
-
-        def vol(vor, p):
-            """
-            Calculate volume of 3d Voronoi cell based on point p. Voronoi diagram is passed in v.
-            
-            Args:
-                vor: 
-                p: 
-
-            Returns:
-
-            """
-            dpoints = []
-            vol = 0
-            for v in vor.regions[vor.point_region[p]]:
-                dpoints.append(list(vor.vertices[v]))
-            tri = Delaunay(np.array(dpoints))
-            for simplex in tri.simplices:
-                vol += tetravol(np.array(dpoints[simplex[0]]), np.array(dpoints[simplex[1]]),
-                                np.array(dpoints[simplex[2]]), np.array(dpoints[simplex[3]]))
-            return vol
-
-        vor = Voronoi(self.positions)
-
-        ind_lst, vol_lst = [], []
-        for i, p in enumerate(vor.points):
-            out = False
-            for v in vor.regions[vor.point_region[i]]:
-                # print ("regions: ", i, p, v)
-                # if v in region_lst:
-                #     continue
-                # region_lst.append(v)
-                if v <= -1:  # a point index of -1 is returned if the vertex is outside the Vornoi diagram, in this application these should be ignorable edge-cases
-                    out = True
-            if not out:
-                pvol = vol(vor, i)
-                ind_lst.append(i)
-                vol_lst.append(pvol)
-                # print ("point "+str(i)+" with coordinates "+str(p)+" has volume "+str(pvol))
-        return np.array(ind_lst), np.array(vol_lst)
+        warnings.warn("This function doesn't account for periodic boundary conditions. Call "
+                      "`analyse_ovito_voronoi_volume` instead. This is what will now be returned.",
+                      DeprecationWarning)
+        return self.analyse_ovito_voronoi_volume()
 
     def __add__(self, other):
         if isinstance(other, Atoms):
