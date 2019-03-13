@@ -532,7 +532,7 @@ class Murnaghan(AtomisticParallelMaster):
 
         # define default input
         self.input['num_points'] = (11, 'number of sample points')
-        self.input['fit_type'] = ("polynomial", ['polynomial', 'birch', 'birchmurnaghan', 'murnaghan', 'pouriertarantola', 'vinet'])
+        self.input['fit_type'] = ("polynomial", "['polynomial', 'birch', 'birchmurnaghan', 'murnaghan', 'pouriertarantola', 'vinet']")
         self.input['fit_order'] = (3, 'order of the fit polynom')
         self.input['vol_range'] = (0.1, 'relative volume variation around volume defined by ref_ham')
 
