@@ -221,10 +221,9 @@ class LammpsBase(AtomisticGenericJob):
             raise ValueError("Input structure not set. Use method set_structure()")
         lmp_structure = self._get_lammps_structure(structure=self.structure, cutoff_radius=self.cutoff_radius)
         lmp_structure.write_file(file_name="structure.inp", cwd=self.working_directory)
-        if self.executable.version and 'dump_modify' in self.input.control._dataset['Parameter'] and \
-                (int(self.executable.version.split('_')[-1].split('.')[0]) < 2016 or
-                 (int(self.executable.version.split('_')[-1].split('.')[0]) == 2016 and
-                  int(self.executable.version.split('_')[-1].split('.')[1]) < 11)):
+        version_int_lst = self._get_executable_version_number()
+        if version_int_lst is not None and 'dump_modify' in self.input.control._dataset['Parameter'] and \
+                (version_int_lst[0] < 2016 or (version_int_lst[0] == 2016 and version_int_lst[1] < 11)):
             self.input.control['dump_modify'] = self.input.control['dump_modify'].replace(' line ', ' ')
         if not all(self.structure.pbc):
             self.input.control['boundary'] = ' '.join(['p' if coord else 'f' for coord in self.structure.pbc])
@@ -232,6 +231,20 @@ class LammpsBase(AtomisticGenericJob):
         self.input.control.write_file(file_name="control.inp", cwd=self.working_directory)
         self.input.potential.write_file(file_name="potential.inp", cwd=self.working_directory)
         self.input.potential.copy_pot_files(self.working_directory)
+
+    def _get_executable_version_number(self):
+        """
+        Get the version of the executable
+
+        Returns:
+            list: List of integers defining the version number
+        """
+        if self.executable.version:
+            return [l for l in [[int(i) for i in s.split('.') if i.isdigit()]
+                                for s in self.executable.version.split('_')]
+                    if len(l) > 0][0]
+        else:
+            return None
 
     def collect_output(self):
         """
