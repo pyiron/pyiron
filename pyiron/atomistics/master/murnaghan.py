@@ -651,7 +651,7 @@ class Murnaghan(AtomisticParallelMaster):
             for key, val in self._output.items():
                 hdf5_out[key] = val
         if self.input['fit_type'] == "polynomial":
-            self.fit_polynomial(self.input['fit_order'])
+            self.fit_polynomial(fit_order=self.input['fit_order'])
         else:
             self._fit_eos_general(fittype=self.input['fit_type'])
 
@@ -662,7 +662,7 @@ class Murnaghan(AtomisticParallelMaster):
             import matplotlib.pyplot as plt
         if not self.fit_dict:
             if self.input['fit_type'] == "polynomial":
-                self.fit_polynomial(self.input['fit_order'])
+                self.fit_polynomial(fit_order=self.input['fit_order'])
             else:
                 self._fit_eos_general(fittype=self.input['fit_type'])
         df = self.output_to_pandas()
