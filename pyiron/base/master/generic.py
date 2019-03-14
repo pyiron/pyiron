@@ -358,6 +358,23 @@ class GenericMaster(GenericJob):
         """
         return len(self._job_object_lst)
 
+    def _get_item_when_str(self, item, child_id_lst, child_name_lst):
+        name_lst = item.split("/")
+        item_obj = name_lst[0]
+        if item_obj in child_name_lst:
+            child_id = child_id_lst[child_name_lst.index(item_obj)]
+            if len(name_lst) > 1:
+                return self.project.inspect(child_id)['/'.join(name_lst[1:])]
+            else:
+                return self.project.load(child_id, convert_to_object=True)
+        if item_obj in self._job_name_lst:
+            child = self._job_object_lst[self._job_name_lst.index(name_lst[0])]
+            if len(name_lst) == 1:
+                return child
+            else:
+                return child['/'.join(name_lst[1:])]
+        return super(GenericMaster, self).__getitem__(item)
+
     def __getitem__(self, item):
         """
         Get/ read data from the GenericMaster
@@ -368,15 +385,10 @@ class GenericMaster(GenericJob):
         Returns:
             dict, list, float, int: data or data object
         """
+        child_id_lst = self.child_ids
+        child_name_lst = [self.project.db.get_item_by_id(child_id)["job"] for child_id in self.child_ids]
         if isinstance(item, str):
-            name_lst = item.split("/")
-            if name_lst[0] in self._job_name_lst:
-                child = getattr(self, name_lst[0])
-                if len(name_lst) == 1:
-                    return child
-                else:
-                    return child['/'.join(name_lst[1:])]
-            return super(GenericMaster, self).__getitem__(item)
+            return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
         elif isinstance(item, int):
             return self._job_object_lst[item]
 

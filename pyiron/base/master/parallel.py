@@ -381,6 +381,24 @@ class ParallelMaster(GenericMaster):
         for job_id in self.child_ids:
             yield self.project.load(job_id, convert_to_object=convert_to_object)
 
+    def _get_item_when_str(self, item, child_id_lst, child_name_lst):
+        name_lst = item.split("/")
+        item_obj = name_lst[0]
+        if item_obj in child_name_lst:
+            child_id = child_id_lst[child_name_lst.index(item_obj)]
+            child = self.project.load(child_id, convert_to_object=True)
+            if len(name_lst) == 1:
+                return child
+            else:
+                return child['/'.join(name_lst[1:])]
+        if item_obj in self._job_name_lst:
+            child = getattr(self, item_obj)
+            if len(name_lst) == 1:
+                return child
+            else:
+                return child['/'.join(name_lst[1:])]
+        return super(ParallelMaster, self).__getitem__(item)
+
     def __getitem__(self, item):
         """
         Get/ read data from the HDF5 file
@@ -394,22 +412,7 @@ class ParallelMaster(GenericMaster):
         child_id_lst = self.child_ids
         child_name_lst = [self.project.db.get_item_by_id(child_id)["job"] for child_id in self.child_ids]
         if isinstance(item, str):
-            name_lst = item.split("/")
-            item_obj = name_lst[0]
-            if item_obj in child_name_lst:
-                child_id = child_id_lst[child_name_lst.index(item_obj)]
-                child = self.project.load(child_id, convert_to_object=True)
-                if len(name_lst) == 1:
-                    return child
-                else:
-                    return child['/'.join(name_lst[1:])]
-            if item_obj in self._job_name_lst:
-                child = getattr(self, item_obj)
-                if len(name_lst) == 1:
-                    return child
-                else:
-                    return child['/'.join(name_lst[1:])]
-            return super(ParallelMaster, self).__getitem__(item)
+            return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
         elif isinstance(item, int):
             total_lst = self._job_name_lst + child_name_lst
             job_name = total_lst[item]
