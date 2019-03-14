@@ -22,6 +22,10 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 
+
+eV_div_A3_to_GPa = 1e21 / scipy.constants.physical_constants['joule-electron volt relationship'][0]
+
+
 def _debye_kernel(xi):
     return xi ** 3 / (np.exp(xi) - 1)
 
@@ -93,7 +97,7 @@ def fitfunction(parameters, vol, fittype='vinet'):
     """
     [E0, b0, bp, V0] = parameters
     # Unit correction
-    B0 = b0 / 160.21766208
+    B0 = b0 / eV_div_A3_to_GPa
     BP = bp
     V = vol
     if fittype.lower() == 'birchmurnaghan':
@@ -417,8 +421,6 @@ class EnergyVolumeFit(object):
         e_eq = e_eq_lst[arg][0]
         volume_eq = volume_eq_lst[arg][0]
 
-        eV_div_A3_to_GPa = 1e21 / scipy.constants.physical_constants['joule-electron volt relationship'][0]
-
         # get bulk modulus at equ. lattice const.
         p_2deriv = np.polyder(p_fit, 2)
         p_3deriv = np.polyder(p_fit, 3)
@@ -682,13 +684,13 @@ class Murnaghan(AtomisticParallelMaster):
                 B0 = self.fit_dict["bulkmodul_eq"]
                 BP = self.fit_dict["b_prime_eq"]
                 if self.input['fit_type'].lower() == 'birchmurnaghan':
-                    eng_fit_lst = birchmurnaghan_energy(x_i, E0, B0, BP, V0)
+                    eng_fit_lst = birchmurnaghan_energy(x_i, E0, B0 / eV_div_A3_to_GPa, BP, V0)
                 elif self.input['fit_type'].lower() == 'vinet':
-                    eng_fit_lst = vinet_energy(x_i, E0, B0, BP, V0)
+                    eng_fit_lst = vinet_energy(x_i, E0, B0 / eV_div_A3_to_GPa, BP, V0)
                 elif self.input['fit_type'].lower() == 'murnaghan':
-                    eng_fit_lst = murnaghan(x_i, E0, B0, BP, V0)
+                    eng_fit_lst = murnaghan(x_i, E0, B0 / eV_div_A3_to_GPa, BP, V0)
                 elif self.input['fit_type'].lower() == 'pouriertarantola':
-                    eng_fit_lst = pouriertarantola(x_i, E0, B0, BP, V0)
+                    eng_fit_lst = pouriertarantola(x_i, E0, B0 / eV_div_A3_to_GPa, BP, V0)
                 elif self.input['fit_type'].lower() == 'birch':
                     eng_fit_lst = birch(x_i, E0, B0, BP, V0)
                 else:
