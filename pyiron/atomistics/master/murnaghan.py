@@ -22,6 +22,10 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 
+
+eV_div_A3_to_GPa = 1e21 / scipy.constants.physical_constants['joule-electron volt relationship'][0]
+
+
 def _debye_kernel(xi):
     return xi ** 3 / (np.exp(xi) - 1)
 
@@ -93,7 +97,7 @@ def fitfunction(parameters, vol, fittype='vinet'):
     """
     [E0, b0, bp, V0] = parameters
     # Unit correction
-    B0 = b0 / 160.21766208
+    B0 = b0 / eV_div_A3_to_GPa
     BP = bp
     V = vol
     if fittype.lower() == 'birchmurnaghan':
@@ -370,6 +374,7 @@ class EnergyVolumeFit(object):
         volume_lst, energy_lst = self._get_volume_and_energy_lst(volume_lst=volume_lst, energy_lst=energy_lst)
         fit_dict = {}
         pfit_leastsq, perr_leastsq = self._fit_leastsq(volume_lst=volume_lst, energy_lst=energy_lst, fittype=fittype)
+        fit_dict["fit_type"] = fittype
         fit_dict["volume_eq"] = pfit_leastsq[3]
         fit_dict["energy_eq"] = pfit_leastsq[0]
         fit_dict["bulkmodul_eq"] = pfit_leastsq[1]
@@ -416,8 +421,6 @@ class EnergyVolumeFit(object):
         e_eq = e_eq_lst[arg][0]
         volume_eq = volume_eq_lst[arg][0]
 
-        eV_div_A3_to_GPa = 1e21 / scipy.constants.physical_constants['joule-electron volt relationship'][0]
-
         # get bulk modulus at equ. lattice const.
         p_2deriv = np.polyder(p_fit, 2)
         p_3deriv = np.polyder(p_fit, 3)
@@ -426,6 +429,7 @@ class EnergyVolumeFit(object):
 
         b_prime = -(volume_eq * a3 / a2 + 1)
 
+        fit_dict["fit_type"] = "polynomial"
         fit_dict["fit_order"] = fit_order
         fit_dict["volume_eq"] = volume_eq
         fit_dict["energy_eq"] = e_eq
@@ -530,6 +534,7 @@ class Murnaghan(AtomisticParallelMaster):
 
         # define default input
         self.input['num_points'] = (11, 'number of sample points')
+        self.input['fit_type'] = ("polynomial", "['polynomial', 'birch', 'birchmurnaghan', 'murnaghan', 'pouriertarantola', 'vinet']")
         self.input['fit_order'] = (3, 'order of the fit polynom')
         self.input['vol_range'] = (0.1, 'relative volume variation around volume defined by ref_ham')
 
@@ -647,8 +652,10 @@ class Murnaghan(AtomisticParallelMaster):
         with self.project_hdf5.open("output") as hdf5_out:
             for key, val in self._output.items():
                 hdf5_out[key] = val
-
-        self.fit_polynomial(self.input['fit_order'])
+        if self.input['fit_type'] == "polynomial":
+            self.fit_polynomial(fit_order=self.input['fit_order'])
+        else:
+            self._fit_eos_general(fittype=self.input['fit_type'])
 
     def plot(self, num_steps=100, plt_show=True):
         try:
@@ -656,17 +663,39 @@ class Murnaghan(AtomisticParallelMaster):
         except ImportError:
             import matplotlib.pyplot as plt
         if not self.fit_dict:
-            self.fit_polynomial()
+            if self.input['fit_type'] == "polynomial":
+                self.fit_polynomial(fit_order=self.input['fit_order'])
+            else:
+                self._fit_eos_general(fittype=self.input['fit_type'])
         df = self.output_to_pandas()
-        vol_lst, erg_lst = df["volume"], df["energy"]
+        vol_lst, erg_lst = df["volume"].values, df["energy"].values
         x_i = np.linspace(np.min(vol_lst), np.max(vol_lst), num_steps)
         color = 'blue'
 
         if self.fit_dict is not None:
-            p_fit = np.poly1d(self.fit_dict["poly_fit"])
-            least_square_error = self.fit_module.get_error(vol_lst, erg_lst, p_fit)
-            plt.title("Murnaghan: error: " + str(least_square_error))
-            plt.plot(x_i, p_fit(x_i), '-', label=self._name, color=color, linewidth=3)
+            if self.input['fit_type'] == "polynomial":
+                p_fit = np.poly1d(self.fit_dict["poly_fit"])
+                least_square_error = self.fit_module.get_error(vol_lst, erg_lst, p_fit)
+                plt.title("Murnaghan: error: " + str(least_square_error))
+                plt.plot(x_i, p_fit(x_i), '-', label=self._name, color=color, linewidth=3)
+            else:
+                V0 = self.fit_dict["volume_eq"]
+                E0 = self.fit_dict["energy_eq"]
+                B0 = self.fit_dict["bulkmodul_eq"]
+                BP = self.fit_dict["b_prime_eq"]
+                if self.input['fit_type'].lower() == 'birchmurnaghan':
+                    eng_fit_lst = birchmurnaghan_energy(x_i, E0, B0 / eV_div_A3_to_GPa, BP, V0)
+                elif self.input['fit_type'].lower() == 'vinet':
+                    eng_fit_lst = vinet_energy(x_i, E0, B0 / eV_div_A3_to_GPa, BP, V0)
+                elif self.input['fit_type'].lower() == 'murnaghan':
+                    eng_fit_lst = murnaghan(x_i, E0, B0 / eV_div_A3_to_GPa, BP, V0)
+                elif self.input['fit_type'].lower() == 'pouriertarantola':
+                    eng_fit_lst = pouriertarantola(x_i, E0, B0 / eV_div_A3_to_GPa, BP, V0)
+                elif self.input['fit_type'].lower() == 'birch':
+                    eng_fit_lst = birch(x_i, E0, B0, BP, V0)
+                else:
+                    raise ValueError
+                plt.plot(x_i, eng_fit_lst, '-', label=self._name, color=color, linewidth=3)
 
         plt.plot(vol_lst, erg_lst, 'x', color=color, markersize=20)
 
