@@ -125,7 +125,7 @@ class GenericMaster(GenericJob):
     def __init__(self, project, job_name):
         super(GenericMaster, self).__init__(project, job_name=job_name)
         self._job_name_lst = []
-        self._job_object_lst = []
+        self._job_object_dict = {}
         self._child_id_func = None
         self._child_id_func_str = None
 
@@ -183,8 +183,7 @@ class GenericMaster(GenericJob):
         if job.job_name not in self._job_name_lst:
             self._job_name_lst.append(job.job_name)
             self._child_job_update_hdf(parent_job=self, child_job=job)
-            setattr(self, job.job_name, job)
-            self._job_object_lst.append(job)
+            self._job_object_dict[job.job_name] = job
 
     def pop(self, i=-1):
         """
@@ -196,16 +195,20 @@ class GenericMaster(GenericJob):
         Returns:
             GenericJob: job
         """
-        job_to_return = self._job_object_lst[i]
+        job_name_to_return = self._job_name_lst[i]
+        if job_name_to_return in self._job_object_dict.keys():
+            job_to_return = self._job_object_dict.pop(job_name_to_return)
+        else:
+            job_to_return = self._load_child_from_hdf(job_name=job_name_to_return)
         del self._job_name_lst[i]
-        del self._job_object_lst[i]
         with self.project_hdf5.open("input") as hdf5_input:
             hdf5_input["job_list"] = self._job_name_lst
         job_to_return.project_hdf5.remove_group()
         job_to_return.project_hdf5 = self.project_hdf5.__class__(self.project, job_to_return.job_name,
                                                                  h5_path='/' + job_to_return.job_name)
         if isinstance(job_to_return, GenericMaster):
-            for sub_job in job_to_return._job_object_lst:
+            for sub_job_name in job_to_return._job_name_lst:
+                sub_job = self._load_job_from_cache(sub_job_name)
                 self._child_job_update_hdf(parent_job=job_to_return, child_job=sub_job)
         job_to_return.status.initialized = True
         return job_to_return
@@ -272,7 +275,7 @@ class GenericMaster(GenericJob):
                     hdf5_input["child_id_func"] = self._child_id_func_str
             else:
                 hdf5_input["child_id_func"] = "None"
-        for job in self._job_object_lst:
+        for job in self._job_object_dict.values():
             job.to_hdf()
 
     def from_hdf(self, hdf=None, group_name=None):
@@ -295,17 +298,7 @@ class GenericMaster(GenericJob):
             else:
                 self._child_id_func_str = child_id_func_str
                 self._child_id_func = self.get_function_from_string(child_id_func_str)
-        for ham in job_list_tmp:
-            # try:
-            ham_obj = self.project_hdf5.create_object(class_name=self._hdf5[ham + '/TYPE'], project=self._hdf5,
-                                                      job_name=ham)
-            ham_obj.from_hdf()
-            setattr(self, ham_obj.job_name, ham_obj)
-            self._job_object_lst.append(ham_obj)
-            self._job_name_lst.append(ham_obj.job_name)
-            # self.append(ham_obj)
-            # except ValueError:
-            #     pass
+            self._job_name_lst = job_list_tmp
 
     def set_child_id_func(self, child_id_func):
         """
@@ -330,6 +323,84 @@ class GenericMaster(GenericJob):
                     self.project.db.get_items_dict({'masterid': self.job_id})
                     if db_entry['status'] not in ['finished', 'aborted']])
 
+    def __len__(self):
+        """
+        Length of the GenericMaster equal the number of childs appended.
+
+        Returns:
+            int: length of the GenericMaster
+        """
+        return len(self._job_name_lst)
+
+    def __getitem__(self, item):
+        """
+        Get/ read data from the GenericMaster
+
+        Args:
+            item (str, slice): path to the data or key of the data object
+
+        Returns:
+            dict, list, float, int: data or data object
+        """
+        child_id_lst = self.child_ids
+        child_name_lst = [self.project.db.get_item_by_id(child_id)["job"] for child_id in self.child_ids]
+        if isinstance(item, int):
+            item = self._job_name_lst[item]
+        return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
+
+    def _load_child_from_hdf(self, job_name):
+        ham_obj = self.project_hdf5.create_object(class_name=self._hdf5[job_name + '/TYPE'], project=self._hdf5,
+                                                  job_name=job_name)
+        ham_obj.from_hdf()
+        return ham_obj
+
+    def _load_job_from_cache(self, job_name):
+        if job_name in self._job_object_dict.keys():
+            return self._job_object_dict[job_name]
+        else:
+            return self._load_child_from_hdf(job_name)
+
+    def __getattr__(self, name):
+        if name in self._job_object_dict.keys():
+            return self._job_object_dict[name]
+        if name in self._job_name_lst:
+            ham_obj = self._load_child_from_hdf(job_name=name)
+            self._job_object_dict[name] = ham_obj
+            return ham_obj
+        else:
+            raise AttributeError
+
+    @staticmethod
+    def get_function_from_string(function_str):
+        """
+        Convert a string of source code to a function
+
+        Args:
+            function_str: function source code
+
+        Returns:
+            function:
+        """
+        exec(function_str)
+        return eval(function_str.split("(")[0][4:])
+
+    def _get_item_when_str(self, item, child_id_lst, child_name_lst):
+        name_lst = item.split("/")
+        item_obj = name_lst[0]
+        if item_obj in child_name_lst:
+            child_id = child_id_lst[child_name_lst.index(item_obj)]
+            if len(name_lst) > 1:
+                return self.project.inspect(child_id)['/'.join(name_lst[1:])]
+            else:
+                return self.project.load(child_id, convert_to_object=True)
+        if item_obj in self._job_name_lst:
+            child = self._load_job_from_cache(job_name=item_obj)
+            if len(name_lst) == 1:
+                return child
+            else:
+                return child['/'.join(name_lst[1:])]
+        return super(GenericMaster, self).__getitem__(item)
+
     def _child_job_update_hdf(self, parent_job, child_job):
         """
 
@@ -348,59 +419,3 @@ class GenericMaster(GenericJob):
         Internal helper function to switch the executable to MPI mode
         """
         pass
-
-    def __len__(self):
-        """
-        Length of the GenericMaster equal the number of childs appended.
-
-        Returns:
-            int: length of the GenericMaster
-        """
-        return len(self._job_object_lst)
-
-    def _get_item_when_str(self, item, child_id_lst, child_name_lst):
-        name_lst = item.split("/")
-        item_obj = name_lst[0]
-        if item_obj in child_name_lst:
-            child_id = child_id_lst[child_name_lst.index(item_obj)]
-            if len(name_lst) > 1:
-                return self.project.inspect(child_id)['/'.join(name_lst[1:])]
-            else:
-                return self.project.load(child_id, convert_to_object=True)
-        if item_obj in self._job_name_lst:
-            child = self._job_object_lst[self._job_name_lst.index(name_lst[0])]
-            if len(name_lst) == 1:
-                return child
-            else:
-                return child['/'.join(name_lst[1:])]
-        return super(GenericMaster, self).__getitem__(item)
-
-    def __getitem__(self, item):
-        """
-        Get/ read data from the GenericMaster
-
-        Args:
-            item (str, slice): path to the data or key of the data object
-
-        Returns:
-            dict, list, float, int: data or data object
-        """
-        child_id_lst = self.child_ids
-        child_name_lst = [self.project.db.get_item_by_id(child_id)["job"] for child_id in self.child_ids]
-        if isinstance(item, int):
-            item = self._job_name_lst[item]
-        return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
-
-    @staticmethod
-    def get_function_from_string(function_str):
-        """
-        Convert a string of source code to a function
-
-        Args:
-            function_str: function source code
-
-        Returns:
-            function:
-        """
-        exec(function_str)
-        return eval(function_str.split("(")[0][4:])  # get function name
