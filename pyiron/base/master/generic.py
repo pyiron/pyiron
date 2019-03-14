@@ -387,10 +387,9 @@ class GenericMaster(GenericJob):
         """
         child_id_lst = self.child_ids
         child_name_lst = [self.project.db.get_item_by_id(child_id)["job"] for child_id in self.child_ids]
-        if isinstance(item, str):
-            return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
-        elif isinstance(item, int):
-            return self._job_object_lst[item]
+        if isinstance(item, int):
+            item = self._job_name_lst[item]
+        return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
 
     @staticmethod
     def get_function_from_string(function_str):

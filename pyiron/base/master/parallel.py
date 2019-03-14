@@ -411,16 +411,10 @@ class ParallelMaster(GenericMaster):
         """
         child_id_lst = self.child_ids
         child_name_lst = [self.project.db.get_item_by_id(child_id)["job"] for child_id in self.child_ids]
-        if isinstance(item, str):
-            return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
-        elif isinstance(item, int):
+        if isinstance(item, int):
             total_lst = self._job_name_lst + child_name_lst
-            job_name = total_lst[item]
-            if job_name in self._job_name_lst:
-                return self._job_object_lst[item]
-            else:
-                child_id = child_id_lst[child_name_lst.index(job_name)]
-                return self.project.load(child_id, convert_to_object=True)
+            item = total_lst[item]
+        return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
 
     def __len__(self):
         """
