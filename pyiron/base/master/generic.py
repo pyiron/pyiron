@@ -203,13 +203,15 @@ class GenericMaster(GenericJob):
         del self._job_name_lst[i]
         with self.project_hdf5.open("input") as hdf5_input:
             hdf5_input["job_list"] = self._job_name_lst
+        if isinstance(job_to_return, GenericMaster):
+            sub_job_lst = [job_to_return._load_job_from_cache(sub_job_name) for sub_job_name in job_to_return._job_name_lst]
+        else:
+            sub_job_lst = []
         job_to_return.project_hdf5.remove_group()
         job_to_return.project_hdf5 = self.project_hdf5.__class__(self.project, job_to_return.job_name,
                                                                  h5_path='/' + job_to_return.job_name)
-        if isinstance(job_to_return, GenericMaster):
-            for sub_job_name in job_to_return._job_name_lst:
-                sub_job = self._load_job_from_cache(sub_job_name)
-                self._child_job_update_hdf(parent_job=job_to_return, child_job=sub_job)
+        for sub_job in sub_job_lst:
+            self._child_job_update_hdf(parent_job=job_to_return, child_job=sub_job)
         job_to_return.status.initialized = True
         return job_to_return
 
@@ -411,7 +413,8 @@ class GenericMaster(GenericJob):
         child_job.project_hdf5.file_name = parent_job.project_hdf5.file_name
         child_job.project_hdf5.h5_path = parent_job.project_hdf5.h5_path + '/' + child_job.job_name
         if isinstance(child_job, GenericMaster):
-            for sub_job in child_job._job_object_lst:
+            for sub_job_name in child_job._job_name_lst:
+                sub_job = child_job._load_job_from_cache(sub_job_name)
                 self._child_job_update_hdf(parent_job=child_job, child_job=sub_job)
 
     def _executable_activate_mpi(self):
