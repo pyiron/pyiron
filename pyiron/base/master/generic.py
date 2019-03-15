@@ -351,23 +351,50 @@ class GenericMaster(GenericJob):
         return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
 
     def _load_child_from_hdf(self, job_name):
+        """
+        Helper function to load a child job from HDF5
+
+        Args:
+            job_name (str): name of the job
+
+        Returns:
+            GenericJob: the reloaded job
+        """
         ham_obj = self.project_hdf5.create_object(class_name=self._hdf5[job_name + '/TYPE'], project=self._hdf5,
                                                   job_name=job_name)
         ham_obj.from_hdf()
         return ham_obj
 
     def _load_job_from_cache(self, job_name):
+        """
+        Helper funcction to load a job either from the _job_object_dict or from the HDF5 file
+
+        Args:
+            job_name (str): name of the job
+
+        Returns:
+            GenericJob: the reloaded job
+        """
         if job_name in self._job_object_dict.keys():
             return self._job_object_dict[job_name]
         else:
             return self._load_child_from_hdf(job_name)
 
-    def __getattr__(self, name):
-        if name in self._job_object_dict.keys():
-            return self._job_object_dict[name]
-        if name in self._job_name_lst:
-            ham_obj = self._load_child_from_hdf(job_name=name)
-            self._job_object_dict[name] = ham_obj
+    def __getattr__(self, item):
+        """
+        CHeck if a job with the specific name exists
+
+        Args:
+            item (str): name of the job
+
+        Returns:
+
+        """
+        if item in self._job_object_dict.keys():
+            return self._job_object_dict[item]
+        if item in self._job_name_lst:
+            ham_obj = self._load_child_from_hdf(job_name=item)
+            self._job_object_dict[item] = ham_obj
             return ham_obj
         else:
             raise AttributeError
@@ -387,6 +414,17 @@ class GenericMaster(GenericJob):
         return eval(function_str.split("(")[0][4:])
 
     def _get_item_when_str(self, item, child_id_lst, child_name_lst):
+        """
+        Helper function for __get_item__ when item is type string
+
+        Args:
+            item (str):
+            child_id_lst (list): a list containing all child job ids
+            child_name_lst (list): a list containing the names of all child jobs
+
+        Returns:
+            anything
+        """
         name_lst = item.split("/")
         item_obj = name_lst[0]
         if item_obj in child_name_lst:
