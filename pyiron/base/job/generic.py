@@ -834,10 +834,12 @@ class GenericJob(JobCore):
                 # p.start()
                 del self
                 master = project.load(master_id)
-                if master.server.run_mode.non_modal or master.server.run_mode.queue:
+                if master.server.run_mode.non_modal:
                     master._run_if_refresh()
-                    if master.server.run_mode.queue and master._process:
-                        master._process.communicate()
+                # if master.server.run_mode.non_modal or master.server.run_mode.queue:
+                #     master._run_if_refresh()
+                #     if master.server.run_mode.queue and master._process:
+                #         master._process.communicate()
             elif master_db_entry['status'] == 'refresh':
                 project.db.item_update({'status': 'busy'}, master_id)
                 self._logger.info("busy master: {} {}".format(master_id, self.get_job_id()))
