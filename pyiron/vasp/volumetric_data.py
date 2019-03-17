@@ -134,7 +134,7 @@ class VaspVolumetricData(VolumetricData):
                     n_x, n_y, n_z = [int(val) for val in strip_line.split()]
                     break
             if (n_x * n_y * n_z) >= 1:
-                load_txt = np.genfromtxt(f)
+                load_txt = np.genfromtxt(f, invalid_raise=False)
                 total_data = np.zeros((n_x, n_y, n_z))
                 all_data = np.hstack(load_txt)
                 all_indices = np.arange(len(all_data), dtype=int)
