@@ -9,6 +9,7 @@ import os
 from pyiron.base.settings.generic import Settings
 from pyiron.vasp.structure import atoms_from_string, get_species_list_from_potcar
 from pyiron.atomistics.volumetric.generic import VolumetricData
+import warnings
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -134,7 +135,14 @@ class VaspVolumetricData(VolumetricData):
                     n_x, n_y, n_z = [int(val) for val in strip_line.split()]
                     break
             if (n_x * n_y * n_z) >= 1:
-                load_txt = np.genfromtxt(f, invalid_raise=False)
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter("always")
+                    load_txt = np.genfromtxt(f, invalid_raise=False)
+                    if issubclass(w[-1].category, np.lib.npyio.ConversionWarning):
+                        s = Settings()
+                        s.logger.warning("File:" + filename + "numpy ConversionWarning ignored delibrately ")
+                    else:
+                        warnings.warn(w[-1].message, w[-1].category)
                 total_data = np.zeros((n_x, n_y, n_z))
                 all_data = np.hstack(load_txt)
                 all_indices = np.arange(len(all_data), dtype=int)
