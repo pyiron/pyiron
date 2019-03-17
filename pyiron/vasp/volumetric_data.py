@@ -116,6 +116,48 @@ class VaspVolumetricData(VolumetricData):
             self.atoms = atoms
             self._total_data = data["total"]
 
+    @staticmethod
+    def _read_vol_data(filename, normalize=True):
+        with open(filename, "r") as f:
+            struct_lines = list()
+            get_grid = False
+            n_x = 0
+            n_y = 0
+            n_z = 0
+            for i, line in enumerate(f):
+                strip_line = line.strip()
+                if not get_grid:
+                    if strip_line == "":
+                        get_grid = True
+                    struct_lines.append(strip_line)
+                else:
+                    n_x, n_y, n_z = [int(val) for val in strip_line.split()]
+                    break
+            if (n_x * n_y * n_z) >= 1:
+                load_txt = np.genfromtxt(f)
+                total_data = np.zeros((n_x, n_y, n_z))
+                all_data = np.hstack(load_txt)
+                all_indices = np.arange(len(all_data), dtype=int)
+                x_indices = all_indices % n_x
+                y_indices = all_indices / n_x % n_y
+                y_indices = np.array(y_indices, dtype=int)
+                z_indices = all_indices / (n_x * n_y)
+                z_indices = np.array(z_indices, dtype=int)
+                total_data[x_indices, y_indices, z_indices] = all_data
+                try:
+                    atoms = atoms_from_string(struct_lines)
+                except ValueError:
+                    pot_str = filename.split("/")
+                    pot_str[-1] = "POTCAR"
+                    potcar_file = "/".join(pot_str)
+                    species = get_species_list_from_potcar(potcar_file)
+                    atoms = atoms_from_string(struct_lines, species_list=species)
+                if normalize:
+                    total_data /= 1
+                return atoms, total_data
+            else:
+                raise ValueError("Unable to get the grid size")
+
     @property
     def total_data(self):
         """
