@@ -118,6 +118,19 @@ class VaspVolumetricData(VolumetricData):
             self._total_data = data["total"]
 
     def _read_vol_data(self, filename, normalize=True):
+        """
+        Parses the VASP volumetric type files (CHGCAR, LOCPOT, PARCHG etc). Rather than looping over individual values,
+        this function utilizes numpy indexing resulting in a parsing efficiency of at least 10%.
+
+        Args:
+            filename (str): File to be parsed
+            normalize (bool): Normalize the data with respect to the volume (Recommended for CHGCAR files)
+
+        Returns:
+            pyiron.atomistics.structure.atoms.Atoms: The structure of the volumetric snapshot
+            list: A list of the volumetric data (length >1 for CHGCAR files with spin)
+
+        """
         with open(filename, "r") as f:
             struct_lines = list()
             get_grid = False
