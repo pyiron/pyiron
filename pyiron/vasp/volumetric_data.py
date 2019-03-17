@@ -184,6 +184,17 @@ class VaspVolumetricData(VolumetricData):
 
     @staticmethod
     def _fastest_index_reshape(raw_data, grid):
+        """
+        Helper function to parse volumetric data with x-axis as the fastest index
+
+        Args:
+            raw_data (numpy.ndarray): Raw unprocessed volumetric data
+            grid (list/turple/numpy.ndarray): Sequence of the integer grid points [Nx, Ny, Nz]
+
+        Returns:
+            numpy.ndarray: A Nx $\times$ Ny $\times$ Nz numpy array
+
+        """
         n_x, n_y, n_z = grid
         total_data = np.zeros((n_x, n_y, n_z))
         all_data = np.hstack(raw_data)
