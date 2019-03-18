@@ -88,6 +88,12 @@ class TestLammps(unittest.TestCase):
                                                            '1 2.000000 0.000000000000000 0.000000000000000 0.000000000000000',
                                                            ''])
 
+    def test_avilable_versions(self):
+        self.job.executable = os.path.join(self.execution_path, '../static/lammps/bin/run_lammps_2018.03.16.sh')
+        self.assertTrue([2018, 3, 16] == self.job._get_executable_version_number())
+        self.job.executable = os.path.join(self.execution_path, '../static/lammps/bin/run_lammps_2018.03.16_mpi.sh')
+        self.assertTrue([2018, 3, 16] == self.job._get_executable_version_number())
+
 
 if __name__ == '__main__':
     unittest.main()

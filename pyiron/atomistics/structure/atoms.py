@@ -1047,7 +1047,7 @@ class Atoms(object):
 
     def analyse_ovito_voronoi_volume(atoms):
         from pyiron.atomistics.structure.ovito import analyse_ovito_voronoi_volume
-        warnings.filterwarnings("ignore")
+        warnings.filterwarnings("module")
         return analyse_ovito_voronoi_volume(atoms)
 
     def analyse_phonopy_equivalent_atoms(atoms):
@@ -1065,7 +1065,7 @@ class Atoms(object):
         x, y, z = coords
         return 'ATOM {:>6} {:>4} {:>4} {:>5} {:10.3f} {:7.3f} {:7.3f} {:5.2f} {:5.2f} {:>11} \n'.format(num, species, group, num2, x, y, z, c0, c1, species)
     
-    def _ngl_write_structure(self, elements, positions, cell, custom_array=None):
+    def _ngl_write_structure(self, elements, positions, cell, scalar_field=None):
         from ase.geometry import cell_to_cellpar, cellpar_to_cell
         cellpar = cell_to_cellpar(cell)
         exportedcell = cellpar_to_cell(cellpar)
@@ -1073,31 +1073,33 @@ class Atoms(object):
   
         pdb_str = self._ngl_write_cell(cellpar[0], cellpar[1], cellpar[2], cellpar[3], cellpar[4], cellpar[5])
         pdb_str += 'MODEL     1\n'
-        if custom_array is None:
-            custom_array = np.ones(len(positions))
+        if scalar_field is None:
+            scalar_field = np.ones(len(positions))
         else:
-            custom_array = (custom_array-np.min(custom_array))/(np.max(custom_array)-np.min(custom_array))
+            scalar_field = (scalar_field-np.min(scalar_field))/(np.max(scalar_field)-np.min(scalar_field))
         for i, p in enumerate(positions):
             if rotation is not None:
                 p = p.dot(rotation)
                 
-            pdb_str += self._ngl_write_atom(i, elements[i], group=elements[i], num2=i, coords=p, c0=custom_array[i], c1=0.0)
+            pdb_str += self._ngl_write_atom(i, elements[i], group=elements[i], num2=i, coords=p, c0=scalar_field[i], c1=0.0)
         pdb_str += 'ENDMDL \n'
         return pdb_str
     
-    def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5,
-               background='white', color_scheme=None, show_axes=True, custom_array=None, custom_3darray=None, select_atoms=None):
+    def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=1.0,
+               background='white', color_scheme=None, show_axes=True, custom_array=None, custom_3darray=None,
+               scalar_field=None, vector_field=None, vector_color=None, select_atoms=None):
         """
 
         Args:
             spacefill:
             show_cell: whether to show the frame or not (default: True)
             camera: 'perspective' or 'orthographic'
-            particle_size:
-            background:
+            particle_size: particle size
+            background: back ground color
             color_scheme: v.i.
-            custom_array: color for each atom according to the array value
-            custom_3darray: vectors for each atom according to the array values (3 values for each atom)
+            scalar_field: color for each atom according to the array value
+            vector_field: vectors for each atom according to the array values (3 values for each atom)
+            vector_color: vector for color coding (only available with vector_field)
             select_atoms: atoms to show (1d array with ID's or True for atoms to show)
 
             Possible color schemes: 
@@ -1112,23 +1114,31 @@ class Atoms(object):
             import nglview
         except ImportError:
             raise ImportError("The package nglview needs to be installed for the plot3d() function!")
+        if custom_array is not None:
+            warnings.warn('custom_array is deprecated. Use scalar_field instead', DeprecationWarning)
+            scalar_field = custom_array
+        if custom_3darray is not None:
+            warnings.warn('custom_3darray is deprecated. Use vector_field instead', DeprecationWarning)
+            vector_field = custom_3darray
         # Always visualize the parent basis
         parent_basis = self.get_parent_basis()
         if select_atoms is None:
             select_atoms = np.array(len(parent_basis)*[True])
         else:
             select_atoms = np.array(select_atoms)
-            if custom_array is not None:
-                custom_array = custom_array[select_atoms]
+            if scalar_field is not None:
+                scalar_field = scalar_field[select_atoms]
         struct = nglview.TextStructure(self._ngl_write_structure(parent_basis.get_chemical_symbols()[select_atoms],
-                                                                 self.positions[select_atoms], self.cell, custom_array=custom_array))
+                                                                 self.positions[select_atoms], self.cell, scalar_field=scalar_field))
         view = nglview.NGLWidget(struct)
         if spacefill:
-            if color_scheme is None and custom_array is not None:
+            if color_scheme is None and scalar_field is not None:
                 color_scheme = 'occupancy'
             elif color_scheme is None:
                 color_scheme = 'element'
-            view.add_spacefill(radius_type='vdw', color_scheme=color_scheme, radius=particle_size)
+            #view.add_spacefill(radius_type='vdw', color_scheme=color_scheme, radius=particle_size)
+            for elem, num in set(list(zip(parent_basis.get_chemical_symbols(), parent_basis.get_atomic_numbers()))):
+                view.add_spacefill(selection='#'+elem, radius_type='vdw', color_scheme=color_scheme, radius=particle_size*(0.2+0.1*np.sqrt(num)))
             # view.add_spacefill(radius=1.0)
             view.remove_ball_and_stick()
         else:
@@ -1136,9 +1146,17 @@ class Atoms(object):
         if show_cell:
             if parent_basis.cell is not None:
                 view.add_unitcell()
-        if custom_3darray is not None:
-            for arr, pos in zip(custom_3darray[select_atoms], self.positions[select_atoms]):
-                view.shape.add_arrow(list(pos), list(pos+arr), list(0.5*arr/np.linalg.norm(arr)+0.5), 0.2)
+        if vector_color is None and vector_field is not None:
+            vector_color = 0.5*vector_field/np.linalg.norm(vector_field, axis=-1)[:, np.newaxis]+0.5
+        elif vector_field is not None and vector_field is not None:
+            try:
+                if vector_color.shape != np.ones((len(self), 3)).shape:
+                    vector_color = np.outer(np.ones(len(self)), vector_color/np.linalg.norm(vector_color))
+            except AttributeError:
+                vector_color = np.ones((len(self), 3))*vector_color
+        if vector_field is not None:
+            for arr, pos, col in zip(vector_field[select_atoms], self.positions[select_atoms], vector_color[select_atoms]):
+                view.shape.add_arrow(list(pos), list(pos+arr), list(col), 0.2)
         if show_axes:
             axes_origin = -np.ones(3)
             view.shape.add_arrow(list(axes_origin), list(axes_origin+np.array([1, 0, 0])), [1, 0, 0], 0.1)
@@ -1148,8 +1166,7 @@ class Atoms(object):
             view.shape.add_text(list(axes_origin+np.array([0, 1, 0])), [0, 0, 0], 1, 'y')
             view.shape.add_text(list(axes_origin+np.array([1, 0, 0])), [0, 0, 0], 1, 'x')
         if camera!='perspective' and camera!='orthographic':
-            print('Only perspective or orthographic is permitted')
-            return None
+            warnings.warn('Only perspective or orthographic is (likely to be) permitted for camera')
         view.camera = camera
         view.background = background
         return view
@@ -1285,20 +1302,18 @@ class Atoms(object):
                      dimension=len(cell), species=self.species)
 
     def get_neighbors(self,
-                      radius=None,
                       num_neighbors=12,
                       t_vec=True,
                       include_boundary=True,
                       exclude_self=True,
                       tolerance=2,
-                      id_list=None, cutoff=None):
+                      id_list=None,
+                      cutoff_radius=None,
+                      cutoff=None):
         """
         
         Args:
-            radius: distance up to which nearest neighbors are searched for
-                    used only for periodic boundary padding
-                   (in absolute units)
-            num_neighbors: 
+            num_neighbors (int): number of neighbors
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
             include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
@@ -1306,7 +1321,10 @@ class Atoms(object):
             exclude_self (bool): include central __atom (i.e. distance = 0)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list:
-            cutoff (float): Upper bound of the distance to which the search must be done
+            cutoff (float/None): Upper bound of the distance to which the search must be done - by default search for
+                                 upto 100 neighbors unless num_neighbors is defined explicitly.
+            cutoff_radius (float/None): Upper bound of the distance to which the search must be done - by default search
+                                        for upto 100 neighbors unless num_neighbors is defined explicitly.
 
         Returns:
 
@@ -1314,6 +1332,11 @@ class Atoms(object):
             and vectors
 
         """
+        if cutoff is not None and cutoff_radius is None:
+            warnings.warn('Please use cutoff_radius, rather than cutoff', DeprecationWarning)
+            cutoff_radius = cutoff
+        if cutoff_radius is not None and num_neighbors == 12:
+            num_neighbors = 100
         # eps = 1e-4
         i_start = 0
         if exclude_self:
@@ -1326,10 +1349,10 @@ class Atoms(object):
         neighbor_obj = Neighbors()
         if not include_boundary:  # periodic boundaries are NOT included
             tree = cKDTree(self.positions)
-            if cutoff is None:
+            if cutoff_radius is None:
                 neighbors = tree.query(self.positions, k=num_neighbors)
             else:
-                neighbors = tree.query(self.positions, k=num_neighbors, distance_upper_bound=cutoff)
+                neighbors = tree.query(self.positions, k=num_neighbors, distance_upper_bound=cutoff_radius)
 
             d_lst, ind_lst, v_lst = [], [], []
             ic = 0
@@ -1348,8 +1371,7 @@ class Atoms(object):
         # include periodic boundaries
         # translate radius in boundary layer with relative coordinates
         # TODO: introduce more rigoros definition
-        if radius is None:
-            radius = 3 * num_neighbors ** (1. / 3.)
+        radius = 3 * num_neighbors ** (1. / 3.)
         rel_width = [radius / np.sqrt(np.dot(a_i, a_i)) for a_i in self.cell]
         rel_width_scalar = np.max(rel_width)
 
@@ -1367,10 +1389,10 @@ class Atoms(object):
         else:
             positions = np.array([self.positions[i] for i in id_list])
         # print ("len positions: ", len(positions))
-        if cutoff is None:
+        if cutoff_radius is None:
             neighbors = tree.query(positions, k=num_neighbors)
         else:
-            neighbors = tree.query(positions, k=num_neighbors, distance_upper_bound=cutoff)
+            neighbors = tree.query(positions, k=num_neighbors, distance_upper_bound=cutoff_radius)
 
         # print ("neighbors: ", neighbors)
 
@@ -1436,16 +1458,12 @@ class Atoms(object):
         neighbor_obj.shells = self.neighbor_shellOrder
         return neighbor_obj
 
-
-    def get_neighborhood(box, position, radius=None, num_neighbors=12, t_vec=True,
-                         include_boundary=True, exclude_self=True, tolerance=2, id_list=None, cutoff=None):
+    def get_neighborhood(box, position, num_neighbors=12, t_vec=True, include_boundary=True, exclude_self=True,
+                         tolerance=2, id_list=None, cutoff=None, cutoff_radius=None):
         """
         
         Args:
             position: position in a box whose neighborhood information is analysed
-            radius: distance up to which nearest neighbors are searched for
-                    used only for periodic boundary padding
-                   (in absolute units)
             num_neighbors: 
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
@@ -1454,7 +1472,8 @@ class Atoms(object):
             exclude_self (bool): include central __atom (i.e. distance = 0)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list:
-            cutoff (float): Upper bound of the distance to which the search must be done
+            cutoff (float/ None): Upper bound of the distance to which the search must be done
+            cutoff_radius (float/ None): Upper bound of the distance to which the search must be done
 
         Returns:
 
@@ -1469,9 +1488,9 @@ class Atoms(object):
         pos = box.positions
         pos[-1] = np.array(position)
         box.positions = pos
-        neigh = box.get_neighbors(radius=radius, num_neighbors=num_neighbors, t_vec=t_vec,
+        neigh = box.get_neighbors(num_neighbors=num_neighbors, t_vec=t_vec,
                                   include_boundary=include_boundary, exclude_self=exclude_self,
-                                  tolerance=tolerance, id_list=id_list, cutoff=cutoff)
+                                  tolerance=tolerance, id_list=id_list, cutoff=cutoff, cutoff_radius=cutoff_radius)
         neigh_return = NeighTemp()
         setattr(neigh_return, 'distances', neigh.distances[-1])
         setattr(neigh_return, 'shells', neigh.shells[-1])
@@ -1483,13 +1502,12 @@ class Atoms(object):
         neigh_return.indices = neigh_return.indices[neigh_return.indices!=len(box)-1]
         return neigh_return
 
-    def get_shells(self, id_list=None, max_shell=2, radius=None, max_num_neighbors=100):
+    def get_shells(self, id_list=None, max_shell=2, max_num_neighbors=100):
         """
         
         Args:
             id_list: 
-            max_shell: 
-            radius: 
+            max_shell:
             max_num_neighbors: 
 
         Returns:
@@ -1497,8 +1515,7 @@ class Atoms(object):
         """
         if id_list is None:
             id_list = [0]
-        neighbors = self.get_neighbors(radius=radius,
-                                       num_neighbors=max_num_neighbors,
+        neighbors = self.get_neighbors(num_neighbors=max_num_neighbors,
                                        id_list=id_list)
 
         shells = neighbors.shells[0]
@@ -1514,7 +1531,7 @@ class Atoms(object):
             raise AssertionError()
         return shell_dict
 
-    def get_shell_matrix(self, shell, id_list=None, restraint_matrix=None, radius=None, max_num_neighbors=100):
+    def get_shell_matrix(self, shell, id_list=None, restraint_matrix=None, max_num_neighbors=100):
         """
 
         Args:
@@ -1531,8 +1548,7 @@ class Atoms(object):
 
         """
         assert isinstance(shell, int) and shell > 0, "Parameter 'shell' must be an integer greater than 0"
-        neigh_list = self.get_neighbors(radius=radius,
-                                        num_neighbors=max_num_neighbors,
+        neigh_list = self.get_neighbors(num_neighbors=max_num_neighbors,
                                         id_list=id_list)
         Natom = len(neigh_list.shells)
         if restraint_matrix is None:
@@ -1765,7 +1781,7 @@ class Atoms(object):
             neigh = box_copy.get_neighbors()
         return pos_total, box_copy
 
-    def get_equivalent_voronoi_vertices(self, return_box=False, minimum_dist=0.1):
+    def get_equivalent_voronoi_vertices(self, return_box=False, minimum_dist=0.1, symprec=1e-5, angle_tolerance=-1.0):
         """
             This function gives the positions of spatially equivalent Voronoi vertices in lists, which
             most likely represent interstitial points or vacancies (along with other high symmetry points)
@@ -1783,7 +1799,7 @@ class Atoms(object):
 
         _, box_copy = self._get_voronoi_vertices(minimum_dist = minimum_dist)
         list_positions = []
-        sym = box_copy.get_symmetry()
+        sym = box_copy.get_symmetry(symprec=symprec, angle_tolerance=angle_tolerance)
         for ind in set(sym['equivalent_atoms'][box_copy.select_index('Hs')]):
             list_positions.append(box_copy.positions[sym['equivalent_atoms']==ind])
         if return_box:
@@ -2024,63 +2040,10 @@ class Atoms(object):
         Returns:
 
         """
-        # adopted from http://stackoverflow.com/questions/19634993/volume-of-voronoi-cell-python
-        from scipy.spatial import Voronoi, Delaunay
-        def tetravol(a, b, c, d):
-            """
-            Calculates the volume of a tetrahedron, given vertices a,b,c and d (triplets)
-            
-            Args:
-                a: 
-                b: 
-                c: 
-                d: 
-
-            Returns:
-
-            """
-            tetravol = abs(np.dot((a - d), np.cross((b - d), (c - d)))) / 6
-            return tetravol
-
-        def vol(vor, p):
-            """
-            Calculate volume of 3d Voronoi cell based on point p. Voronoi diagram is passed in v.
-            
-            Args:
-                vor: 
-                p: 
-
-            Returns:
-
-            """
-            dpoints = []
-            vol = 0
-            for v in vor.regions[vor.point_region[p]]:
-                dpoints.append(list(vor.vertices[v]))
-            tri = Delaunay(np.array(dpoints))
-            for simplex in tri.simplices:
-                vol += tetravol(np.array(dpoints[simplex[0]]), np.array(dpoints[simplex[1]]),
-                                np.array(dpoints[simplex[2]]), np.array(dpoints[simplex[3]]))
-            return vol
-
-        vor = Voronoi(self.positions)
-
-        ind_lst, vol_lst = [], []
-        for i, p in enumerate(vor.points):
-            out = False
-            for v in vor.regions[vor.point_region[i]]:
-                # print ("regions: ", i, p, v)
-                # if v in region_lst:
-                #     continue
-                # region_lst.append(v)
-                if v <= -1:  # a point index of -1 is returned if the vertex is outside the Vornoi diagram, in this application these should be ignorable edge-cases
-                    out = True
-            if not out:
-                pvol = vol(vor, i)
-                ind_lst.append(i)
-                vol_lst.append(pvol)
-                # print ("point "+str(i)+" with coordinates "+str(p)+" has volume "+str(pvol))
-        return np.array(ind_lst), np.array(vol_lst)
+        warnings.warn("This function doesn't account for periodic boundary conditions. Call "
+                      "`analyse_ovito_voronoi_volume` instead. This is what will now be returned.",
+                      DeprecationWarning)
+        return self.analyse_ovito_voronoi_volume()
 
     def __add__(self, other):
         if isinstance(other, Atoms):

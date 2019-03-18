@@ -431,8 +431,7 @@ class TestAtoms(unittest.TestCase):
         cell = 2.2 * np.identity(3)
         Al_sc = Atoms(elements=['Al', 'Al'], scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
         Al_sc.set_repeat([4, 4, 4])
-        radius = Al_sc.get_shell_radius()
-        neighbors = Al_sc.get_neighbors(radius=radius, num_neighbors=100, t_vec=False, exclude_self=True)
+        neighbors = Al_sc.get_neighbors(num_neighbors=100, t_vec=False, exclude_self=True)
 
         c_Zn = 0.1
         pse = PeriodicTable()
