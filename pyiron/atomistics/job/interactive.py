@@ -258,7 +258,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
 
     @staticmethod
     def _extend_species_elements(struct_species, species_array):
-        if not any(np.isin(struct_species, species_array)):
+        if not all(np.isin(struct_species, species_array)):
             new_elements_index = np.invert(np.isin(struct_species, species_array))
             species_array = np.append(species_array, struct_species[new_elements_index])
         return species_array
