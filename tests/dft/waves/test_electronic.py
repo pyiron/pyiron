@@ -26,7 +26,7 @@ class TestElectronicStructure(unittest.TestCase):
         for f in file_list:
             vp = Vasprun()
             direc = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                 "../../static/vasprun_samples"))
+                                                 "../../static/vasp_test_files/vasprun_samples"))
             filename = posixpath.join(direc, f)
             vp.from_file(filename)
             es = vp.get_electronic_structure()
