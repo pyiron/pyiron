@@ -140,7 +140,7 @@ class VaspVolumetricData(VolumetricData):
             n_grid_str = None
             total_data_list = list()
             atoms = None
-            for i, line in enumerate(f):
+            for line in f:
                 strip_line = line.strip()
                 if not get_grid:
                     if strip_line == "":
