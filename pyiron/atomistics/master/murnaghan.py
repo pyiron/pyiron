@@ -572,6 +572,10 @@ class Murnaghan(AtomisticParallelMaster):
     def _fit_eos_general(self, vol_erg_dic=None, fittype='birchmurnaghan'):
         self._set_fit_module(vol_erg_dic=vol_erg_dic)
         fit_dict = self.fit_module.fit_eos_general(fittype=fittype)
+        self.input['fit_type'] = fit_dict["fit_type"]
+        self.input['fit_order'] = 0
+        with self.project_hdf5.open('input') as hdf5_input:
+            self.input.to_hdf(hdf5_input)
         with self.project_hdf5.open("output") as hdf5:
             hdf5["equilibrium_energy"] = fit_dict["energy_eq"]
             hdf5["equilibrium_volume"] = fit_dict["volume_eq"]
@@ -600,6 +604,10 @@ class Murnaghan(AtomisticParallelMaster):
         if fit_dict is None:
             self._logger.warning("Minimum could not be found!")
         else:
+            self.input['fit_type'] = fit_dict["fit_type"]
+            self.input['fit_order'] = fit_dict["fit_order"]
+            with self.project_hdf5.open('input') as hdf5_input:
+                self.input.to_hdf(hdf5_input)
             with self.project_hdf5.open("output") as hdf5:
                 hdf5["equilibrium_energy"] = fit_dict["energy_eq"]
                 hdf5["equilibrium_volume"] = fit_dict["volume_eq"]
