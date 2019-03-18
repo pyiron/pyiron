@@ -131,9 +131,10 @@ class VaspVolumetricData(VolumetricData):
                 return
             if len(all_dataset) == 2:
                 data = {"total": all_dataset[0] / volume, "diff": all_dataset[1] / volume}
+                return atoms, [data["total"], data["diff"]]
             else:
                 data = {"total": all_dataset[0] / volume}
-            return atoms, [data["total"], data["diff"]]
+                return atoms, [data["total"]]
 
     def _read_vol_data(self, filename, normalize=True):
         """
