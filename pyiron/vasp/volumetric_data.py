@@ -9,7 +9,6 @@ import os
 from pyiron.base.settings.generic import Settings
 from pyiron.vasp.structure import atoms_from_string, get_species_list_from_potcar
 from pyiron.atomistics.volumetric.generic import VolumetricData
-import warnings
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -151,15 +150,11 @@ class VaspVolumetricData(VolumetricData):
                     n_x, n_y, n_z = [int(val) for val in strip_line.split()]
                     n_grid = n_x * n_y * n_z
                     n_grid_str = " ".join([str(val) for val in [n_x, n_y, n_z]])
-                    with warnings.catch_warnings(record=True) as w:
-                        warnings.simplefilter("always")
-                        load_txt = np.genfromtxt(f, max_rows=int(n_grid / 5), invalid_raise=False)
-                        if len(w) > 0:
-                            if issubclass(w[-1].category, np.lib.npyio.ConversionWarning):
-                                s = Settings()
-                                s.logger.warning("File:" + filename + "numpy ConversionWarning ignored deliberately")
-                            else:
-                                warnings.warn(w[-1].message, w[-1].category)
+                    load_txt = np.genfromtxt(f, max_rows=int(n_grid / 5))
+                    load_txt = np.hstack(load_txt)
+                    if n_grid % 5 != 0:
+                        add_line = np.genfromtxt(f, max_rows=1)
+                        load_txt = np.append(load_txt, np.hstack(add_line))
                     total_data = self._fastest_index_reshape(load_txt, [n_x, n_y, n_z])
                     try:
                         atoms = atoms_from_string(struct_lines)
@@ -175,7 +170,11 @@ class VaspVolumetricData(VolumetricData):
                 elif atoms is not None:
                     grid_str = n_grid_str.replace(" ", "")
                     if grid_str == strip_line.replace(" ", ""):
-                        load_txt = np.genfromtxt(f, max_rows=int(n_grid / 5), invalid_raise=False)
+                        load_txt = np.genfromtxt(f, max_rows=int(n_grid / 5))
+                        load_txt = np.hstack(load_txt)
+                        if n_grid % 5 != 0:
+                            add_line = np.genfromtxt(f, max_rows=1)
+                            load_txt = np.hstack(np.append(load_txt, np.hstack(add_line)))
                         total_data = self._fastest_index_reshape(load_txt, [n_x, n_y, n_z])
                         if normalize:
                             total_data /= atoms.get_volume()
@@ -188,7 +187,7 @@ class VaspVolumetricData(VolumetricData):
         Helper function to parse volumetric data with x-axis as the fastest index
 
         Args:
-            raw_data (numpy.ndarray): Raw unprocessed volumetric data
+            raw_data (numpy.ndarray): Raw unprocessed volumetric data which is flattened
             grid (list/turple/numpy.ndarray): Sequence of the integer grid points [Nx, Ny, Nz]
 
         Returns:
@@ -197,7 +196,7 @@ class VaspVolumetricData(VolumetricData):
         """
         n_x, n_y, n_z = grid
         total_data = np.zeros((n_x, n_y, n_z))
-        all_data = np.hstack(raw_data)
+        all_data = raw_data[0:np.prod(grid)]
         all_indices = np.arange(len(all_data), dtype=int)
         x_indices = all_indices % n_x
         y_indices = all_indices / n_x % n_y
