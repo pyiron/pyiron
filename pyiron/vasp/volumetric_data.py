@@ -37,9 +37,30 @@ class VaspVolumetricData(VolumetricData):
 
     def from_file(self, filename, normalize=True):
         """
+        Parsing the contents of from a file
+
+        Args:
+            filename (str): Path of file to parse
+            normalize (boolean): Flag to normalize by the volume of the cell
+        """
+        try:
+            self.atoms, vol_data_list = self._read_vol_data(filename=filename, normalize=normalize)
+        except (ValueError, IndexError):
+            try:
+                self.atoms, vol_data_list = self._read_vol_data_old(filename=filename, normalize=normalize)
+            except (ValueError, IndexError):
+                raise ValueError("Unable to parse file: {}".format(filename))
+
+        self._total_data = vol_data_list[0]
+        if len(vol_data_list) > 1:
+            self._diff_data = vol_data_list[1]
+
+    @staticmethod
+    def _read_vol_data_old(filename, normalize=True):
+        """
         Convenience method to parse a generic volumetric static file in the vasp like format.
         Used by subclasses for parsing the file. This routine is adapted from the pymatgen vasp VolumetricData
-        class with very minor modifications
+        class with very minor modifications. The new parser is faster
 
         http://pymatgen.org/_modules/pymatgen/io/vasp/outputs.html#VolumetricData.
 
@@ -110,11 +131,9 @@ class VaspVolumetricData(VolumetricData):
                 return
             if len(all_dataset) == 2:
                 data = {"total": all_dataset[0] / volume, "diff": all_dataset[1] / volume}
-                self._diff_data = data["diff"]
             else:
                 data = {"total": all_dataset[0] / volume}
-            self.atoms = atoms
-            self._total_data = data["total"]
+            return atoms, [data["total"], data["diff"]]
 
     def _read_vol_data(self, filename, normalize=True):
         """
@@ -184,7 +203,7 @@ class VaspVolumetricData(VolumetricData):
     @staticmethod
     def _fastest_index_reshape(raw_data, grid):
         """
-        Helper function to parse volumetric data with x-axis as the fastest index
+        Helper function to parse volumetric data with x-axis as the fastest index into a 3D numpy array
 
         Args:
             raw_data (numpy.ndarray): Raw unprocessed volumetric data which is flattened
