@@ -132,21 +132,28 @@ class Vasprun(object):
             if leaf.tag == "generation":
                 d[leaf.tag] = dict()
                 d[leaf.tag]["scheme"] = leaf.attrib["param"]
-                gen_vec = np.zeros((3, 3))
-                for item in leaf:
-                    if item.tag == "v":
-                        if item.attrib["name"] in ["divisions"]:
-                            d[leaf.tag]["divisions"] = self._parse_vector(item, vec_type=int)
-                        if item.attrib["name"] in ["genvec{}".format(i) for i in range(1, 4)]:
-                            if item.attrib["name"] == "genvec1":
-                                gen_vec[0, :] = self._parse_vector(item, vec_type=float)
-                            if item.attrib["name"] == "genvec2":
-                                gen_vec[1, :] = self._parse_vector(item, vec_type=float)
-                            if item.attrib["name"] == "genvec3":
-                                gen_vec[2, :] = self._parse_vector(item, vec_type=float)
-                        if item.attrib["name"] in ["shift", "usershift"]:
-                            d[leaf.tag][item.attrib["name"]] = self._parse_vector(item, vec_type=float)
-                d[leaf.tag]["genvec"] = np.array(gen_vec)
+                if d[leaf.tag]["scheme"] == "listgenerated":
+                    line_mode_kpoints = list()
+                    for item in leaf:
+                        if item.tag == "v":
+                            line_mode_kpoints.append(self._parse_vector(item, vec_type=float))
+                    d["line_mode_kpoints"] = np.array(line_mode_kpoints)
+                else:
+                    gen_vec = np.zeros((3, 3))
+                    for item in leaf:
+                        if item.tag == "v":
+                            if item.attrib["name"] in ["divisions"]:
+                                d[leaf.tag]["divisions"] = self._parse_vector(item, vec_type=int)
+                            if item.attrib["name"] in ["genvec{}".format(i) for i in range(1, 4)]:
+                                if item.attrib["name"] == "genvec1":
+                                    gen_vec[0, :] = self._parse_vector(item, vec_type=float)
+                                if item.attrib["name"] == "genvec2":
+                                    gen_vec[1, :] = self._parse_vector(item, vec_type=float)
+                                if item.attrib["name"] == "genvec3":
+                                    gen_vec[2, :] = self._parse_vector(item, vec_type=float)
+                            if item.attrib["name"] in ["shift", "usershift"]:
+                                d[leaf.tag][item.attrib["name"]] = self._parse_vector(item, vec_type=float)
+                    d[leaf.tag]["genvec"] = np.array(gen_vec)
             if leaf.tag == "varray":
                 if leaf.attrib["name"] == "kpointlist":
                     d["kpoint_list"] = self._parse_2d_matrix(leaf, vec_type=float)
