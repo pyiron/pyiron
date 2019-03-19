@@ -3340,6 +3340,12 @@ def pyiron_to_ase(pyiron_obj):
 
 
 def _check_if_simple_atoms(atoms):
+    """
+    Raise a warning if the ASE atoms object includes properties which can not be converted to pymatgen atoms.
+
+    Args:
+        atoms: ASE atoms object
+    """
     dict_keys = [k for k in atoms.__dict__.keys() if k not in ['_celldisp', 'arrays', '_cell', '_pbc', '_constraints',
                                                                'info', '_calc']]
     array_keys = [k for k in atoms.__dict__['arrays'].keys() if k not in ['numbers', 'positions']]
@@ -3360,6 +3366,15 @@ def _check_if_simple_atoms(atoms):
 
 
 def pymatgen_to_pyiron(pymatgen_obj):
+    """
+    Convert pymatgen atoms object to pyiron atoms object (pymatgen->ASE->pyiron)
+
+    Args:
+        pymatgen_obj: pymatgen atoms object
+
+    Returns:
+        pyiron atoms object
+    """
     try:
         from pymatgen.io.ase import AseAtomsAdaptor
     except ImportError:
@@ -3368,6 +3383,15 @@ def pymatgen_to_pyiron(pymatgen_obj):
 
 
 def pyiron_to_pymatgen(pyiron_obj):
+    """
+    Convert pyiron atoms object to pymatgen atoms object
+
+    Args:
+        pyiron_obj: pyiron atoms object
+
+    Returns:
+        pymatgen atoms object
+    """
     try:
         from pymatgen.io.ase import AseAtomsAdaptor
     except ImportError:
