@@ -3309,7 +3309,8 @@ def ase_to_pyiron(ase_obj):
     cell = ase_obj.cell
     positions = ase_obj.get_positions()
     pbc = ase_obj.get_pbc()
-    pyiron_atoms = Atoms(elements=element_list, positions=positions, pbc=pbc, cell=cell)
+    spins = ase_obj.get_initial_magnetic_moments()
+    pyiron_atoms = Atoms(elements=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins)
     if len(ase_obj.constraints) != 0:
         for constraint in ase_obj.constraints:
             constraint_dict = constraint.todict()
@@ -3335,11 +3336,47 @@ def pyiron_to_ase(pyiron_obj):
     cell = pyiron_obj.cell
     positions = pyiron_obj.positions
     pbc = pyiron_obj.get_pbc()
-    atoms = ASEAtoms(symbols=element_list, positions=positions, pbc=pbc, cell=cell)
+    spins = pyiron_obj.get_initial_magnetic_moments()
+    atoms = ASEAtoms(symbols=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins)
     return atoms
 
 
+def _check_if_simple_atoms(atoms):
+    """
+    Raise a warning if the ASE atoms object includes properties which can not be converted to pymatgen atoms.
+
+    Args:
+        atoms: ASE atoms object
+    """
+    dict_keys = [k for k in atoms.__dict__.keys() if k not in ['_celldisp', 'arrays', '_cell', '_pbc', '_constraints',
+                                                               'info', '_calc']]
+    array_keys = [k for k in atoms.__dict__['arrays'].keys() if k not in ['numbers', 'positions']]
+    if not len(dict_keys) == 0:
+        warnings.warn('Found unknown keys: ' + str(dict_keys))
+    if not np.all(atoms.__dict__['_celldisp'] == np.array([[0.], [0.], [0.]])):
+        warnings.warn('Found cell displacement: ' + str(atoms.__dict__['_celldisp']))
+    if not atoms.__dict__['_calc'] is None:
+        warnings.warn('Found calculator: ' + str(atoms.__dict__['_calc']))
+    if not atoms.__dict__['_constraints'] == []:
+        warnings.warn('Found constraint: ' + str(atoms.__dict__['_constraints']))
+    if not np.all(atoms.__dict__['_pbc']):
+        warnings.warn('Cell is not periodic: ' + str(atoms.__dict__['_pbc']))
+    if not len(array_keys) == 0:
+        warnings.warn('Found unknown flags: ' + str(array_keys))
+    if not atoms.__dict__['info'] == dict():
+        warnings.warn('Info is not empty: ' + str(atoms.__dict__['info']))
+
+
 def pymatgen_to_pyiron(pymatgen_obj):
+    """
+    Convert pymatgen atoms object to pyiron atoms object (pymatgen->ASE->pyiron)
+
+    Args:
+        pymatgen_obj: pymatgen atoms object
+
+    Returns:
+        pyiron atoms object
+    """
     try:
         from pymatgen.io.ase import AseAtomsAdaptor
     except ImportError:
@@ -3348,11 +3385,22 @@ def pymatgen_to_pyiron(pymatgen_obj):
 
 
 def pyiron_to_pymatgen(pyiron_obj):
+    """
+    Convert pyiron atoms object to pymatgen atoms object
+
+    Args:
+        pyiron_obj: pyiron atoms object
+
+    Returns:
+        pymatgen atoms object
+    """
     try:
         from pymatgen.io.ase import AseAtomsAdaptor
     except ImportError:
         raise ValueError('PyMatGen package not yet installed')
-    return AseAtomsAdaptor().get_structure(atoms=pyiron_to_ase(pyiron_obj), cls=None)
+    ase_atoms = pyiron_to_ase(pyiron_obj)
+    _check_if_simple_atoms(atoms=ase_atoms)
+    return AseAtomsAdaptor().get_structure(atoms=ase_atoms, cls=None)
 
 
 def ovito_to_pyiron(ovito_obj):
