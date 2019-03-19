@@ -3339,12 +3339,34 @@ def pyiron_to_ase(pyiron_obj):
     return atoms
 
 
+def _check_if_simple_atoms(atoms):
+    dict_keys = [k for k in atoms.__dict__.keys() if k not in ['_celldisp', 'arrays', '_cell', '_pbc', '_constraints',
+                                                               'info', '_calc']]
+    array_keys = [k for k in atoms.__dict__['arrays'].keys() if k not in ['numbers', 'positions']]
+    if not len(dict_keys) == 0:
+        warnings.warn('Found unknown keys: ' + str(dict_keys))
+    if not np.all(atoms.__dict__['_celldisp'] == np.array([[0.], [0.], [0.]])):
+        warnings.warn('Found cell displacement: ' + str(atoms.__dict__['_celldisp']))
+    if not atoms.__dict__['_calc'] is None:
+        warnings.warn('Found calculator: ' + str(atoms.__dict__['_calc']))
+    if not atoms.__dict__['_constraints'] == []:
+        warnings.warn('Found constraint: ' + str(atoms.__dict__['_constraints']))
+    if not np.all(atoms.__dict__['_pbc']):
+        warnings.warn('Cell is not periodic: ' + str(atoms.__dict__['_pbc']))
+    if not len(array_keys) == 0:
+        warnings.warn('Found unknown flags: ' + str(array_keys))
+    if not atoms.__dict__['info'] == dict():
+        warnings.warn('Info is not empty: ' + str(atoms.__dict__['info']))
+
+
 def pymatgen_to_pyiron(pymatgen_obj):
     try:
         from pymatgen.io.ase import AseAtomsAdaptor
     except ImportError:
         raise ValueError('PyMatGen package not yet installed')
-    return ase_to_pyiron(AseAtomsAdaptor().get_atoms(structure=pymatgen_obj))
+    ase_atoms = ase_to_pyiron(AseAtomsAdaptor().get_atoms(structure=pymatgen_obj))
+    _check_if_simple_atoms(atoms=ase_atoms)
+    return ase_atoms
 
 
 def pyiron_to_pymatgen(pyiron_obj):
