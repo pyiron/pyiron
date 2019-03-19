@@ -3309,7 +3309,8 @@ def ase_to_pyiron(ase_obj):
     cell = ase_obj.cell
     positions = ase_obj.get_positions()
     pbc = ase_obj.get_pbc()
-    pyiron_atoms = Atoms(elements=element_list, positions=positions, pbc=pbc, cell=cell)
+    spins = ase_obj.get_initial_magnetic_moments()
+    pyiron_atoms = Atoms(elements=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins)
     if len(ase_obj.constraints) != 0:
         for constraint in ase_obj.constraints:
             constraint_dict = constraint.todict()
@@ -3335,7 +3336,8 @@ def pyiron_to_ase(pyiron_obj):
     cell = pyiron_obj.cell
     positions = pyiron_obj.positions
     pbc = pyiron_obj.get_pbc()
-    atoms = ASEAtoms(symbols=element_list, positions=positions, pbc=pbc, cell=cell)
+    spins = pyiron_obj.get_initial_magnetic_moments()
+    atoms = ASEAtoms(symbols=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins)
     return atoms
 
 
