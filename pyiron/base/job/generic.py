@@ -673,8 +673,10 @@ class GenericJob(JobCore):
             self._logger.info("{}, status: {}, script: {}".format(self.job_info_str, self.status, file_name))
             with open(posixpath.join(self.project_hdf5.working_directory, 'out.txt'), mode='w') as f_out:
                 with open(posixpath.join(self.project_hdf5.working_directory, 'error.txt'), mode='w') as f_err:
-                    self._process = subprocess.Popen(['python', file_name], cwd=self.project_hdf5.working_directory,
-                                                     shell=shell, stdout=f_out, stderr=f_err, universal_newlines=True)
+                    self._process = subprocess.Popen(['python', '-m', 'pyiron.base.job.wrappercmd', '-p',
+                                                      self.working_directory, '-j', str(self.job_id)],
+                                                     cwd=self.project_hdf5.working_directory, shell=shell, stdout=f_out,
+                                                     stderr=f_err, universal_newlines=True)
             self._logger.info("{}, status: {}, job submitted".format(self.job_info_str, self.status))
         except subprocess.CalledProcessError as e:
             self._logger.warn("Job aborted")
@@ -1194,28 +1196,6 @@ class GenericJob(JobCore):
             self.server.cores = 1
             warnings.warn('No multi core executable found falling back to the single core executable.', RuntimeWarning)
 
-    def _write_run_wrapper(self, debug=False):
-        """
-        Internal helper function to run a python script for monitoring external calculation:
-        This python script - which is executed as a wrapper around the simulation - is written here.
-
-        Args:
-            debug (bool): True or False - set level of output
-        """
-        file_name = posixpath.join(self.project_hdf5.working_directory, "run_job.py")
-        with open(file_name, "w") as f:
-            def wl(arg):
-                return f.write(arg + '\n')
-
-            wl('import sys')
-            wl('from pyiron.base.job.wrapper import JobWrapper')
-            wl('')
-            wl('debug = {0}'.format(debug))
-            wl('job = JobWrapper(working_directory=\'{0}\','.format(self.project_hdf5.working_directory))
-            wl('                 job_id={},'.format(self.job_id))
-            wl('                 debug={})'.format(debug))
-            wl('job.run()')
-
     def _calculate_predecessor(self):
         """
         Internal helper function to calculate the predecessor of the current job if it was not calculated before. This
@@ -1256,7 +1236,6 @@ class GenericJob(JobCore):
             self.project_hdf5.create_working_directory()
             self.write_input()
             self._copy_restart_files()
-            self._write_run_wrapper(debug=debug)
         self.status.created = True
         self._calculate_predecessor()
 
