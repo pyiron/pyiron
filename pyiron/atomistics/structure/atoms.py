@@ -3364,9 +3364,7 @@ def pymatgen_to_pyiron(pymatgen_obj):
         from pymatgen.io.ase import AseAtomsAdaptor
     except ImportError:
         raise ValueError('PyMatGen package not yet installed')
-    ase_atoms = ase_to_pyiron(AseAtomsAdaptor().get_atoms(structure=pymatgen_obj))
-    _check_if_simple_atoms(atoms=ase_atoms)
-    return ase_atoms
+    return ase_to_pyiron(AseAtomsAdaptor().get_atoms(structure=pymatgen_obj))
 
 
 def pyiron_to_pymatgen(pyiron_obj):
@@ -3374,7 +3372,9 @@ def pyiron_to_pymatgen(pyiron_obj):
         from pymatgen.io.ase import AseAtomsAdaptor
     except ImportError:
         raise ValueError('PyMatGen package not yet installed')
-    return AseAtomsAdaptor().get_structure(atoms=pyiron_to_ase(pyiron_obj), cls=None)
+    ase_atoms = pyiron_to_ase(pyiron_obj)
+    _check_if_simple_atoms(atoms=ase_atoms)
+    return AseAtomsAdaptor().get_structure(atoms=ase_atoms, cls=None)
 
 
 def ovito_to_pyiron(ovito_obj):
