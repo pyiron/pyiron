@@ -728,7 +728,8 @@ class GenericJob(JobCore):
                                                 cores=self.server.cores,
                                                 run_time_max=self.server.run_time,
                                                 memory_max=self.server.memory_limit,
-                                                command='python run_job.py')
+                                                command='python -m pyiron.base.job.wrappercmd -p ' +
+                                                        self.working_directory + ' -j ' + str(self.job_id))
             self.server.queue_id = que_id
             self._server.to_hdf(self._hdf5)
             print('Queue system id: ', que_id)
