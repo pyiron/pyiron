@@ -6,6 +6,9 @@ from __future__ import print_function
 
 from copy import copy
 import os
+import re
+import tokenize
+import keyword
 import posixpath
 from pyiron.base.settings.generic import Settings
 from six import string_types
@@ -216,7 +219,9 @@ class ProjectPath(GenericPath):
         """
         if path == "":
             raise ValueError('ProjectPath: path is not allowed to be empty!')
-        if not os.path.abspath(os.path.expanduser(path)).replace('/', '').replace('\\', '').isidentifier():
+        path_to_check = os.path.abspath(os.path.expanduser(path)).replace('/', '').replace('\\', '')
+        # if not path_to_check.isidentifier():  # Python 3 only
+        if not (re.match(tokenize.Name + '$', path_to_check) and not keyword.iskeyword(path_to_check)):
             warnings.warn('Please do not use special characters in your project names: ' + path)
         generic_path = self._convert_str_to_generic_path(path)
         super(ProjectPath, self).__init__(generic_path.root_path, generic_path.project_path)
