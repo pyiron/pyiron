@@ -268,36 +268,6 @@ class DebyeModel(object):
         atoms_per_cell = len(self._murnaghan.structure)
         return atoms_per_cell * val
 
-    @staticmethod
-    def birchmurnaghan_energy(V, E0, B0, BP, V0):
-        'BirchMurnaghan equation from PRB 70, 224107'
-        return birchmurnaghan_energy(V, E0, B0, BP, V0)
-
-    @staticmethod
-    def vinet_energy(V, E0, B0, BP, V0):
-        'Vinet equation from PRB 70, 224107'
-        return vinet_energy(V, E0, B0, BP, V0)
-
-    @staticmethod
-    def murnaghan(V, E0, B0, BP, V0):
-        'From PRB 28,5480 (1983'
-        return murnaghan(V, E0, B0, BP, V0)
-
-    @staticmethod
-    def birch(V, E0, B0, BP, V0):
-        """
-        From Intermetallic compounds: Principles and Practice, Vol. I: Principles
-        Chapter 9 pages 195-210 by M. Mehl. B. Klein, D. Papaconstantopoulos
-        paper downloaded from Web
-
-        case where n=0
-        """
-        return birch(V, E0, B0, BP, V0)
-
-    @staticmethod
-    def pouriertarantola(V, E0, B0, BP, V0):
-        return pouriertarantola(V, E0, B0, BP, V0)
-
 
 class MurnaghanJobGenerator(JobGenerator):
     @property
@@ -540,6 +510,36 @@ class EnergyVolumeFit(object):
         y_fit_lst = np.array(p_fit(x_lst))
         error_lst = (y_lst - y_fit_lst) ** 2
         return np.mean(error_lst)
+
+    @staticmethod
+    def birchmurnaghan_energy(V, E0, B0, BP, V0):
+        'BirchMurnaghan equation from PRB 70, 224107'
+        return birchmurnaghan_energy(V, E0, B0, BP, V0)
+
+    @staticmethod
+    def vinet_energy(V, E0, B0, BP, V0):
+        'Vinet equation from PRB 70, 224107'
+        return vinet_energy(V, E0, B0, BP, V0)
+
+    @staticmethod
+    def murnaghan(V, E0, B0, BP, V0):
+        'From PRB 28,5480 (1983'
+        return murnaghan(V, E0, B0, BP, V0)
+
+    @staticmethod
+    def birch(V, E0, B0, BP, V0):
+        """
+        From Intermetallic compounds: Principles and Practice, Vol. I: Principles
+        Chapter 9 pages 195-210 by M. Mehl. B. Klein, D. Papaconstantopoulos
+        paper downloaded from Web
+
+        case where n=0
+        """
+        return birch(V, E0, B0, BP, V0)
+
+    @staticmethod
+    def pouriertarantola(V, E0, B0, BP, V0):
+        return pouriertarantola(V, E0, B0, BP, V0)
 
 
 # ToDo: not all abstract methods implemented
