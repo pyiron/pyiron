@@ -64,3 +64,16 @@ class JobWrapper(object):
         The job wrapper run command, sets the job status to 'running' and executes run_if_modal().
         """
         self.job.run_static()
+
+
+def job_wrapper_function(working_directory, job_id, debug=False):
+    """
+    Job Wrapper function - creates a JobWrapper object and calls run() on that object
+
+    Args:
+        working_directory (str): directory where the HDF5 file of the job is located
+        job_id (int): job id
+        debug (bool): enable debug mode
+    """
+    job = JobWrapper(working_directory=working_directory, job_id=job_id, debug=debug)
+    job.run()

@@ -5,7 +5,7 @@
 import math
 
 import numpy as np
-
+import os
 from pyiron.base.settings.generic import Settings
 from pyiron.vasp.structure import atoms_from_string, get_species_list_from_potcar
 from pyiron.atomistics.volumetric.generic import VolumetricData
@@ -37,9 +37,30 @@ class VaspVolumetricData(VolumetricData):
 
     def from_file(self, filename, normalize=True):
         """
+        Parsing the contents of from a file
+
+        Args:
+            filename (str): Path of file to parse
+            normalize (boolean): Flag to normalize by the volume of the cell
+        """
+        try:
+            self.atoms, vol_data_list = self._read_vol_data(filename=filename, normalize=normalize)
+        except (ValueError, IndexError):
+            try:
+                self.atoms, vol_data_list = self._read_vol_data_old(filename=filename, normalize=normalize)
+            except (ValueError, IndexError):
+                raise ValueError("Unable to parse file: {}".format(filename))
+
+        self._total_data = vol_data_list[0]
+        if len(vol_data_list) > 1:
+            self._diff_data = vol_data_list[1]
+
+    @staticmethod
+    def _read_vol_data_old(filename, normalize=True):
+        """
         Convenience method to parse a generic volumetric static file in the vasp like format.
         Used by subclasses for parsing the file. This routine is adapted from the pymatgen vasp VolumetricData
-        class with very minor modifications
+        class with very minor modifications. The new parser is faster
 
         http://pymatgen.org/_modules/pymatgen/io/vasp/outputs.html#VolumetricData.
 
@@ -104,16 +125,106 @@ class VaspVolumetricData(VolumetricData):
             if not normalize:
                 volume = 1.0
             if len(all_dataset) == 0:
-                s = Settings()
-                s.logger.warning("File:" + filename + "seems to be corrupted/empty")
+                if not os.stat(filename).st_size == 0:
+                    s = Settings()
+                    s.logger.warning("File:" + filename + "seems to be corrupted/empty")
                 return
             if len(all_dataset) == 2:
                 data = {"total": all_dataset[0] / volume, "diff": all_dataset[1] / volume}
-                self._diff_data = data["diff"]
+                return atoms, [data["total"], data["diff"]]
             else:
                 data = {"total": all_dataset[0] / volume}
-            self.atoms = atoms
-            self._total_data = data["total"]
+                return atoms, [data["total"]]
+
+    def _read_vol_data(self, filename, normalize=True):
+        """
+        Parses the VASP volumetric type files (CHGCAR, LOCPOT, PARCHG etc). Rather than looping over individual values,
+        this function utilizes numpy indexing resulting in a parsing efficiency of at least 10%.
+
+        Args:
+            filename (str): File to be parsed
+            normalize (bool): Normalize the data with respect to the volume (Recommended for CHGCAR files)
+
+        Returns:
+            pyiron.atomistics.structure.atoms.Atoms: The structure of the volumetric snapshot
+            list: A list of the volumetric data (length >1 for CHGCAR files with spin)
+
+        """
+        with open(filename, "r") as f:
+            struct_lines = list()
+            get_grid = False
+            n_x = 0
+            n_y = 0
+            n_z = 0
+            n_grid = 0
+            n_grid_str = None
+            total_data_list = list()
+            atoms = None
+            for line in f:
+                strip_line = line.strip()
+                if not get_grid:
+                    if strip_line == "":
+                        get_grid = True
+                    struct_lines.append(strip_line)
+                elif n_grid_str is None:
+                    n_x, n_y, n_z = [int(val) for val in strip_line.split()]
+                    n_grid = n_x * n_y * n_z
+                    n_grid_str = " ".join([str(val) for val in [n_x, n_y, n_z]])
+                    load_txt = np.genfromtxt(f, max_rows=int(n_grid / 5))
+                    load_txt = np.hstack(load_txt)
+                    if n_grid % 5 != 0:
+                        add_line = np.genfromtxt(f, max_rows=1)
+                        load_txt = np.append(load_txt, np.hstack(add_line))
+                    total_data = self._fastest_index_reshape(load_txt, [n_x, n_y, n_z])
+                    try:
+                        atoms = atoms_from_string(struct_lines)
+                    except ValueError:
+                        pot_str = filename.split("/")
+                        pot_str[-1] = "POTCAR"
+                        potcar_file = "/".join(pot_str)
+                        species = get_species_list_from_potcar(potcar_file)
+                        atoms = atoms_from_string(struct_lines, species_list=species)
+                    if normalize:
+                        total_data /= atoms.get_volume()
+                    total_data_list.append(total_data)
+                elif atoms is not None:
+                    grid_str = n_grid_str.replace(" ", "")
+                    if grid_str == strip_line.replace(" ", ""):
+                        load_txt = np.genfromtxt(f, max_rows=int(n_grid / 5))
+                        load_txt = np.hstack(load_txt)
+                        if n_grid % 5 != 0:
+                            add_line = np.genfromtxt(f, max_rows=1)
+                            load_txt = np.hstack(np.append(load_txt, np.hstack(add_line)))
+                        total_data = self._fastest_index_reshape(load_txt, [n_x, n_y, n_z])
+                        if normalize:
+                            total_data /= atoms.get_volume()
+                        total_data_list.append(total_data)
+            return atoms, total_data_list
+
+    @staticmethod
+    def _fastest_index_reshape(raw_data, grid):
+        """
+        Helper function to parse volumetric data with x-axis as the fastest index into a 3D numpy array
+
+        Args:
+            raw_data (numpy.ndarray): Raw unprocessed volumetric data which is flattened
+            grid (list/turple/numpy.ndarray): Sequence of the integer grid points [Nx, Ny, Nz]
+
+        Returns:
+            numpy.ndarray: A Nx $\times$ Ny $\times$ Nz numpy array
+
+        """
+        n_x, n_y, n_z = grid
+        total_data = np.zeros((n_x, n_y, n_z))
+        all_data = raw_data[0:np.prod(grid)]
+        all_indices = np.arange(len(all_data), dtype=int)
+        x_indices = all_indices % n_x
+        y_indices = all_indices / n_x % n_y
+        y_indices = np.array(y_indices, dtype=int)
+        z_indices = all_indices / (n_x * n_y)
+        z_indices = np.array(z_indices, dtype=int)
+        total_data[x_indices, y_indices, z_indices] = all_data
+        return total_data
 
     @property
     def total_data(self):

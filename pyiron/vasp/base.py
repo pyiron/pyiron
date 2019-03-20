@@ -80,6 +80,7 @@ class VaspBase(GenericDFTJob):
         self._output_parser = Output()
         self._potential = VaspPotentialSetter([])
         self._compress_by_default = True
+        s.publication_add(self.publication)
 
     @property
     def structure(self):
@@ -262,6 +263,45 @@ class VaspBase(GenericDFTJob):
                 return df['Name']
             else:
                 return []
+
+    @property
+    def publication(self):
+        return {'vasp': {'Kresse1993': {'title': 'Ab initio molecular dynamics for liquid metals',
+                                        'author': ['Kresse, G.', 'Hafner, J.'],
+                                        'journal': 'Phys. Rev. B',
+                                        'volume': '47',
+                                        'issue': '1',
+                                        'pages': '558--561',
+                                        'numpages': '0',
+                                        'month': 'jan',
+                                        'publisher': 'American Physical Society',
+                                        'doi': '10.1103/PhysRevB.47.558',
+                                        'url': 'https://link.aps.org/doi/10.1103/PhysRevB.47.558'},
+                         'Kresse1996a':{'title': 'Efficiency of ab-initio total energy calculations for metals and '
+                                                 'semiconductors using a plane-wave basis set',
+                                        'journal': 'Computational Materials Science',
+                                        'volume': '6',
+                                        'number': '1',
+                                        'pages': '15-50',
+                                        'year': '1996',
+                                        'issn': '0927-0256',
+                                        'doi': '10.1016/0927-0256(96)00008-0',
+                                        'url': 'http://www.sciencedirect.com/science/article/pii/0927025696000080',
+                                        'author': ['Kresse, G.', 'Furthmüller, J.']},
+                         'Kresse1996b': {'title': 'Efficient iterative schemes for ab initio total-energy calculations '
+                                                  'using a plane-wave basis set',
+                                         'author': ['Kresse, G.', 'Furthmüller, J.'],
+                                         'journal': 'Phys. Rev. B',
+                                         'volume': '54',
+                                         'issue': '16',
+                                         'pages': '11169--11186',
+                                         'numpages': '0',
+                                         'year': '1996',
+                                         'month': 'oct',
+                                         'publisher': 'American Physical Society',
+                                         'doi': '10.1103/PhysRevB.54.11169',
+                                         'url': 'https://link.aps.org/doi/10.1103/PhysRevB.54.11169',
+                                         }}}
 
     # Compatibility functions
     def write_input(self):
@@ -999,6 +1039,11 @@ class VaspBase(GenericDFTJob):
         """
         if files_to_compress is None:
             files_to_compress = [f for f in list(self.list_files()) if f not in ["CHGCAR", "CONTCAR", "WAVECAR"]]
+        # delete empty files
+        for f in list(self.list_files()):
+            filename = os.path.join(self.working_directory, f)
+            if f not in files_to_compress and os.path.exists(filename) and os.stat(filename).st_size == 0:
+                os.remove(filename)
         super(VaspBase, self).compress(files_to_compress=files_to_compress)
 
     def restart_from_wave_functions(self, snapshot=-1, job_name=None, job_type=None, istart=1):

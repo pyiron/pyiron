@@ -22,7 +22,7 @@ class TestVasprun(unittest.TestCase):
         cls.direc = os.path.join(cls.file_location, "../static/vasp_test_files/vasprun_samples")
         file_list = sorted(os.listdir(cls.direc))
         del file_list[file_list.index("vasprun_spoilt.xml")]
-        cls.num_species = [3, 1, 2, 2, 3, 4]
+        cls.num_species = [3, 1, 2, 2, 3, 4, 2]
 
         for f in file_list:
             vp = Vasprun()
@@ -54,7 +54,7 @@ class TestVasprun(unittest.TestCase):
             d = vp.vasprun_dict["kpoints"]
             self.assertIsInstance(d, dict)
             self.assertIsInstance(d["generation"], dict)
-            if d["generation"]["scheme"] in ["Monkhorst-Pack"]:
+            if d["generation"]["scheme"] in ["Monkhorst-Pack", "Gamma"]:
                 self.assertIsInstance(d["generation"]["divisions"], np.ndarray)
                 self.assertIsInstance(d["generation"]["genvec"], np.ndarray)
                 self.assertIsInstance(d["generation"]["shift"], np.ndarray)
@@ -64,6 +64,9 @@ class TestVasprun(unittest.TestCase):
                 self.assertTrue(len(d["generation"]["genvec"].T) == 3)
                 self.assertTrue(len(d["generation"]["shift"]) == 3)
                 self.assertTrue(len(d["generation"]["usershift"]) == 3)
+            if d["generation"]["scheme"] in ["listgenerated"]:
+                self.assertIsInstance(d["line_mode_kpoints"], np.ndarray)
+                self.assertTrue(len(d["line_mode_kpoints"][-1]), 3)
             self.assertIsInstance(d["kpoint_list"], np.ndarray)
             self.assertIsInstance(d["kpoint_weights"], np.ndarray)
             self.assertEqual(len(d["kpoint_list"]), len(d["kpoint_weights"]))
