@@ -474,7 +474,11 @@ class Outcar(object):
             int: Mesh size
         """
         trigger_indices, lines = _get_trigger(lines=lines, filename=filename, trigger="gives a total of ")
-        line_ngx = lines[trigger_indices[0]-2]
+        try:
+            line_ngx = lines[trigger_indices[0]-2]
+        except IndexError:
+            warnings.warn("Unable to parse the Broyden mixing mesh. Returning 0 instead")
+            return 0
         # Exclude all alphabets, and spaces. Then split based on '='
         str_list = re.sub(r'[a-zA-Z]', r'', line_ngx.replace(" ", "").replace("\n", "")).split("=")
         return np.prod([int(val) for val in str_list[1:]])
