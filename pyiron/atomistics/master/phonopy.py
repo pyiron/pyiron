@@ -31,7 +31,6 @@ __date__ = "Sep 1, 2017"
 s = Settings()
 
 
-
 class thermal(object):
     """
 
