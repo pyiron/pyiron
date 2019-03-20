@@ -70,6 +70,8 @@ class VaspVolumetricData(VolumetricData):
 
         """
         if os.stat(filename).st_size == 0:
+            s = Settings()
+            s.logger.warning("File:" + filename + "seems to be corrupted/empty")
             return None, None
         poscar_read = False
         poscar_string = list()
@@ -152,6 +154,8 @@ class VaspVolumetricData(VolumetricData):
 
         """
         if os.stat(filename).st_size == 0:
+            s = Settings()
+            s.logger.warning("File:" + filename + "seems to be corrupted/empty")
             return None, None
         with open(filename, "r") as f:
             struct_lines = list()
