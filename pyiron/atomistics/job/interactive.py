@@ -5,6 +5,7 @@
 import numpy as np
 from pyiron.base.job.interactive import InteractiveBase
 from pyiron.atomistics.structure.atoms import Atoms
+from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob, GenericOutput
 
 __author__ = "Osamu Waseda, Jan Janssen"
@@ -27,6 +28,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         self._interactive_grand_canonical = False
         self._interactive_fetch_completed = True
         self._interactive_species_lst = np.array([])
+        self._periodic_table = PeriodicTable()
         self.interactive_cache = {'cells': [],
                                   'energy_pot': [],
                                   'energy_tot': [],
@@ -245,9 +247,12 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             else:
                 el_lst = self._interactive_species_lst.tolist()
             if indices is not None:
-                return Atoms(symbols=np.array([el_lst[el] for el in indices]),
-                             positions=self.output.positions[iteration_step],
-                             cell=self.output.cells[iteration_step])
+                atoms = Atoms(symbols=np.array([el_lst[el] for el in indices]),
+                              positions=self.output.positions[iteration_step],
+                              cell=self.output.cells[iteration_step])
+                atoms.set_species([self._periodic_table.element(el) for el in el_lst])
+                atoms.indices = indices
+                return atoms
             else:
                 return None
         else:
