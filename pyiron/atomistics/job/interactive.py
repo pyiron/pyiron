@@ -110,8 +110,9 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         if self._structure_current is not None:
             if len(self._structure_current) != len(self._structure_previous) and not self._interactive_grand_canonical:
                 raise ValueError('The number of atoms changed, this is currently not supported!')
-            el_lst = list(set(list(self._structure_current.get_species_symbols()) +
-                              list(self._structure_previous.get_species_symbols())))
+            index_merge_lst = self._interactive_species_lst.tolist() + \
+                              list(self._structure_current.get_species_symbols())
+            el_lst = sorted(set(index_merge_lst), key=index_merge_lst.index)
             current_structure_index = [el_lst.index(el) for el in self._structure_current.get_chemical_symbols()]
             previous_structure_index = [el_lst.index(el) for el in self._structure_previous.get_chemical_symbols()]
             if np.array_equal(np.array(current_structure_index), np.array(previous_structure_index)) and \
@@ -209,10 +210,10 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         self._interactive_species_lst = self._extend_species_elements(
             struct_species=species_symbols,
             species_array=self._interactive_species_lst)
-        new_indices = self._new_indicies(struct_species=species_symbols,
-                                         species_array=self._interactive_species_lst)
-        return self._store_indicies(species_lst=new_indices,
-                                    structure_indicies=self.current_structure.get_chemical_indices())
+        index_merge_lst = self._interactive_species_lst.tolist() + list(self._structure_current.get_species_symbols())
+        el_lst = sorted(set(index_merge_lst), key=index_merge_lst.index)
+        current_structure_index = np.array([el_lst.index(el) for el in self._structure_current.get_chemical_symbols()])
+        return current_structure_index
 
     def interactive_positions_getter(self):
         return self.current_structure.positions
@@ -250,6 +251,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
                 atoms = Atoms(symbols=np.array([el_lst[el] for el in indices]),
                               positions=self.output.positions[iteration_step],
                               cell=self.output.cells[iteration_step])
+                # Update indicies to match the indicies in the cache.
                 atoms.set_species([self._periodic_table.element(el) for el in el_lst])
                 atoms.indices = indices
                 return atoms
@@ -267,18 +269,6 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             new_elements_index = np.invert(np.isin(struct_species, species_array))
             species_array = np.append(species_array, struct_species[new_elements_index])
         return species_array
-
-    @staticmethod
-    def _store_indicies(species_lst, structure_indicies):
-        structure_indicies_to_store = structure_indicies.copy()
-        for ind, el in enumerate(species_lst):
-            structure_indicies_to_store[np.where(structure_indicies == ind)[0]] = el
-        return structure_indicies_to_store
-
-    @staticmethod
-    def _new_indicies(struct_species, species_array):
-        return np.array([np.where(species_array == el)[0][0] for el in
-                         species_array[np.isin(species_array, struct_species)]])
 
     # Functions which have to be implemented by the fin
     def interactive_cells_setter(self, cell):
