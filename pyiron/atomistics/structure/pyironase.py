@@ -24,14 +24,21 @@ sys.modules['ase.atoms'] = atoms
 
 
 def publication():
-    return {'ase': """\
-@article{ase-paper,
-  author={Ask Hjorth Larsen and Jens Jørgen Mortensen and Jakob Blomqvist and Ivano E Castelli and Rune Christensen and Marcin Dułak and Jesper Friis and Michael N Groves and Bjørk Hammer and Cory Hargus and Eric D Hermes and Paul C Jennings and Peter Bjerre Jensen and James Kermode and John R Kitchin and Esben Leonhard Kolsbjerg and Joseph Kubal and Kristen Kaasbjerg and Steen Lysgaard and Jón Bergmann Maronsson and Tristan Maxson and Thomas Olsen and Lars Pastewka and Andrew Peterson and Carsten Rostgaard and Jakob Schiøtz and Ole Schütt and Mikkel Strange and Kristian S Thygesen and Tejs Vegge and Lasse Vilhelmsen and Michael Walter and Zhenhua Zeng and Karsten W Jacobsen},
-  title={The atomic simulation environment—a Python library for working with atoms},
-  journal={Journal of Physics: Condensed Matter},
-  volume={29},
-  number={27},
-  pages={273002},
-  url={http://stacks.iop.org/0953-8984/29/i=27/a=273002},
-  year={2017}
-}"""}
+    return {'ase': {'ase-paper': {'author': ['Ask Hjorth Larsen', 'Jens Jørgen Mortensen', 'Jakob Blomqvist',
+                                             'Ivano E Castelli', 'Rune Christensen', 'Marcin Dułak', 'Jesper Friis',
+                                             'Michael N Groves', 'Bjørk Hammer', 'Cory Hargus', 'Eric D Hermes',
+                                             'Paul C Jennings', 'Peter Bjerre Jensen', 'James Kermode', 'John R Kitchin',
+                                             'Esben Leonhard Kolsbjerg', 'Joseph Kubal', 'Kristen Kaasbjerg',
+                                             'Steen Lysgaard', 'Jón Bergmann Maronsson', 'Tristan Maxson',
+                                             'Thomas Olsen', 'Lars Pastewka', 'Andrew Peterson', 'Carsten Rostgaard',
+                                             'Jakob Schiøtz', 'Ole Schütt', 'Mikkel Strange', 'Kristian S Thygesen',
+                                             'Tejs Vegge', 'Lasse Vilhelmsen', 'Michael Walter', 'Zhenhua Zeng',
+                                             'Karsten W Jacobsen'],
+                                  'title': 'The atomic simulation environment—a Python library for working with atoms',
+                                  'journal': 'Journal of Physics: Condensed Matter',
+                                  'volume': '29',
+                                  'number': '27',
+                                  'pages': '273002',
+                                  'url': 'http://stacks.iop.org/0953-8984/29/i=27/a=273002',
+                                  'year': '2017',
+                                  }}}

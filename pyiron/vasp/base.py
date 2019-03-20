@@ -266,48 +266,42 @@ class VaspBase(GenericDFTJob):
 
     @property
     def publication(self):
-        return {'vasp': ["""\
-@article{Kresse1993,
-  title = {Ab initio molecular dynamics for liquid metals},
-  author = {Kresse, G. and Hafner, J.},
-  journal = {Phys. Rev. B},
-  volume = {47},
-  issue = {1},
-  pages = {558--561},
-  numpages = {0},
-  month = {Jan},
-  publisher = {American Physical Society},
-  doi = {10.1103/PhysRevB.47.558},
-  url = {https://link.aps.org/doi/10.1103/PhysRevB.47.558}
-}""", """\
-@article{Kresse1996a,
-  title = {Efficiency of ab-initio total energy calculations for metals and semiconductors using a plane-wave basis set},
-  journal = {Computational Materials Science},
-  volume = {6},
-  number = {1},
-  pages = {15-50},
-  year = {1996},
-  issn = {0927-0256},
-  doi = {https://doi.org/10.1016/0927-0256(96)00008-0},
-  url = {http://www.sciencedirect.com/science/article/pii/0927025696000080},
-  author = {Kresse, G. and Furthm\"uller, J.}
-}""", """\
-@article{Kresse1996b,
-  title = {Efficient iterative schemes for ab initio total-energy calculations using a plane-wave basis set},
-  author = {Kresse, G. and Furthm\"uller, J.},
-  journal = {Phys. Rev. B},
-  volume = {54},
-  issue = {16},
-  pages = {11169--11186},
-  numpages = {0},
-  year = {1996},
-  month = {Oct},
-  publisher = {American Physical Society},
-  doi = {10.1103/PhysRevB.54.11169},
-  url = {https://link.aps.org/doi/10.1103/PhysRevB.54.11169}
-}
-"""]}
-
+        return {'vasp': {'Kresse1993': {'title': 'Ab initio molecular dynamics for liquid metals',
+                                        'author': ['Kresse, G.', 'Hafner, J.'],
+                                        'journal': 'Phys. Rev. B',
+                                        'volume': '47',
+                                        'issue': '1',
+                                        'pages': '558--561',
+                                        'numpages': '0',
+                                        'month': 'jan',
+                                        'publisher': 'American Physical Society',
+                                        'doi': '10.1103/PhysRevB.47.558',
+                                        'url': 'https://link.aps.org/doi/10.1103/PhysRevB.47.558'},
+                         'Kresse1996a':{'title': 'Efficiency of ab-initio total energy calculations for metals and '
+                                                 'semiconductors using a plane-wave basis set',
+                                        'journal': 'Computational Materials Science',
+                                        'volume': '6',
+                                        'number': '1',
+                                        'pages': '15-50',
+                                        'year': '1996',
+                                        'issn': '0927-0256',
+                                        'doi': '10.1016/0927-0256(96)00008-0',
+                                        'url': 'http://www.sciencedirect.com/science/article/pii/0927025696000080',
+                                        'author': ['Kresse, G.', 'Furthmüller, J.']},
+                         'Kresse1996b': {'title': 'Efficient iterative schemes for ab initio total-energy calculations '
+                                                  'using a plane-wave basis set',
+                                         'author': ['Kresse, G.', 'Furthmüller, J.'],
+                                         'journal': 'Phys. Rev. B',
+                                         'volume': '54',
+                                         'issue': '16',
+                                         'pages': '11169--11186',
+                                         'numpages': '0',
+                                         'year': '1996',
+                                         'month': 'oct',
+                                         'publisher': 'American Physical Society',
+                                         'doi': '10.1103/PhysRevB.54.11169',
+                                         'url': 'https://link.aps.org/doi/10.1103/PhysRevB.54.11169',
+                                         }}}
 
     # Compatibility functions
     def write_input(self):

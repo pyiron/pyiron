@@ -88,18 +88,25 @@ def analyse_ovito_voronoi_volume(atoms):
 
 
 def publication():
-    return {'ovito': """\
-@article{Stukowski_2009,
-    doi = {10.1088/0965-0393/18/1/015012},
-    url = {https://doi.org/10.1088%2F0965-0393%2F18%2F1%2F015012},
-    year = 2009,
-    month = {dec},
-    publisher = {{IOP} Publishing},
-    volume = {18},
-    number = {1},
-    pages = {015012},
-    author = {Alexander Stukowski},
-    title = {Visualization and analysis of atomistic simulation data with {OVITO}{\textendash}the Open Visualization Tool},
-    journal = {Modelling and Simulation in Materials Science and Engineering},
-    abstract = {The Open Visualization Tool (OVITO) is a new 3D visualization software designed for post-processing atomistic data obtained from molecular dynamics or Monte Carlo simulations. Unique analysis, editing and animations functions are integrated into its easy-to-use graphical user interface. The software is written in object-oriented C++, controllable via Python scripts and easily extendable through a plug-in interface. It is distributed as open-source software and can be downloaded from the website http://ovito.sourceforge.net/.}
-}"""}
+    return {'ovito': {'Stukowski_2009': {'doi': '10.1088/0965-0393/18/1/015012',
+                                         'url': 'https://doi.org/10.1088%2F0965-0393%2F18%2F1%2F015012',
+                                         'year': '2009',
+                                         'month': 'dec',
+                                         'publisher': '{IOP} Publishing',
+                                         'volume': '18',
+                                         'number': '1',
+                                         'pages': '015012',
+                                         'author': ['Alexander Stukowski'],
+                                         'title':  'Visualization and analysis of atomistic simulation data with '
+                                                   '{OVITO}{\textendash}the Open Visualization Tool',
+                                         'journal': 'Modelling and Simulation in Materials Science and Engineering',
+                                         'abstract': 'The Open Visualization Tool (OVITO) is a new 3D visualization '
+                                                     'software designed for post-processing atomistic data obtained '
+                                                     'from molecular dynamics or Monte Carlo simulations. Unique '
+                                                     'analysis, editing and animations functions are integrated into '
+                                                     'its easy-to-use graphical user interface. The software is '
+                                                     'written in object-oriented C++, controllable via Python scripts '
+                                                     'and easily extendable through a plug-in interface. It is '
+                                                     'distributed as open-source software and can be downloaded '
+                                                     'from the website http://ovito.sourceforge.net/.'
+                                         }}}
