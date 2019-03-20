@@ -268,11 +268,6 @@ class DebyeModel(object):
         atoms_per_cell = len(self._murnaghan.structure)
         return atoms_per_cell * val
 
-        # def energy(self, V, T):
-        #     p_fit = np.poly1d(self.fit_dict["poly_fit"])
-        #     e0_lst = p_fit(V)
-        #     return [e0_lst + self.energy_vib(Ti) for Ti in T]
-
 
 class MurnaghanJobGenerator(JobGenerator):
     @property
@@ -516,6 +511,36 @@ class EnergyVolumeFit(object):
         error_lst = (y_lst - y_fit_lst) ** 2
         return np.mean(error_lst)
 
+    @staticmethod
+    def birchmurnaghan_energy(V, E0, B0, BP, V0):
+        'BirchMurnaghan equation from PRB 70, 224107'
+        return birchmurnaghan_energy(V, E0, B0, BP, V0)
+
+    @staticmethod
+    def vinet_energy(V, E0, B0, BP, V0):
+        'Vinet equation from PRB 70, 224107'
+        return vinet_energy(V, E0, B0, BP, V0)
+
+    @staticmethod
+    def murnaghan(V, E0, B0, BP, V0):
+        'From PRB 28,5480 (1983'
+        return murnaghan(V, E0, B0, BP, V0)
+
+    @staticmethod
+    def birch(V, E0, B0, BP, V0):
+        """
+        From Intermetallic compounds: Principles and Practice, Vol. I: Principles
+        Chapter 9 pages 195-210 by M. Mehl. B. Klein, D. Papaconstantopoulos
+        paper downloaded from Web
+
+        case where n=0
+        """
+        return birch(V, E0, B0, BP, V0)
+
+    @staticmethod
+    def pouriertarantola(V, E0, B0, BP, V0):
+        return pouriertarantola(V, E0, B0, BP, V0)
+
 
 # ToDo: not all abstract methods implemented
 class Murnaghan(AtomisticParallelMaster):
@@ -685,7 +710,7 @@ class Murnaghan(AtomisticParallelMaster):
                 p_fit = np.poly1d(self.fit_dict["poly_fit"])
                 least_square_error = self.fit_module.get_error(vol_lst, erg_lst, p_fit)
                 plt.title("Murnaghan: error: " + str(least_square_error))
-                plt.plot(x_i, p_fit(x_i), '-', label=self._name, color=color, linewidth=3)
+                plt.plot(x_i, p_fit(x_i), '-', label=self.input['fit_type'], color=color, linewidth=3)
             else:
                 V0 = self.fit_dict["volume_eq"]
                 E0 = self.fit_dict["energy_eq"]
@@ -703,10 +728,10 @@ class Murnaghan(AtomisticParallelMaster):
                     eng_fit_lst = birch(x_i, E0, B0, BP, V0)
                 else:
                     raise ValueError
-                plt.plot(x_i, eng_fit_lst, '-', label=self._name, color=color, linewidth=3)
+                plt.plot(x_i, eng_fit_lst, '-', label=self.input['fit_type'], color=color, linewidth=3)
 
         plt.plot(vol_lst, erg_lst, 'x', color=color, markersize=20)
-
+        plt.legend()
         plt.xlabel("Volume ($\AA^3$)")
         plt.ylabel("energy (eV)")
         if plt_show:
