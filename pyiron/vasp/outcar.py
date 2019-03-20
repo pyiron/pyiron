@@ -474,9 +474,9 @@ class Outcar(object):
             int: Mesh size
         """
         trigger_indices, lines = _get_trigger(lines=lines, filename=filename, trigger="gives a total of ")
-        try:
+        if len(trigger_indices) > 0:
             line_ngx = lines[trigger_indices[0]-2]
-        except IndexError:
+        else:
             warnings.warn("Unable to parse the Broyden mixing mesh. Returning 0 instead")
             return 0
         # Exclude all alphabets, and spaces. Then split based on '='
