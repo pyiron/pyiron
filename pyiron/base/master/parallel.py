@@ -393,31 +393,10 @@ class ParallelMaster(GenericMaster):
         """
         child_id_lst = self.child_ids
         child_name_lst = [self.project.db.get_item_by_id(child_id)["job"] for child_id in self.child_ids]
-        if isinstance(item, str):
-            name_lst = item.split("/")
-            item_obj = name_lst[0]
-            if item_obj in child_name_lst:
-                child_id = child_id_lst[child_name_lst.index(item_obj)]
-                child = self.project.load(child_id, convert_to_object=True)
-                if len(name_lst) == 1:
-                    return child
-                else:
-                    return child['/'.join(name_lst[1:])]
-            if item_obj in self._job_name_lst:
-                child = getattr(self, item_obj)
-                if len(name_lst) == 1:
-                    return child
-                else:
-                    return child['/'.join(name_lst[1:])]
-            return super(ParallelMaster, self).__getitem__(item)
-        elif isinstance(item, int):
+        if isinstance(item, int):
             total_lst = self._job_name_lst + child_name_lst
-            job_name = total_lst[item]
-            if job_name in self._job_name_lst:
-                return self._job_object_lst[item]
-            else:
-                child_id = child_id_lst[child_name_lst.index(job_name)]
-                return self.project.load(child_id, convert_to_object=True)
+            item = total_lst[item]
+        return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
 
     def __len__(self):
         """
@@ -544,6 +523,7 @@ class ParallelMaster(GenericMaster):
                 if job.server.run_mode.thread:
                     job_lst.append(job._process)
             process_lst = [process.communicate() for process in job_lst if process]
+            self._run_if_refresh()
         else:
             self.run_static()
 
@@ -714,13 +694,15 @@ class ParallelMaster(GenericMaster):
             return ham
 
         job = self.ref_job.copy()
-
+        if isinstance(job, GenericMaster):
+            sub_job_lst = [job._load_job_from_cache(sub_job_name) for sub_job_name in job._job_name_lst]
+        else:
+            sub_job_lst = []
         if self.server.new_hdf:
             job._hdf5 = self.project_hdf5.create_hdf(path=self._hdf5._project.open(self.job_name + '_hdf5').path,
                                                      job_name=job_name)
-            if isinstance(job, GenericMaster):
-                for sub_job in job._job_object_lst:
-                    self._child_job_update_hdf(parent_job=job, child_job=sub_job)
+            for sub_job in sub_job_lst:
+                self._child_job_update_hdf(parent_job=job, child_job=sub_job)
         else:
             job._hdf5 = self.project_hdf5.open(job_name)
         try:
