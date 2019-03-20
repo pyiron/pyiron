@@ -15,7 +15,9 @@ from phonopy.file_IO import write_FORCE_CONSTANTS
 
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.master.parallel import AtomisticParallelMaster
+from pyiron.atomistics.structure.phonopy import publication as phonopy_publication
 from pyiron.base.master.parallel import JobGenerator
+from pyiron.base.settings.generic import Settings
 
 __author__ = "Jan Janssen, Yury Lysogorskiy"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -26,6 +28,7 @@ __email__ = "janssen@mpie.de"
 __status__ = "development"
 __date__ = "Sep 1, 2017"
 
+s = Settings()
 
 
 class thermal(object):
@@ -114,6 +117,7 @@ class PhonopyJob(AtomisticParallelMaster):
 
         self.phonopy = None
         self._job_generator = PhonopyJobGenerator(self)
+        s.publication_add(phonopy_publication())
 
     @property
     def _phonopy_unit_cell(self):
