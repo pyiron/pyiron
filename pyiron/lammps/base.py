@@ -256,7 +256,7 @@ class LammpsBase(AtomisticGenericJob):
                                       'pages': '1-19',
                                       'year': '1995',
                                       'issn': '0021-9991',
-                                      'doi': 'https://doi.org/10.1006/jcph.1995.1039',
+                                      'doi': '10.1006/jcph.1995.1039',
                                       'url': 'http://www.sciencedirect.com/science/article/pii/S002199918571039X',
                                       'author': ['Steve Plimpton']}}}
 
