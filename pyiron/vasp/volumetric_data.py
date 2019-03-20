@@ -199,6 +199,10 @@ class VaspVolumetricData(VolumetricData):
                         if normalize:
                             total_data /= atoms.get_volume()
                         total_data_list.append(total_data)
+                if len(total_data_list) == 0:
+                    if not os.stat(filename).st_size == 0:
+                        s = Settings()
+                        s.logger.warning("File:" + filename + "seems to be corrupted/empty")
             return atoms, total_data_list
 
     @staticmethod
