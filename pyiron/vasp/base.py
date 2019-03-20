@@ -1397,9 +1397,9 @@ class Output:
             if "kinetic_energies" in self.vp_new.vasprun_dict.keys():
                 self.generic_output.dft_log_dict["scf_energy_kin"] = self.vp_new.vasprun_dict["kinetic_energies"]
 
-        if "LOCPOT" in files_present:
+        if "LOCPOT" in files_present and os.stat(posixpath.join(directory, "LOCPOT")).st_size != 0:
             self.electrostatic_potential.from_file(filename=posixpath.join(directory, "LOCPOT"), normalize=False)
-        if "CHGCAR" in files_present:
+        if "CHGCAR" in files_present and os.stat(posixpath.join(directory, "CHGCAR")).st_size != 0:
             self.charge_density.from_file(filename=posixpath.join(directory, "CHGCAR"), normalize=True)
         self.generic_output.bands = self.electronic_structure
 
