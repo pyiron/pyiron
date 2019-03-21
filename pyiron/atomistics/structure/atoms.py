@@ -1320,6 +1320,7 @@ class Atoms(object):
                 view = self._add_custom_color_spacefill(view, atomic_numbers, particle_size, colors)
             # Color by per-atom scalars
             elif scalar_field is not None:  # Color by per-atom scalars
+                print("sstart/end", scalar_start, scalar_end)
                 colors = self._scalars_to_hex_colors(scalar_field, scalar_start, scalar_end, scalar_cmap)
                 view = self._add_custom_color_spacefill(view, atomic_numbers, particle_size, colors)
             # Color by element
