@@ -1194,19 +1194,25 @@ class Atoms(object):
         return view
 
     @staticmethod
-    def _scalars_to_hex_colors(scalar_field, start, end, cmap=None):
+    def _scalars_to_hex_colors(scalar_field, start=None, end=None, cmap=None):
         """
         Convert scalar values to hex codes using a colormap.
 
         Args:
             scalar_field (ndarray/list): Scalars to convert.
-            start (float): Scalar value to map to the bottom of the colormap (values below are clipped).
-            end (float): Scalar value to map to the top of the colormap (values above are clipped).
+            start (float): Scalar value to map to the bottom of the colormap (values below are clipped). (Default is
+                None, use the minimal scalar value.)
+            end (float): Scalar value to map to the top of the colormap (values above are clipped).  (Default is
+                None, use the maximal scalar value.)
             cmap (matplotlib.cm): The colormap to use. (Default is None, which gives a blue-red divergent map.)
 
         Returns:
             (list): The corresponding hex codes for each scalar value passed in.
         """
+        if start is None:
+            start = np.amin(scalar_field)
+        if end is None:
+            end = np.amax(scalar_field)
         interp = interp1d([start, end], [0, 1])
         remapped_field = interp(np.clip(scalar_field, start, end))  # Map field onto [0,1]
 
@@ -1291,10 +1297,6 @@ class Atoms(object):
             if scalar_field is not None:
                 scalar_field = np.array(scalar_field)
                 scalar_field = scalar_field[select_atoms]
-                if scalar_start is None:
-                    scalar_start = np.amin(scalar_field)
-                if scalar_end is None:
-                    scalar_end = np.amax(scalar_field)
             if vector_field is not None:
                 vector_field = np.array(vector_field)
                 vector_field = vector_field[select_atoms]
@@ -1320,7 +1322,6 @@ class Atoms(object):
                 view = self._add_custom_color_spacefill(view, atomic_numbers, particle_size, colors)
             # Color by per-atom scalars
             elif scalar_field is not None:  # Color by per-atom scalars
-                print("sstart/end", scalar_start, scalar_end)
                 colors = self._scalars_to_hex_colors(scalar_field, scalar_start, scalar_end, scalar_cmap)
                 view = self._add_custom_color_spacefill(view, atomic_numbers, particle_size, colors)
             # Color by element
