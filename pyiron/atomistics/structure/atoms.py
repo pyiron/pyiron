@@ -1253,6 +1253,7 @@ class Atoms(object):
                 shift[n] = 1
                 end = list(start + shift)
                 color = list(shift)
+                # We cast as list to avoid JSON warnings
                 view.shape.add_arrow(start, end, color, arrow_radius)
                 view.shape.add_text(end, text_color, text_size, arrow_names[n])
 
