@@ -1227,13 +1227,13 @@ class Atoms(object):
         view = nglview.NGLWidget(struct)
 
         if spacefill:
-            elemental_data_list = list(zip(elements, atomic_numbers))
-
             if scalar_field is not None:
                 assert(color_scheme is None)
                 scalar_field = (scalar_field - np.amin(scalar_field)) / np.ptp(scalar_field)  # Map field onto [0,1]
                 cmap = sns.diverging_palette(245, 15, as_cmap=True)
-                for n, elem, num, in enumerate(elemental_data_list):
+
+                for n, num in enumerate(atomic_numbers):
+
                     view.add_spacefill(selection=[n],
                                        radius_type='vdw',
                                        radius=self._atomic_number_to_radius(num, scale=particle_size),
@@ -1242,7 +1242,7 @@ class Atoms(object):
                 if color_scheme is None:
                     color_scheme = 'element'
 
-                for elem, num in set(elemental_data_list):
+                for elem, num in set(list(zip(elements, atomic_numbers))):
                     view.add_spacefill(selection='#' + elem,
                                        radius_type='vdw',
                                        radius=self._atomic_number_to_radius(num, scale=particle_size),
