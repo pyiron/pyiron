@@ -1217,10 +1217,8 @@ class Atoms(object):
                 vector_color = vector_color[select_atoms]
 
         # Write the nglview protein-database-formatted string
-        struct = nglview.TextStructure(self._ngl_write_structure(elements,
-                                                                 positions,
-                                                                 self.cell,
-                                                                 scalar_field=scalar_field))
+        struct = nglview.TextStructure(self._ngl_write_structure(elements, positions, self.cell))
+
         # Parse the string into the displayable widget
         view = nglview.NGLWidget(struct)
 
