@@ -1248,12 +1248,11 @@ class Atoms(object):
             arrow_names = ['x', 'y', 'z']
 
             for n in [0, 1, 2]:
-                start = axes_origin
+                start = list(axes_origin)
                 shift = np.zeros(3)
                 shift[n] = 1
-                end = start + shift
+                end = list(start + shift)
                 color = list(shift)
-                # WARNING: Start and end were previously cast explicitly as lists; if you get an error check this.
                 view.shape.add_arrow(start, end, color, arrow_radius)
                 view.shape.add_text(end, text_color, text_size, arrow_names[n])
 
