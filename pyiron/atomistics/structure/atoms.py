@@ -11,7 +11,6 @@ import numpy as np
 from six import string_types
 import warnings
 from ase.geometry import cellpar_to_cell, complete_cell
-from seaborn import diverging_palette
 from matplotlib.colors import rgb2hex
 from scipy.interpolate import interp1d
 
@@ -1217,6 +1216,10 @@ class Atoms(object):
         remapped_field = interp(np.clip(scalar_field, start, end))  # Map field onto [0,1]
 
         if cmap is None:
+            try:
+                from seaborn import diverging_palette
+            except ImportError:
+                print("The package seaborn needs to be installed for the plot3d() function!")
             cmap = diverging_palette(245, 15, as_cmap=True)  # A nice blue-red palette
 
         return [rgb2hex(cmap(scalar)[:3]) for scalar in remapped_field]  # The slice gets RGB but leaves alpha
