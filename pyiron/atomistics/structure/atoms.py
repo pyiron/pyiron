@@ -1168,6 +1168,9 @@ class Atoms(object):
     
         Returns:
             (NGLWidget): The NGLView widget itself, which can be operated on further or viewed as-is.
+
+        Warnings:
+            * Many features only work with space-filling atoms (e.g. coloring by a scalar field).
         """
         try:  # If the graphical packages are not available, the GUI will not work.
             import nglview
