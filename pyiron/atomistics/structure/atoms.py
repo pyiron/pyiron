@@ -1192,10 +1192,13 @@ class Atoms(object):
             elements = elements[select_atoms]
             positions = positions[select_atoms]
             if scalar_field is not None:
+                scalar_field = np.array(scalar_field)
                 scalar_field = scalar_field[select_atoms]
             if vector_field is not None:
+                vector_field = np.array(vector_field)
                 vector_field = vector_field[select_atoms]
             if vector_color is not None:
+                vector_color = np.array(vector_color)
                 vector_color = vector_color[select_atoms]
 
         # Write the nglview protein-database-formatted string
