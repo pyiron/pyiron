@@ -1058,115 +1058,208 @@ class Atoms(object):
 
     @staticmethod
     def _ngl_write_cell(a1, a2, a3, f1=90, f2=90, f3=90):
+        """
+        Writes a PDB-formatted line to represent the simulation cell.
+
+        Args:
+            a1, a2, a3 (float): Lengths of the cell vectors.
+            f1, f2, f3 (float): Angles between the cell vectors (which angles exactly?) (in degrees).
+
+        Returns:
+            (str): The line defining the cell in PDB format.
+        """
         return 'CRYST1 {:8.3f} {:8.3f} {:8.3f} {:6.2f} {:6.2f} {:6.2f} P 1\n'.format(a1, a2, a3, f1, f2, f3)
     
     @staticmethod
-    def _ngl_write_atom(num, species, group, num2, coords=None, c0=None, c1=None):
+    def _ngl_write_atom(num, species, group, num2, coords=None, occupancy=None, temperature_factor=None):
+        """
+        Writes a PDB-formatted line to represent an atom.
+
+        Args:
+            num (int): Atomic index.
+            species (str): Elemental species.
+            group (str):
+            num2 (int): An "alternate" index. (Don't ask me...)
+            coords (list/ndarray[float]: X, Y, and Z coordinates of the atom.
+            occupancy (float): PDB occupancy parameter.
+            temperature_factor (float): PDB temperature factor parameter.
+
+        Returns:
+            (str): The line defining an atom in PDB format
+
+        Warnings:
+            * The [PDB docs](https://www.cgl.ucsf.edu/chimera/docs/UsersGuide/tutorials/pdbintro.html) indicate that
+                the xyz coordinates might need to be in some sort of orthogonal basis. If you have weird behaviour,
+                this might be a good place to investigate.
+        """
         x, y, z = coords
-        return 'ATOM {:>6} {:>4} {:>4} {:>5} {:10.3f} {:7.3f} {:7.3f} {:5.2f} {:5.2f} {:>11} \n'.format(num, species, group, num2, x, y, z, c0, c1, species)
+        return 'ATOM {:>6} {:>4} {:>4} {:>5} {:10.3f} {:7.3f} {:7.3f} {:5.2f} {:5.2f} {:>11} \n'.format(
+            num, species, group, num2, x, y, z, occupancy, temperature_factor, species)
     
     def _ngl_write_structure(self, elements, positions, cell, scalar_field=None):
+        """
+        Turns structure information into a NGLView-readable protein-database-formatted string.
+
+        Args:
+            elements (ndarray/list): Element symbol for each atom.
+            positions (ndarray/list): Vector of Cartesian atom positions.
+            cell (ndarray/list): Simulation cell Bravais matrix.
+            scalar_field (ndarray/list): Per-atom vector of floats used to re-color the atoms. (Default is None, use
+                NGLView coloring scheme.)
+
+        Returns:
+            (str): The PDB-formatted representation of the structure.
+        """
         from ase.geometry import cell_to_cellpar, cellpar_to_cell
         cellpar = cell_to_cellpar(cell)
         exportedcell = cellpar_to_cell(cellpar)
         rotation = np.linalg.solve(cell, exportedcell)
   
-        pdb_str = self._ngl_write_cell(cellpar[0], cellpar[1], cellpar[2], cellpar[3], cellpar[4], cellpar[5])
+        pdb_str = self._ngl_write_cell(*cellpar)
         pdb_str += 'MODEL     1\n'
+
         if scalar_field is None:
             scalar_field = np.ones(len(positions))
         else:
-            scalar_field = (scalar_field-np.min(scalar_field))/(np.max(scalar_field)-np.min(scalar_field))
+            scalar_field = (scalar_field - np.amin(scalar_field)) / np.ptp(scalar_field)
+
         for i, p in enumerate(positions):
             if rotation is not None:
                 p = p.dot(rotation)
                 
-            pdb_str += self._ngl_write_atom(i, elements[i], group=elements[i], num2=i, coords=p, c0=scalar_field[i], c1=0.0)
+            pdb_str += self._ngl_write_atom(i, elements[i],
+                                            group=elements[i],
+                                            num2=i,
+                                            coords=p,
+                                            occupancy=scalar_field[i],
+                                            temperature_factor=0.0)
         pdb_str += 'ENDMDL \n'
         return pdb_str
     
-    def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=1.0,
-               background='white', color_scheme=None, show_axes=True, custom_array=None, custom_3darray=None,
-               scalar_field=None, vector_field=None, vector_color=None, select_atoms=None):
+    def plot3d(self, show_cell=True, show_axes=True, camera='perspective', spacefill=True, particle_size=1.0,
+               select_atoms=None, background='white', color_scheme=None,
+               scalar_field=None, vector_field=None, vector_color=None,
+               custom_array=None, custom_3darray=None):
         """
+        Plot3d relies on NGLView to visualize atomic structures. Here, we construct a string in the "protein database"
+        ("pdb") format, then turn it into an NGLView "structure". PDB is a white-space sensitive format, so the
+        string snippets are carefully formatted.
+
+        The final widget is returned. If it is assigned to a variable, the visualization is suppressed until that
+        variable is evaluated, and in the meantime more NGL operations can be applied to it to modify the visualization.
 
         Args:
-            spacefill:
-            show_cell: whether to show the frame or not (default: True)
-            camera: 'perspective' or 'orthographic'
-            particle_size: particle size
-            background: back ground color
-            color_scheme: v.i.
-            scalar_field: color for each atom according to the array value
-            vector_field: vectors for each atom according to the array values (3 values for each atom)
-            vector_color: vector for color coding (only available with vector_field)
-            select_atoms: atoms to show (1d array with ID's or True for atoms to show)
+            show_cell (bool): Whether or not to show the frame. (Default is True.)
+            show_axes (bool): Whether or not to show xyz axes. (Default is True.)
+            camera (str): 'perspective' or 'orthographic'. (Default is 'perspective'.)
+            spacefill (bool): Whether to use a space-filling or ball-and-stick representation. (Default is True, use space-filling atoms.)
+            particle_size (float): Size of the particles. (Default is 1.)
+            select_atoms (ndarray): Indices of atoms to show, either as integers or a boolean array mask. (Default is None, show all atoms)
+            background (str): Background color. (Default is 'white'.)
+            color_scheme (str): NGLView color scheme to use. (Default is None,
+            scalar_field (ndarray): Color each atom according to the array value (Default is None, use coloring scheme.)
+            vector_field (ndarray): Add vectors (3 values) originating at each atom. (Default is None, no vectors.)
+            vector_color (ndarray): Colors for the vectors (only available with vector_field). (Default is None, vectors are colored by their direction.)
 
-            Possible color schemes: 
+            Possible NGLView color schemes:
               " ", "picking", "random", "uniform", "atomindex", "residueindex",
               "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
               "hydrophobicity", "value", "volume", "occupancy"
     
         Returns:
-    
+            (NGLWidget): The NGLView widget itself, which can be operated on further or viewed as-is.
         """
         try:  # If the graphical packages are not available, the GUI will not work.
             import nglview
         except ImportError:
             raise ImportError("The package nglview needs to be installed for the plot3d() function!")
+
         if custom_array is not None:
             warnings.warn('custom_array is deprecated. Use scalar_field instead', DeprecationWarning)
             scalar_field = custom_array
+
         if custom_3darray is not None:
             warnings.warn('custom_3darray is deprecated. Use vector_field instead', DeprecationWarning)
             vector_field = custom_3darray
-        # Always visualize the parent basis
+
         parent_basis = self.get_parent_basis()
-        if select_atoms is None:
-            select_atoms = np.array(len(parent_basis)*[True])
-        else:
-            select_atoms = np.array(select_atoms)
+        elements = parent_basis.get_chemical_symbols()
+        positions = self.positions
+
+        # If `select_atoms` was given, visualize only a subset of the `parent_basis`
+        if select_atoms is not None:
+            select_atoms = np.array(select_atoms, dtype=int)
+            elements = elements[select_atoms]
+            positions = positions[select_atoms]
             if scalar_field is not None:
                 scalar_field = scalar_field[select_atoms]
-        struct = nglview.TextStructure(self._ngl_write_structure(parent_basis.get_chemical_symbols()[select_atoms],
-                                                                 self.positions[select_atoms], self.cell, scalar_field=scalar_field))
+            if vector_field is not None:
+                vector_field = vector_field[select_atoms]
+            if vector_color is not None:
+                vector_color = vector_color[select_atoms]
+
+        # Write the nglview protein-database-formatted string
+        struct = nglview.TextStructure(self._ngl_write_structure(elements,
+                                                                 positions,
+                                                                 self.cell,
+                                                                 scalar_field=scalar_field))
+        # Parse the string into the displayable widget
         view = nglview.NGLWidget(struct)
+
         if spacefill:
             if color_scheme is None and scalar_field is not None:
                 color_scheme = 'occupancy'
             elif color_scheme is None:
                 color_scheme = 'element'
-            #view.add_spacefill(radius_type='vdw', color_scheme=color_scheme, radius=particle_size)
+            # TODO: Raise a warning if `color_scheme` and `scalar_field` are both given.
+
             for elem, num in set(list(zip(parent_basis.get_chemical_symbols(), parent_basis.get_atomic_numbers()))):
-                view.add_spacefill(selection='#'+elem, radius_type='vdw', color_scheme=color_scheme, radius=particle_size*(0.2+0.1*np.sqrt(num)))
-            # view.add_spacefill(radius=1.0)
+                view.add_spacefill(selection='#'+elem,
+                                   radius_type='vdw',
+                                   color_scheme=color_scheme,
+                                   radius=particle_size * (0.2 + 0.1 * np.sqrt(num)))
+
             view.remove_ball_and_stick()
         else:
             view.add_ball_and_stick()
+
         if show_cell:
             if parent_basis.cell is not None:
                 view.add_unitcell()
+
         if vector_color is None and vector_field is not None:
-            vector_color = 0.5*vector_field/np.linalg.norm(vector_field, axis=-1)[:, np.newaxis]+0.5
-        elif vector_field is not None and vector_field is not None:
+            vector_color = 0.5 * vector_field / np.linalg.norm(vector_field, axis=-1)[:, np.newaxis] + 0.5
+        elif vector_field is not None and vector_field is not None:  # WARNING: There must be a bug here...
             try:
                 if vector_color.shape != np.ones((len(self), 3)).shape:
-                    vector_color = np.outer(np.ones(len(self)), vector_color/np.linalg.norm(vector_color))
+                    vector_color = np.outer(np.ones(len(self)), vector_color / np.linalg.norm(vector_color))
             except AttributeError:
-                vector_color = np.ones((len(self), 3))*vector_color
+                vector_color = np.ones((len(self), 3)) * vector_color
+
         if vector_field is not None:
-            for arr, pos, col in zip(vector_field[select_atoms], self.positions[select_atoms], vector_color[select_atoms]):
-                view.shape.add_arrow(list(pos), list(pos+arr), list(col), 0.2)
-        if show_axes:
+            for arr, pos, col in zip(vector_field, positions, vector_color):
+                view.shape.add_arrow(list(pos), list(pos + arr), list(col), 0.2)
+
+        if show_axes:  # Add axes
             axes_origin = -np.ones(3)
-            view.shape.add_arrow(list(axes_origin), list(axes_origin+np.array([1, 0, 0])), [1, 0, 0], 0.1)
-            view.shape.add_arrow(list(axes_origin), list(axes_origin+np.array([0, 1, 0])), [0, 1, 0], 0.1)
-            view.shape.add_arrow(list(axes_origin), list(axes_origin+np.array([0, 0, 1])), [0, 0, 1], 0.1)
-            view.shape.add_text(list(axes_origin+np.array([0, 0, 1])), [0, 0, 0], 1, 'z')
-            view.shape.add_text(list(axes_origin+np.array([0, 1, 0])), [0, 0, 0], 1, 'y')
-            view.shape.add_text(list(axes_origin+np.array([1, 0, 0])), [0, 0, 0], 1, 'x')
-        if camera!='perspective' and camera!='orthographic':
+            arrow_radius = 0.1
+            text_size = 1
+            text_color = [0, 0, 0]
+            arrow_names = ['x', 'y', 'z']
+
+            for n in [0, 1, 2]:
+                start = axes_origin
+                shift = np.zeros(3)
+                shift[n] = 1
+                end = start + shift
+                color = list(shift)
+                # WARNING: Start and end were previously cast explicitly as lists; if you get an error check this.
+                view.shape.add_arrow(start, end, color, arrow_radius)
+                view.shape.add_text(end, text_color, text_size, arrow_names[n])
+
+        if camera != 'perspective' and camera != 'orthographic':
             warnings.warn('Only perspective or orthographic is (likely to be) permitted for camera')
+
         view.camera = camera
         view.background = background
         return view
