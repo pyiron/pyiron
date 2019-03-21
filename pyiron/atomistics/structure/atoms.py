@@ -1220,7 +1220,7 @@ class Atoms(object):
             # TODO: Raise a warning if `color_scheme` and `scalar_field` are both given.
 
             for elem, num in set(list(zip(parent_basis.get_chemical_symbols(), parent_basis.get_atomic_numbers()))):
-                view.add_spacefill(selection='#'+elem,
+                view.add_spacefill(selection='#' + elem,
                                    radius_type='vdw',
                                    color_scheme=color_scheme,
                                    radius=particle_size * (0.2 + 0.1 * np.sqrt(num)))
