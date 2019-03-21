@@ -1148,6 +1148,24 @@ class Atoms(object):
         return (shift + slope * np.sqrt(atomic_number)) * scale
 
     def _add_colorscheme_spacefill(self, view, elements, atomic_numbers, particle_size, scheme='elements'):
+        """
+        Set NGLView spacefill parameters according to a color-scheme.
+
+        Args:
+            view (NGLWidget): The widget to work on.
+            elements (ndarray/list): Elemental symbols.
+            atomic_numbers (ndarray/list): Integer atomic numbers for determining atomic size.
+            particle_size (float): A scale factor for the atomic size.
+            scheme (str): The scheme to use. (Default is "element".)
+
+            Possible NGLView color schemes:
+              " ", "picking", "random", "uniform", "atomindex", "residueindex",
+              "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
+              "hydrophobicity", "value", "volume", "occupancy"
+
+        Returns:
+            (NGLWidget): The modified widget.
+        """
         for elem, num in set(list(zip(elements, atomic_numbers))):
             view.add_spacefill(selection='#' + elem,
                                radius_type='vdw',
@@ -1156,6 +1174,18 @@ class Atoms(object):
         return view
 
     def _add_custom_color_spacefill(self, view, atomic_numbers, particle_size, colors):
+        """
+        Set NGLView spacefill parameters according to per-atom colors.
+
+        Args:
+            view (NGLWidget): The widget to work on.
+            atomic_numbers (ndarray/list): Integer atomic numbers for determining atomic size.
+            particle_size (float): A scale factor for the atomic size.
+            colors (ndarray/list): A per-atom list of HTML or hex color codes.
+
+        Returns:
+            (NGLWidget): The modified widget.
+        """
         for n, num in enumerate(atomic_numbers):
             view.add_spacefill(selection=[n],
                                radius_type='vdw',
@@ -1165,6 +1195,18 @@ class Atoms(object):
 
     @staticmethod
     def _scalars_to_hex_colors(scalar_field, start, end, cmap=None):
+        """
+        Convert scalar values to hex codes using a colormap.
+
+        Args:
+            scalar_field (ndarray/list): Scalars to convert.
+            start (float): Scalar value to map to the bottom of the colormap (values below are clipped).
+            end (float): Scalar value to map to the top of the colormap (values above are clipped).
+            cmap (matplotlib.cm): The colormap to use. (Default is None, which gives a blue-red divergent map.)
+
+        Returns:
+            (list): The corresponding hex codes for each scalar value passed in.
+        """
         interp = interp1d([start, end], [0, 1])
         remapped_field = interp(np.clip(scalar_field, start, end))  # Map field onto [0,1]
 
