@@ -110,23 +110,23 @@ matrix:
     #       on:
     #         tags: true
 
-    # - stage: docker
-    #   if: branch = master
-    #   name: docker
-    #   sudo: required
-    #   services:
-    #     - docker
-    #   language: generic
-    #   env:
-    #     global:
-    #       - COMMIT=${TRAVIS_COMMIT::8}
-    #   script:
-    #     - mv binder/docker/* .
-    #     - docker build -t pyiron -f ./Dockerfile .
-    #   deploy:
-    #     - provider: script
-    #       skip_cleanup: true
-    #       script: ./deploy.sh
-    #       on:
-    #          all_branches: true
-    #          repo: pyiron/examples
+     - stage: docker
+       if: branch = master
+       name: docker
+       sudo: required
+       services:
+         - docker
+       language: generic
+       env:
+         global:
+           - COMMIT=${TRAVIS_COMMIT::8}
+       script:
+         - mv binder/docker/* .
+         - docker build -t pyiron -f ./Dockerfile .
+       deploy:
+         - provider: script
+           skip_cleanup: true
+           script: ./deploy.sh
+           on:
+              all_branches: true
+              repo: pyiron/examples
