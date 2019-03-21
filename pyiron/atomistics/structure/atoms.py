@@ -11,7 +11,8 @@ import numpy as np
 from six import string_types
 import warnings
 from ase.geometry import cellpar_to_cell, complete_cell
-import seaborn as sns
+from seaborn import diverging_palette
+from matplotlib.colors import rgb2hex
 
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
@@ -1230,14 +1231,14 @@ class Atoms(object):
             if scalar_field is not None:
                 assert(color_scheme is None)
                 scalar_field = (scalar_field - np.amin(scalar_field)) / np.ptp(scalar_field)  # Map field onto [0,1]
-                cmap = sns.diverging_palette(245, 15, as_cmap=True)
+                cmap = diverging_palette(245, 15, as_cmap=True)
 
                 for n, num in enumerate(atomic_numbers):
-
+                    color = rgb2hex(cmap(scalar_field[n])[:3])  # Map fractional rgb colors (no alpha) to hex
                     view.add_spacefill(selection=[n],
                                        radius_type='vdw',
                                        radius=self._atomic_number_to_radius(num, scale=particle_size),
-                                       color=cmap(scalar_field[n]))
+                                       color=color)
             else:
                 if color_scheme is None:
                     color_scheme = 'element'
