@@ -6,7 +6,6 @@ dependencies:
 - pyiron
 - lammps
 - nodejs
-- nglview=1.1.9
 - ipython
 - ipywidgets 
 - notebook

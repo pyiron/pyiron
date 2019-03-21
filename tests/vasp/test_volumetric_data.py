@@ -22,8 +22,7 @@ class TestVaspVolumetricData(unittest.TestCase):
     def test_read_vol_data(self):
         for chgcar_file in self.file_list:
             if chgcar_file.split("/")[-1] == "CHGCAR_spin":
-                atoms, [total_data, diff_data] = \
-                    self.vd_obj._read_vol_data(chgcar_file, normalize=True)
+                atoms, [total_data, diff_data] = self.vd_obj._read_vol_data(chgcar_file, normalize=True)
                 self.assertEqual(total_data.shape, diff_data.shape)
                 self.assertEqual(total_data.shape, (28, 28, 28))
                 self.assertEqual(round(np.average(total_data) * atoms.get_volume(), 1), 8)
@@ -35,8 +34,7 @@ class TestVaspVolumetricData(unittest.TestCase):
                 self.assertTrue(np.array_equal(diff_data_old, self.vd_obj.diff_data))
 
             if chgcar_file.split("/")[-1] == "CHGCAR_no_spin":
-                atoms, [total_data] = \
-                    self.vd_obj._read_vol_data(chgcar_file, normalize=True)
+                atoms, [total_data] = self.vd_obj._read_vol_data(chgcar_file, normalize=True)
                 self.assertEqual(total_data.shape, (28, 28, 28))
                 self.assertEqual(round(np.average(total_data) * atoms.get_volume(), 1), 8)
                 _, [total_data] = self.vd_obj._read_vol_data(chgcar_file, normalize=False)
@@ -45,3 +43,8 @@ class TestVaspVolumetricData(unittest.TestCase):
                 self.assertTrue(np.array_equal(total_data, self.vd_obj.total_data))
                 atoms, [total_data_old] = self.vd_obj._read_vol_data_old(chgcar_file, normalize=False)
                 self.assertTrue(np.array_equal(total_data_old, self.vd_obj.total_data))
+
+            if chgcar_file.split("/")[-1] == "CHGCAR_empty":
+                atoms, total_data = self.vd_obj._read_vol_data(chgcar_file, normalize=True)
+                self.assertIsNone(atoms)
+                self.assertIsNone(total_data)
