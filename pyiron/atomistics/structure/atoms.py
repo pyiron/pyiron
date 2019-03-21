@@ -11,6 +11,7 @@ import numpy as np
 from six import string_types
 import warnings
 from ase.geometry import cellpar_to_cell, complete_cell
+import seaborn as sns
 
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
@@ -1118,11 +1119,6 @@ class Atoms(object):
         pdb_str = self._ngl_write_cell(*cellpar)
         pdb_str += 'MODEL     1\n'
 
-        if scalar_field is None:
-            scalar_field = np.ones(len(positions))
-        else:
-            scalar_field = (scalar_field - np.amin(scalar_field)) / np.ptp(scalar_field)
-
         for i, p in enumerate(positions):
             if rotation is not None:
                 p = p.dot(rotation)
@@ -1131,10 +1127,26 @@ class Atoms(object):
                                             group=elements[i],
                                             num2=i,
                                             coords=p,
-                                            occupancy=scalar_field[i],
+                                            occupancy=1.0,
                                             temperature_factor=0.0)
         pdb_str += 'ENDMDL \n'
         return pdb_str
+
+    def _atomic_number_to_radius(self, atomic_number, shift=0.2, slope=0.1, scale=1.0):
+        """
+        Give the atomic radius for plotting, which scales like the root of the atomic number.
+
+        Args:
+            atomic_number (int/float): The atomic number.
+            shift (float): A constant addition to the radius. (Default is 0.2.)
+            slope (float): A multiplier for the root of the atomic number. (Default is 0.1)
+            scale (float): How much to rescale the whole thing by.
+
+        Returns:
+            (float): The radius. (Not physical, just for visualization!)
+        """
+        return (shift + slope * np.sqrt(atomic_number)) * scale
+
     
     def plot3d(self, show_cell=True, show_axes=True, camera='perspective', spacefill=True, particle_size=1.0,
                select_atoms=None, background='white', color_scheme=None,
@@ -1187,12 +1199,14 @@ class Atoms(object):
 
         parent_basis = self.get_parent_basis()
         elements = parent_basis.get_chemical_symbols()
+        atomic_numbers = parent_basis.get_atomic_numbers()
         positions = self.positions
 
         # If `select_atoms` was given, visualize only a subset of the `parent_basis`
         if select_atoms is not None:
             select_atoms = np.array(select_atoms, dtype=int)
             elements = elements[select_atoms]
+            atomic_numbers = atomic_numbers[select_atoms]
             positions = positions[select_atoms]
             if scalar_field is not None:
                 scalar_field = np.array(scalar_field)
@@ -1213,17 +1227,26 @@ class Atoms(object):
         view = nglview.NGLWidget(struct)
 
         if spacefill:
-            if color_scheme is None and scalar_field is not None:
-                color_scheme = 'occupancy'
-            elif color_scheme is None:
-                color_scheme = 'element'
-            # TODO: Raise a warning if `color_scheme` and `scalar_field` are both given.
+            elemental_data_list = list(zip(elements, atomic_numbers))
 
-            for elem, num in set(list(zip(parent_basis.get_chemical_symbols(), parent_basis.get_atomic_numbers()))):
-                view.add_spacefill(selection='#' + elem,
-                                   radius_type='vdw',
-                                   color_scheme=color_scheme,
-                                   radius=particle_size * (0.2 + 0.1 * np.sqrt(num)))
+            if scalar_field is not None:
+                assert(color_scheme is None)
+                scalar_field = (scalar_field - np.amin(scalar_field)) / np.ptp(scalar_field)  # Map field onto [0,1]
+                cmap = sns.diverging_palette(245, 15, as_cmap=True)
+                for n, elem, num, in enumerate(elemental_data_list):
+                    view.add_spacefill(selection=[n],
+                                       radius_type='vdw',
+                                       radius=self._atomic_number_to_radius(num, scale=particle_size),
+                                       color=cmap(scalar_field[n]))
+            else:
+                if color_scheme is None:
+                    color_scheme = 'element'
+
+                for elem, num in set(elemental_data_list):
+                    view.add_spacefill(selection='#' + elem,
+                                       radius_type='vdw',
+                                       radius=self._atomic_number_to_radius(num, scale=particle_size),
+                                       color_scheme=color_scheme)
 
             view.remove_ball_and_stick()
         else:
