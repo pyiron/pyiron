@@ -13,6 +13,7 @@ import warnings
 from ase.geometry import cellpar_to_cell, complete_cell
 from seaborn import diverging_palette
 from matplotlib.colors import rgb2hex
+from scipy.interpolate import interp1d
 
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
@@ -1147,8 +1148,8 @@ class Atoms(object):
         return (shift + slope * np.sqrt(atomic_number)) * scale
 
     def plot3d(self, show_cell=True, show_axes=True, camera='perspective', spacefill=True, particle_size=1.0,
-               select_atoms=None, background='white', color_scheme=None,
-               scalar_field=None, vector_field=None, vector_color=None,
+               select_atoms=None, background='white', color_scheme=None, colors=None,
+               scalar_field=None, scalar_start=None, scalar_end=None, scalar_cmap=None, vector_field=None, vector_color=None,
                custom_array=None, custom_3darray=None):
         """
         Plot3d relies on NGLView to visualize atomic structures. Here, we construct a string in the "protein database"
@@ -1166,8 +1167,12 @@ class Atoms(object):
             particle_size (float): Size of the particles. (Default is 1.)
             select_atoms (ndarray): Indices of atoms to show, either as integers or a boolean array mask. (Default is None, show all atoms)
             background (str): Background color. (Default is 'white'.)
-            color_scheme (str): NGLView color scheme to use. (Default is None,
+            color_scheme (str): NGLView color scheme to use. (Default is None, color by element.)
+            colors (ndarray): A per-atom array of HTML color names or hex color codes to use for atomic colors. (Default is None, use coloring scheme.)
             scalar_field (ndarray): Color each atom according to the array value (Default is None, use coloring scheme.)
+            scalar_start (float): The scalar value to be mapped onto the low end of the color map (lower values are clipped). (Default is None, use the minimum value in `scalar_field`.)
+            scalar_end (float): The scalar value to be mapped onto the high end of the color map (higher values are clipped). (Default is None, use the maximum value in `scalar_field`.)
+            scalar_cmap (matplotlib.cm): The colormap to use. (Default is None, giving a blue-red divergent map.)
             vector_field (ndarray): Add vectors (3 values) originating at each atom. (Default is None, no vectors.)
             vector_color (ndarray): Colors for the vectors (only available with vector_field). (Default is None, vectors are colored by their direction.)
 
@@ -1206,9 +1211,16 @@ class Atoms(object):
             elements = elements[select_atoms]
             atomic_numbers = atomic_numbers[select_atoms]
             positions = positions[select_atoms]
+            if colors is not None:
+                colors = np.array(colors)
+                colors = colors[select_atoms]
             if scalar_field is not None:
                 scalar_field = np.array(scalar_field)
                 scalar_field = scalar_field[select_atoms]
+                if scalar_start is None:
+                    scalar_start = np.amin(scalar_field)
+                if scalar_end is None:
+                    scalar_end = np.amax(scalar_field)
             if vector_field is not None:
                 vector_field = np.array(vector_field)
                 vector_field = vector_field[select_atoms]
@@ -1223,26 +1235,40 @@ class Atoms(object):
         view = nglview.NGLWidget(struct)
 
         if spacefill:
-            if scalar_field is not None:
-                assert(color_scheme is None)
-                scalar_field = (scalar_field - np.amin(scalar_field)) / np.ptp(scalar_field)  # Map field onto [0,1]
-                cmap = diverging_palette(245, 15, as_cmap=True)
-
-                for n, num in enumerate(atomic_numbers):
-                    color = rgb2hex(cmap(scalar_field[n])[:3])  # Map fractional rgb colors (no alpha) to hex
-                    view.add_spacefill(selection=[n],
-                                       radius_type='vdw',
-                                       radius=self._atomic_number_to_radius(num, scale=particle_size),
-                                       color=color)
-            else:
-                if color_scheme is None:
-                    color_scheme = 'element'
+            if color_scheme is not None:
+                assert(colors is None)
+                assert(scalar_field is None)
 
                 for elem, num in set(list(zip(elements, atomic_numbers))):
                     view.add_spacefill(selection='#' + elem,
                                        radius_type='vdw',
                                        radius=self._atomic_number_to_radius(num, scale=particle_size),
                                        color_scheme=color_scheme)
+            elif colors is not None:
+                assert(scalar_field is None)
+                for n, num in enumerate(atomic_numbers):
+                    view.add_spacefill(selection=[n],
+                                       radius_type='vdw',
+                                       radius=self._atomic_number_to_radius(num, scale=particle_size),
+                                       color=colors[n])
+            elif scalar_field is not None:
+                interp = interp1d([scalar_start, scalar_end], [0, 1])
+                remapped_field = interp(np.clip(scalar_field, scalar_start, scalar_end))  # Map field onto [0,1]
+                if scalar_cmap is None:
+                    scalar_cmap = diverging_palette(245, 15, as_cmap=True)  # A nice blue-red palette
+
+                for n, num in enumerate(atomic_numbers):
+                    color = rgb2hex(scalar_cmap(remapped_field[n])[:3])  # Map fractional rgb colors (no alpha) to hex
+                    view.add_spacefill(selection=[n],
+                                       radius_type='vdw',
+                                       radius=self._atomic_number_to_radius(num, scale=particle_size),
+                                       color=color)
+            else:
+                for elem, num in set(list(zip(elements, atomic_numbers))):
+                    view.add_spacefill(selection='#' + elem,
+                                       radius_type='vdw',
+                                       radius=self._atomic_number_to_radius(num, scale=particle_size),
+                                       color_scheme='element')
 
             view.remove_ball_and_stick()
         else:
