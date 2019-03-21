@@ -1146,7 +1146,6 @@ class Atoms(object):
         """
         return (shift + slope * np.sqrt(atomic_number)) * scale
 
-    
     def plot3d(self, show_cell=True, show_axes=True, camera='perspective', spacefill=True, particle_size=1.0,
                select_atoms=None, background='white', color_scheme=None,
                scalar_field=None, vector_field=None, vector_color=None,
