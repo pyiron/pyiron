@@ -1266,6 +1266,7 @@ class Atoms(object):
 
         Warnings:
             * Many features only work with space-filling atoms (e.g. coloring by a scalar field).
+            * The colour interpretation of some hex codes is weird, e.g. 'green'.
         """
         try:  # If the graphical packages are not available, the GUI will not work.
             import nglview
