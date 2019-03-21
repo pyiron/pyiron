@@ -1101,7 +1101,7 @@ class Atoms(object):
         return 'ATOM {:>6} {:>4} {:>4} {:>5} {:10.3f} {:7.3f} {:7.3f} {:5.2f} {:5.2f} {:>11} \n'.format(
             num, species, group, num2, x, y, z, occupancy, temperature_factor, species)
     
-    def _ngl_write_structure(self, elements, positions, cell, scalar_field=None):
+    def _ngl_write_structure(self, elements, positions, cell):
         """
         Turns structure information into a NGLView-readable protein-database-formatted string.
 
