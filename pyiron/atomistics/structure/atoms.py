@@ -1073,18 +1073,18 @@ class Atoms(object):
         return 'CRYST1 {:8.3f} {:8.3f} {:8.3f} {:6.2f} {:6.2f} {:6.2f} P 1\n'.format(a1, a2, a3, f1, f2, f3)
     
     @staticmethod
-    def _ngl_write_atom(num, species, group, num2, coords=None, occupancy=None, temperature_factor=None):
+    def _ngl_write_atom(num, species, x, y, z, group=None, num2=None, occupancy=1., temperature_factor=0.):
         """
         Writes a PDB-formatted line to represent an atom.
 
         Args:
             num (int): Atomic index.
             species (str): Elemental species.
-            group (str):
-            num2 (int): An "alternate" index. (Don't ask me...)
-            coords (list/ndarray[float]: X, Y, and Z coordinates of the atom.
-            occupancy (float): PDB occupancy parameter.
-            temperature_factor (float): PDB temperature factor parameter.
+            x, y, z (float): Cartesian coordinates of the atom.
+            group (str): A...group name? (Default is None, repeat elemental species.)
+            num2 (int): An "alternate" index. (Don't ask me...) (Default is None, repeat first number.)
+            occupancy (float): PDB occupancy parameter. (Default is 1.)
+            temperature_factor (float): PDB temperature factor parameter. (Default is 0.
 
         Returns:
             (str): The line defining an atom in PDB format
@@ -1094,7 +1094,10 @@ class Atoms(object):
                 the xyz coordinates might need to be in some sort of orthogonal basis. If you have weird behaviour,
                 this might be a good place to investigate.
         """
-        x, y, z = coords
+        if group is None:
+            group = species
+        if num2 is None:
+            num2 = num
         return 'ATOM {:>6} {:>4} {:>4} {:>5} {:10.3f} {:7.3f} {:7.3f} {:5.2f} {:5.2f} {:>11} \n'.format(
             num, species, group, num2, x, y, z, occupancy, temperature_factor, species)
     
@@ -1123,13 +1126,8 @@ class Atoms(object):
         for i, p in enumerate(positions):
             if rotation is not None:
                 p = p.dot(rotation)
-                
-            pdb_str += self._ngl_write_atom(i, elements[i],
-                                            group=elements[i],
-                                            num2=i,
-                                            coords=p,
-                                            occupancy=1.0,
-                                            temperature_factor=0.0)
+            pdb_str += self._ngl_write_atom(i, elements[i], *p)
+
         pdb_str += 'ENDMDL \n'
         return pdb_str
 
