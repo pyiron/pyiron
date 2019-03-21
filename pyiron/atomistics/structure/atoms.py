@@ -1163,18 +1163,24 @@ class Atoms(object):
             show_cell (bool): Whether or not to show the frame. (Default is True.)
             show_axes (bool): Whether or not to show xyz axes. (Default is True.)
             camera (str): 'perspective' or 'orthographic'. (Default is 'perspective'.)
-            spacefill (bool): Whether to use a space-filling or ball-and-stick representation. (Default is True, use space-filling atoms.)
+            spacefill (bool): Whether to use a space-filling or ball-and-stick representation. (Default is True, use
+                space-filling atoms.)
             particle_size (float): Size of the particles. (Default is 1.)
-            select_atoms (ndarray): Indices of atoms to show, either as integers or a boolean array mask. (Default is None, show all atoms)
+            select_atoms (ndarray): Indices of atoms to show, either as integers or a boolean array mask. (Default is
+                None, show all atoms)
             background (str): Background color. (Default is 'white'.)
             color_scheme (str): NGLView color scheme to use. (Default is None, color by element.)
-            colors (ndarray): A per-atom array of HTML color names or hex color codes to use for atomic colors. (Default is None, use coloring scheme.)
+            colors (ndarray): A per-atom array of HTML color names or hex color codes to use for atomic colors.
+                (Default is None, use coloring scheme.)
             scalar_field (ndarray): Color each atom according to the array value (Default is None, use coloring scheme.)
-            scalar_start (float): The scalar value to be mapped onto the low end of the color map (lower values are clipped). (Default is None, use the minimum value in `scalar_field`.)
-            scalar_end (float): The scalar value to be mapped onto the high end of the color map (higher values are clipped). (Default is None, use the maximum value in `scalar_field`.)
+            scalar_start (float): The scalar value to be mapped onto the low end of the color map (lower values are
+                clipped). (Default is None, use the minimum value in `scalar_field`.)
+            scalar_end (float): The scalar value to be mapped onto the high end of the color map (higher values are
+                clipped). (Default is None, use the maximum value in `scalar_field`.)
             scalar_cmap (matplotlib.cm): The colormap to use. (Default is None, giving a blue-red divergent map.)
             vector_field (ndarray): Add vectors (3 values) originating at each atom. (Default is None, no vectors.)
-            vector_color (ndarray): Colors for the vectors (only available with vector_field). (Default is None, vectors are colored by their direction.)
+            vector_color (ndarray): Colors for the vectors (only available with vector_field). (Default is None,
+                vectors are colored by their direction.)
 
             Possible NGLView color schemes:
               " ", "picking", "random", "uniform", "atomindex", "residueindex",
