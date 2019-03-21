@@ -1147,7 +1147,7 @@ class Atoms(object):
         """
         return (shift + slope * np.sqrt(atomic_number)) * scale
 
-    def _add_colorscheme_spacefill(self, view, elements, atomic_numbers, particle_size, scheme='elements'):
+    def _add_colorscheme_spacefill(self, view, elements, atomic_numbers, particle_size, scheme='element'):
         """
         Set NGLView spacefill parameters according to a color-scheme.
 
@@ -1217,8 +1217,8 @@ class Atoms(object):
 
     def plot3d(self, show_cell=True, show_axes=True, camera='perspective', spacefill=True, particle_size=1.0,
                select_atoms=None, background='white', color_scheme=None, colors=None,
-               scalar_field=None, scalar_start=None, scalar_end=None, scalar_cmap=None, vector_field=None, vector_color=None,
-               custom_array=None, custom_3darray=None):
+               scalar_field=None, scalar_start=None, scalar_end=None, scalar_cmap=None,
+               vector_field=None, vector_color=None, custom_array=None, custom_3darray=None):
         """
         Plot3d relies on NGLView to visualize atomic structures. Here, we construct a string in the "protein database"
         ("pdb") format, then turn it into an NGLView "structure". PDB is a white-space sensitive format, so the
