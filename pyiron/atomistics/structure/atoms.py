@@ -1109,8 +1109,6 @@ class Atoms(object):
             elements (numpy.ndarray/list): Element symbol for each atom.
             positions (numpy.ndarray/list): Vector of Cartesian atom positions.
             cell (numpy.ndarray/list): Simulation cell Bravais matrix.
-            scalar_field (numpy.ndarray/list): Per-atom vector of floats used to re-color the atoms. (Default is None,
-                use NGLView coloring scheme.)
 
         Returns:
             (str): The PDB-formatted representation of the structure.
@@ -1164,7 +1162,7 @@ class Atoms(object):
               "hydrophobicity", "value", "volume", "occupancy"
 
         Returns:
-            (NGLWidget): The modified widget.
+            (nglview.NGLWidget): The modified widget.
         """
         for elem, num in set(list(zip(elements, atomic_numbers))):
             view.add_spacefill(selection='#' + elem,
@@ -1184,7 +1182,7 @@ class Atoms(object):
             colors (numpy.ndarray/list): A per-atom list of HTML or hex color codes.
 
         Returns:
-            (NGLWidget): The modified widget.
+            (nglview.NGLWidget): The modified widget.
         """
         for n, num in enumerate(atomic_numbers):
             view.add_spacefill(selection=[n],
@@ -1268,7 +1266,7 @@ class Atoms(object):
               "hydrophobicity", "value", "volume", "occupancy"
     
         Returns:
-            (NGLWidget): The NGLView widget itself, which can be operated on further or viewed as-is.
+            (nglview.NGLWidget): The NGLView widget itself, which can be operated on further or viewed as-is.
 
         Warnings:
             * Many features only work with space-filling atoms (e.g. coloring by a scalar field).
