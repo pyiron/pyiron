@@ -212,6 +212,7 @@ class GenericMaster(GenericJob):
                                                                  h5_path='/' + job_to_return.job_name)
         for sub_job in sub_job_lst:
             self._child_job_update_hdf(parent_job=job_to_return, child_job=sub_job)
+            job_to_return._job_object_dict[sub_job.job_name] = sub_job
         job_to_return.status.initialized = True
         return job_to_return
 
