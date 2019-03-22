@@ -1318,12 +1318,15 @@ class Atoms(object):
         if spacefill:
             # Color by scheme
             if color_scheme is not None:
-                assert(colors is None)
-                assert(scalar_field is None)
+                if colors is not None:
+                    warnings.warn('`color_scheme` is overriding `colors`')
+                if scalar_field is not None:
+                    warnings.warn('`color_scheme` is overriding `scalar_field`')
                 view = self._add_colorscheme_spacefill(view, elements, atomic_numbers, particle_size, color_scheme)
             # Color by per-atom colors
             elif colors is not None:
-                assert(scalar_field is None)
+                if scalar_field is not None:
+                    warnings.warn('`colors` is overriding `scalar_field`')
                 view = self._add_custom_color_spacefill(view, atomic_numbers, particle_size, colors)
             # Color by per-atom scalars
             elif scalar_field is not None:  # Color by per-atom scalars
