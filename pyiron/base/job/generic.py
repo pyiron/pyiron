@@ -669,6 +669,7 @@ class GenericJob(JobCore):
         """
         shell = (os.name == 'nt')
         try:
+            file_name = posixpath.join(self.project_hdf5.working_directory, "run_job.py")
             self._logger.info("{}, status: {}, script: {}".format(self.job_info_str, self.status, file_name))
             with open(posixpath.join(self.project_hdf5.working_directory, 'out.txt'), mode='w') as f_out:
                 with open(posixpath.join(self.project_hdf5.working_directory, 'error.txt'), mode='w') as f_err:
