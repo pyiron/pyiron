@@ -1123,9 +1123,10 @@ class Atoms(object):
         pdb_str = self._ngl_write_cell(*cellpar)
         pdb_str += 'MODEL     1\n'
 
+        if rotation is not None:
+            positions = np.array(positions).dot(rotation)
+
         for i, p in enumerate(positions):
-            if rotation is not None:
-                p = p.dot(rotation)
             pdb_str += self._ngl_write_atom(i, elements[i], *p)
 
         pdb_str += 'ENDMDL \n'
