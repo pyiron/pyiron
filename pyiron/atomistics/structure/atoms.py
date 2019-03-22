@@ -1106,11 +1106,11 @@ class Atoms(object):
         Turns structure information into a NGLView-readable protein-database-formatted string.
 
         Args:
-            elements (ndarray/list): Element symbol for each atom.
-            positions (ndarray/list): Vector of Cartesian atom positions.
-            cell (ndarray/list): Simulation cell Bravais matrix.
-            scalar_field (ndarray/list): Per-atom vector of floats used to re-color the atoms. (Default is None, use
-                NGLView coloring scheme.)
+            elements (numpy.ndarray/list): Element symbol for each atom.
+            positions (numpy.ndarray/list): Vector of Cartesian atom positions.
+            cell (numpy.ndarray/list): Simulation cell Bravais matrix.
+            scalar_field (numpy.ndarray/list): Per-atom vector of floats used to re-color the atoms. (Default is None,
+                use NGLView coloring scheme.)
 
         Returns:
             (str): The PDB-formatted representation of the structure.
@@ -1153,8 +1153,8 @@ class Atoms(object):
 
         Args:
             view (NGLWidget): The widget to work on.
-            elements (ndarray/list): Elemental symbols.
-            atomic_numbers (ndarray/list): Integer atomic numbers for determining atomic size.
+            elements (numpy.ndarray/list): Elemental symbols.
+            atomic_numbers (numpy.ndarray/list): Integer atomic numbers for determining atomic size.
             particle_size (float): A scale factor for the atomic size.
             scheme (str): The scheme to use. (Default is "element".)
 
@@ -1179,9 +1179,9 @@ class Atoms(object):
 
         Args:
             view (NGLWidget): The widget to work on.
-            atomic_numbers (ndarray/list): Integer atomic numbers for determining atomic size.
+            atomic_numbers (numpy.ndarray/list): Integer atomic numbers for determining atomic size.
             particle_size (float): A scale factor for the atomic size.
-            colors (ndarray/list): A per-atom list of HTML or hex color codes.
+            colors (numpy.ndarray/list): A per-atom list of HTML or hex color codes.
 
         Returns:
             (NGLWidget): The modified widget.
@@ -1199,7 +1199,7 @@ class Atoms(object):
         Convert scalar values to hex codes using a colormap.
 
         Args:
-            scalar_field (ndarray/list): Scalars to convert.
+            scalar_field (numpy.ndarray/list): Scalars to convert.
             start (float): Scalar value to map to the bottom of the colormap (values below are clipped). (Default is
                 None, use the minimal scalar value.)
             end (float): Scalar value to map to the top of the colormap (values above are clipped).  (Default is
@@ -1244,20 +1244,22 @@ class Atoms(object):
             spacefill (bool): Whether to use a space-filling or ball-and-stick representation. (Default is True, use
                 space-filling atoms.)
             particle_size (float): Size of the particles. (Default is 1.)
-            select_atoms (ndarray): Indices of atoms to show, either as integers or a boolean array mask. (Default is
-                None, show all atoms)
+            select_atoms (numpy.ndarray): Indices of atoms to show, either as integers or a boolean array mask.
+                (Default is None, show all atoms.)
             background (str): Background color. (Default is 'white'.)
             color_scheme (str): NGLView color scheme to use. (Default is None, color by element.)
-            colors (ndarray): A per-atom array of HTML color names or hex color codes to use for atomic colors.
+            colors (numpy.ndarray): A per-atom array of HTML color names or hex color codes to use for atomic colors.
                 (Default is None, use coloring scheme.)
-            scalar_field (ndarray): Color each atom according to the array value (Default is None, use coloring scheme.)
+            scalar_field (numpy.ndarray): Color each atom according to the array value (Default is None, use coloring
+                scheme.)
             scalar_start (float): The scalar value to be mapped onto the low end of the color map (lower values are
                 clipped). (Default is None, use the minimum value in `scalar_field`.)
             scalar_end (float): The scalar value to be mapped onto the high end of the color map (higher values are
                 clipped). (Default is None, use the maximum value in `scalar_field`.)
             scalar_cmap (matplotlib.cm): The colormap to use. (Default is None, giving a blue-red divergent map.)
-            vector_field (ndarray): Add vectors (3 values) originating at each atom. (Default is None, no vectors.)
-            vector_color (ndarray): Colors for the vectors (only available with vector_field). (Default is None,
+            vector_field (numpy.ndarray): Add vectors (3 values) originating at each atom. (Default is None, no
+                vectors.)
+            vector_color (numpy.ndarray): Colors for the vectors (only available with vector_field). (Default is None,
                 vectors are colored by their direction.)
 
             Possible NGLView color schemes:
