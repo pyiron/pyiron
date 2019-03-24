@@ -155,20 +155,20 @@ class GenericMaster(GenericJob):
         else:
             return super(GenericMaster, self).child_ids
 
-    def copy(self):
-        """
-        Copy the GenericJob object which links to the job and its HDF5 file
-
-        Returns:
-            GenericJob: New GenericJob object pointing to the same job
-        """
-        self_copied = super(GenericMaster, self).copy()
-        self_copied._job_name_lst = self._job_name_lst[:]
-        self._load_all_child_jobs(job_to_load=self)
-        self_copied._job_object_dict = {key: value.copy() for key, value in self._job_object_dict.items()}
-        self_copied._child_id_func = self._child_id_func
-        self_copied._child_id_func_str = self._child_id_func_str
-        return self_copied
+    # def copy(self):
+    #     """
+    #     Copy the GenericJob object which links to the job and its HDF5 file
+    #
+    #     Returns:
+    #         GenericJob: New GenericJob object pointing to the same job
+    #     """
+    #     self_copied = super(GenericMaster, self).copy()
+    #     self_copied._job_name_lst = self._job_name_lst[:]
+    #     self._load_all_child_jobs(job_to_load=self)
+    #     self_copied._job_object_dict = {key: value.copy() for key, value in self._job_object_dict.items()}
+    #     self_copied._child_id_func = self._child_id_func
+    #     self_copied._child_id_func_str = self._child_id_func_str
+    #     return self_copied
 
     def first_child_name(self):
         """
