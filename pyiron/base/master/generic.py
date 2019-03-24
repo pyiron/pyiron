@@ -183,7 +183,6 @@ class GenericMaster(GenericJob):
         if job.job_name not in self._job_name_lst:
             self._job_name_lst.append(job.job_name)
             self._child_job_update_hdf(parent_job=self, child_job=job)
-            self._job_object_dict[job.job_name] = job
 
     def pop(self, i=-1):
         """
@@ -212,7 +211,6 @@ class GenericMaster(GenericJob):
                                                                  h5_path='/' + job_to_return.job_name)
         for sub_job in sub_job_lst:
             self._child_job_update_hdf(parent_job=job_to_return, child_job=sub_job)
-            job_to_return._job_object_dict[sub_job.job_name] = sub_job
         job_to_return.status.initialized = True
         return job_to_return
 
@@ -455,6 +453,7 @@ class GenericMaster(GenericJob):
             for sub_job_name in child_job._job_name_lst:
                 sub_job = child_job._load_job_from_cache(sub_job_name)
                 self._child_job_update_hdf(parent_job=child_job, child_job=sub_job)
+        parent_job._job_object_dict[child_job.job_name] = child_job
 
     def _executable_activate_mpi(self):
         """
