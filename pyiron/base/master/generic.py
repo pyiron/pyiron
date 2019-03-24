@@ -467,8 +467,7 @@ class GenericMaster(GenericJob):
         child_job.project_hdf5.h5_path = parent_job.project_hdf5.h5_path + '/' + child_job.job_name
         if isinstance(child_job, GenericMaster):
             for sub_job_name in child_job._job_name_lst:
-                sub_job = child_job._load_job_from_cache(sub_job_name)
-                self._child_job_update_hdf(parent_job=child_job, child_job=sub_job)
+                self._child_job_update_hdf(parent_job=child_job, child_job=child_job._load_job_from_cache(sub_job_name))
         parent_job._job_object_dict[child_job.job_name] = child_job
 
     def _executable_activate_mpi(self):
