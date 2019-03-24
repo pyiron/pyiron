@@ -319,6 +319,7 @@ class ParallelMaster(GenericMaster):
         """
         if len(self._job_name_lst) > 0:
             self._ref_job = self.pop(-1)
+            self._ref_job.job_name = self.job_name + '_' + self._ref_job.job_name
             if self._job_id is not None and self._ref_job._master_id is None:
                 self._ref_job.master_id = self.job_id
 
@@ -603,7 +604,8 @@ class ParallelMaster(GenericMaster):
                 self._run_if_child_queue(job)
             elif self.server.run_mode.non_modal and job.server.run_mode.non_modal:
                 self._run_if_master_non_modal_child_non_modal(job)
-            elif self.server.run_mode.modal and job.server.run_mode.modal:
+            elif (self.server.run_mode.modal and job.server.run_mode.modal) or \
+                    (self.server.run_mode.interactive and job.server.run_mode.interactive):
                 self._run_if_master_modal_child_modal(job)
             elif self.server.run_mode.modal and job.server.run_mode.non_modal:
                 self._run_if_master_modal_child_non_modal(job)
@@ -616,7 +618,9 @@ class ParallelMaster(GenericMaster):
     def run_if_interactive(self):
         if not (self.ref_job.server.run_mode.interactive or self.ref_job.server.run_mode.interactive_non_modal):
             raise ValueError('The child job has to be run_mode interactive or interactive_non_modal.')
-        if self.server.cores == 1:
+        if isinstance(self.ref_job, GenericMaster):
+            self.run_static()
+        elif self.server.cores == 1:
             self.interactive_ref_job_initialize()
             for parameter in self._job_generator.parameter_list:
                 self._job_generator.modify_job(job=self.ref_job, parameter=parameter)
