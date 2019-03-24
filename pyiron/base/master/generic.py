@@ -210,10 +210,7 @@ class GenericMaster(GenericJob):
             GenericJob: job
         """
         job_name_to_return = self._job_name_lst[i]
-        if job_name_to_return in self._job_object_dict.keys():
-            job_to_return = self._load_all_child_jobs(self._job_object_dict.pop(job_name_to_return))
-        else:
-            job_to_return = self._load_all_child_jobs(self._load_child_from_hdf(job_name=job_name_to_return))
+        job_to_return = self._load_all_child_jobs(self._load_job_from_cache(job_name_to_return))
         del self._job_name_lst[i]
         with self.project_hdf5.open("input") as hdf5_input:
             hdf5_input["job_list"] = self._job_name_lst
