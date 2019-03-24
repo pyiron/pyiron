@@ -155,6 +155,21 @@ class GenericMaster(GenericJob):
         else:
             return super(GenericMaster, self).child_ids
 
+    # def copy(self):
+    #     """
+    #     Copy the GenericJob object which links to the job and its HDF5 file
+    #
+    #     Returns:
+    #         GenericJob: New GenericJob object pointing to the same job
+    #     """
+    #     self_copied = super(GenericMaster, self).copy()
+    #     self_copied._job_name_lst = self._job_name_lst[:]
+    #     self._load_all_child_jobs(job_to_load=self)
+    #     self_copied._job_object_dict = {key: value.copy() for key, value in self._job_object_dict.items()}
+    #     self_copied._child_id_func = self._child_id_func
+    #     self_copied._child_id_func_str = self._child_id_func_str
+    #     return self_copied
+
     def first_child_name(self):
         """
         Get the name of the first child job
@@ -183,7 +198,6 @@ class GenericMaster(GenericJob):
         if job.job_name not in self._job_name_lst:
             self._job_name_lst.append(job.job_name)
             self._child_job_update_hdf(parent_job=self, child_job=job)
-            self._job_object_dict[job.job_name] = job
 
     def pop(self, i=-1):
         """
@@ -196,23 +210,16 @@ class GenericMaster(GenericJob):
             GenericJob: job
         """
         job_name_to_return = self._job_name_lst[i]
-        if job_name_to_return in self._job_object_dict.keys():
-            job_to_return = self._job_object_dict.pop(job_name_to_return)
-        else:
-            job_to_return = self._load_child_from_hdf(job_name=job_name_to_return)
+        job_to_return = self._load_all_child_jobs(self._load_job_from_cache(job_name_to_return))
         del self._job_name_lst[i]
         with self.project_hdf5.open("input") as hdf5_input:
             hdf5_input["job_list"] = self._job_name_lst
-        if isinstance(job_to_return, GenericMaster):
-            sub_job_lst = [job_to_return._load_job_from_cache(sub_job_name) for sub_job_name in job_to_return._job_name_lst]
-        else:
-            sub_job_lst = []
         job_to_return.project_hdf5.remove_group()
         job_to_return.project_hdf5 = self.project_hdf5.__class__(self.project, job_to_return.job_name,
                                                                  h5_path='/' + job_to_return.job_name)
-        for sub_job in sub_job_lst:
-            self._child_job_update_hdf(parent_job=job_to_return, child_job=sub_job)
-            job_to_return._job_object_dict[sub_job.job_name] = sub_job
+        if isinstance(job_to_return, GenericMaster):
+            for sub_job in job_to_return._job_object_dict.values():
+                self._child_job_update_hdf(parent_job=job_to_return, child_job=sub_job)
         job_to_return.status.initialized = True
         return job_to_return
 
@@ -271,13 +278,7 @@ class GenericMaster(GenericJob):
         super(GenericMaster, self).to_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input") as hdf5_input:
             hdf5_input["job_list"] = self._job_name_lst
-            if self._child_id_func is not None:
-                try:
-                    hdf5_input["child_id_func"] = inspect.getsource(self._child_id_func)
-                except IOError:
-                    hdf5_input["child_id_func"] = self._child_id_func_str
-            else:
-                hdf5_input["child_id_func"] = "None"
+            self._to_hdf_child_function(hdf=hdf5_input)
         for job in self._job_object_dict.values():
             job.to_hdf()
 
@@ -292,15 +293,7 @@ class GenericMaster(GenericJob):
         super(GenericMaster, self).from_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input") as hdf5_input:
             job_list_tmp = hdf5_input["job_list"]
-            try:
-                child_id_func_str = hdf5_input["child_id_func"]
-            except ValueError:
-                child_id_func_str = "None"
-            if child_id_func_str == "None":
-                self._child_id_func = None
-            else:
-                self._child_id_func_str = child_id_func_str
-                self._child_id_func = self.get_function_from_string(child_id_func_str)
+            self._from_hdf_child_function(hdf=hdf5_input)
             self._job_name_lst = job_list_tmp
 
     def set_child_id_func(self, child_id_func):
@@ -351,20 +344,37 @@ class GenericMaster(GenericJob):
             item = self._job_name_lst[item]
         return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
 
-    def _load_child_from_hdf(self, job_name):
+    def __getattr__(self, item):
         """
-        Helper function to load a child job from HDF5
+        CHeck if a job with the specific name exists
 
         Args:
-            job_name (str): name of the job
+            item (str): name of the job
 
         Returns:
-            GenericJob: the reloaded job
+
         """
-        ham_obj = self.project_hdf5.create_object(class_name=self._hdf5[job_name + '/TYPE'], project=self._hdf5,
-                                                  job_name=job_name)
-        ham_obj.from_hdf()
-        return ham_obj
+        item_from_get_item = self.__getitem__(item=item)
+        if item_from_get_item is not None:
+            return item_from_get_item
+        else:
+            raise AttributeError
+
+    def _load_all_child_jobs(self, job_to_load):
+        """
+        Helper function to load all child jobs to memory - like it was done in the previous implementation
+
+        Args:
+            job_to_load (GenericJob): job to be reloaded
+
+        Returns:
+            GenericJob: job to be reloaded - including all the child jobs and their child jobs
+        """
+        if isinstance(job_to_load, GenericMaster):
+            for sub_job_name in job_to_load._job_name_lst:
+                job_to_load._job_object_dict[sub_job_name] = \
+                    self._load_all_child_jobs(job_to_load._load_job_from_cache(sub_job_name))
+        return job_to_load
 
     def _load_job_from_cache(self, job_name):
         """
@@ -379,40 +389,43 @@ class GenericMaster(GenericJob):
         if job_name in self._job_object_dict.keys():
             return self._job_object_dict[job_name]
         else:
-            return self._load_child_from_hdf(job_name)
-
-    def __getattr__(self, item):
-        """
-        CHeck if a job with the specific name exists
-
-        Args:
-            item (str): name of the job
-
-        Returns:
-
-        """
-        if item in self._job_object_dict.keys():
-            return self._job_object_dict[item]
-        if item in self._job_name_lst:
-            ham_obj = self._load_child_from_hdf(job_name=item)
-            self._job_object_dict[item] = ham_obj
+            ham_obj = self.project_hdf5.create_object(class_name=self._hdf5[job_name + '/TYPE'], project=self._hdf5,
+                                                      job_name=job_name)
+            ham_obj.from_hdf()
             return ham_obj
-        else:
-            raise AttributeError
 
-    @staticmethod
-    def get_function_from_string(function_str):
+    def _to_hdf_child_function(self, hdf):
         """
-        Convert a string of source code to a function
+        Helper function to store the child function in HDF5
 
         Args:
-            function_str: function source code
-
-        Returns:
-            function:
+            hdf: HDF5 file object
         """
-        exec(function_str)
-        return eval(function_str.split("(")[0][4:])
+        hdf["job_list"] = self._job_name_lst
+        if self._child_id_func is not None:
+            try:
+                hdf["child_id_func"] = inspect.getsource(self._child_id_func)
+            except IOError:
+                hdf["child_id_func"] = self._child_id_func_str
+        else:
+            hdf["child_id_func"] = "None"
+
+    def _from_hdf_child_function(self, hdf):
+        """
+        Helper function to load the child function from HDF5
+
+        Args:
+            hdf: HDF5 file object
+        """
+        try:
+            child_id_func_str = hdf["child_id_func"]
+        except ValueError:
+            child_id_func_str = "None"
+        if child_id_func_str == "None":
+            self._child_id_func = None
+        else:
+            self._child_id_func_str = child_id_func_str
+            self._child_id_func = self.get_function_from_string(child_id_func_str)
 
     def _get_item_when_str(self, item, child_id_lst, child_name_lst):
         """
@@ -434,13 +447,14 @@ class GenericMaster(GenericJob):
                 return self.project.inspect(child_id)['/'.join(name_lst[1:])]
             else:
                 return self.project.load(child_id, convert_to_object=True)
-        if item_obj in self._job_name_lst:
+        elif item_obj in self._job_name_lst:
             child = self._load_job_from_cache(job_name=item_obj)
             if len(name_lst) == 1:
                 return child
             else:
                 return child['/'.join(name_lst[1:])]
-        return super(GenericMaster, self).__getitem__(item)
+        else:
+            return super(GenericMaster, self).__getitem__(item)
 
     def _child_job_update_hdf(self, parent_job, child_job):
         """
@@ -453,11 +467,25 @@ class GenericMaster(GenericJob):
         child_job.project_hdf5.h5_path = parent_job.project_hdf5.h5_path + '/' + child_job.job_name
         if isinstance(child_job, GenericMaster):
             for sub_job_name in child_job._job_name_lst:
-                sub_job = child_job._load_job_from_cache(sub_job_name)
-                self._child_job_update_hdf(parent_job=child_job, child_job=sub_job)
+                self._child_job_update_hdf(parent_job=child_job, child_job=child_job._load_job_from_cache(sub_job_name))
+        parent_job._job_object_dict[child_job.job_name] = child_job
 
     def _executable_activate_mpi(self):
         """
         Internal helper function to switch the executable to MPI mode
         """
         pass
+
+    @staticmethod
+    def get_function_from_string(function_str):
+        """
+        Convert a string of source code to a function
+
+        Args:
+            function_str: function source code
+
+        Returns:
+            function:
+        """
+        exec(function_str)
+        return eval(function_str.split("(")[0][4:])
