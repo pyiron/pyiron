@@ -41,9 +41,12 @@ Technical issues and bugs should be reported on `Github <https://github.com/pyir
 Release history
 ***************
 
+Release 0.2.0 (2018)
+====================
+* Implement interactive interface to communicate with codes at runtime. 
+
 Release 0.1.0 (2018)
 ====================
-* plugin based infrastructure for flexible extension.
 * opensource release - licensed under the BSD license.
 * installation available on pip and anaconda.
 * moved opensource repository to github.
@@ -55,7 +58,6 @@ Release 0.0.9 (2017)
 * NGLview for visualisation.
 * Atoms class speedup.
 * Serial- and parallelmaster work with the cluster environment.
-* S/PHI/nX support added.
 * Python 3.6 support added.
 
 Release 0.0.8 (2016)
