@@ -89,7 +89,8 @@ Citing
 ******
 If you use pyiron in your research, please consider citing the following work:
 
-.. code-block:: bibtex 
+.. code-block:: bibtex
+  
   @article{pyiron-paper,
     title = {pyiron: An integrated development environment for computational materials science},
     journal = {Computational Materials Science},
