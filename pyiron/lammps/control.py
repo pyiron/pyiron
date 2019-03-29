@@ -39,7 +39,7 @@ class LammpsControl(GenericParameters):
         block_dict['compute'] = 'compute'
         block_dict['control'] = ('fix', 'min_style', 'min_modify', 'neigh_modify',
                                  'velocity', 'dump', 'dump_modify', 'thermo_style', 'thermo_modify', 'thermo',
-                                 'timestep', 'dielectric', 'fix_modify')
+                                 'timestep', 'dielectric', 'fix_modify', 'reset_timestep')
         block_dict['run'] = ('run', 'minimize')
         block_dict['write_restart'] = 'write_restart'
         self._block_dict = block_dict
