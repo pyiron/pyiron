@@ -3519,7 +3519,12 @@ def ase_to_pyiron(ase_obj):
     positions = ase_obj.get_positions()
     pbc = ase_obj.get_pbc()
     spins = ase_obj.get_initial_magnetic_moments()
-    pyiron_atoms = Atoms(elements=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins)
+    if all(spins == np.array(None)) or sum(np.abs(spins)) == 0.0:
+        pyiron_atoms = Atoms(elements=element_list, positions=positions, pbc=pbc, cell=cell)
+    else:
+        if any(spins == np.array(None)):
+            spins[spins == np.array(None)] = 0.0
+        pyiron_atoms = Atoms(elements=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins)
     if len(ase_obj.constraints) != 0:
         for constraint in ase_obj.constraints:
             constraint_dict = constraint.todict()
