@@ -566,6 +566,7 @@ class LammpsBase(AtomisticGenericJob):
         """
         self._is_continuation = True
         self.input.control.set(read_restart=filename)
+        self.input.control['reset_timestep'] = 0
         self.input.control.remove_keys(['dimension', 'read_data', 'boundary', 'atom_style', 'velocity'])
 
     def collect_dump_file(self, file_name="dump.out", cwd=None):
