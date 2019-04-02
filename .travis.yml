@@ -89,6 +89,15 @@ matrix:
           on:
             branch: master
 
+    - stage: websitevalidation
+      if: branch = master
+      name: websitevalidation
+      os: linux
+      language: python
+      script:
+        - echo -e "import urllib2\nurllib2.urlopen('https://pyiron.github.io')" > test.py
+        - python test.py
+
     # - stage: anaconda
     #   if: branch = master
     #   name: anaconda
