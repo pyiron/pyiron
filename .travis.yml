@@ -95,7 +95,7 @@ matrix:
       os: linux
       language: python
       script:
-        - echo -e "import urllib2\nurllib2.urlopen('http://thermopot.github.io')" > test.py
+        - echo -e "import urllib2\nurllib2.urlopen('https://pyiron.github.io')" > test.py
         - python test.py
 
     # - stage: anaconda
