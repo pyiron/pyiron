@@ -45,10 +45,10 @@ class VaspVolumetricData(VolumetricData):
         """
         try:
             self.atoms, vol_data_list = self._read_vol_data(filename=filename, normalize=normalize)
-        except (ValueError, IndexError):
+        except (ValueError, IndexError, TypeError):
             try:
                 self.atoms, vol_data_list = self._read_vol_data_old(filename=filename, normalize=normalize)
-            except (ValueError, IndexError):
+            except (ValueError, IndexError, TypeError):
                 raise ValueError("Unable to parse file: {}".format(filename))
         if self.atoms is not None:
             self._total_data = vol_data_list[0]
