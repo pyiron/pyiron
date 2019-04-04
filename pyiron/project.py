@@ -207,6 +207,29 @@ class Project(ProjectCore):
         job.project_hdf5._project = Project(path=job.project_hdf5.file_path)
         return job
 
+    def load_from_jobpath_string(self, job_path, convert_to_object=True):
+        """
+        Internal function to load an existing job either based on the job ID or based on the database entry dictionary.
+
+        Args:
+            job_path (str): string to reload the job from an HDF5 file - '/root_path/project_path/filename.h5/h5_path'
+            convert_to_object (bool): convert the object to an pyiron object or only access the HDF5 file - default=True
+                                      accessing only the HDF5 file is about an order of magnitude faster, but only
+                                      provides limited functionality. Compare the GenericJob object to JobCore object.
+
+        Returns:
+            GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
+        """
+        job_path_lst = job_path.split('.h5')
+        if len(job_path_lst) != 2:
+            raise ValueError
+        pr_job = Project(os.path.dirname(job_path_lst[0]))
+        return self.load_from_jobpath(db_entry={"job": job_path_lst[1].split('/')[-1],
+                                                "subjob": job_path_lst[1],
+                                                "projectpath": pr_job.root_path,
+                                                "project": pr_job.project_path},
+                                      convert_to_object=convert_to_object)
+
     def import_single_calculation(self, project_to_import_from, rel_path=None, job_type="Vasp"):
         """
 

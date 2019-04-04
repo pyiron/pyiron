@@ -127,14 +127,19 @@ class JobPath(JobCore):
         hdf_project = ProjectHDFio(project=Project(path=gp, user=user), file_name=hdf5_file, h5_path=h5_path, mode="r")
         super(JobPath, self).__init__(hdf_project, job_name)
 
-        self.__name__ = db_entry["hamilton"]
-        self.__version__ = db_entry["hamversion"]
+        if "hamilton" in db_entry.keys():
+            self.__name__ = db_entry["hamilton"]
+        if "hamversion" in db_entry.keys():
+            self.__version__ = db_entry["hamversion"]
 
-        if 'id' in db_entry:
+        if 'id' in db_entry.keys():
             self._job_id = db_entry["id"]
-        self._status = db_entry["status"]
-        self._master_id = db_entry["masterid"]
-        self._parent_id = db_entry["parentid"]
+        if "status" in db_entry.keys():
+            self._status = db_entry["status"]
+        if "masterid" in db_entry.keys():
+            self._master_id = db_entry["masterid"]
+        if "parentid" in db_entry.keys():
+            self._parent_id = db_entry["parentid"]
 
     @property
     def is_root(self):
