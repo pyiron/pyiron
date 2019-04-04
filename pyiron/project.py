@@ -220,15 +220,9 @@ class Project(ProjectCore):
         Returns:
             GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
         """
-        job_path_lst = job_path.split('.h5')
-        if len(job_path_lst) != 2:
-            raise ValueError
-        pr_job = Project(os.path.dirname(job_path_lst[0]))
-        return self.load_from_jobpath(db_entry={"job": job_path_lst[1].split('/')[-1],
-                                                "subjob": job_path_lst[1],
-                                                "projectpath": pr_job.root_path,
-                                                "project": pr_job.project_path},
-                                      convert_to_object=convert_to_object)
+        from pyiron.base.job.path import JobPathBase
+        job = JobPathBase(job_path=job_path)
+        return job.load_object(convert_to_object=convert_to_object, project=job.project_hdf5.copy())
 
     def import_single_calculation(self, project_to_import_from, rel_path=None, job_type="Vasp"):
         """
