@@ -42,8 +42,9 @@ class ListMaster(GenericMaster):
 
         .. attribute:: status
 
-            execution status of the job, can be one of the following [initialized, appended, created, submitted, running,
-                                                                      aborted, collect, suspended, refresh, busy, finished]
+            execution status of the job, can be one of the following [initialized, appended, created, submitted,
+                                                                      running, aborted, collect, suspended, refresh,
+                                                                      busy, finished]
 
         .. attribute:: job_id
 
@@ -55,8 +56,8 @@ class ListMaster(GenericMaster):
 
         .. attribute:: master_id
 
-            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel or in
-            serial.
+            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel
+            or in serial.
 
         .. attribute:: child_ids
 
@@ -92,7 +93,8 @@ class ListMaster(GenericMaster):
 
         .. attribute:: library_activated
 
-            For job types which offer a Python library pyiron can use the python library instead of an external executable.
+            For job types which offer a Python library pyiron can use the python library instead of an external
+            executable.
 
         .. attribute:: server
 
@@ -112,8 +114,8 @@ class ListMaster(GenericMaster):
 
         .. attribute:: job_type
 
-            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster', 'ScriptJob',
-                                                               'ListMaster']
+            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster',
+                                                               'ScriptJob', 'ListMaster']
 
         .. attribute:: child_names
 
@@ -141,7 +143,8 @@ class ListMaster(GenericMaster):
 
     def refresh_submission_status(self):
         """
-        Refresh the submission status - if a job ID job_id is set then the submission status is loaded from the database.
+        Refresh the submission status - if a job ID job_id is set then the submission status is loaded from the
+        database.
         """
         if self.job_id:
             self.submission_status = SubmissionStatus(db=self._hdf5.db, job_id=self.job_id)
@@ -237,7 +240,7 @@ class ListMaster(GenericMaster):
                     job_lst.append(ham._process)
                 else:
                     self.refresh_job_status()
-            process_lst = [process.communicate() for process in job_lst if process]
+            _ = [process.communicate() for process in job_lst if process]
             self.status.suspended = True
         if self.server.run_mode.modal or ((self.server.run_mode.non_modal or self.server.run_mode.queue)
                                           and self.is_finished()):
@@ -245,7 +248,8 @@ class ListMaster(GenericMaster):
 
     def write_input(self):
         """
-        Write the input files - for the ListMaster this only contains the execution mode, which is 'parallel' by default.
+        Write the input files - for the ListMaster this only contains the execution mode, which is 'parallel' by
+        default.
         """
         self._input.write_file(file_name="input.inp", cwd=self.working_directory)
 
@@ -273,6 +277,34 @@ class ListMaster(GenericMaster):
         for job_id in self.child_ids:
             yield self._hdf5.load(job_id, convert_to_object=convert_to_object)
 
+    def run_if_refresh(self):
+        """
+        Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
+        suspended previously, the job is going to be started again, to be continued.
+        """
+        self._logger.info("{}, status: {}, finished: {} parallel master "
+                          "refresh".format(self.job_info_str, self.status, self.is_finished()))
+        if self.is_finished() and not self.server.run_mode.modal:
+            self.status.finished = True
+        elif (self.server.run_mode.non_modal or self.server.run_mode.queue) and not self.submission_status.finished:
+            self.run_static()
+        else:
+            self.refresh_job_status()
+            if self.status.refresh:
+                self.status.suspended = True
+
+    def collect_output(self):
+        """
+        Collect output is not implemented for ListMaster jobs
+        """
+        pass
+
+    def run_if_interactive(self):
+        """
+        run_if_interactive() is not implemented for ListMaster jobs
+        """
+        pass
+
     def __getitem__(self, item):
         """
         Get/ read data from the HDF5 file
@@ -298,19 +330,3 @@ class ListMaster(GenericMaster):
             int: length of the ListMaster
         """
         return len(self.child_ids + self._job_name_lst)
-
-    def run_if_refresh(self):
-        """
-        Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
-        suspended previously, the job is going to be started again, to be continued.
-        """
-        self._logger.info("{}, status: {}, finished: {} parallel master "
-                          "refresh".format(self.job_info_str, self.status, self.is_finished()))
-        if self.is_finished() and not self.server.run_mode.modal:
-            self.status.finished = True
-        elif (self.server.run_mode.non_modal or self.server.run_mode.queue) and not self.submission_status.finished:
-            self.run_static()
-        else:
-            self.refresh_job_status()
-            if self.status.refresh:
-                self.status.suspended = True
