@@ -220,7 +220,7 @@ class Project(ProjectCore):
         Returns:
             GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
         """
-        job = super(Project, self).load_from_jobpath(job_path=job_path, convert_to_object=convert_to_object)
+        job = super(Project, self).load_from_jobpath_string(job_path=job_path, convert_to_object=convert_to_object)
         job.project_hdf5._project = Project(path=job.project_hdf5.file_path)
         return job
 
