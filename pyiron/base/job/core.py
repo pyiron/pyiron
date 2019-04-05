@@ -533,9 +533,10 @@ class JobCore(PyironObject):
         else:
             where_dict = {'job': str(self._name), 'project': str(self.project_hdf5.project_path),
                           'subjob': str(self.project_hdf5.h5_path)}
-            try:
-                return self.project.db.get_items_dict(where_dict, return_all_columns=False)[-1]['id']
-            except IndexError:
+            response = self.project.db.get_items_dict(where_dict, return_all_columns=False)
+            if len(response) > 0:
+                return response[-1]['id']
+            else:
                 return None
 
     def list_files(self):
