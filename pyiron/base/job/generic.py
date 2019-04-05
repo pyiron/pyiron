@@ -128,8 +128,8 @@ class GenericJob(JobCore):
 
         .. attribute:: job_type
 
-            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster', 'ScriptJob',
-                                                               'ListMaster']
+            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster',
+                                                               'ScriptJob', 'ListMaster']
     """
     def __init__(self, project, job_name):
         super(GenericJob, self).__init__(project, job_name)
@@ -149,20 +149,17 @@ class GenericJob(JobCore):
         for sig in intercepted_signals:
             signal.signal(sig,  self.signal_intercept)
 
-    def signal_intercept(self,sig,frame):
-        try:
-            self._logger.info('Job {} intercept signal {}, job is shutting down'.format(self._job_id, sig))
-            self.drop_status_to_aborted()
-        except:
-            raise
-        # finally:
-        #     if sig in intercepted_signals:
-        #         sys.exit(0)
+    @property
+    def interactive_cache(self):
+        raise NotImplementedError
 
-    def drop_status_to_aborted(self):
-        self.refresh_job_status()
-        if not (self.status.finished or self.status.suspended):
-            self.status.aborted = True
+    @interactive_cache.setter
+    def interactive_cache(self, cache_dict):
+        raise NotImplementedError
+
+    @property
+    def python_execution_process(self):
+        return self._process
 
     @property
     def version(self):
@@ -493,6 +490,9 @@ class GenericJob(JobCore):
         return self.copy_to(project=project, new_job_name=new_job_name, input_only=True, new_database_entry=False)
 
     def _kill_child(self):
+        """
+        Internal helper function to kill a child process.
+        """
         if not self.server.run_mode.queue and (self.status.running or self.status.submitted):
             for proc in psutil.process_iter():
                 try:
@@ -1014,6 +1014,30 @@ class GenericJob(JobCore):
         if self.server.new_hdf:
             h5_dict["groups"] += self._list_ext_childs()
         return h5_dict
+
+    def signal_intercept(self, sig, frame):
+        """
+
+        Args:
+            sig:
+            frame:
+
+        Returns:
+
+        """
+        try:
+            self._logger.info('Job {} intercept signal {}, job is shutting down'.format(self._job_id, sig))
+            self.drop_status_to_aborted()
+        except:
+            raise
+
+    def drop_status_to_aborted(self):
+        """
+        Change the job status to aborted when the job was intercepted.
+        """
+        self.refresh_job_status()
+        if not (self.status.finished or self.status.suspended):
+            self.status.aborted = True
 
     def _copy_restart_files(self):
         """

@@ -41,8 +41,9 @@ class SerialMasterBase(GenericMaster):
 
         .. attribute:: status
 
-            execution status of the job, can be one of the following [initialized, appended, created, submitted, running,
-                                                                      aborted, collect, suspended, refresh, busy, finished]
+            execution status of the job, can be one of the following [initialized, appended, created, submitted,
+                                                                      running, aborted, collect, suspended, refresh,
+                                                                      busy, finished]
 
         .. attribute:: job_id
 
@@ -54,8 +55,8 @@ class SerialMasterBase(GenericMaster):
 
         .. attribute:: master_id
 
-            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel or in
-            serial.
+            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel
+            or in serial.
 
         .. attribute:: child_ids
 
@@ -91,7 +92,8 @@ class SerialMasterBase(GenericMaster):
 
         .. attribute:: library_activated
 
-            For job types which offer a Python library pyiron can use the python library instead of an external executable.
+            For job types which offer a Python library pyiron can use the python library instead of an external
+            executable.
 
         .. attribute:: server
 
@@ -111,8 +113,8 @@ class SerialMasterBase(GenericMaster):
 
         .. attribute:: job_type
 
-            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster', 'ScriptJob',
-                                                               'ListMaster']
+            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster',
+                                                               'ScriptJob', 'ListMaster']
 
         .. attribute:: child_names
 
@@ -174,7 +176,7 @@ class SerialMasterBase(GenericMaster):
 
     @ref_job.setter
     def ref_job(self, job):
-        self.start_job = job
+        self.append(job)
 
     @property
     def input(self):
@@ -324,20 +326,21 @@ class SerialMasterBase(GenericMaster):
         job = self.pop(-1)
         job._master_id = self.job_id
         if self.server.new_hdf:
-            job._hdf5 = self.project_hdf5.create_hdf(path=self._hdf5._project.open(self.job_name + '_hdf5').path,
+            job._hdf5 = self.project_hdf5.create_hdf(path=self.project.open(self.job_name + '_hdf5').path,
                                                      job_name=job.job_name)
         else:
             job._hdf5 = self.project_hdf5.open(job.job_name)
         self._logger.info('SerialMaster: run job {}'.format(job.job_name))
         return job
 
-    def _run_child_job(self, job):
+    @staticmethod
+    def _run_child_job(job):
         job.run()
 
     def _run_if_master_queue(self, job):
         job.run()
-        if job._process:
-            job._process.communicate()
+        if job.python_execution_process:
+            job.python_execution_process.communicate()
         self._run_if_refresh()
 
     def _run_if_master_non_modal_child_non_modal(self, job):

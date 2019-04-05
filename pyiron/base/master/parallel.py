@@ -8,6 +8,7 @@ from datetime import datetime
 import numpy as np
 import pandas
 import time
+import importlib
 from pyiron.base.job.generic import GenericJob
 from pyiron.base.master.generic import GenericMaster
 from pyiron.base.master.submissionstatus import SubmissionStatus
@@ -277,7 +278,10 @@ class ParallelMaster(GenericMaster):
         Display the output of the child jobs in a human readable print out
         """
         try:
-            from IPython import display
+            display = getattr(importlib.import_module('IPython'), 'display')
+        except ModuleNotFoundError:
+            print('show_hdf() requires IPython to be installed.')
+        else:
             for nn in self.project_hdf5.list_groups():
                 with self.project_hdf5.open(nn) as hdf_dir:
                     display.display(nn)
@@ -291,8 +295,6 @@ class ParallelMaster(GenericMaster):
                         except Exception as e:
                             print(e)
                             print("Not a pandas object")
-        except ImportError:
-            print('show_hdf() requires IPython to be installed.')
 
     def save(self):
         """
@@ -523,7 +525,7 @@ class ParallelMaster(GenericMaster):
             for job in job_to_be_run_lst:
                 job.run()
                 if job.server.run_mode.thread:
-                    job_lst.append(job._process)
+                    job_lst.append(job.python_execution_process)
             _ = [process.communicate() for process in job_lst if process]
             self._run_if_refresh()
         else:

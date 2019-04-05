@@ -19,13 +19,6 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 
-try:
-    FileExistsError = FileExistsError
-except NameError:
-    class FileExistsError(OSError):
-        pass
-
-
 class GenericMaster(GenericJob):
     """
     The GenericMaster is the template class for all meta jobs - meaning all jobs which contain multiple other jobs. It
@@ -154,6 +147,36 @@ class GenericMaster(GenericJob):
             return self._child_id_func(self)
         else:
             return super(GenericMaster, self).child_ids
+
+    @property
+    def job_object_dict(self):
+        """
+        internal cache of currently loaded jobs
+
+        Returns:
+            dict: Dictionary of currently loaded jobs
+        """
+        return self._job_object_dict
+
+    @property
+    def interactive_cache(self):
+        """
+        Interactive cache
+
+        Returns:
+            dict: returns an empty dict
+        """
+        return {}
+
+    @interactive_cache.setter
+    def interactive_cache(self, cache_dict):
+        """
+        The GenericMasters do not have an interactive cache
+
+        Args:
+            cache_dict (dict):
+        """
+        pass
 
     # def copy(self):
     #     """
@@ -364,19 +387,6 @@ class GenericMaster(GenericJob):
         """
         pass
 
-    def _run_if_refresh(self):
-        """
-        Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
-        suspended previously, the job is going to be started again, to be continued.
-        """
-        raise NotImplementedError('Refresh is not supported for this job type for job  ' + str(self.job_id))
-
-    def _run_if_busy(self):
-        """
-        Run if busy is not implemented for MetaJobs
-        """
-        pass
-
     def __len__(self):
         """
         Length of the GenericMaster equal the number of childs appended.
@@ -526,11 +536,24 @@ class GenericMaster(GenericJob):
         if isinstance(child_job, GenericMaster):
             for sub_job_name in child_job._job_name_lst:
                 self._child_job_update_hdf(parent_job=child_job, child_job=child_job._load_job_from_cache(sub_job_name))
-        parent_job._job_object_dict[child_job.job_name] = child_job
+        parent_job.job_object_dict[child_job.job_name] = child_job
 
     def _executable_activate_mpi(self):
         """
         Internal helper function to switch the executable to MPI mode
+        """
+        pass
+
+    def _run_if_refresh(self):
+        """
+        Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
+        suspended previously, the job is going to be started again, to be continued.
+        """
+        raise NotImplementedError('Refresh is not supported for this job type for job  ' + str(self.job_id))
+
+    def _run_if_busy(self):
+        """
+        Run if busy is not implemented for MetaJobs
         """
         pass
 
