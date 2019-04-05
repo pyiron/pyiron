@@ -289,7 +289,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         Get the run mode of the job
         
         Returns:
-            (str): ['modal', 'non_modal', 'queue', 'manual']
+            (str/pyiron.base.server.runmode.Runmode): ['modal', 'non_modal', 'queue', 'manual']
         """
         return self._run_mode
 
