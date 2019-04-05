@@ -529,7 +529,7 @@ class JobCore(PyironObject):
             int: job ID of the job
         """
         if job_specifier:
-            return self.project.get_job_id(job_specifier, sub_job_name=self.project_hdf5.h5_path)
+            return self.project.get_job_id(job_specifier)   # , sub_job_name=self.project_hdf5.h5_path)
         else:
             where_dict = {'job': str(self._name), 'project': str(self.project_hdf5.project_path),
                           'subjob': str(self.project_hdf5.h5_path)}

@@ -682,10 +682,9 @@ class ParallelMaster(GenericMaster):
         Returns:
             GenericJob: next job
         """
-        project = self.project.open(self.job_name + '_hdf5')
-        job_id = project.get_job_id(job_name)
+        job_id = self.project.get_job_id(job_specifier=job_name)
         if job_id is not None:
-            ham = project.load(job_id)
+            ham = self.project.load(job_id)
             print("job ", job_name, " found, status:", ham.status)
             if ham.server.run_mode.queue:
                 self.project.refresh_job_status_based_on_job_id(job_id, que_mode=True)
@@ -752,9 +751,12 @@ class JobGenerator(object):
     JobGenerator - this class implements the functions to generate the parameter list, modify the individual jobs
     according to the parameter list and generate the new job names according to the parameter list.
     """
-    def __init__(self, job):
+    def __init__(self, job, no_job_checks=False):
         self._job = job
-        self._childcounter = len(self._job.child_ids)
+        if no_job_checks:
+            self._childcounter = len(self._job.child_ids)
+        else:
+            self._childcounter = 0
         self._parameter_lst_cached = []
 
     @property
@@ -780,19 +782,19 @@ class JobGenerator(object):
     def __len__(self):
         return len(self.parameter_list_cached)
 
-    def _create_job(self, job_name):
-        """
-        Create the next job to be executed, by calling the _create_child_job() function of the Parallelmaster.
-
-        Args:
-            job_name (str): name of the next child job
-
-        Returns:
-            GenericJob: new job object
-        """
-        job = self._job._create_child_job(job_name)
-        self._childcounter += 1
-        return job
+    # def _create_job(self, job_name):
+    #     """
+    #     Create the next job to be executed, by calling the _create_child_job() function of the Parallelmaster.
+    #
+    #     Args:
+    #         job_name (str): name of the next child job
+    #
+    #     Returns:
+    #         GenericJob: new job object
+    #     """
+    #     job = self._job._create_child_job(job_name)
+    #     self._childcounter += 1
+    #     return job
 
     def next(self):
         """
