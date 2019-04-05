@@ -37,7 +37,8 @@ __date__ = "Sep 1, 2017"
 
 s = Settings()
 
-intercepted_signals=[signal.SIGINT, signal.SIGTERM, signal.SIGABRT] #, signal.SIGQUIT]
+intercepted_signals = [signal.SIGINT, signal.SIGTERM, signal.SIGABRT] #, signal.SIGQUIT]
+
 
 class GenericJob(JobCore):
     """
