@@ -524,7 +524,7 @@ class ParallelMaster(GenericMaster):
                 job.run()
                 if job.server.run_mode.thread:
                     job_lst.append(job._process)
-            process_lst = [process.communicate() for process in job_lst if process]
+            _ = [process.communicate() for process in job_lst if process]
             self._run_if_refresh()
         else:
             self.run_static()
@@ -539,7 +539,6 @@ class ParallelMaster(GenericMaster):
         job_to_be_run_lst = self._next_job_series(job)
         if self.project.db.get_item_by_id(self.job_id)['status'] != 'busy':
             self.status.suspended = True
-            job_lst = []
             for job in job_to_be_run_lst:
                 job.run()
             if self.master_id:

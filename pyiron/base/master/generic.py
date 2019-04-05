@@ -340,6 +340,24 @@ class GenericMaster(GenericJob):
         """
         raise NotImplementedError("This function needs to be implemented in the specific class.")
 
+    def interactive_close(self):
+        """
+        interactive close is not implemtned for MetaJobs
+        """
+        pass
+
+    def interactive_fetch(self):
+        """
+        interactive fetch is not implemtned for MetaJobs
+        """
+        pass
+
+    def interactive_flush(self, path="generic", include_last_step=True):
+        """
+        interactive flush is not implemtned for MetaJobs
+        """
+        pass
+
     def run_if_interactive_non_modal(self):
         """
         Run if interactive non modal is not implemented for MetaJobs

@@ -656,6 +656,30 @@ class GenericJob(JobCore):
         """
         raise NotImplementedError("This function needs to be implemented in the specific class.")
 
+    def interactive_close(self):
+        """
+        For jobs which executables are available as Python library, those can also be executed with a library call
+        instead of calling an external executable. This is usually faster than a single core python job. After the
+        interactive execution, the job can be closed using the interactive_close function.
+        """
+        raise NotImplementedError("This function needs to be implemented in the specific class.")
+
+    def interactive_fetch(self):
+        """
+        For jobs which executables are available as Python library, those can also be executed with a library call
+        instead of calling an external executable. This is usually faster than a single core python job. To access the
+        output data during the execution the interactive_fetch function is used.
+        """
+        raise NotImplementedError("This function needs to be implemented in the specific class.")
+
+    def interactive_flush(self, path="generic", include_last_step=True):
+        """
+        For jobs which executables are available as Python library, those can also be executed with a library call
+        instead of calling an external executable. This is usually faster than a single core python job. To write the
+        interactive cache to the HDF5 file the interactive flush function is used.
+        """
+        raise NotImplementedError("This function needs to be implemented in the specific class.")
+
     def run_if_interactive_non_modal(self):
         """
         For jobs which executables are available as Python library, those can also be executed with a library call
