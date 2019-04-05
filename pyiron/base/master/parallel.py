@@ -682,9 +682,20 @@ class ParallelMaster(GenericMaster):
         Returns:
             GenericJob: next job
         """
-        job_id = self.project.get_job_id(job_specifier=job_name)
+        if not self.server.new_hdf:
+            project = self.project
+            where_dict = {'job': str(job_name), 'project': str(self.project_hdf5.project_path),
+                          'subjob': str(self.project_hdf5.h5_path + '/' + job_name)}
+            response = self.project.db.get_items_dict(where_dict, return_all_columns=False)
+            if len(response) > 0:
+                job_id = response[-1]['id']
+            else:
+                job_id = None
+        else:
+            project = self.project.open(self.job_name + '_hdf5')
+            job_id = project.get_job_id(job_specifier=job_name)
         if job_id is not None:
-            ham = self.project.load(job_id)
+            ham = project.load(job_id)
             print("job ", job_name, " found, status:", ham.status)
             if ham.server.run_mode.queue:
                 self.project.refresh_job_status_based_on_job_id(job_id, que_mode=True)
