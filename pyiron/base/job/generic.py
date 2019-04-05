@@ -978,6 +978,18 @@ class GenericJob(JobCore):
         new_ham._restart_file_dict = dict()
         return new_ham
 
+    def list_all(self):
+        """
+        List all groups and nodes of the HDF5 file - where groups are equivalent to directories and nodes to files.
+
+        Returns:
+            dict: {'groups': [list of groups], 'nodes': [list of nodes]}
+        """
+        h5_dict = self.project_hdf5.list_all()
+        if self.server.new_hdf:
+            h5_dict["groups"] += self._list_ext_childs()
+        return h5_dict
+
     def _copy_restart_files(self):
         """
         Internal helper function to copy the files required for the restart job.
