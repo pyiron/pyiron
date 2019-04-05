@@ -171,7 +171,7 @@ class JobCore(PyironObject):
                                                                   aborted, collect, suspended, refresh, busy, finished]
 
         Returns:
-            (str): status
+            (str/pyiron.base.job.jobstatus.JobStatus): status
         """
         return self._status
 
