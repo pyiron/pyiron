@@ -147,17 +147,10 @@ class GenericJob(JobCore):
         self._restart_file_dict = dict()
         self._process = None
         self._compress_by_default = False
+        self.interactive_cache = None
 
         for sig in intercepted_signals:
             signal.signal(sig,  self.signal_intercept)
-
-    @property
-    def interactive_cache(self):
-        raise NotImplementedError
-
-    @interactive_cache.setter
-    def interactive_cache(self, cache_dict):
-        raise NotImplementedError
 
     @property
     def python_execution_process(self):
