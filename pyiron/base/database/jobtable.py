@@ -275,7 +275,7 @@ def get_job_id(database, sql_query, user, project_path, job_specifier):
 
     job_specifier.replace('.', '_')
     if job_specifier[0] is not '/':
-        job_specifier = '/' + job_specifier
+        job_specifier = '%/' + job_specifier
     job_dict = _job_dict(database, sql_query, user, project_path, recursive=False,  # job=job_specifier,
                          sub_job_name=job_specifier)
     if len(job_dict) == 0:
