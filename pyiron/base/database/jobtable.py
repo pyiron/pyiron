@@ -274,13 +274,18 @@ def get_job_id(database, sql_query, user, project_path, job_specifier):
             return job_specifier  # is id
 
     job_specifier.replace('.', '_')
-    if job_specifier[0] is not '/':
-        job_specifier = '%/' + job_specifier
-    job_dict = _job_dict(database, sql_query, user, project_path, recursive=False,  # job=job_specifier,
-                         sub_job_name=job_specifier)
+    # if job_specifier[0] is not '/':
+    #     sub_job_name = '/' + job_specifier
+    # else:
+    #     sub_job_name = job_specifier
+    # job_dict = _job_dict(database, sql_query, user, project_path, recursive=False,  # job=job_specifier,
+    #                      sub_job_name=sub_job_name)
+    # if len(job_dict) == 0:
+    #     job_dict = _job_dict(database, sql_query, user, project_path, recursive=True,  # job=job_specifier,
+    #                          sub_job_name=sub_job_name)
+    job_dict = _job_dict(database, sql_query, user, project_path, recursive=False,  job=job_specifier)
     if len(job_dict) == 0:
-        job_dict = _job_dict(database, sql_query, user, project_path, recursive=True,  # job=job_specifier,
-                             sub_job_name=job_specifier)
+        job_dict = _job_dict(database, sql_query, user, project_path, recursive=True,  job=job_specifier)
     if len(job_dict) == 0:
         return None
     elif len(job_dict) == 1:
