@@ -37,7 +37,7 @@ __date__ = "Sep 1, 2017"
 
 s = Settings()
 
-intercepted_signals = [signal.SIGINT, signal.SIGTERM, signal.SIGABRT] #, signal.SIGQUIT]
+intercepted_signals = [signal.SIGINT, signal.SIGTERM, signal.SIGABRT]  # , signal.SIGQUIT]
 
 
 class GenericJob(JobCore):
@@ -58,8 +58,9 @@ class GenericJob(JobCore):
 
         .. attribute:: status
 
-            execution status of the job, can be one of the following [initialized, appended, created, submitted, running,
-                                                                      aborted, collect, suspended, refresh, busy, finished]
+            execution status of the job, can be one of the following [initialized, appended, created, submitted,
+                                                                      running, aborted, collect, suspended, refresh,
+                                                                      busy, finished]
 
         .. attribute:: job_id
 
@@ -71,8 +72,8 @@ class GenericJob(JobCore):
 
         .. attribute:: master_id
 
-            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel or in
-            serial.
+            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel
+            or in serial.
 
         .. attribute:: child_ids
 
@@ -108,7 +109,8 @@ class GenericJob(JobCore):
 
         .. attribute:: library_activated
 
-            For job types which offer a Python library pyiron can use the python library instead of an external executable.
+            For job types which offer a Python library pyiron can use the python library instead of an external
+            executable.
 
         .. attribute:: server
 
@@ -197,7 +199,7 @@ class GenericJob(JobCore):
         Get the executable used to run the job - usually the path to an external executable.
         
         Returns:
-            (str): exectuable path
+            (str/pyiron.base.job.executable.Executable): exectuable path
         """
         self._executable_activate()
         return self._executable
