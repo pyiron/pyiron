@@ -754,7 +754,7 @@ class JobGenerator(object):
     """
     def __init__(self, job):
         self._job = job
-        self._childcounter = 0
+        self._childcounter = len(self._job.child_ids)
         self._parameter_lst_cached = []
 
     @property
