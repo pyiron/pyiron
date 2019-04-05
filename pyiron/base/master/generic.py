@@ -319,6 +319,46 @@ class GenericMaster(GenericJob):
                     self.project.db.get_items_dict({'masterid': self.job_id})
                     if db_entry['status'] not in ['finished', 'aborted']])
 
+    def write_input(self):
+        """
+        Write the input files for the external executable. This method has to be implemented in the individual
+        hamiltonians.
+        """
+        raise NotImplementedError("write procedure must be defined for derived Hamilton!")
+
+    def collect_output(self):
+        """
+        Collect the output files of the external executable and store the information in the HDF5 file. This method has
+        to be implemented in the individual hamiltonians.
+        """
+        raise NotImplementedError("read procedure must be defined for derived Hamilton!")
+
+    def run_if_interactive(self):
+        """
+        For jobs which executables are available as Python library, those can also be executed with a library call
+        instead of calling an external executable. This is usually faster than a single core python job.
+        """
+        raise NotImplementedError("This function needs to be implemented in the specific class.")
+
+    def run_if_interactive_non_modal(self):
+        """
+        Run if interactive non modal is not implemented for MetaJobs
+        """
+        pass
+
+    def _run_if_refresh(self):
+        """
+        Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
+        suspended previously, the job is going to be started again, to be continued.
+        """
+        raise NotImplementedError('Refresh is not supported for this job type for job  ' + str(self.job_id))
+
+    def _run_if_busy(self):
+        """
+        Run if busy is not implemented for MetaJobs
+        """
+        pass
+
     def __len__(self):
         """
         Length of the GenericMaster equal the number of childs appended.

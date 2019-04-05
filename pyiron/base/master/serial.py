@@ -316,6 +316,9 @@ class SerialMasterBase(GenericMaster):
         for job_id in self.child_ids:
             yield self.project.load(job_id, convert_to_object=convert_to_object)
 
+    def run_if_interactive(self):
+        pass
+
     def _get_job_template(self):
         self._logger.info("run serial master {}".format(self.job_info_str))
         job = self.pop(-1)
