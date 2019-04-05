@@ -220,9 +220,9 @@ class Project(ProjectCore):
         Returns:
             GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
         """
-        from pyiron.base.job.path import JobPathBase
-        job = JobPathBase(job_path=job_path)
-        return job.load_object(convert_to_object=convert_to_object, project=job.project_hdf5.copy())
+        job = super(Project, self).load_from_jobpath(job_path=job_path, convert_to_object=convert_to_object)
+        job.project_hdf5._project = Project(path=job.project_hdf5.file_path)
+        return job
 
     def import_single_calculation(self, project_to_import_from, rel_path=None, job_type="Vasp"):
         """
