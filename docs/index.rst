@@ -15,7 +15,7 @@ pyiron
 .. image:: https://anaconda.org/conda-forge/pyiron/badges/latest_release_date.svg
 
 
-pyiron is an integrated development environment for implementing, testing, and running simulations in computational materials science. It combines several tools in a common plattform:
+pyiron - an integrated development environment (IDE) for computational materials science. It combines several tools in a common plattform:
 
 • Atomic structure objects – compatible to the `Atomic Simulation Environment (ASE) <https://wiki.fysik.dtu.dk/ase/>`_.
 
