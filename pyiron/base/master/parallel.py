@@ -196,6 +196,13 @@ class ParallelMaster(GenericMaster):
         """
         self.submission_status.total_jobs = num_jobs
 
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        self.input.read_only = True
+
     def reset_job_id(self, job_id=None):
         """
         Reset the job id sets the job_id to None as well as all connected modules like JobStatus and SubmissionStatus.

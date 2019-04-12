@@ -640,6 +640,7 @@ class GenericJob(JobCore):
             else:
                 job_crashed = True
 
+        self.set_input_to_read_only()
         self.status.collect = True
         self._logger.info('{}, status: {}, output: {}'.format(self.job_info_str, self.status, out))
         self.run()
@@ -1134,6 +1135,13 @@ class GenericJob(JobCore):
         suspended previously, the job is going to be started again, to be continued.
         """
         raise NotImplementedError('Refresh is not supported for this job type for job  ' + str(self.job_id))
+
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        pass
 
     def _run_if_busy(self):
         """
