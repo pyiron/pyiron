@@ -340,6 +340,45 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(len(sel_dyn_before) * 18, len(sel_dyn_after))
         self.assertTrue(np.alltrue(np.logical_not(np.alltrue(sel_dyn_after[basis.select_index("O")], axis=1))))
         self.assertTrue(np.alltrue(np.alltrue(sel_dyn_after[basis.select_index("Mg")], axis=1)))
+        basis = basis_Mg + basis_O
+        basis.add_tag(spin=None)
+        basis.spin[basis.select_index("Mg")] = 1
+        basis.spin[basis.select_index("O")] = -1
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("Mg")].list(), 1 *
+                                       np.ones(len(basis.select_index("Mg")))))
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("O")].list(), -1 *
+                                       np.ones(len(basis.select_index("O")))))
+        basis.set_repeat(2)
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("Mg")].list(), 1 *
+                                       np.ones(len(basis.select_index("Mg")))))
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("O")].list(), -1 *
+                                       np.ones(len(basis.select_index("O")))))
+        basis = basis_Mg + basis_O
+        basis.add_tag(spin=None)
+        # Indices set as int
+        Mg_indices = basis.select_index("Mg").tolist()
+        for ind in Mg_indices:
+            basis.spin[ind] = 1
+        O_indices = basis.select_index("O").tolist()
+        for ind in O_indices:
+            basis.spin[ind] = -1
+        basis.set_repeat(2)
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("Mg")].list(), 1 *
+                                       np.ones(len(basis.select_index("Mg")))))
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("O")].list(), -1 *
+                                       np.ones(len(basis.select_index("O")))))
+        # Indices set as numpy.int
+        Mg_indices = basis.select_index("Mg").tolist()
+        for ind in Mg_indices:
+            basis.spin[ind] = 1
+        O_indices = basis.select_index("O").tolist()
+        for ind in O_indices:
+            basis.spin[ind] = -1
+        basis.set_repeat(2)
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("Mg")].list(), 1 *
+                                       np.ones(len(basis.select_index("Mg")))))
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("O")].list(), -1 *
+                                       np.ones(len(basis.select_index("O")))))
 
     def test_boundary(self):
         cell = 2.2 * np.identity(3)
