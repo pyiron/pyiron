@@ -184,7 +184,7 @@ class SparseList(object):
         return self.__class__(sliced_dict, default=self._default, length=len(ind_list))
 
     def __setitem__(self, key, value):
-        if isinstance(key, int):
+        if isinstance(key, (int, np.int32, np.int64, np.int_)):
             if key > len(self):
                 raise IndexError
             self._dict[key] = value
