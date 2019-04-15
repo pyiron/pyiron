@@ -125,7 +125,7 @@ class Atoms(object):
                             object_list.append(el)
                         if isinstance(el, Atom):
                             object_list.append(el.element)
-                        if isinstance(el, (int, np.int64, np.int32)):
+                        if isinstance(el, (int, np.integer)):
                             # pse = PeriodicTable()
                             object_list.append(self._pse.element(el))
                         el_object_list = object_list
@@ -143,7 +143,7 @@ class Atoms(object):
                     elif isinstance(elements[0], Atom):
                         el_object_list = [el.element for el in elements]
                         positions = [el.position for el in elements]
-                    elif elements.dtype in [int, np.int64, np.int32]:
+                    elif elements.dtype in [int, np.integer]:
                         el_object_list = self.numbers_to_elements(elements)
                     else:
                         raise ValueError('Unknown static type for element in list: ' + str(type(elements[0])))
@@ -2305,7 +2305,7 @@ class Atoms(object):
         return atoms_new
 
     def __delitem__(self, key):
-        if isinstance(key, (int, np.int32, np.int64)):
+        if isinstance(key, (int, np.integer)):
             key = [key]
         new_length = len(self) - len(key)
         key = np.array(key).flatten()
@@ -2397,7 +2397,7 @@ class Atoms(object):
         return out_str
 
     def __setitem__(self, key, value):
-        if isinstance(key, (int, np.int8, np.int16, np.int32, np.int64)):
+        if isinstance(key, (int, np.integer)):
             old_el = self.species[self.indices[key]]
             if isinstance(value, (str, np.str, np.str_)):
                 el = PeriodicTable().element(value)
@@ -2449,7 +2449,7 @@ class Atoms(object):
                         key = np.arange(0, key.stop, key.step)
                     else:
                         key = np.arange(0, len(self), key.step)
-            if isinstance(value, (str, np.str, np.str_, int, np.int, np.int32)):
+            if isinstance(value, (str, np.str, np.str_, int, np.integer)):
                 el = PeriodicTable().element(value)
             elif isinstance(value, ChemicalElement):
                 el = value
