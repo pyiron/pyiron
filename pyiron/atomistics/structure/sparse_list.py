@@ -225,11 +225,10 @@ class SparseList(object):
     def __mul__(self, other):
         if not isinstance(other, (int, np.int32, np.int_, np.int64)):
             raise ValueError('Multiplication defined only for SparseArray*integers')
-
         overall_list = other * np.arange(len(self)).tolist()
         new_dic = dict()
         for k in self.keys():
-            for val in np.argwhere(overall_list == k).flatten():
+            for val in np.argwhere(np.array(overall_list) == k).flatten():
                 new_dic[val] = self[k]
         return self.__class__(new_dic, default=self._default, length=other * len(self))
 
