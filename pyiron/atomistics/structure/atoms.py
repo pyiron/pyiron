@@ -10,7 +10,7 @@ from math import cos, sin
 import numpy as np
 from six import string_types
 import warnings
-from ase.geometry import cellpar_to_cell, complete_cell
+from ase.geometry import cellpar_to_cell, complete_cell, get_distances
 from matplotlib.colors import rgb2hex
 from scipy.interpolate import interp1d
 
@@ -2658,7 +2658,6 @@ class Atoms(object):
             a1 = None
         if a0 is None:
             a0 = self.positions
-        from ase.geometry import get_distances
         if mic:
             vec, dist = get_distances(a0, a1, cell=self.cell, pbc=self.pbc)
         else:
