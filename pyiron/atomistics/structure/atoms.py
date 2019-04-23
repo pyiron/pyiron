@@ -10,7 +10,7 @@ from math import cos, sin
 import numpy as np
 from six import string_types
 import warnings
-from ase.geometry import cellpar_to_cell, complete_cell
+from ase.geometry import cellpar_to_cell, complete_cell, get_distances
 from matplotlib.colors import rgb2hex
 from scipy.interpolate import interp1d
 
@@ -2630,11 +2630,49 @@ class Atoms(object):
 
         return d_len[0]
 
+    def get_distances(self, a0=None, a1=None, mic=True, vector=False):
+        """
+        Return distance matrix of every position in p1 with every position in p2
+
+        Args:
+            a0 (numpy.ndarray/list): Nx3 array of positions
+            a1 (numpy.ndarray/list): Nx3 array of positions
+            mic (bool): minimum image convention
+            vector (bool): return vectors instead of distances
+
+        Returns:
+            numpy.ndarray NxN if vector=False and NxNx3 if vector=True
+
+        if a1 is not set, it is assumed that distances between all positions in a0 are desired. a1 will be set to a0 in this case.
+        if both a0 and a1 are not set, the distances between all atoms in the box are returned
+
+        Use mic to use the minimum image convention.
+
+        Learn more about get_distances from the ase website:
+        https://wiki.fysik.dtu.dk/ase/ase/geometry.html#ase.geometry.get_distances
+        """
+        if (a0 is not None and len(np.array(a0).shape)!=2) or (a1 is not None and len(np.array(a1).shape)!=2):
+            raise ValueError('a0 and a1 have to be None or Nx3 array')
+        if a0 is None and a1 is not None:
+            a0 = a1
+            a1 = None
+        if a0 is None:
+            a0 = self.positions
+        if mic:
+            vec, dist = get_distances(a0, a1, cell=self.cell, pbc=self.pbc)
+        else:
+            vec, dist = get_distances(a0, a1)
+        if vector:
+            return vec
+        else:
+            return dist
+
     def get_distance_matrix(self, mic=True, vector=False):
         """
         Return distances between all atoms in a matrix. cf. get_distance
         """
-        return np.array([np.array([self.get_distance(i, j, mic, vector) for i in range(len(self))]) for j in range(len(self))])
+        warnings.warn('get_distance_matrix is deprecated. Use get_distances instead', DeprecationWarning)
+        return self.get_distances(mic=mic, vector=vector)
 
     def get_constraint(self):
         if 'selective_dynamics' in self._tag_list._lists.keys():
