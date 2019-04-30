@@ -65,6 +65,8 @@ class InteractiveWrapper(GenericMaster):
         Args:
             ref_job (GenericJob): reference job
         """
+        if not ref_job.server.run_mode.interactive:
+            warnings.warn("Run mode of the reference job not set to interactive")
         self.append(ref_job)
 
     def validate_ready_to_run(self):
