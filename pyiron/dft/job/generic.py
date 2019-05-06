@@ -4,6 +4,7 @@
 
 import numpy as np
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
+import warnings
 
 __author__ = "Jan Janssen"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -66,7 +67,7 @@ class GenericDFTJob(AtomisticGenericJob):
         latlens = [np.linalg.norm(lat) for lat in cell]
         kmesh = np.rint(np.array([2 * np.pi / ll for ll in latlens]) * kpoint_per_angstrom)
         if kmesh.min()<=0:
-           raise ValueError('kpoint per angstrom too low')
+           warnings.warn('kpoint per angstrom too low')
         return [int(k) for k in kmesh]
 
     @property
@@ -121,8 +122,30 @@ class GenericDFTJob(AtomisticGenericJob):
 
     def set_kpoints(self, mesh=None, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
                     weights=None, reciprocal=True, kpoint_per_angstrom=None):
+        """
+        Function to setup the k-points
+
+        Args:
+            mesh (list): Size of the mesh (ignored if scheme is not set to 'MP' or kpoint_per_angstrom is set)
+            scheme (str): Type of k-point generation scheme (MP/GP(gamma point)/Manual/Line)
+            center_shift (list): Shifts the center of the mesh from the gamma point by the given vector in relative coordinates
+            symmetry_reduction (boolean): Tells if the symmetry reduction is to be applied to the k-points
+            manual_kpoints (list/numpy.ndarray): Manual list of k-points
+            weights(list/numpy.ndarray): Manually supplied weights to each k-point in case of the manual mode
+            reciprocal (bool): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
+            reciprocal space)
+            kpoint_per_angstrom (float): Number of kpoint per angstrom in each direction
+        """
         if kpoint_per_angstrom is not None:
+            if mesh is not None:
+                warnings.warn('mesh value is overwritten by kpoint_per_angstrom')
             mesh = self.get_k_mesh_by_cell(kpoint_per_angstrom=kpoint_per_angstrom)
+        if mesh is not None:
+            if np.min(mesh) <= 0:
+                raise ValueError('mesh values must be larger than 0')
+        if center_shift is not None:
+            if np.min(center_shift)<0 or np.max(center_shift)>1:
+                warnings.warn('center_shift is given in relative coordinates')
         self._set_kpoints(mesh=mesh, scheme=scheme, center_shift=center_shift, symmetry_reduction=symmetry_reduction, manual_kpoints=manual_kpoints,
                           weights=weights, reciprocal=reciprocal)
 
