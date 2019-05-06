@@ -731,8 +731,8 @@ class VaspBase(GenericDFTJob):
         for key in kwargs.keys():
             self.logger.warn("Tag {} not relevant for vasp".format(key))
 
-    def set_kpoints(self, mesh=None, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
-                    weights=None, reciprocal=True, kmesh_density=None):
+    def _set_kpoints(self, mesh=None, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
+                    weights=None, reciprocal=True):
         """
         Function to setup the k-points for the VASP job
 
@@ -755,10 +755,7 @@ class VaspBase(GenericDFTJob):
             raise AssertionError()
         if scheme == "MP":
             if mesh is None:
-                if kmesh_density is not None:
-                    mesh = self._get_k_mesh_by_cell(self.structure, kmesh_density)
-                else:
-                    mesh = [4, 4, 4]
+                mesh = [int(val) for val in self.input.kpoints[3].split()]
             self.input.kpoints.set(size_of_mesh=mesh, shift=center_shift)
         if scheme == "GP":
             self.input.kpoints.set(size_of_mesh=[1, 1, 1], method="Gamma Point")

@@ -60,10 +60,11 @@ class GenericDFTJob(AtomisticGenericJob):
     def exchange_correlation_functional(self, val):
         raise NotImplementedError("The exchange property is not implemented for this code.")
 
-    @staticmethod
-    def _get_k_mesh_by_cell(cell, kspace_per_in_ang=0.10):
+    def get_k_mesh_by_cell(self, cell=None, kpoint_per_angstrom=0.10):
+        if cell is None:
+            cell = self.structure.cell
         latlens = [np.linalg.norm(lat) for lat in cell]
-        kmesh = np.floor(np.array([2 * np.pi / ll for ll in latlens]) / kspace_per_in_ang)
+        kmesh = np.floor(np.array([2 * np.pi / ll for ll in latlens]) / kpoint_per_angstrom)
         return [int(k) for k in kmesh]
 
     @property
@@ -107,14 +108,21 @@ class GenericDFTJob(AtomisticGenericJob):
     def set_mixing_parameters(self, method=None, n_pulay_steps=None, density_mixing_parameter=None, spin_mixing_parameter=None):
         raise NotImplementedError("set_mixing_parameters is not implemented for this code.")
 
-    def set_kmesh_density(self, kspace_per_in_ang=0.10):
-        mesh = self._get_k_mesh_by_cell(self.structure, kspace_per_in_ang)
-        self.set_kpoints(mesh=mesh, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
-                         weights=None, reciprocal=True)
+    #def set_kmesh_density(self, kspace_per_in_ang=0.10):
+    #    mesh = self._get_k_mesh_by_cell(self.structure, kspace_per_in_ang)
+    #    self.set_kpoints(mesh=mesh, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
+    #                     weights=None, reciprocal=True)
+
+    def _set_kpoints(self, mesh=None, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
+                     weights=None, reciprocal=True):
+        raise NotImplementedError("The set_kpoints function is not implemented for this code.")
 
     def set_kpoints(self, mesh=None, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
-                    weights=None, reciprocal=True):
-        raise NotImplementedError("The set_kpoints function is not implemented for this code.")
+                    weights=None, reciprocal=True, kpoint_per_angstrom=None):
+        if kpoint_per_angstrom is not None:
+            mesh = self.get_k_mesh_by_cell(kpoint_per_angstrom=kpoint_per_angstrom)
+        self._set_kpoints(mesh=mesh, scheme=scheme, center_shift=center_shift, symmetry_reduction=symmetry_reduction, manual_kpoints=manual_kpoints,
+                          weights=weights, reciprocal=reciprocal)
 
     def calc_static(self, electronic_steps=400, algorithm=None, retain_charge_density=False,
                     retain_electrostatic_potential=False):
