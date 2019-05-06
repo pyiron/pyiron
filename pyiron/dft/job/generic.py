@@ -60,11 +60,13 @@ class GenericDFTJob(AtomisticGenericJob):
     def exchange_correlation_functional(self, val):
         raise NotImplementedError("The exchange property is not implemented for this code.")
 
-    def get_k_mesh_by_cell(self, cell=None, kpoint_per_angstrom=0.10):
+    def get_k_mesh_by_cell(self, cell=None, kpoint_per_angstrom=1):
         if cell is None:
             cell = self.structure.cell
         latlens = [np.linalg.norm(lat) for lat in cell]
-        kmesh = np.floor(np.array([2 * np.pi / ll for ll in latlens]) / kpoint_per_angstrom)
+        kmesh = np.rint(np.array([2 * np.pi / ll for ll in latlens]) * kpoint_per_angstrom)
+        if kmesh.min()<=0:
+           raise ValueError('kpoint per angstrom too low')
         return [int(k) for k in kmesh]
 
     @property
@@ -108,7 +110,7 @@ class GenericDFTJob(AtomisticGenericJob):
     def set_mixing_parameters(self, method=None, n_pulay_steps=None, density_mixing_parameter=None, spin_mixing_parameter=None):
         raise NotImplementedError("set_mixing_parameters is not implemented for this code.")
 
-    #def set_kmesh_density(self, kspace_per_in_ang=0.10):
+    #def set_kpoint_per_angstrom(self, kspace_per_in_ang=0.10):
     #    mesh = self._get_k_mesh_by_cell(self.structure, kspace_per_in_ang)
     #    self.set_kpoints(mesh=mesh, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
     #                     weights=None, reciprocal=True)
