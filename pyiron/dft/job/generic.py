@@ -61,11 +61,11 @@ class GenericDFTJob(AtomisticGenericJob):
     def exchange_correlation_functional(self, val):
         raise NotImplementedError("The exchange property is not implemented for this code.")
 
-    def get_k_mesh_by_cell(self, cell=None, kpoint_per_angstrom=1):
+    def get_k_mesh_by_cell(self, cell=None, kpoints_per_angstrom=1):
         if cell is None:
             cell = self.structure.cell
         latlens = [np.linalg.norm(lat) for lat in cell]
-        kmesh = np.rint(np.array([2 * np.pi / ll for ll in latlens]) * kpoint_per_angstrom)
+        kmesh = np.rint(np.array([2 * np.pi / ll for ll in latlens]) * kpoints_per_angstrom)
         if kmesh.min()<=0:
            warnings.warn('kpoint per angstrom too low')
         return [int(k) for k in kmesh]
@@ -111,7 +111,7 @@ class GenericDFTJob(AtomisticGenericJob):
     def set_mixing_parameters(self, method=None, n_pulay_steps=None, density_mixing_parameter=None, spin_mixing_parameter=None):
         raise NotImplementedError("set_mixing_parameters is not implemented for this code.")
 
-    #def set_kpoint_per_angstrom(self, kspace_per_in_ang=0.10):
+    #def set_kmesh_density(self, kspace_per_in_ang=0.10):
     #    mesh = self._get_k_mesh_by_cell(self.structure, kspace_per_in_ang)
     #    self.set_kpoints(mesh=mesh, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
     #                     weights=None, reciprocal=True)
@@ -121,12 +121,12 @@ class GenericDFTJob(AtomisticGenericJob):
         raise NotImplementedError("The set_kpoints function is not implemented for this code.")
 
     def set_kpoints(self, mesh=None, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
-                    weights=None, reciprocal=True, kpoint_per_angstrom=None):
+                    weights=None, reciprocal=True, kpoints_per_angstrom=None):
         """
         Function to setup the k-points
 
         Args:
-            mesh (list): Size of the mesh (ignored if scheme is not set to 'MP' or kpoint_per_angstrom is set)
+            mesh (list): Size of the mesh (ignored if scheme is not set to 'MP' or kpoints_per_angstrom is set)
             scheme (str): Type of k-point generation scheme (MP/GP(gamma point)/Manual/Line)
             center_shift (list): Shifts the center of the mesh from the gamma point by the given vector in relative coordinates
             symmetry_reduction (boolean): Tells if the symmetry reduction is to be applied to the k-points
@@ -134,12 +134,12 @@ class GenericDFTJob(AtomisticGenericJob):
             weights(list/numpy.ndarray): Manually supplied weights to each k-point in case of the manual mode
             reciprocal (bool): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
             reciprocal space)
-            kpoint_per_angstrom (float): Number of kpoint per angstrom in each direction
+            kpoints_per_angstrom (float): Number of kpoint per angstrom in each direction
         """
-        if kpoint_per_angstrom is not None:
+        if kpoints_per_angstrom is not None:
             if mesh is not None:
-                warnings.warn('mesh value is overwritten by kpoint_per_angstrom')
-            mesh = self.get_k_mesh_by_cell(kpoint_per_angstrom=kpoint_per_angstrom)
+                warnings.warn('mesh value is overwritten by kpoints_per_angstrom')
+            mesh = self.get_k_mesh_by_cell(kpoints_per_angstrom=kpoints_per_angstrom)
         if mesh is not None:
             if np.min(mesh) <= 0:
                 raise ValueError('mesh values must be larger than 0')

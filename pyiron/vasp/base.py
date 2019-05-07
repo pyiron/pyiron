@@ -800,8 +800,8 @@ class VaspBase(GenericDFTJob):
         bs_obj = Bandstructure(structure)
         _, q_point_list, [_, _] = bs_obj.get_path(num_points=num_points, path_type="full")
         q_point_list = np.array(q_point_list)
-        self.set_kpoints(scheme="Manual", symmetry_reduction=False, manual_kpoints=q_point_list, weights=None,
-                         reciprocal=False)
+        self._set_kpoints(scheme="Manual", symmetry_reduction=False, manual_kpoints=q_point_list, weights=None,
+                          reciprocal=False)
 
     def set_convergence_precision(self, ionic_energy=1.E-3, electronic_energy=1.E-7, ionic_forces=1.E-2):
         """
