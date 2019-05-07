@@ -146,7 +146,8 @@ class ScriptJob(GenericJob):
         if isinstance(path, str):
             self._script_path = self._get_abs_path(path)
             self.executable = self._executable_command(working_directory=self.working_directory,
-                                                       script_path=self._script_path)
+                                                       script_path=self._script_path,
+                                                       cores=self.server.cores)
         else:
             raise TypeError('path should be a string, but ', path, ' is a ', type(path), ' instead.')
 
@@ -210,7 +211,7 @@ class ScriptJob(GenericJob):
         pass
 
     @staticmethod
-    def _executable_command(working_directory, script_path):
+    def _executable_command(working_directory, script_path, cores):
         """
         internal function to generate the executable command to either use jupyter or python
 
@@ -226,7 +227,10 @@ class ScriptJob(GenericJob):
         if file_name[-6:] == '.ipynb':
             return 'jupyter nbconvert --ExecutePreprocessor.timeout=9999999 --to notebook --execute ' + path
         elif file_name[-3:] == '.py':
-            return 'python ' + path
+            if cores == 1:
+                return 'python ' + path
+            else:
+                return 'mpirun -np ' + str(cores) + ' python ' + path
         else:
             raise ValueError('Filename not recognized: ', path)
 
