@@ -291,7 +291,7 @@ class LammpsStructure(GenericParameters):
                 for el_j, b_lst in i_bonds.items():
                     b_type = bond_type[el_i][el_dict[el_j]]
                     for i_shell, ib_shell_lst in enumerate(b_lst):
-                        for ib in ib_shell_lst:
+                        for ib in np.unique(ib_shell_lst):
                             if ia < ib:  # avoid double counting of bonds
                                 bonds.append([ia + 1, ib + 1, b_type])
 
