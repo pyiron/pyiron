@@ -302,8 +302,7 @@ class LammpsStructure(GenericParameters):
                     '{0:d} atoms'.format(len(self._structure)) + ' \n' + \
                     '{0:d} bonds'.format(len(bonds)) + ' \n' + \
                     '{0} atom types'.format(self._structure.get_number_of_species()) + ' \n' + \
-                    '{0} bond types'.format(np.max(bond_type)) + ' \n' + \
-                    '{0} bond types'.format(3) + ' \n'
+                    '{0} bond types'.format(np.max(bond_type)) + ' \n'
 
         cell_dimesions = self.simulation_cell()
 
