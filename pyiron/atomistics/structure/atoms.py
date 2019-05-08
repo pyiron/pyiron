@@ -1891,7 +1891,7 @@ class Atoms(object):
             dist_vec_cl = [np.mean(group) for group in np.split(dist_vec, ind_where)]
             return ind_vec_cl, dist_vec_cl
 
-        neighbors = self.get_neighbors(radius=radius,
+        neighbors = self.get_neighbors(cutoff_radius=radius,
                                        num_neighbors=num_neighbors)
 
         dist = neighbors.distances
