@@ -297,6 +297,8 @@ class Logstatus(object):
                                     break
                                 if line_read.find(tag.rows().strip()) > -1:
                                     break
+                                if 'WARNING:' in line_read:
+                                    break
                                 val_line = [[ast.literal_eval(l) for l in line_read.split()]]
                                 if i_line == 0:
                                     val_array = np.array(val_line)
