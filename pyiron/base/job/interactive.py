@@ -4,6 +4,7 @@
 
 import numpy as np
 from pyiron.base.job.generic import GenericJob
+import warnings
 
 """
 InteractiveBase class extends the Generic Job class with all the functionality to run the job object interactivley.
@@ -126,6 +127,8 @@ class InteractiveBase(GenericJob):
     def interactive_flush_frequency(self, frequency):
         if not isinstance(frequency, int):
             raise AssertionError()
+        if frequency<self._interactive_write_frequency:
+            warnings.warn('interactive_write_frequency must be smaller or equal to interactive_flush_frequency')
         self._interactive_flush_frequency = frequency
 
     @property
@@ -136,6 +139,8 @@ class InteractiveBase(GenericJob):
     def interactive_write_frequency(self, frequency):
         if not isinstance(frequency, int):
             raise AssertionError()
+        if self._interactive_flush_frequency<frequency:
+            warnings.warn('interactive_write_frequency must be smaller or equal to interactive_flush_frequency')
         self._interactive_write_frequency = frequency
 
     def _run_if_running(self):
