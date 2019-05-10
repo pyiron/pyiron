@@ -286,8 +286,9 @@ texinfo_documents = [
 
 main(['-e', '-o', 'apidoc', '../pyiron', '--force'])
 
-if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'source/notebooks')):
-    shutil.rmtree(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'source/notebooks'))
+curdir = os.path.dirname(os.path.abspath(__file__))
+if os.path.exists(os.path.join(curdir, 'source/notebooks')):
+    shutil.rmtree(os.path.join(curdir, 'source/notebooks'))
 
-shutil.copytree(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'notebooks'),
-                os.path.join(os.path.dirname(os.path.abspath(__file__)), 'source/notebooks'))
+shutil.copytree(os.path.join(curdir, '..', 'notebooks'),
+                os.path.join(curdir, 'source/notebooks'))
