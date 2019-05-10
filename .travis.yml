@@ -10,7 +10,7 @@ matrix:
         - ./.ci_support/setup_miniconda.sh ${MINICONDA} ${PYTHONVER}
         - ./.ci_support/setup_pyiron.sh
       script:
-        - coverage run -m unittest discover tests
+        - coverage run --omit pyiron/_version.py -m unittest discover tests
         # - ./.ci_support/build_notebooks_on_master.sh
 
     - name: test_linux_3_7
@@ -22,10 +22,13 @@ matrix:
         - ./.ci_support/setup_miniconda.sh ${MINICONDA} ${PYTHONVER}
         - ./.ci_support/setup_pyiron.sh
       script:
-        - coverage run -m unittest discover tests
+        - coverage run --omit pyiron/_version.py -m unittest discover tests
         # - ./.ci_support/build_notebooks_on_master.sh
       after_success:
         - coveralls
+        - coverage xml
+        - pip install codacy-coverage
+        - python-codacy-coverage -r coverage.xml
       deploy:
         - provider: pypi
           user: pyiron
@@ -49,7 +52,7 @@ matrix:
         - ./.ci_support/setup_miniconda.sh ${MINICONDA} ${PYTHONVER}
         - ./.ci_support/setup_pyiron.sh
       script:
-        - coverage run -m unittest discover tests
+        - coverage run --omit pyiron/_version.py -m unittest discover tests
         # - ./.ci_support/build_notebooks_on_master.sh
 
     - name: test_osx_3_7
@@ -61,7 +64,7 @@ matrix:
         - ./.ci_support/setup_miniconda.sh ${MINICONDA} ${PYTHONVER}
         - ./.ci_support/setup_pyiron.sh
       script:
-        - coverage run -m unittest discover tests
+        - coverage run --omit pyiron/_version.py -m unittest discover tests
         # - ./.ci_support/build_notebooks_on_master.sh
 
     - stage: documentation
@@ -85,6 +88,15 @@ matrix:
           local_dir: ../pyiron.github.io
           on:
             branch: master
+
+    - stage: websitevalidation
+      if: branch = master
+      name: websitevalidation
+      os: linux
+      language: python
+      script:
+        - echo -e "from urllib.request import urlopen\nurlopen('https://pyiron.github.io')" > test.py
+        - python test.py
 
     # - stage: anaconda
     #   if: branch = master

@@ -15,7 +15,8 @@ GenericParameters class defines the typical input file with a key value structur
 """
 
 __author__ = "Joerg Neugebauer"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -402,7 +403,7 @@ class GenericParameters(PyironObject):
         Set the value of multiple parameters or create new parameter key, if they do not exist already.
         
         Args:
-            separator (str): separator string - optional
+            separator (float/int/str): separator string - optional
             **set_dict (dict): dictionary containing the parameter keys and their corresponding values to be set
         """
         self.modify(separator=separator, append_if_not_present=True, **set_dict)
@@ -412,7 +413,7 @@ class GenericParameters(PyironObject):
         Set the value of a parameter in a specific line
         
         Args:
-            line (int): line number - starting with 0
+            line (float/int/str): line number - starting with 0
             val (str/bytes): value to be set
         """
         if line < len(self._dataset['Value']):
@@ -564,12 +565,21 @@ class GenericParameters(PyironObject):
 
         Args:
             key (str): key to be set of modified
-            value (str): value to be set
+            value (float/int/str): value to be set
         """
         if isinstance(key, int):
             self._dataset["Value"][key] = value
         else:
             self.set(**{key: value})
+
+    def set_dict(self, dictionary):
+        """
+        Set a dictionary of key value pairs
+
+        Args:
+            dictionary (dict): dictionary of key value pairs
+        """
+        self.set(**dictionary)
 
     def __getitem__(self, item):
         """

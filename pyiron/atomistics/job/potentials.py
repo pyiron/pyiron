@@ -11,7 +11,8 @@ import os
 from pyiron.base.settings.generic import Settings
 
 __author__ = "Martin Boeckmann, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -36,7 +37,7 @@ class PotentialAbstract(object):
     def __init__(self, potential_df, default_df=None, selected_atoms=None):
         self._potential_df = potential_df
         self._default_df = default_df
-        if selected_atoms:
+        if selected_atoms is not None:
             self._selected_atoms = selected_atoms
         else:
             self._selected_atoms = []

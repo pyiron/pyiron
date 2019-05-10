@@ -9,14 +9,15 @@ import posixpath
 from pyiron.base.generic.parameters import GenericParameters
 from pyiron.base.job.generic import GenericJob
 from pyiron.base.pyio.parser import Logstatus
-from pyiron.atomistics.job.atomistic import AtomisticGenericJob
+from pyiron.atomistics.job.interactive import GenericInteractive
 
 """
 Example Job class for testing the pyiron classes  
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -221,6 +222,7 @@ class ExampleJob(GenericJob):
             int: job ID
         """
         from pyiron.testing.executable import ExampleExecutable
+        self._interactive_library = True
         self.status.running = True
         alat, count, energy = ExampleExecutable().run_lib(self.input)
         self._interactive_cache['alat'].append(alat)
@@ -228,6 +230,7 @@ class ExampleJob(GenericJob):
         self._interactive_cache['energy'].append(energy)
 
     def interactive_close(self):
+        self._interactive_library = False
         self.to_hdf()
         with self.project_hdf5.open("output") as h5:
             h5["generic/energy"] = np.array(self._interactive_cache['energy'])
@@ -271,7 +274,7 @@ read_restart False
         self.load_string(input_str)
 
 
-class AtomisticExampleJob(AtomisticGenericJob, ExampleJob):
+class AtomisticExampleJob(ExampleJob, GenericInteractive):
     """
     ExampleJob generating a list of random numbers to simulate energy fluctuations.
 
@@ -367,6 +370,22 @@ class AtomisticExampleJob(AtomisticGenericJob, ExampleJob):
         self.input = ExampleInput()
         self.executable = "python " + str(os.path.dirname(os.path.realpath(__file__))) + \
                           "/executable.py"
+        self.interactive_cache = {'cells': [],
+                                  'energy_pot': [],
+                                  'energy_tot': [],
+                                  'forces': [],
+                                  'positions': [],
+                                  'pressures': [],
+                                  'stress': [],
+                                  'steps': [],
+                                  'temperature': [],
+                                  'indices': [],
+                                  'computation_time': [],
+                                  'unwrapped_positions': [],
+                                  'atom_spin_constraints': [],
+                                  'atom_spins': [],
+                                  'magnetic_forces': [],
+                                  'volume': []}
 
     @property
     def structure(self):
@@ -416,3 +435,25 @@ class AtomisticExampleJob(AtomisticGenericJob, ExampleJob):
         """
         super(AtomisticExampleJob, self).from_hdf(hdf=hdf, group_name=group_name)
         self._structure_from_hdf()
+
+    def run_if_interactive(self):
+        """
+        Run the job as Python library and store the result in the HDF5 File.
+
+        Returns:
+            int: job ID
+        """
+        super(AtomisticExampleJob, self).run_if_interactive()
+        self.interactive_cache['cells'].append(self._structure.cell)
+        self.interactive_cache['energy_pot'].append(self._interactive_cache['energy'][-1][-1])
+        self.interactive_cache['energy_tot'].append(self._interactive_cache['energy'][-1][-1])
+        self.interactive_cache['forces'].append(np.random.random((len(self._structure), 3)))
+        self.interactive_cache['positions'].append(self._structure.positions)
+        self.interactive_cache['pressures'].append(np.random.random((3, 3)))
+        self.interactive_cache['stress'].append(np.random.random((len(self._structure), 3, 3)))
+        self.interactive_cache['steps'].append(len(self.interactive_cache['steps']))
+        self.interactive_cache['temperature'].append(np.random.random())
+        self.interactive_cache['indices'].append(self._structure.indices)
+        self.interactive_cache['computation_time'].append(np.random.random())
+        self.interactive_cache['unwrapped_positions'].append(self._structure.positions)
+        self.interactive_cache['volume'].append(self._structure.get_volume())

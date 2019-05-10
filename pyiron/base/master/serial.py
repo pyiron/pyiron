@@ -15,7 +15,8 @@ The serial master class is a metajob consisting of a dynamic list of jobs which 
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -201,6 +202,15 @@ class SerialMasterBase(GenericMaster):
         else:
             raise ValueError('Input can only be set after a start job has been assinged.')
 
+    def get_initial_child_name(self):
+        """
+        Get name of the initial child.
+
+        Returns:
+            str: name of the initial child
+        """
+        return self.project.db.get_item_by_id(self.child_ids[0])["job"]
+
     def create_next(self, job_name=None):
         """
         Create the next job in the series by duplicating the previous job.
@@ -213,7 +223,7 @@ class SerialMasterBase(GenericMaster):
         """
         if len(self) == 0:
             raise ValueError('No job available in job list, please append a job first.')
-        if len(self._job_list) > len(self.child_ids):
+        if len(self._job_name_lst) > len(self.child_ids):
             return self.pop(-1)
         ham_old = self.project.load(self.child_ids[-1], convert_to_object=True)
 
@@ -224,7 +234,9 @@ class SerialMasterBase(GenericMaster):
             return None
         if job_name is None:
             job_name = '_'.join(ham_old.job_name.split('_')[:-1] + [str(len(self.child_ids))])
-        return ham_old.restart(job_name=job_name)
+        new_job = ham_old.restart(job_name=job_name)
+        new_job.server.cores = self.server.cores
+        return new_job
 
     def collect_output(self):
         """
@@ -271,8 +283,7 @@ class SerialMasterBase(GenericMaster):
                 self._convergence_goal = None
             else:
                 self._convergence_goal_str = convergence_goal_str
-                exec(convergence_goal_str)
-                self._convergence_goal = eval(convergence_goal_str.split("(")[0][4:])  # get function name
+                self._convergence_goal = self.get_function_from_string(convergence_goal_str)
                 self._convergence_goal_qwargs = hdf5_input["convergence_goal_qwargs"]
 
     def get_from_childs(self, path):
@@ -324,6 +335,7 @@ class SerialMasterBase(GenericMaster):
         job.run()
         if job._process:
             job._process.communicate()
+        self._run_if_refresh()
 
     def _run_if_master_non_modal_child_non_modal(self, job):
         job.run()
@@ -372,7 +384,8 @@ class SerialMasterBase(GenericMaster):
         self._convergence_goal = convergence_goal
         self._convergence_goal_qwargs = qwargs
         self._convergence_goal_str = inspect.getsource(convergence_goal)
-        self.to_hdf()
+        if self.project_hdf5.file_exists:
+            self.to_hdf()
 
     def show(self):
         """
@@ -417,7 +430,7 @@ class SerialMasterBase(GenericMaster):
         Returns:
             int: length of the SerialMaster
         """
-        return len(self.child_ids + self._job_list)
+        return len(self.child_ids + self._job_name_lst)
 
     def __getitem__(self, item):
         """
@@ -431,30 +444,10 @@ class SerialMasterBase(GenericMaster):
         """
         child_id_lst = self.child_ids
         child_name_lst = [self.project.db.get_item_by_id(child_id)["job"] for child_id in self.child_ids]
-        if isinstance(item, str):
-            name_lst = item.split("/")
-            if name_lst[0] in child_name_lst:
-                child_id = child_id_lst[child_name_lst.index(name_lst[0])]
-                if len(name_lst) > 1:
-                    return self.project.inspect(child_id)['/'.join(name_lst[1:])]
-                else:
-                    return self.project.load(child_id, convert_to_object=True)
-            if name_lst[0] in self._job_list:
-                child = getattr(self, name_lst[0])
-                if len(name_lst) == 1:
-                    return child
-                else:
-                    return child['/'.join(name_lst[1:])]
-            return super(GenericMaster, self).__getitem__(item)
-        elif isinstance(item, int):
-            total_lst = child_name_lst + self._job_list
-            job_name = total_lst[item]
-            if job_name in child_name_lst:
-                child_id = child_id_lst[child_name_lst.index(job_name)]
-                return self.project.load(child_id, convert_to_object=True)
-            else:
-                job_name = self._job_list[item]
-                return getattr(self, job_name)
+        if isinstance(item, int):
+            total_lst = child_name_lst + self._job_name_lst
+            item = total_lst[item]
+        return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
 
     def _run_if_refresh(self):
         """

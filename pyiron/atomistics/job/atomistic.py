@@ -6,6 +6,7 @@ from ase.io import write as ase_write
 import copy
 
 import numpy as np
+import warnings
 
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.base.generic.parameters import GenericParameters
@@ -17,12 +18,9 @@ try:
 except (ImportError, TypeError, AttributeError):
     pass
 
-"""
-Atomistic Generic Job class extends the Generic Job class with all the functionality to run jobs containing atomistic structures.
-"""
-
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -128,6 +126,7 @@ class AtomisticGenericJob(GenericJobCore):
         self._structure = None
         self._generic_input = GenericInput()
         self.output = GenericOutput(job=self)
+        self.map_functions = MapFunctions()
 
     @property
     def structure(self):
@@ -198,8 +197,9 @@ class AtomisticGenericJob(GenericJobCore):
         self._generic_input['calc_mode'] = 'static'
         self._generic_input.remove_keys(['max_iter', 'pressure', 'temperature', 'n_ionic_steps', 'n_print', 'velocity'])
 
-    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100, delta_temp=1.0,
-                delta_press=None, seed=None, tloop=None, rescale_velocity=True, langevin=False):
+    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100,
+                temperature_damping_timescale=100., pressure_damping_timescale=None, seed=None, tloop=None,
+                initial_temperature=True, langevin=False):
         self._generic_input['calc_mode'] = 'md'
         self._generic_input['temperature'] = temperature
         self._generic_input['n_ionic_steps'] = n_ionic_steps
@@ -222,7 +222,11 @@ class AtomisticGenericJob(GenericJobCore):
 
     def to_hdf(self, hdf=None, group_name=None):
         """
-        Stores the instance attributes into the hdf5 file
+        Store the GenericJob in an HDF5 file
+
+        Args:
+            hdf (ProjectHDFio): HDF5 group object - optional
+            group_name (str): HDF5 subgroup name - optional
         """
         super(AtomisticGenericJob, self).to_hdf(hdf=hdf, group_name=group_name)
         with self._hdf5.open("input") as hdf5_input:
@@ -235,7 +239,8 @@ class AtomisticGenericJob(GenericJobCore):
 
         """
         if self.structure is not None:
-            structure_container = self.create_job(self.project.job_type.StructureContainer)
+            structure_container = self.create_job(job_type=self.project.job_type.StructureContainer,
+                                                  job_name=self.job_name + '_structure')
             structure_container.structure = self.structure
             self.parent_id = structure_container.job_id
         else:
@@ -384,7 +389,7 @@ class AtomisticGenericJob(GenericJobCore):
             self._job_id = self.save()
         new_ham.parent_id = self.job_id
         if self.status.finished:
-            new_ham.structure = self.get_final_structure()
+            new_ham.structure = self.get_structure(iteration_step=-1)
             new_ham._generic_input['structure'] = 'atoms'
         else:
             new_ham._generic_input['structure'] = 'continue_final'
@@ -414,48 +419,31 @@ class AtomisticGenericJob(GenericJobCore):
                               center_of_mass=center_of_mass, cells=cells[::stride])
         else:
             return Trajectory(positions[::stride, atom_indices, :],
-                              self.structure.get_parent_basis(), center_of_mass=center_of_mass,
+                              self.structure.get_parent_basis()[atom_indices], center_of_mass=center_of_mass,
                               cells=cells[::stride])
 
-    def write_traj(self, filename, format=None, parallel=True, append=False, stride=1, center_of_mass=False, **kwargs):
+    def write_traj(self, filename, file_format=None, parallel=True, append=False, stride=1, center_of_mass=False,
+                   atom_indices=None, snapshot_indices=None, **kwargs):
         """
-        Writes the trajectory in a given file format based on the `ase.io.write`_ function.
+        Writes the trajectory in a given file file_format based on the `ase.io.write`_ function.
 
         Args:
             filename (str): Filename of the output
-            format (str): The specific format of the output
+            file_format (str): The specific file_format of the output
             parallel (bool):
             append (bool):
             stride (int): Writes trajectory every `stride` steps
             center_of_mass (bool): True if the positions are centered on the COM
+            atom_indices (list/numpy.ndarray): The atom indices for which the trajectory should be generated
+            snapshot_indices (list/numpy.ndarray): The snapshots for which the trajectory should be generated
             **kwargs: Additional ase arguments
 
         .. _ase.io.write: https://wiki.fysik.dtu.dk/ase/_modules/ase/io/formats.html#write
         """
-        traj = self.trajectory(stride=stride, center_of_mass=center_of_mass)
+        traj = self.trajectory(stride=stride, center_of_mass=center_of_mass, atom_indices=atom_indices,
+                               snapshot_indices=snapshot_indices)
         # Using thr ASE output writer
-        ase_write(filename=filename, images=traj, format=format,  parallel=parallel, append=append, **kwargs)
-
-    def _run_if_lib_save(self, job_name=None, structure=None, db_entry=True):
-        """
-
-        Args:
-            job_name:
-            structure:
-            db_entry:
-
-        Returns:
-
-        """
-        if job_name:
-            with self.project_hdf5.open(job_name + '/input') as hdf5_input:
-                if structure:
-                    structure.to_hdf(hdf5_input)
-                else:
-                    self.structure.to_hdf(hdf5_input)
-        else:
-            self.to_hdf()
-        return super(AtomisticGenericJob, self)._run_if_lib_save(job_name=job_name, db_entry=db_entry)
+        ase_write(filename=filename, images=traj, format=file_format, parallel=parallel, append=append, **kwargs)
 
     # Compatibility functions
     def get_final_structure(self):
@@ -464,7 +452,8 @@ class AtomisticGenericJob(GenericJobCore):
         Returns:
 
         """
-        return self.get_structure()
+        warnings.warn("get_final_structure() is deprecated - please use get_structure() instead.", DeprecationWarning)
+        return self.get_structure(iteration_step=-1)
 
     def set_kpoints(self, mesh=None, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
                     weights=None, reciprocal=True):
@@ -506,9 +495,7 @@ class AtomisticGenericJob(GenericJobCore):
             iteration_step (int): Step for which the structure is requested
 
         Returns:
-            atomistics.structure.atoms.Atoms object
-
-
+            pyiron.atomistics.structure.atoms.Atoms: The required structure
         """
         if not (self.structure is not None):
             raise AssertionError()
@@ -516,9 +503,15 @@ class AtomisticGenericJob(GenericJobCore):
         snapshot.cell = self.get("output/generic/cells")[iteration_step]
         snapshot.positions = self.get("output/generic/positions")[iteration_step]
         indices = self.get("output/generic/indices")
-        if indices is not None: 
+        if indices is not None:
             snapshot.indices = indices[iteration_step]
         return snapshot
+
+    def map(self, function, parameter_lst):
+        master = self.create_job(job_type=self.project.job_type.MapMaster, job_name='map_' + self.job_name)
+        master.modify_function = function
+        master.parameter_list = parameter_lst
+        return master
 
     def gui(self):
         """
@@ -545,8 +538,30 @@ class AtomisticGenericJob(GenericJobCore):
 
     def _before_successor_calc(self, ham):
         if ham._generic_input['structure'] == 'continue_final':
-            ham.structure = self.get_final_structure()
+            ham.structure = self.get_structure(iteration_step=-1)
             ham.to_hdf()
+
+
+def set_encut(job, parameter):
+    job.set_encut(parameter)
+    return job
+
+
+def set_kpoints(job, parameter):
+    job.set_kpoints(parameter)
+    return job
+
+
+def set_structure(job, parameter):
+    job.structure = parameter
+    return job
+
+
+class MapFunctions(object):
+    def __init__(self):
+        self.set_structure = set_structure
+        self.set_encut = set_encut
+        self.set_kpoints = set_kpoints
 
 
 class Trajectory(object):
@@ -581,7 +596,7 @@ class Trajectory(object):
         new_structure.positions = self._positions[item]
         # This step is necessary for using ase.io.write for trajectories
         new_structure.arrays['positions'] = new_structure.positions
-        new_structure.arrays['cells'] = new_structure.cell
+        # new_structure.arrays['cells'] = new_structure.cell
         return new_structure
 
     def __len__(self):

@@ -5,9 +5,10 @@
 from collections import OrderedDict
 import numpy as np
 from pyiron.atomistics.structure.atoms import Atoms
+import warnings
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
                 "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
@@ -174,47 +175,50 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
         position_index += 1
     positions = list()
     selective_dynamics = list()
-    n_atoms = 0
-    for key in atoms_dict["species_dict"].keys():
-        n_atoms += atoms_dict["species_dict"][key]["count"]
-    for i in range(position_index, position_index + n_atoms):
-        vec = list()
-        for j in range(3):
-            vec.append(float(string[i].split()[j]))
-        if atoms_dict["selective_dynamics"]:
-            selective_dynamics.append(["T" in string[i].split()[k] for k in range(3, 6)])
-        positions.append(vec)
+    n_atoms = sum([atoms_dict["species_dict"][key]["count"] for key in atoms_dict["species_dict"].keys()])
+    try:
+        for i in range(position_index, position_index + n_atoms):
+            string_list = np.array(string[i].split())
+            positions.append([float(val) for val in string_list[0:3]])
+            if atoms_dict["selective_dynamics"]:
+                selective_dynamics.append(["T" in val for val in string_list[3:6]])
+    except (ValueError, IndexError):
+        raise AssertionError("The number of positions given does not match the number of atoms")
     atoms_dict["positions"] = np.array(positions)
     if not atoms_dict["relative"]:
         if atoms_dict["scaling_factor"] > 0.:
             atoms_dict["positions"] *= atoms_dict["scaling_factor"]
         else:
             atoms_dict["positions"] *= (-atoms_dict["scaling_factor"]) ** (1. / 3.)
-
-    if not (len(atoms_dict["positions"]) == n_atoms):
-        raise AssertionError()
     velocities = list()
+    try:
+        atoms = _dict_to_atoms(atoms_dict, species_list=species_list)
+    except ValueError:
+        atoms = _dict_to_atoms(atoms_dict, read_from_first_line=True)
+    if atoms_dict["selective_dynamics"]:
+        selective_dynamics = np.array(selective_dynamics)
+        unique_sel_dyn, inverse, counts = np.unique(selective_dynamics, axis=0, return_counts=True,
+                                                    return_inverse=True)
+        count_index = np.argmax(counts)
+        atoms.add_tag(selective_dynamics=unique_sel_dyn.tolist()[count_index])
+        is_not_majority = np.arange(len(unique_sel_dyn), dtype=int) != count_index
+        for i, val in enumerate(unique_sel_dyn):
+            if is_not_majority[i]:
+                for key in np.argwhere(inverse == i).flatten():
+                    atoms.selective_dynamics[int(key)] = val.tolist()
     if read_velocities:
         velocity_index = position_index + n_atoms + 1
         for i in range(velocity_index, velocity_index + n_atoms):
-            vec = list()
-            for j in range(3):
-                vec.append(float(string[i].split()[j]))
-            velocities.append(vec)
+            try:
+                velocities.append([float(val) for val in string[i].split()[0:3]])
+            except IndexError:
+                break
         if not (len(velocities) == n_atoms):
-            raise AssertionError()
-        atoms = _dict_to_atoms(atoms_dict, species_list=species_list)
-        if atoms_dict["selective_dynamics"]:
-            selective_dynamics = np.array(selective_dynamics)
-            atoms.add_tag(selective_dynamics=[True, True, True])
-            atoms.selective_dynamics[:] = selective_dynamics
+            warnings.warn("The velocities are either not available or they are incomplete/corrupted. Returning empty "
+                          "list instead", UserWarning)
+            return atoms, list()
         return atoms, velocities
     else:
-        atoms = _dict_to_atoms(atoms_dict, species_list=species_list)
-        if atoms_dict["selective_dynamics"]:
-            selective_dynamics = np.array(selective_dynamics)
-            atoms.add_tag(selective_dynamics=[True, True, True])
-            atoms.selective_dynamics = selective_dynamics
         return atoms
 
 

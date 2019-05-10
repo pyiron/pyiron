@@ -14,15 +14,16 @@ from pyiron.base.database.jobtable import get_db_columns, get_job_ids, get_job_i
 from pyiron.base.settings.logger import set_logging_level
 from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.base.job.jobtype import JobType, JobTypeChoice
-from pyiron.base.server.queuestatus import queue_delete_job, queue_is_empty, queue_job_info, queue_table, \
-    wait_for_job, queue_report, queue_id_table, queue_enable_reservation
+from pyiron.base.server.queuestatus import queue_delete_job, queue_is_empty, queue_table, wait_for_job, \
+    queue_enable_reservation, queue_check_job_is_waiting_or_running
 
 """
 The project object is the central import point of pyiron - all other objects can be created from this one 
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -381,7 +382,7 @@ class Project(ProjectPath):
         """
         return self.load(job_specifier=job_specifier, convert_to_object=False)
 
-    def iter_jobs(self, path=None, recursive=True, convert_to_object=True):
+    def iter_jobs(self, path=None, recursive=True, convert_to_object=True, status=None):
         """
         Iterate over the jobs within the current project and it is sub projects
 
@@ -389,15 +390,20 @@ class Project(ProjectPath):
             path (str): HDF5 path inside each job object
             recursive (bool): search subprojects [True/False] - True by default
             convert_to_object (bool): load the full GenericJob object (default) or just the HDF5 / JobCore object
+            status (str/None): status of the jobs to filter for - ['finished', 'aborted', 'submitted', ...]
 
         Returns:
             yield: Yield of GenericJob or JobCore
         """
-        if path is not None:
-            for job_id in self.get_jobs(recursive)["id"]:
+        if status is None:
+            job_id_lst = self.get_jobs(recursive)["id"]
+        else:
+            df = self.job_table(recursive=True)
+            job_id_lst = list(df[df['status'] == status]['id'])
+        for job_id in job_id_lst:
+            if path is not None:
                 yield self.load(job_id, convert_to_object=False)[path]
-        else:  # Backwards compatibility - in future the option convert_to_object should be removed
-            for job_id in self.get_jobs(recursive)["id"]:
+            else:  # Backwards compatibility - in future the option convert_to_object should be removed
                 yield self.load(job_id, convert_to_object=convert_to_object)
 
     def iter_output(self, recursive=True):
@@ -648,11 +654,12 @@ class Project(ProjectPath):
         Returns:
             pandas.DataFrame: Output from the queuing system - optimized for the Sun grid engine
         """
-        try:
-            return pandas.DataFrame([self.db.get_item_by_id(int(str(queue_ID).replace('pi_', '')))
-                                     for queue_ID in self.queue_table(project_only=False)['name'] 
+        df = queue_table(job_ids=[], project_only=False)
+        if len(df) != 0:
+            return pandas.DataFrame([self.db.get_item_by_id(int(str(queue_ID).replace('pi_', '').replace('.sh', '')))
+                                     for queue_ID in df['jobname']
                                      if str(queue_ID).startswith('pi_')])
-        except TypeError:
+        else:
             return None
 
     def refresh_job_status_based_on_queue_status(self, job_specifier, status='running'):
@@ -681,15 +688,7 @@ class Project(ProjectPath):
         if job_id:
             if (not que_mode and self.db.get_item_by_id(job_id)['status'] not in ['finished']) or (
                         que_mode and self.db.get_item_by_id(job_id)['status'] in ['running', 'submitted']):
-                try:
-                    queue_status = queue_id_table(job_id)
-                except Exception:
-                    queue_status = None
-                if queue_status:
-                    for key, (q_id, q_status) in queue_status.items():
-                        if q_status != 'r':
-                            self.db.item_update({'status': 'aborted'}, job_id)
-                else:
+                if not self.queue_check_job_is_waiting_or_running(job_id):
                     self.db.item_update({'status': 'aborted'}, job_id)
 
     def remove_file(self, file_name):
@@ -753,6 +752,35 @@ class Project(ProjectPath):
                         s.logger.debug("Could not remove job with ID {0} ".format(job_id))
         else:
             raise EnvironmentError('copy_to: is not available in Viewermode !')
+
+    def compress_jobs(self, recursive=False):
+        """
+        Compress all finished jobs in the current project and in all subprojects if recursive=True is selected.
+
+        Args:
+            recursive (bool): [True/False] compress all jobs in all subprojects - default=False
+        """
+        for job_id in self.get_job_ids(recursive=recursive):
+            job = self.inspect(job_id)
+            if job.status == 'finished':
+                job.compress()
+
+    def delete_output_files_jobs(self, recursive=False):
+        """
+        Delete the output files of all finished jobs in the current project and in all subprojects if recursive=True is selected.
+
+        Args:
+            recursive (bool): [True/False] delete the output files of all jobs in all subprojects - default=False
+        """
+        for job_id in self.get_job_ids(recursive=recursive):
+            job = self.inspect(job_id)
+            if job.status == 'finished':
+                for file in job.list_files():
+                    fullname = os.path.join(job.working_directory, file)
+                    if os.path.isfile(fullname) and '.h5' not in fullname:
+                        os.remove(fullname)
+                    elif os.path.isdir(fullname):
+                        os.removedirs(fullname)
 
     def remove(self, enable=False, enforce=False):
         """
@@ -821,6 +849,13 @@ class Project(ProjectPath):
         self.db = s.database
 
     def switch_to_local_database(self, file_name='pyiron.db', cwd=None):
+        """
+        Switch from central mode to local mode - if local_mode is enable pyiron is using a local database.
+
+        Args:
+            file_name (str): file name or file path for the local database
+            cwd (str): directory where the local database is located
+        """
         if cwd is None: 
             cwd = self.path
         s.switch_to_local_database(file_name=file_name, cwd=cwd)
@@ -829,7 +864,7 @@ class Project(ProjectPath):
 
     def switch_to_central_database(self):
         """
-        Switch from viewer mode to user mode - if viewer_mode is enable pyiron has read only access to the database.
+        Switch from local mode to central mode - if local_mode is enable pyiron is using a local database.
         """
         s.switch_to_central_database()
         s.open_connection()
@@ -888,30 +923,17 @@ class Project(ProjectPath):
         return queue_enable_reservation(item)
 
     @staticmethod
-    def queue_job_info(item):
+    def queue_check_job_is_waiting_or_running(item):
         """
-        Short reporting for a particular job - using the qstat command of the sun grid engine.
+        Check if a job is still listed in the queue system as either waiting or running.
 
         Args:
             item (int, GenericJob): Provide either the job_ID or the full hamiltonian
 
         Returns:
-            pandas.DataFrame: Short report returned from the queuing system - optimized for the Sun grid engine
+            bool: [True/False]
         """
-        return queue_job_info(item)
-
-    @staticmethod
-    def queue_report(item):
-        """
-        Detailed reporting for a particular job - using the qacct command of the sun grid engine.
-
-        Args:
-            item (int, GenericJob): Provide either the job_ID or the full hamiltonian
-
-        Returns:
-            pandas.DataFrame: Detailed report returned from the queuing system - optimized for the Sun grid engine
-        """
-        return queue_report(item)
+        return queue_check_job_is_waiting_or_running(item)
 
     @staticmethod
     def wait_for_job(job, interval_in_s=5, max_iterations=100):

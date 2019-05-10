@@ -11,7 +11,8 @@ from pyiron.base.generic.parameters import GenericParameters
 from pyiron.atomistics.job.potentials import PotentialAbstract
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -462,3 +463,20 @@ class LammpsPotentialFile(PotentialAbstract):
         potential_df = self.find(element=item)
         selected_atoms = self._selected_atoms + [item]
         return LammpsPotentialFile(potential_df=potential_df, default_df=self._default_df, selected_atoms=selected_atoms)
+
+
+class PotentialAvailable(object):
+    def __init__(self, list_of_potentials):
+        self._list_of_potentials = list_of_potentials
+
+    def __getattr__(self, name):
+        if name in self._list_of_potentials:
+            return name
+        else:
+            raise AttributeError
+
+    def __dir__(self):
+        return self._list_of_potentials
+
+    def __repr__(self):
+        return str(dir(self))

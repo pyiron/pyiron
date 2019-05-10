@@ -6,24 +6,27 @@ from __future__ import print_function
 
 import h5py
 import os
+import importlib
 import pandas
 import posixpath
 import h5io
 import numpy as np
 from tables.exceptions import NoSuchNodeError
+import sys
 """
 Classes to map the Python objects to HDF5 data structures 
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
 
-
+  
 class HDFStoreIO(pandas.HDFStore):
     """
     dict-like IO interface for storing pandas objects in PyTables either Fixed or Table format.
@@ -227,6 +230,32 @@ class FileHDFio(object):
         else:
             return True
 
+    @staticmethod
+    def file_size(hdf):
+        """
+        Get size of the HDF5 file
+
+        Args:
+            hdf (FileHDFio): hdf file
+       
+        Returns:
+            float: file size in Bytes
+        """
+        return os.path.getsize(hdf.file_name)
+
+    def get_size(self, hdf):  
+        """
+        Get size of the groups inside the HDF5 file
+    
+        Args:
+            hdf (FileHDFio): hdf file
+
+        Returns:
+            float: file size in Bytes
+        """
+        return sum([sys.getsizeof(hdf[p]) for p in hdf.list_nodes()]) + sum(
+            [self.get_size(hdf[p]) for p in hdf.list_groups()])
+          
     def copy(self):
         """
         Copy the Python object which links to the HDF5 file - in contrast to copy_to() which copies the content of the
@@ -288,8 +317,8 @@ class FileHDFio(object):
 
     def create_group(self, name):
         """
-        Create an HDF5 group - similar to a folder in the filesystem - the HDF5 groups allow the users to structure their
-        data.
+        Create an HDF5 group - similar to a folder in the filesystem - the HDF5 groups allow the users to structure
+        their data.
 
         Args:
             name (str): name of the HDF5 group
@@ -438,8 +467,8 @@ class FileHDFio(object):
                     nodes = set()
             iopy_nodes = self._filter_io_objects(groups)
             store.close()
-            return {"groups": list(groups - iopy_nodes),
-                    "nodes": list((nodes - groups).union(iopy_nodes))}
+            return {"groups": sorted(list(groups - iopy_nodes)),
+                    "nodes": sorted(list((nodes - groups).union(iopy_nodes)))}
         else:
             return {"groups": [], "nodes": []}
 
@@ -531,6 +560,49 @@ class FileHDFio(object):
         new._filter = ["nodes"]
         return new
 
+    def hd_copy(self, hdf_old, hdf_new, exclude_groups=None):
+        """
+        args:
+            hdf_old (ProjectHDFio): old hdf
+            hdf_new (ProjectHDFio): new hdf
+            exclude_groups (list/None): list of groups to delete
+        """
+        if exclude_groups is None:
+            exclude_groups = list()
+        for p in hdf_old.list_nodes():
+            hdf_new[p] = hdf_old[p]
+        for p in hdf_old.list_groups():
+            if p in exclude_groups:
+                continue
+            h_new = hdf_new.create_group(p)
+            self.hd_copy(hdf_old[p], h_new, exclude_groups=exclude_groups)
+        return hdf_new
+
+    def rewrite_hdf5(self, job_name, info=False, exclude_groups=None):
+        """
+        args:
+            info (True/False): whether to give the information on how much space has been saved
+            exclude_groups (list/None): list of groups to delete from hdf
+        """
+        # hdf = self._hdf5
+        if exclude_groups is None:
+            exclude_groups = ['interactive']
+        file_name = self.file_name
+        _path, _ = file_name.split('.')
+        p_lst = _path.split('/')
+        # path = '/'.join(p_lst[:-1])
+        new_file = p_lst[-1] + '_rewrite'
+
+        hdf_new = ProjectHDFio(project=self.project, file_name=new_file, h5_path='/' + job_name)
+        hdf_new = self.hd_copy(self, hdf_new, exclude_groups=exclude_groups)
+
+        if info:
+            print('job: {}'.format(job_name))
+            print('compression rate from old to new: {}'.format(self.file_size(self) / self.file_size(hdf_new)))
+            print('data size vs file size: {}'.format(self.get_size(hdf_new)/self.file_size(hdf_new)))
+        self.remove_file()
+        os.rename(hdf_new.file_name, file_name)
+
     def __setitem__(self, key, value):
         """
         Store data inside the HDF5 file
@@ -541,7 +613,7 @@ class FileHDFio(object):
         """
         if hasattr(value, "to_hdf") & (not isinstance(value, (pandas.DataFrame, pandas.Series))):
             value.to_hdf(self, key)
-        elif isinstance(value, list) and len(value) > 0 and isinstance(value[0], (list, np.ndarray)) \
+        elif isinstance(value, (list, np.ndarray)) and len(value) > 0 and isinstance(value[0], (list, np.ndarray)) \
                 and len(value[0]) > 0 and not isinstance(value[0][0], str):
             shape_lst = [np.shape(sub) for sub in value]
             if all([shape_lst[0][1:] == t[1:] for t in shape_lst]):
@@ -699,7 +771,7 @@ class FileHDFio(object):
         Returns:
             Project: pyiron project object
         """
-        from pyiron.base.project import Project
+        from pyiron.base.project.generic import Project
         return Project(path=self.file_path)
 
     def _get_h5_path(self, name):
@@ -1054,13 +1126,10 @@ class ProjectHDFio(FileHDFio):
         Returns:
             pyiron object: defined by the pyiron class in class_name with the input from **qwargs
         """
-        job_type_lst = class_name.split(".")
-        if len(job_type_lst) > 1:
-            class_name = class_name.split('.')[-1][:-2]
-            if class_name in self._project.job_type.job_class_dict.keys():
-                import_path = self._project.job_type.job_class_dict[class_name]
-                exec("from {} import {}".format(import_path, class_name))
-        return eval(class_name + "(**qwargs)")
+        class_name = class_name.split('.')[-1][:-2]
+        if class_name in self._project.job_type.job_class_dict.keys():
+            return getattr(importlib.import_module(self._project.job_type.job_class_dict[class_name]),
+                           class_name)(**qwargs)
 
     def to_object(self, object_type=None, **qwargs):
         """

@@ -1,14 +1,16 @@
 import os
 from datetime import datetime
+from pyiron.base.project.generic import Project
 from pyiron.base.database.generic import DatabaseAccess
 from pyiron.base.job.jobstatus import JobStatus
 import unittest
 
 
 class TestJobStatus(unittest.TestCase):
-    def setUp(self):
-        self.jobstatus = JobStatus()
-        self.database = DatabaseAccess('sqlite:///test_job_status.db', 'simulation')
+    @classmethod
+    def setUpClass(cls):
+        cls.jobstatus = JobStatus()
+        cls.database = DatabaseAccess('sqlite:///test_job_status.db', 'simulation')
         par_dict = {'chemicalformula': 'H',
                     'computer': 'localhost',
                     'hamilton': 'Test',
@@ -22,12 +24,18 @@ class TestJobStatus(unittest.TestCase):
                     'timestop': datetime(2016, 5, 2, 11, 31, 4, 371165),
                     'totalcputime': 0.117788,
                     'username': 'Test'}
-        self.job_id = self.database.add_item_dict(par_dict)
-        self.jobstatus_database = JobStatus(db=self.database, job_id=self.job_id)
+        cls.job_id = cls.database.add_item_dict(par_dict)
+        cls.jobstatus_database = JobStatus(db=cls.database, job_id=cls.job_id)
 
-    def doCleanups(self):
-        self.database.conn.close()
-        os.remove('test_job_status.db')
+    def setUp(self):
+        self.jobstatus.initialized = True
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            os.remove('test_job_status.db')
+        except (WindowsError, OSError):
+            pass
 
     def test_initialized(self):
         self.assertTrue(self.jobstatus.initialized)
@@ -257,6 +265,30 @@ class TestJobStatus(unittest.TestCase):
         self.assertNotEqual(current_status, str(self.jobstatus_database))
         self.assertNotEqual(new_status, str(self.jobstatus_database))
         self.assertEqual(finished_status, str(self.jobstatus_database))
+
+
+class JobStatusIntegration(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        cls.project = Project(os.path.join(cls.file_location, 'random_testing'))
+        cls.ham = cls.project.create_job("ExampleJob", "job_test_run")
+
+    @classmethod
+    def tearDownClass(cls):
+        project = Project(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'random_testing'))
+        ham = project.load(project.get_job_ids()[0])
+        ham.remove()
+        project.remove(enable=True)
+
+    def test_inspect_job(self):
+        self.assertTrue(self.ham.status.initialized)
+        self.assertEqual(self.ham.status, 'initialized')
+        self.ham.run()
+        self.assertTrue(self.ham.status.finished)
+        self.assertEqual(self.ham.status, 'finished')
+        job_inspect = self.project.inspect(self.ham.job_name)
+        self.assertEqual(job_inspect.status, 'finished')
 
 
 if __name__ == '__main__':

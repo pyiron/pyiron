@@ -15,7 +15,7 @@ pyiron
 .. image:: https://anaconda.org/conda-forge/pyiron/badges/latest_release_date.svg
 
 
-pyiron is an integrated development environment for implementing, testing, and running simulations in computational materials science. It combines several tools in a common plattform:
+pyiron - an integrated development environment (IDE) for computational materials science. It combines several tools in a common plattform:
 
 • Atomic structure objects – compatible to the `Atomic Simulation Environment (ASE) <https://wiki.fysik.dtu.dk/ase/>`_.
 
@@ -41,7 +41,7 @@ pyiron (called pyron) is developed in the `Computational Materials Design depart
 
 .. note::  
 
-    **pyiron 1.0 – Disclaimer**: With the first open source release of pyiron under the `BSD license <https://github.com/pyiron/pyiron/blob/master/LICENSE>`_ we provide a fully functional core platform. We are currently working on finalizing various plugins, e.g. to enhance high throughput simulations, for `Computational Phase Studies <https://www.mpie.de/2891195/computational_phase_studies>`_, and `Electrochemistry and Corrosion <https://www.mpie.de/3119070/Corrosion>`_. The code is published on `Github.org <https://github.com/pyiron>`_, `PyPi.org <https://pypi.org/user/pyiron/>`_ and `Anaconda.org <https://anaconda.org/pyiron>`_
+    **pyiron 0.X – Disclaimer**: With the first open source release of pyiron under the `BSD license <https://github.com/pyiron/pyiron/blob/master/LICENSE>`_ we provide a fully functional core platform. We are currently working on finalizing various plugins, e.g. to enhance high throughput simulations, for `Computational Phase Studies <https://www.mpie.de/2891195/computational_phase_studies>`_, and `Electrochemistry and Corrosion <https://www.mpie.de/3119070/Corrosion>`_. The code is published on `Github.org <https://github.com/pyiron>`_, `PyPi.org <https://pypi.org/user/pyiron/>`_ and `Anaconda.org <https://anaconda.org/pyiron>`_
     
 **************
 Explore pyiron
@@ -68,6 +68,12 @@ Please contact us if you are interested in using pyiron:
 ****
 News
 ****
+* **24th March 2019:** pyiron 0.2.2 released.
+* **15th March 2019:** `pyiron paper available as open access <https://doi.org/10.1016/j.commatsci.2018.07.043>`_ .
+* **20th January 2019:** pyiron 0.2.1 released.
+* **15th December 2019:** pyiron was downloaded over 2000 times on `conda-forge <https://anaconda.org/conda-forge/pyiron/>`_ .
+* **21st November 2018:** pyiron 0.2.0 released.
+* **2nd August 2018:** pyiron 0.1.8 released.
 * **21st July 2018:** pyiron paper accepted.
 * **20th July 2018:** pyiron 0.1.7 released.
 * **25th May 2018:** pyiron 0.1.5 released.
@@ -83,12 +89,19 @@ Citing
 ******
 If you use pyiron in your research, please consider citing the following work:
 
-.. code-block:: bibtex 
-
+.. code-block:: bibtex
+  
   @article{pyiron-paper,
-    author={Jan Janssen and Sudarsan Surendralal and Yury Lysogorskiy and Mira Todorova and Tilmann Hickel and Ralf Drautz and Jörg Neugebauer},
-    title={pyiron: An integrated development environment for computational materials science},
-    year={2018}
+    title = {pyiron: An integrated development environment for computational materials science},
+    journal = {Computational Materials Science},
+    volume = {163},
+    pages = {24 - 36},
+    year = {2019},
+    issn = {0927-0256},
+    doi = {https://doi.org/10.1016/j.commatsci.2018.07.043},
+    url = {http://www.sciencedirect.com/science/article/pii/S0927025618304786},
+    author = {Jan Janssen and Sudarsan Surendralal and Yury Lysogorskiy and Mira Todorova and Tilmann Hickel and Ralf Drautz and Jörg Neugebauer},
+    keywords = {Modelling workflow, Integrated development environment, Complex simulation protocols},
   }
 
 Read more about `citing individual modules/ plugins of pyiron and the implemented simulation codes <citation>`_. 

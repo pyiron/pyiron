@@ -1,21 +1,22 @@
 import os
 import unittest
-from pyiron.project import Project
+from pyiron.base.project.generic import Project
 
 
 class TestExampleJob(unittest.TestCase):
-    def setUp(self):
-        self.count_run_one = 12
-        self.count_run_two = 12
-        self.file_location = os.path.dirname(os.path.abspath(__file__))
-        self.project = Project(os.path.join(self.file_location, 'random_testing_lib'))
-        self.ham = self.project.create_job("ExampleJob", "job_test_run")
-        self.ham.input['count'] = self.count_run_one
-        self.ham.server.run_mode.interactive = True
-        self.ham.run()
-        self.ham.input['count'] = self.count_run_two
-        self.ham.run()
-        self.ham.interactive_close()
+    @classmethod
+    def setUpClass(cls):
+        cls.count_run_one = 12
+        cls.count_run_two = 12
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        cls.project = Project(os.path.join(cls.file_location, 'random_testing_lib'))
+        cls.ham = cls.project.create_job("ExampleJob", "job_test_run")
+        cls.ham.input['count'] = cls.count_run_one
+        cls.ham.server.run_mode.interactive = True
+        cls.ham.run()
+        cls.ham.input['count'] = cls.count_run_two
+        cls.ham.run()
+        cls.ham.interactive_close()
 
     @classmethod
     def tearDownClass(cls):

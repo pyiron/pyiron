@@ -6,18 +6,19 @@ from pyiron.vasp.outcar import Outcar
 
 
 class TestOutcar(unittest.TestCase):
-    def setUp(self):
-        self.file_location = os.path.dirname(os.path.abspath(__file__))
-        self.file_list = list()
-        self.outcar_parser = Outcar()
+    @classmethod
+    def setUpClass(cls):
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        cls.file_list = list()
+        cls.outcar_parser = Outcar()
         # file_list = ["OUTCAR_1", "OUTCAR_2", "OUTCAR_3", "OUTCAR_4", "OUTCAR_5", "OUTCAR_6", "OUTCAR_7"]
-        file_list = os.listdir(os.path.abspath(os.path.join(self.file_location,
+        file_list = os.listdir(os.path.abspath(os.path.join(cls.file_location,
                                                             "../static/vasp_test_files/outcar_samples")))
         for f in file_list:
-            direc = os.path.abspath(os.path.join(self.file_location,
+            direc = os.path.abspath(os.path.join(cls.file_location,
                                                  "../static/vasp_test_files/outcar_samples"))
             filename = posixpath.join(direc, f)
-            self.file_list.append(filename)
+            cls.file_list.append(filename)
 
     def test_from_file(self):
         for filename in self.file_list:
@@ -284,6 +285,9 @@ class TestOutcar(unittest.TestCase):
                 self.assertEqual(mixing, output)
             if int(filename.split('/OUTCAR_')[-1]) in [2, 3, 4, 5, 6]:
                 mixing = 343
+                self.assertEqual(mixing, output)
+            if int(filename.split('/OUTCAR_')[-1]) == 8:
+                mixing = 21 ** 3
                 self.assertEqual(mixing, output)
 
     def test_get_dipole_moments(self):

@@ -16,6 +16,7 @@ from pyiron.base.settings.generic import Settings
 from pyiron.base.job.executable import Executable
 from pyiron.base.job.jobstatus import JobStatus
 from pyiron.base.job.core import JobCore
+from pyiron.base.generic.util import static_isinstance
 from pyiron.base.server.generic import Server
 import subprocess
 import shutil
@@ -26,7 +27,8 @@ Generic Job class extends the JobCore class with all the functionality to run th
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -141,6 +143,7 @@ class GenericJob(JobCore):
         self._restart_file_list = list()
         self._restart_file_dict = dict()
         self._process = None
+        self._compress_by_default = False
 
         for sig in intercepted_signals:
             signal.signal(sig,  self.signal_intercept)
@@ -463,6 +466,12 @@ class GenericJob(JobCore):
         return new_generic_job
 
     def copy_file_to_working_directory(self, file):
+        """
+        Copy a specific file to the working directory before the job is executed.
+
+        Args:
+            file (str): path of the file to be copied.
+        """
         if os.path.isabs(file):
             self.restart_file_list.append(file)
         else: 
@@ -518,6 +527,14 @@ class GenericJob(JobCore):
         """
         pass
 
+    def check_setup(self):
+        """
+        Checks whether certain parameters (such as plane wave cutoff radius in DFT) are changed from the pyiron standard
+        values to allow for a physically meaningful results. This function is called manually or only when the job is
+        submitted to the queueing system.
+        """
+        pass
+
     def reset_job_id(self, job_id=None):
         """
         Reset the job id sets the job_id to None in the GenericJob as well as all connected modules like JobStatus.
@@ -527,7 +544,7 @@ class GenericJob(JobCore):
         self._job_id = job_id
         self._status = JobStatus(db=self.project.db, job_id=self._job_id)
 
-    def run(self, run_again=False, repair=False, debug=False, run_mode=None, que_wait_for=None,):
+    def run(self, run_again=False, repair=False, debug=False, run_mode=None):
         """
         This is the main run function, depending on the job status ['initialized', 'created', 'submitted', 'running',
         'collect','finished', 'refresh', 'suspended'] the corresponding run mode is chosen.
@@ -537,7 +554,6 @@ class GenericJob(JobCore):
             repair (bool): Set the job status to created and run the simulation again.
             debug (bool): Debug Mode - defines the log level of the subprocess the job is executed in.
             run_mode (str): ['modal', 'non_modal', 'queue', 'manual'] overwrites self.server.run_mode
-            que_wait_for (int): Que ID to wait for before this job is executed.
         """
         try:
             self._logger.info('run {}, status: {}'.format(self.job_info_str, self.status))
@@ -554,9 +570,9 @@ class GenericJob(JobCore):
             if repair and self.job_id and not self.status.finished:
                 status = 'created'
             if status == 'initialized':
-                self._run_if_new(debug=debug, que_wait_for=que_wait_for)
+                self._run_if_new(debug=debug)
             elif status == 'created':
-                que_id = self._run_if_created(que_wait_for=que_wait_for)
+                que_id = self._run_if_created()
                 if que_id:
                     self._logger.info('{}, status: {}, submitted: queue id {}'.format(self.job_info_str, self.status, que_id))
                     # print('job was submitted, queue id: ', que_id)
@@ -607,7 +623,9 @@ class GenericJob(JobCore):
                 out = subprocess.check_output(str(self.executable), cwd=self.project_hdf5.working_directory, shell=True,
                                               stderr=subprocess.STDOUT, universal_newlines=True)
             else:
-                out = subprocess.check_output([self.executable.executable_path, str(self.server.cores)],
+                out = subprocess.check_output([self.executable.executable_path,
+                                               str(self.server.cores),
+                                               str(self.server.threads)],
                                               cwd=self.project_hdf5.working_directory, shell=False,
                                               stderr=subprocess.STDOUT, universal_newlines=True)
         except subprocess.CalledProcessError as e:
@@ -655,8 +673,10 @@ class GenericJob(JobCore):
             self._logger.info("{}, status: {}, script: {}".format(self.job_info_str, self.status, file_name))
             with open(posixpath.join(self.project_hdf5.working_directory, 'out.txt'), mode='w') as f_out:
                 with open(posixpath.join(self.project_hdf5.working_directory, 'error.txt'), mode='w') as f_err:
-                    self._process = subprocess.Popen(['python', file_name], cwd=self.project_hdf5.working_directory,
-                                                     shell=shell, stdout=f_out, stderr=f_err, universal_newlines=True)
+                    self._process = subprocess.Popen(['python', '-m', 'pyiron.base.job.wrappercmd', '-p',
+                                                      self.working_directory, '-j', str(self.job_id)],
+                                                     cwd=self.project_hdf5.working_directory, shell=shell, stdout=f_out,
+                                                     stderr=f_err, universal_newlines=True)
             self._logger.info("{}, status: {}, job submitted".format(self.job_info_str, self.status))
         except subprocess.CalledProcessError as e:
             self._logger.warn("Job aborted")
@@ -687,33 +707,34 @@ class GenericJob(JobCore):
             _manually_print (bool): Print explanation how to run the simulation manually - default=True.
         """
         if _manually_print:
+            abs_working = posixpath.abspath(self.project_hdf5.working_directory)
             print('You have selected to start the job manually. ' +
-                  'To run it, go into the working directory {} and ' +
-                  'call \'python run_job.py\' '.format(posixpath.abspath(self.project_hdf5.working_directory)))
+                  'To run it, go into the working directory {} and '.format(abs_working) +
+                  'call \'python -m pyiron.base.job.wrappercmd -p {}'.format(abs_working) +
+                  ' - j {} \' '.format(self.job_id))
 
-    def run_if_scheduler(self, que_wait_for=None):
+    def run_if_scheduler(self):
         """
         The run if queue function is called by run if the user decides to submit the job to and queing system. The job
         is submitted to the queuing system using subprocess.Popen()
 
-        Args:
-            que_wait_for (int): Job ID the current job should be waiting for before being submitted.
-
         Returns:
             int: Returns the queue ID for the job.
         """
-        queue_options, return_job_id = self.server.init_scheduler_run(working_dir=self.project_hdf5.working_directory,
-                                                                      wait_for_prev_job=que_wait_for,
-                                                                      job_id=self.job_id)
-        que_id = None
+        if s.queue_adapter is None:
+            raise TypeError('No queue adapter defined.')
         try:
-            self._logger.debug("SUMBIT SCHEDULED JOB: "+str(queue_options))
-            p = subprocess.Popen(queue_options, stdout=subprocess.PIPE, universal_newlines=True)
-            if return_job_id:
-                self.server.queue_id = p.communicate()[0]
-                que_id = self.server.queue_id
-                self._server.to_hdf(self._hdf5)
-                print('Queue system id: ', que_id)
+            que_id = s.queue_adapter.submit_job(queue=self.server.queue,
+                                                job_name='pi_' + str(self.job_id),
+                                                working_directory=self.project_hdf5.working_directory,
+                                                cores=self.server.cores,
+                                                run_time_max=self.server.run_time,
+                                                memory_max=self.server.memory_limit,
+                                                command='python -m pyiron.base.job.wrappercmd -p ' +
+                                                        self.working_directory + ' -j ' + str(self.job_id))
+            self.server.queue_id = que_id
+            self._server.to_hdf(self._hdf5)
+            print('Queue system id: ', que_id)
         except subprocess.CalledProcessError as e:
             self._logger.warn("Job aborted")
             self._logger.warn(e.output)
@@ -730,6 +751,68 @@ class GenericJob(JobCore):
         """
         if self.server.send_to_db:
             pass
+
+    def create_job(self, job_type, job_name):
+        """
+        Create one of the following jobs:
+        - 'StructureContainer’:
+        - ‘StructurePipeline’:
+        - ‘AtomisticExampleJob’: example job just generating random number
+        - ‘ExampleJob’: example job just generating random number
+        - ‘Lammps’:
+        - ‘KMC’:
+        - ‘Sphinx’:
+        - ‘Vasp’:
+        - ‘GenericMaster’:
+        - ‘SerialMaster’: series of jobs run in serial
+        - ‘AtomisticSerialMaster’:
+        - ‘ParallelMaster’: series of jobs run in parallel
+        - ‘KmcMaster’:
+        - ‘ThermoLambdaMaster’:
+        - ‘RandomSeedMaster’:
+        - ‘MeamFit’:
+        - ‘Murnaghan’:
+        - ‘MinimizeMurnaghan’:
+        - ‘ElasticMatrix’:
+        - ‘ConvergenceVolume’:
+        - ‘ConvergenceEncutParallel’:
+        - ‘ConvergenceKpointParallel’:
+        - ’PhonopyMaster’:
+        - ‘DefectFormationEnergy’:
+        - ‘LammpsASE’:
+        - ‘PipelineMaster’:
+        - ’TransformationPath’:
+        - ‘ThermoIntEamQh’:
+        - ‘ThermoIntDftEam’:
+        - ‘ScriptJob’: Python script or jupyter notebook job container
+        - ‘ListMaster': list of jobs
+
+        Args:
+            job_type (str): job type can be ['StructureContainer’, ‘StructurePipeline’, ‘AtomisticExampleJob’,
+                                             ‘ExampleJob’, ‘Lammps’, ‘KMC’, ‘Sphinx’, ‘Vasp’, ‘GenericMaster’,
+                                             ‘SerialMaster’, ‘AtomisticSerialMaster’, ‘ParallelMaster’, ‘KmcMaster’,
+                                             ‘ThermoLambdaMaster’, ‘RandomSeedMaster’, ‘MeamFit’, ‘Murnaghan’,
+                                             ‘MinimizeMurnaghan’, ‘ElasticMatrix’, ‘ConvergenceVolume’,
+                                             ‘ConvergenceEncutParallel’, ‘ConvergenceKpointParallel’, ’PhonopyMaster’,
+                                             ‘DefectFormationEnergy’, ‘LammpsASE’, ‘PipelineMaster’,
+                                             ’TransformationPath’, ‘ThermoIntEamQh’, ‘ThermoIntDftEam’, ‘ScriptJob’,
+                                             ‘ListMaster']
+            job_name (str): name of the job
+
+        Returns:
+            GenericJob: job object depending on the job_type selected
+        """
+        job = self.project.create_job(job_type=job_type, job_name=job_name)
+        if static_isinstance(obj=job.__class__,
+                             obj_type=['pyiron.base.master.parallel.ParallelMaster',
+                                       'pyiron.base.master.serial.SerialMasterBase',
+                                       'pyiron.atomistic.job.interactivewrapper.InteractiveWrapper']):
+            job.ref_job = self
+            if self.server.run_mode.non_modal:
+                job.server.run_mode.non_modal = True
+            elif self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
+                job.server.run_mode.interactive = True
+        return job
 
     def update_master(self):
         """
@@ -755,11 +838,13 @@ class GenericJob(JobCore):
                 # del self
                 # p.start()
                 del self
-                master = project.load(master_id)
-                if master.server.run_mode.non_modal or master.server.run_mode.queue:
+                if project.inspect(master_id)["server"]["run_mode"] == "non_modal":
+                    master = project.load(master_id)
                     master._run_if_refresh()
-                    if master.server.run_mode.queue and master._process:
-                        master._process.communicate()
+                # if master.server.run_mode.non_modal or master.server.run_mode.queue:
+                #     master._run_if_refresh()
+                #     if master.server.run_mode.queue and master._process:
+                #         master._process.communicate()
             elif master_db_entry['status'] == 'refresh':
                 project.db.item_update({'status': 'busy'}, master_id)
                 self._logger.info("busy master: {} {}".format(master_id, self.get_job_id()))
@@ -788,6 +873,10 @@ class GenericJob(JobCore):
             hdf (ProjectHDFio): HDF5 group object - optional
             group_name (str): HDF5 subgroup name - optional
         """
+        if hdf is not None:
+            self._hdf5 = hdf
+        if group_name is not None:
+            self._hdf5.open(group_name)
         self._executable_activate_mpi()
         self._type_to_hdf()
         self._server.to_hdf(self._hdf5)
@@ -803,6 +892,10 @@ class GenericJob(JobCore):
             hdf (ProjectHDFio): HDF5 group object - optional
             group_name (str): HDF5 subgroup name - optional
         """
+        if hdf is not None:
+            self._hdf5 = hdf
+        if group_name is not None:
+            self._hdf5.open(group_name)
         self._type_from_hdf()
         self._server.from_hdf(self._hdf5)
         with self._hdf5.open('input') as hdf_input:
@@ -885,24 +978,6 @@ class GenericJob(JobCore):
         new_ham._restart_file_dict = dict()
         return new_ham
 
-    def create_job(self, job_type, job_name):
-        """
-        Create one of the following jobs:
-        - 'ExampleJob': example job just generating random number
-        - 'SerialMaster': series of jobs run in serial
-        - 'ParallelMaster': series of jobs run in parallel
-        - 'ScriptJob': Python script or jupyter notebook job container
-        - 'ListMaster': list of jobs
-
-        Args:
-            job_type (str): job type can be ['ExampleJob', 'SerialMaster', 'ParallelMaster', 'ScriptJob', 'ListMaster']
-            job_name (str): name of the job
-
-        Returns:
-            GenericJob: job object depending on the job_type selected
-        """
-        return self.project.create_job(job_type=job_type, job_name=job_name)
-
     def _copy_restart_files(self):
         """
         Internal helper function to copy the files required for the restart job.
@@ -928,30 +1003,28 @@ class GenericJob(JobCore):
                   'To run it, go into the working directory {} and ' +
                   'call \'python run_job.py\' '.format(posixpath.abspath(self.project_hdf5.working_directory)))
 
-    def _run_if_new(self, debug=False, que_wait_for=None):
+    def _run_if_new(self, debug=False):
         """
         Internal helper function the run if new function is called when the job status is 'initialized'. It prepares
         the hdf5 file and the corresponding directory structure.
 
         Args:
             debug (bool): Debug Mode
-            que_wait_for (int): Que ID to wait for before this job is executed.
         """
         self.validate_ready_to_run()
+        if self.server.run_mode.queue:
+            self.check_setup()
         if self.check_if_job_exists():
             print('job exists already and therefore was not created!')
         else:
             self._create_job_structure(debug=debug)
-            self.run(que_wait_for=que_wait_for)
+            self.run()
 
-    def _run_if_created(self, que_wait_for=None):
+    def _run_if_created(self):
         """
         Internal helper function the run if created function is called when the job status is 'created'. It executes
         the simulation, either in modal mode, meaning waiting for the simulation to finish, manually, or submits the
         simulation to the que.
-
-        Args:
-            que_wait_for (int): Queue ID to wait for before this job is executed.
 
         Returns:
             int: Queue ID - if the job was send to the queue
@@ -966,7 +1039,7 @@ class GenericJob(JobCore):
         elif self.server.run_mode.non_modal or self.server.run_mode.thread:
             self.run_if_non_modal()
         elif self.server.run_mode.queue:
-            return self.run_if_scheduler(que_wait_for)
+            return self.run_if_scheduler()
         elif self.server.run_mode.interactive:
             self.run_if_interactive()
         elif self.server.run_mode.interactive_non_modal:
@@ -978,7 +1051,7 @@ class GenericJob(JobCore):
         Internal helper function the run if submitted function is called when the job status is 'submitted'. It means
         the job is waiting in the queue. ToDo: Display a list of the users jobs in the queue.
         """
-        if self.server.run_mode.queue and self.project.queue_job_info(self) is None:
+        if self.server.run_mode.queue and not self.project.queue_check_job_is_waiting_or_running(self.job_id):
             self.run(run_again=True)
         else:
             print('Job ' + str(self.job_id) + ' is waiting in the que!')
@@ -988,7 +1061,7 @@ class GenericJob(JobCore):
         Internal helper function the run if running function is called when the job status is 'running'. It allows the
         user to interact with the simulation while it is running.
         """
-        if self.server.run_mode.queue and self.project.queue_job_info(self) is None:
+        if self.server.run_mode.queue and not self.project.queue_check_job_is_waiting_or_running(self.job_id):
             self.run(run_again=True)
         elif self.server.run_mode.interactive:
             self.run_if_interactive()
@@ -1023,6 +1096,8 @@ class GenericJob(JobCore):
             if not self.convergence_check():
                 self.status.not_converged = True
             else:
+                if self._compress_by_default:
+                    self.compress()
                 self.status.finished = True
         self._calculate_successor()
         self.send_to_database()
@@ -1064,6 +1139,8 @@ class GenericJob(JobCore):
                 self._executable = Executable(codename=self.__name__,
                                               module=self.__module__.split('.')[1],
                                               path_binary_codes=s.resource_paths)
+            else:
+                self._executable = Executable(codename=self.__name__, path_binary_codes=s.resource_paths)
 
     def _type_to_hdf(self):
         """
@@ -1122,28 +1199,6 @@ class GenericJob(JobCore):
             self.server.cores = 1
             warnings.warn('No multi core executable found falling back to the single core executable.', RuntimeWarning)
 
-    def _write_run_wrapper(self, debug=False):
-        """
-        Internal helper function to run a python script for monitoring external calculation:
-        This python script - which is executed as a wrapper around the simulation - is written here.
-
-        Args:
-            debug (bool): True or False - set level of output
-        """
-        file_name = posixpath.join(self.project_hdf5.working_directory, "run_job.py")
-        with open(file_name, "w") as f:
-            def wl(arg):
-                return f.write(arg + '\n')
-
-            wl('import sys')
-            wl('from pyiron.base.job.wrapper import JobWrapper')
-            wl('')
-            wl('debug = {0}'.format(debug))
-            wl('job = JobWrapper(working_directory=\'{0}\','.format(self.project_hdf5.working_directory))
-            wl('                 job_id={},'.format(self.job_id))
-            wl('                 debug={})'.format(debug))
-            wl('job.run()')
-
     def _calculate_predecessor(self):
         """
         Internal helper function to calculate the predecessor of the current job if it was not calculated before. This
@@ -1180,13 +1235,15 @@ class GenericJob(JobCore):
         """
         self._job_id = self.save()
         print('The job ' + self.job_name + ' was saved and received the ID: ' + str(self._job_id))
-        if not (self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal):
+        if self._check_if_input_should_be_written():
             self.project_hdf5.create_working_directory()
             self.write_input()
             self._copy_restart_files()
-            self._write_run_wrapper(debug=debug)
         self.status.created = True
         self._calculate_predecessor()
+
+    def _check_if_input_should_be_written(self):
+        return not (self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal)
 
     def _before_successor_calc(self, ham):
         """
@@ -1195,35 +1252,6 @@ class GenericJob(JobCore):
         Mainly used by the ListMaster job type.
         """
         pass
-
-    def _run_if_lib_save(self, job_name=None, db_entry=True):
-        """
-
-        Args:
-            job_name:
-            db_entry:
-
-        Returns:
-
-        """
-        self.status.running = True
-        if db_entry:
-            job_id = self.project.db.add_item_dict(self.db_entry())
-        else:
-            job_id = None
-        return job_id
-
-    def _run_if_lib_finished(self, job_id):
-        """
-
-        Args:
-            job_id:
-
-        Returns:
-
-        """
-        if job_id is not None:
-            self.project.db.item_update(self._runtime(), job_id)
 
 
 def multiprocess_wrapper(job_id, working_dir, debug=False):

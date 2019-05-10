@@ -18,7 +18,8 @@ The JobCore the most fundamental pyiron job class.
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -94,6 +95,12 @@ class JobCore(PyironObject):
         self._parent_id = None
         self._master_id = None
         self._status = None
+        self._database_property = DatabaseProperties()
+        self._hdf5_content = HDF5Content(project_hdf5=self._hdf5)
+
+    @property
+    def content(self):
+        return self._hdf5_content
 
     @property
     def job_name(self):
@@ -189,6 +196,12 @@ class JobCore(PyironObject):
             int: job id
         """
         return self.job_id
+
+    @property
+    def database_entry(self):
+        if not bool(self._database_property):
+            self._database_property = DatabaseProperties(job_dict=self.project.db.get_item_by_id(self.job_id))
+        return self._database_property
 
     @property
     def parent_id(self):
@@ -414,10 +427,8 @@ class JobCore(PyironObject):
             if os.path.isfile(self.project_hdf5.file_name):
                 os.remove(self.project_hdf5.file_name)
                 dir_name = self.project_hdf5.file_name.split('.h5')[0] + '_hdf5'
-                try:
+                if os.path.isdir(dir_name):
                     os.rmdir(dir_name)
-                except OSError:
-                    print('Library jobs have no job folder {}'.format(dir_name))
         if self.job_id:
             self.project.db.delete_item(self.job_id)
 
@@ -802,6 +813,12 @@ class JobCore(PyironObject):
             pass  # no name check in Python 2.7
 
     def compress(self, files_to_compress=None):
+        """
+        Compress the output files of a job object.
+
+        Args:
+            files_to_compress (list):
+        """
         if not any([".tar.bz2" in file for file in self.list_files()]):
             if files_to_compress is None:
                 files_to_compress = list(self.list_files())
@@ -814,7 +831,7 @@ class JobCore(PyironObject):
                             tar.add(name)
                 for name in files_to_compress:
                     if "tar" not in name:
-                        fullname=os.path.join(self.working_directory, name)
+                        fullname = os.path.join(self.working_directory, name)
                         if os.path.isfile(fullname):
                             os.remove(fullname)
                         elif os.path.isdir(fullname):
@@ -825,8 +842,11 @@ class JobCore(PyironObject):
             print('The files are already compressed!')
 
     def decompress(self):
+        """
+        Decompress the output files of a compressed job object.
+        """
         try:
-            tar_file_name=os.path.join(self.working_directory, self.job_name + ".tar.bz2")
+            tar_file_name = os.path.join(self.working_directory, self.job_name + ".tar.bz2")
             with tarfile.open(tar_file_name, "r:bz2") as tar:
                 tar.extractall(self.working_directory)
             os.remove(tar_file_name)
@@ -834,6 +854,12 @@ class JobCore(PyironObject):
             pass
 
     def is_compressed(self):
+        """
+        Check if the job is already compressed or not.
+
+        Returns:
+            bool: [True/False]
+        """
         compressed_name = self.job_name + ".tar.bz2"
         for name in self.list_files():
             if compressed_name in name:
@@ -844,21 +870,21 @@ class JobCore(PyironObject):
         fpath = self.project_hdf5.file_path
         jname = self.job_name
         h5_dir_name = jname + "_hdf5"
-        h5_file_name =jname + ".h5"
+        h5_file_name = jname + ".h5"
         # assert os.path.isdir(h5_dir_name)
         # assert os.path.isfile(h5_file_name)
         try:
             cwd = os.getcwd()
             os.chdir(fpath)
             with tarfile.open(os.path.join(fpath, self.job_name + ".tar.bz2"), "w:bz2") as tar:
-                for name in [h5_dir_name,h5_file_name]:
-                        tar.add(name)
-            for name in [h5_dir_name,h5_file_name]:
-                     fullname = os.path.join(fpath, name)
-                     if os.path.isfile(fullname):
-                         os.remove(fullname)
-                     elif os.path.isdir(fullname):
-                         shutil.rmtree(fullname)
+                for name in [h5_dir_name, h5_file_name]:
+                    tar.add(name)
+            for name in [h5_dir_name, h5_file_name]:
+                fullname = os.path.join(fpath, name)
+                if os.path.isfile(fullname):
+                    os.remove(fullname)
+                elif os.path.isdir(fullname):
+                    shutil.rmtree(fullname)
         finally:
             os.chdir(cwd)
 
@@ -874,3 +900,48 @@ class JobCore(PyironObject):
 
     def is_self_archived(self):
         return os.path.isfile(os.path.join(self.project_hdf5.file_path, self.job_name + ".tar.bz2"))
+
+
+class DatabaseProperties(object):
+    """
+    Access the database entry of the job
+    """
+    def __init__(self, job_dict=None):
+        self._job_dict = job_dict
+
+    def __bool__(self):
+        return self._job_dict is not None
+
+    def __nonzero__(self):  # __bool__() for Python 2.7
+        return self._job_dict is not None
+
+    def __dir__(self):
+        return list(self._job_dict.keys())
+
+    def __getattr__(self, name):
+        if name in self._job_dict.keys():
+            return self._job_dict[name]
+        else:
+            raise AttributeError
+
+
+class HDF5Content(object):
+    """
+    Access the HDF5 file of the job
+    """
+    def __init__(self, project_hdf5):
+        self._project_hdf5 = project_hdf5
+
+    def __getattr__(self, name):
+        if name in self._project_hdf5.list_nodes():
+            return self._project_hdf5.__getitem__(name)
+        elif name in self._project_hdf5.list_groups():
+            return HDF5Content(self._project_hdf5.__getitem__(name))
+        else:
+            raise AttributeError
+
+    def __dir__(self):
+        return self._project_hdf5.list_nodes() + self._project_hdf5.list_groups()
+
+    def __repr__(self):
+        return self._project_hdf5.__repr__()

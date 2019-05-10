@@ -10,7 +10,9 @@ from math import cos, sin
 import numpy as np
 from six import string_types
 import warnings
-from ase.geometry import cellpar_to_cell, complete_cell
+from ase.geometry import cellpar_to_cell, complete_cell, get_distances
+from matplotlib.colors import rgb2hex
+from scipy.interpolate import interp1d
 
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
@@ -28,7 +30,7 @@ except ImportError:
 
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
                 "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
@@ -114,15 +116,7 @@ class Atoms(object):
             if isinstance(elements, str):
                 element_list = self.convert_formula(elements)
             elif isinstance(elements, (list, tuple, np.ndarray)):
-                is_mixed = False
-                init_type = type(elements[0])
-                for el in elements:
-                    if type(el) == init_type:
-                        pass
-                    else:
-                        is_mixed = True
-                        break
-                if is_mixed:
+                if not all([isinstance(el, elements[0].__class__) for el in elements]):
                     object_list = list()
                     for el in elements:
                         if isinstance(el, (str, np.str, np.str_)):
@@ -131,7 +125,7 @@ class Atoms(object):
                             object_list.append(el)
                         if isinstance(el, Atom):
                             object_list.append(el.element)
-                        if isinstance(el, (int, np.int64, np.int32)):
+                        if isinstance(el, (int, np.integer)):
                             # pse = PeriodicTable()
                             object_list.append(self._pse.element(el))
                         el_object_list = object_list
@@ -149,7 +143,7 @@ class Atoms(object):
                     elif isinstance(elements[0], Atom):
                         el_object_list = [el.element for el in elements]
                         positions = [el.position for el in elements]
-                    elif elements.dtype in [int, np.int64, np.int32]:
+                    elif elements.dtype in [int, np.integer]:
                         el_object_list = self.numbers_to_elements(elements)
                     else:
                         raise ValueError('Unknown static type for element in list: ' + str(type(elements[0])))
@@ -1055,7 +1049,7 @@ class Atoms(object):
 
     def analyse_ovito_voronoi_volume(atoms):
         from pyiron.atomistics.structure.ovito import analyse_ovito_voronoi_volume
-        warnings.filterwarnings("ignore")
+        warnings.filterwarnings("module")
         return analyse_ovito_voronoi_volume(atoms)
 
     def analyse_phonopy_equivalent_atoms(atoms):
@@ -1066,98 +1060,322 @@ class Atoms(object):
 
     @staticmethod
     def _ngl_write_cell(a1, a2, a3, f1=90, f2=90, f3=90):
+        """
+        Writes a PDB-formatted line to represent the simulation cell.
+
+        Args:
+            a1, a2, a3 (float): Lengths of the cell vectors.
+            f1, f2, f3 (float): Angles between the cell vectors (which angles exactly?) (in degrees).
+
+        Returns:
+            (str): The line defining the cell in PDB format.
+        """
         return 'CRYST1 {:8.3f} {:8.3f} {:8.3f} {:6.2f} {:6.2f} {:6.2f} P 1\n'.format(a1, a2, a3, f1, f2, f3)
     
     @staticmethod
-    def _ngl_write_atom(num, species, group, num2, coords=None, c0=None, c1=None):
-        x, y, z = coords
-        return 'ATOM {:>6} {:>4} {:>4} {:>5} {:10.3f} {:7.3f} {:7.3f} {:5.2f} {:5.2f} {:>11} \n'.format(num, species, group, num2, x, y, z, c0, c1, species)
+    def _ngl_write_atom(num, species, x, y, z, group=None, num2=None, occupancy=1., temperature_factor=0.):
+        """
+        Writes a PDB-formatted line to represent an atom.
+
+        Args:
+            num (int): Atomic index.
+            species (str): Elemental species.
+            x, y, z (float): Cartesian coordinates of the atom.
+            group (str): A...group name? (Default is None, repeat elemental species.)
+            num2 (int): An "alternate" index. (Don't ask me...) (Default is None, repeat first number.)
+            occupancy (float): PDB occupancy parameter. (Default is 1.)
+            temperature_factor (float): PDB temperature factor parameter. (Default is 0.
+
+        Returns:
+            (str): The line defining an atom in PDB format
+
+        Warnings:
+            * The [PDB docs](https://www.cgl.ucsf.edu/chimera/docs/UsersGuide/tutorials/pdbintro.html) indicate that
+                the xyz coordinates might need to be in some sort of orthogonal basis. If you have weird behaviour,
+                this might be a good place to investigate.
+        """
+        if group is None:
+            group = species
+        if num2 is None:
+            num2 = num
+        return 'ATOM {:>6} {:>4} {:>4} {:>5} {:10.3f} {:7.3f} {:7.3f} {:5.2f} {:5.2f} {:>11} \n'.format(
+            num, species, group, num2, x, y, z, occupancy, temperature_factor, species)
     
-    def _ngl_write_structure(self, elements, positions, cell, custom_array=None):
+    def _ngl_write_structure(self, elements, positions, cell):
+        """
+        Turns structure information into a NGLView-readable protein-database-formatted string.
+
+        Args:
+            elements (numpy.ndarray/list): Element symbol for each atom.
+            positions (numpy.ndarray/list): Vector of Cartesian atom positions.
+            cell (numpy.ndarray/list): Simulation cell Bravais matrix.
+
+        Returns:
+            (str): The PDB-formatted representation of the structure.
+        """
         from ase.geometry import cell_to_cellpar, cellpar_to_cell
         cellpar = cell_to_cellpar(cell)
         exportedcell = cellpar_to_cell(cellpar)
         rotation = np.linalg.solve(cell, exportedcell)
   
-        pdb_str = self._ngl_write_cell(cellpar[0], cellpar[1], cellpar[2], cellpar[3], cellpar[4], cellpar[5])
+        pdb_str = self._ngl_write_cell(*cellpar)
         pdb_str += 'MODEL     1\n'
-        if custom_array is None:
-            custom_array = np.ones(len(positions))
-        else:
-            custom_array = (custom_array-np.min(custom_array))/(np.max(custom_array)-np.min(custom_array))
+
+        if rotation is not None:
+            positions = np.array(positions).dot(rotation)
+
         for i, p in enumerate(positions):
-            if rotation is not None:
-                p = p.dot(rotation)
-                
-            pdb_str += self._ngl_write_atom(i, elements[i], group=elements[i], num2=i, coords=p, c0=custom_array[i], c1=0.0)
+            pdb_str += self._ngl_write_atom(i, elements[i], *p)
+
         pdb_str += 'ENDMDL \n'
         return pdb_str
-    
-    def plot3d(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5,
-               background='white', color_scheme=None, show_axes=True, custom_array=None, custom_3darray=None, select_atoms=None):
+
+    def _atomic_number_to_radius(self, atomic_number, shift=0.2, slope=0.1, scale=1.0):
         """
+        Give the atomic radius for plotting, which scales like the root of the atomic number.
 
         Args:
-            spacefill:
-            show_cell: whether to show the frame or not (default: True)
-            camera: 'perspective' or 'orthographic'
-            particle_size:
-            background:
-            color_scheme: v.i.
-            custom_array: color for each atom according to the array value
-            custom_3darray: vectors for each atom according to the array values (3 values for each atom)
-            select_atoms: atoms to show (1d array with ID's or True for atoms to show)
+            atomic_number (int/float): The atomic number.
+            shift (float): A constant addition to the radius. (Default is 0.2.)
+            slope (float): A multiplier for the root of the atomic number. (Default is 0.1)
+            scale (float): How much to rescale the whole thing by.
 
-            Possible color schemes: 
+        Returns:
+            (float): The radius. (Not physical, just for visualization!)
+        """
+        return (shift + slope * np.sqrt(atomic_number)) * scale
+
+    def _add_colorscheme_spacefill(self, view, elements, atomic_numbers, particle_size, scheme='element'):
+        """
+        Set NGLView spacefill parameters according to a color-scheme.
+
+        Args:
+            view (NGLWidget): The widget to work on.
+            elements (numpy.ndarray/list): Elemental symbols.
+            atomic_numbers (numpy.ndarray/list): Integer atomic numbers for determining atomic size.
+            particle_size (float): A scale factor for the atomic size.
+            scheme (str): The scheme to use. (Default is "element".)
+
+            Possible NGLView color schemes:
+              " ", "picking", "random", "uniform", "atomindex", "residueindex",
+              "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
+              "hydrophobicity", "value", "volume", "occupancy"
+
+        Returns:
+            (nglview.NGLWidget): The modified widget.
+        """
+        for elem, num in set(list(zip(elements, atomic_numbers))):
+            view.add_spacefill(selection='#' + elem,
+                               radius_type='vdw',
+                               radius=self._atomic_number_to_radius(num, scale=particle_size),
+                               color_scheme=scheme)
+        return view
+
+    def _add_custom_color_spacefill(self, view, atomic_numbers, particle_size, colors):
+        """
+        Set NGLView spacefill parameters according to per-atom colors.
+
+        Args:
+            view (NGLWidget): The widget to work on.
+            atomic_numbers (numpy.ndarray/list): Integer atomic numbers for determining atomic size.
+            particle_size (float): A scale factor for the atomic size.
+            colors (numpy.ndarray/list): A per-atom list of HTML or hex color codes.
+
+        Returns:
+            (nglview.NGLWidget): The modified widget.
+        """
+        for n, num in enumerate(atomic_numbers):
+            view.add_spacefill(selection=[n],
+                               radius_type='vdw',
+                               radius=self._atomic_number_to_radius(num, scale=particle_size),
+                               color=colors[n])
+        return view
+
+    @staticmethod
+    def _scalars_to_hex_colors(scalar_field, start=None, end=None, cmap=None):
+        """
+        Convert scalar values to hex codes using a colormap.
+
+        Args:
+            scalar_field (numpy.ndarray/list): Scalars to convert.
+            start (float): Scalar value to map to the bottom of the colormap (values below are clipped). (Default is
+                None, use the minimal scalar value.)
+            end (float): Scalar value to map to the top of the colormap (values above are clipped).  (Default is
+                None, use the maximal scalar value.)
+            cmap (matplotlib.cm): The colormap to use. (Default is None, which gives a blue-red divergent map.)
+
+        Returns:
+            (list): The corresponding hex codes for each scalar value passed in.
+        """
+        if start is None:
+            start = np.amin(scalar_field)
+        if end is None:
+            end = np.amax(scalar_field)
+        interp = interp1d([start, end], [0, 1])
+        remapped_field = interp(np.clip(scalar_field, start, end))  # Map field onto [0,1]
+
+        if cmap is None:
+            try:
+                from seaborn import diverging_palette
+            except ImportError:
+                print("The package seaborn needs to be installed for the plot3d() function!")
+            cmap = diverging_palette(245, 15, as_cmap=True)  # A nice blue-red palette
+
+        return [rgb2hex(cmap(scalar)[:3]) for scalar in remapped_field]  # The slice gets RGB but leaves alpha
+
+    def plot3d(self, show_cell=True, show_axes=True, camera='perspective', spacefill=True, particle_size=1.0,
+               select_atoms=None, background='white', color_scheme=None, colors=None,
+               scalar_field=None, scalar_start=None, scalar_end=None, scalar_cmap=None,
+               vector_field=None, vector_color=None, custom_array=None, custom_3darray=None):
+        """
+        Plot3d relies on NGLView to visualize atomic structures. Here, we construct a string in the "protein database"
+        ("pdb") format, then turn it into an NGLView "structure". PDB is a white-space sensitive format, so the
+        string snippets are carefully formatted.
+
+        The final widget is returned. If it is assigned to a variable, the visualization is suppressed until that
+        variable is evaluated, and in the meantime more NGL operations can be applied to it to modify the visualization.
+
+        Args:
+            show_cell (bool): Whether or not to show the frame. (Default is True.)
+            show_axes (bool): Whether or not to show xyz axes. (Default is True.)
+            camera (str): 'perspective' or 'orthographic'. (Default is 'perspective'.)
+            spacefill (bool): Whether to use a space-filling or ball-and-stick representation. (Default is True, use
+                space-filling atoms.)
+            particle_size (float): Size of the particles. (Default is 1.)
+            select_atoms (numpy.ndarray): Indices of atoms to show, either as integers or a boolean array mask.
+                (Default is None, show all atoms.)
+            background (str): Background color. (Default is 'white'.)
+            color_scheme (str): NGLView color scheme to use. (Default is None, color by element.)
+            colors (numpy.ndarray): A per-atom array of HTML color names or hex color codes to use for atomic colors.
+                (Default is None, use coloring scheme.)
+            scalar_field (numpy.ndarray): Color each atom according to the array value (Default is None, use coloring
+                scheme.)
+            scalar_start (float): The scalar value to be mapped onto the low end of the color map (lower values are
+                clipped). (Default is None, use the minimum value in `scalar_field`.)
+            scalar_end (float): The scalar value to be mapped onto the high end of the color map (higher values are
+                clipped). (Default is None, use the maximum value in `scalar_field`.)
+            scalar_cmap (matplotlib.cm): The colormap to use. (Default is None, giving a blue-red divergent map.)
+            vector_field (numpy.ndarray): Add vectors (3 values) originating at each atom. (Default is None, no
+                vectors.)
+            vector_color (numpy.ndarray): Colors for the vectors (only available with vector_field). (Default is None,
+                vectors are colored by their direction.)
+
+            Possible NGLView color schemes:
               " ", "picking", "random", "uniform", "atomindex", "residueindex",
               "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
               "hydrophobicity", "value", "volume", "occupancy"
     
         Returns:
-    
+            (nglview.NGLWidget): The NGLView widget itself, which can be operated on further or viewed as-is.
+
+        Warnings:
+            * Many features only work with space-filling atoms (e.g. coloring by a scalar field).
+            * The colour interpretation of some hex codes is weird, e.g. 'green'.
         """
         try:  # If the graphical packages are not available, the GUI will not work.
             import nglview
         except ImportError:
             raise ImportError("The package nglview needs to be installed for the plot3d() function!")
-        # Always visualize the parent basis
+
+        if custom_array is not None:
+            warnings.warn('custom_array is deprecated. Use scalar_field instead', DeprecationWarning)
+            scalar_field = custom_array
+
+        if custom_3darray is not None:
+            warnings.warn('custom_3darray is deprecated. Use vector_field instead', DeprecationWarning)
+            vector_field = custom_3darray
+
         parent_basis = self.get_parent_basis()
-        if select_atoms is None:
-            select_atoms = np.array(len(parent_basis)*[True])
-        else:
-            select_atoms = np.array(select_atoms)
-            if custom_array is not None:
-                custom_array = custom_array[select_atoms]
-        struct = nglview.TextStructure(self._ngl_write_structure(parent_basis.get_chemical_symbols()[select_atoms],
-                                                                 self.positions[select_atoms], self.cell, custom_array=custom_array))
+        elements = parent_basis.get_chemical_symbols()
+        atomic_numbers = parent_basis.get_atomic_numbers()
+        positions = self.positions
+
+        # If `select_atoms` was given, visualize only a subset of the `parent_basis`
+        if select_atoms is not None:
+            select_atoms = np.array(select_atoms, dtype=int)
+            elements = elements[select_atoms]
+            atomic_numbers = atomic_numbers[select_atoms]
+            positions = positions[select_atoms]
+            if colors is not None:
+                colors = np.array(colors)
+                colors = colors[select_atoms]
+            if scalar_field is not None:
+                scalar_field = np.array(scalar_field)
+                scalar_field = scalar_field[select_atoms]
+            if vector_field is not None:
+                vector_field = np.array(vector_field)
+                vector_field = vector_field[select_atoms]
+            if vector_color is not None:
+                vector_color = np.array(vector_color)
+                vector_color = vector_color[select_atoms]
+
+        # Write the nglview protein-database-formatted string
+        struct = nglview.TextStructure(self._ngl_write_structure(elements, positions, self.cell))
+
+        # Parse the string into the displayable widget
         view = nglview.NGLWidget(struct)
+
         if spacefill:
-            if color_scheme is None and custom_array is not None:
-                color_scheme = 'occupancy'
-            elif color_scheme is None:
-                color_scheme = 'element'
-            view.add_spacefill(radius_type='vdw', color_scheme=color_scheme, radius=particle_size)
-            # view.add_spacefill(radius=1.0)
+            # Color by scheme
+            if color_scheme is not None:
+                if colors is not None:
+                    warnings.warn('`color_scheme` is overriding `colors`')
+                if scalar_field is not None:
+                    warnings.warn('`color_scheme` is overriding `scalar_field`')
+                view = self._add_colorscheme_spacefill(view, elements, atomic_numbers, particle_size, color_scheme)
+            # Color by per-atom colors
+            elif colors is not None:
+                if scalar_field is not None:
+                    warnings.warn('`colors` is overriding `scalar_field`')
+                view = self._add_custom_color_spacefill(view, atomic_numbers, particle_size, colors)
+            # Color by per-atom scalars
+            elif scalar_field is not None:  # Color by per-atom scalars
+                colors = self._scalars_to_hex_colors(scalar_field, scalar_start, scalar_end, scalar_cmap)
+                view = self._add_custom_color_spacefill(view, atomic_numbers, particle_size, colors)
+            # Color by element
+            else:
+                view = self._add_colorscheme_spacefill(view, elements, atomic_numbers, particle_size)
             view.remove_ball_and_stick()
         else:
             view.add_ball_and_stick()
+
         if show_cell:
             if parent_basis.cell is not None:
                 view.add_unitcell()
-        if custom_3darray is not None:
-            for arr, pos in zip(custom_3darray[select_atoms], self.positions[select_atoms]):
-                view.shape.add_arrow(list(pos), list(pos+arr), list(0.5*arr/np.linalg.norm(arr)+0.5), 0.2)
-        if show_axes:
+
+        if vector_color is None and vector_field is not None:
+            vector_color = 0.5 * vector_field / np.linalg.norm(vector_field, axis=-1)[:, np.newaxis] + 0.5
+        elif vector_field is not None and vector_field is not None:  # WARNING: There must be a bug here...
+            try:
+                if vector_color.shape != np.ones((len(self), 3)).shape:
+                    vector_color = np.outer(np.ones(len(self)), vector_color / np.linalg.norm(vector_color))
+            except AttributeError:
+                vector_color = np.ones((len(self), 3)) * vector_color
+
+        if vector_field is not None:
+            for arr, pos, col in zip(vector_field, positions, vector_color):
+                view.shape.add_arrow(list(pos), list(pos + arr), list(col), 0.2)
+
+        if show_axes:  # Add axes
             axes_origin = -np.ones(3)
-            view.shape.add_arrow(list(axes_origin), list(axes_origin+np.array([1, 0, 0])), [1, 0, 0], 0.1)
-            view.shape.add_arrow(list(axes_origin), list(axes_origin+np.array([0, 1, 0])), [0, 1, 0], 0.1)
-            view.shape.add_arrow(list(axes_origin), list(axes_origin+np.array([0, 0, 1])), [0, 0, 1], 0.1)
-            view.shape.add_text(list(axes_origin+np.array([0, 0, 1])), [0, 0, 0], 1, 'z')
-            view.shape.add_text(list(axes_origin+np.array([0, 1, 0])), [0, 0, 0], 1, 'y')
-            view.shape.add_text(list(axes_origin+np.array([1, 0, 0])), [0, 0, 0], 1, 'x')
-        if camera!='perspective' and camera!='orthographic':
-            print('Only perspective or orthographic is permitted')
-            return None
+            arrow_radius = 0.1
+            text_size = 1
+            text_color = [0, 0, 0]
+            arrow_names = ['x', 'y', 'z']
+
+            for n in [0, 1, 2]:
+                start = list(axes_origin)
+                shift = np.zeros(3)
+                shift[n] = 1
+                end = list(start + shift)
+                color = list(shift)
+                # We cast as list to avoid JSON warnings
+                view.shape.add_arrow(start, end, color, arrow_radius)
+                view.shape.add_text(end, text_color, text_size, arrow_names[n])
+
+        if camera != 'perspective' and camera != 'orthographic':
+            warnings.warn('Only perspective or orthographic is (likely to be) permitted for camera')
+
         view.camera = camera
         view.background = background
         return view
@@ -1293,20 +1511,18 @@ class Atoms(object):
                      dimension=len(cell), species=self.species)
 
     def get_neighbors(self,
-                      radius=None,
                       num_neighbors=12,
                       t_vec=True,
                       include_boundary=True,
                       exclude_self=True,
                       tolerance=2,
-                      id_list=None, cutoff=None):
+                      id_list=None,
+                      cutoff_radius=None,
+                      cutoff=None):
         """
         
         Args:
-            radius: distance up to which nearest neighbors are searched for
-                    used only for periodic boundary padding
-                   (in absolute units)
-            num_neighbors: 
+            num_neighbors (int): number of neighbors
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
             include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
@@ -1314,7 +1530,10 @@ class Atoms(object):
             exclude_self (bool): include central __atom (i.e. distance = 0)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list:
-            cutoff (float): Upper bound of the distance to which the search must be done
+            cutoff (float/None): Upper bound of the distance to which the search must be done - by default search for
+                                 upto 100 neighbors unless num_neighbors is defined explicitly.
+            cutoff_radius (float/None): Upper bound of the distance to which the search must be done - by default search
+                                        for upto 100 neighbors unless num_neighbors is defined explicitly.
 
         Returns:
 
@@ -1322,6 +1541,11 @@ class Atoms(object):
             and vectors
 
         """
+        if cutoff is not None and cutoff_radius is None:
+            warnings.warn('Please use cutoff_radius, rather than cutoff', DeprecationWarning)
+            cutoff_radius = cutoff
+        if cutoff_radius is not None and num_neighbors == 12:
+            num_neighbors = 100
         # eps = 1e-4
         i_start = 0
         if exclude_self:
@@ -1334,10 +1558,10 @@ class Atoms(object):
         neighbor_obj = Neighbors()
         if not include_boundary:  # periodic boundaries are NOT included
             tree = cKDTree(self.positions)
-            if cutoff is None:
+            if cutoff_radius is None:
                 neighbors = tree.query(self.positions, k=num_neighbors)
             else:
-                neighbors = tree.query(self.positions, k=num_neighbors, distance_upper_bound=cutoff)
+                neighbors = tree.query(self.positions, k=num_neighbors, distance_upper_bound=cutoff_radius)
 
             d_lst, ind_lst, v_lst = [], [], []
             ic = 0
@@ -1356,8 +1580,7 @@ class Atoms(object):
         # include periodic boundaries
         # translate radius in boundary layer with relative coordinates
         # TODO: introduce more rigoros definition
-        if radius is None:
-            radius = 3 * num_neighbors ** (1. / 3.)
+        radius = 3 * num_neighbors ** (1. / 3.)
         rel_width = [radius / np.sqrt(np.dot(a_i, a_i)) for a_i in self.cell]
         rel_width_scalar = np.max(rel_width)
 
@@ -1375,10 +1598,10 @@ class Atoms(object):
         else:
             positions = np.array([self.positions[i] for i in id_list])
         # print ("len positions: ", len(positions))
-        if cutoff is None:
+        if cutoff_radius is None:
             neighbors = tree.query(positions, k=num_neighbors)
         else:
-            neighbors = tree.query(positions, k=num_neighbors, distance_upper_bound=cutoff)
+            neighbors = tree.query(positions, k=num_neighbors, distance_upper_bound=cutoff_radius)
 
         # print ("neighbors: ", neighbors)
 
@@ -1444,13 +1667,56 @@ class Atoms(object):
         neighbor_obj.shells = self.neighbor_shellOrder
         return neighbor_obj
 
-    def get_shells(self, id_list=None, max_shell=2, radius=None, max_num_neighbors=100):
+    def get_neighborhood(box, position, num_neighbors=12, t_vec=True, include_boundary=True, exclude_self=True,
+                         tolerance=2, id_list=None, cutoff=None, cutoff_radius=None):
+        """
+        
+        Args:
+            position: position in a box whose neighborhood information is analysed
+            num_neighbors: 
+            t_vec (bool): True: compute distance vectors
+                        (pbc are automatically taken into account)
+            include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
+                                     False is needed e.g. in plot routines to avoid showing incorrect bonds
+            exclude_self (bool): include central __atom (i.e. distance = 0)
+            tolerance (int): tolerance (round decimal points) used for computing neighbor shells
+            id_list:
+            cutoff (float/ None): Upper bound of the distance to which the search must be done
+            cutoff_radius (float/ None): Upper bound of the distance to which the search must be done
+
+        Returns:
+
+            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor indices, distances
+            and vectors
+
+        """
+        class NeighTemp(object):
+            pass
+        box = box.copy()
+        box += box[-1]
+        pos = box.positions
+        pos[-1] = np.array(position)
+        box.positions = pos
+        neigh = box.get_neighbors(num_neighbors=num_neighbors, t_vec=t_vec,
+                                  include_boundary=include_boundary, exclude_self=exclude_self,
+                                  tolerance=tolerance, id_list=id_list, cutoff=cutoff, cutoff_radius=cutoff_radius)
+        neigh_return = NeighTemp()
+        setattr(neigh_return, 'distances', neigh.distances[-1])
+        setattr(neigh_return, 'shells', neigh.shells[-1])
+        setattr(neigh_return, 'vecs', neigh.vecs[-1])
+        setattr(neigh_return, 'indices', neigh.indices[-1])
+        neigh_return.distances = neigh_return.distances[neigh_return.indices!=len(box)-1]
+        neigh_return.shells = neigh_return.shells[neigh_return.indices!=len(box)-1]
+        neigh_return.vecs = np.array(neigh_return.vecs)[neigh_return.indices!=len(box)-1]
+        neigh_return.indices = neigh_return.indices[neigh_return.indices!=len(box)-1]
+        return neigh_return
+
+    def get_shells(self, id_list=None, max_shell=2, max_num_neighbors=100):
         """
         
         Args:
             id_list: 
-            max_shell: 
-            radius: 
+            max_shell:
             max_num_neighbors: 
 
         Returns:
@@ -1458,8 +1724,7 @@ class Atoms(object):
         """
         if id_list is None:
             id_list = [0]
-        neighbors = self.get_neighbors(radius=radius,
-                                       num_neighbors=max_num_neighbors,
+        neighbors = self.get_neighbors(num_neighbors=max_num_neighbors,
                                        id_list=id_list)
 
         shells = neighbors.shells[0]
@@ -1475,7 +1740,7 @@ class Atoms(object):
             raise AssertionError()
         return shell_dict
 
-    def get_shell_matrix(self, shell, id_list=None, restraint_matrix=None, radius=None, max_num_neighbors=100):
+    def get_shell_matrix(self, shell, id_list=None, restraint_matrix=None, max_num_neighbors=100):
         """
 
         Args:
@@ -1491,10 +1756,8 @@ class Atoms(object):
             NxN matrix with 1 for the pairs of atoms in the given shell
 
         """
-        if not isinstance(shell, int) or not shell > 0:
-            raise ValueError("Parameter 'shell' must be an integer greater than 0")
-        neigh_list = self.get_neighbors(radius=radius,
-                                        num_neighbors=max_num_neighbors,
+        assert isinstance(shell, int) and shell > 0, "Parameter 'shell' must be an integer greater than 0"
+        neigh_list = self.get_neighbors(num_neighbors=max_num_neighbors,
                                         id_list=id_list)
         Natom = len(neigh_list.shells)
         if restraint_matrix is None:
@@ -1628,7 +1891,7 @@ class Atoms(object):
             dist_vec_cl = [np.mean(group) for group in np.split(dist_vec, ind_where)]
             return ind_vec_cl, dist_vec_cl
 
-        neighbors = self.get_neighbors(radius=radius,
+        neighbors = self.get_neighbors(cutoff_radius=radius,
                                        num_neighbors=num_neighbors)
 
         dist = neighbors.distances
@@ -1687,6 +1950,25 @@ class Atoms(object):
                                        symprec=symprec,
                                        angle_tolerance=angle_tolerance)
 
+    def group_points_by_symmetry(self, points):
+        """
+            This function classifies the points into groups according to the box symmetry given by spglib.
+
+            Args:
+                points: (np.array/list) nx3 array which contains positions
+
+            Returns: list of arrays containing geometrically equivalent positions
+
+            It is possible that the original points are not found in the returned list, as the positions outsie
+            the box will be projected back to the box.
+        """
+        struct_copy = self.copy()
+        points = np.array(points).reshape(-1, 3)
+        struct_copy += Atoms(elements=len(points)*['Hs'], positions=points)
+        struct_copy.center_coordinates_in_unit_cell();
+        group_IDs = struct_copy.get_symmetry()['equivalent_atoms'][struct_copy.select_index('Hs')]
+        return [np.round(points[group_IDs==ID], decimals=8) for ID in group_IDs]
+
     def _get_voronoi_vertices(self, minimum_dist=0.1):
         """
             This function gives the positions of Voronoi vertices
@@ -1727,7 +2009,7 @@ class Atoms(object):
             neigh = box_copy.get_neighbors()
         return pos_total, box_copy
 
-    def get_equivalent_voronoi_vertices(self, return_box=False, minimum_dist=0.1):
+    def get_equivalent_voronoi_vertices(self, return_box=False, minimum_dist=0.1, symprec=1e-5, angle_tolerance=-1.0):
         """
             This function gives the positions of spatially equivalent Voronoi vertices in lists, which
             most likely represent interstitial points or vacancies (along with other high symmetry points)
@@ -1745,7 +2027,7 @@ class Atoms(object):
 
         _, box_copy = self._get_voronoi_vertices(minimum_dist = minimum_dist)
         list_positions = []
-        sym = box_copy.get_symmetry()
+        sym = box_copy.get_symmetry(symprec=symprec, angle_tolerance=angle_tolerance)
         for ind in set(sym['equivalent_atoms'][box_copy.select_index('Hs')]):
             list_positions.append(box_copy.positions[sym['equivalent_atoms']==ind])
         if return_box:
@@ -1986,63 +2268,10 @@ class Atoms(object):
         Returns:
 
         """
-        # adopted from http://stackoverflow.com/questions/19634993/volume-of-voronoi-cell-python
-        from scipy.spatial import Voronoi, Delaunay
-        def tetravol(a, b, c, d):
-            """
-            Calculates the volume of a tetrahedron, given vertices a,b,c and d (triplets)
-            
-            Args:
-                a: 
-                b: 
-                c: 
-                d: 
-
-            Returns:
-
-            """
-            tetravol = abs(np.dot((a - d), np.cross((b - d), (c - d)))) / 6
-            return tetravol
-
-        def vol(vor, p):
-            """
-            Calculate volume of 3d Voronoi cell based on point p. Voronoi diagram is passed in v.
-            
-            Args:
-                vor: 
-                p: 
-
-            Returns:
-
-            """
-            dpoints = []
-            vol = 0
-            for v in vor.regions[vor.point_region[p]]:
-                dpoints.append(list(vor.vertices[v]))
-            tri = Delaunay(np.array(dpoints))
-            for simplex in tri.simplices:
-                vol += tetravol(np.array(dpoints[simplex[0]]), np.array(dpoints[simplex[1]]),
-                                np.array(dpoints[simplex[2]]), np.array(dpoints[simplex[3]]))
-            return vol
-
-        vor = Voronoi(self.positions)
-
-        ind_lst, vol_lst = [], []
-        for i, p in enumerate(vor.points):
-            out = False
-            for v in vor.regions[vor.point_region[i]]:
-                # print ("regions: ", i, p, v)
-                # if v in region_lst:
-                #     continue
-                # region_lst.append(v)
-                if v <= -1:  # a point index of -1 is returned if the vertex is outside the Vornoi diagram, in this application these should be ignorable edge-cases
-                    out = True
-            if not out:
-                pvol = vol(vor, i)
-                ind_lst.append(i)
-                vol_lst.append(pvol)
-                # print ("point "+str(i)+" with coordinates "+str(p)+" has volume "+str(pvol))
-        return np.array(ind_lst), np.array(vol_lst)
+        warnings.warn("This function doesn't account for periodic boundary conditions. Call "
+                      "`analyse_ovito_voronoi_volume` instead. This is what will now be returned.",
+                      DeprecationWarning)
+        return self.analyse_ovito_voronoi_volume()
 
     def __add__(self, other):
         if isinstance(other, Atoms):
@@ -2095,7 +2324,7 @@ class Atoms(object):
         return atoms_new
 
     def __delitem__(self, key):
-        if isinstance(key, (int, np.int32, np.int64)):
+        if isinstance(key, (int, np.integer)):
             key = [key]
         new_length = len(self) - len(key)
         key = np.array(key).flatten()
@@ -2187,7 +2416,7 @@ class Atoms(object):
         return out_str
 
     def __setitem__(self, key, value):
-        if isinstance(key, (int, np.int8, np.int16, np.int32, np.int64)):
+        if isinstance(key, (int, np.integer)):
             old_el = self.species[self.indices[key]]
             if isinstance(value, (str, np.str, np.str_)):
                 el = PeriodicTable().element(value)
@@ -2239,7 +2468,7 @@ class Atoms(object):
                         key = np.arange(0, key.stop, key.step)
                     else:
                         key = np.arange(0, len(self), key.step)
-            if isinstance(value, (str, np.str, np.str_, int, np.int, np.int32)):
+            if isinstance(value, (str, np.str, np.str_, int, np.integer)):
                 el = PeriodicTable().element(value)
             elif isinstance(value, ChemicalElement):
                 el = value
@@ -2379,7 +2608,7 @@ class Atoms(object):
         else:
             return self._cell.copy()
 
-    def get_distance(self, a0, a1, mic=False, vector=False):
+    def get_distance(self, a0, a1, mic=True, vector=False):
         """
         Return distance between two atoms.
 
@@ -2387,12 +2616,12 @@ class Atoms(object):
         vector=True gives the distance vector (from a0 to a1).
 
         Args:
-            a0:
-            a1:
-            mic:
-            vector:
+            a0: position or atom ID
+            a1: position or atom ID
+            mic: minimum image convention (True if periodic boundary conditions should be considered)
+            vector: True, if instead of distnce the vector connecting the two positions should be returned
 
-        Returns:
+        Returns: distance or vectors in length unit
 
         """
         from ase.geometry import find_mic
@@ -2420,11 +2649,49 @@ class Atoms(object):
 
         return d_len[0]
 
+    def get_distances(self, a0=None, a1=None, mic=True, vector=False):
+        """
+        Return distance matrix of every position in p1 with every position in p2
+
+        Args:
+            a0 (numpy.ndarray/list): Nx3 array of positions
+            a1 (numpy.ndarray/list): Nx3 array of positions
+            mic (bool): minimum image convention
+            vector (bool): return vectors instead of distances
+
+        Returns:
+            numpy.ndarray NxN if vector=False and NxNx3 if vector=True
+
+        if a1 is not set, it is assumed that distances between all positions in a0 are desired. a1 will be set to a0 in this case.
+        if both a0 and a1 are not set, the distances between all atoms in the box are returned
+
+        Use mic to use the minimum image convention.
+
+        Learn more about get_distances from the ase website:
+        https://wiki.fysik.dtu.dk/ase/ase/geometry.html#ase.geometry.get_distances
+        """
+        if (a0 is not None and len(np.array(a0).shape)!=2) or (a1 is not None and len(np.array(a1).shape)!=2):
+            raise ValueError('a0 and a1 have to be None or Nx3 array')
+        if a0 is None and a1 is not None:
+            a0 = a1
+            a1 = None
+        if a0 is None:
+            a0 = self.positions
+        if mic:
+            vec, dist = get_distances(a0, a1, cell=self.cell, pbc=self.pbc)
+        else:
+            vec, dist = get_distances(a0, a1)
+        if vector:
+            return vec
+        else:
+            return dist
+
     def get_distance_matrix(self, mic=True, vector=False):
         """
         Return distances between all atoms in a matrix. cf. get_distance
         """
-        return np.array([np.array([self.get_distance(i, j, mic, vector) for i in range(len(self))]) for j in range(len(self))])
+        warnings.warn('get_distance_matrix is deprecated. Use get_distances instead', DeprecationWarning)
+        return self.get_distances(mic=mic, vector=vector)
 
     def get_constraint(self):
         if 'selective_dynamics' in self._tag_list._lists.keys():
@@ -3308,7 +3575,13 @@ def ase_to_pyiron(ase_obj):
     cell = ase_obj.cell
     positions = ase_obj.get_positions()
     pbc = ase_obj.get_pbc()
-    pyiron_atoms = Atoms(elements=element_list, positions=positions, pbc=pbc, cell=cell)
+    spins = ase_obj.get_initial_magnetic_moments()
+    if all(spins == np.array(None)) or sum(np.abs(spins)) == 0.0:
+        pyiron_atoms = Atoms(elements=element_list, positions=positions, pbc=pbc, cell=cell)
+    else:
+        if any(spins == np.array(None)):
+            spins[spins == np.array(None)] = 0.0
+        pyiron_atoms = Atoms(elements=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins)
     if len(ase_obj.constraints) != 0:
         for constraint in ase_obj.constraints:
             constraint_dict = constraint.todict()
@@ -3334,11 +3607,47 @@ def pyiron_to_ase(pyiron_obj):
     cell = pyiron_obj.cell
     positions = pyiron_obj.positions
     pbc = pyiron_obj.get_pbc()
-    atoms = ASEAtoms(symbols=element_list, positions=positions, pbc=pbc, cell=cell)
+    spins = pyiron_obj.get_initial_magnetic_moments()
+    atoms = ASEAtoms(symbols=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins)
     return atoms
 
 
+def _check_if_simple_atoms(atoms):
+    """
+    Raise a warning if the ASE atoms object includes properties which can not be converted to pymatgen atoms.
+
+    Args:
+        atoms: ASE atoms object
+    """
+    dict_keys = [k for k in atoms.__dict__.keys() if k not in ['_celldisp', 'arrays', '_cell', '_pbc', '_constraints',
+                                                               'info', '_calc']]
+    array_keys = [k for k in atoms.__dict__['arrays'].keys() if k not in ['numbers', 'positions']]
+    if not len(dict_keys) == 0:
+        warnings.warn('Found unknown keys: ' + str(dict_keys))
+    if not np.all(atoms.__dict__['_celldisp'] == np.array([[0.], [0.], [0.]])):
+        warnings.warn('Found cell displacement: ' + str(atoms.__dict__['_celldisp']))
+    if not atoms.__dict__['_calc'] is None:
+        warnings.warn('Found calculator: ' + str(atoms.__dict__['_calc']))
+    if not atoms.__dict__['_constraints'] == []:
+        warnings.warn('Found constraint: ' + str(atoms.__dict__['_constraints']))
+    if not np.all(atoms.__dict__['_pbc']):
+        warnings.warn('Cell is not periodic: ' + str(atoms.__dict__['_pbc']))
+    if not len(array_keys) == 0:
+        warnings.warn('Found unknown flags: ' + str(array_keys))
+    if not atoms.__dict__['info'] == dict():
+        warnings.warn('Info is not empty: ' + str(atoms.__dict__['info']))
+
+
 def pymatgen_to_pyiron(pymatgen_obj):
+    """
+    Convert pymatgen atoms object to pyiron atoms object (pymatgen->ASE->pyiron)
+
+    Args:
+        pymatgen_obj: pymatgen atoms object
+
+    Returns:
+        pyiron atoms object
+    """
     try:
         from pymatgen.io.ase import AseAtomsAdaptor
     except ImportError:
@@ -3347,11 +3656,22 @@ def pymatgen_to_pyiron(pymatgen_obj):
 
 
 def pyiron_to_pymatgen(pyiron_obj):
+    """
+    Convert pyiron atoms object to pymatgen atoms object
+
+    Args:
+        pyiron_obj: pyiron atoms object
+
+    Returns:
+        pymatgen atoms object
+    """
     try:
         from pymatgen.io.ase import AseAtomsAdaptor
     except ImportError:
         raise ValueError('PyMatGen package not yet installed')
-    return AseAtomsAdaptor().get_structure(atoms=pyiron_to_ase(pyiron_obj), cls=None)
+    ase_atoms = pyiron_to_ase(pyiron_obj)
+    _check_if_simple_atoms(atoms=ase_atoms)
+    return AseAtomsAdaptor().get_structure(atoms=ase_atoms, cls=None)
 
 
 def ovito_to_pyiron(ovito_obj):

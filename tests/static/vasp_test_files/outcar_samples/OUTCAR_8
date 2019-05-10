@@ -569,7 +569,7 @@ Automatic generation of k-mesh.
    wavefun   :   195232. kBytes
 
  Broyden mixing: mesh for mixing (old mesh)
-   NGX = 21   NGY = 21   NGZ = 21
+   NGX =21   NGY= 21   NGZ = 21
   (NGX  = 96   NGY  = 96   NGZ  = 96)
   gives a total of   9261 points
 

@@ -10,7 +10,8 @@ import numpy as np
 from collections import OrderedDict, Sequence
 
 __author__ = "Joerg Neugebauer"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -158,7 +159,7 @@ class SparseList(object):
                 yield val
 
     def __getitem__(self, item):
-        if isinstance(item, (int, np.int64, np.int32)):
+        if isinstance(item, (int, np.integer)):
             if item in self._dict:
                 return self._dict[item]
             return self._default
@@ -169,7 +170,7 @@ class SparseList(object):
             if len(item) == 0:
                 ind_list = []
             else:
-                if isinstance(item[0], (int, np.int64, np.int32)):
+                if isinstance(item[0], (int, np.integer)):
                     ind_list = item
                 elif isinstance(item[0], (bool, np.bool_)):
                     ind_list = []
@@ -183,7 +184,7 @@ class SparseList(object):
         return self.__class__(sliced_dict, default=self._default, length=len(ind_list))
 
     def __setitem__(self, key, value):
-        if isinstance(key, int):
+        if isinstance(key, (int, np.integer)):
             if key > len(self):
                 raise IndexError
             self._dict[key] = value
@@ -222,17 +223,13 @@ class SparseList(object):
         return new_list
 
     def __mul__(self, other):
-        if not isinstance(other, (int, np.int32, np.int_, np.int64)):
+        if not isinstance(other, (int, np.integer)):
             raise ValueError('Multiplication defined only for SparseArray*integers')
-
-        len_sparse = len(list(self.keys()))
-        keys = other * list(self.keys())
-        vals = other * list(self._dict.values())[:]
-        for i in range(len(keys)):
-            i_shift = (i % len_sparse) * len(self)
-            keys[i] += i_shift
-
-        new_dic = {key: val for key, val in zip(keys, vals)}
+        overall_list = other * np.arange(len(self)).tolist()
+        new_dic = dict()
+        for k in self.keys():
+            for val in np.argwhere(np.array(overall_list) == k).flatten():
+                new_dic[val] = self[k]
         return self.__class__(new_dic, default=self._default, length=other * len(self))
 
     def __rmul__(self, other):

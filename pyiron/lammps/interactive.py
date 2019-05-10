@@ -1,5 +1,10 @@
+# coding: utf-8
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
+
 from ctypes import c_double, c_int
 import numpy as np
+import os
 import pandas as pd
 import warnings
 
@@ -12,10 +17,19 @@ from pyiron.lammps.structure import UnfoldingPrism
 from pyiron.atomistics.job.interactive import GenericInteractive
 from pyiron.lammps.pipe import LammpsLibrary
 
+__author__ = "Osamu Waseda, Jan Janssen"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
+__version__ = "1.0"
+__maintainer__ = "Jan Janssen"
+__email__ = "janssen@mpie.de"
+__status__ = "production"
+__date__ = "Sep 1, 2018"
 
-class LammpsInterative(LammpsBase, GenericInteractive):
+
+class LammpsInteractive(LammpsBase, GenericInteractive):
     def __init__(self, project, job_name):
-        super(LammpsInterative, self).__init__(project, job_name)
+        super(LammpsInteractive, self).__init__(project, job_name)
         self._check_opened = False
         self._interactive_prism = None
         self._interactive_run_command = None
@@ -81,7 +95,7 @@ class LammpsInterative(LammpsBase, GenericInteractive):
         self._interactive_prism = UnfoldingPrism(cell)
         lx, ly, lz, xy, xz, yz = self._interactive_prism.get_lammps_prism()
         if np.matrix.trace(self._interactive_prism.R) != 3:
-            print('Warning: setting upper trangular matrix might slow down the calculation')
+            warnings.warn('Warning: setting upper trangular matrix might slow down the calculation')
         if abs(xy) + abs(xz) + abs(yz) > 1.0e-6:
             if self.structure._is_scaled:
                 self._interactive_lib_command(
@@ -138,6 +152,8 @@ class LammpsInterative(LammpsBase, GenericInteractive):
         potential_lst = []
         if self.input.potential.files is not None:
             for potential in self.input.potential.files:
+                if not os.path.exists(potential):
+                    raise ValueError('Potential not found: ', potential)
                 potential_lst.append([potential.split('/')[-1], potential])
         for line in self.input.potential.get_string_lst():
             if len(line) > 2:
@@ -160,25 +176,16 @@ class LammpsInterative(LammpsBase, GenericInteractive):
         self._reset_interactive_run_command()
         self.interactive_structure_setter(self.structure)
 
-    def calc_minimize(self, e_tol=1e-8, f_tol=1e-8, max_iter=1000, pressure=None, n_print=1):
+    def calc_minimize(self, e_tol=1e-8, f_tol=1e-8, max_iter=1000, pressure=None, n_print=100):
         if self.server.run_mode.interactive_non_modal:
             warnings.warn('calc_minimize() is not implemented for the non modal interactive mode use calc_static()!')
-        super(LammpsInterative, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure,
-                                                    n_print=n_print)
-
-    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100, delta_temp=1.0,
-                delta_press=None, seed=None, tloop=None, rescale_velocity=True, langevin=False):
-        if self.server.run_mode.interactive_non_modal:
-            warnings.warn('calc_md() is not implemented for the non modal interactive mode use calc_static()!')
-        super(LammpsInterative, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
-                                              time_step=time_step, n_print=n_print, delta_temp=delta_temp,
-                                              delta_press=delta_press, seed=seed, tloop=tloop,
-                                              rescale_velocity=rescale_velocity, langevin=langevin)
+        super(LammpsInteractive, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure,
+                                                     n_print=n_print)
 
     def run_if_interactive(self):
         if self._generic_input['calc_mode'] == 'md':
             self.input.control['run'] = self._generic_input['n_print']
-            super(LammpsInterative, self).run_if_interactive()
+            super(LammpsInteractive, self).run_if_interactive()
             self._reset_interactive_run_command()
 
             counter = 0
@@ -189,7 +196,7 @@ class LammpsInterative(LammpsBase, GenericInteractive):
                 counter += 1
 
         else:
-            super(LammpsInterative, self).run_if_interactive()
+            super(LammpsInteractive, self).run_if_interactive()
             self._interactive_lib_command(self._interactive_run_command)
             self.interactive_collect()
 
@@ -197,7 +204,7 @@ class LammpsInterative(LammpsBase, GenericInteractive):
         if not self._interactive_fetch_completed:
             print('Warning: interactive_fetch being effectuated')
             self.interactive_fetch()
-        super(LammpsInterative, self).run_if_interactive()
+        super(LammpsInteractive, self).run_if_interactive()
         self._interactive_lib_command(self._interactive_run_command)
         self._interactive_fetch_completed = False
 
@@ -218,7 +225,7 @@ class LammpsInterative(LammpsBase, GenericInteractive):
         self._interactive_lib_command("atom_modify map array")
         self._interactive_prism = UnfoldingPrism(structure.cell)
         if np.matrix.trace(self._interactive_prism.R) != 3:
-            print('Warning: setting upper trangular matrix might slow down the calculation')
+            warnings.warn('Warning: setting upper trangular matrix might slow down the calculation')
         xhi, yhi, zhi, xy, xz, yz = self._interactive_prism.get_lammps_prism()
         if self._interactive_prism.is_skewed():
             self._interactive_lib_command('region 1 prism' +
@@ -253,18 +260,29 @@ class LammpsInterative(LammpsBase, GenericInteractive):
         self._interactive_lammps_input()
         self._interactive_set_potential()
 
+    def from_hdf(self, hdf=None, group_name=None):
+        """
+        Recreates instance from the hdf5 file
+
+        Args:
+            hdf (str): Path to the hdf5 file
+            group_name (str): Name of the group which contains the object
+        """
+        super(LammpsInteractive, self).from_hdf(hdf=hdf, group_name=group_name)
+        self.species_from_hdf()
+
     def collect_output(self):
         if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
             pass
         else:
-            super(LammpsInterative, self).collect_output()
+            super(LammpsInteractive, self).collect_output()
 
     def update_potential(self):
         self._interactive_lib_command(self.potential.Config[0][0])
         self._interactive_lib_command(self.potential.Config[0][1])
 
     def interactive_indices_getter(self):
-        return super(LammpsInterative, self).interactive_indices_getter().tolist()
+        return super(LammpsInteractive, self).interactive_indices_getter().tolist()
 
     def interactive_energy_pot_getter(self):
         return self._interactive_library.get_thermo("pe")
@@ -279,12 +297,13 @@ class LammpsInterative(LammpsBase, GenericInteractive):
         return self._interactive_library.get_thermo("temp")
 
     def interactive_stress_getter(self):
-        '''
-        This gives back an Nx3x3 np array of stress/atom defined in
-        http://lammps.sandia.gov/doc/compute_stress_atom.html
-        Keep in mind that it is stress*volume in eV.
-        Further discussion can be found on the website above.
-        '''
+        """
+        This gives back an Nx3x3 array of stress/atom defined in http://lammps.sandia.gov/doc/compute_stress_atom.html
+        Keep in mind that it is stress*volume in eV. Further discussion can be found on the website above.
+
+        Returns:
+            numpy.array: Nx3x3 np array of stress/atom
+        """
         if not 'stress' in self.interactive_cache.keys():
             self._interactive_lib_command('compute st all stress/atom NULL')
             self._interactive_lib_command('run 0')
@@ -318,4 +337,4 @@ class LammpsInterative(LammpsBase, GenericInteractive):
                 if 'interactive' in h5.list_groups():
                     for key in h5['interactive'].list_nodes():
                         h5['generic/' + key] = h5['interactive/' + key]
-            super(LammpsInterative, self).interactive_close()
+            super(LammpsInteractive, self).interactive_close()

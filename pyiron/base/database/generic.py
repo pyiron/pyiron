@@ -4,6 +4,7 @@
 
 import numpy as np
 import re
+import time
 from datetime import datetime
 from sqlalchemy import Column, create_engine, DateTime, Float, Integer, MetaData, String, Table, text, and_, or_
 from sqlalchemy.pool import NullPool
@@ -15,7 +16,7 @@ DatabaseAccess class deals with accessing the database
 """
 
 __author__ = "Murat Han Celik"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH" \
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH" \
                 " - Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
@@ -30,9 +31,13 @@ class AutorestoredConnection:
         self._conn = None
 
     def execute(self, *args, **kwargs):
-        if not self._conn or self._conn.closed:
-            self._conn = self.engine.connect()
-        result = self._conn.execute(*args, **kwargs)
+        try:
+            if not self._conn or self._conn.closed:
+                self._conn = self.engine.connect()
+            result = self._conn.execute(*args, **kwargs)
+        except OperationalError:
+            time.sleep(5)
+            result = self.execute(*args, **kwargs)
         return result
 
     def close(self):

@@ -41,24 +41,26 @@ Technical issues and bugs should be reported on `Github <https://github.com/pyir
 Release history
 ***************
 
-Release 1.0.0 (2018)
+Release 0.2.0 (2018)
 ====================
-* plugin based infrastructure for flexible extension.
+* Implement interactive interface to communicate with codes at runtime. 
+
+Release 0.1.0 (2018)
+====================
 * opensource release - licensed under the BSD license.
 * installation available on pip and anaconda.
 * moved opensource repository to github.
 
-Release 0.9.3 (2017)
+Release 0.0.9 (2017)
 ====================
 * Name changed from PyIron to pyiron
 * Fileoperations implemented (move, copy_to and remove).
 * NGLview for visualisation.
 * Atoms class speedup.
 * Serial- and parallelmaster work with the cluster environment.
-* S/PHI/nX support added.
 * Python 3.6 support added.
 
-Release 0.9.2 (2016)
+Release 0.0.8 (2016)
 ====================
 * Rewirte serial- and parallelmaster.
 * Deprecated Qt environment in favor of jupyter.
@@ -66,7 +68,7 @@ Release 0.9.2 (2016)
 * Use anaconda as recommended Python environment.
 * Switch to Gitlab rather than subversion.
 
-Release 0.9.1 (2015)
+Release 0.0.5 (2015)
 ====================
 * Linux and Mac OS X support added.
 * ASE compatible atom and atoms class.

@@ -13,7 +13,8 @@ The Jobtable module provides a set of top level functions to interact with the d
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -266,10 +267,10 @@ def get_job_id(database, sql_query, user, project_path, job_specifier):
         int: job ID of the job
     """
     if sys.version_info.major == 2:
-        if isinstance(job_specifier, (int, long, np.int64)):
+        if isinstance(job_specifier, (int, long, np.integer)):
             return int(job_specifier)  # is id
     else:
-        if isinstance(job_specifier, (int, np.int64)):
+        if isinstance(job_specifier, (int, np.integer)):
             return job_specifier  # is id
 
     job_specifier.replace('.', '_')

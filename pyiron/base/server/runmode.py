@@ -7,8 +7,8 @@ Runmode class defines the different modes a pyiron job can be executed in
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2017," \
-                "Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -19,7 +19,7 @@ __date__ = "Sep 1, 2017"
 run_mode_lst = ['modal', 'non_modal', 'queue', 'manual', 'thread', 'interactive', 'interactive_non_modal']
 
 
-class Runmode(str):
+class Runmode(object):
     """
     Run mode describes how the job is going to be executed:
     - modal: the interactive run mode
@@ -85,3 +85,19 @@ class Runmode(str):
 
     def __dir__(self):
         return list(self._mode.keys())
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return other._mode == self._mode
+        elif isinstance(other, str):
+            return other == self.mode
+        else:
+            return super(Runmode, self).__eq__(other)
+
+    def __ne__(self, other):
+        if isinstance(other, self.__class__):
+            return other._mode != self._mode
+        elif isinstance(other, str):
+            return other != self.mode
+        else:
+            return super(Runmode, self).__ne__(other)

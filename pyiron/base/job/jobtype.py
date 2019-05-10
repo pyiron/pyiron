@@ -7,13 +7,15 @@ import importlib
 import inspect
 import pkgutil
 from six import with_metaclass
+from pyiron.base.generic.util import static_isinstance
 
 """
 Jobtype class to create GenericJob type objects
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -25,18 +27,21 @@ JOB_CLASS_DICT = {'GenericMaster': 'pyiron.base.master.generic',
                   'ListMaster': 'pyiron.base.master.list',
                   'ScriptJob': 'pyiron.base.job.script',
                   'SerialMasterBase': 'pyiron.base.master.serial',
+                  'FlexibleMaster': 'pyiron.base.master.flexible',
                   'SerialMaster': 'pyiron.atomistics.master.serial',
                   'ParallelMaster': 'pyiron.atomistics.master.parallel',
                   'Murnaghan': 'pyiron.atomistics.master.murnaghan',
                   'MurnaghanInt': 'pyiron.atomistics.master.murnaghan',
+                  'MapMaster': 'pyiron.atomistics.master.parallel',
                   'PhonopyJob': 'pyiron.atomistics.master.phonopy',
                   'PhonopyMaster': 'pyiron.atomistics.master.phonopy',
                   'PhonopyMaster2': 'pyiron.atomistics.master.phonopy',
                   'ConvergenceVolume': 'pyiron.atomistics.master.convergence_volume',
+                  'StructureListMaster': 'pyiron.atomistics.master.structure',
                   'StructureContainer': 'pyiron.atomistics.job.structurecontainer',
-                  'ConvergenceEncutParallel': 'pyiron.dft.master.convergence_encut_parallel',
-                  'ConvergenceEncutSerial': 'pyiron.dft.master.convergence_encut_serial',
-                  'ConvergenceKpointParallel': 'pyiron.dft.master.convergence_kpoint_parallel',
+                  'ConvEncutParallel': 'pyiron.dft.master.convergence_encut_parallel',
+                  'ConvEncutSerial': 'pyiron.dft.master.convergence_encut_serial',
+                  'ConvKpointParallel': 'pyiron.dft.master.convergence_kpoint_parallel',
                   'MurnaghanDFT': 'pyiron.dft.master.murnaghan_dft',
                   'Lammps': 'pyiron.lammps.lammps',
                   'LammpsInt': 'pyiron.lammps.lammps',
@@ -46,7 +51,7 @@ JOB_CLASS_DICT = {'GenericMaster': 'pyiron.base.master.generic',
                   'Vasp': 'pyiron.vasp.vasp',
                   'VaspInt': 'pyiron.vasp.vasp',
                   'VaspInt2': 'pyiron.vasp.vasp',
-}
+                  }
 
 
 class Singleton(type):
@@ -68,9 +73,6 @@ class JobTypeChoice(with_metaclass(Singleton)):
     """
     Helper class to choose the job type directly from the project, autocompletion is enabled by overwriting the
     __dir__() function.
-
-    Args:
-        job_class_dict: dictionary with the jobtypes to choose from.
     """
     def __init__(self):
         self._job_class_dict = None
@@ -136,6 +138,16 @@ class JobType(object):
 
     @staticmethod
     def convert_str_to_class(job_class_dict, class_name):
+        """
+        convert the name of a class to the corresponding class object - only for pyiron internal classes.
+
+        Args:
+            job_class_dict (dict):
+            class_name (str):
+
+        Returns:
+            (class):
+        """
         job_type_lst = class_name.split(".")
         if len(job_type_lst) > 1:
             class_name = class_name.split()[-1][1:-2]
@@ -148,7 +160,3 @@ class JobType(object):
                 job_class = getattr(job_module, job_class_name)
                 return job_class
         raise ValueError("Unknown job type: ", class_name, [job for job in list(job_class_dict.keys())])
-
-
-def static_isinstance(obj, obj_type):
-    return obj_type in ['.'.join([subcls.__module__, subcls.__name__]) for subcls in obj.__mro__]

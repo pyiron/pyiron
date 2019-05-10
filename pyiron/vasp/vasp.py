@@ -6,7 +6,7 @@ import warnings
 from pyiron.vasp.interactive import VaspInteractive
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
                 "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
@@ -24,9 +24,6 @@ class Vasp(VaspInteractive):
     Args:
         project (pyiron.project.Project instance):  Specifies the project path among other attributes
         job_name (str): Name of the job
-
-    Attributes:
-        input (pyiron.vasp.vasp.Input): Instance which handles the input
 
     Examples:
         Let's say you need to run a vasp simulation where you would like to control the input parameters manually. To

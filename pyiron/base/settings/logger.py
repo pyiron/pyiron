@@ -5,7 +5,8 @@
 import logging
 
 __author__ = "Joerg Neugebauer"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -44,16 +45,21 @@ def setup_logger():
     """
     logger = logging.getLogger('pyiron_log')
     logger.setLevel(logging.DEBUG)
-    fh = logging.FileHandler('pyiron.log')
-    ch = logging.StreamHandler()
-
-    fh.setLevel(logging.INFO)
-    ch.setLevel(logging.WARN)
 
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    fh.setFormatter(formatter)
-    ch.setFormatter(formatter)
 
-    logger.addHandler(fh)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.WARN)
+    ch.setFormatter(formatter)
     logger.addHandler(ch)
+
+    try:
+        fh = logging.FileHandler('pyiron.log')
+    except PermissionError:
+        pass
+    else:
+        fh.setLevel(logging.INFO)
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
     return logger

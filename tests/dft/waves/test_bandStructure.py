@@ -5,9 +5,10 @@ from pyiron.dft.waves.bandstructure import Bandstructure
 
 
 class TestBandStructure(unittest.TestCase):
-    def setUp(self):
-        self.bcc = CrystalStructure("Fe", bravais_basis='bcc', lattice_constants=[2.7])
-        self.fcc = CrystalStructure("Fe", bravais_basis='fcc', lattice_constants=[3.6])
+    @classmethod
+    def setUpClass(cls):
+        cls.bcc = CrystalStructure("Fe", bravais_basis='bcc', lattice_constants=[2.7])
+        cls.fcc = CrystalStructure("Fe", bravais_basis='fcc', lattice_constants=[3.6])
 
     def test_bcc(self):
         b1, b2, b3 = np.transpose(np.linalg.inv(self.bcc.cell))

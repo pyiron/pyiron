@@ -4,13 +4,15 @@
 
 import numpy as np
 from pyiron.base.job.generic import GenericJob
+import warnings
 
 """
 InteractiveBase class extends the Generic Job class with all the functionality to run the job object interactivley.
 """
 
 __author__ = "Osamu Waseda, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -20,7 +22,7 @@ __date__ = "Sep 1, 2018"
 
 class InteractiveBase(GenericJob):
     """
-    InteractiveBase class extends the Generic Job class with all the functionality to run the job object interactivley.
+    InteractiveBase class extends the Generic Job class with all the functionality to run the job object interactively.
     From this class all interactive Hamiltonians are derived. Therefore it should contain the properties/routines common
     to all interactive jobs. The functions in this module should be as generic as possible.
 
@@ -125,6 +127,8 @@ class InteractiveBase(GenericJob):
     def interactive_flush_frequency(self, frequency):
         if not isinstance(frequency, int):
             raise AssertionError()
+        if frequency<self._interactive_write_frequency:
+            warnings.warn('interactive_write_frequency must be smaller or equal to interactive_flush_frequency')
         self._interactive_flush_frequency = frequency
 
     @property
@@ -135,6 +139,8 @@ class InteractiveBase(GenericJob):
     def interactive_write_frequency(self, frequency):
         if not isinstance(frequency, int):
             raise AssertionError()
+        if self._interactive_flush_frequency<frequency:
+            warnings.warn('interactive_write_frequency must be smaller or equal to interactive_flush_frequency')
         self._interactive_write_frequency = frequency
 
     def _run_if_running(self):
@@ -150,21 +156,8 @@ class InteractiveBase(GenericJob):
         else:
             super(InteractiveBase, self)._run_if_running()
 
-    def _run_if_created(self, que_wait_for=None):
-        """
-
-        Args:
-            que_wait_for:
-
-        Returns:
-
-        """
-        if self._interactive_write_input_files:
-            self.project_hdf5.create_working_directory()
-            self.write_input()
-            self._copy_restart_files()
-            self._write_run_wrapper()
-        super(InteractiveBase, self)._run_if_created(que_wait_for=que_wait_for)
+    def _check_if_input_should_be_written(self):
+        return super(InteractiveBase, self)._check_if_input_should_be_written() or self._interactive_write_input_files
 
     def interactive_is_activated(self):
         """
@@ -190,11 +183,11 @@ class InteractiveBase(GenericJob):
         Returns:
 
         """
-        if path in h5.list_groups() and key in h5[path].list_nodes(): 
+        if path in h5.list_groups() and key in h5[path].list_nodes():
             current_hdf = h5[path + "/" + key]
             if isinstance(data, list):
                 entry = current_hdf.tolist() + data
-            else: 
+            else:
                 entry = current_hdf.tolist() + data.tolist()
             data = np.array(entry)
         h5[path + "/" + key] = data
@@ -271,10 +264,12 @@ class InteractiveBase(GenericJob):
         if len(list(self.interactive_cache.keys())) > 0 and \
                 len(self.interactive_cache[list(self.interactive_cache.keys())[0]]) != 0:
             self.interactive_flush(path="interactive", include_last_step=True)
+        self.project_hdf5.rewrite_hdf5(job_name=self.job_name, exclude_groups=[])
         self.project.db.item_update(self._runtime(), self._job_id)
         self.status.finished = True
         self._interactive_library = None
-        self.interactive_cache = {}
+        for key in self.interactive_cache.keys():
+            self.interactive_cache[key] = []
 
     def interactive_store_in_cache(self, key, value):
         """

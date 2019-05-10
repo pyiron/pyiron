@@ -4,15 +4,16 @@ from pyiron.project import Project
 
 
 class TestStructureContainer(unittest.TestCase):
-    def setUp(self):
-        self.lattice_constant = 3.5
-        self.file_location = os.path.dirname(os.path.abspath(__file__))
-        self.project = Project(os.path.join(self.file_location, 'structure_testing'))
-        self.basis = self.project.create_structure(element="Fe", bravais_basis='fcc',
-                                                   lattice_constant=self.lattice_constant)
-        self.structure_container = self.project.create_job(self.project.job_type.StructureContainer,
-                                                           "structure_container")
-        self.structure_container.structure = self.basis
+    @classmethod
+    def setUpClass(cls):
+        cls.lattice_constant = 3.5
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        cls.project = Project(os.path.join(cls.file_location, 'structure_testing'))
+        cls.basis = cls.project.create_structure(element="Fe", bravais_basis='fcc',
+                                                   lattice_constant=cls.lattice_constant)
+        cls.structure_container = cls.project.create_job(cls.project.job_type.StructureContainer,
+                                                         "structure_container")
+        cls.structure_container.structure = cls.basis
 
     @classmethod
     def tearDownClass(cls):
@@ -29,6 +30,7 @@ class TestStructureContainer(unittest.TestCase):
         self.assertTrue('atomistics/job/structure_testing/' in structure_container.project_hdf5.project_path)
         self.assertTrue(structure_container.status.finished)
         self.assertEqual(structure_container.structure, self.basis)
+
 
 if __name__ == '__main__':
     unittest.main()

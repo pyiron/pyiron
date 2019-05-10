@@ -18,12 +18,15 @@ class TestAtoms(unittest.TestCase):
             if os.path.isfile(os.path.join(file_location, "../../static/atomistics/test_hdf")):
                 os.remove(os.path.join(file_location, "../../static/atomistics/test_hdf"))
 
-    def setUp(self):
-        pass
-        self.CO2 = Atoms("CO2", positions=[[0, 0, 0], [0, 0, 1.5], [0, 1.5, 0]])
+    @classmethod
+    def setUpClass(cls):
         C = Atom('C').element
-        self.C3 = Atoms([C, C, C], positions=[[0, 0, 0], [0, 0, 2], [0, 2, 0]])
-        self.C2 = Atoms(2 * [Atom('C')])
+        cls.C3 = Atoms([C, C, C], positions=[[0, 0, 0], [0, 0, 2], [0, 2, 0]])
+        cls.C2 = Atoms(2 * [Atom('C')])
+
+    def setUp(self):
+        # These atoms are reset before every test.
+        self.CO2 = Atoms("CO2", positions=[[0, 0, 0], [0, 0, 1.5], [0, 1.5, 0]])
 
     def test__init__(self):
         pos, cell = generate_fcc_lattice()
@@ -320,11 +323,62 @@ class TestAtoms(unittest.TestCase):
     def test_repeat(self):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
         basis_O = CrystalStructure("O", bravais_basis="fcc", lattice_constant=4.2)
-        basis_O.positions += [0., 0., 0.5]
+        basis_O.scaled_positions += [0., 0., 0.5]
         basis = basis_Mg + basis_O
         basis.center_coordinates_in_unit_cell()
-        basis.set_repeat([3, 3, 3])
+        basis.add_tag(selective_dynamics=[True, True, True])
+        basis.selective_dynamics[basis.select_index("O")] = [False, False, False]
+        len_before = len(basis)
+        sel_dyn_before = np.array(basis.selective_dynamics.list())
+        self.assertTrue(np.alltrue(np.logical_not(np.alltrue(sel_dyn_before[basis.select_index("O")], axis=1))))
+        self.assertTrue(np.alltrue(np.alltrue(sel_dyn_before[basis.select_index("Mg")], axis=1)))
+        basis.set_repeat([3, 3, 2])
+        sel_dyn_after = np.array(basis.selective_dynamics.list())
+        len_after = len(basis)
         self.assertEqual(basis.get_spacegroup()["Number"], 225)
+        self.assertEqual(len_before * 18, len_after)
+        self.assertEqual(len(sel_dyn_before) * 18, len(sel_dyn_after))
+        self.assertTrue(np.alltrue(np.logical_not(np.alltrue(sel_dyn_after[basis.select_index("O")], axis=1))))
+        self.assertTrue(np.alltrue(np.alltrue(sel_dyn_after[basis.select_index("Mg")], axis=1)))
+        basis = basis_Mg + basis_O
+        basis.add_tag(spin=None)
+        basis.spin[basis.select_index("Mg")] = 1
+        basis.spin[basis.select_index("O")] = -1
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("Mg")].list(), 1 *
+                                       np.ones(len(basis.select_index("Mg")))))
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("O")].list(), -1 *
+                                       np.ones(len(basis.select_index("O")))))
+        basis.set_repeat(2)
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("Mg")].list(), 1 *
+                                       np.ones(len(basis.select_index("Mg")))))
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("O")].list(), -1 *
+                                       np.ones(len(basis.select_index("O")))))
+        basis = basis_Mg + basis_O
+        basis.add_tag(spin=None)
+        # Indices set as int
+        Mg_indices = basis.select_index("Mg").tolist()
+        for ind in Mg_indices:
+            basis.spin[ind] = 1
+        O_indices = basis.select_index("O").tolist()
+        for ind in O_indices:
+            basis.spin[ind] = -1
+        basis.set_repeat(2)
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("Mg")].list(), 1 *
+                                       np.ones(len(basis.select_index("Mg")))))
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("O")].list(), -1 *
+                                       np.ones(len(basis.select_index("O")))))
+        # Indices set as numpy.int
+        Mg_indices = basis.select_index("Mg").tolist()
+        for ind in Mg_indices:
+            basis.spin[ind] = 1
+        O_indices = basis.select_index("O").tolist()
+        for ind in O_indices:
+            basis.spin[ind] = -1
+        basis.set_repeat(2)
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("Mg")].list(), 1 *
+                                       np.ones(len(basis.select_index("Mg")))))
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("O")].list(), -1 *
+                                       np.ones(len(basis.select_index("O")))))
 
     def test_boundary(self):
         cell = 2.2 * np.identity(3)
@@ -340,6 +394,11 @@ class TestAtoms(unittest.TestCase):
         self.assertAlmostEqual(NaCl.get_distance(0, 1), 2.2*0.5*np.sqrt(3))
         self.assertAlmostEqual(NaCl.get_distance(0, [0, 0, 0.5]), 0.5)
         self.assertAlmostEqual(NaCl.get_distance([0, 0, 0], [0, 0, 0.5]), 0.5)
+
+    def test_get_neighborhood(self):
+        basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
+        neigh = basis.get_neighborhood([0, 0, 0.1])
+        self.assertEqual(neigh.distances[0], 0.1)
 
     def test_get_neighbors(self):
         cell = 2.2 * np.identity(3)
@@ -365,6 +424,26 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(0 <= np.min(NaCl.positions))
         self.assertTrue(np.max(NaCl.scaled_positions < 1))
 
+    @unittest.skip("skip ovito because it is not installed in the test environment")
+    def test_analyse_ovito_cna_adaptive(self):
+        basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
+        basis.analyse_ovito_cna_adaptive()['CommonNeighborAnalysis.counts.BCC']==2
+	
+    @unittest.skip("skip ovito because it is not installed in the test environment")
+    def test_analyse_ovito_centro_symmetry(self):
+        basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
+        self.assertTrue(all(basis.analyse_ovito_centro_symmetry()==np.array([0.75, 0.75])))
+	
+    @unittest.skip("skip ovito because it is not installed in the test environment")
+    def test_analyse_ovito_voronoi_volume(self):
+        basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
+        self.assertTrue(all(basis.analyse_ovito_centro_symmetry()==np.array([0.5, 0.5])))
+
+    @unittest.skip("skip nglview because it is not installed in the test environment")
+    def test_plot3d(self):
+        basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
+        view = basis.plot3d()
+
     def test_get_shells(self):
         dim = 3
         cell = 2.2 * np.identity(dim)
@@ -374,7 +453,7 @@ class TestAtoms(unittest.TestCase):
 
     def test_get_shell_matrix(self):
         basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
-        output = basis.get_shell_matrix(shell=1)
+        output = basis.get_shell_matrix(shell=1, restraint_matrix=['Fe', 'Fe'])
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(np.sum(output), 16)
         self.assertTrue(np.all(np.dot(output, output) == np.identity(2)*64))
@@ -391,8 +470,7 @@ class TestAtoms(unittest.TestCase):
         cell = 2.2 * np.identity(3)
         Al_sc = Atoms(elements=['Al', 'Al'], scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
         Al_sc.set_repeat([4, 4, 4])
-        radius = Al_sc.get_shell_radius()
-        neighbors = Al_sc.get_neighbors(radius=radius, num_neighbors=100, t_vec=False, exclude_self=True)
+        neighbors = Al_sc.get_neighbors(num_neighbors=100, t_vec=False, exclude_self=True)
 
         c_Zn = 0.1
         pse = PeriodicTable()

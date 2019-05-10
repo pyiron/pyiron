@@ -8,7 +8,7 @@ Installation
 
           * :ref:`Local Installation (recommeded) <InstallLocal>`: for Windows, Linux or Mac OS X workstation (interface for local VASP executable, support for the latest jupyterlab based GUI)
 
-          * :ref:`Mybinder.org (beta) <InstallBinder>`: test pyiron directly in your browser (no VASP license, no visualization, only temporary data storage)
+          * :ref:`Mybinder.org (beta) <InstallBinder>`: test pyiron directly in your browser (no VASP license, only temporary data storage)
 
           * :ref:`Docker (for demonstration) <InstallDocker>`: requires docker installation (no VASP license, only temporary data storage)
 
@@ -20,19 +20,25 @@ Workstation Installation (recommeded)
 *************************************
 Requirements
 ============
-When you start to develop your own simulation protocols we recommend a local installation. Inside the `pyiron anaconda repository <https://anaconda.org/pyiron>`_ we provide precompiled executables for Linux, Mac OS X and Windows with Python 2.7, 3.5 and 3.6 and the other packages are available inside the `conda-forge <https://conda-forge.org>`_ channel.
+When you start to develop your own simulation protocols we recommend a local installation. Inside the `pyiron anaconda repository <https://anaconda.org/pyiron>`_ we provide precompiled executables for Linux, Mac OS X and Windows with Python 2.7, 3.5, 3.6 and 3.7 and the other packages are available inside the `conda-forge <https://conda-forge.org>`_ channel.
 
 Install pyiron package 
 ======================
-You can install pyiron either via `anaconda <https://www.anaconda.com>`_ (recommended) or via pip.
+As pyiron is written in Python you can install pyiron either via `anaconda <https://www.anaconda.com>`_ (recommended) or via pip.
 
 Install via anaconda (recommended):
 ------------------------------------------
-To install `anaconda <https://www.anaconda.com>`_  you can download the `anaconda distribution <https://www.anaconda.com/download/>`_. After the installation of the anaconda environment you can install pyiron using:
+To install `anaconda <https://www.anaconda.com>`_  you can download the `anaconda distribution <https://www.anaconda.com/download/>`_. Following the installation update to the latest version of conda from `conda-forge <https://conda-forge.org>`_.
 
 .. code-block:: bash
 
-    conda install -c pyiron -c conda-forge pyiron lammps
+    conda update -c conda-forge conda
+
+After the update of the anaconda environment you can install pyiron using:
+
+.. code-block:: bash
+
+    conda install -c conda-forge pyiron
 
 Install via pip: 
 ----------------
@@ -48,24 +54,46 @@ Visualization
 =============
 In addition to the pyiron package we recommend installing the `NGLview visualization framework <https://github.com/arose/nglview>`_. 
 
-Stable version 0.6.3 – for jupyter notebooks (recommended):
+Stable version 1.1.9 – for jupyter notebooks (recommended):
 -----------------------------------------------------------
 
 .. code-block:: bash 
 
-    conda install -c conda-forge nglview=0.6.2.3 jupyter_contrib_nbextensions=0.3.3
+    conda install -c conda-forge nglview=1.1.9 
+    
+On windows it might be necessary to also execute: 
 
-Test version 1.1.2 – for jupyter lab
+.. code-block:: bash 
+
+    jupyter nbextension install nglview --py --sys-prefix 
+    jupyter nbextension enable nglview --py --sys-prefix
+
+Stable version 1.1.9 – for jupyter lab
 ------------------------------------
 
 .. code-block:: bash 
     
-    conda install ipywidgets=7.1.2 nodejs -c conda-forge
-    pip install nglview==1.1.2
-    nglview enable
-    conda install jupyterlab=0.31.12 -y -c conda-forge
-    jupyter-labextension install @jupyter-widgets/jupyterlab-manager@0.33.2
-    jupyter-labextension install nglview-js-widgets@1.1.2
+    conda install -c conda-forge nodejs nglview=1.1.9
+    jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build
+    jupyter labextension install nglview-js-widgets@1.1.9
+
+Simulation code: Lammps
+=======================
+pyiron supports the simulation codes `VASP <https://www.vasp.at>`_ for DFT calculation and `Lammps <https://lammps.sandia.gov>`_  for molecular dynamics calculation. While VASP requires a separate license and therefore has to be configured by the user, Lammps is available as opensource code and can be installed from anaconda. 
+
+For Linux and Mac Os X (for Python 2.7, 3.5, 3.6 and 3.7):
+-----------------------------------------------------
+
+.. code-block:: bash
+
+    conda install -c conda-forge lammps
+    
+For windows: 
+------------
+.. code-block:: bash
+
+    conda install -c pyiron lammps
+
 
 Configuration
 =============

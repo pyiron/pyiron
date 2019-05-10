@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import os
+import getopt
 from zipfile import ZipFile
 from shutil import copytree, rmtree
 import tempfile
@@ -15,7 +16,8 @@ else:
     import urllib as urllib2
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -27,6 +29,16 @@ def _download_resources(zip_file="resources.zip",
                         resource_directory="~/pyiron/resources",
                         giturl_for_zip_file="https://github.com/pyiron/pyiron-resources/archive/master.zip",
                         git_folder_name="pyiron-resources-master"):
+    """
+    Download pyiron resources from Github
+
+    Args:
+        zip_file (str): name of the compressed file
+        resource_directory (str): directory where to extract the resources - the users resource directory
+        giturl_for_zip_file (str): url for the zipped resources file on github
+        git_folder_name (str): name of the extracted folder
+
+    """
     user_directory = os.path.normpath(os.path.abspath(os.path.expanduser(resource_directory)))
     temp_directory = tempfile.gettempdir()
     temp_zip_file = os.path.join(temp_directory, zip_file)
@@ -47,25 +59,89 @@ def _download_resources(zip_file="resources.zip",
     rmtree(temp_extract_folder)
 
 
-def _write_config_file(file_name='~/.pyiron'):
+def _write_config_file(file_name='~/.pyiron', project_path='~/pyiron/projects', resource_path='~/pyiron/resources'):
+    """
+    Write configuration file and create the corresponding project path.
+
+    Args:
+        file_name (str): configuration file name - usually ~/.pyiron
+        project_path (str): the location where pyiron is going to store the pyiron projects
+        resource_path (str): the location where the resouces (executables, potentials, ...) for pyiron are stored.
+    """
     config_file = os.path.normpath(os.path.abspath(os.path.expanduser(file_name)))
     if not os.path.isfile(config_file):
         with open(config_file, 'w') as cf:
             cf.writelines(['[DEFAULT]\n',
-                           'PROJECT_PATHS = ~/pyiron/projects\n',
-                           'RESOURCE_PATHS = ~/pyiron/resources\n'])
-        project_path = os.path.normpath(os.path.abspath(os.path.expanduser('~/pyiron/projects')))
+                           'PROJECT_PATHS = ' + project_path + '\n',
+                           'RESOURCE_PATHS = ' + resource_path + '\n'])
+        project_path = os.path.normpath(os.path.abspath(os.path.expanduser(project_path)))
         if not os.path.exists(project_path):
             os.makedirs(project_path)
 
 
 def install_pyiron(config_file_name='~/.pyiron',
                    zip_file="resources.zip",
+                   project_path='~/pyiron/projects',
                    resource_directory="~/pyiron/resources",
                    giturl_for_zip_file="https://github.com/pyiron/pyiron-resources/archive/master.zip",
                    git_folder_name="pyiron-resources-master"):
-    _write_config_file(file_name=config_file_name)
+    """
+    Function to configure the pyiron installation.
+
+    Args:
+        config_file_name (str): configuration file name - usually ~/.pyiron
+        zip_file (str): name of the compressed file
+        project_path (str): the location where pyiron is going to store the pyiron projects
+        resource_directory (str): the location where the resouces (executables, potentials, ...) for pyiron are stored.
+        giturl_for_zip_file (str): url for the zipped resources file on github
+        git_folder_name (str): name of the extracted folder
+    """
+    _write_config_file(file_name=config_file_name, project_path=project_path, resource_path=resource_directory)
     _download_resources(zip_file=zip_file,
                         resource_directory=resource_directory,
                         giturl_for_zip_file=giturl_for_zip_file,
                         git_folder_name=git_folder_name)
+
+
+def command_line(argv):
+    """
+    Parse the command line arguments.
+
+    Args:
+        argv: Command line arguments
+
+    """
+    config_file_name = '~/.pyiron'
+    zip_file = "resources.zip"
+    resource_path = "~/pyiron/resources"
+    project_path = "~/pyiron/projects"
+    giturl_for_zip_file = "https://github.com/pyiron/pyiron-resources/archive/master.zip"
+    git_folder_name = "pyiron-resources-master"
+    try:
+        opts, args = getopt.getopt(argv, "c:r:u:p:h", ["config=", "resource_path=", "project_path=", "url="])
+    except getopt.GetoptError:
+        print('install.py -c <config_file> -p <project_path> -r <resource_dir> -u <url>')
+        sys.exit()
+    else:
+        for opt, arg in opts:
+            if opt in ("-h", "--help"):
+                print('install.py -c <config_file> -p <project_path> -r <resource_dir> -u <url>')
+                sys.exit()
+            elif opt in ("-c", "--config"):
+                config_file_name = arg
+            elif opt in ("-r", "--resource_path"):
+                resource_path = arg
+            elif opt in ("-p", "--project_path"):
+                project_path = arg
+            elif opt in ("-u", "--url"):
+                giturl_for_zip_file = arg
+        install_pyiron(config_file_name=config_file_name,
+                       zip_file=zip_file,
+                       project_path=project_path,
+                       resource_directory=resource_path,
+                       giturl_for_zip_file=giturl_for_zip_file,
+                       git_folder_name=git_folder_name)
+
+
+if __name__ == "__main__":
+    command_line(sys.argv[1:])

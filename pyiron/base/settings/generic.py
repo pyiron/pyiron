@@ -4,6 +4,7 @@
 
 from builtins import input
 import os
+import importlib
 from six import with_metaclass
 import sys
 from pathlib2 import Path
@@ -16,7 +17,8 @@ The settings file provides the attributes of the configuration as properties.
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -137,11 +139,46 @@ class Settings(with_metaclass(Singleton)):
 
         self._database = None
         self._use_local_database = False
+        self._queue_adapter = None
+        self._queue_adapter = self._init_queue_adapter(resource_path_lst=self._configuration['resource_paths'])
         self.logger = setup_logger()
+        self._publication_lst = {}
+        self.publication_add(self.publication)
 
     @property
     def database(self):
         return self._database
+
+    @property
+    def queue_adapter(self):
+        return self._queue_adapter
+
+    @property
+    def publication_lst(self):
+        """
+        List of publications currently in use.
+
+        Returns:
+            list: list of publications
+        """
+        all_publication = []
+        for v in self._publication_lst.values():
+            if isinstance(v, list):
+                all_publication += v
+            else:
+                all_publication.append(v)
+        return all_publication
+
+    def publication_add(self, pub_dict):
+        """
+        Add a publication to the list of publications
+
+        Args:
+            pub_dict (dict): The key should be the name of the code used and the value a list of publications to cite.
+        """
+        for key, value in pub_dict.items():
+            if key not in self._publication_lst.keys():
+                self._publication_lst[key] = value
 
     @property
     def login_user(self):
@@ -179,6 +216,13 @@ class Settings(with_metaclass(Singleton)):
                                             self._configuration['sql_table_name'])
 
     def switch_to_local_database(self, file_name='pyiron.db', cwd=None):
+        """
+        Swtich to an local SQLite based database.
+
+        Args:
+            file_name (str): SQLite database file name
+            cwd (str/None): directory where the SQLite database file is located in
+        """
         if not self._use_local_database:
             if cwd is None and not os.path.isabs(file_name):
                 file_name = os.path.join(os.path.abspath(os.path.curdir), file_name)
@@ -192,6 +236,9 @@ class Settings(with_metaclass(Singleton)):
             print('Database is already in local mode!')
             
     def switch_to_central_database(self):
+        """
+        Switch to central database
+        """
         if self._use_local_database:
             self.close_connection()
             self._database = DatabaseAccess(self._configuration['sql_connection_string'],
@@ -253,9 +300,30 @@ class Settings(with_metaclass(Singleton)):
         for path in self._configuration['project_paths']:
             if path in full_path:
                 return path
-        raise ValueError('the current path {0} is not included in the .pyiron configuration. {1}'.format(full_path, self._configuration['project_paths']))
+        raise ValueError('the current path {0} is not included in the .pyiron configuration. {1}'
+                         .format(full_path, self._configuration['project_paths']))
 
     # private functions
+    @staticmethod
+    def _init_queue_adapter(resource_path_lst):
+        """
+        Initialize the queue adapter if a folder queues is found in one of the resource paths which contains a
+        queue configuration file (queue.yaml).
+
+        Args:
+            resource_path_lst (list): List of resource paths
+
+        Returns:
+            pysqa.QueueAdapter:
+        """
+        for resource_path in resource_path_lst:
+            if os.path.exists(resource_path) and \
+                    'queues' in os.listdir(resource_path) and \
+                    'queue.yaml' in os.listdir(os.path.join(resource_path, 'queues')):
+                queueadapter = getattr(importlib.import_module('pysqa'), 'QueueAdapter')
+                return queueadapter(directory=os.path.join(resource_path, 'queues'))
+        return None
+
     def _config_parse_file(self, config_file):
         """
         Read section in configuration file and return a dictionary with the corresponding parameters.
@@ -324,8 +392,33 @@ class Settings(with_metaclass(Singleton)):
         if parser.has_option(section, "JOB_TABLE"):
             self._configuration['sql_table_name'] = parser.get(section, "JOB_TABLE")
 
+    @property
+    def publication(self):
+        return {'pyiron': {'pyiron-paper': {'author': ['Jan Janssen', 'Sudarsan Surendralal', 'Yury Lysogorskiy',
+                                                       'Mira Todorova', 'Tilmann Hickel', 'Ralf Drautz',
+                                                       'Jörg Neugebauer'],
+                                            'title': 'pyiron: An integrated development environment for computational '
+                                                     'materials science',
+                                            'journal': 'Computational Materials Science',
+                                            'volume': '161',
+                                            'pages': '24 - 36',
+                                            'issn': '0927-0256',
+                                            'doi': 'https://doi.org/10.1016/j.commatsci.2018.07.043',
+                                            'url': 'http://www.sciencedirect.com/science/article/pii/S0927025618304786',
+                                            'year': '2019'
+                                            }}}
+
 
 def convert_path(path):
+    """
+    Convert path to POSIX path
+
+    Args:
+        path(str): input path
+
+    Returns:
+        str: absolute path in POSIX format
+    """
     if not (sys.version_info.major < 3 and os.name == 'nt'):
         return Path(path).expanduser().resolve().absolute().as_posix()
     else:

@@ -31,7 +31,7 @@ pyiron
     :alt: Screenshot of pyiron running inside jupyterlab.
 
 
-pyiron is an integrated development environment for implementing, testing, and running simulations in computational materials science. It combines several tools in a common plattform:
+pyiron - an integrated development environment (IDE) for computational materials science. It combines several tools in a common plattform:
 
  - Atomic structure objects – compatible to the `Atomic Simulation Environment (ASE) <https://wiki.fysik.dtu.dk/ase/>`_.
  - Atomistic simulation codes – like `LAMMPS <http://lammps.sandia.gov>`_ and `VASP <https://www.vasp.at>`_.
@@ -82,19 +82,26 @@ Finally a first lammps calculation can be executed by::
 
     job = pr.create_job(job_type=pr.job_type.Lammps, job_name='lammpstestjob')
     job.structure = structure
-    job.potential = ham.list_potentials()[0]
+    job.potential = job.list_potentials()[0]
     job.run()
 
 
 
 License and Acknowledgments
 ---------------------------
-``pyiron`` is licensed under the MIT license.
+``pyiron`` is licensed under the BSD license.
 
 If you use pyiron in your scientific work, please consider citing::
 
   @article{pyiron-paper,
-    author={Jan Janssen and Sudarsan Surendralal and Yury Lysogorskiy and Mira Todorova and Tilmann Hickel and Ralf Drautz and Jörg Neugebauer},
-    title={pyiron: An integrated development environment for computational materials science},
-    year={2018}
+    title = {pyiron: An integrated development environment for computational materials science},
+    journal = {Computational Materials Science},
+    volume = {163},
+    pages = {24 - 36},
+    year = {2019},
+    issn = {0927-0256},
+    doi = {https://doi.org/10.1016/j.commatsci.2018.07.043},
+    url = {http://www.sciencedirect.com/science/article/pii/S0927025618304786},
+    author = {Jan Janssen and Sudarsan Surendralal and Yury Lysogorskiy and Mira Todorova and Tilmann Hickel and Ralf Drautz and Jörg Neugebauer},
+    keywords = {Modelling workflow, Integrated development environment, Complex simulation protocols},
   }

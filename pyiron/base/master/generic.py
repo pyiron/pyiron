@@ -10,7 +10,8 @@ The GenericMaster is the template class for all meta jobs
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -23,6 +24,7 @@ try:
 except NameError:
     class FileExistsError(OSError):
         pass
+
 
 class GenericMaster(GenericJob):
     """
@@ -41,8 +43,9 @@ class GenericMaster(GenericJob):
 
         .. attribute:: status
 
-            execution status of the job, can be one of the following [initialized, appended, created, submitted, running,
-                                                                      aborted, collect, suspended, refresh, busy, finished]
+            execution status of the job, can be one of the following [initialized, appended, created, submitted,
+                                                                      running, aborted, collect, suspended, refresh,
+                                                                      busy, finished]
 
         .. attribute:: job_id
 
@@ -54,8 +57,8 @@ class GenericMaster(GenericJob):
 
         .. attribute:: master_id
 
-            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel or in
-            serial.
+            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel
+            or in serial.
 
         .. attribute:: child_ids
 
@@ -91,7 +94,8 @@ class GenericMaster(GenericJob):
 
         .. attribute:: library_activated
 
-            For job types which offer a Python library pyiron can use the python library instead of an external executable.
+            For job types which offer a Python library pyiron can use the python library instead of an external
+            executable.
 
         .. attribute:: server
 
@@ -111,8 +115,8 @@ class GenericMaster(GenericJob):
 
         .. attribute:: job_type
 
-            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster', 'ScriptJob',
-                                                               'ListMaster']
+            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster',
+                                                               'ScriptJob', 'ListMaster']
 
         .. attribute:: child_names
 
@@ -120,7 +124,8 @@ class GenericMaster(GenericJob):
     """
     def __init__(self, project, job_name):
         super(GenericMaster, self).__init__(project, job_name=job_name)
-        self._job_list = []
+        self._job_name_lst = []
+        self._job_object_dict = {}
         self._child_id_func = None
         self._child_id_func_str = None
 
@@ -150,6 +155,21 @@ class GenericMaster(GenericJob):
         else:
             return super(GenericMaster, self).child_ids
 
+    # def copy(self):
+    #     """
+    #     Copy the GenericJob object which links to the job and its HDF5 file
+    #
+    #     Returns:
+    #         GenericJob: New GenericJob object pointing to the same job
+    #     """
+    #     self_copied = super(GenericMaster, self).copy()
+    #     self_copied._job_name_lst = self._job_name_lst[:]
+    #     self._load_all_child_jobs(job_to_load=self)
+    #     self_copied._job_object_dict = {key: value.copy() for key, value in self._job_object_dict.items()}
+    #     self_copied._child_id_func = self._child_id_func
+    #     self_copied._child_id_func_str = self._child_id_func_str
+    #     return self_copied
+
     def first_child_name(self):
         """
         Get the name of the first child job
@@ -173,32 +193,33 @@ class GenericMaster(GenericJob):
         Args:
             job (GenericJob): job to append
         """
-        if job.job_name not in self._job_list:
-            self._job_list.append(job.job_name)
-            setattr(self, job.job_name, job)
-            if self.project_hdf5.file_name != job.project_hdf5.file_name or self.project_hdf5.h5_path not in job.project_hdf5.h5_path:
-                try:
-                    job.move_to(self._hdf5)
-                except (ValueError, FileExistsError, RuntimeError):
-                    pass
+        if job.server.cores >= self.server.cores:
+            self.server.cores = job.server.cores
+        if job.job_name not in self._job_name_lst:
+            self._job_name_lst.append(job.job_name)
+            self._child_job_update_hdf(parent_job=self, child_job=job)
 
-    def pop(self, i):
+    def pop(self, i=-1):
         """
         Pop a job from the GenericMaster - just like you would pop an element from a list
 
         Args:
-            i (int): position of the job
+            i (int): position of the job. (Default is last element, -1.)
 
         Returns:
             GenericJob: job
         """
-        job_to_return = getattr(self, self._job_list[i])
-        del self._job_list[i]
+        job_name_to_return = self._job_name_lst[i]
+        job_to_return = self._load_all_child_jobs(self._load_job_from_cache(job_name_to_return))
+        del self._job_name_lst[i]
         with self.project_hdf5.open("input") as hdf5_input:
-            hdf5_input["job_list"] = self._job_list
+            hdf5_input["job_list"] = self._job_name_lst
         job_to_return.project_hdf5.remove_group()
         job_to_return.project_hdf5 = self.project_hdf5.__class__(self.project, job_to_return.job_name,
                                                                  h5_path='/' + job_to_return.job_name)
+        if isinstance(job_to_return, GenericMaster):
+            for sub_job in job_to_return._job_object_dict.values():
+                self._child_job_update_hdf(parent_job=job_to_return, child_job=sub_job)
         job_to_return.status.initialized = True
         return job_to_return
 
@@ -235,15 +256,15 @@ class GenericMaster(GenericJob):
         new_generic_job = super(GenericMaster, self).copy_to(project=project, new_job_name=new_job_name,
                                                              input_only=input_only,
                                                              new_database_entry=new_database_entry)
-        if new_generic_job.job_id and new_database_entry:
-            if self._job_id:
-                for child_id in self.child_ids:
-                    child = self.project.load(child_id)
-                    new_child = child.copy_to(project.open(self.job_name + '_hdf5'), new_database_entry=new_database_entry)
-                    if new_database_entry and child.parent_id:
-                        new_child.parent_id = new_generic_job.job_id
-                    if new_database_entry and child.master_id:
-                        new_child.master_id = new_generic_job.job_id
+        if new_generic_job.job_id and new_database_entry and self._job_id:
+            for child_id in self.child_ids:
+                child = self.project.load(child_id)
+                new_child = child.copy_to(project.open(self.job_name + '_hdf5'),
+                                          new_database_entry=new_database_entry)
+                if new_database_entry and child.parent_id:
+                    new_child.parent_id = new_generic_job.job_id
+                if new_database_entry and child.master_id:
+                    new_child.master_id = new_generic_job.job_id
         return new_generic_job
 
     def to_hdf(self, hdf=None, group_name=None):
@@ -256,18 +277,10 @@ class GenericMaster(GenericJob):
         """
         super(GenericMaster, self).to_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input") as hdf5_input:
-            hdf5_input["job_list"] = self._job_list
-            if self._child_id_func is not None:
-                try:
-                    hdf5_input["child_id_func"] = inspect.getsource(self._child_id_func)
-                except IOError:
-                    hdf5_input["child_id_func"] = self._child_id_func_str
-            else:
-                hdf5_input["child_id_func"] = "None"
-        for ham in self._job_list:
-            ham_obj = self[ham]
-            if ham_obj is not None:
-                ham_obj.to_hdf()
+            hdf5_input["job_list"] = self._job_name_lst
+            self._to_hdf_child_function(hdf=hdf5_input)
+        for job in self._job_object_dict.values():
+            job.to_hdf()
 
     def from_hdf(self, hdf=None, group_name=None):
         """
@@ -280,25 +293,8 @@ class GenericMaster(GenericJob):
         super(GenericMaster, self).from_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input") as hdf5_input:
             job_list_tmp = hdf5_input["job_list"]
-            try:
-                child_id_func_str = hdf5_input["child_id_func"]
-            except ValueError:
-                child_id_func_str = "None"
-            if child_id_func_str == "None":
-                self._child_id_func = None
-            else:
-                self._child_id_func_str = child_id_func_str
-                exec(child_id_func_str)
-                func = child_id_func_str.split("(")[0][4:]  # get function name
-                exec("self._child_id_func = " + func)
-        for ham in job_list_tmp:
-            try:
-                ham_obj = self.project_hdf5.create_object(class_name=self._hdf5[ham + '/TYPE'], project=self._hdf5,
-                                                          job_name=ham)
-                ham_obj.from_hdf()
-                self.append(ham_obj)
-            except ValueError:
-                pass
+            self._from_hdf_child_function(hdf=hdf5_input)
+            self._job_name_lst = job_list_tmp
 
     def set_child_id_func(self, child_id_func):
         """
@@ -313,7 +309,8 @@ class GenericMaster(GenericJob):
 
     def get_child_cores(self):
         """
-        Calculate the currently active number of cores, by summarizing all childs which are neither finished nor aborted.
+        Calculate the currently active number of cores, by summarizing all childs which are neither finished nor
+        aborted.
 
         Returns:
             (int): number of cores used
@@ -322,12 +319,6 @@ class GenericMaster(GenericJob):
                     self.project.db.get_items_dict({'masterid': self.job_id})
                     if db_entry['status'] not in ['finished', 'aborted']])
 
-    def _executable_activate_mpi(self):
-        """
-        Internal helper function to switch the executable to MPI mode
-        """
-        pass
-
     def __len__(self):
         """
         Length of the GenericMaster equal the number of childs appended.
@@ -335,7 +326,7 @@ class GenericMaster(GenericJob):
         Returns:
             int: length of the GenericMaster
         """
-        return len(self._job_list)
+        return len(self._job_name_lst)
 
     def __getitem__(self, item):
         """
@@ -347,15 +338,154 @@ class GenericMaster(GenericJob):
         Returns:
             dict, list, float, int: data or data object
         """
-        if isinstance(item, str):
-            name_lst = item.split("/")
-            if name_lst[0] in self._job_list:
-                child = getattr(self, name_lst[0])
-                if len(name_lst) == 1:
-                    return child
-                else:
-                    return child['/'.join(name_lst[1:])]
+        child_id_lst = self.child_ids
+        child_name_lst = [self.project.db.get_item_by_id(child_id)["job"] for child_id in self.child_ids]
+        if isinstance(item, int):
+            item = self._job_name_lst[item]
+        return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
+
+    def __getattr__(self, item):
+        """
+        CHeck if a job with the specific name exists
+
+        Args:
+            item (str): name of the job
+
+        Returns:
+
+        """
+        item_from_get_item = self.__getitem__(item=item)
+        if item_from_get_item is not None:
+            return item_from_get_item
+        else:
+            raise AttributeError
+
+    def _load_all_child_jobs(self, job_to_load):
+        """
+        Helper function to load all child jobs to memory - like it was done in the previous implementation
+
+        Args:
+            job_to_load (GenericJob): job to be reloaded
+
+        Returns:
+            GenericJob: job to be reloaded - including all the child jobs and their child jobs
+        """
+        if isinstance(job_to_load, GenericMaster):
+            for sub_job_name in job_to_load._job_name_lst:
+                job_to_load._job_object_dict[sub_job_name] = \
+                    self._load_all_child_jobs(job_to_load._load_job_from_cache(sub_job_name))
+        return job_to_load
+
+    def _load_job_from_cache(self, job_name):
+        """
+        Helper funcction to load a job either from the _job_object_dict or from the HDF5 file
+
+        Args:
+            job_name (str): name of the job
+
+        Returns:
+            GenericJob: the reloaded job
+        """
+        if job_name in self._job_object_dict.keys():
+            return self._job_object_dict[job_name]
+        else:
+            ham_obj = self.project_hdf5.create_object(class_name=self._hdf5[job_name + '/TYPE'], project=self._hdf5,
+                                                      job_name=job_name)
+            ham_obj.from_hdf()
+            return ham_obj
+
+    def _to_hdf_child_function(self, hdf):
+        """
+        Helper function to store the child function in HDF5
+
+        Args:
+            hdf: HDF5 file object
+        """
+        hdf["job_list"] = self._job_name_lst
+        if self._child_id_func is not None:
+            try:
+                hdf["child_id_func"] = inspect.getsource(self._child_id_func)
+            except IOError:
+                hdf["child_id_func"] = self._child_id_func_str
+        else:
+            hdf["child_id_func"] = "None"
+
+    def _from_hdf_child_function(self, hdf):
+        """
+        Helper function to load the child function from HDF5
+
+        Args:
+            hdf: HDF5 file object
+        """
+        try:
+            child_id_func_str = hdf["child_id_func"]
+        except ValueError:
+            child_id_func_str = "None"
+        if child_id_func_str == "None":
+            self._child_id_func = None
+        else:
+            self._child_id_func_str = child_id_func_str
+            self._child_id_func = self.get_function_from_string(child_id_func_str)
+
+    def _get_item_when_str(self, item, child_id_lst, child_name_lst):
+        """
+        Helper function for __get_item__ when item is type string
+
+        Args:
+            item (str):
+            child_id_lst (list): a list containing all child job ids
+            child_name_lst (list): a list containing the names of all child jobs
+
+        Returns:
+            anything
+        """
+        name_lst = item.split("/")
+        item_obj = name_lst[0]
+        if item_obj in child_name_lst:
+            child_id = child_id_lst[child_name_lst.index(item_obj)]
+            if len(name_lst) > 1:
+                return self.project.inspect(child_id)['/'.join(name_lst[1:])]
+            else:
+                return self.project.load(child_id, convert_to_object=True)
+        elif item_obj in self._job_name_lst:
+            child = self._load_job_from_cache(job_name=item_obj)
+            if len(name_lst) == 1:
+                return child
+            else:
+                return child['/'.join(name_lst[1:])]
+        else:
             return super(GenericMaster, self).__getitem__(item)
-        elif isinstance(item, int):
-            job_name = self._job_list[item]
-            return getattr(self, job_name)
+
+    def _child_job_update_hdf(self, parent_job, child_job):
+        """
+
+        Args:
+            parent_job:
+            child_job:
+        """
+        child_job.project_hdf5.file_name = parent_job.project_hdf5.file_name
+        child_job.project_hdf5.h5_path = parent_job.project_hdf5.h5_path + '/' + child_job.job_name
+        if isinstance(child_job, GenericMaster):
+            for sub_job_name in child_job._job_name_lst:
+                self._child_job_update_hdf(parent_job=child_job, child_job=child_job._load_job_from_cache(sub_job_name))
+        parent_job._job_object_dict[child_job.job_name] = child_job
+
+    def _executable_activate_mpi(self):
+        """
+        Internal helper function to switch the executable to MPI mode
+        """
+        pass
+
+    @staticmethod
+    def get_function_from_string(function_str):
+        """
+        Convert a string of source code to a function
+
+        Args:
+            function_str: function source code
+
+        Returns:
+            function:
+        """
+        exec(function_str)
+        return eval(function_str.split("(")[0][4:])

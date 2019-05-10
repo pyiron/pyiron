@@ -2,9 +2,10 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-from __future__ import print_function
+from __future__ import division, print_function
 from collections import OrderedDict
 from datetime import datetime
+import numpy as np
 import pandas
 import time
 from pyiron.base.job.generic import GenericJob
@@ -18,7 +19,8 @@ The parallel master class is a metajob consisting of a list of jobs which are ex
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -43,8 +45,9 @@ class ParallelMaster(GenericMaster):
 
         .. attribute:: status
 
-            execution status of the job, can be one of the following [initialized, appended, created, submitted, running,
-                                                                      aborted, collect, suspended, refresh, busy, finished]
+            execution status of the job, can be one of the following [initialized, appended, created, submitted,
+                                                                      running, aborted, collect, suspended, refresh,
+                                                                      busy, finished]
 
         .. attribute:: job_id
 
@@ -56,8 +59,8 @@ class ParallelMaster(GenericMaster):
 
         .. attribute:: master_id
 
-            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel or in
-            serial.
+            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel
+            or in serial.
 
         .. attribute:: child_ids
 
@@ -93,7 +96,8 @@ class ParallelMaster(GenericMaster):
 
         .. attribute:: library_activated
 
-            For job types which offer a Python library pyiron can use the python library instead of an external executable.
+            For job types which offer a Python library pyiron can use the python library instead of an external
+            executable.
 
         .. attribute:: server
 
@@ -113,8 +117,8 @@ class ParallelMaster(GenericMaster):
 
         .. attribute:: job_type
 
-            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster', 'ScriptJob',
-                                                               'ListMaster']
+            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster',
+                                                               'ScriptJob', 'ListMaster']
 
         .. attribute:: child_names
 
@@ -150,8 +154,9 @@ class ParallelMaster(GenericMaster):
         if self._ref_job:
             return self._ref_job
         try:
-            if isinstance(self[0], GenericJob):
-                self._ref_job = self[0]
+            ref_job = self[0]
+            if isinstance(ref_job, GenericJob):
+                self._ref_job = ref_job
                 self._ref_job._job_id = None
                 self._ref_job._status = JobStatus(db=self.project.db)
                 return self._ref_job
@@ -308,6 +313,16 @@ class ParallelMaster(GenericMaster):
             self.submission_status = SubmissionStatus(db=self.project.db, job_id=self.job_id)
             self.submission_status.refresh()
 
+    def interactive_ref_job_initialize(self):
+        """
+        To execute the reference job in interactive mode it is necessary to initialize it.
+        """
+        if len(self._job_name_lst) > 0:
+            self._ref_job = self.pop(-1)
+            self._ref_job.job_name = self.job_name + '_' + self._ref_job.job_name
+            if self._job_id is not None and self._ref_job._master_id is None:
+                self._ref_job.master_id = self.job_id
+
     def copy(self):
         """
         Copy the GenericJob object which links to the job and its HDF5 file
@@ -351,10 +366,8 @@ class ParallelMaster(GenericMaster):
             return True
         if len(self.child_ids) < len(self._job_generator):
             return False
-        return set([self.project.db.get_item_by_id(child_id)['status'] for child_id in self.child_ids]) < {'finished',
-                                                                                                           'busy',
-                                                                                                           'refresh',
-                                                                                                           'aborted'}
+        return set([self.project.db.get_item_by_id(child_id)['status']
+                    for child_id in self.child_ids]) < {'finished', 'busy', 'refresh', 'aborted'}
 
     def iter_jobs(self, convert_to_object=True):
         """
@@ -381,32 +394,10 @@ class ParallelMaster(GenericMaster):
         """
         child_id_lst = self.child_ids
         child_name_lst = [self.project.db.get_item_by_id(child_id)["job"] for child_id in self.child_ids]
-        if isinstance(item, str):
-            name_lst = item.split("/")
-            item_obj = name_lst[0]
-            if item_obj in child_name_lst:
-                child_id = child_id_lst[child_name_lst.index(item_obj)]
-                child = self.project.load(child_id, convert_to_object=True)
-                if len(name_lst) == 1:
-                    return child
-                else:
-                    return child['/'.join(name_lst[1:])]
-            if item_obj in self._job_list:
-                child = getattr(self, item_obj)
-                if len(name_lst) == 1:
-                    return child
-                else:
-                    return child['/'.join(name_lst[1:])]
-            return super(GenericMaster, self).__getitem__(item)
-        elif isinstance(item, int):
-            total_lst = self._job_list + child_name_lst
-            job_name = total_lst[item]
-            if job_name in self._job_list:
-                job_name = self._job_list[item]
-                return getattr(self, job_name)
-            else:
-                child_id = child_id_lst[child_name_lst.index(job_name)]
-                return self.project.load(child_id, convert_to_object=True)
+        if isinstance(item, int):
+            total_lst = self._job_name_lst + child_name_lst
+            item = total_lst[item]
+        return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
 
     def __len__(self):
         """
@@ -433,6 +424,9 @@ class ParallelMaster(GenericMaster):
             self.refresh_job_status()
             if self.status.refresh:
                 self.status.suspended = True
+            if self.status.busy:
+                self.status.refresh = True
+                self._run_if_refresh()
 
     def _run_if_collect(self):
         """
@@ -455,9 +449,28 @@ class ParallelMaster(GenericMaster):
         # self.send_to_database()
 
     def _validate_cores(self, job, cores_for_session):
+        """
+        Check if enough cores are available to start the next child job.
+
+        Args:
+            job (GenericJob): child job to be started
+            cores_for_session (list): list of currently active cores - list of integers
+
+        Returns:
+            bool: [True/False]
+        """
         return self.get_child_cores() + job.server.cores + sum(cores_for_session) > self.server.cores
 
     def _next_job_series(self, job):
+        """
+        Generate a list of child jobs to be executed in the next iteration.
+
+        Args:
+            job (GenericJob): child job to be started
+
+        Returns:
+            list: list of GenericJob objects
+        """
         job_to_be_run_lst, cores_for_session = [], []
         while job is not None:
             self._logger.debug('create job: %s %s', job.job_info_str, job.master_id)
@@ -471,7 +484,37 @@ class ParallelMaster(GenericMaster):
                 job = None
         return job_to_be_run_lst
 
+    def _run_if_child_queue(self, job):
+        """
+        run function which is executed when the child jobs are submitted to the queue. In this case all child jobs are
+        submitted at the same time without considering the number of cores specified for the Parallelmaster.
+
+        Args:
+            job (GenericJob): child job to be started
+        """
+        while job is not None:
+            self._logger.debug('create job: %s %s', job.job_info_str, job.master_id)
+            if not job.status.finished:
+                job.run()
+                self._logger.info('{}: submitted job {}'.format(self.job_name, job.job_name))
+            job = next(self._job_generator, None)
+        self.submission_status.submitted_jobs = self.submission_status.total_jobs
+        self.status.suspended = True
+        if self.is_finished():
+            self.status.collect = True
+            self.run()
+
     def _run_if_master_queue(self, job):
+        """
+        run function which is executed when the Parallelmaster is submitted to the queue. This run mode is similar to
+        the non modal run mode, as the number of cores assigned to the Parallelmaster determines how many subprocesses
+        can be started. But in contrast to the non modal mode where the Parallelmaster is suspended after the submission
+        of the child jobs in the queue the Parallelmaster stays active, as some queuing systems kill the jobs once the
+        primary task exited.
+
+        Args:
+            job (GenericJob): child job to be started
+        """
         job_to_be_run_lst = self._next_job_series(job)
         if self.project.db.get_item_by_id(self.job_id)['status'] != 'busy':
             self.status.suspended = True
@@ -481,10 +524,17 @@ class ParallelMaster(GenericMaster):
                 if job.server.run_mode.thread:
                     job_lst.append(job._process)
             process_lst = [process.communicate() for process in job_lst if process]
+            self._run_if_refresh()
         else:
             self.run_static()
 
     def _run_if_master_non_modal_child_non_modal(self, job):
+        """
+        run function which is executed when the Parallelmaster as well as its childs are running in non modal mode.
+
+        Args:
+            job (GenericJob): child job to be started
+        """
         job_to_be_run_lst = self._next_job_series(job)
         if self.project.db.get_item_by_id(self.job_id)['status'] != 'busy':
             self.status.suspended = True
@@ -497,6 +547,12 @@ class ParallelMaster(GenericMaster):
             self.run_static()
 
     def _run_if_master_modal_child_modal(self, job):
+        """
+        run function which is executed when the Parallelmaster as well as its childs are running in modal mode.
+
+        Args:
+            job (GenericJob): child job to be started
+        """
         while job is not None:
             self._logger.debug('create job: %s %s', job.job_info_str, job.master_id)
             if not job.status.finished:
@@ -509,6 +565,13 @@ class ParallelMaster(GenericMaster):
             self.run()
 
     def _run_if_master_modal_child_non_modal(self, job):
+        """
+        run function which is executed when the Parallelmaster is running in modal mode and its childs are running in
+        non modal mode.
+
+        Args:
+            job (GenericJob): child job to be started
+        """
         while job is not None:
             self._logger.debug('create job: %s %s', job.job_info_str, job.master_id)
             if not job.status.finished:
@@ -524,6 +587,10 @@ class ParallelMaster(GenericMaster):
             self.run()
 
     def run_static(self):
+        """
+        The run_static function is executed within the GenericJob class and depending on the run_mode of the
+        Parallelmaster and its child jobs a more specific run function is selected.
+        """
         self._logger.info('{} run parallel master (modal)'.format(self.job_info_str))
         self.status.running = True
         self.submission_status.total_jobs = len(self._job_generator)
@@ -533,9 +600,12 @@ class ParallelMaster(GenericMaster):
             job = next(self._job_generator, None)
             if self.server.run_mode.queue:
                 self._run_if_master_queue(job)
+            elif job.server.run_mode.queue:
+                self._run_if_child_queue(job)
             elif self.server.run_mode.non_modal and job.server.run_mode.non_modal:
                 self._run_if_master_non_modal_child_non_modal(job)
-            elif self.server.run_mode.modal and job.server.run_mode.modal:
+            elif (self.server.run_mode.modal and job.server.run_mode.modal) or \
+                    (self.server.run_mode.interactive and job.server.run_mode.interactive):
                 self._run_if_master_modal_child_modal(job)
             elif self.server.run_mode.modal and job.server.run_mode.non_modal:
                 self._run_if_master_modal_child_non_modal(job)
@@ -544,6 +614,62 @@ class ParallelMaster(GenericMaster):
         else:
             self.status.collect = True
             self.run()
+
+    def run_if_interactive(self):
+        if not (self.ref_job.server.run_mode.interactive or self.ref_job.server.run_mode.interactive_non_modal):
+            raise ValueError('The child job has to be run_mode interactive or interactive_non_modal.')
+        if isinstance(self.ref_job, GenericMaster):
+            self.run_static()
+        elif self.server.cores == 1:
+            self.interactive_ref_job_initialize()
+            for parameter in self._job_generator.parameter_list:
+                self._job_generator.modify_job(job=self.ref_job, parameter=parameter)
+                self.ref_job.run()
+            self.ref_job.interactive_close()
+        else:
+            if self.server.cores > len(self._job_generator.parameter_list):
+                number_of_jobs = len(self._job_generator.parameter_list)
+            else:
+                number_of_jobs = self.server.cores
+            max_tasks_per_job = int(len(self._job_generator.parameter_list) // number_of_jobs) + 1
+            parameters_sub_lst = [self._job_generator.parameter_list[i:i + max_tasks_per_job]
+                                  for i in range(0, len(self._job_generator.parameter_list), max_tasks_per_job)]
+            list_of_sub_jobs = [self._create_child_job('job_' + str(i)) for i in range(number_of_jobs)]
+            primary_job = list_of_sub_jobs[0]
+            if not primary_job.server.run_mode.interactive_non_modal:
+                raise ValueError('The child job has to be run_mode interactive_non_modal.')
+            if primary_job.server.cores != 1:
+                raise ValueError('The child job can only use a single core.')
+            for iteration in range(len(parameters_sub_lst[0])):
+                for job_ind, job in enumerate(list_of_sub_jobs):
+                    if iteration < len(parameters_sub_lst[job_ind]):
+                        self._job_generator.modify_job(job=job,
+                                                       parameter=parameters_sub_lst[job_ind][iteration])
+                        job.run()
+                for job_ind, job in enumerate(list_of_sub_jobs):
+                    if iteration < len(parameters_sub_lst[job_ind]):
+                        job.interactive_fetch()
+            for job in list_of_sub_jobs:
+                job.interactive_close()
+            self.interactive_ref_job_initialize()
+            self.ref_job.run()
+            for key in primary_job.interactive_cache.keys():
+                output_sum = []
+                for job in list_of_sub_jobs:
+                    output = job['output/interactive/' + key]
+                    if isinstance(output, np.ndarray):
+                        output = output.tolist()
+                    if isinstance(output, list):
+                        output_sum += output
+                    else:
+                        raise TypeError('output should be list or numpy.ndarray but it is ', type(output))
+                self.ref_job.interactive_cache[key] = output_sum
+            interactive_cache_backup = self.ref_job.interactive_cache.copy()
+            self.ref_job.interactive_flush(path="generic", include_last_step=True)
+            self.ref_job.interactive_cache = interactive_cache_backup
+            self.ref_job.interactive_close()
+        self.status.collect = True
+        self.run()
 
     def _create_child_job(self, job_name):
         """
@@ -572,16 +698,15 @@ class ParallelMaster(GenericMaster):
             return ham
 
         job = self.ref_job.copy()
-
+        job = self._load_all_child_jobs(job_to_load=job)
         if self.server.new_hdf:
-            job._hdf5 = self.project_hdf5.create_hdf(path=self._hdf5._project.open(self.job_name + '_hdf5').path,
-                                                     job_name=job_name)
+            job.project_hdf5 = self.project_hdf5.create_hdf(path=self.project.open(self.job_name + '_hdf5').path,
+                                                            job_name=job_name)
         else:
-            job._hdf5 = self.project_hdf5.open(job_name)
-        try:
-            self.ref_job.project_hdf5.copy_to(job._hdf5, maintain_name=False)
-        except ValueError:
-            pass
+            job.project_hdf5 = self.project_hdf5.open(job_name)
+        if isinstance(job, GenericMaster):
+            for sub_job in job._job_object_dict.values():
+                self._child_job_update_hdf(parent_job=job, child_job=sub_job)
         self._logger.debug("create_job:: {} {} {} {}".format(self.project_hdf5.path,
                                                              self._name,
                                                              self.project_hdf5.h5_path,
@@ -623,6 +748,10 @@ class GenericOutput(OrderedDict):
 
 
 class JobGenerator(object):
+    """
+    JobGenerator - this class implements the functions to generate the parameter list, modify the individual jobs
+    according to the parameter list and generate the new job names according to the parameter list.
+    """
     def __init__(self, job):
         self._job = job
         self._childcounter = 0
@@ -639,10 +768,6 @@ class JobGenerator(object):
         raise NotImplementedError("Implement in derived class")
 
     @staticmethod
-    def job_name(parameter):
-        raise NotImplementedError("Implement in derived class")
-
-    @staticmethod
     def modify_job(job, parameter):
         raise NotImplementedError("Implement in derived class")
 
@@ -656,14 +781,32 @@ class JobGenerator(object):
         return len(self.parameter_list_cached)
 
     def _create_job(self, job_name):
+        """
+        Create the next job to be executed, by calling the _create_child_job() function of the Parallelmaster.
+
+        Args:
+            job_name (str): name of the next child job
+
+        Returns:
+            GenericJob: new job object
+        """
         job = self._job._create_child_job(job_name)
         self._childcounter += 1
         return job
 
     def next(self):
+        """
+        Iterate over the child jobs
+
+        Returns:
+            GenericJob: new job object
+        """
         if len(self.parameter_list_cached) > self._childcounter:
             current_paramenter = self.parameter_list_cached[self._childcounter]
-            job = self._job._create_child_job(self.job_name(parameter=current_paramenter))
+            if hasattr(self, 'job_name'):
+                job = self._job._create_child_job(self.job_name(parameter=current_paramenter))
+            else:
+                job = self._job._create_child_job(self._job.ref_job.job_name + '_' + str(self._childcounter))
             if job is not None:
                 self._childcounter += 1
                 job = self.modify_job(job=job, parameter=current_paramenter)

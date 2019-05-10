@@ -1,15 +1,29 @@
+# coding: utf-8
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
+
 import numpy as np
 import os
 from subprocess import Popen, PIPE
-import warnings
 
 from pyiron.vasp.outcar import Outcar
 from pyiron.vasp.base import VaspBase
 from pyiron.vasp.structure import vasp_sorter
+from pyiron.vasp.potential import VaspPotentialSetter
 from pyiron.vasp.base import GenericOutput as GenericOutputBase
 from pyiron.vasp.base import DFTOutput as DFTOutputBase
 from pyiron.vasp.base import Output as OutputBase
 from pyiron.atomistics.job.interactive import GenericInteractive
+
+
+__author__ = "Osamu Waseda, Jan Janssen"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
+__version__ = "1.0"
+__maintainer__ = "Jan Janssen"
+__email__ = "janssen@mpie.de"
+__status__ = "production"
+__date__ = "Sep 1, 2018"
 
 
 class VaspInteractive(VaspBase, GenericInteractive):
@@ -34,6 +48,8 @@ class VaspInteractive(VaspBase, GenericInteractive):
     @structure.setter
     def structure(self, structure):
         GenericInteractive.structure.fset(self, structure)
+        if structure is not None:
+            self._potential = VaspPotentialSetter(element_lst=structure.get_species_symbols().tolist())
 
     @property
     def interactive_enforce_structure_reset(self):
@@ -51,8 +67,8 @@ class VaspInteractive(VaspBase, GenericInteractive):
             with open(os.path.join(self.working_directory, 'STOPCAR'), 'w') as stopcar:
                 stopcar.write('LABORT = .TRUE.')  # stopcar.write('LSTOP = .TRUE.')
             try:
-                self.run_if_interactive()
-                self.run_if_interactive()
+                self.run_if_interactive_non_modal()
+                self.run_if_interactive_non_modal()
                 for atom in self.current_structure.scaled_positions:
                     text = ' '.join(map('{:19.16f}'.format, atom))
                     self._interactive_library.stdin.write(text + '\n')
@@ -60,7 +76,7 @@ class VaspInteractive(VaspBase, GenericInteractive):
                 self._logger.warn('VASP calculation exited before interactive_close() - already converged?')
             for key in self.interactive_cache.keys():
                 if isinstance(self.interactive_cache[key], list):
-                    self.interactive_cache[key] = self.interactive_cache[key][:-2]
+                    self.interactive_cache[key] = self.interactive_cache[key]
             super(VaspInteractive, self).interactive_close()
             self.status.collect = True
             self._output_parser = Output()
@@ -115,6 +131,22 @@ class VaspInteractive(VaspBase, GenericInteractive):
     def calc_minimize(self, electronic_steps=400, ionic_steps=100, max_iter=None, pressure=None, algorithm=None,
                       retain_charge_density=False, retain_electrostatic_potential=False, ionic_energy=None,
                       ionic_forces=None, volume_only=False):
+        """
+        Function to setup the hamiltonian to perform ionic relaxations using DFT. The ISIF tag has to be supplied
+        separately.
+
+        Args:
+            electronic_steps (int): Maximum number of electronic steps
+            ionic_steps (int): Maximum number of ionic
+            max_iter (int): Maximum number of iterations
+            pressure (float): External pressure to be applied
+            algorithm (str): Type of VASP algorithm to be used "Fast"/"Accurate"
+            retain_charge_density (bool): True if the charge density should be written
+            retain_electrostatic_potential (boolean): True if the electrostatic potential should be written
+            ionic_energy (float): Ionic energy convergence criteria (eV)
+            ionic_forces (float): Ionic forces convergence criteria (overwrites ionic energy) (ev/A)
+            volume_only (bool): Option to relax only the volume (keeping the relative coordinates fixed
+        """
         if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
             raise NotImplementedError('calc_minimize() is not implemented for the interactive mode use calc_static()!')
         else:
@@ -125,20 +157,31 @@ class VaspInteractive(VaspBase, GenericInteractive):
                                                        ionic_energy=ionic_energy, ionic_forces=ionic_forces,
                                                        volume_only=volume_only)
 
-    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100, delta_temp=1.0,
-                delta_press=None, seed=None, tloop=None, rescale_velocity=True, langevin=False):
+    def calc_md(self, temperature=None, n_ionic_steps=1000, n_print=1, time_step=1.0, retain_charge_density=False,
+                retain_electrostatic_potential=False, **kwargs):
+        """
+        Sets appropriate tags for molecular dynamics in VASP
+
+        Args:
+            temperature (int/float/list): Temperature/ range of temperatures in Kelvin
+            n_ionic_steps (int): Maximum number of ionic steps
+            n_print (int): Prints outputs every n_print steps
+            time_step (float): time step (fs)
+            retain_charge_density (bool): True id the charge density should be written
+            retain_electrostatic_potential (bool): True if the electrostatic potential should be written
+        """
         if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
             raise NotImplementedError('calc_md() is not implemented for the interactive mode use calc_static()!')
         else:
-            super(VaspInteractive, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
-                                                 time_step=time_step, n_print=n_print, delta_temp=delta_temp,
-                                                 delta_press=delta_press, seed=seed, tloop=tloop,
-                                                 rescale_velocity=rescale_velocity, langevin=langevin)
+            super(VaspInteractive, self).calc_md(temperature=temperature, n_ionic_steps=n_ionic_steps,
+                                                 time_step=time_step, n_print=n_print,
+                                                 retain_charge_density=retain_charge_density,
+                                                 retain_electrostatic_potential=retain_electrostatic_potential, **kwargs)
 
     def run_if_interactive_non_modal(self):
-        initial_run = not self.interactive_is_activated()
+        initial_run = self.interactive_is_activated()
         super(VaspInteractive, self).run_if_interactive()
-        if not initial_run:
+        if initial_run:
             atom_numbers = self.current_structure.get_number_species_atoms()
             for species in atom_numbers.keys():
                 indices = self.current_structure.select_index(species)
@@ -177,14 +220,14 @@ class VaspInteractive(VaspBase, GenericInteractive):
             if "POSITIONS: reading from stdin" in text:
                 return
 
-    def _run_if_created(self, que_wait_for=None):
+    def _run_if_new(self, debug=False):
         if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
             self._check_incar_parameter(parameter='INTERACTIVE', value=True)
             self._check_incar_parameter(parameter='IBRION', value=-1)
             self._check_incar_parameter(parameter='POTIM', value=0.0)
             self._check_incar_parameter(parameter='NSW', value=1000)
             self._check_incar_parameter(parameter='ISYM', value=0)
-        super(VaspInteractive, self)._run_if_created(que_wait_for=que_wait_for)
+        super(VaspInteractive, self)._run_if_new(debug=debug)
 
 
 class Output(OutputBase):
@@ -227,16 +270,10 @@ class GenericOutput(GenericOutputBase):
         with hdf.open("generic") as hdf_go:
             # hdf_go["description"] = self.description
             for key, val in self.log_dict.items():
-                if isinstance(val, list) or isinstance(val, np.ndarray):
-                    hdf_go[key] = val[:-1]
-                else:
-                    hdf_go[key] = val
+                hdf_go[key] = val
             with hdf_go.open("dft") as hdf_dft:
                 for key, val in self.dft_log_dict.items():
-                    if isinstance(val, list) or isinstance(val, np.ndarray):
-                        hdf_dft[key] = val[:-1]
-                    else:
-                        hdf_dft[key] = val
+                    hdf_dft[key] = val
                 if self.bands.eigenvalue_matrix is not None:
                     self.bands.to_hdf(hdf_dft, "bands")
 
@@ -261,9 +298,5 @@ class DFTOutput(DFTOutputBase):
 
         """
         with hdf.open("dft") as hdf_dft:
-            # hdf_go["description"] = self.description
             for key, val in self.log_dict.items():
-                if isinstance(val, list) or isinstance(val, np.ndarray):
-                    hdf_dft[key] = val[:-1]
-                else:
-                    hdf_dft[key] = val
+                hdf_dft[key] = val

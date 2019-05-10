@@ -4,10 +4,11 @@ from pyiron.lammps.potential import LammpsPotentialFile
 from pyiron.vasp.potential import VaspPotential
 
 
-class TestOpenKimPotential(unittest.TestCase):
-    def setUp(self):
-        self.kim = LammpsPotentialFile()
-        self.potential_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../static/lammps/potentials')
+class TestLammpsPotentialFile(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.kim = LammpsPotentialFile()
+        cls.potential_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../static/lammps/potentials')
 
     def test_find(self):
         Fe_lst = ['Fe_C_Becquart_eam', 'Fe_C_Hepburn_Ackland_eam']
@@ -24,9 +25,10 @@ class TestOpenKimPotential(unittest.TestCase):
 
 
 class TestVaspPotential(unittest.TestCase):
-    def setUp(self):
-        self.vasp = VaspPotential()
-        self.potential_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../static/vasp/potentials')
+    @classmethod
+    def setUpClass(cls):
+        cls.vasp = VaspPotential()
+        cls.potential_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../static/vasp/potentials')
 
     def test_find(self):
         self.assertEqual(list(self.vasp.pbe.find('Fe')['Name']), ['Fe-gga-pbe', 'Fe_GW-gga-pbe', 'Fe_pv-gga-pbe',

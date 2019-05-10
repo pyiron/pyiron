@@ -11,7 +11,8 @@ General purpose output parser
 """
 
 __author__ = "Joerg Neugebauer"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department"
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+                "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -295,6 +296,8 @@ class Logstatus(object):
                                 except StopIteration:
                                     break
                                 if line_read.find(tag.rows().strip()) > -1:
+                                    break
+                                if 'WARNING:' in line_read:
                                     break
                                 val_line = [[ast.literal_eval(l) for l in line_read.split()]]
                                 if i_line == 0:

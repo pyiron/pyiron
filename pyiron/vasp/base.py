@@ -11,7 +11,7 @@ import numpy as np
 import tables
 
 from pyiron.dft.job.generic import GenericDFTJob
-from pyiron.vasp.potential import VaspPotentialFile
+from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentialSetter
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
@@ -27,7 +27,7 @@ from pyiron.dft.waves.bandstructure import Bandstructure
 import warnings
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH - " \
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
                 "Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
@@ -57,8 +57,8 @@ class VaspBase(GenericDFTJob):
         as shown below:
 
         >>> ham = VaspBase(job_name="trial_job")
-        >>> ham.input.incar.set(IBRION=-1)
-        >>> ham.input.incar.set(ISMEAR=0)
+        >>> ham.input.incar[IBRION=-1]
+        >>> ham.input.incar[ISMEAR=0]
         >>> ham.input.kpoints.set(size_of_mesh=[6, 6, 6])
 
         However, the according to pyiron's philosophy, it is recommended to avoid using code specific tags like IBRION,
@@ -78,15 +78,36 @@ class VaspBase(GenericDFTJob):
         self.input = Input()
         self.input.incar["SYSTEM"] = self.job_name
         self._output_parser = Output()
-        self._potential = VaspPotentialFile(xc=self.input.potcar["xc"])
+        self._potential = VaspPotentialSetter([])
+        self._compress_by_default = True
+        s.publication_add(self.publication)
+
+    @property
+    def structure(self):
+        """
+
+        Returns:
+
+        """
+        return GenericDFTJob.structure.fget(self)
+
+    @structure.setter
+    def structure(self, structure):
+        """
+
+        Args:
+            structure:
+
+        Returns:
+
+        """
+        GenericDFTJob.structure.fset(self, structure)
+        if structure is not None:
+            self._potential = VaspPotentialSetter(element_lst=structure.get_species_symbols().tolist())
 
     @property
     def potential(self):
         return self._potential
-
-    @potential.setter
-    def potential(self, val):
-        self._potential = val
 
     @property
     def plane_wave_cutoff(self):
@@ -218,6 +239,70 @@ class VaspBase(GenericDFTJob):
         raise NotImplementedError("The fix_symmetry property is not implemented for this code. "
                                   "Instead use ham.input.incar['ISYM'].")
 
+    @property
+    def potential_available(self):
+        if self.structure is not None:
+            return VaspPotential(selected_atoms=self.structure.get_species_symbols().tolist())
+        else:
+            return VaspPotential()
+
+    @property
+    def potential_view(self):
+        if self.structure is None:
+            raise ValueError("Can't list potentials unless a structure is set")
+        else:
+            return VaspPotentialFile(xc=self.input.potcar['xc']).find(self.structure.get_species_symbols().tolist())
+
+    @property
+    def potential_list(self):
+        if self.structure is None:
+            raise ValueError("Can't list potentials unless a structure is set")
+        else:
+            df = VaspPotentialFile(xc=self.input.potcar['xc']).find(self.structure.get_species_symbols().tolist())
+            if len(df) != 0:
+                return df['Name']
+            else:
+                return []
+
+    @property
+    def publication(self):
+        return {'vasp': {'Kresse1993': {'title': 'Ab initio molecular dynamics for liquid metals',
+                                        'author': ['Kresse, G.', 'Hafner, J.'],
+                                        'journal': 'Phys. Rev. B',
+                                        'volume': '47',
+                                        'issue': '1',
+                                        'pages': '558--561',
+                                        'numpages': '0',
+                                        'month': 'jan',
+                                        'publisher': 'American Physical Society',
+                                        'doi': '10.1103/PhysRevB.47.558',
+                                        'url': 'https://link.aps.org/doi/10.1103/PhysRevB.47.558'},
+                         'Kresse1996a':{'title': 'Efficiency of ab-initio total energy calculations for metals and '
+                                                 'semiconductors using a plane-wave basis set',
+                                        'journal': 'Computational Materials Science',
+                                        'volume': '6',
+                                        'number': '1',
+                                        'pages': '15-50',
+                                        'year': '1996',
+                                        'issn': '0927-0256',
+                                        'doi': '10.1016/0927-0256(96)00008-0',
+                                        'url': 'http://www.sciencedirect.com/science/article/pii/0927025696000080',
+                                        'author': ['Kresse, G.', 'Furthmüller, J.']},
+                         'Kresse1996b': {'title': 'Efficient iterative schemes for ab initio total-energy calculations '
+                                                  'using a plane-wave basis set',
+                                         'author': ['Kresse, G.', 'Furthmüller, J.'],
+                                         'journal': 'Phys. Rev. B',
+                                         'volume': '54',
+                                         'issue': '16',
+                                         'pages': '11169--11186',
+                                         'numpages': '0',
+                                         'year': '1996',
+                                         'month': 'oct',
+                                         'publisher': 'American Physical Society',
+                                         'doi': '10.1103/PhysRevB.54.11169',
+                                         'url': 'https://link.aps.org/doi/10.1103/PhysRevB.54.11169',
+                                         }}}
+
     # Compatibility functions
     def write_input(self):
         """
@@ -225,6 +310,7 @@ class VaspBase(GenericDFTJob):
         """
         if self.input.incar['SYSTEM'] == 'pyiron_jobname':
             self.input.incar['SYSTEM'] = self.job_name
+        modified_elements = {key: value for key, value in self._potential.to_dict().items() if value is not None}
         self.write_magmoms()
         self.set_coulomb_interactions()
         if "CONTCAR" in self.restart_file_dict.keys():
@@ -235,7 +321,9 @@ class VaspBase(GenericDFTJob):
                 else:
                     self.logger.info(
                         "The POSCAR file will be overwritten by the CONTCAR file specified in restart_file_list.")
-        self.input.write(structure=self.structure, directory=self.working_directory)
+        self.input.write(structure=self.structure,
+                         directory=self.working_directory,
+                         modified_elements=modified_elements)
 
     # define routines that collect all output files
     def collect_output(self):
@@ -318,6 +406,18 @@ class VaspBase(GenericDFTJob):
         # TODO: implement for vasp
         self._logger.info("collect_errors() is not yet implemented for VASP")
 
+    @staticmethod
+    def _decompress_files_in_directory(directory):
+        files = os.listdir(directory)
+        for file_compressed, file, mode in [["OUTCAR.gz", "OUTCAR", 'gzip'],
+                                            ["vasprun.xml.bz2", 'vasprun.xml', 'bzip2'],
+                                            ["vasprun.xml.gz", 'vasprun.xml', 'gzip']]:
+            if file_compressed in files and file not in files:
+                _ = subprocess.check_output([mode, '-d', file_compressed], cwd=directory, shell=False,
+                                            universal_newlines=True)
+                files = os.listdir(directory)
+        return files
+
     def from_directory(self, directory):
         """
         The Vasp instance is created by parsing the input and output from the specified directory
@@ -327,20 +427,8 @@ class VaspBase(GenericDFTJob):
         """
         if not self.status.finished:
             # _ = s.top_path(directory)
-            files = os.listdir(directory)
+            files = self._decompress_files_in_directory(directory)
             vp_new = Vr()
-            if "OUTCAR.gz" in files and "OUTCAR" not in files:
-                _ = subprocess.check_output(['gzip', '-d', 'OUTCAR.gz'], cwd=directory, shell=False,
-                                            universal_newlines=True)
-                files = os.listdir(directory)
-            if "vasprun.xml.bz2" in files:
-                _ = subprocess.check_output(['bzip2', '-d', 'vasprun.xml.bz2'], cwd=directory, shell=False,
-                                            universal_newlines=True)
-                files = os.listdir(directory)
-            if "vasprun.xml.gz" in files:
-                _ = subprocess.check_output(['gzip', '-d', 'vasprun.xml.gz'], cwd=directory, shell=False,
-                                            universal_newlines=True)
-                files = os.listdir(directory)
             try:
                 if not ("OUTCAR" in files or "vasprun.xml" in files):
                     raise IOError("This file isn't present")
@@ -366,6 +454,24 @@ class VaspBase(GenericDFTJob):
             else:
                 structure = vp_new.get_initial_structure()
             self.structure = structure
+            # Read initial magnetic moments from the INCAR file and set it to the structure
+            magmom_loc = np.array(self.input.incar._dataset["Parameter"]) == "MAGMOM"
+            if any(magmom_loc):
+                init_moments = list()
+                try:
+                    value = np.array(self.input.incar._dataset["Value"])[magmom_loc][0]
+                    if "*" not in value:
+                        init_moments = np.array([float(val) for val in value.split()])
+                    else:
+                        # Values given in "number_of_atoms*value" format
+                        init_moments = np.hstack(([int(val.split("*")[0]) * [float(val.split("*")[1])] for val in value.split()]))
+                except (ValueError, IndexError, TypeError):
+                    self.logger.warn("Unable to parse initial magnetic moments from the INCAR file")
+                if len(init_moments) == len(self.structure):
+                    self.structure.set_initial_magnetic_moments(init_moments)
+                else:
+                    self.logger.warn("Inconsistency during parsing initial magnetic moments from the INCAR file")
+
             self._write_chemical_formular_to_database()
             self._import_directory = directory
             self.status.collect = True
@@ -606,7 +712,7 @@ class VaspBase(GenericDFTJob):
         if retain_electrostatic_potential:
             self.write_electrostatic_potential = retain_electrostatic_potential
 
-    def calc_md(self, temperature=None, n_ionic_steps=1000, n_print=1, dt=1.0, retain_charge_density=False,
+    def calc_md(self, temperature=None, n_ionic_steps=1000, n_print=1, time_step=1.0, retain_charge_density=False,
                 retain_electrostatic_potential=False, **kwargs):
         """
         Sets appropriate tags for molecular dynamics in VASP
@@ -615,11 +721,11 @@ class VaspBase(GenericDFTJob):
             temperature (int/float/list): Temperature/ range of temperatures in Kelvin
             n_ionic_steps (int): Maximum number of ionic steps
             n_print (int): Prints outputs every n_print steps
-            dt (float): time step (fs)
+            time_step (float): time step (fs)
             retain_charge_density (bool): True id the charge density should be written
             retain_electrostatic_potential (bool): True if the electrostatic potential should be written
         """
-        super(VaspBase, self).calc_md(temperature=temperature, n_ionic_steps=n_ionic_steps, n_print=n_print, dt=dt,
+        super(VaspBase, self).calc_md(temperature=temperature, n_ionic_steps=n_ionic_steps, n_print=n_print, time_step=time_step,
                                       retain_charge_density=retain_charge_density,
                                       retain_electrostatic_potential=retain_electrostatic_potential, **kwargs)
         if temperature is not None:
@@ -635,16 +741,16 @@ class VaspBase(GenericDFTJob):
             self.input.incar["SMASS"] = -3
         self.input.incar["NSW"] = n_ionic_steps
         self.input.incar["NBLOCK"] = int(n_print)
-        self.input.incar["POTIM"] = dt
+        self.input.incar["POTIM"] = time_step
         if retain_charge_density:
             self.write_charge_density = retain_charge_density
         if retain_electrostatic_potential:
             self.write_electrostatic_potential = retain_electrostatic_potential
         for key in kwargs.keys():
-            s.logger.warning("{}tag not relevant for vasp".format(key))
+            self.logger.warn("Tag {} not relevant for vasp".format(key))
 
-    def set_kpoints(self, mesh=None, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
-                    weights=None, reciprocal=True, kmesh_density=None):
+    def _set_kpoints(self, mesh=None, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
+                    weights=None, reciprocal=True):
         """
         Function to setup the k-points for the VASP job
 
@@ -667,10 +773,7 @@ class VaspBase(GenericDFTJob):
             raise AssertionError()
         if scheme == "MP":
             if mesh is None:
-                if kmesh_density is not None:
-                    mesh = self._get_k_mesh_by_cell(self.structure, kmesh_density)
-                else:
-                    mesh = [4, 4, 4]
+                mesh = [int(val) for val in self.input.kpoints[3].split()]
             self.input.kpoints.set(size_of_mesh=mesh, shift=center_shift)
         if scheme == "GP":
             self.input.kpoints.set(size_of_mesh=[1, 1, 1], method="Gamma Point")
@@ -715,10 +818,10 @@ class VaspBase(GenericDFTJob):
         bs_obj = Bandstructure(structure)
         _, q_point_list, [_, _] = bs_obj.get_path(num_points=num_points, path_type="full")
         q_point_list = np.array(q_point_list)
-        self.set_kpoints(scheme="Manual", symmetry_reduction=False, manual_kpoints=q_point_list, weights=None,
-                         reciprocal=False)
+        self._set_kpoints(scheme="Manual", symmetry_reduction=False, manual_kpoints=q_point_list, weights=None,
+                          reciprocal=False)
 
-    def set_convergence_precision(self, ionic_energy=1.E-5, electronic_energy=1.E-7, ionic_forces=None):
+    def set_convergence_precision(self, ionic_energy=1.E-3, electronic_energy=1.E-7, ionic_forces=1.E-2):
         """
         Sets the electronic and ionic convergence precision. For ionic convergence either the energy or the force
         precision is required
@@ -803,6 +906,52 @@ class VaspBase(GenericDFTJob):
             self.input.incar["NGYF"] = int(ny)
         if nz is not None:
             self.input.incar["NGZF"] = int(nz)
+
+    def set_mixing_parameters(self, method=None, n_pulay_steps=None, density_mixing_parameter=None,
+                              spin_mixing_parameter=None):
+        """
+
+        Args:
+            method (str):
+            n_pulay_steps (int):
+            density_mixing_parameter (float):
+            spin_mixing_parameter (float):
+
+        """
+        if method.upper() == "PULAY":
+            self.input.incar["IMIX"] = 4
+        if method.upper() == "KERKER":
+            self.input.incar["IMIX"] = 1
+        if n_pulay_steps is not None:
+            self.input.incar["MAXMIX"] = n_pulay_steps
+        if density_mixing_parameter is not None:
+            self.input.incar["AMIX"] = density_mixing_parameter
+
+    def set_empty_states(self, n_empty_states=None):
+        """
+        Sets the number of empty states in the calculation
+        Args:
+            n_empty_states (int): Required number of empty states
+
+        """
+        n_elect = self.get_nelect()
+        if n_empty_states is not None:
+            self.input.incar["NBANDS"] = int(round(n_elect / 2)) + int(n_empty_states)
+
+    def get_nelect(self):
+        """
+        Returns the number of electrons in the systems
+
+        Returns:
+            float: Number of electrons in the system
+
+        """
+        if not self.status.finished and self.structure is not None:
+            potential = VaspPotentialFile(xc=self.input.potcar['xc'])
+            return sum([potential.find_default(el).n_elect.values[-1] * n_atoms
+                        for el, n_atoms in self.structure.get_parent_basis().get_number_species_atoms().items()])
+        else:
+            return self["output/generic/dft/n_elect"]
 
     def get_electronic_structure(self):
         """
@@ -895,6 +1044,22 @@ class VaspBase(GenericDFTJob):
             else:
                 new_ham.input.incar["ICHARG"] = icharg
         return new_ham
+
+    def compress(self, files_to_compress=None):
+        """
+        Compress the output files of a job object.
+
+        Args:
+            files_to_compress (list): A list of files to compress (optional)
+        """
+        if files_to_compress is None:
+            files_to_compress = [f for f in list(self.list_files()) if f not in ["CHGCAR", "CONTCAR", "WAVECAR"]]
+        # delete empty files
+        for f in list(self.list_files()):
+            filename = os.path.join(self.working_directory, f)
+            if f not in files_to_compress and os.path.exists(filename) and os.stat(filename).st_size == 0:
+                os.remove(filename)
+        super(VaspBase, self).compress(files_to_compress=files_to_compress)
 
     def restart_from_wave_functions(self, snapshot=-1, job_name=None, job_type=None, istart=1):
 
@@ -991,12 +1156,9 @@ class VaspBase(GenericDFTJob):
         Lists all the possible POTCAR files for the elements in the structure depending on the XC functional
 
         Returns:
-            pyiron.vasp.potential.VaspPotentialFile: A pandas datafrome like object
+           list: a list of available potentials
         """
-        if self.structure is None:
-            raise ValueError("Can't list potentials unless a structure is set")
-        else:
-            return VaspPotentialFile(xc=self.input.potcar['xc']).find(self.structure.get_species_symbols().tolist())
+        return self.potential_list
 
     def __del__(self):
         pass
@@ -1029,7 +1191,7 @@ class Input:
         self.kpoints = Kpoints(table_name="kpoints")
         self.potcar = Potcar(table_name="potcar")
 
-    def write(self, structure, directory=None):
+    def write(self, structure, modified_elements, directory=None):
         """
         Writes all the input files to a specified directory
 
@@ -1039,7 +1201,7 @@ class Input:
         """
         self.incar.write_file(file_name="INCAR", cwd=directory)
         self.kpoints.write_file(file_name="KPOINTS", cwd=directory)
-        self.potcar.potcar_set_structure(structure)
+        self.potcar.potcar_set_structure(structure, modified_elements)
         self.potcar.write_file(file_name="POTCAR", cwd=directory)
         # Write the species info in the POSCAR file only if there are no user defined species
         is_user_defined = list()
@@ -1250,9 +1412,9 @@ class Output:
             if "kinetic_energies" in self.vp_new.vasprun_dict.keys():
                 self.generic_output.dft_log_dict["scf_energy_kin"] = self.vp_new.vasprun_dict["kinetic_energies"]
 
-        if "LOCPOT" in files_present:
+        if "LOCPOT" in files_present and os.stat(posixpath.join(directory, "LOCPOT")).st_size != 0:
             self.electrostatic_potential.from_file(filename=posixpath.join(directory, "LOCPOT"), normalize=False)
-        if "CHGCAR" in files_present:
+        if "CHGCAR" in files_present and os.stat(posixpath.join(directory, "CHGCAR")).st_size != 0:
             self.charge_density.from_file(filename=posixpath.join(directory, "CHGCAR"), normalize=True)
         self.generic_output.bands = self.electronic_structure
 
@@ -1501,11 +1663,13 @@ class Potcar(GenericParameters):
         self.max_cutoff_lst = list()
         self.el_path_lst = list()
         self.el_path_dict = dict()
+        self.modified_elements = dict()
 
-    def potcar_set_structure(self, structure):
+    def potcar_set_structure(self, structure, modified_elements):
         self._structure = structure
         self._set_default_path_dict()
         self._set_potential_paths()
+        self.modified_elements = modified_elements
 
     def modify(self, **modify):
         if "xc" in modify:
@@ -1576,7 +1740,10 @@ class Potcar(GenericParameters):
                 self._dataset["Parameter"].append("pot_" + str(i))
                 self._dataset["Value"].append(el_path)
                 self._dataset["Comment"].append("")
-            self.el_path_lst.append(el_path)
+            if el_obj.Abbreviation in self.modified_elements.keys():
+                self.el_path_lst.append(self.modified_elements[el_obj.Abbreviation])
+            else:
+                self.el_path_lst.append(el_path)
 
     def _find_potential_file(self, file_name=None, xc=None, path=None):
         if path is not None:

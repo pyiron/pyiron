@@ -11,8 +11,9 @@ import posixpath
 import h5py
 import numpy as np
 import pandas as pd
+import warnings
 
-from pyiron.lammps.potential import LammpsPotentialFile
+from pyiron.lammps.potential import LammpsPotentialFile, PotentialAvailable
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 from pyiron.base.settings.generic import Settings
 from pyiron.base.pyio.parser import Logstatus, extract_data_from_file
@@ -22,7 +23,7 @@ from pyiron.lammps.structure import LammpsStructure, UnfoldingPrism
 from pyiron.atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
-__copyright__ = "Copyright 2017, Max-Planck-Institut für Eisenforschung GmbH " \
+__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH " \
                 "- Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
@@ -54,6 +55,8 @@ class LammpsBase(AtomisticGenericJob):
         self.input = Input()
         self._cutoff_radius = None
         self._is_continuation = None
+        self._compress_by_default = True
+        s.publication_add(self.publication)
 
     @property
     def cutoff_radius(self):
@@ -131,6 +134,34 @@ class LammpsBase(AtomisticGenericJob):
                 self.input.control[val] = v
         self.input.potential.remove_structure_block()
 
+    @property
+    def potential_available(self):
+        return PotentialAvailable(list_of_potentials=self.potential_list)
+
+    @property
+    def potential_list(self):
+        """
+        List of interatomic potentials suitable for the current atomic structure.
+
+        use self.potentials_view() to get more details.
+
+        Returns:
+            list: potential names
+        """
+        return self.list_potentials()
+
+    @property
+    def potential_view(self):
+        """
+        List all interatomic potentials for the current atomistic sturcture including all potential parameters.
+
+        To quickly get only the names of the potentials you can use: self.potentials_list()
+
+        Returns:
+            pandas.Dataframe: Dataframe including all potential parameters.
+        """
+        return self.view_potentials()
+
     def validate_ready_to_run(self):
         """
 
@@ -155,13 +186,17 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
 
         """
-        return self.get_structure()
+        warnings.warn("get_final_structure() is deprecated - please use get_structure() instead.", DeprecationWarning)
+        return self.get_structure(iteration_step=-1)
 
     def view_potentials(self):
         """
+        List all interatomic potentials for the current atomistic sturcture including all potential parameters.
+
+        To quickly get only the names of the potentials you can use: self.potentials_list()
 
         Returns:
-
+            pandas.Dataframe: Dataframe including all potential parameters.
         """
         from pyiron.lammps.potential import LammpsPotentialFile
         if not self.structure:
@@ -175,9 +210,12 @@ class LammpsBase(AtomisticGenericJob):
 
     def list_potentials(self):
         """
+        List of interatomic potentials suitable for the current atomic structure.
+
+        use self.potentials_view() to get more details.
 
         Returns:
-            list:
+            list: potential names
         """
         return list(self.view_potentials()['Name'].values)
 
@@ -202,10 +240,9 @@ class LammpsBase(AtomisticGenericJob):
             raise ValueError("Input structure not set. Use method set_structure()")
         lmp_structure = self._get_lammps_structure(structure=self.structure, cutoff_radius=self.cutoff_radius)
         lmp_structure.write_file(file_name="structure.inp", cwd=self.working_directory)
-        if self.executable.version and 'dump_modify' in self.input.control._dataset['Parameter'] and \
-                (int(self.executable.version.split('.')[0]) < 2016 or
-                 (int(self.executable.version.split('.')[0]) == 2016 and
-                  int(self.executable.version.split('.')[1]) < 11)):
+        version_int_lst = self._get_executable_version_number()
+        if version_int_lst is not None and 'dump_modify' in self.input.control._dataset['Parameter'] and \
+                (version_int_lst[0] < 2016 or (version_int_lst[0] == 2016 and version_int_lst[1] < 11)):
             self.input.control['dump_modify'] = self.input.control['dump_modify'].replace(' line ', ' ')
         if not all(self.structure.pbc):
             self.input.control['boundary'] = ' '.join(['p' if coord else 'f' for coord in self.structure.pbc])
@@ -213,6 +250,33 @@ class LammpsBase(AtomisticGenericJob):
         self.input.control.write_file(file_name="control.inp", cwd=self.working_directory)
         self.input.potential.write_file(file_name="potential.inp", cwd=self.working_directory)
         self.input.potential.copy_pot_files(self.working_directory)
+
+    def _get_executable_version_number(self):
+        """
+        Get the version of the executable
+
+        Returns:
+            list: List of integers defining the version number
+        """
+        if self.executable.version:
+            return [l for l in [[int(i) for i in s.split('.') if i.isdigit()]
+                                for s in self.executable.version.split('_')]
+                    if len(l) > 0][0]
+        else:
+            return None
+
+    @property
+    def publication(self):
+        return {'lammps': {'lammps': {'title': 'Fast Parallel Algorithms for Short-Range Molecular Dynamics',
+                                      'journal': 'Journal of Computational Physics',
+                                      'volume': '117',
+                                      'number': '1',
+                                      'pages': '1-19',
+                                      'year': '1995',
+                                      'issn': '0021-9991',
+                                      'doi': '10.1006/jcph.1995.1039',
+                                      'url': 'http://www.sciencedirect.com/science/article/pii/S002199918571039X',
+                                      'author': ['Steve Plimpton']}}}
 
     def collect_output(self):
         """
@@ -226,7 +290,7 @@ class LammpsBase(AtomisticGenericJob):
         else:
             self.collect_dump_file(file_name="dump.out", cwd=self.working_directory)
         self.collect_output_log(file_name="log.lammps", cwd=self.working_directory)
-        final_structure = self.get_final_structure()
+        final_structure = self.get_structure(iteration_step=-1)
         with self.project_hdf5.open("output") as hdf_output:
             final_structure.to_hdf(hdf_output)
 
@@ -384,7 +448,7 @@ class LammpsBase(AtomisticGenericJob):
         with self.project_hdf5.open("output/generic") as hdf_output:
             lf.to_hdf(hdf_output)
 
-    def calc_minimize(self, e_tol=0.0, f_tol=1e-8, max_iter=100000, pressure=None, n_print=100):
+    def calc_minimize(self, e_tol=0.0, f_tol=1e-2, max_iter=100000, pressure=None, n_print=100):
         """
 
         Args:
@@ -411,31 +475,52 @@ class LammpsBase(AtomisticGenericJob):
         super(LammpsBase, self).calc_static()
         self.input.control.calc_static()
 
-    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=None, n_print=100,
-                delta_temp=100.0, delta_press=None, seed=None, tloop=None, rescale_velocity=True, langevin=False):
+    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=1.0, n_print=100,
+                temperature_damping_timescale=100.0, pressure_damping_timescale=1000.0, seed=None, tloop=None, initial_temperature=None,
+                langevin=False, delta_temp=None, delta_press=None):
         """
+        Set an MD calculation within LAMMPS. Nosé Hoover is used by default.
 
         Args:
-            temperature:
-            pressure:
-            n_ionic_steps:
-            dt:
-            time_step:
-            n_print:
-            delta_temp:
-            delta_press:
-            seed:
+            temperature (None/float): Target temperature. If set to None, an NVE calculation is performed.
+                                      It is required when the pressure is set or langevin is set
+            pressure (None/float): Target pressure. If set to None, an NVE or an NVT calculation is performed.
+                                   (This tag will allow for a list in the future as it is done for calc_minimize())
+            n_ionic_steps (int): Number of ionic steps
+            time_step (float): Step size between two steps. In fs if units==metal
+            n_print (int):  Print frequency
+            temperature_damping_timescale (float): The time associated with the thermostat adjusting the temperature.
+                                                   (In fs. After rescaling to appropriate time units, is equivalent to
+                                                   Lammps' `Tdamp`.)
+            pressure_damping_timescale (float): The time associated with the barostat adjusting the temperature.
+                                                (In fs. After rescaling to appropriate time units, is equivalent to
+                                                Lammps' `Pdamp`.)
+            seed (int):  Seed for the random number generation (required for the velocity creation)
             tloop:
-            rescale_velocity:
-
+            initial_temperature (None/float):  Initial temperature according to which the initial velocity field
+                                               is created. If None, the initial temperature will be twice the target
+                                               temperature (which would go immediately down to the target temperature
+                                               as described in equipartition theorem). If 0, the velocity field is not
+                                               initialized (in which case  the initial velocity given in structure will
+                                               be used). If any other number is given, this value is going to be used
+                                               for the initial temperature.
+            langevin (bool): (True or False) Activate Langevin dynamics
+            delta_temp (float): Thermostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
+            delta_press (float): Barostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
         """
+        if self.server.run_mode.interactive_non_modal:
+            warnings.warn('calc_md() is not implemented for the non modal interactive mode use calc_static()!')
         super(LammpsBase, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
-                                        time_step=time_step, n_print=n_print, delta_temp=delta_temp,
-                                        delta_press=delta_press,
-                                        seed=seed, tloop=tloop, rescale_velocity=rescale_velocity, langevin=langevin)
+                                        time_step=time_step, n_print=n_print,
+                                        temperature_damping_timescale=temperature_damping_timescale,
+                                        pressure_damping_timescale=pressure_damping_timescale,
+                                        seed=seed, tloop=tloop, initial_temperature=initial_temperature,
+                                        langevin=langevin)
         self.input.control.calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
-                                   time_step=time_step, n_print=n_print, delta_temp=delta_temp, delta_press=delta_press,
-                                   seed=seed, tloop=tloop, rescale_velocity=rescale_velocity, langevin=langevin)
+                                   time_step=time_step, n_print=n_print, temperature_damping_timescale=temperature_damping_timescale,
+                                   pressure_damping_timescale=pressure_damping_timescale,
+                                   seed=seed, tloop=tloop, initial_temperature=initial_temperature, langevin=langevin,
+                                   delta_temp=delta_temp, delta_press=delta_press)
 
     # define hdf5 input and output
     def to_hdf(self, hdf=None, group_name=None):
@@ -477,6 +562,17 @@ class LammpsBase(AtomisticGenericJob):
         """
         self.input.control.modify(write_restart=filename, append_if_not_present=True)
 
+    def compress(self, files_to_compress=None):
+        """
+        Compress the output files of a job object.
+
+        Args:
+            files_to_compress (list):
+        """
+        if files_to_compress is None:
+            files_to_compress = [f for f in list(self.list_files()) if f not in ["restart.out"]]
+        super(LammpsBase, self).compress(files_to_compress=files_to_compress)
+
     def read_restart_file(self, filename="restart.out"):
         """
 
@@ -488,6 +584,7 @@ class LammpsBase(AtomisticGenericJob):
         """
         self._is_continuation = True
         self.input.control.set(read_restart=filename)
+        self.input.control['reset_timestep'] = 0
         self.input.control.remove_keys(['dimension', 'read_data', 'boundary', 'atom_style', 'velocity'])
 
     def collect_dump_file(self, file_name="dump.out", cwd=None):

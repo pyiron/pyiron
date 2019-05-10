@@ -13,10 +13,11 @@ class TestTrajectoryAnalysis(unittest.TestCase):
     Testing the TrajectoryAnalysis() module.
     """
 
-    def setUp(self):
-        self.positions = np.array([[[0.2, 0.2, 0.99], [0., 0., 0.]], [[0.2, 0.2, 0.03], [0., 0., 0.]],
-                                   [[0.2, 0.2, 0.02], [0., 0., 0.]], [[0.2, 0.2, 0.98], [0., 0., 0.]],
-                                   [[0.2, 0.99, 0.99], [0., 0., 0.]], [[0.2, 0.01, 0.02], [0., 0., 0.]]])
+    @classmethod
+    def setUpClass(cls):
+        cls.positions = np.array([[[0.2, 0.2, 0.99], [0., 0., 0.]], [[0.2, 0.2, 0.03], [0., 0., 0.]],
+                                  [[0.2, 0.2, 0.02], [0., 0., 0.]], [[0.2, 0.2, 0.98], [0., 0., 0.]],
+                                  [[0.2, 0.99, 0.99], [0., 0., 0.]], [[0.2, 0.01, 0.02], [0., 0., 0.]]])
 
     def test_unwrap_coordinates(self):
         unwrapped_positions = unwrap_coordinates(positions=self.positions, is_relative=True)
