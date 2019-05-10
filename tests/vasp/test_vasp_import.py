@@ -1,4 +1,5 @@
 import unittest
+import numpy as np
 import os
 from pyiron.project import Project
 from pyiron.vasp.vasp import Vasp
@@ -24,6 +25,7 @@ class TestVaspImport(unittest.TestCase):
         ham = self.project.load('full_job_sample')
         self.assertTrue(isinstance(ham, Vasp))
         self.assertEqual(ham.get_nelect(), 16)
+        self.assertTrue(np.array_equal(ham.structure.get_initial_magnetic_moments(), [-1, -1]))
 
 
 if __name__ == '__main__':

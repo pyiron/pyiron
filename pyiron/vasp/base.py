@@ -454,6 +454,24 @@ class VaspBase(GenericDFTJob):
             else:
                 structure = vp_new.get_initial_structure()
             self.structure = structure
+            # Read initial magnetic moments from the INCAR file and set it to the structure
+            magmom_loc = np.array(self.input.incar._dataset["Parameter"]) == "MAGMOM"
+            if any(magmom_loc):
+                init_moments = list()
+                try:
+                    value = np.array(self.input.incar._dataset["Value"])[magmom_loc][0]
+                    if "*" not in value:
+                        init_moments = np.array([float(val) for val in value.split()])
+                    else:
+                        # Values given in "number_of_atoms*value" format
+                        init_moments = np.hstack(([int(val.split("*")[0]) * [float(val.split("*")[1])] for val in value.split()]))
+                except (ValueError, IndexError, TypeError):
+                    self.logger.warn("Unable to parse initial magnetic moments from the INCAR file")
+                if len(init_moments) == len(self.structure):
+                    self.structure.set_initial_magnetic_moments(init_moments)
+                else:
+                    self.logger.warn("Inconsistency during parsing initial magnetic moments from the INCAR file")
+
             self._write_chemical_formular_to_database()
             self._import_directory = directory
             self.status.collect = True
