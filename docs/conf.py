@@ -295,6 +295,6 @@ shutil.copytree(os.path.join(curdir, '..', 'notebooks'),
 
 if 'readthedocs.org' in curdir:  # write config for readthedocs.org
     with open(os.path.join(os.path.expanduser('~/.pyiron')), 'w') as f:
-        f.writelines(lines=['[DEFAULT]',
-                            'TOP_LEVEL_DIRS = ' + os.path.join(curdir, '..'),
-                            'RESOURCE_PATHS = ' + os.path.join(curdir, '..') + '/tests/static'])
+        f.writelines(['[DEFAULT]',
+                      'TOP_LEVEL_DIRS = ' + os.path.join(curdir, '..'),
+                      'RESOURCE_PATHS = ' + os.path.join(curdir, '..') + '/tests/static'])
