@@ -14,6 +14,8 @@
 
 import sys
 import os
+import shutil
+from sphinx.ext.apidoc import main
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -281,3 +283,8 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 # texinfo_no_detailmenu = False
+
+main(['-e', '-o', 'apidoc', '../pyiron', '--force'])
+
+shutil.copytree(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'notebooks'),
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), 'source/notebooks'))
