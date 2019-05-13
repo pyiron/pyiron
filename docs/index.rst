@@ -68,6 +68,7 @@ Please contact us if you are interested in using pyiron:
 ****
 News
 ****
+* **10th May 2019:** pyiron documentation hosted on `readthedocs.org <https://pyiron.readthedocs.io>`_.
 * **24th March 2019:** pyiron 0.2.2 released.
 * **15th March 2019:** `pyiron paper available as open access <https://doi.org/10.1016/j.commatsci.2018.07.043>`_ .
 * **20th January 2019:** pyiron 0.2.1 released.
@@ -116,6 +117,6 @@ Read more about `citing individual modules/ plugins of pyiron and the implemente
    source/citation.rst
    source/faq.rst
    License (BSD) <https://github.com/pyiron/pyiron/blob/master/LICENSE>
-   Module index <https://pyiron.github.io/py-modindex.html>
+   Module index <https://pyiron.readthedocs.io/en/latest/py-modindex.html>
    Imprint <https://www.mpie.de/impressum>
    Data protection <https://www.mpie.de/3392182/data-protection>

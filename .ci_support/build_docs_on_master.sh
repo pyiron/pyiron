@@ -14,10 +14,7 @@ if [ "$TRAVIS_BRANCH" = "master" ]; then
     echo -e "# Build Status\n\nThis repository is automatically updated based on the changes in https://github.com/pyiron/pyiron .\n[![Build Status](https://travis-ci.org/pyiron/pyiron.svg?branch=master)](https://travis-ci.org/pyiron/pyiron)" > README.md
     cd ..
 
-    cd pyiron
-    sphinx-apidoc -f -o docs/apidoc pyiron
-    cd docs
-    cp -r ../notebooks source
+    cd pyiron/docs
     sphinx-build -b html ./ ../../pyiron.github.io
     cd ..
 
