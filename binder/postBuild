@@ -1,7 +1,7 @@
 # ngl install
-conda install -c conda-forge nglview=1.1.9
+conda install -c conda-forge nglview=1.2.2
 jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build
-jupyter labextension install nglview-js-widgets@1.1.9
+jupyter labextension install nglview-js-widgets@1.2.2
 
 # pyiron setup
 echo "[DEFAULT]\nTOP_LEVEL_DIRS = ${HOME}\nRESOURCE_PATHS = ${HOME}/resources" > ${HOME}/.pyiron
