@@ -711,7 +711,7 @@ class GenericJob(JobCore):
             print('You have selected to start the job manually. ' +
                   'To run it, go into the working directory {} and '.format(abs_working) +
                   'call \'python -m pyiron.base.job.wrappercmd -p {}'.format(abs_working) +
-                  ' - j {} \' '.format(self.job_id))
+                  ' -j {} \' '.format(self.job_id))
 
     def run_if_scheduler(self):
         """
