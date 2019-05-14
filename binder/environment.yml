@@ -10,3 +10,4 @@ dependencies:
 - ipywidgets 
 - notebook
 - ipykernel
+- nglview=1.2.2
