@@ -80,24 +80,7 @@ class LammpsPotential(GenericParameters):
     def get_element_lst(self):
         return list(self._df['Species'])[0]
 
-    def set_parameter(self, parameter, elements=[], value='not defined'):
-        if self.custom_potential is not None:
-            self.custom_potential.set_parameter(parameter=parameter, elements=elements, value=value)
-            self._df = self.custom_potential.df
-
     def to_hdf(self, hdf, group_name=None):
-#<<<<<<< HEAD
-#        with hdf.open('potential') as hdf_pot:
-#            if self.custom_potential is not None:
-#                for key in ['Config', 'Filename', 'Name', 'Model', 'Species']:
-#                    hdf_pot[key] = self.custom_potential.df[key].values[0]
-#                if 'Content' in self.custom_potential.df.columns:
-#                    hdf_pot['Content'] = self.custom_potential.df['Content'].values[0]
-#            elif self._df is not None:
-#                for key in ['Config', 'Filename', 'Name', 'Model', 'Species']:
-#                    hdf_pot[key] = self._df[key].values[0]
-#                hdf_pot['Content'] = self.potential_content
-#=======
         if self._df is not None:
             with hdf.open('potential') as hdf_pot:
                 hdf_pot['Config'] = self._df['Config'].values[0]
@@ -105,308 +88,21 @@ class LammpsPotential(GenericParameters):
                 hdf_pot['Name'] = self._df['Name'].values[0]
                 hdf_pot['Model'] = self._df['Model'].values[0]
                 hdf_pot['Species'] = self._df['Species'].values[0]
-#>>>>>>> master
         super(LammpsPotential, self).to_hdf(hdf, group_name=group_name)
 
     def from_hdf(self, hdf, group_name=None):
         with hdf.open('potential') as hdf_pot:
             try:
-#<<<<<<< HEAD
-#                keys = ['Config', 'Filename', 'Model', 'Species', 'Content']
-#                if "Content" in hdf.list_nodes():
-#                    keys.append('Content')
-#                    self._potential_content = hdf_pot['Content']
-#                self._df = pd.DataFrame({k: [hdf_pot[k]] for k in keys})
-#                #if "Content" in hdf.list_nodes():
-#                #    self._df = pd.DataFrame({'Config': [hdf_pot['Config']],
-#                #                             'Filename': [hdf_pot['Filename']],
-#                #                             'Name': [hdf_pot['Name']],
-#                #                             'Model': [hdf_pot['Model']],
-#                #                             'Species': [hdf_pot['Species']],
-#                #                             'Content': [hdf_pot['Content']]})
-#                #    self._potential_content = self._df['Content']
-#                #else:
-#                #    self._df = pd.DataFrame({'Config': [hdf_pot['Config']],
-#                #                             'Filename': [hdf_pot['Filename']],
-#                #                             'Name': [hdf_pot['Name']],
-#                #                             'Model': [hdf_pot['Model']],
-#                #                             'Species': [hdf_pot['Species']]})
-#=======
                 self._df = pd.DataFrame({'Config': [hdf_pot['Config']],
                                          'Filename': [hdf_pot['Filename']],
                                          'Name': [hdf_pot['Name']],
                                          'Model': [hdf_pot['Model']],
                                          'Species': [hdf_pot['Species']]})
-#>>>>>>> master
             except ValueError:
                 pass
         super(LammpsPotential, self).from_hdf(hdf, group_name=group_name)
 
 
-#<<<<<<< HEAD
-#class CustomPotential(GenericParameters):
-#    def __init__(self, structure, pot_type=None, pot_sub_style=None, file_name=None, meam_library=None, eam_combinations=False):
-#        super(CustomPotential, self).__init__(comment_char="//",
-#                    separator_char="=", end_value_char=';')
-#        self._initialized = False
-#        self._model = pot_type
-#        self._file_name = file_name
-#        self._structure = structure
-#        self._combinations = []
-#        self._value_modified = {}
-#        self._element_indices = None
-#        self._eam_comb = eam_combinations
-#        self.overlay = False
-#        self['sub_potential'] = pot_sub_style
-#        self._file_eam = []
-#        self._output_file_eam = []
-#        pair_pots=['lj/cut','morse','buck','mie/cut','yukawa','born','born/coul/long','gauss']
-#        if file_name is None:
-#            self._initialize(self._model)
-#            if self._model not in pair_pots:
-#                print('ERROR: Choose a potential type from', pair_pots)
-#            self._initialized = True
-#        else:
-#            if isinstance(pot_type, str) and pot_type=='eam':
-#                self._output_file_eam = file_name
-#                with open(self._output_file_eam, 'r') as file:
-#                    self._file_eam = file.readlines()
-#                self._initialize_eam()
-#            if isinstance(pot_type, list):
-#                self._initialize_hybrid()
-#
-#    @property
-#    def elements(self):
-#        if self._element_indices is None:
-#            self._element_indices=OrderedDict(sorted(zip(self._structure.get_chemical_symbols(),self._structure.get_chemical_indices()), key=lambda x: x[1]))
-#        return list(self._element_indices.keys())
-#
-#
-#    @property
-#    def combinations(self):
-#        if len(self._combinations)==0:
-#            self._combinations=np.array([[self.elements[i], self.elements[j]] for i in range(len(self.elements)) for j in range (i+1)])
-#        return self._combinations
-#
-#    def __setitem__(self, key, value):
-#        if key not in self._dataset['Parameter'] and self._initialized:
-#            if key.split('_')[0] not in self._dataset['Parameter']:
-#                pair_coeff_parameters, pair_style_parameters = self.available_keys(self._model)
-#                print('ERROR:\nParameter '+key+' is not defined in '+self._model+' potential.\n'+
-#                      'Available parameters are '+', '.join([str(k) for k in pair_coeff_parameters.keys()])+
-#                      ', which can be defined globally or for each pair of elements.\n'+
-#                      'Furthermore, '+', '.join([str(k) for k in pair_style_parameters.keys()])+' can be defined globally.\n'+
-#                      'For more information, please take a look at pair_coeff '+self._model+' on the LAMMPS website.')
-#            else:
-#                print('ERROR:\nIt seems you chose a pair of elements not given in your structure')
-#        else:
-#            super(CustomPotential, self).__setitem__(key, value)
-#
-#    def _initialize(self,pot):
-#
-#        pair_coeff_parameters, pair_style_parameters = self.available_keys(self._model)
-#        for k,v in pair_style_parameters.items():
-#            self[k] = v
-#        for k,v in pair_coeff_parameters.items():
-#            self[k] = v
-#            for value in self.combinations:
-#                self[k+'_'+str(value[0])+'_'+str(value[1])] = None
-#
-#        self._value_modified={k:False for k in pair_coeff_parameters.keys()}
-#        if 'sub_potential' in list(self._value_modified.keys()):
-#            del self._value_modified['sub_potential']
-#
-#
-#    def set_parameter(self, parameter, elements=[], value='not defined'):
-#        if isinstance(elements, list) and len(elements)==0:
-#            key = parameter
-#        else:
-#            if not isinstance(elements, list) and not isinstance(elements, str) and value=='not defined':
-#                value = elements
-#                elements = []
-#                key = parameter
-#            else:
-#                key = parameter+'_'+elements[0]+'_'+elements[1]
-#                if parameter+'_'+elements[0]+'_'+elements[1] not in list(self.get_pandas()['Parameter']):
-#                    elements[0], elements[1] = elements[1], elements[0]
-#                key = parameter+'_'+elements[0]+'_'+elements[1]
-#        if value=='not defined':
-#            raise ValueError('Value not given. Set a number or None, if the parameter should be removed')
-#        self[key]=value
-#        self._value_modified[key] = True
-#        if len(elements) != 0:
-#            pair_coeff_parameters, _ = self.available_keys(self._model)
-#            for keys in pair_coeff_parameters.keys():
-#                if keys==parameter:
-#                    continue
-#                if keys+'_'+elements[0]+'_'+elements[1] in list(self.get_pandas()['Parameter']):
-#                    if self[keys+'_'+elements[0]+'_'+elements[1]] is None:
-#                        self[keys+'_'+elements[0]+'_'+elements[1]] = self[keys]
-#
-#    def get_parameter(self, parameter, element_one=None, element_two=None):
-#        if element_one is None and element_two is None:
-#            key = parameter
-#        else:
-#            key = parameter+'_'+element_one+'_'+element_two
-#            if key not in list(self.get_pandas()['Parameter']):
-#                key = parameter+'_'+element_two+'_'+element_one
-#        if self[key] is None:
-#            return ''
-#        return self[key]
-#
-#    def _config_file(self, pot):
-#        pair_coeff_parameters, pair_style_parameters = self.available_keys(self._model)
-#        config_vars = []
-#        pair_style=['pair_style '+self._model+' '+' '.join([str(self[k]) for k in list(pair_style_parameters.keys())])+ ' \n']
-#        config_vars.append('pair_coeff * * '+' '.join([str(self.get_parameter(k)) for k in list(pair_coeff_parameters.keys())])+'\n')
-#        for i in range(len(self.combinations)):
-#            if len(str(''.join([str(self.get_parameter(k, self.combinations[i,0], self.combinations[i,1])) for k in list(pair_coeff_parameters.keys())])))==0 or len(self.elements)==1:
-#                continue
-#            config_vars.append('pair_coeff '+str(self._element_indices[self.combinations[i,1]]+1)+
-#                               ' '+str(self._element_indices[self.combinations[i,0]]+1)+' '+
-#                               ' '.join([str(self.get_parameter(k, self.combinations[i,0], self.combinations[i,1])) for k in list(pair_coeff_parameters.keys())])+'\n')
-#        config_vars=pair_style+config_vars
-#        return config_vars
-#
-#    def _initialize_eam(self):
-#        self._keys_eam = [['No_Elements'],
-#                          ['Nrho', 'drho', 'Nr', 'dr', 'cutoff_eam'],
-#                          ['atomic_number', 'mass', 'lattice_constant', 'lattice_type']]
-#        try:
-#            for i in range(len(self._file_eam[3].split())-1):
-#                self._keys_eam[0].append('Element'+str(i+1))
-#            for i in range(3):
-#                for k,v in zip(self._keys_eam[i], self._file_eam[i+3].split()):
-#                    self[k] = v
-#            if len(self._keys_eam[0]) != self['No_Elements']+1:
-#                print('WARNING: Number of elements is not consistent in EAM File')
-#        except:
-#            print('ERROR: Potential file content not valid')
-#            raise
-#        self._value_modified={k:False for k in self.get_pandas()['Parameter']}
-#        self['model']='eam/alloy'
-#
-#    def _update_eam_file(self):
-#        for i, k in enumerate(self._keys_eam):
-#            self._file_eam[i+3] = ' '.join([str(self[kk]) for kk in k])
-#            self._file_eam[i+3] += '\n'
-#
-#    def _config_file_eam(self):
-#        config_eam = []
-#        for key, value in self._value_modified.items():
-#            if not value:
-#                print('WARNING: '+key+' is not set. Default value: '+str(self[key]))
-#        NULL=[]
-#        if len(self.elements) <= self['No_Elements']:
-#            self['model'] = 'eam/alloy'
-#            config_eam=['pair_style '+self['model']+'\n', 'pair_coeff * * '
-#                              +self._output_file_eam.split()[-1]+' '+' '
-#                              .join([self[k] for i,k in enumerate(self._keys_eam[0]) if i!=0])+'\n']
-#        elif len(self.elements) > self['No_Elements']:
-#            self['model'] = 'hybrid'
-#            for i in range(len(self.elements)-self['No_Elements']):
-#                NULL.append('NULL')
-#            config_eam=['pair_style '+self['model']+'\n', 'pair_coeff * * '
-#                        +self._output_file_eam.split()[-1]+' '+' '
-#                        .join([self[k] for i,k in enumerate(self._keys_eam[0]) if i!=0])+' '+' '
-#                        .join(NULL)+'\n']
-#        return config_eam
-#
-#    @property
-#    def _config(self):
-#        if self._file_name is None:
-#            return self._config_file(self._model)
-#        if self._model == 'eam':
-#            return self._config_file_eam()
-#        if self._model == 'hybrid':
-#            return self._config_file_hybrid()
-#        return None
-#
-#    def _initialize_hybrid(self):
-#        for model in self._model:
-#            dict_param, _ = self.available_keys(model)
-#            if dict_param is not None:
-#                continue
-#            if '.lmp' in model:
-#                potential_filename = potential_filename.split('.lmp')[0]
-#            #potential_db = LammpsPotentialFile()
-#            #self.input.potential.df = potential_db.find_by_name(potential_filename)
-#        if self['sub_potential'] is None:
-#            print ('Error: Substyle for hybrid with EAM is not defined')
-#        self._output_file_eam = self._file_name
-#        with open(self._output_file_eam, 'r') as file:
-#            self._file_eam = file.readlines()
-#        self._initialize(self['sub_potential'])
-#        self._initialize_eam()
-#
-#    def _lammps_model(self):
-#        if isinstance(self._model, list):
-#            if self.overlay:
-#                return 'hybrid/overlay'
-#            else:
-#                return 'hybrid'
-#        else:
-#            return self._model
-#
-#    def _config_file_hybrid(self):
-#        if self['sub_potential'] is None:
-#            print ('Error : Sub Pair Style for hybrid is not defined')
-#        eam_pot_config=self._config_file_eam()[1:]
-#        for i in range(len(eam_pot_config)):
-#            eam_pot_config[i]=eam_pot_config[i].split()
-#            eam_pot_config[i].insert(3, self['model'])
-#            eam_pot_config[i].append('\n')
-#            eam_pot_config[i]=' '.join(eam_pot_config[i])
-#        if not self._eam_comb:
-#            pair_pot_config=self._config_file(self['sub_potential'])[5:]
-#        elif self._eam_comb:
-#            pair_pot_config=self._config_file(self['sub_potential'])[2:]
-#        for i in range(len(pair_pot_config)):
-#            pair_pot_config[i]=pair_pot_config[i].split()
-#            pair_pot_config[i].insert(3, self._model)
-#            pair_pot_config[i].append('\n')
-#            pair_pot_config[i]=' '.join(pair_pot_config[i])
-#
-#        pair_style=['pair_style hybrid '+self['model']+' '+self._model+' '+str(self['cutoff'])+' \n']
-#        pair_pot_config=pair_style+eam_pot_config+pair_pot_config
-#
-#        return pair_pot_config
-#
-#    @property
-#    def df(self):
-#        if self._model == 'eam':
-#            self._update_eam_file()
-#        return pd.DataFrame({'Config':[self._config],
-#                             'Filename':[self._output_file_eam],
-#                             'Model':[self._model],
-#                             'Name':['custom_potential'],
-#                             'Species':[self.elements],
-#                             'Content':[self._file_eam]})
-#
-#    def available_keys(self, pot):
-#        '''
-#            Return: pairwise parameters, global parameters (with their initial values)
-#        '''
-#        if pot.startswith('lj'):
-#            return OrderedDict([('sigma', 1), ('epsilon', 0)]), OrderedDict([('cutoff', 8.0)])
-#        elif pot.startswith('morse'):
-#            return OrderedDict([('D0', 0), ('alpha', 1), ('r0', 1)]), OrderedDict([('cutoff', 8.0)])
-#        elif pot.startswith('buck'):
-#            return OrderedDict([('A', 0), ('rho', 1), ('C', 0)]), OrderedDict([('cutoff', 8.0)])
-#        elif pot.startswith('mie'):
-#            return OrderedDict([('epsilon', 0), ('sigma', 1), ('gammaR', 12), ('gammaA', 6)]), OrderedDict([('cutoff', 8.0)])
-#        elif pot.startswith('yukawa'):
-#            return OrderedDict([('A', 0), ('cutoff', 3)]), OrderedDict([('kappa', 1.0), ('cutoff', 8.0)])
-#        elif pot.startswith('born'):
-#            return OrderedDict([('A', 0), ('rho', 1), ('sigma', 1), ('C', 0), ('D', 0), ('cutoff', 4.0)]), OrderedDict([('cutoff', 4.0)])
-#        elif pot.startswith('gauss'):
-#            return OrderedDict([('A', 0), ('B', 0), ('cutoff', 3.0)]), OrderedDict([('cutoff', 3.0)])
-#        else:
-#            None, None
-#
-#
-#=======
-#>>>>>>> master
 class LammpsPotentialFile(PotentialAbstract):
     """
     The Potential class is derived from the PotentialAbstract class, but instead of loading the potentials from a list,
@@ -480,3 +176,447 @@ class PotentialAvailable(object):
 
     def __repr__(self):
         return str(dir(self))
+
+class CustomPotential(GenericParameters):
+    def __init__(self, structure, pot_type):
+        """
+            Args:
+                structure: pyiron structure. This argument will be erased when this class is integrated in pyiron
+                pot_type (list or str): list of potentials to be used.
+                file_name (list or str): list of eam potential files. Currently only one file is permitted. Absolute path
+                                         or the name of the potential in database
+        """
+        self._initialized = False # required for setitem
+        warnings.simplefilter(action='ignore', category=FutureWarning)
+        super(Potential, self).__init__(comment_char="//",
+                    separator_char="=", end_value_char=';')
+        self._structure = structure
+        self._value_modified = {} # checks whether parameters have been modified (rather for debugging)
+        if not isinstance(pot_type, list):
+            pot_type = [pot_type]
+        self._pot_type = pot_type
+        assert self._file_name is None or isinstance(self._file_name, str)
+        assert structure is not None, 'structure not defined'
+        assert isinstance(pot_type[0], str), 'pot_type must be a string or a list of strings'
+        assert len(pot_type)<=2, 'Not possible to superpose more than 2 potentials'
+        if self._file_name is not None:
+            if not os.path.isfile(self._file_name):
+                self._file_name = self.find_absolute_path(self._file_name)
+            with open(self._file_name, 'r') as ffile:
+                self._file_eam = ffile.readlines()
+        if self.style=='hybrid':
+            self._initialize_hybrid()
+        elif self.style=='pairwise':
+            self._initialize(self._model_pair_pot[0])
+        else:
+            try:
+                self._initialize_eam()
+            except:
+                warnings.warn('EAM parsing was not successful; original EAM file is used')
+                self._eam_parsing_successful = False
+        self._initialized = True
+
+    def __setitem__(self, key, value):
+        if hasattr(value, '__len__'):
+            value = np.array(value).tolist()
+        param=key.split('/')
+        if len(param)==1:
+            super(Potential, self).__setitem__(key, value)
+        else:
+            elems = sorted(param[1].split('-'))
+            if len(elems)==1:
+                key=str(param[0])+'/'+str(elems[0])+'-'+str(elems[0])
+            else:
+                key = str(param[0])+'/'+str(elems[0])+'-'+str(elems[1])
+            super(Potential, self).__setitem__(key, value)
+        for kk in self.pair_coeff_parameters:
+            if kk == param[0] or kk.endswith('_eam'):
+                continue
+            if self[key.replace(param[0], kk)] is None and self[key] is not None:
+                self[key.replace(param[0], kk)] = self._pair_pot_keys(self._model_pair_pot[0])[0][kk]
+            elif self[key.replace(param[0], kk)] is not None and self[key] is None:
+                self[key.replace(param[0], kk)] = None
+
+    def __getitem__(self, key):
+        param=key.split('/')
+        if len(param) != 1:
+            elems = sorted(param[1].split('-'))
+            if len(elems)==1:
+                key = str(param[0])+'/'+'-'+str(elems[0])+str(elems[0])
+            else:
+                key = str(param[0])+'/'+str(elems[0])+'-'+str(elems[1])
+        value = super(Potential, self).__getitem__(key)
+        if isinstance(value, list):
+            return np.array(value, dtype=float)
+        else:
+            return value
+
+
+    @staticmethod
+    def find_absolute_path(file_name):
+        assert isinstance(file_name, str)
+        from pyiron.lammps.potential import LammpsPotential, LammpsPotentialFile
+        potential_df = LammpsPotentialFile().find_by_name(file_name)
+        assert len(potential_df)>0
+        potential = LammpsPotential()
+        potential.df = potential_df
+        return potential.files[0]
+
+    @property
+    def _file_name(self):
+        if self._eam_file_name is None:
+            pot_diff = list(set(self._pot_type)-set(self._pair_pot_keys().keys()))
+            if len(pot_diff)>0:
+                self._file_name = pot_diff[0]
+            else:
+                self._file_name = None
+        return self._eam_file_name
+
+    @_file_name.setter
+    def _file_name(self, file_name):
+        if file_name is not None and not isinstance(file_name, str):
+            raise ValueError('file name has to be a string')
+        self._eam_file_name = file_name
+
+    @property
+    def style(self):
+        if self._file_name is not None:
+            if len(self._model_pair_pot)>0:
+                assert len(self._pot_type)>1
+                return 'hybrid'
+            else:
+                return 'many_body'
+        assert len(self._pot_type)==1, 'currently only combinations of eam and pairwise potential are implemented'
+        return 'pairwise'
+
+    @property
+    def _model_pair_pot(self):
+        return list(set(self._pot_type).intersection(self._pair_pot_keys().keys()))
+
+    @property
+    def _model_mb(self): # mb stands for 'many-body'
+        if self.style=='pairwise':
+            return []
+        intersect = list(set(self._pot_type).intersection(self._mb_pot_keys().keys()))
+        if len(intersect)!=0:
+            return intersect
+        return ['eam/alloy']
+
+    @property
+    def model(self):
+        if len(self._pot_type)>1:
+            if self.overlay:
+                return "hybrid/overlay"
+            return "hybrid"
+        if len(self._model_mb)!=0:
+            return self._model_mb[0]
+        return self._model_pair_pot[0]
+
+    @property
+    def element_indices(self):
+        try:
+            return self._element_indices
+        except AttributeError:
+            self._element_indices=OrderedDict(sorted(zip(self._structure.get_chemical_symbols(), self._structure.get_chemical_indices()), key=lambda x: x[1]))
+            return self._element_indices
+
+    @property
+    def elements(self):
+        return list(self.element_indices.keys())
+
+    @property
+    def combinations(self):
+        try:
+            return self._combinations
+        except AttributeError:
+            self._combinations=np.array([[elem, self.elements[j]] for i, elem in enumerate(self.elements) for j in range (i+1)])
+            return self._combinations
+
+    @property
+    def overlay(self):
+        """
+            whether to overlay two potentials or not. When overlay=True, the two potentials are superposed (default: True)
+            For more info: https://lammps.sandia.gov/doc/pair_hybrid.html
+        """
+        if self.style != 'hybrid':
+            return True
+        else:
+            try:
+                return self._overlay
+            except AttributeError:
+                return True
+
+    @overlay.setter
+    def overlay(self, value):
+        assert isinstance(value, bool)
+        self._overlay = value
+
+
+
+    def _initialize(self, pot):
+        for k,v in self.pair_style_parameters.items():
+            self[k] = v
+        for k,v in self.pair_coeff_parameters.items():
+            self[k] = v
+            for value in self.combinations:
+                self[k+'/'+str(value[0])+'-'+str(value[1])] = None
+        self._value_modified={k:False for k in self.pair_coeff_parameters.keys()}
+
+    def _initialize_hybrid(self):
+        self._initialize_eam()
+        self._initialize(self._model_pair_pot[0])
+
+
+    @property
+    def _pair_style_str(self):
+        if len(self._pot_type)>1:
+            return 'pair_style '+self.model+' '+self._model_mb[0]+' '+self._model_pair_pot[0]+' '+str(self['cutoff'])+'\n'
+        else:
+            return 'pair_style '+self.model+' '+' '.join([str(self[k]) for k in list(self.pair_style_parameters.keys())])+'\n'
+
+    def _config_file(self, pot):
+        config_vars = []
+        if self.overlay:
+            config_vars = ['pair_coeff * * '+' '.join([str(self[str(k)]) for k in list(self.pair_coeff_parameters.keys())])+'\n']
+        for comb in self.combinations:
+            if len(str(''.join([str(self[str(k)+'/'+str(comb[0])+'-'+str(comb[1])]) for k in list(self.pair_coeff_parameters.keys())])))==0 or len(self.elements)==1:
+                continue
+            kk = list(self.pair_coeff_parameters.keys())[0]
+            if self.style=='hybrid':
+                if self[str(kk)+'/'+str(comb[0])+'-'+str(comb[1])] is None:
+                    if len(set(comb)) > len(set(comb).intersection(self._elements_in_eam)):
+                        self[str(kk)+'/'+str(comb[0])+'-'+str(comb[1])]= self._pair_pot_keys(self._model_pair_pot[0])[0][kk]
+            if self[str(kk)+'/'+str(comb[0])+'-'+str(comb[1])] is None:
+                continue
+            config_vars.append('pair_coeff '+str(self.element_indices[comb[1]]+1)+
+                               ' '+str(self.element_indices[comb[0]]+1)+' '+
+                               ' '.join([str(self[str(k)+'/'+str(comb[0])+'-'+str(comb[1])]) for k in list(self.pair_coeff_parameters.keys())])+'\n')
+        config_vars = [self._pair_style_str]+config_vars
+        return config_vars
+
+    def _config_file_eam(self):
+        NULL=[]
+        if len(self.elements) > len(set(self.elements).intersection(self._elements_in_eam)):
+            assert self.style == 'hybrid', 'Some elements are not defined in the potential file. Choose a pairwise potential to extend it to hybrid'
+            for i in range(len(self.elements)-len(set(self.elements).intersection(self._elements_in_eam))):
+                NULL.append('NULL')
+        config_eam=['pair_coeff * * '+os.getcwd()+'/potential.dat '+
+                    ' '.join([self[k] for i,k in enumerate(self._keys_eam[0]) if i!=0])+' '+' '
+                    .join(NULL)+'\n']
+        return [self._pair_style_str]+config_eam
+
+    def _config_file_hybrid(self):
+        eam_pot_config = self._config_file_eam()[1:]
+        eam_pot_config = [' '.join(ll.split()[:3]+[self._model_mb[0]]+ll.split()[3:])+'\n' for ll in eam_pot_config]
+        pair_pot_config=self._config_file(self._model_pair_pot[0])[1:]
+        pair_pot_config = [' '.join(ll.split()[:3]+[self._model_pair_pot[0]]+ll.split()[3:])+'\n' for ll in pair_pot_config]
+
+        pair_pot_config = [self._pair_style_str]+eam_pot_config+pair_pot_config
+
+        return pair_pot_config
+
+    @property
+    def _df(self):
+        """
+            This function returns a dataframe with parameters, Config:contains lammps compatible pair style and pair coeff,
+            File_name, Potential Mode.
+        """
+        if self.style=='hybrid':
+            self._update_eam_file()
+            config_file = self._config_file_hybrid()
+            species = self._elements_in_eam+list(set(self.elements)-set(self._elements_in_eam))
+        elif self.style=='pairwise':
+            config_file = self._config_file(self._model_pair_pot[0])
+            species = self.elements
+        else:
+            self._update_eam_file()
+            config_file = self._config_file_eam()
+            species = self._elements_in_eam
+        return pandas.DataFrame({'Config':[config_file],
+                                 'Filename':[[]], ### Do it for current directory
+                                 'Model':[self.model],
+                                 'Name':['my_potential'],
+                                 'Species':[species]})
+
+    @property
+    def available_potentials(self):
+        return list(self._pair_pot_keys().keys())+list(self._mb_pot_keys().keys())
+
+    @property
+    def pair_coeff_parameters(self):
+        if len(self._model_pair_pot)>0:
+            return self._pair_pot_keys(self._model_pair_pot[0])[0]
+        else:
+            return OrderedDict([])
+
+    @property
+    def pair_style_parameters(self):
+        if len(self._model_pair_pot)>0:
+            return self._pair_pot_keys(self._model_pair_pot[0])[1]
+        else:
+            return OrderedDict([])
+
+    def _pair_pot_keys(self, pot=None):
+        """
+            This function returns a list of two sets of parameters. The first item contains the values
+            for pair_coeff; the second contains the values for pair_style.
+
+            args:
+                pot (str): name of the potential.
+                           If the name of the potential is not specified,
+                           the entire list of parameters is returned
+        """
+        if pot is not None and not isinstance(pot, str):
+            raise ValueError('Potential name must be a string')
+        param = {'lj/cut': [OrderedDict([('epsilon', 0), ('sigma', 1)]),
+                            OrderedDict([('cutoff', 8.0)])],
+                 'morse': [OrderedDict([('D0', 0), ('alpha', 1), ('r0', 1)]),
+                           OrderedDict([('cutoff', 8.0)])],
+                 'buck': [OrderedDict([('A', 0), ('rho', 1), ('C', 0)]),
+                          OrderedDict([('cutoff', 8.0)])],
+                 'mie': [OrderedDict([('epsilon', 0), ('sigma', 1), ('gammaR', 1), ('gammaA', 1)]),
+                         OrderedDict([('cutoff', 8.0)])],
+                 'yukawa': [OrderedDict([('A', 0), ('cutoff', 3)]),
+                            OrderedDict([('kappa', 1.0), ('cutoff', 8.0)])],
+                 'born': [OrderedDict([('A', 0), ('rho', 1), ('sigma', 1), ('C', 0), ('D', 0), ('cutoff', None)]),
+                          OrderedDict([('cutoff', 4.0)])],
+                 'gauss': [OrderedDict([('A', 0), ('B', 0), ('cutoff', None)]),
+                           OrderedDict([('cutoff', 3.0)])]}
+        if pot is None:
+            return param
+        elif pot in param.keys():
+            return param[pot]
+        for k,v in param.items():
+            if pot.startswith(k):
+                return v
+        raise NotImplementedError(pot+' is not implemented')
+
+
+    def analytical_pot(self, pot, points):
+        analytic_pot=[]
+        if pot.startswith('lj/cut'):
+            for i in np.arange(0.01, self['cutoff'], self['cutoff']/points):
+                analytic_pot.append(4*self['epsilon']*((self['sigma']/i)**12-(self['sigma']/i)**6))
+        return analytic_pot
+        # Implement other analytical Potentials
+
+    @property
+    def _elements_in_eam(self):
+        if self._keys_eam is None or len(self._keys_eam[0])<=1:
+            raise ValueError("EAM parsing not performed")
+        return [self[k] for k in self._keys_eam[0][1:]]
+
+    def _mb_pot_keys(self, pot=None):
+        return {'eam/alloy': None, 'meam': None, 'tersoff': None}
+
+
+    @property
+    def eam_element_comb(self):
+        try:
+            return self._eam_comb
+        except AttributeError:
+            eam_list_comb=[]
+            self._eam_comb=np.array(self.combinations).tolist()
+            for i,k in enumerate(self.combinations):
+                if list(set(self.elements)-set(self._elements_in_eam)) in k:
+                    warnings.simplefilter(action='ignore', category=FutureWarning)
+                    eam_list_comb.append(i)
+            for i in sorted(eam_list_comb, reverse=True):
+                del self._eam_comb[i]
+            return self._eam_comb
+
+    @property
+    def _eam_ending(self):
+        if self.style == 'hybrid':
+            return '_eam'
+        else:
+            return ''
+
+    @staticmethod
+    def _has_non_number(list_of_something):
+        if not hasattr(list_of_something, '__len__'):
+            list_of_something = [list_of_something]
+        for elem in list_of_something:
+            try:
+                float(elem)
+            except ValueError:
+                return True
+        return False
+
+    def _initialize_eam(self):
+        self._keys_eam = [['No_Elements'+self._eam_ending],
+                          ['Nrho'+self._eam_ending, 'drho'+self._eam_ending, 'Nr'+self._eam_ending, 'dr'+self._eam_ending, 'cutoff'+self._eam_ending]]
+        self._keys_eam[0].extend(['Element_eam_'+str(i+1) for i in range(len(self._file_eam[3].split())-1)])
+        for i in range(2):
+            for k,v in zip(self._keys_eam[i], self._file_eam[i+3].split()):
+                self[k] = v
+        for k in ['Nrho'+self._eam_ending, 'Nr'+self._eam_ending]:
+            self[k] = int(self[k])
+        for k in ['drho'+self._eam_ending, 'dr'+self._eam_ending, 'cutoff'+self._eam_ending]:
+            self[k] = float(self[k])
+        # self._elem_props=['atomic_number'+self._eam_ending, 'mass'+self._eam_ending, 'lattice_constant'+self._eam_ending, 'lattice_type'+self._eam_ending]
+        self._elem_props=['atomic_number'+self._eam_ending, 'mass'+self._eam_ending]
+        self['meaningless_item'] = None
+
+        property_lines = list(filter(lambda a: self._has_non_number(a.split()), self._file_eam[5:]))
+        if len(self._elements_in_eam) != len(property_lines):
+            warnings.warn('EAM parsing might have failed; number of elements defined ('+str(len(self._elements_in_eam))+') != number of element property lines ('+str(len(property_lines))+')')
+        for i_elem, elem in enumerate(self._elements_in_eam):
+            for i_prop, prop in enumerate(self._elem_props):
+                self[str(prop)+'/'+str(elem)+'-'+(elem)] = property_lines[i_elem].split()[i_prop]
+        tab_lines = list(filter(lambda a: self._has_non_number(a.split())==False, self._file_eam[5:]))
+        tab_lines = ''.join(tab_lines).replace('\n',' ').split()
+        start_line = 0
+        for elem in self._elements_in_eam:
+            self['F'+self._eam_ending+'/'+elem+'-'+elem] = [float(value) for value in tab_lines[start_line:start_line+self['Nrho'+self._eam_ending]]]
+            start_line += self['Nrho'+self._eam_ending]
+            self['rho'+self._eam_ending+'/'+elem+'-'+elem] = [float(value) for value in tab_lines[start_line:start_line+self['Nr'+self._eam_ending]]]
+            start_line += self['Nr'+self._eam_ending]
+        for i in range(self['No_Elements'+self._eam_ending]):
+            for j in range(i+1):
+                self['phi'+self._eam_ending+'/'+self._elements_in_eam[j]+'-'+self._elements_in_eam[i]] = [float(value) for value in tab_lines[start_line:start_line+self['Nr'+self._eam_ending]]]
+                start_line += self['Nr'+self._eam_ending]
+        if len(self._keys_eam[0]) != self['No_Elements'+self._eam_ending]+1:
+            print('WARNING: Number of elements is not consistent in EAM File')
+        self._value_modified = {k:False for k in self.get_pandas()['Parameter']}
+        self._eam_parsing_successful = True
+
+    @property
+    def comment_str(self):
+        return ''.join([line for line in self._file_eam[0:3]])
+
+    @property
+    def eam_info_str(self):
+        first_line = ' '.join([str(self[k]) for k in self._keys_eam[0]])+'\n'
+        second_line = ' '.join([str(self[k]) for k in self._keys_eam[1]])+'\n'
+        return first_line+second_line
+
+
+    def element_prop(self, element_1, element_2):
+        elem_prop = ([self[str(prop)+'/'+str(element_1)+'-'+str(element_2)] for prop in self._elem_props])
+        prop = ' '.join([str(prop) for prop in elem_prop])+'\n'
+        return prop
+
+
+    def F_rho_str(self, element_1, element_2):
+        F = np.array(self['F'+self._eam_ending+'/'+str(element_1)+'-'+str(element_2)]).tolist()
+        rho = np.array(self['rho'+self._eam_ending+'/'+str(element_1)+'-'+str(element_2)]).tolist()
+        F_rho = '\n'.join([str(value) for value in F+rho])+'\n'
+        return F_rho
+
+
+    def phi_str(self, element_1, element_2):
+        phi = np.array(self['phi'+self._eam_ending+'/'+str(element_1)+'-'+str(element_2)]).tolist()
+        return '\n'.join([str(pp) for pp in phi])+'\n'
+
+
+    def _update_eam_file(self):
+        return_file = self.comment_str+self.eam_info_str
+        for elem in self._elements_in_eam:
+            return_file += self.element_prop(elem, elem)+self.F_rho_str(elem, elem)
+        for elem in self.eam_element_comb:
+            return_file += self.phi_str(elem[0], elem[1])
+        with open('potential.dat', 'w') as ff:
+            for line in return_file:
+                ff.write(line)
+

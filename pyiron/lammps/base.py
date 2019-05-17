@@ -101,33 +101,15 @@ class LammpsBase(AtomisticGenericJob):
 
         """
         if isinstance(potential_filename, str):
-#<<<<<<< HEAD
-            if potential_filename in ['lj/cut', 'morse', 'buck', 'mie/cut', 'yukawa', 'born', 'born/coul/long', 'gauss']:
-                self.input.potential.custom_potential = CustomPotential(self.structure, pot_type=potential_filename)
-                self.input.potential.df = self.input.potential.custom_potential.df
-            else:
-                if '.lmp' in potential_filename:
-                    potential_filename = potential_filename.split('.lmp')[0]
-                potential_db = LammpsPotentialFile()
-                self.input.potential.df = potential_db.find_by_name(potential_filename)
-        elif isinstance(potential_filename, list):
-            self.input.potential.custom_potential = CustomPotential(self.structure, pot_type=potential_filename)
-            self.input.potential.df = self.input.potential.custom_potential.df
-#=======
-#            if '.lmp' in potential_filename:
-#                potential_filename = potential_filename.split('.lmp')[0]
-#            potential_db = LammpsPotentialFile()
-#            potential = potential_db.find_by_name(potential_filename)
-#>>>>>>> master
+            if '.lmp' in potential_filename:
+                potential_filename = potential_filename.split('.lmp')[0]
+            potential_db = LammpsPotentialFile()
+            potential = potential_db.find_by_name(potential_filename)
         elif isinstance(potential_filename, pd.DataFrame):
             potential = potential_filename
         else:
-#<<<<<<< HEAD
-            raise TypeError('Potentials have to be strings, list of strings or pandas dataframes.')
-#=======
-#            raise TypeError('Potentials have to be strings or pandas dataframes.')
-#        self.input.potential.df = potential
-#>>>>>>> master
+            raise TypeError('Potentials have to be strings or pandas dataframes.')
+        self.input.potential.df = potential
         for val in ["units", "atom_style", "dimension"]:
             v = self.input.potential[val]
             if v is not None:
