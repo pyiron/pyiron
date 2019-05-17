@@ -20,6 +20,8 @@ class TestVolumetricData(unittest.TestCase):
 
     def test_total_data_assertion(self):
         vd = VolumetricData()
+        self.assertIsNone(vd._atoms)
+        self.assertIsNone(vd.atoms)
         with self.assertRaises(ValueError):
             vd.total_data = list()
         with self.assertRaises(TypeError):
@@ -40,6 +42,7 @@ class TestVolumetricData(unittest.TestCase):
                 if key == "non-cubic":
                     answer = np.zeros(nz)
                     self.assertTrue(all(np.equal(answer, vd.get_average_along_axis(ind=i))))
+
 
 if __name__ == '__main__':
     unittest.main()

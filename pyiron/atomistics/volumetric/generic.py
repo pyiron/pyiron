@@ -28,6 +28,22 @@ class VolumetricData(object):
     """
     def __init__(self):
         self._total_data = None
+        self._atoms = None
+
+    @property
+    def atoms(self):
+        """
+        The structure related to the volumeric data
+
+        Returns:
+            pyiron.atomistics.structure.Atoms: The structure associated with the data
+
+        """
+        return self._atoms
+
+    @atoms.setter
+    def atoms(self, val):
+        self._atoms = val
 
     @property
     def total_data(self):
@@ -93,4 +109,4 @@ class VolumetricData(object):
 
         """
         with hdf5.open(group_name) as hdf_vd:
-            self.total_data = hdf_vd["total"]
+            self._total_data = hdf_vd["total"]
