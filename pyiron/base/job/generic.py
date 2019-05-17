@@ -558,7 +558,7 @@ class GenericJob(JobCore):
         try:
             self._logger.info('run {}, status: {}'.format(self.job_info_str, self.status))
             status = self.status.string
-            if run_mode:
+            if run_mode is not None:
                 self.server.run_mode = run_mode
             if run_again and self.job_id:
                 self._logger.info("run repair "+str(self.job_id))
@@ -711,7 +711,7 @@ class GenericJob(JobCore):
             print('You have selected to start the job manually. ' +
                   'To run it, go into the working directory {} and '.format(abs_working) +
                   'call \'python -m pyiron.base.job.wrappercmd -p {}'.format(abs_working) +
-                  ' - j {} \' '.format(self.job_id))
+                  ' -j {} \' '.format(self.job_id))
 
     def run_if_scheduler(self):
         """

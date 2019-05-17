@@ -6,7 +6,7 @@ FAQ
 
 How to cite pyiron?
 ===================
-To cite pyiron and the corresponding codes, please follow the instructions on the `publication page <_citation>`_.
+To cite pyiron and the corresponding codes, please follow the instructions on the `publication page <citation>`_.
 
 What units does pyiron use?
 ===========================
