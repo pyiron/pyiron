@@ -558,7 +558,7 @@ class GenericJob(JobCore):
         try:
             self._logger.info('run {}, status: {}'.format(self.job_info_str, self.status))
             status = self.status.string
-            if run_mode:
+            if run_mode is not None:
                 self.server.run_mode = run_mode
             if run_again and self.job_id:
                 self._logger.info("run repair "+str(self.job_id))
