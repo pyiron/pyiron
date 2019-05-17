@@ -267,10 +267,10 @@ def get_job_id(database, sql_query, user, project_path, job_specifier):
         int: job ID of the job
     """
     if sys.version_info.major == 2:
-        if isinstance(job_specifier, (int, long, np.int64)):
+        if isinstance(job_specifier, (int, long, np.integer)):
             return int(job_specifier)  # is id
     else:
-        if isinstance(job_specifier, (int, np.int64)):
+        if isinstance(job_specifier, (int, np.integer)):
             return job_specifier  # is id
 
     job_specifier.replace('.', '_')

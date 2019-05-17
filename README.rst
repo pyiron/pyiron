@@ -89,9 +89,9 @@ Finally a first lammps calculation can be executed by::
 
 License and Acknowledgments
 ---------------------------
-``pyiron`` is licensed under the MIT license.
+``pyiron`` is licensed under the BSD license.
 
-If you use pyiron in your scientific work, please consider citing::
+If you use pyiron in your scientific work, `please consider citing <http://www.sciencedirect.com/science/article/pii/S0927025618304786>`_ ::
 
   @article{pyiron-paper,
     title = {pyiron: An integrated development environment for computational materials science},

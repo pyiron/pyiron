@@ -4,6 +4,7 @@
 
 from ctypes import c_double, c_int
 import numpy as np
+import os
 import pandas as pd
 import warnings
 
@@ -151,6 +152,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         potential_lst = []
         if self.input.potential.files is not None:
             for potential in self.input.potential.files:
+                if not os.path.exists(potential):
+                    raise ValueError('Potential not found: ', potential)
                 potential_lst.append([potential.split('/')[-1], potential])
         for line in self.input.potential.get_string_lst():
             if len(line) > 2:

@@ -464,6 +464,24 @@ class VaspBase(GenericDFTJob):
             else:
                 structure = vp_new.get_initial_structure()
             self.structure = structure
+            # Read initial magnetic moments from the INCAR file and set it to the structure
+            magmom_loc = np.array(self.input.incar._dataset["Parameter"]) == "MAGMOM"
+            if any(magmom_loc):
+                init_moments = list()
+                try:
+                    value = np.array(self.input.incar._dataset["Value"])[magmom_loc][0]
+                    if "*" not in value:
+                        init_moments = np.array([float(val) for val in value.split()])
+                    else:
+                        # Values given in "number_of_atoms*value" format
+                        init_moments = np.hstack(([int(val.split("*")[0]) * [float(val.split("*")[1])] for val in value.split()]))
+                except (ValueError, IndexError, TypeError):
+                    self.logger.warn("Unable to parse initial magnetic moments from the INCAR file")
+                if len(init_moments) == len(self.structure):
+                    self.structure.set_initial_magnetic_moments(init_moments)
+                else:
+                    self.logger.warn("Inconsistency during parsing initial magnetic moments from the INCAR file")
+
             self._write_chemical_formular_to_database()
             self._import_directory = directory
             self.status.collect = True
@@ -741,8 +759,8 @@ class VaspBase(GenericDFTJob):
         for key in kwargs.keys():
             self.logger.warn("Tag {} not relevant for vasp".format(key))
 
-    def set_kpoints(self, mesh=None, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
-                    weights=None, reciprocal=True, kmesh_density=None):
+    def _set_kpoints(self, mesh=None, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
+                    weights=None, reciprocal=True):
         """
         Function to setup the k-points for the VASP job
 
@@ -765,10 +783,7 @@ class VaspBase(GenericDFTJob):
             raise AssertionError()
         if scheme == "MP":
             if mesh is None:
-                if kmesh_density is not None:
-                    mesh = self._get_k_mesh_by_cell(self.structure, kmesh_density)
-                else:
-                    mesh = [4, 4, 4]
+                mesh = [int(val) for val in self.input.kpoints[3].split()]
             self.input.kpoints.set(size_of_mesh=mesh, shift=center_shift)
         if scheme == "GP":
             self.input.kpoints.set(size_of_mesh=[1, 1, 1], method="Gamma Point")
@@ -813,8 +828,8 @@ class VaspBase(GenericDFTJob):
         bs_obj = Bandstructure(structure)
         _, q_point_list, [_, _] = bs_obj.get_path(num_points=num_points, path_type="full")
         q_point_list = np.array(q_point_list)
-        self.set_kpoints(scheme="Manual", symmetry_reduction=False, manual_kpoints=q_point_list, weights=None,
-                         reciprocal=False)
+        self._set_kpoints(scheme="Manual", symmetry_reduction=False, manual_kpoints=q_point_list, weights=None,
+                          reciprocal=False)
 
     def set_convergence_precision(self, ionic_energy=1.E-3, electronic_energy=1.E-7, ionic_forces=1.E-2):
         """

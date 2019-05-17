@@ -14,6 +14,8 @@
 
 import sys
 import os
+import shutil
+from sphinx.ext.apidoc import main
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -48,7 +50,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'pyiron'
-copyright = u'2018, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department ' \
+copyright = u'2019, Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department ' \
             u'All rights reserved'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -281,3 +283,18 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 # texinfo_no_detailmenu = False
+
+main(['-e', '-o', 'apidoc', '../pyiron', '--force'])
+
+curdir = os.path.dirname(os.path.abspath(__file__))
+if os.path.exists(os.path.join(curdir, 'source/notebooks')):
+    shutil.rmtree(os.path.join(curdir, 'source/notebooks'))
+
+shutil.copytree(os.path.join(curdir, '..', 'notebooks'),
+                os.path.join(curdir, 'source/notebooks'))
+
+if 'readthedocs.org' in curdir:  # write config for readthedocs.org
+    with open(os.path.join(os.path.expanduser('~/.pyiron')), 'w') as f:
+        f.writelines(['[DEFAULT]',
+                      'TOP_LEVEL_DIRS = ' + os.path.join(curdir, '..'),
+                      'RESOURCE_PATHS = ' + os.path.join(curdir, '..') + '/tests/static'])
