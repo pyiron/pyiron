@@ -103,14 +103,11 @@ class GenericDFTJob(AtomisticGenericJob):
 
 
         """
-        snapshot = super(GenericDFTJob).get_structure(iteration_step=iteration_step)
+        snapshot = super(GenericDFTJob).get_structure(iteration_step=iteration_step, wrap_atoms=wrap_atoms)
         spins = self.get("output/generic/dft/atom_spins")
         if spins is not None:
             snapshot.set_initial_magnetic_moments(spins[iteration_step])
-        if wrap_atoms:
-            return snapshot.center_coordinates_in_unit_cell()
-        else:
-            return snapshot
+        return snapshot
 
     def set_mixing_parameters(self, method=None, n_pulay_steps=None, density_mixing_parameter=None, spin_mixing_parameter=None):
         raise NotImplementedError("set_mixing_parameters is not implemented for this code.")
