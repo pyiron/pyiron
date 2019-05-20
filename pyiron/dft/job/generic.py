@@ -90,15 +90,16 @@ class GenericDFTJob(AtomisticGenericJob):
             raise AssertionError()
         self._generic_input['fix_symmetry'] = boolean
 
-    def get_structure(self, iteration_step=-1):
+    def get_structure(self, iteration_step=-1, wrap_atoms=True):
         """
         Gets the structure from a given iteration step of the simulation (MD/ionic relaxation). For static calculations
         there is only one ionic iteration step
         Args:
             iteration_step (int): Step for which the structure is requested
+            wrap_atoms (bool): True if the atoms are to be wrapped back into the unit cell
 
         Returns:
-            atomistics.structure.atoms.Atoms object
+            pyiron.atomistics.structure.atoms.Atoms: The required structure
 
 
         """
@@ -106,7 +107,10 @@ class GenericDFTJob(AtomisticGenericJob):
         spins = self.get("output/generic/dft/atom_spins")
         if spins is not None:
             snapshot.set_initial_magnetic_moments(spins[iteration_step])
-        return snapshot
+        if wrap_atoms:
+            return snapshot.center_coordinates_in_unit_cell()
+        else:
+            return snapshot
 
     def set_mixing_parameters(self, method=None, n_pulay_steps=None, density_mixing_parameter=None, spin_mixing_parameter=None):
         raise NotImplementedError("set_mixing_parameters is not implemented for this code.")

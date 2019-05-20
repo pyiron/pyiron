@@ -268,13 +268,14 @@ class Project(ProjectCore):
             rel_path = posixpath.relpath(abs_path, self.path)
             self._calculation_validation(search_path, os.listdir(search_path), rel_path=rel_path)
 
-    def get_structure(self, job_specifier, iteration_step=-1):
+    def get_structure(self, job_specifier, iteration_step=-1, wrap_atoms=True):
         """
         Gets the structure from a given iteration step of the simulation (MD/ionic relaxation). For static calculations
         there is only one ionic iteration step
         Args:
             job_specifier (str, int): name of the job or job ID
             iteration_step (int): Step for which the structure is requested
+            wrap_atoms (bool): True if the atoms are to be wrapped back into the unit cell
 
         Returns:
             atomistics.structure.atoms.Atoms object
@@ -288,7 +289,10 @@ class Project(ProjectCore):
                 snapshot.indices = job.get("output/generic/indices")[iteration_step]
             if 'dft' in job['output/generic'].list_groups() and 'atom_spins' in job['output/generic/dft'].list_nodes():
                 snapshot.set_initial_magnetic_moments(job.get("output/generic/dft/atom_spins")[iteration_step])
-        return snapshot
+        if wrap_atoms:
+            return snapshot.center_coordinates_in_unit_cell()
+        else:
+            return snapshot
 
     def _calculation_validation(self, path, files_available, rel_path=None):
         """
