@@ -205,11 +205,15 @@ class LammpsControl(GenericParameters):
         if pressure is not None:  # NPT
             if not hasattr(pressure, '__len__'):
                 pressure = pressure*np.ones(3)
-            pressure = np.array(pressure)
+            else:
+                pressure = np.array(pressure)
+
             if sum(pressure != None) == 0:
                 raise ValueError('Pressure cannot be three times None')
+
             if len(pressure) != 3:
                 raise ValueError('Pressure must be a float or a 3d vector')
+
             if temperature is None or temperature == 0.0:
                 raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0')
 
