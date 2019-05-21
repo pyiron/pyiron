@@ -204,7 +204,7 @@ class LammpsControl(GenericParameters):
         # Set thermodynamic ensemble
         if pressure is not None:  # NPT
             if not hasattr(pressure, '__len__'):
-                pressure = pressure*np.ones(3)
+                pressure = pressure * np.ones(3)
             else:
                 pressure = np.array(pressure)
 
