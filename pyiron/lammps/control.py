@@ -124,8 +124,9 @@ class LammpsControl(GenericParameters):
         Args:
             temperature (None/float): Target temperature. If set to None, an NVE calculation is performed.
                                       It is required when the pressure is set or langevin is set
-            pressure (None/float): Target pressure. If set to None, an NVE or an NVT calculation is performed.
-                                   (This tag will allow for a list in the future as it is done for calc_minimize())
+            pressure (None/float/numpy.ndarray/list): Target pressure. If set to None, an NVE or an NVT calculation is
+                performed. A length-3 list or array may be given to specify x-, y- and z-components individually. In
+                this case, floats and `None` may be mixed to allow relaxation only in particular directions.
             n_ionic_steps (int): Number of ionic steps
             time_step (float): Step size between two steps. In fs if units==metal
             n_print (int):  Print frequency
@@ -202,27 +203,39 @@ class LammpsControl(GenericParameters):
 
         # Set thermodynamic ensemble
         if pressure is not None:  # NPT
-            pressure *= pressure_units
+            if not hasattr(pressure, '__len__'):
+                pressure = pressure * np.ones(3)
+            else:
+                pressure = np.array(pressure)
+
+            if sum(pressure != None) == 0:
+                raise ValueError('Pressure cannot be three times None')
+
+            if len(pressure) != 3:
+                raise ValueError('Pressure must be a float or a 3d vector')
 
             if temperature is None or temperature == 0.0:
-                raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
+                raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0')
+
+            pressure[pressure != None] *= pressure_units
+
+            pressure_string = ''
+            for coord, value in zip(['x', 'y', 'z'], pressure):
+                if value is not None:
+                    pressure_string += ' {0} {1} {1} {2}'.format(coord, str(value), str(pressure_damping_timescale))
 
             if langevin:  # NPT(Langevin)
-                fix_ensemble_str = 'all nph aniso {0} {1} {2}'.format(str(pressure),
-                                                                      str(pressure),
-                                                                      str(pressure_damping_timescale))
+                fix_ensemble_str = 'all nph' + pressure_string
                 self.modify(fix___langevin='all langevin {0} {1} {2} {3} zero yes'.format(str(temperature),
                                                                                           str(temperature),
                                                                                           str(temperature_damping_timescale),
                                                                                           str(seed)),
                             append_if_not_present=True)
-            else:  #NPT(Nose-Hoover)
-                fix_ensemble_str = 'all npt temp {0} {1} {2} aniso {3} {4} {5}'.format(str(temperature),
-                                                                                       str(temperature),
-                                                                                       str(temperature_damping_timescale),
-                                                                                       str(pressure),
-                                                                                       str(pressure),
-                                                                                       str(pressure_damping_timescale))
+            else:  # NPT(Nose-Hoover)
+                fix_ensemble_str = 'all npt temp {0} {1} {2}'.format(str(temperature),
+                                                                     str(temperature),
+                                                                     str(temperature_damping_timescale))
+                fix_ensemble_str += pressure_string
         elif temperature is not None:  # NVT
             if temperature == 0.0:
                 raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
