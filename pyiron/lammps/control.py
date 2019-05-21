@@ -219,11 +219,13 @@ class LammpsControl(GenericParameters):
 
             pressure[pressure != None] *= pressure_units
 
+            pressure_string = ''
+            for coord, value in zip(['x', 'y', 'z'], pressure):
+                if value is not None:
+                    pressure_string += ' {0} {1} {1} {2}'.format(coord, str(value), str(pressure_damping_timescale))
+
             if langevin:  # NPT(Langevin)
-                fix_ensemble_str = 'all nph'
-                for coord, value in zip(['x', 'y', 'z'], pressure):
-                    if value is not None:
-                        fix_ensemble_str += ' {0} {1} {1} {2}'.format(coord, str(value), str(pressure_damping_timescale))
+                fix_ensemble_str = 'all nph' + pressure_string
                 self.modify(fix___langevin='all langevin {0} {1} {2} {3} zero yes'.format(str(temperature),
                                                                                           str(temperature),
                                                                                           str(temperature_damping_timescale),
@@ -233,9 +235,7 @@ class LammpsControl(GenericParameters):
                 fix_ensemble_str = 'all npt temp {0} {1} {2}'.format(str(temperature),
                                                                      str(temperature),
                                                                      str(temperature_damping_timescale))
-                for coord, value in zip(['x', 'y', 'z'], pressure):
-                    if value is not None:
-                        fix_ensemble_str += ' {0} {1} {1} {2}'.format(coord, str(value), str(pressure_damping_timescale))
+                fix_ensemble_str += pressure_string
         elif temperature is not None:  # NVT
             if temperature == 0.0:
                 raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0.0')
