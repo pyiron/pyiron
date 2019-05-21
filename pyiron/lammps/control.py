@@ -206,14 +206,14 @@ class LammpsControl(GenericParameters):
             if not hasattr(pressure, '__len__'):
                 pressure = pressure*np.ones(3)
             pressure = np.array(pressure)
-            if sum(pressure!=None)==0:
+            if sum(pressure != None) == 0:
                 raise ValueError('Pressure cannot be three times None')
-            if len(pressure)!=3:
+            if len(pressure) != 3:
                 raise ValueError('Pressure must be a float or a 3d vector')
             if temperature is None or temperature == 0.0:
                 raise ValueError('Target temperature for fix nvt/npt/nph cannot be 0')
 
-            pressure[pressure!=None] *= pressure_units
+            pressure[pressure != None] *= pressure_units
 
             if langevin:  # NPT(Langevin)
                 fix_ensemble_str = 'all nph'
@@ -225,7 +225,7 @@ class LammpsControl(GenericParameters):
                                                                                           str(temperature_damping_timescale),
                                                                                           str(seed)),
                             append_if_not_present=True)
-            else:  #NPT(Nose-Hoover)
+            else:  # NPT(Nose-Hoover)
                 fix_ensemble_str = 'all npt temp {0} {1} {2}'.format(str(temperature),
                                                                      str(temperature),
                                                                      str(temperature_damping_timescale))
