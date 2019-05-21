@@ -124,8 +124,9 @@ class LammpsControl(GenericParameters):
         Args:
             temperature (None/float): Target temperature. If set to None, an NVE calculation is performed.
                                       It is required when the pressure is set or langevin is set
-            pressure (None/float): Target pressure. If set to None, an NVE or an NVT calculation is performed.
-                                   (This tag will allow for a list in the future as it is done for calc_minimize())
+            pressure (None/float/numpy.ndarray/list): Target pressure. If set to None, an NVE or an NVT calculation is
+                performed. A length-3 list or array may be given to specify x-, y- and z-components individually. In
+                this case, floats and `None` may be mixed to allow relaxation only in particular directions.
             n_ionic_steps (int): Number of ionic steps
             time_step (float): Step size between two steps. In fs if units==metal
             n_print (int):  Print frequency
