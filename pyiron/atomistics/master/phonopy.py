@@ -117,7 +117,16 @@ class PhonopyJob(AtomisticParallelMaster):
 
         self.phonopy = None
         self._job_generator = PhonopyJobGenerator(self)
+        self._disable_phonopy_pickle = False
         s.publication_add(phonopy_publication())
+
+    @property
+    def phonopy_pickling_disabled(self):
+        return self._disable_phonopy_pickle
+
+    @phonopy_pickling_disabled.setter
+    def phonopy_pickling_disabled(self, disable):
+        self._disable_phonopy_pickle = disable
 
     @property
     def _phonopy_unit_cell(self):
@@ -170,7 +179,7 @@ class PhonopyJob(AtomisticParallelMaster):
             group_name (str): HDF5 subgroup name - optional
         """
         super(PhonopyJob, self).to_hdf(hdf=hdf, group_name=group_name)
-        if self.phonopy is not None:
+        if self.phonopy is not None and not self._disable_phonopy_pickle:
             with self.project_hdf5.open("output") as hdf5_output:
                 hdf5_output['phonopy_pickeled'] = codecs.encode(pickle.dumps(self.phonopy), "base64").decode()
 
