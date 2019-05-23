@@ -379,8 +379,13 @@ class ParallelMaster(GenericMaster):
         Returns:
             yield: Yield of GenericJob or JobCore
         """
-        for job_id in self.child_ids:
+        for job_id in self._get_jobs_sorted():
             yield self.project.load(job_id, convert_to_object=convert_to_object)
+
+    def _get_jobs_sorted(self):
+        job_names = self.child_names.values()
+        return [j for j in [self._job_generator.job_name(p) for p in self._job_generator.parameter_list] if
+                j in job_names]
 
     def __getitem__(self, item):
         """
