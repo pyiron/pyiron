@@ -1,12 +1,14 @@
 import unittest
 import numpy as np
 import os
+import posixpath
 from pyiron.base.project.generic import Project
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.lammps.lammps import Lammps
 from pyiron.lammps.base import LammpsStructure
 import ase.units as units
+import shutil
 
 
 class TestLammps(unittest.TestCase):
@@ -15,7 +17,8 @@ class TestLammps(unittest.TestCase):
         cls.execution_path = os.path.dirname(os.path.abspath(__file__))
         cls.project = Project(os.path.join(cls.execution_path, 'lammps'))
         cls.job = Lammps(project=ProjectHDFio(project=cls.project, file_name='lammps'), job_name='lammps')
-        cls.job_water = Lammps(project=ProjectHDFio(project=cls.project, file_name='lammps'), job_name='lammps_water')
+        cls.job_water = Lammps(project=ProjectHDFio(project=cls.project, file_name='lammps_water'),
+                               job_name='lammps_water')
 
     @classmethod
     def tearDownClass(cls):
@@ -117,6 +120,20 @@ class TestLammps(unittest.TestCase):
         self.job_water.potential = 'H2O_tip3p'
         self.job_water.calc_md(temperature=350, initial_temperature=350, time_step=1, n_ionic_steps=1000, n_print=200)
         self.job_water.run(run_mode="manual")
+        file_directory = posixpath.join(self.execution_path, "../static/lammps_test_files")
+        shutil.copy(src=posixpath.join(file_directory, "log.lammps"), dst=self.job_water.working_directory)
+        shutil.copy(src=posixpath.join(file_directory, "dump.out"), dst=self.job_water.working_directory)
+        self.job_water.collect_output_log(file_name="log.lammps", cwd=file_directory)
+        self.job_water.collect_dump_file(file_name="dump.out", cwd=file_directory)
+        self.job_water.to_hdf()
+        nodes = ["positions", "temperature", "energy_tot", "steps", "positions", "forces", "cells", "pressures"]
+        with self.job_water.project_hdf5.open("output/generic") as h_gen:
+            hdf_nodes = h_gen.list_nodes()
+            self.assertTrue(all([node in hdf_nodes for node in nodes]))
+        self.assertTrue(np.array_equal(self.job_water["output/generic/positions"].shape, (6, 81, 3)))
+        self.assertTrue(np.array_equal(self.job_water["output/generic/positions"].shape,
+                                       self.job_water["output/generic/forces"].shape))
+        self.assertEqual(len(self.job_water["output/generic/steps"]), 6)
 
 
 if __name__ == '__main__':
