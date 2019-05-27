@@ -428,6 +428,9 @@ class LammpsBase(AtomisticGenericJob):
         if 'memory' in lf.status_dict.keys():
             del lf.status_dict['memory']
         with self.project_hdf5.open("output/generic") as hdf_output:
+            # This is a hack for backward comparability
+            if "temperature" in lf.status_dict.keys():
+                hdf_output["temperatures"] = np.array(lf.status_dict["temperature"])[0][1]
             lf.to_hdf(hdf_output)
 
     def calc_minimize(self, e_tol=0.0, f_tol=1e-2, max_iter=100000, pressure=None, n_print=100):
