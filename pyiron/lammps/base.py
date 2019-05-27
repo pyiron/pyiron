@@ -380,7 +380,7 @@ class LammpsBase(AtomisticGenericJob):
             # print "tag_dict: ", tag_dict
 
         h5_dict = {"Step": "steps",
-                   "Temp": "temperatures",
+                   "Temp": "temperature",
                    "PotEng": "energy_pot",
                    "TotEng": "energy_tot",
                    "Pxx": "pressure_x",
@@ -413,7 +413,7 @@ class LammpsBase(AtomisticGenericJob):
                         h5_dict=h5_dict,
                         key_dict=lammps_dict)
 
-        lf.store_as_vector = ['energy_tot', 'temperatures', 'steps', 'volume', 'energy_pot']
+        lf.store_as_vector = ['energy_tot', 'temperature', 'steps', 'volume', 'energy_pot']
         # print ("lf_keys: ", lf.status_dict['energy_tot'])
 
         lf.combine_mat('pressure_x', 'pressure_xy', 'pressure_xz',
