@@ -1,0 +1,116 @@
+LAMMPS (17 Nov 2016)
+units real
+dimension 3
+boundary p p p
+atom_style full
+read_data structure.inp
+  orthogonal box = (0 0 0) to (9.5712 11.0519 18.097)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  192 atoms
+  scanning bonds ...
+  2 = max bonds/atom
+  scanning angles ...
+  1 = max angles/atom
+  reading bonds ...
+  128 bonds
+  reading angles ...
+  64 angles
+  2 = max # of 1-2 neighbors
+  1 = max # of 1-3 neighbors
+  1 = max # of 1-4 neighbors
+  2 = max # of special neighbors
+include potential.inp
+# @potential_species H_O  ### species in potentia
+# W.L. Jorgensen et.al.The Journal of Chemical Physics 79926 (1983); https://doi.org/10.1063/1.44586
+
+
+
+# create groups ##
+group O type 2
+0 atoms in group O
+group H type 1
+192 atoms in group H
+
+## set charges - beside manually ##
+set group O charge -0.830
+  0 settings made for charge
+set group H charge 0.415
+  192 settings made for charge
+
+### TIP3P Potential Parameters ##
+pair_style lj/cut/coul/long 10.0
+pair_coeff * * 0.0 0.0
+pair_coeff 2 2 0.102 3.188
+bond_style harmonic
+bond_coeff 1 450 0.9572
+angle_style harmonic
+angle_coeff 1 55 104.52
+kspace_style pppm 1.0e-5
+
+fix ensemble all nvt temp 350 350 100.0
+variable  dumptime equal 200
+dump 1 all custom ${dumptime} dump.out id type xsu ysu zsu fx fy fz
+dump 1 all custom 200 dump.out id type xsu ysu zsu fx fy fz
+dump_modify 1 sort id format line "%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g"
+thermo_style custom step temp pe etotal pxx pxy pxz pyy pyz pzz vol
+thermo_modify format  float %20.15g
+thermo 200
+timestep 1
+velocity all create 350 93411 dist gaussian
+run 1000
+PPPM initialization ...
+WARNING: System is not charge neutral, net charge = 79.68 (../kspace.cpp:298)
+WARNING: Using 12-bit tables for long-range coulomb (../kspace.cpp:317)
+  G vector (1/distance) = 0.299623
+  grid = 8 9 15
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.00204481
+  estimated relative force accuracy = 6.15788e-06
+  using double precision FFTs
+  3d grid and FFT values/proc = 5280 1080
+Neighbor list info ...
+  1 neighbor list requests
+  update every 1 steps, delay 10 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 12
+  ghost atom cutoff = 12
+  binsize = 6 -> bins = 2 2 4
+Memory usage per processor = 8.13009 Mbytes
+Step Temp PotEng TotEng Pxx Pxy Pxz Pyy Pyz Pzz Volume 
+       0                  350    -10117.1709826736    -9917.90383083112     784197.060175734    -443.287623330939      104.06472062385     521299.527989966     249.757059476527     272325.240011036     1914.29177451605 
+     200     788.654248076452    -13993.7552220254    -13544.7469768748     566769.066827229     3433.37912286336    -798.542069717387     556614.262968745    -4561.63567999028     558389.439943593     1914.29177451605 
+     400     308.524725964912    -14192.9302000433    -14017.2763617119     534156.487139679    -1339.62496628022    -1242.25844406926     547018.553578598    -2801.58809979543     539231.160176034     1914.29177451605 
+     600       286.1704330167    -14198.2068957585    -14035.2801325334      538390.44893048    -2482.48624560737    -1293.62196104592     539501.065610844     2719.21499148196     536984.445896441     1914.29177451605 
+     800     375.471549016493    -14155.7071570766    -13941.9381680182     550706.297245409     204.983215486342     3151.45214224003     549497.983288966     2565.61399935753     545059.621562648     1914.29177451605 
+    1000     321.981139241316    -14215.8450966745    -14032.5300550642     543811.007791452    -1822.72487058493    -1634.51478967186     543138.315629694    -2149.57374073053     541155.394543912     1914.29177451605 
+Loop time of 1.87283 on 1 procs for 1000 steps with 192 atoms
+
+Performance: 46.133 ns/day, 0.520 hours/ns, 533.950 timesteps/s
+99.9% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 1.3224     | 1.3224     | 1.3224     |   0.0 | 70.61
+Bond    | 0.0075154  | 0.0075154  | 0.0075154  |   0.0 |  0.40
+Kspace  | 0.35426    | 0.35426    | 0.35426    |   0.0 | 18.92
+Neigh   | 0.14357    | 0.14357    | 0.14357    |   0.0 |  7.67
+Comm    | 0.030166   | 0.030166   | 0.030166   |   0.0 |  1.61
+Output  | 0.0050189  | 0.0050189  | 0.0050189  |   0.0 |  0.27
+Modify  | 0.005131   | 0.005131   | 0.005131   |   0.0 |  0.27
+Other   |            | 0.004822   |            |       |  0.26
+
+Nlocal:    192 ave 192 max 192 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:    4813 ave 4813 max 4813 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:    70093 ave 70093 max 70093 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 70093
+Ave neighs/atom = 365.068
+Ave special neighs/atom = 2
+Neighbor list builds = 62
+Dangerous builds = 15
+Total wall time: 0:00:01
