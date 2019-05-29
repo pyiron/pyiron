@@ -117,6 +117,15 @@ class Executable(object):
         Returns:
             list: list of the available version
         """
+        return self.list_executables()
+
+    def list_executables(self):
+        """
+        List all available exectuables in the path_binary_codes for the specified codename.
+
+        Returns:
+            list: list of the available version
+        """
         return sorted(list(self._executable_lst.keys()))
 
     @property
