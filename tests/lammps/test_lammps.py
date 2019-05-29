@@ -119,13 +119,12 @@ class TestLammps(unittest.TestCase):
         self.job_water.structure = water
         self.job_water.potential = 'H2O_tip3p'
         self.job_water.calc_md(temperature=350, initial_temperature=350, time_step=1, n_ionic_steps=1000, n_print=200)
-        self.job_water.run(run_mode="manual")
         file_directory = posixpath.join(self.execution_path, "../static/lammps_test_files")
-        shutil.copy(src=posixpath.join(file_directory, "log.lammps"), dst=self.job_water.working_directory)
-        shutil.copy(src=posixpath.join(file_directory, "dump.out"), dst=self.job_water.working_directory)
-        self.job_water.collect_output_log(file_name="log.lammps", cwd=file_directory)
-        self.job_water.collect_dump_file(file_name="dump.out", cwd=file_directory)
-        self.job_water.to_hdf()
+        self.job_water.restart_file_list.append(posixpath.join(file_directory, "dump.out"))
+        self.job_water.restart_file_list.append(posixpath.join(file_directory, "log.lammps"))
+        self.job_water.run(run_mode="manual")
+        self.job_water.status.collect = True
+        self.job_water.run()
         nodes = ["positions", "temperature", "temperatures", "energy_tot", "steps", "positions", "forces", "cells",
                  "pressures"]
         with self.job_water.project_hdf5.open("output/generic") as h_gen:
