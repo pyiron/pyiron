@@ -542,14 +542,20 @@ class VaspBase(GenericDFTJob):
             pyiron.atomistics.structure.atoms.Atoms: The final structure
         """
         filename = posixpath.join(self.working_directory, filename)
-        input_structure = self.structure.copy()
-        try:
-            output_structure = read_atoms(filename=filename, species_list=input_structure.get_parent_elements())
-        except (IndexError, ValueError, IOError):
-            s.logger.warning("Unable to read output structure")
-            return
-        input_structure.cell = output_structure.cell.copy()
-        input_structure.positions[self.sorted_indices] = output_structure.positions
+        if self.structure is None:
+            try:
+                output_structure = read_atoms(filename=filename)
+                input_structure = output_structure.copy()
+            except (IndexError, ValueError, IOError):
+                raise IOError("Unable to read output structure")
+        else:
+            input_structure = self.structure.copy()
+            try:
+                output_structure = read_atoms(filename=filename, species_list=input_structure.get_parent_elements())
+                input_structure.cell = output_structure.cell.copy()
+                input_structure.positions[self.sorted_indices] = output_structure.positions
+            except (IndexError, ValueError, IOError):
+                raise IOError("Unable to read output structure")
         return input_structure
 
     def write_magmoms(self):
