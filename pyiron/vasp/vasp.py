@@ -31,8 +31,8 @@ class Vasp(VaspInteractive):
         as shown below:
 
         >>> ham = Vasp(job_name="trial_job")
-        >>> ham.input.incar.set(IBRION=-1)
-        >>> ham.input.incar.set(ISMEAR=0)
+        >>> ham.input.incar[IBRION] = -1
+        >>> ham.input.incar[ISMEAR] = 0
         >>> ham.input.kpoints.set(size_of_mesh=[6, 6, 6])
 
         However, the according to pyiron's philosophy, it is recommended to avoid using code specific tags like IBRION,
