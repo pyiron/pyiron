@@ -1967,7 +1967,7 @@ class Atoms(object):
         struct_copy += Atoms(elements=len(points)*['Hs'], positions=points)
         struct_copy.center_coordinates_in_unit_cell();
         group_IDs = struct_copy.get_symmetry()['equivalent_atoms'][struct_copy.select_index('Hs')]
-        return [np.round(points[group_IDs==ID], decimals=8) for ID in group_IDs]
+        return [np.round(points[group_IDs==ID], decimals=8) for ID in np.unique(group_IDs)]
 
     def _get_voronoi_vertices(self, minimum_dist=0.1):
         """
