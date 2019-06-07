@@ -1667,7 +1667,7 @@ class Atoms(object):
         neighbor_obj.shells = self.neighbor_shellOrder
         return neighbor_obj
 
-    def get_neighborhood(box, position, num_neighbors=12, t_vec=True, include_boundary=True, exclude_self=True,
+    def get_neighborhood(box, position, num_neighbors=12, t_vec=True, include_boundary=True,
                          tolerance=2, id_list=None, cutoff=None, cutoff_radius=None):
         """
         
@@ -1678,7 +1678,6 @@ class Atoms(object):
                         (pbc are automatically taken into account)
             include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
                                      False is needed e.g. in plot routines to avoid showing incorrect bonds
-            exclude_self (bool): include central __atom (i.e. distance = 0)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list:
             cutoff (float/ None): Upper bound of the distance to which the search must be done
@@ -1698,7 +1697,7 @@ class Atoms(object):
         pos[-1] = np.array(position)
         box.positions = pos
         neigh = box.get_neighbors(num_neighbors=num_neighbors, t_vec=t_vec,
-                                  include_boundary=include_boundary, exclude_self=exclude_self,
+                                  include_boundary=include_boundary, exclude_self=True,
                                   tolerance=tolerance, id_list=id_list, cutoff=cutoff, cutoff_radius=cutoff_radius)
         neigh_return = NeighTemp()
         setattr(neigh_return, 'distances', neigh.distances[-1])
