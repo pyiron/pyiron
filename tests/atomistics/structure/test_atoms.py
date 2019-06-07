@@ -18,12 +18,15 @@ class TestAtoms(unittest.TestCase):
             if os.path.isfile(os.path.join(file_location, "../../static/atomistics/test_hdf")):
                 os.remove(os.path.join(file_location, "../../static/atomistics/test_hdf"))
 
-    def setUp(self):
-        pass
-        self.CO2 = Atoms("CO2", positions=[[0, 0, 0], [0, 0, 1.5], [0, 1.5, 0]])
+    @classmethod
+    def setUpClass(cls):
         C = Atom('C').element
-        self.C3 = Atoms([C, C, C], positions=[[0, 0, 0], [0, 0, 2], [0, 2, 0]])
-        self.C2 = Atoms(2 * [Atom('C')])
+        cls.C3 = Atoms([C, C, C], positions=[[0, 0, 0], [0, 0, 2], [0, 2, 0]])
+        cls.C2 = Atoms(2 * [Atom('C')])
+
+    def setUp(self):
+        # These atoms are reset before every test.
+        self.CO2 = Atoms("CO2", positions=[[0, 0, 0], [0, 0, 1.5], [0, 1.5, 0]])
 
     def test__init__(self):
         pos, cell = generate_fcc_lattice()
@@ -337,6 +340,45 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(len(sel_dyn_before) * 18, len(sel_dyn_after))
         self.assertTrue(np.alltrue(np.logical_not(np.alltrue(sel_dyn_after[basis.select_index("O")], axis=1))))
         self.assertTrue(np.alltrue(np.alltrue(sel_dyn_after[basis.select_index("Mg")], axis=1)))
+        basis = basis_Mg + basis_O
+        basis.add_tag(spin=None)
+        basis.spin[basis.select_index("Mg")] = 1
+        basis.spin[basis.select_index("O")] = -1
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("Mg")].list(), 1 *
+                                       np.ones(len(basis.select_index("Mg")))))
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("O")].list(), -1 *
+                                       np.ones(len(basis.select_index("O")))))
+        basis.set_repeat(2)
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("Mg")].list(), 1 *
+                                       np.ones(len(basis.select_index("Mg")))))
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("O")].list(), -1 *
+                                       np.ones(len(basis.select_index("O")))))
+        basis = basis_Mg + basis_O
+        basis.add_tag(spin=None)
+        # Indices set as int
+        Mg_indices = basis.select_index("Mg").tolist()
+        for ind in Mg_indices:
+            basis.spin[ind] = 1
+        O_indices = basis.select_index("O").tolist()
+        for ind in O_indices:
+            basis.spin[ind] = -1
+        basis.set_repeat(2)
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("Mg")].list(), 1 *
+                                       np.ones(len(basis.select_index("Mg")))))
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("O")].list(), -1 *
+                                       np.ones(len(basis.select_index("O")))))
+        # Indices set as numpy.int
+        Mg_indices = basis.select_index("Mg").tolist()
+        for ind in Mg_indices:
+            basis.spin[ind] = 1
+        O_indices = basis.select_index("O").tolist()
+        for ind in O_indices:
+            basis.spin[ind] = -1
+        basis.set_repeat(2)
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("Mg")].list(), 1 *
+                                       np.ones(len(basis.select_index("Mg")))))
+        self.assertTrue(np.array_equal(basis.spin[basis.select_index("O")].list(), -1 *
+                                       np.ones(len(basis.select_index("O")))))
 
     def test_boundary(self):
         cell = 2.2 * np.identity(3)
@@ -428,8 +470,7 @@ class TestAtoms(unittest.TestCase):
         cell = 2.2 * np.identity(3)
         Al_sc = Atoms(elements=['Al', 'Al'], scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
         Al_sc.set_repeat([4, 4, 4])
-        radius = Al_sc.get_shell_radius()
-        neighbors = Al_sc.get_neighbors(radius=radius, num_neighbors=100, t_vec=False, exclude_self=True)
+        neighbors = Al_sc.get_neighbors(num_neighbors=100, t_vec=False, exclude_self=True)
 
         c_Zn = 0.1
         pse = PeriodicTable()

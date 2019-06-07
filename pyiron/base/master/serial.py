@@ -234,7 +234,9 @@ class SerialMasterBase(GenericMaster):
             return None
         if job_name is None:
             job_name = '_'.join(ham_old.job_name.split('_')[:-1] + [str(len(self.child_ids))])
-        return ham_old.restart(job_name=job_name)
+        new_job = ham_old.restart(job_name=job_name)
+        new_job.server.cores = self.server.cores
+        return new_job
 
     def collect_output(self):
         """
@@ -442,29 +444,10 @@ class SerialMasterBase(GenericMaster):
         """
         child_id_lst = self.child_ids
         child_name_lst = [self.project.db.get_item_by_id(child_id)["job"] for child_id in self.child_ids]
-        if isinstance(item, str):
-            name_lst = item.split("/")
-            if name_lst[0] in child_name_lst:
-                child_id = child_id_lst[child_name_lst.index(name_lst[0])]
-                if len(name_lst) > 1:
-                    return self.project.inspect(child_id)['/'.join(name_lst[1:])]
-                else:
-                    return self.project.load(child_id, convert_to_object=True)
-            if name_lst[0] in self._job_name_lst:
-                child = self._job_object_lst[self._job_name_lst.index(name_lst[0])]
-                if len(name_lst) == 1:
-                    return child
-                else:
-                    return child['/'.join(name_lst[1:])]
-            return super(GenericMaster, self).__getitem__(item)
-        elif isinstance(item, int):
+        if isinstance(item, int):
             total_lst = child_name_lst + self._job_name_lst
-            job_name = total_lst[item]
-            if job_name in child_name_lst:
-                child_id = child_id_lst[child_name_lst.index(job_name)]
-                return self.project.load(child_id, convert_to_object=True)
-            else:
-                return self._job_object_lst[item]
+            item = total_lst[item]
+        return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
 
     def _run_if_refresh(self):
         """

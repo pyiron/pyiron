@@ -654,7 +654,13 @@ class Project(ProjectPath):
         Returns:
             pandas.DataFrame: Output from the queuing system - optimized for the Sun grid engine
         """
-        return queue_table(job_ids=[], project_only=False)
+        df = queue_table(job_ids=[], project_only=False)
+        if len(df) != 0:
+            return pandas.DataFrame([self.db.get_item_by_id(int(str(queue_ID).replace('pi_', '').replace('.sh', '')))
+                                     for queue_ID in df['jobname']
+                                     if str(queue_ID).startswith('pi_')])
+        else:
+            return None
 
     def refresh_job_status_based_on_queue_status(self, job_specifier, status='running'):
         """

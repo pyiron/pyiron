@@ -37,7 +37,7 @@ class PotentialAbstract(object):
     def __init__(self, potential_df, default_df=None, selected_atoms=None):
         self._potential_df = potential_df
         self._default_df = default_df
-        if selected_atoms:
+        if selected_atoms is not None:
             self._selected_atoms = selected_atoms
         else:
             self._selected_atoms = []

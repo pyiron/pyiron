@@ -4,6 +4,7 @@
 
 from ctypes import c_double, c_int
 import numpy as np
+import os
 import pandas as pd
 import warnings
 
@@ -94,7 +95,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_prism = UnfoldingPrism(cell)
         lx, ly, lz, xy, xz, yz = self._interactive_prism.get_lammps_prism()
         if np.matrix.trace(self._interactive_prism.R) != 3:
-            print('Warning: setting upper trangular matrix might slow down the calculation')
+            warnings.warn('Warning: setting upper trangular matrix might slow down the calculation')
         if abs(xy) + abs(xz) + abs(yz) > 1.0e-6:
             if self.structure._is_scaled:
                 self._interactive_lib_command(
@@ -151,6 +152,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         potential_lst = []
         if self.input.potential.files is not None:
             for potential in self.input.potential.files:
+                if not os.path.exists(potential):
+                    raise ValueError('Potential not found: ', potential)
                 potential_lst.append([potential.split('/')[-1], potential])
         for line in self.input.potential.get_string_lst():
             if len(line) > 2:
@@ -222,7 +225,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_lib_command("atom_modify map array")
         self._interactive_prism = UnfoldingPrism(structure.cell)
         if np.matrix.trace(self._interactive_prism.R) != 3:
-            print('Warning: setting upper trangular matrix might slow down the calculation')
+            warnings.warn('Warning: setting upper trangular matrix might slow down the calculation')
         xhi, yhi, zhi, xy, xz, yz = self._interactive_prism.get_lammps_prism()
         if self._interactive_prism.is_skewed():
             self._interactive_lib_command('region 1 prism' +

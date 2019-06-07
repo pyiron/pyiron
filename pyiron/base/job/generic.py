@@ -527,6 +527,14 @@ class GenericJob(JobCore):
         """
         pass
 
+    def check_setup(self):
+        """
+        Checks whether certain parameters (such as plane wave cutoff radius in DFT) are changed from the pyiron standard
+        values to allow for a physically meaningful results. This function is called manually or only when the job is
+        submitted to the queueing system.
+        """
+        pass
+
     def reset_job_id(self, job_id=None):
         """
         Reset the job id sets the job_id to None in the GenericJob as well as all connected modules like JobStatus.
@@ -550,7 +558,7 @@ class GenericJob(JobCore):
         try:
             self._logger.info('run {}, status: {}'.format(self.job_info_str, self.status))
             status = self.status.string
-            if run_mode:
+            if run_mode is not None:
                 self.server.run_mode = run_mode
             if run_again and self.job_id:
                 self._logger.info("run repair "+str(self.job_id))
@@ -665,8 +673,10 @@ class GenericJob(JobCore):
             self._logger.info("{}, status: {}, script: {}".format(self.job_info_str, self.status, file_name))
             with open(posixpath.join(self.project_hdf5.working_directory, 'out.txt'), mode='w') as f_out:
                 with open(posixpath.join(self.project_hdf5.working_directory, 'error.txt'), mode='w') as f_err:
-                    self._process = subprocess.Popen(['python', file_name], cwd=self.project_hdf5.working_directory,
-                                                     shell=shell, stdout=f_out, stderr=f_err, universal_newlines=True)
+                    self._process = subprocess.Popen(['python', '-m', 'pyiron.base.job.wrappercmd', '-p',
+                                                      self.working_directory, '-j', str(self.job_id)],
+                                                     cwd=self.project_hdf5.working_directory, shell=shell, stdout=f_out,
+                                                     stderr=f_err, universal_newlines=True)
             self._logger.info("{}, status: {}, job submitted".format(self.job_info_str, self.status))
         except subprocess.CalledProcessError as e:
             self._logger.warn("Job aborted")
@@ -697,9 +707,11 @@ class GenericJob(JobCore):
             _manually_print (bool): Print explanation how to run the simulation manually - default=True.
         """
         if _manually_print:
+            abs_working = posixpath.abspath(self.project_hdf5.working_directory)
             print('You have selected to start the job manually. ' +
-                  'To run it, go into the working directory {} and ' +
-                  'call \'python run_job.py\' '.format(posixpath.abspath(self.project_hdf5.working_directory)))
+                  'To run it, go into the working directory {} and '.format(abs_working) +
+                  'call \'python -m pyiron.base.job.wrappercmd -p {}'.format(abs_working) +
+                  ' -j {} \' '.format(self.job_id))
 
     def run_if_scheduler(self):
         """
@@ -718,7 +730,8 @@ class GenericJob(JobCore):
                                                 cores=self.server.cores,
                                                 run_time_max=self.server.run_time,
                                                 memory_max=self.server.memory_limit,
-                                                command='python run_job.py')
+                                                command='python -m pyiron.base.job.wrappercmd -p ' +
+                                                        self.working_directory + ' -j ' + str(self.job_id))
             self.server.queue_id = que_id
             self._server.to_hdf(self._hdf5)
             print('Queue system id: ', que_id)
@@ -825,11 +838,13 @@ class GenericJob(JobCore):
                 # del self
                 # p.start()
                 del self
-                master = project.load(master_id)
-                if master.server.run_mode.non_modal or master.server.run_mode.queue:
+                if project.inspect(master_id)["server"]["run_mode"] == "non_modal":
+                    master = project.load(master_id)
                     master._run_if_refresh()
-                    if master.server.run_mode.queue and master._process:
-                        master._process.communicate()
+                # if master.server.run_mode.non_modal or master.server.run_mode.queue:
+                #     master._run_if_refresh()
+                #     if master.server.run_mode.queue and master._process:
+                #         master._process.communicate()
             elif master_db_entry['status'] == 'refresh':
                 project.db.item_update({'status': 'busy'}, master_id)
                 self._logger.info("busy master: {} {}".format(master_id, self.get_job_id()))
@@ -997,6 +1012,8 @@ class GenericJob(JobCore):
             debug (bool): Debug Mode
         """
         self.validate_ready_to_run()
+        if self.server.run_mode.queue:
+            self.check_setup()
         if self.check_if_job_exists():
             print('job exists already and therefore was not created!')
         else:
@@ -1182,28 +1199,6 @@ class GenericJob(JobCore):
             self.server.cores = 1
             warnings.warn('No multi core executable found falling back to the single core executable.', RuntimeWarning)
 
-    def _write_run_wrapper(self, debug=False):
-        """
-        Internal helper function to run a python script for monitoring external calculation:
-        This python script - which is executed as a wrapper around the simulation - is written here.
-
-        Args:
-            debug (bool): True or False - set level of output
-        """
-        file_name = posixpath.join(self.project_hdf5.working_directory, "run_job.py")
-        with open(file_name, "w") as f:
-            def wl(arg):
-                return f.write(arg + '\n')
-
-            wl('import sys')
-            wl('from pyiron.base.job.wrapper import JobWrapper')
-            wl('')
-            wl('debug = {0}'.format(debug))
-            wl('job = JobWrapper(working_directory=\'{0}\','.format(self.project_hdf5.working_directory))
-            wl('                 job_id={},'.format(self.job_id))
-            wl('                 debug={})'.format(debug))
-            wl('job.run()')
-
     def _calculate_predecessor(self):
         """
         Internal helper function to calculate the predecessor of the current job if it was not calculated before. This
@@ -1244,7 +1239,6 @@ class GenericJob(JobCore):
             self.project_hdf5.create_working_directory()
             self.write_input()
             self._copy_restart_files()
-            self._write_run_wrapper(debug=debug)
         self.status.created = True
         self._calculate_predecessor()
 

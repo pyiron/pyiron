@@ -5,10 +5,11 @@ from pyiron.base.project.path import GenericPath
 
 
 class TestGenericPath(unittest.TestCase):
-    def setUp(self):
-        self.current_dir = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
-        self.path_project = GenericPath(root_path=self.current_dir,
-                                        project_path='project/path/')
+    @classmethod
+    def setUpClass(cls):
+        cls.current_dir = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
+        cls.path_project = GenericPath(root_path=cls.current_dir,
+                                       project_path='project/path/')
 
     def test_root_path(self):
         self.assertEqual(self.path_project.root_path, self.current_dir + '/')
@@ -21,9 +22,10 @@ class TestGenericPath(unittest.TestCase):
 
 
 class TestProject(unittest.TestCase):
-    def setUp(self):
-        self.current_dir = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
-        self.project = Project(os.path.join(self.current_dir, 'sub_folder'))
+    @classmethod
+    def setUpClass(cls):
+        cls.current_dir = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
+        cls.project = Project(os.path.join(cls.current_dir, 'sub_folder'))
 
     def tearDown(self):
         self.project.remove(enable=True)

@@ -5,11 +5,11 @@
 import numpy as np
 import os
 from subprocess import Popen, PIPE
-import warnings
 
 from pyiron.vasp.outcar import Outcar
 from pyiron.vasp.base import VaspBase
 from pyiron.vasp.structure import vasp_sorter
+from pyiron.vasp.potential import VaspPotentialSetter
 from pyiron.vasp.base import GenericOutput as GenericOutputBase
 from pyiron.vasp.base import DFTOutput as DFTOutputBase
 from pyiron.vasp.base import Output as OutputBase
@@ -48,6 +48,8 @@ class VaspInteractive(VaspBase, GenericInteractive):
     @structure.setter
     def structure(self, structure):
         GenericInteractive.structure.fset(self, structure)
+        if structure is not None:
+            self._potential = VaspPotentialSetter(element_lst=structure.get_species_symbols().tolist())
 
     @property
     def interactive_enforce_structure_reset(self):
@@ -74,7 +76,7 @@ class VaspInteractive(VaspBase, GenericInteractive):
                 self._logger.warn('VASP calculation exited before interactive_close() - already converged?')
             for key in self.interactive_cache.keys():
                 if isinstance(self.interactive_cache[key], list):
-                    self.interactive_cache[key] = self.interactive_cache[key][:-2]
+                    self.interactive_cache[key] = self.interactive_cache[key]
             super(VaspInteractive, self).interactive_close()
             self.status.collect = True
             self._output_parser = Output()
@@ -268,16 +270,10 @@ class GenericOutput(GenericOutputBase):
         with hdf.open("generic") as hdf_go:
             # hdf_go["description"] = self.description
             for key, val in self.log_dict.items():
-                if isinstance(val, list) or isinstance(val, np.ndarray):
-                    hdf_go[key] = val[:-1]
-                else:
-                    hdf_go[key] = val
+                hdf_go[key] = val
             with hdf_go.open("dft") as hdf_dft:
                 for key, val in self.dft_log_dict.items():
-                    if isinstance(val, list) or isinstance(val, np.ndarray):
-                        hdf_dft[key] = val[:-1]
-                    else:
-                        hdf_dft[key] = val
+                    hdf_dft[key] = val
                 if self.bands.eigenvalue_matrix is not None:
                     self.bands.to_hdf(hdf_dft, "bands")
 
@@ -302,9 +298,5 @@ class DFTOutput(DFTOutputBase):
 
         """
         with hdf.open("dft") as hdf_dft:
-            # hdf_go["description"] = self.description
             for key, val in self.log_dict.items():
-                if isinstance(val, list) or isinstance(val, np.ndarray):
-                    hdf_dft[key] = val[:-1]
-                else:
-                    hdf_dft[key] = val
+                hdf_dft[key] = val

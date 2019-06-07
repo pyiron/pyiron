@@ -5,12 +5,13 @@ from pyiron.base.project.generic import Project
 
 
 class TestExampleJob(unittest.TestCase):
-    def setUp(self):
-        self.count = 12
-        self.file_location = os.path.dirname(os.path.abspath(__file__))
-        self.project = Project(os.path.join(self.file_location, 'random_testing_non_modal'))
-        self.project.remove_jobs(recursive=True)
-        self.project.set_logging_level('INFO')
+    @classmethod
+    def setUpClass(cls):
+        cls.count = 12
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        cls.project = Project(os.path.join(cls.file_location, 'random_testing_non_modal'))
+        cls.project.remove_jobs(recursive=True)
+        cls.project.set_logging_level('INFO')
 
     @classmethod
     def tearDownClass(cls):

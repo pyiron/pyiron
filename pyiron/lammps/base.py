@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import warnings
 
-from pyiron.lammps.potential import LammpsPotentialFile
+from pyiron.lammps.potential import LammpsPotentialFile, PotentialAvailable
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 from pyiron.base.settings.generic import Settings
 from pyiron.base.pyio.parser import Logstatus, extract_data_from_file
@@ -56,6 +56,7 @@ class LammpsBase(AtomisticGenericJob):
         self._cutoff_radius = None
         self._is_continuation = None
         self._compress_by_default = True
+        s.publication_add(self.publication)
 
     @property
     def cutoff_radius(self):
@@ -114,6 +115,10 @@ class LammpsBase(AtomisticGenericJob):
             if v is not None:
                 self.input.control[val] = v
         self.input.potential.remove_structure_block()
+
+    @property
+    def potential_available(self):
+        return PotentialAvailable(list_of_potentials=self.potential_list)
 
     @property
     def potential_list(self):
@@ -217,10 +222,9 @@ class LammpsBase(AtomisticGenericJob):
             raise ValueError("Input structure not set. Use method set_structure()")
         lmp_structure = self._get_lammps_structure(structure=self.structure, cutoff_radius=self.cutoff_radius)
         lmp_structure.write_file(file_name="structure.inp", cwd=self.working_directory)
-        if self.executable.version and 'dump_modify' in self.input.control._dataset['Parameter'] and \
-                (int(self.executable.version.split('.')[0]) < 2016 or
-                 (int(self.executable.version.split('.')[0]) == 2016 and
-                  int(self.executable.version.split('.')[1]) < 11)):
+        version_int_lst = self._get_executable_version_number()
+        if version_int_lst is not None and 'dump_modify' in self.input.control._dataset['Parameter'] and \
+                (version_int_lst[0] < 2016 or (version_int_lst[0] == 2016 and version_int_lst[1] < 11)):
             self.input.control['dump_modify'] = self.input.control['dump_modify'].replace(' line ', ' ')
         if not all(self.structure.pbc):
             self.input.control['boundary'] = ' '.join(['p' if coord else 'f' for coord in self.structure.pbc])
@@ -228,6 +232,33 @@ class LammpsBase(AtomisticGenericJob):
         self.input.control.write_file(file_name="control.inp", cwd=self.working_directory)
         self.input.potential.write_file(file_name="potential.inp", cwd=self.working_directory)
         self.input.potential.copy_pot_files(self.working_directory)
+
+    def _get_executable_version_number(self):
+        """
+        Get the version of the executable
+
+        Returns:
+            list: List of integers defining the version number
+        """
+        if self.executable.version:
+            return [l for l in [[int(i) for i in s.split('.') if i.isdigit()]
+                                for s in self.executable.version.split('_')]
+                    if len(l) > 0][0]
+        else:
+            return None
+
+    @property
+    def publication(self):
+        return {'lammps': {'lammps': {'title': 'Fast Parallel Algorithms for Short-Range Molecular Dynamics',
+                                      'journal': 'Journal of Computational Physics',
+                                      'volume': '117',
+                                      'number': '1',
+                                      'pages': '1-19',
+                                      'year': '1995',
+                                      'issn': '0021-9991',
+                                      'doi': '10.1006/jcph.1995.1039',
+                                      'url': 'http://www.sciencedirect.com/science/article/pii/S002199918571039X',
+                                      'author': ['Steve Plimpton']}}}
 
     def collect_output(self):
         """
@@ -349,7 +380,7 @@ class LammpsBase(AtomisticGenericJob):
             # print "tag_dict: ", tag_dict
 
         h5_dict = {"Step": "steps",
-                   "Temp": "temperatures",
+                   "Temp": "temperature",
                    "PotEng": "energy_pot",
                    "TotEng": "energy_tot",
                    "Pxx": "pressure_x",
@@ -382,7 +413,7 @@ class LammpsBase(AtomisticGenericJob):
                         h5_dict=h5_dict,
                         key_dict=lammps_dict)
 
-        lf.store_as_vector = ['energy_tot', 'temperatures', 'steps', 'volume', 'energy_pot']
+        lf.store_as_vector = ['energy_tot', 'temperature', 'steps', 'volume', 'energy_pot']
         # print ("lf_keys: ", lf.status_dict['energy_tot'])
 
         lf.combine_mat('pressure_x', 'pressure_xy', 'pressure_xz',
@@ -397,6 +428,9 @@ class LammpsBase(AtomisticGenericJob):
         if 'memory' in lf.status_dict.keys():
             del lf.status_dict['memory']
         with self.project_hdf5.open("output/generic") as hdf_output:
+            # This is a hack for backward comparability
+            if "temperature" in lf.status_dict.keys():
+                hdf_output["temperatures"] = np.array(lf.status_dict["temperature"])[0][1]
             lf.to_hdf(hdf_output)
 
     def calc_minimize(self, e_tol=0.0, f_tol=1e-2, max_iter=100000, pressure=None, n_print=100):
@@ -535,6 +569,7 @@ class LammpsBase(AtomisticGenericJob):
         """
         self._is_continuation = True
         self.input.control.set(read_restart=filename)
+        self.input.control['reset_timestep'] = 0
         self.input.control.remove_keys(['dimension', 'read_data', 'boundary', 'atom_style', 'velocity'])
 
     def collect_dump_file(self, file_name="dump.out", cwd=None):

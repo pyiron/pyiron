@@ -142,6 +142,8 @@ class Settings(with_metaclass(Singleton)):
         self._queue_adapter = None
         self._queue_adapter = self._init_queue_adapter(resource_path_lst=self._configuration['resource_paths'])
         self.logger = setup_logger()
+        self._publication_lst = {}
+        self.publication_add(self.publication)
 
     @property
     def database(self):
@@ -150,6 +152,33 @@ class Settings(with_metaclass(Singleton)):
     @property
     def queue_adapter(self):
         return self._queue_adapter
+
+    @property
+    def publication_lst(self):
+        """
+        List of publications currently in use.
+
+        Returns:
+            list: list of publications
+        """
+        all_publication = []
+        for v in self._publication_lst.values():
+            if isinstance(v, list):
+                all_publication += v
+            else:
+                all_publication.append(v)
+        return all_publication
+
+    def publication_add(self, pub_dict):
+        """
+        Add a publication to the list of publications
+
+        Args:
+            pub_dict (dict): The key should be the name of the code used and the value a list of publications to cite.
+        """
+        for key, value in pub_dict.items():
+            if key not in self._publication_lst.keys():
+                self._publication_lst[key] = value
 
     @property
     def login_user(self):
@@ -362,6 +391,22 @@ class Settings(with_metaclass(Singleton)):
                 self._configuration['sql_file'] = parser.get(section, "DATABASE_FILE").replace('\\', '/')
         if parser.has_option(section, "JOB_TABLE"):
             self._configuration['sql_table_name'] = parser.get(section, "JOB_TABLE")
+
+    @property
+    def publication(self):
+        return {'pyiron': {'pyiron-paper': {'author': ['Jan Janssen', 'Sudarsan Surendralal', 'Yury Lysogorskiy',
+                                                       'Mira Todorova', 'Tilmann Hickel', 'Ralf Drautz',
+                                                       'Jörg Neugebauer'],
+                                            'title': 'pyiron: An integrated development environment for computational '
+                                                     'materials science',
+                                            'journal': 'Computational Materials Science',
+                                            'volume': '161',
+                                            'pages': '24 - 36',
+                                            'issn': '0927-0256',
+                                            'doi': 'https://doi.org/10.1016/j.commatsci.2018.07.043',
+                                            'url': 'http://www.sciencedirect.com/science/article/pii/S0927025618304786',
+                                            'year': '2019'
+                                            }}}
 
 
 def convert_path(path):

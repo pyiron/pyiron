@@ -65,6 +65,8 @@ class InteractiveWrapper(GenericMaster):
         Args:
             ref_job (GenericJob): reference job
         """
+        if not ref_job.server.run_mode.interactive:
+            warnings.warn("Run mode of the reference job not set to interactive")
         self.append(ref_job)
 
     def validate_ready_to_run(self):
@@ -74,6 +76,17 @@ class InteractiveWrapper(GenericMaster):
         """
         self.ref_job.validate_ready_to_run()
 
+    def check_setup(self):
+        """
+        Checks whether certain parameters (such as plane wave cutoff radius in DFT) are changed from the pyiron standard
+        values to allow for a physically meaningful results. This function is called manually or only when the job is
+        submitted to the queueing system.
+        """
+        try:
+            self.ref_job.check_setup()
+        except AttributeError:
+            pass
+
     def ref_job_initialize(self):
         """
 
@@ -82,6 +95,7 @@ class InteractiveWrapper(GenericMaster):
             self._ref_job = self.pop(-1)
             if self._job_id is not None and self._ref_job._master_id is None:
                 self._ref_job.master_id = self.job_id
+                self._ref_job.server.cores = self.server.cores
 
     def get_final_structure(self):
         """
@@ -178,29 +192,10 @@ class InteractiveWrapper(GenericMaster):
         """
         child_id_lst = self.child_ids
         child_name_lst = [self.project.db.get_item_by_id(child_id)["job"] for child_id in self.child_ids]
-        if isinstance(item, str):
-            name_lst = item.split("/")
-            if name_lst[0] in child_name_lst:
-                child_id = child_id_lst[child_name_lst.index(name_lst[0])]
-                if len(name_lst) > 1:
-                    return self.project.inspect(child_id)['/'.join(name_lst[1:])]
-                else:
-                    return self.project.load(child_id, convert_to_object=True)
-            if name_lst[0] in self._job_name_lst:
-                child = getattr(self, name_lst[0])
-                if len(name_lst) == 1:
-                    return child
-                else:
-                    return child['/'.join(name_lst[1:])]
-            return super(GenericMaster, self).__getitem__(item)
-        elif isinstance(item, int):
+        if isinstance(item, int):
             total_lst = child_name_lst + self._job_name_lst
-            job_name = total_lst[item]
-            if job_name in child_name_lst:
-                child_id = child_id_lst[child_name_lst.index(job_name)]
-                return self.project.load(child_id, convert_to_object=True)
-            else:
-                return self._job_object_lst[item]
+            item = total_lst[item]
+        return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
 
 
 class ReferenceJobOutput(object):

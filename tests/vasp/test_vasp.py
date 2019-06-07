@@ -3,7 +3,7 @@ import os
 from pyiron.atomistics.structure.atoms import CrystalStructure
 from pyiron.vasp.base import Input, Output
 from pyiron.base.project.generic import Project
-from pyiron.vasp.potential import VaspPotentialFile
+from pyiron.vasp.potential import VaspPotentialSetter
 
 __author__ = "surendralal"
 
@@ -13,10 +13,14 @@ class TestVasp(unittest.TestCase):
     Tests the pyiron.objects.hamilton.dft.vasp.Vasp class
     """
 
+    @classmethod
+    def setUpClass(cls):
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        cls.project = Project(os.path.join(cls.file_location, 'test_vasp'))
+        cls.job = cls.project.create_job("Vasp", "trial")
+
     def setUp(self):
-        self.file_location = os.path.dirname(os.path.abspath(__file__))
-        self.project = Project(os.path.join(self.file_location, 'test_vasp'))
-        self.job = self.project.create_job("Vasp", "trial")
+        self.job.structure = None
 
     @classmethod
     def tearDownClass(cls):
@@ -30,7 +34,7 @@ class TestVasp(unittest.TestCase):
         self.assertEqual(self.job._sorted_indices, None)
         self.assertIsInstance(self.job.input, Input)
         self.assertIsInstance(self.job._output_parser, Output)
-        self.assertIsInstance(self.job._potential, VaspPotentialFile)
+        self.assertIsInstance(self.job._potential, VaspPotentialSetter)
         self.assertTrue(self.job._compress_by_default)
 
     def test_potential(self):

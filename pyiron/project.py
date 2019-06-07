@@ -22,6 +22,7 @@ from pyiron.lammps.potential import LammpsPotentialFile
 from pyiron.vasp.potential import VaspPotential
 from pyiron.atomistics.structure.atoms import CrystalStructure
 import pyiron.atomistics.structure.pyironase as ase
+from pyiron.atomistics.structure.pyironase import publication as publication_ase
 from pyiron.atomistics.structure.atoms import Atoms
 
 
@@ -267,13 +268,14 @@ class Project(ProjectCore):
             rel_path = posixpath.relpath(abs_path, self.path)
             self._calculation_validation(search_path, os.listdir(search_path), rel_path=rel_path)
 
-    def get_structure(self, job_specifier, iteration_step=-1):
+    def get_structure(self, job_specifier, iteration_step=-1, wrap_atoms=True):
         """
         Gets the structure from a given iteration step of the simulation (MD/ionic relaxation). For static calculations
         there is only one ionic iteration step
         Args:
             job_specifier (str, int): name of the job or job ID
             iteration_step (int): Step for which the structure is requested
+            wrap_atoms (bool): True if the atoms are to be wrapped back into the unit cell
 
         Returns:
             atomistics.structure.atoms.Atoms object
@@ -287,7 +289,10 @@ class Project(ProjectCore):
                 snapshot.indices = job.get("output/generic/indices")[iteration_step]
             if 'dft' in job['output/generic'].list_groups() and 'atom_spins' in job['output/generic/dft'].list_nodes():
                 snapshot.set_initial_magnetic_moments(job.get("output/generic/dft/atom_spins")[iteration_step])
-        return snapshot
+        if wrap_atoms:
+            return snapshot.center_coordinates_in_unit_cell()
+        else:
+            return snapshot
 
     def _calculation_validation(self, path, files_available, rel_path=None):
         """
@@ -305,6 +310,63 @@ class Project(ProjectCore):
             self.import_single_calculation(path, rel_path=rel_path, job_type="Vasp")
         if "incontrol.dat" in files_available and "lattice.out" in files_available and "lattice.inp" in files_available:
             self.import_single_calculation(path, rel_path=rel_path, job_type="KMC")
+
+    @staticmethod
+    def list_publications(bib_format='dict'):
+        """
+        List the publications used in this project.
+
+        Args:
+            bib_format (str): ['dict', 'bibtex', 'apa']
+
+        Returns:
+            list: list of publications in Bibtex format.
+        """
+
+        def get_bibtex(key, value):
+            total_keys = ['title', 'journal', 'volume', 'issue', 'number', 'pages', 'numpages', 'year', 'month',
+                          'publisher', 'url', 'doi', 'issn']
+            bibtex_str = '@article{' + key + ',\n' \
+                         + '    author={' + ' and '.join(value['author']) + '},\n'
+            for key in total_keys:
+                if key in value.keys():
+                    bibtex_str += '    ' + key + '={' + value[key] + '},\n'
+            bibtex_str += '}\n'
+            return bibtex_str
+
+        def get_apa(value):
+            apa_str = ' & '.join(value['author'])
+            if 'year' in value.keys():
+                apa_str += ' (' + value['year'] + '). '
+            if 'title' in value.keys():
+                apa_str += value['title'] + '. '
+            if 'journal' in value.keys():
+                apa_str += value['journal'] + ', '
+            if 'volume' in value.keys():
+                apa_str += value['volume'] + ', '
+            if 'pages' in value.keys():
+                apa_str += value['pages'] + '. '
+            if 'doi' in value.keys():
+                apa_str += 'doi: ' + value['doi'] + '\n'
+            return apa_str
+
+        publication_dict = s.publication_lst
+        if bib_format.lower() == 'dict':
+            return publication_dict
+        elif bib_format.lower() == 'bibtex':
+            total_str = ''
+            for pub in publication_dict:
+                for key, value in pub.items():
+                    total_str += get_bibtex(key, value)
+            return total_str
+        elif bib_format.lower() == 'apa':
+            total_str = ''
+            for pub in publication_dict:
+                for key, value in pub.items():
+                    total_str += get_apa(value)
+            return total_str
+        else:
+            raise ValueError("Supported Bibformats are ['dict', 'bibtex', 'apa']")
 
     @staticmethod
     def create_structure(element, bravais_basis, lattice_constant):
@@ -347,6 +409,7 @@ class Project(ProjectCore):
             cubic: bool
                 Construct cubic unit cell if possible.
             """
+            s.publication_add(publication_ase())
             from ase.build import bulk
             return bulk(name=name, crystalstructure=crystalstructure, a=a, c=c, covera=covera, u=u,
                         orthorhombic=orthorhombic, cubic=cubic)
@@ -409,6 +472,7 @@ class Project(ProjectCore):
 
         """
         # https://gitlab.com/ase/ase/blob/master/ase/lattice/surface.py
+        s.publication_add(publication_ase())
         from ase.build import (add_adsorbate, add_vacuum,
                                bcc100, bcc110, bcc111,
                                diamond100, diamond111,

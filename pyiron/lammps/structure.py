@@ -13,7 +13,7 @@ try:
 except ImportError:
     from ase.calculators.lammpsrun import prism as Prism
 
-__author__ = "Joerg Neugebauer, Sudarsan Surendralal, Yury Lysogorskiy, Jan Janssen"
+__author__ = "Joerg Neugebauer, Sudarsan Surendralal, Yury Lysogorskiy, Jan Janssen, Markus Tautschnig"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
                 "Computational Materials Design (CM) Department"
 __version__ = "1.0"
@@ -291,7 +291,7 @@ class LammpsStructure(GenericParameters):
                 for el_j, b_lst in i_bonds.items():
                     b_type = bond_type[el_i][el_dict[el_j]]
                     for i_shell, ib_shell_lst in enumerate(b_lst):
-                        for ib in ib_shell_lst:
+                        for ib in np.unique(ib_shell_lst):
                             if ia < ib:  # avoid double counting of bonds
                                 bonds.append([ia + 1, ib + 1, b_type])
 
@@ -302,8 +302,7 @@ class LammpsStructure(GenericParameters):
                     '{0:d} atoms'.format(len(self._structure)) + ' \n' + \
                     '{0:d} bonds'.format(len(bonds)) + ' \n' + \
                     '{0} atom types'.format(self._structure.get_number_of_species()) + ' \n' + \
-                    '{0} bond types'.format(np.max(bond_type)) + ' \n' + \
-                    '{0} bond types'.format(3) + ' \n'
+                    '{0} bond types'.format(np.max(bond_type)) + ' \n'
 
         cell_dimesions = self.simulation_cell()
 

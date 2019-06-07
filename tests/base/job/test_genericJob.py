@@ -4,9 +4,10 @@ from pyiron.base.project.generic import Project
 
 
 class TestGenericJob(unittest.TestCase):
-    def setUp(self):
-        self.file_location = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
-        self.project = Project(os.path.join(self.file_location, 'test_genericjob'))
+    @classmethod
+    def setUpClass(cls):
+        cls.file_location = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
+        cls.project = Project(os.path.join(cls.file_location, 'test_genericjob'))
 
     @classmethod
     def tearDownClass(cls):
