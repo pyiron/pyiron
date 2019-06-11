@@ -3608,7 +3608,12 @@ def pyiron_to_ase(pyiron_obj):
     positions = pyiron_obj.positions
     pbc = pyiron_obj.get_pbc()
     spins = pyiron_obj.get_initial_magnetic_moments()
-    atoms = ASEAtoms(symbols=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins)
+    if all(spins == np.array(None)) or sum(np.abs(spins)) == 0.0:
+        atoms = ASEAtoms(symbols=element_list, positions=positions, pbc=pbc, cell=cell)
+    else:
+        if any(spins == np.array(None)):
+            spins[spins == np.array(None)] = 0.0
+        atoms = ASEAtoms(symbols=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins)
     return atoms
 
 
