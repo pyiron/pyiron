@@ -205,7 +205,8 @@ class VaspBase(GenericDFTJob):
         """
         How the original atom indices are ordered in the vasp format (species by species)
         """
-        self._sorted_indices = vasp_sorter(self.structure)
+        if self._sorted_indices is None:
+            self._sorted_indices = vasp_sorter(self.structure)
         return self._sorted_indices
 
     @sorted_indices.setter
@@ -332,12 +333,14 @@ class VaspBase(GenericDFTJob):
         """
         if self.structure is None or len(self.structure) == 0:
             try:
-                self.structure = self.get_final_structure_from_file(filename="CONTCAR")
+                self.structure, self.sorted_indices = self.get_final_structure_from_file(filename="CONTCAR",
+                                                                                         return_index=True)
             except IOError:
-                self.structure = self.get_final_structure_from_file(filename="POSCAR")
+                self.structure, self.sorted_indices = self.get_final_structure_from_file(filename="POSCAR",
+                                                                                         return_index=True)
         self._output_parser.structure = self.structure.copy()
         try:
-            self._output_parser.collect(directory=self.working_directory)
+            self._output_parser.collect(directory=self.working_directory, sorted_indices=self.sorted_indices)
         except VaspCollectError:
             self.status.aborted = True
             return
@@ -532,7 +535,7 @@ class VaspBase(GenericDFTJob):
         """
         self._output_parser = Output()
 
-    def get_final_structure_from_file(self, filename="CONTCAR"):
+    def get_final_structure_from_file(self, filename="CONTCAR", return_index=False):
         """
         Get the final structure of the simulation usually from the CONTCAR file
 
@@ -545,19 +548,23 @@ class VaspBase(GenericDFTJob):
         filename = posixpath.join(self.working_directory, filename)
         if self.structure is None:
             try:
-                output_structure = read_atoms(filename=filename)
+                output_structure, sorted_indices = read_atoms(filename=filename)
                 input_structure = output_structure.copy()
             except (IndexError, ValueError, IOError):
                 raise IOError("Unable to read output structure")
         else:
             input_structure = self.structure.copy()
+            sorted_indices = self.sorted_indices
             try:
                 output_structure = read_atoms(filename=filename, species_list=input_structure.get_parent_elements())
                 input_structure.cell = output_structure.cell.copy()
-                input_structure.positions[self.sorted_indices] = output_structure.positions
+                input_structure.positions[sorted_indices] = output_structure.positions
             except (IndexError, ValueError, IOError):
                 raise IOError("Unable to read output structure")
-        return input_structure
+        if return_index:
+            return input_structure, sorted_indices
+        else:
+            return input_structure
 
     def write_magmoms(self):
         """
@@ -1280,14 +1287,16 @@ class Output:
         """
         self._structure = atoms
 
-    def collect(self, directory=os.getcwd()):
+    def collect(self, directory=os.getcwd(), sorted_indices=None):
         """
         Collects output from the working directory
 
         Args:
             directory (str): Path to the directory
+            sorted_indices (np.array/None):
         """
-        sorted_indices = vasp_sorter(self.structure)
+        if sorted_indices is None:
+            sorted_indices = vasp_sorter(self.structure)
         files_present = os.listdir(directory)
         log_dict = dict()
         vasprun_working, outcar_working = False, False

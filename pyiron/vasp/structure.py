@@ -192,9 +192,9 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
             atoms_dict["positions"] *= (-atoms_dict["scaling_factor"]) ** (1. / 3.)
     velocities = list()
     try:
-        atoms = _dict_to_atoms(atoms_dict, species_list=species_list)
+        atoms, sorted_indices = _dict_to_atoms(atoms_dict, species_list=species_list)
     except ValueError:
-        atoms = _dict_to_atoms(atoms_dict, read_from_first_line=True)
+        atoms, sorted_indices = _dict_to_atoms(atoms_dict, read_from_first_line=True)
     if atoms_dict["selective_dynamics"]:
         selective_dynamics = np.array(selective_dynamics)
         unique_sel_dyn, inverse, counts = np.unique(selective_dynamics, axis=0, return_counts=True,
@@ -217,9 +217,9 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
             warnings.warn("The velocities are either not available or they are incomplete/corrupted. Returning empty "
                           "list instead", UserWarning)
             return atoms, list()
-        return atoms, velocities
+        return atoms, sorted_indices, velocities
     else:
-        return atoms
+        return atoms, sorted_indices
 
 
 def _dict_to_atoms(atoms_dict, species_list=None, read_from_first_line=False):
@@ -275,7 +275,7 @@ def _dict_to_atoms(atoms_dict, species_list=None, read_from_first_line=False):
         atoms = Atoms(elements, positions=positions, cell=cell)
     else:
         atoms = Atoms(elements, scaled_positions=positions, cell=cell)
-    return atoms
+    return atoms, np.array(range(len(atoms)))
 
 
 def vasp_sorter(structure):
