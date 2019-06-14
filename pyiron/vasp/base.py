@@ -333,11 +333,10 @@ class VaspBase(GenericDFTJob):
         """
         if self.structure is None or len(self.structure) == 0:
             try:
-                self.structure, self.sorted_indices = self.get_final_structure_from_file(filename="CONTCAR",
-                                                                                         return_index=True)
+                self.structure = self.get_final_structure_from_file(filename="CONTCAR")
             except IOError:
-                self.structure, self.sorted_indices = self.get_final_structure_from_file(filename="POSCAR",
-                                                                                         return_index=True)
+                self.structure = self.get_final_structure_from_file(filename="POSCAR")
+            self.sorted_indices = np.array(range(len(self.structure)))
         self._output_parser.structure = self.structure.copy()
         try:
             self._output_parser.collect(directory=self.working_directory, sorted_indices=self.sorted_indices)
@@ -535,7 +534,7 @@ class VaspBase(GenericDFTJob):
         """
         self._output_parser = Output()
 
-    def get_final_structure_from_file(self, filename="CONTCAR", return_index=False):
+    def get_final_structure_from_file(self, filename="CONTCAR"):
         """
         Get the final structure of the simulation usually from the CONTCAR file
 
@@ -548,23 +547,19 @@ class VaspBase(GenericDFTJob):
         filename = posixpath.join(self.working_directory, filename)
         if self.structure is None:
             try:
-                output_structure, sorted_indices = read_atoms(filename=filename)
+                output_structure = read_atoms(filename=filename)
                 input_structure = output_structure.copy()
             except (IndexError, ValueError, IOError):
                 raise IOError("Unable to read output structure")
         else:
             input_structure = self.structure.copy()
-            sorted_indices = self.sorted_indices
             try:
                 output_structure = read_atoms(filename=filename, species_list=input_structure.get_parent_elements())
                 input_structure.cell = output_structure.cell.copy()
-                input_structure.positions[sorted_indices] = output_structure.positions
+                input_structure.positions[self.sorted_indices] = output_structure.positions
             except (IndexError, ValueError, IOError):
                 raise IOError("Unable to read output structure")
-        if return_index:
-            return input_structure, sorted_indices
-        else:
-            return input_structure
+        return input_structure
 
     def write_magmoms(self):
         """
