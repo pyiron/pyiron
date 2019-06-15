@@ -156,11 +156,18 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                         line = line.replace(potential[0], potential[1])
                 self._interactive_lib_command(line.split('\n')[0])
 
+    def _executable_activate_mpi(self):
+        if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
+            pass
+        else:
+            super(LammpsInteractive, self)._executable_activate_mpi()
+
     def _reset_interactive_run_command(self):
         df = pd.DataFrame(self.input.control.dataset)
         self._interactive_run_command = " ".join(df.T[df.index[-1]].values)
 
     def interactive_initialize_interface(self):
+        self._create_working_directory()
         self._interactive_library = LammpsLibrary(cores=self.server.cores, working_directory=self.working_directory)
         if not all(self.structure.pbc):
             self.input.control['boundary'] = ' '.join(['p' if coord else 'f' for coord in self.structure.pbc])
