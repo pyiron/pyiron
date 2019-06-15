@@ -2,14 +2,9 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-from ctypes import c_double, c_int
-from multiprocessing import Process, Pipe
-import numpy as np
-
-try:
-    from lammps import lammps
-except ImportError:
-    pass
+import os
+import pickle
+import subprocess
 
 
 __author__ = "Jan Janssen"
@@ -24,79 +19,90 @@ __date__ = "Sep 1, 2018"
 
 class LammpsLibrary(object):
     def __init__(self):
-        lmp_interface = lammps()
-        parent_conn, child_conn = Pipe()
-        lammps_process = Process(target=self.interactive_run, args=(child_conn, lmp_interface))
-        lammps_process.start()
-        self._interactive_library = parent_conn
+        executable = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'lmpmpi.py')
+        # print(executable)
+        self._process = subprocess.Popen(['mpiexec', '-n', '2', 'python', executable],
+                                         stdout=subprocess.PIPE,
+                                         stderr=subprocess.PIPE,
+                                         stdin=subprocess.PIPE)
+
+    def _send(self, command, data=None):
+        """
+        Send a command to the Lammps Library executable
+
+        Args:
+            command (str): command to be send to the
+            data:
+        """
+        # print('send: ', {'c': command, 'd': data})
+        pickle.dump({'c': command, 'd': data}, self._process.stdin)
+        self._process.stdin.flush()
+
+    def _receive(self):
+        """
+        Receive data from the Lammps library
+
+        Returns:
+            data
+        """
+        return pickle.load(self._process.stdout)
 
     def command(self, command):
-        self._interactive_library.send([self.interactive_lib_command, command])
+        """
+        Send a command to the lammps library
+
+        Args:
+            command (str):
+        """
+        self._send(command='command', data=command)
 
     def gather_atoms(self, *args):
-        self._interactive_library.send([self.interative_gather_atoms] + list(args))
-        # self._interactive_library.send([self.interative_gather_atoms, *args])  # Python 3.X only
-        return self._interactive_library.recv()
+        """
+        Gather atoms from the lammps library
+
+        Args:
+            *args:
+
+        Returns:
+            np.array
+        """
+        self._send(command='gather_atoms', data=list(args))
+        return self._receive()
 
     def scatter_atoms(self, *args):
-        self._interactive_library.send([self.interactive_scatter_atoms] + list(args))
-        # self._interactive_library.send([self.interactive_scatter_atoms, *args])  # Python 3.X only
+        """
+        Scatter atoms for the lammps library
+
+        Args:
+            *args:
+        """
+        self._send(command='scatter_atoms', data=list(args))
 
     def get_thermo(self, *args):
-        self._interactive_library.send([self.interactive_get_thermo] + list(args))
-        # self._interactive_library.send([self.interactive_get_thermo, *args])  # Python 3.X only
-        return self._interactive_library.recv()
+        """
+        Get thermo from the lammps library
+
+        Args:
+            *args:
+
+        Returns:
+
+        """
+        self._send(command='get_thermo', data=list(args))
+        return self._receive()
 
     def extract_compute(self, *args):
-        self._interactive_library.send([self.interactive_extract_compute] + list(args))
-        # self._interactive_library.send([self.interactive_extract_compute, *args])  # Python 3.X only
-        return self._interactive_library.recv()
+        """
+        Extract compute from the lammps library
+
+        Args:
+            *args:
+
+        Returns:
+
+        """
+        self._send(command='extract_compute', data=list(args))
+        return self._receive()
 
     def close(self):
-        self._interactive_library.send([self.interactive_close])
-
-    @staticmethod
-    def interactive_lib_command(conn, job, funct_args):
-        job.command(*funct_args)
-
-    @staticmethod
-    def interative_gather_atoms(conn, job, funct_args):
-        return np.array(job.gather_atoms(*funct_args))
-
-    @staticmethod
-    def interactive_scatter_atoms(conn, job, funct_args):
-        py_vector = funct_args[3]
-        if issubclass(type(py_vector[0]), np.integer):
-            c_vector = (len(py_vector) * c_int)(*py_vector)
-        else:
-            c_vector = (len(py_vector) * c_double)(*py_vector)
-        job.scatter_atoms(funct_args[0], funct_args[1], funct_args[2], c_vector)
-
-    @staticmethod
-    def interactive_get_thermo(conn, job, funct_args):
-        return np.array(job.get_thermo(*funct_args))
-
-    @staticmethod
-    def interactive_extract_compute(conn, job, funct_args):
-        return np.array(job.extract_compute(*funct_args))
-
-    @staticmethod
-    def interactive_close(conn, job, funct_args):
-        job.close()
-        conn.close()
-        return 'exit'
-
-    @staticmethod
-    def interactive_run(conn, job):
-        while True:
-            input_info = conn.recv()
-            if isinstance(input_info, list):
-                input_function = input_info[0]
-                input_args = input_info[1:]
-                answer = input_function(conn=conn, job=job, funct_args=input_args)
-            else:
-                answer = input_info(conn=conn, job=job)
-            if isinstance(answer, str) and answer == 'exit':
-                break
-            elif answer is not None:
-                conn.send(answer)
+        self._send(command='close')
