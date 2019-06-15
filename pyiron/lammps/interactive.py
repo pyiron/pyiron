@@ -15,7 +15,7 @@ except ImportError:
 from pyiron.lammps.base import LammpsBase
 from pyiron.lammps.structure import UnfoldingPrism
 from pyiron.atomistics.job.interactive import GenericInteractive
-from pyiron.lammps.pipe import LammpsLibrary
+from pyiron.lammps.sub.pipe_sub import LammpsLibrary
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
