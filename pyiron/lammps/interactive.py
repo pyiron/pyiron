@@ -161,7 +161,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_run_command = " ".join(df.T[df.index[-1]].values)
 
     def interactive_initialize_interface(self):
-        self._interactive_library = LammpsLibrary(cores=self.server.cores)
+        self._interactive_library = LammpsLibrary(cores=self.server.cores, working_directory=self.working_directory)
         if not all(self.structure.pbc):
             self.input.control['boundary'] = ' '.join(['p' if coord else 'f' for coord in self.structure.pbc])
         self._reset_interactive_run_command()
@@ -328,13 +328,14 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
 
 
 class LammpsLibrary(object):
-    def __init__(self, cores=1):
+    def __init__(self, cores=1, working_directory='.'):
         executable = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sub', 'lmpmpi.py')
         # print(executable)
         self._process = subprocess.Popen(['mpiexec', '-n', str(cores), 'python', executable],
                                          stdout=subprocess.PIPE,
                                          stderr=subprocess.PIPE,
-                                         stdin=subprocess.PIPE)
+                                         stdin=subprocess.PIPE,
+                                         cwd=working_directory)
 
     def _send(self, command, data=None):
         """
