@@ -38,8 +38,7 @@ def command(funct_args):
 
 
 def gather_atoms(funct_args):
-    if MPI.COMM_WORLD.rank == 0:
-        return np.array(job.gather_atoms(*funct_args))
+    return np.array(job.gather_atoms(*funct_args))
 
 
 def select_cmd(argument):
@@ -67,6 +66,6 @@ if __name__ == '__main__':
             job.close()
             break
         output = select_cmd(input_dict['c'])(input_dict['d'])
-        if output is not None:
+        if MPI.COMM_WORLD.rank == 0 and output is not None:
             pickle.dump(output, sys.stdout.buffer)
             sys.stdout.flush()
