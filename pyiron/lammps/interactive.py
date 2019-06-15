@@ -8,10 +8,6 @@ import os
 import pandas as pd
 import warnings
 
-try:
-    from lammps import lammps
-except ImportError:
-    pass
 from pyiron.lammps.base import LammpsBase
 from pyiron.lammps.structure import UnfoldingPrism
 from pyiron.atomistics.job.interactive import GenericInteractive
@@ -73,10 +69,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             positions = np.array(positions).reshape(-1, 3)
             positions = np.dot(positions, self._interactive_prism.R)
         positions = np.array(positions).flatten()
-        if self.server.run_mode.interactive_non_modal:
-            self._interactive_library.scatter_atoms("x", 1, 3, positions)
-        else:
-            self._interactive_library.scatter_atoms("x", 1, 3, (len(positions) * c_double)(*positions))
+        self._interactive_library.scatter_atoms("x", 1, 3, positions)
         self._interactive_lib_command('change_box all remap')
 
     def interactive_cells_getter(self):
@@ -167,10 +160,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_run_command = " ".join(df.T[df.index[-1]].values)
 
     def interactive_initialize_interface(self):
-        if self.server.run_mode.interactive_non_modal:
-            self._interactive_library = LammpsLibrary()
-        else:
-            self._interactive_library = lammps()
+        self._interactive_library = LammpsLibrary(cores=self.server.cores)
         if not all(self.structure.pbc):
             self.input.control['boundary'] = ' '.join(['p' if coord else 'f' for coord in self.structure.pbc])
         self._reset_interactive_run_command()
@@ -250,12 +240,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_lib_command('create_atoms 1 random ' + str(len(structure)) + ' 12345 1')
         positions = structure.positions.flatten()
         elem_all = np.array([el_dict[el] for el in structure.get_chemical_elements()])
-        if self.server.run_mode.interactive_non_modal:
-            self._interactive_library.scatter_atoms("x", 1, 3, positions)
-            self._interactive_library.scatter_atoms('type', 0, 1, elem_all)
-        else:
-            self._interactive_library.scatter_atoms("x", 1, 3, (len(positions) * c_double)(*positions))
-            self._interactive_library.scatter_atoms('type', 0, 1, (len(elem_all) * c_int)(*elem_all))
+        self._interactive_library.scatter_atoms("x", 1, 3, positions)
+        self._interactive_library.scatter_atoms('type', 0, 1, elem_all)
         self._interactive_lib_command('change_box all remap')
         self._interactive_lammps_input()
         self._interactive_set_potential()
