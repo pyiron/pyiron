@@ -1,4 +1,5 @@
 from ctypes import c_double, c_int
+from mpi4py import MPI
 import numpy as np
 import pickle
 import sys
@@ -14,11 +15,13 @@ job = lammps(cmdargs=['-screen', 'lmpscreen.log'])
 
 
 def extract_compute(funct_args):
-    return np.array(job.extract_compute(*funct_args))
+    if MPI.COMM_WORLD.rank == 0:
+        return np.array(job.extract_compute(*funct_args))
 
 
 def get_thermo(funct_args):
-    return np.array(job.get_thermo(*funct_args))
+    if MPI.COMM_WORLD.rank == 0:
+        return np.array(job.get_thermo(*funct_args))
 
 
 def scatter_atoms(funct_args):
@@ -35,7 +38,8 @@ def command(funct_args):
 
 
 def gather_atoms(funct_args):
-    return np.array(job.gather_atoms(*funct_args))
+    if MPI.COMM_WORLD.rank == 0:
+        return np.array(job.gather_atoms(*funct_args))
 
 
 def select_cmd(argument):
@@ -54,7 +58,11 @@ def select_cmd(argument):
 
 if __name__ == '__main__':
     while True:
-        input_dict = pickle.load(sys.stdin.buffer)
+        if MPI.COMM_WORLD.rank == 0:
+            input_dict = pickle.load(sys.stdin.buffer)
+        else:
+            input_dict = None
+        input_dict = MPI.COMM_WORLD.bcast(input_dict, root=0)
         if input_dict['c'] == 'close':
             job.close()
             break
