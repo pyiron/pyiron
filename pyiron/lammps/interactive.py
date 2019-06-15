@@ -329,7 +329,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
 
 class LammpsLibrary(object):
     def __init__(self, cores=1):
-        executable = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'lmpmpi.py')
+        executable = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sub', 'lmpmpi.py')
         # print(executable)
         self._process = subprocess.Popen(['mpiexec', '-n', str(cores), 'python', executable],
                                          stdout=subprocess.PIPE,
