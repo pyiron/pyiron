@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from ctypes import c_double, c_int
+import importlib
 import numpy as np
 import os
 import pandas as pd
@@ -70,7 +71,10 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             positions = np.array(positions).reshape(-1, 3)
             positions = np.dot(positions, self._interactive_prism.R)
         positions = np.array(positions).flatten()
-        self._interactive_library.scatter_atoms("x", 1, 3, positions)
+        if self.server.run_mode.interactive and self.server.cores == 1:
+            self._interactive_library.scatter_atoms("x", 1, 3, (len(positions) * c_double)(*positions))
+        else:
+            self._interactive_library.scatter_atoms("x", 1, 3, positions)
         self._interactive_lib_command('change_box all remap')
 
     def interactive_cells_getter(self):
@@ -167,8 +171,12 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_run_command = " ".join(df.T[df.index[-1]].values)
 
     def interactive_initialize_interface(self):
-        self._create_working_directory()
-        self._interactive_library = LammpsLibrary(cores=self.server.cores, working_directory=self.working_directory)
+        if self.server.run_mode.interactive and self.server.cores == 1:
+            lammps = getattr(importlib.import_module('lammps'), 'lammps')
+            self._interactive_library = lammps()
+        else:
+            self._create_working_directory()
+            self._interactive_library = LammpsLibrary(cores=self.server.cores, working_directory=self.working_directory)
         if not all(self.structure.pbc):
             self.input.control['boundary'] = ' '.join(['p' if coord else 'f' for coord in self.structure.pbc])
         self._reset_interactive_run_command()
@@ -248,8 +256,12 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_lib_command('create_atoms 1 random ' + str(len(structure)) + ' 12345 1')
         positions = structure.positions.flatten()
         elem_all = np.array([el_dict[el] for el in structure.get_chemical_elements()])
-        self._interactive_library.scatter_atoms("x", 1, 3, positions)
-        self._interactive_library.scatter_atoms('type', 0, 1, elem_all)
+        if self.server.run_mode.interactive and self.server.cores == 1:
+            self._interactive_library.scatter_atoms("x", 1, 3, (len(positions) * c_double)(*positions))
+            self._interactive_library.scatter_atoms('type', 0, 1, (len(elem_all) * c_int)(*elem_all))
+        else:
+            self._interactive_library.scatter_atoms("x", 1, 3, positions)
+            self._interactive_library.scatter_atoms('type', 0, 1, elem_all)
         self._interactive_lib_command('change_box all remap')
         self._interactive_lammps_input()
         self._interactive_set_potential()
