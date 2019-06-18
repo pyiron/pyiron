@@ -375,7 +375,9 @@ class LammpsLibrary(object):
         Returns:
             data
         """
-        return pickle.load(self._process.stdout)
+        output = pickle.load(self._process.stdout)
+        # print(output)
+        return output
 
     def command(self, command):
         """
@@ -439,4 +441,5 @@ class LammpsLibrary(object):
         self._process.kill()
 
     def __del__(self):
+        # print('object killed __del__')
         self.close()
