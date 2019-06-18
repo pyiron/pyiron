@@ -1667,7 +1667,7 @@ class Atoms(object):
         neighbor_obj.shells = self.neighbor_shellOrder
         return neighbor_obj
 
-    def get_neighborhood(box, position, num_neighbors=12, t_vec=True, include_boundary=True, exclude_self=True,
+    def get_neighborhood(box, position, num_neighbors=12, t_vec=True, include_boundary=True,
                          tolerance=2, id_list=None, cutoff=None, cutoff_radius=None):
         """
         
@@ -1678,7 +1678,6 @@ class Atoms(object):
                         (pbc are automatically taken into account)
             include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
                                      False is needed e.g. in plot routines to avoid showing incorrect bonds
-            exclude_self (bool): include central __atom (i.e. distance = 0)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list:
             cutoff (float/ None): Upper bound of the distance to which the search must be done
@@ -1698,7 +1697,7 @@ class Atoms(object):
         pos[-1] = np.array(position)
         box.positions = pos
         neigh = box.get_neighbors(num_neighbors=num_neighbors, t_vec=t_vec,
-                                  include_boundary=include_boundary, exclude_self=exclude_self,
+                                  include_boundary=include_boundary, exclude_self=True,
                                   tolerance=tolerance, id_list=id_list, cutoff=cutoff, cutoff_radius=cutoff_radius)
         neigh_return = NeighTemp()
         setattr(neigh_return, 'distances', neigh.distances[-1])
@@ -1967,7 +1966,7 @@ class Atoms(object):
         struct_copy += Atoms(elements=len(points)*['Hs'], positions=points)
         struct_copy.center_coordinates_in_unit_cell();
         group_IDs = struct_copy.get_symmetry()['equivalent_atoms'][struct_copy.select_index('Hs')]
-        return [np.round(points[group_IDs==ID], decimals=8) for ID in group_IDs]
+        return [np.round(points[group_IDs==ID], decimals=8) for ID in np.unique(group_IDs)]
 
     def _get_voronoi_vertices(self, minimum_dist=0.1):
         """
@@ -3608,7 +3607,12 @@ def pyiron_to_ase(pyiron_obj):
     positions = pyiron_obj.positions
     pbc = pyiron_obj.get_pbc()
     spins = pyiron_obj.get_initial_magnetic_moments()
-    atoms = ASEAtoms(symbols=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins)
+    if all(spins == np.array(None)) or sum(np.abs(spins)) == 0.0:
+        atoms = ASEAtoms(symbols=element_list, positions=positions, pbc=pbc, cell=cell)
+    else:
+        if any(spins == np.array(None)):
+            spins[spins == np.array(None)] = 0.0
+        atoms = ASEAtoms(symbols=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins)
     return atoms
 
 
