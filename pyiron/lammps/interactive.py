@@ -436,3 +436,7 @@ class LammpsLibrary(object):
 
     def close(self):
         self._send(command='close')
+        self._process.kill()
+
+    def __del__(self):
+        self.close()
