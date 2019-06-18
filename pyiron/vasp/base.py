@@ -205,7 +205,8 @@ class VaspBase(GenericDFTJob):
         """
         How the original atom indices are ordered in the vasp format (species by species)
         """
-        self._sorted_indices = vasp_sorter(self.structure)
+        if self._sorted_indices is None:
+            self._sorted_indices = vasp_sorter(self.structure)
         return self._sorted_indices
 
     @sorted_indices.setter
@@ -335,9 +336,10 @@ class VaspBase(GenericDFTJob):
                 self.structure = self.get_final_structure_from_file(filename="CONTCAR")
             except IOError:
                 self.structure = self.get_final_structure_from_file(filename="POSCAR")
+            self.sorted_indices = np.array(range(len(self.structure)))
         self._output_parser.structure = self.structure.copy()
         try:
-            self._output_parser.collect(directory=self.working_directory)
+            self._output_parser.collect(directory=self.working_directory, sorted_indices=self.sorted_indices)
         except VaspCollectError:
             self.status.aborted = True
             return
@@ -1280,14 +1282,16 @@ class Output:
         """
         self._structure = atoms
 
-    def collect(self, directory=os.getcwd()):
+    def collect(self, directory=os.getcwd(), sorted_indices=None):
         """
         Collects output from the working directory
 
         Args:
             directory (str): Path to the directory
+            sorted_indices (np.array/None):
         """
-        sorted_indices = vasp_sorter(self.structure)
+        if sorted_indices is None:
+            sorted_indices = vasp_sorter(self.structure)
         files_present = os.listdir(directory)
         log_dict = dict()
         vasprun_working, outcar_working = False, False

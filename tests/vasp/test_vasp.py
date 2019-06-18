@@ -1,11 +1,15 @@
 import unittest
 import os
+import posixpath
 from pyiron.atomistics.structure.atoms import CrystalStructure
 from pyiron.vasp.base import Input, Output
+from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.base.project.generic import Project
 from pyiron.vasp.potential import VaspPotentialSetter
+from pyiron.vasp.vasp import Vasp
+from pyiron.vasp.structure import read_atoms
 
-__author__ = "surendralal"
+__author__ = "Sudarsan Surendralal"
 
 
 class TestVasp(unittest.TestCase):
@@ -15,19 +19,23 @@ class TestVasp(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.file_location = os.path.dirname(os.path.abspath(__file__))
-        cls.project = Project(os.path.join(cls.file_location, 'test_vasp'))
+        cls.execution_path = os.path.dirname(os.path.abspath(__file__))
+        cls.project = Project(os.path.join(cls.execution_path, 'test_vasp'))
         cls.job = cls.project.create_job("Vasp", "trial")
-
-    def setUp(self):
-        self.job.structure = None
+        cls.job_complete = Vasp(project=ProjectHDFio(project=cls.project, file_name='vasp_complete'),
+                                job_name='vasp_complete')
+        poscar_file = posixpath.join(cls.execution_path, "../static/vasp_test_files/full_job_sample/POSCAR")
+        cls.job_complete.structure = read_atoms(poscar_file, species_from_potcar=True)
 
     @classmethod
     def tearDownClass(cls):
-        pass
+        cls.execution_path = os.path.dirname(os.path.abspath(__file__))
+        project = Project(os.path.join(cls.execution_path, 'test_vasp'))
+        project.remove_jobs(recursive=True)
+        project.remove(enable=True)
 
-    def tearDown(self):
-        pass
+    def setUp(self):
+        self.job.structure = None
 
     def test_init(self):
         self.assertEqual(self.job.__name__, "Vasp")
@@ -92,11 +100,35 @@ class TestVasp(unittest.TestCase):
     def test_list_potenitals(self):
         self.assertRaises(ValueError, self.job.list_potentials)
 
-
-class TestInput(unittest.TestCase):
-
-    def setUp(self):
-        pass
+    def test_run_complete(self):
+        self.job_complete.exchange_correlation_functional = "PBE"
+        self.job_complete.set_occupancy_smearing(smearing="fermi", width=0.2)
+        self.job_complete.calc_static()
+        self.job_complete.set_convergence_precision(electronic_energy=1e-7)
+        self.job_complete.write_electrostatic_potential = False
+        self.assertEqual(self.job_complete.input.incar["SIGMA"], 0.2)
+        self.assertEqual(self.job_complete.input.incar["LVTOT"], False)
+        self.assertEqual(self.job_complete.input.incar["EDIFF"], 1e-7)
+        file_directory = posixpath.join(self.execution_path, "../static/vasp_test_files/full_job_sample")
+        self.job_complete.restart_file_list.append(posixpath.join(file_directory, "vasprun.xml"))
+        self.job_complete.restart_file_list.append(posixpath.join(file_directory, "OUTCAR"))
+        self.job_complete.run(run_mode="manual")
+        self.job_complete.status.collect = True
+        self.job_complete.run()
+        nodes = ["positions", "temperature", "energy_tot", "steps", "positions", "forces", "cells",
+                 "pressures"]
+        with self.job_complete.project_hdf5.open("output/generic") as h_gen:
+            hdf_nodes = h_gen.list_nodes()
+            self.assertTrue(all([node in hdf_nodes for node in nodes]))
+        nodes = ['energy_free', 'energy_int', 'energy_zero', 'final_magmoms', 'magnetization', 'n_elect',
+                 'scf_dipole_mom', 'scf_energy_free', 'scf_energy_int', 'scf_energy_zero']
+        with self.job_complete.project_hdf5.open("output/generic/dft") as h_dft:
+            hdf_nodes = h_dft.list_nodes()
+            self.assertTrue(all([node in hdf_nodes for node in nodes]))
+        nodes = ['efermi', 'eig_matrix', 'k_points', 'k_weights', 'occ_matrix']
+        with self.job_complete.project_hdf5.open("output/electronic_structure") as h_dft:
+            hdf_nodes = h_dft.list_nodes()
+            self.assertTrue(all([node in hdf_nodes for node in nodes]))
 
 
 if __name__ == '__main__':
