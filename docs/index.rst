@@ -68,6 +68,7 @@ Please contact us if you are interested in using pyiron:
 ****
 News
 ****
+* **20th June 2019:** pyiron was downloaded over 5000 times on `conda-forge <https://anaconda.org/conda-forge/pyiron/>`_ and 70% of our code are `covered with unit tests <https://coveralls.io/github/pyiron/pyiron?branch=master>`_. 
 * **10th May 2019:** pyiron documentation hosted on `readthedocs.org <https://pyiron.readthedocs.io>`_.
 * **24th March 2019:** pyiron 0.2.2 released.
 * **15th March 2019:** `pyiron paper available as open access <https://doi.org/10.1016/j.commatsci.2018.07.043>`_ .
