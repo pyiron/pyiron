@@ -147,6 +147,7 @@ def wait_for_job(job, interval_in_s=5, max_iterations=100):
             finished = True
             break
         elif job.status.busy:
+            job = job.load_object()
             job.status.refresh = True
             job.run()
         time.sleep(interval_in_s)
