@@ -827,6 +827,7 @@ class GenericJob(JobCore):
         project = self.project
         self._logger.info("update master: {} {}".format(master_id, self.get_job_id()))
         if master_id is not None and not self.server.run_mode.modal and not self.server.run_mode.interactive:
+            queue_flag = self.server.run_mode.queue
             master_db_entry = project.db.get_item_by_id(master_id)
             if master_db_entry['status'] == 'suspended':
                 project.db.item_update({'status': 'refresh'}, master_id)
@@ -840,7 +841,7 @@ class GenericJob(JobCore):
                 del self
                 master_inspect = project.inspect(master_id)
                 if master_inspect["server"]["run_mode"] == "non_modal" or \
-                        master_inspect["server"]["run_mode"] == "modal":
+                        master_inspect["server"]["run_mode"] == "modal" and queue_flag:
                     master = master_inspect.load_object()
                     master._run_if_refresh()
                 # if master.server.run_mode.non_modal or master.server.run_mode.queue:
