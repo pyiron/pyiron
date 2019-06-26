@@ -838,8 +838,10 @@ class GenericJob(JobCore):
                 # del self
                 # p.start()
                 del self
-                if project.inspect(master_id)["server"]["run_mode"] == "non_modal":
-                    master = project.load(master_id)
+                master_inspect = project.inspect(master_id)
+                if master_inspect["server"]["run_mode"] == "non_modal" or \
+                        master_inspect["server"]["run_mode"] == "modal":
+                    master = master_inspect.load_object()
                     master._run_if_refresh()
                 # if master.server.run_mode.non_modal or master.server.run_mode.queue:
                 #     master._run_if_refresh()
