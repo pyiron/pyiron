@@ -146,10 +146,6 @@ def wait_for_job(job, interval_in_s=5, max_iterations=100):
         if job.status.finished or job.status.aborted:
             finished = True
             break
-        elif job.status.busy:
-            job = job.load_object()
-            job.status.refresh = True
-            job.run()
         time.sleep(interval_in_s)
     if not finished:
         raise ValueError('Maximum iterations reached, but the job was not finished.')
