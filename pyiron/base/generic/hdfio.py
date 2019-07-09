@@ -580,14 +580,15 @@ class FileHDFio(object):
             if p in exclude_groups:
                 continue
             h_new = hdf_new.create_group(p)
-            self.hd_copy(hdf_old[p], h_new, exclude_groups=exclude_groups)
+            self.hd_copy(hdf_old[p], h_new, exclude_groups=exclude_groups, exclude_nodes=exclude_nodes)
         return hdf_new
 
-    def rewrite_hdf5(self, job_name, info=False, exclude_groups=None):
+    def rewrite_hdf5(self, job_name, info=False, exclude_groups=None, exclude_nodes=None):
         """
         args:
             info (True/False): whether to give the information on how much space has been saved
             exclude_groups (list/None): list of groups to delete from hdf
+            exclude_nodes (list/None): list of nodes to delete from hdf
         """
         # hdf = self._hdf5
         if exclude_groups is None:
@@ -599,7 +600,7 @@ class FileHDFio(object):
         new_file = p_lst[-1] + '_rewrite'
 
         hdf_new = ProjectHDFio(project=self.project, file_name=new_file, h5_path='/' + job_name)
-        hdf_new = self.hd_copy(self, hdf_new, exclude_groups=exclude_groups)
+        hdf_new = self.hd_copy(self, hdf_new, exclude_groups=exclude_groups, exclude_nodes=exclude_nodes)
 
         if info:
             print('job: {}'.format(job_name))
