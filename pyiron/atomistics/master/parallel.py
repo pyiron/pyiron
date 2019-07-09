@@ -8,6 +8,7 @@ import inspect
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.base.master.parallel import ParallelMaster, JobGenerator
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
+from pyiron.base.master.generic import get_function_from_string
 
 __author__ = "Jan Janssen"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -120,7 +121,7 @@ class MapMaster(AtomisticParallelMaster):
             if function_str == "None":
                 self._map_function = None
             else:
-                self._map_function = self.get_function_from_string(function_str)
+                self._map_function = get_function_from_string(function_str)
 
     def collect_output(self):
         pass

@@ -61,7 +61,7 @@ Stable version 1.1.9 – for jupyter notebooks (recommended):
 
     conda install -c conda-forge nglview=1.1.9 
     
-On windows it might be necessary to also execute: 
+and afterwards: 
 
 .. code-block:: bash 
 

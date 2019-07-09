@@ -3,19 +3,17 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from ctypes import c_double, c_int
+import importlib
 import numpy as np
 import os
 import pandas as pd
+import pickle
+import subprocess
 import warnings
 
-try:
-    from lammps import lammps
-except ImportError:
-    pass
 from pyiron.lammps.base import LammpsBase
 from pyiron.lammps.structure import UnfoldingPrism
 from pyiron.atomistics.job.interactive import GenericInteractive
-from pyiron.lammps.pipe import LammpsLibrary
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -73,10 +71,10 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             positions = np.array(positions).reshape(-1, 3)
             positions = np.dot(positions, self._interactive_prism.R)
         positions = np.array(positions).flatten()
-        if self.server.run_mode.interactive_non_modal:
-            self._interactive_library.scatter_atoms("x", 1, 3, positions)
-        else:
+        if self.server.run_mode.interactive and self.server.cores == 1:
             self._interactive_library.scatter_atoms("x", 1, 3, (len(positions) * c_double)(*positions))
+        else:
+            self._interactive_library.scatter_atoms("x", 1, 3, positions)
         self._interactive_lib_command('change_box all remap')
 
     def interactive_cells_getter(self):
@@ -124,10 +122,10 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                 el = el_obj_lst[id_el]
                 el_dict[el] = id_eam + 1
         elem_all = np.array([el_dict[self._structure_current.species[el]] for el in indices])
-        if self.server.run_mode.interactive_non_modal:
-            self._interactive_library.scatter_atoms('type', 0, 1, elem_all)
-        else:
+        if self.server.run_mode.interactive and self.server.cores == 1:
             self._interactive_library.scatter_atoms('type', 0, 1, (len(elem_all) * c_int)(*elem_all))
+        else:
+            self._interactive_library.scatter_atoms('type', 0, 1, elem_all)
 
     def interactive_volume_getter(self):
         return self._interactive_library.get_thermo('vol')
@@ -162,15 +160,23 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                         line = line.replace(potential[0], potential[1])
                 self._interactive_lib_command(line.split('\n')[0])
 
+    def _executable_activate_mpi(self):
+        if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
+            pass
+        else:
+            super(LammpsInteractive, self)._executable_activate_mpi()
+
     def _reset_interactive_run_command(self):
         df = pd.DataFrame(self.input.control.dataset)
         self._interactive_run_command = " ".join(df.T[df.index[-1]].values)
 
     def interactive_initialize_interface(self):
-        if self.server.run_mode.interactive_non_modal:
-            self._interactive_library = LammpsLibrary()
-        else:
+        if self.server.run_mode.interactive and self.server.cores == 1:
+            lammps = getattr(importlib.import_module('lammps'), 'lammps')
             self._interactive_library = lammps()
+        else:
+            self._create_working_directory()
+            self._interactive_library = LammpsLibrary(cores=self.server.cores, working_directory=self.working_directory)
         if not all(self.structure.pbc):
             self.input.control['boundary'] = ' '.join(['p' if coord else 'f' for coord in self.structure.pbc])
         self._reset_interactive_run_command()
@@ -250,12 +256,12 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_lib_command('create_atoms 1 random ' + str(len(structure)) + ' 12345 1')
         positions = structure.positions.flatten()
         elem_all = np.array([el_dict[el] for el in structure.get_chemical_elements()])
-        if self.server.run_mode.interactive_non_modal:
-            self._interactive_library.scatter_atoms("x", 1, 3, positions)
-            self._interactive_library.scatter_atoms('type', 0, 1, elem_all)
-        else:
+        if self.server.run_mode.interactive and self.server.cores == 1:
             self._interactive_library.scatter_atoms("x", 1, 3, (len(positions) * c_double)(*positions))
             self._interactive_library.scatter_atoms('type', 0, 1, (len(elem_all) * c_int)(*elem_all))
+        else:
+            self._interactive_library.scatter_atoms("x", 1, 3, positions)
+            self._interactive_library.scatter_atoms('type', 0, 1, elem_all)
         self._interactive_lib_command('change_box all remap')
         self._interactive_lammps_input()
         self._interactive_set_potential()
@@ -338,3 +344,102 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                     for key in h5['interactive'].list_nodes():
                         h5['generic/' + key] = h5['interactive/' + key]
             super(LammpsInteractive, self).interactive_close()
+
+
+class LammpsLibrary(object):
+    def __init__(self, cores=1, working_directory='.'):
+        executable = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sub', 'lmpmpi.py')
+        # print(executable)
+        self._process = subprocess.Popen(['mpiexec', '-n', str(cores), 'python', executable],
+                                         stdout=subprocess.PIPE,
+                                         stderr=subprocess.PIPE,
+                                         stdin=subprocess.PIPE,
+                                         cwd=working_directory)
+
+    def _send(self, command, data=None):
+        """
+        Send a command to the Lammps Library executable
+
+        Args:
+            command (str): command to be send to the
+            data:
+        """
+        # print('send: ', {'c': command, 'd': data})
+        pickle.dump({'c': command, 'd': data}, self._process.stdin)
+        self._process.stdin.flush()
+
+    def _receive(self):
+        """
+        Receive data from the Lammps library
+
+        Returns:
+            data
+        """
+        output = pickle.load(self._process.stdout)
+        # print(output)
+        return output
+
+    def command(self, command):
+        """
+        Send a command to the lammps library
+
+        Args:
+            command (str):
+        """
+        self._send(command='command', data=command)
+
+    def gather_atoms(self, *args):
+        """
+        Gather atoms from the lammps library
+
+        Args:
+            *args:
+
+        Returns:
+            np.array
+        """
+        self._send(command='gather_atoms', data=list(args))
+        return self._receive()
+
+    def scatter_atoms(self, *args):
+        """
+        Scatter atoms for the lammps library
+
+        Args:
+            *args:
+        """
+        self._send(command='scatter_atoms', data=list(args))
+
+    def get_thermo(self, *args):
+        """
+        Get thermo from the lammps library
+
+        Args:
+            *args:
+
+        Returns:
+
+        """
+        self._send(command='get_thermo', data=list(args))
+        return self._receive()
+
+    def extract_compute(self, *args):
+        """
+        Extract compute from the lammps library
+
+        Args:
+            *args:
+
+        Returns:
+
+        """
+        self._send(command='extract_compute', data=list(args))
+        return self._receive()
+
+    def close(self):
+        self._send(command='close')
+        self._process.kill()
+
+    def __del__(self):
+        # print('object killed __del__')
+        self.close()
