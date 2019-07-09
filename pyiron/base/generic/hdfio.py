@@ -560,16 +560,21 @@ class FileHDFio(object):
         new._filter = ["nodes"]
         return new
 
-    def hd_copy(self, hdf_old, hdf_new, exclude_groups=None):
+    def hd_copy(self, hdf_old, hdf_new, exclude_groups=None, exclude_nodes=None):
         """
         args:
             hdf_old (ProjectHDFio): old hdf
             hdf_new (ProjectHDFio): new hdf
             exclude_groups (list/None): list of groups to delete
+            exclude_nodes (list/None): list of nodes to delete
         """
         if exclude_groups is None:
             exclude_groups = list()
+        if exclude_nodes is None:
+            exclude_nodes = list()
         for p in hdf_old.list_nodes():
+            if p in exclude_nodes:
+                continue
             hdf_new[p] = hdf_old[p]
         for p in hdf_old.list_groups():
             if p in exclude_groups:
