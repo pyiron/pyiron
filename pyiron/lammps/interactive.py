@@ -266,12 +266,28 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_lib_command('change_box all remap')
         if self.input.control['atom_style'] == "full":
             # Do not scatter or manipulate when you have water/ use atom_style full in your system
-            lmp_structure = self._get_lammps_structure(structure=self.structure, cutoff_radius=self.cutoff_radius)
-            # for line in lmp_structure.structure_full().split("\n")[1:]:
-                # self._interactive_lib_command(line)
-
+            self._interactive_water_setter()
         self._interactive_lammps_input()
         self._interactive_set_potential()
+
+    def _interactive_water_setter(self):
+        neighbors = self.structure.get_neighbors(cutoff=1.3)
+        o_indices = self.structure.select_index("O")
+        h_indices = self.structure.select_index("H")
+        h1_indices = np.intersect1d(np.vstack(neighbors.indices[o_indices])[:, 0], h_indices)
+        h2_indices = np.intersect1d(np.vstack(neighbors.indices[o_indices])[:, 1], h_indices)
+        o_ind_str = np.array2string(o_indices).replace("[", "").replace("]", "").strip()
+        h1_ind_str = np.array2string(h1_indices).replace("[", "").replace("]", "").strip()
+        h2_ind_str = np.array2string(h2_indices).replace("[", "").replace("]", "").strip()
+        group_o = "group Oatoms id {}".format(o_ind_str)
+        group_h1 = "group H1atoms id {}".format(h1_ind_str)
+        group_h2 = "group H2atoms id {}".format(h2_ind_str)
+        self._interactive_lib_command(group_o)
+        self._interactive_lib_command(group_h1)
+        self._interactive_lib_command(group_h2)
+        self._interactive_lib_command("create_bonds many Oatoms H1atoms 1 0.7 1.4")
+        self._interactive_lib_command("create_bonds many Oatoms H2atoms 1 0.7 1.4")
+
 
     def from_hdf(self, hdf=None, group_name=None):
         """
