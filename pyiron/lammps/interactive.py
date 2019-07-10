@@ -168,8 +168,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                     for potential in potential_lst:
                         if potential[0] in line:
                             line = line.replace(potential[0], potential[1])
-                    # kspace should not be specified before creating bonds
-                    if "kspace" not in line:
+                    # Avoid writing pair styles or kspace style
+                    if "kspace" not in line or "pair" not in line:
                         self._interactive_lib_command(line.split('\n')[0])
             self._interactive_water_setter()
 
@@ -302,6 +302,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_lib_command(group_o)
         self._interactive_lib_command(group_h1)
         self._interactive_lib_command(group_h2)
+        self._interactive_lib_command("pair_style lj/cut 2.5")
+        self._interactive_lib_command("pair_coeff * * 0.0 0.0")
         # self._interactive_lib_command("pair_style " + self.input.potential["pair_style"])
         # self._interactive_lib_command("pair_coeff * * 0.0 0.0")
         # self._interactive_lib_command("bond_style " + self.input.potential["bond_style"])
@@ -310,6 +312,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         # self._interactive_lib_command("kspace_style " + self.input.potential["kspace_style"])
         self._interactive_lib_command("create_bonds many Oatoms H1atoms 1 0.7 1.4")
         self._interactive_lib_command("create_bonds many Oatoms H2atoms 1 0.7 1.4")
+        self._interactive_lib_command("pair_style " + self.input.potential["pair_style"])
+        self._interactive_lib_command("pair_coeff * * 0.0 0.0")
         self._interactive_lib_command("kspace_style " + self.input.potential["kspace_style"])
 
     def from_hdf(self, hdf=None, group_name=None):
