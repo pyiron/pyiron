@@ -586,7 +586,8 @@ class FileHDFio(object):
         for p in hdf_old.list_groups():
             if len(exclude_groups_split) == 0:
                 h_new = hdf_new.create_group(p)
-                self.hd_copy(hdf_old[p], h_new, exclude_nodes=exclude_nodes)
+                ex_n = [e[-1] for e in exclude_nodes_split if p == e[0] or len(e) == 1]
+                self.hd_copy(hdf_old[p], h_new, exclude_nodes=ex_n)
             else:
                 for ex in exclude_groups_split:
                     if p not in ex[0]:
