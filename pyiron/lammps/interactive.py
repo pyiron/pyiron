@@ -290,6 +290,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_lib_command(group_h1)
         self._interactive_lib_command(group_h2)
         self._interactive_lib_command("pair_style " + self.input.potential["pair_style"])
+        self._interactive_lib_command("pair_coeff * * 0.0 0.0")
         self._interactive_lib_command("bond_style " + self.input.potential["bond_style"])
         self._interactive_lib_command("bond_coeff " + self.input.potential["bond_coeff"])
         self._interactive_lib_command("create_bonds many Oatoms H1atoms 1 0.7 1.4")
