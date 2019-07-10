@@ -608,7 +608,7 @@ class FileHDFio(object):
         #     if p not in exclude_groups:
         #         h_new = hdf_new.create_group(p)
         #         self.hd_copy(hdf_old[p], h_new, exclude_groups=exclude_groups, exclude_nodes=exclude_nodes)
-        # return hdf_new
+        return hdf_new
 
     def rewrite_hdf5(self, job_name, info=False, exclude_groups=None, exclude_nodes=None):
         """
