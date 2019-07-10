@@ -573,14 +573,12 @@ class FileHDFio(object):
         if exclude_nodes is None:
             exclude_nodes = list()
         for p in hdf_old.list_nodes():
-            if p in exclude_nodes:
-                continue
-            hdf_new[p] = hdf_old[p]
+            if p not in exclude_nodes:
+                hdf_new[p] = hdf_old[p]
         for p in hdf_old.list_groups():
-            if p in exclude_groups:
-                continue
-            h_new = hdf_new.create_group(p)
-            self.hd_copy(hdf_old[p], h_new, exclude_groups=exclude_groups, exclude_nodes=exclude_nodes)
+            if p not in exclude_groups:
+                h_new = hdf_new.create_group(p)
+                self.hd_copy(hdf_old[p], h_new, exclude_groups=exclude_groups, exclude_nodes=exclude_nodes)
         return hdf_new
 
     def rewrite_hdf5(self, job_name, info=False, exclude_groups=None, exclude_nodes=None):
