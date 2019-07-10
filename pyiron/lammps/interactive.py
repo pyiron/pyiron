@@ -244,7 +244,11 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         el_struct_lst = self.structure.get_species_symbols()
         el_obj_lst = self.structure.get_species_objects()
         el_eam_lst = self.input.potential.get_element_lst()
-        self._interactive_lib_command('create_box ' + str(len(el_eam_lst)) + ' 1')
+        if self.input.control['atom_style'] == "full":
+            self._interactive_lib_command('create_box ' + str(len(el_eam_lst)) + ' 1 ' + 'bond/types 1 '
+                                          + 'angle/types 1 ')
+        else:
+            self._interactive_lib_command('create_box ' + str(len(el_eam_lst)) + ' 1')
         el_dict = {}
         for id_eam, el_eam in enumerate(el_eam_lst):
             if el_eam in el_struct_lst:
@@ -290,7 +294,6 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_lib_command("bond_coeff " + self.input.potential["bond_coeff"])
         self._interactive_lib_command("create_bonds many Oatoms H1atoms 1 0.7 1.4")
         self._interactive_lib_command("create_bonds many Oatoms H2atoms 1 0.7 1.4")
-
 
     def from_hdf(self, hdf=None, group_name=None):
         """
