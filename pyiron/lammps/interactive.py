@@ -313,7 +313,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_lib_command("create_bonds many Oatoms H2atoms 1 0.7 1.4")
         for i in range(len(o_indices)):
             self._interactive_lib_command("create_bonds single/angle 1 {} {} {}".format(
-                int(h1_indices) + 1, int(o_indices) + 1, int(h2_indices) + 1))
+                int(h1_indices[i]) + 1, int(o_indices[i]) + 1, int(h2_indices[i]) + 1))
         self._interactive_lib_command("pair_style " + self.input.potential["pair_style"])
         values = np.array(self.input.potential._dataset['Value'])
         pair_val = values[["pair_coeff" in val for val in self.input.potential._dataset['Parameter']]]
