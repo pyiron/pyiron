@@ -258,7 +258,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         el_eam_lst = self.input.potential.get_element_lst()
         if self.input.control['atom_style'] == "full":
             self._interactive_lib_command('create_box ' + str(len(el_eam_lst)) + ' 1 ' + 'bond/types 1 '
-                                          + 'angle/types 1 ')
+                                          + 'angle/types 1 ' + 'extra/bond/per/atom 2 ')
         else:
             self._interactive_lib_command('create_box ' + str(len(el_eam_lst)) + ' 1')
         el_dict = {}
