@@ -147,21 +147,31 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                 self._interactive_lib_command(key + ' ' + str(value))
 
     def _interactive_set_potential(self):
+
         potential_lst = []
         if self.input.potential.files is not None:
             for potential in self.input.potential.files:
                 if not os.path.exists(potential):
                     raise ValueError('Potential not found: ', potential)
                 potential_lst.append([potential.split('/')[-1], potential])
-        for line in self.input.potential.get_string_lst():
-            if len(line) > 2:
-                for potential in potential_lst:
-                    if potential[0] in line:
-                        line = line.replace(potential[0], potential[1])
-                self._interactive_lib_command(line.split('\n')[0])
-        if self.input.control['atom_style'] == "full":
-            self._interactive_water_setter()
 
+        if not self.input.control['atom_style'] == "full":
+            for line in self.input.potential.get_string_lst():
+                if len(line) > 2:
+                    for potential in potential_lst:
+                        if potential[0] in line:
+                            line = line.replace(potential[0], potential[1])
+                    self._interactive_lib_command(line.split('\n')[0])
+        else:
+            for line in self.input.potential.get_string_lst():
+                if len(line) > 2:
+                    for potential in potential_lst:
+                        if potential[0] in line:
+                            line = line.replace(potential[0], potential[1])
+                    # kspace should not be specified before creating bonds
+                    if "kspace" not in line:
+                        self._interactive_lib_command(line.split('\n')[0])
+            self._interactive_water_setter()
 
     def _executable_activate_mpi(self):
         if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
@@ -300,6 +310,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         # self._interactive_lib_command("kspace_style " + self.input.potential["kspace_style"])
         self._interactive_lib_command("create_bonds many Oatoms H1atoms 1 0.7 1.4")
         self._interactive_lib_command("create_bonds many Oatoms H2atoms 1 0.7 1.4")
+        self._interactive_lib_command("kspace_style " + self.input.potential["kspace_style"])
 
     def from_hdf(self, hdf=None, group_name=None):
         """
