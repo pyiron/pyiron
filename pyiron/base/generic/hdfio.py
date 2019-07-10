@@ -574,6 +574,8 @@ class FileHDFio(object):
             exclude_nodes = list()
         exclude_groups_split = [i.split('/', 1) for i in exclude_groups]
         exclude_nodes_split = [i.split('/', 1) for i in exclude_nodes]
+
+        print(exclude_groups_split, exclude_nodes_split)
         for p in hdf_old.list_nodes():
             if len(exclude_nodes_split) == 0:
                 hdf_new[p] = hdf_old[p]
@@ -592,9 +594,9 @@ class FileHDFio(object):
             else:
                 print("Checkpoint 2")
                 for ex in exclude_groups_split:
-                    print("Checkpoint 3, group: ", ex)
+                    print("Checkpoint 3")
                     if p not in ex[0]:
-                        print("Checkpoint 4, group: ", ex[0])
+                        print("Checkpoint 4")
                         h_new = hdf_new.create_group(p)
                         ex_n = [e[-1] for e in exclude_nodes_split if p == e[0] or len(e) == 1]
                         self.hd_copy(hdf_old[p], h_new, exclude_groups=exclude_groups, exclude_nodes=ex_n)
@@ -602,7 +604,7 @@ class FileHDFio(object):
                         h_new = hdf_new.create_group(p)
                         ex_n = [e[-1] for e in exclude_nodes_split if p == e[0] or len(e) == 1]
                         ex_g = [e[-1] for e in exclude_groups_split if p == e[0] or len(e) == 1]
-                        print("Checkpoint 5, group: ", ex_n, ex_g)
+                        print("Checkpoint 5")
                         self.hd_copy(hdf_old[p], h_new, exclude_groups=ex_g, exclude_nodes=ex_n)
         ### old ###
         # for p in hdf_old.list_nodes():
