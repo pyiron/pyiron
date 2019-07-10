@@ -572,42 +572,42 @@ class FileHDFio(object):
             exclude_groups = list()
         if exclude_nodes is None:
             exclude_nodes = list()
-        exclude_groups_split = [i.split('/', 1) for i in exclude_groups]
-        exclude_nodes_split = [i.split('/', 1) for i in exclude_nodes]
-        for p in hdf_old.list_nodes():
-            if len(exclude_nodes_split) == 0:
-                hdf_new[p] = hdf_old[p]
-            else:
-                for ex in exclude_nodes_split:
-                    if p not in ex[0]:
-                        hdf_new[p] = hdf_old[p]
-                    elif not len(ex) == 1:
-                        hdf_new[p] = hdf_old[p]
-        for p in hdf_old.list_groups():
-            if len(exclude_groups_split) == 0:
-                h_new = hdf_new.create_group(p)
-                ex_n = [e[-1] for e in exclude_nodes_split if p == e[0] or len(e) == 1]
-                self.hd_copy(hdf_old[p], h_new, exclude_nodes=ex_n)
-            else:
-                for ex in exclude_groups_split:
-                    if p not in ex[0]:
-                        h_new = hdf_new.create_group(p)
-                        ex_n = [e[-1] for e in exclude_nodes_split if p == e[0] or len(e) == 1]
-                        self.hd_copy(hdf_old[p], h_new, exclude_groups=exclude_groups, exclude_nodes=ex_n)
-                    elif not len(ex) == 1:
-                        h_new = hdf_new.create_group(p)
-                        ex_n = [e[-1] for e in exclude_nodes_split if p == e[0] or len(e) == 1]
-                        ex_g = [e[-1] for e in exclude_groups_split if p == e[0] or len(e) == 1]
-                        self.hd_copy(hdf_old[p], h_new, exclude_groups=ex_g, exclude_nodes=ex_n)
+        # exclude_groups_split = [i.split('/', 1) for i in exclude_groups]
+        # exclude_nodes_split = [i.split('/', 1) for i in exclude_nodes]
+        # for p in hdf_old.list_nodes():
+        #     if len(exclude_nodes_split) == 0:
+        #         hdf_new[p] = hdf_old[p]
+        #     else:
+        #         for ex in exclude_nodes_split:
+        #             if p not in ex[0]:
+        #                 hdf_new[p] = hdf_old[p]
+        #             elif not len(ex) == 1:
+        #                 hdf_new[p] = hdf_old[p]
+        # for p in hdf_old.list_groups():
+        #     if len(exclude_groups_split) == 0:
+        #         h_new = hdf_new.create_group(p)
+        #         ex_n = [e[-1] for e in exclude_nodes_split if p == e[0] or len(e) == 1]
+        #         self.hd_copy(hdf_old[p], h_new, exclude_nodes=ex_n)
+        #     else:
+        #         for ex in exclude_groups_split:
+        #             if p not in ex[0]:
+        #                 h_new = hdf_new.create_group(p)
+        #                 ex_n = [e[-1] for e in exclude_nodes_split if p == e[0] or len(e) == 1]
+        #                 self.hd_copy(hdf_old[p], h_new, exclude_groups=exclude_groups, exclude_nodes=ex_n)
+        #             elif not len(ex) == 1:
+        #                 h_new = hdf_new.create_group(p)
+        #                 ex_n = [e[-1] for e in exclude_nodes_split if p == e[0] or len(e) == 1]
+        #                 ex_g = [e[-1] for e in exclude_groups_split if p == e[0] or len(e) == 1]
+        #                 self.hd_copy(hdf_old[p], h_new, exclude_groups=ex_g, exclude_nodes=ex_n)
         ### old ###
-#        for p in hdf_old.list_nodes():
-#            if p not in exclude_nodes:
-#                hdf_new[p] = hdf_old[p]
-#
-#        for p in hdf_old.list_groups():
-#            if p not in exclude_groups:
-#               h_new = hdf_new.create_group(p)
-#                self.hd_copy(hdf_old[p], h_new, exclude_groups=exclude_groups, exclude_nodes=exclude_nodes)
+        for p in hdf_old.list_nodes():
+            if p not in exclude_nodes:
+                hdf_new[p] = hdf_old[p]
+
+        for p in hdf_old.list_groups():
+            if p not in exclude_groups:
+                h_new = hdf_new.create_group(p)
+                self.hd_copy(hdf_old[p], h_new, exclude_groups=exclude_groups, exclude_nodes=exclude_nodes)
         return hdf_new
 
     def rewrite_hdf5(self, job_name, info=False, exclude_groups=None, exclude_nodes=None):
