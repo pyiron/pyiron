@@ -573,14 +573,16 @@ class FileHDFio(object):
             group_list = hdf_old.list_groups()
         else:
             exclude_groups_split = [i.split('/', 1) for i in exclude_groups]
-            group_list = list((set(hdf_old.list_groups()) ^ set(exclude_groups_split[-1])) & set(hdf_old.list_groups()))
+            check_groups = [i[-1] for i in exclude_groups_split]
+            group_list = list((set(hdf_old.list_groups()) ^ set(check_groups)) & set(hdf_old.list_groups()))
 
         if exclude_nodes is None or len(exclude_nodes) == 0:
             exclude_nodes_split = list()
             node_list = hdf_old.list_nodes()
         else:
             exclude_nodes_split = [i.split('/', 1) for i in exclude_nodes]
-            node_list = list((set(hdf_old.list_nodes()) ^ set(exclude_nodes_split[-1])) & set(hdf_old.list_nodes()))
+            check_nodes = [i[-1] for i in exclude_nodes_split]
+            node_list = list((set(hdf_old.list_nodes()) ^ set(check_nodes)) & set(hdf_old.list_nodes()))
         for p in node_list:
             hdf_new[p] = hdf_old[p]
         for p in group_list:
