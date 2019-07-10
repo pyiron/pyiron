@@ -147,7 +147,6 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                 self._interactive_lib_command(key + ' ' + str(value))
 
     def _interactive_set_potential(self):
-
         potential_lst = []
         if self.input.potential.files is not None:
             for potential in self.input.potential.files:
@@ -168,8 +167,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                     for potential in potential_lst:
                         if potential[0] in line:
                             line = line.replace(potential[0], potential[1])
-                    # Avoid writing pair styles or kspace style
-                    if "kspace" not in line or "pair" not in line:
+                    # Avoid writing pair styles or k-space style
+                    if "kspace" not in line and "pair" not in line:
                         self._interactive_lib_command(line.split('\n')[0])
             self._interactive_water_setter()
 
