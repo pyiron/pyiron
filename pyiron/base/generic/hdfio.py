@@ -568,14 +568,14 @@ class FileHDFio(object):
             exclude_groups (list/None): list of groups to delete
             exclude_nodes (list/None): list of nodes to delete
         """
-        if exclude_groups is None:
+        if exclude_groups is None or len(exclude_groups) == 0:
             exclude_groups_split = list()
             group_list = hdf_old.list_groups()
         else:
             exclude_groups_split = [i.split('/', 1) for i in exclude_groups]
             group_list = list((set(hdf_old.list_groups()) ^ set(exclude_groups_split[-1])) & set(hdf_old.list_groups()))
 
-        if exclude_nodes is None:
+        if exclude_nodes is None or len(exclude_nodes) == 0:
             exclude_nodes_split = list()
             node_list = hdf_old.list_nodes()
         else:
