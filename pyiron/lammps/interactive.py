@@ -159,6 +159,9 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                     if potential[0] in line:
                         line = line.replace(potential[0], potential[1])
                 self._interactive_lib_command(line.split('\n')[0])
+        if self.input.control['atom_style'] == "full":
+            self._interactive_water_setter()
+
 
     def _executable_activate_mpi(self):
         if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
@@ -268,9 +271,9 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             self._interactive_library.scatter_atoms("x", 1, 3, positions)
             self._interactive_library.scatter_atoms('type', 0, 1, elem_all)
         self._interactive_lib_command('change_box all remap')
-        if self.input.control['atom_style'] == "full":
-            # Do not scatter or manipulate when you have water/ use atom_style full in your system
-            self._interactive_water_setter()
+        # if self.input.control['atom_style'] == "full":
+        # Do not scatter or manipulate when you have water/ use atom_style full in your system
+        # self._interactive_water_setter()
         self._interactive_lammps_input()
         self._interactive_set_potential()
 
@@ -289,12 +292,12 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_lib_command(group_o)
         self._interactive_lib_command(group_h1)
         self._interactive_lib_command(group_h2)
-        self._interactive_lib_command("pair_style " + self.input.potential["pair_style"])
-        self._interactive_lib_command("pair_coeff * * 0.0 0.0")
-        self._interactive_lib_command("bond_style " + self.input.potential["bond_style"])
-        self._interactive_lib_command("bond_coeff " + self.input.potential["bond_coeff"])
-        # kspace_style necessary
-        self._interactive_lib_command("kspace_style " + self.input.potential["kspace_style"])
+        # self._interactive_lib_command("pair_style " + self.input.potential["pair_style"])
+        # self._interactive_lib_command("pair_coeff * * 0.0 0.0")
+        # self._interactive_lib_command("bond_style " + self.input.potential["bond_style"])
+        # self._interactive_lib_command("bond_coeff " + self.input.potential["bond_coeff"])
+        # # kspace_style necessary
+        # self._interactive_lib_command("kspace_style " + self.input.potential["kspace_style"])
         self._interactive_lib_command("create_bonds many Oatoms H1atoms 1 0.7 1.4")
         self._interactive_lib_command("create_bonds many Oatoms H2atoms 1 0.7 1.4")
 
