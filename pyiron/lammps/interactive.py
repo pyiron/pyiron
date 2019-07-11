@@ -154,22 +154,17 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                     raise ValueError('Potential not found: ', potential)
                 potential_lst.append([potential.split('/')[-1], potential])
 
-        if not self.input.control['atom_style'] == "full":
-            for line in self.input.potential.get_string_lst():
-                if len(line) > 2:
-                    for potential in potential_lst:
-                        if potential[0] in line:
-                            line = line.replace(potential[0], potential[1])
-                    self._interactive_lib_command(line.split('\n')[0])
-        else:
-            for line in self.input.potential.get_string_lst():
-                if len(line) > 2:
-                    for potential in potential_lst:
-                        if potential[0] in line:
-                            line = line.replace(potential[0], potential[1])
-                    # Avoid writing pair styles or k-space style
-                    if "kspace" not in line and "pair" not in line:
+        style_full = self.input.control['atom_style'] == 'full'
+        for line in self.input.potential.get_string_lst():
+            if len(line) > 2:
+                for potential in potential_lst:
+                    if potential[0] in line:
+                        line = line.replace(potential[0], potential[1])
+                    # Don't write the kspace_style or pair style commands if the atom style is "full"
+                    if not (style_full and ("kspace" in line or "pair" in line)):
                         self._interactive_lib_command(line.split('\n')[0])
+        if style_full:
+            # Currently supports only water molecules. Please feel free to expand this
             self._interactive_water_setter()
 
     def _executable_activate_mpi(self):
@@ -290,7 +285,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         """
         This function writes the bonds for water molecules present in the structure. It is assumed that only intact
         water molecules are present and the H atoms are within 1.3 $\AA$ of each O atom. Once the neighbor list is
-        generated, the conds and angles are created. This function needs to be generalized/extened to account for
+        generated, the bonds and angles are created. This function needs to be generalized/extended to account for
         dissociated water. This function can also be used as an example to create bonds between other molecules.
         """
         neighbors = self.structure.get_neighbors(cutoff=1.3)
