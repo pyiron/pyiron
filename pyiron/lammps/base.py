@@ -266,7 +266,7 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
 
         """
-        print('Collecting',job_name )
+        print('Collecting', self.job_name)
         self.input.from_hdf(self._hdf5)
         if os.path.isfile(self.job_file_name(file_name="dump.h5", cwd=self.working_directory)):
             self.collect_h5md_file(file_name="dump.h5", cwd=self.working_directory)
