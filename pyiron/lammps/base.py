@@ -431,7 +431,7 @@ class LammpsBase(AtomisticGenericJob):
         with self.project_hdf5.open("output/generic") as hdf_output:
             # This is a hack for backward comparability
             print('Line 433',np.array(lf.status_dict['pressures']).shape)
-            print('Line 434', np.array(lf.status_dict['pressures'])[0][-1].shape)
+            print('Line 434', np.array(np.array(lf.status_dict['pressures'])[0])[-1].shape)
             if "temperature" in lf.status_dict.keys():
                 hdf_output["temperatures"] = np.array(lf.status_dict["temperature"])[0][1]
             #print('line 437',hdf_output["pressures"].shape)
