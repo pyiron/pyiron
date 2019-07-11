@@ -430,7 +430,8 @@ class LammpsBase(AtomisticGenericJob):
             del lf.status_dict['memory']
         with self.project_hdf5.open("output/generic") as hdf_output:
             # This is a hack for backward comparability
-            print('Line 433',lf.status_dict['pressures'].shape)
+            print('Line 433',np.array(lf.status_dict['pressures']).shape)
+            print('Line 434', np.array(lf.status_dict['pressures'][0])
             if "temperature" in lf.status_dict.keys():
                 hdf_output["temperatures"] = np.array(lf.status_dict["temperature"])[0][1]
             #hdf_output["temperatures"] = hdf_output["temperatures"]
