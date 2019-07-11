@@ -189,7 +189,17 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._reset_interactive_run_command()
         self.interactive_structure_setter(self.structure)
 
-    def calc_minimize(self, e_tol=1e-8, f_tol=1e-8, max_iter=1000, pressure=None, n_print=100):
+    def calc_minimize(self, e_tol=0.0, f_tol=1e-4, max_iter=1000, pressure=None, n_print=100):
+        """
+        Sets parameters required for minimisation
+
+        Args:
+            e_tol (float): Energy convergence criterion (Default: 0.0 )
+            f_tol (float): Force convergence criterion (Default: 1e-4)
+            max_iter (int): Maximum number of minimisation calculations to perform if not converged (Default: 1000)
+            pressure (float): Pressure at which minimisation is to be carried out (Default: None [eV / Ang^3])
+            n_print (int): Dump every n steps (Default: 100)
+        """
         if self.server.run_mode.interactive_non_modal:
             warnings.warn('calc_minimize() is not implemented for the non modal interactive mode use calc_static()!')
         super(LammpsInteractive, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure,
