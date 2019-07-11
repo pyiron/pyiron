@@ -287,6 +287,12 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_set_potential()
 
     def _interactive_water_setter(self):
+        """
+        This function writes the bonds for water molecules present in the structure. It is assumed that only intact
+        water molecules are present and the H atoms are within 1.3 $\AA$ of each O atom. Once the neighbor list is
+        generated, the conds and angles are created. This function needs to be generalized/extened to account for
+        dissociated water. This function can also be used as an example to create bonds between other molecules.
+        """
         neighbors = self.structure.get_neighbors(cutoff=1.3)
         o_indices = self.structure.select_index("O")
         h_indices = self.structure.select_index("H")
@@ -301,19 +307,15 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_lib_command(group_o)
         self._interactive_lib_command(group_h1)
         self._interactive_lib_command(group_h2)
+        # A dummy pair style that does not have any Coulombic interactions needs to be initialized to create the bonds
         self._interactive_lib_command("pair_style lj/cut 2.5")
         self._interactive_lib_command("pair_coeff * * 0.0 0.0")
-        # self._interactive_lib_command("pair_style " + self.input.potential["pair_style"])
-        # self._interactive_lib_command("pair_coeff * * 0.0 0.0")
-        # self._interactive_lib_command("bond_style " + self.input.potential["bond_style"])
-        # self._interactive_lib_command("bond_coeff " + self.input.potential["bond_coeff"])
-        # # kspace_style necessary
-        # self._interactive_lib_command("kspace_style " + self.input.potential["kspace_style"])
         self._interactive_lib_command("create_bonds many Oatoms H1atoms 1 0.7 1.4")
         self._interactive_lib_command("create_bonds many Oatoms H2atoms 1 0.7 1.4")
         for i, o_ind in enumerate(o_indices):
             self._interactive_lib_command("create_bonds single/angle 1 {} {} {}".format(
                 int(h1_indices[i]) + 1, int(o_ind) + 1, int(h2_indices[i]) + 1))
+        # Now the actual pair styles are written
         self._interactive_lib_command("pair_style " + self.input.potential["pair_style"])
         values = np.array(self.input.potential._dataset['Value'])
         pair_val = values[["pair_coeff" in val for val in self.input.potential._dataset['Parameter']]]
