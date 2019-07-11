@@ -434,6 +434,7 @@ class LammpsBase(AtomisticGenericJob):
             # print('Line 434', np.array(np.array(lf.status_dict['pressures'])[0])[-1].shape)
             if "temperature" in lf.status_dict.keys():
                 hdf_output["temperatures"] = np.array(lf.status_dict["temperature"])[0][1]
+            lf.status_dict['pressures'] = lf.status_dict['pressures'][0]
             lf.to_hdf(hdf_output)
 
     def calc_minimize(self, e_tol=0.0, f_tol=1e-2, max_iter=100000, pressure=None, n_print=100):
