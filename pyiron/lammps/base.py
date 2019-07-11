@@ -266,7 +266,6 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
 
         """
-        print('Collecting', self.job_name)
         self.input.from_hdf(self._hdf5)
         if os.path.isfile(self.job_file_name(file_name="dump.h5", cwd=self.working_directory)):
             self.collect_h5md_file(file_name="dump.h5", cwd=self.working_directory)
@@ -430,11 +429,10 @@ class LammpsBase(AtomisticGenericJob):
             del lf.status_dict['memory']
         with self.project_hdf5.open("output/generic") as hdf_output:
             # This is a hack for backward comparability
-            # print('Line 433',np.array(lf.status_dict['pressures']).shape)
-            # print('Line 434', np.array(np.array(lf.status_dict['pressures'])[0])[-1].shape)
             if "temperature" in lf.status_dict.keys():
                 hdf_output["temperatures"] = np.array(lf.status_dict["temperature"])[0][1]
             lf.to_hdf(hdf_output)
+            # Here pressure_list is converted to array of lists
             hdf_output["pressures"] = hdf_output["pressures"][0]
 
     def calc_minimize(self, e_tol=0.0, f_tol=1e-2, max_iter=100000, pressure=None, n_print=100):
@@ -669,7 +667,6 @@ class LammpsBase(AtomisticGenericJob):
         lf.status_dict["unwrapped_positions"] = list()
         for pos in unwrapped_pos:
             lf.status_dict["unwrapped_positions"].append([[0], pos])
-        print('Writing_Output')
         with self.project_hdf5.open("output/generic") as hdf_output:
             lf.to_hdf(hdf_output)
         return lf
