@@ -434,6 +434,7 @@ class LammpsBase(AtomisticGenericJob):
             print('Line 434', np.array(lf.status_dict['pressures'])[0].shape)
             if "temperature" in lf.status_dict.keys():
                 hdf_output["temperatures"] = np.array(lf.status_dict["temperature"])[0][1]
+            print('line 437',hdf_output["pressures"].shape)
             #hdf_output["temperatures"] = hdf_output["temperatures"]
             print()
             lf.to_hdf(hdf_output)
