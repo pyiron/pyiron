@@ -170,7 +170,7 @@ class AtomisticGenericJob(GenericJobCore):
             new_generic_job._structure = copy.copy(self._structure)
         return new_generic_job
 
-    def calc_minimize(self, e_tol=1e-8, f_tol=1e-8, max_iter=1000, pressure=None, n_print=1):
+    def calc_minimize(self, e_tol=0, f_tol=1e-4, max_iter=1000, pressure=None, n_print=1):
         """
 
         Args:
