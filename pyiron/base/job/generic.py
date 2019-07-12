@@ -326,8 +326,10 @@ class GenericJob(JobCore):
 
     @exclude_nodes_hdf.setter
     def exclude_nodes_hdf(self, val):
-        if not hasattr(val, '__len__'):
+        if isinstance(val, str):
             val = [val]
+        elif not hasattr(val, '__len__'):
+            raise ValueError('Wrong type of variable.')
         self._exclude_nodes_hdf = val
 
     @property
@@ -342,8 +344,10 @@ class GenericJob(JobCore):
 
     @exclude_groups_hdf.setter
     def exclude_groups_hdf(self, val):
-        if not hasattr(val, '__len__'):
+        if isinstance(val, str):
             val = [val]
+        elif not hasattr(val, '__len__'):
+            raise ValueError('Wrong type of variable.')
         self._exclude_groups_hdf = val
 
     @property
