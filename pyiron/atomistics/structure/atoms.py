@@ -1223,7 +1223,7 @@ class Atoms(object):
 
         return [rgb2hex(cmap(scalar)[:3]) for scalar in remapped_field]  # The slice gets RGB but leaves alpha
 
-    def plot3d(self, show_cell=True, show_axes=True, camera='perspective', spacefill=True, particle_size=1.0,
+    def plot3d(self, show_cell=True, show_axes=True, camera='orthographic', spacefill=True, particle_size=1.0,
                select_atoms=None, background='white', color_scheme=None, colors=None,
                scalar_field=None, scalar_start=None, scalar_end=None, scalar_cmap=None,
                vector_field=None, vector_color=None, custom_array=None, custom_3darray=None):
