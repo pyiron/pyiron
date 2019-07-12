@@ -670,9 +670,16 @@ class GenericOutput(object):
     @property
     def volume(self):
         return self._job['output/generic/volume']
-    
+
     @property
     def displacements(self):
+        """
+        Output for 3-d displacements between successive snapshots, with minimum image convention.
+        For the total displacements from the initial configuration, use total_displacements
+        This algorithm collapses if:
+        - the ID's are not consistent (i.e. you can also not change the number of atoms)
+        - there are atoms which move by more than half a box length in any direction within two snapshots (due to periodic boundary conditions)
+        """
         displacement = np.tensordot(self.positions,
                                     np.linalg.inv(self._job.structure.cell), axes=([2,0]))
         displacement -= np.append(self._job.structure.scaled_positions,
@@ -681,9 +688,16 @@ class GenericOutput(object):
         displacement -= np.rint(displacement)
         displacement = np.tensordot(displacement, self._job.structure.cell, axes=([2,0]))
         return displacement
-    
+
     @property
     def total_displacements(self):
+        """
+        Output for 3-d total displacements from the initial configuration, with minimum image convention.
+        For the diplacements for the successive snapshots, use displacements
+        This algorithm collapses if:
+        - the ID's are not consistent (i.e. you can also not change the number of atoms)
+        - there are atoms which move by more than half a box length in any direction within two snapshots (due to periodic boundary conditions)
+        """
         return np.cumsum(self.displacements, axis=0)
 
     def __dir__(self):
