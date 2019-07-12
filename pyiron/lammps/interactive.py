@@ -153,12 +153,19 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                 if not os.path.exists(potential):
                     raise ValueError('Potential not found: ', potential)
                 potential_lst.append([potential.split('/')[-1], potential])
+
+        style_full = self.input.control['atom_style'] == 'full'
         for line in self.input.potential.get_string_lst():
             if len(line) > 2:
                 for potential in potential_lst:
                     if potential[0] in line:
                         line = line.replace(potential[0], potential[1])
-                self._interactive_lib_command(line.split('\n')[0])
+                    # Don't write the kspace_style or pair style commands if the atom style is "full"
+                    if not (style_full and ("kspace" in line or "pair" in line)):
+                        self._interactive_lib_command(line.split('\n')[0])
+        if style_full:
+            # Currently supports only water molecules. Please feel free to expand this
+            self._interactive_water_setter()
 
     def _executable_activate_mpi(self):
         if self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal:
@@ -228,6 +235,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_lib_command('dimension ' + str(self.input.control['dimension']))
         self._interactive_lib_command('boundary ' + self.input.control['boundary'])
         self._interactive_lib_command('atom_style ' + self.input.control['atom_style'])
+
         self._interactive_lib_command("atom_modify map array")
         self._interactive_prism = UnfoldingPrism(structure.cell)
         if np.matrix.trace(self._interactive_prism.R) != 3:
@@ -235,15 +243,19 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         xhi, yhi, zhi, xy, xz, yz = self._interactive_prism.get_lammps_prism()
         if self._interactive_prism.is_skewed():
             self._interactive_lib_command('region 1 prism' +
-                                          ' 0.0 ' + str(xhi) + ' 0.0 ' + str(yhi) + ' 0.0 ' + str(zhi) +
-                                          ' ' + str(xy) + ' ' + str(xz) + ' ' + str(yz) + ' units box')
+                                      ' 0.0 ' + str(xhi) + ' 0.0 ' + str(yhi) + ' 0.0 ' + str(zhi) +
+                                      ' ' + str(xy) + ' ' + str(xz) + ' ' + str(yz) + ' units box')
         else:
             self._interactive_lib_command('region 1 block' +
-                                          ' 0.0 ' + str(xhi) + ' 0.0 ' + str(yhi) + ' 0.0 ' + str(zhi) + ' units box')
+                                      ' 0.0 ' + str(xhi) + ' 0.0 ' + str(yhi) + ' 0.0 ' + str(zhi) + ' units box')
         el_struct_lst = self.structure.get_species_symbols()
         el_obj_lst = self.structure.get_species_objects()
         el_eam_lst = self.input.potential.get_element_lst()
-        self._interactive_lib_command('create_box ' + str(len(el_eam_lst)) + ' 1')
+        if self.input.control['atom_style'] == "full":
+            self._interactive_lib_command('create_box ' + str(len(el_eam_lst)) + ' 1 ' + 'bond/types 1 '
+                                          + 'angle/types 1 ' + 'extra/bond/per/atom 2 ' + 'extra/angle/per/atom 2 ')
+        else:
+            self._interactive_lib_command('create_box ' + str(len(el_eam_lst)) + ' 1')
         el_dict = {}
         for id_eam, el_eam in enumerate(el_eam_lst):
             if el_eam in el_struct_lst:
@@ -263,8 +275,48 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             self._interactive_library.scatter_atoms("x", 1, 3, positions)
             self._interactive_library.scatter_atoms('type', 0, 1, elem_all)
         self._interactive_lib_command('change_box all remap')
+        # if self.input.control['atom_style'] == "full":
+        # Do not scatter or manipulate when you have water/ use atom_style full in your system
+        # self._interactive_water_setter()
         self._interactive_lammps_input()
         self._interactive_set_potential()
+
+    def _interactive_water_setter(self):
+        """
+        This function writes the bonds for water molecules present in the structure. It is assumed that only intact
+        water molecules are present and the H atoms are within 1.3 $\AA$ of each O atom. Once the neighbor list is
+        generated, the bonds and angles are created. This function needs to be generalized/extended to account for
+        dissociated water. This function can also be used as an example to create bonds between other molecules.
+        """
+        neighbors = self.structure.get_neighbors(cutoff=1.3)
+        o_indices = self.structure.select_index("O")
+        h_indices = self.structure.select_index("H")
+        h1_indices = np.intersect1d(np.vstack(neighbors.indices[o_indices])[:, 0], h_indices)
+        h2_indices = np.intersect1d(np.vstack(neighbors.indices[o_indices])[:, 1], h_indices)
+        o_ind_str = np.array2string(o_indices + 1).replace("[", "").replace("]", "").strip()
+        h1_ind_str = np.array2string(h1_indices + 1).replace("[", "").replace("]", "").strip()
+        h2_ind_str = np.array2string(h2_indices + 1).replace("[", "").replace("]", "").strip()
+        group_o = "group Oatoms id {}".format(o_ind_str).replace("  ", " ")
+        group_h1 = "group H1atoms id {}".format(h1_ind_str).replace("  ", " ")
+        group_h2 = "group H2atoms id {}".format(h2_ind_str).replace("  ", " ")
+        self._interactive_lib_command(group_o)
+        self._interactive_lib_command(group_h1)
+        self._interactive_lib_command(group_h2)
+        # A dummy pair style that does not have any Coulombic interactions needs to be initialized to create the bonds
+        self._interactive_lib_command("pair_style lj/cut 2.5")
+        self._interactive_lib_command("pair_coeff * * 0.0 0.0")
+        self._interactive_lib_command("create_bonds many Oatoms H1atoms 1 0.7 1.4")
+        self._interactive_lib_command("create_bonds many Oatoms H2atoms 1 0.7 1.4")
+        for i, o_ind in enumerate(o_indices):
+            self._interactive_lib_command("create_bonds single/angle 1 {} {} {}".format(
+                int(h1_indices[i]) + 1, int(o_ind) + 1, int(h2_indices[i]) + 1))
+        # Now the actual pair styles are written
+        self._interactive_lib_command("pair_style " + self.input.potential["pair_style"])
+        values = np.array(self.input.potential._dataset['Value'])
+        pair_val = values[["pair_coeff" in val for val in self.input.potential._dataset['Parameter']]]
+        for val in pair_val:
+            self._interactive_lib_command("pair_coeff " + val)
+        self._interactive_lib_command("kspace_style " + self.input.potential["kspace_style"])
 
     def from_hdf(self, hdf=None, group_name=None):
         """
