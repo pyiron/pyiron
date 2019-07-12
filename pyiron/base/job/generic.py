@@ -151,7 +151,7 @@ class GenericJob(JobCore):
         self._restart_file_list = list()
         self._restart_file_dict = dict()
         self._exclude_nodes_hdf = list()
-        self._exclude_group_hdf = list()
+        self._exclude_groups_hdf = list()
         self._process = None
         self._compress_by_default = False
 
@@ -930,7 +930,7 @@ class GenericJob(JobCore):
             hdf_input["restart_file_list"] = self._restart_file_list
             hdf_input["restart_file_dict"] = self._restart_file_dict
             hdf_input["exclude_nodes_hdf"] = self._exclude_nodes_hdf
-            hdf_input["exclude_groups_hdf"] = self._exclude_group_hdf
+            hdf_input["exclude_groups_hdf"] = self._exclude_groups_hdf
 
     def from_hdf(self, hdf=None, group_name=None):
         """
@@ -1142,7 +1142,7 @@ class GenericJob(JobCore):
         status is set to 'finished'
         """
         self.collect_output()
-        self.project_hdf5.rewrite_hdf5(job_name=self.job_name, exclude_groups=self._exclude_group_hdf,
+        self.project_hdf5.rewrite_hdf5(job_name=self.job_name, exclude_groups=self._exclude_groups_hdf,
                                        exclude_nodes=self._exclude_nodes_hdf)
         self.collect_logfiles()
         self.project.db.item_update(self._runtime(), self.job_id)
