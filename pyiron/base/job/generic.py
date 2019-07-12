@@ -125,6 +125,14 @@ class GenericJob(JobCore):
 
             list of files which are used to restart the calculation from these files.
 
+        .. attribute:: exclude_nodes_hdf
+
+            list of nodes which are excluded from storing in the hdf5 file.
+
+        .. attribute:: exclude_groups_hdf
+
+            list of groups which are excluded from storing in the hdf5 file.
+
         .. attribute:: job_type
 
             Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster', 'ScriptJob',
@@ -142,6 +150,8 @@ class GenericJob(JobCore):
         self.refresh_job_status()
         self._restart_file_list = list()
         self._restart_file_dict = dict()
+        self._exclude_nodes_hdf = list()
+        self._exclude_group_hdf = list()
         self._process = None
         self._compress_by_default = False
 
@@ -303,6 +313,38 @@ class GenericJob(JobCore):
             raise ValueError("restart_file_dict should be a dictionary!")
         else:
             self._restart_file_dict = val
+
+    @property
+    def exclude_nodes_hdf(self):
+        """
+        Get the list of nodes which are excluded from storing in the hdf5 file
+
+        Returns:
+            nodes(list)
+        """
+        return self._exclude_nodes_hdf
+
+    @exclude_nodes_hdf.setter
+    def exclude_nodes_hdf(self, val):
+        if not hasattr(val, '__len__'):
+            val = [val]
+        self._exclude_nodes_hdf = val
+
+    @property
+    def exclude_groups_hdf(self):
+        """
+        Get the list of groups which are excluded from storing in the hdf5 file
+
+        Returns:
+            groups(list)
+        """
+        return self._exclude_groups_hdf
+
+    @exclude_groups_hdf.setter
+    def exclude_groups_hdf(self, val):
+        if not hasattr(val, '__len__'):
+            val = [val]
+        self._exclude_groups_hdf = val
 
     @property
     def job_type(self):
@@ -883,6 +925,8 @@ class GenericJob(JobCore):
         with self._hdf5.open('input') as hdf_input:
             hdf_input["restart_file_list"] = self._restart_file_list
             hdf_input["restart_file_dict"] = self._restart_file_dict
+            hdf_input["exclude_nodes_hdf"] = self._exclude_nodes_hdf
+            hdf_input["exclude_groups_hdf"] = self._exclude_group_hdf
 
     def from_hdf(self, hdf=None, group_name=None):
         """
@@ -903,6 +947,10 @@ class GenericJob(JobCore):
                 self._restart_file_list = hdf_input["restart_file_list"]
             if "restart_file_dict" in hdf_input.list_nodes():
                 self._restart_file_dict = hdf_input["restart_file_dict"]
+            if "exclude_nodes_hdf" in hdf_input.list_nodes():
+                self._exclude_nodes_hdf = hdf_input["exclude_nodes_hdf"]
+            if "exclude_groups_hdf" in hdf_input.list_nodes():
+                self._exclude_groups_hdf = hdf_input["exclude_groups_hdf"]
 
     def save(self):
         """
@@ -1090,6 +1138,8 @@ class GenericJob(JobCore):
         status is set to 'finished'
         """
         self.collect_output()
+        self.project_hdf5.rewrite_hdf5(job_name=self.job_name, exclude_groups=self._exclude_group_hdf,
+                                       exclude_nodes=self._exclude_nodes_hdf)
         self.collect_logfiles()
         self.project.db.item_update(self._runtime(), self.job_id)
         if self.status.collect:
