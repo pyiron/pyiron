@@ -670,6 +670,21 @@ class GenericOutput(object):
     @property
     def volume(self):
         return self._job['output/generic/volume']
+    
+    @property
+    def displacements(self):
+        displacement = np.tensordot(self.positions,
+                                    np.linalg.inv(self._job.structure.cell), axes=([2,0]))
+        displacement -= np.append(self._job.structure.scaled_positions,
+                                  displacement).reshape(len(self.positions)+1,
+                                                        len(self._job.structure), 3)[:-1]
+        displacement -= np.rint(displacement)
+        displacement = np.tensordot(displacement, self._job.structure.cell, axes=([2,0]))
+        return displacement
+    
+    @property
+    def total_displacements(self):
+        return np.cumsum(self.displacements, axis=0)
 
     def __dir__(self):
         hdf5_path = self._job['output/generic']
