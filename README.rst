@@ -17,7 +17,7 @@ pyiron
     :target: https://travis-ci.org/pyiron/pyiron
     :alt: Build Status
 
-.. image:: https://ci.appveyor.com/api/projects/status/wfdgqkxca1i19xcq?svg=true
+.. image:: https://ci.appveyor.com/api/projects/status/wfdgqkxca1i19xcq/branch/master?svg=true
     :target: https://ci.appveyor.com/project/pyiron-runner/pyiron/branch/master
     :alt: Build status
 
