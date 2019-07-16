@@ -52,12 +52,14 @@ class Executable(object):
         self._executable = None
         self._executable_path = None
         self._mpi = False
-        print(self.__name__)
+        if self.__name__ == 'lammps':
+            self.version = '2016.11.17'
+        else:
+            self.version = sorted(self._executable_lst.keys())[0]
         if self._executable_lst:
             print('Unsorted',list(self._executable_lst.keys()))
             print('Sorted_lists',sorted(self._executable_lst.keys()))
             #print('job_type',self.__name__)
-            self.version = sorted(self._executable_lst.keys())[0]
             #self.version = '2016.11.17'
 
     @property
