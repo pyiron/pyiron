@@ -42,8 +42,9 @@ class ListMaster(GenericMaster):
 
         .. attribute:: status
 
-            execution status of the job, can be one of the following [initialized, appended, created, submitted, running,
-                                                                      aborted, collect, suspended, refresh, busy, finished]
+            execution status of the job, can be one of the following [initialized, appended, created, submitted,
+                                                                      running, aborted, collect, suspended, refresh,
+                                                                      busy, finished]
 
         .. attribute:: job_id
 
@@ -55,8 +56,8 @@ class ListMaster(GenericMaster):
 
         .. attribute:: master_id
 
-            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel or in
-            serial.
+            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel
+            or in serial.
 
         .. attribute:: child_ids
 
@@ -92,7 +93,8 @@ class ListMaster(GenericMaster):
 
         .. attribute:: library_activated
 
-            For job types which offer a Python library pyiron can use the python library instead of an external executable.
+            For job types which offer a Python library pyiron can use the python library instead of an external
+            executable.
 
         .. attribute:: server
 
@@ -112,8 +114,8 @@ class ListMaster(GenericMaster):
 
         .. attribute:: job_type
 
-            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster', 'ScriptJob',
-                                                               'ListMaster']
+            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster',
+                                                               'ScriptJob', 'ListMaster']
 
         .. attribute:: child_names
 
@@ -141,7 +143,8 @@ class ListMaster(GenericMaster):
 
     def refresh_submission_status(self):
         """
-        Refresh the submission status - if a job ID job_id is set then the submission status is loaded from the database.
+        Refresh the submission status - if a job ID job_id is set then the submission status is loaded from the
+        database.
         """
         if self.job_id:
             self.submission_status = SubmissionStatus(db=self._hdf5.db, job_id=self.job_id)
@@ -245,7 +248,8 @@ class ListMaster(GenericMaster):
 
     def write_input(self):
         """
-        Write the input files - for the ListMaster this only contains the execution mode, which is 'parallel' by default.
+        Write the input files - for the ListMaster this only contains the execution mode, which is 'parallel' by
+        default.
         """
         self._input.write_file(file_name="input.inp", cwd=self.working_directory)
 
@@ -272,6 +276,18 @@ class ListMaster(GenericMaster):
         """
         for job_id in self.child_ids:
             yield self._hdf5.load(job_id, convert_to_object=convert_to_object)
+
+    def collect_output(self):
+        """
+        Collect output is not implemented for ListMaster jobs
+        """
+        pass
+
+    def run_if_interactive(self):
+        """
+        run_if_interactive() is not implemented for ListMaster jobs
+        """
+        pass
 
     def __getitem__(self, item):
         """
