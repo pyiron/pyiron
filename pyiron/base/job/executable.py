@@ -67,7 +67,7 @@ class Executable(object):
             #self.version = '2016.11.17'
         for executable in self._executable_lst.keys():
             if 'default' in executable:
-                self.version = self.executable
+                self.version = executable
 
     @property
     def version(self):
