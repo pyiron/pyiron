@@ -55,7 +55,7 @@ class Executable(object):
         if self._executable_lst:
             print('Unsorted',list(self._executable_lst.keys()))
             print('Sorted_lists',sorted(self._executable_lst.keys()))
-            print('Default_version',self.__version__)
+            print('Default_version',self._version)
             self.version = sorted(self._executable_lst.keys())[0]
 
     @property
