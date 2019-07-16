@@ -204,8 +204,7 @@ class Executable(object):
                             executable[len("run_" + self.__name__) + 1:-len(extension)] not in executable_dict.keys():
                         executable_dict[executable[len("run_" + self.__name__) + 1:-len(extension)]] = \
                             os.path.join(path, executable).replace('\\', '/')
-                        print('Executables_names',self.__name__)
-            print('Executable',executable_dict)
+                 print('Executable',executable)
             return executable_dict
         except OSError:  # No executable exists - This is the case for GenericJob and other abstract job classes.
             return dict()
