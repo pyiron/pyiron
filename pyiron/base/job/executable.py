@@ -53,6 +53,7 @@ class Executable(object):
         self._executable_path = None
         self._mpi = False
         if self._executable_lst:
+            print('Executable keys',self._executable_lst.keys())
             self.version = sorted(self._executable_lst.keys())[0]
 
     @property
@@ -190,7 +191,6 @@ class Executable(object):
                         executable_dict[executable[len("run_" + self.__name__) + 1:-len(extension)]] = \
                             os.path.join(path, executable).replace('\\', '/')
             return executable_dict
-            print('Showing Executable dicts',executable_dict)
         except OSError:  # No executable exists - This is the case for GenericJob and other abstract job classes.
             return dict()
 
@@ -202,6 +202,7 @@ class Executable(object):
             str: absolute executable path
         """
         try:
+            print('Show executable versions',self.version)
             return self._executable_lst[self.version]
         except KeyError:
             return ''
