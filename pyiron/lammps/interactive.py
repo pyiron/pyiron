@@ -194,11 +194,16 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         Sets parameters required for minimisation
 
         Args:
-            e_tol (float): Energy convergence criterion (Default: 0.0 )
-            f_tol (float): Force convergence criterion (Default: 1e-4)
-            max_iter (int): Maximum number of minimisation calculations to perform if not converged (Default: 1000)
-            pressure (float): Pressure at which minimisation is to be carried out (Default: None [eV / Ang^3])
-            n_print (int): Dump every n steps (Default: 100)
+            e_tol (float): If the magnitude of difference between energies of two consecutive steps is lower
+                than or equal to e_tol, the minimisation terminates and is considered converged. (Default: 0.0)
+            f_tol (float): If the magnitude of the global force vector at a step is lower than or equal to
+                f_tol, the minimisation terminates and is considered converged. (Default: 1e-4)
+            max_iter (int): Maximum number of minimisation steps to carry out. If the minimisation converges
+                before 'max_iter' steps, terminate at the converged step. If the minimisation does
+                not converge up to 'max_iter' steps, terminate at the 'max_iter' step. Default: 1000)
+            pressure (float): Pressure at which minimisation is to be carried out. If 'None', isochoric
+                (constant volume) condition will be used. (Default: None)
+            n_print (int): Write (dump or print) to the output file every n steps (Default: 100)
         """
         if self.server.run_mode.interactive_non_modal:
             warnings.warn('calc_minimize() is not implemented for the non modal interactive mode use calc_static()!')
