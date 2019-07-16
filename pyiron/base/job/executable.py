@@ -55,7 +55,6 @@ class Executable(object):
         if self._executable_lst:
             print('Unsorted',list(self._executable_lst.keys()))
             print('Sorted_lists',sorted(self._executable_lst.keys()))
-            print('Default_version',self._version)
             self.version = sorted(self._executable_lst.keys())[0]
 
     @property
@@ -67,6 +66,17 @@ class Executable(object):
             str: version
         """
         return self.__version__
+
+    @property
+    def default_version(self):
+        """
+        Default Version of the Available Executables
+        i.e. first version of the sorted list
+
+        Returns:
+            str: default_version
+        """
+        return sorted(self._executable_lst.keys())[0]
 
     @version.setter
     def version(self, new_version):
