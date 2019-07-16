@@ -32,6 +32,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_prism = None
         self._interactive_run_command = None
         self._interactive_grand_canonical = True
+        self._disable_lmp_output = False
         self.interactive_cache = {'cells': [],
                                   'energy_pot': [],
                                   'energy_tot': [],
@@ -180,7 +181,10 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
     def interactive_initialize_interface(self):
         if self.server.run_mode.interactive and self.server.cores == 1:
             lammps = getattr(importlib.import_module('lammps'), 'lammps')
-            self._interactive_library = lammps()
+            if self._disable_lmp_output:
+                self._interactive_library = lammps(cmdargs=['-screen', 'lmpscreen.log'])
+            else:
+                self._interactive_library = lammps()
         else:
             self._create_working_directory()
             self._interactive_library = LammpsLibrary(cores=self.server.cores, working_directory=self.working_directory)
@@ -209,6 +213,22 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             warnings.warn('calc_minimize() is not implemented for the non modal interactive mode use calc_static()!')
         super(LammpsInteractive, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure,
                                                      n_print=n_print)
+        if self.interactive_is_activated() and \
+                (self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal):
+            self.interactive_structure_setter(self.structure)
+
+    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=1.0, n_print=100,
+                temperature_damping_timescale=100.0, pressure_damping_timescale=1000.0, seed=None, tloop=None,
+                initial_temperature=None, langevin=False, delta_temp=None, delta_press=None):
+        super(LammpsInteractive, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
+                                               time_step=time_step, n_print=n_print,
+                                               temperature_damping_timescale=temperature_damping_timescale,
+                                               pressure_damping_timescale=pressure_damping_timescale, seed=seed,
+                                               tloop=tloop, initial_temperature=initial_temperature,
+                                               langevin=langevin, delta_temp=delta_temp, delta_press=delta_press)
+        if self.interactive_is_activated() and \
+                (self.server.run_mode.interactive or self.server.run_mode.interactive_non_modal):
+            self.interactive_structure_setter(self.structure)
 
     def run_if_interactive(self):
         if self._generic_input['calc_mode'] == 'md':
