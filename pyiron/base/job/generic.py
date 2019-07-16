@@ -585,7 +585,7 @@ class GenericJob(JobCore):
             elif status == 'suspend':
                 self._run_if_suspended()
             elif status == 'refresh':
-                self._run_if_refresh()
+                self.run_if_refresh()
             elif status == 'busy':
                 self._run_if_busy()
             elif status == 'finished':
@@ -840,7 +840,7 @@ class GenericJob(JobCore):
                 del self
                 if project.inspect(master_id)["server"]["run_mode"] == "non_modal":
                     master = project.load(master_id)
-                    master._run_if_refresh()
+                    master.run_if_refresh()
                 # if master.server.run_mode.non_modal or master.server.run_mode.queue:
                 #     master._run_if_refresh()
                 #     if master.server.run_mode.queue and master._process:
@@ -1070,7 +1070,7 @@ class GenericJob(JobCore):
         else:
             print('Job ' + str(self.job_id) + ' is running!')
 
-    def _run_if_refresh(self):
+    def run_if_refresh(self):
         """
         Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
         suspended previously, the job is going to be started again, to be continued.
