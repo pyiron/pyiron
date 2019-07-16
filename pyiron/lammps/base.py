@@ -379,39 +379,39 @@ class LammpsBase(AtomisticGenericJob):
                                                 "splitTag": True}
             # print "tag_dict: ", tag_dict
 
-        h5_dict = {"Step": "steps",
-                   "Temp": "temperature",
-                   "PotEng": "energy_pot",
-                   "TotEng": "energy_tot",
-                   "Pxx": "pressure_x",
-                   "Pxy": "pressure_xy",
-                   "Pxz": "pressure_xz",
-                   "Pyy": "pressure_y",
-                   "Pyz": "pressure_yz",
-                   "Pzz": "pressure_z",
-                   "Volume": "volume",
-                   "E_pair": "E_pair",
-                   "E_mol": "E_mol"
-                   }
+        self._h5_dict = {"Step": "steps",
+                         "Temp": "temperature",
+                         "PotEng": "energy_pot",
+                         "TotEng": "energy_tot",
+                         "Pxx": "pressure_x",
+                         "Pxy": "pressure_xy",
+                         "Pxz": "pressure_xz",
+                         "Pyy": "pressure_y",
+                         "Pyz": "pressure_yz",
+                         "Pzz": "pressure_z",
+                         "Volume": "volume",
+                         "E_pair": "E_pair",
+                         "E_mol": "E_mol"
+                         }
 
-        lammps_dict = {"step": "Step",
-                       "temp": "Temp",
-                       "pe": "PotEng",
-                       "etotal": "TotEng",
-                       "pxx": "Pxx",
-                       "pxy": "Pxy",
-                       "pxz": "Pxz",
-                       "pyy": "Pyy",
-                       "pyz": "Pyz",
-                       "pzz": "Pzz",
-                       "vol": "Volume"
-                       }
+        self._lammps_dict = {"step": "Step",
+                             "temp": "Temp",
+                             "pe": "PotEng",
+                             "etotal": "TotEng",
+                             "pxx": "Pxx",
+                             "pxy": "Pxy",
+                             "pxz": "Pxz",
+                             "pyy": "Pyy",
+                             "pyz": "Pyz",
+                             "pzz": "Pzz",
+                             "vol": "Volume"
+                             }
 
         lf = Logstatus()
         lf.extract_file(file_name=log_file,
                         tag_dict=tag_dict,
-                        h5_dict=h5_dict,
-                        key_dict=lammps_dict)
+                        h5_dict=self._h5_dict,
+                        key_dict=self._lammps_dict)
 
         lf.store_as_vector = ['energy_tot', 'temperature', 'steps', 'volume', 'energy_pot']
         # print ("lf_keys: ", lf.status_dict['energy_tot'])
