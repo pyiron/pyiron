@@ -55,8 +55,8 @@ class Executable(object):
         if self._executable_lst:
             print('Unsorted',list(self._executable_lst.keys()))
             print('Sorted_lists',sorted(self._executable_lst.keys()))
-            self.version = sorted(self._executable_lst.keys())[0]
-            #self.version = '2016.11.17'
+            #self.version = sorted(self._executable_lst.keys())[0]
+            self.version = '2016.11.17'
 
     @property
     def version(self):
@@ -205,7 +205,7 @@ class Executable(object):
                             executable[len("run_" + self.__name__) + 1:-len(extension)] not in executable_dict.keys():
                         executable_dict[executable[len("run_" + self.__name__) + 1:-len(extension)]] = \
                             os.path.join(path, executable).replace('\\', '/')
-                        print('Executable', executable)
+
             return executable_dict
         except OSError:  # No executable exists - This is the case for GenericJob and other abstract job classes.
             return dict()
