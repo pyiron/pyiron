@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import inspect
+import textwrap
 from pyiron.base.job.generic import GenericJob
 
 """
@@ -458,7 +459,7 @@ class GenericMaster(GenericJob):
             self._child_id_func = None
         else:
             self._child_id_func_str = child_id_func_str
-            self._child_id_func = self.get_function_from_string(child_id_func_str)
+            self._child_id_func = get_function_from_string(child_id_func_str)
 
     def _get_item_when_str(self, item, child_id_lst, child_name_lst):
         """
@@ -522,16 +523,17 @@ class GenericMaster(GenericJob):
         """
         pass
 
-    @staticmethod
-    def get_function_from_string(function_str):
-        """
-        Convert a string of source code to a function
 
-        Args:
-            function_str: function source code
+def get_function_from_string(function_str):
+    """
+    Convert a string of source code to a function
 
-        Returns:
-            function:
-        """
-        exec(function_str)
-        return eval(function_str.split("(")[0][4:])
+    Args:
+        function_str: function source code
+
+    Returns:
+        function:
+    """
+    function_dedent_str = textwrap.dedent(function_str)
+    exec(function_dedent_str)
+    return eval(function_dedent_str.split("(")[0][4:])

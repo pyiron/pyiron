@@ -7,7 +7,7 @@ from collections import OrderedDict
 import inspect
 import time
 import numpy as np
-from pyiron.base.master.generic import GenericMaster
+from pyiron.base.master.generic import GenericMaster, get_function_from_string
 from pyiron.base.generic.parameters import GenericParameters
 
 """
@@ -292,7 +292,7 @@ class SerialMasterBase(GenericMaster):
                 self._convergence_goal = None
             else:
                 self._convergence_goal_str = convergence_goal_str
-                self._convergence_goal = self.get_function_from_string(convergence_goal_str)
+                self._convergence_goal = get_function_from_string(convergence_goal_str)
                 self._convergence_goal_qwargs = hdf5_input["convergence_goal_qwargs"]
 
     def get_from_childs(self, path):

@@ -17,7 +17,7 @@ pyiron
     :target: https://travis-ci.org/pyiron/pyiron
     :alt: Build Status
 
-.. image:: https://ci.appveyor.com/api/projects/status/wfdgqkxca1i19xcq?svg=true
+.. image:: https://ci.appveyor.com/api/projects/status/wfdgqkxca1i19xcq/branch/master?svg=true
     :target: https://ci.appveyor.com/project/pyiron-runner/pyiron/branch/master
     :alt: Build status
 
@@ -31,7 +31,7 @@ pyiron
     :alt: Screenshot of pyiron running inside jupyterlab.
 
 
-pyiron - an integrated development environment (IDE) for computational materials science. It combines several tools in a common plattform:
+pyiron - an integrated development environment (IDE) for computational materials science. It combines several tools in a common platform:
 
  - Atomic structure objects – compatible to the `Atomic Simulation Environment (ASE) <https://wiki.fysik.dtu.dk/ase/>`_.
  - Atomistic simulation codes – like `LAMMPS <http://lammps.sandia.gov>`_ and `VASP <https://www.vasp.at>`_.

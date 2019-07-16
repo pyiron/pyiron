@@ -389,7 +389,7 @@ class LammpsBase(AtomisticGenericJob):
             # print "tag_dict: ", tag_dict
 
         h5_dict = {"Step": "steps",
-                   "Temp": "temperatures",
+                   "Temp": "temperature",
                    "PotEng": "energy_pot",
                    "TotEng": "energy_tot",
                    "Pxx": "pressure_x",
@@ -422,7 +422,7 @@ class LammpsBase(AtomisticGenericJob):
                         h5_dict=h5_dict,
                         key_dict=lammps_dict)
 
-        lf.store_as_vector = ['energy_tot', 'temperatures', 'steps', 'volume', 'energy_pot']
+        lf.store_as_vector = ['energy_tot', 'temperature', 'steps', 'volume', 'energy_pot']
         # print ("lf_keys: ", lf.status_dict['energy_tot'])
 
         lf.combine_mat('pressure_x', 'pressure_xy', 'pressure_xz',
@@ -437,6 +437,9 @@ class LammpsBase(AtomisticGenericJob):
         if 'memory' in lf.status_dict.keys():
             del lf.status_dict['memory']
         with self.project_hdf5.open("output/generic") as hdf_output:
+            # This is a hack for backward comparability
+            if "temperature" in lf.status_dict.keys():
+                hdf_output["temperatures"] = np.array(lf.status_dict["temperature"])[0][1]
             lf.to_hdf(hdf_output)
 
     def calc_minimize(self, e_tol=0.0, f_tol=1e-2, max_iter=100000, pressure=None, n_print=100):
