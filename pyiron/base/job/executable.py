@@ -60,9 +60,9 @@ class Executable(object):
             self.version = '2.5'
         else:
             self.version = sorted(self._executable_lst.keys())[0]
-        if self._executable_lst:
-            print('Unsorted',list(self._executable_lst.keys()))
-            print('Sorted_lists',sorted(self._executable_lst.keys()))
+        #if self._executable_lst:
+            #print('Unsorted',list(self._executable_lst.keys()))
+            #print('Sorted_lists',sorted(self._executable_lst.keys()))
             #print('job_type',self.__name__)
             #self.version = '2016.11.17'
 
