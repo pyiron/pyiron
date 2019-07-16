@@ -54,6 +54,10 @@ class Executable(object):
         self._mpi = False
         if self.__name__ == 'lammps':
             self.version = '2016.11.17'
+        elif self.__name__ == 'vasp':
+            self.version = '5.3'
+        elif self.__name__ == 'sphinx':
+            self.version = '2.5'
         else:
             self.version = sorted(self._executable_lst.keys())[0]
         if self._executable_lst:
