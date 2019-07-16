@@ -97,6 +97,7 @@ class GenericParameters(PyironObject):
         self.comment_char = comment_char
         self.separator_char = separator_char
         self.multi_word_separator = "___"
+        self.read_only = False
         if input_file_name is None:
             self.load_default()
         else:

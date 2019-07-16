@@ -144,6 +144,15 @@ class LammpsBase(AtomisticGenericJob):
         """
         return self.view_potentials()
 
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        super(LammpsBase, self).set_input_to_read_only()
+        self.input.control.read_only = True
+        self.input.potential.read_only = True
+
     def validate_ready_to_run(self):
         """
 

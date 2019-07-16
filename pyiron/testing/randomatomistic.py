@@ -124,6 +124,13 @@ class ExampleJob(GenericJob):
                           "/executable.py"
         self._interactive_cache = {'alat': [], 'count': [], 'energy': []}
 
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        self.input.read_only = True
+
     # define routines that create all necessary input files
     def write_input(self):
         """
