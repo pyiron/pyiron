@@ -55,10 +55,8 @@ class Executable(object):
         if self._executable_lst:
             print('Unsorted',list(self._executable_lst.keys()))
             print('Sorted_lists',sorted(self._executable_lst.keys()))
-            if self._name == 'lammps':
-                self.version = '2016.11.17'
-            else:
-                self.version = sorted(self._executable_lst.keys())[0]
+            print('job_type',self.__name__)
+            self.version = sorted(self._executable_lst.keys())[0]
             #self.version = '2016.11.17'
 
     @property
