@@ -52,19 +52,6 @@ class Executable(object):
         self._executable = None
         self._executable_path = None
         self._mpi = False
-        #if self.__name__ == 'lammps':
-         #   self.version = '2016.11.17'
-        #elif self.__name__ == 'vasp':
-         #   self.version = '5.3'
-        #elif self.__name__ == 'sphinx':
-         #   self.version = '2.5'
-        #else:
-         #   self.version = sorted(self._executable_lst.keys())[0]
-        #if self._executable_lst:
-            #print('Unsorted',list(self._executable_lst.keys()))
-            #print('Sorted_lists',sorted(self._executable_lst.keys()))
-            #print('job_type',self.__name__)
-            #self.version = '2016.11.17'
         for executable in self._executable_lst.keys():
             if 'default' in executable:
                 self.version = executable
@@ -89,8 +76,6 @@ class Executable(object):
             str: default_version
         """
         return self.__version__
-        #or
-        #return sorted(self._executable_lst.keys())[0]
 
     @version.setter
     def version(self, new_version):
@@ -216,13 +201,6 @@ class Executable(object):
                             executable[len("run_" + self.__name__) + 1:-len(extension)] not in executable_dict.keys():
                         executable_dict[executable[len("run_" + self.__name__) + 1:-len(extension)]] = \
                             os.path.join(path, executable).replace('\\', '/')
-                        #if self.__name__ == 'lammps':
-                            #self.version = '2016.11.17'
-                        #else:
-                            #self.version = sorted(self._executable_lst.keys())[0]
-
-                #print('job_type',self.__name__)
-                #print(executable_dict)
             return executable_dict
         except OSError:  # No executable exists - This is the case for GenericJob and other abstract job classes.
             return dict()
