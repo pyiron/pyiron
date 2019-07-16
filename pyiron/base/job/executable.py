@@ -66,14 +66,15 @@ class Executable(object):
             #print('job_type',self.__name__)
             #self.version = '2016.11.17'
 
-    #@property
-    #def version(self):
-     #   """
-     #   Version of the Executable
-     #   Returns:
-      #      str: version
-       # """
-        #return self.__version__
+    @property
+    def version(self):
+        """
+        Version of the Executable
+
+        Returns:
+            str: version
+        """
+        return self.__version__
 
     @property
     def default_version(self):
