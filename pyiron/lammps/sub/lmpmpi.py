@@ -11,7 +11,7 @@ except ImportError:
 
 
 # Lammps executable
-job = lammps(cmdargs=['-screen', 'lmpscreen.log'])
+job = lammps(cmdargs=['-screen', 'none'])
 
 
 def extract_compute(funct_args):
