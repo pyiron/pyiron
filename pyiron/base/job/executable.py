@@ -53,7 +53,8 @@ class Executable(object):
         self._executable_path = None
         self._mpi = False
         if self._executable_lst:
-            print('Executable keys',self._executable_lst.keys())
+            print('Unsorted',list(self._executable_lst.keys()))
+            print('Sorted_lists',sorted(self._executable_lst.keys()))
             self.version = sorted(self._executable_lst.keys())[0]
 
     @property
