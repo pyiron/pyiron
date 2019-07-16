@@ -206,10 +206,10 @@ class Executable(object):
                             executable[len("run_" + self.__name__) + 1:-len(extension)] not in executable_dict.keys():
                         executable_dict[executable[len("run_" + self.__name__) + 1:-len(extension)]] = \
                             os.path.join(path, executable).replace('\\', '/')
-                 if self.__name__ == 'lammps':
-                     self.version = '2016.11.17'
-                 else:
-                     self.version = sorted(self._executable_lst.keys())[0]
+                        if self.__name__ == 'lammps':
+                            self.version = '2016.11.17'
+                        else:
+                            self.version = sorted(self._executable_lst.keys())[0]
 
                 #print('job_type',self.__name__)
                 #print(executable_dict)
