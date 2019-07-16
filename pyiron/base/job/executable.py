@@ -52,19 +52,22 @@ class Executable(object):
         self._executable = None
         self._executable_path = None
         self._mpi = False
-        if self.__name__ == 'lammps':
-            self.version = '2016.11.17'
-        elif self.__name__ == 'vasp':
-            self.version = '5.3'
-        elif self.__name__ == 'sphinx':
-            self.version = '2.5'
-        else:
-            self.version = sorted(self._executable_lst.keys())[0]
+        #if self.__name__ == 'lammps':
+         #   self.version = '2016.11.17'
+        #elif self.__name__ == 'vasp':
+         #   self.version = '5.3'
+        #elif self.__name__ == 'sphinx':
+         #   self.version = '2.5'
+        #else:
+         #   self.version = sorted(self._executable_lst.keys())[0]
         #if self._executable_lst:
             #print('Unsorted',list(self._executable_lst.keys()))
             #print('Sorted_lists',sorted(self._executable_lst.keys()))
             #print('job_type',self.__name__)
             #self.version = '2016.11.17'
+        for executable in self._executable_lst.keys():
+            if 'default' in executable:
+                self.version = self.executable
 
     @property
     def version(self):
