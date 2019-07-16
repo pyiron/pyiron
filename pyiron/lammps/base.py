@@ -12,6 +12,7 @@ import h5py
 import numpy as np
 import pandas as pd
 import warnings
+from pymatgen.io.lammps import outputs
 
 from pyiron.lammps.potential import LammpsPotentialFile, PotentialAvailable
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
@@ -347,91 +348,29 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
 
         """
-        log_file = self.job_file_name(file_name=file_name, cwd=cwd)
+        if cwd is not None:
+            file_name = cwd + '/' + file_name
         self.collect_errors(file_name)
-        # log_fileName = "logfile.out"
-        # self.collect_errors(log_fileName)
-        attr = self.input.control.dataset["Parameter"]
-        tag_dict = {"Loop time of": {"arg": "0",
-                                     "type": "float",
-                                     "h5": "time_loop"},
+        df = outputs.parse_lammps_log(file_name)[-1]
 
-                    "Memory usage per processor": {"arg": "1",
-                                                   "h5": "memory"}
-                    }
+        h5_dict = {"Step": "steps",
+                   "Temp": "temperature",
+                   "PotEng": "energy_pot",
+                   "TotEng": "energy_tot",
+                   "Volume": "volume"}
 
-        if 'minimize' in attr:
-            tag_dict["Step Temp PotEng TotEng Pxx Pxy Pxz Pyy Pyz Pzz Volume"] = {"arg": ":,:",
-                                                                                  "rows": "Loop",
-                                                                                  "splitTag": True}
+        df = df.rename(index=str, columns=h5_dict)
+        pressures = np.stack((df.Pxx, df.Pxy, df.Pxz,
+                              df.Pxy, df.Pyy, df.Pyz,
+                              df.Pxz, df.Pyz, df.Pzz), axis=-1).reshape(-1, 3, 3)
+        pressures *= 0.0001 # bar -> GPa
+        df = df.drop(columns=df.columns[((df.columns.str.len()==3) & df.columns.str.startswith('P'))])
+        df['pressures'] = pressures.tolist()
 
-
-        elif 'run' in attr:
-            num_iterations = ast.literal_eval(extract_data_from_file(log_file, tag="run")[0])
-            num_thermo = ast.literal_eval(extract_data_from_file(log_file, tag="thermo")[0])
-            num_iterations = num_iterations / num_thermo + 1
-
-            tag_dict["thermo_style custom"] = {"arg": ":",
-                                               "type": "str",
-                                               "h5": "thermo_style"}
-            tag_dict["$thermo_style custom"] = {"arg": ":,:",
-                                                "rows": num_iterations,
-                                                "splitTag": True}
-            # print "tag_dict: ", tag_dict
-
-        self._h5_dict = {"Step": "steps",
-                         "Temp": "temperature",
-                         "PotEng": "energy_pot",
-                         "TotEng": "energy_tot",
-                         "Pxx": "pressure_x",
-                         "Pxy": "pressure_xy",
-                         "Pxz": "pressure_xz",
-                         "Pyy": "pressure_y",
-                         "Pyz": "pressure_yz",
-                         "Pzz": "pressure_z",
-                         "Volume": "volume",
-                         "E_pair": "E_pair",
-                         "E_mol": "E_mol"
-                         }
-
-        self._lammps_dict = {"step": "Step",
-                             "temp": "Temp",
-                             "pe": "PotEng",
-                             "etotal": "TotEng",
-                             "pxx": "Pxx",
-                             "pxy": "Pxy",
-                             "pxz": "Pxz",
-                             "pyy": "Pyy",
-                             "pyz": "Pyz",
-                             "pzz": "Pzz",
-                             "vol": "Volume"
-                             }
-
-        lf = Logstatus()
-        lf.extract_file(file_name=log_file,
-                        tag_dict=tag_dict,
-                        h5_dict=self._h5_dict,
-                        key_dict=self._lammps_dict)
-
-        lf.store_as_vector = ['energy_tot', 'temperature', 'steps', 'volume', 'energy_pot']
-        # print ("lf_keys: ", lf.status_dict['energy_tot'])
-
-        lf.combine_mat('pressure_x', 'pressure_xy', 'pressure_xz',
-                       'pressure_y', 'pressure_yz', 'pressure_z', 'pressures')
-        lf.convert_unit('pressures', 0.0001)  # bar -> GPa
-
-        if 'minimize' not in attr:
-            if 'thermo_style' in lf.status_dict.keys():
-                del lf.status_dict['thermo_style']
-        if 'time_loop' in lf.status_dict.keys():
-            del lf.status_dict['time_loop']
-        if 'memory' in lf.status_dict.keys():
-            del lf.status_dict['memory']
         with self.project_hdf5.open("output/generic") as hdf_output:
             # This is a hack for backward comparability
-            if "temperature" in lf.status_dict.keys():
-                hdf_output["temperatures"] = np.array(lf.status_dict["temperature"])[0][1]
-            lf.to_hdf(hdf_output)
+            for k,v in df.items():
+                hdf_output[k] = np.array(v)
 
     def calc_minimize(self, e_tol=0.0, f_tol=1e-2, max_iter=100000, pressure=None, n_print=100):
         """
