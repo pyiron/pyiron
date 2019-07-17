@@ -1111,6 +1111,13 @@ class GenericJob(JobCore):
         """
         raise NotImplementedError('Refresh is not supported for this job type for job  ' + str(self.job_id))
 
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        pass
+
     def _run_if_busy(self):
         """
         Internal helper function the run if busy function is called when the job status is 'busy'.

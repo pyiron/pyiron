@@ -418,6 +418,14 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
             self.input["alat"] = self._structure.cell[0, 0]
             # print("set alat: {}".format(self.input["alat"]))
 
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        super(AtomisticExampleJob, self).set_input_to_read_only()
+        self.input.read_only = True
+
     def get_structure(self, iteration_step=-1):
         return self.structure
 

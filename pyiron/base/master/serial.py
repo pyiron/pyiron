@@ -204,6 +204,13 @@ class SerialMasterBase(GenericMaster):
         else:
             raise ValueError('Input can only be set after a start job has been assinged.')
 
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        self._input.read_only = True
+
     def get_initial_child_name(self):
         """
         Get name of the initial child.
