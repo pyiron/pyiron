@@ -134,6 +134,8 @@ class JobType(object):
             job.logger.warn('Job aborted - please remove it and run again! {}'.format(job.job_name))
         if not job.status.initialized:
             job.from_hdf()
+        if job.status.finished or job.status.collect:
+            job.set_input_to_read_only()
         return job
 
     @staticmethod

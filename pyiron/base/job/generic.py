@@ -651,6 +651,7 @@ class GenericJob(JobCore):
             else:
                 job_crashed = True
 
+        self.set_input_to_read_only()
         self.status.collect = True
         self._logger.info('{}, status: {}, output: {}'.format(self.job_info_str, self.status, out))
         self.run()

@@ -304,6 +304,16 @@ class VaspBase(GenericDFTJob):
                                          'url': 'https://link.aps.org/doi/10.1103/PhysRevB.54.11169',
                                          }}}
 
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        super(VaspBase, self).set_input_to_read_only()
+        self.input.incar.read_only = True
+        self.input.kpoints.read_only = True
+        self.input.potcar.read_only = True
+
     # Compatibility functions
     def write_input(self):
         """
