@@ -364,7 +364,7 @@ class EnergyVolumeFit(object):
         return volume_lst, energy_lst
 
     def fit_eos_general_intern(self, fittype='birchmurnaghan'):
-        self._fit_dict = self.fit_eos_general(fittype=fittype)
+        self._fit_dict = self.fit_eos_general(volume_lst=self._volume_lst, energy_lst=self._energy_lst, fittype=fittype)
 
     def fit_eos_general(self, volume_lst=None, energy_lst=None, fittype='birchmurnaghan'):
         """
