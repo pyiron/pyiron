@@ -171,7 +171,7 @@ class JobCore(PyironObject):
                                                                   aborted, collect, suspended, refresh, busy, finished]
 
         Returns:
-            (str): status
+            (str/pyiron.base.job.jobstatus.JobStatus): status
         """
         return self._status
 
@@ -690,13 +690,23 @@ class JobCore(PyironObject):
         """
         self.job_name = new_job_name
 
+    def reset_job_id(self, job_id):
+        """
+        The reset_job_id function has to be implemented by the derived classes - usually the GenericJob class
+
+        Args:
+            job_id (int):
+
+        """
+        raise NotImplementedError("reset_job_id() should be implemented in the derived class")
+
     def save(self):
         """
         The save function has to be implemented by the derived classes - usually the GenericJob class
         """
         raise NotImplementedError("save() should be implemented in the derived class")
 
-    def to_hdf(self, hdf, group_name="group"):
+    def to_hdf(self, hdf=None, group_name="group"):
         """
         Store object in hdf5 format - The function has to be implemented by the derived classes
         - usually the GenericJob class
@@ -707,7 +717,7 @@ class JobCore(PyironObject):
         """
         raise NotImplementedError("to_hdf() should be implemented in the derived class")
 
-    def from_hdf(self, hdf, group_name="group"):
+    def from_hdf(self, hdf=None, group_name="group"):
         """
         Restore object from hdf5 format - The function has to be implemented by the derived classes
         - usually the GenericJob class

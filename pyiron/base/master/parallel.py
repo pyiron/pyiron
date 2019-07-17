@@ -307,7 +307,8 @@ class ParallelMaster(GenericMaster):
 
     def refresh_submission_status(self):
         """
-        Refresh the submission status - if a job ID job_id is set then the submission status is loaded from the database.
+        Refresh the submission status - if a job ID job_id is set then the submission status is loaded from the
+        database.
         """
         if self.job_id:
             self.submission_status = SubmissionStatus(db=self.project.db, job_id=self.job_id)
