@@ -183,13 +183,19 @@ class FlexibleMaster(GenericMaster):
 
     def write_input(self):
         """
-        Skip the write input function - it is not used for the FlexibleMaster
+        write_input is not implemented for FlexibleMaster jobs
         """
         pass
 
     def collect_output(self):
         """
-        Skip the collect output function - it is not used for the FlexibleMaster
+        Collect output is not implemented for FlexibleMaster jobs
+        """
+        pass
+
+    def run_if_interactive(self):
+        """
+        run_if_interactive() is not implemented for FlexibleMaster jobs
         """
         pass
 
