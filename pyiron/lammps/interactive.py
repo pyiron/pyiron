@@ -32,7 +32,6 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_prism = None
         self._interactive_run_command = None
         self._interactive_grand_canonical = True
-        self._disable_lmp_output = False
         self.interactive_cache = {'cells': [],
                                   'energy_pot': [],
                                   'energy_tot': [],
@@ -181,10 +180,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
     def interactive_initialize_interface(self):
         if self.server.run_mode.interactive and self.server.cores == 1:
             lammps = getattr(importlib.import_module('lammps'), 'lammps')
-            if self._disable_lmp_output:
-                self._interactive_library = lammps(cmdargs=['-screen', 'lmpscreen.log'])
-            else:
-                self._interactive_library = lammps()
+            self._interactive_library = lammps(cmdargs=['-screen', 'none'])
         else:
             self._create_working_directory()
             self._interactive_library = LammpsLibrary(cores=self.server.cores, working_directory=self.working_directory)
@@ -526,7 +522,8 @@ class LammpsLibrary(object):
     def close(self):
         self._send(command='close')
         self._process.kill()
+        self._process = None
 
     def __del__(self):
-        # print('object killed __del__')
-        self.close()
+        if self._process is not None:
+            self.close()
