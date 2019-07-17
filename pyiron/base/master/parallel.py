@@ -416,7 +416,7 @@ class ParallelMaster(GenericMaster):
         """
         return len(self.child_ids)
 
-    def _run_if_refresh(self):
+    def run_if_refresh(self):
         """
         Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
         suspended previously, the job is going to be started again, to be continued.
@@ -434,7 +434,7 @@ class ParallelMaster(GenericMaster):
                 self.status.suspended = True
             if self.status.busy:
                 self.status.refresh = True
-                self._run_if_refresh()
+                self.run_if_refresh()
 
     def _run_if_collect(self):
         """
@@ -532,7 +532,7 @@ class ParallelMaster(GenericMaster):
                 if job.server.run_mode.thread:
                     job_lst.append(job._process)
             process_lst = [process.communicate() for process in job_lst if process]
-            self._run_if_refresh()
+            self.run_if_refresh()
         else:
             self.run_static()
 

@@ -277,6 +277,22 @@ class ListMaster(GenericMaster):
         for job_id in self.child_ids:
             yield self._hdf5.load(job_id, convert_to_object=convert_to_object)
 
+    def run_if_refresh(self):
+        """
+        Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
+        suspended previously, the job is going to be started again, to be continued.
+        """
+        self._logger.info("{}, status: {}, finished: {} parallel master "
+                          "refresh".format(self.job_info_str, self.status, self.is_finished()))
+        if self.is_finished() and not self.server.run_mode.modal:
+            self.status.finished = True
+        elif (self.server.run_mode.non_modal or self.server.run_mode.queue) and not self.submission_status.finished:
+            self.run_static()
+        else:
+            self.refresh_job_status()
+            if self.status.refresh:
+                self.status.suspended = True
+
     def collect_output(self):
         """
         Collect output is not implemented for ListMaster jobs
@@ -314,19 +330,3 @@ class ListMaster(GenericMaster):
             int: length of the ListMaster
         """
         return len(self.child_ids + self._job_name_lst)
-
-    def _run_if_refresh(self):
-        """
-        Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
-        suspended previously, the job is going to be started again, to be continued.
-        """
-        self._logger.info("{}, status: {}, finished: {} parallel master "
-                          "refresh".format(self.job_info_str, self.status, self.is_finished()))
-        if self.is_finished() and not self.server.run_mode.modal:
-            self.status.finished = True
-        elif (self.server.run_mode.non_modal or self.server.run_mode.queue) and not self.submission_status.finished:
-            self.run_static()
-        else:
-            self.refresh_job_status()
-            if self.status.refresh:
-                self.status.suspended = True

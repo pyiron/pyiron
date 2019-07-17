@@ -340,7 +340,7 @@ class SerialMasterBase(GenericMaster):
         job.run()
         if job._process:
             job._process.communicate()
-        self._run_if_refresh()
+        self.run_if_refresh()
 
     def _run_if_master_non_modal_child_non_modal(self, job):
         job.run()
@@ -349,14 +349,14 @@ class SerialMasterBase(GenericMaster):
 
     def _run_if_master_modal_child_modal(self, job):
         job.run()
-        self._run_if_refresh()
+        self.run_if_refresh()
 
     def _run_if_master_modal_child_non_modal(self, job):
         job.run()
         while not job.status.finished and not job.status.aborted:
             job.refresh_job_status()
             time.sleep(5)
-        self._run_if_refresh()
+        self.run_if_refresh()
 
     def run_static(self, **qwargs):
         self.status.running = True
@@ -454,7 +454,7 @@ class SerialMasterBase(GenericMaster):
             item = total_lst[item]
         return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
 
-    def _run_if_refresh(self):
+    def run_if_refresh(self):
         """
         Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
         suspended previously, the job is going to be started again, to be continued.
