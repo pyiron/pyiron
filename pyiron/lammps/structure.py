@@ -11,7 +11,10 @@ import decimal as dec
 try:
     from ase.calculators.lammpsrun import Prism
 except ImportError:
-    from ase.calculators.lammpsrun import prism as Prism
+    try:
+        from ase.calculators.lammps import Prism
+    except ImportError:
+        from ase.calculators.lammpsrun import prism as Prism
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Yury Lysogorskiy, Jan Janssen, Markus Tautschnig"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
