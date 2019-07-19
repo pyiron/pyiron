@@ -9,10 +9,11 @@ from pyiron.base.generic.parameters import GenericParameters
 import decimal as dec
 
 try:
-    from ase.calculators.lammpsrun import Prism
+    from ase.calculators.lammps import Prism
+
 except ImportError:
     try:
-        from ase.calculators.lammps import Prism
+        from ase.calculators.lammpsrun import Prism
     except ImportError:
         from ase.calculators.lammpsrun import prism as Prism
 
