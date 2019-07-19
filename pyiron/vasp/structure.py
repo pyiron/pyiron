@@ -296,3 +296,58 @@ def vasp_sorter(structure):
         for i in indices:
             sorted_indices.append(i)
     return sorted_indices
+
+
+def manip_contcar(filename, new_filename, add_pos):
+    """
+    Manipulate a CONTCAR/POSCAR file by adding something to the positions
+
+    Args:
+        filename (str):  Filename/path of the input file
+        new_filename (str): Filename/path of the output file
+        add_pos (list/numpy.ndarray): Array of values to be added to the positions of the input
+
+    """
+    actual_struct = read_atoms(filename)
+    n = 0
+    direct = True
+    with open(filename, "r") as f:
+        lines = f.readlines()
+        for line in lines:
+            if "Direct" in line or "Cartesian" in line:
+                direct = "Direct" in line
+                break
+            n += 1
+    pos_list = list()
+    sd_list = list()
+    if len(lines[n+1].split()) == 6:
+        for line in lines[n+1: n+1+len(actual_struct)]:
+            pos_list.append([float(val) for val in line.split()[0:3]])
+            sd_list.append(['T' in val for val in line.split()[3:]])
+    else:
+        for line in lines[n+1: n+1+len(actual_struct)]:
+            pos_list.append([float(val) for val in line.split()[0:3]])
+    old_pos = np.array(pos_list)
+    if direct:
+        add_pos_rel = np.dot(add_pos, np.linalg.inv(actual_struct.cell))
+        new_pos = old_pos + add_pos_rel
+    else:
+        new_pos = old_pos + add_pos
+    new_lines = lines.copy()
+    new_pos_str = np.array(new_pos, dtype=str)
+    if len(sd_list) > 0:
+        bool_list = np.zeros_like(old_pos, dtype=str)
+        bool_list[:] = "F"
+        bool_list[sd_list] = "T"
+        for i, pos in enumerate(new_pos_str):
+            linestr = np.append(pos, bool_list[i])
+            new_lines[n+1+i] = " ".join([str(val) for val in linestr])+ "\n"
+    else:
+        for i, pos in enumerate(new_pos_str):
+            linestr = pos
+            new_lines[n+1+i] = " ".join([str(val) for val in linestr]) + "\n"
+
+    with open(new_filename, "w") as f:
+        for new_line in new_lines:
+            f.write(new_line)
+
