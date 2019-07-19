@@ -84,8 +84,8 @@ class Project(ProjectPath):
 
         .. attribute:: job_type
 
-            Job Type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster', 'ScriptJob',
-                                                               'ListMaster']
+            Job Type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster',
+                                                               'ScriptJob', 'ListMaster']
 
         .. attribute:: view_mode
 
@@ -225,7 +225,7 @@ class Project(ProjectPath):
         Returns:
             GenericJob: job object depending on the job_type selected
         """
-        job_name = job_name.replace('.','_')
+        job_name = job_name.replace('.', '_')
         job = JobType(job_type, project=ProjectHDFio(project=self.copy(), file_name=job_name),
                       job_name=job_name, job_class_dict=self.job_type.job_class_dict)
         if self.user is not None:
@@ -273,15 +273,16 @@ class Project(ProjectPath):
         """
         return get_db_columns(self.db)
 
-    def get_jobs(self, recursive=True, columns=["id", "project"]):
+    def get_jobs(self, recursive=True, columns=None):
         """
         Internal function to return the jobs as dictionary rather than a pandas.Dataframe
 
         Args:
             recursive (bool): search subprojects [True/False]
             columns (list): by default only the columns ['id', 'project'] are selected, but the user can select a subset
-                            of ['id', 'status', 'chemicalformula', 'job', 'subjob', 'project', 'projectpath', 'timestart',
-                            'timestop', 'totalcputime', 'computer', 'hamilton', 'hamversion', 'parentid', 'masterid']
+                            of ['id', 'status', 'chemicalformula', 'job', 'subjob', 'project', 'projectpath',
+                            'timestart', 'timestop', 'totalcputime', 'computer', 'hamilton', 'hamversion', 'parentid',
+                            'masterid']
 
         Returns:
             dict: columns are used as keys and point to a list of the corresponding values
@@ -437,8 +438,7 @@ class Project(ProjectPath):
         """
         return [(key, self[key]) for key in self.keys()]
 
-    def job_table(self, recursive=True, columns=["job", "project", "chemicalformula"], all_columns=True, sort_by="id",
-                  element_lst=None):
+    def job_table(self, recursive=True, columns=None, all_columns=True, sort_by="id", element_lst=None):
         """
         Access the job_table
 
@@ -446,8 +446,8 @@ class Project(ProjectPath):
             recursive (bool): search subprojects [True/False] - default=True
             columns (list): by default only the columns ['job', 'project', 'chemicalformula'] are selected, but the
                             user can select a subset of ['id', 'status', 'chemicalformula', 'job', 'subjob', 'project',
-                            'projectpath', 'timestart', 'timestop', 'totalcputime', 'computer', 'hamilton', 'hamversion',
-                            'parentid', 'masterid']
+                            'projectpath', 'timestart', 'timestop', 'totalcputime', 'computer', 'hamilton',
+                            'hamversion', 'parentid', 'masterid']
             all_columns (bool): Select all columns - this overwrites the columns option.
             sort_by (str): Sort by a specific column
             element_lst (list): list of elements required in the chemical formular - by default None
@@ -536,7 +536,7 @@ class Project(ProjectPath):
             recursive (bool): search subprojects [True/False] - default=False
 
         Returns:
-            dict: columns are used as keys and point to a list of the corresponding values
+            list: list of nodes/ jobs/ pyiron objects inside the project
         """
         if "nodes" not in self._filter:
             return []
@@ -647,10 +647,6 @@ class Project(ProjectPath):
         """
         Display the queuing system table as pandas.Dataframe
 
-        Args:
-            project_only (bool): Query only for jobs within the current project - True by default
-            recursive (bool): Include jobs from sub projects
-
         Returns:
             pandas.DataFrame: Output from the queuing system - optimized for the Sun grid engine
         """
@@ -735,7 +731,8 @@ class Project(ProjectPath):
 
     def remove_jobs(self, recursive=False):
         """
-        Remove all jobs in the current project and in all subprojects if recursive=True is selected - see also remove_job()
+        Remove all jobs in the current project and in all subprojects if recursive=True is selected - see also
+        remove_job()
 
         Args:
             recursive (bool): [True/False] delete all jobs in all subprojects - default=False
@@ -767,7 +764,8 @@ class Project(ProjectPath):
 
     def delete_output_files_jobs(self, recursive=False):
         """
-        Delete the output files of all finished jobs in the current project and in all subprojects if recursive=True is selected.
+        Delete the output files of all finished jobs in the current project and in all subprojects if recursive=True is
+        selected.
 
         Args:
             recursive (bool): [True/False] delete the output files of all jobs in all subprojects - default=False
@@ -816,12 +814,12 @@ class Project(ProjectPath):
             job_specifier (str): name of the job or job ID
             status (str): job status can be one of the following ['initialized', 'appended', 'created', 'submitted',
                          'running', 'aborted', 'collect', 'suspended', 'refresh', 'busy', 'finished']
-
+            project (str): project path
         """
         if not project:
             project = self.project_path
-        return set_job_status(database=self.db, sql_query=self.sql_query, user=self.user, project_path=project,
-                              job_specifier=job_specifier, status=status)
+        set_job_status(database=self.db, sql_query=self.sql_query, user=self.user, project_path=project,
+                       job_specifier=job_specifier, status=status)
 
     def values(self):
         """
