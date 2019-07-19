@@ -139,6 +139,9 @@ class UnfoldingPrism(Prism):
         """
         return tuple([x for x in np.dot(position, self.R)])
 
+    def f2qdec(self, f):
+        return dec.Decimal(repr(f)).quantize(self.car_prec, dec.ROUND_DOWN)
+
 
 class LammpsStructure(GenericParameters):
     """
