@@ -338,7 +338,7 @@ def manip_contcar(filename, new_filename, add_pos):
     if len(sd_list) > 0:
         bool_list = np.zeros_like(old_pos, dtype=str)
         bool_list[:] = "F"
-        bool_list[sd_list] = "T"
+        bool_list[np.array(sd_list)] = "T"
         for i, pos in enumerate(new_pos_str):
             linestr = np.append(pos, bool_list[i])
             new_lines[n+1+i] = " ".join([str(val) for val in linestr])+ "\n"
@@ -350,4 +350,3 @@ def manip_contcar(filename, new_filename, add_pos):
     with open(new_filename, "w") as f:
         for new_line in new_lines:
             f.write(new_line)
-
