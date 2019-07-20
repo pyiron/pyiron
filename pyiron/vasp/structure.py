@@ -341,11 +341,15 @@ def manip_contcar(filename, new_filename, add_pos):
         bool_list[np.array(sd_list)] = "T"
         for i, pos in enumerate(new_pos_str):
             linestr = np.append(pos, bool_list[i])
-            new_lines[n+1+i] = " ".join([str(val) for val in linestr])+ "\n"
+            new_lines[n+1+i] = " ".join([str(val) for val in linestr]) + "\n"
     else:
         for i, pos in enumerate(new_pos_str):
             linestr = pos
             new_lines[n+1+i] = " ".join([str(val) for val in linestr]) + "\n"
+
+    # Exclude predictor corrector positions
+    if len(new_lines[n+len(new_pos_str):]) >= 2*len(new_pos_str):
+        new_lines = new_lines[:n + 2*(len(new_pos_str)) + 2]
 
     with open(new_filename, "w") as f:
         for new_line in new_lines:
