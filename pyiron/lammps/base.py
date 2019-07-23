@@ -12,7 +12,7 @@ import h5py
 import numpy as np
 import pandas as pd
 import warnings
-from pymatgen.io.lammps import outputs
+from io import StringIO
 
 from pyiron.lammps.potential import LammpsPotentialFile, PotentialAvailable
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
@@ -360,7 +360,15 @@ class LammpsBase(AtomisticGenericJob):
         if cwd is not None:
             file_name = cwd + '/' + file_name
         self.collect_errors(file_name)
-        df = outputs.parse_lammps_log(file_name)[-1]
+        with open(file_name, 'r') as f:
+            f = f.readlines()
+            l_start = np.where([line.startswith('Step') for line in f])[0]
+            l_end = np.where([line.startswith('Loop') for line in f])[0]
+            if len(l_start)>len(l_end):
+                l_end = np.append(l_end, [None])
+            df = [pd.read_csv(StringIO('\n'.join(f[llst:llen])),
+                              delim_whitespace=True) for llst, llen in zip(l_start, l_end)]
+        df = df[-1]
 
         h5_dict = {"Step": "steps",
                    "Temp": "temperature",
