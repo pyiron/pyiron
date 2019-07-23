@@ -34,11 +34,15 @@ class ChemicalElement(object):
         """
         self._dataset = None
         self.sub = sub
-        if 'Parent' in self.sub.index:
-            self._mendeleev_element = element(self.sub.Parent)
-        else:
-            self._mendeleev_element = element(self.sub.Abbreviation)
-        self._mendeleev_property_lst = [s for s in dir(self._mendeleev_element) if not s.startswith('_')]
+        self._mendeleev_element = None
+        self._mendeleev_property_lst = None
+        if isinstance(self.sub, str):
+            self._init_mendeleev(self.sub)
+        elif 'Parent' in self.sub.index and isinstance(self.sub.Parent, str):
+            self._init_mendeleev(self.sub.Parent)
+        elif len(self.sub) > 0:
+            self._init_mendeleev(self.sub.Abbreviation)
+
         self._mendeleev_translation_dict = {'AtomicNumber': 'atomic_number',
                                             'AtomicRadius': 'covalent_radius_cordero',
                                             'AtomicMass': 'mass',
@@ -53,6 +57,10 @@ class ChemicalElement(object):
                                             'ElectronAffinity': 'electron_affinity'
                                             }
         self.el = None
+
+    def _init_mendeleev(self, element_str):
+        self._mendeleev_element = element(element_str)
+        self._mendeleev_property_lst = [s for s in dir(self._mendeleev_element) if not s.startswith('_')]
 
     def __getattr__(self, item):
         return self[item]
@@ -150,8 +158,10 @@ class ChemicalElement(object):
                     if key in 'Parent':
                         self.sub = pse.dataframe.loc[val]
                         self.sub['Parent'] = val
+                        self._init_mendeleev(val)
                     else:
                         self.sub['Parent'] = None
+                        self._init_mendeleev(elname)
                     self.sub.name = elname
             if "tagData" in hdf_el.list_groups():
                 with hdf_el.open("tagData") as hdf_tag:  # "Dictionary of element tag static"
