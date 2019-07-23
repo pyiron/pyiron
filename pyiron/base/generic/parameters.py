@@ -7,6 +7,7 @@ import numpy as np
 import os
 import pandas
 import posixpath
+import warnings
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.template import PyironObject
 
@@ -269,7 +270,7 @@ class GenericParameters(PyironObject):
 
     @staticmethod
     def _read_only_error():
-        raise ValueError('GenericParameters read_only')
+        warnings.warn('The input in GenericParameters changed, while the state of the job was already finished.')
 
     def load_string(self, input_str):
         """
@@ -413,7 +414,7 @@ class GenericParameters(PyironObject):
                 if self.read_only and self._dataset["Comment"][i_key] != comment:
                     self._read_only_error()
                 self._dataset["Comment"][i_key] = comment
-            if self.read_only and self._dataset["Value"][i_key] != str(val):
+            if self.read_only and str(self._dataset["Value"][i_key]) != str(val):
                 self._read_only_error()
             self._dataset["Value"][i_key] = str(val)
 
@@ -469,7 +470,7 @@ class GenericParameters(PyironObject):
         Args:
             key_list (list): list of keys to be removed
         """
-        if self.read_only:
+        if self.read_only and any([k in self._dataset["Parameter"] for k in key_list]):
             self._read_only_error()
         for key in key_list:
             params = np.array(self._dataset["Parameter"])
