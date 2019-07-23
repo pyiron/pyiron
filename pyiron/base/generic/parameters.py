@@ -469,7 +469,7 @@ class GenericParameters(PyironObject):
         Args:
             key_list (list): list of keys to be removed
         """
-        if self.read_only:
+        if self.read_only and any([k in self._dataset["Parameter"] for k in key_list]):
             self._read_only_error()
         for key in key_list:
             params = np.array(self._dataset["Parameter"])
