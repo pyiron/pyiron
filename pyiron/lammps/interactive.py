@@ -144,7 +144,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                        'minimize']:
                 continue
             else:
-                self._interactive_lib_command(key + ' ' + str(value))
+                self._interactive_lib_command(' '.join(key.split(self.input.control.multi_word_separator)) + ' ' + str(value))
 
     def _interactive_set_potential(self):
         potential_lst = []

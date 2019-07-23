@@ -80,7 +80,7 @@ class LammpsControl(GenericParameters):
             self.remove_keys(["fix___nve"])
         self.set(minimize=str(e_tol) + ' ' + str(f_tol) + ' ' + str(max_iter) + " " + str(max_evaluations))
         self.remove_keys(['run', 'velocity'])
-        self.modify(variable___dumptime___equal=n_print, thermo=n_print)
+        self.modify(variable___dumptime='equal n_print', thermo=n_print)
 
     def calc_static(self):
         self.set(run='0')
