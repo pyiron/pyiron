@@ -7,6 +7,7 @@ import numpy as np
 import os
 import pandas
 import posixpath
+import warnings
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.template import PyironObject
 
@@ -269,7 +270,7 @@ class GenericParameters(PyironObject):
 
     @staticmethod
     def _read_only_error():
-        raise ValueError('GenericParameters read_only')
+        warnings.warn('The input in GenericParameters changed, while the state of the job was already finished.')
 
     def load_string(self, input_str):
         """
