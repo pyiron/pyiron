@@ -537,15 +537,21 @@ class GenericParameters(PyironObject):
             tab_dict["Parameter"] = ["" for _ in tab_dict["Value"]]
 
         string_lst = []
-        for par, _, c in zip(tab_dict["Parameter"], tab_dict["Value"], tab_dict["Comment"]):
-            v = self[par]
+        if self._val_only:
+            value_lst = tab_dict["Value"]
+        else:
+            value_lst = [self[p] for p in tab_dict["Parameter"]]
+        for par, v, c in zip(tab_dict["Parameter"], value_lst, tab_dict["Comment"]):
             # special treatment for values that are bool or str
-            if isinstance(v, bool):
-                v_str = self._bool_dict[v]
-            elif isinstance(v, str):  # TODO: introduce variable for string symbol (" or ')
-                v_str = v
-            else:
+            if self._val_only:
                 v_str = str(v)
+            else:
+                if isinstance(v, bool):
+                    v_str = self._bool_dict[v]
+                elif isinstance(v, str):  # TODO: introduce variable for string symbol (" or ')
+                    v_str = v
+                else:
+                    v_str = str(v)
 
             if par == "Comment":
                 string_lst.append(str(v) + self.end_value_char + "\n")
