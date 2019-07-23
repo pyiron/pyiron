@@ -230,6 +230,7 @@ class LammpsBase(AtomisticGenericJob):
         if self.structure is None:
             raise ValueError("Input structure not set. Use method set_structure()")
         lmp_structure = self._get_lammps_structure(structure=self.structure, cutoff_radius=self.cutoff_radius)
+        lmp_structure.val_only = True
         lmp_structure.write_file(file_name="structure.inp", cwd=self.working_directory)
         version_int_lst = self._get_executable_version_number()
         if version_int_lst is not None and 'dump_modify' in self.input.control._dataset['Parameter'] and \
