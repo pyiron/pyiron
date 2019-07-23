@@ -17,3 +17,7 @@ class TestLammps(unittest.TestCase):
         self.assertEqual(job_hash_dict['job_1_0'], 84649)
         self.assertEqual(job_hash_dict['job_1_1'], 99268)
         self.assertEqual(job_hash_dict['job_1_2'], 45752)
+
+
+if __name__ == '__main__':
+    unittest.main()
