@@ -129,7 +129,7 @@ class LammpsControl(GenericParameters):
         Returns:
             int: random seed generated based on the hash
         """
-        return int(str(int(hashlib.sha1(job_name.encode()).hexdigest(), 16))[5 * seed:5 * seed + 5])
+        return int(str(int(hashlib.sha2(job_name.encode()).hexdigest(), 16))[5 * seed:5 * seed + 5])
 
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=1.0, n_print=100,
                 temperature_damping_timescale=100.0, pressure_damping_timescale=1000.0, seed=None, tloop=None,
