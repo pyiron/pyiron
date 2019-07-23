@@ -514,7 +514,7 @@ class LammpsBase(AtomisticGenericJob):
                                    time_step=time_step, n_print=n_print, temperature_damping_timescale=temperature_damping_timescale,
                                    pressure_damping_timescale=pressure_damping_timescale,
                                    seed=seed, tloop=tloop, initial_temperature=initial_temperature, langevin=langevin,
-                                   delta_temp=delta_temp, delta_press=delta_press)
+                                   delta_temp=delta_temp, delta_press=delta_press, job_name=self.job_name)
 
     # define hdf5 input and output
     def to_hdf(self, hdf=None, group_name=None):
