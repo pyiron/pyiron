@@ -75,7 +75,7 @@ class Executable(object):
             str: default_version
         """
         for executable in self._executable_lst.keys():
-            if 'default' in executable:
+            if 'default' in executable and 'mpi' not in executable:
                 return executable
         return sorted(self._executable_lst.keys())[0]
 
