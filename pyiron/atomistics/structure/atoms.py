@@ -2499,10 +2499,16 @@ class Atoms(object):
                     self.indices[key] = ind
                 else:
                     self.indices[key] = ind
+                    delete_indices = list()
+                    new_indices = self.indices.copy()
                     for i, rep in enumerate(replace_list):
                         if i != ind and rep:
-                            del new_species[i]
-                            self.indices[self.indices > i] -= 1
+                            delete_indices.append(i)
+                            # del new_species[i]
+                            new_indices[new_indices > i] -= 1
+                    self.indices = new_indices.copy()
+                    new_species = np.array(new_species)[np.setdiff1d(np.arange(len(new_species)),
+                                                                     delete_indices)].tolist()
                     self.set_species(new_species)
         else:
             raise NotImplementedError()
@@ -3581,7 +3587,7 @@ def ase_to_pyiron(ase_obj):
         if any(spins == np.array(None)):
             spins[spins == np.array(None)] = 0.0
         pyiron_atoms = Atoms(elements=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins)
-    if len(ase_obj.constraints) != 0:
+    if hasattr(ase_obj, 'constraints') and len(ase_obj.constraints) != 0:
         for constraint in ase_obj.constraints:
             constraint_dict = constraint.todict()
             if constraint_dict['name'] == 'FixAtoms':
