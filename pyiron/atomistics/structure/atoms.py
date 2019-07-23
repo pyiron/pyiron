@@ -2499,10 +2499,16 @@ class Atoms(object):
                     self.indices[key] = ind
                 else:
                     self.indices[key] = ind
+                    delete_indices = list()
+                    new_indices = self.indices.copy()
                     for i, rep in enumerate(replace_list):
                         if i != ind and rep:
-                            del new_species[i]
-                            self.indices[self.indices > i] -= 1
+                            delete_indices.append(i)
+                            # del new_species[i]
+                            new_indices[new_indices > i] -= 1
+                    self.indices = new_indices.copy()
+                    new_species = np.array(new_species)[np.setdiff1d(np.arange(len(new_species)),
+                                                                     delete_indices)].tolist()
                     self.set_species(new_species)
         else:
             raise NotImplementedError()
