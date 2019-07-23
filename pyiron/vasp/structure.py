@@ -333,7 +333,7 @@ def manip_contcar(filename, new_filename, add_pos):
         new_pos = old_pos + add_pos_rel
     else:
         new_pos = old_pos + add_pos
-    new_lines = lines.copy()
+    new_lines = lines
     new_pos_str = np.array(new_pos, dtype=str)
     if len(sd_list) > 0:
         bool_list = np.zeros_like(old_pos, dtype=str)
