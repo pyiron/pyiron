@@ -3581,7 +3581,7 @@ def ase_to_pyiron(ase_obj):
         if any(spins == np.array(None)):
             spins[spins == np.array(None)] = 0.0
         pyiron_atoms = Atoms(elements=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins)
-    if len(ase_obj.constraints) != 0:
+    if hasattr(ase_obj, 'constraints') and len(ase_obj.constraints) != 0:
         for constraint in ase_obj.constraints:
             constraint_dict = constraint.todict()
             if constraint_dict['name'] == 'FixAtoms':
