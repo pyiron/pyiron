@@ -80,7 +80,7 @@ class LammpsControl(GenericParameters):
             self.remove_keys(["fix___nve"])
         self.set(minimize=str(e_tol) + ' ' + str(f_tol) + ' ' + str(max_iter) + " " + str(max_evaluations))
         self.remove_keys(['run', 'velocity'])
-        self.modify(variable___dumptime='equal'+str(n_print), thermo=n_print)
+        self.modify(variable___dumptime='equal '+str(n_print), thermo=n_print)
 
     def calc_static(self):
         self.set(run='0')
@@ -252,6 +252,8 @@ class LammpsControl(GenericParameters):
                                                                      str(temperature),
                                                                      str(temperature_damping_timescale))
         else:  # NVE
+            if langevin:
+                warnings.warn("Temperature not set; Langevin ignored.")
             fix_ensemble_str = 'all nve'
             initial_temperature = 0
 
