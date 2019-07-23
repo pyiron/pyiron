@@ -77,8 +77,7 @@ class Executable(object):
         for executable in self._executable_lst.keys():
             if 'default' in executable:
                 return executable
-        else:
-            return sorted(self._executable_lst.keys())[0]
+        return sorted(self._executable_lst.keys())[0]
 
     @version.setter
     def version(self, new_version):
