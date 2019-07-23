@@ -6,6 +6,7 @@ from __future__ import print_function, unicode_literals
 import numpy as np
 import os
 from pyiron.base.settings.generic import Settings
+from mendeleev import element
 import sys
 import pandas
 
@@ -33,12 +34,19 @@ class ChemicalElement(object):
         """
         self._dataset = None
         self.sub = sub
+        if 'Parent' in self.sub.index:
+            self._mendeleev_element = element(self.sub.Parent)
+        else:
+            self._mendeleev_element = element(self.sub.Abbreviation)
+        self._mendeleev_property_lst = [s for s in dir(self._mendeleev_element) if not s.startswith('_')]
         self.el = None
 
     def __getattr__(self, item):
         return self[item]
 
     def __getitem__(self, item):
+        if item in self._mendeleev_property_lst:
+            return getattr(self._mendeleev_element, item)
         if item in self.sub.index:
             return self.sub[item]
 
