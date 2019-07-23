@@ -394,11 +394,7 @@ class GenericParameters(PyironObject):
             modify_dict = {k + separator: v for k, v in modify_dict.items()}
 
         for key, val in modify_dict.items():
-            if self._is_multi_word_parameter(key):
-                key_split = " ".join(key.split(self.multi_word_separator))
-                i_key, multi_word_lst = self._find_line(key_split)
-            else:
-                i_key, multi_word_lst = self._find_line(key)
+            i_key, multi_word_lst = self._find_line(key)
 
             if i_key == -1:
                 if append_if_not_present:
@@ -546,6 +542,7 @@ class GenericParameters(PyironObject):
             else:
                 v_str = str(v)
 
+            par = ' '.join(par.split(self.multi_word_separator))
             if par == "Comment":
                 string_lst.append(str(v) + self.end_value_char + "\n")
             elif c.strip() == '':
@@ -785,7 +782,7 @@ class GenericParameters(PyironObject):
             bool: [True/False]
         """
         for key, val in self._block_dict.items():
-            par_first = parameter_name.split()[0]
+            par_first = parameter_name.split()[0].split(self.multi_word_separator)[0]
             if par_first in val:
                 parameter_found_in_block = True
                 i_last_block_line = max(self._block_line_dict[key])
@@ -808,22 +805,10 @@ class GenericParameters(PyironObject):
             if par in self._dataset["Parameter"]:
                 raise ValueError("Parameter exists already: " + par)
 
-            if self._is_multi_word_parameter(par):
-                key_lst = par.split(self.multi_word_separator)
-                par = key_lst[0]
-                val = " ".join(key_lst[1:]) + " " + str(val)
-
             if self._block_dict is not None:
                 self._refresh_block_line_hash_table()
                 if self._append_line_in_block(par, val):
                     continue
-
-            for col in self._dataset:
-                self._dataset[col] = np.array(self._dataset[col]).tolist()
-            if self._is_multi_word_parameter(par):
-                key_lst = par.split(self.multi_word_separator)
-                par = key_lst[0]
-                val = " ".join(key_lst[1:]) + " " + str(val)
 
             for col in self._dataset:
                 self._dataset[col] = np.array(self._dataset[col]).tolist()

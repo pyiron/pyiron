@@ -46,20 +46,20 @@ class LammpsControl(GenericParameters):
 
     def load_default(self, file_content=None):
         if file_content is None:
-            file_content = ('units         metal\n'+
-                            'dimension     3\n'+
-                            'boundary      p p p\n'+
-                            'atom_style    atomic\n'+
-                            'read_data     structure.inp\n'+
-                            'include       potential.inp\n'+
-                            'fix           ensemble all nve\n'+
-                            'variable      dumptime equal 100\n'+
-                            'dump          1 all custom ${dumptime} dump.out id type xsu ysu zsu fx fy fz\n'+
-                            'dump_modify   1 sort id format line "%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g"\n'+
-                            'thermo_style  custom step temp pe etotal pxx pxy pxz pyy pyz pzz vol\n'+
-                            'thermo_modify format  float %20.15g\n'+
-                            'thermo        100\n'+
-                            'run           0\n')
+            file_content = ('units               metal\n'+
+                            'dimension           3\n'+
+                            'boundary            p p p\n'+
+                            'atom_style          atomic\n'+
+                            'read_data           structure.inp\n'+
+                            'include             potential.inp\n'+
+                            'fix___ensemble      all nve\n'+
+                            'variable___dumptime equal 100\n'+
+                            'dump___1            all custom ${dumptime} dump.out id type xsu ysu zsu fx fy fz\n'+
+                            'dump_modify___1     sort id format line "%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g"\n'+
+                            'thermo_style        custom step temp pe etotal pxx pxy pxz pyy pyz pzz vol\n'+
+                            'thermo_modify       format float %20.15g\n'+
+                            'thermo              100\n'+
+                            'run                 0\n')
         self.load_string(file_content)
 
     def calc_minimize(self, e_tol=0.0, f_tol=1e-8, max_iter=100000, pressure=None, n_print=100):
@@ -77,7 +77,7 @@ class LammpsControl(GenericParameters):
                 str_press += ' couple none'
             self.set(fix___ensemble=r'all box/relax' + str_press)
         else:
-            self.remove_keys(["fix"])
+            self.remove_keys(["fix___nve"])
         self.set(minimize=str(e_tol) + ' ' + str(f_tol) + ' ' + str(max_iter) + " " + str(max_evaluations))
         self.remove_keys(['run', 'velocity'])
         self.modify(variable___dumptime___equal=n_print, thermo=n_print)
@@ -260,7 +260,7 @@ class LammpsControl(GenericParameters):
 
         self.remove_keys(["minimize"])
         self.modify(fix___ensemble=fix_ensemble_str,
-                    variable=' dumptime equal {} '.format(n_print),
+                    variable___dumptime=' equal {} '.format(n_print),
                     thermo=int(n_print),
                     run=int(n_ionic_steps),
                     append_if_not_present=True)
