@@ -821,17 +821,20 @@ class TestAtoms(unittest.TestCase):
         lat_0 = CrystalStructure("Al", bravais_basis="fcc", lattice_constant=4.0).repeat(3)
         # lat_0.set_SQS(['Al', 'Mg'], x=1/4)  # simple access to SQS
         lat_0[:] = 'V'
+        self.assertEqual(lat_0.get_chemical_formula(), "V108")
         lat_0[[1, 3, 5]] = 'Mg'  # direct occupation
+        self.assertEqual(lat_0.get_chemical_formula(), "Mg3V105")
         # lat_0[[0]] = 'V'                     # vacancy (note: do not delete atom)
         lat_1 = lat_0.copy()
         lat_1.scaled_positions += 1 / 4
         lat_1[:] = 'V'
+        self.assertEqual(lat_1.get_chemical_formula(), "V108")
         lat_1[[1, 4, 9]] = 'H'
         lat_1[[2, 5, 8]] = 'C'
+        self.assertEqual(lat_1.get_chemical_formula(), "C3H3V102")
         lat_1.scaled_positions += 1 / 4
         lat_1[:] = 'V'  # vacancies
-        lat_1[[1, 4, 9]] = 'H'
-        lat_1[[2, 5, 8]] = 'C'
+        self.assertEqual(lat_1.get_chemical_formula(), "V108")
 
 
 def generate_fcc_lattice(a=4.2):
