@@ -52,9 +52,7 @@ class Executable(object):
         self._executable = None
         self._executable_path = None
         self._mpi = False
-        for executable in self._executable_lst.keys():
-            if 'default' in executable:
-                self.version = executable
+        self.version = self.default_version
 
     @property
     def version(self):
@@ -75,7 +73,11 @@ class Executable(object):
         Returns:
             str: default_version
         """
-        return self.__version__
+        for executable in self._executable_lst.keys():
+            if 'default' in executable:
+                return executable
+        else:
+            retrun list(self._executable_lst.keys())[0]
 
     @version.setter
     def version(self, new_version):
