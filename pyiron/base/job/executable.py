@@ -52,7 +52,8 @@ class Executable(object):
         self._executable = None
         self._executable_path = None
         self._mpi = False
-        self.version = self.default_version
+        if self._executable_lst:
+            self.version = self.default_version
 
     @property
     def version(self):
