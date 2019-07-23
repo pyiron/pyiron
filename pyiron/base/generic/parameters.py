@@ -413,7 +413,7 @@ class GenericParameters(PyironObject):
                 if self.read_only and self._dataset["Comment"][i_key] != comment:
                     self._read_only_error()
                 self._dataset["Comment"][i_key] = comment
-            if self.read_only and self._dataset["Value"][i_key] != str(val):
+            if self.read_only and str(self._dataset["Value"][i_key]) != str(val):
                 self._read_only_error()
             self._dataset["Value"][i_key] = str(val)
 
