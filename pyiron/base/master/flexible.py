@@ -174,7 +174,7 @@ class FlexibleMaster(GenericMaster):
         else:
             self.status.suspended = True
 
-    def _run_if_refresh(self):
+    def run_if_refresh(self):
         """
         Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
         suspended previously, the job is going to be started again, to be continued.
@@ -183,13 +183,19 @@ class FlexibleMaster(GenericMaster):
 
     def write_input(self):
         """
-        Skip the write input function - it is not used for the FlexibleMaster
+        write_input is not implemented for FlexibleMaster jobs
         """
         pass
 
     def collect_output(self):
         """
-        Skip the collect output function - it is not used for the FlexibleMaster
+        Collect output is not implemented for FlexibleMaster jobs
+        """
+        pass
+
+    def run_if_interactive(self):
+        """
+        run_if_interactive() is not implemented for FlexibleMaster jobs
         """
         pass
 

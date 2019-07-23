@@ -11,9 +11,9 @@ pyiron was initially developed in the `Computational Materials Design department
 Core Developer (alphabetical)
 *****************************
 
-* `Jan Janssen (MPIE) <https://www.mpie.de/person/42524/2768816>`_ – Leading the pyiron development – since 2015.  
+* `Liam Huber (MPIE) <https://www.mpie.de/person/47229/3098843>`_ - Leading the implementation of flexible simulation protocols - since 2019.
 
-* `Yury Lysogorski (ICAMS) <http://www.icams.de/content/people/icams-staff-members/?detail=1484>`_ – Leading the high throughput development – since 2017.
+* `Jan Janssen (MPIE) <https://www.mpie.de/person/42524/2768816>`_ – Leading the pyiron development – since 2015.  
 
 * `Sudarsan Surendralal (MPIE) <https://www.mpie.de/person/41328/2768816>`_ – Leading the electronic structure code development – since 2015.
 
@@ -28,9 +28,7 @@ Application Developer (alphabetical)
 
 * Uday Gajera (MPIE) - Automated analysis of existing DFT data sets - since 2017. 
 
-* `Liam Huber (MPIE) <https://www.mpie.de/person/47229/3098843>`_ - Implementation of flexible simulation protocols - since 2019.
-
-* `Markus Tautschnig (MPIE) <https://www.mpie.de/person/59813/2768816>`_ – Structure Optimisation with VASP – since 2018. 
+* `Yury Lysogorski (ICAMS) <http://www.icams.de/content/people/icams-staff-members/?detail=1484>`_ – High throughput evaluation of interatomic potentials – since 2017.
 
 * `Lifang Zhu (MPIE) <https://www.mpie.de/person/43027/2768816>`_ - Efficient approach to compute melting properties fully from ab initio - since 2017.  
 
@@ -65,6 +63,9 @@ Alumni (chronological)
 * Martin Boeckmann (MPIE) – Metropolis Monte Carlo implementation – 2017-2018.
 
 * Murali Uddagiri (MPIE) - Generation of special quasirandom structures - 2017-2018.
+
+* Markus Tautschnig (MPIE) – Structure Optimisation with VASP – 2018-2019. 
+
 
 
 **********************

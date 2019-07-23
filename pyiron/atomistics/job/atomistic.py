@@ -150,6 +150,13 @@ class AtomisticGenericJob(GenericJobCore):
         self._generic_input['structure'] = 'atoms'
         self._structure = basis
 
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        self._generic_input.read_only = True
+
     def copy_to(self, project=None, new_job_name=None, input_only=False, new_database_entry=True):
         """
 

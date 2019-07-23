@@ -284,8 +284,8 @@ class FileHDFio(object):
         if file_name is None:
             file_name = destination.file_name
         if self.file_exists:
-            with h5py.File(self.file_name, mode="r") as f_source:
-                with h5py.File(file_name) as f_target:
+            with h5py.File(self.file_name, mode="r", libver='latest', swmr=True) as f_source:
+                with h5py.File(file_name, libver='latest', swmr=True) as f_target:
                     if destination.h5_path[0] == '/':
                         dest_path = destination.h5_path[1:]
                     else:
@@ -327,7 +327,7 @@ class FileHDFio(object):
             FileHDFio: FileHDFio object pointing to the new group
         """
         full_name = posixpath.join(self.h5_path, name)
-        with h5py.File(self.file_name, mode='a') as h:
+        with h5py.File(self.file_name, mode='a', libver='latest', swmr=True) as h:
             try:
                 h.create_group(full_name)
             except ValueError:
@@ -340,7 +340,7 @@ class FileHDFio(object):
         Remove an HDF5 group - if it exists. If the group does not exist no error message is raised.
         """
         try:
-            with h5py.File(self.file_name, mode='a') as hdf_file:
+            with h5py.File(self.file_name, mode='a', libver='latest', swmr=True) as hdf_file:
                 del hdf_file[self.h5_path]
         except KeyError:
             pass
