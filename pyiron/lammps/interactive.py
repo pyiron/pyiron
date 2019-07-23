@@ -137,8 +137,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         return ff.tolist()
 
     def _interactive_lammps_input(self):
-        del self.input.control['dump']
-        del self.input.control['dump_modify']
+        del self.input.control['dump___1']
+        del self.input.control['dump_modify___1']
         for key, value in zip(self.input.control.dataset['Parameter'], self.input.control.dataset['Value']):
             if key in ['read_data', 'units', 'dimension', 'boundary', 'atom_style', 'atom_modify', 'include', 'run',
                        'minimize']:
