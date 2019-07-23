@@ -39,12 +39,27 @@ class ChemicalElement(object):
         else:
             self._mendeleev_element = element(self.sub.Abbreviation)
         self._mendeleev_property_lst = [s for s in dir(self._mendeleev_element) if not s.startswith('_')]
+        self._mendeleev_translation_dict = {'AtomicNumber': 'atomic_number',
+                                            'AtomicRadius': 'covalent_radius_cordero',
+                                            'AtomicMass': 'mass',
+                                            'CovalentRadius': 'covalent_radius',
+                                            'DiscoveryYear': 'discovery_year',
+                                            'Group': 'group_id',
+                                            'Name': 'name',
+                                            'Period': 'period',
+                                            'StandardName': 'name',
+                                            'VanDerWaalsRadius': 'vdw_radius',
+                                            'MeltingPoint': 'melting_point',
+                                            'ElectronAffinity': 'electron_affinity'
+                                            }
         self.el = None
 
     def __getattr__(self, item):
         return self[item]
 
     def __getitem__(self, item):
+        if item in self._mendeleev_translation_dict.keys():
+            item = self._mendeleev_translation_dict[item]
         if item in self._mendeleev_property_lst:
             return getattr(self._mendeleev_element, item)
         if item in self.sub.index:
