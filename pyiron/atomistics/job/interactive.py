@@ -101,12 +101,11 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             raise ValueError("Input structure not set. Use method set_structure()")
         if not self.interactive_is_activated():
             self.interactive_initialize_interface()
-        if self._structure_previous is None:
-            pre_struct = self.get_structure(-1)
-            if pre_struct is not None:
-                self._structure_previous = pre_struct
-            else:
-                self._structure_previous = self.structure.copy()
+        pre_struct = self.get_structure(-1)
+        if pre_struct is not None:
+            self._structure_previous = pre_struct
+        else:
+            self._structure_previous = self.structure.copy()
         if self._structure_current is not None:
             if len(self._structure_current) != len(self._structure_previous) and not self._interactive_grand_canonical:
                 raise ValueError('The number of atoms changed, this is currently not supported!')
@@ -143,7 +142,6 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             else:
                 self._logger.debug('Generic library: structure changed!')
                 self.interactive_structure_setter(self._structure_current)
-            self._structure_previous = self._structure_current.copy()
 
     def interactive_cells_getter(self):
         return self.initial_structure.cell
