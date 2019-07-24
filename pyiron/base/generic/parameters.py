@@ -7,6 +7,7 @@ import numpy as np
 import os
 import pandas
 import posixpath
+import warnings
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.template import PyironObject
 
@@ -269,7 +270,7 @@ class GenericParameters(PyironObject):
 
     @staticmethod
     def _read_only_error():
-        raise ValueError('GenericParameters read_only')
+        warnings.warn('The input in GenericParameters changed, while the state of the job was already finished.')
 
     def load_string(self, input_str):
         """
@@ -409,7 +410,7 @@ class GenericParameters(PyironObject):
                 if self.read_only and self._dataset["Comment"][i_key] != comment:
                     self._read_only_error()
                 self._dataset["Comment"][i_key] = comment
-            if self.read_only and self._dataset["Value"][i_key] != str(val):
+            if self.read_only and str(self._dataset["Value"][i_key]) != str(val):
                 self._read_only_error()
             self._dataset["Value"][i_key] = str(val)
 
@@ -465,7 +466,7 @@ class GenericParameters(PyironObject):
         Args:
             key_list (list): list of keys to be removed
         """
-        if self.read_only:
+        if self.read_only and any([k in self._dataset["Parameter"] for k in key_list]):
             self._read_only_error()
         for key in key_list:
             params = np.array(self._dataset["Parameter"])
@@ -533,15 +534,18 @@ class GenericParameters(PyironObject):
             tab_dict["Parameter"] = ["" for _ in tab_dict["Value"]]
 
         string_lst = []
-        for par, _, c in zip(tab_dict["Parameter"], tab_dict["Value"], tab_dict["Comment"]):
-            v = self[par]
-            # special treatment for values that are bool or str
-            if isinstance(v, bool):
-                v_str = self._bool_dict[v]
-            elif isinstance(v, str):  # TODO: introduce variable for string symbol (" or ')
-                v_str = v
+        for par, v, c in zip(tab_dict["Parameter"], tab_dict["Value"], tab_dict["Comment"]):
+            if not self.val_only:
+                v = self[par]
+                # special treatment for values that are bool or str
+                if isinstance(v, bool):
+                    v_str = self._bool_dict[v]
+                elif isinstance(v, str):  # TODO: introduce variable for string symbol (" or ')
+                    v_str = v
+                else:
+                    v_str = str(v)
             else:
-                v_str = str(v)
+                v_str = v
 
             par = ' '.join(par.split(self.multi_word_separator))
             if par == "Comment":

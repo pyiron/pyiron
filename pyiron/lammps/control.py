@@ -4,6 +4,7 @@
 
 from __future__ import print_function
 from collections import OrderedDict
+import hashlib
 import numpy as np
 import warnings
 from pyiron.base.generic.parameters import GenericParameters
@@ -87,7 +88,7 @@ class LammpsControl(GenericParameters):
         self.remove_keys(['minimize', 'velocity'])
 
     def set_initial_velocity(self, temperature, seed=None, gaussian=False, append_value=False, zero_lin_momentum=True,
-                             zero_rot_momentum=True):
+                             zero_rot_momentum=True, job_name=''):
         """
         Create initial velocities via velocity all create. More information can be found on LAMMPS website:
         https://lammps.sandia.gov/doc/velocity.html
@@ -99,10 +100,11 @@ class LammpsControl(GenericParameters):
             append_value: (True/False) Add the velocity values to the current velocities (probably not functional now)
             zero_lin_momentum: (True/False) Cancel the total linear momentum
             zero_rot_momentum: (True/False) Cancel the total angular momentum
+            job_name: (str) job name to generate seed
         """
 
         if seed is None:
-            seed = np.random.randint(99999)
+            seed = self.generate_seed_from_job(job_name=job_name, seed=1)
         arg = ''
         if gaussian:
             arg = ' dist gaussian'
@@ -115,9 +117,23 @@ class LammpsControl(GenericParameters):
         self.modify(velocity='all create ' + str(temperature) + ' ' + str(seed) + arg,
                     append_if_not_present=True)
 
+    @staticmethod
+    def generate_seed_from_job(job_name='', seed=0):
+        """
+        Generate a unique seed from the job name.
+
+        Args:
+            job_name (str): job_name of the current job to generate the seed
+            seed (int): integer to access part of the seed
+
+        Returns:
+            int: random seed generated based on the hash
+        """
+        return int(str(int(hashlib.sha256(job_name.encode()).hexdigest(), 16))[5 * seed:5 * seed + 5])
+
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=1.0, n_print=100,
                 temperature_damping_timescale=100.0, pressure_damping_timescale=1000.0, seed=None, tloop=None,
-                initial_temperature=None, langevin=False, delta_temp=None, delta_press=None):
+                initial_temperature=None, langevin=False, delta_temp=None, delta_press=None, job_name=''):
         """
         Set an MD calculation within LAMMPS. Nosé Hoover is used by default.
 
@@ -148,6 +164,7 @@ class LammpsControl(GenericParameters):
             langevin (bool): (True or False) Activate Langevin dynamics
             delta_temp (float): Thermostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
             delta_press (float): Barostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
+            job_name (str): Job name of the job to generate a unique random seed.
         """
         # Conversion factors for transfroming pyiron units to Lammps units
         fs_to_ps = spc.femto / spc.pico
@@ -199,7 +216,7 @@ class LammpsControl(GenericParameters):
             initial_temperature = 2 * temperature
 
         if seed is None:
-            seed = np.random.randint(99999)
+            seed = self.generate_seed_from_job(job_name=job_name)
 
         # Set thermodynamic ensemble
         if pressure is not None:  # NPT
@@ -268,4 +285,4 @@ class LammpsControl(GenericParameters):
                     append_if_not_present=True)
 
         if initial_temperature > 0:
-            self.set_initial_velocity(initial_temperature, gaussian=True)
+            self.set_initial_velocity(initial_temperature, gaussian=True, job_name=job_name)
