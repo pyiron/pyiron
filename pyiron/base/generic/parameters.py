@@ -538,8 +538,7 @@ class GenericParameters(PyironObject):
             tab_dict["Parameter"] = ["" for _ in tab_dict["Value"]]
 
         string_lst = []
-        for par, _, c in zip(tab_dict["Parameter"], tab_dict["Value"], tab_dict["Comment"]):
-            v = self[par]
+        for par, v, c in zip(tab_dict["Parameter"], tab_dict["Value"], tab_dict["Comment"]):
             # special treatment for values that are bool or str
             if isinstance(v, bool):
                 v_str = self._bool_dict[v]
