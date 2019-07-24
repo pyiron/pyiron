@@ -8,7 +8,6 @@ from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.lammps.lammps import Lammps
 from pyiron.lammps.base import LammpsStructure
 import ase.units as units
-import shutil
 
 
 class TestLammps(unittest.TestCase):
