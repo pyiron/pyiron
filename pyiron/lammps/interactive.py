@@ -136,6 +136,9 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             ff = np.dot(ff, self._interactive_prism.R.T)
         return ff.tolist()
 
+    def interactive_execute(self):
+        self._interactive_lib_command(self._interactive_run_command)
+
     def _interactive_lammps_input(self):
         del self.input.control['dump']
         del self.input.control['dump_modify']
@@ -235,13 +238,13 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             counter = 0
             iteration_max = int(self._generic_input['n_ionic_steps'] / self._generic_input['n_print'])
             while counter < iteration_max:
-                self._interactive_lib_command(self._interactive_run_command)
+                self.interactive_execute()
                 self.interactive_collect()
                 counter += 1
 
         else:
             super(LammpsInteractive, self).run_if_interactive()
-            self._interactive_lib_command(self._interactive_run_command)
+            self.interactive_execute()
             self.interactive_collect()
 
     def run_if_interactive_non_modal(self):
@@ -249,7 +252,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             print('Warning: interactive_fetch being effectuated')
             self.interactive_fetch()
         super(LammpsInteractive, self).run_if_interactive()
-        self._interactive_lib_command(self._interactive_run_command)
+        self.interactive_execute()
         self._interactive_fetch_completed = False
 
     def interactive_fetch(self):
