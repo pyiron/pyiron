@@ -125,17 +125,16 @@ class TestLammps(unittest.TestCase):
         self.job_water.run(run_mode="manual")
         self.job_water.status.collect = True
         self.job_water.run()
-        nodes = ["positions", "temperature", "temperatures", "energy_tot", "steps", "positions", "forces", "cells",
-                 "pressures"]
+        nodes = ["positions", "temperature", "energy_tot", "energy_pot", "steps", "time", "positions", "forces",
+                 "cells", "pressures", "unwrapped_positions"]
         with self.job_water.project_hdf5.open("output/generic") as h_gen:
             hdf_nodes = h_gen.list_nodes()
+            print(hdf_nodes, [node in hdf_nodes for node in nodes])
             self.assertTrue(all([node in hdf_nodes for node in nodes]))
         self.assertTrue(np.array_equal(self.job_water["output/generic/positions"].shape, (6, 81, 3)))
         self.assertTrue(np.array_equal(self.job_water["output/generic/positions"].shape,
                                        self.job_water["output/generic/forces"].shape))
         self.assertEqual(len(self.job_water["output/generic/steps"]), 6)
-        self.assertTrue(np.array_equal(self.job_water["output/generic/temperatures"],
-                                       self.job_water["output/generic/temperature"]))
 
 
 if __name__ == '__main__':
