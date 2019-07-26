@@ -2,11 +2,11 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-from __future__ import print_function
-from builtins import str
+from __future__ import print_function, unicode_literals
 import os
 import posixpath
 
+import sys
 import h5py
 import numpy as np
 import pandas as pd
@@ -365,8 +365,12 @@ class LammpsBase(AtomisticGenericJob):
             l_end = np.where([line.startswith('Loop') for line in f])[0]
             if len(l_start)>len(l_end):
                 l_end = np.append(l_end, [None])
-            df = [pd.read_csv(StringIO(str('\n'.join(f[llst:llen]))),
-                              delim_whitespace=True) for llst, llen in zip(l_start, l_end)]
+            if sys.version_info >= (3,):
+                df = [pd.read_csv(StringIO('\n'.join(f[llst:llen])),
+                                  delim_whitespace=True) for llst, llen in zip(l_start, l_end)]
+            else:
+                df = [pd.read_csv(StringIO(unicode('\n'.join(f[llst:llen]))),
+                                  delim_whitespace=True) for llst, llen in zip(l_start, l_end)]
         df = df[-1]
 
         h5_dict = {"Step": "steps",
