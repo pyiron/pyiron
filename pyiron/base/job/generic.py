@@ -37,7 +37,8 @@ __date__ = "Sep 1, 2017"
 
 s = Settings()
 
-intercepted_signals=[signal.SIGINT, signal.SIGTERM, signal.SIGABRT] #, signal.SIGQUIT]
+intercepted_signals = [signal.SIGINT, signal.SIGTERM, signal.SIGABRT]  # , signal.SIGQUIT]
+
 
 class GenericJob(JobCore):
     """
@@ -57,8 +58,9 @@ class GenericJob(JobCore):
 
         .. attribute:: status
 
-            execution status of the job, can be one of the following [initialized, appended, created, submitted, running,
-                                                                      aborted, collect, suspended, refresh, busy, finished]
+            execution status of the job, can be one of the following [initialized, appended, created, submitted,
+                                                                      running, aborted, collect, suspended, refresh,
+                                                                      busy, finished]
 
         .. attribute:: job_id
 
@@ -70,8 +72,8 @@ class GenericJob(JobCore):
 
         .. attribute:: master_id
 
-            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel or in
-            serial.
+            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel
+            or in serial.
 
         .. attribute:: child_ids
 
@@ -107,7 +109,8 @@ class GenericJob(JobCore):
 
         .. attribute:: library_activated
 
-            For job types which offer a Python library pyiron can use the python library instead of an external executable.
+            For job types which offer a Python library pyiron can use the python library instead of an external
+            executable.
 
         .. attribute:: server
 
@@ -135,8 +138,8 @@ class GenericJob(JobCore):
 
         .. attribute:: job_type
 
-            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster', 'ScriptJob',
-                                                               'ListMaster']
+            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster',
+                                                               'ScriptJob', 'ListMaster']
     """
     def __init__(self, project, job_name):
         super(GenericJob, self).__init__(project, job_name)
@@ -154,6 +157,7 @@ class GenericJob(JobCore):
         self._exclude_groups_hdf = list()
         self._process = None
         self._compress_by_default = False
+        self.interactive_cache = None
 
         for sig in intercepted_signals:
             signal.signal(sig,  self.signal_intercept)
@@ -209,7 +213,7 @@ class GenericJob(JobCore):
         Get the executable used to run the job - usually the path to an external executable.
         
         Returns:
-            (str): exectuable path
+            (str/pyiron.base.job.executable.Executable): exectuable path
         """
         self._executable_activate()
         return self._executable
@@ -538,6 +542,9 @@ class GenericJob(JobCore):
         return self.copy_to(project=project, new_job_name=new_job_name, input_only=True, new_database_entry=False)
 
     def _kill_child(self):
+        """
+        Internal helper function to kill a child process.
+        """
         if not self.server.run_mode.queue and (self.status.running or self.status.submitted):
             for proc in psutil.process_iter():
                 try:
@@ -620,7 +627,9 @@ class GenericJob(JobCore):
             elif status == 'created':
                 que_id = self._run_if_created()
                 if que_id:
-                    self._logger.info('{}, status: {}, submitted: queue id {}'.format(self.job_info_str, self.status, que_id))
+                    self._logger.info('{}, status: {}, submitted: queue id {}'.format(self.job_info_str,
+                                                                                      self.status,
+                                                                                      que_id))
                     # print('job was submitted, queue id: ', que_id)
             elif status == 'submitted':
                 self._run_if_submitted()
@@ -631,7 +640,7 @@ class GenericJob(JobCore):
             elif status == 'suspend':
                 self._run_if_suspended()
             elif status == 'refresh':
-                self._run_if_refresh()
+                self.run_if_refresh()
             elif status == 'busy':
                 self._run_if_busy()
             elif status == 'finished':
@@ -688,6 +697,7 @@ class GenericJob(JobCore):
             else:
                 job_crashed = True
 
+        self.set_input_to_read_only()
         self.status.collect = True
         self._logger.info('{}, status: {}, output: {}'.format(self.job_info_str, self.status, out))
         self.run()
@@ -698,6 +708,30 @@ class GenericJob(JobCore):
         """
         For jobs which executables are available as Python library, those can also be executed with a library call
         instead of calling an external executable. This is usually faster than a single core python job.
+        """
+        raise NotImplementedError("This function needs to be implemented in the specific class.")
+
+    def interactive_close(self):
+        """
+        For jobs which executables are available as Python library, those can also be executed with a library call
+        instead of calling an external executable. This is usually faster than a single core python job. After the
+        interactive execution, the job can be closed using the interactive_close function.
+        """
+        raise NotImplementedError("This function needs to be implemented in the specific class.")
+
+    def interactive_fetch(self):
+        """
+        For jobs which executables are available as Python library, those can also be executed with a library call
+        instead of calling an external executable. This is usually faster than a single core python job. To access the
+        output data during the execution the interactive_fetch function is used.
+        """
+        raise NotImplementedError("This function needs to be implemented in the specific class.")
+
+    def interactive_flush(self, path="generic", include_last_step=True):
+        """
+        For jobs which executables are available as Python library, those can also be executed with a library call
+        instead of calling an external executable. This is usually faster than a single core python job. To write the
+        interactive cache to the HDF5 file the interactive flush function is used.
         """
         raise NotImplementedError("This function needs to be implemented in the specific class.")
 
@@ -886,7 +920,7 @@ class GenericJob(JobCore):
                 del self
                 if project.inspect(master_id)["server"]["run_mode"] == "non_modal":
                     master = project.load(master_id)
-                    master._run_if_refresh()
+                    master.run_if_refresh()
                 # if master.server.run_mode.non_modal or master.server.run_mode.queue:
                 #     master._run_if_refresh()
                 #     if master.server.run_mode.queue and master._process:
@@ -1122,12 +1156,19 @@ class GenericJob(JobCore):
         else:
             print('Job ' + str(self.job_id) + ' is running!')
 
-    def _run_if_refresh(self):
+    def run_if_refresh(self):
         """
         Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
         suspended previously, the job is going to be started again, to be continued.
         """
         raise NotImplementedError('Refresh is not supported for this job type for job  ' + str(self.job_id))
+
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        pass
 
     def _run_if_busy(self):
         """

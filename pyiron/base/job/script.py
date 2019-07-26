@@ -150,6 +150,13 @@ class ScriptJob(GenericJob):
         else:
             raise TypeError('path should be a string, but ', path, ' is a ', type(path), ' instead.')
 
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        self.input.read_only = True
+
     def to_hdf(self, hdf=None, group_name=None):
         """
         Store the ScriptJob in an HDF5 file

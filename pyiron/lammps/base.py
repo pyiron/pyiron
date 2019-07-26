@@ -144,6 +144,15 @@ class LammpsBase(AtomisticGenericJob):
         """
         return self.view_potentials()
 
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        super(LammpsBase, self).set_input_to_read_only()
+        self.input.control.read_only = True
+        self.input.potential.read_only = True
+
     def validate_ready_to_run(self):
         """
 
@@ -306,7 +315,7 @@ class LammpsBase(AtomisticGenericJob):
 
         """
         file_name = self.job_file_name(file_name=file_name, cwd=cwd)
-        with h5py.File(file_name) as h5md:
+        with h5py.File(file_name, 'r', libver='latest', swmr=True) as h5md:
             positions = [pos_i.tolist() for pos_i in h5md['/particles/all/position/value']]
             time = [time_i.tolist() for time_i in h5md['/particles/all/position/step']]
             forces = [for_i.tolist() for for_i in h5md['/particles/all/force/value']]
@@ -505,7 +514,7 @@ class LammpsBase(AtomisticGenericJob):
                                    time_step=time_step, n_print=n_print, temperature_damping_timescale=temperature_damping_timescale,
                                    pressure_damping_timescale=pressure_damping_timescale,
                                    seed=seed, tloop=tloop, initial_temperature=initial_temperature, langevin=langevin,
-                                   delta_temp=delta_temp, delta_press=delta_press)
+                                   delta_temp=delta_temp, delta_press=delta_press, job_name=self.job_name)
 
     # define hdf5 input and output
     def to_hdf(self, hdf=None, group_name=None):

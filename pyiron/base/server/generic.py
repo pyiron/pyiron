@@ -32,7 +32,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         host (str): hostname of the local machine
         queue (str): queue name of the currently selected queue
         cores (int): number of cores
-        run_mode (str): mode of the job ['modal', 'non_modal', 'queue', 'manual']
+        run_mode (pyiron.base.server.runmode.Runmode): mode of the job ['modal', 'non_modal', 'queue', 'manual']
         new_hdf (bool): create a new HDF5 file [True/False] - default=True
 
     Attributes:
@@ -289,7 +289,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         Get the run mode of the job
         
         Returns:
-            (str): ['modal', 'non_modal', 'queue', 'manual']
+            (str/pyiron.base.server.runmode.Runmode): ['modal', 'non_modal', 'queue', 'manual']
         """
         return self._run_mode
 

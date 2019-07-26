@@ -149,7 +149,8 @@ class LammpsStructure(GenericParameters):
     def __init__(self, input_file_name=None):
         super(LammpsStructure, self).__init__(input_file_name=input_file_name,
                                               table_name="structure_inp",
-                                              comment_char="#")
+                                              comment_char="#",
+                                              val_only=True)
         self._structure = None
         self._potential = None
         self._el_eam_lst = []
