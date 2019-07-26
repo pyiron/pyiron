@@ -3,8 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
-
-import ast
+from builtins import str
 import os
 import posixpath
 
@@ -366,7 +365,7 @@ class LammpsBase(AtomisticGenericJob):
             l_end = np.where([line.startswith('Loop') for line in f])[0]
             if len(l_start)>len(l_end):
                 l_end = np.append(l_end, [None])
-            df = [pd.read_csv(StringIO('\n'.join(f[llst:llen])),
+            df = [pd.read_csv(StringIO(str('\n'.join(f[llst:llen]))),
                               delim_whitespace=True) for llst, llen in zip(l_start, l_end)]
         df = df[-1]
 
