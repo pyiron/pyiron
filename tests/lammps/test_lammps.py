@@ -51,21 +51,21 @@ class TestLammps(unittest.TestCase):
         lmp_structure = LammpsStructure()
         lmp_structure._el_eam_lst = ['Fe']
         lmp_structure.structure = atoms
-        self.assertEqual(lmp_structure._dataset['Value'], ['File for LAMMPS',
-                                                           'atoms',
-                                                           'atom types',
+        self.assertEqual(lmp_structure._dataset['Value'], ['Start File for LAMMPS',
+                                                           '1 atoms',
+                                                           '1 atom types',
                                                            '',
-                                                           '1.000000000000000 xlo xhi',
-                                                           '1.000000000000000 ylo yhi',
-                                                           '1.000000000000000 zlo zhi',
+                                                           '0. 1.000000000000000 xlo xhi',
+                                                           '0. 1.000000000000000 ylo yhi',
+                                                           '0. 1.000000000000000 zlo zhi',
                                                            '',
+                                                           'Masses',
                                                            '',
+                                                           '1 55.845001',
                                                            '',
-                                                           '55.845000',
+                                                           'Atoms',
                                                            '',
-                                                           '',
-                                                           '',
-                                                           '1 0.000000000000000 0.000000000000000 0.000000000000000',
+                                                           '1 1 0.000000000000000 0.000000000000000 0.000000000000000',
                                                            ''])
 
     def test_structure_charge(self):
@@ -75,21 +75,21 @@ class TestLammps(unittest.TestCase):
         lmp_structure.atom_type = 'charge'
         lmp_structure._el_eam_lst = ['Fe']
         lmp_structure.structure = atoms
-        self.assertEqual(lmp_structure._dataset['Value'], ['File for LAMMPS',
-                                                           'atoms',
-                                                           'atom types',
+        self.assertEqual(lmp_structure._dataset['Value'], ['Start File for LAMMPS',
+                                                           '1 atoms',
+                                                           '1 atom types',
                                                            '',
-                                                           '1.000000000000000 xlo xhi',
-                                                           '1.000000000000000 ylo yhi',
-                                                           '1.000000000000000 zlo zhi',
+                                                           '0. 1.000000000000000 xlo xhi',
+                                                           '0. 1.000000000000000 ylo yhi',
+                                                           '0. 1.000000000000000 zlo zhi',
                                                            '',
+                                                           'Masses',
                                                            '',
+                                                           '1 55.845001',
                                                            '',
-                                                           '55.845000',
+                                                           'Atoms',
                                                            '',
-                                                           '',
-                                                           '',
-                                                           '1 2.000000 0.000000000000000 0.000000000000000 0.000000000000000',
+                                                           '1 1 2.000000 0.000000000000000 0.000000000000000 0.000000000000000',
                                                            ''])
 
     def test_avilable_versions(self):
