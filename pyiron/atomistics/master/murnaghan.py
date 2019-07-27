@@ -312,10 +312,15 @@ class EnergyVolumeFit(object):
         .. attribute:: energy_lst
 
             vector of energies
+
+        .. attribute:: fit_dict
+
+            dictionary of fit parameters
     """
     def __init__(self, volume_lst=None, energy_lst=None):
         self._volume_lst = volume_lst
         self._energy_lst = energy_lst
+        self._fit_dict = None
 
     @property
     def volume_lst(self):
@@ -332,6 +337,10 @@ class EnergyVolumeFit(object):
     @energy_lst.setter
     def energy_lst(self, eng_lst):
         self._energy_lst = eng_lst
+
+    @property
+    def fit_dict(self):
+        return self._fit_dict
 
     def _get_volume_and_energy_lst(self, volume_lst=None, energy_lst=None):
         """
@@ -353,6 +362,9 @@ class EnergyVolumeFit(object):
                 raise ValueError('Volume list not set.')
             energy_lst = self._energy_lst
         return volume_lst, energy_lst
+
+    def fit_eos_general_intern(self, fittype='birchmurnaghan'):
+        self._fit_dict = self.fit_eos_general(volume_lst=self._volume_lst, energy_lst=self._energy_lst, fittype=fittype)
 
     def fit_eos_general(self, volume_lst=None, energy_lst=None, fittype='birchmurnaghan'):
         """
@@ -510,6 +522,35 @@ class EnergyVolumeFit(object):
         y_fit_lst = np.array(p_fit(x_lst))
         error_lst = (y_lst - y_fit_lst) ** 2
         return np.mean(error_lst)
+
+    def fit_energy(self, volume_lst):
+        """
+        Gives the energy value for the corresponding energy volume fit defined in the fit dictionary.
+
+        Args:
+            volume_lst: list of volumes
+
+        Returns:
+            list of energies
+
+        """
+        if not self._fit_dict:
+            return ValueError("parameter 'fit_dict' has to be defined!")
+        v = volume_lst
+        e0 = self._fit_dict["energy_eq"]
+        b0 = self._fit_dict["bulkmodul_eq"] / 160.21766208
+        b_p = self._fit_dict["b_prime_eq"]
+        v0 = self._fit_dict["volume_eq"]
+        if self._fit_dict['fit_type'] == 'birch':
+            return self.birch(v, e0, b0, b_p, v0)
+        elif self._fit_dict['fit_type'] == 'birchmurnaghan':
+            return self.birchmurnaghan_energy(v, e0, b0, b_p, v0)
+        elif self._fit_dict['fit_type'] == 'murnaghan':
+            return self.murnaghan(v, e0, b0, b_p, v0)
+        elif self._fit_dict['fit_type'] == 'pouriertarantola':
+            return self.pouriertarantola(v, e0, b0, b_p, v0)
+        else:
+            return self.vinet_energy(v, e0, b0, b_p, v0)
 
     @staticmethod
     def birchmurnaghan_energy(V, E0, B0, BP, V0):

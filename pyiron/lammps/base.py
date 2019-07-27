@@ -2,12 +2,11 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-from __future__ import print_function
-
-import ast
+from __future__ import print_function, unicode_literals
 import os
 import posixpath
 
+import sys
 import h5py
 import numpy as np
 import pandas as pd
@@ -101,7 +100,11 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
 
         """
-        if isinstance(potential_filename, str):
+        if sys.version_info.major == 2:
+            stringtypes = (str, unicode)
+        else:
+            stringtypes = str
+        if isinstance(potential_filename, stringtypes):
             if '.lmp' in potential_filename:
                 potential_filename = potential_filename.split('.lmp')[0]
             potential_db = LammpsPotentialFile()
@@ -357,17 +360,20 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
 
         """
-        if cwd is not None:
-            file_name = cwd + '/' + file_name
-        self.collect_errors(file_name)
+        self.collect_errors(file_name=file_name, cwd=cwd)
+        file_name = self.job_file_name(file_name=file_name, cwd=cwd)
         with open(file_name, 'r') as f:
             f = f.readlines()
             l_start = np.where([line.startswith('Step') for line in f])[0]
             l_end = np.where([line.startswith('Loop') for line in f])[0]
             if len(l_start)>len(l_end):
                 l_end = np.append(l_end, [None])
-            df = [pd.read_csv(StringIO('\n'.join(f[llst:llen])),
-                              delim_whitespace=True) for llst, llen in zip(l_start, l_end)]
+            if sys.version_info >= (3,):
+                df = [pd.read_csv(StringIO('\n'.join(f[llst:llen])),
+                                  delim_whitespace=True) for llst, llen in zip(l_start, l_end)]
+            else:
+                df = [pd.read_csv(StringIO(unicode('\n'.join(f[llst:llen]))),
+                                  delim_whitespace=True) for llst, llen in zip(l_start, l_end)]
         df = df[-1]
 
         h5_dict = {"Step": "steps",
@@ -380,8 +386,8 @@ class LammpsBase(AtomisticGenericJob):
         pressures = np.stack((df.Pxx, df.Pxy, df.Pxz,
                               df.Pxy, df.Pyy, df.Pyz,
                               df.Pxz, df.Pyz, df.Pzz), axis=-1).reshape(-1, 3, 3)
-        pressures *= 0.0001 # bar -> GPa
-        df = df.drop(columns=df.columns[((df.columns.str.len()==3) & df.columns.str.startswith('P'))])
+        pressures *= 0.0001  # bar -> GPa
+        df = df.drop(columns=df.columns[((df.columns.str.len() == 3) & df.columns.str.startswith('P'))])
         df['pressures'] = pressures.tolist()
 
         with self.project_hdf5.open("output/generic") as hdf_output:

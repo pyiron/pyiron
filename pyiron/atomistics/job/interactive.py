@@ -101,12 +101,11 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             raise ValueError("Input structure not set. Use method set_structure()")
         if not self.interactive_is_activated():
             self.interactive_initialize_interface()
-        if self._structure_previous is None:
-            pre_struct = self.get_structure(-1)
-            if pre_struct is not None:
-                self._structure_previous = pre_struct
-            else:
-                self._structure_previous = self.structure.copy()
+        pre_struct = self.get_structure(-1)
+        if pre_struct is not None:
+            self._structure_previous = pre_struct
+        else:
+            self._structure_previous = self.structure.copy()
         if self._structure_current is not None:
             if len(self._structure_current) != len(self._structure_previous) and not self._interactive_grand_canonical:
                 raise ValueError('The number of atoms changed, this is currently not supported!')
@@ -115,8 +114,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             el_lst = sorted(set(index_merge_lst), key=index_merge_lst.index)
             current_structure_index = [el_lst.index(el) for el in self._structure_current.get_chemical_symbols()]
             previous_structure_index = [el_lst.index(el) for el in self._structure_previous.get_chemical_symbols()]
-            if np.array_equal(np.array(current_structure_index), np.array(previous_structure_index)) and \
-                    not self._interactive_enforce_structure_reset:
+            if not self._interactive_enforce_structure_reset:
                 if not np.allclose(self._structure_current.cell, self._structure_previous.cell, rtol=1e-15, atol=1e-15):
                     self._logger.debug('Generic library: cell changed!')
                     self.interactive_cells_setter(self._structure_current.cell)
@@ -130,20 +128,12 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
                                          self._structure_previous.get_initial_magnetic_moments())):
                     self._logger.debug('Generic library: magnetic moments changed!')
                     self.interactive_spin_constraints_setter(self._structure_current.get_initial_magnetic_moments())
-            elif not self._interactive_enforce_structure_reset and \
-                    len(self._structure_current) == len(self._structure_previous) and \
-                    np.allclose(self._structure_current.cell, self._structure_previous.cell, rtol=1e-15, atol=1e-15) and \
-                    np.allclose(self._structure_current.scaled_positions,
-                                self._structure_previous.scaled_positions, rtol=1e-15, atol=1e-15) and \
-                    (not np.any(self._structure_current.get_initial_magnetic_moments()) or
-                     np.allclose(self._structure_current.get_initial_magnetic_moments(),
-                                 self._structure_previous.get_initial_magnetic_moments())):
-                self._logger.debug('Generic library: indices changed!')
-                self.interactive_indices_setter(self._structure_current.indices)
+                if not np.array_equal(np.array(current_structure_index), np.array(previous_structure_index)):
+                    self._logger.debug('Generic library: indices changed!')
+                    self.interactive_indices_setter(self._structure_current.indices)
             else:
                 self._logger.debug('Generic library: structure changed!')
                 self.interactive_structure_setter(self._structure_current)
-            self._structure_previous = self._structure_current.copy()
 
     def interactive_cells_getter(self):
         return self.initial_structure.cell

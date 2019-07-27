@@ -94,7 +94,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         lx, ly, lz, xy, xz, yz = self._interactive_prism.get_lammps_prism()
         if np.matrix.trace(self._interactive_prism.R) != 3:
             warnings.warn('Warning: setting upper trangular matrix might slow down the calculation')
-        if abs(xy) + abs(xz) + abs(yz) > 1.0e-6:
+        if self._interactive_prism.is_skewed():
             if self.structure._is_scaled:
                 self._interactive_lib_command(
                     'change_box all x final 0 %f y final 0 %f z final 0 %f \
@@ -135,6 +135,9 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         if np.matrix.trace(self._interactive_prism.R) != 3:
             ff = np.dot(ff, self._interactive_prism.R.T)
         return ff.tolist()
+
+    def interactive_execute(self):
+        self._interactive_lib_command(self._interactive_run_command)
 
     def _interactive_lammps_input(self):
         del self.input.control['dump___1']
@@ -235,13 +238,13 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             counter = 0
             iteration_max = int(self._generic_input['n_ionic_steps'] / self._generic_input['n_print'])
             while counter < iteration_max:
-                self._interactive_lib_command(self._interactive_run_command)
+                self.interactive_execute()
                 self.interactive_collect()
                 counter += 1
 
         else:
             super(LammpsInteractive, self).run_if_interactive()
-            self._interactive_lib_command(self._interactive_run_command)
+            self.interactive_execute()
             self.interactive_collect()
 
     def run_if_interactive_non_modal(self):
@@ -249,7 +252,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             print('Warning: interactive_fetch being effectuated')
             self.interactive_fetch()
         super(LammpsInteractive, self).run_if_interactive()
-        self._interactive_lib_command(self._interactive_run_command)
+        self.interactive_execute()
         self._interactive_fetch_completed = False
 
     def interactive_fetch(self):
@@ -274,11 +277,11 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         xhi, yhi, zhi, xy, xz, yz = self._interactive_prism.get_lammps_prism()
         if self._interactive_prism.is_skewed():
             self._interactive_lib_command('region 1 prism' +
-                                      ' 0.0 ' + str(xhi) + ' 0.0 ' + str(yhi) + ' 0.0 ' + str(zhi) +
-                                      ' ' + str(xy) + ' ' + str(xz) + ' ' + str(yz) + ' units box')
+                                          ' 0.0 ' + str(xhi) + ' 0.0 ' + str(yhi) + ' 0.0 ' + str(zhi) +
+                                          ' ' + str(xy) + ' ' + str(xz) + ' ' + str(yz) + ' units box')
         else:
             self._interactive_lib_command('region 1 block' +
-                                      ' 0.0 ' + str(xhi) + ' 0.0 ' + str(yhi) + ' 0.0 ' + str(zhi) + ' units box')
+                                          ' 0.0 ' + str(xhi) + ' 0.0 ' + str(yhi) + ' 0.0 ' + str(zhi) + ' units box')
         el_struct_lst = self.structure.get_species_symbols()
         el_obj_lst = self.structure.get_species_objects()
         el_eam_lst = self.input.potential.get_element_lst()
@@ -298,6 +301,10 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                 self._interactive_lib_command('mass {0:3d} {1:f}'.format(id_eam + 1, 1.00))
         self._interactive_lib_command('create_atoms 1 random ' + str(len(structure)) + ' 12345 1')
         positions = structure.positions.flatten()
+        if np.matrix.trace(self._interactive_prism.R) != 3:
+            positions = np.array(positions).reshape(-1, 3)
+            positions = np.dot(positions, self._interactive_prism.R)
+        positions = positions.flatten()
         elem_all = np.array([el_dict[el] for el in structure.get_chemical_elements()])
         if self.server.run_mode.interactive and self.server.cores == 1:
             self._interactive_library.scatter_atoms("x", 1, 3, (len(positions) * c_double)(*positions))
