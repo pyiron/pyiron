@@ -17,6 +17,8 @@ class TestGenericParameters(unittest.TestCase):
                 par_2 all
                 count 0
                 write_restart True
+                dict {"a": 1, "b": 2}
+                list [1, "s"]
                 read_restart False'''
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
         cls.generic_parameters_str.load_string(my_str)
@@ -25,6 +27,8 @@ class TestGenericParameters(unittest.TestCase):
         self.assertEqual(self.generic_parameters_str.get("par___1"), 1)
         self.assertEqual(self.generic_parameters_str.get("par_2"), 'all')
         self.assertEqual(self.generic_parameters_str.get("count"), 0)
+        self.assertEqual(self.generic_parameters_str.get("dict"), {"a": 1, "b": 2})
+        self.assertEqual(self.generic_parameters_str.get("list"), [1, "s"])
         self.assertTrue(self.generic_parameters_str.get("write_restart"))
         self.assertFalse(self.generic_parameters_str.get("read_restart"))
 
@@ -47,7 +51,9 @@ class TestGenericParameters(unittest.TestCase):
         self.assertEqual(lines[1], 'par_2 all\n')
         self.assertEqual(lines[2], 'count 0\n')
         self.assertEqual(lines[3], 'write_restart True\n')
-        self.assertEqual(lines[4], 'read_restart FALSE\n')
+        # self.assertEqual(lines[4], 'dict {"a": 1, "b": 2}')
+        # self.assertEqual(lines[5], 'list [1, "s"]')
+        self.assertEqual(lines[6], 'read_restart FALSE\n')
         os.remove(file_name)
 
     def test_hdf(self):
@@ -63,6 +69,8 @@ class TestGenericParameters(unittest.TestCase):
         self.assertEqual(gp_reload.get("count"), 0)
         self.assertTrue(gp_reload.get("write_restart"))
         self.assertFalse(gp_reload.get("read_restart"))
+        self.assertEqual(gp_reload.get("dict"), {"a": 1, "b": 2})
+        self.assertEqual(gp_reload.get("list"), [1, "s"])
         os.remove(file_name)
 
     def test_remove_keys(self):
