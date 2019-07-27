@@ -397,11 +397,7 @@ class GenericParameters(PyironObject):
             modify_dict = {k + separator: v for k, v in modify_dict.items()}
 
         for key, val in modify_dict.items():
-            if self._is_multi_word_parameter(key):
-                key_split = " ".join(key.split(self.multi_word_separator))
-                i_key, multi_word_lst = self._find_line(key_split)
-            else:
-                i_key, multi_word_lst = self._find_line(key)
+            i_key, multi_word_lst = self._find_line(key)
 
             if i_key == -1:
                 if append_if_not_present:
@@ -577,6 +573,7 @@ class GenericParameters(PyironObject):
 
         with open(file_name, 'w') as f:
             for line in self.get_string_lst():
+                line.replace(self.multi_word_separator, ' ')
                 f.write(line)
 
     def __repr__(self):
@@ -810,23 +807,10 @@ class GenericParameters(PyironObject):
         for par, val in qwargs.items():
             if par in self._dataset["Parameter"]:
                 raise ValueError("Parameter exists already: " + par)
-
-            if self._is_multi_word_parameter(par):
-                key_lst = par.split(self.multi_word_separator)
-                par = key_lst[0]
-                val = " ".join(key_lst[1:]) + " " + str(val)
-
             if self._block_dict is not None:
                 self._refresh_block_line_hash_table()
                 if self._append_line_in_block(par, val):
                     continue
-
-            for col in self._dataset:
-                self._dataset[col] = np.array(self._dataset[col]).tolist()
-            if self._is_multi_word_parameter(par):
-                key_lst = par.split(self.multi_word_separator)
-                par = key_lst[0]
-                val = " ".join(key_lst[1:]) + " " + str(val)
 
             for col in self._dataset:
                 self._dataset[col] = np.array(self._dataset[col]).tolist()
