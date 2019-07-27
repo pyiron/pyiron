@@ -1,14 +1,12 @@
 import unittest
 import numpy as np
 import os
-import posixpath
 from pyiron.base.project.generic import Project
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.lammps.lammps import Lammps
 from pyiron.lammps.base import LammpsStructure
 import ase.units as units
-import shutil
 
 
 class TestLammps(unittest.TestCase):
@@ -119,9 +117,9 @@ class TestLammps(unittest.TestCase):
         self.job_water.structure = water
         self.job_water.potential = 'H2O_tip3p'
         self.job_water.calc_md(temperature=350, initial_temperature=350, time_step=1, n_ionic_steps=1000, n_print=200)
-        file_directory = posixpath.join(self.execution_path, "../static/lammps_test_files")
-        self.job_water.restart_file_list.append(posixpath.join(file_directory, "dump.out"))
-        self.job_water.restart_file_list.append(posixpath.join(file_directory, "log.lammps"))
+        file_directory = os.path.join(self.execution_path, "..", "static", "lammps_test_files")
+        self.job_water.restart_file_list.append(os.path.join(file_directory, "dump.out"))
+        self.job_water.restart_file_list.append(os.path.join(file_directory, "log.lammps"))
         self.job_water.run(run_mode="manual")
         self.job_water.status.collect = True
         self.job_water.run()
