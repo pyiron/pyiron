@@ -545,6 +545,7 @@ class GenericParameters(PyironObject):
             else:
                 v_str = str(v)
 
+            par = ' '.join(par.split(self.multi_word_separator))
             if par == "Comment":
                 string_lst.append(str(v) + self.end_value_char + "\n")
             elif c.strip() == '':
@@ -573,7 +574,6 @@ class GenericParameters(PyironObject):
 
         with open(file_name, 'w') as f:
             for line in self.get_string_lst():
-                line = line.replace(self.multi_word_separator, ' ')
                 f.write(line)
 
     def __repr__(self):
@@ -785,7 +785,7 @@ class GenericParameters(PyironObject):
             bool: [True/False]
         """
         for key, val in self._block_dict.items():
-            par_first = parameter_name.split()[0]
+            par_first = parameter_name.split()[0].split(self.multi_word_separator)[0]
             if par_first in val:
                 parameter_found_in_block = True
                 i_last_block_line = max(self._block_line_dict[key])
@@ -807,6 +807,7 @@ class GenericParameters(PyironObject):
         for par, val in qwargs.items():
             if par in self._dataset["Parameter"]:
                 raise ValueError("Parameter exists already: " + par)
+
             if self._block_dict is not None:
                 self._refresh_block_line_hash_table()
                 if self._append_line_in_block(par, val):
