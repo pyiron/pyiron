@@ -88,7 +88,7 @@ class GenericParameters(PyironObject):
         self._end_value_char = None
         self._replace_char_dict = None
         self._block_dict = None
-        self._bool_dict = {True: "TRUE", False: "FALSE"}
+        self._bool_dict = {True: "True", False: "False"}
         self._dataset = OrderedDict()
         self._block_line_dict = {}
         self.end_value_char = end_value_char
