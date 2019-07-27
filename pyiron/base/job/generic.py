@@ -961,10 +961,11 @@ class GenericJob(JobCore):
         self._type_to_hdf()
         self._server.to_hdf(self._hdf5)
         with self._hdf5.open('input') as hdf_input:
-            hdf_input["restart_file_list"] = self._restart_file_list
-            hdf_input["restart_file_dict"] = self._restart_file_dict
-            hdf_input["exclude_nodes_hdf"] = self._exclude_nodes_hdf
-            hdf_input["exclude_groups_hdf"] = self._exclude_groups_hdf
+            generic_dict = {"restart_file_list": self._restart_file_list,
+                            "restart_file_dict": self._restart_file_dict,
+                            "exclude_nodes_hdf": self._exclude_nodes_hdf,
+                            "exclude_groups_hdf": self._exclude_groups_hdf}
+            hdf_input["generic_dict"] = generic_dict
 
     def from_hdf(self, hdf=None, group_name=None):
         """
@@ -981,6 +982,13 @@ class GenericJob(JobCore):
         self._type_from_hdf()
         self._server.from_hdf(self._hdf5)
         with self._hdf5.open('input') as hdf_input:
+            if "generic_dict" in hdf_input.list_nodes():
+                generic_dict = hdf_input["generic_dict"]
+                self._restart_file_list = generic_dict["restart_file_list"]
+                self._restart_file_dict = generic_dict["restart_file_dict"]
+                self._exclude_nodes_hdf = generic_dict["exclude_nodes_hdf"]
+                self._exclude_groups_hdf = generic_dict["exclude_groups_hdf"]
+            # Backwards compatbility
             if "restart_file_list" in hdf_input.list_nodes():
                 self._restart_file_list = hdf_input["restart_file_list"]
             if "restart_file_dict" in hdf_input.list_nodes():
@@ -1183,8 +1191,6 @@ class GenericJob(JobCore):
         status is set to 'finished'
         """
         self.collect_output()
-        self.project_hdf5.rewrite_hdf5(job_name=self.job_name, exclude_groups=self._exclude_groups_hdf,
-                                       exclude_nodes=self._exclude_nodes_hdf)
         self.collect_logfiles()
         self.project.db.item_update(self._runtime(), self.job_id)
         if self.status.collect:
