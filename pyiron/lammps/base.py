@@ -100,7 +100,11 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
 
         """
-        if isinstance(potential_filename, str):
+        if sys.version_info.major == 2:
+            stringtypes = (str, unicode)
+        else:
+            stringtypes = str
+        if isinstance(potential_filename, stringtypes):
             if '.lmp' in potential_filename:
                 potential_filename = potential_filename.split('.lmp')[0]
             potential_db = LammpsPotentialFile()
