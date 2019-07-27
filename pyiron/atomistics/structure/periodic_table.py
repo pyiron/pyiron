@@ -36,7 +36,11 @@ class ChemicalElement(object):
         self.sub = sub
         self._mendeleev_element = None
         self._mendeleev_property_lst = None
-        if isinstance(self.sub, str):
+        if sys.version_info.major == 2:
+            stringtypes = (str, unicode)
+        else:
+            stringtypes = str
+        if isinstance(self.sub, stringtypes):
             self._init_mendeleev(self.sub)
         elif 'Parent' in self.sub.index and isinstance(self.sub.Parent, str):
             self._init_mendeleev(self.sub.Parent)
@@ -59,7 +63,7 @@ class ChemicalElement(object):
         self.el = None
 
     def _init_mendeleev(self, element_str):
-        self._mendeleev_element = element(str(element_str))
+        self._mendeleev_element = element(element_str)
         self._mendeleev_property_lst = [s for s in dir(self._mendeleev_element) if not s.startswith('_')]
 
     def __getattr__(self, item):
