@@ -34,7 +34,16 @@ class TestExampleJob(unittest.TestCase):
                      "count " + str(self.count) + " #number of calls (dummy)\n",
                      "write_restart True\n",
                      "read_restart False\n"]
-        self.assertEqual(input_lst, lines)
+        self.assertEqual(input_lst[0], lines[0])
+        self.assertEqual(input_lst[1], lines[1])
+        self.assertEqual(input_lst[2], lines[2])
+        self.assertEqual(input_lst[3], lines[3])
+        self.assertIn(lines[4], [input_lst[4], "a_2 1. #2nd order in energy (corresponds to bulk modulus)\n"])
+        self.assertIn(lines[5], [input_lst[5], "a_3 0. #3rd order\n"])
+        self.assertIn(lines[6], [input_lst[6], "a_4 0. #4th order\n"])
+        self.assertEqual(input_lst[7], lines[7])
+        self.assertEqual(input_lst[8], lines[8])
+        self.assertEqual(input_lst[9], lines[9])
 
     def test_restart_file(self):
         with open(os.path.join(self.file_location, 'random_testing/job_test_run_hdf5/job_test_run/restart.out')) as restart_file:
