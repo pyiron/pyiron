@@ -40,13 +40,15 @@ class TestGenericParameters(unittest.TestCase):
 
     def test_write_to_file(self):
         self.generic_parameters_str.write_file(file_name='genpar.txt', cwd=self.file_location)
-        with open(os.path.join(self.file_location, 'genpar.txt',), 'r') as f:
+        file_name = os.path.join(self.file_location, 'genpar.txt')
+        with open(file_name, 'r') as f:
             lines = f.readlines()
         self.assertEqual(lines[0], 'par 1 1\n')
         self.assertEqual(lines[1], 'par_2 all\n')
         self.assertEqual(lines[2], 'count 0\n')
         self.assertEqual(lines[3], 'write_restart True\n')
         self.assertEqual(lines[4], 'read_restart FALSE\n')
+        os.remove(file_name)
 
     def test_hdf(self):
         pr = Project(self.file_location)
