@@ -360,9 +360,8 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
 
         """
-        if cwd is not None:
-            file_name = cwd + '/' + file_name
-        self.collect_errors(file_name)
+        self.collect_errors(file_name=file_name, cwd=cwd)
+        file_name = self.job_file_name(file_name=file_name, cwd=cwd)
         with open(file_name, 'r') as f:
             f = f.readlines()
             l_start = np.where([line.startswith('Step') for line in f])[0]
@@ -387,8 +386,8 @@ class LammpsBase(AtomisticGenericJob):
         pressures = np.stack((df.Pxx, df.Pxy, df.Pxz,
                               df.Pxy, df.Pyy, df.Pyz,
                               df.Pxz, df.Pyz, df.Pzz), axis=-1).reshape(-1, 3, 3)
-        pressures *= 0.0001 # bar -> GPa
-        df = df.drop(columns=df.columns[((df.columns.str.len()==3) & df.columns.str.startswith('P'))])
+        pressures *= 0.0001  # bar -> GPa
+        df = df.drop(columns=df.columns[((df.columns.str.len() == 3) & df.columns.str.startswith('P'))])
         df['pressures'] = pressures.tolist()
 
         with self.project_hdf5.open("output/generic") as hdf_output:
