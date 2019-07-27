@@ -50,7 +50,7 @@ class TestGenericParameters(unittest.TestCase):
         self.assertEqual(lines[0], 'par 1 1\n')
         self.assertEqual(lines[1], 'par_2 all\n')
         self.assertEqual(lines[2], 'count 0\n')
-        self.assertEqual(lines[3], 'write_restart True\n')
+        self.assertEqual(lines[3], 'write_restart TRUE\n')
         # self.assertEqual(lines[4], 'dict {"a": 1, "b": 2}')
         # self.assertEqual(lines[5], 'list [1, "s"]')
         self.assertEqual(lines[6], 'read_restart FALSE\n')
