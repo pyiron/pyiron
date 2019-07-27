@@ -64,7 +64,7 @@ class ChemicalElement(object):
 
     def _init_mendeleev(self, element_str):
         print(element_str)  # debugging
-        self._mendeleev_element = element(element_str)
+        self._mendeleev_element = element(str(element_str))
         self._mendeleev_property_lst = [s for s in dir(self._mendeleev_element) if not s.startswith('_')]
 
     def __getattr__(self, item):
