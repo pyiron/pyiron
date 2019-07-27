@@ -35,9 +35,9 @@ class TestExampleJob(unittest.TestCase):
                      "alpha 0.1 #noise amplitude\n",
                      "a_0 3 #equilibrium lattice constant\n",
                      "a_1 0\n",
-                     "a_2 1. #2nd order in energy (corresponds to bulk modulus)\n",
-                     "a_3 0. #3rd order\n",
-                     "a_4 0. #4th order\n",
+                     "a_2 1.0 #2nd order in energy (corresponds to bulk modulus)\n",
+                     "a_3 0.0 #3rd order\n",
+                     "a_4 0.0 #4th order\n",
                      "count " + str(self.count) + " #number of calls (dummy)\n",
                      "write_restart True\n",
                      "read_restart False\n"]
