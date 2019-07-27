@@ -41,9 +41,13 @@ class TestLammps(unittest.TestCase):
         atoms.selective_dynamics[7] = [False, False, False]
         self.job.structure = atoms
         self.job._set_selective_dynamics()
-        self.assertTrue('group' in self.job.input.control._dataset["Parameter"])
-        para_lst = np.array(self.job.input.control._dataset["Parameter"])
-        self.assertEqual(len(para_lst[para_lst == 'group']), 7)
+        self.assertTrue('group___constraintx' in self.job.input.control._dataset["Parameter"])
+        self.assertTrue('group___constrainty' in self.job.input.control._dataset["Parameter"])
+        self.assertTrue('group___constraintz' in self.job.input.control._dataset["Parameter"])
+        self.assertTrue('group___constraintxy' in self.job.input.control._dataset["Parameter"])
+        self.assertTrue('group___constraintyz' in self.job.input.control._dataset["Parameter"])
+        self.assertTrue('group___constraintxz' in self.job.input.control._dataset["Parameter"])
+        self.assertTrue('group___constraintxyz' in self.job.input.control._dataset["Parameter"])
 
     def test_structure_atomic(self):
         atoms = Atoms('Fe1', positions=np.zeros((1, 3)), cell=np.eye(3))
@@ -127,7 +131,6 @@ class TestLammps(unittest.TestCase):
                  "cells", "pressures", "unwrapped_positions"]
         with self.job_water.project_hdf5.open("output/generic") as h_gen:
             hdf_nodes = h_gen.list_nodes()
-            print(hdf_nodes, [node in hdf_nodes for node in nodes])
             self.assertTrue(all([node in hdf_nodes for node in nodes]))
         self.assertTrue(np.array_equal(self.job_water["output/generic/positions"].shape, (6, 81, 3)))
         self.assertTrue(np.array_equal(self.job_water["output/generic/positions"].shape,
