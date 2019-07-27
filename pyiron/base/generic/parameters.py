@@ -573,7 +573,7 @@ class GenericParameters(PyironObject):
 
         with open(file_name, 'w') as f:
             for line in self.get_string_lst():
-                line.replace(self.multi_word_separator, ' ')
+                line = line.replace(self.multi_word_separator, ' ')
                 f.write(line)
 
     def __repr__(self):

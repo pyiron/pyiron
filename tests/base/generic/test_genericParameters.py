@@ -13,7 +13,7 @@ class TestGenericParameters(unittest.TestCase):
         cls.generic_parameters_empty = GenericParameters(table_name='empty')
         cls.generic_parameters_str = GenericParameters(table_name='str')
         my_str = '''\
-                par_1 1
+                par___1 1
                 par_2 all
                 count 0
                 write_restart True
@@ -22,7 +22,7 @@ class TestGenericParameters(unittest.TestCase):
         cls.generic_parameters_str.load_string(my_str)
 
     def test_load_string(self):
-        self.assertEqual(self.generic_parameters_str.get("par_1"), 1)
+        self.assertEqual(self.generic_parameters_str.get("par___1"), 1)
         self.assertEqual(self.generic_parameters_str.get("par_2"), 'all')
         self.assertEqual(self.generic_parameters_str.get("count"), 0)
         self.assertTrue(self.generic_parameters_str.get("write_restart"))
@@ -33,9 +33,20 @@ class TestGenericParameters(unittest.TestCase):
                          str(pandas.DataFrame(columns=['Parameter', 'Value', 'Comment'])))
 
     def test_modify(self):
-        self.assertEqual(self.generic_parameters_str.get("par_1"), 1)
-        self.generic_parameters_str.modify(par_1=3)
-        self.assertEqual(self.generic_parameters_str.get("par_1"), 3)
+        self.assertEqual(self.generic_parameters_str.get("par___1"), 1)
+        self.generic_parameters_str.modify(par___1=3)
+        self.assertEqual(self.generic_parameters_str.get("par___1"), 3)
+        self.generic_parameters_str.modify(par___1=1)
+
+    def test_write_to_file(self):
+        self.generic_parameters_str.write_file(file_name='genpar.txt', cwd=self.file_location)
+        with open(os.path.join(self.file_location, 'genpar.txt',), 'r') as f:
+            lines = f.readlines()
+        self.assertEqual(lines[0], 'par 1 1\n')
+        self.assertEqual(lines[1], 'par_2 all\n')
+        self.assertEqual(lines[2], 'count 0\n')
+        self.assertEqual(lines[3], 'write_restart True\n')
+        self.assertEqual(lines[4], 'read_restart FALSE\n')
 
     def test_hdf(self):
         pr = Project(self.file_location)
@@ -45,7 +56,7 @@ class TestGenericParameters(unittest.TestCase):
         self.generic_parameters_str.to_hdf(hdf=hdf, group_name='input')
         gp_reload = GenericParameters(table_name='str')
         gp_reload.from_hdf(hdf=hdf, group_name='input')
-        self.assertEqual(gp_reload.get("par_1"), 1)
+        self.assertEqual(gp_reload.get("par___1"), 1)
         self.assertEqual(gp_reload.get("par_2"), 'all')
         self.assertEqual(gp_reload.get("count"), 0)
         self.assertTrue(gp_reload.get("write_restart"))
