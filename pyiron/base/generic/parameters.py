@@ -355,6 +355,8 @@ class GenericParameters(PyironObject):
                 val_v = eval(val)
             except (TypeError, NameError, SyntaxError):
                 val_v = val
+            if callable(val_v):
+                val_v = val
             return val_v
         elif default_value is not None:
             return default_value
