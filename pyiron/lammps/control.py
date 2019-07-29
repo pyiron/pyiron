@@ -4,6 +4,7 @@
 
 from __future__ import print_function
 from collections import OrderedDict
+import hashlib
 import numpy as np
 import warnings
 from pyiron.base.generic.parameters import GenericParameters
@@ -46,20 +47,20 @@ class LammpsControl(GenericParameters):
 
     def load_default(self, file_content=None):
         if file_content is None:
-            file_content = ('units         metal\n'+
-                            'dimension     3\n'+
-                            'boundary      p p p\n'+
-                            'atom_style    atomic\n'+
-                            'read_data     structure.inp\n'+
-                            'include       potential.inp\n'+
-                            'fix           ensemble all nve\n'+
-                            'variable      dumptime equal 100\n'+
-                            'dump          1 all custom ${dumptime} dump.out id type xsu ysu zsu fx fy fz\n'+
-                            'dump_modify   1 sort id format line "%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g"\n'+
-                            'thermo_style  custom step temp pe etotal pxx pxy pxz pyy pyz pzz vol\n'+
-                            'thermo_modify format  float %20.15g\n'+
-                            'thermo        100\n'+
-                            'run           0\n')
+            file_content = ('units               metal\n'+
+                            'dimension           3\n'+
+                            'boundary            p p p\n'+
+                            'atom_style          atomic\n'+
+                            'read_data           structure.inp\n'+
+                            'include             potential.inp\n'+
+                            'fix___ensemble      all nve\n'+
+                            'variable___dumptime equal 100\n'+
+                            'dump___1            all custom ${dumptime} dump.out id type xsu ysu zsu fx fy fz\n'+
+                            'dump_modify___1     sort id format line "%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g"\n'+
+                            'thermo_style        custom step temp pe etotal pxx pxy pxz pyy pyz pzz vol\n'+
+                            'thermo_modify       format float %20.15g\n'+
+                            'thermo              100\n'+
+                            'run                 0\n')
         self.load_string(file_content)
 
     def calc_minimize(self, e_tol=0.0, f_tol=1e-8, max_iter=100000, pressure=None, n_print=100):
@@ -77,17 +78,17 @@ class LammpsControl(GenericParameters):
                 str_press += ' couple none'
             self.set(fix___ensemble=r'all box/relax' + str_press)
         else:
-            self.remove_keys(["fix"])
+            self.remove_keys(["fix___nve"])
         self.set(minimize=str(e_tol) + ' ' + str(f_tol) + ' ' + str(max_iter) + " " + str(max_evaluations))
         self.remove_keys(['run', 'velocity'])
-        self.modify(variable___dumptime___equal=n_print, thermo=n_print)
+        self.modify(variable___dumptime='equal '+str(n_print), thermo=n_print)
 
     def calc_static(self):
         self.set(run='0')
         self.remove_keys(['minimize', 'velocity'])
 
     def set_initial_velocity(self, temperature, seed=None, gaussian=False, append_value=False, zero_lin_momentum=True,
-                             zero_rot_momentum=True):
+                             zero_rot_momentum=True, job_name=''):
         """
         Create initial velocities via velocity all create. More information can be found on LAMMPS website:
         https://lammps.sandia.gov/doc/velocity.html
@@ -99,10 +100,11 @@ class LammpsControl(GenericParameters):
             append_value: (True/False) Add the velocity values to the current velocities (probably not functional now)
             zero_lin_momentum: (True/False) Cancel the total linear momentum
             zero_rot_momentum: (True/False) Cancel the total angular momentum
+            job_name: (str) job name to generate seed
         """
 
         if seed is None:
-            seed = np.random.randint(99999)
+            seed = self.generate_seed_from_job(job_name=job_name, seed=1)
         arg = ''
         if gaussian:
             arg = ' dist gaussian'
@@ -115,9 +117,23 @@ class LammpsControl(GenericParameters):
         self.modify(velocity='all create ' + str(temperature) + ' ' + str(seed) + arg,
                     append_if_not_present=True)
 
+    @staticmethod
+    def generate_seed_from_job(job_name='', seed=0):
+        """
+        Generate a unique seed from the job name.
+
+        Args:
+            job_name (str): job_name of the current job to generate the seed
+            seed (int): integer to access part of the seed
+
+        Returns:
+            int: random seed generated based on the hash
+        """
+        return int(str(int(hashlib.sha256(job_name.encode()).hexdigest(), 16))[5 * seed:5 * seed + 5])
+
     def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=1.0, n_print=100,
                 temperature_damping_timescale=100.0, pressure_damping_timescale=1000.0, seed=None, tloop=None,
-                initial_temperature=None, langevin=False, delta_temp=None, delta_press=None):
+                initial_temperature=None, langevin=False, delta_temp=None, delta_press=None, job_name=''):
         """
         Set an MD calculation within LAMMPS. Nosé Hoover is used by default.
 
@@ -148,6 +164,7 @@ class LammpsControl(GenericParameters):
             langevin (bool): (True or False) Activate Langevin dynamics
             delta_temp (float): Thermostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
             delta_press (float): Barostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
+            job_name (str): Job name of the job to generate a unique random seed.
         """
         # Conversion factors for transfroming pyiron units to Lammps units
         fs_to_ps = spc.femto / spc.pico
@@ -199,7 +216,7 @@ class LammpsControl(GenericParameters):
             initial_temperature = 2 * temperature
 
         if seed is None:
-            seed = np.random.randint(99999)
+            seed = self.generate_seed_from_job(job_name=job_name)
 
         # Set thermodynamic ensemble
         if pressure is not None:  # NPT
@@ -252,6 +269,8 @@ class LammpsControl(GenericParameters):
                                                                      str(temperature),
                                                                      str(temperature_damping_timescale))
         else:  # NVE
+            if langevin:
+                warnings.warn("Temperature not set; Langevin ignored.")
             fix_ensemble_str = 'all nve'
             initial_temperature = 0
 
@@ -260,10 +279,10 @@ class LammpsControl(GenericParameters):
 
         self.remove_keys(["minimize"])
         self.modify(fix___ensemble=fix_ensemble_str,
-                    variable=' dumptime equal {} '.format(n_print),
+                    variable___dumptime=' equal {} '.format(n_print),
                     thermo=int(n_print),
                     run=int(n_ionic_steps),
                     append_if_not_present=True)
 
         if initial_temperature > 0:
-            self.set_initial_velocity(initial_temperature, gaussian=True)
+            self.set_initial_velocity(initial_temperature, gaussian=True, job_name=job_name)
