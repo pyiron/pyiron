@@ -725,9 +725,7 @@ class GenericJob(JobCore):
         The run if non modal function is called by run to execute the simulation in the background. For this we use
         multiprocessing.Process()
         """
-        p = multiprocessing.Process(target=multiprocess_wrapper, args=(self.job_id,
-                                                                       self.project_hdf5.working_directory,
-                                                                       False))
+        p = multiprocessing.Process(target=self.run_static)
         if self.master_id:
             del self
         p.start()
