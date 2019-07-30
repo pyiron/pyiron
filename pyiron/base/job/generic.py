@@ -10,7 +10,7 @@ import os
 # import sys
 import posixpath
 import psutil
-# import multiprocessing
+import multiprocessing
 from pyiron.base.job.wrapper import JobWrapper
 from pyiron.base.settings.generic import Settings
 from pyiron.base.job.executable import Executable
@@ -696,41 +696,41 @@ class GenericJob(JobCore):
         """
         raise NotImplementedError("This function needs to be implemented in the specific class.")
 
-    def run_if_non_modal(self):
-        """
-        The run if non modal function is called by run to execute the simulation in the background. For this we use
-        subprocess.Popen()
-        """
-        shell = (os.name == 'nt')
-        try:
-            file_name = posixpath.join(self.project_hdf5.working_directory, "run_job.py")
-            self._logger.info("{}, status: {}, script: {}".format(self.job_info_str, self.status, file_name))
-            with open(posixpath.join(self.project_hdf5.working_directory, 'out.txt'), mode='w') as f_out:
-                with open(posixpath.join(self.project_hdf5.working_directory, 'error.txt'), mode='w') as f_err:
-                    self._process = subprocess.Popen(['python', '-m', 'pyiron.base.job.wrappercmd', '-p',
-                                                      self.working_directory, '-j', str(self.job_id)],
-                                                     cwd=self.project_hdf5.working_directory, shell=shell, stdout=f_out,
-                                                     stderr=f_err, universal_newlines=True)
-            self._logger.info("{}, status: {}, job submitted".format(self.job_info_str, self.status))
-        except subprocess.CalledProcessError as e:
-            self._logger.warn("Job aborted")
-            self._logger.warn(e.output)
-            self.status.aborted = True
-            raise ValueError("run_job.py crashed")
-        s.logger.info('submitted run %s', self.job_name)
-        self._logger.info('job status: %s', self.status)
-
     # def run_if_non_modal(self):
     #     """
     #     The run if non modal function is called by run to execute the simulation in the background. For this we use
-    #     multiprocessing.Process()
+    #     subprocess.Popen()
     #     """
-    #     p = multiprocessing.Process(target=multiprocess_wrapper, args=(self.job_id,
-    #                                                                    self.project_hdf5.working_directory,
-    #                                                                    False))
-    #     if self.master_id:
-    #         del self
-    #     p.start()
+    #     shell = (os.name == 'nt')
+    #     try:
+    #         file_name = posixpath.join(self.project_hdf5.working_directory, "run_job.py")
+    #         self._logger.info("{}, status: {}, script: {}".format(self.job_info_str, self.status, file_name))
+    #         with open(posixpath.join(self.project_hdf5.working_directory, 'out.txt'), mode='w') as f_out:
+    #             with open(posixpath.join(self.project_hdf5.working_directory, 'error.txt'), mode='w') as f_err:
+    #                 self._process = subprocess.Popen(['python', '-m', 'pyiron.base.job.wrappercmd', '-p',
+    #                                                   self.working_directory, '-j', str(self.job_id)],
+    #                                                  cwd=self.project_hdf5.working_directory, shell=shell, stdout=f_out,
+    #                                                  stderr=f_err, universal_newlines=True)
+    #         self._logger.info("{}, status: {}, job submitted".format(self.job_info_str, self.status))
+    #     except subprocess.CalledProcessError as e:
+    #         self._logger.warn("Job aborted")
+    #         self._logger.warn(e.output)
+    #         self.status.aborted = True
+    #         raise ValueError("run_job.py crashed")
+    #     s.logger.info('submitted run %s', self.job_name)
+    #     self._logger.info('job status: %s', self.status)
+
+    def run_if_non_modal(self):
+        """
+        The run if non modal function is called by run to execute the simulation in the background. For this we use
+        multiprocessing.Process()
+        """
+        p = multiprocessing.Process(target=multiprocess_wrapper, args=(self.job_id,
+                                                                       self.project_hdf5.working_directory,
+                                                                       False))
+        if self.master_id:
+            del self
+        p.start()
 
     def run_if_manually(self, _manually_print=True):
         """
