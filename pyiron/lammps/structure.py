@@ -46,6 +46,12 @@ class UnfoldingPrism(Prism):
         digits: 
     """
     def __init__(self, cell, pbc=(True, True, True), digits=10):
+        # Temporary fix. Since the arguments for the constructor have changed, try to see if it is compatible with
+        # the latest ase. If not, revert to the old __init__ parameters.
+        try:
+            super(UnfoldingPrism, self).__init__(cell, pbc=pbc, tolerance=float('1e-{}'.format(digits)))
+        except TypeError:
+            super(UnfoldingPrism, self).__init__(cell, pbc=pbc, digits=digits)
         a, b, c = cell
         an, bn, cn = [np.linalg.norm(v) for v in cell]
 
@@ -75,6 +81,7 @@ class UnfoldingPrism(Prism):
 
         # Actual lammps cell may be different from what is used to create R
         eps = 1e-10
+
         def fold(vec, pvec, i):
             p = pvec[i]
             x = vec[i] + 0.5 * p
