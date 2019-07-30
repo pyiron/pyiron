@@ -153,6 +153,9 @@ class UnfoldingPrism(Prism):
     def f2qdec(self, f):
         return dec.Decimal(repr(f)).quantize(self.car_prec, dec.ROUND_DOWN)
 
+    def f2s(self, f):
+        return str(dec.Decimal(repr(f)).quantize(self.car_prec, dec.ROUND_HALF_EVEN))
+
     def get_lammps_prism_str(self):
         """Return a tuple of strings"""
         p = self.get_lammps_prism()
