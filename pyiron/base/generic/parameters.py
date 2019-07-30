@@ -88,7 +88,7 @@ class GenericParameters(PyironObject):
         self._end_value_char = None
         self._replace_char_dict = None
         self._block_dict = None
-        self._bool_dict = {True: "TRUE", False: "FALSE"}
+        self._bool_dict = {True: "True", False: "False"}
         self._dataset = OrderedDict()
         self._block_line_dict = {}
         self.end_value_char = end_value_char
@@ -355,6 +355,8 @@ class GenericParameters(PyironObject):
                 val_v = eval(val)
             except (TypeError, NameError, SyntaxError):
                 val_v = val
+            if callable(val_v):
+                val_v = val
             return val_v
         elif default_value is not None:
             return default_value
@@ -395,11 +397,7 @@ class GenericParameters(PyironObject):
             modify_dict = {k + separator: v for k, v in modify_dict.items()}
 
         for key, val in modify_dict.items():
-            if self._is_multi_word_parameter(key):
-                key_split = " ".join(key.split(self.multi_word_separator))
-                i_key, multi_word_lst = self._find_line(key_split)
-            else:
-                i_key, multi_word_lst = self._find_line(key)
+            i_key, multi_word_lst = self._find_line(key)
 
             if i_key == -1:
                 if append_if_not_present:
@@ -538,7 +536,14 @@ class GenericParameters(PyironObject):
             tab_dict["Parameter"] = ["" for _ in tab_dict["Value"]]
 
         string_lst = []
-        for par, v, c in zip(tab_dict["Parameter"], tab_dict["Value"], tab_dict["Comment"]):
+        if self.val_only:
+            value_lst = tab_dict["Value"]
+        else:
+            try:
+                value_lst = [self[p] for p in tab_dict["Parameter"]]
+            except ValueError:
+                value_lst = tab_dict["Value"]
+        for par, v, c in zip(tab_dict["Parameter"], value_lst, tab_dict["Comment"]):
             # special treatment for values that are bool or str
             if isinstance(v, bool):
                 v_str = self._bool_dict[v]
@@ -547,6 +552,7 @@ class GenericParameters(PyironObject):
             else:
                 v_str = str(v)
 
+            par = ' '.join(par.split(self.multi_word_separator))
             if par == "Comment":
                 string_lst.append(str(v) + self.end_value_char + "\n")
             elif c.strip() == '':
@@ -786,7 +792,7 @@ class GenericParameters(PyironObject):
             bool: [True/False]
         """
         for key, val in self._block_dict.items():
-            par_first = parameter_name.split()[0]
+            par_first = parameter_name.split()[0].split(self.multi_word_separator)[0]
             if par_first in val:
                 parameter_found_in_block = True
                 i_last_block_line = max(self._block_line_dict[key])
@@ -809,22 +815,10 @@ class GenericParameters(PyironObject):
             if par in self._dataset["Parameter"]:
                 raise ValueError("Parameter exists already: " + par)
 
-            if self._is_multi_word_parameter(par):
-                key_lst = par.split(self.multi_word_separator)
-                par = key_lst[0]
-                val = " ".join(key_lst[1:]) + " " + str(val)
-
             if self._block_dict is not None:
                 self._refresh_block_line_hash_table()
                 if self._append_line_in_block(par, val):
                     continue
-
-            for col in self._dataset:
-                self._dataset[col] = np.array(self._dataset[col]).tolist()
-            if self._is_multi_word_parameter(par):
-                key_lst = par.split(self.multi_word_separator)
-                par = key_lst[0]
-                val = " ".join(key_lst[1:]) + " " + str(val)
 
             for col in self._dataset:
                 self._dataset[col] = np.array(self._dataset[col]).tolist()

@@ -140,14 +140,14 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_lib_command(self._interactive_run_command)
 
     def _interactive_lammps_input(self):
-        del self.input.control['dump']
-        del self.input.control['dump_modify']
+        del self.input.control['dump___1']
+        del self.input.control['dump_modify___1']
         for key, value in zip(self.input.control.dataset['Parameter'], self.input.control.dataset['Value']):
             if key in ['read_data', 'units', 'dimension', 'boundary', 'atom_style', 'atom_modify', 'include', 'run',
                        'minimize']:
                 continue
             else:
-                self._interactive_lib_command(key + ' ' + str(value))
+                self._interactive_lib_command(' '.join(key.split(self.input.control.multi_word_separator)) + ' ' + str(value))
 
     def _interactive_set_potential(self):
         potential_lst = []

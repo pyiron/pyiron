@@ -271,9 +271,9 @@ alat  3.2     # lattice constant (would be in a more realistic example in the st
 alpha 0.1     # noise amplitude
 a_0   3       # equilibrium lattice constant
 a_1   0
-a_2   1.      # 2nd order in energy (corresponds to bulk modulus)
-a_3   0.      # 3rd order
-a_4   0.      # 4th order
+a_2   1.0     # 2nd order in energy (corresponds to bulk modulus)
+a_3   0.0     # 3rd order
+a_4   0.0     # 4th order
 count 10      # number of calls (dummy)
 write_restart True
 read_restart False
