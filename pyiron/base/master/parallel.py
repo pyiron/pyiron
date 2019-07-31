@@ -377,7 +377,7 @@ class ParallelMaster(GenericMaster):
         if len(self.child_ids) < len(self._job_generator):
             return False
         return set([self.project.db.get_item_by_id(child_id)['status']
-                    for child_id in self.child_ids]) < {'finished', 'busy', 'refresh', 'aborted'}
+                    for child_id in self.child_ids]) < {'finished', 'busy', 'refresh', 'aborted', 'not_converged'}
 
     def iter_jobs(self, convert_to_object=True):
         """

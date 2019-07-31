@@ -39,7 +39,7 @@ install:
 - '"%CONDA%\Scripts\activate.bat"'
 - "conda config --set always_yes yes --set changeps1 no"
 - "conda update -q conda"
-- "conda install -c conda-forge future psutil pytables numpy lxml scipy cycler pyparsing kiwisolver matplotlib Werkzeug itsdangerous flask sqlalchemy pathlib2 pandas h5py coveralls coverage ase spglib h5io phonopy defusedxml pysqa"
+- "conda install -c conda-forge python=%PYTHON_VERSION% future psutil pytables numpy lxml scipy cycler pyparsing kiwisolver matplotlib Werkzeug itsdangerous flask sqlalchemy pathlib2 pandas h5py coveralls coverage \"ase>=3.16\" spglib h5io phonopy defusedxml pysqa"
 - "conda info -a"
 - "pip install --pre ."
 

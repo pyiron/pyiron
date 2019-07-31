@@ -10,7 +10,7 @@ import os
 # import sys
 import posixpath
 import psutil
-# import multiprocessing
+import multiprocessing
 from pyiron.base.job.wrapper import JobWrapper
 from pyiron.base.settings.generic import Settings
 from pyiron.base.job.executable import Executable
@@ -128,6 +128,14 @@ class GenericJob(JobCore):
 
             list of files which are used to restart the calculation from these files.
 
+        .. attribute:: exclude_nodes_hdf
+
+            list of nodes which are excluded from storing in the hdf5 file.
+
+        .. attribute:: exclude_groups_hdf
+
+            list of groups which are excluded from storing in the hdf5 file.
+
         .. attribute:: job_type
 
             Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster',
@@ -145,6 +153,8 @@ class GenericJob(JobCore):
         self.refresh_job_status()
         self._restart_file_list = list()
         self._restart_file_dict = dict()
+        self._exclude_nodes_hdf = list()
+        self._exclude_groups_hdf = list()
         self._process = None
         self._compress_by_default = False
         self.interactive_cache = None
@@ -296,6 +306,42 @@ class GenericJob(JobCore):
             raise ValueError("restart_file_dict should be a dictionary!")
         else:
             self._restart_file_dict = val
+
+    @property
+    def exclude_nodes_hdf(self):
+        """
+        Get the list of nodes which are excluded from storing in the hdf5 file
+
+        Returns:
+            nodes(list)
+        """
+        return self._exclude_nodes_hdf
+
+    @exclude_nodes_hdf.setter
+    def exclude_nodes_hdf(self, val):
+        if isinstance(val, str):
+            val = [val]
+        elif not hasattr(val, '__len__'):
+            raise ValueError('Wrong type of variable.')
+        self._exclude_nodes_hdf = val
+
+    @property
+    def exclude_groups_hdf(self):
+        """
+        Get the list of groups which are excluded from storing in the hdf5 file
+
+        Returns:
+            groups(list)
+        """
+        return self._exclude_groups_hdf
+
+    @exclude_groups_hdf.setter
+    def exclude_groups_hdf(self, val):
+        if isinstance(val, str):
+            val = [val]
+        elif not hasattr(val, '__len__'):
+            raise ValueError('Wrong type of variable.')
+        self._exclude_groups_hdf = val
 
     @property
     def job_type(self):
@@ -685,41 +731,41 @@ class GenericJob(JobCore):
         """
         raise NotImplementedError("This function needs to be implemented in the specific class.")
 
-    def run_if_non_modal(self):
-        """
-        The run if non modal function is called by run to execute the simulation in the background. For this we use
-        subprocess.Popen()
-        """
-        shell = (os.name == 'nt')
-        try:
-            file_name = posixpath.join(self.project_hdf5.working_directory, "run_job.py")
-            self._logger.info("{}, status: {}, script: {}".format(self.job_info_str, self.status, file_name))
-            with open(posixpath.join(self.project_hdf5.working_directory, 'out.txt'), mode='w') as f_out:
-                with open(posixpath.join(self.project_hdf5.working_directory, 'error.txt'), mode='w') as f_err:
-                    self._process = subprocess.Popen(['python', '-m', 'pyiron.base.job.wrappercmd', '-p',
-                                                      self.working_directory, '-j', str(self.job_id)],
-                                                     cwd=self.project_hdf5.working_directory, shell=shell, stdout=f_out,
-                                                     stderr=f_err, universal_newlines=True)
-            self._logger.info("{}, status: {}, job submitted".format(self.job_info_str, self.status))
-        except subprocess.CalledProcessError as e:
-            self._logger.warn("Job aborted")
-            self._logger.warn(e.output)
-            self.status.aborted = True
-            raise ValueError("run_job.py crashed")
-        s.logger.info('submitted run %s', self.job_name)
-        self._logger.info('job status: %s', self.status)
-
     # def run_if_non_modal(self):
     #     """
     #     The run if non modal function is called by run to execute the simulation in the background. For this we use
-    #     multiprocessing.Process()
+    #     subprocess.Popen()
     #     """
-    #     p = multiprocessing.Process(target=multiprocess_wrapper, args=(self.job_id,
-    #                                                                    self.project_hdf5.working_directory,
-    #                                                                    False))
-    #     if self.master_id:
-    #         del self
-    #     p.start()
+    #     shell = (os.name == 'nt')
+    #     try:
+    #         file_name = posixpath.join(self.project_hdf5.working_directory, "run_job.py")
+    #         self._logger.info("{}, status: {}, script: {}".format(self.job_info_str, self.status, file_name))
+    #         with open(posixpath.join(self.project_hdf5.working_directory, 'out.txt'), mode='w') as f_out:
+    #             with open(posixpath.join(self.project_hdf5.working_directory, 'error.txt'), mode='w') as f_err:
+    #                 self._process = subprocess.Popen(['python', '-m', 'pyiron.base.job.wrappercmd', '-p',
+    #                                                   self.working_directory, '-j', str(self.job_id)],
+    #                                                  cwd=self.project_hdf5.working_directory, shell=shell, stdout=f_out,
+    #                                                  stderr=f_err, universal_newlines=True)
+    #         self._logger.info("{}, status: {}, job submitted".format(self.job_info_str, self.status))
+    #     except subprocess.CalledProcessError as e:
+    #         self._logger.warn("Job aborted")
+    #         self._logger.warn(e.output)
+    #         self.status.aborted = True
+    #         raise ValueError("run_job.py crashed")
+    #     s.logger.info('submitted run %s', self.job_name)
+    #     self._logger.info('job status: %s', self.status)
+
+    def run_if_non_modal(self):
+        """
+        The run if non modal function is called by run to execute the simulation in the background. For this we use
+        multiprocessing.Process()
+        """
+        p = multiprocessing.Process(target=multiprocess_wrapper, args=(self.job_id,
+                                                                       self.project_hdf5.working_directory,
+                                                                       False))
+        if self.master_id:
+            del self
+        p.start()
 
     def run_if_manually(self, _manually_print=True):
         """
@@ -850,6 +896,7 @@ class GenericJob(JobCore):
         project = self.project
         self._logger.info("update master: {} {}".format(master_id, self.get_job_id()))
         if master_id is not None and not self.server.run_mode.modal and not self.server.run_mode.interactive:
+            queue_flag = self.server.run_mode.queue
             master_db_entry = project.db.get_item_by_id(master_id)
             if master_db_entry['status'] == 'suspended':
                 project.db.item_update({'status': 'refresh'}, master_id)
@@ -861,8 +908,11 @@ class GenericJob(JobCore):
                 # del self
                 # p.start()
                 del self
-                if project.inspect(master_id)["server"]["run_mode"] == "non_modal":
+                master_inspect = project.inspect(master_id)
+                if master_inspect["server"]["run_mode"] == "non_modal" or \
+                        (master_inspect["server"]["run_mode"] == "modal" and queue_flag):
                     master = project.load(master_id)
+                    # master = master_inspect.load_object()
                     master.run_if_refresh()
                 # if master.server.run_mode.non_modal or master.server.run_mode.queue:
                 #     master._run_if_refresh()
@@ -904,8 +954,11 @@ class GenericJob(JobCore):
         self._type_to_hdf()
         self._server.to_hdf(self._hdf5)
         with self._hdf5.open('input') as hdf_input:
-            hdf_input["restart_file_list"] = self._restart_file_list
-            hdf_input["restart_file_dict"] = self._restart_file_dict
+            generic_dict = {"restart_file_list": self._restart_file_list,
+                            "restart_file_dict": self._restart_file_dict,
+                            "exclude_nodes_hdf": self._exclude_nodes_hdf,
+                            "exclude_groups_hdf": self._exclude_groups_hdf}
+            hdf_input["generic_dict"] = generic_dict
 
     def from_hdf(self, hdf=None, group_name=None):
         """
@@ -922,10 +975,21 @@ class GenericJob(JobCore):
         self._type_from_hdf()
         self._server.from_hdf(self._hdf5)
         with self._hdf5.open('input') as hdf_input:
+            if "generic_dict" in hdf_input.list_nodes():
+                generic_dict = hdf_input["generic_dict"]
+                self._restart_file_list = generic_dict["restart_file_list"]
+                self._restart_file_dict = generic_dict["restart_file_dict"]
+                self._exclude_nodes_hdf = generic_dict["exclude_nodes_hdf"]
+                self._exclude_groups_hdf = generic_dict["exclude_groups_hdf"]
+            # Backwards compatbility
             if "restart_file_list" in hdf_input.list_nodes():
                 self._restart_file_list = hdf_input["restart_file_list"]
             if "restart_file_dict" in hdf_input.list_nodes():
                 self._restart_file_dict = hdf_input["restart_file_dict"]
+            if "exclude_nodes_hdf" in hdf_input.list_nodes():
+                self._exclude_nodes_hdf = hdf_input["exclude_nodes_hdf"]
+            if "exclude_groups_hdf" in hdf_input.list_nodes():
+                self._exclude_groups_hdf = hdf_input["exclude_groups_hdf"]
 
     def save(self):
         """

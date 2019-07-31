@@ -560,29 +560,53 @@ class FileHDFio(object):
         new._filter = ["nodes"]
         return new
 
-    def hd_copy(self, hdf_old, hdf_new, exclude_groups=None):
+    def hd_copy(self, hdf_old, hdf_new, exclude_groups=None, exclude_nodes=None):
         """
         args:
             hdf_old (ProjectHDFio): old hdf
             hdf_new (ProjectHDFio): new hdf
             exclude_groups (list/None): list of groups to delete
+            exclude_nodes (list/None): list of nodes to delete
         """
-        if exclude_groups is None:
-            exclude_groups = list()
-        for p in hdf_old.list_nodes():
+        if exclude_groups is None or len(exclude_groups) == 0:
+            exclude_groups_split = list()
+            group_list = hdf_old.list_groups()
+        else:
+            exclude_groups_split = [i.split('/', 1) for i in exclude_groups]
+            check_groups = [i[-1] for i in exclude_groups_split]
+            group_list = list((set(hdf_old.list_groups()) ^ set(check_groups)) & set(hdf_old.list_groups()))
+
+        if exclude_nodes is None or len(exclude_nodes) == 0:
+            exclude_nodes_split = list()
+            node_list = hdf_old.list_nodes()
+        else:
+            exclude_nodes_split = [i.split('/', 1) for i in exclude_nodes]
+            check_nodes = [i[-1] for i in exclude_nodes_split]
+            node_list = list((set(hdf_old.list_nodes()) ^ set(check_nodes)) & set(hdf_old.list_nodes()))
+        for p in node_list:
             hdf_new[p] = hdf_old[p]
-        for p in hdf_old.list_groups():
-            if p in exclude_groups:
-                continue
+        for p in group_list:
             h_new = hdf_new.create_group(p)
-            self.hd_copy(hdf_old[p], h_new, exclude_groups=exclude_groups)
+            ex_n = [e[-1] for e in exclude_nodes_split if p == e[0] or len(e) == 1]
+            ex_g = [e[-1] for e in exclude_groups_split if p == e[0] or len(e) == 1]
+            self.hd_copy(hdf_old[p], h_new, exclude_nodes=ex_n, exclude_groups=ex_g)
+        ### old ###
+        # for p in hdf_old.list_nodes():
+        #     if p not in exclude_nodes:
+        #         hdf_new[p] = hdf_old[p]
+        #
+        # for p in hdf_old.list_groups():
+        #     if p not in exclude_groups:
+        #         h_new = hdf_new.create_group(p)
+        #         self.hd_copy(hdf_old[p], h_new, exclude_groups=exclude_groups, exclude_nodes=exclude_nodes)
         return hdf_new
 
-    def rewrite_hdf5(self, job_name, info=False, exclude_groups=None):
+    def rewrite_hdf5(self, job_name, info=False, exclude_groups=None, exclude_nodes=None):
         """
         args:
             info (True/False): whether to give the information on how much space has been saved
             exclude_groups (list/None): list of groups to delete from hdf
+            exclude_nodes (list/None): list of nodes to delete from hdf
         """
         # hdf = self._hdf5
         if exclude_groups is None:
@@ -594,7 +618,7 @@ class FileHDFio(object):
         new_file = p_lst[-1] + '_rewrite'
 
         hdf_new = ProjectHDFio(project=self.project, file_name=new_file, h5_path='/' + job_name)
-        hdf_new = self.hd_copy(self, hdf_new, exclude_groups=exclude_groups)
+        hdf_new = self.hd_copy(self, hdf_new, exclude_groups=exclude_groups, exclude_nodes=exclude_nodes)
 
         if info:
             print('job: {}'.format(job_name))

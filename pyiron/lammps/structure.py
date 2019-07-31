@@ -9,9 +9,13 @@ from pyiron.base.generic.parameters import GenericParameters
 import decimal as dec
 
 try:
-    from ase.calculators.lammpsrun import Prism
+    from ase.calculators.lammps import Prism
+
 except ImportError:
-    from ase.calculators.lammpsrun import prism as Prism
+    try:
+        from ase.calculators.lammpsrun import Prism
+    except ImportError:
+        from ase.calculators.lammpsrun import prism as Prism
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Yury Lysogorskiy, Jan Janssen, Markus Tautschnig"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -42,6 +46,12 @@ class UnfoldingPrism(Prism):
         digits: 
     """
     def __init__(self, cell, pbc=(True, True, True), digits=10):
+        # Temporary fix. Since the arguments for the constructor have changed, try to see if it is compatible with
+        # the latest ase. If not, revert to the old __init__ parameters.
+        try:
+            super(UnfoldingPrism, self).__init__(cell, pbc=pbc, tolerance=float('1e-{}'.format(digits)))
+        except TypeError:
+            super(UnfoldingPrism, self).__init__(cell, pbc=pbc, digits=digits)
         a, b, c = cell
         an, bn, cn = [np.linalg.norm(v) for v in cell]
 
@@ -71,6 +81,7 @@ class UnfoldingPrism(Prism):
 
         # Actual lammps cell may be different from what is used to create R
         eps = 1e-10
+
         def fold(vec, pvec, i):
             p = pvec[i]
             x = vec[i] + 0.5 * p
@@ -139,6 +150,17 @@ class UnfoldingPrism(Prism):
         """
         return tuple([x for x in np.dot(position, self.R)])
 
+    def f2qdec(self, f):
+        return dec.Decimal(repr(f)).quantize(self.car_prec, dec.ROUND_DOWN)
+
+    def f2s(self, f):
+        return str(dec.Decimal(repr(f)).quantize(self.car_prec, dec.ROUND_HALF_EVEN))
+
+    def get_lammps_prism_str(self):
+        """Return a tuple of strings"""
+        p = self.get_lammps_prism()
+        return tuple([self.f2s(x) for x in p])
+
 
 class LammpsStructure(GenericParameters):
     """
@@ -149,7 +171,8 @@ class LammpsStructure(GenericParameters):
     def __init__(self, input_file_name=None):
         super(LammpsStructure, self).__init__(input_file_name=input_file_name,
                                               table_name="structure_inp",
-                                              comment_char="#")
+                                              comment_char="#",
+                                              val_only=True)
         self._structure = None
         self._potential = None
         self._el_eam_lst = []
