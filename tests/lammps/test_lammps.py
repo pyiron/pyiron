@@ -138,5 +138,6 @@ class TestLammps(unittest.TestCase):
         self.assertEqual(len(self.job_water["output/generic/steps"]), 6)
 
 
+
 if __name__ == '__main__':
     unittest.main()
