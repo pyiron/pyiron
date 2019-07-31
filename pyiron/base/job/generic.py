@@ -128,6 +128,14 @@ class GenericJob(JobCore):
 
             list of files which are used to restart the calculation from these files.
 
+        .. attribute:: exclude_nodes_hdf
+
+            list of nodes which are excluded from storing in the hdf5 file.
+
+        .. attribute:: exclude_groups_hdf
+
+            list of groups which are excluded from storing in the hdf5 file.
+
         .. attribute:: job_type
 
             Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster',
@@ -145,6 +153,8 @@ class GenericJob(JobCore):
         self.refresh_job_status()
         self._restart_file_list = list()
         self._restart_file_dict = dict()
+        self._exclude_nodes_hdf = list()
+        self._exclude_groups_hdf = list()
         self._process = None
         self._compress_by_default = False
         self.interactive_cache = None
@@ -307,6 +317,42 @@ class GenericJob(JobCore):
             raise ValueError("restart_file_dict should be a dictionary!")
         else:
             self._restart_file_dict = val
+
+    @property
+    def exclude_nodes_hdf(self):
+        """
+        Get the list of nodes which are excluded from storing in the hdf5 file
+
+        Returns:
+            nodes(list)
+        """
+        return self._exclude_nodes_hdf
+
+    @exclude_nodes_hdf.setter
+    def exclude_nodes_hdf(self, val):
+        if isinstance(val, str):
+            val = [val]
+        elif not hasattr(val, '__len__'):
+            raise ValueError('Wrong type of variable.')
+        self._exclude_nodes_hdf = val
+
+    @property
+    def exclude_groups_hdf(self):
+        """
+        Get the list of groups which are excluded from storing in the hdf5 file
+
+        Returns:
+            groups(list)
+        """
+        return self._exclude_groups_hdf
+
+    @exclude_groups_hdf.setter
+    def exclude_groups_hdf(self, val):
+        if isinstance(val, str):
+            val = [val]
+        elif not hasattr(val, '__len__'):
+            raise ValueError('Wrong type of variable.')
+        self._exclude_groups_hdf = val
 
     @property
     def job_type(self):
@@ -919,8 +965,11 @@ class GenericJob(JobCore):
         self._type_to_hdf()
         self._server.to_hdf(self._hdf5)
         with self._hdf5.open('input') as hdf_input:
-            hdf_input["restart_file_list"] = self._restart_file_list
-            hdf_input["restart_file_dict"] = self._restart_file_dict
+            generic_dict = {"restart_file_list": self._restart_file_list,
+                            "restart_file_dict": self._restart_file_dict,
+                            "exclude_nodes_hdf": self._exclude_nodes_hdf,
+                            "exclude_groups_hdf": self._exclude_groups_hdf}
+            hdf_input["generic_dict"] = generic_dict
 
     def from_hdf(self, hdf=None, group_name=None):
         """
@@ -937,10 +986,21 @@ class GenericJob(JobCore):
         self._type_from_hdf()
         self._server.from_hdf(self._hdf5)
         with self._hdf5.open('input') as hdf_input:
+            if "generic_dict" in hdf_input.list_nodes():
+                generic_dict = hdf_input["generic_dict"]
+                self._restart_file_list = generic_dict["restart_file_list"]
+                self._restart_file_dict = generic_dict["restart_file_dict"]
+                self._exclude_nodes_hdf = generic_dict["exclude_nodes_hdf"]
+                self._exclude_groups_hdf = generic_dict["exclude_groups_hdf"]
+            # Backwards compatbility
             if "restart_file_list" in hdf_input.list_nodes():
                 self._restart_file_list = hdf_input["restart_file_list"]
             if "restart_file_dict" in hdf_input.list_nodes():
                 self._restart_file_dict = hdf_input["restart_file_dict"]
+            if "exclude_nodes_hdf" in hdf_input.list_nodes():
+                self._exclude_nodes_hdf = hdf_input["exclude_nodes_hdf"]
+            if "exclude_groups_hdf" in hdf_input.list_nodes():
+                self._exclude_groups_hdf = hdf_input["exclude_groups_hdf"]
 
     def save(self):
         """
