@@ -459,6 +459,23 @@ class Project(ProjectPath):
                          recursive=recursive, columns=columns, all_columns=all_columns, sort_by=sort_by,
                          element_lst=element_lst)
 
+    def get_jobs_status(self, recursive=True, element_lst=None):
+        """
+
+        Gives a overview of all jobs status.
+
+        Args:
+            recursive (bool): search subprojects [True/False] - default=True
+            element_lst (list): list of elements required in the chemical formular - by default None
+
+        Returns:
+            prints an overview of the job status.
+
+        """
+        df = job_table(database=self.db, sql_query=self.sql_query, user=self.user, project_path=self.project_path,
+                       recursive=recursive, columns=["status"], element_lst=element_lst)
+        return df.value_counts()
+
     def keys(self):
         """
         List of file-, folder- and objectnames
