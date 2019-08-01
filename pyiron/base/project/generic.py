@@ -472,7 +472,7 @@ class Project(ProjectPath):
             prints an overview of the job status.
         """
         df = job_table(database=self.db, sql_query=self.sql_query, user=self.user, project_path=self.project_path,
-                       recursive=recursive, element_lst=element_lst)
+                       recursive=recursive, all_columns=True, element_lst=element_lst)
         return df['status'].value_counts()
 
     def keys(self):
