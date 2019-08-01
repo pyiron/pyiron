@@ -33,7 +33,7 @@ def command_line(argv):
                 output_path = os.path.abspath(arg)
         with h5py.File(input_path, 'r') as f:
             job_name = list(f.keys())[0]
-        project_path = os.path.join(os.path.dirname(input_path), job_name + '.h5')
+        project_path = os.path.join(os.path.dirname(output_path), job_name + '.h5')
         shutil.copy(input_path, project_path)
 
         file = os.path.basename(project_path)
