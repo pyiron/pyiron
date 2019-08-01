@@ -33,7 +33,7 @@ def command_line(argv):
                 output_path = os.path.abspath(arg)
         with h5py.File(input_path, 'r') as f:
             job_name = list(f.keys())[0]
-        project_path = os.path.join(os.path.dirname(input_path), job_name)
+        project_path = os.path.join(os.path.dirname(input_path), job_name + '.h5')
         shutil.copy(input_path, project_path)
 
         file = os.path.basename(project_path)
@@ -41,7 +41,7 @@ def command_line(argv):
 
         db_protject_path = s.top_path(project_path)
         project = os.path.dirname(project_path)
-        db_project = project.replace(db_protject_path, '')
+        db_project = (project + '/').replace(db_protject_path, '')
         job_reload = Project(project).load_from_jobpath(job_id=None,
                                                         db_entry={'id': 1000,
                                                                   'status': '',
