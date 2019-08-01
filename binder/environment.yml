@@ -5,6 +5,7 @@ dependencies:
 - python
 - pyiron
 - lammps
+- gpaw
 - nodejs
 - ipython
 - ipywidgets 
