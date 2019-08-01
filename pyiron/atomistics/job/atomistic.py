@@ -508,10 +508,10 @@ class AtomisticGenericJob(GenericJobCore):
         if not (self.structure is not None):
             raise AssertionError()
         snapshot = self.structure.copy()
-        snapshot.cell = self.get("output/generic/cells")[iteration_step]
-        snapshot.positions = self.get("output/generic/positions")[iteration_step]
-        indices = self.get("output/generic/indices")
-        if indices is not None:
+        snapshot.cell = self.output.cells[iteration_step]
+        snapshot.positions = self.output.positions[iteration_step]
+        indices = self.output.indices
+        if indices is not None and len(indices)>max([iteration_step,0]):
             snapshot.indices = indices[iteration_step]
         if wrap_atoms:
             return snapshot.center_coordinates_in_unit_cell()
