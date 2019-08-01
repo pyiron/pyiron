@@ -39,16 +39,16 @@ def command_line(argv):
         file = os.path.basename(project_path)
         job_name = os.path.splitext(file)[0]
 
-        db_protject_path = s.top_path(project_path)
+        db_project_path = s.top_path(project_path)
         project = os.path.dirname(project_path)
-        db_project = (project + '/').replace(db_protject_path, '')
+        db_project = (project + '/').replace(db_project_path, '')
         job_reload = Project(project).load_from_jobpath(job_id=None,
                                                         db_entry={'id': 1000,
                                                                   'status': '',
                                                                   'chemicalformula': '',
                                                                   'job': job_name,
                                                                   'subjob': '/' + job_name,
-                                                                  'projectpath': db_protject_path,
+                                                                  'projectpath': db_project_path,
                                                                   'project': db_project,
                                                                   'hamilton': '',
                                                                   'hamversion': '',
