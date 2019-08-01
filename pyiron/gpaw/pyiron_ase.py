@@ -9,6 +9,10 @@ import importlib
 import numpy as np
 from pyiron.base.job.interactive import InteractiveBase
 from pyiron.atomistics.job.interactive import GenericInteractiveOutput
+try:
+    from ase.cell import Cell
+except ImportError:
+    Cell = None
 
 __author__ = "Jan Janssen"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -36,15 +40,25 @@ class AseJob(InteractiveBase):
                                   'volume': []}
         self.output = GenericInteractiveOutput(job=self)
 
+    @staticmethod
+    def _cellfromdict(celldict):
+        if Cell is not None:
+            return Cell(**celldict)
+        else:
+            return celldict
+
     def _todict(self):
         atoms_dict = {'symbols': self._structure.get_chemical_symbols(),
                       'positions': self._structure.get_positions(),
-                      'cell': self._structure.get_cell(),
                       'pbc': self._structure.get_pbc(),
                       'celldisp': self._structure.get_celldisp(),
                       'constraint': [c.todict() for c in self._structure.constraints],
                       'info': copy.deepcopy(self._structure.info),
                       }
+        if Cell is not None:
+            atoms_dict['cell'] = self._structure.get_cell().todict()
+        else:
+            atoms_dict['cell'] = self._structure.get_cell()
         if self._structure.has('tags'):
             atoms_dict['tags'] = self._structure.get_tags()
         if self._structure.has('masses'):
@@ -72,6 +86,7 @@ class AseJob(InteractiveBase):
         if 'constraint' in atoms_dict_copy.keys():
             atoms_dict_copy['constraint'] = [dict2constraint(const_dict) for const_dict in
                                              atoms_dict_copy['constraint']]
+        atoms_dict_copy['cell'] = self._cellfromdict(celldict=atoms_dict_copy['cell'])
         atoms = Atoms(**atoms_dict_copy)
         if atoms.calc is not None:
             atoms.calc.read(atoms.calc.label)
