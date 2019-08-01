@@ -798,10 +798,3 @@ class Murnaghan(AtomisticParallelMaster):
             return self.structure
         else:
             raise ValueError('iteration_step should be either 0 or -1.')
-
-
-class MurnaghanInt(Murnaghan):
-    def __init__(self, project, job_name):
-        warnings.warn('Please use Murnaghan instead of MurnaghanInt')
-        super(MurnaghanInt, self).__init__(project=project, job_name=job_name)
-
