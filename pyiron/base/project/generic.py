@@ -470,7 +470,6 @@ class Project(ProjectPath):
 
         Returns:
             prints an overview of the job status.
-
         """
         df = job_table(database=self.db, sql_query=self.sql_query, user=self.user, project_path=self.project_path,
                        recursive=recursive, columns=["status"], element_lst=element_lst)
