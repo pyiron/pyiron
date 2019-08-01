@@ -120,8 +120,7 @@ class ExampleJob(GenericJob):
         self.__version__ = "0.3"
         self.__name__ = "ExampleJob"
         self.input = ExampleInput()
-        self.executable = "python " + str(os.path.dirname(os.path.realpath(__file__))) + \
-                          "/executable.py"
+        self.executable = "python -m pyiron.testing.executable"
         self._interactive_cache = {'alat': [], 'count': [], 'energy': []}
 
     def set_input_to_read_only(self):
