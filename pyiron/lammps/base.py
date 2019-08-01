@@ -532,9 +532,51 @@ class LammpsBase(AtomisticGenericJob):
         self._is_continuation = True
         self.input.control.set(read_restart=filename)
         self.input.control['reset_timestep'] = 0
-        self.input.control.remove_keys(['dimension', 'read_data', 'boundary', 'atom_style', 'velocity'])
+        self.input.control.remove_keys(['dimension', 'read_data', 'boundary',
+                                        'atom_style', 'velocity'])
 
     def collect_dump_file(self, file_name="dump.out", cwd=None):
+        """
+        general purpose routine to extract static from a lammps dump file
+
+        Args:
+            file_name:
+            cwd:
+
+        Returns:
+
+        """
+        file_name = self.job_file_name(file_name=file_name, cwd=cwd)
+        output = {}
+        with open(file_name, 'r') as ff:
+            dump = ff.readlines()
+        prism = UnfoldingPrism(self.structure.cell, digits=15)
+        rotation_lammps2orig = np.linalg.inv(prism.R)
+        output['time'] = np.genfromtxt([dump[nn] for nn in np.where([ll.startswith('ITEM: TIMESTEP') for ll in dump])[0]+1], dtype=int)
+        natoms = np.genfromtxt([dump[nn] for nn in np.where([ll.startswith('ITEM: NUMBER OF ATOMS') for ll in dump])[0]+1], dtype=int)
+        cells = np.genfromtxt(' '.join(([' '.join(dump[nn:nn+3])
+                                         for nn in np.where([ll.startswith('ITEM: BOX BOUNDS')
+                                                             for ll in dump])[0]+1])).split()).reshape(len(natoms), -1)
+        cells = np.array([to_amat(cc) for cc in cells])
+        output['cells'] = cells
+        l_start = np.where([ll.startswith('ITEM: ATOMS') for ll in dump])[0]
+        l_end = l_start+natoms+1
+        content = [pd.read_csv(StringIO('\n'.join(dump[llst:llen]).replace('ITEM: ATOMS ', '')),
+                            delim_whitespace=True) for llst, llen in zip(l_start, l_end)]
+
+        forces = np.array([np.stack((cc['fx'], cc['fy'], cc['fz']), axis=-1) for cc in content])
+        output['forces'] = np.einsum('ijk,kl->ijl', forces, rotation_lammps2orig)
+        unwrapped_positions = np.array([np.stack((cc['xsu'], cc['ysu'], cc['zsu']), axis=-1) for cc in content])
+        positions = unwrapped_positions-np.floor(unwrapped_positions)
+        unwrapped_positions = np.einsum('ikj,ilk->ilj', cells, unwrapped_positions)
+        output['unwrapped_positions'] = np.einsum('ijk,kl->ijl', unwrapped_positions, rotation_lammps2orig)
+        positions = np.einsum('ikj,ilk->ilj', cells, positions)
+        output['positions'] = np.einsum('ijk,kl->ijl', positions, rotation_lammps2orig)
+        with self.project_hdf5.open("output/generic") as hdf_output:
+            for k,v in output.items():
+                hdf_output[k] = v
+
+    def collect_dump_file_old(self, file_name="dump.out", cwd=None):
         """
         general purpose routine to extract static from a lammps dump file
 

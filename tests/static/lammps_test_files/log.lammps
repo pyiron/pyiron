@@ -1,25 +1,27 @@
-LAMMPS (17 Nov 2016)
+LAMMPS (5 Jun 2019)
 units real
 dimension 3
 boundary p p p
 atom_style full
 read_data structure.inp
-  orthogonal box = (0 0 0) to (9.5712 11.0519 18.097)
+  triclinic box = (0 0 0) to (9.31289 9.3128 9.31284) with tilt (0.0299998 0 0)
   1 by 1 by 1 MPI processor grid
   reading atoms ...
-  192 atoms
+  81 atoms
   scanning bonds ...
   2 = max bonds/atom
   scanning angles ...
   1 = max angles/atom
   reading bonds ...
-  128 bonds
+  54 bonds
   reading angles ...
-  64 angles
+  27 angles
   2 = max # of 1-2 neighbors
   1 = max # of 1-3 neighbors
   1 = max # of 1-4 neighbors
   2 = max # of special neighbors
+  special bonds CPU = 3.88622e-05 secs
+  read_data CPU = 0.000877142 secs
 include potential.inp
 # @potential_species H_O  ### species in potentia
 # W.L. Jorgensen et.al.The Journal of Chemical Physics 79926 (1983); https://doi.org/10.1063/1.44586
@@ -30,13 +32,13 @@ include potential.inp
 group O type 2
 0 atoms in group O
 group H type 1
-192 atoms in group H
+81 atoms in group H
 
 ## set charges - beside manually ##
 set group O charge -0.830
   0 settings made for charge
 set group H charge 0.415
-  192 settings made for charge
+  81 settings made for charge
 
 ### TIP3P Potential Parameters ##
 pair_style lj/cut/coul/long 10.0
@@ -49,68 +51,73 @@ angle_coeff 1 55 104.52
 kspace_style pppm 1.0e-5
 
 fix ensemble all nvt temp 350 350 100.0
-variable  dumptime equal 200
+variable dumptime  equal 200
 dump 1 all custom ${dumptime} dump.out id type xsu ysu zsu fx fy fz
 dump 1 all custom 200 dump.out id type xsu ysu zsu fx fy fz
 dump_modify 1 sort id format line "%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g"
 thermo_style custom step temp pe etotal pxx pxy pxz pyy pyz pzz vol
-thermo_modify format  float %20.15g
+thermo_modify format float %20.15g
 thermo 200
 timestep 1
-velocity all create 350 93411 dist gaussian
+velocity all create 350 57539 dist gaussian
 run 1000
 PPPM initialization ...
-WARNING: System is not charge neutral, net charge = 79.68 (../kspace.cpp:298)
-WARNING: Using 12-bit tables for long-range coulomb (../kspace.cpp:317)
-  G vector (1/distance) = 0.299623
-  grid = 8 9 15
+WARNING: System is not charge neutral, net charge = 33.615 (src/kspace.cpp:300)
+  using 12-bit tables for long-range coulomb (src/kspace.cpp:319)
+  G vector (1/distance) = 0.312433
+  grid = 9 9 9
   stencil order = 5
-  estimated absolute RMS force accuracy = 0.00204481
-  estimated relative force accuracy = 6.15788e-06
+  estimated absolute RMS force accuracy = 0.000927171
+  estimated relative force accuracy = 2.79215e-06
   using double precision FFTs
-  3d grid and FFT values/proc = 5280 1080
+  3d grid and FFT values/proc = 4096 729
 Neighbor list info ...
-  1 neighbor list requests
   update every 1 steps, delay 10 steps, check yes
   max neighbors/atom: 2000, page size: 100000
   master list distance cutoff = 12
   ghost atom cutoff = 12
-  binsize = 6 -> bins = 2 2 4
-Memory usage per processor = 8.13009 Mbytes
+  binsize = 6, bins = 2 2 2
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/cut/coul/long, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton/tri
+      stencil: half/bin/3d/newton/tri
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 8.317 | 8.317 | 8.317 Mbytes
 Step Temp PotEng TotEng Pxx Pxy Pxz Pyy Pyz Pzz Volume 
-       0                  350    -10117.1709826736    -9917.90383083112     784197.060175734    -443.287623330939      104.06472062385     521299.527989966     249.757059476527     272325.240011036     1914.29177451605 
-     200     788.654248076452    -13993.7552220254    -13544.7469768748     566769.066827229     3433.37912286336    -798.542069717387     556614.262968745    -4561.63567999028     558389.439943593     1914.29177451605 
-     400     308.524725964912    -14192.9302000433    -14017.2763617119     534156.487139679    -1339.62496628022    -1242.25844406926     547018.553578598    -2801.58809979543     539231.160176034     1914.29177451605 
-     600       286.1704330167    -14198.2068957585    -14035.2801325334      538390.44893048    -2482.48624560737    -1293.62196104592     539501.065610844     2719.21499148196     536984.445896441     1914.29177451605 
-     800     375.471549016493    -14155.7071570766    -13941.9381680182     550706.297245409     204.983215486342     3151.45214224003     549497.983288966     2565.61399935753     545059.621562648     1914.29177451605 
-    1000     321.981139241316    -14215.8450966745    -14032.5300550642     543811.007791452    -1822.72487058493    -1634.51478967186     543138.315629694    -2149.57374073053     541155.394543912     1914.29177451605 
-Loop time of 1.87283 on 1 procs for 1000 steps with 192 atoms
+       0                  350     -5745.2195617995     -5661.7568803995     502350.191578909     270.738267021724     1376.27102955284     336012.975634435     707.228109075416     447633.281389156     807.694491958975 
+     200     516.054779828975    -5953.68235423325    -5830.62145230807     517051.070256082    -489.438611267953     2462.74042976889     507650.091106875    -588.133685527138      519991.41202245     807.694491958975 
+     400     344.056140974651    -5989.21918935541    -5907.17390913289     500191.905425211    -5645.21111524062    -2230.36101621523     496331.875284439     1908.38413202247     504631.886210155     807.694491958975 
+     600      292.67178547153    -5967.38500790164    -5897.59308794284      466665.36927827     1773.86860838872    -7133.68311077478     447121.401367241     3526.96666627454      468732.39682674     807.694491958975 
+     800     402.249681935517    -5972.18390727894    -5876.26151571713     515832.570508186     4101.08177969964     822.661138163431     488789.060860251     -3489.5962230035     500977.319794091     807.694491958975 
+    1000     320.180106873751    -5982.82004785158    -5906.46836142123     495373.974418278      2402.1135866365    -2548.19624723298     496875.585031828     7824.68149372476     485101.592590631     807.694491958975 
+Loop time of 0.65363 on 1 procs for 1000 steps with 81 atoms
 
-Performance: 46.133 ns/day, 0.520 hours/ns, 533.950 timesteps/s
-99.9% CPU use with 1 MPI tasks x no OpenMP threads
+Performance: 132.185 ns/day, 0.182 hours/ns, 1529.917 timesteps/s
+99.6% CPU use with 1 MPI tasks x no OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 1.3224     | 1.3224     | 1.3224     |   0.0 | 70.61
-Bond    | 0.0075154  | 0.0075154  | 0.0075154  |   0.0 |  0.40
-Kspace  | 0.35426    | 0.35426    | 0.35426    |   0.0 | 18.92
-Neigh   | 0.14357    | 0.14357    | 0.14357    |   0.0 |  7.67
-Comm    | 0.030166   | 0.030166   | 0.030166   |   0.0 |  1.61
-Output  | 0.0050189  | 0.0050189  | 0.0050189  |   0.0 |  0.27
-Modify  | 0.005131   | 0.005131   | 0.005131   |   0.0 |  0.27
-Other   |            | 0.004822   |            |       |  0.26
+Pair    | 0.46113    | 0.46113    | 0.46113    |   0.0 | 70.55
+Bond    | 0.0032892  | 0.0032892  | 0.0032892  |   0.0 |  0.50
+Kspace  | 0.10288    | 0.10288    | 0.10288    |   0.0 | 15.74
+Neigh   | 0.057763   | 0.057763   | 0.057763   |   0.0 |  8.84
+Comm    | 0.020496   | 0.020496   | 0.020496   |   0.0 |  3.14
+Output  | 0.0027258  | 0.0027258  | 0.0027258  |   0.0 |  0.42
+Modify  | 0.0021968  | 0.0021968  | 0.0021968  |   0.0 |  0.34
+Other   |            | 0.00315    |            |       |  0.48
 
-Nlocal:    192 ave 192 max 192 min
+Nlocal:    81 ave 81 max 81 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
-Nghost:    4813 ave 4813 max 4813 min
+Nghost:    3605 ave 3605 max 3605 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
-Neighs:    70093 ave 70093 max 70093 min
+Neighs:    29246 ave 29246 max 29246 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
 
-Total # of neighbors = 70093
-Ave neighs/atom = 365.068
+Total # of neighbors = 29246
+Ave neighs/atom = 361.062
 Ave special neighs/atom = 2
-Neighbor list builds = 62
-Dangerous builds = 15
-Total wall time: 0:00:01
+Neighbor list builds = 47
+Dangerous builds = 0
+Total wall time: 0:00:00
