@@ -3,6 +3,8 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import numpy as np
+from pyiron.atomistics.structure.atoms import Atoms
+from pyiron.vasp.structure import write_poscar
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH " \
@@ -145,3 +147,27 @@ class VolumetricData(object):
             np.savetxt(f, position_array, fmt='%4d %.6f %.6f %.6f %.6f')
             np.savetxt(f, reshaped_data, fmt='%.5e')
             np.savetxt(f, last_line, fmt='%.5e')
+
+    def read_cube_file(self, filename="cube_file.cube"):
+        with open(filename) as f:
+            lines = f.readlines()
+            n_atoms = int(lines[2].strip().split()[0])
+            cell_data = np.genfromtxt(lines[3:6])
+            cell_grid = cell_data[:, 1:]
+            grid_shape = np.array(cell_data[:, 0], dtype=int)
+            # total_data = np.zeros(grid_shape)
+            cell = np.array([val * grid_shape[i] for i, val in enumerate(cell_grid)])
+            pos_data = np.genfromtxt(lines[6:n_atoms+6])
+            if n_atoms == 1:
+                pos_data = np.array([pos_data])
+            atomic_numbers = np.array(pos_data[:, 0], dtype=int)
+            positions = pos_data[:, 1:]
+            self._atoms = Atoms(atomic_numbers, positions, cell=cell)
+            end_int = int(np.prod(grid_shape) / 6) + 7
+            data = np.genfromtxt(lines[n_atoms+6:end_int])
+            data_flatten = np.hstack(data)
+            if np.prod(grid_shape) % 6 > 0:
+                data_flatten = np.append(data_flatten, [float(val) for val in lines[end_int].split()])
+            # print(len(data_flatten), np.prod(grid_shape))
+            n_x, n_y, n_z = grid_shape
+            self._total_data = data_flatten.reshape((n_x, n_y, n_z))
