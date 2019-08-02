@@ -1108,6 +1108,10 @@ class ProjectHDFio(FileHDFio):
         """
         self._project._inspect_mode = read_mode
 
+    @property
+    def name(self):
+        return os.path.basename(self.h5_path)
+
     def copy(self):
         """
         Copy the ProjectHDFio object - copying just the Python object but maintaining the same pyiron path
