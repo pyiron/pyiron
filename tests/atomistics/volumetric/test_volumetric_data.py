@@ -70,6 +70,21 @@ class TestVolumetricData(unittest.TestCase):
         rd_obj.write_vasp_volumetric(filename=os.path.join(self.execution_path, "random_CHGCAR"))
         cd_obj.from_file(filename=os.path.join(self.execution_path, "random_CHGCAR"))
         self.assertTrue(np.allclose(cd_obj.total_data * cd_obj.atoms.get_volume(), rd_obj.total_data))
+        file_name = os.path.abspath(os.path.join(self.execution_path, "..", "..", "static", "vasp_test_files",
+                                                 "CHGCAR_samples", "CHGCAR_water"))
+        cd_obj = VaspVolumetricData()
+        cd_obj.from_file(file_name)
+        data_before = cd_obj.total_data.copy()
+        cd_obj.write_cube_file(filename=os.path.join(self.execution_path, "chgcar.cube"))
+        cd_obj.read_cube_file(filename=os.path.join(self.execution_path, "chgcar.cube"))
+        self.assertIsNotNone(cd_obj.atoms)
+        data_after = cd_obj.total_data.copy()
+        self.assertTrue(np.allclose(data_before, data_after))
+        data_before = cd_obj.total_data.copy()
+        cd_obj.write_vasp_volumetric(filename=os.path.join(self.execution_path, "random_CHGCAR"))
+        cd_obj.from_file(filename=os.path.join(self.execution_path, "random_CHGCAR"), normalize=False)
+        data_after = cd_obj.total_data.copy()
+        self.assertTrue(np.allclose(data_before, data_after))
 
 
 if __name__ == '__main__':
