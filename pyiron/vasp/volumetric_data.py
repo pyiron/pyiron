@@ -153,7 +153,7 @@ class VaspVolumetricData(VolumetricData):
             list: A list of the volumetric data (length >1 for CHGCAR files with spin)
 
         """
-        if os.stat(filename).st_size == 0:
+        if os.path.getsize(filename) > 0:
             s = Settings()
             s.logger.warning("File:" + filename + "seems to be corrupted/empty")
             return None, None
