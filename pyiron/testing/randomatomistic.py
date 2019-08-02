@@ -374,8 +374,7 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
         self.__version__ = "0.3"
         self.__name__ = "AtomisticExampleJob"
         self.input = ExampleInput()
-        self.executable = "python " + str(os.path.dirname(os.path.realpath(__file__))) + \
-                          "/executable.py"
+        self.executable = "python -m pyiron.testing.executable"
         self.interactive_cache = {'cells': [],
                                   'energy_pot': [],
                                   'energy_tot': [],

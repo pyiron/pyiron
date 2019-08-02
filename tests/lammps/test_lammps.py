@@ -17,6 +17,8 @@ class TestLammps(unittest.TestCase):
         cls.job = Lammps(project=ProjectHDFio(project=cls.project, file_name='lammps'), job_name='lammps')
         cls.job_water = Lammps(project=ProjectHDFio(project=cls.project, file_name='lammps_water'),
                                job_name='lammps_water')
+        cls.job_water_dump = Lammps(project=ProjectHDFio(project=cls.project, file_name='lammps_water_dump'),
+                                    job_name='lammps_water_dump')
 
     @classmethod
     def tearDownClass(cls):
@@ -136,6 +138,41 @@ class TestLammps(unittest.TestCase):
         self.assertTrue(np.array_equal(self.job_water["output/generic/positions"].shape,
                                        self.job_water["output/generic/forces"].shape))
         self.assertEqual(len(self.job_water["output/generic/steps"]), 6)
+
+
+    def test_dump_parser(self):
+        density = 1.0e-24  # g/A^3
+        n_mols = 27
+        mol_mass_water = 18.015  # g/mol
+        # Determining the supercell size size
+        mass = mol_mass_water * n_mols / units.mol  # g
+        vol_h2o = mass / density  # in A^3
+        a = vol_h2o ** (1. / 3.)  # A
+        # Constructing the unitcell
+        n = int(round(n_mols ** (1. / 3.)))
+        dx = 0.7
+        r_O = [0, 0, 0]
+        r_H1 = [dx, dx, 0]
+        r_H2 = [-dx, dx, 0]
+        unit_cell = (a / n) * np.eye(3)
+        unit_cell[0][1] += 0.01
+        water = Atoms(elements=['H', 'H', 'O'], positions=[r_H1, r_H2, r_O], cell=unit_cell)
+        water.set_repeat([n, n, n])
+        self.job_water_dump.structure = water
+        self.job_water_dump.potential = 'H2O_tip3p'
+        self.job_water_dump.calc_md(temperature=350, initial_temperature=350, time_step=1, n_ionic_steps=1000, n_print=200, pressure=0)
+        file_directory = os.path.join(self.execution_path, "..", "static", "lammps_test_files")
+        self.job_water_dump.restart_file_list.append(os.path.join(file_directory, "log.lammps"))
+        self.job_water_dump.restart_file_list.append(os.path.join(file_directory, "dump.out"))
+        self.job_water_dump.run(run_mode="manual")
+        self.job_water_dump.status.collect = True
+        self.job_water_dump.run()
+        positions = np.loadtxt(os.path.join(file_directory, 'positions_water.dat'))
+        positions = positions.reshape(len(positions), -1, 3)
+        forces = np.loadtxt(os.path.join(file_directory, 'forces_water.dat'))
+        forces = forces.reshape(len(forces), -1, 3)
+        self.assertTrue(np.allclose(self.job_water_dump['output/generic/unwrapped_positions'], positions))
+        self.assertTrue(np.allclose(self.job_water_dump['output/generic/forces'], forces))
 
 
 if __name__ == '__main__':

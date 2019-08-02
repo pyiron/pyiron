@@ -40,7 +40,7 @@ JOB_CLASS_DICT = {'ScriptJob': 'pyiron.base.job.script',
                   'Lammps': 'pyiron.lammps.lammps',
                   'AtomisticExampleJob': 'pyiron.testing.randomatomistic',
                   'ExampleJob': 'pyiron.testing.randomatomistic',
-                  'Gpaw': 'pyiron.gpaw.gpaw',
+                  'GpawJob': 'pyiron.gpaw.gpaw',
                   'Vasp': 'pyiron.vasp.vasp',
                   }
 
