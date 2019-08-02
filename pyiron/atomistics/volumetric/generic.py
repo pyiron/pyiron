@@ -192,7 +192,7 @@ class VolumetricData(object):
             f.write("\n")
             f.write(" ".join(list(np.array(self.total_data.shape, dtype=str))))
             f.write("\n")
-            n_x, n_y, n_z = self.total_data.shape
+            _, n_y, n_z = self.total_data.shape
             flattened_data = np.hstack([self.total_data[:, i, j] for j in range(n_z) for i in range(n_y)])
             if normalize:
                 flattened_data /= self.atoms.get_volume()
