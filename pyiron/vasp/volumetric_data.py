@@ -84,7 +84,7 @@ class VaspVolumetricData(VolumetricData):
         data_count = 0
         atoms = None
         volume = None
-        with open(filename) as f:
+        with open(filename, "r") as f:
             for line in f:
                 line = line.strip()
                 if read_dataset:
@@ -153,9 +153,9 @@ class VaspVolumetricData(VolumetricData):
             list: A list of the volumetric data (length >1 for CHGCAR files with spin)
 
         """
-        if os.path.getsize(filename) > 0:
+        if not os.path.getsize(filename) > 0:
             s = Settings()
-            s.logger.warning("File:" + filename + "seems to be corrupted/empty")
+            s.logger.warning("File:" + filename + "seems to be empty! ")
             return None, None
         with open(filename, "r") as f:
             struct_lines = list()
@@ -208,7 +208,7 @@ class VaspVolumetricData(VolumetricData):
                         total_data_list.append(total_data)
             if len(total_data_list) == 0:
                 s = Settings()
-                s.logger.warning("File:" + filename + "seems to be corrupted/empty")
+                s.logger.warning("File:" + filename + "seems to be corrupted/empty even after parsing!")
                 return None, None
             return atoms, total_data_list
 
