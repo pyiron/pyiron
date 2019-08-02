@@ -4,7 +4,7 @@
 
 import numpy as np
 from pyiron.atomistics.structure.atoms import Atoms
-# from pyiron.vasp.structure import write_poscar
+from pyiron.vasp.structure import write_poscar
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH " \
@@ -149,7 +149,7 @@ class VolumetricData(object):
             np.savetxt(f, last_line, fmt='%.5e')
 
     def read_cube_file(self, filename="cube_file.cube"):
-        with open(filename) as f:
+        with open(filename, "r") as f:
             lines = f.readlines()
             n_atoms = int(lines[2].strip().split()[0])
             cell_data = np.genfromtxt(lines[3:6])
@@ -171,3 +171,19 @@ class VolumetricData(object):
             # print(len(data_flatten), np.prod(grid_shape))
             n_x, n_y, n_z = grid_shape
             self._total_data = data_flatten.reshape((n_x, n_y, n_z))
+
+    def write_vasp_volumetric(self, filename="CHGCAR", normalize=False):
+        write_poscar(structure=self.atoms, filename=filename)
+        with open(filename, "a") as f:
+            f.write("\n")
+            f.write(" ".join(list(np.array(self.total_data.shape, dtype=str))))
+            f.write("\n")
+            n_x, n_y, n_z = self.total_data.shape
+            flattened_data = np.hstack([self.total_data[:, i, j] for j in range(n_z) for i in range(n_y)])
+            if normalize:
+                flattened_data /= self.atoms.get_volume()
+            num_lines = int(len(flattened_data) / 5) * 5
+            reshaped_data = np.reshape(flattened_data[0:num_lines], (-1, 5))
+            np.savetxt(f, reshaped_data, fmt="%.12f")
+            if len(flattened_data) % 5 > 0:
+                np.savetxt(f, [flattened_data[num_lines:]], fmt="%.12f")
