@@ -51,8 +51,8 @@ class TestVolumetricData(unittest.TestCase):
 
     def test_write_cube(self):
         cd_obj = VaspVolumetricData()
-        file_name = os.path.abspath(os.path.join(self.execution_path,
-                                                 "../../static/vasp_test_files/CHGCAR_samples/CHGCAR_no_spin"))
+        file_name = os.path.abspath(os.path.join(self.execution_path, "..", "..", "static", "vasp_test_files",
+                                                 "CHGCAR_samples", "CHGCAR_no_spin"))
         cd_obj.from_file(filename=file_name)
         data_before = cd_obj.total_data.copy()
         cd_obj.write_cube_file(filename=os.path.join(self.execution_path, "chgcar.cube"))
