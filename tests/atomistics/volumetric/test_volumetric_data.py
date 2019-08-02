@@ -2,7 +2,9 @@ import unittest
 import numpy as np
 import os
 from pyiron.atomistics.volumetric.generic import VolumetricData
+from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.vasp.volumetric_data import VaspVolumetricData
+
 
 """
 @author: surendralal
@@ -23,6 +25,7 @@ class TestVolumetricData(unittest.TestCase):
     def tearDownClass(cls):
         cls.execution_path = os.path.dirname(os.path.abspath(__file__))
         os.remove(os.path.join(cls.execution_path, "chgcar.cube"))
+        os.remove(os.path.join(cls.execution_path, "random_CHGCAR"))
 
     def test_total_data_assertion(self):
         vd = VolumetricData()
@@ -59,6 +62,14 @@ class TestVolumetricData(unittest.TestCase):
         cd_obj.read_cube_file(filename=os.path.join(self.execution_path, "chgcar.cube"))
         data_after = cd_obj.total_data.copy()
         self.assertTrue(np.allclose(data_before, data_after))
+        n_x, n_y, n_z = (3, 4, 2)
+        random_array = np.random.rand(n_x, n_y, n_z)
+        rd_obj = VolumetricData()
+        rd_obj.atoms = Atoms("H2O", cell=np.eye(3)*10, positions=np.eye(3))
+        rd_obj.total_data = random_array
+        rd_obj.write_vasp_volumetric(filename=os.path.join(self.execution_path, "random_CHGCAR"))
+        cd_obj.from_file(filename=os.path.join(self.execution_path, "random_CHGCAR"))
+        self.assertTrue(np.allclose(cd_obj.total_data * cd_obj.atoms.get_volume(), rd_obj.total_data))
 
 
 if __name__ == '__main__':
