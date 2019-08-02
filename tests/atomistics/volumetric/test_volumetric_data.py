@@ -1,8 +1,9 @@
 import unittest
-
 import numpy as np
-
+import os
 from pyiron.atomistics.volumetric.generic import VolumetricData
+from pyiron.vasp.volumetric_data import VaspVolumetricData
+import posixpath
 
 """
 @author: surendralal
@@ -14,9 +15,15 @@ Unittests for the pyiron.objects.volumetric module
 class TestVolumetricData(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.execution_path = os.path.dirname(os.path.abspath(__file__))
         cls.data_dict = dict()
         cls.data_dict["cubic"] = np.ones((100, 100, 100))
         cls.data_dict["non_cubic"] = np.zeros((200, 50, 100))
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.execution_path = os.path.dirname(os.path.abspath(__file__))
+        os.remove(posixpath.join(cls.execution_path, "chgcar.cube"))
 
     def test_total_data_assertion(self):
         vd = VolumetricData()
@@ -42,6 +49,12 @@ class TestVolumetricData(unittest.TestCase):
                 if key == "non-cubic":
                     answer = np.zeros(nz)
                     self.assertTrue(all(np.equal(answer, vd.get_average_along_axis(ind=i))))
+
+    def test_write_cube(self):
+        cd_obj = VaspVolumetricData()
+        cd_obj.from_file(filename=posixpath.join(self.execution_path,
+                                                 "../../static/vasp_test_files/CHGCAR_samples/CHGCAR_no_spin"))
+        cd_obj.write_cube_file(filename="chgcar.cube")
 
 
 if __name__ == '__main__':
