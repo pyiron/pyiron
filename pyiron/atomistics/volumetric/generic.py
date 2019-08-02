@@ -4,7 +4,7 @@
 
 import numpy as np
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.vasp.structure import write_poscar
+# from pyiron.vasp.structure import write_poscar
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH " \
@@ -126,7 +126,7 @@ class VolumetricData(object):
             raise ValueError("The volumetric data object must have a valid structure assigned to it before writing "
                              "to the cube format")
         data = self.total_data
-        n_x, n_y, n_z = data.shape
+        n_x, n_y, _ = data.shape
         origin = np.zeros(3)
         flattened_data = np.hstack([data[i, j, :] for i in range(n_x) for j in range(n_y)])
         n_atoms = len(self.atoms)

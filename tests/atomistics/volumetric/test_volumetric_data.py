@@ -52,6 +52,7 @@ class TestVolumetricData(unittest.TestCase):
 
     def test_write_cube(self):
         cd_obj = VaspVolumetricData()
+        print(self.execution_path)
         cd_obj.from_file(filename=posixpath.join(self.execution_path,
                                                  "../../static/vasp_test_files/CHGCAR_samples/CHGCAR_no_spin"))
         data_before = cd_obj.total_data.copy()
