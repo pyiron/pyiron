@@ -461,7 +461,6 @@ class Project(ProjectPath):
 
     def get_jobs_status(self, recursive=True, element_lst=None):
         """
-
         Gives a overview of all jobs status.
 
         Args:
