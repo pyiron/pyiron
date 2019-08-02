@@ -149,6 +149,13 @@ class VolumetricData(object):
             np.savetxt(f, last_line, fmt='%.5e')
 
     def read_cube_file(self, filename="cube_file.cube"):
+        """
+        Generate data from a CUBE file
+
+        Args:
+            filename (str): Filename to parse
+
+        """
         with open(filename, "r") as f:
             lines = f.readlines()
             n_atoms = int(lines[2].strip().split()[0])
@@ -173,6 +180,14 @@ class VolumetricData(object):
             self._total_data = data_flatten.reshape((n_x, n_y, n_z))
 
     def write_vasp_volumetric(self, filename="CHGCAR", normalize=False):
+        """
+        Writes volumetric data into a VASP CHGCAR format
+
+        Args:
+            filename (str): Filename of the new file
+            normalize (bool): True if the data is to be normalized by the volume
+
+        """
         write_poscar(structure=self.atoms, filename=filename)
         with open(filename, "a") as f:
             f.write("\n")
