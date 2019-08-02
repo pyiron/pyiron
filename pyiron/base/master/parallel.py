@@ -195,6 +195,13 @@ class ParallelMaster(GenericMaster):
         """
         self.submission_status.total_jobs = num_jobs
 
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        self.input.read_only = True
+
     def reset_job_id(self, job_id=None):
         """
         Reset the job id sets the job_id to None as well as all connected modules like JobStatus and SubmissionStatus.
@@ -307,7 +314,8 @@ class ParallelMaster(GenericMaster):
 
     def refresh_submission_status(self):
         """
-        Refresh the submission status - if a job ID job_id is set then the submission status is loaded from the database.
+        Refresh the submission status - if a job ID job_id is set then the submission status is loaded from the
+        database.
         """
         if self.job_id:
             self.submission_status = SubmissionStatus(db=self.project.db, job_id=self.job_id)
@@ -367,7 +375,7 @@ class ParallelMaster(GenericMaster):
         if len(self.child_ids) < len(self._job_generator):
             return False
         return set([self.project.db.get_item_by_id(child_id)['status']
-                    for child_id in self.child_ids]) < {'finished', 'busy', 'refresh', 'aborted'}
+                    for child_id in self.child_ids]) < {'finished', 'busy', 'refresh', 'aborted', 'not_converged'}
 
     def iter_jobs(self, convert_to_object=True):
         """
@@ -408,7 +416,7 @@ class ParallelMaster(GenericMaster):
         """
         return len(self.child_ids)
 
-    def _run_if_refresh(self):
+    def run_if_refresh(self):
         """
         Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
         suspended previously, the job is going to be started again, to be continued.
@@ -426,7 +434,7 @@ class ParallelMaster(GenericMaster):
                 self.status.suspended = True
             if self.status.busy:
                 self.status.refresh = True
-                self._run_if_refresh()
+                self.run_if_refresh()
 
     def _run_if_collect(self):
         """
@@ -524,7 +532,7 @@ class ParallelMaster(GenericMaster):
                 if job.server.run_mode.thread:
                     job_lst.append(job._process)
             process_lst = [process.communicate() for process in job_lst if process]
-            self._run_if_refresh()
+            self.run_if_refresh()
         else:
             self.run_static()
 

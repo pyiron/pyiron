@@ -2,7 +2,6 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-import warnings
 from pyiron.vasp.interactive import VaspInteractive
 
 __author__ = "Sudarsan Surendralal"
@@ -31,8 +30,8 @@ class Vasp(VaspInteractive):
         as shown below:
 
         >>> ham = Vasp(job_name="trial_job")
-        >>> ham.input.incar.set(IBRION=-1)
-        >>> ham.input.incar.set(ISMEAR=0)
+        >>> ham.input.incar[IBRION] = -1
+        >>> ham.input.incar[ISMEAR] = 0
         >>> ham.input.kpoints.set(size_of_mesh=[6, 6, 6])
 
         However, the according to pyiron's philosophy, it is recommended to avoid using code specific tags like IBRION,
@@ -51,15 +50,3 @@ class Vasp(VaspInteractive):
         self.__name__ = "Vasp"
         self.__version__ = None  # Reset the version number to the executable is set automatically
         self._executable_activate(enforce=True)
-
-
-class VaspInt(Vasp):
-    def __init__(self, project, job_name):
-        warnings.warn('Please use Vasp instead of VaspInt')
-        super(VaspInt, self).__init__(project=project, job_name=job_name)
-
-
-class VaspInt2(Vasp):
-    def __init__(self, project, job_name):
-        warnings.warn('Please use Vasp instead of VaspInt2')
-        super(VaspInt2, self).__init__(project=project, job_name=job_name)

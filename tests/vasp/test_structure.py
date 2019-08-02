@@ -4,7 +4,7 @@ import posixpath
 import numpy as np
 
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.vasp.structure import read_atoms, write_poscar, vasp_sorter, atoms_from_string
+from pyiron.vasp.structure import read_atoms, write_poscar, vasp_sorter, atoms_from_string, manip_contcar
 from pyiron.atomistics.structure.sparse_list import SparseList
 import warnings
 
@@ -135,6 +135,38 @@ class TestVaspStructure(unittest.TestCase):
         self.assertEqual(len(self.structure), len(test_atoms))
         self.assertEqual(self.structure[vasp_order], test_atoms)
         os.remove(posixpath.join(self.file_location, "POSCAR_test"))
+
+    def test_manip_contcar(self):
+        for f in self.file_list:
+            if "CONTCAR_Mg" in f:
+                struct = read_atoms(f)
+                Mg_indices = struct.select_index("Mg")
+                add_pos = np.zeros_like(struct.positions)
+                max_Mg = np.argmax(struct.positions[Mg_indices, 2])
+                init_z = struct.positions[max_Mg, 2]
+                add_pos[np.argsort(vasp_sorter(struct))[max_Mg], 2] += 5.0
+                manip_contcar(filename=f, new_filename="manip_file", add_pos=add_pos)
+                new_struct = read_atoms("manip_file")
+                Mg_indices = new_struct.select_index("Mg")
+                max_Mg = np.argmax(new_struct.positions[Mg_indices, 2])
+                final_z = new_struct.positions[max_Mg, 2]
+                self.assertEqual(round(final_z-init_z, 3), 5.0)
+                os.remove("manip_file")
+                break
+        positions = np.ones((3, 3))
+        positions[0] = [5., 5., 5.]
+        positions[1] = [5., 5.7, 5.7]
+        positions[2] = [5., -5.7, -5.7]
+        struct = Atoms(["O", "H", "H"], positions=positions, cell=10.*np.eye(3))
+        write_poscar(structure=struct, filename="simple_water")
+        add_pos = np.zeros_like(positions)
+        poscar_order = np.argsort(vasp_sorter(struct))
+        add_pos[poscar_order[struct.select_index("O")], 2] += 3
+        manip_contcar("simple_water", "simple_water_new", add_pos)
+        new_struct = read_atoms("simple_water_new")
+        self.assertEqual(new_struct.positions[new_struct.select_index("O"), 2], 8)
+        os.remove("simple_water")
+        os.remove("simple_water_new")
 
     def tearDown(self):
         pass

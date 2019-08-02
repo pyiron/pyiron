@@ -5,9 +5,10 @@ dependencies:
 - python
 - pyiron
 - lammps
+- gpaw
 - nodejs
 - ipython
 - ipywidgets 
 - notebook
 - ipykernel
-- nglview=1.2.2
+- nglview=2.0

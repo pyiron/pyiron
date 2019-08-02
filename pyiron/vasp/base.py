@@ -57,8 +57,8 @@ class VaspBase(GenericDFTJob):
         as shown below:
 
         >>> ham = VaspBase(job_name="trial_job")
-        >>> ham.input.incar[IBRION=-1]
-        >>> ham.input.incar[ISMEAR=0]
+        >>> ham.input.incar[IBRION] = -1
+        >>> ham.input.incar[ISMEAR] = 0
         >>> ham.input.kpoints.set(size_of_mesh=[6, 6, 6])
 
         However, the according to pyiron's philosophy, it is recommended to avoid using code specific tags like IBRION,
@@ -205,7 +205,8 @@ class VaspBase(GenericDFTJob):
         """
         How the original atom indices are ordered in the vasp format (species by species)
         """
-        self._sorted_indices = vasp_sorter(self.structure)
+        if self._sorted_indices is None:
+            self._sorted_indices = vasp_sorter(self.structure)
         return self._sorted_indices
 
     @sorted_indices.setter
@@ -303,6 +304,16 @@ class VaspBase(GenericDFTJob):
                                          'url': 'https://link.aps.org/doi/10.1103/PhysRevB.54.11169',
                                          }}}
 
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        super(VaspBase, self).set_input_to_read_only()
+        self.input.incar.read_only = True
+        self.input.kpoints.read_only = True
+        self.input.potcar.read_only = True
+
     # Compatibility functions
     def write_input(self):
         """
@@ -335,13 +346,17 @@ class VaspBase(GenericDFTJob):
                 self.structure = self.get_final_structure_from_file(filename="CONTCAR")
             except IOError:
                 self.structure = self.get_final_structure_from_file(filename="POSCAR")
+            self.sorted_indices = np.array(range(len(self.structure)))
         self._output_parser.structure = self.structure.copy()
         try:
-            self._output_parser.collect(directory=self.working_directory)
+            self._output_parser.collect(directory=self.working_directory, sorted_indices=self.sorted_indices)
         except VaspCollectError:
             self.status.aborted = True
             return
         self._output_parser.to_hdf(self._hdf5)
+        if len(self._exclude_groups_hdf) > 0 or len(self._exclude_nodes_hdf) > 0:
+            self.project_hdf5.rewrite_hdf5(job_name=self.job_name, exclude_groups=self._exclude_groups_hdf,
+                                           exclude_nodes=self._exclude_nodes_hdf)
 
     def convergence_check(self):
         if 'IBRION' in self['input/incar/data_dict']['Parameter']:
@@ -475,8 +490,9 @@ class VaspBase(GenericDFTJob):
             self._write_chemical_formular_to_database()
             self._import_directory = directory
             self.status.collect = True
-            self.to_hdf()
+            # self.to_hdf()
             self.collect_output()
+            self.to_hdf()
             self.status.finished = True
         else:
             return
@@ -542,14 +558,20 @@ class VaspBase(GenericDFTJob):
             pyiron.atomistics.structure.atoms.Atoms: The final structure
         """
         filename = posixpath.join(self.working_directory, filename)
-        input_structure = self.structure.copy()
-        try:
-            output_structure = read_atoms(filename=filename, species_list=input_structure.get_parent_elements())
-        except (IndexError, ValueError, IOError):
-            s.logger.warning("Unable to read output structure")
-            return
-        input_structure.cell = output_structure.cell.copy()
-        input_structure.positions[self.sorted_indices] = output_structure.positions
+        if self.structure is None:
+            try:
+                output_structure = read_atoms(filename=filename)
+                input_structure = output_structure.copy()
+            except (IndexError, ValueError, IOError):
+                raise IOError("Unable to read output structure")
+        else:
+            input_structure = self.structure.copy()
+            try:
+                output_structure = read_atoms(filename=filename, species_list=input_structure.get_parent_elements())
+                input_structure.cell = output_structure.cell.copy()
+                input_structure.positions[self.sorted_indices] = output_structure.positions
+            except (IndexError, ValueError, IOError):
+                raise IOError("Unable to read output structure")
         return input_structure
 
     def write_magmoms(self):
@@ -1273,14 +1295,16 @@ class Output:
         """
         self._structure = atoms
 
-    def collect(self, directory=os.getcwd()):
+    def collect(self, directory=os.getcwd(), sorted_indices=None):
         """
         Collects output from the working directory
 
         Args:
             directory (str): Path to the directory
+            sorted_indices (np.array/None):
         """
-        sorted_indices = vasp_sorter(self.structure)
+        if sorted_indices is None:
+            sorted_indices = vasp_sorter(self.structure)
         files_present = os.listdir(directory)
         log_dict = dict()
         vasprun_working, outcar_working = False, False

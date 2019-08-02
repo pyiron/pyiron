@@ -7,7 +7,7 @@ from collections import OrderedDict
 import inspect
 import time
 import numpy as np
-from pyiron.base.master.generic import GenericMaster
+from pyiron.base.master.generic import GenericMaster, get_function_from_string
 from pyiron.base.generic.parameters import GenericParameters
 
 """
@@ -41,8 +41,9 @@ class SerialMasterBase(GenericMaster):
 
         .. attribute:: status
 
-            execution status of the job, can be one of the following [initialized, appended, created, submitted, running,
-                                                                      aborted, collect, suspended, refresh, busy, finished]
+            execution status of the job, can be one of the following [initialized, appended, created, submitted,
+                                                                      running, aborted, collect, suspended, refresh,
+                                                                      busy, finished]
 
         .. attribute:: job_id
 
@@ -54,8 +55,8 @@ class SerialMasterBase(GenericMaster):
 
         .. attribute:: master_id
 
-            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel or in
-            serial.
+            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel
+            or in serial.
 
         .. attribute:: child_ids
 
@@ -91,7 +92,8 @@ class SerialMasterBase(GenericMaster):
 
         .. attribute:: library_activated
 
-            For job types which offer a Python library pyiron can use the python library instead of an external executable.
+            For job types which offer a Python library pyiron can use the python library instead of an external
+            executable.
 
         .. attribute:: server
 
@@ -111,8 +113,8 @@ class SerialMasterBase(GenericMaster):
 
         .. attribute:: job_type
 
-            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster', 'ScriptJob',
-                                                               'ListMaster']
+            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster',
+                                                               'ScriptJob', 'ListMaster']
 
         .. attribute:: child_names
 
@@ -174,7 +176,7 @@ class SerialMasterBase(GenericMaster):
 
     @ref_job.setter
     def ref_job(self, job):
-        self.start_job = job
+        self.append(job)
 
     @property
     def input(self):
@@ -201,6 +203,13 @@ class SerialMasterBase(GenericMaster):
             self._start_job.input = value
         else:
             raise ValueError('Input can only be set after a start job has been assinged.')
+
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        self._input.read_only = True
 
     def get_initial_child_name(self):
         """
@@ -283,7 +292,7 @@ class SerialMasterBase(GenericMaster):
                 self._convergence_goal = None
             else:
                 self._convergence_goal_str = convergence_goal_str
-                self._convergence_goal = self.get_function_from_string(convergence_goal_str)
+                self._convergence_goal = get_function_from_string(convergence_goal_str)
                 self._convergence_goal_qwargs = hdf5_input["convergence_goal_qwargs"]
 
     def get_from_childs(self, path):
@@ -316,6 +325,9 @@ class SerialMasterBase(GenericMaster):
         for job_id in self.child_ids:
             yield self.project.load(job_id, convert_to_object=convert_to_object)
 
+    def run_if_interactive(self):
+        pass
+
     def _get_job_template(self):
         self._logger.info("run serial master {}".format(self.job_info_str))
         job = self.pop(-1)
@@ -335,7 +347,7 @@ class SerialMasterBase(GenericMaster):
         job.run()
         if job._process:
             job._process.communicate()
-        self._run_if_refresh()
+        self.run_if_refresh()
 
     def _run_if_master_non_modal_child_non_modal(self, job):
         job.run()
@@ -344,14 +356,14 @@ class SerialMasterBase(GenericMaster):
 
     def _run_if_master_modal_child_modal(self, job):
         job.run()
-        self._run_if_refresh()
+        self.run_if_refresh()
 
     def _run_if_master_modal_child_non_modal(self, job):
         job.run()
         while not job.status.finished and not job.status.aborted:
             job.refresh_job_status()
             time.sleep(5)
-        self._run_if_refresh()
+        self.run_if_refresh()
 
     def run_static(self, **qwargs):
         self.status.running = True
@@ -449,7 +461,7 @@ class SerialMasterBase(GenericMaster):
             item = total_lst[item]
         return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
 
-    def _run_if_refresh(self):
+    def run_if_refresh(self):
         """
         Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
         suspended previously, the job is going to be started again, to be continued.

@@ -138,7 +138,8 @@ class DatabaseAccess(object):
         Returns:
 
         """
-        self.conn.close()
+        if not self._keep_connection:
+            self.conn.close()
 
     def __reload_db(self):
         """
@@ -361,10 +362,10 @@ class DatabaseAccess(object):
         if not self._viewer_mode:
             try:
                 par_dict = dict((key.lower(), value) for key, value in par_dict.items())           # make keys lowercase
-                result = self.conn.execute(self.simulation_table.insert(par_dict))
+                result = self.conn.execute(self.simulation_table.insert(par_dict)).inserted_primary_key[-1]
                 if not self._keep_connection:
                     self.conn.close()
-                return result.inserted_primary_key[-1]
+                return result
             except Exception as except_msg:
                 raise ValueError("Error occurred: " + str(except_msg))
         else:

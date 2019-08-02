@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import inspect
+import textwrap
 from pyiron.base.job.generic import GenericJob
 
 """
@@ -319,6 +320,51 @@ class GenericMaster(GenericJob):
                     self.project.db.get_items_dict({'masterid': self.job_id})
                     if db_entry['status'] not in ['finished', 'aborted']])
 
+    def write_input(self):
+        """
+        Write the input files for the external executable. This method has to be implemented in the individual
+        hamiltonians.
+        """
+        raise NotImplementedError("write procedure must be defined for derived Hamilton!")
+
+    def collect_output(self):
+        """
+        Collect the output files of the external executable and store the information in the HDF5 file. This method has
+        to be implemented in the individual hamiltonians.
+        """
+        raise NotImplementedError("read procedure must be defined for derived Hamilton!")
+
+    def run_if_interactive(self):
+        """
+        For jobs which executables are available as Python library, those can also be executed with a library call
+        instead of calling an external executable. This is usually faster than a single core python job.
+        """
+        raise NotImplementedError("This function needs to be implemented in the specific class.")
+
+    def interactive_close(self):
+        """
+        interactive close is not implemtned for MetaJobs
+        """
+        pass
+
+    def interactive_fetch(self):
+        """
+        interactive fetch is not implemtned for MetaJobs
+        """
+        pass
+
+    def interactive_flush(self, path="generic", include_last_step=True):
+        """
+        interactive flush is not implemtned for MetaJobs
+        """
+        pass
+
+    def run_if_interactive_non_modal(self):
+        """
+        Run if interactive non modal is not implemented for MetaJobs
+        """
+        pass
+
     def __len__(self):
         """
         Length of the GenericMaster equal the number of childs appended.
@@ -425,7 +471,7 @@ class GenericMaster(GenericJob):
             self._child_id_func = None
         else:
             self._child_id_func_str = child_id_func_str
-            self._child_id_func = self.get_function_from_string(child_id_func_str)
+            self._child_id_func = get_function_from_string(child_id_func_str)
 
     def _get_item_when_str(self, item, child_id_lst, child_name_lst):
         """
@@ -476,16 +522,30 @@ class GenericMaster(GenericJob):
         """
         pass
 
-    @staticmethod
-    def get_function_from_string(function_str):
+    def run_if_refresh(self):
         """
-        Convert a string of source code to a function
-
-        Args:
-            function_str: function source code
-
-        Returns:
-            function:
+        Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
+        suspended previously, the job is going to be started again, to be continued.
         """
-        exec(function_str)
-        return eval(function_str.split("(")[0][4:])
+        raise NotImplementedError('Refresh is not supported for this job type for job  ' + str(self.job_id))
+
+    def _run_if_busy(self):
+        """
+        Run if busy is not implemented for MetaJobs
+        """
+        pass
+
+
+def get_function_from_string(function_str):
+    """
+    Convert a string of source code to a function
+
+    Args:
+        function_str: function source code
+
+    Returns:
+        function:
+    """
+    function_dedent_str = textwrap.dedent(function_str)
+    exec(function_dedent_str)
+    return eval(function_dedent_str.split("(")[0][4:])

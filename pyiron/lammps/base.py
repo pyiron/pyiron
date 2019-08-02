@@ -2,16 +2,16 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-from __future__ import print_function
-
-import ast
+from __future__ import print_function, unicode_literals
 import os
 import posixpath
 
+import sys
 import h5py
 import numpy as np
 import pandas as pd
 import warnings
+from io import StringIO
 
 from pyiron.lammps.potential import LammpsPotentialFile, PotentialAvailable
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
@@ -100,7 +100,11 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
 
         """
-        if isinstance(potential_filename, str):
+        if sys.version_info.major == 2:
+            stringtypes = (str, unicode)
+        else:
+            stringtypes = str
+        if isinstance(potential_filename, stringtypes):
             if '.lmp' in potential_filename:
                 potential_filename = potential_filename.split('.lmp')[0]
             potential_db = LammpsPotentialFile()
@@ -143,6 +147,15 @@ class LammpsBase(AtomisticGenericJob):
             pandas.Dataframe: Dataframe including all potential parameters.
         """
         return self.view_potentials()
+
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        super(LammpsBase, self).set_input_to_read_only()
+        self.input.control.read_only = True
+        self.input.potential.read_only = True
 
     def validate_ready_to_run(self):
         """
@@ -306,7 +319,7 @@ class LammpsBase(AtomisticGenericJob):
 
         """
         file_name = self.job_file_name(file_name=file_name, cwd=cwd)
-        with h5py.File(file_name) as h5md:
+        with h5py.File(file_name, 'r', libver='latest', swmr=True) as h5md:
             positions = [pos_i.tolist() for pos_i in h5md['/particles/all/position/value']]
             time = [time_i.tolist() for time_i in h5md['/particles/all/position/step']]
             forces = [for_i.tolist() for for_i in h5md['/particles/all/force/value']]
@@ -347,88 +360,40 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
 
         """
-        log_file = self.job_file_name(file_name=file_name, cwd=cwd)
-        self.collect_errors(file_name)
-        # log_fileName = "logfile.out"
-        # self.collect_errors(log_fileName)
-        attr = self.input.control.dataset["Parameter"]
-        tag_dict = {"Loop time of": {"arg": "0",
-                                     "type": "float",
-                                     "h5": "time_loop"},
-
-                    "Memory usage per processor": {"arg": "1",
-                                                   "h5": "memory"}
-                    }
-
-        if 'minimize' in attr:
-            tag_dict["Step Temp PotEng TotEng Pxx Pxy Pxz Pyy Pyz Pzz Volume"] = {"arg": ":,:",
-                                                                                  "rows": "Loop",
-                                                                                  "splitTag": True}
-
-
-        elif 'run' in attr:
-            num_iterations = ast.literal_eval(extract_data_from_file(log_file, tag="run")[0])
-            num_thermo = ast.literal_eval(extract_data_from_file(log_file, tag="thermo")[0])
-            num_iterations = num_iterations / num_thermo + 1
-
-            tag_dict["thermo_style custom"] = {"arg": ":",
-                                               "type": "str",
-                                               "h5": "thermo_style"}
-            tag_dict["$thermo_style custom"] = {"arg": ":,:",
-                                                "rows": num_iterations,
-                                                "splitTag": True}
-            # print "tag_dict: ", tag_dict
+        self.collect_errors(file_name=file_name, cwd=cwd)
+        file_name = self.job_file_name(file_name=file_name, cwd=cwd)
+        with open(file_name, 'r') as f:
+            f = f.readlines()
+            l_start = np.where([line.startswith('Step') for line in f])[0]
+            l_end = np.where([line.startswith('Loop') for line in f])[0]
+            if len(l_start)>len(l_end):
+                l_end = np.append(l_end, [None])
+            if sys.version_info >= (3,):
+                df = [pd.read_csv(StringIO('\n'.join(f[llst:llen])),
+                                  delim_whitespace=True) for llst, llen in zip(l_start, l_end)]
+            else:
+                df = [pd.read_csv(StringIO(unicode('\n'.join(f[llst:llen]))),
+                                  delim_whitespace=True) for llst, llen in zip(l_start, l_end)]
+        df = df[-1]
 
         h5_dict = {"Step": "steps",
-                   "Temp": "temperatures",
+                   "Temp": "temperature",
                    "PotEng": "energy_pot",
                    "TotEng": "energy_tot",
-                   "Pxx": "pressure_x",
-                   "Pxy": "pressure_xy",
-                   "Pxz": "pressure_xz",
-                   "Pyy": "pressure_y",
-                   "Pyz": "pressure_yz",
-                   "Pzz": "pressure_z",
-                   "Volume": "volume",
-                   "E_pair": "E_pair",
-                   "E_mol": "E_mol"
-                   }
+                   "Volume": "volume"}
 
-        lammps_dict = {"step": "Step",
-                       "temp": "Temp",
-                       "pe": "PotEng",
-                       "etotal": "TotEng",
-                       "pxx": "Pxx",
-                       "pxy": "Pxy",
-                       "pxz": "Pxz",
-                       "pyy": "Pyy",
-                       "pyz": "Pyz",
-                       "pzz": "Pzz",
-                       "vol": "Volume"
-                       }
+        df = df.rename(index=str, columns=h5_dict)
+        pressures = np.stack((df.Pxx, df.Pxy, df.Pxz,
+                              df.Pxy, df.Pyy, df.Pyz,
+                              df.Pxz, df.Pyz, df.Pzz), axis=-1).reshape(-1, 3, 3)
+        pressures *= 0.0001  # bar -> GPa
+        df = df.drop(columns=df.columns[((df.columns.str.len() == 3) & df.columns.str.startswith('P'))])
+        df['pressures'] = pressures.tolist()
 
-        lf = Logstatus()
-        lf.extract_file(file_name=log_file,
-                        tag_dict=tag_dict,
-                        h5_dict=h5_dict,
-                        key_dict=lammps_dict)
-
-        lf.store_as_vector = ['energy_tot', 'temperatures', 'steps', 'volume', 'energy_pot']
-        # print ("lf_keys: ", lf.status_dict['energy_tot'])
-
-        lf.combine_mat('pressure_x', 'pressure_xy', 'pressure_xz',
-                       'pressure_y', 'pressure_yz', 'pressure_z', 'pressures')
-        lf.convert_unit('pressures', 0.0001)  # bar -> GPa
-
-        if 'minimize' not in attr:
-            if 'thermo_style' in lf.status_dict.keys():
-                del lf.status_dict['thermo_style']
-        if 'time_loop' in lf.status_dict.keys():
-            del lf.status_dict['time_loop']
-        if 'memory' in lf.status_dict.keys():
-            del lf.status_dict['memory']
         with self.project_hdf5.open("output/generic") as hdf_output:
-            lf.to_hdf(hdf_output)
+            # This is a hack for backward comparability
+            for k,v in df.items():
+                hdf_output[k] = np.array(v)
 
     def calc_minimize(self, e_tol=0.0, f_tol=1e-2, max_iter=100000, pressure=None, n_print=100):
         """
@@ -502,7 +467,7 @@ class LammpsBase(AtomisticGenericJob):
                                    time_step=time_step, n_print=n_print, temperature_damping_timescale=temperature_damping_timescale,
                                    pressure_damping_timescale=pressure_damping_timescale,
                                    seed=seed, tloop=tloop, initial_temperature=initial_temperature, langevin=langevin,
-                                   delta_temp=delta_temp, delta_press=delta_press)
+                                   delta_temp=delta_temp, delta_press=delta_press, job_name=self.job_name)
 
     # define hdf5 input and output
     def to_hdf(self, hdf=None, group_name=None):
@@ -567,7 +532,8 @@ class LammpsBase(AtomisticGenericJob):
         self._is_continuation = True
         self.input.control.set(read_restart=filename)
         self.input.control['reset_timestep'] = 0
-        self.input.control.remove_keys(['dimension', 'read_data', 'boundary', 'atom_style', 'velocity'])
+        self.input.control.remove_keys(['dimension', 'read_data', 'boundary',
+                                        'atom_style', 'velocity'])
 
     def collect_dump_file(self, file_name="dump.out", cwd=None):
         """
@@ -581,90 +547,34 @@ class LammpsBase(AtomisticGenericJob):
 
         """
         file_name = self.job_file_name(file_name=file_name, cwd=cwd)
-        tag_dict = {"ITEM: TIMESTEP": {"arg": "0",
-                                       "rows": 1,
-                                       "h5": "time"},
-                    # "ITEM: NUMBER OF ATOMS": {"arg": "0",
-                    #                          "rows": 1,
-                    #                          "h5": "number_of_atoms"},
-                    "ITEM: BOX BOUNDS": {"arg": "0",
-                                         "rows": 3,
-                                         "h5": "cells",
-                                         "func": to_amat},
-                    "ITEM: ATOMS": {"arg": ":,:",
-                                    "rows": len(self.structure),
-                                    "splitArg": True}
-                    }
-
-        h5_dict = {"id": "id",
-                   "type": "type",
-                   "xsu": "coord_xs",
-                   "ysu": "coord_ys",
-                   "zsu": "coord_zs",
-                   "f_ave[1]": "coord_xs",
-                   "f_ave[2]": "coord_ys",
-                   "f_ave[3]": "coord_zs",
-                   "fx": "force_x",
-                   "fy": "force_y",
-                   "fz": "force_z",
-                   }
-
-        lammps_dict = None
-
-        lf = Logstatus()
-        lf.extract_file(file_name=file_name,
-                        tag_dict=tag_dict,
-                        h5_dict=h5_dict,
-                        key_dict=lammps_dict)
-        lf.combine_xyz('force_x', 'force_y', 'force_z', 'forces')
-        lf.combine_xyz('coord_xs', 'coord_ys', 'coord_zs', 'positions')
-
+        output = {}
+        with open(file_name, 'r') as ff:
+            dump = ff.readlines()
         prism = UnfoldingPrism(self.structure.cell, digits=15)
+        rotation_lammps2orig = np.linalg.inv(prism.R)
+        output['time'] = np.genfromtxt([dump[nn] for nn in np.where([ll.startswith('ITEM: TIMESTEP') for ll in dump])[0]+1], dtype=int)
+        natoms = np.genfromtxt([dump[nn] for nn in np.where([ll.startswith('ITEM: NUMBER OF ATOMS') for ll in dump])[0]+1], dtype=int)
+        cells = np.genfromtxt(' '.join(([' '.join(dump[nn:nn+3])
+                                         for nn in np.where([ll.startswith('ITEM: BOX BOUNDS')
+                                                             for ll in dump])[0]+1])).split()).reshape(len(natoms), -1)
+        cells = np.array([to_amat(cc) for cc in cells])
+        output['cells'] = cells
+        l_start = np.where([ll.startswith('ITEM: ATOMS') for ll in dump])[0]
+        l_end = l_start+natoms+1
+        content = [pd.read_csv(StringIO('\n'.join(dump[llst:llen]).replace('ITEM: ATOMS ', '')),
+                            delim_whitespace=True) for llst, llen in zip(l_start, l_end)]
 
-        rel_positions = list()
-
-        for ind, (pos, forc, cel) in enumerate(
-                zip(lf.status_dict["positions"], lf.status_dict["forces"], lf.status_dict["cells"])):
-            cell = cel[1]
-            positions = pos[1]
-            forces = forc[1]
-
-            # rotation matrix from lammps(unfolded) cell to original cell
-            rotation_lammps2orig = np.linalg.inv(prism.R)
-
-            # convert from scaled positions to absolute in lammps cell
-            positions = np.array([np.dot(cell.T, r) for r in positions])
-            # rotate positions from lammps to original
-            positions_atoms = np.array([np.dot(np.array(r), rotation_lammps2orig) for r in positions])
-
-            # rotate forces from lammps to original cell
-            forces_atoms = np.array([np.dot(np.array(f), rotation_lammps2orig) for f in forces])
-
-            # unfold cell
-            cell = prism.unfold_cell(cell)
-            # rotate cell from unfolded lammps to original
-            cell_atoms = np.array([np.dot(np.array(f), rotation_lammps2orig) for f in cell])
-
-            lf.status_dict["positions"][ind][1] = positions_atoms
-
-            rel_positions.append(np.dot(positions_atoms, np.linalg.inv(cell_atoms)))
-
-            lf.status_dict["forces"][ind][1] = forces_atoms
-            lf.status_dict["cells"][ind][1] = cell_atoms
-
-        del lf.status_dict['id']
-        del lf.status_dict['type']
-        unwrapped_rel_pos = unwrap_coordinates(positions=np.array(rel_positions), is_relative=True)
-        unwrapped_pos = list()
-        # print(np.shape(unwrapped_rel_pos))
-        for i, cell in enumerate(lf.status_dict["cells"]):
-            unwrapped_pos.append(np.dot(np.array(unwrapped_rel_pos[i]), cell[1]))
-        lf.status_dict["unwrapped_positions"] = list()
-        for pos in unwrapped_pos:
-            lf.status_dict["unwrapped_positions"].append([[0], pos])
+        forces = np.array([np.stack((cc['fx'], cc['fy'], cc['fz']), axis=-1) for cc in content])
+        output['forces'] = np.einsum('ijk,kl->ijl', forces, rotation_lammps2orig)
+        unwrapped_positions = np.array([np.stack((cc['xsu'], cc['ysu'], cc['zsu']), axis=-1) for cc in content])
+        positions = unwrapped_positions-np.floor(unwrapped_positions)
+        unwrapped_positions = np.einsum('ikj,ilk->ilj', cells, unwrapped_positions)
+        output['unwrapped_positions'] = np.einsum('ijk,kl->ijl', unwrapped_positions, rotation_lammps2orig)
+        positions = np.einsum('ikj,ilk->ilj', cells, positions)
+        output['positions'] = np.einsum('ijk,kl->ijl', positions, rotation_lammps2orig)
         with self.project_hdf5.open("output/generic") as hdf_output:
-            lf.to_hdf(hdf_output)
-        return lf
+            for k,v in output.items():
+                hdf_output[k] = v
 
     # Outdated functions:
     def set_potential(self, file_name):

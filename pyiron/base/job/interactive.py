@@ -125,10 +125,10 @@ class InteractiveBase(GenericJob):
 
     @interactive_flush_frequency.setter
     def interactive_flush_frequency(self, frequency):
-        if not isinstance(frequency, int):
-            raise AssertionError()
+        if not isinstance(frequency, int) or frequency<1:
+            raise AssertionError('interactive_flush_frequency must be an integer>0')
         if frequency<self._interactive_write_frequency:
-            warnings.warn('interactive_write_frequency must be smaller or equal to interactive_flush_frequency')
+            raise ValueError('interactive_flush_frequency must be larger or equal to interactive_write_frequency')
         self._interactive_flush_frequency = frequency
 
     @property
@@ -137,11 +137,18 @@ class InteractiveBase(GenericJob):
 
     @interactive_write_frequency.setter
     def interactive_write_frequency(self, frequency):
-        if not isinstance(frequency, int):
-            raise AssertionError()
+        if not isinstance(frequency, int) or frequency<1:
+            raise AssertionError('interactive_write_frequency must be an integer>0')
         if self._interactive_flush_frequency<frequency:
-            warnings.warn('interactive_write_frequency must be smaller or equal to interactive_flush_frequency')
+            self.interactive_flush_frequency = frequency
         self._interactive_write_frequency = frequency
+
+    def validate_ready_to_run(self):
+        """
+        This should work but doesn't...
+        """
+        if self._interactive_flush_frequency<self._interactive_write_frequency:
+            raise ValueError('interactive_write_frequency must be smaller or equal to interactive_flush_frequency')
 
     def _run_if_running(self):
         """

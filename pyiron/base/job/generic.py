@@ -10,7 +10,7 @@ import os
 # import sys
 import posixpath
 import psutil
-# import multiprocessing
+import multiprocessing
 from pyiron.base.job.wrapper import JobWrapper
 from pyiron.base.settings.generic import Settings
 from pyiron.base.job.executable import Executable
@@ -37,7 +37,8 @@ __date__ = "Sep 1, 2017"
 
 s = Settings()
 
-intercepted_signals=[signal.SIGINT, signal.SIGTERM, signal.SIGABRT] #, signal.SIGQUIT]
+intercepted_signals = [signal.SIGINT, signal.SIGTERM, signal.SIGABRT]  # , signal.SIGQUIT]
+
 
 class GenericJob(JobCore):
     """
@@ -57,8 +58,9 @@ class GenericJob(JobCore):
 
         .. attribute:: status
 
-            execution status of the job, can be one of the following [initialized, appended, created, submitted, running,
-                                                                      aborted, collect, suspended, refresh, busy, finished]
+            execution status of the job, can be one of the following [initialized, appended, created, submitted,
+                                                                      running, aborted, collect, suspended, refresh,
+                                                                      busy, finished]
 
         .. attribute:: job_id
 
@@ -70,8 +72,8 @@ class GenericJob(JobCore):
 
         .. attribute:: master_id
 
-            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel or in
-            serial.
+            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel
+            or in serial.
 
         .. attribute:: child_ids
 
@@ -107,7 +109,8 @@ class GenericJob(JobCore):
 
         .. attribute:: library_activated
 
-            For job types which offer a Python library pyiron can use the python library instead of an external executable.
+            For job types which offer a Python library pyiron can use the python library instead of an external
+            executable.
 
         .. attribute:: server
 
@@ -125,10 +128,18 @@ class GenericJob(JobCore):
 
             list of files which are used to restart the calculation from these files.
 
+        .. attribute:: exclude_nodes_hdf
+
+            list of nodes which are excluded from storing in the hdf5 file.
+
+        .. attribute:: exclude_groups_hdf
+
+            list of groups which are excluded from storing in the hdf5 file.
+
         .. attribute:: job_type
 
-            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster', 'ScriptJob',
-                                                               'ListMaster']
+            Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster',
+                                                               'ScriptJob', 'ListMaster']
     """
     def __init__(self, project, job_name):
         super(GenericJob, self).__init__(project, job_name)
@@ -142,8 +153,11 @@ class GenericJob(JobCore):
         self.refresh_job_status()
         self._restart_file_list = list()
         self._restart_file_dict = dict()
+        self._exclude_nodes_hdf = list()
+        self._exclude_groups_hdf = list()
         self._process = None
         self._compress_by_default = False
+        self.interactive_cache = None
 
         for sig in intercepted_signals:
             signal.signal(sig,  self.signal_intercept)
@@ -199,7 +213,7 @@ class GenericJob(JobCore):
         Get the executable used to run the job - usually the path to an external executable.
         
         Returns:
-            (str): exectuable path
+            (str/pyiron.base.job.executable.Executable): exectuable path
         """
         self._executable_activate()
         return self._executable
@@ -303,6 +317,42 @@ class GenericJob(JobCore):
             raise ValueError("restart_file_dict should be a dictionary!")
         else:
             self._restart_file_dict = val
+
+    @property
+    def exclude_nodes_hdf(self):
+        """
+        Get the list of nodes which are excluded from storing in the hdf5 file
+
+        Returns:
+            nodes(list)
+        """
+        return self._exclude_nodes_hdf
+
+    @exclude_nodes_hdf.setter
+    def exclude_nodes_hdf(self, val):
+        if isinstance(val, str):
+            val = [val]
+        elif not hasattr(val, '__len__'):
+            raise ValueError('Wrong type of variable.')
+        self._exclude_nodes_hdf = val
+
+    @property
+    def exclude_groups_hdf(self):
+        """
+        Get the list of groups which are excluded from storing in the hdf5 file
+
+        Returns:
+            groups(list)
+        """
+        return self._exclude_groups_hdf
+
+    @exclude_groups_hdf.setter
+    def exclude_groups_hdf(self, val):
+        if isinstance(val, str):
+            val = [val]
+        elif not hasattr(val, '__len__'):
+            raise ValueError('Wrong type of variable.')
+        self._exclude_groups_hdf = val
 
     @property
     def job_type(self):
@@ -492,6 +542,9 @@ class GenericJob(JobCore):
         return self.copy_to(project=project, new_job_name=new_job_name, input_only=True, new_database_entry=False)
 
     def _kill_child(self):
+        """
+        Internal helper function to kill a child process.
+        """
         if not self.server.run_mode.queue and (self.status.running or self.status.submitted):
             for proc in psutil.process_iter():
                 try:
@@ -558,7 +611,7 @@ class GenericJob(JobCore):
         try:
             self._logger.info('run {}, status: {}'.format(self.job_info_str, self.status))
             status = self.status.string
-            if run_mode:
+            if run_mode is not None:
                 self.server.run_mode = run_mode
             if run_again and self.job_id:
                 self._logger.info("run repair "+str(self.job_id))
@@ -574,7 +627,9 @@ class GenericJob(JobCore):
             elif status == 'created':
                 que_id = self._run_if_created()
                 if que_id:
-                    self._logger.info('{}, status: {}, submitted: queue id {}'.format(self.job_info_str, self.status, que_id))
+                    self._logger.info('{}, status: {}, submitted: queue id {}'.format(self.job_info_str,
+                                                                                      self.status,
+                                                                                      que_id))
                     # print('job was submitted, queue id: ', que_id)
             elif status == 'submitted':
                 self._run_if_submitted()
@@ -585,7 +640,7 @@ class GenericJob(JobCore):
             elif status == 'suspend':
                 self._run_if_suspended()
             elif status == 'refresh':
-                self._run_if_refresh()
+                self.run_if_refresh()
             elif status == 'busy':
                 self._run_if_busy()
             elif status == 'finished':
@@ -642,6 +697,7 @@ class GenericJob(JobCore):
             else:
                 job_crashed = True
 
+        self.set_input_to_read_only()
         self.status.collect = True
         self._logger.info('{}, status: {}, output: {}'.format(self.job_info_str, self.status, out))
         self.run()
@@ -655,6 +711,30 @@ class GenericJob(JobCore):
         """
         raise NotImplementedError("This function needs to be implemented in the specific class.")
 
+    def interactive_close(self):
+        """
+        For jobs which executables are available as Python library, those can also be executed with a library call
+        instead of calling an external executable. This is usually faster than a single core python job. After the
+        interactive execution, the job can be closed using the interactive_close function.
+        """
+        raise NotImplementedError("This function needs to be implemented in the specific class.")
+
+    def interactive_fetch(self):
+        """
+        For jobs which executables are available as Python library, those can also be executed with a library call
+        instead of calling an external executable. This is usually faster than a single core python job. To access the
+        output data during the execution the interactive_fetch function is used.
+        """
+        raise NotImplementedError("This function needs to be implemented in the specific class.")
+
+    def interactive_flush(self, path="generic", include_last_step=True):
+        """
+        For jobs which executables are available as Python library, those can also be executed with a library call
+        instead of calling an external executable. This is usually faster than a single core python job. To write the
+        interactive cache to the HDF5 file the interactive flush function is used.
+        """
+        raise NotImplementedError("This function needs to be implemented in the specific class.")
+
     def run_if_interactive_non_modal(self):
         """
         For jobs which executables are available as Python library, those can also be executed with a library call
@@ -662,41 +742,41 @@ class GenericJob(JobCore):
         """
         raise NotImplementedError("This function needs to be implemented in the specific class.")
 
-    def run_if_non_modal(self):
-        """
-        The run if non modal function is called by run to execute the simulation in the background. For this we use
-        subprocess.Popen()
-        """
-        shell = (os.name == 'nt')
-        try:
-            file_name = posixpath.join(self.project_hdf5.working_directory, "run_job.py")
-            self._logger.info("{}, status: {}, script: {}".format(self.job_info_str, self.status, file_name))
-            with open(posixpath.join(self.project_hdf5.working_directory, 'out.txt'), mode='w') as f_out:
-                with open(posixpath.join(self.project_hdf5.working_directory, 'error.txt'), mode='w') as f_err:
-                    self._process = subprocess.Popen(['python', '-m', 'pyiron.base.job.wrappercmd', '-p',
-                                                      self.working_directory, '-j', str(self.job_id)],
-                                                     cwd=self.project_hdf5.working_directory, shell=shell, stdout=f_out,
-                                                     stderr=f_err, universal_newlines=True)
-            self._logger.info("{}, status: {}, job submitted".format(self.job_info_str, self.status))
-        except subprocess.CalledProcessError as e:
-            self._logger.warn("Job aborted")
-            self._logger.warn(e.output)
-            self.status.aborted = True
-            raise ValueError("run_job.py crashed")
-        s.logger.info('submitted run %s', self.job_name)
-        self._logger.info('job status: %s', self.status)
-
     # def run_if_non_modal(self):
     #     """
     #     The run if non modal function is called by run to execute the simulation in the background. For this we use
-    #     multiprocessing.Process()
+    #     subprocess.Popen()
     #     """
-    #     p = multiprocessing.Process(target=multiprocess_wrapper, args=(self.job_id,
-    #                                                                    self.project_hdf5.working_directory,
-    #                                                                    False))
-    #     if self.master_id:
-    #         del self
-    #     p.start()
+    #     shell = (os.name == 'nt')
+    #     try:
+    #         file_name = posixpath.join(self.project_hdf5.working_directory, "run_job.py")
+    #         self._logger.info("{}, status: {}, script: {}".format(self.job_info_str, self.status, file_name))
+    #         with open(posixpath.join(self.project_hdf5.working_directory, 'out.txt'), mode='w') as f_out:
+    #             with open(posixpath.join(self.project_hdf5.working_directory, 'error.txt'), mode='w') as f_err:
+    #                 self._process = subprocess.Popen(['python', '-m', 'pyiron.base.job.wrappercmd', '-p',
+    #                                                   self.working_directory, '-j', str(self.job_id)],
+    #                                                  cwd=self.project_hdf5.working_directory, shell=shell, stdout=f_out,
+    #                                                  stderr=f_err, universal_newlines=True)
+    #         self._logger.info("{}, status: {}, job submitted".format(self.job_info_str, self.status))
+    #     except subprocess.CalledProcessError as e:
+    #         self._logger.warn("Job aborted")
+    #         self._logger.warn(e.output)
+    #         self.status.aborted = True
+    #         raise ValueError("run_job.py crashed")
+    #     s.logger.info('submitted run %s', self.job_name)
+    #     self._logger.info('job status: %s', self.status)
+
+    def run_if_non_modal(self):
+        """
+        The run if non modal function is called by run to execute the simulation in the background. For this we use
+        multiprocessing.Process()
+        """
+        p = multiprocessing.Process(target=multiprocess_wrapper, args=(self.job_id,
+                                                                       self.project_hdf5.working_directory,
+                                                                       False))
+        if self.master_id:
+            del self
+        p.start()
 
     def run_if_manually(self, _manually_print=True):
         """
@@ -827,6 +907,7 @@ class GenericJob(JobCore):
         project = self.project
         self._logger.info("update master: {} {}".format(master_id, self.get_job_id()))
         if master_id is not None and not self.server.run_mode.modal and not self.server.run_mode.interactive:
+            queue_flag = self.server.run_mode.queue
             master_db_entry = project.db.get_item_by_id(master_id)
             if master_db_entry['status'] == 'suspended':
                 project.db.item_update({'status': 'refresh'}, master_id)
@@ -838,9 +919,12 @@ class GenericJob(JobCore):
                 # del self
                 # p.start()
                 del self
-                if project.inspect(master_id)["server"]["run_mode"] == "non_modal":
+                master_inspect = project.inspect(master_id)
+                if master_inspect["server"]["run_mode"] == "non_modal" or \
+                        (master_inspect["server"]["run_mode"] == "modal" and queue_flag):
                     master = project.load(master_id)
-                    master._run_if_refresh()
+                    # master = master_inspect.load_object()
+                    master.run_if_refresh()
                 # if master.server.run_mode.non_modal or master.server.run_mode.queue:
                 #     master._run_if_refresh()
                 #     if master.server.run_mode.queue and master._process:
@@ -881,8 +965,11 @@ class GenericJob(JobCore):
         self._type_to_hdf()
         self._server.to_hdf(self._hdf5)
         with self._hdf5.open('input') as hdf_input:
-            hdf_input["restart_file_list"] = self._restart_file_list
-            hdf_input["restart_file_dict"] = self._restart_file_dict
+            generic_dict = {"restart_file_list": self._restart_file_list,
+                            "restart_file_dict": self._restart_file_dict,
+                            "exclude_nodes_hdf": self._exclude_nodes_hdf,
+                            "exclude_groups_hdf": self._exclude_groups_hdf}
+            hdf_input["generic_dict"] = generic_dict
 
     def from_hdf(self, hdf=None, group_name=None):
         """
@@ -899,10 +986,21 @@ class GenericJob(JobCore):
         self._type_from_hdf()
         self._server.from_hdf(self._hdf5)
         with self._hdf5.open('input') as hdf_input:
+            if "generic_dict" in hdf_input.list_nodes():
+                generic_dict = hdf_input["generic_dict"]
+                self._restart_file_list = generic_dict["restart_file_list"]
+                self._restart_file_dict = generic_dict["restart_file_dict"]
+                self._exclude_nodes_hdf = generic_dict["exclude_nodes_hdf"]
+                self._exclude_groups_hdf = generic_dict["exclude_groups_hdf"]
+            # Backwards compatbility
             if "restart_file_list" in hdf_input.list_nodes():
                 self._restart_file_list = hdf_input["restart_file_list"]
             if "restart_file_dict" in hdf_input.list_nodes():
                 self._restart_file_dict = hdf_input["restart_file_dict"]
+            if "exclude_nodes_hdf" in hdf_input.list_nodes():
+                self._exclude_nodes_hdf = hdf_input["exclude_nodes_hdf"]
+            if "exclude_groups_hdf" in hdf_input.list_nodes():
+                self._exclude_groups_hdf = hdf_input["exclude_groups_hdf"]
 
     def save(self):
         """
@@ -1070,12 +1168,19 @@ class GenericJob(JobCore):
         else:
             print('Job ' + str(self.job_id) + ' is running!')
 
-    def _run_if_refresh(self):
+    def run_if_refresh(self):
         """
         Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
         suspended previously, the job is going to be started again, to be continued.
         """
         raise NotImplementedError('Refresh is not supported for this job type for job  ' + str(self.job_id))
+
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        pass
 
     def _run_if_busy(self):
         """

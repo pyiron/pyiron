@@ -23,19 +23,13 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 
-JOB_CLASS_DICT = {'GenericMaster': 'pyiron.base.master.generic',
-                  'ListMaster': 'pyiron.base.master.list',
-                  'ScriptJob': 'pyiron.base.job.script',
+JOB_CLASS_DICT = {'ScriptJob': 'pyiron.base.job.script',
                   'SerialMasterBase': 'pyiron.base.master.serial',
                   'FlexibleMaster': 'pyiron.base.master.flexible',
                   'SerialMaster': 'pyiron.atomistics.master.serial',
-                  'ParallelMaster': 'pyiron.atomistics.master.parallel',
                   'Murnaghan': 'pyiron.atomistics.master.murnaghan',
-                  'MurnaghanInt': 'pyiron.atomistics.master.murnaghan',
                   'MapMaster': 'pyiron.atomistics.master.parallel',
                   'PhonopyJob': 'pyiron.atomistics.master.phonopy',
-                  'PhonopyMaster': 'pyiron.atomistics.master.phonopy',
-                  'PhonopyMaster2': 'pyiron.atomistics.master.phonopy',
                   'ConvergenceVolume': 'pyiron.atomistics.master.convergence_volume',
                   'StructureListMaster': 'pyiron.atomistics.master.structure',
                   'StructureContainer': 'pyiron.atomistics.job.structurecontainer',
@@ -44,13 +38,10 @@ JOB_CLASS_DICT = {'GenericMaster': 'pyiron.base.master.generic',
                   'ConvKpointParallel': 'pyiron.dft.master.convergence_kpoint_parallel',
                   'MurnaghanDFT': 'pyiron.dft.master.murnaghan_dft',
                   'Lammps': 'pyiron.lammps.lammps',
-                  'LammpsInt': 'pyiron.lammps.lammps',
-                  'LammpsInt2': 'pyiron.lammps.lammps',
                   'AtomisticExampleJob': 'pyiron.testing.randomatomistic',
                   'ExampleJob': 'pyiron.testing.randomatomistic',
+                  'GpawJob': 'pyiron.gpaw.gpaw',
                   'Vasp': 'pyiron.vasp.vasp',
-                  'VaspInt': 'pyiron.vasp.vasp',
-                  'VaspInt2': 'pyiron.vasp.vasp',
                   }
 
 
@@ -134,6 +125,8 @@ class JobType(object):
             job.logger.warn('Job aborted - please remove it and run again! {}'.format(job.job_name))
         if not job.status.initialized:
             job.from_hdf()
+        if job.status.finished or job.status.collect:
+            job.set_input_to_read_only()
         return job
 
     @staticmethod

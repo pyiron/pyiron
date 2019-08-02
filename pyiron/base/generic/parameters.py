@@ -7,6 +7,7 @@ import numpy as np
 import os
 import pandas
 import posixpath
+import warnings
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.template import PyironObject
 
@@ -87,7 +88,7 @@ class GenericParameters(PyironObject):
         self._end_value_char = None
         self._replace_char_dict = None
         self._block_dict = None
-        self._bool_dict = {True: "TRUE", False: "FALSE"}
+        self._bool_dict = {True: "True", False: "False"}
         self._dataset = OrderedDict()
         self._block_line_dict = {}
         self.end_value_char = end_value_char
@@ -97,6 +98,7 @@ class GenericParameters(PyironObject):
         self.comment_char = comment_char
         self.separator_char = separator_char
         self.multi_word_separator = "___"
+        self.read_only = False
         if input_file_name is None:
             self.load_default()
         else:
@@ -262,6 +264,14 @@ class GenericParameters(PyironObject):
         """
         self._replace_char_dict = new_replace_char_dict
 
+    def _read_only_check_dict(self, new_dict):
+        if self.read_only and new_dict != self._dataset:
+            self._read_only_error()
+
+    @staticmethod
+    def _read_only_error():
+        warnings.warn('The input in GenericParameters changed, while the state of the job was already finished.')
+
     def load_string(self, input_str):
         """
         Load a multi line string to overwrite the current parameter settings
@@ -269,16 +279,20 @@ class GenericParameters(PyironObject):
         Args:
             input_str (str): multi line string
         """
-        self._dataset = self._lines_to_dict(input_str.splitlines())
+        new_dict = self._lines_to_dict(input_str.splitlines())
+        self._read_only_check_dict(new_dict=new_dict)
+        self._dataset = new_dict
 
     def load_default(self):
         """
         Load defaults resets the dataset in the background to be empty
         """
-        self._dataset = OrderedDict()
-        self._dataset["Parameter"] = []
-        self._dataset["Value"] = []
-        self._dataset["Comment"] = []
+        new_dict = OrderedDict()
+        new_dict["Parameter"] = []
+        new_dict["Value"] = []
+        new_dict["Comment"] = []
+        self._read_only_check_dict(new_dict=new_dict)
+        self._dataset = new_dict
 
     def read_input(self, file_name, ignore_trigger=None):
         """
@@ -305,7 +319,9 @@ class GenericParameters(PyironObject):
                             lines[i] = line[:line.find("!")]
                 lines = np.array(lines)
                 new_lines = lines[np.setdiff1d(np.arange(len(lines)), del_ind)]
-        self._dataset = self._lines_to_dict(new_lines)
+        new_dict = self._lines_to_dict(new_lines)
+        self._read_only_check_dict(new_dict=new_dict)
+        self._dataset = new_dict
 
     def get_pandas(self):
         """
@@ -338,6 +354,8 @@ class GenericParameters(PyironObject):
             try:
                 val_v = eval(val)
             except (TypeError, NameError, SyntaxError):
+                val_v = val
+            if callable(val_v):
                 val_v = val
             return val_v
         elif default_value is not None:
@@ -379,11 +397,7 @@ class GenericParameters(PyironObject):
             modify_dict = {k + separator: v for k, v in modify_dict.items()}
 
         for key, val in modify_dict.items():
-            if self._is_multi_word_parameter(key):
-                key_split = " ".join(key.split(self.multi_word_separator))
-                i_key, multi_word_lst = self._find_line(key_split)
-            else:
-                i_key, multi_word_lst = self._find_line(key)
+            i_key, multi_word_lst = self._find_line(key)
 
             if i_key == -1:
                 if append_if_not_present:
@@ -395,7 +409,11 @@ class GenericParameters(PyironObject):
                 val = " ".join(multi_word_lst[1:]) + " " + str(val)
             if isinstance(val, tuple):
                 val, comment = val
+                if self.read_only and self._dataset["Comment"][i_key] != comment:
+                    self._read_only_error()
                 self._dataset["Comment"][i_key] = comment
+            if self.read_only and str(self._dataset["Value"][i_key]) != str(val):
+                self._read_only_error()
             self._dataset["Value"][i_key] = str(val)
 
     def set(self, separator=None, **set_dict):
@@ -417,6 +435,8 @@ class GenericParameters(PyironObject):
             val (str/bytes): value to be set
         """
         if line < len(self._dataset['Value']):
+            if self.read_only and self._dataset["Value"][line] != val:
+                self._read_only_error()
             self._dataset["Value"][line] = val
         elif line >= len(self._dataset['Value']):
             new_array = []
@@ -432,9 +452,12 @@ class GenericParameters(PyironObject):
             new_array = np.array(new_array)
             new_comments = np.array(new_comments)
             new_params = np.array(new_params)
-            self._dataset["Value"] = new_array
-            self._dataset["Comment"] = new_comments
-            self._dataset["Parameter"] = new_params
+            new_dict = OrderedDict()
+            new_dict["Value"] = new_array
+            new_dict["Comment"] = new_comments
+            new_dict["Parameter"] = new_params
+            self._read_only_check_dict(new_dict=new_dict)
+            self._dataset = new_dict
         else:
             raise ValueError('Wrong indexing')
 
@@ -445,6 +468,8 @@ class GenericParameters(PyironObject):
         Args:
             key_list (list): list of keys to be removed
         """
+        if self.read_only and any([k in self._dataset["Parameter"] for k in key_list]):
+            self._read_only_error()
         for key in key_list:
             params = np.array(self._dataset["Parameter"])
             i_keys = np.where(params == key)[0]
@@ -511,7 +536,14 @@ class GenericParameters(PyironObject):
             tab_dict["Parameter"] = ["" for _ in tab_dict["Value"]]
 
         string_lst = []
-        for par, v, c in zip(tab_dict["Parameter"], tab_dict["Value"], tab_dict["Comment"]):
+        if self.val_only:
+            value_lst = tab_dict["Value"]
+        else:
+            try:
+                value_lst = [self[p] for p in tab_dict["Parameter"]]
+            except ValueError:
+                value_lst = tab_dict["Value"]
+        for par, v, c in zip(tab_dict["Parameter"], value_lst, tab_dict["Comment"]):
             # special treatment for values that are bool or str
             if isinstance(v, bool):
                 v_str = self._bool_dict[v]
@@ -520,6 +552,7 @@ class GenericParameters(PyironObject):
             else:
                 v_str = str(v)
 
+            par = ' '.join(par.split(self.multi_word_separator))
             if par == "Comment":
                 string_lst.append(str(v) + self.end_value_char + "\n")
             elif c.strip() == '':
@@ -568,6 +601,8 @@ class GenericParameters(PyironObject):
             value (float/int/str): value to be set
         """
         if isinstance(key, int):
+            if self.read_only and self._dataset["Value"][key] != value:
+                self._read_only_error()
             self._dataset["Value"][key] = value
         else:
             self.set(**{key: value})
@@ -697,6 +732,8 @@ class GenericParameters(PyironObject):
         Args:
             line_number (int): line number
         """
+        if self.read_only:
+            self._read_only_error()
         for key, val in self._dataset.items():
             if "numpy" in str(type(val)):
                 val = val.tolist()
@@ -712,6 +749,8 @@ class GenericParameters(PyironObject):
             data_dict (dict): data dictionary
             shift (int): shift line number - default=0
         """
+        if self.read_only:
+            self._read_only_error()
         for key, val in data_dict.items():
             lst = self._dataset[key]
             val = np.array(val).tolist()
@@ -753,7 +792,7 @@ class GenericParameters(PyironObject):
             bool: [True/False]
         """
         for key, val in self._block_dict.items():
-            par_first = parameter_name.split()[0]
+            par_first = parameter_name.split()[0].split(self.multi_word_separator)[0]
             if par_first in val:
                 parameter_found_in_block = True
                 i_last_block_line = max(self._block_line_dict[key])
@@ -770,26 +809,16 @@ class GenericParameters(PyironObject):
         Args:
             **qwargs (dict): dictionary with parameter keys and their corresponding values
         """
+        if self.read_only:
+            self._read_only_error()
         for par, val in qwargs.items():
             if par in self._dataset["Parameter"]:
                 raise ValueError("Parameter exists already: " + par)
-
-            if self._is_multi_word_parameter(par):
-                key_lst = par.split(self.multi_word_separator)
-                par = key_lst[0]
-                val = " ".join(key_lst[1:]) + " " + str(val)
 
             if self._block_dict is not None:
                 self._refresh_block_line_hash_table()
                 if self._append_line_in_block(par, val):
                     continue
-
-            for col in self._dataset:
-                self._dataset[col] = np.array(self._dataset[col]).tolist()
-            if self._is_multi_word_parameter(par):
-                key_lst = par.split(self.multi_word_separator)
-                par = key_lst[0]
-                val = " ".join(key_lst[1:]) + " " + str(val)
 
             for col in self._dataset:
                 self._dataset[col] = np.array(self._dataset[col]).tolist()

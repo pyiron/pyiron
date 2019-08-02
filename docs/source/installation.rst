@@ -54,28 +54,23 @@ Visualization
 =============
 In addition to the pyiron package we recommend installing the `NGLview visualization framework <https://github.com/arose/nglview>`_. 
 
-Stable version 1.1.9 – for jupyter notebooks (recommended):
+Stable version – for jupyter notebooks (recommended):
 -----------------------------------------------------------
 
 .. code-block:: bash 
 
-    conda install -c conda-forge nglview=1.1.9 
-    
-On windows it might be necessary to also execute: 
-
-.. code-block:: bash 
-
+    conda install -c conda-forge nglview 
     jupyter nbextension install nglview --py --sys-prefix 
     jupyter nbextension enable nglview --py --sys-prefix
 
-Stable version 1.1.9 – for jupyter lab
+Stable version – for jupyter lab
 ------------------------------------
 
 .. code-block:: bash 
     
-    conda install -c conda-forge nodejs nglview=1.1.9
+    conda install -c conda-forge nodejs nglview
     jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build
-    jupyter labextension install nglview-js-widgets@1.1.9
+    jupyter labextension install nglview-js-widgets
 
 Simulation code: Lammps
 =======================

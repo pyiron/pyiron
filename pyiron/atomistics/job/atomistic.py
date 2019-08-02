@@ -150,6 +150,13 @@ class AtomisticGenericJob(GenericJobCore):
         self._generic_input['structure'] = 'atoms'
         self._structure = basis
 
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        self._generic_input.read_only = True
+
     def copy_to(self, project=None, new_job_name=None, input_only=False, new_database_entry=True):
         """
 
@@ -170,7 +177,7 @@ class AtomisticGenericJob(GenericJobCore):
             new_generic_job._structure = copy.copy(self._structure)
         return new_generic_job
 
-    def calc_minimize(self, e_tol=1e-8, f_tol=1e-8, max_iter=1000, pressure=None, n_print=1):
+    def calc_minimize(self, e_tol=0, f_tol=1e-4, max_iter=1000, pressure=None, n_print=1):
         """
 
         Args:
@@ -487,12 +494,13 @@ class AtomisticGenericJob(GenericJobCore):
     def get_encut(self):
         raise NotImplementedError("The set_encut function is not implemented for this code.")
 
-    def get_structure(self, iteration_step=-1):
+    def get_structure(self, iteration_step=-1, wrap_atoms=True):
         """
         Gets the structure from a given iteration step of the simulation (MD/ionic relaxation). For static calculations
         there is only one ionic iteration step
         Args:
             iteration_step (int): Step for which the structure is requested
+            wrap_atoms (bool): True if the atoms are to be wrapped back into the unit cell
 
         Returns:
             pyiron.atomistics.structure.atoms.Atoms: The required structure
@@ -505,7 +513,10 @@ class AtomisticGenericJob(GenericJobCore):
         indices = self.get("output/generic/indices")
         if indices is not None:
             snapshot.indices = indices[iteration_step]
-        return snapshot
+        if wrap_atoms:
+            return snapshot.center_coordinates_in_unit_cell()
+        else:
+            return snapshot
 
     def map(self, function, parameter_lst):
         master = self.create_job(job_type=self.project.job_type.MapMaster, job_name='map_' + self.job_name)
@@ -666,6 +677,35 @@ class GenericOutput(object):
     @property
     def volume(self):
         return self._job['output/generic/volume']
+
+    @property
+    def displacements(self):
+        """
+        Output for 3-d displacements between successive snapshots, with minimum image convention.
+        For the total displacements from the initial configuration, use total_displacements
+        This algorithm collapses if:
+        - the ID's are not consistent (i.e. you can also not change the number of atoms)
+        - there are atoms which move by more than half a box length in any direction within two snapshots (due to periodic boundary conditions)
+        """
+        displacement = np.tensordot(self.positions,
+                                    np.linalg.inv(self._job.structure.cell), axes=([2,0]))
+        displacement -= np.append(self._job.structure.scaled_positions,
+                                  displacement).reshape(len(self.positions)+1,
+                                                        len(self._job.structure), 3)[:-1]
+        displacement -= np.rint(displacement)
+        displacement = np.tensordot(displacement, self._job.structure.cell, axes=([2,0]))
+        return displacement
+
+    @property
+    def total_displacements(self):
+        """
+        Output for 3-d total displacements from the initial configuration, with minimum image convention.
+        For the diplacements for the successive snapshots, use displacements
+        This algorithm collapses if:
+        - the ID's are not consistent (i.e. you can also not change the number of atoms)
+        - there are atoms which move by more than half a box length in any direction within two snapshots (due to periodic boundary conditions)
+        """
+        return np.cumsum(self.displacements, axis=0)
 
     def __dir__(self):
         hdf5_path = self._job['output/generic']

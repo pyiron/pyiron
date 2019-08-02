@@ -120,9 +120,15 @@ class ExampleJob(GenericJob):
         self.__version__ = "0.3"
         self.__name__ = "ExampleJob"
         self.input = ExampleInput()
-        self.executable = "python " + str(os.path.dirname(os.path.realpath(__file__))) + \
-                          "/executable.py"
+        self.executable = "python -m pyiron.testing.executable"
         self._interactive_cache = {'alat': [], 'count': [], 'energy': []}
+
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        self.input.read_only = True
 
     # define routines that create all necessary input files
     def write_input(self):
@@ -264,9 +270,9 @@ alat  3.2     # lattice constant (would be in a more realistic example in the st
 alpha 0.1     # noise amplitude
 a_0   3       # equilibrium lattice constant
 a_1   0
-a_2   1.      # 2nd order in energy (corresponds to bulk modulus)
-a_3   0.      # 3rd order
-a_4   0.      # 4th order
+a_2   1.0     # 2nd order in energy (corresponds to bulk modulus)
+a_3   0.0     # 3rd order
+a_4   0.0     # 4th order
 count 10      # number of calls (dummy)
 write_restart True
 read_restart False
@@ -368,8 +374,7 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
         self.__version__ = "0.3"
         self.__name__ = "AtomisticExampleJob"
         self.input = ExampleInput()
-        self.executable = "python " + str(os.path.dirname(os.path.realpath(__file__))) + \
-                          "/executable.py"
+        self.executable = "python -m pyiron.testing.executable"
         self.interactive_cache = {'cells': [],
                                   'energy_pot': [],
                                   'energy_tot': [],
@@ -410,6 +415,14 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
         if self._structure.cell.any():
             self.input["alat"] = self._structure.cell[0, 0]
             # print("set alat: {}".format(self.input["alat"]))
+
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        super(AtomisticExampleJob, self).set_input_to_read_only()
+        self.input.read_only = True
 
     def get_structure(self, iteration_step=-1):
         return self.structure

@@ -135,7 +135,6 @@ class Atoms(object):
                 else:
                     if isinstance(elements[0], (list, tuple, np.ndarray)):
                         elements = np.array(elements).flatten()
-
                     if isinstance(elements[0], string_types):
                         element_list = elements
                     elif isinstance(elements[0], ChemicalElement):
@@ -1223,7 +1222,7 @@ class Atoms(object):
 
         return [rgb2hex(cmap(scalar)[:3]) for scalar in remapped_field]  # The slice gets RGB but leaves alpha
 
-    def plot3d(self, show_cell=True, show_axes=True, camera='perspective', spacefill=True, particle_size=1.0,
+    def plot3d(self, show_cell=True, show_axes=True, camera='orthographic', spacefill=True, particle_size=1.0,
                select_atoms=None, background='white', color_scheme=None, colors=None,
                scalar_field=None, scalar_start=None, scalar_end=None, scalar_cmap=None,
                vector_field=None, vector_color=None, custom_array=None, custom_3darray=None):
@@ -1667,7 +1666,7 @@ class Atoms(object):
         neighbor_obj.shells = self.neighbor_shellOrder
         return neighbor_obj
 
-    def get_neighborhood(box, position, num_neighbors=12, t_vec=True, include_boundary=True, exclude_self=True,
+    def get_neighborhood(box, position, num_neighbors=12, t_vec=True, include_boundary=True,
                          tolerance=2, id_list=None, cutoff=None, cutoff_radius=None):
         """
         
@@ -1678,7 +1677,6 @@ class Atoms(object):
                         (pbc are automatically taken into account)
             include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
                                      False is needed e.g. in plot routines to avoid showing incorrect bonds
-            exclude_self (bool): include central __atom (i.e. distance = 0)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list:
             cutoff (float/ None): Upper bound of the distance to which the search must be done
@@ -1698,7 +1696,7 @@ class Atoms(object):
         pos[-1] = np.array(position)
         box.positions = pos
         neigh = box.get_neighbors(num_neighbors=num_neighbors, t_vec=t_vec,
-                                  include_boundary=include_boundary, exclude_self=exclude_self,
+                                  include_boundary=include_boundary, exclude_self=True,
                                   tolerance=tolerance, id_list=id_list, cutoff=cutoff, cutoff_radius=cutoff_radius)
         neigh_return = NeighTemp()
         setattr(neigh_return, 'distances', neigh.distances[-1])
@@ -1967,7 +1965,7 @@ class Atoms(object):
         struct_copy += Atoms(elements=len(points)*['Hs'], positions=points)
         struct_copy.center_coordinates_in_unit_cell();
         group_IDs = struct_copy.get_symmetry()['equivalent_atoms'][struct_copy.select_index('Hs')]
-        return [np.round(points[group_IDs==ID], decimals=8) for ID in group_IDs]
+        return [np.round(points[group_IDs==ID], decimals=8) for ID in np.unique(group_IDs)]
 
     def _get_voronoi_vertices(self, minimum_dist=0.1):
         """
@@ -2500,10 +2498,16 @@ class Atoms(object):
                     self.indices[key] = ind
                 else:
                     self.indices[key] = ind
+                    delete_indices = list()
+                    new_indices = self.indices.copy()
                     for i, rep in enumerate(replace_list):
                         if i != ind and rep:
-                            del new_species[i]
-                            self.indices[self.indices > i] -= 1
+                            delete_indices.append(i)
+                            # del new_species[i]
+                            new_indices[new_indices > i] -= 1
+                    self.indices = new_indices.copy()
+                    new_species = np.array(new_species)[np.setdiff1d(np.arange(len(new_species)),
+                                                                     delete_indices)].tolist()
                     self.set_species(new_species)
         else:
             raise NotImplementedError()
@@ -3582,7 +3586,7 @@ def ase_to_pyiron(ase_obj):
         if any(spins == np.array(None)):
             spins[spins == np.array(None)] = 0.0
         pyiron_atoms = Atoms(elements=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins)
-    if len(ase_obj.constraints) != 0:
+    if hasattr(ase_obj, 'constraints') and len(ase_obj.constraints) != 0:
         for constraint in ase_obj.constraints:
             constraint_dict = constraint.todict()
             if constraint_dict['name'] == 'FixAtoms':
@@ -3608,7 +3612,12 @@ def pyiron_to_ase(pyiron_obj):
     positions = pyiron_obj.positions
     pbc = pyiron_obj.get_pbc()
     spins = pyiron_obj.get_initial_magnetic_moments()
-    atoms = ASEAtoms(symbols=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins)
+    if all(spins == np.array(None)) or sum(np.abs(spins)) == 0.0:
+        atoms = ASEAtoms(symbols=element_list, positions=positions, pbc=pbc, cell=cell)
+    else:
+        if any(spins == np.array(None)):
+            spins[spins == np.array(None)] = 0.0
+        atoms = ASEAtoms(symbols=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins)
     return atoms
 
 
