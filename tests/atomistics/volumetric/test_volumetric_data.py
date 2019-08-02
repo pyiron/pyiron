@@ -22,7 +22,7 @@ class TestVolumetricData(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.execution_path = os.path.dirname(os.path.abspath(__file__))
-        os.remove(os.join(cls.execution_path, "chgcar.cube"))
+        os.remove(os.path.join(cls.execution_path, "chgcar.cube"))
 
     def test_total_data_assertion(self):
         vd = VolumetricData()
@@ -55,8 +55,8 @@ class TestVolumetricData(unittest.TestCase):
                                                  "../../static/vasp_test_files/CHGCAR_samples/CHGCAR_no_spin"))
         cd_obj.from_file(filename=file_name)
         data_before = cd_obj.total_data.copy()
-        cd_obj.write_cube_file(filename=os.join(self.execution_path, "chgcar.cube"))
-        cd_obj.read_cube_file(filename=os.join(self.execution_path, "chgcar.cube"))
+        cd_obj.write_cube_file(filename=os.path.join(self.execution_path, "chgcar.cube"))
+        cd_obj.read_cube_file(filename=os.path.join(self.execution_path, "chgcar.cube"))
         data_after = cd_obj.total_data.copy()
         self.assertTrue(np.allclose(data_before, data_after))
 
