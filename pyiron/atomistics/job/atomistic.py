@@ -416,11 +416,11 @@ class AtomisticGenericJob(GenericJobCore):
 
         """
         if snapshot_indices is None:
-            positions = self['output/generic/positions']
-            cells = self['output/generic/cells']
+            positions = self.output.positions
+            cells = self.output.cells
         else:
-            positions = self['output/generic/positions'][snapshot_indices]
-            cells = self['output/generic/cells'][snapshot_indices]
+            positions = self.output.positions[snapshot_indices]
+            cells = self.output.cells[snapshot_indices]
         if atom_indices is None:
             return Trajectory(positions[::stride], self.structure.get_parent_basis(),
                               center_of_mass=center_of_mass, cells=cells[::stride])
