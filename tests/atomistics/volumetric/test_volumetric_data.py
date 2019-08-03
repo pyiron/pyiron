@@ -53,7 +53,7 @@ class TestVolumetricData(unittest.TestCase):
                     self.assertTrue(all(np.equal(answer, vd.get_average_along_axis(ind=i))))
 
     def test_write_cube(self):
-        # cd_obj = VaspVolumetricData()
+        cd_obj = VaspVolumetricData()
         # file_name = os.path.abspath(os.path.join(self.execution_path, "..", "..", "static", "vasp_test_files",
         #                                          "CHGCAR_samples", "CHGCAR_no_spin"))
         # cd_obj.from_file(filename=file_name)
