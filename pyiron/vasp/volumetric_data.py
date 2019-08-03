@@ -155,7 +155,7 @@ class VaspVolumetricData(VolumetricData):
         """
         try: 
             filesize = os.path.getsize(filename)
-        except (OSError, FileNotFoundError):
+        except OSError:
             filesize = 0
         if not filesize > 0:
             s = Settings()
