@@ -53,15 +53,15 @@ class TestVolumetricData(unittest.TestCase):
                     self.assertTrue(all(np.equal(answer, vd.get_average_along_axis(ind=i))))
 
     def test_write_cube(self):
-        cd_obj = VaspVolumetricData()
-        file_name = os.path.abspath(os.path.join(self.execution_path, "..", "..", "static", "vasp_test_files",
-                                                 "CHGCAR_samples", "CHGCAR_no_spin"))
-        cd_obj.from_file(filename=file_name)
-        data_before = cd_obj.total_data.copy()
-        cd_obj.write_cube_file(filename=os.path.join(self.execution_path, "chgcar.cube"))
-        cd_obj.read_cube_file(filename=os.path.join(self.execution_path, "chgcar.cube"))
-        data_after = cd_obj.total_data.copy()
-        self.assertTrue(np.allclose(data_before, data_after))
+        # cd_obj = VaspVolumetricData()
+        # file_name = os.path.abspath(os.path.join(self.execution_path, "..", "..", "static", "vasp_test_files",
+        #                                          "CHGCAR_samples", "CHGCAR_no_spin"))
+        # cd_obj.from_file(filename=file_name)
+        # data_before = cd_obj.total_data.copy()
+        # cd_obj.write_cube_file(filename=os.path.join(self.execution_path, "chgcar.cube"))
+        # cd_obj.read_cube_file(filename=os.path.join(self.execution_path, "chgcar.cube"))
+        # data_after = cd_obj.total_data.copy()
+        # self.assertTrue(np.allclose(data_before, data_after))
         n_x, n_y, n_z = (3, 4, 2)
         random_array = np.random.rand(n_x, n_y, n_z)
         rd_obj = VolumetricData()
@@ -70,6 +70,11 @@ class TestVolumetricData(unittest.TestCase):
         rd_obj.write_vasp_volumetric(filename=os.path.join(self.execution_path, "random_CHGCAR"))
         cd_obj.from_file(filename=os.path.join(self.execution_path, "random_CHGCAR"))
         self.assertTrue(np.allclose(cd_obj.total_data * cd_obj.atoms.get_volume(), rd_obj.total_data))
+        data_before = cd_obj.total_data.copy()
+        cd_obj.write_cube_file(filename=os.path.join(self.execution_path, "chgcar.cube"))
+        cd_obj.read_cube_file(filename=os.path.join(self.execution_path, "chgcar.cube"))
+        data_after = cd_obj.total_data.copy()
+        self.assertTrue(np.allclose(data_before, data_after))
         file_name = os.path.abspath(os.path.join(self.execution_path, "..", "..", "static", "vasp_test_files",
                                                  "CHGCAR_samples", "CHGCAR_water"))
         cd_obj = VaspVolumetricData()
