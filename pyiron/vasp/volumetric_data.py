@@ -152,10 +152,8 @@ class VaspVolumetricData(VolumetricData):
             pyiron.atomistics.structure.atoms.Atoms: The structure of the volumetric snapshot
             list: A list of the volumetric data (length >1 for CHGCAR files with spin)
 
-        """
-
-        filesize = os.path.getsize(filename)
-        if not filesize > 0:
+        """ 
+        if not os.path.getsize(filename) > 0:
             s = Settings()
             s.logger.warning("File:" + filename + "seems to be empty! ")
             return None, None
