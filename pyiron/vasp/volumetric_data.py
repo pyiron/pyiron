@@ -156,7 +156,10 @@ class VaspVolumetricData(VolumetricData):
         try: 
             filesize = os.path.getsize(filename)
         except OSError:
-            filesize = 0
+            if os.path.exists(filename):
+                filesize = 1
+            else:
+                filesize = 0
         if not filesize > 0:
             s = Settings()
             s.logger.warning("File:" + filename + "seems to be empty! ")
