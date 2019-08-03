@@ -160,6 +160,7 @@ class VaspVolumetricData(VolumetricData):
                 filesize = 1
             else:
                 filesize = 0
+        print(filename, filesize)
         if not filesize > 0:
             s = Settings()
             s.logger.warning("File:" + filename + "seems to be empty! ")
