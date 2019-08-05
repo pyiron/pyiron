@@ -241,9 +241,9 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
                 if wrap_atoms:
                     positions = self.output.positions[iteration_step]
                 else:
-                    try:
+                    if len(self.output.unwrapped_positions)>iteration_step:
                         positions = self.output.unwrapped_positions[iteration_step]
-                    except:
+                    else:
                         positions = self.output.positions[iteration_step]+self.output.total_displacements[iteration_step]
                 atoms = Atoms(symbols=np.array([el_lst[el] for el in indices]),
                               positions=positions, cell=self.output.cells[iteration_step])
