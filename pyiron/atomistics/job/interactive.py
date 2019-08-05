@@ -7,6 +7,7 @@ from pyiron.base.job.interactive import InteractiveBase
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob, GenericOutput
+from collections import defaultdict
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -29,22 +30,23 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         self._interactive_fetch_completed = True
         self._interactive_species_lst = np.array([])
         self._periodic_table = PeriodicTable()
-        self.interactive_cache = {'cells': [],
-                                  'energy_pot': [],
-                                  'energy_tot': [],
-                                  'forces': [],
-                                  'positions': [],
-                                  'pressures': [],
-                                  'stress': [],
-                                  'steps': [],
-                                  'temperature': [],
-                                  'indices': [],
-                                  'computation_time': [],
-                                  'unwrapped_positions': [],
-                                  'atom_spin_constraints': [],
-                                  'atom_spins': [],
-                                  'magnetic_forces': [],
-                                  'volume': []}
+        self.interactive_cache = defaultdict(list)
+        self.interactive_functions = {'cells': self.interactive_cells_getter,
+                                      'energy_pot': self.interactive_energy_pot_getter,
+                                      'energy_tot': self.interactive_energy_tot_getter,
+                                      'forces': self.interactive_forces_getter,
+                                      'positions': self.interactive_positions_getter,
+                                      'pressures': self.interactive_pressures_getter,
+                                      'stress': self.interactive_stress_getter,
+                                      'steps': self.interactive_steps_getter,
+                                      'temperature': self.interactive_temperatures_getter,
+                                      'indices': self.interactive_indices_getter,
+                                      'computation_time': self.interactive_computation_time_getter,
+                                      'unwrapped_positions': self.interactive_unwrapped_positions_getter,
+                                      'magnetic_forces': self.interactive_magnetic_forces_getter,
+                                      'atom_spin_constraints': self.interactive_spin_constraints_getter,
+                                      'atom_spins': self.interactive_spins_getter,
+                                      'volume': self.interactive_volume_getter}
 
     @property
     def interactive_enforce_structure_reset(self):
@@ -139,40 +141,8 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         return self.initial_structure.cell
 
     def interactive_collect(self):
-        if 'cells' in self.interactive_cache.keys():
-            self.interactive_cache['cells'].append(self.interactive_cells_getter())
-        if 'energy_pot' in self.interactive_cache.keys():
-            self.interactive_cache['energy_pot'].append(self.interactive_energy_pot_getter())
-        if 'energy_tot' in self.interactive_cache.keys():
-            self.interactive_cache['energy_tot'].append(self.interactive_energy_tot_getter())
-        if 'forces' in self.interactive_cache.keys():
-            self.interactive_cache['forces'].append(self.interactive_forces_getter())
-        if 'positions' in self.interactive_cache.keys():
-            self.interactive_cache['positions'].append(self.interactive_positions_getter())
-        if 'pressures' in self.interactive_cache.keys():
-            self.interactive_cache['pressures'].append(self.interactive_pressures_getter())
-        if 'stress' in self.interactive_cache.keys():
-            self.interactive_cache['stress'].append(self.interactive_stress_getter())
-        if 'steps' in self.interactive_cache.keys():
-            self.interactive_cache['steps'].append(self.interactive_steps_getter())
-        if 'temperature' in self.interactive_cache.keys():
-            self.interactive_cache['temperature'].append(self.interactive_temperatures_getter())
-        if 'computation_time' in self.interactive_cache.keys():
-            self.interactive_cache['computation_time'].append(self.interactive_time_getter())
-        if 'indices' in self.interactive_cache.keys():
-            self.interactive_cache['indices'].append(self.interactive_indices_getter())
-        if 'atom_spins' in self.interactive_cache.keys():
-            self.interactive_cache['atom_spins'].append(self.interactive_spins_getter())
-        if 'atom_spin_constraints' in self.interactive_cache.keys():
-            if self._generic_input['fix_spin_constraint']:
-                self.interactive_cache['atom_spin_constraints'].append(self.interactive_spin_constraints_getter())
-        if 'magnetic_forces' in self.interactive_cache.keys():
-            if self._generic_input['fix_spin_constraint']:
-                self.interactive_cache['magnetic_forces'].append(self.interactive_magnetic_forces_getter())
-        if 'unwrapped_positions' in self.interactive_cache.keys():
-            self.interactive_cache['unwrapped_positions'].append(self.interactive_unwrapped_positions_getter())
-        if 'volume' in self.interactive_cache.keys():
-            self.interactive_cache['volume'].append(self.interactive_volume_getter())
+        for k,v in self.interactive_functions.items():
+            self.interactive_cache[k].append(v())
         if len(list(self.interactive_cache.keys())) > 0 and \
                 len(self.interactive_cache[list(self.interactive_cache.keys())[0]]) \
                 % self._interactive_flush_frequency == 0:
@@ -305,6 +275,9 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
 
     def interactive_temperatures_getter(self):
         raise NotImplementedError('interactive_temperatures_getter() is not implemented!')
+
+    def interactive_computation_time_getter(self):
+        raise NotImplementedError('interactive_computation_time_getter() is not implemented!')
 
     def interactive_unwrapped_positions_getter(self):
         raise NotImplementedError('interactive_unwrapped_positions_getter() is not implemented!')

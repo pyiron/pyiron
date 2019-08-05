@@ -32,17 +32,13 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_prism = None
         self._interactive_run_command = None
         self._interactive_grand_canonical = True
-        self.interactive_cache = {'cells': [],
-                                  'energy_pot': [],
-                                  'energy_tot': [],
-                                  'forces': [],
-                                  'positions': [],
-                                  'pressures': [],
-                                  'steps': [],
-                                  'indices': [],
-                                  'temperature': [],
-                                  'computation_time': [],
-                                  'volume': []}
+        keys_to_keep = ['cells', 'energy_pot', 'energy_tot', 'forces',
+                        'positions', 'pressures', 'steps', 'indices',
+                        'temperature', 'volume']
+        original_keys = list(self.interactive_functions.keys())
+        for k in original_keys:
+            if k not in keys_to_keep:
+                self.interactive_functions.pop(k, None)
 
     @property
     def structure(self):
@@ -400,10 +396,10 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         Returns:
             numpy.array: Nx3x3 np array of stress/atom
         """
-        if not 'stress' in self.interactive_cache.keys():
+        if not 'stress' in self.interactive_function.keys():
             self._interactive_lib_command('compute st all stress/atom NULL')
             self._interactive_lib_command('run 0')
-            self.interactive_cache['stress'] = []
+            self.interactive_function['stress'] = self.interactive_stress_getter
         ss = np.array([self._interactive_library.extract_compute('st', 1, 2)[i][j + (j != k) * (k + 2)]
                        for i in range(len(self.structure))
                        for j in range(3)
