@@ -511,12 +511,12 @@ class AtomisticGenericJob(GenericJobCore):
         snapshot.cell = self.output.cells[iteration_step]
         snapshot.positions = self.output.positions[iteration_step]
         indices = self.output.indices
-        if indices is not None and len(indices)>max([iteration_step,0]):
+        if indices is not None and len(indices) > max([iteration_step,0]):
             snapshot.indices = indices[iteration_step]
         if wrap_atoms:
             return snapshot.center_coordinates_in_unit_cell()
         else:
-            if len(self.output.unwrapped_positions)>max([iteration_step,0]):
+            if len(self.output.unwrapped_positions) > max([iteration_step,0]):
                 snapshot.positions = self.output.unwrapped_positions[iteration_step]
             else:
                 snapshot.positions += self.output.total_displacements[iteration_step]

@@ -412,8 +412,7 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
 
         """
         self._structure = structure
-        if self._structure.cell.any():
-            self.input["alat"] = self._structure.cell[0, 0]
+        self.input["alat"] = self._structure.cell[0, 0]
             # print("set alat: {}".format(self.input["alat"]))
 
     def set_input_to_read_only(self):
@@ -423,9 +422,6 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
         """
         super(AtomisticExampleJob, self).set_input_to_read_only()
         self.input.read_only = True
-
-    def get_structure(self, iteration_step=-1):
-        return self.structure
 
     def to_hdf(self, hdf=None, group_name=None):
         """

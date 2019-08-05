@@ -241,7 +241,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
                 if wrap_atoms:
                     positions = self.output.positions[iteration_step]
                 else:
-                    if len(self.output.unwrapped_positions)>max([iteration_step,0]):
+                    if len(self.output.unwrapped_positions) > max([iteration_step,0]):
                         positions = self.output.unwrapped_positions[iteration_step]
                     else:
                         positions = self.output.positions[iteration_step]+self.output.total_displacements[iteration_step]

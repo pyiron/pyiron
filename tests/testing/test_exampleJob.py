@@ -10,15 +10,15 @@ class TestExampleJob(unittest.TestCase):
         cls.count = 12
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
         cls.project = Project(os.path.join(cls.file_location, 'random_testing'))
-        cls.ham = cls.project.create_job("ExampleJob", "job_test_run")
-        cls.ham.input['count'] = cls.count
-        cls.ham.run()
+        cls.job = cls.project.create_job("ExampleJob", "job_test_run")
+        cls.job.input['count'] = cls.count
+        cls.job.run()
 
     @classmethod
     def tearDownClass(cls):
         project = Project(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'random_testing'))
-        ham = project.load(project.get_job_ids()[0])
-        ham.remove()
+        job = project.load(project.get_job_ids()[0])
+        job.remove()
         project.remove(enable=True)
 
     def test_input(self):
@@ -43,7 +43,7 @@ class TestExampleJob(unittest.TestCase):
         self.assertEqual(restart_lst, lines)
 
     def test_output(self):
-        energy_lst = self.ham.get("output/generic/energy_tot")
+        energy_lst = self.job.get("output/generic/energy_tot")
         self.assertEqual(len(energy_lst), self.count)
         with open(os.path.join(self.file_location, 'random_testing/job_test_run_hdf5/job_test_run/output.log')) as output_file:
             lines = output_file.readlines()
@@ -55,7 +55,6 @@ class TestExampleJob(unittest.TestCase):
         for e_1, e_2 in zip(energy_lst, energy_output_lst):
             self.assertTrue(1 > e_1 > 0)
             self.assertEqual(e_1, e_2)
-
 
 if __name__ == '__main__':
     unittest.main()
