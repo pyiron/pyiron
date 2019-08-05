@@ -516,9 +516,9 @@ class AtomisticGenericJob(GenericJobCore):
         if wrap_atoms:
             return snapshot.center_coordinates_in_unit_cell()
         else:
-            try:
+            if len(snapshot.positions)>iteration_step:
                 snapshot.positions = self.output.unwrapped_positions[iteration_step]
-            except:
+            else:
                 snapshot.positions += self.output.total_displacements[iteration_step]
             return snapshot
 
