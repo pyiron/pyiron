@@ -552,8 +552,11 @@ class LammpsBase(AtomisticGenericJob):
             dump = ff.readlines()
         prism = UnfoldingPrism(self.structure.cell, digits=15)
         rotation_lammps2orig = np.linalg.inv(prism.R)
-        output['time'] = np.genfromtxt([dump[nn] for nn in np.where([ll.startswith('ITEM: TIMESTEP') for ll in dump])[0]+1], dtype=int)
+        time = np.genfromtxt([dump[nn] for nn in np.where([ll.startswith('ITEM: TIMESTEP') for ll in dump])[0]+1], dtype=int)
+        time = np.array([time]).flatten()
+        output['time'] = time
         natoms = np.genfromtxt([dump[nn] for nn in np.where([ll.startswith('ITEM: NUMBER OF ATOMS') for ll in dump])[0]+1], dtype=int)
+        natoms = np.array([natoms]).flatten()
         cells = np.genfromtxt(' '.join(([' '.join(dump[nn:nn+3])
                                          for nn in np.where([ll.startswith('ITEM: BOX BOUNDS')
                                                              for ll in dump])[0]+1])).split()).reshape(len(natoms), -1)
