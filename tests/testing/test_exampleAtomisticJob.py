@@ -10,8 +10,8 @@ class TestExampleJob(unittest.TestCase):
     def setUpClass(cls):
         cls.count = 12
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
-        cls.project = Project(os.path.join(cls.file_location, 'random_testing'))
-        cls.job = cls.project.create_job("AtomisticExampleJob", "job_test_run")
+        cls.project = Project(os.path.join(cls.file_location, 'random_testing_atomistic'))
+        cls.job = cls.project.create_job("AtomisticExampleJob", "job_test_atomistic_run")
         cls.job.input['count'] = cls.count
         cls.job.structure = Atoms(positions=[[0, 0, 0], [1, 1, 1]], elements=['Fe', 'Fe'], cell=2*np.eye(3))
         cls.job.interactive_open()
@@ -20,7 +20,7 @@ class TestExampleJob(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.job.interactive_close()
-        project = Project(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'random_testing'))
+        project = Project(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'random_testing_atomistic'))
         job = project.load(project.get_job_ids()[0])
         job.remove()
         project.remove(enable=True)
