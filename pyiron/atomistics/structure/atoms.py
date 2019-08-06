@@ -2002,8 +2002,8 @@ class Atoms(object):
         box_copy.center_coordinates_in_unit_cell();
 
         neigh = box_copy.get_neighbors() # delete all atoms which lie within minimum_dist (including periodic boundary conditions)
-        while len(neigh.indices.flatten()[neigh.distances.flatten()<minimum_dist])!=0:
-            del box_copy[neigh.indices.flatten()[neigh.distances.flatten()<minimum_dist][0]]
+        while len(np.array(neigh.indices).flatten()[np.array(neigh.distances).flatten()<minimum_dist])!=0:
+            del box_copy[np.array(neigh.indices).flatten()[np.array(neigh.distances).flatten()<minimum_dist][0]]
             neigh = box_copy.get_neighbors()
         return pos_total, box_copy
 
