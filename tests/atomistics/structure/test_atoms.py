@@ -153,10 +153,6 @@ class TestAtoms(unittest.TestCase):
         basis_copy[:] = "Pt"
         self.assertNotEqual(basis, basis_copy)
 
-    def test_scalars_to_hex_colors(self):
-        col = self.CO2._scalars_to_hex_colors(np.arange(2))
-        self.assertTrue(col, ['#427bb0', '#d1483a'])
-
     def test_numbers_to_elements(self):
         num_list = [1, 12, 13, 6]
         self.assertTrue(np.array_equal([el.Abbreviation for el in self.CO2.numbers_to_elements(num_list)],
