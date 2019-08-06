@@ -8,6 +8,7 @@ from datetime import datetime
 import numpy as np
 import pandas
 import time
+import importlib
 from pyiron.base.job.generic import GenericJob
 from pyiron.base.master.generic import GenericMaster
 from pyiron.base.master.submissionstatus import SubmissionStatus
@@ -284,7 +285,10 @@ class ParallelMaster(GenericMaster):
         Display the output of the child jobs in a human readable print out
         """
         try:
-            from IPython import display
+            display = getattr(importlib.import_module('IPython'), 'display')
+        except ModuleNotFoundError:
+            print('show_hdf() requires IPython to be installed.')
+        else:
             for nn in self.project_hdf5.list_groups():
                 with self.project_hdf5.open(nn) as hdf_dir:
                     display.display(nn)
@@ -298,8 +302,6 @@ class ParallelMaster(GenericMaster):
                         except Exception as e:
                             print(e)
                             print("Not a pandas object")
-        except ImportError:
-            print('show_hdf() requires IPython to be installed.')
 
     def save(self):
         """
@@ -530,8 +532,8 @@ class ParallelMaster(GenericMaster):
             for job in job_to_be_run_lst:
                 job.run()
                 if job.server.run_mode.thread:
-                    job_lst.append(job._process)
-            process_lst = [process.communicate() for process in job_lst if process]
+                    job_lst.append(job.python_execution_process)
+            _ = [process.communicate() for process in job_lst if process]
             self.run_if_refresh()
         else:
             self.run_static()
@@ -546,7 +548,6 @@ class ParallelMaster(GenericMaster):
         job_to_be_run_lst = self._next_job_series(job)
         if self.project.db.get_item_by_id(self.job_id)['status'] != 'busy':
             self.status.suspended = True
-            job_lst = []
             for job in job_to_be_run_lst:
                 job.run()
             if self.master_id:
@@ -642,7 +643,7 @@ class ParallelMaster(GenericMaster):
             max_tasks_per_job = int(len(self._job_generator.parameter_list) // number_of_jobs) + 1
             parameters_sub_lst = [self._job_generator.parameter_list[i:i + max_tasks_per_job]
                                   for i in range(0, len(self._job_generator.parameter_list), max_tasks_per_job)]
-            list_of_sub_jobs = [self._create_child_job('job_' + str(i)) for i in range(number_of_jobs)]
+            list_of_sub_jobs = [self.create_child_job('job_' + str(i)) for i in range(number_of_jobs)]
             primary_job = list_of_sub_jobs[0]
             if not primary_job.server.run_mode.interactive_non_modal:
                 raise ValueError('The child job has to be run_mode interactive_non_modal.')
@@ -679,7 +680,7 @@ class ParallelMaster(GenericMaster):
         self.status.collect = True
         self.run()
 
-    def _create_child_job(self, job_name):
+    def create_child_job(self, job_name):
         """
         Internal helper function to create the next child job from the reference job template - usually this is called
         as part of the create_jobs() function.
@@ -690,11 +691,21 @@ class ParallelMaster(GenericMaster):
         Returns:
             GenericJob: next job
         """
-        project = self.project.open(self.job_name + '_hdf5')
-        job_id = project.get_job_id(job_name)
+        if not self.server.new_hdf:
+            project = self.project
+            where_dict = {'job': str(job_name), 'project': str(self.project_hdf5.project_path),
+                          'subjob': str(self.project_hdf5.h5_path + '/' + job_name)}
+            response = self.project.db.get_items_dict(where_dict, return_all_columns=False)
+            if len(response) > 0:
+                job_id = response[-1]['id']
+            else:
+                job_id = None
+        else:
+            project = self.project.open(self.job_name + '_hdf5')
+            job_id = project.get_job_id(job_specifier=job_name)
         if job_id is not None:
             ham = project.load(job_id)
-            print("job ", job_name, " found, status:", ham.status)
+            self._logger.debug("job {} found, status: {}".format(job_name, ham.status))
             if ham.server.run_mode.queue:
                 self.project.refresh_job_status_based_on_job_id(job_id, que_mode=True)
             else:
@@ -702,7 +713,7 @@ class ParallelMaster(GenericMaster):
             if ham.status.aborted:
                 ham.status.created = True
 
-            print("job - status:", ham.status)
+            self._logger.debug("job - status: {}".format(ham.status))
             return ham
 
         job = self.ref_job.copy()
@@ -727,8 +738,6 @@ class ParallelMaster(GenericMaster):
         elif self.server.run_mode.queue:
             job.server.run_mode.thread = True
         self._logger.info('{}: run job {}'.format(self.job_name, job.job_name))
-        # if job.server.run_mode.non_modal and self.get_child_cores() + job.server.cores > self.server.cores:
-        #     return None
         return job
 
     def _db_server_entry(self):
@@ -760,9 +769,12 @@ class JobGenerator(object):
     JobGenerator - this class implements the functions to generate the parameter list, modify the individual jobs
     according to the parameter list and generate the new job names according to the parameter list.
     """
-    def __init__(self, job):
+    def __init__(self, job, no_job_checks=False):
         self._job = job
-        self._childcounter = 0
+        if no_job_checks:
+            self._childcounter = len(self._job.child_ids)
+        else:
+            self._childcounter = 0
         self._parameter_lst_cached = []
 
     @property
@@ -788,20 +800,6 @@ class JobGenerator(object):
     def __len__(self):
         return len(self.parameter_list_cached)
 
-    def _create_job(self, job_name):
-        """
-        Create the next job to be executed, by calling the _create_child_job() function of the Parallelmaster.
-
-        Args:
-            job_name (str): name of the next child job
-
-        Returns:
-            GenericJob: new job object
-        """
-        job = self._job._create_child_job(job_name)
-        self._childcounter += 1
-        return job
-
     def next(self):
         """
         Iterate over the child jobs
@@ -812,9 +810,9 @@ class JobGenerator(object):
         if len(self.parameter_list_cached) > self._childcounter:
             current_paramenter = self.parameter_list_cached[self._childcounter]
             if hasattr(self, 'job_name'):
-                job = self._job._create_child_job(self.job_name(parameter=current_paramenter))
+                job = self._job.create_child_job(self.job_name(parameter=current_paramenter))
             else:
-                job = self._job._create_child_job(self._job.ref_job.job_name + '_' + str(self._childcounter))
+                job = self._job.create_child_job(self._job.ref_job.job_name + '_' + str(self._childcounter))
             if job is not None:
                 self._childcounter += 1
                 job = self.modify_job(job=job, parameter=current_paramenter)
