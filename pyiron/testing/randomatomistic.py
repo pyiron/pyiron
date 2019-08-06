@@ -412,7 +412,7 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
 
         """
         self._structure = structure
-        if structure is None:
+        if structure is not None:
             self.input["alat"] = self._structure.cell[0, 0]
             # print("set alat: {}".format(self.input["alat"]))
 
