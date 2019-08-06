@@ -158,6 +158,11 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(np.array_equal([el.Abbreviation for el in self.CO2.numbers_to_elements(num_list)],
                                        ['H', 'Mg', 'Al', 'C']))
 
+    def test_scaled_pos_xyz(self):
+        basis = Atoms(symbols='Al', positions=[3*[0], 3*[1]], cell=2*np.eye(3))
+        pos_xyz = basis.pos_xyz()
+        self.assertAlmostEqual(np.linalg.norm(pos_xyz[0]-np.array([0, 1])), 0)
+
     def test_to_hdf(self):
         if sys.version_info[0] >= 3:
             filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../static/atomistics/test_hdf")
