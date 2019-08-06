@@ -137,7 +137,12 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(np.array_equal(self.CO2.pbc, self.CO2.get_pbc()))
 
     def test_chemical_element(self):
-        self.assertIsInstance(self.CO2.convert_element('C'), ChemicalElement)
+        conv = self.CO2.convert_element('C')
+        self.assertIsInstance(conv, ChemicalElement)
+        self.assertIsInstance(self.CO2.convert_element(conv), ChemicalElement)
+        self.assertIsInstance(self.CO2.convert_element(self.CO2[0]), ChemicalElement)
+        with self.assertRaises(AssertionError):
+            self.assertIsInstance(self.CO2.convert_element(self.CO2), ChemicalElement)
         self.assertEqual(len(self.CO2.species), 2)
 
     def test_copy(self):
@@ -152,6 +157,11 @@ class TestAtoms(unittest.TestCase):
         num_list = [1, 12, 13, 6]
         self.assertTrue(np.array_equal([el.Abbreviation for el in self.CO2.numbers_to_elements(num_list)],
                                        ['H', 'Mg', 'Al', 'C']))
+
+    def test_scaled_pos_xyz(self):
+        basis = Atoms(symbols='AlAl', positions=[3*[0], 3*[1]], cell=2*np.eye(3))
+        pos_xyz = basis.pos_xyz()
+        self.assertAlmostEqual(np.linalg.norm(pos_xyz[0]-np.array([0, 1])), 0)
 
     def test_to_hdf(self):
         if sys.version_info[0] >= 3:
@@ -409,6 +419,9 @@ class TestAtoms(unittest.TestCase):
         extended_cell = NaCl + boundary
         # extended_cell.plot3d()
         nbr_dict = NaCl.get_neighbors(num_neighbors=12, t_vec=True)
+        basis = Atoms(symbols='FeFe', positions=[3*[0], 3*[1]], cell=2*np.eye(3))
+        neigh = basis.get_neighbors(include_boundary=False)
+        self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
         # print nbr_dict.distances
         # print [set(s) for s in nbr_dict.shells]
 
@@ -443,6 +456,22 @@ class TestAtoms(unittest.TestCase):
     def test_plot3d(self):
         basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
         view = basis.plot3d()
+
+    def test_get_shell_radius(self):
+        basis = Atoms('FeFe', positions=[3*[0], 3*[1]], cell=2*np.eye(3))
+        self.assertAlmostEqual(basis.get_shell_radius(), np.mean(list(basis.get_shells().values())))
+
+    def test_group_points_by_symmetry(self):
+        basis = Atoms('FeFe', positions=[3*[0], 3*[1]], cell=2*np.eye(3))
+        self.assertEqual(len(basis.group_points_by_symmetry([3*[0.5], 3*[1.5]])), 1)
+        self.assertEqual(len(basis.group_points_by_symmetry([3*[0.5], 3*[1.4]])), 2)
+
+    def test_get_equivalent_voronoi_vertices(self):
+        basis = Atoms('FeFe', positions=[3*[0], 3*[1]], cell=2*np.eye(3))
+        vert = basis.get_equivalent_voronoi_vertices()
+        self.assertEqual(len(vert), 1)
+        self.assertGreater(np.min(np.linalg.norm(vert[0]-basis.positions[0], axis=-1)), 0.5)
+        self.assertGreater(np.min(np.linalg.norm(vert[0]-basis.positions[1], axis=-1)), 0.5)
 
     def test_get_shells(self):
         dim = 3
