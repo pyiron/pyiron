@@ -137,7 +137,12 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(np.array_equal(self.CO2.pbc, self.CO2.get_pbc()))
 
     def test_chemical_element(self):
-        self.assertIsInstance(self.CO2.convert_element('C'), ChemicalElement)
+        conv = self.CO2.convert_element('C')
+        self.assertIsInstance(conv, ChemicalElement)
+        self.assertIsInstance(self.CO2.convert_element(conv), ChemicalElement)
+        self.assertIsInstance(self.CO2.convert_element(self.CO2[0]), ChemicalElement)
+        with self.assertRaises(AssertionError):
+            self.assertIsInstance(self.CO2.convert_element(self.CO2), ChemicalElement)
         self.assertEqual(len(self.CO2.species), 2)
 
     def test_copy(self):
@@ -147,6 +152,10 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(basis, basis_copy)
         basis_copy[:] = "Pt"
         self.assertNotEqual(basis, basis_copy)
+
+    def test_scalars_to_hex_colors(self):
+        col = self.CO2._scalars_to_hex_colors(np.arange(2))
+        self.assertTrue(col, ['#427bb0', '#d1483a'])
 
     def test_numbers_to_elements(self):
         num_list = [1, 12, 13, 6]
