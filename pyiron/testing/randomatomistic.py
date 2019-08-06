@@ -401,8 +401,8 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
         """
         return self._structure
 
-    def get_structure(self, iteration_step=-1):
-        structure = super(AtomisticExampleJob, self).get_structure(iteration_step=iteration_step)
+    def get_structure(self, iteration_step=-1, wrap_atoms=True):
+        structure = super(AtomisticExampleJob, self).get_structure(iteration_step=iteration_step, wrap_atoms=wrap_atoms)
         if structure is None:
             return self.structure
         return structure
