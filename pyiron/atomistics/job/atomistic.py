@@ -416,11 +416,11 @@ class AtomisticGenericJob(GenericJobCore):
 
         """
         if snapshot_indices is None:
-            positions = self['output/generic/positions']
-            cells = self['output/generic/cells']
+            positions = self.output.positions
+            cells = self.output.cells
         else:
-            positions = self['output/generic/positions'][snapshot_indices]
-            cells = self['output/generic/cells'][snapshot_indices]
+            positions = self.output.positions[snapshot_indices]
+            cells = self.output.cells[snapshot_indices]
         if atom_indices is None:
             return Trajectory(positions[::stride], self.structure.get_parent_basis(),
                               center_of_mass=center_of_mass, cells=cells[::stride])
@@ -508,14 +508,18 @@ class AtomisticGenericJob(GenericJobCore):
         if not (self.structure is not None):
             raise AssertionError()
         snapshot = self.structure.copy()
-        snapshot.cell = self.get("output/generic/cells")[iteration_step]
-        snapshot.positions = self.get("output/generic/positions")[iteration_step]
-        indices = self.get("output/generic/indices")
-        if indices is not None:
+        snapshot.cell = self.output.cells[iteration_step]
+        snapshot.positions = self.output.positions[iteration_step]
+        indices = self.output.indices
+        if indices is not None and len(indices) > max([iteration_step,0]):
             snapshot.indices = indices[iteration_step]
         if wrap_atoms:
             return snapshot.center_coordinates_in_unit_cell()
         else:
+            if len(self.output.unwrapped_positions) > max([iteration_step,0]):
+                snapshot.positions = self.output.unwrapped_positions[iteration_step]
+            else:
+                snapshot.positions += self.output.total_displacements[iteration_step]
             return snapshot
 
     def map(self, function, parameter_lst):

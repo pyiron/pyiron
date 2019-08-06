@@ -52,8 +52,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
     def structure(self, structure):
         GenericInteractive.structure.fset(self, structure)
 
-    def get_structure(self, iteration_step=-1):
-        return GenericInteractive.get_structure(self, iteration_step=iteration_step)
+    def get_structure(self, iteration_step=-1, wrap_atoms=True):
+        return GenericInteractive.get_structure(self, iteration_step=iteration_step, wrap_atoms=wrap_atoms)
 
     def _interactive_lib_command(self, command):
         self._logger.debug('Lammps library: ' + command)
