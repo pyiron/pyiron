@@ -612,10 +612,10 @@ class FileHDFio(object):
         if exclude_groups is None:
             exclude_groups = ['interactive']
         file_name = self.file_name
-        _path, _ = file_name.split('.')
-        p_lst = _path.split('/')
+        _path = file_name.split('/')[-1]
+        _path = _path.split('.')[-1]
         # path = '/'.join(p_lst[:-1])
-        new_file = p_lst[-1] + '_rewrite'
+        new_file = _path[-1] + '_rewrite'
 
         hdf_new = ProjectHDFio(project=self.project, file_name=new_file, h5_path='/' + job_name)
         hdf_new = self.hd_copy(self, hdf_new, exclude_groups=exclude_groups, exclude_nodes=exclude_nodes)
@@ -1107,6 +1107,10 @@ class ProjectHDFio(FileHDFio):
             read_mode (bool): [True/False]
         """
         self._project._inspect_mode = read_mode
+
+    @property
+    def name(self):
+        return os.path.basename(self.h5_path)
 
     def copy(self):
         """

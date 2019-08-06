@@ -401,6 +401,12 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
         """
         return self._structure
 
+    def get_structure(self, iteration_step=-1, wrap_atoms=True):
+        structure = super(AtomisticExampleJob, self).get_structure(iteration_step=iteration_step, wrap_atoms=wrap_atoms)
+        if structure is None:
+            return self.structure
+        return structure
+
     @structure.setter
     def structure(self, structure):
         """
@@ -412,7 +418,7 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
 
         """
         self._structure = structure
-        if self._structure.cell.any():
+        if structure is not None:
             self.input["alat"] = self._structure.cell[0, 0]
             # print("set alat: {}".format(self.input["alat"]))
 
@@ -423,9 +429,6 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
         """
         super(AtomisticExampleJob, self).set_input_to_read_only()
         self.input.read_only = True
-
-    def get_structure(self, iteration_step=-1):
-        return self.structure
 
     def to_hdf(self, hdf=None, group_name=None):
         """

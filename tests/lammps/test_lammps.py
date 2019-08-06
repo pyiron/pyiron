@@ -19,6 +19,8 @@ class TestLammps(unittest.TestCase):
                                job_name='lammps_water')
         cls.job_water_dump = Lammps(project=ProjectHDFio(project=cls.project, file_name='lammps_water_dump'),
                                     job_name='lammps_water_dump')
+        cls.job_dump = Lammps(project=ProjectHDFio(project=cls.project, file_name='lammps_dump_static'),
+                              job_name='lammps_dump_static')
 
     @classmethod
     def tearDownClass(cls):
@@ -173,6 +175,15 @@ class TestLammps(unittest.TestCase):
         forces = forces.reshape(len(forces), -1, 3)
         self.assertTrue(np.allclose(self.job_water_dump['output/generic/unwrapped_positions'], positions))
         self.assertTrue(np.allclose(self.job_water_dump['output/generic/forces'], forces))
+
+    def test_dump_parser(self):
+        structure = Atoms(elements=2*['Fe'], cell=2.78*np.eye(3), positions=2.78*np.outer(np.arange(2), np.ones(3))*0.5)
+        self.job_dump.structure = structure
+        file_directory = os.path.join(self.execution_path, "..", "static", "lammps_test_files")
+        self.job_dump.collect_dump_file(cwd=file_directory, file_name='dump_static.out')
+        self.assertTrue(np.array_equal(self.job_dump['output/generic/forces'].shape, (1, 2, 3)))
+        self.assertTrue(np.array_equal(self.job_dump['output/generic/positions'].shape, (1, 2, 3)))
+        self.assertTrue(np.array_equal(self.job_dump['output/generic/cells'].shape, (1, 3, 3)))
 
 
 if __name__ == '__main__':

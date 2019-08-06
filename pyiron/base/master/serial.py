@@ -333,20 +333,21 @@ class SerialMasterBase(GenericMaster):
         job = self.pop(-1)
         job._master_id = self.job_id
         if self.server.new_hdf:
-            job._hdf5 = self.project_hdf5.create_hdf(path=self._hdf5._project.open(self.job_name + '_hdf5').path,
+            job._hdf5 = self.project_hdf5.create_hdf(path=self.project.open(self.job_name + '_hdf5').path,
                                                      job_name=job.job_name)
         else:
             job._hdf5 = self.project_hdf5.open(job.job_name)
         self._logger.info('SerialMaster: run job {}'.format(job.job_name))
         return job
 
-    def _run_child_job(self, job):
+    @staticmethod
+    def _run_child_job(job):
         job.run()
 
     def _run_if_master_queue(self, job):
         job.run()
-        if job._process:
-            job._process.communicate()
+        if job.python_execution_process:
+            job.python_execution_process.communicate()
         self.run_if_refresh()
 
     def _run_if_master_non_modal_child_non_modal(self, job):

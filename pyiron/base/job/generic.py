@@ -162,20 +162,9 @@ class GenericJob(JobCore):
         for sig in intercepted_signals:
             signal.signal(sig,  self.signal_intercept)
 
-    def signal_intercept(self,sig,frame):
-        try:
-            self._logger.info('Job {} intercept signal {}, job is shutting down'.format(self._job_id, sig))
-            self.drop_status_to_aborted()
-        except:
-            raise
-        # finally:
-        #     if sig in intercepted_signals:
-        #         sys.exit(0)
-
-    def drop_status_to_aborted(self):
-        self.refresh_job_status()
-        if not (self.status.finished or self.status.suspended):
-            self.status.aborted = True
+    @property
+    def python_execution_process(self):
+        return self._process
 
     @property
     def version(self):
@@ -1075,6 +1064,42 @@ class GenericJob(JobCore):
         new_ham._restart_file_list = list()
         new_ham._restart_file_dict = dict()
         return new_ham
+
+    def list_all(self):
+        """
+        List all groups and nodes of the HDF5 file - where groups are equivalent to directories and nodes to files.
+
+        Returns:
+            dict: {'groups': [list of groups], 'nodes': [list of nodes]}
+        """
+        h5_dict = self.project_hdf5.list_all()
+        if self.server.new_hdf:
+            h5_dict["groups"] += self._list_ext_childs()
+        return h5_dict
+
+    def signal_intercept(self, sig, frame):
+        """
+
+        Args:
+            sig:
+            frame:
+
+        Returns:
+
+        """
+        try:
+            self._logger.info('Job {} intercept signal {}, job is shutting down'.format(self._job_id, sig))
+            self.drop_status_to_aborted()
+        except:
+            raise
+
+    def drop_status_to_aborted(self):
+        """
+        Change the job status to aborted when the job was intercepted.
+        """
+        self.refresh_job_status()
+        if not (self.status.finished or self.status.suspended):
+            self.status.aborted = True
 
     def _copy_restart_files(self):
         """
