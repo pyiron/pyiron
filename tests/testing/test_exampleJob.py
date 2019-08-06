@@ -56,5 +56,6 @@ class TestExampleJob(unittest.TestCase):
             self.assertTrue(1 > e_1 > 0)
             self.assertEqual(e_1, e_2)
 
+
 if __name__ == '__main__':
     unittest.main()

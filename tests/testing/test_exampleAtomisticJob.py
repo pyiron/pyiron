@@ -31,5 +31,6 @@ class TestExampleJob(unittest.TestCase):
         self.assertEqual(struct.positions.shape, (2, 3))
         self.assertEqual(struct.cell.shape, (3, 3))
 
+
 if __name__ == '__main__':
     unittest.main()
