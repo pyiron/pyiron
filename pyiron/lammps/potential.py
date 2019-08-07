@@ -58,7 +58,7 @@ class LammpsPotential(GenericParameters):
 
     @property
     def files(self):
-        if list(self._df['Filename'])[0]:
+        if list(self._df['Filename'])[0] is not None:
             absolute_file_paths = [files for files in list(self._df['Filename'])[0] if os.path.isabs(files)]
             relative_file_paths = [files for files in list(self._df['Filename'])[0] if not os.path.isabs(files)]
             for path in relative_file_paths:
@@ -88,6 +88,10 @@ class LammpsPotential(GenericParameters):
                 hdf_pot['Name'] = self._df['Name'].values[0]
                 hdf_pot['Model'] = self._df['Model'].values[0]
                 hdf_pot['Species'] = self._df['Species'].values[0]
+                try:
+                    hdf_pot['Content'] = self._df['Content'].values[0]
+                except KeyError:
+                    pass
         super(LammpsPotential, self).to_hdf(hdf, group_name=group_name)
 
     def from_hdf(self, hdf, group_name=None):
@@ -97,7 +101,8 @@ class LammpsPotential(GenericParameters):
                                          'Filename': [hdf_pot['Filename']],
                                          'Name': [hdf_pot['Name']],
                                          'Model': [hdf_pot['Model']],
-                                         'Species': [hdf_pot['Species']]})
+                                         'Species': [hdf_pot['Species']],
+                                         'Content': [hdf_pot['Content']]})
             except ValueError:
                 pass
         super(LammpsPotential, self).from_hdf(hdf, group_name=group_name)
