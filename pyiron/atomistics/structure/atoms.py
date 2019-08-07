@@ -2203,7 +2203,7 @@ class Atoms(object):
         """
         This function returns the majority species and their number in the box
 
-        Returns: number of majority atoms, chemical symbol
+        Returns: number of atoms of the majority species, chemical symbol
 
         """
         el_dict = self.get_number_species_atoms()
