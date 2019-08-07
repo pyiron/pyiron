@@ -366,10 +366,10 @@ class TestAtoms(unittest.TestCase):
         basis = basis_Mg + basis_O
         basis.add_tag(spin=None)
         # Indices set as int
-        Mg_indices = basis.select_index("Mg").tolist()
+        Mg_indices = np.array(basis.select_index("Mg"), dtype=int).tolist()
         for ind in Mg_indices:
             basis.spin[ind] = 1
-        O_indices = basis.select_index("O").tolist()
+        O_indices = np.array(basis.select_index("O"), dtype=int).tolist()
         for ind in O_indices:
             basis.spin[ind] = -1
         basis.set_repeat(2)
@@ -378,10 +378,10 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(np.array_equal(basis.spin[basis.select_index("O")].list(), -1 *
                                        np.ones(len(basis.select_index("O")))))
         # Indices set as numpy.int
-        Mg_indices = basis.select_index("Mg").tolist()
+        Mg_indices = np.array(basis.select_index("Mg"), dtype=np.int)
         for ind in Mg_indices:
             basis.spin[ind] = 1
-        O_indices = basis.select_index("O").tolist()
+        O_indices = np.array(basis.select_index("O"), dtype=np.int)
         for ind in O_indices:
             basis.spin[ind] = -1
         basis.set_repeat(2)
