@@ -686,7 +686,7 @@ class Atoms(object):
             return np.where(self.get_chemical_symbols()==el)[0]
         elif isinstance(el, ChemicalElement):
             return np.where([e==el for e in self.get_chemical_elements()])[0]
-        if isinstance(el, list):
+        if isinstance(el, (list, np.ndarray)):
             if isinstance(el[0], str):
                 return np.where(np.isin(self.get_chemical_symbols(), el))[0]
             elif isinstance(el[0], ChemicalElement):

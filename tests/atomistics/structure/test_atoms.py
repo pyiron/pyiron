@@ -675,7 +675,7 @@ class TestAtoms(unittest.TestCase):
         Ni = basis.convert_element('Ni')
         self.assertTrue(np.array_equal(basis.select_index([Fe, Ni]), [0, 2]))
         pse = PeriodicTable()
-        pse.add_element("Ni", "Ni_up", spin="up")
+        pse.add_element("Ni", "Ni_up", spin=1)
         ni_up = pse.element("Ni_up")
         basis = Atoms(symbols=['Fe', 'Cu', ni_up,  'Al'], positions=np.random.random((4, 3)), cell=np.eye(3))
         self.assertTrue(np.array_equal(basis.select_index("Fe"), [0]))
