@@ -20,13 +20,6 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 
-try:
-    FileExistsError = FileExistsError
-except NameError:
-    class FileExistsError(OSError):
-        pass
-
-
 class GenericMaster(GenericJob):
     """
     The GenericMaster is the template class for all meta jobs - meaning all jobs which contain multiple other jobs. It
@@ -156,20 +149,15 @@ class GenericMaster(GenericJob):
         else:
             return super(GenericMaster, self).child_ids
 
-    # def copy(self):
-    #     """
-    #     Copy the GenericJob object which links to the job and its HDF5 file
-    #
-    #     Returns:
-    #         GenericJob: New GenericJob object pointing to the same job
-    #     """
-    #     self_copied = super(GenericMaster, self).copy()
-    #     self_copied._job_name_lst = self._job_name_lst[:]
-    #     self._load_all_child_jobs(job_to_load=self)
-    #     self_copied._job_object_dict = {key: value.copy() for key, value in self._job_object_dict.items()}
-    #     self_copied._child_id_func = self._child_id_func
-    #     self_copied._child_id_func_str = self._child_id_func_str
-    #     return self_copied
+    @property
+    def job_object_dict(self):
+        """
+        internal cache of currently loaded jobs
+
+        Returns:
+            dict: Dictionary of currently loaded jobs
+        """
+        return self._job_object_dict
 
     def first_child_name(self):
         """
@@ -514,7 +502,7 @@ class GenericMaster(GenericJob):
         if isinstance(child_job, GenericMaster):
             for sub_job_name in child_job._job_name_lst:
                 self._child_job_update_hdf(parent_job=child_job, child_job=child_job._load_job_from_cache(sub_job_name))
-        parent_job._job_object_dict[child_job.job_name] = child_job
+        parent_job.job_object_dict[child_job.job_name] = child_job
 
     def _executable_activate_mpi(self):
         """

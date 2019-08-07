@@ -7,6 +7,7 @@ import os
 import posixpath
 import shutil
 import pandas
+import importlib
 from pyiron.base.project.path import ProjectPath
 from pyiron.base.settings.generic import Settings
 from pyiron.base.database.jobtable import get_db_columns, get_job_ids, get_job_id, get_jobs, job_table, \
@@ -459,6 +460,21 @@ class Project(ProjectPath):
                          recursive=recursive, columns=columns, all_columns=all_columns, sort_by=sort_by,
                          element_lst=element_lst)
 
+    def get_jobs_status(self, recursive=True, element_lst=None):
+        """
+        Gives a overview of all jobs status.
+
+        Args:
+            recursive (bool): search subprojects [True/False] - default=True
+            element_lst (list): list of elements required in the chemical formular - by default None
+
+        Returns:
+            prints an overview of the job status.
+        """
+        df = job_table(database=self.db, sql_query=self.sql_query, user=self.user, project_path=self.project_path,
+                       recursive=recursive, all_columns=True, element_lst=element_lst)
+        return df['status'].value_counts()
+
     def keys(self):
         """
         List of file-, folder- and objectnames
@@ -577,20 +593,42 @@ class Project(ProjectPath):
         Returns:
             GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
         """
-        from pyiron.base.job.path import JobPath
+        jobpath = getattr(importlib.import_module('pyiron.base.job.path'), 'JobPath')
         if job_id:
-            job = JobPath(db=self.db, job_id=job_id, user=self.user)
+            job = jobpath(db=self.db, job_id=job_id, user=self.user)
             job = job.load_object(convert_to_object=convert_to_object, project=job.project_hdf5.copy())
             job._job_id = job_id
             if convert_to_object:
                 job.reset_job_id(job_id=job_id)
+                job.set_input_to_read_only()
             return job
         elif db_entry:
-            job = JobPath(db=self.db, db_entry=db_entry)
+            job = jobpath(db=self.db, db_entry=db_entry)
             job = job.load_object(convert_to_object=convert_to_object, project=job.project_hdf5.copy())
+            if convert_to_object:
+                job.set_input_to_read_only()
             return job
         else:
             raise ValueError('Either a job ID or an database entry has to be provided.')
+
+    @staticmethod
+    def load_from_jobpath_string(job_path, convert_to_object=True):
+        """
+        Internal function to load an existing job either based on the job ID or based on the database entry dictionary.
+
+        Args:
+            job_path (str): string to reload the job from an HDF5 file - '/root_path/project_path/filename.h5/h5_path'
+            convert_to_object (bool): convert the object to an pyiron object or only access the HDF5 file - default=True
+                                      accessing only the HDF5 file is about an order of magnitude faster, but only
+                                      provides limited functionality. Compare the GenericJob object to JobCore object.
+
+        Returns:
+            GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
+        """
+        job = getattr(importlib.import_module('pyiron.base.job.path'), 'JobPathBase')(job_path=job_path)
+        job = job.load_object(convert_to_object=convert_to_object, project=job.project_hdf5.copy())
+        job.set_input_to_read_only()
+        return job
 
     def move_to(self, destination):
         """

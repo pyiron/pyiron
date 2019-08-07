@@ -26,8 +26,7 @@ class ObjectTypeChoice(object):
         for item in list(OBJECT_CLASS_DICT.keys()):
             self.__setattr__(item, item)
 
-    @staticmethod
-    def __dir__():
+    def __dir__(self):
         return list(OBJECT_CLASS_DICT.keys())
 
 

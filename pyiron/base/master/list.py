@@ -247,7 +247,7 @@ class ListMaster(GenericMaster):
                     job_lst.append(ham._process)
                 else:
                     self.refresh_job_status()
-            process_lst = [process.communicate() for process in job_lst if process]
+            _ = [process.communicate() for process in job_lst if process]
             self.status.suspended = True
         if self.server.run_mode.modal or ((self.server.run_mode.non_modal or self.server.run_mode.queue)
                                           and self.is_finished()):

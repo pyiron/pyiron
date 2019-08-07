@@ -187,7 +187,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
     def interactive_volume_getter(self):
         return self.initial_structure.get_volume()
 
-    def get_structure(self, iteration_step=-1):
+    def get_structure(self, iteration_step=-1, wrap_atoms=True):
         """
         Gets the structure from a given iteration step of the simulation (MD/ionic relaxation). For static calculations
         there is only one ionic iteration step
@@ -208,18 +208,26 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             else:
                 el_lst = self._interactive_species_lst.tolist()
             if indices is not None:
+                if wrap_atoms:
+                    positions = self.output.positions[iteration_step]
+                else:
+                    if len(self.output.unwrapped_positions) > max([iteration_step,0]):
+                        positions = self.output.unwrapped_positions[iteration_step]
+                    else:
+                        positions = self.output.positions[iteration_step]+self.output.total_displacements[iteration_step]
                 atoms = Atoms(symbols=np.array([el_lst[el] for el in indices]),
-                              positions=self.output.positions[iteration_step],
-                              cell=self.output.cells[iteration_step])
+                              positions=positions, cell=self.output.cells[iteration_step])
                 # Update indicies to match the indicies in the cache.
                 atoms.set_species([self._periodic_table.element(el) for el in el_lst])
                 atoms.indices = indices
+                if wrap_atoms:
+                    atoms = atoms.center_coordinates_in_unit_cell()
                 return atoms
             else:
                 return None
         else:
             if self.get("output/generic/cells") is not None and len(self.get("output/generic/cells")) != 0:
-                return super(GenericInteractive, self).get_structure(iteration_step=iteration_step)
+                return super(GenericInteractive, self).get_structure(iteration_step=iteration_step, wrap_atoms=wrap_atoms)
             else:
                 return None
 
