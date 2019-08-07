@@ -667,12 +667,22 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(orig_basis.get_chemical_formula(), "Cl31HNa32")
 
     def test_select_index(self):
-        basis = Atoms(symbols=['Fe', 'Cu', 'Ni',  'Al'], positions=np.random.random((4,3)), cell=np.eye(3))
+        basis = Atoms(symbols=['Fe', 'Cu', 'Ni', 'Al'], positions=np.random.random((4, 3)), cell=np.eye(3))
         self.assertTrue(np.array_equal(basis.select_index("Fe"), [0]))
         self.assertTrue(np.array_equal(basis.select_index("Ni"), [2]))
         self.assertTrue(np.array_equal(basis.select_index(['Cu', 'Al']), [1, 3]))
         Fe = basis.convert_element('Fe')
         Ni = basis.convert_element('Ni')
+        self.assertTrue(np.array_equal(basis.select_index([Fe, Ni]), [0, 2]))
+        pse = PeriodicTable()
+        pse.add_element("Ni", "Ni_up", spin="up")
+        ni_up = pse.element("Ni_up")
+        basis = Atoms(symbols=['Fe', 'Cu', ni_up,  'Al'], positions=np.random.random((4, 3)), cell=np.eye(3))
+        self.assertTrue(np.array_equal(basis.select_index("Fe"), [0]))
+        self.assertTrue(np.array_equal(basis.select_index(ni_up), [2]))
+        self.assertTrue(np.array_equal(basis.select_index(['Cu', 'Al']), [1, 3]))
+        Fe = basis.convert_element('Fe')
+        Ni = basis.convert_element(ni_up)
         self.assertTrue(np.array_equal(basis.select_index([Fe, Ni]), [0, 2]))
 
     def test_parent_index(self):
