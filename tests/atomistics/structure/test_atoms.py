@@ -671,7 +671,7 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(orig_basis.get_chemical_formula(), "Cl31HNa32")
 
 
-    def test_select_index(self):
+    def test_get_majority_species(self):
         basis = Atoms(symbols=4*['Fe'], positions=np.random.random((4, 3)), cell=np.eye(3))
         self.assertEqual(basis.get_majority_species()[0], 4)
         self.assertEqual(basis.get_majority_species()[1], 'Fe')
