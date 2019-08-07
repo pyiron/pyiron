@@ -366,10 +366,10 @@ class TestAtoms(unittest.TestCase):
         basis = basis_Mg + basis_O
         basis.add_tag(spin=None)
         # Indices set as int
-        Mg_indices = basis.select_index("Mg").tolist()
+        Mg_indices = np.array(basis.select_index("Mg"), dtype=int).tolist()
         for ind in Mg_indices:
             basis.spin[ind] = 1
-        O_indices = basis.select_index("O").tolist()
+        O_indices = np.array(basis.select_index("O"), dtype=int).tolist()
         for ind in O_indices:
             basis.spin[ind] = -1
         basis.set_repeat(2)
@@ -378,10 +378,10 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(np.array_equal(basis.spin[basis.select_index("O")].list(), -1 *
                                        np.ones(len(basis.select_index("O")))))
         # Indices set as numpy.int
-        Mg_indices = basis.select_index("Mg").tolist()
+        Mg_indices = np.array(basis.select_index("Mg"), dtype=np.int)
         for ind in Mg_indices:
             basis.spin[ind] = 1
-        O_indices = basis.select_index("O").tolist()
+        O_indices = np.array(basis.select_index("O"), dtype=np.int)
         for ind in O_indices:
             basis.spin[ind] = -1
         basis.set_repeat(2)
@@ -667,8 +667,23 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(orig_basis.get_chemical_formula(), "Cl31HNa32")
 
     def test_select_index(self):
-        self.assertTrue(np.array_equal(self.CO2.select_index("C"), [0]))
-        self.assertTrue(np.array_equal(self.CO2.select_index("O"), [1, 2]))
+        basis = Atoms(symbols=['Fe', 'Cu', 'Ni', 'Al'], positions=np.random.random((4, 3)), cell=np.eye(3))
+        self.assertTrue(np.array_equal(basis.select_index("Fe"), [0]))
+        self.assertTrue(np.array_equal(basis.select_index("Ni"), [2]))
+        self.assertTrue(np.array_equal(basis.select_index(['Cu', 'Al']), [1, 3]))
+        Fe = basis.convert_element('Fe')
+        Ni = basis.convert_element('Ni')
+        self.assertTrue(np.array_equal(basis.select_index([Fe, Ni]), [0, 2]))
+        pse = PeriodicTable()
+        pse.add_element("Ni", "Ni_up", spin=1)
+        ni_up = pse.element("Ni_up")
+        basis = Atoms(symbols=['Fe', 'Cu', ni_up,  'Al'], positions=np.random.random((4, 3)), cell=np.eye(3))
+        self.assertTrue(np.array_equal(basis.select_index("Fe"), [0]))
+        self.assertTrue(np.array_equal(basis.select_index(ni_up), [2]))
+        self.assertTrue(np.array_equal(basis.select_index(['Cu', 'Al']), [1, 3]))
+        Fe = basis.convert_element('Fe')
+        Ni = basis.convert_element(ni_up)
+        self.assertTrue(np.array_equal(basis.select_index([Fe, Ni]), [0, 2]))
 
     def test_parent_index(self):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
