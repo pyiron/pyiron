@@ -676,16 +676,21 @@ class Atoms(object):
         Returns the indices of a given element in the structure
 
         Args:
-            el (str/atomistics.structures.periodic_table.ChemicalElement): Element for which the indices should
+            el (str/atomistics.structures.periodic_table.ChemicalElement/list): Element for which the indices should
                                                                                   be returned
         Returns:
             numpy.ndarray: An array of indices of the atoms of the given element
 
         """
         if isinstance(el, str):
-            return np.array([i for i, e in enumerate(self.get_chemical_symbols()) if e == el], dtype=int)
+            return np.where(self.get_chemical_symbols()==el)[0]
         elif isinstance(el, ChemicalElement):
-            return np.array([i for i, e in enumerate(self.get_chemical_elements()) if e == el], dtype=int)
+            return np.where([e==el for e in self.get_chemical_elements()])[0]
+        if isinstance(el, list):
+            if isinstance(el[0], str):
+                return np.where(np.isin(self.get_chemical_symbols(), el))[0]
+            elif isinstance(el[0], ChemicalElement):
+                return np.where([e in el for e in self.get_chemical_elements()])[0]
 
     def select_parent_index(self, el):
         """
