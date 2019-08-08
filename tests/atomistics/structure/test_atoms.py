@@ -261,6 +261,7 @@ class TestAtoms(unittest.TestCase):
         CO.cell[2][2] = 10.
         self.assertTrue(CO.cell[2, 2] == 10.)
         self.assertAlmostEqual(CO.get_volume(), 10)
+        self.assertAlmostEqual(CO.get_volume(per_atom=True), 0.5*10)
         with self.assertRaises(ValueError):
             CO.cell = -np.eye(3)
         with self.assertRaises(ValueError):

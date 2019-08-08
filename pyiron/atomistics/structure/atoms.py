@@ -951,20 +951,27 @@ class Atoms(object):
 
     def get_masses_dof(self):
         """
-        
+
         Returns:
 
         """
         dim = self.dimension
         return np.repeat(self.get_masses(), dim)
 
-    def get_volume(self):
+    def get_volume(self, per_atom=False):
         """
         
+        Args:
+            per_atom (bool): True if volume per atom is to be returned
+
         Returns:
+            volume (float): Volume in A**3
 
         """
-        return np.abs(np.linalg.det(self.cell))
+        if per_atom:
+            return np.abs(np.linalg.det(self.cell))/len(self)
+        else:
+            return np.abs(np.linalg.det(self.cell))
 
     def get_density(self):
         """
