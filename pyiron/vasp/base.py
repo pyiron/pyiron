@@ -418,8 +418,14 @@ class VaspBase(GenericDFTJob):
         """
         Collects errors from the VASP run
         """
-        # TODO: implement for vasp
-        self._logger.info("collect_errors() is not yet implemented for VASP")
+        with open(os.path.join(self.working_directory, 'error.out'), 'r') as f:
+            lines = f.readlines()
+        # If the wrong convergence algorithm is chosen, we get the following error.
+        # https://cms.mpi.univie.ac.at/vasp-forum/viewtopic.php?f=4&t=17071
+        for l in lines:
+            if 'WARNING in EDDRMM: call to ZHEGV failed, returncode =' in l:
+                self.status.not_converged = True
+                break
 
     @staticmethod
     def _decompress_files_in_directory(directory):
