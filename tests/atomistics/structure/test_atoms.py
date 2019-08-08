@@ -40,7 +40,6 @@ class TestAtoms(unittest.TestCase):
         self.assertIsInstance(basis.units, dict)
         self.assertIsInstance(basis.pbc, (bool, list, np.ndarray))
         self.assertIsInstance(basis.indices, np.ndarray)
-        self.assertIsNone(basis._internal_positions)
         self.assertIsNone(basis.positions)
         self.assertIsNone(basis.scaled_positions)
         self.assertIsInstance(basis.species, list)
@@ -67,7 +66,6 @@ class TestAtoms(unittest.TestCase):
         self.assertIsInstance(basis.indices, np.ndarray)
         self.assertIsInstance(basis.species, list)
         self.assertIsInstance(basis.cell, np.ndarray)
-        self.assertIsInstance(basis._internal_positions, np.ndarray)
         self.assertIsInstance(basis.positions, np.ndarray)
         self.assertIsInstance(basis.scaled_positions, np.ndarray)
         self.assertIsInstance(basis.elements, np.ndarray)
@@ -336,6 +334,29 @@ class TestAtoms(unittest.TestCase):
         # fcc.set_relative()
         self.assertTrue(np.linalg.norm(fcc.scaled_positions - positions) < 1e-10)
 
+    def test_set_relative(self):
+        lattice = CrystalStructure(element='Al', bravais_basis='fcc', lattice_constants=4)
+        basis_relative = lattice.copy()
+        basis_relative.set_relative()
+        basis_relative.cell[0,0] = 6
+        basis_absolute = lattice.copy()
+        basis_absolute.set_absolute()
+        basis_absolute.cell[0,0] = 6
+        self.assertAlmostEqual(basis_relative.positions[-1,0]*1.5, basis_absolute.positions[-1,0])
+        basis = lattice.copy()
+        self.assertAlmostEqual(basis.scaled_positions[-1,0], basis_relative.scaled_positions[-1,0])
+        basis.cell[0,0] = 6
+        self.assertAlmostEqual(basis.positions[-1,0], basis_absolute.positions[-1,0])
+        basis = lattice.copy()
+        basis_relative = lattice.copy()
+        basis_relative.set_relative()
+        basis.positions[-1,0] = 0.5
+        basis_relative.positions[-1,0] = 0.5
+        self.assertAlmostEqual(basis.positions[-1,0], basis_relative.positions[-1,0])
+        basis.scaled_positions[-1,0] = 0.5
+        basis_relative.scaled_positions[-1,0] = 0.5
+        self.assertAlmostEqual(basis.positions[-1,0], basis_relative.positions[-1,0])
+
     def test_repeat(self):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
         basis_O = CrystalStructure("O", bravais_basis="fcc", lattice_constant=4.2)
@@ -437,7 +458,7 @@ class TestAtoms(unittest.TestCase):
         NaCl.set_repeat([3, 3, 3])
         NaCl.positions += [2.2, 2.2, 2.2]
         NaCl.center_coordinates_in_unit_cell(origin=-0.5)
-        self.assertTrue(-0.5 < np.min(NaCl.scaled_positions))
+        self.assertTrue(-0.5 <= np.min(NaCl.scaled_positions))
         self.assertTrue(np.max(NaCl.scaled_positions < 0.5))
         NaCl.center_coordinates_in_unit_cell(origin=0.)
         self.assertTrue(0 <= np.min(NaCl.positions))

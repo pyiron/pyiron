@@ -90,7 +90,8 @@ class Atoms(object):
                 cell = np.array(cell)
         self._cell = cell
         self._species = list()
-        self._internal_positions = None
+        self._positions= None
+        self._scaled_positions= None
         self._pse = PeriodicTable()
         self._tag_list = SparseArray()
         self.indices = np.array([])
@@ -215,14 +216,10 @@ class Atoms(object):
         numpy.ndarray: A size Nx3 array of the scaled (relative) coordinates of the structure which has N atoms
 
         """
-
-        if self._is_scaled:
-            return self._internal_positions
-        elif self.cell is not None:
+        if self._scaled_positions is None and self.cell is not None and self._positions is not None:
             b_mat = np.linalg.inv(self.cell)
-            return np.dot(b_mat.T, np.array(self.positions).T).T
-        else:
-            return None
+            self._scaled_positions = np.dot(b_mat.T, np.array(self._positions).T).T
+        return self._scaled_positions
 
     @property
     def positions(self):
@@ -230,25 +227,22 @@ class Atoms(object):
         numpy.ndarray: A size Nx3 array of the absolute coordinates of the structure which has N atoms
 
         """
-        if self._is_scaled:
-            return np.dot(self.cell.T, np.array(self._internal_positions).T).T
-        else:
-            return self._internal_positions
+        if self._positions is None and self.cell is not None and self._scaled_positions is not None:
+            self._positions = np.dot(self.cell.T, np.array(self._scaled_positions).T).T
+        return self._positions
 
     @scaled_positions.setter
     def scaled_positions(self, positions):
-        if self._is_scaled:
-            self._internal_positions = positions
-        else:
-            self._internal_positions = np.dot(self.cell.T, np.array(positions).T).T
+        self._scaled_positions = positions
+        if self.cell is not None:
+            self._positions = np.dot(self.cell.T, np.array(positions).T).T
 
     @positions.setter
     def positions(self, positions):
-        if self._is_scaled:
+        self._positions = positions
+        if self.cell is not None:
             b_mat = np.linalg.inv(self.cell)
-            self._internal_positions = np.dot(b_mat.T, np.array(positions).T).T
-        else:
-            self._internal_positions = positions
+            self._scaled_positions = np.dot(b_mat.T, np.array(positions).T).T
 
     @property
     def species(self):
@@ -1010,12 +1004,10 @@ class Atoms(object):
     def set_absolute(self):
         if self._is_scaled:
             self._is_scaled = False
-            self.scaled_positions = self._internal_positions
 
     def set_relative(self):
         if not self._is_scaled:
             self._is_scaled = True
-            self.positions = self._internal_positions
 
     def center_coordinates_in_unit_cell(self, origin=0, eps=1e-4):
         """
