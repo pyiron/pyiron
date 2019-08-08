@@ -2,6 +2,7 @@ import unittest
 import sys
 import numpy as np
 import os
+import warnings
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron.atomistics.structure.sparse_list import SparseList
@@ -54,9 +55,9 @@ class TestAtoms(unittest.TestCase):
         self.assertIsInstance(basis, Atoms)
         self.assertRaises(ValueError, Atoms, symbols="Pt", elements='Al', positions=pos, cell=cell)
         basis = Atoms(numbers=[13], positions=pos, cell=cell)
-        self.assertEqual(basis.get_majority_species()[1], "Al")
+        self.assertEqual(basis.get_majority_species()['symbol'], "Al")
         basis = Atoms(species=[el], indices=[0], positions=pos, cell=cell)
-        self.assertEqual(basis.get_majority_species()[1], "Al")
+        self.assertEqual(basis.get_majority_species()['symbol'], "Al")
         self.assertIsInstance(basis, Atoms)
         self.assertIsInstance(basis.info, dict)
         self.assertIsInstance(basis.arrays, dict)
@@ -185,7 +186,7 @@ class TestAtoms(unittest.TestCase):
             basis_store.to_hdf(hdf_obj, "simple_structure")
             basis = Atoms().from_hdf(hdf_obj, group_name="simple_structure")
             self.assertEqual(len(basis), 8)
-            self.assertEqual(basis.get_majority_species()[1], "Al")
+            self.assertEqual(basis.get_majority_species()['symbol'], "Al")
             self.assertEqual(basis.get_spacegroup()['Number'], 225)
 
     def create_Fe_bcc(self):
@@ -516,10 +517,13 @@ class TestAtoms(unittest.TestCase):
 
     def test_get_distance_matrix(self):
         basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
-        output = basis.get_distance_matrix()
-        self.assertIsInstance(output, np.ndarray)
-        output = np.rint(output*2/np.sqrt(3))
-        self.assertTrue(np.all(np.dot(output, output)==np.identity(2)))
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            output = basis.get_distance_matrix()
+            self.assertIsInstance(output, np.ndarray)
+            output = np.rint(output*2/np.sqrt(3))
+            self.assertTrue(np.all(np.dot(output, output)==np.identity(2)))
+            self.assertEqual(len(w), 1)
 
     def test_cluster_analysis(self):
         import random
@@ -692,6 +696,17 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(orig_basis.get_chemical_formula(), "Cl32Na32")
         orig_basis.occupy_lattice(H=O_indices[0])
         self.assertEqual(orig_basis.get_chemical_formula(), "Cl31HNa32")
+
+
+    def test_get_majority_species(self):
+        basis = Atoms(symbols=4*['Fe'], positions=np.random.random((4, 3)), cell=np.eye(3))
+        self.assertEqual(basis.get_majority_species()['count'], 4)
+        self.assertEqual(basis.get_majority_species()['symbol'], 'Fe')
+        basis = Atoms(symbols=['Fe', 'Cu', 'Ni', 'Al'], positions=np.random.random((4, 3)), cell=np.eye(3))
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            basis.get_majority_species()
+            self.assertEqual(len(w), 1)
 
     def test_select_index(self):
         basis = Atoms(symbols=['Fe', 'Cu', 'Ni', 'Al'], positions=np.random.random((4, 3)), cell=np.eye(3))
