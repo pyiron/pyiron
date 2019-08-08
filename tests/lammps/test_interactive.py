@@ -5,8 +5,6 @@ from pyiron.base.project.generic import Project
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.lammps.lammps import Lammps
-from pyiron.lammps.base import LammpsStructure
-import ase.units as units
 
 class InteractiveLibrary(object):
     def __init__(self):
