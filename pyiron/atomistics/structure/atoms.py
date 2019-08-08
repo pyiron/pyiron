@@ -192,18 +192,6 @@ class Atoms(object):
         self.set_initial_magnetic_moments(magmoms)
 
     @property
-    def volume(self):
-        """
-            Returns:
-                volume based on the cell size
-        """
-        return np.linalg.det(self.cell)
-
-    @volume.setter
-    def volume(self, vol):
-        raise NotImplementedError('Set unit cell via job.structure.cell')
-
-    @property
     def cell(self):
         """
         numpy.ndarray: A size 3x3 array which gives the lattice vectors of the cell as [a1, a2, a3]

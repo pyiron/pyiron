@@ -260,9 +260,7 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue((CO.cell == np.identity(3)).all())
         CO.cell[2][2] = 10.
         self.assertTrue(CO.cell[2, 2] == 10.)
-        self.assertAlmostEqual(CO.volume, 10)
-        with self.assertRaises(NotImplementedError):
-            CO.volume = 1
+        self.assertAlmostEqual(CO.get_volume(), 10)
         with self.assertRaises(ValueError):
             CO.cell = -np.eye(3)
         with self.assertRaises(ValueError):
