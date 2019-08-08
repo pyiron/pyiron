@@ -951,20 +951,27 @@ class Atoms(object):
 
     def get_masses_dof(self):
         """
-        
+
         Returns:
 
         """
         dim = self.dimension
         return np.repeat(self.get_masses(), dim)
 
-    def get_volume(self):
+    def get_volume(self, per_atom=False):
         """
         
+        Args:
+            per_atom (bool): True if volume per atom is to be returned
+
         Returns:
+            volume (float): Volume in A**3
 
         """
-        return np.abs(np.linalg.det(self.cell))
+        if per_atom:
+            return np.abs(np.linalg.det(self.cell))/len(self)
+        else:
+            return np.abs(np.linalg.det(self.cell))
 
     def get_density(self):
         """
@@ -3010,6 +3017,10 @@ class Atoms(object):
         elif cell.shape != (3, 3):
             raise ValueError('Cell must be length 3 sequence, length 6 '
                              'sequence or 3x3 matrix!')
+
+        if np.linalg.det(cell)<=0:
+            raise ValueError('Cell must be a full dimensional matrix with '
+                             'right hand orientation')
 
         if scale_atoms:
             M = np.linalg.solve(self.get_cell(complete=True),
