@@ -142,7 +142,7 @@ class TestLammps(unittest.TestCase):
         self.assertEqual(len(self.job_water["output/generic/steps"]), 6)
 
 
-    def test_dump_parser(self):
+    def test_dump_parser_water(self):
         density = 1.0e-24  # g/A^3
         n_mols = 27
         mol_mass_water = 18.015  # g/mol
