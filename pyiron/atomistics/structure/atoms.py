@@ -233,16 +233,16 @@ class Atoms(object):
 
     @scaled_positions.setter
     def scaled_positions(self, positions):
-        self._scaled_positions = positions
         if self.cell is not None:
             self._positions = np.dot(self.cell.T, np.array(positions).T).T
+        self._scaled_positions = positions
 
     @positions.setter
     def positions(self, positions):
-        self._positions = positions
         if self.cell is not None:
             b_mat = np.linalg.inv(self.cell)
             self._scaled_positions = np.dot(b_mat.T, np.array(positions).T).T
+        self._positions = positions
 
     @property
     def species(self):
