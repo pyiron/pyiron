@@ -2914,6 +2914,16 @@ class Atoms(object):
         else:
             self.positions = np.transpose(rcoords) + center
 
+    @property
+    def scaled_positions(self):
+        warnings.warn('scaled_positions is deprecated. Use get_scaled_positions instead', DeprecationWarning)
+        return self.get_scaled_positions()
+
+    @scaled_positions.setter
+    def scaled_positions(self, positions):
+        warnings.warn('scaled_positions is deprecated. Use set_scaled_positions instead', DeprecationWarning)
+        self.set_scaled_positions(positions)
+
     def set_scaled_positions(self, scaled):
         """
         Set positions relative to unit cell.

@@ -188,7 +188,7 @@ class TestAtoms(unittest.TestCase):
             self.assertEqual(basis.get_majority_species()['symbol'], "Al")
             self.assertEqual(basis.get_spacegroup()['Number'], 225)
 
-    def create_Fe_bcc(self):
+    def test_create_Fe_bcc(self):
         self.pse = PeriodicTable()
         self.pse.add_element("Fe", "Fe_up", spin="up", pseudo_name='GGA')
         self.pse.add_element("Fe", "Fe_down", spin="down", pseudo_name='GGA')
@@ -248,6 +248,10 @@ class TestAtoms(unittest.TestCase):
         basis.set_scaled_positions(np.array([[0.5, 0.5, 0.5]]))
         self.assertTrue(np.array_equal(basis.get_scaled_positions(), [[0.5, 0.5, 0.5]]))
         self.assertTrue(np.array_equal(basis.positions, np.dot([[0.5, 0.5, 0.5]], basis.cell)))
+        with warnings.catch_warnings(record=True) as w:
+            basis.scaled_positions = np.array([[0.5, 0.5, 0.5]])
+            self.assertTrue(np.array_equal(basis.scaled_positions, [[0.5, 0.5, 0.5]]))
+            self.assertEqual(len(w), 2)
 
     def test_cell(self):
         CO = Atoms("CO",
@@ -563,7 +567,7 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(len(Al.get_symmetry()['translations']), 96)
         self.assertEqual(len(Al.get_symmetry()['translations']), len(Al.get_symmetry()['rotations']))
 
-    def _get_voronoi_vertices(self):
+    def test_get_voronoi_vertices(self):
         cell = 2.2 * np.identity(3)
         Al = Atoms('AlAl', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
         pos, box = Al._get_voronoi_vertices()
