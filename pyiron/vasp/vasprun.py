@@ -625,7 +625,7 @@ class Vasprun(object):
             if len(positions[positions > 1.01]) > 0:
                 basis.positions = positions
             else:
-                basis.scaled_positions = positions
+                basis.set_scaled_positions(positions)
             return basis
         except (KeyError, AttributeError, ValueError):
             return

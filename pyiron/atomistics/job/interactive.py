@@ -118,8 +118,8 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
                 if not np.allclose(self._structure_current.cell, self._structure_previous.cell, rtol=1e-15, atol=1e-15):
                     self._logger.debug('Generic library: cell changed!')
                     self.interactive_cells_setter(self._structure_current.cell)
-                if not np.allclose(self._structure_current.scaled_positions,
-                                   self._structure_previous.scaled_positions, rtol=1e-15, atol=1e-15):
+                if not np.allclose(self._structure_current.get_scaled_positions(),
+                                   self._structure_previous.get_scaled_positions(), rtol=1e-15, atol=1e-15):
                     self._logger.debug('Generic library: positions changed!')
                     self.interactive_positions_setter(self._structure_current.positions)
                 if np.any(self._structure_current.get_initial_magnetic_moments()) and \
