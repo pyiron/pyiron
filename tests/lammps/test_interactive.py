@@ -18,7 +18,7 @@ class InteractiveLibrary(object):
 
 
 
-class TestLammps(unittest.TestCase):
+class TestLammpsInteractive(unittest.TestCase):
     def setUp(self):
         self.job._interactive_library = InteractiveLibrary()
 
