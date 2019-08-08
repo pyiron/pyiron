@@ -260,6 +260,12 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue((CO.cell == np.identity(3)).all())
         CO.cell[2][2] = 10.
         self.assertTrue(CO.cell[2, 2] == 10.)
+        self.assertAlmostEqual(CO.get_volume(), 10)
+        self.assertAlmostEqual(CO.get_volume(per_atom=True), 0.5*10)
+        with self.assertRaises(ValueError):
+            CO.cell = -np.eye(3)
+        with self.assertRaises(ValueError):
+            CO.cell = [2,1]
 
     def test_add(self):
         COX = self.C2 + Atom("O", position=[0, 0, -2])
