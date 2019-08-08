@@ -2199,7 +2199,7 @@ class Atoms(object):
         # print "ref_id: ", ref_id_list
         return eq_atoms, trans_vec, rot_vec, id_vec, ref_id_list
 
-    def get_majority_species(self):
+    def get_majority_species(self, return_count=False):
         """
         This function returns the majority species and their number in the box
 
@@ -2212,7 +2212,10 @@ class Atoms(object):
         el_name = list(el_dict.keys())
         if np.sum(np.array(el_num)==np.max(el_num)) > 1:
             warnings.warn('There are more than one majority species')
-        return int(np.max(el_num)), el_name[np.argmax(el_num)]
+        if return_count:
+            return el_name[np.argmax(el_num)], int(np.max(el_num))
+        else:
+            return el_name[np.argmax(el_num)]
 
     def extend(self, other):
         """

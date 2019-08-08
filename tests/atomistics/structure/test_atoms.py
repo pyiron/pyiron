@@ -56,9 +56,9 @@ class TestAtoms(unittest.TestCase):
         self.assertIsInstance(basis, Atoms)
         self.assertRaises(ValueError, Atoms, symbols="Pt", elements='Al', positions=pos, cell=cell)
         basis = Atoms(numbers=[13], positions=pos, cell=cell)
-        self.assertEqual(basis.get_majority_species()[1], "Al")
+        self.assertEqual(basis.get_majority_species(), "Al")
         basis = Atoms(species=[el], indices=[0], positions=pos, cell=cell)
-        self.assertEqual(basis.get_majority_species()[1], "Al")
+        self.assertEqual(basis.get_majority_species(), "Al")
         self.assertIsInstance(basis, Atoms)
         self.assertIsInstance(basis.info, dict)
         self.assertIsInstance(basis.arrays, dict)
@@ -188,7 +188,7 @@ class TestAtoms(unittest.TestCase):
             basis_store.to_hdf(hdf_obj, "simple_structure")
             basis = Atoms().from_hdf(hdf_obj, group_name="simple_structure")
             self.assertEqual(len(basis), 8)
-            self.assertEqual(basis.get_majority_species()[1], "Al")
+            self.assertEqual(basis.get_majority_species(), "Al")
             self.assertEqual(basis.get_spacegroup()['Number'], 225)
 
     def create_Fe_bcc(self):
@@ -673,8 +673,8 @@ class TestAtoms(unittest.TestCase):
 
     def test_get_majority_species(self):
         basis = Atoms(symbols=4*['Fe'], positions=np.random.random((4, 3)), cell=np.eye(3))
-        self.assertEqual(basis.get_majority_species()[0], 4)
-        self.assertEqual(basis.get_majority_species()[1], 'Fe')
+        self.assertEqual(basis.get_majority_species(return_count=True)[1], 4)
+        self.assertEqual(basis.get_majority_species(), 'Fe')
         basis = Atoms(symbols=['Fe', 'Cu', 'Ni', 'Al'], positions=np.random.random((4, 3)), cell=np.eye(3))
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
