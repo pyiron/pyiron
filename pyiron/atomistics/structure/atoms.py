@@ -2203,13 +2203,14 @@ class Atoms(object):
         """
         This function returns the majority species and their number in the box
 
-        Returns: number of atoms of the majority species, chemical symbol
+        Returns:
+            number of atoms of the majority species, chemical symbol
 
         """
         el_dict = self.get_number_species_atoms()
         el_num = list(el_dict.values())
         el_name = list(el_dict.keys())
-        if np.sum(np.array(el_num)==np.max(el_num))>1:
+        if np.sum(np.array(el_num)==np.max(el_num)) > 1:
             warnings.warn('There are more than one majority species')
         return int(np.max(el_num)), el_name[np.argmax(el_num)]
 
