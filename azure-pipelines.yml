@@ -23,7 +23,7 @@ jobs:
   steps:
   - bash: echo "##vso[task.prependpath]/usr/share/miniconda/bin"
     displayName: Add conda to PATH
-  - template: .azure-pipelines/test-template.yml
+  - template: .azure-pipelines/test-template-unix.yml
 
 - job: 'OSX'
   pool:
@@ -39,7 +39,7 @@ jobs:
   steps:
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
-  - template: .azure-pipelines/test-template.yml
+  - template: .azure-pipelines/test-template-unix.yml
 
 - job: 'Windows'
   pool:
@@ -53,6 +53,8 @@ jobs:
     maxParallel: 1
 
   steps:
+  - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+    displayName: Add conda to PATH
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
-  - template: .azure-pipelines/test-template.yml
+  - template: .azure-pipelines/test-template-unix.yml
