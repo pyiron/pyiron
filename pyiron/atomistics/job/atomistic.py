@@ -269,8 +269,6 @@ class AtomisticGenericJob(GenericJobCore):
             animation: nglview IPython widget
 
         """
-        if not self.status.finished:
-            raise ValueError("This job can't be animated until it is finished")
         try:
             import nglview
         except ImportError:
