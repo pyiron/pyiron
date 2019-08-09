@@ -69,7 +69,7 @@ class VaspInteractive(VaspBase, GenericInteractive):
             try:
                 self.run_if_interactive_non_modal()
                 self.run_if_interactive_non_modal()
-                for atom in self.current_structure.scaled_positions:
+                for atom in self.current_structure.get_scaled_positions():
                     text = ' '.join(map('{:19.16f}'.format, atom))
                     self._interactive_library.stdin.write(text + '\n')
             except BrokenPipeError:
@@ -186,7 +186,7 @@ class VaspInteractive(VaspBase, GenericInteractive):
             for species in atom_numbers.keys():
                 indices = self.current_structure.select_index(species)
                 for i in indices:
-                    text = ' '.join(map('{:19.16f}'.format, self.current_structure.scaled_positions[i]))
+                    text = ' '.join(map('{:19.16f}'.format, self.current_structure.get_scaled_positions()[i]))
                     self._logger.debug('Vasp library: ' + text)
                     self._interactive_library.stdin.write(text + '\n')
             self._interactive_library.stdin.flush()
