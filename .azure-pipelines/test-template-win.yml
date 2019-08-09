@@ -5,10 +5,10 @@ steps:
     conda update -q conda
   displayName: conda setup
 
-- bash: echo -e "[DEFAULT]\nTOP_LEVEL_DIRS = $PWD\nRESOURCE_PATHS = $PWD/tests/static" > ~/.pyiron
+- script: echo -e "[DEFAULT]\nTOP_LEVEL_DIRS = $PWD\nRESOURCE_PATHS = $PWD/tests/static" > ~/.pyiron
   displayName: pyiron config
 
-- bash: conda create -n pyiron -q --yes -c conda-forge future psutil pytables numpy matplotlib scipy sqlalchemy pathlib2 pandas h5py coveralls coverage "ase>=3.16" spglib h5io phonopy defusedxml pysqa
+- script: conda create -n pyiron -q --yes -c conda-forge future psutil pytables numpy matplotlib scipy sqlalchemy pathlib2 pandas h5py coveralls coverage "ase>=3.16" spglib h5io phonopy defusedxml pysqa
   displayName: pyiron environment
 
 - script:  |
@@ -16,7 +16,7 @@ steps:
     pip install --pre .
   displayName: Installing deeptools
 
-- bash: |
+- script: |
     call activate pyiron
     coverage run --omit pyiron/_version.py -m unittest discover tests
   displayName: coverage
