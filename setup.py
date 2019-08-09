@@ -37,6 +37,7 @@ setup(
                       'matplotlib',
                       'numpy',
                       'pandas',
+                      'papermill',
                       'pathlib2',
                       'phonopy',
                       'psutil',

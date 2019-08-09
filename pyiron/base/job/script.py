@@ -229,13 +229,15 @@ class ScriptJob(GenericJob):
             str: executable command
         """
         file_name = os.path.basename(script_path)
-        path = os.path.join(working_directory, file_name)
+        file, ext = os.path.splitext(file_name)
+        path_input = os.path.join(working_directory, file_name)
+        path_output = os.path.join(working_directory, file + '_out' + ext)
         if file_name[-6:] == '.ipynb':
-            return 'jupyter nbconvert --ExecutePreprocessor.timeout=9999999 --to notebook --execute ' + path
+            return 'papermill ' + path_input + ' ' + path_output
         elif file_name[-3:] == '.py':
-            return 'python ' + path
+            return 'python ' + path_input
         else:
-            raise ValueError('Filename not recognized: ', path)
+            raise ValueError('Filename not recognized: ', path_input)
 
     def _executable_activate_mpi(self):
         """
@@ -257,33 +259,3 @@ class ScriptJob(GenericJob):
         """
         return os.path.normpath(os.path.join(os.path.abspath(os.path.curdir), path))
 
-
-class Notebook(object):
-    """
-    class for pyiron notebook objects
-    """
-    @staticmethod
-    def get_custom_dict():
-        folder = Path('.').cwd().parts[-1]
-        hdf_file = Path('.').cwd().parents[1]/folder
-        hdf_file = str(hdf_file)+'.h5'
-        if Path(hdf_file).exists():
-            hdf = FileHDFio(hdf_file)
-            custom_dict = GenericParameters()
-            for k, v in zip(hdf[folder+'/input/custom_dict/data_dict']['Parameter'],
-                            hdf[folder+'/input/custom_dict/data_dict']['Value']):
-                custom_dict[k] = v
-            return custom_dict
-        else:
-            print(hdf_file, 'not found')
-            return None
-
-    @staticmethod
-    def store_custom_output_dict(output_dict):
-        folder = Path('.').cwd().parts[-1]
-        hdf_file = Path('.').cwd().parents[1] / folder
-        hdf_file = str(hdf_file) + '.h5'
-        hdf = FileHDFio(hdf_file)
-        hdf[folder].create_group('output')
-        for k, v in output_dict.items():
-            hdf[folder + '/output'][k] = v
