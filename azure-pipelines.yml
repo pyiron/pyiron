@@ -19,37 +19,35 @@ jobs:
         py27-linux:
           imageName: $(linux)
           python.version: '2.7'
-          miniconda.link: https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
         py37-linux:
           imageName: $(linux)
           python.version: '3.7'
-          miniconda.link: https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
         py27-mac:
           imageName: $(mac)
           python.version: '2.7'
-          tox.env: py27
         py37-mac:
           imageName: $(mac)
           python.version: '3.7'
-          tox.env: py37
         py27-win:
           imageName: $(windows)
           python.version: '2.7'
-          tox.env: py27
         py37-win:
           imageName: $(windows)
           python.version: '3.7'
-          tox.env: py37
 
     steps:
-    - script: export PATH="$HOME/miniconda/bin:$PATH"
-      displayName: 'Export environoment variable'
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(python.version)'
+    
+    - script: pip install --upgrade pip
+      displayName: 'Upgrade pip'
 
-    - script: ./.ci_support/setup_miniconda.sh $(miniconda.link)
-      displayName: 'Install miniconda'
-
-    - script: ./.ci_support/setup_pyiron.sh $(python.version)
+    - script: pip install --pre .
       displayName: 'Install pyiron'
+
+    - script: echo -e "[DEFAULT]\nTOP_LEVEL_DIRS = $PWD\nRESOURCE_PATHS = $PWD/tests/static" > ~/.pyiron
+      displayName: 'create config file'
 
     - script: coverage run --omit pyiron/_version.py -m unittest discover tests
       displayName: 'run tests'
