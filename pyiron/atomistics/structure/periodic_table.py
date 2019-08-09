@@ -265,7 +265,7 @@ class PeriodicTable(object):
         if not isinstance(atom_no, int):
             raise ValueError("type not defined: " + str(type(atom_no)))
 
-        return self.Abbreviation[np.nonzero(self.AtomicNumber == atom_no)[0][0]]
+        return self.Abbreviation[np.nonzero(self.AtomicNumber.to_numpy() == atom_no)[0][0]]
 
     def add_element(self, parent_element, new_element, use_parent_potential=False, **qwargs):
         """
