@@ -576,16 +576,6 @@ class TestAtoms(unittest.TestCase):
         pos, box = Al._get_voronoi_vertices()
         self.assertEqual(len(pos), 14)
 
-    def get_equivalent_voronoi_vertices(self):
-        cell = 2.2 * np.identity(3)
-        Al = Atoms('AlAl', positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell).repeat(2)
-        pos, box = Al._get_voronoi_vertices()
-        self.assertEqual(len(Al), 69)
-        self.assertEqual(len(len(Al.get_species_symbols())), 2)
-        Al = Atoms('AlAl', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell).repeat(2)
-        pos = Al.get_equivalent_voronoi_vertices()
-        self.assertEqual(len(pos), 1)
-
     def test_get_parent_symbols(self):
         self.assertTrue(np.array_equal(self.CO2.get_parent_symbols(), ["C", "O", "O"]))
         self.assertTrue(np.array_equal(self.CO2.get_parent_symbols(), self.CO2.get_chemical_symbols()))
