@@ -43,6 +43,9 @@ jobs:
     - script: pip install --upgrade pip
       displayName: 'Upgrade pip'
 
+   - script: pip install numpy
+      displayName: 'Install numpy'
+
     - script: pip install --pre .
       displayName: 'Install pyiron'
 
