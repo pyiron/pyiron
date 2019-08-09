@@ -358,6 +358,8 @@ class TestAtoms(unittest.TestCase):
         self.assertAlmostEqual(basis.positions[-1,0], basis_relative.positions[-1,0])
         basis.cell = 3*np.ones(3)
         self.assertAlmostEqual(basis.get_volume(), 27)
+        basis.cell = np.append(np.ones(3), 90-np.random.random(3)).flatten()
+        self.assertLess(basis.get_volume(), 1)
 
     def test_repeat(self):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
