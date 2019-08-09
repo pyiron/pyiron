@@ -1,7 +1,3 @@
-trigger:
-  - master
-
-# Set variables once
 variables:
   linux: 'ubuntu-16.04'
   mac: 'macos-10.13'
@@ -13,44 +9,50 @@ pr:
       - '*'
 
 jobs:
-  - job: 'Test'
-    strategy:
-      matrix:
-        py27-linux:
-          imageName: $(linux)
-          python.version: '2.7'
-        py37-linux:
-          imageName: $(linux)
-          python.version: '3.7'
-        py27-mac:
-          imageName: $(mac)
-          python.version: '2.7'
-        py37-mac:
-          imageName: $(mac)
-          python.version: '3.7'
-        py27-win:
-          imageName: $(windows)
-          python.version: '2.7'
-        py37-win:
-          imageName: $(windows)
-          python.version: '3.7'
+- job: 'Linux'
+  pool:
+    vmImage: $(linux)
+  strategy:
+    matrix:
+      Python27:
+        python.version: '2.7'
+      Python37:
+        python.version: '3.7'
+    maxParallel: 4
 
-    steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '$(python.version)'
-    
-    - script: pip install --upgrade pip
-      displayName: 'Upgrade pip'
+  steps:
+  - bash: echo "##vso[task.prependpath]/usr/share/miniconda/bin"
+    displayName: Add conda to PATH
+  - template: .azure-pipelines/test-template.yml
 
-   - script: pip install numpy
-      displayName: 'Install numpy'
+- job: 'OSX'
+  pool:
+    vmImage: $(mac)
+  strategy:
+    matrix:
+      Python27:
+        python.version: '2.7'
+      Python37:
+        python.version: '3.7'
+    maxParallel: 1
 
-    - script: pip install --pre .
-      displayName: 'Install pyiron'
+  steps:
+  - bash: echo "##vso[task.prependpath]$CONDA/bin"
+    displayName: Add conda to PATH
+  - template: .azure-pipelines/test-template.yml
 
-    - script: echo -e "[DEFAULT]\nTOP_LEVEL_DIRS = $PWD\nRESOURCE_PATHS = $PWD/tests/static" > ~/.pyiron
-      displayName: 'create config file'
+- job: 'Windows'
+  pool:
+    vmImage: $(windows)
+  strategy:
+    matrix:
+      Python27:
+        python.version: '2.7'
+      Python37:
+        python.version: '3.7'
+    maxParallel: 1
 
-    - script: coverage run --omit pyiron/_version.py -m unittest discover tests
-      displayName: 'run tests'
+  steps:
+  - bash: echo "##vso[task.prependpath]$CONDA/bin"
+    displayName: Add conda to PATH
+  - template: .azure-pipelines/test-template.yml
