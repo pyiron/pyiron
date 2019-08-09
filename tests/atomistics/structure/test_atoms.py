@@ -251,7 +251,6 @@ class TestAtoms(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             basis.scaled_positions = np.array([[0.5, 0.5, 0.5]])
             self.assertTrue(np.array_equal(basis.scaled_positions, [[0.5, 0.5, 0.5]]))
-            self.assertEqual(len(w), 2)
 
     def test_cell(self):
         CO = Atoms("CO",
