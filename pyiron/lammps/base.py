@@ -254,8 +254,8 @@ class LammpsBase(AtomisticGenericJob):
             list: List of integers defining the version number
         """
         if self.executable.version:
-            return [l for l in [[int(i) for i in s.split('.') if i.isdigit()]
-                                for s in self.executable.version.split('_')]
+            return [l for l in [[int(i) for i in sv.split('.') if i.isdigit()]
+                                for sv in self.executable.version.split('/')[-1].split('_')]
                     if len(l) > 0][0]
         else:
             return None
