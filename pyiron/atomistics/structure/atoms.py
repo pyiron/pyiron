@@ -90,7 +90,7 @@ class Atoms(object):
                 cell = np.array(cell)
         self._cell = cell
         self._species = list()
-        self._internal_positions = None
+        self.positions= None
         self._pse = PeriodicTable()
         self._tag_list = SparseArray()
         self.indices = np.array([])
@@ -208,47 +208,6 @@ class Atoms(object):
                 self.set_cell(value, scale_atoms=True)
             else:
                 self.set_cell(value)
-
-    @property
-    def scaled_positions(self):
-        """
-        numpy.ndarray: A size Nx3 array of the scaled (relative) coordinates of the structure which has N atoms
-
-        """
-
-        if self._is_scaled:
-            return self._internal_positions
-        elif self.cell is not None:
-            b_mat = np.linalg.inv(self.cell)
-            return np.dot(b_mat.T, np.array(self.positions).T).T
-        else:
-            return None
-
-    @property
-    def positions(self):
-        """
-        numpy.ndarray: A size Nx3 array of the absolute coordinates of the structure which has N atoms
-
-        """
-        if self._is_scaled:
-            return np.dot(self.cell.T, np.array(self._internal_positions).T).T
-        else:
-            return self._internal_positions
-
-    @scaled_positions.setter
-    def scaled_positions(self, positions):
-        if self._is_scaled:
-            self._internal_positions = positions
-        else:
-            self._internal_positions = np.dot(self.cell.T, np.array(positions).T).T
-
-    @positions.setter
-    def positions(self, positions):
-        if self._is_scaled:
-            b_mat = np.linalg.inv(self.cell)
-            self._internal_positions = np.dot(b_mat.T, np.array(positions).T).T
-        else:
-            self._internal_positions = positions
 
     @property
     def species(self):
@@ -528,7 +487,7 @@ class Atoms(object):
                     position_tag = "coordinates"
                 if "is_absolute" in hdf_atoms.list_nodes():
                     if not tr_dict[hdf_atoms["is_absolute"]]:
-                        self.scaled_positions = hdf_atoms[position_tag]
+                        self.set_scaled_positions(hdf_atoms[position_tag])
                     else:
                         self.positions = hdf_atoms[position_tag]
                 else:
@@ -574,19 +533,19 @@ class Atoms(object):
                             my_dict = {i: val for i, val in zip(my_dict["index"], my_dict["values"])}
                             self._tag_list[tag] = SparseList(my_dict, length=len(self))
 
-            tr_dict = {1: True, 0: False}
-            self.dimension = hdf_atoms["dimension"]
-            if "is_absolute" in hdf_atoms and not tr_dict[hdf_atoms["is_absolute"]]:
-                self.positions = hdf_atoms["coordinates"]
-            else:
-                self.scaled_positions = hdf_atoms["coordinates"]
-            self.units = hdf_atoms["units"]
-
             self.cell = None
             if "cell" in hdf_atoms.list_groups():
                 with hdf_atoms.open("cell") as hdf_cell:
                     self.cell = hdf_cell["cell"]
                     self.pbc = hdf_cell["pbc"]
+
+            tr_dict = {1: True, 0: False}
+            self.dimension = hdf_atoms["dimension"]
+            if "is_absolute" in hdf_atoms and not tr_dict[hdf_atoms["is_absolute"]]:
+                self.positions = hdf_atoms["coordinates"]
+            else:
+                self.set_scaled_positions(hdf_atoms["coordinates"])
+            self.units = hdf_atoms["units"]
 
             if "bonds" in hdf_atoms.list_nodes():
                 self.bonds = hdf_atoms["explicit_bonds"]
@@ -993,7 +952,7 @@ class Atoms(object):
 
         """
         pbc = np.array(self.pbc)
-        positions = copy(self.scaled_positions)
+        positions = np.einsum('jk,ij->ik', np.linalg.inv(self.cell), self.positions)
         if wrap:
             positions[:, pbc] = np.mod(positions[:, pbc], 1.)
         return positions
@@ -1010,12 +969,10 @@ class Atoms(object):
     def set_absolute(self):
         if self._is_scaled:
             self._is_scaled = False
-            self.scaled_positions = self._internal_positions
 
     def set_relative(self):
         if not self._is_scaled:
             self._is_scaled = True
-            self.positions = self._internal_positions
 
     def center_coordinates_in_unit_cell(self, origin=0, eps=1e-4):
         """
@@ -1028,7 +985,7 @@ class Atoms(object):
         Returns:
 
         """
-        self.scaled_positions = np.mod(self.scaled_positions + eps, 1) - eps + origin
+        self.set_scaled_positions(np.mod(self.get_scaled_positions() + eps, 1) - eps + origin)
         return self
 
     def repeat(self, rep):
@@ -1443,10 +1400,8 @@ class Atoms(object):
         Returns:
 
         """
-        x = self.scaled_positions[:, 0]
-        y = self.scaled_positions[:, 1]
-        z = self.scaled_positions[:, 2]
-        return x, y, z
+        xyz = self.get_scaled_positions()
+        return xyz[0], xyz[1], xyz[2]
 
     def __select_slice(self, i_dim, i_flag, dist):
         """
@@ -1462,11 +1417,11 @@ class Atoms(object):
         if i_dim + 1 > self.dimension:
             return True
         if i_flag == 1:
-            return self.scaled_positions[:, i_dim] < dist
+            return self.get_scaled_positions()[:, i_dim] < dist
         elif i_flag == 0:
             return True
         elif i_flag == -1:
-            return self.scaled_positions[:, i_dim] > 1. - dist
+            return self.get_scaled_positions()[:, i_dim] > 1. - dist
 
     def get_boundary_region(self, dist):
         """
@@ -1479,7 +1434,7 @@ class Atoms(object):
         Returns:
 
         """
-        rel_coordinates = self.scaled_positions
+        rel_coordinates = self.get_scaled_positions()
 
         dim = self.dimension
         cell = self.cell.T  # to use same definition as ASE
@@ -2560,7 +2515,7 @@ class Atoms(object):
         mx, my, mz = i_vec
         nx_lst, ny_lst, nz_lst = np.arange(mx), np.arange(my), np.arange(mz)
 
-        positions = self.scaled_positions
+        positions = self.get_scaled_positions()
 
         lat = np.array(np.meshgrid(nx_lst, ny_lst, nz_lst)).T.reshape(-1, 3)
         lat_new = np.repeat(lat, len(positions), axis=0)
@@ -2568,7 +2523,7 @@ class Atoms(object):
         new_positions = np.tile(positions, (len(lat), 1)) + lat_new
 
         self._length = len(new_positions)
-        self.scaled_positions = new_positions/np.array(i_vec)
+        self.set_scaled_positions(new_positions/np.array(i_vec))
         self.indices = np.tile(self.indices, len(lat))
         self._tag_list._length = len(self)
         # print ('basis_len: ', len(self.positions), len(new_elements))
@@ -2933,7 +2888,7 @@ class Atoms(object):
         # numpy broadcasts the smaller array to the larger row-wise,
         # so there is no need to play with the Kronecker product.
         if self._is_scaled:
-            rcoords = self.scaled_positions - center
+            rcoords = self.get_scaled_positions() - center
         else:
             rcoords = self.positions - center
 
@@ -2955,9 +2910,19 @@ class Atoms(object):
         rcoords = np.dot(a, np.transpose(rcoords))
         # Move back to the rotation point
         if self._is_scaled:
-            self.scaled_positions = np.transpose(rcoords) + center
+            self.get_scaled_positions(np.transpose(rcoords) + center)
         else:
             self.positions = np.transpose(rcoords) + center
+
+    @property
+    def scaled_positions(self):
+        warnings.warn('scaled_positions is deprecated. Use get_scaled_positions instead', DeprecationWarning)
+        return self.get_scaled_positions()
+
+    @scaled_positions.setter
+    def scaled_positions(self, positions):
+        warnings.warn('scaled_positions is deprecated. Use set_scaled_positions instead', DeprecationWarning)
+        self.set_scaled_positions(positions)
 
     def set_scaled_positions(self, scaled):
         """
@@ -2967,7 +2932,9 @@ class Atoms(object):
             scaled (numpy.ndarray/list): The relative coordinates
 
         """
-        self.scaled_positions = scaled
+        if self.cell is None:
+            raise ValueError('cell has not been set yet')
+        self.positions = np.einsum('jk,ij->ik', self.cell, scaled)
 
     def set_cell(self, cell, scale_atoms=False):
         """

@@ -31,7 +31,7 @@ def analyse_phonopy_equivalent_atoms(atoms, symprec=1e-5, angle_tolerance=-1.0):
 
     """
     s.publication_add(publication())
-    positions = atoms.scaled_positions
+    positions = atoms.get_scaled_positions()
     cell = atoms.cell
     types = atoms.get_chemical_symbols()
     types = list(types)

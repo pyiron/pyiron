@@ -104,7 +104,7 @@ def write_poscar(structure, filename="POSCAR", write_species=True, cartesian=Tru
                 if cartesian:
                     sorted_coords.append(structure.positions[i])
                 else:
-                    sorted_coords.append(structure.scaled_positions[i])
+                    sorted_coords.append(structure.get_scaled_positions()[i])
                 if selec_dyn:
                     selec_dyn_lst.append(structure.selective_dynamics[i])
         if cartesian:
