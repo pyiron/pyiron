@@ -248,7 +248,7 @@ class TestAtoms(unittest.TestCase):
         basis.set_scaled_positions(np.array([[0.5, 0.5, 0.5]]))
         self.assertTrue(np.array_equal(basis.get_scaled_positions(), [[0.5, 0.5, 0.5]]))
         self.assertTrue(np.array_equal(basis.positions, np.dot([[0.5, 0.5, 0.5]], basis.cell)))
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True):
             basis.scaled_positions = np.array([[0.5, 0.5, 0.5]])
             self.assertTrue(np.array_equal(basis.scaled_positions, [[0.5, 0.5, 0.5]]))
 
