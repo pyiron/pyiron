@@ -13,7 +13,7 @@ steps:
 - script: conda create -n pyiron -q --yes -c conda-forge future psutil pytables numpy matplotlib scipy sqlalchemy pathlib2 pandas h5py coveralls coverage "ase>=3.16" spglib h5io phonopy defusedxml pysqa
   displayName: pyiron environment
 
-- script: |
+- bash: |
     source activate pyiron
     pip install --pre .
   displayName: Installing deeptools
