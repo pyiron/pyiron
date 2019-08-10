@@ -297,11 +297,7 @@ class Settings(with_metaclass(Singleton)):
         """
         if full_path[-1] != '/':
             full_path += '/'
-        if os.name == 'nt':
-            full_path = full_path.lower()
         for path in self._configuration['project_paths']:
-            if os.name == 'nt':
-                path = path.lower()
             if path in full_path:
                 return path
         raise ValueError('the current path {0} is not included in the .pyiron configuration. {1}'
