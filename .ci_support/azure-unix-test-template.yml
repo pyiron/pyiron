@@ -10,7 +10,7 @@ steps:
     conda update -q conda
   displayName: conda setup
 
-- bash: conda create -n pyiron -q --yes -c conda-forge future psutil pytables numpy matplotlib scipy sqlalchemy pathlib2 pandas h5py coveralls coverage "ase>=3.16" spglib h5io phonopy defusedxml pysqa
+- bash: conda create -n pyiron -q --yes -c conda-forge python=$(python.version) future psutil pytables numpy matplotlib scipy sqlalchemy pathlib2 pandas h5py coveralls coverage "ase>=3.16" spglib h5io phonopy defusedxml pysqa
   displayName: pyiron environment
 
 - bash: |
