@@ -23,7 +23,7 @@ jobs:
   steps:
   - bash: echo "##vso[task.prependpath]/usr/share/miniconda/bin"
     displayName: Add conda to PATH
-  - template: .ci_support/azure-test-template.yml
+  - template: .ci_support/azure-unix-test-template.yml
 
 - job: 'OSX'
   pool:
@@ -41,7 +41,7 @@ jobs:
     displayName: Add conda to PATH
   - bash: sudo chown -R $USER $CONDA
     displayName: Take ownership of conda installation
-  - template: .ci_support/azure-test-template.yml
+  - template: .ci_support/azure-unix-test-template.yml
 
 - job: 'Windows'
   pool:
@@ -59,4 +59,4 @@ jobs:
     displayName: Add conda to PATH
   - bash: echo "##vso[task.prependpath]$CONDA/bin"
     displayName: Add conda to PATH
-  - template: .ci_support/azure-test-template.yml
+  - template: .ci_support/azure-win-test-template.yml
