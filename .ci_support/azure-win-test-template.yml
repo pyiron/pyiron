@@ -14,11 +14,11 @@ steps:
   displayName: pyiron environment
 
 - script: |
-    activate pyiron
+    call activate pyiron
     pip install --pre .
   displayName: Installing deeptools
 
 - script: |
-    activate pyiron
+    call activate pyiron
     coverage run --omit pyiron/_version.py -m unittest discover tests
   displayName: coverage
