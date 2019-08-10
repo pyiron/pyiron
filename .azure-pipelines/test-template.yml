@@ -1,10 +1,5 @@
 steps:
 - bash: |
-    python .ci_support/pyironconfig.py
-    cat ~/.pyiron
-  displayName: pyiron config
-
-- bash: |
     conda info -a
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
@@ -12,6 +7,12 @@ steps:
 
 - bash: conda create -n pyiron -q --yes -c conda-forge future psutil pytables numpy matplotlib scipy sqlalchemy pathlib2 pandas h5py coveralls coverage "ase>=3.16" spglib h5io phonopy defusedxml pysqa
   displayName: pyiron environment
+
+- bash: |
+    source activate pyiron
+    python .ci_support/pyironconfig.py
+    cat ~/.pyiron
+  displayName: pyiron config
 
 - bash: |
     source activate pyiron
