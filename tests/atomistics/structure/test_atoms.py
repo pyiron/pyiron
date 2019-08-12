@@ -41,9 +41,7 @@ class TestAtoms(unittest.TestCase):
         self.assertIsInstance(basis.units, dict)
         self.assertIsInstance(basis.pbc, (bool, list, np.ndarray))
         self.assertIsInstance(basis.indices, np.ndarray)
-        self.assertIsNone(basis._internal_positions)
         self.assertIsNone(basis.positions)
-        self.assertIsNone(basis.scaled_positions)
         self.assertIsInstance(basis.species, list)
         self.assertIsInstance(basis.elements, np.ndarray)
         self.assertIsNone(basis.cell)
@@ -68,9 +66,8 @@ class TestAtoms(unittest.TestCase):
         self.assertIsInstance(basis.indices, np.ndarray)
         self.assertIsInstance(basis.species, list)
         self.assertIsInstance(basis.cell, np.ndarray)
-        self.assertIsInstance(basis._internal_positions, np.ndarray)
         self.assertIsInstance(basis.positions, np.ndarray)
-        self.assertIsInstance(basis.scaled_positions, np.ndarray)
+        self.assertIsInstance(basis.get_scaled_positions(), np.ndarray)
         self.assertIsInstance(basis.elements, np.ndarray)
 
     def test_set_species(self):
@@ -163,6 +160,8 @@ class TestAtoms(unittest.TestCase):
         basis = Atoms(symbols='AlAl', positions=[3*[0], 3*[1]], cell=2*np.eye(3))
         pos_xyz = basis.pos_xyz()
         self.assertAlmostEqual(np.linalg.norm(pos_xyz[0]-np.array([0, 1])), 0)
+        scaled_pos_xyz = basis.scaled_pos_xyz()
+        self.assertAlmostEqual(np.linalg.norm(pos_xyz[0]-basis.cell[0,0]*scaled_pos_xyz[0]), 0)
 
     def test_to_hdf(self):
         if sys.version_info[0] >= 3:
@@ -191,7 +190,7 @@ class TestAtoms(unittest.TestCase):
             self.assertEqual(basis.get_majority_species()['symbol'], "Al")
             self.assertEqual(basis.get_spacegroup()['Number'], 225)
 
-    def create_Fe_bcc(self):
+    def test_create_Fe_bcc(self):
         self.pse = PeriodicTable()
         self.pse.add_element("Fe", "Fe_up", spin="up", pseudo_name='GGA')
         self.pse.add_element("Fe", "Fe_down", spin="down", pseudo_name='GGA')
@@ -249,8 +248,11 @@ class TestAtoms(unittest.TestCase):
         pos, cell = generate_fcc_lattice()
         basis = Atoms(symbols='Al', positions=pos, cell=cell, a=4.2)
         basis.set_scaled_positions(np.array([[0.5, 0.5, 0.5]]))
-        self.assertTrue(np.array_equal(basis.scaled_positions, [[0.5, 0.5, 0.5]]))
+        self.assertTrue(np.array_equal(basis.get_scaled_positions(), [[0.5, 0.5, 0.5]]))
         self.assertTrue(np.array_equal(basis.positions, np.dot([[0.5, 0.5, 0.5]], basis.cell)))
+        with warnings.catch_warnings(record=True):
+            basis.scaled_positions = np.array([[0.5, 0.5, 0.5]])
+            self.assertTrue(np.array_equal(basis.scaled_positions, [[0.5, 0.5, 0.5]]))
 
     def test_cell(self):
         CO = Atoms("CO",
@@ -335,12 +337,36 @@ class TestAtoms(unittest.TestCase):
         # fcc.set_absolute()
         # print fcc.positions
         # fcc.set_relative()
-        self.assertTrue(np.linalg.norm(fcc.scaled_positions - positions) < 1e-10)
+        self.assertTrue(np.linalg.norm(fcc.get_scaled_positions() - positions) < 1e-10)
+
+    def test_set_relative(self):
+        lattice = CrystalStructure(element='Al', bravais_basis='fcc', lattice_constants=4)
+        basis_relative = lattice.copy()
+        basis_relative.set_relative()
+        basis_relative.cell[0,0] = 6
+        basis_absolute = lattice.copy()
+        basis_absolute.set_absolute()
+        basis_absolute.cell[0,0] = 6
+        self.assertAlmostEqual(basis_relative.positions[-1,0]*1.5, basis_absolute.positions[-1,0])
+        basis = lattice.copy()
+        self.assertAlmostEqual(basis.get_scaled_positions()[-1,0], basis_relative.get_scaled_positions()[-1,0])
+        basis.cell[0,0] = 6
+        self.assertAlmostEqual(basis.positions[-1,0], basis_absolute.positions[-1,0])
+        basis = lattice.copy()
+        basis_relative = lattice.copy()
+        basis_relative.set_relative()
+        basis.positions[-1,0] = 0.5
+        basis_relative.positions[-1,0] = 0.5
+        self.assertAlmostEqual(basis.positions[-1,0], basis_relative.positions[-1,0])
+        basis.cell = 3*np.ones(3)
+        self.assertAlmostEqual(basis.get_volume(), 27)
+        basis.cell = np.append(np.ones(3), 90-np.random.random(3)).flatten()
+        self.assertLess(basis.get_volume(), 1)
 
     def test_repeat(self):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
         basis_O = CrystalStructure("O", bravais_basis="fcc", lattice_constant=4.2)
-        basis_O.scaled_positions += [0., 0., 0.5]
+        basis_O.set_scaled_positions(basis_O.get_scaled_positions()+[0., 0., 0.5])
         basis = basis_Mg + basis_O
         basis.center_coordinates_in_unit_cell()
         basis.add_tag(selective_dynamics=[True, True, True])
@@ -429,6 +455,8 @@ class TestAtoms(unittest.TestCase):
         basis = Atoms(symbols='FeFe', positions=[3*[0], 3*[1]], cell=2*np.eye(3))
         neigh = basis.get_neighbors(include_boundary=False)
         self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
+        basis.set_repeat(2)
+        self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
         # print nbr_dict.distances
         # print [set(s) for s in nbr_dict.shells]
 
@@ -438,11 +466,11 @@ class TestAtoms(unittest.TestCase):
         NaCl.set_repeat([3, 3, 3])
         NaCl.positions += [2.2, 2.2, 2.2]
         NaCl.center_coordinates_in_unit_cell(origin=-0.5)
-        self.assertTrue(-0.5 < np.min(NaCl.scaled_positions))
-        self.assertTrue(np.max(NaCl.scaled_positions < 0.5))
+        self.assertTrue(-0.5 <= np.min(NaCl.get_scaled_positions()))
+        self.assertTrue(np.max(NaCl.get_scaled_positions() < 0.5))
         NaCl.center_coordinates_in_unit_cell(origin=0.)
         self.assertTrue(0 <= np.min(NaCl.positions))
-        self.assertTrue(np.max(NaCl.scaled_positions < 1))
+        self.assertTrue(np.max(NaCl.get_scaled_positions() < 1))
 
     @unittest.skip("skip ovito because it is not installed in the test environment")
     def test_analyse_ovito_cna_adaptive(self):
@@ -546,21 +574,11 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(len(Al.get_symmetry()['translations']), 96)
         self.assertEqual(len(Al.get_symmetry()['translations']), len(Al.get_symmetry()['rotations']))
 
-    def _get_voronoi_vertices(self):
+    def test_get_voronoi_vertices(self):
         cell = 2.2 * np.identity(3)
         Al = Atoms('AlAl', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
         pos, box = Al._get_voronoi_vertices()
         self.assertEqual(len(pos), 14)
-
-    def get_equivalent_voronoi_vertices(self):
-        cell = 2.2 * np.identity(3)
-        Al = Atoms('AlAl', positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell).repeat(2)
-        pos, box = Al._get_voronoi_vertices()
-        self.assertEqual(len(Al), 69)
-        self.assertEqual(len(len(Al.get_species_symbols())), 2)
-        Al = Atoms('AlAl', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell).repeat(2)
-        pos = Al.get_equivalent_voronoi_vertices()
-        self.assertEqual(len(pos), 1)
 
     def test_get_parent_symbols(self):
         self.assertTrue(np.array_equal(self.CO2.get_parent_symbols(), ["C", "O", "O"]))
@@ -650,12 +668,14 @@ class TestAtoms(unittest.TestCase):
 
     def test_get_scaled_positions(self):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
-        self.assertTrue(np.array_equal(basis_Mg.scaled_positions, basis_Mg.get_scaled_positions()))
+        basis_Mg.cell += 0.1*np.random.random((3,3))
+        basis_Mg = basis_Mg.center_coordinates_in_unit_cell()
+        self.assertTrue(np.allclose(np.dot(np.linalg.inv(basis_Mg.cell).T, basis_Mg.positions.T).T, basis_Mg.get_scaled_positions()))
 
     def test_occupy_lattice(self):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
         basis_O = CrystalStructure("O", bravais_basis="fcc", lattice_constant=4.2)
-        basis_O.scaled_positions += [0., 0., 0.5]
+        basis_O.set_scaled_positions(basis_O.get_scaled_positions()+[0., 0., 0.5])
         basis = basis_Mg + basis_O
         basis.center_coordinates_in_unit_cell()
         orig_basis = basis.copy()
@@ -748,15 +768,15 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(b.get_chemical_formula(), "H3O")
         b = basis_0 + basis_1 + basis_2 + basis_3
         self.assertEqual(b.get_chemical_formula(), "H3NO2")
-        self.assertTrue(np.array_equal(b.scaled_positions[b.select_index("N")], [[0., 0., 0.1]]))
-        self.assertTrue(np.allclose(b.scaled_positions[b.select_index("H")], [[0.75, 0.75, 0.75], [0.25, 0.25, 0.25],
+        self.assertTrue(np.array_equal(b.get_scaled_positions()[b.select_index("N")], [[0., 0., 0.1]]))
+        self.assertTrue(np.allclose(b.get_scaled_positions()[b.select_index("H")], [[0.75, 0.75, 0.75], [0.25, 0.25, 0.25],
                                                                               [0.35, 0.35, 0.35]]))
-        self.assertTrue(np.allclose(b.scaled_positions[b.select_index("O")], [[0.5, 0.5, 0.5], [0., 0., 0.]]))
+        self.assertTrue(np.allclose(b.get_scaled_positions()[b.select_index("O")], [[0.5, 0.5, 0.5], [0., 0., 0.]]))
         b.set_repeat([2, 2, 2])
         self.assertEqual(b.get_chemical_formula(), "H24N8O16")
         b += basis_4
         self.assertEqual(b.get_chemical_formula(), "H24N8O16O_up")
-        self.assertTrue(np.allclose(b.scaled_positions[b.select_index(o_up)], [[0.27, 0.27, 0.27]]))
+        self.assertTrue(np.allclose(b.get_scaled_positions()[b.select_index(o_up)], [[0.27, 0.27, 0.27]]))
         COX = self.C2 + Atom("O", position=[0, 0, -2])
         COX += Atom("O", position=[0, 0, -4])
         COX += COX
@@ -768,7 +788,7 @@ class TestAtoms(unittest.TestCase):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
         basis_O = CrystalStructure("O", bravais_basis="fcc", lattice_constant=4.2)
         # basis_O.set_relative()
-        basis_O.scaled_positions += [0., 0., 0.5]
+        basis_O.set_scaled_positions([0., 0., 0.5]+basis_O.get_scaled_positions())
         basis = basis_Mg + basis_O
         self.assertEqual(len(basis._tag_list), len(basis_Mg._tag_list) + len(basis_O._tag_list))
         basis.center_coordinates_in_unit_cell()
@@ -891,13 +911,13 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(lat_0.get_chemical_formula(), "Mg3V105")
         # lat_0[[0]] = 'V'                     # vacancy (note: do not delete atom)
         lat_1 = lat_0.copy()
-        lat_1.scaled_positions += 1 / 4
+        lat_1.set_scaled_positions(1/4+lat_1.get_scaled_positions())
         lat_1[:] = 'V'
         self.assertEqual(lat_1.get_chemical_formula(), "V108")
         lat_1[[1, 4, 9]] = 'H'
         lat_1[[2, 5, 8]] = 'C'
         self.assertEqual(lat_1.get_chemical_formula(), "C3H3V102")
-        lat_1.scaled_positions += 1 / 4
+        lat_1.set_scaled_positions(1/4+lat_1.get_scaled_positions())
         lat_1[:] = 'V'  # vacancies
         self.assertEqual(lat_1.get_chemical_formula(), "V108")
 
