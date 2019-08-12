@@ -1075,6 +1075,45 @@ class VaspBase(GenericDFTJob):
                 new_ham.input.incar["ICHARG"] = icharg
         return new_ham
 
+    def restart_from_wave_and_charge(self, snapshot=-1, job_name=None, job_type=None, icharg=None,
+                                    self_consistent_calc=False, istart=1):
+        """
+        Restart a new job created from an existing Vasp calculation by reading the charge density and the wave
+        function.
+
+        Args:
+            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
+            job_name (str): Job name
+            job_type (str): Job type. If not specified a Vasp job type is assumed
+            icharg (int): Vasp ICHARG tag
+            self_consistent_calc (boolean): Tells if the new calculation is self consistent
+            istart (int): Vasp ISTART tag
+
+        Returns:
+            new_ham (vasp.vasp.Vasp instance): New job
+        """
+        new_ham = self.restart(snapshot=snapshot, job_name=job_name, job_type=job_type)
+        if new_ham.__name__ == self.__name__:
+            try:
+                new_ham.restart_file_list.append(posixpath.join(self.working_directory, "CHGCAR"))
+            except IOError:
+                self.logger.warn(msg="A CHGCAR from job: {} is not generated and therefore it can't be read.".
+                                 format(self.job_name))
+            try:
+                new_ham.restart_file_list.append(posixpath.join(self.working_directory, "WAVECAR"))
+            except IOError:
+                self.logger.warn(msg="A WAVECAR from job: {} is not generated and therefore it can't be read.".
+                                 format(self.job_name))
+            new_ham.input.incar["ISTART"] = istart
+
+            if icharg is None:
+                new_ham.input.incar["ICHARG"] = 1
+                if not self_consistent_calc:
+                    new_ham.input.incar["ICHARG"] = 11
+            else:
+                new_ham.input.incar["ICHARG"] = icharg
+        return new_ham
+
     def compress(self, files_to_compress=None):
         """
         Compress the output files of a job object.
