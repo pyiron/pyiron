@@ -160,6 +160,8 @@ class TestAtoms(unittest.TestCase):
         basis = Atoms(symbols='AlAl', positions=[3*[0], 3*[1]], cell=2*np.eye(3))
         pos_xyz = basis.pos_xyz()
         self.assertAlmostEqual(np.linalg.norm(pos_xyz[0]-np.array([0, 1])), 0)
+        scaled_pos_xyz = basis.scaled_pos_xyz()
+        self.assertAlmostEqual(np.linalg.norm(pos_xyz[0]-basis.cell[0,0]*scaled_pos_xyz[0]), 0)
 
     def test_to_hdf(self):
         if sys.version_info[0] >= 3:
@@ -452,6 +454,8 @@ class TestAtoms(unittest.TestCase):
         nbr_dict = NaCl.get_neighbors(num_neighbors=12, t_vec=True)
         basis = Atoms(symbols='FeFe', positions=[3*[0], 3*[1]], cell=2*np.eye(3))
         neigh = basis.get_neighbors(include_boundary=False)
+        self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
+        basis.set_repeat(2)
         self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
         # print nbr_dict.distances
         # print [set(s) for s in nbr_dict.shells]
