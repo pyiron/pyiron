@@ -1401,7 +1401,7 @@ class Atoms(object):
 
         """
         xyz = self.get_scaled_positions()
-        return xyz[0], xyz[1], xyz[2]
+        return xyz[:,0], xyz[:,1], xyz[:,2]
 
     def __select_slice(self, i_dim, i_flag, dist):
         """
@@ -2910,7 +2910,7 @@ class Atoms(object):
         rcoords = np.dot(a, np.transpose(rcoords))
         # Move back to the rotation point
         if self._is_scaled:
-            self.get_scaled_positions(np.transpose(rcoords) + center)
+            self.set_scaled_positions(np.transpose(rcoords) + center)
         else:
             self.positions = np.transpose(rcoords) + center
 
