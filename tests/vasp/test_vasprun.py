@@ -149,13 +149,13 @@ class TestVasprun(unittest.TestCase):
         for vp in self.vp_list:
             basis = vp.get_initial_structure()
             self.assertIsInstance(basis, Atoms)
-            self.assertTrue(np.max(basis.scaled_positions) < 1.01)
+            self.assertTrue(np.max(basis.get_scaled_positions()) < 1.01)
 
     def test_get_final_structure(self):
         for vp in self.vp_list:
             basis = vp.get_final_structure()
             self.assertIsInstance(basis, Atoms)
-            self.assertTrue(np.max(basis.scaled_positions) < 1.01)
+            self.assertTrue(np.max(basis.get_scaled_positions()) < 1.01)
             self.assertFalse(np.max(basis.positions) < 1.01)
 
     def test_get_electronic_structure(self):

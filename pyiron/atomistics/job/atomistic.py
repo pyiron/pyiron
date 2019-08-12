@@ -269,8 +269,6 @@ class AtomisticGenericJob(GenericJobCore):
             animation: nglview IPython widget
 
         """
-        if not self.status.finished:
-            raise ValueError("This job can't be animated until it is finished")
         try:
             import nglview
         except ImportError:
@@ -693,7 +691,7 @@ class GenericOutput(object):
         """
         displacement = np.tensordot(self.positions,
                                     np.linalg.inv(self._job.structure.cell), axes=([2,0]))
-        displacement -= np.append(self._job.structure.scaled_positions,
+        displacement -= np.append(self._job.structure.get_scaled_positions(),
                                   displacement).reshape(len(self.positions)+1,
                                                         len(self._job.structure), 3)[:-1]
         displacement -= np.rint(displacement)
