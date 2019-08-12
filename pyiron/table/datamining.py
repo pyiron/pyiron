@@ -156,7 +156,7 @@ class PyironTable(object):
         self._filter_function = funct
         try:
             self._filter_function_str = inspect.getsource(funct)
-        except OSError:
+        except (OSError, IOError):
             pass
 
     def to_hdf(self):
@@ -472,7 +472,7 @@ class TableJob(GenericJob):
             if self.pyiron_table._filter_function is not None:
                 try:
                     hdf5_input['filter'] = inspect.getsource(self.pyiron_table._filter_function)
-                except OSError:
+                except (OSError, IOError):
                     if self.pyiron_table._filter_function_str is not None:
                         hdf5_input['filter'] = self.pyiron_table._filter_function_str
         if len(self.pyiron_table._df) != 0:
