@@ -1046,7 +1046,7 @@ class VaspBase(GenericDFTJob):
         return new_ham
 
     def restart_from_charge_density(self, snapshot=-1, job_name=None, job_type=None, icharg=None,
-                                    self_consistent_calc=False):
+                                    self_consistent_calc=None):
         """
         Restart a new job created from an existing Vasp calculation by reading the charge density.
 
@@ -1065,15 +1065,37 @@ class VaspBase(GenericDFTJob):
             try:
                 new_ham.restart_file_list.append(posixpath.join(self.working_directory, "CHGCAR"))
             except IOError:
-                self.logger.warn(msg="A CHGCAR from job: {} is not generated and therefore it can't be read.".
-                                 format(self.job_name))
+                self.logger.warn(msg="A CHGCAR from job: {} is not generated and therefore it can't be read.".format(self.job_name))
+            if self_consistent_calc:
+                icharg = 1
+            elif self_consistent_calc is not None:
+                icharg = 11
             if icharg is None:
-                new_ham.input.incar["ICHARG"] = 1
-                if not self_consistent_calc:
-                    new_ham.input.incar["ICHARG"] = 11
-            else:
-                new_ham.input.incar["ICHARG"] = icharg
-        return new_ham
+                if "ICHARG" in self.input.incar.keys() and int(self.input.incar["ICHARG"]) > 9:
+                    icharg = 11
+                else:
+                    icharg = 1
+            new_ham.input.incar["ICHARG"] = icharg
+            return new_ham
+        else:
+            return new_ham
+
+    def append_charge_density(self, job_specifier=None, path=None):
+        """
+        Append charge density file (CHGCAR)
+
+        Args:
+            job_specifier (str, int): name of the job or job ID
+            path (str): path to CHGCAR file
+        """
+        if job_specifier is None and path is None:
+            raise ValueError
+        elif job_specifier is not None:
+            path = self.project.inspect(job_specifier=job_specifier).working_directory
+        if os.path.basename(path) == "CHGCAR":
+            self.restart_file_list.append(path)
+        else:
+            self.restart_file_list.append(posixpath.join(path, "CHGCAR"))
 
     def compress(self, files_to_compress=None):
         """
