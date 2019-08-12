@@ -18,21 +18,25 @@ requirements:
     - pip
 
   run:
-    - ase
-    - future
-    - h5io
     - python
-    - phonopy
+    - ase >=3.16
+    - defusedxml
+    - dill
+    - future
+    - h5io >=0.1.1
     - h5py
     - matplotlib
     - numpy
     - pandas
-    - six
-    - sqlalchemy
-    - pytables
     - pathlib2
+    - phonopy
     - psutil
+    - pysqa
+    - pytables
+    - scipy
+    - six
     - spglib
+    - sqlalchemy
 
 test:
   imports:
@@ -57,4 +61,4 @@ extra:
   recipe-maintainers:
     - pyiron-runner
     - jan-janssen
-    - sudarsan1989
+    - sudarsan-surendralal

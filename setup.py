@@ -31,6 +31,7 @@ setup(
     packages=find_packages(exclude=["*tests*", "*docs*", "*binder*", "*conda*", "*notebooks*", "*.ci_support*"]),
     install_requires=['ase>=3.16',
                       'defusedxml',
+                      'dill',
                       'future',
                       'h5io>=0.1.1',
                       'h5py',
