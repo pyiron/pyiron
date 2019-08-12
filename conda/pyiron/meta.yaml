@@ -37,6 +37,7 @@ requirements:
     - six
     - spglib
     - sqlalchemy
+    - tqdm
 
 test:
   imports:

@@ -46,6 +46,7 @@ setup(
                       'six',
                       'spglib',
                       'sqlalchemy',
-                      'tables'],
+                      'tables',
+                      'tqdm'],
     cmdclass=versioneer.get_cmdclass(),
     )
