@@ -985,7 +985,7 @@ class Atoms(object):
         Returns:
 
         """
-        self.set_scaled_positions(np.mod(self.get_scaled_positions() + eps, 1) - eps + origin)
+        self.set_scaled_positions(np.mod(self.get_scaled_positions(wrap=False) + eps, 1) - eps + origin)
         return self
 
     def repeat(self, rep):
@@ -1400,8 +1400,8 @@ class Atoms(object):
         Returns:
 
         """
-        xyz = self.get_scaled_positions()
-        return xyz[0], xyz[1], xyz[2]
+        xyz = self.get_scaled_positions(wrap=False)
+        return xyz[:,0], xyz[:,1], xyz[:,2]
 
     def __select_slice(self, i_dim, i_flag, dist):
         """
@@ -1417,11 +1417,11 @@ class Atoms(object):
         if i_dim + 1 > self.dimension:
             return True
         if i_flag == 1:
-            return self.get_scaled_positions()[:, i_dim] < dist
+            return self.get_scaled_positions(wrap=False)[:, i_dim] < dist
         elif i_flag == 0:
             return True
         elif i_flag == -1:
-            return self.get_scaled_positions()[:, i_dim] > 1. - dist
+            return self.get_scaled_positions(wrap=False)[:, i_dim] > 1. - dist
 
     def get_boundary_region(self, dist):
         """
@@ -1434,7 +1434,7 @@ class Atoms(object):
         Returns:
 
         """
-        rel_coordinates = self.get_scaled_positions()
+        rel_coordinates = self.get_scaled_positions(wrap=False)
 
         dim = self.dimension
         cell = self.cell.T  # to use same definition as ASE
@@ -1900,7 +1900,7 @@ class Atoms(object):
 
         """
         lattice = np.array(self.get_cell().T, dtype='double', order='C')
-        positions = np.array(self.get_scaled_positions(), dtype='double', order='C')
+        positions = np.array(self.get_scaled_positions(wrap=False), dtype='double', order='C')
         if use_elements:
             numbers = np.array(self.get_atomic_numbers(), dtype='intc')
         else:
@@ -2012,7 +2012,7 @@ class Atoms(object):
         https://atztogo.github.io/spglib/python-spglib.html
         """
         lattice = np.array(self.get_cell().T, dtype='double', order='C')
-        positions = np.array(self.get_scaled_positions(), dtype='double', order='C')
+        positions = np.array(self.get_scaled_positions(wrap=False), dtype='double', order='C')
         numbers = np.array(self.get_atomic_numbers(), dtype='intc')
         return spglib.get_symmetry_dataset(cell=(lattice, positions, numbers),
                                            symprec=symprec,
@@ -2030,7 +2030,7 @@ class Atoms(object):
         https://atztogo.github.io/spglib/python-spglib.html
         """
         lattice = np.array(self.get_cell(), dtype='double', order='C')
-        positions = np.array(self.get_scaled_positions(), dtype='double', order='C')
+        positions = np.array(self.get_scaled_positions(wrap=False), dtype='double', order='C')
         numbers = np.array(self.get_atomic_numbers(), dtype='intc')
         space_group = spglib.get_spacegroup(cell=(lattice, positions, numbers),
                                             symprec=symprec,
@@ -2053,7 +2053,7 @@ class Atoms(object):
         https://atztogo.github.io/spglib/python-spglib.html
         """
         lattice = np.array(self.get_cell().T, dtype='double', order='C')
-        positions = np.array(self.get_scaled_positions(), dtype='double', order='C')
+        positions = np.array(self.get_scaled_positions(wrap=False), dtype='double', order='C')
         numbers = np.array(self.get_atomic_numbers(), dtype='intc')
         cell, coords, el = spglib.refine_cell(cell=(lattice, positions, numbers),
                                               symprec=symprec,
@@ -2077,7 +2077,7 @@ class Atoms(object):
         for el in set(self.get_chemical_elements()):
             el_dict[el.AtomicNumber] = el
         lattice = np.array(self.get_cell().T, dtype='double', order='C')
-        positions = np.array(self.get_scaled_positions(), dtype='double', order='C')
+        positions = np.array(self.get_scaled_positions(wrap=False), dtype='double', order='C')
         numbers = np.array(self.get_atomic_numbers(), dtype='intc')
         cell, coords, atomic_numbers = spglib.find_primitive(cell=(lattice, positions, numbers),
                                                              symprec=symprec,
@@ -2124,7 +2124,7 @@ class Atoms(object):
 
         """
         sym = self.get_symmetry()
-        coords = np.mod(self.get_scaled_positions() + eps, 1) - eps
+        coords = np.mod(self.get_scaled_positions(wrap=False) + eps, 1) - eps
 
         trans_vec = []
         rot_vec = []
@@ -2515,7 +2515,7 @@ class Atoms(object):
         mx, my, mz = i_vec
         nx_lst, ny_lst, nz_lst = np.arange(mx), np.arange(my), np.arange(mz)
 
-        positions = self.get_scaled_positions()
+        positions = self.get_scaled_positions(wrap=False)
 
         lat = np.array(np.meshgrid(nx_lst, ny_lst, nz_lst)).T.reshape(-1, 3)
         lat_new = np.repeat(lat, len(positions), axis=0)
@@ -2888,7 +2888,7 @@ class Atoms(object):
         # numpy broadcasts the smaller array to the larger row-wise,
         # so there is no need to play with the Kronecker product.
         if self._is_scaled:
-            rcoords = self.get_scaled_positions() - center
+            rcoords = self.get_scaled_positions(wrap=False) - center
         else:
             rcoords = self.positions - center
 
@@ -2910,14 +2910,14 @@ class Atoms(object):
         rcoords = np.dot(a, np.transpose(rcoords))
         # Move back to the rotation point
         if self._is_scaled:
-            self.get_scaled_positions(np.transpose(rcoords) + center)
+            self.set_scaled_positions(np.transpose(rcoords) + center)
         else:
             self.positions = np.transpose(rcoords) + center
 
     @property
     def scaled_positions(self):
         warnings.warn('scaled_positions is deprecated. Use get_scaled_positions instead', DeprecationWarning)
-        return self.get_scaled_positions()
+        return self.get_scaled_positions(wrap=False)
 
     @scaled_positions.setter
     def scaled_positions(self, positions):
