@@ -1056,7 +1056,7 @@ class GenericJob(JobCore):
         if job_type is None:
             job_type = self.__name__
         if job_type == self.__name__:
-            new_ham = self.copy_to(new_job_name=job_name, new_database_entry=False)
+            new_ham = self.copy_to(new_job_name=job_name, new_database_entry=False, input_only=True)
         else:
             new_ham = self.create_job(job_type, job_name)
         new_ham.parent_id = self.job_id
