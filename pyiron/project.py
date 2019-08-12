@@ -176,6 +176,20 @@ class Project(ProjectCore):
         obj = ObjectType(object_type, project=None, job_name=None)
         return obj
 
+    def create_table(self, job_name='table'):
+        """
+        Create pyiron table
+
+        Args:
+            job_name (str): job name of the pyiron table job
+
+        Returns:
+            pyiron.table.datamining.TableJob
+        """
+        table = self.create_job(job_type=self.job_type.TableJob, job_name=job_name)
+        table.analysis_project = self
+        return table
+
     def copy(self):
         """
         Copy the project object - copying just the Python object but maintaining the same pyiron path
