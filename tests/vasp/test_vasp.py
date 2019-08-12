@@ -130,6 +130,46 @@ class TestVasp(unittest.TestCase):
             hdf_nodes = h_dft.list_nodes()
             self.assertTrue(all([node in hdf_nodes for node in nodes]))
 
+        job_chg_den = self.job_complete.restart_from_charge_density(job_name="chg")
+        self.assertEqual(job_chg_den.structure, self.job_complete.get_structure(-1))
+        self.assertTrue(posixpath.join(self.job_complete.working_directory,
+                                       "CHGCAR") in job_chg_den.restart_file_list)
+        with job_chg_den.project_hdf5.open("output") as h_out:
+            self.assertTrue(h_out.list_nodes() == [])
+            self.assertTrue(h_out.list_groups() == [])
+
+        with job_chg_den.project_hdf5.open("input") as h_in:
+            self.assertFalse(h_in.list_nodes() == [])
+            self.assertFalse(h_in.list_groups() == [])
+
+        job_wave = self.job_complete.restart_from_wave_functions(job_name="wave")
+        self.assertEqual(job_wave.structure, self.job_complete.get_structure(-1))
+        self.assertTrue(posixpath.join(self.job_complete.working_directory,
+                                       "WAVECAR") in job_wave.restart_file_list)
+        with job_wave.project_hdf5.open("output") as h_out:
+            self.assertTrue(h_out.list_nodes() == [])
+            self.assertTrue(h_out.list_groups() == [])
+
+        with job_wave.project_hdf5.open("input") as h_in:
+            self.assertFalse(h_in.list_nodes() == [])
+            self.assertFalse(h_in.list_groups() == [])
+
+        job_chg_wave = self.job_complete.restart_from_wave_and_charge(job_name="chg_wave")
+        self.assertEqual(job_chg_wave.structure, self.job_complete.get_structure(-1))
+        self.assertTrue(posixpath.join(self.job_complete.working_directory,
+                                       "WAVECAR") in job_chg_wave.restart_file_list)
+        self.assertTrue(posixpath.join(self.job_complete.working_directory,
+                                       "CHGCAR") in job_chg_wave.restart_file_list)
+        for key, val in job_chg_wave.restart_file_dict.items():
+            self.assertTrue(key, val)
+        with job_chg_wave.project_hdf5.open("output") as h_out:
+            self.assertTrue(h_out.list_nodes() == [])
+            self.assertTrue(h_out.list_groups() == [])
+
+        with job_chg_wave.project_hdf5.open("input") as h_in:
+            self.assertFalse(h_in.list_nodes() == [])
+            self.assertFalse(h_in.list_groups() == [])
+
 
 if __name__ == '__main__':
     unittest.main()
