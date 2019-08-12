@@ -455,6 +455,8 @@ class TestAtoms(unittest.TestCase):
         basis = Atoms(symbols='FeFe', positions=[3*[0], 3*[1]], cell=2*np.eye(3))
         neigh = basis.get_neighbors(include_boundary=False)
         self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
+        basis.set_repeat(2)
+        self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
         # print nbr_dict.distances
         # print [set(s) for s in nbr_dict.shells]
 
