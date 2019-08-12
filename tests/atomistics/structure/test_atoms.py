@@ -289,6 +289,58 @@ class TestAtoms(unittest.TestCase):
     def test_get_masses_DOF(self):
         self.assertEqual(len(self.CO2.get_masses_dof()), len(self.CO2.positions.flatten()))
 
+    def test_get_center_of_mass(self):
+        basis = Atoms(elements='AlFe', positions=[3*[0.5], 3*[1.5]], cell=2*np.eye(3))
+        mass = np.array(basis.get_masses())
+        self.assertAlmostEqual((mass[0]*0.5+mass[1]*1.5)/mass.sum(), basis.get_center_of_mass()[0])
+        basis.set_repeat(2)
+        self.assertAlmostEqual((mass[0]*0.5+mass[1]*1.5)/mass.sum()+1, basis.get_center_of_mass()[0])
+
+    def test_rotate(self):
+        unitcell = Atoms(elements='AlFe', positions=[3*[0], 3*[1]], cell=2*np.eye(3))
+        basis = unitcell.copy()
+        basis.rotate(vector=[0, 0, 0.1*np.pi])
+        self.assertAlmostEqual(np.arccos(basis.positions[1, :2].sum()/2)/np.pi, 0.1)
+        basis = unitcell.copy()
+        basis.rotate(vector=[0, 0, 1], angle=0.1*np.pi)
+        self.assertAlmostEqual(np.arccos(basis.positions[1, :2].sum()/2)/np.pi, 0.1)
+        basis = unitcell.copy()
+        center_of_mass = basis.get_center_of_mass()
+        basis.rotate(vector=[0, 0, 0.1*np.pi], center='com')
+        self.assertTrue(np.allclose(basis.get_center_of_mass(), center_of_mass))
+        basis = unitcell.copy()
+        center_of_positions = basis.positions.mean(axis=0)
+        basis.rotate(vector=[0, 0, 1], center='cop')
+        self.assertTrue(np.allclose(center_of_positions, basis.positions.mean(axis=0)))
+        basis = unitcell.copy()
+        position = basis.positions[1]
+        basis.rotate(vector=[0, 0, 1], center='cou')
+        self.assertTrue(np.allclose(position, basis.positions[1]))
+        basis = unitcell.copy()
+        basis.rotate(vector=np.random.random(3), rotate_cell=True)
+        self.assertAlmostEqual(basis.get_scaled_positions()[1,0], 0.5)
+        basis = unitcell.copy()
+        basis.rotate(vector=np.random.random(3), index_list=[0])
+        self.assertTrue(np.allclose(unitcell.positions.flatten(), basis.positions.flatten()))
+
+    def test_rotate_euler(self):
+        unitcell = Atoms(elements='AlFe', positions=[3*[0], 3*[1]], cell=2*np.eye(3))
+        basis = unitcell.copy()
+        basis.rotate_euler(phi=0.1*np.pi)
+        self.assertAlmostEqual(np.arccos(basis.positions[1, :2].sum()/2)/np.pi, 0.1)
+        basis = unitcell.copy()
+        center_of_mass = basis.get_center_of_mass()
+        basis.rotate_euler(phi=0.1*np.pi, center='com')
+        self.assertTrue(np.allclose(basis.get_center_of_mass(), center_of_mass))
+        basis = unitcell.copy()
+        center_of_positions = basis.positions.mean(axis=0)
+        basis.rotate_euler(phi=0.1*np.pi, center='cop')
+        self.assertTrue(np.allclose(center_of_positions, basis.positions.mean(axis=0)))
+        basis = unitcell.copy()
+        position = basis.positions[1]
+        basis.rotate_euler(phi=0.1*np.pi, center='cou')
+        self.assertTrue(np.allclose(position, basis.positions[1]))
+
     def test_get_parent_basis(self):
         periodic_table = PeriodicTable()
         periodic_table.add_element(parent_element="O", new_element="O_up")

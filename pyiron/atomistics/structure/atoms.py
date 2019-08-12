@@ -899,6 +899,14 @@ class Atoms(object):
         """
         return len(self) * self.dimension
 
+    def get_center_of_mass(self):
+        """
+        Returns:
+            com (float): center of mass in A
+        """
+        masses = self.get_masses()
+        return np.einsum('i,ij->j', masses, self.positions)/np.sum(masses)
+
     def get_masses(self):
         """
 
@@ -2837,9 +2845,9 @@ class Atoms(object):
         if index_list is not None:
             if not (len(index_list) > 0):
                 raise AssertionError()
-            rotate_list = index_list
+            rotate_list = np.array(index_list)
         else:
-            rotate_list = [range(len(self))]
+            rotate_list = np.array(len(self)*[True])
 
         p = self.positions[rotate_list] - center
         self.positions[rotate_list] = (c * p -
@@ -2865,11 +2873,11 @@ class Atoms(object):
             coordinates, or 'COM' to select the center of mass, 'COP' to
             select center of positions or 'COU' to select center of cell.
         phi :
-            The 1st rotation angle around the z axis.
+            The 1st rotation angle around the z axis (in radian)
         theta :
-            Rotation around the x axis.
+            Rotation around the x axis (in radian)
         psi :
-            2nd rotation around the z axis.
+            2nd rotation around the z axis (in radian)
 
         """
         if isinstance(center, str):
