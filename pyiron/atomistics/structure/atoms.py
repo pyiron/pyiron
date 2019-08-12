@@ -676,16 +676,21 @@ class Atoms(object):
         Returns the indices of a given element in the structure
 
         Args:
-            el (str/atomistics.structures.periodic_table.ChemicalElement): Element for which the indices should
+            el (str/atomistics.structures.periodic_table.ChemicalElement/list): Element for which the indices should
                                                                                   be returned
         Returns:
             numpy.ndarray: An array of indices of the atoms of the given element
 
         """
         if isinstance(el, str):
-            return np.array([i for i, e in enumerate(self.get_chemical_symbols()) if e == el], dtype=int)
+            return np.where(self.get_chemical_symbols()==el)[0]
         elif isinstance(el, ChemicalElement):
-            return np.array([i for i, e in enumerate(self.get_chemical_elements()) if e == el], dtype=int)
+            return np.where([e==el for e in self.get_chemical_elements()])[0]
+        if isinstance(el, (list, np.ndarray)):
+            if isinstance(el[0], str):
+                return np.where(np.isin(self.get_chemical_symbols(), el))[0]
+            elif isinstance(el[0], ChemicalElement):
+                return np.where([e in el for e in self.get_chemical_elements()])[0]
 
     def select_parent_index(self, el):
         """
@@ -946,20 +951,27 @@ class Atoms(object):
 
     def get_masses_dof(self):
         """
-        
+
         Returns:
 
         """
         dim = self.dimension
         return np.repeat(self.get_masses(), dim)
 
-    def get_volume(self):
+    def get_volume(self, per_atom=False):
         """
         
+        Args:
+            per_atom (bool): True if volume per atom is to be returned
+
         Returns:
+            volume (float): Volume in A**3
 
         """
-        return np.abs(np.linalg.det(self.cell))
+        if per_atom:
+            return np.abs(np.linalg.det(self.cell))/len(self)
+        else:
+            return np.abs(np.linalg.det(self.cell))
 
     def get_density(self):
         """
@@ -2002,8 +2014,8 @@ class Atoms(object):
         box_copy.center_coordinates_in_unit_cell();
 
         neigh = box_copy.get_neighbors() # delete all atoms which lie within minimum_dist (including periodic boundary conditions)
-        while len(neigh.indices.flatten()[neigh.distances.flatten()<minimum_dist])!=0:
-            del box_copy[neigh.indices.flatten()[neigh.distances.flatten()<minimum_dist][0]]
+        while len(np.array(neigh.indices).flatten()[np.array(neigh.distances).flatten()<minimum_dist])!=0:
+            del box_copy[np.array(neigh.indices).flatten()[np.array(neigh.distances).flatten()<minimum_dist][0]]
             neigh = box_copy.get_neighbors()
         return pos_total, box_copy
 
@@ -2194,17 +2206,25 @@ class Atoms(object):
         # print "ref_id: ", ref_id_list
         return eq_atoms, trans_vec, rot_vec, id_vec, ref_id_list
 
-    def get_majority_species(self):
+    def get_majority_species(self, return_count=False):
         """
-        
+        This function returns the majority species and their number in the box
+
         Returns:
+            number of atoms of the majority species, chemical symbol and chemical index
 
         """
         el_dict = self.get_number_species_atoms()
         el_num = list(el_dict.values())
         el_name = list(el_dict.keys())
-        max_index = np.argsort(el_num)[-1]
-        return max_index, el_name[max_index]
+        if np.sum(np.array(el_num)==np.max(el_num)) > 1:
+            warnings.warn('There are more than one majority species')
+        symbol_to_index = dict(zip(self.get_chemical_symbols(),
+                                   self.get_chemical_indices()))
+        max_index = np.argmax(el_num)
+        return {'symbol': el_name[max_index],
+                'count': int(np.max(el_num)),
+                'index': symbol_to_index[el_name[max_index]]}
 
     def extend(self, other):
         """
@@ -2999,6 +3019,10 @@ class Atoms(object):
         elif cell.shape != (3, 3):
             raise ValueError('Cell must be length 3 sequence, length 6 '
                              'sequence or 3x3 matrix!')
+
+        if np.linalg.det(cell)<=0:
+            raise ValueError('Cell must be a full dimensional matrix with '
+                             'right hand orientation')
 
         if scale_atoms:
             M = np.linalg.solve(self.get_cell(complete=True),
