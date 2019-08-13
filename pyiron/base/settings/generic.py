@@ -75,11 +75,7 @@ class Settings(with_metaclass(Singleton)):
                                'sql_database': None}
         environment_keys = os.environ.keys()
         if 'PYIRONCONFIG' in environment_keys:
-            config_file = environment_keys['PYIRONCONFIG']
-        else:
-            config_file = os.path.expanduser(os.path.join("~", ".pyiron"))
-        if os.path.isfile(config_file):
-            self._config_parse_file(config_file)
+            config_file = os.environ['PYIRONCONFIG']
         elif not any([env in environment_keys
                       for env in ['TRAVIS', 'APPVEYOR', 'CIRCLECI', 'CONDA_BUILD', 'GITLAB_CI']]):
             user_input = None
@@ -109,7 +105,9 @@ class Settings(with_metaclass(Singleton)):
                 else:
                     raise ValueError('pyiron was not installed!')
             self._config_parse_file(config_file)
-
+        else:
+            raise ValueError('No config file!')
+            
         # Take dictionary as primary source - overwrite everything
         if isinstance(config, dict):
             for key, value in config.items():
