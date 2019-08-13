@@ -92,7 +92,7 @@ def _write_environ_var(config_file_name='~/.pyiron'):
         print('')
         print('$ source ~/.bashrc')
     else:
-        raise SystemError('Your .bashrc has the correct environment variable but has not been sourced. Please execute the following in your bash shell: source ~/.bashrc')
+        raise SystemError('Your .bashrc has the correct environment variable but has not been sourced. Please execute: source ~/.bashrc')
         
             
 
