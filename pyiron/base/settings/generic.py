@@ -416,9 +416,6 @@ class Settings(with_metaclass(Singleton)):
         if parser.has_option(section, "JOB_TABLE"):
             self._configuration['sql_table_name'] = parser.get(section, "JOB_TABLE")
 
-    def _check_paths(self):
-        self._configuration['project_paths'],self._configuration['resource_paths']
-
     @property
     def publication(self):
         return {'pyiron': {'pyiron-paper': {'author': ['Jan Janssen', 'Sudarsan Surendralal', 'Yury Lysogorskiy',
