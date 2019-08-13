@@ -124,6 +124,15 @@ class Settings(with_metaclass(Singleton)):
                                                 for path in self._configuration['project_paths']]
         self._configuration['resource_paths'] = [convert_path(path)
                                                 for path in self._configuration['resource_paths']]   
+        
+        # Build directories if install_pyiron has been skipped for custom pyiron config file
+        project_path = self._configuration['project_paths'][0]
+        if not os.path.exists(project_path):
+            os.makedirs(project_path)
+            
+        resource_path = self._configuration['resource_paths'][0]
+        if not os.path.exists(resource_path):
+            os.makedirs(resource_path)
 
         # Build the SQLalchemy connection strings
         if self._configuration['sql_type'] == 'Postgres':
@@ -406,6 +415,9 @@ class Settings(with_metaclass(Singleton)):
                 self._configuration['sql_file'] = parser.get(section, "DATABASE_FILE").replace('\\', '/')
         if parser.has_option(section, "JOB_TABLE"):
             self._configuration['sql_table_name'] = parser.get(section, "JOB_TABLE")
+    
+    def _check_paths(self):
+        self._configuration['project_paths'],self._configuration['resource_paths']
 
     @property
     def publication(self):

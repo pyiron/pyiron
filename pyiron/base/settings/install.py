@@ -74,9 +74,6 @@ def _write_config_file(file_name='~/.pyiron', project_path='~/pyiron/projects', 
             cf.writelines(['[DEFAULT]\n',
                            'PROJECT_PATHS = ' + project_path + '\n',
                            'RESOURCE_PATHS = ' + resource_path + '\n'])
-        project_path = os.path.normpath(os.path.abspath(os.path.expanduser(project_path)))
-        if not os.path.exists(project_path):
-            os.makedirs(project_path)
 
 
 def install_pyiron(config_file_name='~/.pyiron',
