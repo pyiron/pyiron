@@ -76,8 +76,7 @@ class Settings(with_metaclass(Singleton)):
         environment_keys = os.environ.keys()
         if 'PYIRONCONFIG' in environment_keys:
             config_file = os.environ['PYIRONCONFIG']
-        elif not any([env in environment_keys
-                      for env in ['TRAVIS', 'APPVEYOR', 'CIRCLECI', 'CONDA_BUILD', 'GITLAB_CI']]):
+        else:
             user_input = None
             while user_input not in ['yes', 'no']:
                 user_input = input('It appears that pyiron is not yet configured, do you want to create a default start configuration (recommended: yes). [yes/no]: ')
@@ -105,8 +104,6 @@ class Settings(with_metaclass(Singleton)):
                 else:
                     raise ValueError('pyiron was not installed!')
             self._config_parse_file(config_file)
-        else:
-            raise ValueError('No config file!')
 
         # Take dictionary as primary source - overwrite everything
         if isinstance(config, dict):

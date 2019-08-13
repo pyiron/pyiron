@@ -87,7 +87,7 @@ def _write_environ_var(config_file_name='~/.pyiron'):
             if not lines[-1]=='\n': outfile.write('\n')
             outfile.write("# PYIRONCONFIG for pyiron config file location\n")
             outfile.write("export PYIRONCONFIG={}\n".format(config_file))
-        print('Please source the .bashrc after the initial configuration')
+        print('Please source the .bashrc after the initial configuration or reset your terminal.')
         print('')
         print('$ source ~/.bashrc')
     else:
