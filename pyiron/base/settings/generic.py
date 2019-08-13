@@ -84,7 +84,7 @@ class Settings(with_metaclass(Singleton)):
                       for env in ['TRAVIS', 'APPVEYOR', 'CIRCLECI', 'CONDA_BUILD', 'GITLAB_CI']]):
             user_input = None
             while user_input not in ['yes', 'no']:
-                user_input = input('It appears that pyiron is not yet configured, do you want to create a default start configuration (recommended: yes). [yes/no]:')
+                user_input = input('It appears that pyiron is not yet configured, do you want to create a default start configuration (recommended: yes). [yes/no]: ')
             if user_input.lower() == 'yes' or user_input.lower() == 'y':
                 install_pyiron(config_file_name=config_file,
                                zip_file="resources.zip",
@@ -92,7 +92,22 @@ class Settings(with_metaclass(Singleton)):
                                giturl_for_zip_file="https://github.com/pyiron/pyiron-resources/archive/master.zip",
                                git_folder_name="pyiron-resources-master")
             else:
-                raise ValueError('pyiron was not installed!')
+                user_input = None #reset input
+                while user_input not in ['yes', 'no']:
+                    user_input = input('Do you want to provide an alternative configuration (recommended: yes). [yes/no]: ')
+                if user_input.lower() == 'yes' or user_input.lower() == 'y':
+                    location = input("Location for pyiron folder and config file (DEFAULT = '.'): ") 
+                    if location=='': location='.'
+                    if not location[-1]=='/': location+='/'
+                    config_file = os.path.join(location, ".pyiron")
+                    install_pyiron(config_file_name=config_file,
+                                   zip_file="resources.zip",
+                                   project_path=os.path.join(location,"pyiron/projects"),
+                                   resource_directory=os.path.join(location,"pyiron/resources"),
+                                   giturl_for_zip_file="https://github.com/SanderBorgmans/pyiron-resources/archive/hpc_ugent.zip",
+                                   git_folder_name="pyiron-resources-hpc_ugent")
+                else:
+                    raise ValueError('pyiron was not installed!')
             self._config_parse_file(config_file)
 
         # Take dictionary as primary source - overwrite everything
