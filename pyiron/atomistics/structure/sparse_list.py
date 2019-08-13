@@ -116,7 +116,7 @@ class SparseList(object):
 
     def keys(self):
         """
-        
+
         Returns:
             indices of non-sparse elements
         """
@@ -264,7 +264,7 @@ def sparse_index(index_list, length, default_val=True):
 
 class SparseArrayElement(object):
     """
-    Single element of a SparseArray 
+    Single element of a SparseArray
     Args:
         **qwargs:
     """

@@ -19,7 +19,7 @@ from pyiron.base.server.queuestatus import queue_delete_job, queue_is_empty, que
     queue_enable_reservation, queue_check_job_is_waiting_or_running
 
 """
-The project object is the central import point of pyiron - all other objects can be created from this one 
+The project object is the central import point of pyiron - all other objects can be created from this one
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
@@ -151,7 +151,7 @@ class Project(ProjectPath):
     def copy_to(self, destination):
         """
         Copy the project object to a different pyiron path - including the content of the project (all jobs).
-        
+
         Args:
             destination (Project): project path to copy the project content to
 
@@ -582,7 +582,7 @@ class Project(ProjectPath):
     def load_from_jobpath(self, job_id=None, db_entry=None, convert_to_object=True):
         """
         Internal function to load an existing job either based on the job ID or based on the database entry dictionary.
-        
+
         Args:
             job_id (int): Job ID - optional, but either the job_id or the db_entry is required.
             db_entry (dict): database entry dictionary - optional, but either the job_id or the db_entry is required.
@@ -745,7 +745,7 @@ class Project(ProjectPath):
     def remove_job(self, job_specifier, _unprotect=False):
         """
         Remove a single job from the project based on its job_specifier - see also remove_jobs()
-        
+
         Args:
             job_specifier (str, int): name of the job or job ID
             _unprotect (bool): [True/False] delete the job without validating the dependencies to other jobs
@@ -892,7 +892,7 @@ class Project(ProjectPath):
             file_name (str): file name or file path for the local database
             cwd (str): directory where the local database is located
         """
-        if cwd is None: 
+        if cwd is None:
             cwd = self.path
         s.switch_to_local_database(file_name=file_name, cwd=cwd)
         s.open_connection()
@@ -905,7 +905,7 @@ class Project(ProjectPath):
         s.switch_to_central_database()
         s.open_connection()
         self.db = s.database
-        
+
     def queue_delete_job(self, item):
         """
         Delete a job from the queuing system

@@ -6,7 +6,7 @@ from __future__ import print_function
 from pyiron.base.settings.generic import Settings
 
 """
-Functions to update existing pyiron installations - mainly modify the database columns. 
+Functions to update existing pyiron installations - mainly modify the database columns.
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"

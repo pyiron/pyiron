@@ -7,7 +7,7 @@ from datetime import datetime
 from pyiron.base.job.generic import GenericJob
 
 """
-Class for storing user aggregated information in an pyiron object 
+Class for storing user aggregated information in an pyiron object
 """
 
 __author__ = "Jan Janssen"

@@ -96,7 +96,7 @@ class Settings(with_metaclass(Singleton)):
                 while user_input not in ['yes', 'no']:
                     user_input = input('Do you want to provide an alternative configuration (recommended: yes). [yes/no]: ')
                 if user_input.lower() == 'yes' or user_input.lower() == 'y':
-                    location = input("Location for pyiron folder and config file (DEFAULT = '.'): ") 
+                    location = input("Location for pyiron folder and config file (DEFAULT = '.'): ")
                     if location=='': location='.'
                     if not location[-1]=='/': location+='/'
                     config_file = os.path.join(location, ".pyiron")
@@ -123,13 +123,13 @@ class Settings(with_metaclass(Singleton)):
         self._configuration['project_paths'] = [convert_path(path) + '/' if path[-1] != '/' else convert_path(path)
                                                 for path in self._configuration['project_paths']]
         self._configuration['resource_paths'] = [convert_path(path)
-                                                for path in self._configuration['resource_paths']]   
-        
+                                                for path in self._configuration['resource_paths']]
+
         # Build directories if install_pyiron has been skipped for custom pyiron config file
         project_path = self._configuration['project_paths'][0]
         if not os.path.exists(project_path):
             os.makedirs(project_path)
-            
+
         resource_path = self._configuration['resource_paths'][0]
         if not os.path.exists(resource_path):
             os.makedirs(resource_path)
@@ -255,10 +255,10 @@ class Settings(with_metaclass(Singleton)):
             self.close_connection()
             self._database = DatabaseAccess('sqlite:///' + file_name,
                                             self._configuration['sql_table_name'])
-            self._use_local_database = True 
+            self._use_local_database = True
         else:
             print('Database is already in local mode!')
-            
+
     def switch_to_central_database(self):
         """
         Switch to central database
@@ -270,7 +270,7 @@ class Settings(with_metaclass(Singleton)):
             self._use_local_database = False
         else:
             print('Database is already in central mode!')
-            
+
     def switch_to_viewer_mode(self):
         """
         Switch from user mode to viewer mode - if viewer_mode is enable pyiron has read only access to the database.
@@ -415,7 +415,7 @@ class Settings(with_metaclass(Singleton)):
                 self._configuration['sql_file'] = parser.get(section, "DATABASE_FILE").replace('\\', '/')
         if parser.has_option(section, "JOB_TABLE"):
             self._configuration['sql_table_name'] = parser.get(section, "JOB_TABLE")
-    
+
     def _check_paths(self):
         self._configuration['project_paths'],self._configuration['resource_paths']
 

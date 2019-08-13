@@ -141,9 +141,9 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def queue(self):
         """
         The que selected for a current simulation
-        
+
         Returns:
-            (str): schedulers_name 
+            (str): schedulers_name
         """
         return self._active_queue
 
@@ -151,7 +151,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def queue(self, new_scheduler):
         """
         Set a que for the current simulation, by choosing one of the available que_names
-        
+
         Args:
             new_scheduler (str): scheduler name
         """
@@ -206,7 +206,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def cores(self):
         """
         The number of cores selected for the current simulation
-        
+
         Returns:
             (int): number of cores
         """
@@ -216,7 +216,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def cores(self, new_cores):
         """
         The number of cores selected for the current simulation
-        
+
         Args:
             new_cores (int): number of cores
         """
@@ -237,7 +237,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def run_time(self):
         """
         The run time in seconds selected for the current simulation
-        
+
         Returns:
             (int): run time in seconds
         """
@@ -247,7 +247,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def run_time(self, new_run_time):
         """
         The run time in seconds selected for the current simulation
-        
+
         Args:
             new_run_time (int): run time in seconds
         """
@@ -287,7 +287,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def run_mode(self):
         """
         Get the run mode of the job
-        
+
         Returns:
             (str/pyiron.base.server.runmode.Runmode): ['modal', 'non_modal', 'queue', 'manual']
         """
@@ -297,9 +297,9 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def run_mode(self, new_mode):
         """
         Set the run mode of the job
-        
+
         Args:
-            new_mode (str): ['modal', 'non_modal', 'queue', 'manual'] 
+            new_mode (str): ['modal', 'non_modal', 'queue', 'manual']
         """
         self._run_mode.mode = new_mode
         if new_mode == 'queue':
@@ -312,7 +312,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def new_hdf(self):
         """
         New_hdf5 defines whether a subjob should be stored in the same HDF5 file or in a new one.
-        
+
         Returns:
             (bool): [True / False]
 
@@ -323,7 +323,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def new_hdf(self, new_hdf_bool):
         """
         New_hdf5 defines whether a subjob should be stored in the same HDF5 file or in a new one.
-        
+
         Args:
             new_hdf_bool (bool): [True / False]
         """
@@ -369,7 +369,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def view_queues():
         """
         List the available Job scheduler provided by the system.
-        
+
         Returns:
             (pandas.DataFrame)
         """
@@ -381,7 +381,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def to_hdf(self, hdf, group_name=None):
         """
         Store Server object in HDF5 file
-        
+
         Args:
             hdf: HDF5 object
             group_name (str): node name in the HDF5 file
@@ -409,7 +409,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def from_hdf(self, hdf, group_name=None):
         """
         Recover Server object in HDF5 file
-        
+
         Args:
             hdf: HDF5 object
             group_name: node name in the HDF5 file
@@ -445,7 +445,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def db_entry(self):
         """
         connect all the info regarding the server into a single word that can be used e.g. as entry in a database
-        
+
         Returns:
             (str): server info as single word
 
