@@ -1089,7 +1089,7 @@ class VaspBase(GenericDFTJob):
             path (str): path to CHGCAR file
         """
         if job_specifier is None and path is None:
-            raise ValueError
+            raise ValueError("Either 'job_specifier' or 'path' has to be given!")
         elif job_specifier is not None:
             path = self.project.inspect(job_specifier=job_specifier).working_directory
         if os.path.basename(path) == "CHGCAR":
@@ -1136,6 +1136,23 @@ class VaspBase(GenericDFTJob):
                                  format(self.job_name))
             new_ham.input.incar["ISTART"] = istart
         return new_ham
+
+    def append_wave_function(self, job_specifier=None, path=None):
+        """
+        Append wave function file (WAVECAR)
+
+        Args:
+            job_specifier (str, int): name of the job or job ID
+            path (str): path to WAVECAR file
+        """
+        if job_specifier is None and path is None:
+            raise ValueError("Either 'job_specifier' or 'path' has to be given!")
+        elif job_specifier is not None:
+            path = self.project.inspect(job_specifier=job_specifier).working_directory
+        if os.path.basename(path) == "WAVECAR":
+            self.restart_file_list.append(path)
+        else:
+            self.restart_file_list.append(posixpath.join(path, "WAVECAR"))
 
     def copy_chgcar(self, old_vasp_job):
         """
