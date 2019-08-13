@@ -107,7 +107,7 @@ class Settings(with_metaclass(Singleton)):
             self._config_parse_file(config_file)
         else:
             raise ValueError('No config file!')
-            
+
         # Take dictionary as primary source - overwrite everything
         if isinstance(config, dict):
             for key, value in config.items():

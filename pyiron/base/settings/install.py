@@ -9,7 +9,6 @@ from shutil import copytree, rmtree
 import tempfile
 import stat
 import sys
-#import subprocess
 
 if sys.version_info >= (3,):
     import urllib.request as urllib2
@@ -78,9 +77,9 @@ def _write_config_file(file_name='~/.pyiron', project_path='~/pyiron/projects', 
 
 def _write_environ_var(config_file_name='~/.pyiron'):
     config_file = os.path.normpath(os.path.abspath(os.path.expanduser(config_file_name)))
-    
+
     # Check whether bashrc already contains PYIRONCONFIG, this can happen in bashrc has not been sourced yet
-    with open(os.path.expanduser("~/.bashrc"), "r") as outfile:   
+    with open(os.path.expanduser("~/.bashrc"), "r") as outfile:
         lines = outfile.readlines()
     if not any(['PYIRONCONFIG' in line for line in lines]):
         # Write to bashrc
@@ -93,8 +92,8 @@ def _write_environ_var(config_file_name='~/.pyiron'):
         print('$ source ~/.bashrc')
     else:
         raise SystemError('Your .bashrc has the correct environment variable but has not been sourced. Please execute the following in your bash shell: source ~/.bashrc')
-        
-            
+
+
 
 def install_pyiron(config_file_name='~/.pyiron',
                    zip_file="resources.zip",
