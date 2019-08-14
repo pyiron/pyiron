@@ -672,6 +672,8 @@ class GenericJob(JobCore):
                                                str(self.server.threads)],
                                               cwd=self.project_hdf5.working_directory, shell=False,
                                               stderr=subprocess.STDOUT, universal_newlines=True)
+            with open(posixpath.join(self.project_hdf5.working_directory, 'error.out'), mode='w') as f_err:
+                f_err.write(out)
         except subprocess.CalledProcessError as e:
             if not self.server.accept_crash:
                 self._logger.warn("Job aborted")
