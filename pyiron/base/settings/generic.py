@@ -103,7 +103,7 @@ class Settings(with_metaclass(Singleton)):
                                    git_folder_name="pyiron-resources-hpc_ugent")
                 else:
                     raise ValueError('pyiron was not installed!')
-            self._config_parse_file(config_file)
+        self._config_parse_file(config_file)
 
         # Take dictionary as primary source - overwrite everything
         if isinstance(config, dict):
