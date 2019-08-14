@@ -45,7 +45,7 @@ class GenericJob(JobCore):
     Generic Job class extends the JobCore class with all the functionality to run the job object. From this class
     all specific Hamiltonians are derived. Therefore it should contain the properties/routines common to all jobs.
     The functions in this module should be as generic as possible.
-
+     
     Args:
         project (ProjectHDFio): ProjectHDFio instance which points to the HDF5 file the job is stored in
         job_name (str): name of the job, which has to be unique within the project
@@ -162,16 +162,27 @@ class GenericJob(JobCore):
         for sig in intercepted_signals:
             signal.signal(sig,  self.signal_intercept)
 
-    @property
-    def python_execution_process(self):
-        return self._process
+    def signal_intercept(self,sig,frame):
+        try:
+            self._logger.info('Job {} intercept signal {}, job is shutting down'.format(self._job_id, sig))
+            self.drop_status_to_aborted()
+        except:
+            raise
+        # finally:
+        #     if sig in intercepted_signals:
+        #         sys.exit(0)
+
+    def drop_status_to_aborted(self):
+        self.refresh_job_status()
+        if not (self.status.finished or self.status.suspended):
+            self.status.aborted = True
 
     @property
     def version(self):
         """
         Get the version of the hamiltonian, which is also the version of the executable unless a custom executable is
         used.
-
+        
         Returns:
             str: version number
         """
@@ -189,7 +200,7 @@ class GenericJob(JobCore):
         """
         Set the version of the hamiltonian, which is also the version of the executable unless a custom executable is
         used.
-
+        
         Args:
             new_version (str): version
         """
@@ -200,7 +211,7 @@ class GenericJob(JobCore):
     def executable(self):
         """
         Get the executable used to run the job - usually the path to an external executable.
-
+        
         Returns:
             (str/pyiron.base.job.executable.Executable): exectuable path
         """
@@ -211,7 +222,7 @@ class GenericJob(JobCore):
     def executable(self, exe):
         """
         Set the executable used to run the job - usually the path to an external executable.
-
+        
         Args:
             exe (str): executable path, if no valid path is provided an executable is chosen based on version.
         """
@@ -281,7 +292,7 @@ class GenericJob(JobCore):
     def restart_file_list(self, filenames):
         """
         Append new files to the restart file list - the list of files which are used to restart the calculation from.
-
+        
         Args:
             filenames (list):
         """
@@ -513,9 +524,9 @@ class GenericJob(JobCore):
         """
         if os.path.isabs(file):
             self.restart_file_list.append(file)
-        else:
+        else: 
             self.restart_file_list.append(file)
-
+    
     def copy_template(self, project, new_job_name=None):
         """
         Copy the content of the job including the HDF5 file but without the output data to a new location
@@ -544,7 +555,7 @@ class GenericJob(JobCore):
                     if pinfo['cwd'] is not None and pinfo['cwd'].startswith(self.working_directory):
                         job_process = psutil.Process(pinfo['pid'])
                         job_process.kill()
-
+    
     def remove_child(self):
         """
         internal function to remove command that removes also child jobs.
@@ -552,7 +563,7 @@ class GenericJob(JobCore):
         """
         self._kill_child()
         super(GenericJob, self).remove_child()
-
+    
     def kill(self):
         if self.status.running or self.status.submitted:
             master_id, parent_id = self.master_id, self.parent_id
@@ -561,7 +572,7 @@ class GenericJob(JobCore):
             self.master_id, self.parent_id = master_id, parent_id
         else:
             raise ValueError('The kill() function is only available during the execution of the job.')
-
+    
     def validate_ready_to_run(self):
         """
         Validate that the calculation is ready to be executed. By default no generic checks are performed, but one could
@@ -590,7 +601,7 @@ class GenericJob(JobCore):
         """
         This is the main run function, depending on the job status ['initialized', 'created', 'submitted', 'running',
         'collect','finished', 'refresh', 'suspended'] the corresponding run mode is chosen.
-
+        
         Args:
             run_again (bool): Delete the existing job and run the simulation again.
             repair (bool): Set the job status to created and run the simulation again.
@@ -650,7 +661,7 @@ class GenericJob(JobCore):
         use subprocess.check_output()
         """
         self.run_static()
-
+        
     def run_static(self):
         """
         The run static function is called by run to execute the simulation.
@@ -771,7 +782,7 @@ class GenericJob(JobCore):
         """
         The run if manually function is called by run if the user decides to execute the simulation manually - this
         might be helpful to debug a new job type or test updated executables.
-
+        
         Args:
             _manually_print (bool): Print explanation how to run the simulation manually - default=True.
         """
@@ -1056,7 +1067,7 @@ class GenericJob(JobCore):
         if job_type is None:
             job_type = self.__name__
         if job_type == self.__name__:
-            new_ham = self.copy_to(new_job_name=job_name, new_database_entry=False, input_only=True)
+            new_ham = self.copy_to(new_job_name=job_name, new_database_entry=False)
         else:
             new_ham = self.create_job(job_type, job_name)
         new_ham.parent_id = self.job_id
@@ -1064,42 +1075,6 @@ class GenericJob(JobCore):
         new_ham._restart_file_list = list()
         new_ham._restart_file_dict = dict()
         return new_ham
-
-    def list_all(self):
-        """
-        List all groups and nodes of the HDF5 file - where groups are equivalent to directories and nodes to files.
-
-        Returns:
-            dict: {'groups': [list of groups], 'nodes': [list of nodes]}
-        """
-        h5_dict = self.project_hdf5.list_all()
-        if self.server.new_hdf:
-            h5_dict["groups"] += self._list_ext_childs()
-        return h5_dict
-
-    def signal_intercept(self, sig, frame):
-        """
-
-        Args:
-            sig:
-            frame:
-
-        Returns:
-
-        """
-        try:
-            self._logger.info('Job {} intercept signal {}, job is shutting down'.format(self._job_id, sig))
-            self.drop_status_to_aborted()
-        except:
-            raise
-
-    def drop_status_to_aborted(self):
-        """
-        Change the job status to aborted when the job was intercepted.
-        """
-        self.refresh_job_status()
-        if not (self.status.finished or self.status.suspended):
-            self.status.aborted = True
 
     def _copy_restart_files(self):
         """

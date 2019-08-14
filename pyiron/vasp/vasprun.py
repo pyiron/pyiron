@@ -261,7 +261,7 @@ class Vasprun(object):
     def parse_partial_dos_to_dict(self, node, d):
         """
         Parses partial dos data from a node to a dictionary
-
+    
         Args:
             node (xml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
@@ -625,7 +625,7 @@ class Vasprun(object):
             if len(positions[positions > 1.01]) > 0:
                 basis.positions = positions
             else:
-                basis.set_scaled_positions(positions)
+                basis.scaled_positions = positions
             return basis
         except (KeyError, AttributeError, ValueError):
             return
@@ -676,7 +676,7 @@ def clean_character(a, remove_char=" "):
 def clean_key(a, remove_char=" "):
     """
     Replaces blanck spaces from a string for a dictionary key with "_"
-
+    
     Args:
         a (str): String to be cleaned
         remove_char (str): Character to be replaced

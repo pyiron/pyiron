@@ -104,7 +104,7 @@ def write_poscar(structure, filename="POSCAR", write_species=True, cartesian=Tru
                 if cartesian:
                     sorted_coords.append(structure.positions[i])
                 else:
-                    sorted_coords.append(structure.get_scaled_positions()[i])
+                    sorted_coords.append(structure.scaled_positions[i])
                 if selec_dyn:
                     selec_dyn_lst.append(structure.selective_dynamics[i])
         if cartesian:
@@ -247,7 +247,7 @@ def _dict_to_atoms(atoms_dict, species_list=None, read_from_first_line=False):
                 el_list = np.tile(el_list, atoms_dict["species_dict"][sp_key]["count"])
                 if isinstance(species_list[i], str):
                     symbol += species_list[i] + str(atoms_dict["species_dict"][sp_key]["count"])
-                else:
+                else: 
                     symbol += species_list[i].Abbreviation + str(atoms_dict["species_dict"][sp_key]["count"])
             except IndexError:
                 raise ValueError("Number of species in the specified species list does not match that in the file")

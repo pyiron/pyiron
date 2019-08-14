@@ -90,7 +90,7 @@ class Atoms(object):
                 cell = np.array(cell)
         self._cell = cell
         self._species = list()
-        self.positions= None
+        self._internal_positions = None
         self._pse = PeriodicTable()
         self._tag_list = SparseArray()
         self.indices = np.array([])
@@ -208,6 +208,47 @@ class Atoms(object):
                 self.set_cell(value, scale_atoms=True)
             else:
                 self.set_cell(value)
+
+    @property
+    def scaled_positions(self):
+        """
+        numpy.ndarray: A size Nx3 array of the scaled (relative) coordinates of the structure which has N atoms
+
+        """
+
+        if self._is_scaled:
+            return self._internal_positions
+        elif self.cell is not None:
+            b_mat = np.linalg.inv(self.cell)
+            return np.dot(b_mat.T, np.array(self.positions).T).T
+        else:
+            return None
+
+    @property
+    def positions(self):
+        """
+        numpy.ndarray: A size Nx3 array of the absolute coordinates of the structure which has N atoms
+
+        """
+        if self._is_scaled:
+            return np.dot(self.cell.T, np.array(self._internal_positions).T).T
+        else:
+            return self._internal_positions
+
+    @scaled_positions.setter
+    def scaled_positions(self, positions):
+        if self._is_scaled:
+            self._internal_positions = positions
+        else:
+            self._internal_positions = np.dot(self.cell.T, np.array(positions).T).T
+
+    @positions.setter
+    def positions(self, positions):
+        if self._is_scaled:
+            b_mat = np.linalg.inv(self.cell)
+            self._internal_positions = np.dot(b_mat.T, np.array(positions).T).T
+        else:
+            self._internal_positions = positions
 
     @property
     def species(self):
@@ -487,7 +528,7 @@ class Atoms(object):
                     position_tag = "coordinates"
                 if "is_absolute" in hdf_atoms.list_nodes():
                     if not tr_dict[hdf_atoms["is_absolute"]]:
-                        self.set_scaled_positions(hdf_atoms[position_tag])
+                        self.scaled_positions = hdf_atoms[position_tag]
                     else:
                         self.positions = hdf_atoms[position_tag]
                 else:
@@ -533,19 +574,19 @@ class Atoms(object):
                             my_dict = {i: val for i, val in zip(my_dict["index"], my_dict["values"])}
                             self._tag_list[tag] = SparseList(my_dict, length=len(self))
 
-            self.cell = None
-            if "cell" in hdf_atoms.list_groups():
-                with hdf_atoms.open("cell") as hdf_cell:
-                    self.cell = hdf_cell["cell"]
-                    self.pbc = hdf_cell["pbc"]
-
             tr_dict = {1: True, 0: False}
             self.dimension = hdf_atoms["dimension"]
             if "is_absolute" in hdf_atoms and not tr_dict[hdf_atoms["is_absolute"]]:
                 self.positions = hdf_atoms["coordinates"]
             else:
-                self.set_scaled_positions(hdf_atoms["coordinates"])
+                self.scaled_positions = hdf_atoms["coordinates"]
             self.units = hdf_atoms["units"]
+
+            self.cell = None
+            if "cell" in hdf_atoms.list_groups():
+                with hdf_atoms.open("cell") as hdf_cell:
+                    self.cell = hdf_cell["cell"]
+                    self.pbc = hdf_cell["pbc"]
 
             if "bonds" in hdf_atoms.list_nodes():
                 self.bonds = hdf_atoms["explicit_bonds"]
@@ -635,21 +676,16 @@ class Atoms(object):
         Returns the indices of a given element in the structure
 
         Args:
-            el (str/atomistics.structures.periodic_table.ChemicalElement/list): Element for which the indices should
+            el (str/atomistics.structures.periodic_table.ChemicalElement): Element for which the indices should
                                                                                   be returned
         Returns:
             numpy.ndarray: An array of indices of the atoms of the given element
 
         """
         if isinstance(el, str):
-            return np.where(self.get_chemical_symbols()==el)[0]
+            return np.array([i for i, e in enumerate(self.get_chemical_symbols()) if e == el], dtype=int)
         elif isinstance(el, ChemicalElement):
-            return np.where([e==el for e in self.get_chemical_elements()])[0]
-        if isinstance(el, (list, np.ndarray)):
-            if isinstance(el[0], str):
-                return np.where(np.isin(self.get_chemical_symbols(), el))[0]
-            elif isinstance(el[0], ChemicalElement):
-                return np.where([e in el for e in self.get_chemical_elements()])[0]
+            return np.array([i for i, e in enumerate(self.get_chemical_elements()) if e == el], dtype=int)
 
     def select_parent_index(self, el):
         """
@@ -745,7 +781,7 @@ class Atoms(object):
     def get_chemical_formula(self):
         """
         Returns the chemical formula of structure
-
+        
         Returns:
             str: The chemical formula as a string
 
@@ -885,7 +921,7 @@ class Atoms(object):
 
     def get_number_of_species(self):
         """
-
+        
         Returns:
 
         """
@@ -893,19 +929,11 @@ class Atoms(object):
 
     def get_number_of_degrees_of_freedom(self):
         """
-
+        
         Returns:
 
         """
         return len(self) * self.dimension
-
-    def get_center_of_mass(self):
-        """
-        Returns:
-            com (float): center of mass in A
-        """
-        masses = self.get_masses()
-        return np.einsum('i,ij->j', masses, self.positions)/np.sum(masses)
 
     def get_masses(self):
         """
@@ -918,32 +946,25 @@ class Atoms(object):
 
     def get_masses_dof(self):
         """
-
+        
         Returns:
 
         """
         dim = self.dimension
         return np.repeat(self.get_masses(), dim)
 
-    def get_volume(self, per_atom=False):
+    def get_volume(self):
         """
-
-        Args:
-            per_atom (bool): True if volume per atom is to be returned
-
+        
         Returns:
-            volume (float): Volume in A**3
 
         """
-        if per_atom:
-            return np.abs(np.linalg.det(self.cell))/len(self)
-        else:
-            return np.abs(np.linalg.det(self.cell))
+        return np.abs(np.linalg.det(self.cell))
 
     def get_density(self):
         """
         Returns the density in g/cm^3
-
+        
         Returns:
             float: Density of the structure
 
@@ -960,14 +981,14 @@ class Atoms(object):
 
         """
         pbc = np.array(self.pbc)
-        positions = np.einsum('jk,ij->ik', np.linalg.inv(self.cell), self.positions)
+        positions = copy(self.scaled_positions)
         if wrap:
             positions[:, pbc] = np.mod(positions[:, pbc], 1.)
         return positions
 
     def get_number_of_atoms(self):
         """
-
+        
         Returns:
 
         """
@@ -977,23 +998,25 @@ class Atoms(object):
     def set_absolute(self):
         if self._is_scaled:
             self._is_scaled = False
+            self.scaled_positions = self._internal_positions
 
     def set_relative(self):
         if not self._is_scaled:
             self._is_scaled = True
+            self.positions = self._internal_positions
 
     def center_coordinates_in_unit_cell(self, origin=0, eps=1e-4):
         """
         compact atomic coordinates in supercell as given by a1, a2., a3
-
+        
         Args:
             origin:  0 to confine between 0 and 1, -0.5 to confine between -0.5 and 0.5
-            eps:
+            eps: 
 
         Returns:
 
         """
-        self.set_scaled_positions(np.mod(self.get_scaled_positions(wrap=False) + eps, 1) - eps + origin)
+        self.scaled_positions = np.mod(self.scaled_positions + eps, 1) - eps + origin
         return self
 
     def repeat(self, rep):
@@ -1047,7 +1070,7 @@ class Atoms(object):
             (str): The line defining the cell in PDB format.
         """
         return 'CRYST1 {:8.3f} {:8.3f} {:8.3f} {:6.2f} {:6.2f} {:6.2f} P 1\n'.format(a1, a2, a3, f1, f2, f3)
-
+    
     @staticmethod
     def _ngl_write_atom(num, species, x, y, z, group=None, num2=None, occupancy=1., temperature_factor=0.):
         """
@@ -1076,7 +1099,7 @@ class Atoms(object):
             num2 = num
         return 'ATOM {:>6} {:>4} {:>4} {:>5} {:10.3f} {:7.3f} {:7.3f} {:5.2f} {:5.2f} {:>11} \n'.format(
             num, species, group, num2, x, y, z, occupancy, temperature_factor, species)
-
+    
     def _ngl_write_structure(self, elements, positions, cell):
         """
         Turns structure information into a NGLView-readable protein-database-formatted string.
@@ -1093,7 +1116,7 @@ class Atoms(object):
         cellpar = cell_to_cellpar(cell)
         exportedcell = cellpar_to_cell(cellpar)
         rotation = np.linalg.solve(cell, exportedcell)
-
+  
         pdb_str = self._ngl_write_cell(*cellpar)
         pdb_str += 'MODEL     1\n'
 
@@ -1240,7 +1263,7 @@ class Atoms(object):
               " ", "picking", "random", "uniform", "atomindex", "residueindex",
               "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
               "hydrophobicity", "value", "volume", "occupancy"
-
+    
         Returns:
             (nglview.NGLWidget): The NGLView widget itself, which can be operated on further or viewed as-is.
 
@@ -1358,7 +1381,7 @@ class Atoms(object):
 
     def plot3d_ase(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5, background='white', color_scheme='element', show_axes=True):
         """
-        Possible color schemes:
+        Possible color schemes: 
           " ", "picking", "random", "uniform", "atomindex", "residueindex",
           "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
           "hydrophobicity", "value", "volume", "occupancy"
@@ -1390,10 +1413,10 @@ class Atoms(object):
         view.camera = camera
         view.background = background
         return view
-
+    
     def pos_xyz(self):
         """
-
+        
         Returns:
 
         """
@@ -1408,16 +1431,18 @@ class Atoms(object):
         Returns:
 
         """
-        xyz = self.get_scaled_positions(wrap=False)
-        return xyz[:,0], xyz[:,1], xyz[:,2]
+        x = self.scaled_positions[:, 0]
+        y = self.scaled_positions[:, 1]
+        z = self.scaled_positions[:, 2]
+        return x, y, z
 
     def __select_slice(self, i_dim, i_flag, dist):
         """
-
+        
         Args:
-            i_dim:
-            i_flag:
-            dist:
+            i_dim: 
+            i_flag: 
+            dist: 
 
         Returns:
 
@@ -1425,24 +1450,24 @@ class Atoms(object):
         if i_dim + 1 > self.dimension:
             return True
         if i_flag == 1:
-            return self.get_scaled_positions(wrap=False)[:, i_dim] < dist
+            return self.scaled_positions[:, i_dim] < dist
         elif i_flag == 0:
             return True
         elif i_flag == -1:
-            return self.get_scaled_positions(wrap=False)[:, i_dim] > 1. - dist
+            return self.scaled_positions[:, i_dim] > 1. - dist
 
     def get_boundary_region(self, dist):
         """
         get all atoms in the boundary around the supercell which have a distance
         to the supercell boundary of less than dist
-
+        
         Args:
-            dist:
+            dist: 
 
         Returns:
 
         """
-        rel_coordinates = self.get_scaled_positions(wrap=False)
+        rel_coordinates = self.scaled_positions
 
         dim = self.dimension
         cell = self.cell.T  # to use same definition as ASE
@@ -1494,7 +1519,7 @@ class Atoms(object):
                       cutoff_radius=None,
                       cutoff=None):
         """
-
+        
         Args:
             num_neighbors (int): number of neighbors
             t_vec (bool): True: compute distance vectors
@@ -1596,10 +1621,10 @@ class Atoms(object):
             # print "i, index: ", i, index
             index = list(index)  # Filter conversion for python 3 compatibility
             nbrs_distances = neighbors[0][i][i_start:len(index)]
-            # if radius:  # reduce neighborlist based on radius
+            # if radius:  # reduce neighborlist based on radius 
             #     new_index_lst, new_dist_lst = [], []
             #     for index_red, dis_red in zip(index, nbrs_distances):
-            #         if dis_red < radius:
+            #         if dis_red < radius: 
             #             new_index_lst.append(index_red)
             #             new_dist_lst.append(dis_red)
             #     index, nbrs_distances= new_index_lst, new_dist_lst
@@ -1644,10 +1669,10 @@ class Atoms(object):
     def get_neighborhood(box, position, num_neighbors=12, t_vec=True, include_boundary=True,
                          tolerance=2, id_list=None, cutoff=None, cutoff_radius=None):
         """
-
+        
         Args:
             position: position in a box whose neighborhood information is analysed
-            num_neighbors:
+            num_neighbors: 
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
             include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
@@ -1686,11 +1711,11 @@ class Atoms(object):
 
     def get_shells(self, id_list=None, max_shell=2, max_num_neighbors=100):
         """
-
+        
         Args:
-            id_list:
+            id_list: 
             max_shell:
-            max_num_neighbors:
+            max_num_neighbors: 
 
         Returns:
 
@@ -1748,10 +1773,10 @@ class Atoms(object):
 
     def get_shell_radius(self, shell=1, id_list=None):
         """
-
+        
         Args:
-            shell:
-            id_list:
+            shell: 
+            id_list: 
 
         Returns:
 
@@ -1790,12 +1815,12 @@ class Atoms(object):
 
     def cluster_analysis(self, id_list, neighbors=None, radius=None, return_cluster_sizes=False):
         """
-
+        
         Args:
-            id_list:
-            neighbors:
-            radius:
-            return_cluster_sizes:
+            id_list: 
+            neighbors: 
+            radius: 
+            return_cluster_sizes: 
 
         Returns:
 
@@ -1828,11 +1853,11 @@ class Atoms(object):
 
     def __probe_cluster(self, c_count, neighbors, id_list):
         """
-
+        
         Args:
-            c_count:
-            neighbors:
-            id_list:
+            c_count: 
+            neighbors: 
+            id_list: 
 
         Returns:
 
@@ -1847,12 +1872,12 @@ class Atoms(object):
     # TODO: combine with corresponding routine in plot3d
     def get_bonds(self, radius=None, max_shells=None, prec=0.1, num_neighbors=20):
         """
-
+        
         Args:
-            radius:
-            max_shells:
+            radius: 
+            max_shells: 
             prec: minimum distance between any two clusters (if smaller considered to be single cluster)
-            num_neighbors:
+            num_neighbors: 
 
         Returns:
 
@@ -1896,19 +1921,19 @@ class Atoms(object):
     # spglib calls
     def get_symmetry(self, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0):
         """
-
+        
         Args:
-            use_magmoms:
+            use_magmoms: 
             use_elements: True or False. If False, chemical elements will be ignored
-            symprec:
-            angle_tolerance:
+            symprec: 
+            angle_tolerance: 
 
         Returns:
 
 
         """
         lattice = np.array(self.get_cell().T, dtype='double', order='C')
-        positions = np.array(self.get_scaled_positions(wrap=False), dtype='double', order='C')
+        positions = np.array(self.get_scaled_positions(), dtype='double', order='C')
         if use_elements:
             numbers = np.array(self.get_atomic_numbers(), dtype='intc')
         else:
@@ -1977,8 +2002,8 @@ class Atoms(object):
         box_copy.center_coordinates_in_unit_cell();
 
         neigh = box_copy.get_neighbors() # delete all atoms which lie within minimum_dist (including periodic boundary conditions)
-        while len(np.array(neigh.indices).flatten()[np.array(neigh.distances).flatten()<minimum_dist])!=0:
-            del box_copy[np.array(neigh.indices).flatten()[np.array(neigh.distances).flatten()<minimum_dist][0]]
+        while len(neigh.indices.flatten()[neigh.distances.flatten()<minimum_dist])!=0:
+            del box_copy[neigh.indices.flatten()[neigh.distances.flatten()<minimum_dist][0]]
             neigh = box_copy.get_neighbors()
         return pos_total, box_copy
 
@@ -2010,17 +2035,17 @@ class Atoms(object):
 
     def get_symmetry_dataset(self, symprec=1e-5, angle_tolerance=-1.0):
         """
-
+        
         Args:
-            symprec:
-            angle_tolerance:
+            symprec: 
+            angle_tolerance: 
 
         Returns:
 
         https://atztogo.github.io/spglib/python-spglib.html
         """
         lattice = np.array(self.get_cell().T, dtype='double', order='C')
-        positions = np.array(self.get_scaled_positions(wrap=False), dtype='double', order='C')
+        positions = np.array(self.get_scaled_positions(), dtype='double', order='C')
         numbers = np.array(self.get_atomic_numbers(), dtype='intc')
         return spglib.get_symmetry_dataset(cell=(lattice, positions, numbers),
                                            symprec=symprec,
@@ -2028,17 +2053,17 @@ class Atoms(object):
 
     def get_spacegroup(self, symprec=1e-5, angle_tolerance=-1.0):
         """
-
+        
         Args:
-            symprec:
-            angle_tolerance:
+            symprec: 
+            angle_tolerance: 
 
         Returns:
 
         https://atztogo.github.io/spglib/python-spglib.html
         """
         lattice = np.array(self.get_cell(), dtype='double', order='C')
-        positions = np.array(self.get_scaled_positions(wrap=False), dtype='double', order='C')
+        positions = np.array(self.get_scaled_positions(), dtype='double', order='C')
         numbers = np.array(self.get_atomic_numbers(), dtype='intc')
         space_group = spglib.get_spacegroup(cell=(lattice, positions, numbers),
                                             symprec=symprec,
@@ -2051,17 +2076,17 @@ class Atoms(object):
 
     def refine_cell(self, symprec=1e-5, angle_tolerance=-1.0):
         """
-
+        
         Args:
-            symprec:
-            angle_tolerance:
+            symprec: 
+            angle_tolerance: 
 
         Returns:
 
         https://atztogo.github.io/spglib/python-spglib.html
         """
         lattice = np.array(self.get_cell().T, dtype='double', order='C')
-        positions = np.array(self.get_scaled_positions(wrap=False), dtype='double', order='C')
+        positions = np.array(self.get_scaled_positions(), dtype='double', order='C')
         numbers = np.array(self.get_atomic_numbers(), dtype='intc')
         cell, coords, el = spglib.refine_cell(cell=(lattice, positions, numbers),
                                               symprec=symprec,
@@ -2073,10 +2098,10 @@ class Atoms(object):
 
     def get_primitive_cell(self, symprec=1e-5, angle_tolerance=-1.0):
         """
-
+        
         Args:
-            symprec:
-            angle_tolerance:
+            symprec: 
+            angle_tolerance: 
 
         Returns:
 
@@ -2085,7 +2110,7 @@ class Atoms(object):
         for el in set(self.get_chemical_elements()):
             el_dict[el.AtomicNumber] = el
         lattice = np.array(self.get_cell().T, dtype='double', order='C')
-        positions = np.array(self.get_scaled_positions(wrap=False), dtype='double', order='C')
+        positions = np.array(self.get_scaled_positions(), dtype='double', order='C')
         numbers = np.array(self.get_atomic_numbers(), dtype='intc')
         cell, coords, atomic_numbers = spglib.find_primitive(cell=(lattice, positions, numbers),
                                                              symprec=symprec,
@@ -2108,12 +2133,12 @@ class Atoms(object):
 
     def get_ir_reciprocal_mesh(self, mesh, is_shift=np.zeros(3, dtype='intc'), is_time_reversal=True, symprec=1e-5):
         """
-
+        
         Args:
-            mesh:
-            is_shift:
-            is_time_reversal:
-            symprec:
+            mesh: 
+            is_shift: 
+            is_time_reversal: 
+            symprec: 
 
         Returns:
 
@@ -2124,15 +2149,15 @@ class Atoms(object):
 
     def get_equivalent_atoms(self, eps=1e-5):
         """
-
+        
         Args:
-            eps:
+            eps: 
 
         Returns:
 
         """
         sym = self.get_symmetry()
-        coords = np.mod(self.get_scaled_positions(wrap=False) + eps, 1) - eps
+        coords = np.mod(self.get_scaled_positions() + eps, 1) - eps
 
         trans_vec = []
         rot_vec = []
@@ -2169,32 +2194,24 @@ class Atoms(object):
         # print "ref_id: ", ref_id_list
         return eq_atoms, trans_vec, rot_vec, id_vec, ref_id_list
 
-    def get_majority_species(self, return_count=False):
+    def get_majority_species(self):
         """
-        This function returns the majority species and their number in the box
-
+        
         Returns:
-            number of atoms of the majority species, chemical symbol and chemical index
 
         """
         el_dict = self.get_number_species_atoms()
         el_num = list(el_dict.values())
         el_name = list(el_dict.keys())
-        if np.sum(np.array(el_num)==np.max(el_num)) > 1:
-            warnings.warn('There are more than one majority species')
-        symbol_to_index = dict(zip(self.get_chemical_symbols(),
-                                   self.get_chemical_indices()))
-        max_index = np.argmax(el_num)
-        return {'symbol': el_name[max_index],
-                'count': int(np.max(el_num)),
-                'index': symbol_to_index[el_name[max_index]]}
+        max_index = np.argsort(el_num)[-1]
+        return max_index, el_name[max_index]
 
     def extend(self, other):
         """
         Extend atoms object by appending atoms from *other*. Copied from ase
-
+        
         Args:
-            other:
+            other: 
 
         Returns:
 
@@ -2230,9 +2247,9 @@ class Atoms(object):
     def append(self, atom):
         """
         Append atom to end. Copied from ase
-
+        
         Args:
-            atom:
+            atom: 
 
         Returns:
 
@@ -2245,7 +2262,7 @@ class Atoms(object):
 
     def get_voronoi_volume(self):
         """
-
+        
         Returns:
 
         """
@@ -2523,7 +2540,7 @@ class Atoms(object):
         mx, my, mz = i_vec
         nx_lst, ny_lst, nz_lst = np.arange(mx), np.arange(my), np.arange(mz)
 
-        positions = self.get_scaled_positions(wrap=False)
+        positions = self.scaled_positions
 
         lat = np.array(np.meshgrid(nx_lst, ny_lst, nz_lst)).T.reshape(-1, 3)
         lat_new = np.repeat(lat, len(positions), axis=0)
@@ -2531,7 +2548,7 @@ class Atoms(object):
         new_positions = np.tile(positions, (len(lat), 1)) + lat_new
 
         self._length = len(new_positions)
-        self.set_scaled_positions(new_positions/np.array(i_vec))
+        self.scaled_positions = new_positions/np.array(i_vec)
         self.indices = np.tile(self.indices, len(lat))
         self._tag_list._length = len(self)
         # print ('basis_len: ', len(self.positions), len(new_elements))
@@ -2698,11 +2715,11 @@ class Atoms(object):
                 self.selective_dynamics[atom_ind] = [True, True, True]
             else:
                 self.selective_dynamics[atom_ind] = [False, False, False]
-
+                
     def get_initial_magnetic_moments(self):
         """
         Get array of initial magnetic moments.
-
+    
         Returns:
             numpy.array()
         """
@@ -2712,7 +2729,7 @@ class Atoms(object):
             spin_lst = [element.tags['spin'] if 'spin' in element.tags.keys() else None
                         for element in self.get_chemical_elements()]
             if any(spin_lst):
-                if (isinstance(spin_lst, str) or
+                if (isinstance(spin_lst, str) or 
                     (isinstance(spin_lst, (list, np.ndarray)) and isinstance(spin_lst[0], str))
                    ) and '[' in list(set(spin_lst))[0]:
                     return np.array(
@@ -2845,9 +2862,9 @@ class Atoms(object):
         if index_list is not None:
             if not (len(index_list) > 0):
                 raise AssertionError()
-            rotate_list = np.array(index_list)
+            rotate_list = index_list
         else:
-            rotate_list = np.array(len(self)*[True])
+            rotate_list = [range(len(self))]
 
         p = self.positions[rotate_list] - center
         self.positions[rotate_list] = (c * p -
@@ -2873,11 +2890,11 @@ class Atoms(object):
             coordinates, or 'COM' to select the center of mass, 'COP' to
             select center of positions or 'COU' to select center of cell.
         phi :
-            The 1st rotation angle around the z axis (in radian)
+            The 1st rotation angle around the z axis.
         theta :
-            Rotation around the x axis (in radian)
+            Rotation around the x axis.
         psi :
-            2nd rotation around the z axis (in radian)
+            2nd rotation around the z axis.
 
         """
         if isinstance(center, str):
@@ -2896,7 +2913,7 @@ class Atoms(object):
         # numpy broadcasts the smaller array to the larger row-wise,
         # so there is no need to play with the Kronecker product.
         if self._is_scaled:
-            rcoords = self.get_scaled_positions(wrap=False) - center
+            rcoords = self.scaled_positions - center
         else:
             rcoords = self.positions - center
 
@@ -2918,19 +2935,9 @@ class Atoms(object):
         rcoords = np.dot(a, np.transpose(rcoords))
         # Move back to the rotation point
         if self._is_scaled:
-            self.set_scaled_positions(np.transpose(rcoords) + center)
+            self.scaled_positions = np.transpose(rcoords) + center
         else:
             self.positions = np.transpose(rcoords) + center
-
-    @property
-    def scaled_positions(self):
-        warnings.warn('scaled_positions is deprecated. Use get_scaled_positions instead', DeprecationWarning)
-        return self.get_scaled_positions(wrap=False)
-
-    @scaled_positions.setter
-    def scaled_positions(self, positions):
-        warnings.warn('scaled_positions is deprecated. Use set_scaled_positions instead', DeprecationWarning)
-        self.set_scaled_positions(positions)
 
     def set_scaled_positions(self, scaled):
         """
@@ -2940,9 +2947,7 @@ class Atoms(object):
             scaled (numpy.ndarray/list): The relative coordinates
 
         """
-        if self.cell is None:
-            raise ValueError('cell has not been set yet')
-        self.positions = np.einsum('jk,ij->ik', self.cell, scaled)
+        self.scaled_positions = scaled
 
     def set_cell(self, cell, scale_atoms=False):
         """
@@ -2994,10 +2999,6 @@ class Atoms(object):
         elif cell.shape != (3, 3):
             raise ValueError('Cell must be length 3 sequence, length 6 '
                              'sequence or 3x3 matrix!')
-
-        if np.linalg.det(cell)<=0:
-            raise ValueError('Cell must be a full dimensional matrix with '
-                             'right hand orientation')
 
         if scale_atoms:
             M = np.linalg.solve(self.get_cell(complete=True),
@@ -3060,11 +3061,11 @@ class Atoms(object):
 
         see ase.io.write for formats.
         kwargs are passed to ase.io.write.
-
+        
         Args:
-            filename:
-            format:
-            **kwargs:
+            filename: 
+            format: 
+            **kwargs: 
 
         Returns:
 
@@ -3078,16 +3079,16 @@ class Atoms(object):
 class _CrystalStructure(Atoms):
     """
     only for historical reasons
-
+        
     Args:
-        element:
-        BravaisLattice:
-        BravaisBasis:
-        LatticeConstants:
-        Dimension:
-        relCoords:
-        PSE:
-        **kwargs:
+        element: 
+        BravaisLattice: 
+        BravaisBasis: 
+        LatticeConstants: 
+        Dimension: 
+        relCoords: 
+        PSE: 
+        **kwargs: 
     """
 
     def __init__(self,
@@ -3154,9 +3155,9 @@ class _CrystalStructure(Atoms):
     # ## private member functions
     def __updateCrystal__(self, pse=None):
         """
-
+        
         Args:
-            pse:
+            pse: 
 
         Returns:
 
@@ -3167,7 +3168,7 @@ class _CrystalStructure(Atoms):
 
     def __updateAmat__(self):  # TODO: avoid multi-call of this function
         """
-
+        
         Returns:
 
         """
@@ -3233,9 +3234,9 @@ class _CrystalStructure(Atoms):
 
     def __updateElementList__(self, pse=None):
         """
-
+        
         Args:
-            pse:
+            pse: 
 
         Returns:
 
@@ -3244,7 +3245,7 @@ class _CrystalStructure(Atoms):
 
     def __updateCoordinates__(self):
         """
-
+        
         Returns:
 
         """
@@ -3284,7 +3285,7 @@ class _CrystalStructure(Atoms):
     # ########################### get commmands ########################
     def get_lattice_types(self):
         """
-
+        
         Returns:
 
         """
@@ -3293,7 +3294,7 @@ class _CrystalStructure(Atoms):
 
     def get_dimension_of_lattice_parameters(self):
         """
-
+        
         Returns:
 
         """
@@ -3306,7 +3307,7 @@ class _CrystalStructure(Atoms):
 
     def get_needed_lattice_parameters(self):
         """
-
+        
         Returns:
 
         """
@@ -3351,7 +3352,7 @@ class _CrystalStructure(Atoms):
 
     def get_basis_types(self):
         """
-
+        
         Returns:
 
         """
@@ -3360,7 +3361,7 @@ class _CrystalStructure(Atoms):
 
     def get_initial_lattice_constants(self):
         """
-
+        
         Returns:
 
         """
@@ -3378,9 +3379,9 @@ class _CrystalStructure(Atoms):
 
     def get_atom_structure(self, rel=True):
         """
-
+        
         Args:
-            rel:
+            rel: 
 
         Returns:
 
@@ -3399,9 +3400,9 @@ class _CrystalStructure(Atoms):
     # #################### set commands #########################
     def set_lattice_constants(self, lattice_constants=None):
         """
-
+        
         Args:
-            lattice_constants:
+            lattice_constants: 
 
         Returns:
 
@@ -3416,9 +3417,9 @@ class _CrystalStructure(Atoms):
 
     def set_element(self, element="Fe"):
         """
-
+        
         Args:
-            element:
+            element: 
 
         Returns:
 
@@ -3428,9 +3429,9 @@ class _CrystalStructure(Atoms):
 
     def set_dimension(self, dim=3):
         """
-
+        
         Args:
-            dim:
+            dim: 
 
         Returns:
 
@@ -3453,9 +3454,9 @@ class _CrystalStructure(Atoms):
 
     def set_lattice_type(self, name_lattice='cubic'):
         """
-
+        
         Args:
-            name_lattice:
+            name_lattice: 
 
         Returns:
 
@@ -3474,9 +3475,9 @@ class _CrystalStructure(Atoms):
 
     def set_basis_type(self, name_basis='primitive'):
         """
-
+        
         Args:
-            name_basis:
+            name_basis: 
 
         Returns:
 
@@ -3489,7 +3490,7 @@ class _CrystalStructure(Atoms):
 
     def atoms(self):
         """
-
+        
         Returns:
 
         """
@@ -3684,9 +3685,9 @@ def pyiron_to_pymatgen(pyiron_obj):
 
 def ovito_to_pyiron(ovito_obj):
     """
-
+    
     Args:
-        ovito_obj:
+        ovito_obj: 
 
     Returns:
 
@@ -3700,9 +3701,9 @@ def ovito_to_pyiron(ovito_obj):
 
 def pyiron_to_ovito(atoms):
     """
-
+    
     Args:
-        atoms:
+        atoms: 
 
     Returns:
 
@@ -3717,9 +3718,9 @@ def pyiron_to_ovito(atoms):
 def string2symbols(s):
     """
     Convert string to list of chemical symbols.
-
+    
     Args:
-        s:
+        s: 
 
     Returns:
 
@@ -3792,9 +3793,9 @@ def symbols2numbers(symbols):
 
 def string2vector(v):
     """
-
+    
     Args:
-        v:
+        v: 
 
     Returns:
 
@@ -3811,10 +3812,10 @@ def string2vector(v):
 def default(data, dflt):
     """
     Helper function for setting default values.
-
+    
     Args:
-        data:
-        dflt:
+        data: 
+        dflt: 
 
     Returns:
 

@@ -14,7 +14,7 @@ import numpy as np
 from tables.exceptions import NoSuchNodeError
 import sys
 """
-Classes to map the Python objects to HDF5 data structures
+Classes to map the Python objects to HDF5 data structures 
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
@@ -26,7 +26,7 @@ __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
 
-
+  
 class HDFStoreIO(pandas.HDFStore):
     """
     dict-like IO interface for storing pandas objects in PyTables either Fixed or Table format.
@@ -237,16 +237,16 @@ class FileHDFio(object):
 
         Args:
             hdf (FileHDFio): hdf file
-
+       
         Returns:
             float: file size in Bytes
         """
         return os.path.getsize(hdf.file_name)
 
-    def get_size(self, hdf):
+    def get_size(self, hdf):  
         """
         Get size of the groups inside the HDF5 file
-
+    
         Args:
             hdf (FileHDFio): hdf file
 
@@ -255,7 +255,7 @@ class FileHDFio(object):
         """
         return sum([sys.getsizeof(hdf[p]) for p in hdf.list_nodes()]) + sum(
             [self.get_size(hdf[p]) for p in hdf.list_groups()])
-
+          
     def copy(self):
         """
         Copy the Python object which links to the HDF5 file - in contrast to copy_to() which copies the content of the
@@ -612,10 +612,10 @@ class FileHDFio(object):
         if exclude_groups is None:
             exclude_groups = ['interactive']
         file_name = self.file_name
-        _path = file_name.split('/')[-1]
-        _path = _path.split('.')[-1]
+        _path, _ = file_name.split('.')
+        p_lst = _path.split('/')
         # path = '/'.join(p_lst[:-1])
-        new_file = _path[-1] + '_rewrite'
+        new_file = p_lst[-1] + '_rewrite'
 
         hdf_new = ProjectHDFio(project=self.project, file_name=new_file, h5_path='/' + job_name)
         hdf_new = self.hd_copy(self, hdf_new, exclude_groups=exclude_groups, exclude_nodes=exclude_nodes)
@@ -648,7 +648,7 @@ class FileHDFio(object):
                 h5io.write_hdf5(self.file_name, value,
                                 title=posixpath.join(self.h5_path, key),
                                 overwrite="update", use_json=True)
-        elif isinstance(value, tuple):
+        elif isinstance(value, tuple): 
             h5io.write_hdf5(self.file_name, list(value),
                             title=posixpath.join(self.h5_path, key),
                             overwrite="update", use_json=True)
@@ -1107,10 +1107,6 @@ class ProjectHDFio(FileHDFio):
             read_mode (bool): [True/False]
         """
         self._project._inspect_mode = read_mode
-
-    @property
-    def name(self):
-        return os.path.basename(self.h5_path)
 
     def copy(self):
         """

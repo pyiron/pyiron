@@ -10,7 +10,7 @@ from pyiron.base.master.generic import GenericMaster
 from pyiron.base.master.submissionstatus import SubmissionStatus
 
 """
-The ListMaster behaves like a list, just for job objects.
+The ListMaster behaves like a list, just for job objects. 
 """
 
 __author__ = "Jan Janssen"
@@ -247,7 +247,7 @@ class ListMaster(GenericMaster):
                     job_lst.append(ham._process)
                 else:
                     self.refresh_job_status()
-            _ = [process.communicate() for process in job_lst if process]
+            process_lst = [process.communicate() for process in job_lst if process]
             self.status.suspended = True
         if self.server.run_mode.modal or ((self.server.run_mode.non_modal or self.server.run_mode.queue)
                                           and self.is_finished()):

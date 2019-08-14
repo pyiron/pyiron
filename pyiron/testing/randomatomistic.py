@@ -12,7 +12,7 @@ from pyiron.base.pyio.parser import Logstatus
 from pyiron.atomistics.job.interactive import GenericInteractive
 
 """
-Example Job class for testing the pyiron classes
+Example Job class for testing the pyiron classes  
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
@@ -395,30 +395,24 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
     @property
     def structure(self):
         """
-
+        
         Returns:
 
         """
         return self._structure
 
-    def get_structure(self, iteration_step=-1, wrap_atoms=True):
-        structure = super(AtomisticExampleJob, self).get_structure(iteration_step=iteration_step, wrap_atoms=wrap_atoms)
-        if structure is None:
-            return self.structure
-        return structure
-
     @structure.setter
     def structure(self, structure):
         """
-
+        
         Args:
-            structure:
+            structure: 
 
         Returns:
 
         """
         self._structure = structure
-        if structure is not None:
+        if self._structure.cell.any():
             self.input["alat"] = self._structure.cell[0, 0]
             # print("set alat: {}".format(self.input["alat"]))
 
@@ -429,6 +423,9 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
         """
         super(AtomisticExampleJob, self).set_input_to_read_only()
         self.input.read_only = True
+
+    def get_structure(self, iteration_step=-1):
+        return self.structure
 
     def to_hdf(self, hdf=None, group_name=None):
         """

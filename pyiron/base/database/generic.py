@@ -620,3 +620,4 @@ class DatabaseAccess(object):
         if not self._keep_connection:
             self.conn.close()
         return [dict(zip(col.keys(), col.values())) for col in row]
+

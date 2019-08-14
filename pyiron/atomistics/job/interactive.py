@@ -118,8 +118,8 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
                 if not np.allclose(self._structure_current.cell, self._structure_previous.cell, rtol=1e-15, atol=1e-15):
                     self._logger.debug('Generic library: cell changed!')
                     self.interactive_cells_setter(self._structure_current.cell)
-                if not np.allclose(self._structure_current.get_scaled_positions(),
-                                   self._structure_previous.get_scaled_positions(), rtol=1e-15, atol=1e-15):
+                if not np.allclose(self._structure_current.scaled_positions,
+                                   self._structure_previous.scaled_positions, rtol=1e-15, atol=1e-15):
                     self._logger.debug('Generic library: positions changed!')
                     self.interactive_positions_setter(self._structure_current.positions)
                 if np.any(self._structure_current.get_initial_magnetic_moments()) and \
@@ -217,7 +217,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
     def interactive_volume_getter(self):
         return self.initial_structure.get_volume()
 
-    def get_structure(self, iteration_step=-1, wrap_atoms=True):
+    def get_structure(self, iteration_step=-1):
         """
         Gets the structure from a given iteration step of the simulation (MD/ionic relaxation). For static calculations
         there is only one ionic iteration step
@@ -238,26 +238,18 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             else:
                 el_lst = self._interactive_species_lst.tolist()
             if indices is not None:
-                if wrap_atoms:
-                    positions = self.output.positions[iteration_step]
-                else:
-                    if len(self.output.unwrapped_positions) > max([iteration_step,0]):
-                        positions = self.output.unwrapped_positions[iteration_step]
-                    else:
-                        positions = self.output.positions[iteration_step]+self.output.total_displacements[iteration_step]
                 atoms = Atoms(symbols=np.array([el_lst[el] for el in indices]),
-                              positions=positions, cell=self.output.cells[iteration_step])
+                              positions=self.output.positions[iteration_step],
+                              cell=self.output.cells[iteration_step])
                 # Update indicies to match the indicies in the cache.
                 atoms.set_species([self._periodic_table.element(el) for el in el_lst])
                 atoms.indices = indices
-                if wrap_atoms:
-                    atoms = atoms.center_coordinates_in_unit_cell()
                 return atoms
             else:
                 return None
         else:
             if self.get("output/generic/cells") is not None and len(self.get("output/generic/cells")) != 0:
-                return super(GenericInteractive, self).get_structure(iteration_step=iteration_step, wrap_atoms=wrap_atoms)
+                return super(GenericInteractive, self).get_structure(iteration_step=iteration_step)
             else:
                 return None
 
@@ -506,3 +498,4 @@ class InteractiveInterface(object):
 
     def run_interactive(self):
         raise NotImplementedError
+

@@ -176,20 +176,6 @@ class Project(ProjectCore):
         obj = ObjectType(object_type, project=None, job_name=None)
         return obj
 
-    def create_table(self, job_name='table'):
-        """
-        Create pyiron table
-
-        Args:
-            job_name (str): job name of the pyiron table job
-
-        Returns:
-            pyiron.table.datamining.TableJob
-        """
-        table = self.create_job(job_type=self.job_type.TableJob, job_name=job_name)
-        table.analysis_project = self
-        return table
-
     def copy(self):
         """
         Copy the project object - copying just the Python object but maintaining the same pyiron path
@@ -218,23 +204,6 @@ class Project(ProjectCore):
         """
         job = super(Project, self).load_from_jobpath(job_id=job_id, db_entry=db_entry,
                                                      convert_to_object=convert_to_object)
-        job.project_hdf5._project = Project(path=job.project_hdf5.file_path)
-        return job
-
-    def load_from_jobpath_string(self, job_path, convert_to_object=True):
-        """
-        Internal function to load an existing job either based on the job ID or based on the database entry dictionary.
-
-        Args:
-            job_path (str): string to reload the job from an HDF5 file - '/root_path/project_path/filename.h5/h5_path'
-            convert_to_object (bool): convert the object to an pyiron object or only access the HDF5 file - default=True
-                                      accessing only the HDF5 file is about an order of magnitude faster, but only
-                                      provides limited functionality. Compare the GenericJob object to JobCore object.
-
-        Returns:
-            GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
-        """
-        job = super(Project, self).load_from_jobpath_string(job_path=job_path, convert_to_object=convert_to_object)
         job.project_hdf5._project = Project(path=job.project_hdf5.file_path)
         return job
 
@@ -402,11 +371,11 @@ class Project(ProjectCore):
     @staticmethod
     def create_structure(element, bravais_basis, lattice_constant):
         """
-
+        
         Args:
-            element:
-            bravais_basis:
-            lattice_constant:
+            element: 
+            bravais_basis: 
+            lattice_constant: 
 
         Returns:
 
@@ -547,7 +516,7 @@ class Project(ProjectCore):
     @staticmethod
     def create_element(parent_element, new_element_name=None, spin=None, potential_file=None):
         """
-
+        
         Args:
             parent_element (str, int): The parent element eq. "N", "O", "Mg" etc.
             new_element_name (str): The name of the new parent element (can be arbitrary)
@@ -580,7 +549,7 @@ class Project(ProjectCore):
     # Graphical user interfaces
     def gui(self):
         """
-
+        
         Returns:
 
         """

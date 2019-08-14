@@ -11,7 +11,7 @@ from pyiron.base.master.generic import GenericMaster, get_function_from_string
 from pyiron.base.generic.parameters import GenericParameters
 
 """
-The serial master class is a metajob consisting of a dynamic list of jobs which are executed in serial mode.
+The serial master class is a metajob consisting of a dynamic list of jobs which are executed in serial mode. 
 """
 
 __author__ = "Jan Janssen"
@@ -333,21 +333,20 @@ class SerialMasterBase(GenericMaster):
         job = self.pop(-1)
         job._master_id = self.job_id
         if self.server.new_hdf:
-            job._hdf5 = self.project_hdf5.create_hdf(path=self.project.open(self.job_name + '_hdf5').path,
+            job._hdf5 = self.project_hdf5.create_hdf(path=self._hdf5._project.open(self.job_name + '_hdf5').path,
                                                      job_name=job.job_name)
         else:
             job._hdf5 = self.project_hdf5.open(job.job_name)
         self._logger.info('SerialMaster: run job {}'.format(job.job_name))
         return job
 
-    @staticmethod
-    def _run_child_job(job):
+    def _run_child_job(self, job):
         job.run()
 
     def _run_if_master_queue(self, job):
         job.run()
-        if job.python_execution_process:
-            job.python_execution_process.communicate()
+        if job._process:
+            job._process.communicate()
         self.run_if_refresh()
 
     def _run_if_master_non_modal_child_non_modal(self, job):
