@@ -20,12 +20,12 @@ __date__ = "Sep 1, 2017"
 class ThermoBulk(object):
     """
     Class should provide all tools to compute bulk thermodynamic quantities. Central quantity is the Free Energy F(V,T).
-    ToDo: Make it a (light weight) pyiron object (introduce a new tool rather than job object). 
-       
+    ToDo: Make it a (light weight) pyiron object (introduce a new tool rather than job object).
+
     Args:
-        project: 
-        name: 
-            
+        project:
+        name:
+
     """
     eV_to_J_per_mol = 1.60217662e-19 * 6.022e23
     kB = 1 / 8.6173303e-5
@@ -46,7 +46,7 @@ class ThermoBulk(object):
 
     def copy(self):
         """
-        
+
         Returns:
 
         """
@@ -61,7 +61,7 @@ class ThermoBulk(object):
 
     def _reset_energy(self):
         """
-        
+
         Returns:
 
         """
@@ -73,7 +73,7 @@ class ThermoBulk(object):
     @property
     def num_atoms(self):
         """
-        
+
         Returns:
 
         """
@@ -84,9 +84,9 @@ class ThermoBulk(object):
     @num_atoms.setter
     def num_atoms(self, num):
         """
-        
+
         Args:
-            num: 
+            num:
 
         Returns:
 
@@ -96,7 +96,7 @@ class ThermoBulk(object):
     @property
     def _coeff(self):
         """
-        
+
         Returns:
 
         """
@@ -105,7 +105,7 @@ class ThermoBulk(object):
     @property
     def temperatures(self):
         """
-        
+
         Returns:
 
         """
@@ -114,7 +114,7 @@ class ThermoBulk(object):
     @property
     def _d_temp(self):
         """
-        
+
         Returns:
 
         """
@@ -123,7 +123,7 @@ class ThermoBulk(object):
     @property
     def _d_vol(self):
         """
-        
+
         Returns:
 
         """
@@ -132,9 +132,9 @@ class ThermoBulk(object):
     @temperatures.setter
     def temperatures(self, temp_lst):
         """
-        
+
         Args:
-            temp_lst: 
+            temp_lst:
 
         Returns:
 
@@ -151,7 +151,7 @@ class ThermoBulk(object):
     @property
     def volumes(self):
         """
-        
+
         Returns:
 
         """
@@ -160,9 +160,9 @@ class ThermoBulk(object):
     @volumes.setter
     def volumes(self, volume_lst):
         """
-        
+
         Args:
-            volume_lst: 
+            volume_lst:
 
         Returns:
 
@@ -179,7 +179,7 @@ class ThermoBulk(object):
     @property
     def entropy(self):
         """
-        
+
         Returns:
 
         """
@@ -190,7 +190,7 @@ class ThermoBulk(object):
     @property
     def pressure(self):
         """
-        
+
         Returns:
 
         """
@@ -201,7 +201,7 @@ class ThermoBulk(object):
     @property
     def energies(self):
         """
-        
+
         Returns:
 
         """
@@ -210,9 +210,9 @@ class ThermoBulk(object):
     @energies.setter
     def energies(self, erg_lst):
         """
-        
+
         Args:
-            erg_lst: 
+            erg_lst:
 
         Returns:
 
@@ -229,11 +229,11 @@ class ThermoBulk(object):
 
     def set_temperatures(self, temperature_min=0, temperature_max=1500, temperature_steps=50):
         """
-        
+
         Args:
-            temperature_min: 
-            temperature_max: 
-            temperature_steps: 
+            temperature_min:
+            temperature_max:
+            temperature_steps:
 
         Returns:
 
@@ -242,11 +242,11 @@ class ThermoBulk(object):
 
     def set_volumes(self, volume_min, volume_max=None, volume_steps=10):
         """
-        
+
         Args:
-            volume_min: 
-            volume_max: 
-            volume_steps: 
+            volume_min:
+            volume_max:
+            volume_steps:
 
         Returns:
 
@@ -257,7 +257,7 @@ class ThermoBulk(object):
 
     def meshgrid(self):
         """
-        
+
         Returns:
 
         """
@@ -265,9 +265,9 @@ class ThermoBulk(object):
 
     def get_minimum_energy_path(self, pressure=None):
         """
-        
+
         Args:
-            pressure: 
+            pressure:
 
         Returns:
 
@@ -288,10 +288,10 @@ class ThermoBulk(object):
 
     def get_free_energy(self, vol, pressure=None):
         """
-        
+
         Args:
-            vol: 
-            pressure: 
+            vol:
+            pressure:
 
         Returns:
 
@@ -303,10 +303,10 @@ class ThermoBulk(object):
 
     def interpolate_volume(self, volumes, fit_order=None):
         """
-        
+
         Args:
-            volumes: 
-            fit_order: 
+            volumes:
+            fit_order:
 
         Returns:
 
@@ -320,7 +320,7 @@ class ThermoBulk(object):
 
     def _compute_thermo(self):
         """
-        
+
         Returns:
 
         """
@@ -328,7 +328,7 @@ class ThermoBulk(object):
 
     def get_free_energy_p(self):
         """
-        
+
         Returns:
 
         """
@@ -337,7 +337,7 @@ class ThermoBulk(object):
 
     def get_entropy_p(self):
         """
-        
+
         Returns:
 
         """
@@ -346,7 +346,7 @@ class ThermoBulk(object):
 
     def get_entropy_v(self):
         """
-        
+
         Returns:
 
         """
@@ -357,7 +357,7 @@ class ThermoBulk(object):
 
     def plot_free_energy(self):
         """
-        
+
         Returns:
 
         """
@@ -371,7 +371,7 @@ class ThermoBulk(object):
 
     def plot_entropy(self):
         """
-        
+
         Returns:
 
         """
@@ -387,9 +387,9 @@ class ThermoBulk(object):
 
     def plot_heat_capacity(self, to_kB=True):
         """
-        
+
         Args:
-            to_kB: 
+            to_kB:
 
         Returns:
 
@@ -414,7 +414,7 @@ class ThermoBulk(object):
 
     def contour_pressure(self):
         """
-        
+
         Returns:
 
         """
@@ -432,7 +432,7 @@ class ThermoBulk(object):
 
     def contour_entropy(self):
         """
-        
+
         Returns:
 
         """
@@ -450,10 +450,10 @@ class ThermoBulk(object):
 
     def plot_contourf(self, ax=None, show_min_erg_path=False):
         """
-        
+
         Args:
-            ax: 
-            show_min_erg_path: 
+            ax:
+            show_min_erg_path:
 
         Returns:
 
@@ -474,11 +474,11 @@ class ThermoBulk(object):
 
     def plot_min_energy_path(self, *args, ax=None, **qwargs):
         """
-        
+
         Args:
-            *args: 
-            ax: 
-            **qwargs: 
+            *args:
+            ax:
+            **qwargs:
 
         Returns:
 

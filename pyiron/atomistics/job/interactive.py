@@ -498,4 +498,3 @@ class InteractiveInterface(object):
 
     def run_interactive(self):
         raise NotImplementedError
-

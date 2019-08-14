@@ -5,7 +5,7 @@
 import os
 
 """
-Executable class loading executables from static/bin/<code>/ 
+Executable class loading executables from static/bin/<code>/
 """
 
 __author__ = "Jan Janssen"

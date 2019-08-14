@@ -11,7 +11,7 @@ from pyiron.base.master.generic import GenericMaster, get_function_from_string
 from pyiron.base.generic.parameters import GenericParameters
 
 """
-The serial master class is a metajob consisting of a dynamic list of jobs which are executed in serial mode. 
+The serial master class is a metajob consisting of a dynamic list of jobs which are executed in serial mode.
 """
 
 __author__ = "Jan Janssen"

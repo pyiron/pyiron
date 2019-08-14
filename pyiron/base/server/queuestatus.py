@@ -24,7 +24,7 @@ QUEUE_SCRIPT_PREFIX = 'pi_'
 
 s = Settings()
 
-    
+
 def queue_table(job_ids=[], project_only=True):
     """
     Display the queuing system table as pandas.Dataframe
@@ -83,7 +83,7 @@ def queue_info_by_job_id(job_id):
     else:
         return None
 
-    
+
 def queue_is_empty():
     """
     Check if the queue table is currently empty - no more jobs to wait for.
@@ -161,7 +161,7 @@ def _validate_que_request(item):
     Returns:
         int: queuing system ID
     """
-    
+
     if isinstance(item, int):
         que_id = item
     elif static_isinstance(item.__class__, 'pyiron.base.job.generic.GenericJob'):

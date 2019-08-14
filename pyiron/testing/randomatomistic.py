@@ -12,7 +12,7 @@ from pyiron.base.pyio.parser import Logstatus
 from pyiron.atomistics.job.interactive import GenericInteractive
 
 """
-Example Job class for testing the pyiron classes  
+Example Job class for testing the pyiron classes
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
@@ -395,7 +395,7 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
     @property
     def structure(self):
         """
-        
+
         Returns:
 
         """
@@ -404,9 +404,9 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
     @structure.setter
     def structure(self, structure):
         """
-        
+
         Args:
-            structure: 
+            structure:
 
         Returns:
 

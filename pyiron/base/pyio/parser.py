@@ -7,7 +7,7 @@ import ast
 import numpy as np
 
 """
-General purpose output parser 
+General purpose output parser
 """
 
 __author__ = "Joerg Neugebauer"

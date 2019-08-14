@@ -781,7 +781,7 @@ class Atoms(object):
     def get_chemical_formula(self):
         """
         Returns the chemical formula of structure
-        
+
         Returns:
             str: The chemical formula as a string
 
@@ -921,7 +921,7 @@ class Atoms(object):
 
     def get_number_of_species(self):
         """
-        
+
         Returns:
 
         """
@@ -929,7 +929,7 @@ class Atoms(object):
 
     def get_number_of_degrees_of_freedom(self):
         """
-        
+
         Returns:
 
         """
@@ -946,7 +946,7 @@ class Atoms(object):
 
     def get_masses_dof(self):
         """
-        
+
         Returns:
 
         """
@@ -955,7 +955,7 @@ class Atoms(object):
 
     def get_volume(self):
         """
-        
+
         Returns:
 
         """
@@ -964,7 +964,7 @@ class Atoms(object):
     def get_density(self):
         """
         Returns the density in g/cm^3
-        
+
         Returns:
             float: Density of the structure
 
@@ -988,7 +988,7 @@ class Atoms(object):
 
     def get_number_of_atoms(self):
         """
-        
+
         Returns:
 
         """
@@ -1008,10 +1008,10 @@ class Atoms(object):
     def center_coordinates_in_unit_cell(self, origin=0, eps=1e-4):
         """
         compact atomic coordinates in supercell as given by a1, a2., a3
-        
+
         Args:
             origin:  0 to confine between 0 and 1, -0.5 to confine between -0.5 and 0.5
-            eps: 
+            eps:
 
         Returns:
 
@@ -1070,7 +1070,7 @@ class Atoms(object):
             (str): The line defining the cell in PDB format.
         """
         return 'CRYST1 {:8.3f} {:8.3f} {:8.3f} {:6.2f} {:6.2f} {:6.2f} P 1\n'.format(a1, a2, a3, f1, f2, f3)
-    
+
     @staticmethod
     def _ngl_write_atom(num, species, x, y, z, group=None, num2=None, occupancy=1., temperature_factor=0.):
         """
@@ -1099,7 +1099,7 @@ class Atoms(object):
             num2 = num
         return 'ATOM {:>6} {:>4} {:>4} {:>5} {:10.3f} {:7.3f} {:7.3f} {:5.2f} {:5.2f} {:>11} \n'.format(
             num, species, group, num2, x, y, z, occupancy, temperature_factor, species)
-    
+
     def _ngl_write_structure(self, elements, positions, cell):
         """
         Turns structure information into a NGLView-readable protein-database-formatted string.
@@ -1116,7 +1116,7 @@ class Atoms(object):
         cellpar = cell_to_cellpar(cell)
         exportedcell = cellpar_to_cell(cellpar)
         rotation = np.linalg.solve(cell, exportedcell)
-  
+
         pdb_str = self._ngl_write_cell(*cellpar)
         pdb_str += 'MODEL     1\n'
 
@@ -1263,7 +1263,7 @@ class Atoms(object):
               " ", "picking", "random", "uniform", "atomindex", "residueindex",
               "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
               "hydrophobicity", "value", "volume", "occupancy"
-    
+
         Returns:
             (nglview.NGLWidget): The NGLView widget itself, which can be operated on further or viewed as-is.
 
@@ -1381,7 +1381,7 @@ class Atoms(object):
 
     def plot3d_ase(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5, background='white', color_scheme='element', show_axes=True):
         """
-        Possible color schemes: 
+        Possible color schemes:
           " ", "picking", "random", "uniform", "atomindex", "residueindex",
           "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
           "hydrophobicity", "value", "volume", "occupancy"
@@ -1413,10 +1413,10 @@ class Atoms(object):
         view.camera = camera
         view.background = background
         return view
-    
+
     def pos_xyz(self):
         """
-        
+
         Returns:
 
         """
@@ -1438,11 +1438,11 @@ class Atoms(object):
 
     def __select_slice(self, i_dim, i_flag, dist):
         """
-        
+
         Args:
-            i_dim: 
-            i_flag: 
-            dist: 
+            i_dim:
+            i_flag:
+            dist:
 
         Returns:
 
@@ -1460,9 +1460,9 @@ class Atoms(object):
         """
         get all atoms in the boundary around the supercell which have a distance
         to the supercell boundary of less than dist
-        
+
         Args:
-            dist: 
+            dist:
 
         Returns:
 
@@ -1519,7 +1519,7 @@ class Atoms(object):
                       cutoff_radius=None,
                       cutoff=None):
         """
-        
+
         Args:
             num_neighbors (int): number of neighbors
             t_vec (bool): True: compute distance vectors
@@ -1621,10 +1621,10 @@ class Atoms(object):
             # print "i, index: ", i, index
             index = list(index)  # Filter conversion for python 3 compatibility
             nbrs_distances = neighbors[0][i][i_start:len(index)]
-            # if radius:  # reduce neighborlist based on radius 
+            # if radius:  # reduce neighborlist based on radius
             #     new_index_lst, new_dist_lst = [], []
             #     for index_red, dis_red in zip(index, nbrs_distances):
-            #         if dis_red < radius: 
+            #         if dis_red < radius:
             #             new_index_lst.append(index_red)
             #             new_dist_lst.append(dis_red)
             #     index, nbrs_distances= new_index_lst, new_dist_lst
@@ -1669,10 +1669,10 @@ class Atoms(object):
     def get_neighborhood(box, position, num_neighbors=12, t_vec=True, include_boundary=True,
                          tolerance=2, id_list=None, cutoff=None, cutoff_radius=None):
         """
-        
+
         Args:
             position: position in a box whose neighborhood information is analysed
-            num_neighbors: 
+            num_neighbors:
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
             include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
@@ -1711,11 +1711,11 @@ class Atoms(object):
 
     def get_shells(self, id_list=None, max_shell=2, max_num_neighbors=100):
         """
-        
+
         Args:
-            id_list: 
+            id_list:
             max_shell:
-            max_num_neighbors: 
+            max_num_neighbors:
 
         Returns:
 
@@ -1773,10 +1773,10 @@ class Atoms(object):
 
     def get_shell_radius(self, shell=1, id_list=None):
         """
-        
+
         Args:
-            shell: 
-            id_list: 
+            shell:
+            id_list:
 
         Returns:
 
@@ -1815,12 +1815,12 @@ class Atoms(object):
 
     def cluster_analysis(self, id_list, neighbors=None, radius=None, return_cluster_sizes=False):
         """
-        
+
         Args:
-            id_list: 
-            neighbors: 
-            radius: 
-            return_cluster_sizes: 
+            id_list:
+            neighbors:
+            radius:
+            return_cluster_sizes:
 
         Returns:
 
@@ -1853,11 +1853,11 @@ class Atoms(object):
 
     def __probe_cluster(self, c_count, neighbors, id_list):
         """
-        
+
         Args:
-            c_count: 
-            neighbors: 
-            id_list: 
+            c_count:
+            neighbors:
+            id_list:
 
         Returns:
 
@@ -1872,12 +1872,12 @@ class Atoms(object):
     # TODO: combine with corresponding routine in plot3d
     def get_bonds(self, radius=None, max_shells=None, prec=0.1, num_neighbors=20):
         """
-        
+
         Args:
-            radius: 
-            max_shells: 
+            radius:
+            max_shells:
             prec: minimum distance between any two clusters (if smaller considered to be single cluster)
-            num_neighbors: 
+            num_neighbors:
 
         Returns:
 
@@ -1921,12 +1921,12 @@ class Atoms(object):
     # spglib calls
     def get_symmetry(self, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0):
         """
-        
+
         Args:
-            use_magmoms: 
+            use_magmoms:
             use_elements: True or False. If False, chemical elements will be ignored
-            symprec: 
-            angle_tolerance: 
+            symprec:
+            angle_tolerance:
 
         Returns:
 
@@ -2035,10 +2035,10 @@ class Atoms(object):
 
     def get_symmetry_dataset(self, symprec=1e-5, angle_tolerance=-1.0):
         """
-        
+
         Args:
-            symprec: 
-            angle_tolerance: 
+            symprec:
+            angle_tolerance:
 
         Returns:
 
@@ -2053,10 +2053,10 @@ class Atoms(object):
 
     def get_spacegroup(self, symprec=1e-5, angle_tolerance=-1.0):
         """
-        
+
         Args:
-            symprec: 
-            angle_tolerance: 
+            symprec:
+            angle_tolerance:
 
         Returns:
 
@@ -2076,10 +2076,10 @@ class Atoms(object):
 
     def refine_cell(self, symprec=1e-5, angle_tolerance=-1.0):
         """
-        
+
         Args:
-            symprec: 
-            angle_tolerance: 
+            symprec:
+            angle_tolerance:
 
         Returns:
 
@@ -2098,10 +2098,10 @@ class Atoms(object):
 
     def get_primitive_cell(self, symprec=1e-5, angle_tolerance=-1.0):
         """
-        
+
         Args:
-            symprec: 
-            angle_tolerance: 
+            symprec:
+            angle_tolerance:
 
         Returns:
 
@@ -2133,12 +2133,12 @@ class Atoms(object):
 
     def get_ir_reciprocal_mesh(self, mesh, is_shift=np.zeros(3, dtype='intc'), is_time_reversal=True, symprec=1e-5):
         """
-        
+
         Args:
-            mesh: 
-            is_shift: 
-            is_time_reversal: 
-            symprec: 
+            mesh:
+            is_shift:
+            is_time_reversal:
+            symprec:
 
         Returns:
 
@@ -2149,9 +2149,9 @@ class Atoms(object):
 
     def get_equivalent_atoms(self, eps=1e-5):
         """
-        
+
         Args:
-            eps: 
+            eps:
 
         Returns:
 
@@ -2196,7 +2196,7 @@ class Atoms(object):
 
     def get_majority_species(self):
         """
-        
+
         Returns:
 
         """
@@ -2209,9 +2209,9 @@ class Atoms(object):
     def extend(self, other):
         """
         Extend atoms object by appending atoms from *other*. Copied from ase
-        
+
         Args:
-            other: 
+            other:
 
         Returns:
 
@@ -2247,9 +2247,9 @@ class Atoms(object):
     def append(self, atom):
         """
         Append atom to end. Copied from ase
-        
+
         Args:
-            atom: 
+            atom:
 
         Returns:
 
@@ -2262,7 +2262,7 @@ class Atoms(object):
 
     def get_voronoi_volume(self):
         """
-        
+
         Returns:
 
         """
@@ -2715,11 +2715,11 @@ class Atoms(object):
                 self.selective_dynamics[atom_ind] = [True, True, True]
             else:
                 self.selective_dynamics[atom_ind] = [False, False, False]
-                
+
     def get_initial_magnetic_moments(self):
         """
         Get array of initial magnetic moments.
-    
+
         Returns:
             numpy.array()
         """
@@ -2729,7 +2729,7 @@ class Atoms(object):
             spin_lst = [element.tags['spin'] if 'spin' in element.tags.keys() else None
                         for element in self.get_chemical_elements()]
             if any(spin_lst):
-                if (isinstance(spin_lst, str) or 
+                if (isinstance(spin_lst, str) or
                     (isinstance(spin_lst, (list, np.ndarray)) and isinstance(spin_lst[0], str))
                    ) and '[' in list(set(spin_lst))[0]:
                     return np.array(
@@ -3061,11 +3061,11 @@ class Atoms(object):
 
         see ase.io.write for formats.
         kwargs are passed to ase.io.write.
-        
+
         Args:
-            filename: 
-            format: 
-            **kwargs: 
+            filename:
+            format:
+            **kwargs:
 
         Returns:
 
@@ -3079,16 +3079,16 @@ class Atoms(object):
 class _CrystalStructure(Atoms):
     """
     only for historical reasons
-        
+
     Args:
-        element: 
-        BravaisLattice: 
-        BravaisBasis: 
-        LatticeConstants: 
-        Dimension: 
-        relCoords: 
-        PSE: 
-        **kwargs: 
+        element:
+        BravaisLattice:
+        BravaisBasis:
+        LatticeConstants:
+        Dimension:
+        relCoords:
+        PSE:
+        **kwargs:
     """
 
     def __init__(self,
@@ -3155,9 +3155,9 @@ class _CrystalStructure(Atoms):
     # ## private member functions
     def __updateCrystal__(self, pse=None):
         """
-        
+
         Args:
-            pse: 
+            pse:
 
         Returns:
 
@@ -3168,7 +3168,7 @@ class _CrystalStructure(Atoms):
 
     def __updateAmat__(self):  # TODO: avoid multi-call of this function
         """
-        
+
         Returns:
 
         """
@@ -3234,9 +3234,9 @@ class _CrystalStructure(Atoms):
 
     def __updateElementList__(self, pse=None):
         """
-        
+
         Args:
-            pse: 
+            pse:
 
         Returns:
 
@@ -3245,7 +3245,7 @@ class _CrystalStructure(Atoms):
 
     def __updateCoordinates__(self):
         """
-        
+
         Returns:
 
         """
@@ -3285,7 +3285,7 @@ class _CrystalStructure(Atoms):
     # ########################### get commmands ########################
     def get_lattice_types(self):
         """
-        
+
         Returns:
 
         """
@@ -3294,7 +3294,7 @@ class _CrystalStructure(Atoms):
 
     def get_dimension_of_lattice_parameters(self):
         """
-        
+
         Returns:
 
         """
@@ -3307,7 +3307,7 @@ class _CrystalStructure(Atoms):
 
     def get_needed_lattice_parameters(self):
         """
-        
+
         Returns:
 
         """
@@ -3352,7 +3352,7 @@ class _CrystalStructure(Atoms):
 
     def get_basis_types(self):
         """
-        
+
         Returns:
 
         """
@@ -3361,7 +3361,7 @@ class _CrystalStructure(Atoms):
 
     def get_initial_lattice_constants(self):
         """
-        
+
         Returns:
 
         """
@@ -3379,9 +3379,9 @@ class _CrystalStructure(Atoms):
 
     def get_atom_structure(self, rel=True):
         """
-        
+
         Args:
-            rel: 
+            rel:
 
         Returns:
 
@@ -3400,9 +3400,9 @@ class _CrystalStructure(Atoms):
     # #################### set commands #########################
     def set_lattice_constants(self, lattice_constants=None):
         """
-        
+
         Args:
-            lattice_constants: 
+            lattice_constants:
 
         Returns:
 
@@ -3417,9 +3417,9 @@ class _CrystalStructure(Atoms):
 
     def set_element(self, element="Fe"):
         """
-        
+
         Args:
-            element: 
+            element:
 
         Returns:
 
@@ -3429,9 +3429,9 @@ class _CrystalStructure(Atoms):
 
     def set_dimension(self, dim=3):
         """
-        
+
         Args:
-            dim: 
+            dim:
 
         Returns:
 
@@ -3454,9 +3454,9 @@ class _CrystalStructure(Atoms):
 
     def set_lattice_type(self, name_lattice='cubic'):
         """
-        
+
         Args:
-            name_lattice: 
+            name_lattice:
 
         Returns:
 
@@ -3475,9 +3475,9 @@ class _CrystalStructure(Atoms):
 
     def set_basis_type(self, name_basis='primitive'):
         """
-        
+
         Args:
-            name_basis: 
+            name_basis:
 
         Returns:
 
@@ -3490,7 +3490,7 @@ class _CrystalStructure(Atoms):
 
     def atoms(self):
         """
-        
+
         Returns:
 
         """
@@ -3685,9 +3685,9 @@ def pyiron_to_pymatgen(pyiron_obj):
 
 def ovito_to_pyiron(ovito_obj):
     """
-    
+
     Args:
-        ovito_obj: 
+        ovito_obj:
 
     Returns:
 
@@ -3701,9 +3701,9 @@ def ovito_to_pyiron(ovito_obj):
 
 def pyiron_to_ovito(atoms):
     """
-    
+
     Args:
-        atoms: 
+        atoms:
 
     Returns:
 
@@ -3718,9 +3718,9 @@ def pyiron_to_ovito(atoms):
 def string2symbols(s):
     """
     Convert string to list of chemical symbols.
-    
+
     Args:
-        s: 
+        s:
 
     Returns:
 
@@ -3793,9 +3793,9 @@ def symbols2numbers(symbols):
 
 def string2vector(v):
     """
-    
+
     Args:
-        v: 
+        v:
 
     Returns:
 
@@ -3812,10 +3812,10 @@ def string2vector(v):
 def default(data, dflt):
     """
     Helper function for setting default values.
-    
+
     Args:
-        data: 
-        dflt: 
+        data:
+        dflt:
 
     Returns:
 

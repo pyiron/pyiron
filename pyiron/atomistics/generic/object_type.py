@@ -37,13 +37,13 @@ class ObjectType(object):
         """
         The ObjectType class is used to create light weight pyiron object that do not represent jobs (i.e., they do
         not have a status, etc.)
-        
+
         Args:
-            cls: The JobType class which contains a list of all available JOB_TYPES these are the objects which 
+            cls: The JobType class which contains a list of all available JOB_TYPES these are the objects which
                  can be restored from an HDF5 File.
             class_name: The specific class name of the class this object belongs to.
             project: Project object (defines path where job will be created and stored)
-            job_name (str): name of the job (must be unique within this project path needed only if object is stored in 
+            job_name (str): name of the job (must be unique within this project path needed only if object is stored in
                             db)
 
         Returns:

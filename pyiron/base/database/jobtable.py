@@ -27,7 +27,7 @@ s = Settings()
 def _job_dict(database, sql_query, user, project_path, recursive, job=None, sub_job_name="%", element_lst=None):
     """
     Internal function to access the database from the project directly.
-    
+
     Args:
         database (DatabaseAccess): Database object
         sql_query (str): SQL query to enter a more specific request
@@ -105,7 +105,7 @@ def _job_dict(database, sql_query, user, project_path, recursive, job=None, sub_
 def get_db_columns(database):
     """
     Get column names
-    
+
     Args:
         database (DatabaseAccess): Database object
 
@@ -135,7 +135,7 @@ def job_table(database, sql_query, user, project_path, recursive=True, columns=N
               all_columns=False, sort_by="id", max_colwidth=200, element_lst=None):
     """
     Access the job_table
-    
+
     Args:
         database (DatabaseAccess): Database object
         sql_query (str): SQL query to enter a more specific request
@@ -230,7 +230,7 @@ def get_job_ids(database, sql_query, user, project_path, recursive=True):
 def get_child_ids(database, sql_query, user, project_path, job_specifier, status=None):
     """
     Get the childs for a specific job
-    
+
     Args:
         database (DatabaseAccess): Database object
         sql_query (str): SQL query to enter a more specific request
@@ -255,7 +255,7 @@ def get_child_ids(database, sql_query, user, project_path, job_specifier, status
 def get_job_id(database, sql_query, user, project_path, job_specifier):
     """
     get the job_id for job named job_name in the local project path from database
-    
+
     Args:
         database (DatabaseAccess): Database object
         sql_query (str): SQL query to enter a more specific request

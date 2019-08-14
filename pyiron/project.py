@@ -371,11 +371,11 @@ class Project(ProjectCore):
     @staticmethod
     def create_structure(element, bravais_basis, lattice_constant):
         """
-        
+
         Args:
-            element: 
-            bravais_basis: 
-            lattice_constant: 
+            element:
+            bravais_basis:
+            lattice_constant:
 
         Returns:
 
@@ -516,7 +516,7 @@ class Project(ProjectCore):
     @staticmethod
     def create_element(parent_element, new_element_name=None, spin=None, potential_file=None):
         """
-        
+
         Args:
             parent_element (str, int): The parent element eq. "N", "O", "Mg" etc.
             new_element_name (str): The name of the new parent element (can be arbitrary)
@@ -549,7 +549,7 @@ class Project(ProjectCore):
     # Graphical user interfaces
     def gui(self):
         """
-        
+
         Returns:
 
         """

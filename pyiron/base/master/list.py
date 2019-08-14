@@ -10,7 +10,7 @@ from pyiron.base.master.generic import GenericMaster
 from pyiron.base.master.submissionstatus import SubmissionStatus
 
 """
-The ListMaster behaves like a list, just for job objects. 
+The ListMaster behaves like a list, just for job objects.
 """
 
 __author__ = "Jan Janssen"
