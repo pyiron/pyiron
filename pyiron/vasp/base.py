@@ -428,6 +428,9 @@ class VaspBase(GenericDFTJob):
                 if 'WARNING in EDDRMM: call to ZHEGV failed, returncode =' in l:
                     self.status.not_converged = True
                     break
+                elif 'ZBRENT: fatal error in bracketing' in l:
+                    self.status.not_converged = True
+                    break
 
     @staticmethod
     def _decompress_files_in_directory(directory):
