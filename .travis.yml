@@ -11,7 +11,8 @@ matrix:
         - python .ci_support/pyironconfig.py
         - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
       script:
-        - coverage run --omit pyiron/_version.py -m unittest discover tests
+        - coverage run -m unittest discover tests
+        - coverage combine
         # - ./.ci_support/build_notebooks_on_master.sh
 
     - name: test_linux_3_7
@@ -24,7 +25,8 @@ matrix:
         - python .ci_support/pyironconfig.py
         - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
       script:
-        - coverage run --omit pyiron/_version.py -m unittest discover tests
+        - coverage run -m unittest discover tests
+        - coverage combine
         # - ./.ci_support/build_notebooks_on_master.sh
       after_success:
         - coveralls
@@ -55,7 +57,8 @@ matrix:
         - python .ci_support/pyironconfig.py
         - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
       script:
-        - coverage run --omit pyiron/_version.py -m unittest discover tests
+        - coverage run -m unittest discover tests
+        - coverage combine
         # - ./.ci_support/build_notebooks_on_master.sh
 
     - name: test_osx_3_7
@@ -68,7 +71,8 @@ matrix:
         - python .ci_support/pyironconfig.py
         - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
       script:
-        - coverage run --omit pyiron/_version.py -m unittest discover tests
+        - coverage run -m unittest discover tests
+        - coverage combine
         # - ./.ci_support/build_notebooks_on_master.sh
 
     - stage: documentation
