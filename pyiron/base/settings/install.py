@@ -68,7 +68,9 @@ def _write_config_file(file_name='~/.pyiron', project_path='~/pyiron/projects', 
         project_path (str): the location where pyiron is going to store the pyiron projects
         resource_path (str): the location where the resouces (executables, potentials, ...) for pyiron are stored.
     """
-    config_file = os.path.normpath(os.path.abspath(os.path.expanduser(file_name)))
+    config_file   = os.path.normpath(os.path.abspath(os.path.expanduser(file_name)))
+    project_path  = os.path.normpath(os.path.abspath(os.path.expanduser(project_path)))
+    resource_path = os.path.normpath(os.path.abspath(os.path.expanduser(resource_path)))
     if not os.path.isfile(config_file):
         with open(config_file, 'w') as cf:
             cf.writelines(['[DEFAULT]\n',
