@@ -1154,47 +1154,6 @@ class VaspBase(GenericDFTJob):
         else:
             self.restart_file_list.append(posixpath.join(path, "WAVECAR"))
 
-    def copy_chgcar(self, old_vasp_job):
-        """
-        Copy CHGCAR from previous VASP calcualtion to the new VASP job.
-        (Sets ICHARG = 1)
-
-        Args:
-            old_vasp_job (pyiron.vasp.vasp.Vasp): Finished Vasp job instance
-
-        """
-        self.copy_file(old_vasp_job)
-        self.input.incar["ICHARG"] = 1
-
-    def copy_wavecar(self, old_vasp_job):
-        """
-        Copy WAVECAR from previous VASP calculation to the new VASP job.
-        (Sets ICHARG = 1)
-
-        Args:
-            (pyiron.vasp.vasp.Vasp): Finished Vasp job instance
-
-        """
-        self.copy_file(old_vasp_job, filename="WAVECAR")
-        self.input.incar["ISTART"] = 1
-
-    def copy_file(self, old_vasp_job, filename="CHGCAR"):
-        """
-        Copy a file from a previous vasp job
-
-        Args:
-            old_vasp_job (pyiron.vasp.vasp.Vasp): Finished Vasp job instance
-            filename (str): Destination to copy the file
-
-        """
-        if not isinstance(old_vasp_job, VaspBase):
-            raise ValueError("old_vasp_job is not Vasp job type")
-        old_path = os.path.join(old_vasp_job.working_directory, filename)
-        new_path = os.path.join(self.working_directory, filename)
-        if not os.path.isdir(self.working_directory):
-            os.makedirs(self.working_directory)
-        copyfile(old_path, new_path)
-
     def set_spin_constraint(self, direction=False, norm=False):
         """
         Setting thr spin constraints
