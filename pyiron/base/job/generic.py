@@ -45,7 +45,7 @@ class GenericJob(JobCore):
     Generic Job class extends the JobCore class with all the functionality to run the job object. From this class
     all specific Hamiltonians are derived. Therefore it should contain the properties/routines common to all jobs.
     The functions in this module should be as generic as possible.
-     
+
     Args:
         project (ProjectHDFio): ProjectHDFio instance which points to the HDF5 file the job is stored in
         job_name (str): name of the job, which has to be unique within the project
@@ -171,7 +171,7 @@ class GenericJob(JobCore):
         """
         Get the version of the hamiltonian, which is also the version of the executable unless a custom executable is
         used.
-        
+
         Returns:
             str: version number
         """
@@ -189,7 +189,7 @@ class GenericJob(JobCore):
         """
         Set the version of the hamiltonian, which is also the version of the executable unless a custom executable is
         used.
-        
+
         Args:
             new_version (str): version
         """
@@ -200,7 +200,7 @@ class GenericJob(JobCore):
     def executable(self):
         """
         Get the executable used to run the job - usually the path to an external executable.
-        
+
         Returns:
             (str/pyiron.base.job.executable.Executable): exectuable path
         """
@@ -211,7 +211,7 @@ class GenericJob(JobCore):
     def executable(self, exe):
         """
         Set the executable used to run the job - usually the path to an external executable.
-        
+
         Args:
             exe (str): executable path, if no valid path is provided an executable is chosen based on version.
         """
@@ -281,7 +281,7 @@ class GenericJob(JobCore):
     def restart_file_list(self, filenames):
         """
         Append new files to the restart file list - the list of files which are used to restart the calculation from.
-        
+
         Args:
             filenames (list):
         """
@@ -513,9 +513,9 @@ class GenericJob(JobCore):
         """
         if os.path.isabs(file):
             self.restart_file_list.append(file)
-        else: 
+        else:
             self.restart_file_list.append(file)
-    
+
     def copy_template(self, project, new_job_name=None):
         """
         Copy the content of the job including the HDF5 file but without the output data to a new location
@@ -544,7 +544,7 @@ class GenericJob(JobCore):
                     if pinfo['cwd'] is not None and pinfo['cwd'].startswith(self.working_directory):
                         job_process = psutil.Process(pinfo['pid'])
                         job_process.kill()
-    
+
     def remove_child(self):
         """
         internal function to remove command that removes also child jobs.
@@ -552,7 +552,7 @@ class GenericJob(JobCore):
         """
         self._kill_child()
         super(GenericJob, self).remove_child()
-    
+
     def kill(self):
         if self.status.running or self.status.submitted:
             master_id, parent_id = self.master_id, self.parent_id
@@ -561,7 +561,7 @@ class GenericJob(JobCore):
             self.master_id, self.parent_id = master_id, parent_id
         else:
             raise ValueError('The kill() function is only available during the execution of the job.')
-    
+
     def validate_ready_to_run(self):
         """
         Validate that the calculation is ready to be executed. By default no generic checks are performed, but one could
@@ -590,7 +590,7 @@ class GenericJob(JobCore):
         """
         This is the main run function, depending on the job status ['initialized', 'created', 'submitted', 'running',
         'collect','finished', 'refresh', 'suspended'] the corresponding run mode is chosen.
-        
+
         Args:
             run_again (bool): Delete the existing job and run the simulation again.
             repair (bool): Set the job status to created and run the simulation again.
@@ -650,7 +650,7 @@ class GenericJob(JobCore):
         use subprocess.check_output()
         """
         self.run_static()
-        
+
     def run_static(self):
         """
         The run static function is called by run to execute the simulation.
@@ -773,7 +773,7 @@ class GenericJob(JobCore):
         """
         The run if manually function is called by run if the user decides to execute the simulation manually - this
         might be helpful to debug a new job type or test updated executables.
-        
+
         Args:
             _manually_print (bool): Print explanation how to run the simulation manually - default=True.
         """

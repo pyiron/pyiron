@@ -54,7 +54,7 @@ class ProjectGUI:
 
     def create_widgets(self):
         """
-        
+
         Returns:
 
         """
@@ -82,7 +82,7 @@ class ProjectGUI:
 
     def connect_widgets(self):
         """
-        
+
         Returns:
 
         """
@@ -92,7 +92,7 @@ class ProjectGUI:
 
     def display(self):
         """
-        
+
         Returns:
 
         """
@@ -101,9 +101,9 @@ class ProjectGUI:
 
     def plot_array(self, val):
         """
-        
+
         Args:
-            val: 
+            val:
 
         Returns:
 
@@ -146,9 +146,9 @@ class ProjectGUI:
 
     def on_value_change(self, change):
         """
-        
+
         Args:
-            change: 
+            change:
 
         Returns:
 
@@ -165,9 +165,9 @@ class ProjectGUI:
 
     def get_rel_path(self, path):
         """
-        
+
         Args:
-            path: 
+            path:
 
         Returns:
 
@@ -177,9 +177,9 @@ class ProjectGUI:
     @staticmethod
     def dict_to_str(my_dict):
         """
-        
+
         Args:
-            my_dict: 
+            my_dict:
 
         Returns:
 
@@ -199,7 +199,7 @@ class ProjectGUI:
 
     def refresh_view(self):
         """
-        
+
         Returns:
 
         """
@@ -261,9 +261,9 @@ class ProjectGUI:
 
     def update_project(self, name):
         """
-        
+
         Args:
-            name: 
+            name:
 
         Returns:
 
@@ -277,7 +277,7 @@ class ProjectGUI:
 
     def _move_up(self):
         """
-        
+
         Returns:
 
         """
@@ -293,7 +293,7 @@ class ProjectGUI:
 
     def move_up(self):
         """
-        
+
         Returns:
 
         """

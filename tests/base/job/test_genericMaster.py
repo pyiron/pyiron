@@ -25,7 +25,7 @@ class TestGenericJob(unittest.TestCase):
     #     self.assertTrue(job_ser_reload['job_single/input/input_inp'])
     #     job_ser.remove()
     #     ham.remove()
-    # 
+    #
     # def test_generic_jobs_ex(self):
     #     ham = self.project.create_job("ExampleJob", "job_single_ex")
     #     ham.to_hdf()

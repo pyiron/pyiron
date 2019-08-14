@@ -231,8 +231,8 @@ class JobStatus(object):
             super(JobStatus, self).__setattr__(name, value)
 
     def __dir__(self):
-        return list(self._status_dict.keys())     
-   
+        return list(self._status_dict.keys())
+
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             return other._status_dict == self._status_dict
