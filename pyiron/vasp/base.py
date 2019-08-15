@@ -1085,7 +1085,7 @@ class VaspBase(GenericDFTJob):
         Append charge density file (CHGCAR)
 
         Args:
-            job_specifier (str, int): name of the job or job ID
+            job_specifier (str/int): name of the job or job ID
             path (str): path to CHGCAR file
         """
         if job_specifier is None and path is None:
@@ -1142,7 +1142,7 @@ class VaspBase(GenericDFTJob):
         Append wave function file (WAVECAR)
 
         Args:
-            job_specifier (str, int): name of the job or job ID
+            job_specifier (str/int): name of the job or job ID
             path (str): path to WAVECAR file
         """
         if job_specifier is None and path is None:
