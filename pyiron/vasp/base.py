@@ -1046,7 +1046,7 @@ class VaspBase(GenericDFTJob):
         return new_ham
 
     def restart_from_charge_density(self, snapshot=-1, job_name=None, job_type=None, icharg=None,
-                                    self_consistent_calc=False):
+                                    self_consistent_calc=None):
         """
         Restart a new job created from an existing Vasp calculation by reading the charge density.
 
@@ -1065,15 +1065,37 @@ class VaspBase(GenericDFTJob):
             try:
                 new_ham.restart_file_list.append(posixpath.join(self.working_directory, "CHGCAR"))
             except IOError:
-                self.logger.warn(msg="A CHGCAR from job: {} is not generated and therefore it can't be read.".
-                                 format(self.job_name))
+                self.logger.warn(msg="A CHGCAR from job: {} is not generated and therefore it can't be read.".format(self.job_name))
+            if self_consistent_calc:
+                icharg = 1
+            elif self_consistent_calc is not None:
+                icharg = 11
             if icharg is None:
-                new_ham.input.incar["ICHARG"] = 1
-                if not self_consistent_calc:
-                    new_ham.input.incar["ICHARG"] = 11
-            else:
-                new_ham.input.incar["ICHARG"] = icharg
-        return new_ham
+                if "ICHARG" in self.input.incar.keys() and int(self.input.incar["ICHARG"]) > 9:
+                    icharg = 11
+                else:
+                    icharg = 1
+            new_ham.input.incar["ICHARG"] = icharg
+            return new_ham
+        else:
+            return new_ham
+
+    def append_charge_density(self, job_specifier=None, path=None):
+        """
+        Append charge density file (CHGCAR)
+
+        Args:
+            job_specifier (str/int): name of the job or job ID
+            path (str): path to CHGCAR file
+        """
+        if job_specifier is None and path is None:
+            raise ValueError("Either 'job_specifier' or 'path' has to be given!")
+        elif job_specifier is not None:
+            path = self.project.inspect(job_specifier=job_specifier).working_directory
+        if os.path.basename(path) == "CHGCAR":
+            self.restart_file_list.append(path)
+        else:
+            self.restart_file_list.append(posixpath.join(path, "CHGCAR"))
 
     def restart_from_wave_and_charge(self, snapshot=-1, job_name=None, job_type=None, icharg=None,
                                     self_consistent_calc=False, istart=1):
@@ -1154,46 +1176,22 @@ class VaspBase(GenericDFTJob):
             new_ham.input.incar["ISTART"] = istart
         return new_ham
 
-    def copy_chgcar(self, old_vasp_job):
+    def append_wave_function(self, job_specifier=None, path=None):
         """
-        Copy CHGCAR from previous VASP calcualtion to the new VASP job.
-        (Sets ICHARG = 1)
+        Append wave function file (WAVECAR)
 
         Args:
-            old_vasp_job (pyiron.vasp.vasp.Vasp): Finished Vasp job instance
-
+            job_specifier (str/int): name of the job or job ID
+            path (str): path to WAVECAR file
         """
-        self.copy_file(old_vasp_job)
-        self.input.incar["ICHARG"] = 1
-
-    def copy_wavecar(self, old_vasp_job):
-        """
-        Copy WAVECAR from previous VASP calculation to the new VASP job.
-        (Sets ICHARG = 1)
-
-        Args:
-            (pyiron.vasp.vasp.Vasp): Finished Vasp job instance
-
-        """
-        self.copy_file(old_vasp_job, filename="WAVECAR")
-        self.input.incar["ISTART"] = 1
-
-    def copy_file(self, old_vasp_job, filename="CHGCAR"):
-        """
-        Copy a file from a previous vasp job
-
-        Args:
-            old_vasp_job (pyiron.vasp.vasp.Vasp): Finished Vasp job instance
-            filename (str): Destination to copy the file
-
-        """
-        if not isinstance(old_vasp_job, VaspBase):
-            raise ValueError("old_vasp_job is not Vasp job type")
-        old_path = os.path.join(old_vasp_job.working_directory, filename)
-        new_path = os.path.join(self.working_directory, filename)
-        if not os.path.isdir(self.working_directory):
-            os.makedirs(self.working_directory)
-        copyfile(old_path, new_path)
+        if job_specifier is None and path is None:
+            raise ValueError("Either 'job_specifier' or 'path' has to be given!")
+        elif job_specifier is not None:
+            path = self.project.inspect(job_specifier=job_specifier).working_directory
+        if os.path.basename(path) == "WAVECAR":
+            self.restart_file_list.append(path)
+        else:
+            self.restart_file_list.append(posixpath.join(path, "WAVECAR"))
 
     def set_spin_constraint(self, direction=False, norm=False):
         """

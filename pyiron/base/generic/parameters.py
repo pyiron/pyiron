@@ -294,6 +294,15 @@ class GenericParameters(PyironObject):
         self._read_only_check_dict(new_dict=new_dict)
         self._dataset = new_dict
 
+    def keys(self):
+        """
+        Return keys of GenericParameters object
+        """
+        if self.val_only:
+            return []
+        else:
+            return self._dataset["Parameter"]
+
     def read_input(self, file_name, ignore_trigger=None):
         """
         Read input file and store the data in GenericParameters - this overwrites the current parameter settings

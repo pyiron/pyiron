@@ -118,9 +118,9 @@ def get_energy_int(job):
 
 def get_f_states(job):
     if 'occ_matrix' in job['output/electronic_structure'].list_nodes():
-        return {'f_states': job['output/electronic_structure/occ_matrix'].flatten()}
+        return {'f_states': job['output/electronic_structure/occ_matrix'].flatten().tolist()}
     elif 'occupancy_matrix' in job['output/electronic_structure'].list_nodes():
-        return {'f_states': job['output/electronic_structure/occupancy_matrix'].flatten()}
+        return {'f_states': job['output/electronic_structure/occupancy_matrix'].flatten().tolist()}
     else:
         print('get_f_states(): ', job.job_name, job.status)
         return {'f_states': [0.0]}
