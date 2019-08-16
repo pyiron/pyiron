@@ -80,6 +80,7 @@ class VaspBase(GenericDFTJob):
         self._output_parser = Output()
         self._potential = VaspPotentialSetter([])
         self._compress_by_default = True
+        self._eddrmm = "not_converged"
         s.publication_add(self.publication)
 
     @property
@@ -424,10 +425,11 @@ class VaspBase(GenericDFTJob):
                 lines = f.readlines()
             # If the wrong convergence algorithm is chosen, we get the following error.
             # https://cms.mpi.univie.ac.at/vasp-forum/viewtopic.php?f=4&t=17071
-            for l in lines:
-                if 'WARNING in EDDRMM: call to ZHEGV failed, returncode =' in l:
-                    self.status.not_converged = True
-                    break
+            if self._eddrmm == "not_converged":
+                for l in lines:
+                    if 'WARNING in EDDRMM: call to ZHEGV failed, returncode =' in l:
+                        self.status.not_converged = True
+                        break
 
     def copy_hamiltonian(self, job_name):
         """
@@ -624,6 +626,29 @@ class VaspBase(GenericDFTJob):
                 raise ValueError('Spin constraints are only avilable for non collinear calculations.')
         else:
             s.logger.debug('No magnetic moments')
+
+    def _set_eddrmm(self, status):
+        """
+        Sets the way, how EDDRMM warning is handled.
+
+        Args:
+            status (str): new status of EDDRMM handling (can be 'not_converged' or 'ignore')
+
+        Returns:
+        """
+        if status == "not_converged" or status == "ignore":
+            self._eddrmm = status
+        else:
+            raise ValueError
+
+    def _get_eddrmm(self):
+        """
+        Returns the status of EDDRMM handling.
+
+        Returns:
+            (str) status of EDDRMM
+        """
+        return self._eddrmm
 
     def set_coulomb_interactions(self, interaction_type=2, ldau_print=True):
         """
