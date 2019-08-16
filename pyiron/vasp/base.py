@@ -425,11 +425,19 @@ class VaspBase(GenericDFTJob):
                 lines = f.readlines()
             # If the wrong convergence algorithm is chosen, we get the following error.
             # https://cms.mpi.univie.ac.at/vasp-forum/viewtopic.php?f=4&t=17071
-            if self._eddrmm == "not_converged":
+            if not self._eddrmm = "ignore":
                 for l in lines:
                     if 'WARNING in EDDRMM: call to ZHEGV failed, returncode =' in l:
-                        self.status.not_converged = True
-                        break
+                        if self._eddrmm == "not_converged":
+                            self.status.not_converged = True
+                            break
+                        elif self._eddrmm == "restart":
+                            self.status.not_converged = True
+                            if not self.input.incar["ALGO"].lower() == 'normal':
+                                ham_new = self.copy_hamiltonian(self.name + "_normal")
+                                ham_new.input.incar["ALGO"] = "Normal"
+                                ham_new.run()
+                            break
 
     def copy_hamiltonian(self, job_name):
         """
@@ -632,11 +640,11 @@ class VaspBase(GenericDFTJob):
         Sets the way, how EDDRMM warning is handled.
 
         Args:
-            status (str): new status of EDDRMM handling (can be 'not_converged' or 'ignore')
+            status (str): new status of EDDRMM handling (can be 'not_converged', 'ignore', or 'restart')
 
         Returns:
         """
-        if status == "not_converged" or status == "ignore":
+        if status == "not_converged" or status == "ignore" or status == "restart":
             self._eddrmm = status
         else:
             raise ValueError
