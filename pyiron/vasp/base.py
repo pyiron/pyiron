@@ -429,6 +429,19 @@ class VaspBase(GenericDFTJob):
                     self.status.not_converged = True
                     break
 
+    def copy_hamiltonian(self, job_name):
+        """
+        Copies a job to new one with a different name.
+
+        Args:
+            job_name (str): Job name
+
+        Returns:
+            new_ham (vasp.vasp.Vasp instance): New job
+
+        """
+        return self.restart(snapshot=0, job_name=job_name)
+
     @staticmethod
     def _decompress_files_in_directory(directory):
         files = os.listdir(directory)
