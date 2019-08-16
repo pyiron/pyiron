@@ -80,7 +80,6 @@ class VaspBase(GenericDFTJob):
         self._output_parser = Output()
         self._potential = VaspPotentialSetter([])
         self._compress_by_default = True
-        self._eddrmm = "not_converged"
         s.publication_add(self.publication)
 
     @property
@@ -425,17 +424,18 @@ class VaspBase(GenericDFTJob):
                 lines = f.readlines()
             # If the wrong convergence algorithm is chosen, we get the following error.
             # https://cms.mpi.univie.ac.at/vasp-forum/viewtopic.php?f=4&t=17071
-            if not self._eddrmm == "ignore":
+            if not self.input._eddrmm == "ignore":
                 for l in lines:
                     if 'WARNING in EDDRMM: call to ZHEGV failed, returncode =' in l:
-                        if self._eddrmm == "not_converged":
+                        if self.input._eddrmm == "not_converged":
                             self.status.not_converged = True
                             break
-                        elif self._eddrmm == "restart":
+                        elif self.input._eddrmm == "restart":
                             self.status.not_converged = True
                             if not self.input.incar["ALGO"].lower() == 'normal':
                                 ham_new = self.copy_hamiltonian(self.name + "_normal")
                                 ham_new.input.incar["ALGO"] = "Normal"
+                                ham_new._set_eddrmm()
                                 ham_new.run()
                             break
 
@@ -635,7 +635,7 @@ class VaspBase(GenericDFTJob):
         else:
             s.logger.debug('No magnetic moments')
 
-    def _set_eddrmm(self, status):
+    def _set_eddrmm(self, status="not_converged"):
         """
         Sets the way, how EDDRMM warning is handled.
 
@@ -645,7 +645,7 @@ class VaspBase(GenericDFTJob):
         Returns:
         """
         if status == "not_converged" or status == "ignore" or status == "restart":
-            self._eddrmm = status
+            self.input._eddrmm = status
         else:
             raise ValueError
 
@@ -656,7 +656,7 @@ class VaspBase(GenericDFTJob):
         Returns:
             (str) status of EDDRMM
         """
-        return self._eddrmm
+        return self.input._eddrmm
 
     def set_coulomb_interactions(self, interaction_type=2, ldau_print=True):
         """
@@ -1304,6 +1304,8 @@ class Input:
         self.kpoints = Kpoints(table_name="kpoints")
         self.potcar = Potcar(table_name="potcar")
 
+        self._eddrmm = "not_converged"
+
     def write(self, structure, modified_elements, directory=None):
         """
         Writes all the input files to a specified directory
@@ -1338,6 +1340,9 @@ class Input:
             self.kpoints.to_hdf(hdf5_input)
             self.potcar.to_hdf(hdf5_input)
 
+            vasp_dict = {"eddrmm_handling": self._eddrmm}
+            hdf5_input["vasp_dict"] = vasp_dict
+
     def from_hdf(self, hdf):
         """
         Reads the attributes and reconstructs the object from a hdf file
@@ -1349,6 +1354,9 @@ class Input:
             self.incar.from_hdf(hdf5_input)
             self.kpoints.from_hdf(hdf5_input)
             self.potcar.from_hdf(hdf5_input)
+
+            vasp_dict = hdf5_input["vasp_dict"]
+            self._eddrmm = vasp_dict["eddrmm_handling"]
 
 
 class Output:
