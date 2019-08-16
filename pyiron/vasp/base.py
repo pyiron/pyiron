@@ -1354,9 +1354,9 @@ class Input:
             self.incar.from_hdf(hdf5_input)
             self.kpoints.from_hdf(hdf5_input)
             self.potcar.from_hdf(hdf5_input)
-
-            vasp_dict = hdf5_input["vasp_dict"]
-            self._eddrmm = vasp_dict["eddrmm_handling"]
+            if "vasp_dict" in hdf5_input.list_nodes():
+                vasp_dict = hdf5_input["vasp_dict"]
+                self._eddrmm = vasp_dict["eddrmm_handling"]
 
 
 class Output:
