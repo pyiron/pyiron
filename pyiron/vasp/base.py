@@ -425,7 +425,7 @@ class VaspBase(GenericDFTJob):
                 lines = f.readlines()
             # If the wrong convergence algorithm is chosen, we get the following error.
             # https://cms.mpi.univie.ac.at/vasp-forum/viewtopic.php?f=4&t=17071
-            if not self._eddrmm = "ignore":
+            if not self._eddrmm == "ignore":
                 for l in lines:
                     if 'WARNING in EDDRMM: call to ZHEGV failed, returncode =' in l:
                         if self._eddrmm == "not_converged":
