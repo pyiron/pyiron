@@ -73,9 +73,10 @@ class Settings(with_metaclass(Singleton)):
                                'sql_type': 'SQLite',
                                'sql_user_key': None,
                                'sql_database': None}
-        environment_keys = os.environ.keys()
         if 'PYIRONCONFIG' in environment_keys:
             config_file = os.environ['PYIRONCONFIG']
+        elif os.path.isfile(os.path.expanduser(os.path.join("~", ".pyiron"))):
+            config_file = os.path.expanduser(os.path.join("~", ".pyiron"))
         else:
             user_input = None
             while user_input not in ['yes', 'no']:
