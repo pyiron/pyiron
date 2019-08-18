@@ -74,8 +74,8 @@ class Settings(with_metaclass(Singleton)):
                                'sql_user_key': None,
                                'sql_database': None}
         environment_keys = os.environ.keys()
-	      if 'PYIRONCONFIG' in environment_keys:
-	          config_file = environment_keys['PYIRONCONFIG']
+        if 'PYIRONCONFIG' in environment_keys:
+            config_file = environment_keys['PYIRONCONFIG']
         elif os.path.isfile(os.path.expanduser(os.path.join("~", ".pyiron"))):
             config_file = os.path.expanduser(os.path.join("~", ".pyiron"))
         else:
