@@ -1231,11 +1231,12 @@ class VaspBase(GenericDFTJob):
     def set_spin_constraint(self, lamb, rwigs_dict, direction=False, norm=False):
         """
         Sets spin constrains including 'LAMBDA' and 'RWIGS'.
+
         Args:
             lamb (float): LAMBDA tag
-            rwigs_dict (dict): Dictionary of species type and corresponding radius.
-            direction (bool): (True/False) constraine spin direction .
-            norm (bool): (True/False) constraine spin norm (magnitude).
+            rwigs_dict (dict): Dictionary of species and corresponding radii.
+            direction (bool): (True/False) constrain spin direction.
+            norm (bool): (True/False) constrain spin norm (magnitude).
 
         Returns:
         """
