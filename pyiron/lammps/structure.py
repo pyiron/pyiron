@@ -41,9 +41,9 @@ class UnfoldingPrism(Prism):
     x must be within [xlo, xhi).
 
     Args:
-        cell: 
-        pbc: 
-        digits: 
+        cell:
+        pbc:
+        digits:
     """
     def __init__(self, cell, pbc=(True, True, True), digits=10):
         # Temporary fix. Since the arguments for the constructor have changed, try to see if it is compatible with
@@ -104,7 +104,7 @@ class UnfoldingPrism(Prism):
             apre[2, 0] -= np.sign(n3) * apre[0, 0]
             n3 -= np.sign(n3)
         self.ns = [n1, n2, n3]
-        
+
         d_a = apre[0, 0]/2 - apre[1,0]
         if np.abs(d_a) < eps:
             if d_a < 0:
@@ -123,7 +123,7 @@ class UnfoldingPrism(Prism):
     def unfold_cell(self, cell):
         """
         Unfold LAMMPS cell to original
-        
+
         Args:
             cell: LAMMPS cell,
 
@@ -141,9 +141,9 @@ class UnfoldingPrism(Prism):
     def pos_to_lammps(self, position):
         """
         Rotate an ase-cell position to the lammps cell orientation
-        
+
         Args:
-            position: 
+            position:
 
         Returns:
             tuple of float.
@@ -166,7 +166,7 @@ class LammpsStructure(GenericParameters):
     """
 
     Args:
-        input_file_name: 
+        input_file_name:
     """
     def __init__(self, input_file_name=None):
         super(LammpsStructure, self).__init__(input_file_name=input_file_name,
@@ -191,7 +191,7 @@ class LammpsStructure(GenericParameters):
     @property
     def structure(self):
         """
-        
+
         Returns:
 
         """
@@ -200,9 +200,9 @@ class LammpsStructure(GenericParameters):
     @structure.setter
     def structure(self, structure):
         """
-        
+
         Args:
-            structure: 
+            structure:
 
         Returns:
 
@@ -221,7 +221,7 @@ class LammpsStructure(GenericParameters):
     @property
     def el_eam_lst(self):
         """
-        
+
         Returns:
 
         """
@@ -230,9 +230,9 @@ class LammpsStructure(GenericParameters):
     @el_eam_lst.setter
     def el_eam_lst(self, el_eam_lst):
         """
-        
+
         Args:
-            el_eam_lst: 
+            el_eam_lst:
 
         Returns:
 
@@ -241,7 +241,7 @@ class LammpsStructure(GenericParameters):
 
     def load_default(self):
         """
-        
+
         Returns:
 
         """
@@ -254,7 +254,7 @@ class LammpsStructure(GenericParameters):
 
     def simulation_cell(self):
         """
-        
+
         Returns:
 
         """
@@ -279,7 +279,7 @@ class LammpsStructure(GenericParameters):
 
     def structure_bond(self):
         """
-        
+
         Returns:
 
         """
@@ -465,9 +465,9 @@ class LammpsStructure(GenericParameters):
     def structure_charge(self):
         """
         Create atom structure including the atom charges.
-        
+
         By convention the LAMMPS atom type numbers are chose alphabetically for the chemical species.
-        
+
         Returns: LAMMPS readable structure.
 
         """
@@ -478,7 +478,7 @@ class LammpsStructure(GenericParameters):
         cell_dimesions = self.simulation_cell()
 
         masses = 'Masses\n\n'
-        
+
         for ind, obj in enumerate(self._structure.get_species_objects()):
             masses += '{0:3d} {1:f}'.format(ind+1, obj.AtomicMass) + '\n'
 
@@ -501,11 +501,11 @@ class LammpsStructure(GenericParameters):
                 id_atom + 1, id_el, el_charge_lst[id_atom], c[0], c[1], c[2]) + '\n'
         return atomtypes + '\n' + cell_dimesions + '\n' + masses + '\n' + atoms + '\n'
 
- 
+
     def structure_atomic(self):
         """
         Write routine to create atom structure static file that can be loaded by LAMMPS
-        
+
         Returns:
 
         """
@@ -549,7 +549,7 @@ class LammpsStructure(GenericParameters):
     def rotate_positions(self, structure):
         """
         Rotate all atomic positions in given structure according to new Prism cell
-        
+
         Args:
             structure: Atoms-like object. Should has .positions attribute
 

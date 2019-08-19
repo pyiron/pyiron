@@ -32,8 +32,8 @@ class ConvergenceVolume(SerialMaster):
     """
 
     Args:
-        project: 
-        job_name: 
+        project:
+        job_name:
     """
     def __init__(self, project, job_name):
         super(ConvergenceVolume, self).__init__(project, job_name=job_name)
@@ -44,9 +44,9 @@ class ConvergenceVolume(SerialMaster):
 
     def create_next(self, job_name=None):
         """
-        
+
         Args:
-            job_name: 
+            job_name:
 
         Returns:
 

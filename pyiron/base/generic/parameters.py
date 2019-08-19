@@ -345,7 +345,7 @@ class GenericParameters(PyironObject):
         """
         Get the value of a specific parameter from GenericParameters - if the parameter is not available return
         default_value if that is set.
-        
+
         Args:
             parameter_name (str): parameter key
             default_value (str): default value to return is the parameter is not set
@@ -393,7 +393,7 @@ class GenericParameters(PyironObject):
     def modify(self, separator=None, append_if_not_present=False, **modify_dict):
         """
         Modify values for existing parameters. The command is called as modify(param1=val1, param2=val2, ...)
-        
+
         Args:
             separator (str): needed if the parameter name contains special characters such as par:
                        use then as input: modify(separator=":", par=val) - optional
@@ -428,7 +428,7 @@ class GenericParameters(PyironObject):
     def set(self, separator=None, **set_dict):
         """
         Set the value of multiple parameters or create new parameter key, if they do not exist already.
-        
+
         Args:
             separator (float/int/str): separator string - optional
             **set_dict (dict): dictionary containing the parameter keys and their corresponding values to be set
@@ -438,7 +438,7 @@ class GenericParameters(PyironObject):
     def set_value(self, line, val):
         """
         Set the value of a parameter in a specific line
-        
+
         Args:
             line (float/int/str): line number - starting with 0
             val (str/bytes): value to be set
@@ -580,9 +580,9 @@ class GenericParameters(PyironObject):
     def write_file(self, file_name, cwd=None):
         """
         Write GenericParameters to input file
-        
+
         Args:
-            file_name (str): name of the file, either absolute (then cwd must be None) or relative 
+            file_name (str): name of the file, either absolute (then cwd must be None) or relative
             cwd (str): path name (default: None)
         """
         if cwd is not None:

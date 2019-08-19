@@ -6,7 +6,7 @@ import inspect
 from pyiron.base.master.generic import GenericMaster
 
 """
-The Flexible master uses a list of functions to connect multiple jobs in a series. 
+The Flexible master uses a list of functions to connect multiple jobs in a series.
 """
 
 __author__ = "Jan Janssen, Liam Huber"
