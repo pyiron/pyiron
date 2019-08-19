@@ -1,19 +1,19 @@
 matrix:
   include:
-    - stage: test
-      name: test_linux_2_7
-      os: linux
-      language: python
-      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh" PYTHONVER="2.7"
-      install:
-        - export PATH="$HOME/miniconda/bin:$PATH"
-        - ./.ci_support/setup_miniconda.sh ${MINICONDA}
-        - python .ci_support/pyironconfig.py
-        - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
-      script:
-        - coverage run -m unittest discover tests
-        - coverage combine
-        # - ./.ci_support/build_notebooks_on_master.sh
+    # - stage: test
+    #   name: test_linux_2_7
+    #   os: linux
+    #   language: python
+    #   env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh" PYTHONVER="2.7"
+    #   install:
+    #     - export PATH="$HOME/miniconda/bin:$PATH"
+    #     - ./.ci_support/setup_miniconda.sh ${MINICONDA}
+    #     - python .ci_support/pyironconfig.py
+    #     - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
+    #   script:
+    #     - coverage run -m unittest discover tests
+    #     - coverage combine
+    #     # - ./.ci_support/build_notebooks_on_master.sh
 
     - name: test_linux_3_7
       os: linux
@@ -47,19 +47,19 @@ matrix:
           on:
             tags: true
 
-    - name: test_osx_2_7
-      os: osx
-      language: generic
-      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh" PYTHONVER="2.7"
-      install:
-        - export PATH="$HOME/miniconda/bin:$PATH"
-        - ./.ci_support/setup_miniconda.sh ${MINICONDA}
-        - python .ci_support/pyironconfig.py
-        - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
-      script:
-        - coverage run -m unittest discover tests
-        - coverage combine
-        # - ./.ci_support/build_notebooks_on_master.sh
+    # - name: test_osx_2_7
+    #   os: osx
+    #   language: generic
+    #   env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh" PYTHONVER="2.7"
+    #   install:
+    #     - export PATH="$HOME/miniconda/bin:$PATH"
+    #     - ./.ci_support/setup_miniconda.sh ${MINICONDA}
+    #     - python .ci_support/pyironconfig.py
+    #     - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
+    #   script:
+    #     - coverage run -m unittest discover tests
+    #     - coverage combine
+    #     # - ./.ci_support/build_notebooks_on_master.sh
 
     - name: test_osx_3_7
       os: osx
