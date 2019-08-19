@@ -450,7 +450,9 @@ class VaspBase(GenericDFTJob):
             new_ham (vasp.vasp.Vasp instance): New job
 
         """
-        return self.restart(snapshot=0, job_name=job_name)
+        ham_new = self.restart(snapshot=0, job_name=job_name)
+        ham_new.structure = self.structure
+        return ham_new
 
     @staticmethod
     def _decompress_files_in_directory(directory):
