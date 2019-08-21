@@ -861,7 +861,7 @@ class JobCore(PyironObject):
             with tarfile.open(tar_file_name, "r:bz2") as tar:
                 tar.extractall(self.working_directory)
             os.remove(tar_file_name)
-        except (FileNotFoundError, IOError):
+        except IOError:
             pass
 
     def is_compressed(self):
