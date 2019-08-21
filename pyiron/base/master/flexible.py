@@ -10,8 +10,10 @@ The Flexible master uses a list of functions to connect multiple jobs in a serie
 """
 
 __author__ = "Jan Janssen, Liam Huber"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -114,6 +116,7 @@ class FlexibleMaster(GenericMaster):
 
             Dictionary matching the child ID to the child job name.
     """
+
     def __init__(self, project, job_name):
         super(FlexibleMaster, self).__init__(project, job_name=job_name)
         self.__name__ = "FlexibleMaster"
@@ -144,8 +147,12 @@ class FlexibleMaster(GenericMaster):
             return True
         if len(self._job_name_lst) > 0:
             return False
-        return set([self.project.db.get_item_by_id(child_id)['status']
-                    for child_id in self.child_ids]) < {'finished', 'busy', 'refresh', 'aborted'}
+        return set(
+            [
+                self.project.db.get_item_by_id(child_id)["status"]
+                for child_id in self.child_ids
+            ]
+        ) < {"finished", "busy", "refresh", "aborted"}
 
     def run_static(self):
         """
@@ -153,7 +160,7 @@ class FlexibleMaster(GenericMaster):
         """
         self.status.running = True
         max_steps = len(self.child_ids + self._job_name_lst)
-        ind = max_steps-1
+        ind = max_steps - 1
         for ind in range(len(self.child_ids), max_steps):
             job = self.pop(0)
             job._master_id = self.job_id
@@ -168,7 +175,7 @@ class FlexibleMaster(GenericMaster):
                 job.interactive_close()
             if self.server.run_mode.non_modal and job.server.run_mode.non_modal:
                 break
-        if ind == max_steps-1 and self.is_finished():
+        if ind == max_steps - 1 and self.is_finished():
             self.status.finished = True
             self.project.db.item_update(self._runtime(), self.job_id)
         else:
@@ -211,8 +218,9 @@ class FlexibleMaster(GenericMaster):
         with self.project_hdf5.open("input") as hdf5_input:
             if self._step_function_lst is not []:
                 try:
-                    hdf5_input["funct_lst"] = [inspect.getsource(funct)
-                                               for funct in self._step_function_lst]
+                    hdf5_input["funct_lst"] = [
+                        inspect.getsource(funct) for funct in self._step_function_lst
+                    ]
                 except IOError:
                     pass
 
@@ -234,8 +242,13 @@ class FlexibleMaster(GenericMaster):
 
     def __getitem__(self, item):
         child_id_lst = self.child_ids
-        child_name_lst = [self.project.db.get_item_by_id(child_id)["job"] for child_id in self.child_ids]
+        child_name_lst = [
+            self.project.db.get_item_by_id(child_id)["job"]
+            for child_id in self.child_ids
+        ]
         if isinstance(item, int):
             total_lst = child_name_lst + self._job_name_lst
             item = total_lst[item]
-        return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
+        return self._get_item_when_str(
+            item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst
+        )

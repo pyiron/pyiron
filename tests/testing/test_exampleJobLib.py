@@ -13,19 +13,19 @@ class TestExampleJob(unittest.TestCase):
         cls.count_run_one = 12
         cls.count_run_two = 12
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
-        cls.project = Project(os.path.join(cls.file_location, 'random_testing_lib'))
+        cls.project = Project(os.path.join(cls.file_location, "random_testing_lib"))
         cls.ham = cls.project.create_job("ExampleJob", "job_test_run")
-        cls.ham.input['count'] = cls.count_run_one
+        cls.ham.input["count"] = cls.count_run_one
         cls.ham.server.run_mode.interactive = True
         cls.ham.run()
-        cls.ham.input['count'] = cls.count_run_two
+        cls.ham.input["count"] = cls.count_run_two
         cls.ham.run()
         cls.ham.interactive_close()
 
     @classmethod
     def tearDownClass(cls):
         file_location = os.path.dirname(os.path.abspath(__file__))
-        project = Project(os.path.join(file_location, 'random_testing_lib'))
+        project = Project(os.path.join(file_location, "random_testing_lib"))
         ham = project.load(project.get_job_ids()[0])
         ham.remove()
         project.remove(enable=True)
@@ -39,5 +39,5 @@ class TestExampleJob(unittest.TestCase):
         self.assertEqual(count[0], len(energy[1]))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

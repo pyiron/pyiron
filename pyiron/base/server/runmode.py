@@ -7,8 +7,10 @@ Runmode class defines the different modes a pyiron job can be executed in
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -16,7 +18,15 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 
-run_mode_lst = ['modal', 'non_modal', 'queue', 'manual', 'thread', 'interactive', 'interactive_non_modal']
+run_mode_lst = [
+    "modal",
+    "non_modal",
+    "queue",
+    "manual",
+    "thread",
+    "interactive",
+    "interactive_non_modal",
+]
 
 
 class Runmode(object):
@@ -32,7 +42,7 @@ class Runmode(object):
         mode (str): ['modal', 'non_modal', 'queue', 'manual', 'thread', 'interactive']
     """
 
-    def __init__(self, mode='modal'):
+    def __init__(self, mode="modal"):
         super(Runmode, self).__init__()
         self._reset_mode()
         self.mode = mode
@@ -58,7 +68,9 @@ class Runmode(object):
             self._mode[new_mode] = True
 
     def _reset_mode(self):
-        super(Runmode, self).__setattr__('_mode', {run_mode: False for run_mode in run_mode_lst})
+        super(Runmode, self).__setattr__(
+            "_mode", {run_mode: False for run_mode in run_mode_lst}
+        )
 
     def __repr__(self):
         return repr(self.mode)
@@ -75,11 +87,11 @@ class Runmode(object):
     def __setattr__(self, name, value):
         if name in self._mode.keys():
             if not isinstance(value, bool):
-                raise TypeError('A run mode can only be activated using [True].')
+                raise TypeError("A run mode can only be activated using [True].")
             if value:
                 self.mode = name
             else:
-                raise ValueError('A run mode can only be activated using [True].')
+                raise ValueError("A run mode can only be activated using [True].")
         else:
             super(Runmode, self).__setattr__(name, value)
 

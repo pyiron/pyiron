@@ -10,6 +10,7 @@ from pyiron.base.project.generic import Project
 
 def convergence_goal(self, **qwargs):
     import numpy as np
+
     eps = 0.2
     if "eps" in qwargs:
         eps = qwargs["eps"]
@@ -28,20 +29,26 @@ class TestMurnaghan(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
-        cls.project = Project(os.path.join(cls.file_location, 'test_murnaghan'))
-        cls.basis = CrystalStructure(element="Fe", bravais_basis='fcc', lattice_constant=3.5)
+        cls.project = Project(os.path.join(cls.file_location, "test_murnaghan"))
+        cls.basis = CrystalStructure(
+            element="Fe", bravais_basis="fcc", lattice_constant=3.5
+        )
         cls.project.remove_jobs(recursive=True)
 
     @classmethod
     def tearDownClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
-        project = Project(os.path.join(cls.file_location, 'test_murnaghan'))
+        project = Project(os.path.join(cls.file_location, "test_murnaghan"))
         project.remove(enable=True, enforce=True)
 
     def test_run(self):
-        job = self.project.create_job(self.project.job_type.AtomisticExampleJob, "job_test")
+        job = self.project.create_job(
+            self.project.job_type.AtomisticExampleJob, "job_test"
+        )
         job.structure = self.basis
-        job_ser = self.project.create_job(self.project.job_type.SerialMaster, "murn_iter")
+        job_ser = self.project.create_job(
+            self.project.job_type.SerialMaster, "murn_iter"
+        )
         job_ser.append(job)
         job_ser.set_goal(convergence_goal, eps=0.4)
         murn = self.project.create_job("Murnaghan", "murnaghan")
@@ -53,5 +60,5 @@ class TestMurnaghan(unittest.TestCase):
         job_ser.remove()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

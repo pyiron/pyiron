@@ -16,7 +16,11 @@ from scipy.interpolate import interp1d
 
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
-from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement, ElementColorDictionary
+from pyiron.atomistics.structure.periodic_table import (
+    PeriodicTable,
+    ChemicalElement,
+    ElementColorDictionary,
+)
 from pyiron.base.settings.generic import Settings
 from scipy.spatial import cKDTree, Voronoi
 
@@ -30,8 +34,10 @@ except ImportError:
 
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -66,18 +72,46 @@ class Atoms(object):
     .. _ASE atoms class: https://wiki.fysik.dtu.dk/ase/ase/atoms.html
 
     """
-    def __init__(self, symbols=None, positions=None, numbers=None, tags=None, momenta=None, masses=None,
-                 magmoms=None, charges=None, scaled_positions=None, cell=None, pbc=None, celldisp=None, constraint=None,
-                 calculator=None, info=None, indices=None, elements=None, dimension=None, species=None,
-                 **qwargs):
+
+    def __init__(
+        self,
+        symbols=None,
+        positions=None,
+        numbers=None,
+        tags=None,
+        momenta=None,
+        masses=None,
+        magmoms=None,
+        charges=None,
+        scaled_positions=None,
+        cell=None,
+        pbc=None,
+        celldisp=None,
+        constraint=None,
+        calculator=None,
+        info=None,
+        indices=None,
+        elements=None,
+        dimension=None,
+        species=None,
+        **qwargs
+    ):
         if symbols is not None:
             if elements is None:
                 elements = symbols
             else:
                 raise ValueError("Only elements OR symbols should be given.")
-        if tags is not None or momenta is not None or masses is not None or charges is not None \
-                or celldisp is not None or constraint is not None or calculator is not None or info is not None:
-            s.logger.debug('Not supported parameter used!')
+        if (
+            tags is not None
+            or momenta is not None
+            or masses is not None
+            or charges is not None
+            or celldisp is not None
+            or constraint is not None
+            or calculator is not None
+            or info is not None
+        ):
+            s.logger.debug("Not supported parameter used!")
         self._store_elements = dict()
         self._species_to_index_dict = None
         self.colorLut = ElementColorDictionary().to_lut()
@@ -90,7 +124,7 @@ class Atoms(object):
                 cell = np.array(cell)
         self._cell = cell
         self._species = list()
-        self.positions= None
+        self.positions = None
         self._pse = PeriodicTable()
         self._tag_list = SparseArray()
         self.indices = np.array([])
@@ -145,7 +179,10 @@ class Atoms(object):
                     elif elements.dtype in [int, np.integer]:
                         el_object_list = self.numbers_to_elements(elements)
                     else:
-                        raise ValueError('Unknown static type for element in list: ' + str(type(elements[0])))
+                        raise ValueError(
+                            "Unknown static type for element in list: "
+                            + str(type(elements[0]))
+                        )
 
             if el_object_list is None:
                 el_object_list = [self.convert_element(el) for el in element_list]
@@ -162,7 +199,7 @@ class Atoms(object):
             if positions is not None:
                 raise ValueError("either position or scaled_positions can be given")
             if cell is None:
-                raise ValueError('scaled_positions can only be used with a given cell')
+                raise ValueError("scaled_positions can only be used with a given cell")
             positions = np.dot(np.array(cell).T, np.array(scaled_positions).T).T
 
         if positions is None:
@@ -175,7 +212,7 @@ class Atoms(object):
         self._tag_list._length = len(positions)
 
         for key, val in qwargs.items():
-            print('set qwargs (ASE): ', key, val)
+            print("set qwargs (ASE): ", key, val)
             setattr(self, key, val)
 
         if len(positions) > 0:
@@ -282,11 +319,11 @@ class Atoms(object):
         """
 
         if dtype is not None:
-            a = np.array(a, dtype, order='C')
+            a = np.array(a, dtype, order="C")
             if len(a) == 0 and shape is not None:
                 a.shape = (-1,) + shape
         else:
-            if not a.flags['C_CONTIGUOUS']:
+            if not a.flags["C_CONTIGUOUS"]:
                 a = np.ascontiguousarray(a)
             else:
                 a = a.copy()
@@ -294,12 +331,12 @@ class Atoms(object):
             raise RuntimeError
         for b in self.arrays.values():
             if len(a) != len(b):
-                raise ValueError('Array has wrong length: %d != %d.' %
-                                 (len(a), len(b)))
+                raise ValueError("Array has wrong length: %d != %d." % (len(a), len(b)))
             break
         if shape is not None and a.shape[1:] != shape:
-            raise ValueError('Array has wrong shape %s != %s.' %
-                             (a.shape, (a.shape[0:1] + shape)))
+            raise ValueError(
+                "Array has wrong shape %s != %s." % (a.shape, (a.shape[0:1] + shape))
+            )
         self.arrays[name] = a
 
     def get_array(self, name, copy=True):
@@ -340,8 +377,9 @@ class Atoms(object):
             else:
                 a = np.asarray(a)
                 if a.shape != b.shape:
-                    raise ValueError('Array has wrong shape %s != %s.' %
-                                     (a.shape, b.shape))
+                    raise ValueError(
+                        "Array has wrong shape %s != %s." % (a.shape, b.shape)
+                    )
                 b[:] = a
 
     def add_tag(self, *args, **qwargs):
@@ -404,7 +442,7 @@ class Atoms(object):
                 if isinstance(el.tags, dict):
                     with hdf_structure.open("new_species") as hdf_species:
                         el.to_hdf(hdf_species)
-            hdf_structure['species'] = [el.Abbreviation for el in self.species]
+            hdf_structure["species"] = [el.Abbreviation for el in self.species]
             hdf_structure["indices"] = self.indices
 
             with hdf_structure.open("tags") as hdf_tags:
@@ -447,7 +485,9 @@ class Atoms(object):
                     with hdf_atoms.open("new_species") as hdf_species:
                         self._pse.from_hdf(hdf_species)
 
-                el_object_list = [self.convert_element(el, self._pse) for el in hdf_atoms["species"]]
+                el_object_list = [
+                    self.convert_element(el, self._pse) for el in hdf_atoms["species"]
+                ]
                 self.indices = hdf_atoms["indices"]
                 self._tag_list._length = len(self)
 
@@ -464,12 +504,21 @@ class Atoms(object):
                             # tr_dict = {'0': False, '1': True}
                             if isinstance(hdf_tags[tag], (list, np.ndarray)):
                                 my_list = hdf_tags[tag]
-                                self._tag_list[tag] = SparseList(my_list, length=len(self))
+                                self._tag_list[tag] = SparseList(
+                                    my_list, length=len(self)
+                                )
 
                             else:
                                 my_dict = hdf_tags.get_pandas(tag).to_dict()
-                                my_dict = {i: val for i, val in zip(my_dict["index"], my_dict["values"])}
-                                self._tag_list[tag] = SparseList(my_dict, length=len(self))
+                                my_dict = {
+                                    i: val
+                                    for i, val in zip(
+                                        my_dict["index"], my_dict["values"]
+                                    )
+                                }
+                                self._tag_list[tag] = SparseList(
+                                    my_dict, length=len(self)
+                                )
 
                 tr_dict = {1: True, 0: False}
                 self.dimension = hdf_atoms["dimension"]
@@ -510,7 +559,9 @@ class Atoms(object):
                 with hdf_atoms.open("species") as hdf_species:
                     self._pse.from_hdf(hdf_species)
             chemical_symbols = np.array(hdf_atoms["elements"], dtype=str)
-            el_object_list = [self.convert_element(el, self._pse) for el in chemical_symbols]
+            el_object_list = [
+                self.convert_element(el, self._pse) for el in chemical_symbols
+            ]
             self.set_species(list(set(el_object_list)))
             self.indices = [self._species_to_index_dict[el] for el in el_object_list]
             self._tag_list._length = len(self)
@@ -530,7 +581,10 @@ class Atoms(object):
 
                         else:
                             my_dict = hdf_tags.get_pandas(tag).to_dict()
-                            my_dict = {i: val for i, val in zip(my_dict["index"], my_dict["values"])}
+                            my_dict = {
+                                i: val
+                                for i, val in zip(my_dict["index"], my_dict["values"])
+                            }
                             self._tag_list[tag] = SparseList(my_dict, length=len(self))
 
             self.cell = None
@@ -642,9 +696,9 @@ class Atoms(object):
 
         """
         if isinstance(el, str):
-            return np.where(self.get_chemical_symbols()==el)[0]
+            return np.where(self.get_chemical_symbols() == el)[0]
         elif isinstance(el, ChemicalElement):
-            return np.where([e==el for e in self.get_chemical_elements()])[0]
+            return np.where([e == el for e in self.get_chemical_elements()])[0]
         if isinstance(el, (list, np.ndarray)):
             if isinstance(el[0], str):
                 return np.where(np.isin(self.get_chemical_symbols(), el))[0]
@@ -733,10 +787,10 @@ class Atoms(object):
             element = el
             el = el.Abbreviation
         else:
-            raise ValueError('Unknown static type to specify a element')
+            raise ValueError("Unknown static type to specify a element")
 
         self._store_elements[el] = element
-        if hasattr(self, 'species'):
+        if hasattr(self, "species"):
             if element not in self.species:
                 self._species.append(element)
                 self.set_species(self._species)
@@ -823,7 +877,9 @@ class Atoms(object):
                 new_species[i] = pse.element(sp.Parent)
         sym_list = [el.Abbreviation for el in new_species]
         if len(sym_list) != len(np.unique(sym_list)):
-            uni, ind, inv_ind = np.unique(sym_list, return_index=True, return_inverse=True)
+            uni, ind, inv_ind = np.unique(
+                sym_list, return_index=True, return_inverse=True
+            )
             new_species = new_species[ind].copy()
             parent_basis.set_species(list(new_species))
             indices_copy = parent_basis.indices.copy()
@@ -905,7 +961,7 @@ class Atoms(object):
             com (float): center of mass in A
         """
         masses = self.get_masses()
-        return np.einsum('i,ij->j', masses, self.positions)/np.sum(masses)
+        return np.einsum("i,ij->j", masses, self.positions) / np.sum(masses)
 
     def get_masses(self):
         """
@@ -936,7 +992,7 @@ class Atoms(object):
 
         """
         if per_atom:
-            return np.abs(np.linalg.det(self.cell))/len(self)
+            return np.abs(np.linalg.det(self.cell)) / len(self)
         else:
             return np.abs(np.linalg.det(self.cell))
 
@@ -960,9 +1016,9 @@ class Atoms(object):
 
         """
         pbc = np.array(self.pbc)
-        positions = np.einsum('jk,ij->ik', np.linalg.inv(self.cell), self.positions)
+        positions = np.einsum("jk,ij->ik", np.linalg.inv(self.cell), self.positions)
         if wrap:
-            positions[:, pbc] = np.mod(positions[:, pbc], 1.)
+            positions[:, pbc] = np.mod(positions[:, pbc], 1.0)
         return positions
 
     def get_number_of_atoms(self):
@@ -993,7 +1049,9 @@ class Atoms(object):
         Returns:
 
         """
-        self.set_scaled_positions(np.mod(self.get_scaled_positions(wrap=False) + eps, 1) - eps + origin)
+        self.set_scaled_positions(
+            np.mod(self.get_scaled_positions(wrap=False) + eps, 1) - eps + origin
+        )
         return self
 
     def repeat(self, rep):
@@ -1011,27 +1069,33 @@ class Atoms(object):
         self *= vec
 
     def reset_absolute(self, is_absolute):
-        raise NotImplementedError('This function was removed!')
+        raise NotImplementedError("This function was removed!")
 
-    def analyse_ovito_cna_adaptive(self, mode='total'):
+    def analyse_ovito_cna_adaptive(self, mode="total"):
         from pyiron.atomistics.structure.ovito import analyse_ovito_cna_adaptive
+
         warnings.filterwarnings("ignore")
         return analyse_ovito_cna_adaptive(atoms=self, mode=mode)
 
     def analyse_ovito_centro_symmetry(atoms, num_neighbors=12):
         from pyiron.atomistics.structure.ovito import analyse_ovito_centro_symmetry
+
         warnings.filterwarnings("ignore")
         return analyse_ovito_centro_symmetry(atoms, num_neighbors=num_neighbors)
 
     def analyse_ovito_voronoi_volume(atoms):
         from pyiron.atomistics.structure.ovito import analyse_ovito_voronoi_volume
+
         warnings.filterwarnings("module")
         return analyse_ovito_voronoi_volume(atoms)
 
     def analyse_phonopy_equivalent_atoms(atoms):
         from pyiron.atomistics.structure.phonopy import analyse_phonopy_equivalent_atoms
-        #warnings.filterwarnings("ignore")
-        warnings.warn("analyse_phonopy_equivalent_atoms() is obsolete use get_symmetry()['equivalent_atoms'] instead")
+
+        # warnings.filterwarnings("ignore")
+        warnings.warn(
+            "analyse_phonopy_equivalent_atoms() is obsolete use get_symmetry()['equivalent_atoms'] instead"
+        )
         return analyse_phonopy_equivalent_atoms(atoms)
 
     @staticmethod
@@ -1046,10 +1110,22 @@ class Atoms(object):
         Returns:
             (str): The line defining the cell in PDB format.
         """
-        return 'CRYST1 {:8.3f} {:8.3f} {:8.3f} {:6.2f} {:6.2f} {:6.2f} P 1\n'.format(a1, a2, a3, f1, f2, f3)
+        return "CRYST1 {:8.3f} {:8.3f} {:8.3f} {:6.2f} {:6.2f} {:6.2f} P 1\n".format(
+            a1, a2, a3, f1, f2, f3
+        )
 
     @staticmethod
-    def _ngl_write_atom(num, species, x, y, z, group=None, num2=None, occupancy=1., temperature_factor=0.):
+    def _ngl_write_atom(
+        num,
+        species,
+        x,
+        y,
+        z,
+        group=None,
+        num2=None,
+        occupancy=1.0,
+        temperature_factor=0.0,
+    ):
         """
         Writes a PDB-formatted line to represent an atom.
 
@@ -1074,8 +1150,9 @@ class Atoms(object):
             group = species
         if num2 is None:
             num2 = num
-        return 'ATOM {:>6} {:>4} {:>4} {:>5} {:10.3f} {:7.3f} {:7.3f} {:5.2f} {:5.2f} {:>11} \n'.format(
-            num, species, group, num2, x, y, z, occupancy, temperature_factor, species)
+        return "ATOM {:>6} {:>4} {:>4} {:>5} {:10.3f} {:7.3f} {:7.3f} {:5.2f} {:5.2f} {:>11} \n".format(
+            num, species, group, num2, x, y, z, occupancy, temperature_factor, species
+        )
 
     def _ngl_write_structure(self, elements, positions, cell):
         """
@@ -1090,12 +1167,13 @@ class Atoms(object):
             (str): The PDB-formatted representation of the structure.
         """
         from ase.geometry import cell_to_cellpar, cellpar_to_cell
+
         cellpar = cell_to_cellpar(cell)
         exportedcell = cellpar_to_cell(cellpar)
         rotation = np.linalg.solve(cell, exportedcell)
 
         pdb_str = self._ngl_write_cell(*cellpar)
-        pdb_str += 'MODEL     1\n'
+        pdb_str += "MODEL     1\n"
 
         if rotation is not None:
             positions = np.array(positions).dot(rotation)
@@ -1103,7 +1181,7 @@ class Atoms(object):
         for i, p in enumerate(positions):
             pdb_str += self._ngl_write_atom(i, elements[i], *p)
 
-        pdb_str += 'ENDMDL \n'
+        pdb_str += "ENDMDL \n"
         return pdb_str
 
     def _atomic_number_to_radius(self, atomic_number, shift=0.2, slope=0.1, scale=1.0):
@@ -1121,7 +1199,9 @@ class Atoms(object):
         """
         return (shift + slope * np.sqrt(atomic_number)) * scale
 
-    def _add_colorscheme_spacefill(self, view, elements, atomic_numbers, particle_size, scheme='element'):
+    def _add_colorscheme_spacefill(
+        self, view, elements, atomic_numbers, particle_size, scheme="element"
+    ):
         """
         Set NGLView spacefill parameters according to a color-scheme.
 
@@ -1141,10 +1221,12 @@ class Atoms(object):
             (nglview.NGLWidget): The modified widget.
         """
         for elem, num in set(list(zip(elements, atomic_numbers))):
-            view.add_spacefill(selection='#' + elem,
-                               radius_type='vdw',
-                               radius=self._atomic_number_to_radius(num, scale=particle_size),
-                               color_scheme=scheme)
+            view.add_spacefill(
+                selection="#" + elem,
+                radius_type="vdw",
+                radius=self._atomic_number_to_radius(num, scale=particle_size),
+                color_scheme=scheme,
+            )
         return view
 
     def _add_custom_color_spacefill(self, view, atomic_numbers, particle_size, colors):
@@ -1161,10 +1243,12 @@ class Atoms(object):
             (nglview.NGLWidget): The modified widget.
         """
         for n, num in enumerate(atomic_numbers):
-            view.add_spacefill(selection=[n],
-                               radius_type='vdw',
-                               radius=self._atomic_number_to_radius(num, scale=particle_size),
-                               color=colors[n])
+            view.add_spacefill(
+                selection=[n],
+                radius_type="vdw",
+                radius=self._atomic_number_to_radius(num, scale=particle_size),
+                color=colors[n],
+            )
         return view
 
     @staticmethod
@@ -1188,21 +1272,43 @@ class Atoms(object):
         if end is None:
             end = np.amax(scalar_field)
         interp = interp1d([start, end], [0, 1])
-        remapped_field = interp(np.clip(scalar_field, start, end))  # Map field onto [0,1]
+        remapped_field = interp(
+            np.clip(scalar_field, start, end)
+        )  # Map field onto [0,1]
 
         if cmap is None:
             try:
                 from seaborn import diverging_palette
             except ImportError:
-                print("The package seaborn needs to be installed for the plot3d() function!")
+                print(
+                    "The package seaborn needs to be installed for the plot3d() function!"
+                )
             cmap = diverging_palette(245, 15, as_cmap=True)  # A nice blue-red palette
 
-        return [rgb2hex(cmap(scalar)[:3]) for scalar in remapped_field]  # The slice gets RGB but leaves alpha
+        return [
+            rgb2hex(cmap(scalar)[:3]) for scalar in remapped_field
+        ]  # The slice gets RGB but leaves alpha
 
-    def plot3d(self, show_cell=True, show_axes=True, camera='orthographic', spacefill=True, particle_size=1.0,
-               select_atoms=None, background='white', color_scheme=None, colors=None,
-               scalar_field=None, scalar_start=None, scalar_end=None, scalar_cmap=None,
-               vector_field=None, vector_color=None, custom_array=None, custom_3darray=None):
+    def plot3d(
+        self,
+        show_cell=True,
+        show_axes=True,
+        camera="orthographic",
+        spacefill=True,
+        particle_size=1.0,
+        select_atoms=None,
+        background="white",
+        color_scheme=None,
+        colors=None,
+        scalar_field=None,
+        scalar_start=None,
+        scalar_end=None,
+        scalar_cmap=None,
+        vector_field=None,
+        vector_color=None,
+        custom_array=None,
+        custom_3darray=None,
+    ):
         """
         Plot3d relies on NGLView to visualize atomic structures. Here, we construct a string in the "protein database"
         ("pdb") format, then turn it into an NGLView "structure". PDB is a white-space sensitive format, so the
@@ -1251,14 +1357,22 @@ class Atoms(object):
         try:  # If the graphical packages are not available, the GUI will not work.
             import nglview
         except ImportError:
-            raise ImportError("The package nglview needs to be installed for the plot3d() function!")
+            raise ImportError(
+                "The package nglview needs to be installed for the plot3d() function!"
+            )
 
         if custom_array is not None:
-            warnings.warn('custom_array is deprecated. Use scalar_field instead', DeprecationWarning)
+            warnings.warn(
+                "custom_array is deprecated. Use scalar_field instead",
+                DeprecationWarning,
+            )
             scalar_field = custom_array
 
         if custom_3darray is not None:
-            warnings.warn('custom_3darray is deprecated. Use vector_field instead', DeprecationWarning)
+            warnings.warn(
+                "custom_3darray is deprecated. Use vector_field instead",
+                DeprecationWarning,
+            )
             vector_field = custom_3darray
 
         parent_basis = self.get_parent_basis()
@@ -1286,7 +1400,9 @@ class Atoms(object):
                 vector_color = vector_color[select_atoms]
 
         # Write the nglview protein-database-formatted string
-        struct = nglview.TextStructure(self._ngl_write_structure(elements, positions, self.cell))
+        struct = nglview.TextStructure(
+            self._ngl_write_structure(elements, positions, self.cell)
+        )
 
         # Parse the string into the displayable widget
         view = nglview.NGLWidget(struct)
@@ -1295,22 +1411,32 @@ class Atoms(object):
             # Color by scheme
             if color_scheme is not None:
                 if colors is not None:
-                    warnings.warn('`color_scheme` is overriding `colors`')
+                    warnings.warn("`color_scheme` is overriding `colors`")
                 if scalar_field is not None:
-                    warnings.warn('`color_scheme` is overriding `scalar_field`')
-                view = self._add_colorscheme_spacefill(view, elements, atomic_numbers, particle_size, color_scheme)
+                    warnings.warn("`color_scheme` is overriding `scalar_field`")
+                view = self._add_colorscheme_spacefill(
+                    view, elements, atomic_numbers, particle_size, color_scheme
+                )
             # Color by per-atom colors
             elif colors is not None:
                 if scalar_field is not None:
-                    warnings.warn('`colors` is overriding `scalar_field`')
-                view = self._add_custom_color_spacefill(view, atomic_numbers, particle_size, colors)
+                    warnings.warn("`colors` is overriding `scalar_field`")
+                view = self._add_custom_color_spacefill(
+                    view, atomic_numbers, particle_size, colors
+                )
             # Color by per-atom scalars
             elif scalar_field is not None:  # Color by per-atom scalars
-                colors = self._scalars_to_hex_colors(scalar_field, scalar_start, scalar_end, scalar_cmap)
-                view = self._add_custom_color_spacefill(view, atomic_numbers, particle_size, colors)
+                colors = self._scalars_to_hex_colors(
+                    scalar_field, scalar_start, scalar_end, scalar_cmap
+                )
+                view = self._add_custom_color_spacefill(
+                    view, atomic_numbers, particle_size, colors
+                )
             # Color by element
             else:
-                view = self._add_colorscheme_spacefill(view, elements, atomic_numbers, particle_size)
+                view = self._add_colorscheme_spacefill(
+                    view, elements, atomic_numbers, particle_size
+                )
             view.remove_ball_and_stick()
         else:
             view.add_ball_and_stick()
@@ -1320,11 +1446,20 @@ class Atoms(object):
                 view.add_unitcell()
 
         if vector_color is None and vector_field is not None:
-            vector_color = 0.5 * vector_field / np.linalg.norm(vector_field, axis=-1)[:, np.newaxis] + 0.5
-        elif vector_field is not None and vector_field is not None:  # WARNING: There must be a bug here...
+            vector_color = (
+                0.5
+                * vector_field
+                / np.linalg.norm(vector_field, axis=-1)[:, np.newaxis]
+                + 0.5
+            )
+        elif (
+            vector_field is not None and vector_field is not None
+        ):  # WARNING: There must be a bug here...
             try:
                 if vector_color.shape != np.ones((len(self), 3)).shape:
-                    vector_color = np.outer(np.ones(len(self)), vector_color / np.linalg.norm(vector_color))
+                    vector_color = np.outer(
+                        np.ones(len(self)), vector_color / np.linalg.norm(vector_color)
+                    )
             except AttributeError:
                 vector_color = np.ones((len(self), 3)) * vector_color
 
@@ -1337,7 +1472,7 @@ class Atoms(object):
             arrow_radius = 0.1
             text_size = 1
             text_color = [0, 0, 0]
-            arrow_names = ['x', 'y', 'z']
+            arrow_names = ["x", "y", "z"]
 
             for n in [0, 1, 2]:
                 start = list(axes_origin)
@@ -1349,14 +1484,25 @@ class Atoms(object):
                 view.shape.add_arrow(start, end, color, arrow_radius)
                 view.shape.add_text(end, text_color, text_size, arrow_names[n])
 
-        if camera != 'perspective' and camera != 'orthographic':
-            warnings.warn('Only perspective or orthographic is (likely to be) permitted for camera')
+        if camera != "perspective" and camera != "orthographic":
+            warnings.warn(
+                "Only perspective or orthographic is (likely to be) permitted for camera"
+            )
 
         view.camera = camera
         view.background = background
         return view
 
-    def plot3d_ase(self, spacefill=True, show_cell=True, camera='perspective', particle_size=0.5, background='white', color_scheme='element', show_axes=True):
+    def plot3d_ase(
+        self,
+        spacefill=True,
+        show_cell=True,
+        camera="perspective",
+        particle_size=0.5,
+        background="white",
+        color_scheme="element",
+        show_axes=True,
+    ):
         """
         Possible color schemes:
           " ", "picking", "random", "uniform", "atomindex", "residueindex",
@@ -1367,12 +1513,16 @@ class Atoms(object):
         try:  # If the graphical packages are not available, the GUI will not work.
             import nglview
         except ImportError:
-            raise ImportError("The package nglview needs to be installed for the plot3d() function!")
+            raise ImportError(
+                "The package nglview needs to be installed for the plot3d() function!"
+            )
         # Always visualize the parent basis
         parent_basis = self.get_parent_basis()
         view = nglview.show_ase(parent_basis)
         if spacefill:
-            view.add_spacefill(radius_type='vdw', color_scheme=color_scheme, radius=particle_size)
+            view.add_spacefill(
+                radius_type="vdw", color_scheme=color_scheme, radius=particle_size
+            )
             # view.add_spacefill(radius=1.0)
             view.remove_ball_and_stick()
         else:
@@ -1384,8 +1534,8 @@ class Atoms(object):
             view.shape.add_arrow([-2, -2, -2], [2, -2, -2], [1, 0, 0], 0.5)
             view.shape.add_arrow([-2, -2, -2], [-2, 2, -2], [0, 1, 0], 0.5)
             view.shape.add_arrow([-2, -2, -2], [-2, -2, 2], [0, 0, 1], 0.5)
-        if camera!='perspective' and camera!='orthographic':
-            print('Only perspective or orthographic is permitted')
+        if camera != "perspective" and camera != "orthographic":
+            print("Only perspective or orthographic is permitted")
             return None
         view.camera = camera
         view.background = background
@@ -1409,7 +1559,7 @@ class Atoms(object):
 
         """
         xyz = self.get_scaled_positions(wrap=False)
-        return xyz[:,0], xyz[:,1], xyz[:,2]
+        return xyz[:, 0], xyz[:, 1], xyz[:, 2]
 
     def __select_slice(self, i_dim, i_flag, dist):
         """
@@ -1429,7 +1579,7 @@ class Atoms(object):
         elif i_flag == 0:
             return True
         elif i_flag == -1:
-            return self.get_scaled_positions(wrap=False)[:, i_dim] > 1. - dist
+            return self.get_scaled_positions(wrap=False)[:, i_dim] > 1.0 - dist
 
     def get_boundary_region(self, dist):
         """
@@ -1466,12 +1616,17 @@ class Atoms(object):
                 for i2 in range(izl, iz):
                     # r_vec_abs = i0 * a1 + i1 * a2 + i2 * a3
                     r_vec = np.array([i0, i1, i2][:dim])
-                    select = self.__select_slice(0, i0, dist) & self.__select_slice(1, i1, dist) & \
-                             self.__select_slice(2, i2, dist)
+                    select = (
+                        self.__select_slice(0, i0, dist)
+                        & self.__select_slice(1, i1, dist)
+                        & self.__select_slice(2, i2, dist)
+                    )
                     if np.linalg.norm(r_vec) > 0:
                         if len(select) > 0:
                             sel_coordinates = rel_coordinates[select] + r_vec
-                            new_coordinates = np.append(new_coordinates, sel_coordinates, axis=0)
+                            new_coordinates = np.append(
+                                new_coordinates, sel_coordinates, axis=0
+                            )
                             if len(sel_coordinates) > 0:
                                 # rVecs = np.array(len(sel_coordinates) * [r_vec_abs])
                                 # pbcVec = np.append(pbcVec, rVecs, axis=0)
@@ -1481,18 +1636,25 @@ class Atoms(object):
         element_list = [self.indices[ia] for ia in ia_list[1:]]
         self._ia_bounds = ia_list[1:]
         # self._pbcVec = pbcVec[1:]
-        return Atoms(indices=element_list, scaled_positions=new_coordinates[1:], cell=self.cell,
-                     dimension=len(cell), species=self.species)
+        return Atoms(
+            indices=element_list,
+            scaled_positions=new_coordinates[1:],
+            cell=self.cell,
+            dimension=len(cell),
+            species=self.species,
+        )
 
-    def get_neighbors(self,
-                      num_neighbors=12,
-                      t_vec=True,
-                      include_boundary=True,
-                      exclude_self=True,
-                      tolerance=2,
-                      id_list=None,
-                      cutoff_radius=None,
-                      cutoff=None):
+    def get_neighbors(
+        self,
+        num_neighbors=12,
+        t_vec=True,
+        include_boundary=True,
+        exclude_self=True,
+        tolerance=2,
+        id_list=None,
+        cutoff_radius=None,
+        cutoff=None,
+    ):
         """
 
         Args:
@@ -1516,7 +1678,9 @@ class Atoms(object):
 
         """
         if cutoff is not None and cutoff_radius is None:
-            warnings.warn('Please use cutoff_radius, rather than cutoff', DeprecationWarning)
+            warnings.warn(
+                "Please use cutoff_radius, rather than cutoff", DeprecationWarning
+            )
             cutoff_radius = cutoff
         if cutoff_radius is not None and num_neighbors == 12:
             num_neighbors = 100
@@ -1535,7 +1699,9 @@ class Atoms(object):
             if cutoff_radius is None:
                 neighbors = tree.query(self.positions, k=num_neighbors)
             else:
-                neighbors = tree.query(self.positions, k=num_neighbors, distance_upper_bound=cutoff_radius)
+                neighbors = tree.query(
+                    self.positions, k=num_neighbors, distance_upper_bound=cutoff_radius
+                )
 
             d_lst, ind_lst, v_lst = [], [], []
             ic = 0
@@ -1554,7 +1720,7 @@ class Atoms(object):
         # include periodic boundaries
         # translate radius in boundary layer with relative coordinates
         # TODO: introduce more rigoros definition
-        radius = 3 * num_neighbors ** (1. / 3.)
+        radius = 3 * num_neighbors ** (1.0 / 3.0)
         rel_width = [radius / np.sqrt(np.dot(a_i, a_i)) for a_i in self.cell]
         rel_width_scalar = np.max(rel_width)
 
@@ -1575,7 +1741,9 @@ class Atoms(object):
         if cutoff_radius is None:
             neighbors = tree.query(positions, k=num_neighbors)
         else:
-            neighbors = tree.query(positions, k=num_neighbors, distance_upper_bound=cutoff_radius)
+            neighbors = tree.query(
+                positions, k=num_neighbors, distance_upper_bound=cutoff_radius
+            )
 
         # print ("neighbors: ", neighbors)
 
@@ -1595,7 +1763,7 @@ class Atoms(object):
         for i, index in enumerate(neighbor_index):
             # print "i, index: ", i, index
             index = list(index)  # Filter conversion for python 3 compatibility
-            nbrs_distances = neighbors[0][i][i_start:len(index)]
+            nbrs_distances = neighbors[0][i][i_start : len(index)]
             # if radius:  # reduce neighborlist based on radius
             #     new_index_lst, new_dist_lst = [], []
             #     for index_red, dis_red in zip(index, nbrs_distances):
@@ -1605,8 +1773,12 @@ class Atoms(object):
             #     index, nbrs_distances= new_index_lst, new_dist_lst
             self.neighbor_distance.append(nbrs_distances)
             self.neighbor_index.append(map_to_cell[index][i_start:])
-            u, indices = np.unique(np.around(nbrs_distances, decimals=tolerance), return_inverse=True)
-            self.neighbor_shellOrder.append(indices + 1)  # this gives the shellOrder of neighboring atoms back
+            u, indices = np.unique(
+                np.around(nbrs_distances, decimals=tolerance), return_inverse=True
+            )
+            self.neighbor_shellOrder.append(
+                indices + 1
+            )  # this gives the shellOrder of neighboring atoms back
 
             if t_vec:
                 nbr_dist = []
@@ -1632,7 +1804,9 @@ class Atoms(object):
         min_nbr, max_nbr = min(num_neighbors), max(num_neighbors)
         if max_nbr == num_neighbors:
             # print "neighbor distance: ", self.neighbor_distance
-            raise ValueError("Increase max_num_neighbors! " + str(max_nbr) + " " + str(num_neighbors))
+            raise ValueError(
+                "Increase max_num_neighbors! " + str(max_nbr) + " " + str(num_neighbors)
+            )
         self.min_nbr_number = min_nbr
         self.max_nbr_number = max_nbr
         neighbor_obj.distances = self.neighbor_distance
@@ -1641,8 +1815,17 @@ class Atoms(object):
         neighbor_obj.shells = self.neighbor_shellOrder
         return neighbor_obj
 
-    def get_neighborhood(box, position, num_neighbors=12, t_vec=True, include_boundary=True,
-                         tolerance=2, id_list=None, cutoff=None, cutoff_radius=None):
+    def get_neighborhood(
+        box,
+        position,
+        num_neighbors=12,
+        t_vec=True,
+        include_boundary=True,
+        tolerance=2,
+        id_list=None,
+        cutoff=None,
+        cutoff_radius=None,
+    ):
         """
 
         Args:
@@ -1663,25 +1846,40 @@ class Atoms(object):
             and vectors
 
         """
+
         class NeighTemp(object):
             pass
+
         box = box.copy()
         box += box[-1]
         pos = box.positions
         pos[-1] = np.array(position)
         box.positions = pos
-        neigh = box.get_neighbors(num_neighbors=num_neighbors, t_vec=t_vec,
-                                  include_boundary=include_boundary, exclude_self=True,
-                                  tolerance=tolerance, id_list=id_list, cutoff=cutoff, cutoff_radius=cutoff_radius)
+        neigh = box.get_neighbors(
+            num_neighbors=num_neighbors,
+            t_vec=t_vec,
+            include_boundary=include_boundary,
+            exclude_self=True,
+            tolerance=tolerance,
+            id_list=id_list,
+            cutoff=cutoff,
+            cutoff_radius=cutoff_radius,
+        )
         neigh_return = NeighTemp()
-        setattr(neigh_return, 'distances', neigh.distances[-1])
-        setattr(neigh_return, 'shells', neigh.shells[-1])
-        setattr(neigh_return, 'vecs', neigh.vecs[-1])
-        setattr(neigh_return, 'indices', neigh.indices[-1])
-        neigh_return.distances = neigh_return.distances[neigh_return.indices!=len(box)-1]
-        neigh_return.shells = neigh_return.shells[neigh_return.indices!=len(box)-1]
-        neigh_return.vecs = np.array(neigh_return.vecs)[neigh_return.indices!=len(box)-1]
-        neigh_return.indices = neigh_return.indices[neigh_return.indices!=len(box)-1]
+        setattr(neigh_return, "distances", neigh.distances[-1])
+        setattr(neigh_return, "shells", neigh.shells[-1])
+        setattr(neigh_return, "vecs", neigh.vecs[-1])
+        setattr(neigh_return, "indices", neigh.indices[-1])
+        neigh_return.distances = neigh_return.distances[
+            neigh_return.indices != len(box) - 1
+        ]
+        neigh_return.shells = neigh_return.shells[neigh_return.indices != len(box) - 1]
+        neigh_return.vecs = np.array(neigh_return.vecs)[
+            neigh_return.indices != len(box) - 1
+        ]
+        neigh_return.indices = neigh_return.indices[
+            neigh_return.indices != len(box) - 1
+        ]
         return neigh_return
 
     def get_shells(self, id_list=None, max_shell=2, max_num_neighbors=100):
@@ -1697,8 +1895,7 @@ class Atoms(object):
         """
         if id_list is None:
             id_list = [0]
-        neighbors = self.get_neighbors(num_neighbors=max_num_neighbors,
-                                       id_list=id_list)
+        neighbors = self.get_neighbors(num_neighbors=max_num_neighbors, id_list=id_list)
 
         shells = neighbors.shells[0]
         dist = neighbors.distances[0]
@@ -1713,7 +1910,9 @@ class Atoms(object):
             raise AssertionError()
         return shell_dict
 
-    def get_shell_matrix(self, shell, id_list=None, restraint_matrix=None, max_num_neighbors=100):
+    def get_shell_matrix(
+        self, shell, id_list=None, restraint_matrix=None, max_num_neighbors=100
+    ):
         """
 
         Args:
@@ -1729,19 +1928,26 @@ class Atoms(object):
             NxN matrix with 1 for the pairs of atoms in the given shell
 
         """
-        assert isinstance(shell, int) and shell > 0, "Parameter 'shell' must be an integer greater than 0"
-        neigh_list = self.get_neighbors(num_neighbors=max_num_neighbors,
-                                        id_list=id_list)
+        assert (
+            isinstance(shell, int) and shell > 0
+        ), "Parameter 'shell' must be an integer greater than 0"
+        neigh_list = self.get_neighbors(
+            num_neighbors=max_num_neighbors, id_list=id_list
+        )
         Natom = len(neigh_list.shells)
         if restraint_matrix is None:
-            restraint_matrix = (np.ones((Natom, Natom)) == 1)
+            restraint_matrix = np.ones((Natom, Natom)) == 1
         elif type(restraint_matrix) == list and len(restraint_matrix) == 2:
-            restraint_matrix = np.outer(1 * (self.get_chemical_symbols() == restraint_matrix[0]),
-                                        1 * (self.get_chemical_symbols() == restraint_matrix[1]))
-            restraint_matrix = ((restraint_matrix + restraint_matrix.transpose()) > 0)
+            restraint_matrix = np.outer(
+                1 * (self.get_chemical_symbols() == restraint_matrix[0]),
+                1 * (self.get_chemical_symbols() == restraint_matrix[1]),
+            )
+            restraint_matrix = (restraint_matrix + restraint_matrix.transpose()) > 0
         shell_matrix = np.zeros((Natom, Natom))
         for ii, ss in enumerate(neigh_list.shells):
-            unique, counts = np.unique(neigh_list.indices[ii][ss == np.array(shell)], return_counts=True)
+            unique, counts = np.unique(
+                neigh_list.indices[ii][ss == np.array(shell)], return_counts=True
+            )
             shell_matrix[ii][unique] = counts
         shell_matrix[restraint_matrix == False] = 0
         return shell_matrix
@@ -1759,7 +1965,7 @@ class Atoms(object):
         if id_list is None:
             id_list = [0]
         shells = self.get_shells(id_list=id_list, max_shell=shell + 1)
-        return np.mean(list(shells.values())[shell - 1:])
+        return np.mean(list(shells.values())[shell - 1 :])
 
     def occupy_lattice(self, **qwargs):
         """
@@ -1788,7 +1994,9 @@ class Atoms(object):
         self.set_species(new_species)
         self.indices = new_indices
 
-    def cluster_analysis(self, id_list, neighbors=None, radius=None, return_cluster_sizes=False):
+    def cluster_analysis(
+        self, id_list, neighbors=None, radius=None, return_cluster_sizes=False
+    ):
         """
 
         Args:
@@ -1819,7 +2027,9 @@ class Atoms(object):
                 c_count += 1
 
         cluster = np.array(self._cluster)
-        cluster_dict = {i_c: np.where(cluster == i_c)[0].tolist() for i_c in range(1, c_count)}
+        cluster_dict = {
+            i_c: np.where(cluster == i_c)[0].tolist() for i_c in range(1, c_count)
+        }
         if return_cluster_sizes:
             sizes = [self._cluster.count(i_c + 1) for i_c in range(c_count - 1)]
             return cluster_dict, sizes
@@ -1864,8 +2074,9 @@ class Atoms(object):
             dist_vec_cl = [np.mean(group) for group in np.split(dist_vec, ind_where)]
             return ind_vec_cl, dist_vec_cl
 
-        neighbors = self.get_neighbors(cutoff_radius=radius,
-                                       num_neighbors=num_neighbors)
+        neighbors = self.get_neighbors(
+            cutoff_radius=radius, num_neighbors=num_neighbors
+        )
 
         dist = neighbors.distances
         ind = neighbors.indices
@@ -1894,7 +2105,9 @@ class Atoms(object):
         return ind_shell
 
     # spglib calls
-    def get_symmetry(self, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0):
+    def get_symmetry(
+        self, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0
+    ):
         """
 
         Args:
@@ -1907,21 +2120,27 @@ class Atoms(object):
 
 
         """
-        lattice = np.array(self.get_cell().T, dtype='double', order='C')
-        positions = np.array(self.get_scaled_positions(wrap=False), dtype='double', order='C')
+        lattice = np.array(self.get_cell().T, dtype="double", order="C")
+        positions = np.array(
+            self.get_scaled_positions(wrap=False), dtype="double", order="C"
+        )
         if use_elements:
-            numbers = np.array(self.get_atomic_numbers(), dtype='intc')
+            numbers = np.array(self.get_atomic_numbers(), dtype="intc")
         else:
-            numbers = np.ones_like(self.get_atomic_numbers(), dtype='intc')
+            numbers = np.ones_like(self.get_atomic_numbers(), dtype="intc")
         if use_magmoms:
             magmoms = self.get_initial_magnetic_moments()
-            return spglib.get_symmetry(cell=(lattice, positions, numbers, magmoms),
-                                       symprec=symprec,
-                                       angle_tolerance=angle_tolerance)
+            return spglib.get_symmetry(
+                cell=(lattice, positions, numbers, magmoms),
+                symprec=symprec,
+                angle_tolerance=angle_tolerance,
+            )
         else:
-            return spglib.get_symmetry(cell=(lattice, positions, numbers),
-                                       symprec=symprec,
-                                       angle_tolerance=angle_tolerance)
+            return spglib.get_symmetry(
+                cell=(lattice, positions, numbers),
+                symprec=symprec,
+                angle_tolerance=angle_tolerance,
+            )
 
     def group_points_by_symmetry(self, points):
         """
@@ -1937,10 +2156,14 @@ class Atoms(object):
         """
         struct_copy = self.copy()
         points = np.array(points).reshape(-1, 3)
-        struct_copy += Atoms(elements=len(points)*['Hs'], positions=points)
-        struct_copy.center_coordinates_in_unit_cell();
-        group_IDs = struct_copy.get_symmetry()['equivalent_atoms'][struct_copy.select_index('Hs')]
-        return [np.round(points[group_IDs==ID], decimals=8) for ID in np.unique(group_IDs)]
+        struct_copy += Atoms(elements=len(points) * ["Hs"], positions=points)
+        struct_copy.center_coordinates_in_unit_cell()
+        group_IDs = struct_copy.get_symmetry()["equivalent_atoms"][
+            struct_copy.select_index("Hs")
+        ]
+        return [
+            np.round(points[group_IDs == ID], decimals=8) for ID in np.unique(group_IDs)
+        ]
 
     def _get_voronoi_vertices(self, minimum_dist=0.1):
         """
@@ -1953,36 +2176,60 @@ class Atoms(object):
             Returns: Positions of Voronoi vertices, box
 
         """
-        vor = Voronoi(self.repeat(3*[2]).positions) # Voronoi package does not have periodic boundary conditions
+        vor = Voronoi(
+            self.repeat(3 * [2]).positions
+        )  # Voronoi package does not have periodic boundary conditions
         b_cell_inv = np.linalg.inv(self.cell)
         voro_vert = vor.vertices
         for ind, v in enumerate(voro_vert):
-            pos = np.mean(voro_vert[(np.linalg.norm(voro_vert-v, axis=-1)<minimum_dist)], axis=0) # Find all points which are within minimum_dist
-            voro_vert[(np.linalg.norm(voro_vert-v, axis=-1)<0.5)] = np.array(3*[-10])    # Mark atoms to be deleted afterwards
+            pos = np.mean(
+                voro_vert[(np.linalg.norm(voro_vert - v, axis=-1) < minimum_dist)],
+                axis=0,
+            )  # Find all points which are within minimum_dist
+            voro_vert[(np.linalg.norm(voro_vert - v, axis=-1) < 0.5)] = np.array(
+                3 * [-10]
+            )  # Mark atoms to be deleted afterwards
             voro_vert[ind] = pos
-        voro_vert = voro_vert[np.min(voro_vert, axis=-1)>-5]
+        voro_vert = voro_vert[np.min(voro_vert, axis=-1) > -5]
 
-        voro_vert = np.dot(b_cell_inv.T, voro_vert.T).T # get scaled positions
-        voro_vert = voro_vert[(np.min(voro_vert, axis=-1)>0.499) & (np.max(voro_vert, axis=-1)<1.501)]
-        voro_vert = np.dot(self.cell.T, voro_vert.T).T # get true positions
+        voro_vert = np.dot(b_cell_inv.T, voro_vert.T).T  # get scaled positions
+        voro_vert = voro_vert[
+            (np.min(voro_vert, axis=-1) > 0.499) & (np.max(voro_vert, axis=-1) < 1.501)
+        ]
+        voro_vert = np.dot(self.cell.T, voro_vert.T).T  # get true positions
 
         box_copy = self.copy()
-        new_atoms = Atoms(cell=self.cell, symbols=['Hs']).repeat([len(voro_vert), 1, 1])
+        new_atoms = Atoms(cell=self.cell, symbols=["Hs"]).repeat([len(voro_vert), 1, 1])
         box_copy += new_atoms
 
         pos_total = np.append(self.positions, voro_vert)
         pos_total = pos_total.reshape(-1, 3)
         box_copy.positions = pos_total
 
-        box_copy.center_coordinates_in_unit_cell();
+        box_copy.center_coordinates_in_unit_cell()
 
-        neigh = box_copy.get_neighbors() # delete all atoms which lie within minimum_dist (including periodic boundary conditions)
-        while len(np.array(neigh.indices).flatten()[np.array(neigh.distances).flatten()<minimum_dist])!=0:
-            del box_copy[np.array(neigh.indices).flatten()[np.array(neigh.distances).flatten()<minimum_dist][0]]
+        neigh = (
+            box_copy.get_neighbors()
+        )  # delete all atoms which lie within minimum_dist (including periodic boundary conditions)
+        while (
+            len(
+                np.array(neigh.indices).flatten()[
+                    np.array(neigh.distances).flatten() < minimum_dist
+                ]
+            )
+            != 0
+        ):
+            del box_copy[
+                np.array(neigh.indices).flatten()[
+                    np.array(neigh.distances).flatten() < minimum_dist
+                ][0]
+            ]
             neigh = box_copy.get_neighbors()
         return pos_total, box_copy
 
-    def get_equivalent_voronoi_vertices(self, return_box=False, minimum_dist=0.1, symprec=1e-5, angle_tolerance=-1.0):
+    def get_equivalent_voronoi_vertices(
+        self, return_box=False, minimum_dist=0.1, symprec=1e-5, angle_tolerance=-1.0
+    ):
         """
             This function gives the positions of spatially equivalent Voronoi vertices in lists, which
             most likely represent interstitial points or vacancies (along with other high symmetry points)
@@ -1998,11 +2245,11 @@ class Atoms(object):
 
         """
 
-        _, box_copy = self._get_voronoi_vertices(minimum_dist = minimum_dist)
+        _, box_copy = self._get_voronoi_vertices(minimum_dist=minimum_dist)
         list_positions = []
         sym = box_copy.get_symmetry(symprec=symprec, angle_tolerance=angle_tolerance)
-        for ind in set(sym['equivalent_atoms'][box_copy.select_index('Hs')]):
-            list_positions.append(box_copy.positions[sym['equivalent_atoms']==ind])
+        for ind in set(sym["equivalent_atoms"][box_copy.select_index("Hs")]):
+            list_positions.append(box_copy.positions[sym["equivalent_atoms"] == ind])
         if return_box:
             return list_positions, box_copy
         else:
@@ -2019,12 +2266,16 @@ class Atoms(object):
 
         https://atztogo.github.io/spglib/python-spglib.html
         """
-        lattice = np.array(self.get_cell().T, dtype='double', order='C')
-        positions = np.array(self.get_scaled_positions(wrap=False), dtype='double', order='C')
-        numbers = np.array(self.get_atomic_numbers(), dtype='intc')
-        return spglib.get_symmetry_dataset(cell=(lattice, positions, numbers),
-                                           symprec=symprec,
-                                           angle_tolerance=angle_tolerance)
+        lattice = np.array(self.get_cell().T, dtype="double", order="C")
+        positions = np.array(
+            self.get_scaled_positions(wrap=False), dtype="double", order="C"
+        )
+        numbers = np.array(self.get_atomic_numbers(), dtype="intc")
+        return spglib.get_symmetry_dataset(
+            cell=(lattice, positions, numbers),
+            symprec=symprec,
+            angle_tolerance=angle_tolerance,
+        )
 
     def get_spacegroup(self, symprec=1e-5, angle_tolerance=-1.0):
         """
@@ -2037,17 +2288,23 @@ class Atoms(object):
 
         https://atztogo.github.io/spglib/python-spglib.html
         """
-        lattice = np.array(self.get_cell(), dtype='double', order='C')
-        positions = np.array(self.get_scaled_positions(wrap=False), dtype='double', order='C')
-        numbers = np.array(self.get_atomic_numbers(), dtype='intc')
-        space_group = spglib.get_spacegroup(cell=(lattice, positions, numbers),
-                                            symprec=symprec,
-                                            angle_tolerance=angle_tolerance).split()
+        lattice = np.array(self.get_cell(), dtype="double", order="C")
+        positions = np.array(
+            self.get_scaled_positions(wrap=False), dtype="double", order="C"
+        )
+        numbers = np.array(self.get_atomic_numbers(), dtype="intc")
+        space_group = spglib.get_spacegroup(
+            cell=(lattice, positions, numbers),
+            symprec=symprec,
+            angle_tolerance=angle_tolerance,
+        ).split()
         if len(space_group) == 1:
             return {"Number": ast.literal_eval(space_group[0])}
         else:
-            return {"InternationalTableSymbol": space_group[0],
-                    "Number": ast.literal_eval(space_group[1])}
+            return {
+                "InternationalTableSymbol": space_group[0],
+                "Number": ast.literal_eval(space_group[1]),
+            }
 
     def refine_cell(self, symprec=1e-5, angle_tolerance=-1.0):
         """
@@ -2060,16 +2317,20 @@ class Atoms(object):
 
         https://atztogo.github.io/spglib/python-spglib.html
         """
-        lattice = np.array(self.get_cell().T, dtype='double', order='C')
-        positions = np.array(self.get_scaled_positions(wrap=False), dtype='double', order='C')
-        numbers = np.array(self.get_atomic_numbers(), dtype='intc')
-        cell, coords, el = spglib.refine_cell(cell=(lattice, positions, numbers),
-                                              symprec=symprec,
-                                              angle_tolerance=angle_tolerance)
+        lattice = np.array(self.get_cell().T, dtype="double", order="C")
+        positions = np.array(
+            self.get_scaled_positions(wrap=False), dtype="double", order="C"
+        )
+        numbers = np.array(self.get_atomic_numbers(), dtype="intc")
+        cell, coords, el = spglib.refine_cell(
+            cell=(lattice, positions, numbers),
+            symprec=symprec,
+            angle_tolerance=angle_tolerance,
+        )
 
-        return Atoms(symbols=list(self.get_chemical_symbols()),
-                     positions=coords,
-                     cell=cell)
+        return Atoms(
+            symbols=list(self.get_chemical_symbols()), positions=coords, cell=cell
+        )
 
     def get_primitive_cell(self, symprec=1e-5, angle_tolerance=-1.0):
         """
@@ -2084,19 +2345,21 @@ class Atoms(object):
         el_dict = {}
         for el in set(self.get_chemical_elements()):
             el_dict[el.AtomicNumber] = el
-        lattice = np.array(self.get_cell().T, dtype='double', order='C')
-        positions = np.array(self.get_scaled_positions(wrap=False), dtype='double', order='C')
-        numbers = np.array(self.get_atomic_numbers(), dtype='intc')
-        cell, coords, atomic_numbers = spglib.find_primitive(cell=(lattice, positions, numbers),
-                                                             symprec=symprec,
-                                                             angle_tolerance=angle_tolerance)
+        lattice = np.array(self.get_cell().T, dtype="double", order="C")
+        positions = np.array(
+            self.get_scaled_positions(wrap=False), dtype="double", order="C"
+        )
+        numbers = np.array(self.get_atomic_numbers(), dtype="intc")
+        cell, coords, atomic_numbers = spglib.find_primitive(
+            cell=(lattice, positions, numbers),
+            symprec=symprec,
+            angle_tolerance=angle_tolerance,
+        )
         # print atomic_numbers, type(atomic_numbers)
         el_lst = [el_dict[i_a] for i_a in atomic_numbers]
 
         # convert lattice vectors to standard (experimental feature!) TODO:
-        red_structure = Atoms(elements=el_lst,
-                              scaled_positions=coords,
-                              cell=cell)
+        red_structure = Atoms(elements=el_lst, scaled_positions=coords, cell=cell)
         space_group = red_structure.get_spacegroup(symprec)["Number"]
         # print "space group: ", space_group
         if space_group == 225:  # fcc
@@ -2106,7 +2369,13 @@ class Atoms(object):
             red_structure.cell = amat_fcc
         return red_structure
 
-    def get_ir_reciprocal_mesh(self, mesh, is_shift=np.zeros(3, dtype='intc'), is_time_reversal=True, symprec=1e-5):
+    def get_ir_reciprocal_mesh(
+        self,
+        mesh,
+        is_shift=np.zeros(3, dtype="intc"),
+        is_time_reversal=True,
+        symprec=1e-5,
+    ):
         """
 
         Args:
@@ -2118,8 +2387,13 @@ class Atoms(object):
         Returns:
 
         """
-        mapping, mesh_points = spglib.get_ir_reciprocal_mesh(mesh=mesh, cell=self, is_shift=is_shift,
-                                                             is_time_reversal=is_time_reversal, symprec=symprec)
+        mapping, mesh_points = spglib.get_ir_reciprocal_mesh(
+            mesh=mesh,
+            cell=self,
+            is_shift=is_shift,
+            is_time_reversal=is_time_reversal,
+            symprec=symprec,
+        )
         return mapping, mesh_points
 
     def get_equivalent_atoms(self, eps=1e-5):
@@ -2139,7 +2413,7 @@ class Atoms(object):
         id_vec = []
 
         ind_ref = 0  # TODO: extend as loop over all inequivalent atoms
-        id_mat = np.identity(3, dtype='intc')
+        id_mat = np.identity(3, dtype="intc")
         ref_id_list = []
         for trans, rot in zip(sym["translations"], sym["rotations"]):
             if np.linalg.norm(rot - id_mat) < eps:  # TODO: remove this limitation
@@ -2180,14 +2454,17 @@ class Atoms(object):
         el_dict = self.get_number_species_atoms()
         el_num = list(el_dict.values())
         el_name = list(el_dict.keys())
-        if np.sum(np.array(el_num)==np.max(el_num)) > 1:
-            warnings.warn('There are more than one majority species')
-        symbol_to_index = dict(zip(self.get_chemical_symbols(),
-                                   self.get_chemical_indices()))
+        if np.sum(np.array(el_num) == np.max(el_num)) > 1:
+            warnings.warn("There are more than one majority species")
+        symbol_to_index = dict(
+            zip(self.get_chemical_symbols(), self.get_chemical_indices())
+        )
         max_index = np.argmax(el_num)
-        return {'symbol': el_name[max_index],
-                'count': int(np.max(el_num)),
-                'index': symbol_to_index[el_name[max_index]]}
+        return {
+            "symbol": el_name[max_index],
+            "count": int(np.max(el_num)),
+            "index": symbol_to_index[el_name[max_index]],
+        }
 
     def extend(self, other):
         """
@@ -2204,22 +2481,22 @@ class Atoms(object):
         n1 = len(self)
         n2 = len(other)
         for name, a1 in self._tag_list.items():
-                a1 = np.array(a1)
-                a = np.zeros((n1 + n2,) + a1.shape[1:], a1.dtype)
-                a[:n1] = a1
-                if name == 'masses':
-                    a2 = other.get_masses()
-                else:
-                    a2 = other.lists.get(name)
-                if a2 is not None:
-                    a[n1:] = a2
-                self._lists[name] = a
+            a1 = np.array(a1)
+            a = np.zeros((n1 + n2,) + a1.shape[1:], a1.dtype)
+            a[:n1] = a1
+            if name == "masses":
+                a2 = other.get_masses()
+            else:
+                a2 = other.lists.get(name)
+            if a2 is not None:
+                a[n1:] = a2
+            self._lists[name] = a
         for name, a2 in other.lists.items():
             if name in self._tag_list.keys():
                 continue
             a = np.empty((n1 + n2,) + a2.shape[1:], a2.dtype)
             a[:n1] = a2
-            if name == 'masses':
+            if name == "masses":
                 a[:n1] = self.get_masses()[:n1]
             else:
                 a[:n1] = 0
@@ -2249,9 +2526,11 @@ class Atoms(object):
         Returns:
 
         """
-        warnings.warn("This function doesn't account for periodic boundary conditions. Call "
-                      "`analyse_ovito_voronoi_volume` instead. This is what will now be returned.",
-                      DeprecationWarning)
+        warnings.warn(
+            "This function doesn't account for periodic boundary conditions. Call "
+            "`analyse_ovito_voronoi_volume` instead. This is what will now be returned.",
+            DeprecationWarning,
+        )
         return self.analyse_ovito_voronoi_volume()
 
     def __add__(self, other):
@@ -2259,7 +2538,9 @@ class Atoms(object):
             sum_atoms = copy(self)
             sum_atoms._tag_list = sum_atoms._tag_list + other._tag_list
             sum_atoms.indices = np.append(sum_atoms.indices, other.indices)
-            sum_atoms.positions = np.append(sum_atoms.positions, other.positions, axis=0)
+            sum_atoms.positions = np.append(
+                sum_atoms.positions, other.positions, axis=0
+            )
 
             new_species_lst = copy(sum_atoms.species)
             ind_conv = {}
@@ -2267,7 +2548,9 @@ class Atoms(object):
             for ind_old, el in enumerate(other.species):
                 if el.Abbreviation in sum_atoms._store_elements.keys():
                     # print ('add:: ', el.Abbreviation, self._store_elements)
-                    ind_new = sum_atoms._species_to_index_dict[sum_atoms._store_elements[el.Abbreviation]]
+                    ind_new = sum_atoms._species_to_index_dict[
+                        sum_atoms._store_elements[el.Abbreviation]
+                    ]
                     ind_conv[ind_old] = ind_new
                 else:
                     new_species_lst.append(el)
@@ -2277,7 +2560,7 @@ class Atoms(object):
             for key, val in ind_conv.items():
                 new_indices[new_indices == key] = val + 1000
             new_indices = np.mod(new_indices, 1000)
-            sum_atoms.indices[len(self.indices):] = new_indices
+            sum_atoms.indices[len(self.indices) :] = new_indices
             sum_atoms.set_species(new_species_lst)
 
             if not len(set(sum_atoms.indices)) == len(sum_atoms.species):
@@ -2298,7 +2581,7 @@ class Atoms(object):
         """
         atoms_new = Atoms()
         for key, val in self.__dict__.items():
-            if key not in ['_pse']:
+            if key not in ["_pse"]:
                 # print ('copy: ', key)
                 atoms_new.__dict__[key] = copy(val)
 
@@ -2348,13 +2631,22 @@ class Atoms(object):
             element = self.species[self.indices[item]]
             index = item
             position = self.positions[item]
-            return Atom(element=element, position=position, pse=self._pse, index=index, atoms=self, **new_dict)
+            return Atom(
+                element=element,
+                position=position,
+                pse=self._pse,
+                index=index,
+                atoms=self,
+                **new_dict
+            )
 
         new_array = copy(self)
         new_array.positions = self.positions[item]
 
         new_indices = self.indices[item].copy()
-        new_species_indices, new_proper_indices = np.unique(new_indices, return_inverse=True)
+        new_species_indices, new_proper_indices = np.unique(
+            new_indices, return_inverse=True
+        )
         new_species = [self.species[ind] for ind in new_species_indices]
         new_array.set_species(new_species)
         new_array.indices = new_proper_indices
@@ -2364,7 +2656,7 @@ class Atoms(object):
         if isinstance(new_array, Atom):
             natoms = len(self)
             if item < -natoms or item >= natoms:
-                raise IndexError('Index out of range.')
+                raise IndexError("Index out of range.")
             new_array.index = item
         return new_array
 
@@ -2389,7 +2681,9 @@ class Atoms(object):
             tags = self.get_tags()
             out_str += "tags: \n"  # + ", ".join(tags) + "\n"
             for tag in tags:
-                out_str += "    " + str(tag) + ": " + self._tag_list[tag].__str__() + "\n"
+                out_str += (
+                    "    " + str(tag) + ": " + self._tag_list[tag].__str__() + "\n"
+                )
         if self._cell is not None:
             out_str += "pbc: " + str(self.pbc) + "\n"
             out_str += "cell: \n"
@@ -2404,11 +2698,13 @@ class Atoms(object):
             elif isinstance(value, ChemicalElement):
                 el = value
             else:
-                raise TypeError('value should either be a string or a ChemicalElement.')
+                raise TypeError("value should either be a string or a ChemicalElement.")
             if el != old_el:
                 new_species = np.array(self.species).copy()
                 if len(self.select_index(old_el)) == 1:
-                    if el.Abbreviation not in [spec.Abbreviation for spec in new_species]:
+                    if el.Abbreviation not in [
+                        spec.Abbreviation for spec in new_species
+                    ]:
                         new_species[self.indices[key]] = el
                         self.set_species(list(new_species))
                     else:
@@ -2421,7 +2717,9 @@ class Atoms(object):
                         self.indices[self.indices > remove_index] -= 1
                         self.set_species(new_species)
                 else:
-                    if el.Abbreviation not in [spec.Abbreviation for spec in new_species]:
+                    if el.Abbreviation not in [
+                        spec.Abbreviation for spec in new_species
+                    ]:
                         new_species = list(new_species)
                         new_species.append(el)
                         self.set_species(new_species)
@@ -2432,7 +2730,7 @@ class Atoms(object):
                         self.indices[key] = ind
         elif isinstance(key, slice) or isinstance(key, (list, tuple, np.ndarray)):
             if not isinstance(key, slice):
-                if hasattr(key, '__len__'):
+                if hasattr(key, "__len__"):
                     if len(key) == 0:
                         return
             else:
@@ -2454,12 +2752,18 @@ class Atoms(object):
             elif isinstance(value, ChemicalElement):
                 el = value
             else:
-                raise ValueError("The value assigned should be a string, integer or a ChemicalElement instance")
+                raise ValueError(
+                    "The value assigned should be a string, integer or a ChemicalElement instance"
+                )
             replace_list = list()
             new_species = list(np.array(self.species).copy())
             for sp in self.species:
-                replace_list.append(np.array_equal(np.sort(self.select_index(sp)),
-                                                   np.sort(np.intersect1d(self.select_index(sp), key))))
+                replace_list.append(
+                    np.array_equal(
+                        np.sort(self.select_index(sp)),
+                        np.sort(np.intersect1d(self.select_index(sp), key)),
+                    )
+                )
             if el.Abbreviation not in [spec.Abbreviation for spec in new_species]:
                 if not any(replace_list):
                     new_species.append(el)
@@ -2489,8 +2793,9 @@ class Atoms(object):
                             # del new_species[i]
                             new_indices[new_indices > i] -= 1
                     self.indices = new_indices.copy()
-                    new_species = np.array(new_species)[np.setdiff1d(np.arange(len(new_species)),
-                                                                     delete_indices)].tolist()
+                    new_species = np.array(new_species)[
+                        np.setdiff1d(np.arange(len(new_species)), delete_indices)
+                    ].tolist()
                     self.set_species(new_species)
         else:
             raise NotImplementedError()
@@ -2531,7 +2836,7 @@ class Atoms(object):
         new_positions = np.tile(positions, (len(lat), 1)) + lat_new
 
         self._length = len(new_positions)
-        self.set_scaled_positions(new_positions/np.array(i_vec))
+        self.set_scaled_positions(new_positions / np.array(i_vec))
         self.indices = np.tile(self.indices, len(lat))
         self._tag_list._length = len(self)
         # print ('basis_len: ', len(self.positions), len(new_elements))
@@ -2557,7 +2862,7 @@ class Atoms(object):
         el_list = []
         num_list = ""
         for i, char in enumerate(elements):
-            is_last = (i == len(elements) - 1)
+            is_last = i == len(elements) - 1
             if len(num_list) > 0:
                 if (not char.isdigit()) or is_last:
                     el_fac = ast.literal_eval(num_list) * el_list[-1]
@@ -2657,8 +2962,10 @@ class Atoms(object):
         Learn more about get_distances from the ase website:
         https://wiki.fysik.dtu.dk/ase/ase/geometry.html#ase.geometry.get_distances
         """
-        if (a0 is not None and len(np.array(a0).shape)!=2) or (a1 is not None and len(np.array(a1).shape)!=2):
-            raise ValueError('a0 and a1 have to be None or Nx3 array')
+        if (a0 is not None and len(np.array(a0).shape) != 2) or (
+            a1 is not None and len(np.array(a1).shape) != 2
+        ):
+            raise ValueError("a0 and a1 have to be None or Nx3 array")
         if a0 is None and a1 is not None:
             a0 = a1
             a1 = None
@@ -2677,21 +2984,32 @@ class Atoms(object):
         """
         Return distances between all atoms in a matrix. cf. get_distance
         """
-        warnings.warn('get_distance_matrix is deprecated. Use get_distances instead', DeprecationWarning)
+        warnings.warn(
+            "get_distance_matrix is deprecated. Use get_distances instead",
+            DeprecationWarning,
+        )
         return self.get_distances(mic=mic, vector=vector)
 
     def get_constraint(self):
-        if 'selective_dynamics' in self._tag_list._lists.keys():
+        if "selective_dynamics" in self._tag_list._lists.keys():
             from ase.constraints import FixAtoms
-            return FixAtoms(indices=np.array([atom_ind for atom_ind in range(len(self))
-                                              if any(self.selective_dynamics[atom_ind])]))
+
+            return FixAtoms(
+                indices=np.array(
+                    [
+                        atom_ind
+                        for atom_ind in range(len(self))
+                        if any(self.selective_dynamics[atom_ind])
+                    ]
+                )
+            )
         else:
             return None
 
     def set_constraint(self, constrain):
-        if constrain.todict()['name'] != 'FixAtoms':
-            raise ValueError('Only FixAtoms is supported as ASE compatible constraint.')
-        if 'selective_dynamics' not in self._tag_list._lists.keys():
+        if constrain.todict()["name"] != "FixAtoms":
+            raise ValueError("Only FixAtoms is supported as ASE compatible constraint.")
+        if "selective_dynamics" not in self._tag_list._lists.keys():
             self.add_tag(selective_dynamics=None)
         for atom_ind in range(len(self)):
             if atom_ind in constrain.index:
@@ -2706,18 +3024,35 @@ class Atoms(object):
         Returns:
             numpy.array()
         """
-        if 'spin' in self._tag_list._lists.keys():
+        if "spin" in self._tag_list._lists.keys():
             return np.array(list(self.spin.values()))
         else:
-            spin_lst = [element.tags['spin'] if 'spin' in element.tags.keys() else None
-                        for element in self.get_chemical_elements()]
+            spin_lst = [
+                element.tags["spin"] if "spin" in element.tags.keys() else None
+                for element in self.get_chemical_elements()
+            ]
             if any(spin_lst):
-                if (isinstance(spin_lst, str) or
-                    (isinstance(spin_lst, (list, np.ndarray)) and isinstance(spin_lst[0], str))
-                   ) and '[' in list(set(spin_lst))[0]:
+                if (
+                    isinstance(spin_lst, str)
+                    or (
+                        isinstance(spin_lst, (list, np.ndarray))
+                        and isinstance(spin_lst[0], str)
+                    )
+                ) and "[" in list(set(spin_lst))[0]:
                     return np.array(
-                        [[float(spin_dir) for spin_dir in spin.replace('[', '').replace(']', '').replace(',', '').split()]
-                         if spin else [0.0, 0.0, 0.0] for spin in spin_lst])
+                        [
+                            [
+                                float(spin_dir)
+                                for spin_dir in spin.replace("[", "")
+                                .replace("]", "")
+                                .replace(",", "")
+                                .split()
+                            ]
+                            if spin
+                            else [0.0, 0.0, 0.0]
+                            for spin in spin_lst
+                        ]
+                    )
                 elif isinstance(spin_lst, (list, np.ndarray)):
                     return np.array(spin_lst)
                 else:
@@ -2734,11 +3069,11 @@ class Atoms(object):
         """
         if magmoms is not None:
             if len(magmoms) != len(self):
-                raise ValueError('magmons can be collinear or non-collinear.')
+                raise ValueError("magmons can be collinear or non-collinear.")
             for ind, element in enumerate(self.get_chemical_elements()):
-                if 'spin' in element.tags.keys():
+                if "spin" in element.tags.keys():
                     self[ind] = element.Parent
-            if 'spin' not in self._tag_list._lists.keys():
+            if "spin" not in self._tag_list._lists.keys():
                 self.add_tag(spin=None)
             for ind, spin in enumerate(magmoms):
                 self.spin[ind] = spin
@@ -2758,7 +3093,9 @@ class Atoms(object):
         del self[i]
         return atom
 
-    def rotate(self, vector, angle=None, center=(0, 0, 0), rotate_cell=False, index_list=None):
+    def rotate(
+        self, vector, angle=None, center=(0, 0, 0), rotate_cell=False, index_list=None
+    ):
         """
         Rotate atoms based on a vector and an angle, or two vectors. This function is completely adopted from ASE code
         (https://wiki.fysik.dtu.dk/ase/_modules/ase/atoms.html#Atoms.rotate)
@@ -2831,14 +3168,14 @@ class Atoms(object):
                 vector /= s
 
         if isinstance(center, str):
-            if center.lower() == 'com':
+            if center.lower() == "com":
                 center = self.get_center_of_mass()
-            elif center.lower() == 'cop':
+            elif center.lower() == "cop":
                 center = np.mean(self.get_positions(), axis=0)
-            elif center.lower() == 'cou':
+            elif center.lower() == "cou":
                 center = self.cell.sum(axis=0) / 2
             else:
-                raise ValueError('Cannot interpret center')
+                raise ValueError("Cannot interpret center")
         else:
             center = np.array(center)
 
@@ -2847,18 +3184,22 @@ class Atoms(object):
                 raise AssertionError()
             rotate_list = np.array(index_list)
         else:
-            rotate_list = np.array(len(self)*[True])
+            rotate_list = np.array(len(self) * [True])
 
         p = self.positions[rotate_list] - center
-        self.positions[rotate_list] = (c * p -
-                                       np.cross(p, s * vector) +
-                                       np.outer(np.dot(p, vector), (1.0 - c) * vector) +
-                                       center)
+        self.positions[rotate_list] = (
+            c * p
+            - np.cross(p, s * vector)
+            + np.outer(np.dot(p, vector), (1.0 - c) * vector)
+            + center
+        )
         if rotate_cell:
             rotcell = self.cell
-            rotcell[:] = (c * rotcell -
-                          np.cross(rotcell, s * vector) +
-                          np.outer(np.dot(rotcell, vector), (1.0 - c) * vector))
+            rotcell[:] = (
+                c * rotcell
+                - np.cross(rotcell, s * vector)
+                + np.outer(np.dot(rotcell, vector), (1.0 - c) * vector)
+            )
             self.cell = rotcell
 
     def rotate_euler(self, center=(0, 0, 0), phi=0.0, theta=0.0, psi=0.0):
@@ -2881,14 +3222,14 @@ class Atoms(object):
 
         """
         if isinstance(center, str):
-            if center.lower() == 'com':
+            if center.lower() == "com":
                 center = self.get_center_of_mass()
-            elif center.lower() == 'cop':
+            elif center.lower() == "cop":
                 center = self.get_positions().mean(axis=0)
-            elif center.lower() == 'cou':
+            elif center.lower() == "cou":
                 center = self.cell.sum(axis=0) / 2
             else:
-                raise ValueError('Cannot interpret center')
+                raise ValueError("Cannot interpret center")
         else:
             center = np.array(center)
 
@@ -2901,17 +3242,21 @@ class Atoms(object):
             rcoords = self.positions - center
 
         # First Euler rotation about z in matrix form
-        d = np.array(((cos(phi), sin(phi), 0.),
-                      (-sin(phi), cos(phi), 0.),
-                      (0., 0., 1.)))
+        d = np.array(
+            ((cos(phi), sin(phi), 0.0), (-sin(phi), cos(phi), 0.0), (0.0, 0.0, 1.0))
+        )
         # Second Euler rotation about x:
-        c = np.array(((1., 0., 0.),
-                      (0., cos(theta), sin(theta)),
-                      (0., -sin(theta), cos(theta))))
+        c = np.array(
+            (
+                (1.0, 0.0, 0.0),
+                (0.0, cos(theta), sin(theta)),
+                (0.0, -sin(theta), cos(theta)),
+            )
+        )
         # Third Euler rotation, 2nd rotation about z:
-        b = np.array(((cos(psi), sin(psi), 0.),
-                      (-sin(psi), cos(psi), 0.),
-                      (0., 0., 1.)))
+        b = np.array(
+            ((cos(psi), sin(psi), 0.0), (-sin(psi), cos(psi), 0.0), (0.0, 0.0, 1.0))
+        )
         # Total Euler rotation
         a = np.dot(b, np.dot(c, d))
         # Do the rotation
@@ -2924,12 +3269,18 @@ class Atoms(object):
 
     @property
     def scaled_positions(self):
-        warnings.warn('scaled_positions is deprecated. Use get_scaled_positions instead', DeprecationWarning)
+        warnings.warn(
+            "scaled_positions is deprecated. Use get_scaled_positions instead",
+            DeprecationWarning,
+        )
         return self.get_scaled_positions(wrap=False)
 
     @scaled_positions.setter
     def scaled_positions(self, positions):
-        warnings.warn('scaled_positions is deprecated. Use set_scaled_positions instead', DeprecationWarning)
+        warnings.warn(
+            "scaled_positions is deprecated. Use set_scaled_positions instead",
+            DeprecationWarning,
+        )
         self.set_scaled_positions(positions)
 
     def set_scaled_positions(self, scaled):
@@ -2941,8 +3292,8 @@ class Atoms(object):
 
         """
         if self.cell is None:
-            raise ValueError('cell has not been set yet')
-        self.positions = np.einsum('jk,ij->ik', self.cell, scaled)
+            raise ValueError("cell has not been set yet")
+        self.positions = np.einsum("jk,ij->ik", self.cell, scaled)
 
     def set_cell(self, cell, scale_atoms=False):
         """
@@ -2992,16 +3343,17 @@ class Atoms(object):
         elif cell.shape == (6,):
             cell = cellpar_to_cell(cell)
         elif cell.shape != (3, 3):
-            raise ValueError('Cell must be length 3 sequence, length 6 '
-                             'sequence or 3x3 matrix!')
+            raise ValueError(
+                "Cell must be length 3 sequence, length 6 " "sequence or 3x3 matrix!"
+            )
 
-        if np.linalg.det(cell)<=0:
-            raise ValueError('Cell must be a full dimensional matrix with '
-                             'right hand orientation')
+        if np.linalg.det(cell) <= 0:
+            raise ValueError(
+                "Cell must be a full dimensional matrix with " "right hand orientation"
+            )
 
         if scale_atoms:
-            M = np.linalg.solve(self.get_cell(complete=True),
-                                complete_cell(cell))
+            M = np.linalg.solve(self.get_cell(complete=True), complete_cell(cell))
             self.positions[:] = np.dot(self.positions, M)
         self._cell = cell
 
@@ -3049,10 +3401,10 @@ class Atoms(object):
         """
 
         from ase.utils.geometry import wrap_positions
+
         if pbc is None:
             pbc = self.pbc
-        self.positions = wrap_positions(self.positions, self.cell,
-                                        pbc, center, eps)
+        self.positions = wrap_positions(self.positions, self.cell, pbc, center, eps)
 
     def write(self, filename, format=None, **kwargs):
         """
@@ -3070,6 +3422,7 @@ class Atoms(object):
 
         """
         from ase.io import write
+
         atoms = self.copy()
         atoms.arrays["positions"] = atoms.positions
         write(filename, atoms, format, **kwargs)
@@ -3090,20 +3443,22 @@ class _CrystalStructure(Atoms):
         **kwargs:
     """
 
-    def __init__(self,
-                 element="Fe",
-                 bravais_lattice='cubic',
-                 bravais_basis='primitive',
-                 lattice_constants=None,  # depending on symmetry length and angles
-                 dimension=3,
-                 rel_coords=True,
-                 pse=None,
-                 **kwargs):
+    def __init__(
+        self,
+        element="Fe",
+        bravais_lattice="cubic",
+        bravais_basis="primitive",
+        lattice_constants=None,  # depending on symmetry length and angles
+        dimension=3,
+        rel_coords=True,
+        pse=None,
+        **kwargs
+    ):
 
         # print "basis0"
         # allow also for scalar input for LatticeConstants (for a cubic system)
         if lattice_constants is None:
-            lattice_constants = [1.]
+            lattice_constants = [1.0]
         try:
             test = lattice_constants[0]
         except (TypeError, IndexError):
@@ -3117,39 +3472,63 @@ class _CrystalStructure(Atoms):
 
         self.__updateCrystal__(pse)
 
-        self.crystalParamsDict = {'BravaisLattice': self.bravais_lattice, 'BravaisBasis': self.bravais_basis,
-                                  'LatticeConstants': self.lattice_constants}
+        self.crystalParamsDict = {
+            "BravaisLattice": self.bravais_lattice,
+            "BravaisBasis": self.bravais_basis,
+            "LatticeConstants": self.lattice_constants,
+        }
 
-        self.crystal_lattice_dict = {3: {
-            "cubic": ["fcc", "bcc", "primitive"],
-            "hexagonal": ["primitive", "hcp"],
-            "monoclinic": ["primitive", "base-centered"],
-            "triclinic": ["primitive"],
-            "orthorombic": ["primitive", "body-centered", "base-centered", "face-centered"],
-            "tetragonal": ["primitive", "body-centered"],
-            "rhombohedral": ["primitive"]}, 2: {
-            "oblique": ["primitive"],
-            "rectangular": ["primitive", "centered"],
-            "hexagonal": ["primitive"],
-            "square": ["primitive"]}, 1: {"line": ["primitive"]}}
+        self.crystal_lattice_dict = {
+            3: {
+                "cubic": ["fcc", "bcc", "primitive"],
+                "hexagonal": ["primitive", "hcp"],
+                "monoclinic": ["primitive", "base-centered"],
+                "triclinic": ["primitive"],
+                "orthorombic": [
+                    "primitive",
+                    "body-centered",
+                    "base-centered",
+                    "face-centered",
+                ],
+                "tetragonal": ["primitive", "body-centered"],
+                "rhombohedral": ["primitive"],
+            },
+            2: {
+                "oblique": ["primitive"],
+                "rectangular": ["primitive", "centered"],
+                "hexagonal": ["primitive"],
+                "square": ["primitive"],
+            },
+            1: {"line": ["primitive"]},
+        }
 
         # init structure for lattice parameters alat, blat, clat, alpha, beta, gamma
-        self.crystalLatticeParams = {3: {"cubic": [1.],
-                                         "hexagonal": [1., 2.],
-                                         "monoclinic": [1., 1., 1., 90.],
-                                         "triclinic": [1., 2., 3., 90., 90., 90.],
-                                         "orthorombic": [1., 1., 1.],
-                                         "tetragonal": [1., 2.],
-                                         "rhombohedral": [1., 90., 90., 90.]}, 2: {"oblique": [1., 1., 90.],
-                                                                                   "rectangular": [1., 1.],
-                                                                                   "hexagonal": [1.],
-                                                                                   "square": [1.]}, 1: {"line": [1.]}}
+        self.crystalLatticeParams = {
+            3: {
+                "cubic": [1.0],
+                "hexagonal": [1.0, 2.0],
+                "monoclinic": [1.0, 1.0, 1.0, 90.0],
+                "triclinic": [1.0, 2.0, 3.0, 90.0, 90.0, 90.0],
+                "orthorombic": [1.0, 1.0, 1.0],
+                "tetragonal": [1.0, 2.0],
+                "rhombohedral": [1.0, 90.0, 90.0, 90.0],
+            },
+            2: {
+                "oblique": [1.0, 1.0, 90.0],
+                "rectangular": [1.0, 1.0],
+                "hexagonal": [1.0],
+                "square": [1.0],
+            },
+            1: {"line": [1.0]},
+        }
 
         # print "basis"
-        super(_CrystalStructure, self).__init__(elements=self.ElementList,
-                                                scaled_positions=self.coordinates,
-                                                cell=self.amat,  # tag = "Crystal",
-                                                pbc=[True, True, True][0:self.dimension])
+        super(_CrystalStructure, self).__init__(
+            elements=self.ElementList,
+            scaled_positions=self.coordinates,
+            cell=self.amat,  # tag = "Crystal",
+            pbc=[True, True, True][0 : self.dimension],
+        )
 
     # ## private member functions
     def __updateCrystal__(self, pse=None):
@@ -3179,55 +3558,59 @@ class _CrystalStructure(Atoms):
             beta = None
             gamma = None
             b_lat, c_lat = None, None
-            if self.bravais_lattice == 'cubic':
+            if self.bravais_lattice == "cubic":
                 b_lat = c_lat = a_lat
-                alpha = beta = gamma = 90 / 180. * np.pi  # 90 degrees
-            elif self.bravais_lattice == 'tetragonal':
+                alpha = beta = gamma = 90 / 180.0 * np.pi  # 90 degrees
+            elif self.bravais_lattice == "tetragonal":
                 b_lat = a_lat
                 c_lat = self.lattice_constants[1]
                 alpha = beta = gamma = 0.5 * np.pi  # 90 degrees
-            elif self.bravais_lattice == 'triclinic':
+            elif self.bravais_lattice == "triclinic":
                 b_lat = self.lattice_constants[1]
                 c_lat = self.lattice_constants[2]
-                alpha = self.lattice_constants[3] / 180. * np.pi
-                beta = self.lattice_constants[4] / 180. * np.pi
-                gamma = self.lattice_constants[5] / 180. * np.pi
-            elif self.bravais_lattice == 'hexagonal':
+                alpha = self.lattice_constants[3] / 180.0 * np.pi
+                beta = self.lattice_constants[4] / 180.0 * np.pi
+                gamma = self.lattice_constants[5] / 180.0 * np.pi
+            elif self.bravais_lattice == "hexagonal":
                 b_lat = a_lat
                 c_lat = self.lattice_constants[1]
-                alpha = 60. / 180. * np.pi  # 60 degrees
+                alpha = 60.0 / 180.0 * np.pi  # 60 degrees
                 beta = gamma = 0.5 * np.pi  # 90 degrees
-            elif self.bravais_lattice == 'orthorombic':
+            elif self.bravais_lattice == "orthorombic":
                 b_lat = self.lattice_constants[1]
                 c_lat = self.lattice_constants[2]
                 alpha = beta = gamma = 0.5 * np.pi  # 90 degrees
-            elif self.bravais_lattice == 'rhombohedral':
+            elif self.bravais_lattice == "rhombohedral":
                 b_lat = a_lat
                 c_lat = a_lat
-                alpha = self.lattice_constants[1] / 180. * np.pi
-                beta = self.lattice_constants[2] / 180. * np.pi
-                gamma = self.lattice_constants[3] / 180. * np.pi
-            elif self.bravais_lattice == 'monoclinic':
+                alpha = self.lattice_constants[1] / 180.0 * np.pi
+                beta = self.lattice_constants[2] / 180.0 * np.pi
+                gamma = self.lattice_constants[3] / 180.0 * np.pi
+            elif self.bravais_lattice == "monoclinic":
                 b_lat = self.lattice_constants[1]
                 c_lat = self.lattice_constants[2]
                 alpha = 0.5 * np.pi
-                beta = self.lattice_constants[3] / 180. * np.pi
+                beta = self.lattice_constants[3] / 180.0 * np.pi
                 gamma = 0.5 * np.pi
 
             b1 = np.cos(alpha)
             b2 = np.sin(alpha)
             c1 = np.cos(beta)
             c2 = (np.cos(gamma) - np.cos(beta) * np.cos(alpha)) / np.sin(alpha)
-            self.amat = np.array([[a_lat, 0., 0.],
-                                  [b_lat * b1, b_lat * b2, 0.],
-                                  [c_lat * c1, c_lat * c2, c_lat * np.sqrt(1 - c2 * c2 - c1 * c1)]])
+            self.amat = np.array(
+                [
+                    [a_lat, 0.0, 0.0],
+                    [b_lat * b1, b_lat * b2, 0.0],
+                    [c_lat * c1, c_lat * c2, c_lat * np.sqrt(1 - c2 * c2 - c1 * c1)],
+                ]
+            )
         elif self.dimension == 2:  # TODO not finished yet
-            self.amat = a_lat * np.array([[1., 0.], [0., 1.]])
-            if self.bravais_lattice == 'rectangular':
+            self.amat = a_lat * np.array([[1.0, 0.0], [0.0, 1.0]])
+            if self.bravais_lattice == "rectangular":
                 b_lat = self.lattice_constants[1]
-                self.amat = np.array([[a_lat, 0.], [0., b_lat]])
+                self.amat = np.array([[a_lat, 0.0], [0.0, b_lat]])
         elif self.dimension == 1:
-            self.amat = a_lat * np.array([[1.]])
+            self.amat = a_lat * np.array([[1.0]])
         else:
             raise ValueError("Bravais lattice not defined!")
 
@@ -3252,31 +3635,33 @@ class _CrystalStructure(Atoms):
         basis = None
         if self.dimension == 3:
             if self.bravais_basis == "fcc" or self.bravais_basis == "face-centered":
-                basis = np.array([[0., 0., 0.], [0.5, 0.5, 0.], [0.5, 0., 0.5], [0., 0.5, 0.5]])
+                basis = np.array(
+                    [[0.0, 0.0, 0.0], [0.5, 0.5, 0.0], [0.5, 0.0, 0.5], [0.0, 0.5, 0.5]]
+                )
             elif self.bravais_basis == "body-centered" or self.bravais_basis == "bcc":
-                basis = np.array([[0., 0., 0.], [0.5, 0.5, 0.5]])
+                basis = np.array([[0.0, 0.0, 0.0], [0.5, 0.5, 0.5]])
             elif self.bravais_basis == "base-centered":
-                basis = np.array([[0., 0., 0.], [0.5, 0.5, 0.]])
+                basis = np.array([[0.0, 0.0, 0.0], [0.5, 0.5, 0.0]])
             elif self.bravais_basis == "hcp":
                 # basis = r([[0.0,-1./np.sqrt(3.),np.sqrt(8./3.)]])
                 # a = self.LatticeConstants[0]
                 # c = self.LatticeConstants[1]
-                basis = np.array([[0., 0., 0.], [1. / 3., 1. / 3., 1. / 2.]])
+                basis = np.array([[0.0, 0.0, 0.0], [1.0 / 3.0, 1.0 / 3.0, 1.0 / 2.0]])
                 # basis = np.dot(basis,np.linalg.inv(self.amat))
             elif self.bravais_basis == "primitive":
-                basis = np.array([[0., 0., 0.]])
+                basis = np.array([[0.0, 0.0, 0.0]])
             else:
                 exit()
         elif self.dimension == 2:
             if self.bravais_basis == "primitive":
-                basis = np.array([[0., 0.]])
+                basis = np.array([[0.0, 0.0]])
             elif self.bravais_basis == "centered":
-                basis = np.array([[0., 0.], [0.5, 0.5]])
+                basis = np.array([[0.0, 0.0], [0.5, 0.5]])
             else:
                 exit()
         elif self.dimension == 1:
             if self.bravais_basis == "primitive":
-                basis = np.array([[0.]])
+                basis = np.array([[0.0]])
             else:
                 exit()
         self.coordinates = basis
@@ -3313,34 +3698,40 @@ class _CrystalStructure(Atoms):
         # print "call: getNeededLatticeParams"
         needed_params = [True, False, False, False, False, False]
         if self.dimension == 3:
-            if self.bravais_lattice == 'cubic':
-                needed_params = [True, False, False, False, False,
-                                False]  # stands for alat, blat, clat, alpha, beta, gamma
-            elif self.bravais_lattice == 'triclinic':
+            if self.bravais_lattice == "cubic":
+                needed_params = [
+                    True,
+                    False,
+                    False,
+                    False,
+                    False,
+                    False,
+                ]  # stands for alat, blat, clat, alpha, beta, gamma
+            elif self.bravais_lattice == "triclinic":
                 needed_params = [True, True, True, True, True, True]
-            elif self.bravais_lattice == 'monoclinic':
+            elif self.bravais_lattice == "monoclinic":
                 needed_params = [True, True, True, True, False, False]
-            elif self.bravais_lattice == 'orthorombic':
+            elif self.bravais_lattice == "orthorombic":
                 needed_params = [True, True, True, False, False, False]
-            elif self.bravais_lattice == 'tetragonal':
+            elif self.bravais_lattice == "tetragonal":
                 needed_params = [True, False, True, False, False, False]
-            elif self.bravais_lattice == 'rhombohedral':
+            elif self.bravais_lattice == "rhombohedral":
                 needed_params = [True, False, False, True, True, True]
-            elif self.bravais_lattice == 'hexagonal':
+            elif self.bravais_lattice == "hexagonal":
                 needed_params = [True, False, True, False, False, False]
         elif self.dimension == 2:
-            if self.bravais_lattice == 'oblique':
+            if self.bravais_lattice == "oblique":
                 needed_params = [True, True, False, True, False, False]
-            elif self.bravais_lattice == 'rectangular':
+            elif self.bravais_lattice == "rectangular":
                 needed_params = [True, True, False, False, False, False]
-            elif self.bravais_lattice == 'hexagonal':
+            elif self.bravais_lattice == "hexagonal":
                 needed_params = [True, False, False, False, False, False]
-            elif self.bravais_lattice == 'square':
+            elif self.bravais_lattice == "square":
                 needed_params = [True, False, False, False, False, False]
             else:  # TODO: need to be improved
                 needed_params = [True, False, False, False, False, False]
         elif self.dimension == 1:
-            if self.bravais_lattice == 'line':
+            if self.bravais_lattice == "line":
                 needed_params = [True, False, False, False, False, False]
             else:  # TODO: improval needed
                 needed_params = [True, False, False, False, False, False]
@@ -3365,7 +3756,9 @@ class _CrystalStructure(Atoms):
 
         """
         self.crystalLatticeParams[self.dimension].get(self.bravais_lattice).sort()
-        return self.crystalLatticeParams[self.dimension].get(self.bravais_lattice).sort()
+        return (
+            self.crystalLatticeParams[self.dimension].get(self.bravais_lattice).sort()
+        )
 
     # def getDimension(self):
     #     return self.dimension
@@ -3392,8 +3785,8 @@ class _CrystalStructure(Atoms):
             amat=self.amat,
             tag="Crystal",
             rel=rel,  # self.relCoords, #rel, # true or false # coordinates are given in relative lattice units
-            pbc=[True, True, True][0:self.dimension],
-            Crystal=self.crystalParamsDict
+            pbc=[True, True, True][0 : self.dimension],
+            Crystal=self.crystalParamsDict,
         )
 
     # #################### set commands #########################
@@ -3407,7 +3800,7 @@ class _CrystalStructure(Atoms):
 
         """
         if lattice_constants is None:
-            lattice_constants = [1.]
+            lattice_constants = [1.0]
         for k in lattice_constants:
             if k <= 0:
                 raise ValueError("negative lattice parameter(s)")
@@ -3438,20 +3831,20 @@ class _CrystalStructure(Atoms):
         self.dimension = dim
         length = self.get_dimension_of_lattice_parameters()
         if dim == 3:  # # initial 3d structure
-            self.lattice_constants = length * [1.]
+            self.lattice_constants = length * [1.0]
             self.bravais_lattice = "cubic"
             self.bravais_basis = "primitive"
         elif dim == 2:  # # initial 2d structure
-            self.lattice_constants = length * [1.]
+            self.lattice_constants = length * [1.0]
             self.bravais_lattice = "square"
             self.bravais_basis = "primitive"
         elif dim == 1:  # # initial 1d structure
-            self.lattice_constants = length * [1.]
+            self.lattice_constants = length * [1.0]
             self.bravais_lattice = "line"
             self.bravais_basis = "primitive"
         self.__updateCrystal__()
 
-    def set_lattice_type(self, name_lattice='cubic'):
+    def set_lattice_type(self, name_lattice="cubic"):
         """
 
         Args:
@@ -3466,13 +3859,18 @@ class _CrystalStructure(Atoms):
             raise ValueError("is not item of ")
         else:
             self.bravais_lattice = name_lattice
-            self.set_lattice_constants(self.get_dimension_of_lattice_parameters() * [1.])
+            self.set_lattice_constants(
+                self.get_dimension_of_lattice_parameters() * [1.0]
+            )
             self.set_basis_type(
-                name_basis=self.crystal_lattice_dict[self.dimension].get(name_lattice)[0])  # initial basis type
+                name_basis=self.crystal_lattice_dict[self.dimension].get(name_lattice)[
+                    0
+                ]
+            )  # initial basis type
 
         self.__updateCrystal__()
 
-    def set_basis_type(self, name_basis='primitive'):
+    def set_basis_type(self, name_basis="primitive"):
         """
 
         Args:
@@ -3493,10 +3891,12 @@ class _CrystalStructure(Atoms):
         Returns:
 
         """
-        return Atoms(elements=self.ElementList,
-                     scaled_positions=self.coordinates,
-                     cell=self.amat,
-                     pbc=[True, True, True][0:self.dimension])
+        return Atoms(
+            elements=self.ElementList,
+            scaled_positions=self.coordinates,
+            cell=self.amat,
+            pbc=[True, True, True][0 : self.dimension],
+        )
 
 
 class Neighbors:
@@ -3519,7 +3919,7 @@ class Neighbors:
         if isinstance(new_distances, list) or isinstance(new_distances, np.ndarray):
             self._distances = np.array(new_distances)
         else:
-            raise TypeError('Only lists and np.arrays are supported.')
+            raise TypeError("Only lists and np.arrays are supported.")
 
     @property
     def vecs(self):
@@ -3530,7 +3930,7 @@ class Neighbors:
         if isinstance(new_vecs, list) or isinstance(new_vecs, np.ndarray):
             self._vecs = np.array(new_vecs)
         else:
-            raise TypeError('Only lists and np.arrays are supported.')
+            raise TypeError("Only lists and np.arrays are supported.")
 
     @property
     def indices(self):
@@ -3541,7 +3941,7 @@ class Neighbors:
         if isinstance(new_indices, list) or isinstance(new_indices, np.ndarray):
             self._indices = np.array(new_indices)
         else:
-            raise TypeError('Only lists and np.arrays are supported.')
+            raise TypeError("Only lists and np.arrays are supported.")
 
     @property
     def shells(self):
@@ -3552,7 +3952,7 @@ class Neighbors:
         if isinstance(new_shells, list) or isinstance(new_shells, np.array):
             self._shells = np.array(new_shells)
         else:
-            raise TypeError('Only lists and np.arrays are supported.')
+            raise TypeError("Only lists and np.arrays are supported.")
 
 
 class CrystalStructure(object):
@@ -3573,31 +3973,43 @@ def ase_to_pyiron(ase_obj):
     try:
         import ase
     except ImportError:
-        raise ValueError('ASE package not yet installed')
+        raise ValueError("ASE package not yet installed")
     element_list = ase_obj.get_chemical_symbols()
     cell = ase_obj.cell
     positions = ase_obj.get_positions()
     pbc = ase_obj.get_pbc()
     spins = ase_obj.get_initial_magnetic_moments()
     if all(spins == np.array(None)) or sum(np.abs(spins)) == 0.0:
-        pyiron_atoms = Atoms(elements=element_list, positions=positions, pbc=pbc, cell=cell)
+        pyiron_atoms = Atoms(
+            elements=element_list, positions=positions, pbc=pbc, cell=cell
+        )
     else:
         if any(spins == np.array(None)):
             spins[spins == np.array(None)] = 0.0
-        pyiron_atoms = Atoms(elements=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins)
-    if hasattr(ase_obj, 'constraints') and len(ase_obj.constraints) != 0:
+        pyiron_atoms = Atoms(
+            elements=element_list,
+            positions=positions,
+            pbc=pbc,
+            cell=cell,
+            magmoms=spins,
+        )
+    if hasattr(ase_obj, "constraints") and len(ase_obj.constraints) != 0:
         for constraint in ase_obj.constraints:
             constraint_dict = constraint.todict()
-            if constraint_dict['name'] == 'FixAtoms':
-                if 'selective_dynamics' not in pyiron_atoms._tag_list.keys():
+            if constraint_dict["name"] == "FixAtoms":
+                if "selective_dynamics" not in pyiron_atoms._tag_list.keys():
                     pyiron_atoms.add_tag(selective_dynamics=[True, True, True])
-                pyiron_atoms.selective_dynamics[constraint_dict['kwargs']['indices']] = [False, False, False]
-            elif constraint_dict['name'] == 'FixScaled':
-                if 'selective_dynamics' not in pyiron_atoms._tag_list.keys():
+                pyiron_atoms.selective_dynamics[
+                    constraint_dict["kwargs"]["indices"]
+                ] = [False, False, False]
+            elif constraint_dict["name"] == "FixScaled":
+                if "selective_dynamics" not in pyiron_atoms._tag_list.keys():
                     pyiron_atoms.add_tag(selective_dynamics=[True, True, True])
-                pyiron_atoms.selective_dynamics[constraint_dict['kwargs']['a']] = constraint_dict['kwargs']['mask']
+                pyiron_atoms.selective_dynamics[
+                    constraint_dict["kwargs"]["a"]
+                ] = constraint_dict["kwargs"]["mask"]
             else:
-                warnings.warn('Unsupported ASE constraint: ' + constraint_dict['name'])
+                warnings.warn("Unsupported ASE constraint: " + constraint_dict["name"])
     return pyiron_atoms
 
 
@@ -3605,7 +4017,7 @@ def pyiron_to_ase(pyiron_obj):
     try:
         from pyiron.atomistics.structure.pyironase import ASEAtoms
     except ImportError:
-        raise ValueError('ASE package not yet installed')
+        raise ValueError("ASE package not yet installed")
     element_list = pyiron_obj.get_parent_symbols()
     cell = pyiron_obj.cell
     positions = pyiron_obj.positions
@@ -3616,7 +4028,9 @@ def pyiron_to_ase(pyiron_obj):
     else:
         if any(spins == np.array(None)):
             spins[spins == np.array(None)] = 0.0
-        atoms = ASEAtoms(symbols=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins)
+        atoms = ASEAtoms(
+            symbols=element_list, positions=positions, pbc=pbc, cell=cell, magmoms=spins
+        )
     return atoms
 
 
@@ -3627,23 +4041,29 @@ def _check_if_simple_atoms(atoms):
     Args:
         atoms: ASE atoms object
     """
-    dict_keys = [k for k in atoms.__dict__.keys() if k not in ['_celldisp', 'arrays', '_cell', '_pbc', '_constraints',
-                                                               'info', '_calc']]
-    array_keys = [k for k in atoms.__dict__['arrays'].keys() if k not in ['numbers', 'positions']]
+    dict_keys = [
+        k
+        for k in atoms.__dict__.keys()
+        if k
+        not in ["_celldisp", "arrays", "_cell", "_pbc", "_constraints", "info", "_calc"]
+    ]
+    array_keys = [
+        k for k in atoms.__dict__["arrays"].keys() if k not in ["numbers", "positions"]
+    ]
     if not len(dict_keys) == 0:
-        warnings.warn('Found unknown keys: ' + str(dict_keys))
-    if not np.all(atoms.__dict__['_celldisp'] == np.array([[0.], [0.], [0.]])):
-        warnings.warn('Found cell displacement: ' + str(atoms.__dict__['_celldisp']))
-    if not atoms.__dict__['_calc'] is None:
-        warnings.warn('Found calculator: ' + str(atoms.__dict__['_calc']))
-    if not atoms.__dict__['_constraints'] == []:
-        warnings.warn('Found constraint: ' + str(atoms.__dict__['_constraints']))
-    if not np.all(atoms.__dict__['_pbc']):
-        warnings.warn('Cell is not periodic: ' + str(atoms.__dict__['_pbc']))
+        warnings.warn("Found unknown keys: " + str(dict_keys))
+    if not np.all(atoms.__dict__["_celldisp"] == np.array([[0.0], [0.0], [0.0]])):
+        warnings.warn("Found cell displacement: " + str(atoms.__dict__["_celldisp"]))
+    if not atoms.__dict__["_calc"] is None:
+        warnings.warn("Found calculator: " + str(atoms.__dict__["_calc"]))
+    if not atoms.__dict__["_constraints"] == []:
+        warnings.warn("Found constraint: " + str(atoms.__dict__["_constraints"]))
+    if not np.all(atoms.__dict__["_pbc"]):
+        warnings.warn("Cell is not periodic: " + str(atoms.__dict__["_pbc"]))
     if not len(array_keys) == 0:
-        warnings.warn('Found unknown flags: ' + str(array_keys))
-    if not atoms.__dict__['info'] == dict():
-        warnings.warn('Info is not empty: ' + str(atoms.__dict__['info']))
+        warnings.warn("Found unknown flags: " + str(array_keys))
+    if not atoms.__dict__["info"] == dict():
+        warnings.warn("Info is not empty: " + str(atoms.__dict__["info"]))
 
 
 def pymatgen_to_pyiron(pymatgen_obj):
@@ -3659,7 +4079,7 @@ def pymatgen_to_pyiron(pymatgen_obj):
     try:
         from pymatgen.io.ase import AseAtomsAdaptor
     except ImportError:
-        raise ValueError('PyMatGen package not yet installed')
+        raise ValueError("PyMatGen package not yet installed")
     return ase_to_pyiron(AseAtomsAdaptor().get_atoms(structure=pymatgen_obj))
 
 
@@ -3676,7 +4096,7 @@ def pyiron_to_pymatgen(pyiron_obj):
     try:
         from pymatgen.io.ase import AseAtomsAdaptor
     except ImportError:
-        raise ValueError('PyMatGen package not yet installed')
+        raise ValueError("PyMatGen package not yet installed")
     ase_atoms = pyiron_to_ase(pyiron_obj)
     _check_if_simple_atoms(atoms=ase_atoms)
     return AseAtomsAdaptor().get_structure(atoms=ase_atoms, cls=None)
@@ -3693,9 +4113,10 @@ def ovito_to_pyiron(ovito_obj):
     """
     try:
         from ovito.data import ase_to_pyiron
+
         return ase_to_pyiron(ovito_obj.to_ase_atoms())
     except ImportError:
-        raise ValueError('ovito package not yet installed')
+        raise ValueError("ovito package not yet installed")
 
 
 def pyiron_to_ovito(atoms):
@@ -3709,9 +4130,10 @@ def pyiron_to_ovito(atoms):
     """
     try:
         from ovito.data import DataCollection
+
         return DataCollection.create_from_ase_atoms(atoms)
     except ImportError:
-        raise ValueError('ovito package not yet installed')
+        raise ValueError("ovito package not yet installed")
 
 
 def string2symbols(s):
@@ -3734,12 +4156,12 @@ def string2symbols(s):
         while i < n and s[i].isdigit():
             i += 1
         return int(s[:i]) * string2symbols(s[i:])
-    if c == '(':
+    if c == "(":
         p = 0
         for i, c in enumerate(s):
-            if c == '(':
+            if c == "(":
                 p += 1
-            elif c == ')':
+            elif c == ")":
                 p -= 1
                 if p == 0:
                     break
@@ -3747,7 +4169,7 @@ def string2symbols(s):
         while j < n and s[j].isdigit():
             j += 1
         if j > i + 1:
-            m = int(s[i + 1:j])
+            m = int(s[i + 1 : j])
         else:
             m = 1
         return m * string2symbols(s[1:i]) + string2symbols(s[j:])
@@ -3800,10 +4222,10 @@ def string2vector(v):
 
     """
     if isinstance(v, str):
-        if v[0] == '-':
+        if v[0] == "-":
             return -string2vector(v[1:])
         w = np.zeros(3)
-        w['xyz'.index(v)] = 1.0
+        w["xyz".index(v)] = 1.0
         return w
     return np.array(v, float)
 

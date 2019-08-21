@@ -7,8 +7,10 @@ import importlib
 from pyiron.base.settings.generic import Settings
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -18,7 +20,7 @@ __date__ = "Sep 1, 2017"
 
 s = Settings()
 
-OBJECT_CLASS_DICT = {'ThermoBulk': 'pyiron.atomistics.thermodynamics.thermo_bulk'}
+OBJECT_CLASS_DICT = {"ThermoBulk": "pyiron.atomistics.thermodynamics.thermo_bulk"}
 
 
 class ObjectTypeChoice(object):
@@ -31,7 +33,6 @@ class ObjectTypeChoice(object):
 
 
 class ObjectType(object):
-
     def __new__(cls, class_name, project=None, job_name=None):
         """
         The ObjectType class is used to create light weight pyiron object that do not represent jobs (i.e., they do
@@ -60,4 +61,8 @@ class ObjectType(object):
                 object_class = getattr(object_module, class_name)
                 return object_class(project, job_name)
 
-        raise ValueError("Unknown object type: ", class_name, [job.__name__ for job in list(OBJECT_CLASS_DICT.keys())])
+        raise ValueError(
+            "Unknown object type: ",
+            class_name,
+            [job.__name__ for job in list(OBJECT_CLASS_DICT.keys())],
+        )

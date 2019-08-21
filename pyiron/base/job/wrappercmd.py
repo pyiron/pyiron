@@ -15,14 +15,16 @@ def command_line(argv):
     project_path = None
     job_id = None
     try:
-        opts, args = getopt.getopt(argv, "dj:p:h", ["debug", "project_path=", "job_id=", "help"])
+        opts, args = getopt.getopt(
+            argv, "dj:p:h", ["debug", "project_path=", "job_id=", "help"]
+        )
     except getopt.GetoptError:
-        print('cms.py --p <project_path> -j <job_id> <debug>')
+        print("cms.py --p <project_path> -j <job_id> <debug>")
         sys.exit()
     else:
         for opt, arg in opts:
             if opt in ("-h", "--help"):
-                print('cms.py --p <project_path> -j <job_id> <debug>')
+                print("cms.py --p <project_path> -j <job_id> <debug>")
                 sys.exit()
             elif opt in ("-d", "--debug"):
                 debug = True

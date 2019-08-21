@@ -6,8 +6,10 @@ import warnings
 from pyiron.sphinx.interactive import SphinxInteractive
 
 __author__ = "Osamu Waseda, Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -30,5 +32,7 @@ class Sphinx(SphinxInteractive):
     def __init__(self, project, job_name):
         super(Sphinx, self).__init__(project, job_name)
         self.__name__ = "Sphinx"
-        self.__version__ = None  # Reset the version number to the executable is set automatically
+        self.__version__ = (
+            None
+        )  # Reset the version number to the executable is set automatically
         self._executable_activate(enforce=True)

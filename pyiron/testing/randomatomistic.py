@@ -16,8 +16,10 @@ Example Job class for testing the pyiron classes
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -121,7 +123,7 @@ class ExampleJob(GenericJob):
         self.__name__ = "ExampleJob"
         self.input = ExampleInput()
         self.executable = "python -m pyiron.testing.executable"
-        self._interactive_cache = {'alat': [], 'count': [], 'energy': []}
+        self._interactive_cache = {"alat": [], "count": [], "energy": []}
 
     def set_input_to_read_only(self):
         """
@@ -153,9 +155,11 @@ class ExampleJob(GenericJob):
         Args:
             file_name (str): output.log - optional
         """
-        tag_dict = {"alat": {"arg": "0", "rows": 0},
-                    "count": {"arg": "0", "rows": 0},
-                    "energy": {"arg": "0", "rows": 0}}
+        tag_dict = {
+            "alat": {"arg": "0", "rows": 0},
+            "count": {"arg": "0", "rows": 0},
+            "energy": {"arg": "0", "rows": 0},
+        }
         lf = Logstatus()
         file_name = posixpath.join(self.working_directory, file_name)
         lf.extract_file(file_name=file_name, tag_dict=tag_dict)
@@ -176,8 +180,10 @@ class ExampleJob(GenericJob):
                 warnings_lst.append(line.split("WARNING"))
                 warnings_lst[-1][-1] = warnings_lst[-1][-1].rstrip()
         if len(warnings_lst) > 0:
-            warnings_dict = {'Module': [warnings_lst[i][0] for i in range(len(warnings_lst))],
-                             'Message': [warnings_lst[i][1] for i in range(len(warnings_lst))]}
+            warnings_dict = {
+                "Module": [warnings_lst[i][0] for i in range(len(warnings_lst))],
+                "Message": [warnings_lst[i][1] for i in range(len(warnings_lst))],
+            }
             print("module: ", warnings_lst[:][:])
             with self.project_hdf5.open("output"):
                 self._hdf5["WARNINGS"] = warnings_dict
@@ -228,22 +234,23 @@ class ExampleJob(GenericJob):
             int: job ID
         """
         from pyiron.testing.executable import ExampleExecutable
+
         self._interactive_library = True
         self.status.running = True
         alat, count, energy = ExampleExecutable().run_lib(self.input)
-        self._interactive_cache['alat'].append(alat)
-        self._interactive_cache['count'].append(count)
-        self._interactive_cache['energy'].append(energy)
+        self._interactive_cache["alat"].append(alat)
+        self._interactive_cache["count"].append(count)
+        self._interactive_cache["energy"].append(energy)
 
     def interactive_close(self):
         self._interactive_library = False
         self.to_hdf()
         with self.project_hdf5.open("output") as h5:
-            h5["generic/energy"] = np.array(self._interactive_cache['energy'])
-            h5["generic/volume"] = np.array(self._interactive_cache['alat'])
-            h5["generic/alat"] = np.array(self._interactive_cache['alat'])
-            h5["generic/count"] = np.array(self._interactive_cache['count'])
-            h5["generic/energy_tot"] = np.array(self._interactive_cache['energy'])
+            h5["generic/energy"] = np.array(self._interactive_cache["energy"])
+            h5["generic/volume"] = np.array(self._interactive_cache["alat"])
+            h5["generic/alat"] = np.array(self._interactive_cache["alat"])
+            h5["generic/count"] = np.array(self._interactive_cache["count"])
+            h5["generic/energy_tot"] = np.array(self._interactive_cache["energy"])
         self.project.db.item_update(self._runtime(), self._job_id)
         self.status.finished = True
 
@@ -257,15 +264,15 @@ class ExampleInput(GenericParameters):
     """
 
     def __init__(self, input_file_name=None):
-        super(ExampleInput, self).__init__(input_file_name=input_file_name,
-                                           table_name="input_inp",
-                                           comment_char="#")
+        super(ExampleInput, self).__init__(
+            input_file_name=input_file_name, table_name="input_inp", comment_char="#"
+        )
 
     def load_default(self):
         """
         Loading the default settings for the input file.
         """
-        input_str = '''\
+        input_str = """\
 alat  3.2     # lattice constant (would be in a more realistic example in the structure file)
 alpha 0.1     # noise amplitude
 a_0   3       # equilibrium lattice constant
@@ -276,7 +283,7 @@ a_4   0.0     # 4th order
 count 10      # number of calls (dummy)
 write_restart True
 read_restart False
-'''
+"""
         self.load_string(input_str)
 
 
@@ -369,28 +376,31 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
             Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster', 'ScriptJob',
                                                                'ListMaster']
     """
+
     def __init__(self, project, job_name):
         super(AtomisticExampleJob, self).__init__(project, job_name)
         self.__version__ = "0.3"
         self.__name__ = "AtomisticExampleJob"
         self.input = ExampleInput()
         self.executable = "python -m pyiron.testing.executable"
-        self.interactive_cache = {'cells': [],
-                                  'energy_pot': [],
-                                  'energy_tot': [],
-                                  'forces': [],
-                                  'positions': [],
-                                  'pressures': [],
-                                  'stress': [],
-                                  'steps': [],
-                                  'temperature': [],
-                                  'indices': [],
-                                  'computation_time': [],
-                                  'unwrapped_positions': [],
-                                  'atom_spin_constraints': [],
-                                  'atom_spins': [],
-                                  'magnetic_forces': [],
-                                  'volume': []}
+        self.interactive_cache = {
+            "cells": [],
+            "energy_pot": [],
+            "energy_tot": [],
+            "forces": [],
+            "positions": [],
+            "pressures": [],
+            "stress": [],
+            "steps": [],
+            "temperature": [],
+            "indices": [],
+            "computation_time": [],
+            "unwrapped_positions": [],
+            "atom_spin_constraints": [],
+            "atom_spins": [],
+            "magnetic_forces": [],
+            "volume": [],
+        }
 
     @property
     def structure(self):
@@ -402,7 +412,9 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
         return self._structure
 
     def get_structure(self, iteration_step=-1, wrap_atoms=True):
-        structure = super(AtomisticExampleJob, self).get_structure(iteration_step=iteration_step, wrap_atoms=wrap_atoms)
+        structure = super(AtomisticExampleJob, self).get_structure(
+            iteration_step=iteration_step, wrap_atoms=wrap_atoms
+        )
         if structure is None:
             return self.structure
         return structure
@@ -460,16 +472,24 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
             int: job ID
         """
         super(AtomisticExampleJob, self).run_if_interactive()
-        self.interactive_cache['cells'].append(self._structure.cell)
-        self.interactive_cache['energy_pot'].append(self._interactive_cache['energy'][-1][-1])
-        self.interactive_cache['energy_tot'].append(self._interactive_cache['energy'][-1][-1])
-        self.interactive_cache['forces'].append(np.random.random((len(self._structure), 3)))
-        self.interactive_cache['positions'].append(self._structure.positions)
-        self.interactive_cache['pressures'].append(np.random.random((3, 3)))
-        self.interactive_cache['stress'].append(np.random.random((len(self._structure), 3, 3)))
-        self.interactive_cache['steps'].append(len(self.interactive_cache['steps']))
-        self.interactive_cache['temperature'].append(np.random.random())
-        self.interactive_cache['indices'].append(self._structure.indices)
-        self.interactive_cache['computation_time'].append(np.random.random())
-        self.interactive_cache['unwrapped_positions'].append(self._structure.positions)
-        self.interactive_cache['volume'].append(self._structure.get_volume())
+        self.interactive_cache["cells"].append(self._structure.cell)
+        self.interactive_cache["energy_pot"].append(
+            self._interactive_cache["energy"][-1][-1]
+        )
+        self.interactive_cache["energy_tot"].append(
+            self._interactive_cache["energy"][-1][-1]
+        )
+        self.interactive_cache["forces"].append(
+            np.random.random((len(self._structure), 3))
+        )
+        self.interactive_cache["positions"].append(self._structure.positions)
+        self.interactive_cache["pressures"].append(np.random.random((3, 3)))
+        self.interactive_cache["stress"].append(
+            np.random.random((len(self._structure), 3, 3))
+        )
+        self.interactive_cache["steps"].append(len(self.interactive_cache["steps"]))
+        self.interactive_cache["temperature"].append(np.random.random())
+        self.interactive_cache["indices"].append(self._structure.indices)
+        self.interactive_cache["computation_time"].append(np.random.random())
+        self.interactive_cache["unwrapped_positions"].append(self._structure.positions)
+        self.interactive_cache["volume"].append(self._structure.get_volume())

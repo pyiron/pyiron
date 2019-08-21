@@ -8,8 +8,10 @@ from copy import copy
 import numpy as np
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -27,6 +29,7 @@ class ThermoBulk(object):
         name:
 
     """
+
     eV_to_J_per_mol = 1.60217662e-19 * 6.022e23
     kB = 1 / 8.6173303e-5
 
@@ -53,10 +56,10 @@ class ThermoBulk(object):
         cls = self.__class__
         result = cls.__new__(cls)
         result.__init__()
-        result.__dict__['_volumes'] = copy(self._volumes)
-        result.__dict__['_temperatures'] = copy(self._temperatures)
-        result.__dict__['_energies'] = copy(self._energies)
-        result.__dict__['_fit_order'] = self._fit_order
+        result.__dict__["_volumes"] = copy(self._volumes)
+        result.__dict__["_temperatures"] = copy(self._temperatures)
+        result.__dict__["_energies"] = copy(self._energies)
+        result.__dict__["_fit_order"] = self._fit_order
         return result
 
     def _reset_energy(self):
@@ -78,7 +81,7 @@ class ThermoBulk(object):
 
         """
         if self._num_atoms is None:
-            return 1   # normalize per cell if number of atoms unknown
+            return 1  # normalize per cell if number of atoms unknown
         return self._num_atoms
 
     @num_atoms.setter
@@ -139,8 +142,8 @@ class ThermoBulk(object):
         Returns:
 
         """
-        if not hasattr(temp_lst, '__len__'):
-            raise ValueError('Requires list as input parameter')
+        if not hasattr(temp_lst, "__len__"):
+            raise ValueError("Requires list as input parameter")
         len_temp = -1
         if self._temperatures is not None:
             len_temp = len(self._temperatures)
@@ -167,8 +170,8 @@ class ThermoBulk(object):
         Returns:
 
         """
-        if not hasattr(volume_lst, '__len__'):
-            raise ValueError('Requires list as input parameter')
+        if not hasattr(volume_lst, "__len__"):
+            raise ValueError("Requires list as input parameter")
         len_vol = -1
         if self._volumes is not None:
             len_vol = len(self._volumes)
@@ -225,9 +228,13 @@ class ThermoBulk(object):
             else:
                 raise ValueError()
         else:
-            self._energies = np.ones((len(self.volumes), len(self.temperatures))) * erg_lst
+            self._energies = (
+                np.ones((len(self.volumes), len(self.temperatures))) * erg_lst
+            )
 
-    def set_temperatures(self, temperature_min=0, temperature_max=1500, temperature_steps=50):
+    def set_temperatures(
+        self, temperature_min=0, temperature_max=1500, temperature_steps=50
+    ):
         """
 
         Args:
@@ -238,7 +245,9 @@ class ThermoBulk(object):
         Returns:
 
         """
-        self.temperatures = np.linspace(temperature_min, temperature_max, temperature_steps)
+        self.temperatures = np.linspace(
+            temperature_min, temperature_max, temperature_steps
+        )
 
     def set_volumes(self, volume_min, volume_max=None, volume_steps=10):
         """
@@ -324,7 +333,9 @@ class ThermoBulk(object):
         Returns:
 
         """
-        self._entropy, self._pressure = np.gradient(-self.energies, self._d_temp, self._d_vol)
+        self._entropy, self._pressure = np.gradient(
+            -self.energies, self._d_temp, self._d_vol
+        )
 
     def get_free_energy_p(self):
         """
@@ -365,9 +376,9 @@ class ThermoBulk(object):
             import pylab as plt
         except ImportError:
             import matplotlib.pyplot as plt
-        plt.plot(self.temperatures, self.get_free_energy_p()/self.num_atoms)
-        plt.xlabel('Temperature [K]')
-        plt.ylabel('Free energy [eV]')
+        plt.plot(self.temperatures, self.get_free_energy_p() / self.num_atoms)
+        plt.xlabel("Temperature [K]")
+        plt.ylabel("Free energy [eV]")
 
     def plot_entropy(self):
         """
@@ -379,11 +390,19 @@ class ThermoBulk(object):
             import pylab as plt
         except ImportError:
             import matplotlib.pyplot as plt
-        plt.plot(self.temperatures, self.eV_to_J_per_mol / self.num_atoms * self.get_entropy_p(), label='S$_p$')
-        plt.plot(self.temperatures, self.eV_to_J_per_mol / self.num_atoms * self.get_entropy_v(), label='S$_V$')
+        plt.plot(
+            self.temperatures,
+            self.eV_to_J_per_mol / self.num_atoms * self.get_entropy_p(),
+            label="S$_p$",
+        )
+        plt.plot(
+            self.temperatures,
+            self.eV_to_J_per_mol / self.num_atoms * self.get_entropy_v(),
+            label="S$_V$",
+        )
         plt.legend()
-        plt.xlabel('Temperature [K]')
-        plt.ylabel('Entropy [J K$^{-1}$ mol-atoms$^{-1}$]')
+        plt.xlabel("Temperature [K]")
+        plt.ylabel("Entropy [J K$^{-1}$ mol-atoms$^{-1}$]")
 
     def plot_heat_capacity(self, to_kB=True):
         """
@@ -400,17 +419,17 @@ class ThermoBulk(object):
             import matplotlib.pyplot as plt
         if to_kB:
             units = self.kB / self.num_atoms
-            plt.ylabel('Heat capacity [kB]')
+            plt.ylabel("Heat capacity [kB]")
         else:
             units = self.eV_to_J_per_mol
-            plt.ylabel('Heat capacity [J K$^{-1}$ mol-atoms$^{-1}$]')
+            plt.ylabel("Heat capacity [J K$^{-1}$ mol-atoms$^{-1}$]")
         temps = self.temperatures[:-2]
         c_p = temps * np.gradient(self.get_entropy_p(), self._d_temp)[:-2]
         c_v = temps * np.gradient(self.get_entropy_v(), self._d_temp)[:-2]
-        plt.plot(temps, units * c_p, label='c$_p$')
-        plt.plot(temps, units * c_v, label='c$_v$')
-        plt.legend(loc='lower right')
-        plt.xlabel('Temperature [K]')
+        plt.plot(temps, units * c_p, label="c$_p$")
+        plt.plot(temps, units * c_v, label="c$_v$")
+        plt.legend(loc="lower right")
+        plt.xlabel("Temperature [K]")
 
     def contour_pressure(self):
         """
@@ -427,8 +446,8 @@ class ThermoBulk(object):
         p_grid = np.array([np.polyval(p_coeff, v) for v in self._volumes]).T
         plt.contourf(x, y, p_grid)
         plt.plot(self.get_minimum_energy_path(), self.temperatures)
-        plt.xlabel('Volume [$\AA^3$]')
-        plt.ylabel('Temperature [K]')
+        plt.xlabel("Volume [$\AA^3$]")
+        plt.ylabel("Temperature [K]")
 
     def contour_entropy(self):
         """
@@ -445,8 +464,8 @@ class ThermoBulk(object):
         x, y = self.meshgrid()
         plt.contourf(x, y, s_grid)
         plt.plot(self.get_minimum_energy_path(), self.temperatures)
-        plt.xlabel('Volume [$\AA^3$]')
-        plt.ylabel('Temperature [K]')
+        plt.xlabel("Volume [$\AA^3$]")
+        plt.ylabel("Temperature [K]")
 
     def plot_contourf(self, ax=None, show_min_erg_path=False):
         """
@@ -467,9 +486,9 @@ class ThermoBulk(object):
             fig, ax = plt.subplots(1, 1)
         ax.contourf(x, y, self.energies)
         if show_min_erg_path:
-            plt.plot(self.get_minimum_energy_path(), self.temperatures, 'w--')
-        plt.xlabel('Volume [$\AA^3$]')
-        plt.ylabel('Temperature [K]')
+            plt.plot(self.get_minimum_energy_path(), self.temperatures, "w--")
+        plt.xlabel("Volume [$\AA^3$]")
+        plt.ylabel("Temperature [K]")
         return ax
 
     def plot_min_energy_path(self, *args, ax=None, **qwargs):
@@ -489,7 +508,7 @@ class ThermoBulk(object):
             import matplotlib.pyplot as plt
         if ax is None:
             fig, ax = plt.subplots(1, 1)
-            ax.xlabel('Volume [$\AA^3$]')
-            ax.ylabel('Temperature [K]')
+            ax.xlabel("Volume [$\AA^3$]")
+            ax.ylabel("Temperature [K]")
         ax.plot(self.get_minimum_energy_path(), self.temperatures, *args, **qwargs)
         return ax

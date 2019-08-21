@@ -9,8 +9,10 @@ from pyiron.atomistics.job.interactive import GenericInteractiveOutput
 from scipy import optimize
 
 __author__ = "Osamu Waseda"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Osamu Waseda"
 __email__ = "waseda@mpie.de"
@@ -29,15 +31,18 @@ class ScipyMinimizer(InteractiveWrapper):
 
     @property
     def minimizer(self):
-        return self.input['minimizer']
+        return self.input["minimizer"]
 
     @minimizer.setter
     def minimizer(self, minim):
-        list_of_minimizers = ['CG', 'BFGS', 'simple']
+        list_of_minimizers = ["CG", "BFGS", "simple"]
         if minim not in list_of_minimizers:
-            print('ERROR: Minimizer has to be chosen from the following list:', ' '.join(list_of_minimizers))
+            print(
+                "ERROR: Minimizer has to be chosen from the following list:",
+                " ".join(list_of_minimizers),
+            )
         else:
-            self.input['minimizer'] = minim
+            self.input["minimizer"] = minim
 
     def set_input_to_read_only(self):
         """
@@ -59,27 +64,44 @@ class ScipyMinimizer(InteractiveWrapper):
 
     def run_static(self):
         self.ref_job_initialize()
-        self._logger.debug('cg status: '+ str(self.status))
+        self._logger.debug("cg status: " + str(self.status))
         self._run_again = True
         if self.ref_job.server.run_mode.interactive:
             self._run_again = False
         self.ref_job.run(run_again=self._run_again)
         self.status.running = True
-        if self.input['minimizer'] == 'CG':
-            output = optimize.fmin_cg(f=self._update_energy, x0=self.ref_job.structure.positions.flatten(),
-                                      fprime=self._update_forces, maxiter=self.input['ionic_steps'],
-                                      gtol=self.input['ionic_forces'], disp=False, full_output=True)
+        if self.input["minimizer"] == "CG":
+            output = optimize.fmin_cg(
+                f=self._update_energy,
+                x0=self.ref_job.structure.positions.flatten(),
+                fprime=self._update_forces,
+                maxiter=self.input["ionic_steps"],
+                gtol=self.input["ionic_forces"],
+                disp=False,
+                full_output=True,
+            )
             self.output._convergence = output[4]
-        elif self.input['minimizer'] == 'BFGS':
-            output = optimize.fmin_bfgs(f=self._update_energy, x0=self.ref_job.structure.positions.flatten(),
-                                        fprime=self._update_forces, maxiter=self.input['ionic_steps'],
-                                        gtol=self.input['ionic_forces'], disp=False, full_output=True)
+        elif self.input["minimizer"] == "BFGS":
+            output = optimize.fmin_bfgs(
+                f=self._update_energy,
+                x0=self.ref_job.structure.positions.flatten(),
+                fprime=self._update_forces,
+                maxiter=self.input["ionic_steps"],
+                gtol=self.input["ionic_forces"],
+                disp=False,
+                full_output=True,
+            )
             self.output._hessian = output[3]
             self.output._convergence = output[6]
-        elif self.input['minimizer'] == 'simple':
-            output = optimize.fmin(f=self._update_energy, x0=self.ref_job.structure.positions.flatten(),
-                                   maxiter=self.input['ionic_steps'], gtol=self.input['ionic_forces'],
-                                   disp=False, full_output=True)
+        elif self.input["minimizer"] == "simple":
+            output = optimize.fmin(
+                f=self._update_energy,
+                x0=self.ref_job.structure.positions.flatten(),
+                maxiter=self.input["ionic_steps"],
+                gtol=self.input["ionic_forces"],
+                disp=False,
+                full_output=True,
+            )
             self.output._hessian = output[4]
         self.status.collect = True
         self.collect_output()
@@ -87,23 +109,23 @@ class ScipyMinimizer(InteractiveWrapper):
             self.ref_job.interactive_close()
 
     def _update_forces(self, x):
-        x = np.array(x).reshape(-1,3)
-        self._logger.debug('cg ref_job status: '+ str(self.ref_job.status))
+        x = np.array(x).reshape(-1, 3)
+        self._logger.debug("cg ref_job status: " + str(self.ref_job.status))
         if not np.equal(x, self.ref_job.structure.positions).all():
             self.ref_job.structure.positions = x
             self.ref_job.run(run_again=self._run_again)
         f = self.ref_job.output.forces[-1].flatten()
-        self._logger.debug('cg ref_job status after: '+ str(self.ref_job.status))
+        self._logger.debug("cg ref_job status after: " + str(self.ref_job.status))
         return -f
 
     def _update_energy(self, x):
-        x = np.array(x).reshape(-1,3)
-        self._logger.debug('cg ref_job status: '+ str(self.ref_job.status))
+        x = np.array(x).reshape(-1, 3)
+        self._logger.debug("cg ref_job status: " + str(self.ref_job.status))
         if not np.equal(x, self.ref_job.structure.positions).all():
             self.ref_job.structure.positions = x
             self.ref_job.run(run_again=self._run_again)
         E = self.ref_job.output.energy_pot[-1]
-        self._logger.debug('cg ref_job status after: '+ str(self.ref_job.status))
+        self._logger.debug("cg ref_job status after: " + str(self.ref_job.status))
         return E
 
     def collect_output(self):
@@ -124,16 +146,21 @@ class Input(GenericParameters):
     """
 
     def __init__(self, input_file_name=None, table_name="input"):
-        super(Input, self).__init__(input_file_name=input_file_name, table_name=table_name, comment_char="//",
-                                    separator_char="=", end_value_char=';')
+        super(Input, self).__init__(
+            input_file_name=input_file_name,
+            table_name=table_name,
+            comment_char="//",
+            separator_char="=",
+            end_value_char=";",
+        )
 
     def load_default(self):
         """
         Loads the default file content
         """
-        file_content = ('minimizer = CG\n'
-                        'ionic_steps = 1000\n'
-                        'ionic_forces = 1.0e-8\n')
+        file_content = (
+            "minimizer = CG\n" "ionic_steps = 1000\n" "ionic_forces = 1.0e-8\n"
+        )
         self.load_string(file_content)
 
 
@@ -146,13 +173,13 @@ class ScipyMinimizerOutput(GenericInteractiveOutput):
     def __dir__(self):
         return list(set(list(self._job.interactive_cache.keys())))
 
-    def to_hdf(self, hdf, group_name='output'):
+    def to_hdf(self, hdf, group_name="output"):
         with hdf.open(group_name) as hdf_output:
-            hdf_output['convergence'] = self._convergence
-            hdf_output['hessian'] = self._hessian
+            hdf_output["convergence"] = self._convergence
+            hdf_output["hessian"] = self._hessian
 
-    def from_hdf(self, hdf, group_name='output'):
-        if 'convergence' in hdf[group_name].list_nodes():
-            self._convergence = hdf[group_name]['convergence']
-        if 'hessian' in hdf[group_name].list_nodes():
-            self._hessian = hdf[group_name]['hessian']
+    def from_hdf(self, hdf, group_name="output"):
+        if "convergence" in hdf[group_name].list_nodes():
+            self._convergence = hdf[group_name]["convergence"]
+        if "hessian" in hdf[group_name].list_nodes():
+            self._hessian = hdf[group_name]["hessian"]
