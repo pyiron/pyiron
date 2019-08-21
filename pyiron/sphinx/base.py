@@ -19,7 +19,7 @@ from collections import OrderedDict as odict
 from collections import defaultdict
 
 from pyiron.dft.job.generic import GenericDFTJob
-from pyiron.vasp.potential import VaspPotentialFile
+from pyiron.vasp.potential import VaspPotentialFile, find_potential_file
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
 
@@ -100,7 +100,7 @@ class SphinxBase(GenericDFTJob):
         Args:
             encut (int): energy cut-off in eV
         """
-        if val<=0:
+        if val <= 0:
             raise ValueError('Cutoff radius value not valid')
         self.input['EnCut'] = val
 
@@ -137,11 +137,12 @@ class SphinxBase(GenericDFTJob):
             scf control string setting for SPHInX
             for all args refer to calc_static or calc_minimize
         """
-        if algorithm.upper()=='CCG':
+        if algorithm.upper() == 'CCG':
             algorithm = 'CCG'
         else:
             if algorithm.upper() != 'BLOCKCCG':
-                warnings.warn('Algorithm not recognized -> setting to blockCCG. Alternatively, choose algorithm=CCG', SyntaxWarning)
+                warnings.warn('Algorithm not recognized -> setting to blockCCG. Alternatively, choose algorithm=CCG',
+                              SyntaxWarning)
             algorithm = 'blockCCG'
         control_str = odict()
         if keepRhoFixed:
@@ -152,7 +153,7 @@ class SphinxBase(GenericDFTJob):
             if self.input['nPulaySteps'] is not None:
                 control_str['nPulaySteps'] = str(self.input['nPulaySteps'])
         if dEnergy is None:
-            control_str['dEnergy'] = 'Ediff/'+str(HARTREE_TO_EV)
+            control_str['dEnergy'] = 'Ediff/' + str(HARTREE_TO_EV)
         else:
             control_str['dEnergy'] = str(dEnergy)
         if maxSteps is None:
@@ -168,25 +169,26 @@ class SphinxBase(GenericDFTJob):
 
     @property
     def _control_str(self):
-        control_str = odict() 
+        control_str = odict()
         control_str.setdefault('scfDiag', [])
         if len(self.restart_file_list) != 0:
-            control_str['scfDiag'].append(self._input_control_scf_string(maxSteps=10, keepRhoFixed=True, dEnergy=1.0e-4))
+            control_str['scfDiag'].append(
+                self._input_control_scf_string(maxSteps=10, keepRhoFixed=True, dEnergy=1.0e-4))
         if self.input['Istep'] is not None:
             control_str['linQN'] = odict()
             control_str['linQN']['maxSteps'] = str(self.input['Istep'])
             if self.input['dE'] is None and self.input['dF'] is None:
                 self.input['dE'] = 1e-3
             if self.input['dE'] is not None:
-                control_str['linQN']['dEnergy'] = str(self.input['dE']/HARTREE_TO_EV)
+                control_str['linQN']['dEnergy'] = str(self.input['dE'] / HARTREE_TO_EV)
             if self.input['dF'] is not None:
-                control_str['linQN']['dF'] = str(self.input['dF']/HARTREE_OVER_BOHR_TO_EV_OVER_ANGSTROM)
+                control_str['linQN']['dF'] = str(self.input['dF'] / HARTREE_OVER_BOHR_TO_EV_OVER_ANGSTROM)
             control_str['linQN']['bornOppenheimer'] = odict([('scfDiag', self._input_control_scf_string())])
         else:
             control_str['scfDiag'].append(self._input_control_scf_string())
             if self.executable.version is not None:
                 vers_num = [int(vv) for vv in self.executable.version.split('_')[0].split('.')]
-                if vers_num[0]>2 or (vers_num[0]==2 and vers_num[1]>5):
+                if vers_num[0] > 2 or (vers_num[0] == 2 and vers_num[1] > 5):
                     control_str['evalForces'] = odict([('file', '"relaxHist.sx"')])
             else:
                 warnings.warn('executable version could not be identified')
@@ -239,20 +241,20 @@ class SphinxBase(GenericDFTJob):
         elif self.input['Istep'] is None:
             self.input['Istep'] = 100
         if ionic_forces is not None:
-            if ionic_forces<0:
+            if ionic_forces < 0:
                 raise ValueError('ionic_forces must be a positive integer')
             self.input['dF'] = float(ionic_forces)
         if ionic_energy is not None:
-            if ionic_energy<0:
+            if ionic_energy < 0:
                 raise ValueError('ionic_forces must be a positive integer')
             self.input['dE'] = float(ionic_energy)
-        super(SphinxBase, self).calc_minimize(electronic_steps=electronic_steps, ionic_steps=ionic_steps, max_iter=max_iter,
+        super(SphinxBase, self).calc_minimize(electronic_steps=electronic_steps, ionic_steps=ionic_steps,
+                                              max_iter=max_iter,
                                               pressure=pressure, algorithm=algorithm,
                                               retain_charge_density=retain_charge_density,
                                               retain_electrostatic_potential=retain_electrostatic_potential,
-                                              ionic_energy=ionic_energy, ionic_forces=ionic_forces, volume_only=volume_only)
-
-
+                                              ionic_energy=ionic_energy, ionic_forces=ionic_forces,
+                                              volume_only=volume_only)
 
     def calc_md(self, temperature=None, n_ionic_steps=1000, n_print=1, time_step=1.0, retain_charge_density=False,
                 retain_electrostatic_potential=False, **kwargs):
@@ -277,13 +279,13 @@ class SphinxBase(GenericDFTJob):
             new_job.restart_file_list.append(posixpath.join(self.working_directory, "rho.sxb"))
         elif from_charge_density:
             self._logger.warn(
-            msg="A charge density from job: {} is not generated and therefore it can't be read.".format(
-            self.job_name))
+                msg="A charge density from job: {} is not generated and therefore it can't be read.".format(
+                    self.job_name))
         if from_wave_functions and os.path.isfile(posixpath.join(self.working_directory, "waves.sxb")):
             new_job.restart_file_list.append(posixpath.join(self.working_directory, "waves.sxb"))
         elif from_wave_functions:
             self._logger.warn(
-            msg="A WAVECAR from job: {} is not generated and therefore it can't be read.".format(self.job_name))
+                msg="A WAVECAR from job: {} is not generated and therefore it can't be read.".format(self.job_name))
         return new_job
 
     def to_hdf(self, hdf=None, group_name=None):
@@ -340,22 +342,24 @@ class SphinxBase(GenericDFTJob):
             check_overlap (bool): Whether to check overlap
 
         Comments:
-            Certain PAW-pseudo-potentials have an intrinsic pathology: their PAW overlap 
-            operator is not generally positive definite (i.e., the PAW-corrected 
-            norm of a wavefunction could become negative). SPHInX usually refuses to 
-            use such problematic potentials. This behavior can be overridden by setting 
+            Certain PAW-pseudo-potentials have an intrinsic pathology: their PAW overlap
+            operator is not generally positive definite (i.e., the PAW-corrected
+            norm of a wavefunction could become negative). SPHInX usually refuses to
+            use such problematic potentials. This behavior can be overridden by setting
             check_overlap to False.
         """
         if not isinstance(check_overlap, bool):
             raise ValueError('check_overlap has to be a boolean')
         if self.executable.version != '2.5.1' and not check_overlap:
             vers_num = [int(vv) for vv in self.executable.version.split('_')[0].split('.')]
-            if vers_num[0]<2 or vers_num[1]<5 or (vers_num[0]<=2 and sum(vers_num[1:])<=5):
-                warnings.warn('SPHInX executable version has to be 2.5.1 or above in order for the overlap to be considered. '+
-                              'Change it via job.executable.version')
+            if vers_num[0] < 2 or vers_num[1] < 5 or (vers_num[0] <= 2 and sum(vers_num[1:]) <= 5):
+                warnings.warn(
+                    'SPHInX executable version has to be 2.5.1 or above in order for the overlap to be considered. ' +
+                    'Change it via job.executable.version')
         self.input['CheckOverlap'] = check_overlap
 
-    def set_mixing_parameters(self, method=None, n_pulay_steps=None, density_mixing_parameter=None, spin_mixing_parameter=None):
+    def set_mixing_parameters(self, method=None, n_pulay_steps=None, density_mixing_parameter=None,
+                              spin_mixing_parameter=None):
         """
         args:
             method ('PULAY' or 'LINEAR'): mixing method (default: PULAY)
@@ -372,9 +376,9 @@ class SphinxBase(GenericDFTJob):
         method_list = ['PULAY', 'LINEAR']
         assert (method is None or method.upper() in method_list), 'Mixing method has to be PULAY or LINEAR'
         assert (n_pulay_steps is None or isinstance(n_pulay_steps, int)), 'n_pulay_steps has to be an integer'
-        if density_mixing_parameter is not None and (density_mixing_parameter>1.0 or density_mixing_parameter<0):
+        if density_mixing_parameter is not None and (density_mixing_parameter > 1.0 or density_mixing_parameter < 0):
             raise ValueError('density_mixing_parameter has to be between 0 and 1 (default value is 1)')
-        if spin_mixing_parameter is not None and (spin_mixing_parameter>1.0 or spin_mixing_parameter<0):
+        if spin_mixing_parameter is not None and (spin_mixing_parameter > 1.0 or spin_mixing_parameter < 0):
             raise ValueError('spin_mixing_parameter has to be between 0 and 1 (default value is 1)')
 
         if method is not None:
@@ -386,7 +390,6 @@ class SphinxBase(GenericDFTJob):
         if spin_mixing_parameter is not None:
             self.input['spinMixing'] = spin_mixing_parameter
 
-
     def set_occupancy_smearing(self, smearing=None, width=None):
         """
         Set how the finite temperature smearing is applied in determining partial occupancies
@@ -397,7 +400,7 @@ class SphinxBase(GenericDFTJob):
         """
         if smearing is not None and not isinstance(smearing, str):
             raise ValueError('Smearing must be a string (only fermi is supported in SPHInX)')
-        if width is not None and width<0:
+        if width is not None and width < 0:
             raise ValueError('Smearing value must be a float >= 0')
         if width is not None:
             self.input["Sigma"] = width
@@ -438,13 +441,13 @@ class SphinxBase(GenericDFTJob):
 
             The default value is 0.5*NIONS+3 for non-magnetic systems and 1.5*NIONS+3 for magnetic systems
         """
-        if n_empty_states is not None or n_empty_states<0:
+        if n_empty_states is not None or n_empty_states < 0:
             raise ValueError('Number of empty states must be greater than 0')
         if n_empty_states is not None:
             self.input['EmptyStates'] = n_empty_states
 
     def _set_kpoints(self, mesh=None, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
-                    weights=None, reciprocal=True):
+                     weights=None, reciprocal=True):
         """
         Function to setup the k-points for the Sphinx job
 
@@ -464,7 +467,7 @@ class SphinxBase(GenericDFTJob):
             raise ValueError('manual_kpoints is not implemented in SPHInX yet')
         if weights is not None:
             raise ValueError('manual weights are not implmented in SPHInX yet')
-        if scheme!='MP':
+        if scheme != 'MP':
             raise ValueError('only Monkhorst-Pack mesh is implemented in SPHInX')
         if mesh is not None:
             self.input['KpointFolding'] = '[' + str(mesh[0]) + ', ' + str(mesh[1]) + ', ' + str(mesh[2]) + ']'
@@ -479,9 +482,9 @@ class SphinxBase(GenericDFTJob):
         """
         self._coarse_run = self.input['CoarseRun']
         if self.input['EmptyStates'] == 'auto':
-            self.input['EmptyStates'] = int(len(self.structure)+3)
-            if np.any(self.structure.get_initial_magnetic_moments()!=None):
-                self.input['EmptyStates'] = int(1.5*len(self.structure)+3)
+            self.input['EmptyStates'] = int(len(self.structure) + 3)
+            if np.any(self.structure.get_initial_magnetic_moments() != None):
+                self.input['EmptyStates'] = int(1.5 * len(self.structure) + 3)
         self.input_writer.structure = self.structure
         write_waves = self.input['WriteWaves']
         save_memory = self.input['SaveMemory']
@@ -520,7 +523,8 @@ class SphinxBase(GenericDFTJob):
     def convergence_check(self):
         if self._generic_input['calc_mode'] == 'minimize' and self._output_parser._parse_dict['scf_convergence'][-1]:
             return True
-        elif self._generic_input['calc_mode'] == 'static' and np.all(self._output_parser._parse_dict['scf_convergence']):
+        elif self._generic_input['calc_mode'] == 'static' and np.all(
+                self._output_parser._parse_dict['scf_convergence']):
             return True
         else:
             return False
@@ -588,7 +592,7 @@ class SphinxBase(GenericDFTJob):
                 warnings.warn('Number of cores exceed number of irreducible reciprocal points: ' + str(
                     self.get_n_ir_reciprocal_points()))
             if self.input['EmptyStates'] == 'auto':
-                if any(self.structure.get_initial_magnetic_moments()!=None):
+                if any(self.structure.get_initial_magnetic_moments() != None):
                     warnings.warn('Number of empty states was not specified. Default: NIONS*1.5 for magnetic systems. ')
                 else:
                     warnings.warn('Number of empty states was not specified. Default: NIONS for non-magnetic systems')
@@ -612,7 +616,7 @@ class SphinxBase(GenericDFTJob):
             raise AssertionError('Control string not set; set it e.g. via job.calc_static()')
         if self.input['THREADS'] > self.server.cores:
             raise AssertionError('Number of cores cannot be smaller than the number of OpenMP threads')
-        if self.input['EmptyStates']!='auto' and self.input['EmptyStates']<0:
+        if self.input['EmptyStates'] != 'auto' and self.input['EmptyStates'] < 0:
             raise AssertionError('Number of empty states not valid')
 
     def compress(self, files_to_compress=None):
@@ -653,19 +657,20 @@ class InputWriter(object):
             - else -> considered as parameter and value -> output format: parameter = value;
         """
         line = ''
-        for k,v in element.items():
-            if type(v)!=list:
+        for k, v in element.items():
+            if type(v) != list:
                 v = [v]
             for vv in v:
                 if vv is None:
-                    line += level*'\t'+str(k)+';\n'
-                elif type(vv)==odict:
-                    if len(vv)==0:
-                        line += level*'\t'+k+' {}\n'
+                    line += level * '\t' + str(k) + ';\n'
+                elif type(vv) == odict:
+                    if len(vv) == 0:
+                        line += level * '\t' + k + ' {}\n'
                     else:
-                        line += level*'\t'+k+' {\n'+self._odict_to_spx_input(vv, level+1)+level*'\t'+'}\n'
+                        line += level * '\t' + k + ' {\n' + self._odict_to_spx_input(vv,
+                                                                                     level + 1) + level * '\t' + '}\n'
                 else:
-                    line += level*'\t'+k+' = '+str(vv)+';\n'
+                    line += level * '\t' + k + ' = ' + str(vv) + ';\n'
         return line
 
     def write_main(self, file_name="input.sx", cwd=None, main_str=None, spin_constraint_enabled=False,
@@ -679,7 +684,7 @@ class InputWriter(object):
             main_str (str): the input to write, if no input is given the default input will be written. (optinal)
         """
         if main_str is None:
-            main_str = odict([('//'+str(job_name), None),
+            main_str = odict([('//' + str(job_name), None),
                               ('//SPHinX input file generated by pyiron', None),
                               ('format paw', None),
                               ('include <parameters.sx>', None),
@@ -704,7 +709,7 @@ class InputWriter(object):
     def id_spx_to_pyi(self):
         if self.structure is None:
             return None
-        if len(self._id_spx_to_pyi)==0:
+        if len(self._id_spx_to_pyi) == 0:
             self._initialize_order()
         return self._id_spx_to_pyi
 
@@ -712,13 +717,14 @@ class InputWriter(object):
     def id_pyi_to_spx(self):
         if self.structure is None:
             return None
-        if len(self._id_pyi_to_spx)==0:
+        if len(self._id_pyi_to_spx) == 0:
             self._initialize_order()
         return self._id_pyi_to_spx
 
     def _initialize_order(self):
         for elm_species in self.structure.get_species_objects():
-            self._id_pyi_to_spx.append(np.arange(len(self.structure))[self.structure.get_chemical_symbols()==elm_species.Abbreviation])
+            self._id_pyi_to_spx.append(
+                np.arange(len(self.structure))[self.structure.get_chemical_symbols() == elm_species.Abbreviation])
         self._id_pyi_to_spx = np.array([ooo for oo in self._id_pyi_to_spx for ooo in oo])
         self._id_spx_to_pyi = np.array([0] * len(self._id_pyi_to_spx))
         for i, p in enumerate(self._id_pyi_to_spx):
@@ -732,8 +738,6 @@ class InputWriter(object):
             file_name (str): name of the file to be written (optional)
             cwd (str): the current working directory (optional)
             species_str (str): the input to write, if no input is given the default input will be written. (optional)
-            check_overlap (bool):
-            xc (str/ None): exchange correlation functional
         """
         potentials = VaspPotentialFile(xc=xc)
         if species_str is None:
@@ -747,39 +751,26 @@ class InputWriter(object):
                 if 'pseudo_potcar_file' in species_obj.tags.keys():
                     new_element = species_obj.tags['pseudo_potcar_file']
                     potentials.add_new_element(parent_element=elem, new_element=new_element)
-                    potential_path = self._find_potential_file(
-                        path=potentials.find_default(new_element)['Filename'].values[0][0])
+                    potential_path = find_potential_file(
+                        path=potentials.find_default(new_element)['Filename'].values[0][0],
+                        pot_path_dict=self.pot_path_dict)
                     assert os.path.isfile(potential_path), 'such a file does not exist in the pp directory'
                 else:
-                    potential_path = self._find_potential_file(
-                        path=potentials.find_default(elem)['Filename'].values[0][0])
+                    potential_path = find_potential_file(path=potentials.find_default(elem)['Filename'].values[0][0],
+                                                         pot_path_dict=self.pot_path_dict)
                 copyfile(potential_path, posixpath.join(cwd, elem + '_POTCAR'))
                 check_overlap_str = ''
                 species_str.setdefault('species', [])
-                species_str['species'].append(odict([('name','\"'+elem+'\"'), ('potType','\"VASP\"'),
-                                                     ('element','\"'+elem+'\"'), ('potential', '\"'+elem+'_POTCAR'+'\"')]))
+                species_str['species'].append(odict([('name', '\"' + elem + '\"'),
+                                                     ('potType', '\"VASP\"'),
+                                                     ('element', '\"' + elem + '\"'),
+                                                     ('potential', '\"' + elem + '_POTCAR' + '\"')]))
                 if not check_overlap:
                     species_str['species'][-1]['checkOverlap'] = 'false'
         if cwd is not None:
             file_name = posixpath.join(cwd, file_name)
         with open(file_name, 'w') as f:
             f.write(self._odict_to_spx_input(species_str))
-
-    def _find_potential_file(self, file_name=None, xc=None, path=None):
-        if path is not None:
-            for resource_path in s.resource_paths:
-                if os.path.exists(os.path.join(resource_path, 'vasp', 'potentials', path)):
-                    return os.path.join(resource_path, 'vasp', 'potentials', path)
-        elif xc is not None and file_name is not None:
-            for resource_path in s.resource_paths:
-                if os.path.exists(os.path.join(resource_path, 'vasp', 'potentials', self.pot_path_dict[xc])):
-                    resource_path = os.path.join(resource_path, 'vasp', 'potentials', self.pot_path_dict[xc])
-                if 'potentials' in resource_path:
-                    for path, folder_lst, file_lst in os.walk(resource_path):
-                        if file_name in file_lst:
-                            return os.path.join(path, file_name)
-        # Backwards compatibility to the old version
-        raise ValueError('Either the filename or the functional has to be defined.')
 
     def write_control(self, file_name="control.sx", cwd=None, control_str=None):
         """
@@ -816,17 +807,18 @@ class InputWriter(object):
             if 'selective_dynamics' in self.structure._tag_list.keys():
                 selective_dynamics_list = self.structure.selective_dynamics.list()
             else:
-                selective_dynamics_list = [3*[False]]*len(self.structure.positions)
+                selective_dynamics_list = [3 * [False]] * len(self.structure.positions)
             for i_elem, elm_species in enumerate(self.structure.get_species_objects()):
                 if elm_species.Parent:
                     element = elm_species.Parent
                 else:
                     element = elm_species.Abbreviation
                 structure_str.setdefault('species', [])
-                structure_str['species'].append(odict([('element', '\"'+ str(element) + '\"')]))
-                elm_list = np.array(self.structure.get_chemical_symbols()==elm_species.Abbreviation)
+                structure_str['species'].append(odict([('element', '\"' + str(element) + '\"')]))
+                elm_list = np.array(self.structure.get_chemical_symbols() == elm_species.Abbreviation)
                 for elm_pos, elm_magmon, selective in zip(self.structure.positions[elm_list],
-                                                          np.array(self.structure.get_initial_magnetic_moments())[elm_list],
+                                                          np.array(self.structure.get_initial_magnetic_moments())[
+                                                              elm_list],
                                                           np.array(selective_dynamics_list)[elm_list]):
                     structure_str['species'][-1].setdefault('atom', [])
                     structure_str['species'][-1]['atom'].append(odict())
@@ -835,13 +827,14 @@ class InputWriter(object):
                     if keep_angstrom:
                         structure_str['species'][-1]['atom'][-1]['coords'] = str(np.array(elm_pos).tolist())
                     else:
-                        structure_str['species'][-1]['atom'][-1]['coords'] = str(np.array(elm_pos * 1 / BOHR_TO_ANGSTROM).tolist())
+                        structure_str['species'][-1]['atom'][-1]['coords'] = str(
+                            np.array(elm_pos * 1 / BOHR_TO_ANGSTROM).tolist())
                     if all(selective):
                         structure_str['species'][-1]['atom'][-1]['movable'] = None
                     elif any(selective):
                         for ss, xx in zip(selective, ['X', 'Y', 'Z']):
                             if ss:
-                                structure_str['species'][-1]['atom'][-1]['movable'+xx] = None
+                                structure_str['species'][-1]['atom'][-1]['movable' + xx] = None
             if not symmetry_enabled:
                 structure_str['symmetry'] = odict([('operator', odict([('S', '[[1,0,0],[0,1,0],[0,0,1]]')]))])
         if cwd is not None:
@@ -857,7 +850,6 @@ class InputWriter(object):
             file_name (str): name of the file to be written (optional)
             cwd (str): the current working directory (optinal)
             basis_str (str): the input to write, if no input is given the default input will be written. (optinal)
-            save_memory (bool): use less memory - False by default
         """
         if basis_str is None:
             basis_str = odict([('eCut', 'EnCut/13.606'),
@@ -896,8 +888,6 @@ class InputWriter(object):
             file_name (str): name of the file to be written (optional)
             cwd (str): the current working directory (optinal)
             guess_str (str): the input to write, if no input is given the default input will be written. (optinal)
-            restart_file_str (list): Restart file string list
-            write_waves (bool): Write wave function - False by default
         """
         charge_density_file = None
         for ff in restart_file_str:
@@ -915,14 +905,15 @@ class InputWriter(object):
                 guess_str['rho'] = odict([('atomicOrbitals', None)])
             else:
                 guess_str['rho'] = odict([('file', '\"' + charge_density_file + '\"')])
-            if np.any(self.structure.get_initial_magnetic_moments().flatten()!=None):
+            if np.any(self.structure.get_initial_magnetic_moments().flatten() != None):
                 if any([True if isinstance(spin, list) or isinstance(spin, np.ndarray) else False
                         for spin in self.structure.get_initial_magnetic_moments()]):
                     raise ValueError('Sphinx only supports collinear spins.')
                 else:
                     for spin in self.structure.get_initial_magnetic_moments()[self.id_pyi_to_spx]:
                         guess_str['rho'].setdefault('atomicSpin', [])
-                        guess_str['rho']['atomicSpin'].append(odict([('label','\"spin_' + str(spin) + '\"'), ('spin', str(spin))]))
+                        guess_str['rho']['atomicSpin'].append(
+                            odict([('label', '\"spin_' + str(spin) + '\"'), ('spin', str(spin))]))
                 self._spin_enabled = True
             if not write_waves:
                 guess_str['noWavesStorage'] = None
@@ -1001,6 +992,7 @@ class Input(GenericParameters):
                         'THREADS = 1\n')
         self.load_string(file_content)
 
+
 class Output(object):
     """
     Handles the output from a Sphinx simulation.
@@ -1015,13 +1007,12 @@ class Output(object):
         if len(arr) == 0 or len(counter) == 0:
             return []
         arr_new = []
-        spl_loc = list(np.where(np.array(counter)==min(counter))[0])
+        spl_loc = list(np.where(np.array(counter) == min(counter))[0])
         spl_loc.append(None)
         for ii, ll in enumerate(spl_loc[:-1]):
-            arr_new.append(np.array(arr[ll:spl_loc[ii+1]]).tolist())
+            arr_new.append(np.array(arr[ll:spl_loc[ii + 1]]).tolist())
         return arr_new
 
- 
     def collect_spins_dat(self, file_name="spins.dat", cwd=None):
         """
 
@@ -1035,7 +1026,8 @@ class Output(object):
         if not os.path.isfile(posixpath.join(cwd, file_name)):
             return None
         spins = np.loadtxt(posixpath.join(cwd, file_name))
-        self._parse_dict['atom_scf_spins'] = self.splitter(np.array([ss[self._job.id_spx_to_pyi] for ss in spins[:, 1:]]), spins[:,0])
+        self._parse_dict['atom_scf_spins'] = self.splitter(
+            np.array([ss[self._job.id_spx_to_pyi] for ss in spins[:, 1:]]), spins[:, 0])
 
     def collect_energy_dat(self, file_name="energy.dat", cwd=None):
         """
@@ -1051,14 +1043,14 @@ class Output(object):
             return None
         energies = np.loadtxt(posixpath.join(cwd, file_name))
         self._parse_dict['scf_computation_time'] = self.splitter(energies[:, 1], energies[:, 0])
-        self._parse_dict['scf_energy_int'] = self.splitter(energies[:, 2]*HARTREE_TO_EV, energies[:, 0])
+        self._parse_dict['scf_energy_int'] = self.splitter(energies[:, 2] * HARTREE_TO_EV, energies[:, 0])
         if len(energies[0]) == 7:
-            self._parse_dict['scf_energy_free'] = self.splitter(energies[:, 3]*HARTREE_TO_EV, energies[:, 0])
-            self._parse_dict['scf_energy_zero'] = self.splitter(energies[:, 4]*HARTREE_TO_EV, energies[:, 0])
-            self._parse_dict['scf_energy_band'] = self.splitter(energies[:, 5]*HARTREE_TO_EV, energies[:, 0])
-            self._parse_dict['scf_electronic_entropy'] = self.splitter(energies[:, 6]*HARTREE_TO_EV, energies[:, 0])
+            self._parse_dict['scf_energy_free'] = self.splitter(energies[:, 3] * HARTREE_TO_EV, energies[:, 0])
+            self._parse_dict['scf_energy_zero'] = self.splitter(energies[:, 4] * HARTREE_TO_EV, energies[:, 0])
+            self._parse_dict['scf_energy_band'] = self.splitter(energies[:, 5] * HARTREE_TO_EV, energies[:, 0])
+            self._parse_dict['scf_electronic_entropy'] = self.splitter(energies[:, 6] * HARTREE_TO_EV, energies[:, 0])
         else:
-            self._parse_dict['scf_energy_band'] = self.splitter(energies[:, 3]*HARTREE_TO_EV, energies[:, 0])
+            self._parse_dict['scf_energy_band'] = self.splitter(energies[:, 3] * HARTREE_TO_EV, energies[:, 0])
 
     def collect_residue_dat(self, file_name="residue.dat", cwd=None):
         """
@@ -1073,12 +1065,12 @@ class Output(object):
         if not os.path.isfile(posixpath.join(cwd, file_name)):
             return None
         residue = np.loadtxt(posixpath.join(cwd, file_name))
-        if len(residue)==0:
+        if len(residue) == 0:
             return None
-        if len(residue[0])==2:
-            self._parse_dict['scf_residue'] = self.splitter(residue[:, 1]*HARTREE_TO_EV, residue[:, 0])
+        if len(residue[0]) == 2:
+            self._parse_dict['scf_residue'] = self.splitter(residue[:, 1] * HARTREE_TO_EV, residue[:, 0])
         else:
-            self._parse_dict['scf_residue'] = self.splitter(residue[:, 1:]*HARTREE_TO_EV, residue[:, 0])
+            self._parse_dict['scf_residue'] = self.splitter(residue[:, 1:] * HARTREE_TO_EV, residue[:, 0])
 
     def collect_eps_dat(self, file_name="eps.dat", cwd=None):
         """
@@ -1091,7 +1083,7 @@ class Output(object):
 
         """
         file_name = posixpath.join(cwd, file_name)
-        if len(self._parse_dict['bands_eigen_values'])!=0:
+        if len(self._parse_dict['bands_eigen_values']) != 0:
             return None
         if os.path.isfile(file_name):
             try:
@@ -1143,6 +1135,7 @@ class Output(object):
 
         if not os.path.isfile(posixpath.join(cwd, file_name)):
             return None
+
         def check_conv(line):
             if line.startswith('WARNING: Maximum number of steps exceeded'):
                 return False
@@ -1150,6 +1143,7 @@ class Output(object):
                 return True
             else:
                 return None
+
         with open(posixpath.join(cwd, file_name), 'r') as sphinx_log_file:
             log_file = sphinx_log_file.readlines()
             if not np.any(['Program exited normally.' in line for line in log_file]):
@@ -1157,46 +1151,46 @@ class Output(object):
                 warnings.warn('SPHInX parsing failed; most likely SPHInX crashed.')
             main_start = np.where(['Enter Main Loop' in line for line in log_file])[0][0]
             log_main = log_file[main_start:]
+
             def get_partial_log(file_content, start_line, end_line):
-                start_line = np.where([line==start_line for line in file_content])[0][0]
-                end_line = np.where([line==end_line for line in file_content[start_line:]])[0][0]
-                return file_content[start_line:start_line+end_line]
-            
+                start_line = np.where([line == start_line for line in file_content])[0][0]
+                end_line = np.where([line == end_line for line in file_content[start_line:]])[0][0]
+                return file_content[start_line:start_line + end_line]
+
             line = [ll for ll in log_file if ll.startswith('|    folding: ')][0].split()
             n_k_points = np.prod(np.array([line[2], line[4], line[6]], dtype=int))
             k_points = get_partial_log(log_file,
                                        '| Symmetrized k-points:               in cartesian coordinates\n',
                                        '\n')[2:-1]
-            self._parse_dict['bands_k_weights'] = np.array([float(kk.split()[6]) for kk in k_points])*n_k_points
-            k_points = np.array([[float(kk.split()[i]) for i in range(2, 5)] for kk in k_points])/BOHR_TO_ANGSTROM
-            counter = [int(line.replace('F(', '').replace(')', ' ').split()[0])
-                       for line in log_main if line.startswith('F(')]
-            energy_free = [float(line.replace('=', ' ').replace(',', ' ').split()[1])*HARTREE_TO_EV
+            self._parse_dict['bands_k_weights'] = np.array([float(kk.split()[6]) for kk in k_points]) * n_k_points
+            k_points = np.array([[float(kk.split()[i]) for i in range(2, 5)] for kk in k_points]) / BOHR_TO_ANGSTROM
+            counter = [int(line.replace('F(', '').replace(')', ' ').split()[0]) for line in log_main if
+                       line.startswith('F(')]
+            energy_free = [float(line.replace('=', ' ').replace(',', ' ').split()[1]) * HARTREE_TO_EV
                            for line in log_main if line.startswith('F(')]
-            energy_int = [float(line.replace('=', ' ').replace(',', ' ').split()[1])*HARTREE_TO_EV
+            energy_int = [float(line.replace('=', ' ').replace(',', ' ').split()[1]) * HARTREE_TO_EV
                           for line in log_main if line.startswith('eTot(') and not line.startswith('eTot(Val)')]
-            energy_zero = 0.5*(np.array(energy_free)+np.array(energy_int))
-            energy_band = [float(line.split()[2])*HARTREE_TO_EV
+            energy_zero = 0.5 * (np.array(energy_free) + np.array(energy_int))
+            energy_band = [float(line.split()[2]) * HARTREE_TO_EV
                            for line in log_main if line.startswith('eBand')]
-            
-            forces = [float(re.split('{|}', line)[1].split(',')[i])*HARTREE_OVER_BOHR_TO_EV_OVER_ANGSTROM
+
+            forces = [float(re.split('{|}', line)[1].split(',')[i]) * HARTREE_OVER_BOHR_TO_EV_OVER_ANGSTROM
                       for line in log_main
                       for i in range(3) if line.startswith('Species: ')]
-            magnetic_forces = [HARTREE_TO_EV*float(line.split()[-1])
-                              for line in log_main if line.startswith('nu(')]
+            magnetic_forces = [HARTREE_TO_EV * float(line.split()[-1])
+                               for line in log_main if line.startswith('nu(')]
             convergence = [check_conv(line) for line in log_main if check_conv(line) is not None]
-            self._parse_dict['bands_e_fermi'] = np.array([float(line.split()[3])
-                                                          for line in log_main if line.startswith('| Fermi energy:')])
+            self._parse_dict['bands_e_fermi'] = np.array(
+                [float(line.split()[3]) for line in log_main if line.startswith('| Fermi energy:')])
             line_vol = np.where(['Omega:' in line for line in log_file])[0][0]
-            volume = float(log_file[line_vol].split()[2])*BOHR_TO_ANGSTROM**3
-            self._parse_dict['bands_occ'] = [line.split()[3:]
-                                             for line in log_main if line.startswith('| final focc:')]
-            self._parse_dict['bands_occ_initial'] = [line.split()[3:]
-                                                     for line in log_main if line.startswith('| focc:')]
-            self._parse_dict['bands_eigen_values'] = [line.split()[4:]
-                                                      for line in log_main if line.startswith('| final eig [eV]:')]
-            self._parse_dict['bands_eigen_values_initial'] = [line.split()[4:]
-                                                              for line in log_main if line.startswith('| eig [eV]:')]
+            volume = float(log_file[line_vol].split()[2]) * BOHR_TO_ANGSTROM ** 3
+            self._parse_dict['bands_occ'] = [line.split()[3:] for line in log_main if line.startswith('| final focc:')]
+            self._parse_dict['bands_occ_initial'] = [line.split()[3:] for line in log_main if
+                                                     line.startswith('| focc:')]
+            self._parse_dict['bands_eigen_values'] = [line.split()[4:] for line in log_main if
+                                                      line.startswith('| final eig [eV]:')]
+            self._parse_dict['bands_eigen_values_initial'] = [line.split()[4:] for line in log_main if
+                                                              line.startswith('| eig [eV]:')]
 
             def eig_converter(arr, magnetic=np.any(self._job.structure.get_initial_magnetic_moments() != None),
                               len_k_points=len(k_points)):
@@ -1206,10 +1200,12 @@ class Output(object):
                     return np.array([float(ff) for f in arr for ff in f]).reshape(-1, 2, len_k_points, len(arr[0]))
                 else:
                     return np.array([float(ff) for f in arr for ff in f]).reshape(-1, len_k_points, len(arr[0]))
+
             self._parse_dict['bands_occ'] = eig_converter(self._parse_dict['bands_occ'])
             self._parse_dict['bands_occ_initial'] = eig_converter(self._parse_dict['bands_occ_initial'])
             self._parse_dict['bands_eigen_values'] = eig_converter(self._parse_dict['bands_eigen_values'])
-            self._parse_dict['bands_eigen_values_initial'] = eig_converter(self._parse_dict['bands_eigen_values_initial'])
+            self._parse_dict['bands_eigen_values_initial'] = eig_converter(
+                self._parse_dict['bands_eigen_values_initial'])
             energy_free_lst = self.splitter(energy_free, counter)
             energy_int_lst = self.splitter(energy_int, counter)
             energy_zero_lst = self.splitter(energy_zero, counter)
@@ -1223,10 +1219,10 @@ class Output(object):
                 for ii, mm in enumerate(magnetic_forces):
                     magnetic_forces[ii] = mm[self._job.id_spx_to_pyi]
                 magnetic_forces = self.splitter(magnetic_forces, counter)
-        if len(convergence) == len(energy_free_lst)-1:
+        if len(convergence) == len(energy_free_lst) - 1:
             convergence.append(False)
         self._parse_dict['scf_convergence'] = convergence
-        self._parse_dict['volume'] = np.array(len(convergence)*[volume])
+        self._parse_dict['volume'] = np.array(len(convergence) * [volume])
         if len(self._parse_dict['scf_energy_int']) == 0 and len(energy_int_lst) != 0:
             self._parse_dict['scf_energy_int'] = energy_int_lst
         if len(self._parse_dict['scf_energy_free']) == 0 and len(energy_free_lst) != 0:
@@ -1252,18 +1248,17 @@ class Output(object):
         with open(file_name, 'r') as file_content:
             file_content = file_content.readlines()
             natoms = len(self._job.id_spx_to_pyi)
-            coords = np.array([json.loads(line.split('=')[1].split(';')[0])
-                               for line in file_content if 'coords' in line])
-            self._parse_dict['positions'] = coords.reshape(-1, natoms, 3)*BOHR_TO_ANGSTROM
-            self._parse_dict['positions'] = np.array([ff[self._job.id_spx_to_pyi]
-                                                      for ff in self._parse_dict['positions']])
-            force = np.array([json.loads(line.split('=')[1].split(';')[0])
-                              for line in file_content if 'force' in line])
-            self._parse_dict['forces'] = force.reshape(-1, natoms, 3)*HARTREE_OVER_BOHR_TO_EV_OVER_ANGSTROM
-            self._parse_dict['forces'] = np.array([ff[self._job.id_spx_to_pyi]
-                                                   for ff in self._parse_dict['forces']])
-            self._parse_dict['cell'] = np.array([json.loads("".join(file_content[i_line:i_line+3]).split('=')[1].split(';')[0])
-                                                 for i_line, line in enumerate(file_content) if 'cell' in line])*BOHR_TO_ANGSTROM
+            coords = np.array(
+                [json.loads(line.split('=')[1].split(';')[0]) for line in file_content if 'coords' in line])
+            self._parse_dict['positions'] = coords.reshape(-1, natoms, 3) * BOHR_TO_ANGSTROM
+            self._parse_dict['positions'] = np.array(
+                [ff[self._job.id_spx_to_pyi] for ff in self._parse_dict['positions']])
+            force = np.array([json.loads(line.split('=')[1].split(';')[0]) for line in file_content if 'force' in line])
+            self._parse_dict['forces'] = force.reshape(-1, natoms, 3) * HARTREE_OVER_BOHR_TO_EV_OVER_ANGSTROM
+            self._parse_dict['forces'] = np.array([ff[self._job.id_spx_to_pyi] for ff in self._parse_dict['forces']])
+            self._parse_dict['cell'] = np.array(
+                [json.loads("".join(file_content[i_line:i_line + 3]).split('=')[1].split(';')[0]) for i_line, line in
+                 enumerate(file_content) if 'cell' in line]) * BOHR_TO_ANGSTROM
 
     def collect(self, directory=os.getcwd()):
         """
@@ -1291,15 +1286,16 @@ class Output(object):
         """
 
         if len(self._parse_dict['scf_energy_zero']) == 0:
-            self._parse_dict['scf_energy_zero'] = [0.5 * (np.array(fr) + np.array(en))
-                                                   for fr, en in zip(self._parse_dict['scf_energy_free'],
-                                                                     self._parse_dict['scf_energy_int'])]
+            self._parse_dict['scf_energy_zero'] = [0.5 * (np.array(fr) + np.array(en)) for fr, en in
+                                                   zip(self._parse_dict['scf_energy_free'],
+                                                       self._parse_dict['scf_energy_int'])]
         with hdf.open("input") as hdf5_input:
             with hdf5_input.open("generic") as hdf5_generic:
                 if 'dft' not in hdf5_generic.list_groups():
                     hdf5_generic.create_group('dft')
                 with hdf5_generic.open("dft") as hdf5_dft:
-                    if len(self._parse_dict['atom_spin_constrains']) > 0 and "atom_spin_constraints" not in hdf5_dft.list_nodes():
+                    if len(self._parse_dict[
+                               'atom_spin_constrains']) > 0 and "atom_spin_constraints" not in hdf5_dft.list_nodes():
                         hdf5_dft["atom_spin_constraints"] = [self._parse_dict['atom_spin_constrains']]
 
         with hdf.open("output") as hdf5_output:
@@ -1314,15 +1310,17 @@ class Output(object):
                 with hdf5_generic.open("dft") as hdf5_dft:
                     hdf5_dft["scf_convergence"] = self._parse_dict['scf_convergence']
                     for k in ["scf_residue", "scf_energy_free", "scf_energy_zero", "scf_energy_int",
-                              "scf_electronic_entropy", "scf_energy_band", "scf_magnetic_forces", "scf_computation_time",
-                              "bands_occ", "bands_e_fermi", "bands_k_weights", "bands_eigen_values", "atom_scf_spins"]:
+                              "scf_electronic_entropy",
+                              "scf_energy_band", "scf_magnetic_forces", "scf_computation_time", "bands_occ",
+                              "bands_e_fermi",
+                              "bands_k_weights", "bands_eigen_values", "atom_scf_spins"]:
                         if len(self._parse_dict[k]) > 0:
                             hdf5_dft[k] = self._parse_dict[k]
                             if 'scf_' in k:
                                 hdf5_dft[k.replace('scf_', '')] = np.array([vv[-1] for vv in self._parse_dict[k]])
                 if len(self._parse_dict['scf_computation_time']) > 0:
-                    hdf5_generic["computation_time"] = np.array([tt[-1]
-                                                                 for tt in self._parse_dict['scf_computation_time']])
+                    hdf5_generic["computation_time"] = np.array(
+                        [tt[-1] for tt in self._parse_dict['scf_computation_time']])
                 if len([en[-1] for en in self._parse_dict['scf_energy_free']]) > 0:
                     hdf5_generic["energy_tot"] = np.array([en[-1] for en in self._parse_dict['scf_energy_free']])
                     hdf5_generic["energy_pot"] = np.array([en[-1] for en in self._parse_dict['scf_energy_free']])
@@ -1330,14 +1328,14 @@ class Output(object):
                 if "positions" not in hdf5_generic.list_nodes() or force_update:
                     if len(self._parse_dict['positions']) > 0:
                         hdf5_generic["positions"] = np.array(self._parse_dict['positions'])
-                    elif len(self._parse_dict['scf_convergence'])==1:
+                    elif len(self._parse_dict['scf_convergence']) == 1:
                         hdf5_generic["positions"] = np.array([self._job.structure.positions])
                 if ("forces" not in hdf5_generic.list_nodes() or force_update) and len(self._parse_dict['forces']) > 0:
                     hdf5_generic["forces"] = np.array(self._parse_dict['forces'])
                 if "cells" not in hdf5_generic.list_nodes() or force_update:
                     if len(self._parse_dict['cell']) > 0:
                         hdf5_generic["cells"] = np.array(self._parse_dict['cell'])
-                    elif len(self._parse_dict['scf_convergence'])==1:
+                    elif len(self._parse_dict['scf_convergence']) == 1:
                         hdf5_generic["cells"] = np.array([self._job.structure.cell])
 
     def from_hdf(self, hdf):
