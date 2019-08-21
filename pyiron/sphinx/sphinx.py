@@ -32,25 +32,3 @@ class Sphinx(SphinxInteractive):
         self.__name__ = "Sphinx"
         self.__version__ = None  # Reset the version number to the executable is set automatically
         self._executable_activate(enforce=True)
-
-
-class SphinxInt(Sphinx):
-    def __init__(self, project, job_name):
-        warnings.warn('Please use Sphinx instead of SphinxInt')
-        super(SphinxInt, self).__init__(project=project, job_name=job_name)
-
-
-class SphinxInt2(Sphinx):
-    def __init__(self, project, job_name):
-        warnings.warn('Please use Sphinx instead of SphinxInt2')
-        super(SphinxInt2, self).__init__(project=project, job_name=job_name)
-
-
-class SphinxEx(Sphinx):
-    def __init__(self, project, job_name):
-        warnings.warn('Please use Sphinx instead of SphinxEx')
-        super(SphinxEx, self).__init__(project=project, job_name=job_name)
-        self.__name__ = "SphinxEx"
-        self.__version__ = None  # Reset the version number to the executable is set automatically
-        self._executable_activate(enforce=True)
-
