@@ -1194,16 +1194,48 @@ class VaspBase(GenericDFTJob):
         else:
             self.restart_file_list.append(posixpath.join(path, "WAVECAR"))
 
-    def set_spin_constraint(self, direction=False, norm=False):
+    def set_rwigs(self, rwigs_dict):
         """
-        Setting thr spin constraints
+        Sets the radii of Wigner-Seitz cell. (RWIGS tag)
 
         Args:
-            direction:
-            norm:
+            rwigs_dict (dict): Dictionary of species and corresponding radii.
+        """
+        species_keys = self.structure.get_number_species_atoms().keys()
+        rwigs_keys = rwigs_dict.keys()
+        for i in species_keys:
+            if i not in list(rwigs_keys):
+                raise ValueError("'" + i + "' is not in rwigs_dict!")
+
+        rwigs = [rwigs_dict[i] for i in species_keys]
+        self.input.incar['RWIGS'] = ' '.join(map(str, rwigs))
+
+    def get_rwigs(self):
+        """
+        Gets the radii of Wigner-Seitz cell. (RWIGS tag)
 
         Returns:
+            dict: dictionary of radii
+        """
+        if 'RWIGS' in self.input.incar._dataset['Parameter']:
+            species_keys = self.structure.get_number_species_atoms().keys()
+            rwigs = [float(i) for i in self.input.incar['RWIGS'].split()]
+            rwigs_dict = dict()
+            for i, k in enumerate(species_keys):
+                rwigs_dict.update({k: rwigs[i]})
+            return rwigs_dict
+        else:
+            return None
 
+    def set_spin_constraint(self, lamb, rwigs_dict, direction=False, norm=False):
+        """
+        Sets spin constrains including 'LAMBDA' and 'RWIGS'.
+
+        Args:
+            lamb (float): LAMBDA tag
+            rwigs_dict (dict): Dictionary of species and corresponding radii.
+            direction (bool): (True/False) constrain spin direction.
+            norm (bool): (True/False) constrain spin norm (magnitude).
         """
         if not isinstance(direction, bool):
             raise AssertionError()
@@ -1213,6 +1245,11 @@ class VaspBase(GenericDFTJob):
             self.input.incar['I_CONSTRAINED_M'] = 2
         elif direction:
             self.input.incar['I_CONSTRAINED_M'] = 1
+        elif norm:
+            raise ValueError("Constraining norm only is not possible.")
+
+        self.input.incar['LAMBDA'] = lamb
+        self.set_rwigs(rwigs_dict)
 
     def validate_ready_to_run(self):
         super(VaspBase, self).validate_ready_to_run()
