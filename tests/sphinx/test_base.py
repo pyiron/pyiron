@@ -5,6 +5,11 @@ import warnings
 from pyiron.project import Project
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.atomistics.structure.atoms import Atoms
+from pyiron.base.settings.generic import Settings
+
+
+s = Settings()
+print(s._configuration['resource_paths'])
 
 
 class TestSphinx(unittest.TestCase):
