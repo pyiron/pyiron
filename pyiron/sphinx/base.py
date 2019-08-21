@@ -489,7 +489,8 @@ class SphinxBase(GenericDFTJob):
         enable_kjxc = self.input['KJxc']
         if self._main_str is None:
             self.input_writer.write_potentials(file_name="potentials.sx", cwd=self.working_directory,
-                                               species_str=self._species_str, check_overlap=check_overlap, xc=self.input['Xcorr'])
+                                               species_str=self._species_str, check_overlap=check_overlap,
+                                               xc=self.input['Xcorr'])
             self.input_writer.write_guess(file_name='guess.sx', cwd=self.working_directory, guess_str=self._guess_str,
                                           restart_file_str=self.restart_file_list, write_waves=write_waves)
             self.input_writer.write_structure(file_name='structure.sx', cwd=self.working_directory,
@@ -731,6 +732,8 @@ class InputWriter(object):
             file_name (str): name of the file to be written (optional)
             cwd (str): the current working directory (optional)
             species_str (str): the input to write, if no input is given the default input will be written. (optional)
+            check_overlap (bool):
+            xc (str/ None): exchange correlation functional
         """
         potentials = VaspPotentialFile(xc=xc)
         if species_str is None:
