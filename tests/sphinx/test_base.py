@@ -37,7 +37,7 @@ class TestSphinx(unittest.TestCase):
         cls.sphinx._create_working_directory()
         cls.sphinx_2_3._create_working_directory()
         cls.sphinx.write_input()
-        cls.sphinx.version = '2.6.1'
+        cls.sphinx.version = '2.6'
         cls.sphinx_2_3.to_hdf()
         cls.sphinx_2_3.decompress()
         cls.sphinx_2_5.decompress()
