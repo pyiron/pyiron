@@ -1198,9 +1198,7 @@ class VaspBase(GenericDFTJob):
         Sets the radii of Wigner-Seitz cell. (RWIGS tag)
 
         Args:
-            rwigs_dict (dict): Dictionary of species type and corresponding radius.
-
-        Returns:
+            rwigs_dict (dict): Dictionary of species and corresponding radii.
         """
         species_keys = self.structure.get_number_species_atoms().keys()
         rwigs_keys = rwigs_dict.keys()
@@ -1216,7 +1214,7 @@ class VaspBase(GenericDFTJob):
         Gets the radii of Wigner-Seitz cell. (RWIGS tag)
 
         Returns:
-            rwigs_dict (dict): dictionary of radii
+            dict: dictionary of radii
         """
         if 'RWIGS' in self.input.incar._dataset['Parameter']:
             species_keys = self.structure.get_number_species_atoms().keys()
@@ -1237,8 +1235,6 @@ class VaspBase(GenericDFTJob):
             rwigs_dict (dict): Dictionary of species and corresponding radii.
             direction (bool): (True/False) constrain spin direction.
             norm (bool): (True/False) constrain spin norm (magnitude).
-
-        Returns:
         """
         if not isinstance(direction, bool):
             raise AssertionError()
