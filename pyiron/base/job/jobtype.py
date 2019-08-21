@@ -43,6 +43,13 @@ JOB_CLASS_DICT = {'ScriptJob': 'pyiron.base.job.script',
                   'GpawJob': 'pyiron.gpaw.gpaw',
                   'Vasp': 'pyiron.vasp.vasp',
                   'TableJob': 'pyiron.table.datamining',
+                  'ScipyMinimizer': 'pyiron.interactive.scipy_minimizer',
+                  'SxExtOptInteractive': 'pyiron.interactive.sxextoptint',
+                  'Sphinx': 'pyiron.sphinx.sphinx',
+                  'SxUniqDispl': 'pyiron.thermodynamics.sxphonons',
+                  'SxDynMat': 'pyiron.thermodynamics.sxphonons',
+                  'SxPhonons': 'pyiron.thermodynamics.sxphonons',
+                  'SxHarmPotTst': 'pyiron.thermodynamics.sxphonons',
                   }
 
 

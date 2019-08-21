@@ -199,3 +199,19 @@ class VaspPotentialSetter(object):
 
     def __repr__(self):
         return self._potential_dict.__repr__()
+
+
+def find_potential_file(file_name=None, xc=None, path=None, pot_path_dict=None):
+    if path is not None:
+        for resource_path in s.resource_paths:
+            if os.path.exists(os.path.join(resource_path, 'vasp', 'potentials', path)):
+                return os.path.join(resource_path, 'vasp', 'potentials', path)
+    elif xc is not None and file_name is not None:
+        for resource_path in s.resource_paths:
+            if os.path.exists(os.path.join(resource_path, 'vasp', 'potentials', pot_path_dict[xc])):
+                resource_path = os.path.join(resource_path, 'vasp', 'potentials', pot_path_dict[xc])
+            if 'potentials' in resource_path:
+                for path, folder_lst, file_lst in os.walk(resource_path):
+                    if file_name in file_lst:
+                        return os.path.join(path, file_name)
+    raise ValueError('Either the filename or the functional has to be defined.')
