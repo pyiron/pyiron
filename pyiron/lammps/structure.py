@@ -18,8 +18,10 @@ except ImportError:
         from ase.calculators.lammpsrun import prism as Prism
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Yury Lysogorskiy, Jan Janssen, Markus Tautschnig"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -45,11 +47,14 @@ class UnfoldingPrism(Prism):
         pbc:
         digits:
     """
+
     def __init__(self, cell, pbc=(True, True, True), digits=10):
         # Temporary fix. Since the arguments for the constructor have changed, try to see if it is compatible with
         # the latest ase. If not, revert to the old __init__ parameters.
         try:
-            super(UnfoldingPrism, self).__init__(cell, pbc=pbc, tolerance=float('1e-{}'.format(digits)))
+            super(UnfoldingPrism, self).__init__(
+                cell, pbc=pbc, tolerance=float("1e-{}".format(digits))
+            )
         except TypeError:
             super(UnfoldingPrism, self).__init__(cell, pbc=pbc, digits=digits)
         a, b, c = cell
@@ -67,16 +72,15 @@ class UnfoldingPrism(Prism):
         zhi = np.sqrt(cn ** 2 - xzp ** 2 - yzp ** 2)
 
         # Set precision
-        self.car_prec = dec.Decimal('10.0') ** \
-                        int(np.floor(np.log10(max((xhi, yhi, zhi)))) - digits)
-        self.dir_prec = dec.Decimal('10.0') ** (-digits)
+        self.car_prec = dec.Decimal("10.0") ** int(
+            np.floor(np.log10(max((xhi, yhi, zhi)))) - digits
+        )
+        self.dir_prec = dec.Decimal("10.0") ** (-digits)
         self.acc = float(self.car_prec)
         self.eps = np.finfo(xhi).eps
 
         # For rotating positions from ase to lammps
-        apre = np.array(((xhi, 0, 0),
-                         (xyp, yhi, 0),
-                         (xzp, yzp, zhi)))
+        apre = np.array(((xhi, 0, 0), (xyp, yhi, 0), (xzp, yzp, zhi)))
         self.R = np.dot(np.linalg.inv(cell), apre)
 
         # Actual lammps cell may be different from what is used to create R
@@ -105,20 +109,20 @@ class UnfoldingPrism(Prism):
             n3 -= np.sign(n3)
         self.ns = [n1, n2, n3]
 
-        d_a = apre[0, 0]/2 - apre[1,0]
+        d_a = apre[0, 0] / 2 - apre[1, 0]
         if np.abs(d_a) < eps:
             if d_a < 0:
-                print ('debug: apply shift')
+                print("debug: apply shift")
                 apre[1, 0] += 2 * d_a
                 apre[2, 0] += 2 * d_a
         self.A = apre
         self.Ainv = np.linalg.inv(self.A)
         self.prism = None
 
-        if self.is_skewed() and \
-                (not (pbc[0] and pbc[1] and pbc[2])):
-            raise RuntimeError('Skewed lammps cells MUST have '
-                               'PBC == True in all directions!')
+        if self.is_skewed() and (not (pbc[0] and pbc[1] and pbc[2])):
+            raise RuntimeError(
+                "Skewed lammps cells MUST have " "PBC == True in all directions!"
+            )
 
     def unfold_cell(self, cell):
         """
@@ -168,11 +172,14 @@ class LammpsStructure(GenericParameters):
     Args:
         input_file_name:
     """
+
     def __init__(self, input_file_name=None):
-        super(LammpsStructure, self).__init__(input_file_name=input_file_name,
-                                              table_name="structure_inp",
-                                              comment_char="#",
-                                              val_only=True)
+        super(LammpsStructure, self).__init__(
+            input_file_name=input_file_name,
+            table_name="structure_inp",
+            comment_char="#",
+            val_only=True,
+        )
         self._structure = None
         self._potential = None
         self._el_eam_lst = []
@@ -208,11 +215,11 @@ class LammpsStructure(GenericParameters):
 
         """
         self._structure = structure
-        if self.atom_type == 'full':
+        if self.atom_type == "full":
             input_str = self.structure_full()
-        elif self.atom_type == 'bond':
+        elif self.atom_type == "bond":
             input_str = self.structure_bond()
-        elif self.atom_type == 'charge':
+        elif self.atom_type == "charge":
             input_str = self.structure_charge()
         else:  # self.atom_type == 'atomic'
             input_str = self.structure_atomic()
@@ -245,7 +252,7 @@ class LammpsStructure(GenericParameters):
         Returns:
 
         """
-        input_str = ''
+        input_str = ""
         self.load_string(input_str)
 
     # def f2s(self, f):
@@ -265,12 +272,14 @@ class LammpsStructure(GenericParameters):
         xhi, yhi, zhi, xy, xz, yz = self.prism.get_lammps_prism_str()
         # Please, be carefull and not round xhi, yhi,..., otherwise you will get too skew cell from LAMMPS.
         # These values are already checked in UnfoldingPrism to fullfill LAMMPS skewness criteria
-        simulation_cell = '0. {} xlo xhi\n'.format(xhi) + \
-                          '0. {} ylo yhi\n'.format(yhi) + \
-                          '0. {} zlo zhi\n'.format(zhi)
+        simulation_cell = (
+            "0. {} xlo xhi\n".format(xhi)
+            + "0. {} ylo yhi\n".format(yhi)
+            + "0. {} zlo zhi\n".format(zhi)
+        )
 
         if self.prism.is_skewed():
-            simulation_cell += '{0} {1} {2} xy xz yz\n'.format(xy, xz, yz)
+            simulation_cell += "{0} {1} {2} xy xz yz\n".format(xy, xz, yz)
 
         # if s.VERBOSE():
         #     s.warning("triclinic cells not supported for test purposes",
@@ -321,42 +330,67 @@ class LammpsStructure(GenericParameters):
             self.structure.bonds = np.array(bonds)
         bonds = self.structure.bonds
 
-        atomtypes = ' Start File for LAMMPS \n' + \
-                    '{0:d} atoms'.format(len(self._structure)) + ' \n' + \
-                    '{0:d} bonds'.format(len(bonds)) + ' \n' + \
-                    '{0} atom types'.format(self._structure.get_number_of_species()) + ' \n' + \
-                    '{0} bond types'.format(np.max(bond_type)) + ' \n'
+        atomtypes = (
+            " Start File for LAMMPS \n"
+            + "{0:d} atoms".format(len(self._structure))
+            + " \n"
+            + "{0:d} bonds".format(len(bonds))
+            + " \n"
+            + "{0} atom types".format(self._structure.get_number_of_species())
+            + " \n"
+            + "{0} bond types".format(np.max(bond_type))
+            + " \n"
+        )
 
         cell_dimesions = self.simulation_cell()
 
-        masses = 'Masses \n\n'
+        masses = "Masses \n\n"
         el_obj_list = self._structure.get_species_objects()
         for object_id, el in enumerate(el_obj_list):
-            masses += '{0:3d} {1:f}'.format(object_id + 1, el.AtomicMass) + '\n'
+            masses += "{0:3d} {1:f}".format(object_id + 1, el.AtomicMass) + "\n"
 
-        atoms = 'Atoms \n\n'
+        atoms = "Atoms \n\n"
 
         # atom_style bond
         # format: atom-ID, molecule-ID, atom_type, x, y, z
-        format_str = '{0:d} {1:d} {2:d} {3:f} {4:f} {5:f} '
+        format_str = "{0:d} {1:d} {2:d} {3:f} {4:f} {5:f} "
         if self._structure.dimension == 3:
             for id_atom, (x, y, z) in enumerate(coords):
                 id_mol, id_species = 1, el_dict[elements[id_atom]]  # elList[id_atom]
                 # print id_atom + 1, id_mol, id_species + 1, x, y, z
-                atoms += format_str.format(id_atom + 1, id_mol, id_species + 1, x, y, z) + '\n'
+                atoms += (
+                    format_str.format(id_atom + 1, id_mol, id_species + 1, x, y, z)
+                    + "\n"
+                )
         elif self._structure.dimension == 2:
             for id_atom, (x, y) in enumerate(coords):
                 id_mol, id_species = 1, el_dict[elements[id_atom]]  # elList[id_atom]
                 # print id_atom + 1, id_mol, id_species + 1, x, y, z
-                atoms += format_str.format(id_atom + 1, id_mol, id_species + 1, x, y, 0.) + '\n'
+                atoms += (
+                    format_str.format(id_atom + 1, id_mol, id_species + 1, x, y, 0.0)
+                    + "\n"
+                )
         else:
             raise ValueError("dimension 1 not yet implemented")
 
-        bonds_str = 'Bonds \n\n'
+        bonds_str = "Bonds \n\n"
         for i_bond, (i_a, i_b, b_type) in enumerate(bonds):
-            bonds_str += '{0:d} {1:d} {2:d} {3:d}'.format(i_bond + 1, b_type, i_a, i_b) + '\n'
+            bonds_str += (
+                "{0:d} {1:d} {2:d} {3:d}".format(i_bond + 1, b_type, i_a, i_b) + "\n"
+            )
 
-        return atomtypes + '\n' + cell_dimesions + '\n' + masses + '\n' + atoms + '\n' + bonds_str + '\n'
+        return (
+            atomtypes
+            + "\n"
+            + cell_dimesions
+            + "\n"
+            + masses
+            + "\n"
+            + atoms
+            + "\n"
+            + bonds_str
+            + "\n"
+        )
 
     def structure_full(self):
         """
@@ -387,7 +421,9 @@ class LammpsStructure(GenericParameters):
         # el_lst = structure.get_chemical_elements()
 
         num_atoms_in_molecule = 3
-        neighbors = self._structure.get_neighbors(num_neighbors=num_atoms_in_molecule + 2)
+        neighbors = self._structure.get_neighbors(
+            num_neighbors=num_atoms_in_molecule + 2
+        )
         # print "neighbors: ", neighbors.distances
         id_mol = 0
         indices = self._structure.indices
@@ -402,8 +438,12 @@ class LammpsStructure(GenericParameters):
                 # id_n1, id_n2 = np.intersect1d(neighbors.indices[id_el], self._structure.select_index("H"))[0:2]
                 id_n1, id_n2 = neighbors.indices[id_el][0:2]
                 # print "id: ", id, id_n1, len(el_lst), el_lst[1].id
-                molecule_lst.append([id_n1, id_mol, species_translate_list[indices[id_n1]]])
-                molecule_lst.append([id_n2, id_mol, species_translate_list[indices[id_n2]]])
+                molecule_lst.append(
+                    [id_n1, id_mol, species_translate_list[indices[id_n1]]]
+                )
+                molecule_lst.append(
+                    [id_n2, id_mol, species_translate_list[indices[id_n2]]]
+                )
 
                 bonds_lst.append([id_el + 1, id_n1 + 1])
                 bonds_lst.append([id_el + 1, id_n2 + 1])
@@ -418,49 +458,83 @@ class LammpsStructure(GenericParameters):
         # print "m_lst: ", m_lst
         # print "mol: ", molecule_lst
 
-        atomtypes = ' Start File for LAMMPS \n' + \
-                    '{0:d} atoms'.format(len(self._structure)) + ' \n' + \
-                    '{0:d} bonds'.format(len(bonds_lst)) + ' \n' + \
-                    '{0:d} angles'.format(len(angles_lst)) + ' \n' + \
-                    '{0} atom types'.format(self._structure.get_number_of_species()) + ' \n' + \
-                    '{0} bond types'.format(1) + ' \n' + \
-                    '{0} angle types'.format(1) + ' \n'
+        atomtypes = (
+            " Start File for LAMMPS \n"
+            + "{0:d} atoms".format(len(self._structure))
+            + " \n"
+            + "{0:d} bonds".format(len(bonds_lst))
+            + " \n"
+            + "{0:d} angles".format(len(angles_lst))
+            + " \n"
+            + "{0} atom types".format(self._structure.get_number_of_species())
+            + " \n"
+            + "{0} bond types".format(1)
+            + " \n"
+            + "{0} angle types".format(1)
+            + " \n"
+        )
 
         cell_dimensions = self.simulation_cell()
 
-        masses = 'Masses' + '\n\n'
+        masses = "Masses" + "\n\n"
         el_obj_list = self._structure.get_species_objects()
         for object_id, el in enumerate(el_obj_list):
-            masses += '{0:3d} {1:f}'.format(object_id + 1, el.AtomicMass) + '\n'
+            masses += "{0:3d} {1:f}".format(object_id + 1, el.AtomicMass) + "\n"
 
-        atoms = 'Atoms \n\n'
+        atoms = "Atoms \n\n"
 
         # format: atom-ID, molecule-ID, atom_type, q, x, y, z
-        format_str = '{0:d} {1:d} {2:d} {3:f} {4:f} {5:f} {6:f}'
+        format_str = "{0:d} {1:d} {2:d} {3:f} {4:f} {5:f} {6:f}"
         for atom in molecule_lst:
             id_atom, id_mol, id_species = atom
             # print id_atom, id_mol, id_species
             x, y, z = coords[id_atom]
             el_id = self._structure.species[id_species].Abbreviation
-            atoms += format_str.format(id_atom + 1, id_mol, id_species + 1, q_dict[el_id], x, y, z) + '\n'
+            atoms += (
+                format_str.format(
+                    id_atom + 1, id_mol, id_species + 1, q_dict[el_id], x, y, z
+                )
+                + "\n"
+            )
 
         if len(bonds_lst) > 0:
-            bonds_str = 'Bonds \n\n'
+            bonds_str = "Bonds \n\n"
             for i_bond, id_vec in enumerate(bonds_lst):
-                bonds_str += '{0:d} {1:d} {2:d} {3:d}'.format(i_bond + 1, 1, id_vec[0], id_vec[1]) + '\n'
+                bonds_str += (
+                    "{0:d} {1:d} {2:d} {3:d}".format(
+                        i_bond + 1, 1, id_vec[0], id_vec[1]
+                    )
+                    + "\n"
+                )
         else:
             bonds_str = "\n"
 
         if len(angles_lst) > 0:
-            angles_str = 'Angles \n\n'
+            angles_str = "Angles \n\n"
             for i_angle, id_vec in enumerate(angles_lst):
                 # print "id: ", i_angle, id_vec
-                angles_str += '{0:d} {1:d} {2:d} {3:d} {4:d}'.format(i_angle + 1, 1, id_vec[0], id_vec[1], id_vec[2]) \
-                              + '\n'
+                angles_str += (
+                    "{0:d} {1:d} {2:d} {3:d} {4:d}".format(
+                        i_angle + 1, 1, id_vec[0], id_vec[1], id_vec[2]
+                    )
+                    + "\n"
+                )
         else:
             angles_str = "\n"
-        return atomtypes + '\n' + cell_dimensions + '\n' + masses + '\n' + atoms + '\n' \
-               + bonds_str + '\n' + angles_str + '\n'
+        return (
+            atomtypes
+            + "\n"
+            + cell_dimensions
+            + "\n"
+            + masses
+            + "\n"
+            + atoms
+            + "\n"
+            + bonds_str
+            + "\n"
+            + angles_str
+            + "\n"
+        )
 
     def structure_charge(self):
         """
@@ -471,36 +545,42 @@ class LammpsStructure(GenericParameters):
         Returns: LAMMPS readable structure.
 
         """
-        atomtypes = 'Start File for LAMMPS \n' + \
-                    '{0:d} atoms'.format(self._structure.get_number_of_atoms()) + ' \n' + \
-                    '{0} atom types'.format(self._structure.get_number_of_species()) + ' \n'
+        atomtypes = (
+            "Start File for LAMMPS \n"
+            + "{0:d} atoms".format(self._structure.get_number_of_atoms())
+            + " \n"
+            + "{0} atom types".format(self._structure.get_number_of_species())
+            + " \n"
+        )
 
         cell_dimesions = self.simulation_cell()
 
-        masses = 'Masses\n\n'
+        masses = "Masses\n\n"
 
         for ind, obj in enumerate(self._structure.get_species_objects()):
-            masses += '{0:3d} {1:f}'.format(ind+1, obj.AtomicMass) + '\n'
+            masses += "{0:3d} {1:f}".format(ind + 1, obj.AtomicMass) + "\n"
 
-
-        atoms = 'Atoms\n\n'
+        atoms = "Atoms\n\n"
 
         coords = self.rotate_positions(self._structure)
 
         el_charge_lst = self._structure.charge
         el_lst = self._structure.get_chemical_symbols()
         el_alphabet_dict = {}
-        for ind,el in enumerate(self._structure.get_species_symbols()):
-            el_alphabet_dict[el] = ind+1
+        for ind, el in enumerate(self._structure.get_species_symbols()):
+            el_alphabet_dict[el] = ind + 1
         for id_atom, (el, coord) in enumerate(zip(el_lst, coords)):
             id_el = el_alphabet_dict[el]
             dim = self._structure.dimension
             c = np.zeros(3)
             c[:dim] = coord
-            atoms += '{0:d} {1:d} {2:f} {3:.15f} {4:.15f} {5:.15f}'.format(
-                id_atom + 1, id_el, el_charge_lst[id_atom], c[0], c[1], c[2]) + '\n'
-        return atomtypes + '\n' + cell_dimesions + '\n' + masses + '\n' + atoms + '\n'
-
+            atoms += (
+                "{0:d} {1:d} {2:f} {3:.15f} {4:.15f} {5:.15f}".format(
+                    id_atom + 1, id_el, el_charge_lst[id_atom], c[0], c[1], c[2]
+                )
+                + "\n"
+            )
+        return atomtypes + "\n" + cell_dimesions + "\n" + masses + "\n" + atoms + "\n"
 
     def structure_atomic(self):
         """
@@ -509,14 +589,17 @@ class LammpsStructure(GenericParameters):
         Returns:
 
         """
-        atomtypes = 'Start File for LAMMPS \n' + \
-                    '{0:d} atoms'.format(len(self._structure)) + ' \n' + \
-                    '{0} atom types'.format(len(
-                        self._el_eam_lst)) + ' \n'  # '{0} atom types'.format(structure.get_number_of_species()) + ' \n'
+        atomtypes = (
+            "Start File for LAMMPS \n"
+            + "{0:d} atoms".format(len(self._structure))
+            + " \n"
+            + "{0} atom types".format(len(self._el_eam_lst))
+            + " \n"
+        )  # '{0} atom types'.format(structure.get_number_of_species()) + ' \n'
 
         cell_dimesions = self.simulation_cell()
 
-        masses = 'Masses\n\n'
+        masses = "Masses\n\n"
 
         el_struct_lst = self._structure.get_species_symbols()
         el_obj_lst = self._structure.get_species_objects()
@@ -528,12 +611,12 @@ class LammpsStructure(GenericParameters):
                 id_el = list(el_struct_lst).index(el_eam)
                 el = el_obj_lst[id_el]
                 el_dict[el] = id_eam + 1
-                masses += '{0:3d} {1:f}'.format(id_eam + 1, el.AtomicMass) + '\n'
+                masses += "{0:3d} {1:f}".format(id_eam + 1, el.AtomicMass) + "\n"
             else:
                 # element in EAM file but not used in structure, use dummy for atomic mass
-                masses += '{0:3d} {1:f}'.format(id_eam + 1, 1.00) + '\n'
+                masses += "{0:3d} {1:f}".format(id_eam + 1, 1.00) + "\n"
 
-        atoms = 'Atoms\n\n'
+        atoms = "Atoms\n\n"
 
         coords = self.rotate_positions(self._structure)
 
@@ -543,8 +626,13 @@ class LammpsStructure(GenericParameters):
             dim = self._structure.dimension
             c = np.zeros(3)
             c[:dim] = coord
-            atoms += '{0:d} {1:d} {2:.15f} {3:.15f} {4:.15f}'.format(id_atom + 1, id_el, c[0], c[1], c[2]) + '\n'
-        return atomtypes + '\n' + cell_dimesions + '\n' + masses + '\n' + atoms + '\n'
+            atoms += (
+                "{0:d} {1:d} {2:.15f} {3:.15f} {4:.15f}".format(
+                    id_atom + 1, id_el, c[0], c[1], c[2]
+                )
+                + "\n"
+            )
+        return atomtypes + "\n" + cell_dimesions + "\n" + masses + "\n" + atoms + "\n"
 
     def rotate_positions(self, structure):
         """
@@ -561,7 +649,7 @@ class LammpsStructure(GenericParameters):
         return coords
 
 
-def write_lammps_datafile(structure, file_name='lammps.data', cwd=None):
+def write_lammps_datafile(structure, file_name="lammps.data", cwd=None):
     lammps_str = LammpsStructure()
     lammps_str.el_eam_lst = structure.get_species_symbols()
     lammps_str.structure = structure

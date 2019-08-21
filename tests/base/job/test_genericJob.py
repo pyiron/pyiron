@@ -10,23 +10,25 @@ from pyiron.base.project.generic import Project
 class TestGenericJob(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.file_location = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
-        cls.project = Project(os.path.join(cls.file_location, 'test_genericjob'))
+        cls.file_location = os.path.dirname(os.path.abspath(__file__)).replace(
+            "\\", "/"
+        )
+        cls.project = Project(os.path.join(cls.file_location, "test_genericjob"))
 
     @classmethod
     def tearDownClass(cls):
         file_location = os.path.dirname(os.path.abspath(__file__))
-        project = Project(os.path.join(file_location, 'test_genericjob'))
+        project = Project(os.path.join(file_location, "test_genericjob"))
         project.remove(enable=True)
 
     def test_db_entry(self):
-        ham = self.project.create_job('ScriptJob', "job_single_debug")
+        ham = self.project.create_job("ScriptJob", "job_single_debug")
         db_entry = ham.db_entry()
-        self.assertEqual(db_entry['project'], ham.project_hdf5.project_path)
-        self.assertEqual(db_entry['hamilton'], 'Script')
-        self.assertEqual(db_entry['hamversion'], ham.version)
-        self.assertEqual(db_entry['status'], ham.status.string)
-        self.assertEqual(db_entry['job'], ham.job_name)
+        self.assertEqual(db_entry["project"], ham.project_hdf5.project_path)
+        self.assertEqual(db_entry["hamilton"], "Script")
+        self.assertEqual(db_entry["hamversion"], ham.version)
+        self.assertEqual(db_entry["status"], ham.status.string)
+        self.assertEqual(db_entry["job"], ham.job_name)
         ham.save()
         ham.remove()
 
@@ -53,45 +55,53 @@ class TestGenericJob(unittest.TestCase):
 
     def test_job_name(self):
         cwd = self.file_location
-        ham = self.project.create_job('ScriptJob', "job_single_debug")
-        self.assertEqual('job_single_debug', ham.job_name)
-        self.assertEqual('/job_single_debug', ham.project_hdf5.h5_path)
-        self.assertEqual(cwd + '/test_genericjob/job_single_debug.h5', ham.project_hdf5.file_name)
-        ham.job_name = 'job_single_move'
+        ham = self.project.create_job("ScriptJob", "job_single_debug")
+        self.assertEqual("job_single_debug", ham.job_name)
+        self.assertEqual("/job_single_debug", ham.project_hdf5.h5_path)
+        self.assertEqual(
+            cwd + "/test_genericjob/job_single_debug.h5", ham.project_hdf5.file_name
+        )
+        ham.job_name = "job_single_move"
         ham.to_hdf()
-        self.assertEqual('/job_single_move', ham.project_hdf5.h5_path)
-        self.assertEqual(cwd + '/test_genericjob/job_single_move.h5', ham.project_hdf5.file_name)
+        self.assertEqual("/job_single_move", ham.project_hdf5.h5_path)
+        self.assertEqual(
+            cwd + "/test_genericjob/job_single_move.h5", ham.project_hdf5.file_name
+        )
         self.assertTrue(os.path.isfile(ham.project_hdf5.file_name))
         ham.project_hdf5.remove_file()
         self.assertFalse(os.path.isfile(ham.project_hdf5.file_name))
-        ham = self.project.create_job('ScriptJob', "job_single_debug_2")
+        ham = self.project.create_job("ScriptJob", "job_single_debug_2")
         ham.to_hdf()
-        self.assertEqual('job_single_debug_2', ham.job_name)
-        self.assertEqual('/job_single_debug_2', ham.project_hdf5.h5_path)
-        self.assertEqual(cwd + '/test_genericjob/job_single_debug_2.h5', ham.project_hdf5.file_name)
+        self.assertEqual("job_single_debug_2", ham.job_name)
+        self.assertEqual("/job_single_debug_2", ham.project_hdf5.h5_path)
+        self.assertEqual(
+            cwd + "/test_genericjob/job_single_debug_2.h5", ham.project_hdf5.file_name
+        )
         self.assertTrue(os.path.isfile(ham.project_hdf5.file_name))
-        ham.job_name = 'job_single_move_2'
-        self.assertEqual('/job_single_move_2', ham.project_hdf5.h5_path)
-        self.assertEqual(cwd + '/test_genericjob/job_single_move_2.h5', ham.project_hdf5.file_name)
+        ham.job_name = "job_single_move_2"
+        self.assertEqual("/job_single_move_2", ham.project_hdf5.h5_path)
+        self.assertEqual(
+            cwd + "/test_genericjob/job_single_move_2.h5", ham.project_hdf5.file_name
+        )
         self.assertTrue(os.path.isfile(ham.project_hdf5.file_name))
         ham.project_hdf5.remove_file()
-        self.assertFalse(os.path.isfile(cwd + '/test_genericjob/job_single_debug_2.h5'))
+        self.assertFalse(os.path.isfile(cwd + "/test_genericjob/job_single_debug_2.h5"))
         self.assertFalse(os.path.isfile(ham.project_hdf5.file_name))
 
     def test_move(self):
-        pr_a = self.project.open('project_a')
-        pr_b = self.project.open('project_b')
-        ham = pr_a.create_job('ScriptJob', "job_moving_easy")
+        pr_a = self.project.open("project_a")
+        pr_b = self.project.open("project_b")
+        ham = pr_a.create_job("ScriptJob", "job_moving_easy")
         self.assertFalse(ham.project_hdf5.file_exists)
-        self.assertTrue('test_genericjob/project_a/' in ham.project_hdf5.project_path)
+        self.assertTrue("test_genericjob/project_a/" in ham.project_hdf5.project_path)
         self.assertFalse(ham.project_hdf5.file_exists)
         ham.move_to(pr_b)
-        self.assertTrue('test_genericjob/project_b/' in ham.project_hdf5.project_path)
-        ham_2 = pr_a.create_job('ScriptJob', "job_moving_diff")
+        self.assertTrue("test_genericjob/project_b/" in ham.project_hdf5.project_path)
+        ham_2 = pr_a.create_job("ScriptJob", "job_moving_diff")
         ham_2.to_hdf()
-        self.assertTrue('test_genericjob/project_a/' in ham_2.project_hdf5.project_path)
+        self.assertTrue("test_genericjob/project_a/" in ham_2.project_hdf5.project_path)
         ham_2.move_to(pr_b)
-        self.assertTrue('test_genericjob/project_b/' in ham_2.project_hdf5.project_path)
+        self.assertTrue("test_genericjob/project_b/" in ham_2.project_hdf5.project_path)
         ham_2.project_hdf5.remove_file()
         pr_a.remove(enable=True)
         pr_b.remove(enable=True)
@@ -268,5 +278,5 @@ class TestGenericJob(unittest.TestCase):
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

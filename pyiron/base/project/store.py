@@ -11,8 +11,10 @@ Class for storing user aggregated information in an pyiron object
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -52,11 +54,12 @@ class ProjectStore(GenericJob):
 
             date when the ProjecStore object was modified
     """
+
     def __init__(self, project, job_name):
         super(ProjectStore, self).__init__(project, job_name)
         self.__version__ = "0.1"
         self.__name__ = "ProjectStore"
-        self._lib = {'available': True, 'enabled': True}
+        self._lib = {"available": True, "enabled": True}
         self._store = {}
 
     @property
@@ -160,7 +163,7 @@ class ProjectStore(GenericJob):
         If a job_id exists update the timestop entry in the database, to validate when this object was updated.
         """
         if self.job_id:
-            self.project.db.item_update({'timestop': datetime.now()}, self._job_id)
+            self.project.db.item_update({"timestop": datetime.now()}, self._job_id)
 
     def write_input(self):
         """

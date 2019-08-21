@@ -10,8 +10,10 @@ The job wrapper is called from the run_job.py script, it restores the job from h
 """
 
 __author__ = "Joerg Neugebauer"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -28,6 +30,7 @@ class JobWrapper(object):
         job_id (int): job ID
         debug (bool): enable debug mode [True/False] (optional)
     """
+
     def __init__(self, working_directory, job_id, debug=False):
         self.working_directory = working_directory
 
@@ -48,13 +51,15 @@ class JobWrapper(object):
         Returns:
             logger: logger object instance
         """
-        logger = logging.getLogger('pyiron_log')
+        logger = logging.getLogger("pyiron_log")
         logger.setLevel(logging.INFO)
         if debug:
             logger.setLevel(logging.DEBUG)
         ch = logging.StreamHandler()
         ch.setLevel(logging.INFO)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
         ch.setFormatter(formatter)
         logger.addHandler(ch)
         return logger

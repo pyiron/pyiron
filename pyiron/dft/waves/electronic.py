@@ -10,8 +10,10 @@ from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.dft.waves.dos import Dos
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH " \
-                "- Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH "
+    "- Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -28,6 +30,7 @@ class ElectronicStructure(object):
 
     .. _pymatgen electronic_structure modules: http://pymatgen.org/pymatgen.electronic_structure.bandstructure.html
     """
+
     def __init__(self):
         self.kpoints = list()
         self._eigenvalues = list()
@@ -166,7 +169,9 @@ class ElectronicStructure(object):
 
         """
         if self._eigenvalue_matrix is None and len(self.kpoints) > 0:
-            self._eigenvalue_matrix = np.zeros((len(self.kpoints), len(self.kpoints[0].bands)))
+            self._eigenvalue_matrix = np.zeros(
+                (len(self.kpoints), len(self.kpoints[0].bands))
+            )
             for i, k in enumerate(self.kpoints):
                 self._eigenvalue_matrix[i, :] = k.eig_occ_matrix[:, 0]
         return self._eigenvalue_matrix
@@ -182,7 +187,9 @@ class ElectronicStructure(object):
                        is given by occupancy_matrix[i][j]
         """
         if self._occupancy_matrix is None and len(self.kpoints) > 0:
-            self._occupancy_matrix = np.zeros((len(self.kpoints), len(self.kpoints[0].bands)))
+            self._occupancy_matrix = np.zeros(
+                (len(self.kpoints), len(self.kpoints[0].bands))
+            )
             for i, k in enumerate(self.kpoints):
                 self._occupancy_matrix[i, :] = k.eig_occ_matrix[:, 1]
         return self._occupancy_matrix
@@ -314,7 +321,7 @@ class ElectronicStructure(object):
         cbm_dict = self.get_cbm(resolution)
         vbm = vbm_dict["value"]
         cbm = cbm_dict["value"]
-        gap_dict["band_gap"] = max(0., cbm-vbm)
+        gap_dict["band_gap"] = max(0.0, cbm - vbm)
         gap_dict["vbm"] = vbm_dict
         gap_dict["cbm"] = cbm_dict
         return gap_dict
@@ -374,7 +381,9 @@ class ElectronicStructure(object):
               present in the band gap in the case of semi-conductors.
         """
         if not (self._efermi is not None):
-            raise ValueError("e_fermi has to be set before you can determine if the system is metallic or not")
+            raise ValueError(
+                "e_fermi has to be set before you can determine if the system is metallic or not"
+            )
         fermi_crossed = False
         _, n_bands = np.shape(self.eigenvalue_matrix)
         for i in range(n_bands):
@@ -401,15 +410,25 @@ class ElectronicStructure(object):
         """
         if self._grand_dos_matrix is None:
             try:
-                n_atoms, n_orbitals = np.shape(self.kpoints[0].bands[0].resolved_dos_matrix)
+                n_atoms, n_orbitals = np.shape(
+                    self.kpoints[0].bands[0].resolved_dos_matrix
+                )
             except ValueError:
                 return self._grand_dos_matrix
-            dimension = (self.n_spins, len(self.kpoints), len(self.kpoints[0].bands), n_atoms, n_orbitals)
+            dimension = (
+                self.n_spins,
+                len(self.kpoints),
+                len(self.kpoints[0].bands),
+                n_atoms,
+                n_orbitals,
+            )
             self._grand_dos_matrix = np.zeros(dimension)
             for spin in range(self.n_spins):
                 for i, kpt in enumerate(self.kpoints):
                     for j, band in enumerate(kpt.bands):
-                        self._grand_dos_matrix[spin, i, j, :, :] = band.resolved_dos_matrix
+                        self._grand_dos_matrix[
+                            spin, i, j, :, :
+                        ] = band.resolved_dos_matrix
         return self._grand_dos_matrix
 
     @grand_dos_matrix.setter
@@ -454,7 +473,7 @@ class ElectronicStructure(object):
             hdf: Path to the hdf5 file/group in the file
             group_name: Name of the group under which the attributes are stored
         """
-        if 'dos' not in hdf[group_name].list_groups():
+        if "dos" not in hdf[group_name].list_groups():
             self.from_hdf_old(hdf=hdf, group_name=group_name)
         else:
             with hdf.open(group_name) as h_es:
@@ -549,7 +568,9 @@ class ElectronicStructure(object):
                 occ = self.occupancy_matrix[i][j]
                 self.kpoints[-1].add_band(eigenvalue=val, occupancy=occ)
                 if self._grand_dos_matrix is not None:
-                    self.kpoints[-1].bands[-1].resolved_dos_matrix = self.grand_dos_matrix[0, i, j, :, :]
+                    self.kpoints[-1].bands[
+                        -1
+                    ].resolved_dos_matrix = self.grand_dos_matrix[0, i, j, :, :]
 
     def get_spin_resolved_dos(self, spin_indices=0):
         """
@@ -613,7 +634,9 @@ class ElectronicStructure(object):
         except ModuleNotFoundError:
             import matplotlib.pyplot as plt
         arg = np.argsort(self.eigenvalues)
-        plt.plot(self.eigenvalues[arg], self.occupancies[arg], linewidth=2.0, color="blue")
+        plt.plot(
+            self.eigenvalues[arg], self.occupancies[arg], linewidth=2.0, color="blue"
+        )
         plt.axvline(self.efermi, linewidth=2.0, linestyle="dashed", color="black")
         plt.xlabel("Energies (eV)")
         plt.ylabel("Occupancy")
@@ -639,7 +662,9 @@ class ElectronicStructure(object):
         output_string.append("ElectronicStructure Instance")
         output_string.append("----------------------------")
         if self.grand_dos_matrix is not None:
-            output_string.append("Spin Configurations: {}".format(len(self.grand_dos_matrix)))
+            output_string.append(
+                "Spin Configurations: {}".format(len(self.grand_dos_matrix))
+            )
         output_string.append("Number of k-points: {}".format(len(self.kpoints)))
         output_string.append("Number of bands: {}".format(len(self.kpoints[0].bands)))
 
@@ -649,7 +674,9 @@ class ElectronicStructure(object):
         except ValueError:
             pass
         if not self.is_metal:
-            output_string.append("Band Gap: {}".format(self.get_band_gap(resolution=1.e-4)["band_gap"]))
+            output_string.append(
+                "Band Gap: {}".format(self.get_band_gap(resolution=1.0e-4)["band_gap"])
+            )
         return "\n".join(output_string)
 
     def __repr__(self):
@@ -715,6 +742,7 @@ class Band(object):
     """
     All data related to a single band for every k-point is stored in this module
     """
+
     def __init__(self):
         self._eigenvalue = None
         self._occupancy = None
