@@ -813,7 +813,7 @@ class InputWriter(object):
             if 'selective_dynamics' in self.structure._tag_list.keys():
                 selective_dynamics_list = self.structure.selective_dynamics.list()
             else:
-            	selective_dynamics_list = [3*[False]]*len(self.structure.positions)
+                selective_dynamics_list = [3*[False]]*len(self.structure.positions)
             for i_elem, elm_species in enumerate(self.structure.get_species_objects()):
                 if elm_species.Parent:
                     element = elm_species.Parent
@@ -854,10 +854,11 @@ class InputWriter(object):
             file_name (str): name of the file to be written (optional)
             cwd (str): the current working directory (optinal)
             basis_str (str): the input to write, if no input is given the default input will be written. (optinal)
+            save_memory (bool): use less memory - False by default
         """
         if basis_str is None:
             basis_str = odict([('eCut', 'EnCut/13.606'),
-                               ('kPoint', odict([('coords', 'KpointCoords'), ('weight', 1), ('relative',None)])),
+                               ('kPoint', odict([('coords', 'KpointCoords'), ('weight', 1), ('relative', None)])),
                                ('folding', 'KpointFolding')])
             if save_memory:
                 basis_str['saveMemory'] = None
@@ -892,6 +893,8 @@ class InputWriter(object):
             file_name (str): name of the file to be written (optional)
             cwd (str): the current working directory (optinal)
             guess_str (str): the input to write, if no input is given the default input will be written. (optinal)
+            restart_file_str (list): Restart file string list
+            write_waves (bool): Write wave function - False by default
         """
         charge_density_file = None
         for ff in restart_file_str:
@@ -937,7 +940,7 @@ class InputWriter(object):
         s.logger.debug('Writing spins.in')
         if spins_str is None:
             s.logger.debug('Getting magnetic moments via get_initial_magnetic_moments')
-            if any(self.structure.get_initial_magnetic_moments().flatten()!=None):
+            if any(self.structure.get_initial_magnetic_moments().flatten() != None):
                 if any([True if isinstance(spin, list) or isinstance(spin, np.ndarray) else False
                         for spin in self.structure.get_initial_magnetic_moments()]):
                     raise ValueError('Sphinx only supports collinear spins at the moment.')
@@ -1163,7 +1166,8 @@ class Output(object):
                                        '\n')[2:-1]
             self._parse_dict['bands_k_weights'] = np.array([float(kk.split()[6]) for kk in k_points])*n_k_points
             k_points = np.array([[float(kk.split()[i]) for i in range(2, 5)] for kk in k_points])/BOHR_TO_ANGSTROM
-            counter = [int(line.replace('F(', '').replace(')', ' ').split()[0]) for line in log_main if line.startswith('F(')]
+            counter = [int(line.replace('F(', '').replace(')', ' ').split()[0])
+                       for line in log_main if line.startswith('F(')]
             energy_free = [float(line.replace('=', ' ').replace(',', ' ').split()[1])*HARTREE_TO_EV
                            for line in log_main if line.startswith('F(')]
             energy_int = [float(line.replace('=', ' ').replace(',', ' ').split()[1])*HARTREE_TO_EV
@@ -1178,14 +1182,21 @@ class Output(object):
             magnetic_forces = [HARTREE_TO_EV*float(line.split()[-1])
                               for line in log_main if line.startswith('nu(')]
             convergence = [check_conv(line) for line in log_main if check_conv(line) is not None]
-            self._parse_dict['bands_e_fermi'] = np.array([float(line.split()[3]) for line in log_main if line.startswith('| Fermi energy:')])
+            self._parse_dict['bands_e_fermi'] = np.array([float(line.split()[3])
+                                                          for line in log_main if line.startswith('| Fermi energy:')])
             line_vol = np.where(['Omega:' in line for line in log_file])[0][0]
             volume = float(log_file[line_vol].split()[2])*BOHR_TO_ANGSTROM**3
-            self._parse_dict['bands_occ'] = [line.split()[3:] for line in log_main if line.startswith('| final focc:')]
-            self._parse_dict['bands_occ_initial'] = [line.split()[3:] for line in log_main if line.startswith('| focc:')]
-            self._parse_dict['bands_eigen_values'] = [line.split()[4:] for line in log_main if line.startswith('| final eig [eV]:')]
-            self._parse_dict['bands_eigen_values_initial'] = [line.split()[4:] for line in log_main if line.startswith('| eig [eV]:')]
-            def eig_converter(arr, magnetic=np.any(self._job.structure.get_initial_magnetic_moments() != None), len_k_points=len(k_points)):
+            self._parse_dict['bands_occ'] = [line.split()[3:]
+                                             for line in log_main if line.startswith('| final focc:')]
+            self._parse_dict['bands_occ_initial'] = [line.split()[3:]
+                                                     for line in log_main if line.startswith('| focc:')]
+            self._parse_dict['bands_eigen_values'] = [line.split()[4:]
+                                                      for line in log_main if line.startswith('| final eig [eV]:')]
+            self._parse_dict['bands_eigen_values_initial'] = [line.split()[4:]
+                                                              for line in log_main if line.startswith('| eig [eV]:')]
+
+            def eig_converter(arr, magnetic=np.any(self._job.structure.get_initial_magnetic_moments() != None),
+                              len_k_points=len(k_points)):
                 if len(arr) == 0:
                     return np.array([])
                 elif magnetic:
@@ -1238,13 +1249,18 @@ class Output(object):
         with open(file_name, 'r') as file_content:
             file_content = file_content.readlines()
             natoms = len(self._job.id_spx_to_pyi)
-            coords = np.array([json.loads(line.split('=')[1].split(';')[0]) for line in file_content if 'coords' in line])
+            coords = np.array([json.loads(line.split('=')[1].split(';')[0])
+                               for line in file_content if 'coords' in line])
             self._parse_dict['positions'] = coords.reshape(-1, natoms, 3)*BOHR_TO_ANGSTROM
-            self._parse_dict['positions'] = np.array([ff[self._job.id_spx_to_pyi] for ff in self._parse_dict['positions']])
-            force = np.array([json.loads(line.split('=')[1].split(';')[0]) for line in file_content if 'force' in line])
+            self._parse_dict['positions'] = np.array([ff[self._job.id_spx_to_pyi]
+                                                      for ff in self._parse_dict['positions']])
+            force = np.array([json.loads(line.split('=')[1].split(';')[0])
+                              for line in file_content if 'force' in line])
             self._parse_dict['forces'] = force.reshape(-1, natoms, 3)*HARTREE_OVER_BOHR_TO_EV_OVER_ANGSTROM
-            self._parse_dict['forces'] = np.array([ff[self._job.id_spx_to_pyi] for ff in self._parse_dict['forces']])
-            self._parse_dict['cell'] = np.array([json.loads("".join(file_content[i_line:i_line+3]).split('=')[1].split(';')[0]) for i_line, line in enumerate(file_content) if 'cell' in line])*BOHR_TO_ANGSTROM
+            self._parse_dict['forces'] = np.array([ff[self._job.id_spx_to_pyi]
+                                                   for ff in self._parse_dict['forces']])
+            self._parse_dict['cell'] = np.array([json.loads("".join(file_content[i_line:i_line+3]).split('=')[1].split(';')[0])
+                                                 for i_line, line in enumerate(file_content) if 'cell' in line])*BOHR_TO_ANGSTROM
 
     def collect(self, directory=os.getcwd()):
         """
@@ -1272,8 +1288,9 @@ class Output(object):
         """
 
         if len(self._parse_dict['scf_energy_zero']) == 0:
-            self._parse_dict['scf_energy_zero'] = [0.5 * (np.array(fr) + np.array(en)) for fr, en in zip(self._parse_dict['scf_energy_free'],
-                                                                                           self._parse_dict['scf_energy_int'])]
+            self._parse_dict['scf_energy_zero'] = [0.5 * (np.array(fr) + np.array(en))
+                                                   for fr, en in zip(self._parse_dict['scf_energy_free'],
+                                                                     self._parse_dict['scf_energy_int'])]
         with hdf.open("input") as hdf5_input:
             with hdf5_input.open("generic") as hdf5_generic:
                 if 'dft' not in hdf5_generic.list_groups():
@@ -1293,15 +1310,16 @@ class Output(object):
                     hdf5_generic.create_group('dft')
                 with hdf5_generic.open("dft") as hdf5_dft:
                     hdf5_dft["scf_convergence"] = self._parse_dict['scf_convergence']
-                    for k in ["scf_residue", "scf_energy_free", "scf_energy_zero", "scf_energy_int", "scf_electronic_entropy",
-                              "scf_energy_band", "scf_magnetic_forces", "scf_computation_time", "bands_occ", "bands_e_fermi",
-                              "bands_k_weights", "bands_eigen_values", "atom_scf_spins"]:
+                    for k in ["scf_residue", "scf_energy_free", "scf_energy_zero", "scf_energy_int",
+                              "scf_electronic_entropy", "scf_energy_band", "scf_magnetic_forces", "scf_computation_time",
+                              "bands_occ", "bands_e_fermi", "bands_k_weights", "bands_eigen_values", "atom_scf_spins"]:
                         if len(self._parse_dict[k]) > 0:
                             hdf5_dft[k] = self._parse_dict[k]
                             if 'scf_' in k:
                                 hdf5_dft[k.replace('scf_', '')] = np.array([vv[-1] for vv in self._parse_dict[k]])
                 if len(self._parse_dict['scf_computation_time']) > 0:
-                    hdf5_generic["computation_time"] = np.array([tt[-1] for tt in self._parse_dict['scf_computation_time']])
+                    hdf5_generic["computation_time"] = np.array([tt[-1]
+                                                                 for tt in self._parse_dict['scf_computation_time']])
                 if len([en[-1] for en in self._parse_dict['scf_energy_free']]) > 0:
                     hdf5_generic["energy_tot"] = np.array([en[-1] for en in self._parse_dict['scf_energy_free']])
                     hdf5_generic["energy_pot"] = np.array([en[-1] for en in self._parse_dict['scf_energy_free']])
