@@ -255,9 +255,9 @@ class PeriodicTable(object):
 
     def atomic_number_to_abbreviation(self, atom_no):
         """
-        
+
         Args:
-            atom_no: 
+            atom_no:
 
         Returns:
 
@@ -463,6 +463,3 @@ class ElementColorDictionary(object):
             for k, el in self.elementColors.iteritems():
                 rv[el[0], :] = np.array(el[1:5])
         return rv
-
-
-

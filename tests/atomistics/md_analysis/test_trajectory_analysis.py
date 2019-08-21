@@ -1,7 +1,9 @@
+# coding: utf-8
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
+
 import unittest
-
 import numpy as np
-
 from pyiron.atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
 
 __author__ = "surendralal"
@@ -27,4 +29,3 @@ class TestTrajectoryAnalysis(unittest.TestCase):
                   [[0.2, -0.01, -0.01], [0., 0., 0.]], [[0.2, 0.01, 0.02], [0., 0., 0.]]])
         # print(unwrapped_positions[:, 0], expected_positions[:, 0])
         self.assertTrue(np.allclose(unwrapped_positions, expected_positions))
-

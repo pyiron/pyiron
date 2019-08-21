@@ -16,7 +16,7 @@ from pyiron.base.generic.parameters import GenericParameters
 from pyiron.base.job.jobstatus import JobStatus
 
 """
-The parallel master class is a metajob consisting of a list of jobs which are executed in parallel. 
+The parallel master class is a metajob consisting of a list of jobs which are executed in parallel.
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"

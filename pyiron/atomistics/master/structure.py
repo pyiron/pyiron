@@ -7,7 +7,7 @@ from pyiron.atomistics.master.parallel import ParallelMaster
 from pyiron.base.master.parallel import JobGenerator
 
 """
-The StructureListMaster class is a parallel master consisting of a list of structures which are executed in parallel. 
+The StructureListMaster class is a parallel master consisting of a list of structures which are executed in parallel.
 """
 
 __author__ = "Jan Janssen"

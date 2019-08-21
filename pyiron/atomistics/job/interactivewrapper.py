@@ -259,4 +259,3 @@ class ReferenceJobOutput(object):
 
     def __dir__(self):
         return list(set(list(self._job.ref_job.interactive_cache.keys())))
-

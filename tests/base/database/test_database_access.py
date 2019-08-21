@@ -1,3 +1,7 @@
+# coding: utf-8
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
+
 """
 Normally, test-based development is done in reversed order unlike this DatabaseClass.
 First the Unittest should be created and then the wanted class which should pass all the tests.

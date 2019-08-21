@@ -22,6 +22,7 @@ from pyiron.vasp.structure import read_atoms, write_poscar, vasp_sorter
 from pyiron.vasp.vasprun import Vasprun as Vr
 from pyiron.vasp.vasprun import VasprunError
 from pyiron.vasp.volumetric_data import VaspVolumetricData
+from pyiron.vasp.potential import find_potential_file
 from pyiron.dft.waves.electronic import ElectronicStructure
 from pyiron.dft.waves.bandstructure import Bandstructure
 import warnings
@@ -1241,16 +1242,48 @@ class VaspBase(GenericDFTJob):
         else:
             self.restart_file_list.append(posixpath.join(path, "WAVECAR"))
 
-    def set_spin_constraint(self, direction=False, norm=False):
+    def set_rwigs(self, rwigs_dict):
         """
-        Setting thr spin constraints
+        Sets the radii of Wigner-Seitz cell. (RWIGS tag)
 
         Args:
-            direction:
-            norm:
+            rwigs_dict (dict): Dictionary of species and corresponding radii.
+        """
+        species_keys = self.structure.get_number_species_atoms().keys()
+        rwigs_keys = rwigs_dict.keys()
+        for i in species_keys:
+            if i not in list(rwigs_keys):
+                raise ValueError("'" + i + "' is not in rwigs_dict!")
+
+        rwigs = [rwigs_dict[i] for i in species_keys]
+        self.input.incar['RWIGS'] = ' '.join(map(str, rwigs))
+
+    def get_rwigs(self):
+        """
+        Gets the radii of Wigner-Seitz cell. (RWIGS tag)
 
         Returns:
+            dict: dictionary of radii
+        """
+        if 'RWIGS' in self.input.incar._dataset['Parameter']:
+            species_keys = self.structure.get_number_species_atoms().keys()
+            rwigs = [float(i) for i in self.input.incar['RWIGS'].split()]
+            rwigs_dict = dict()
+            for i, k in enumerate(species_keys):
+                rwigs_dict.update({k: rwigs[i]})
+            return rwigs_dict
+        else:
+            return None
 
+    def set_spin_constraint(self, lamb, rwigs_dict, direction=False, norm=False):
+        """
+        Sets spin constrains including 'LAMBDA' and 'RWIGS'.
+
+        Args:
+            lamb (float): LAMBDA tag
+            rwigs_dict (dict): Dictionary of species and corresponding radii.
+            direction (bool): (True/False) constrain spin direction.
+            norm (bool): (True/False) constrain spin norm (magnitude).
         """
         if not isinstance(direction, bool):
             raise AssertionError()
@@ -1260,6 +1293,11 @@ class VaspBase(GenericDFTJob):
             self.input.incar['I_CONSTRAINED_M'] = 2
         elif direction:
             self.input.incar['I_CONSTRAINED_M'] = 1
+        elif norm:
+            raise ValueError("Constraining norm only is not possible.")
+
+        self.input.incar['LAMBDA'] = lamb
+        self.set_rwigs(rwigs_dict)
 
     def validate_ready_to_run(self):
         super(VaspBase, self).validate_ready_to_run()
@@ -1842,12 +1880,13 @@ class Potcar(GenericParameters):
             if isinstance(el_obj.tags, dict) and 'pseudo_potcar_file' in el_obj.tags.keys():
                 new_element = el_obj.tags['pseudo_potcar_file']
                 vasp_potentials.add_new_element(parent_element=el, new_element=new_element)
-                el_path = self._find_potential_file(
-                    path=vasp_potentials.find_default(new_element)['Filename'].values[0][0])
+                el_path = find_potential_file(path=vasp_potentials.find_default(new_element)['Filename'].values[0][0],
+                                              pot_path_dict=self.pot_path_dict)
                 if not (os.path.isfile(el_path)):
                     raise ValueError('such a file does not exist in the pp directory')
             else:
-                el_path = self._find_potential_file(path=vasp_potentials.find_default(el)['Filename'].values[0][0])
+                el_path = find_potential_file(path=vasp_potentials.find_default(el)['Filename'].values[0][0],
+                                              pot_path_dict=self.pot_path_dict)
 
             if not (os.path.isfile(el_path)):
                 raise AssertionError()
@@ -1869,21 +1908,6 @@ class Potcar(GenericParameters):
                 self.el_path_lst.append(self.modified_elements[el_obj.Abbreviation])
             else:
                 self.el_path_lst.append(el_path)
-
-    def _find_potential_file(self, file_name=None, xc=None, path=None):
-        if path is not None:
-            for resource_path in s.resource_paths:
-                if os.path.exists(os.path.join(resource_path, 'vasp', 'potentials', path)):
-                    return os.path.join(resource_path, 'vasp', 'potentials', path)
-        elif xc is not None and file_name is not None:
-            for resource_path in s.resource_paths:
-                if os.path.exists(os.path.join(resource_path, 'vasp', 'potentials', self.pot_path_dict[xc])):
-                    resource_path = os.path.join(resource_path, 'vasp', 'potentials', self.pot_path_dict[xc])
-                if 'potentials' in resource_path:
-                    for path, folder_lst, file_lst in os.walk(resource_path):
-                        if file_name in file_lst:
-                            return os.path.join(path, file_name)
-        raise ValueError('Either the filename or the functional has to be defined.')
 
     def write_file(self, file_name, cwd=None):
         """

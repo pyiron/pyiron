@@ -1,3 +1,7 @@
+# coding: utf-8
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
+
 import unittest
 import sys
 import numpy as np
@@ -528,12 +532,12 @@ class TestAtoms(unittest.TestCase):
     def test_analyse_ovito_cna_adaptive(self):
         basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
         basis.analyse_ovito_cna_adaptive()['CommonNeighborAnalysis.counts.BCC']==2
-	
+
     @unittest.skip("skip ovito because it is not installed in the test environment")
     def test_analyse_ovito_centro_symmetry(self):
         basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))
         self.assertTrue(all(basis.analyse_ovito_centro_symmetry()==np.array([0.75, 0.75])))
-	
+
     @unittest.skip("skip ovito because it is not installed in the test environment")
     def test_analyse_ovito_voronoi_volume(self):
         basis = Atoms('FeFe', scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3))

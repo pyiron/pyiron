@@ -556,7 +556,7 @@ class ElectronicStructure(object):
         Gets the spin resolved DOS
 
         Args:
-            spin_indices (int): The index of the spin for which the DOS is required 
+            spin_indices (int): The index of the spin for which the DOS is required
 
         Returns:
             Spin resolved dos (numpy.ndarray instance)
@@ -571,9 +571,9 @@ class ElectronicStructure(object):
         Get resolved dos based on the specified spin, atom and orbital indices
 
         Args:
-            spin_indices (int/list/numpy.ndarray): spin indices  
-            atom_indices (int/list/numpy.ndarray): stom indices 
-            orbital_indices (int/list/numpy.ndarray): orbital indices (based on orbital_dict) 
+            spin_indices (int/list/numpy.ndarray): spin indices
+            atom_indices (int/list/numpy.ndarray): stom indices
+            orbital_indices (int/list/numpy.ndarray): orbital indices (based on orbital_dict)
 
         Returns:
             rdos (numpy.ndarray): Required resolved dos
