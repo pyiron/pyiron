@@ -5,18 +5,12 @@ import warnings
 from pyiron.project import Project
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.base.settings.generic import Settings
-
-
-s = Settings()
-file_location = os.path.dirname(os.path.abspath(__file__))
-s._configuration['resource_paths'] = [os.path.join(file_location, '..', 'static')]
 
 
 class TestSphinx(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.file_location = file_location
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
         cls.project = Project(os.path.join(cls.file_location, '../static/sphinx'))
         pt = PeriodicTable()
         pt.add_element(parent_element='Fe', new_element='Fe_up', spin='0.5')
