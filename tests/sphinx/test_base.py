@@ -1,3 +1,7 @@
+# coding: utf-8
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
+
 import os
 import numpy as np
 import unittest
@@ -5,11 +9,6 @@ import warnings
 from pyiron.project import Project
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.base.settings.generic import Settings
-
-
-s = Settings()
-print(s._configuration['resource_paths'])
 
 
 class TestSphinx(unittest.TestCase):
