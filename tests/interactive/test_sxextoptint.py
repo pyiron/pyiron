@@ -1,10 +1,6 @@
 import os
-import numpy as np
 import unittest
-import warnings
 from pyiron.project import Project
-from pyiron.atomistics.structure.periodic_table import PeriodicTable
-from pyiron_mpie.interactive.artint import ART
 
 
 class TestSxExtOptInteractive(unittest.TestCase):
@@ -27,7 +23,6 @@ class TestSxExtOptInteractive(unittest.TestCase):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
         cls.project = Project(os.path.join(cls.file_location, '../static/sxextopt'))
         cls.project.remove_jobs(recursive=True)
-
 
 
 if __name__ == '__main__':
