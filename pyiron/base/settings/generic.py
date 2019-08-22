@@ -120,14 +120,6 @@ class Settings(with_metaclass(Singleton)):
         self._configuration['resource_paths'] = [convert_path(path)
                                                 for path in self._configuration['resource_paths']]
 
-        # Build directories if install_pyiron has been skipped for custom pyiron config file
-        project_path = self._configuration['project_paths'][0]
-        if not os.path.exists(project_path):
-            os.makedirs(project_path)
-
-        resource_path = self._configuration['resource_paths'][0]
-        if not os.path.exists(resource_path):
-            os.makedirs(resource_path)
 
         # Build the SQLalchemy connection strings
         if self._configuration['sql_type'] == 'Postgres':
