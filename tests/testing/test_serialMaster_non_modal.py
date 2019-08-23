@@ -9,6 +9,7 @@ from pyiron.project import Project
 
 def convergence_goal(self, **qwargs):
     import numpy as np
+
     eps = 0.2
     if "eps" in qwargs:
         eps = qwargs["eps"]
@@ -27,19 +28,23 @@ class TestSerialMaster(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
-        cls.project = Project(os.path.join(cls.file_location, 'testing_serial_non_modal'))
+        cls.project = Project(
+            os.path.join(cls.file_location, "testing_serial_non_modal")
+        )
         cls.project.remove_jobs(recursive=True)
 
     @classmethod
     def tearDownClass(cls):
         file_location = os.path.dirname(os.path.abspath(__file__))
-        project = Project(os.path.join(file_location, 'testing_serial_non_modal'))
+        project = Project(os.path.join(file_location, "testing_serial_non_modal"))
         project.remove(enable=True, enforce=True)
 
     def test_single_job_non_modal(self):
         ham = self.project.create_job(self.project.job_type.ExampleJob, "job_single_nm")
         ham.server.run_mode.non_modal = True
-        job_ser = self.project.create_job(self.project.job_type.SerialMasterBase, "sequence_single_nm")
+        job_ser = self.project.create_job(
+            self.project.job_type.SerialMasterBase, "sequence_single_nm"
+        )
         job_ser.append(ham)
         job_ser.run()
         job_ser.from_hdf()
@@ -49,9 +54,13 @@ class TestSerialMaster(unittest.TestCase):
         job_ser.remove()
 
     def test_single_job_non_modal_all(self):
-        ham = self.project.create_job(self.project.job_type.ExampleJob, "job_single_nma")
+        ham = self.project.create_job(
+            self.project.job_type.ExampleJob, "job_single_nma"
+        )
         ham.server.run_mode.non_modal = True
-        job_ser = self.project.create_job(self.project.job_type.SerialMasterBase, "sequence_single_nma")
+        job_ser = self.project.create_job(
+            self.project.job_type.SerialMasterBase, "sequence_single_nma"
+        )
         job_ser.server.run_mode.non_modal = True
         job_ser.append(ham)
         job_ser.run()
@@ -65,10 +74,14 @@ class TestSerialMaster(unittest.TestCase):
 
     def test_convergence_goal(self):
         # self.project.set_logging_level("DEBUG")
-        ham = self.project.create_job(self.project.job_type.ExampleJob, "job_convergence")
+        ham = self.project.create_job(
+            self.project.job_type.ExampleJob, "job_convergence"
+        )
         ham.server.run_mode.non_modal = True
         # print (self.project.job_table())
-        job_ser = self.project.create_job(self.project.job_type.SerialMasterBase, "sequence_convergence")
+        job_ser = self.project.create_job(
+            self.project.job_type.SerialMasterBase, "sequence_convergence"
+        )
         job_ser.server.run_mode.non_modal = True
         job_ser.append(ham)
         job_ser.set_goal(convergence_goal=convergence_goal, eps=0.2)
@@ -79,5 +92,6 @@ class TestSerialMaster(unittest.TestCase):
         self.assertTrue(len(job_ser) > 0)
         job_ser.remove()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

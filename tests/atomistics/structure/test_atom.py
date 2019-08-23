@@ -24,13 +24,13 @@ class TestAtom(unittest.TestCase):
         self.assertEqual(Atom(Z=13).element.Abbreviation, "Al")
         self.assertRaises(ValueError, Atom)
         self.assertRaises(ValueError, Atom, 13)
-        self.assertEqual(Atom('Si', (0, 0, 0)).position.tolist(), [0, 0, 0])
+        self.assertEqual(Atom("Si", (0, 0, 0)).position.tolist(), [0, 0, 0])
 
-        self.assertEqual(self.Al_atom.symbol, 'Al')
+        self.assertEqual(self.Al_atom.symbol, "Al")
         self.assertEqual(self.Al_atom.element.tags["spin"], -1)
 
     def test_mass(self):
-        self.assertEqual(round(Atom('Si', (0, 0, 0)).mass, 4), 28.0855)
+        self.assertEqual(round(Atom("Si", (0, 0, 0)).mass, 4), 28.0855)
 
     def test_number(self):
         self.assertEqual(self.Fe_atom.number, 26)
@@ -39,5 +39,5 @@ class TestAtom(unittest.TestCase):
         self.assertEqual(self.Fe_atom.x, 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

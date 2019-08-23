@@ -18,15 +18,18 @@ Unittests for the pyiron.objects.electronic module
 
 
 class TestDos(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls):
         cls.es_list = list()
         file_list = ["vasprun_1.xml", "vasprun_2.xml"]
         for f in file_list:
             vp = Vasprun()
-            direc = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                 "../../static/vasp_test_files/vasprun_samples"))
+            direc = os.path.abspath(
+                os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)),
+                    "../../static/vasp_test_files/vasprun_samples",
+                )
+            )
             filename = posixpath.join(direc, f)
             vp.from_file(filename)
             es = vp.get_electronic_structure()
@@ -43,10 +46,20 @@ class TestDos(unittest.TestCase):
             self.assertIsInstance(dos.n_bins, int)
             self.assertEqual(len(dos.energies), len(dos.t_dos))
             if es.grand_dos_matrix is None:
-                self.assertRaises(NoResolvedDosError, dos.get_spatially_resolved_dos, atom_indices=[0])
-                self.assertRaises(NoResolvedDosError, dos.get_orbital_resolved_dos, orbital_indices=[0])
-                self.assertRaises(NoResolvedDosError, dos.get_spatial_orbital_resolved_dos, atom_indices=[0],
-                                  orbital_indices=[0])
+                self.assertRaises(
+                    NoResolvedDosError, dos.get_spatially_resolved_dos, atom_indices=[0]
+                )
+                self.assertRaises(
+                    NoResolvedDosError,
+                    dos.get_orbital_resolved_dos,
+                    orbital_indices=[0],
+                )
+                self.assertRaises(
+                    NoResolvedDosError,
+                    dos.get_spatial_orbital_resolved_dos,
+                    atom_indices=[0],
+                    orbital_indices=[0],
+                )
             else:
                 self.assertIsInstance(dos.es_obj.grand_dos_matrix, np.ndarray)
 
@@ -82,5 +95,7 @@ class TestDos(unittest.TestCase):
                 _, _, _, n_atoms, n_orbitals = np.shape(dos.es_obj.grand_dos_matrix)
                 atom_indices = np.arange(n_atoms)
                 orbital_indices = np.arange(n_orbitals)
-                r_dos = dos.get_spatial_orbital_resolved_dos(atom_indices=atom_indices, orbital_indices=orbital_indices)
+                r_dos = dos.get_spatial_orbital_resolved_dos(
+                    atom_indices=atom_indices, orbital_indices=orbital_indices
+                )
                 self.assertTrue(np.allclose(dos.t_dos, r_dos))

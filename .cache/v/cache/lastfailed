@@ -1,0 +1,3 @@
+{
+  "tests/vasp/test_outcar.py::TestOutcar": true
+}

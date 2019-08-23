@@ -24,17 +24,21 @@ class TestVasp(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.execution_path = os.path.dirname(os.path.abspath(__file__))
-        cls.project = Project(os.path.join(cls.execution_path, 'test_vasp'))
+        cls.project = Project(os.path.join(cls.execution_path, "test_vasp"))
         cls.job = cls.project.create_job("Vasp", "trial")
-        cls.job_complete = Vasp(project=ProjectHDFio(project=cls.project, file_name='vasp_complete'),
-                                job_name='vasp_complete')
-        poscar_file = posixpath.join(cls.execution_path, "../static/vasp_test_files/full_job_sample/POSCAR")
+        cls.job_complete = Vasp(
+            project=ProjectHDFio(project=cls.project, file_name="vasp_complete"),
+            job_name="vasp_complete",
+        )
+        poscar_file = posixpath.join(
+            cls.execution_path, "../static/vasp_test_files/full_job_sample/POSCAR"
+        )
         cls.job_complete.structure = read_atoms(poscar_file, species_from_potcar=True)
 
     @classmethod
     def tearDownClass(cls):
         cls.execution_path = os.path.dirname(os.path.abspath(__file__))
-        project = Project(os.path.join(cls.execution_path, 'test_vasp'))
+        project = Project(os.path.join(cls.execution_path, "test_vasp"))
         project.remove_jobs(recursive=True)
         project.remove(enable=True)
 
@@ -85,7 +89,11 @@ class TestVasp(unittest.TestCase):
         self.assertEqual(self.job.input.incar["NBANDS"], 25)
 
     def test_calc_static(self):
-        self.job.calc_static(electronic_steps=90, retain_charge_density=True, retain_electrostatic_potential=True)
+        self.job.calc_static(
+            electronic_steps=90,
+            retain_charge_density=True,
+            retain_electrostatic_potential=True,
+        )
         self.assertEqual(self.job.input.incar["IBRION"], -1)
         self.assertEqual(self.job.input.incar["NELM"], 90)
         self.assertEqual(self.job.input.incar["LVTOT"], True)
@@ -113,31 +121,59 @@ class TestVasp(unittest.TestCase):
         self.assertEqual(self.job_complete.input.incar["SIGMA"], 0.2)
         self.assertEqual(self.job_complete.input.incar["LVTOT"], False)
         self.assertEqual(self.job_complete.input.incar["EDIFF"], 1e-7)
-        file_directory = posixpath.join(self.execution_path, "../static/vasp_test_files/full_job_sample")
-        self.job_complete.restart_file_list.append(posixpath.join(file_directory, "vasprun.xml"))
-        self.job_complete.restart_file_list.append(posixpath.join(file_directory, "OUTCAR"))
+        file_directory = posixpath.join(
+            self.execution_path, "../static/vasp_test_files/full_job_sample"
+        )
+        self.job_complete.restart_file_list.append(
+            posixpath.join(file_directory, "vasprun.xml")
+        )
+        self.job_complete.restart_file_list.append(
+            posixpath.join(file_directory, "OUTCAR")
+        )
         self.job_complete.run(run_mode="manual")
         self.job_complete.status.collect = True
         self.job_complete.run()
-        nodes = ["positions", "temperature", "energy_tot", "steps", "positions", "forces", "cells",
-                 "pressures"]
+        nodes = [
+            "positions",
+            "temperature",
+            "energy_tot",
+            "steps",
+            "positions",
+            "forces",
+            "cells",
+            "pressures",
+        ]
         with self.job_complete.project_hdf5.open("output/generic") as h_gen:
             hdf_nodes = h_gen.list_nodes()
             self.assertTrue(all([node in hdf_nodes for node in nodes]))
-        nodes = ['energy_free', 'energy_int', 'energy_zero', 'final_magmoms', 'magnetization', 'n_elect',
-                 'scf_dipole_mom', 'scf_energy_free', 'scf_energy_int', 'scf_energy_zero']
+        nodes = [
+            "energy_free",
+            "energy_int",
+            "energy_zero",
+            "final_magmoms",
+            "magnetization",
+            "n_elect",
+            "scf_dipole_mom",
+            "scf_energy_free",
+            "scf_energy_int",
+            "scf_energy_zero",
+        ]
         with self.job_complete.project_hdf5.open("output/generic/dft") as h_dft:
             hdf_nodes = h_dft.list_nodes()
             self.assertTrue(all([node in hdf_nodes for node in nodes]))
-        nodes = ['efermi', 'eig_matrix', 'k_points', 'k_weights', 'occ_matrix']
-        with self.job_complete.project_hdf5.open("output/electronic_structure") as h_dft:
+        nodes = ["efermi", "eig_matrix", "k_points", "k_weights", "occ_matrix"]
+        with self.job_complete.project_hdf5.open(
+            "output/electronic_structure"
+        ) as h_dft:
             hdf_nodes = h_dft.list_nodes()
             self.assertTrue(all([node in hdf_nodes for node in nodes]))
 
         job_chg_den = self.job_complete.restart_from_charge_density(job_name="chg")
         self.assertEqual(job_chg_den.structure, self.job_complete.get_structure(-1))
-        self.assertTrue(posixpath.join(self.job_complete.working_directory,
-                                       "CHGCAR") in job_chg_den.restart_file_list)
+        self.assertTrue(
+            posixpath.join(self.job_complete.working_directory, "CHGCAR")
+            in job_chg_den.restart_file_list
+        )
         with job_chg_den.project_hdf5.open("output") as h_out:
             self.assertTrue(h_out.list_nodes() == [])
             self.assertTrue(h_out.list_groups() == [])
@@ -148,8 +184,10 @@ class TestVasp(unittest.TestCase):
 
         job_wave = self.job_complete.restart_from_wave_functions(job_name="wave")
         self.assertEqual(job_wave.structure, self.job_complete.get_structure(-1))
-        self.assertTrue(posixpath.join(self.job_complete.working_directory,
-                                       "WAVECAR") in job_wave.restart_file_list)
+        self.assertTrue(
+            posixpath.join(self.job_complete.working_directory, "WAVECAR")
+            in job_wave.restart_file_list
+        )
         with job_wave.project_hdf5.open("output") as h_out:
             self.assertTrue(h_out.list_nodes() == [])
             self.assertTrue(h_out.list_groups() == [])
@@ -158,12 +196,18 @@ class TestVasp(unittest.TestCase):
             self.assertFalse(h_in.list_nodes() == [])
             self.assertFalse(h_in.list_groups() == [])
 
-        job_chg_wave = self.job_complete.restart_from_wave_and_charge(job_name="chg_wave")
+        job_chg_wave = self.job_complete.restart_from_wave_and_charge(
+            job_name="chg_wave"
+        )
         self.assertEqual(job_chg_wave.structure, self.job_complete.get_structure(-1))
-        self.assertTrue(posixpath.join(self.job_complete.working_directory,
-                                       "WAVECAR") in job_chg_wave.restart_file_list)
-        self.assertTrue(posixpath.join(self.job_complete.working_directory,
-                                       "CHGCAR") in job_chg_wave.restart_file_list)
+        self.assertTrue(
+            posixpath.join(self.job_complete.working_directory, "WAVECAR")
+            in job_chg_wave.restart_file_list
+        )
+        self.assertTrue(
+            posixpath.join(self.job_complete.working_directory, "CHGCAR")
+            in job_chg_wave.restart_file_list
+        )
         for key, val in job_chg_wave.restart_file_dict.items():
             self.assertTrue(key, val)
         with job_chg_wave.project_hdf5.open("output") as h_out:
@@ -175,5 +219,5 @@ class TestVasp(unittest.TestCase):
             self.assertFalse(h_in.list_groups() == [])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

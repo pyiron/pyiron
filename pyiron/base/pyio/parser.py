@@ -11,8 +11,10 @@ General purpose output parser
 """
 
 __author__ = "Joerg Neugebauer"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -32,14 +34,15 @@ def extract_data_from_str_lst(str_lst, tag, num_args=1):
     Returns:
         list: List of arguments extracted as strings
     """
+
     def multiple_delimiter_split(s, seps):
         res = [s]
         for sep in seps:
             s, res = res, []
             for seq in s:
                 res += seq.split(sep)
-        while '' in res:
-            res.remove('')
+        while "" in res:
+            res.remove("")
         return res
 
     collector = []
@@ -47,11 +50,11 @@ def extract_data_from_str_lst(str_lst, tag, num_args=1):
     for line_in_file in str_lst:
         if line_in_file.startswith(tag):
             collector = []
-            vals = multiple_delimiter_split(line_in_file, (' ', ','))
+            vals = multiple_delimiter_split(line_in_file, (" ", ","))
             if num_args == 1:
                 collector.append(vals[ind_start])
             else:
-                collector.append(vals[ind_start:num_args + ind_start])
+                collector.append(vals[ind_start : num_args + ind_start])
 
     return collector
 
@@ -125,7 +128,9 @@ class Logstatus(object):
         """
         if title in self.status_dict.keys():
             if vec:
-                raise ValueError("For appending matrix rather than vector option needed!")
+                raise ValueError(
+                    "For appending matrix rather than vector option needed!"
+                )
             self.status_dict[title].append([list(self.iter), data_to_append])
         else:
             self.status_dict[title] = [[list(self.iter), data_to_append]]
@@ -140,7 +145,9 @@ class Logstatus(object):
         for key, value in self.status_dict.items():
             if key in self.store_as_vector:
                 if len(value) > 1:
-                    raise ValueError('Multi-dimensional array cannot be saved as vector')
+                    raise ValueError(
+                        "Multi-dimensional array cannot be saved as vector"
+                    )
                 hdf[key] = np.array(value[0][1])
             else:
                 hdf[key] = np.array([val for _, val in value])
@@ -156,7 +163,11 @@ class Logstatus(object):
             z_key (str): key of the z coordinates
             combined_key (str): name of the combined coordinates
         """
-        if x_key in self.status_dict and y_key in self.status_dict and z_key in self.status_dict:
+        if (
+            x_key in self.status_dict
+            and y_key in self.status_dict
+            and z_key in self.status_dict
+        ):
             combined_lst = []
             if as_vector:
                 time_x, val_x = self.status_dict[x_key][0]
@@ -165,12 +176,25 @@ class Logstatus(object):
                 for val_t_x, val_t_y, val_t_z in zip(val_x, val_y, val_z):
                     combined_lst.append([time_x, [val_t_x, val_t_y, val_t_z]])
             else:
-                for var_x, var_y, var_z in zip(self.status_dict[x_key], self.status_dict[y_key], self.status_dict[z_key]):
+                for var_x, var_y, var_z in zip(
+                    self.status_dict[x_key],
+                    self.status_dict[y_key],
+                    self.status_dict[z_key],
+                ):
                     time_x, val_x = var_x
                     time_y, val_y = var_y
                     time_z, val_z = var_z
-                    combined_lst.append([time_x, [[val_t_x, val_t_y, val_t_z] for val_t_x, val_t_y, val_t_z in
-                                                  zip(val_x, val_y, val_z)]])
+                    combined_lst.append(
+                        [
+                            time_x,
+                            [
+                                [val_t_x, val_t_y, val_t_z]
+                                for val_t_x, val_t_y, val_t_z in zip(
+                                    val_x, val_y, val_z
+                                )
+                            ],
+                        ]
+                    )
             del self.status_dict[x_key]
             del self.status_dict[y_key]
             del self.status_dict[z_key]
@@ -187,26 +211,49 @@ class Logstatus(object):
             z_key (str): key of the z coordinates
             combined_key (str): name of the combined coordinates
         """
-        if x_key in self.status_dict and y_key in self.status_dict and z_key in self.status_dict:
+        if (
+            x_key in self.status_dict
+            and y_key in self.status_dict
+            and z_key in self.status_dict
+        ):
             combined_lst = []
-            for var_xx, var_xy, var_xz, var_yy, var_yz, var_zz in \
-                    zip(self.status_dict[x_key], self.status_dict[xy_key], self.status_dict[xz_key],
-                        self.status_dict[y_key], self.status_dict[yz_key], self.status_dict[z_key]):
+            for var_xx, var_xy, var_xz, var_yy, var_yz, var_zz in zip(
+                self.status_dict[x_key],
+                self.status_dict[xy_key],
+                self.status_dict[xz_key],
+                self.status_dict[y_key],
+                self.status_dict[yz_key],
+                self.status_dict[z_key],
+            ):
                 time_xx, val_xx = var_xx
                 time_xy, val_xy = var_xy
                 time_xz, val_xz = var_xz
                 time_yy, val_yy = var_yy
                 time_yz, val_yz = var_yz
                 time_zz, val_zz = var_zz
-                combined_lst.append([time_xx, [[[var_t_xx, var_t_xy, var_t_xz],
-                                                [var_t_yx, var_t_yy, var_t_yz],
-                                                [var_t_zx, var_t_zy, var_t_zz]]
-                                               for var_t_xx, var_t_xy, var_t_xz,
-                                                   var_t_yx, var_t_yy, var_t_yz,
-                                                   var_t_zx, var_t_zy, var_t_zz in
-                                               zip(val_xx, val_xy, val_xz,
-                                                   val_xy, val_yy, val_yz,
-                                                   val_xz, val_yz, val_zz)]])
+                combined_lst.append(
+                    [
+                        time_xx,
+                        [
+                            [
+                                [var_t_xx, var_t_xy, var_t_xz],
+                                [var_t_yx, var_t_yy, var_t_yz],
+                                [var_t_zx, var_t_zy, var_t_zz],
+                            ]
+                            for var_t_xx, var_t_xy, var_t_xz, var_t_yx, var_t_yy, var_t_yz, var_t_zx, var_t_zy, var_t_zz in zip(
+                                val_xx,
+                                val_xy,
+                                val_xz,
+                                val_xy,
+                                val_yy,
+                                val_yz,
+                                val_xz,
+                                val_yz,
+                                val_zz,
+                            )
+                        ],
+                    ]
+                )
             del self.status_dict[x_key]
             del self.status_dict[xy_key]
             del self.status_dict[xz_key]
@@ -220,7 +267,7 @@ class Logstatus(object):
             return_lst = []
             for step in self.status_dict[key]:
                 time, values = step
-                return_lst.append([time, (np.array(values)*factor).tolist()])
+                return_lst.append([time, (np.array(values) * factor).tolist()])
             self.status_dict[key] = return_lst
 
     @staticmethod
@@ -242,12 +289,12 @@ class Logstatus(object):
             num_elements = 2
         else:
             num_elements = 1
-        tag = item_list[1:num_elements + 1]
+        tag = item_list[1 : num_elements + 1]
         tag_string = " ".join(el for el in tag)
         if len(item_list) == num_elements + 1:
             args = None
         else:
-            args = item_list[num_elements + 1::]
+            args = item_list[num_elements + 1 : :]
         return tag_string, args
 
     def extract_from_list(self, list_of_lines, tag_dict, h5_dict=None, key_dict=None):
@@ -297,13 +344,17 @@ class Logstatus(object):
                                     break
                                 if line_read.find(tag.rows().strip()) > -1:
                                     break
-                                if 'WARNING:' in line_read:
+                                if "WARNING:" in line_read:
                                     break
-                                val_line = [[ast.literal_eval(l) for l in line_read.split()]]
+                                val_line = [
+                                    [ast.literal_eval(l) for l in line_read.split()]
+                                ]
                                 if i_line == 0:
                                     val_array = np.array(val_line)
                                 else:
-                                    val_array = np.append(arr=val_array, values=val_line, axis=0)
+                                    val_array = np.append(
+                                        arr=val_array, values=val_line, axis=0
+                                    )
                                 i_line += 1
 
                         else:
@@ -312,11 +363,15 @@ class Logstatus(object):
                                     line_read = next(iterate_over_lines)
                                 except StopIteration:
                                     break
-                                val_line = [[ast.literal_eval(l) for l in line_read.split()]]
+                                val_line = [
+                                    [ast.literal_eval(l) for l in line_read.split()]
+                                ]
                                 if i_line == 0:
                                     val_array = np.array(val_line)
                                 else:
-                                    val_array = np.append(arr=val_array, values=val_line, axis=0)
+                                    val_array = np.append(
+                                        arr=val_array, values=val_line, axis=0
+                                    )
 
                         if tag.is_func():
                             val_array = tag.apply_func(val_array)
@@ -332,10 +387,12 @@ class Logstatus(object):
                                 if "header" not in tag_dict[tag_name].keys():
                                     tag_list = tag.val_list
                                 else:
-                                    tag_list = tag_dict[tag_name]['header']
+                                    tag_list = tag_dict[tag_name]["header"]
                             for i, t in enumerate(tag_list):
                                 if "header" not in tag_dict[tag_name].keys():
-                                    self.append(tag.translate(t), np.copy(val_array[:, i]))
+                                    self.append(
+                                        tag.translate(t), np.copy(val_array[:, i])
+                                    )
                                 else:
                                     self.append(t, np.copy(val_array[:, i]))
                         else:
@@ -365,9 +422,11 @@ class Logstatus(object):
             h5_dict (dict): Translation dictionary of output tags as keys to the tags used on the HDF5 file as values.
             key_dict (dict): Translation dictionary of python internal tags as keys to the output tags as values.
         """
-        with open(file_name, 'r') as f:
+        with open(file_name, "r") as f:
             content = f.readlines()
-        self.extract_from_list(list_of_lines=content, tag_dict=tag_dict, h5_dict=h5_dict, key_dict=key_dict)
+        self.extract_from_list(
+            list_of_lines=content, tag_dict=tag_dict, h5_dict=h5_dict, key_dict=key_dict
+        )
 
 
 class LogTag(object):
@@ -388,6 +447,7 @@ class LogTag(object):
         h5_dict (dict): Translation dictionary of output tags as keys to the tags used on the HDF5 file as values.
         key_dict (dict): Translation dictionary of python internal tags as keys to the output tags as values.
     """
+
     def __init__(self, tag_dict, h5_dict=None, key_dict=None):
         self._tag_dict = None
         self._tag_first_word = None
@@ -561,14 +621,16 @@ class LogTag(object):
             bool: [True/False]
         """
         l = item_line.strip()
-        if not l.startswith(self.tag_first_word, start):  # start -> line must start with tag
+        if not l.startswith(
+            self.tag_first_word, start
+        ):  # start -> line must start with tag
             return False
         tag = None
         for tag in self.tag_first_word:
             if start == l.find(tag, start):
                 break
 
-        items = [ls.strip() for ls in l[len(tag):].split()]
+        items = [ls.strip() for ls in l[len(tag) :].split()]
         self.current = tag
         self.val_list = items
         return True

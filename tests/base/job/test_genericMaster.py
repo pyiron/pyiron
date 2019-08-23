@@ -11,12 +11,12 @@ class TestGenericJob(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
-        cls.project = Project(os.path.join(cls.file_location, 'jobs_testing'))
+        cls.project = Project(os.path.join(cls.file_location, "jobs_testing"))
 
     @classmethod
     def tearDownClass(cls):
         file_location = os.path.dirname(os.path.abspath(__file__))
-        project = Project(os.path.join(file_location, 'jobs_testing'))
+        project = Project(os.path.join(file_location, "jobs_testing"))
         project.remove(enforce=True)
 
     # def test_generic_jobs(self):
@@ -44,5 +44,5 @@ class TestGenericJob(unittest.TestCase):
     #     ham.remove()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

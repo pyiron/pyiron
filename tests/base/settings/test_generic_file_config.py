@@ -10,9 +10,10 @@ import unittest
 class TestConfigSettingsStatic(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.resource_path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                                         '../../static')).replace('\\', '/')
-        cls.project_path = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
+        cls.resource_path = os.path.abspath(
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../static")
+        ).replace("\\", "/")
+        cls.project_path = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
         cls.file_config = Settings()
 
     # def test_file_db_connection_name(self):
@@ -32,14 +33,24 @@ class TestConfigSettingsStatic(unittest.TestCase):
     #     self.assertEqual(self.file_config.db_name, 'DEFAULT')
 
     def test_file_top_path(self):
-        self.assertTrue(self.file_config.top_path(self.project_path + '/test') in self.project_path)
+        self.assertTrue(
+            self.file_config.top_path(self.project_path + "/test") in self.project_path
+        )
 
     def test_file_resource_paths(self):
-        self.assertTrue(any([path for path in self.file_config.resource_paths if path in self.resource_path]))
+        self.assertTrue(
+            any(
+                [
+                    path
+                    for path in self.file_config.resource_paths
+                    if path in self.resource_path
+                ]
+            )
+        )
 
     def test_file_login_user(self):
-        self.assertEqual(self.file_config.login_user, 'pyiron')
+        self.assertEqual(self.file_config.login_user, "pyiron")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

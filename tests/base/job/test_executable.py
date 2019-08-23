@@ -67,5 +67,5 @@ import unittest
 #                          '../../../../static/bin_cmmc/vasp/run_vasp_5.4_mpi.sh')
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
