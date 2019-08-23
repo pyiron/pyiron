@@ -754,8 +754,6 @@ class VaspBase(GenericDFTJob):
 
         Args:
             status (str): new status of EDDRMM handling (can be 'not_converged', 'ignore', or 'restart')
-
-        Returns:
         """
         if status == "not_converged" or status == "ignore" or status == "restart":
             self.input._eddrmm = status
@@ -764,10 +762,8 @@ class VaspBase(GenericDFTJob):
 
     def get_eddrmm(self):
         """
-        Returns the status of EDDRMM handling.
-
         Returns:
-            (str) status of EDDRMM
+            str: status of EDDRMM
         """
         return self.input._eddrmm
 
