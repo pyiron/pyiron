@@ -642,9 +642,9 @@ class FileHDFio(object):
             exclude_groups = ["interactive"]
         file_name = self.file_name
         _path = file_name.split("/")[-1]
-        _path = _path.split(".")[-1]
+        _path = _path.split(".")[0]
         # path = '/'.join(p_lst[:-1])
-        new_file = _path[-1] + "_rewrite"
+        new_file = _path + "_rewrite"
 
         hdf_new = ProjectHDFio(
             project=self.project, file_name=new_file, h5_path="/" + job_name
