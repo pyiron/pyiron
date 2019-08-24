@@ -474,18 +474,18 @@ class VaspBase(GenericDFTJob):
                 lines = f.readlines()
             # If the wrong convergence algorithm is chosen, we get the following error.
             # https://cms.mpi.univie.ac.at/vasp-forum/viewtopic.php?f=4&t=17071
-            if not self.get_eddrmm() == "ignore":
+            if not self.get_eddrmm_handling() == "ignore":
                 for l in lines:
                     if "WARNING in EDDRMM: call to ZHEGV failed, returncode =" in l:
-                        if self.get_eddrmm() == "not_converged":
+                        if self.get_eddrmm_handling() == "not_converged":
                             self.status.not_converged = True
                             break
-                        elif self.get_eddrmm() == "restart":
+                        elif self.get_eddrmm_handling() == "restart":
                             self.status.not_converged = True
                             if not self.input.incar["ALGO"].lower() == "normal":
                                 ham_new = self.copy_hamiltonian(self.name + "_normal")
                                 ham_new.input.incar["ALGO"] = "Normal"
-                                ham_new.set_eddrmm()
+                                ham_new.set_eddrmm_handling()
                                 ham_new.run()
                             break
 
@@ -497,7 +497,7 @@ class VaspBase(GenericDFTJob):
             job_name (str): Job name
 
         Returns:
-            vasp.vasp.Vasp instance: New job
+            pyiron.vasp.vasp.Vasp: New job
         """
         ham_new = self.restart(snapshot=0, job_name=job_name)
         ham_new.structure = self.structure
@@ -748,7 +748,7 @@ class VaspBase(GenericDFTJob):
         else:
             s.logger.debug("No magnetic moments")
 
-    def set_eddrmm(self, status="not_converged"):
+    def set_eddrmm_handling(self, status="not_converged"):
         """
         Sets the way, how EDDRMM warning is handled.
 
@@ -760,7 +760,7 @@ class VaspBase(GenericDFTJob):
         else:
             raise ValueError
 
-    def get_eddrmm(self):
+    def get_eddrmm_handling(self):
         """
         Returns:
             str: status of EDDRMM
