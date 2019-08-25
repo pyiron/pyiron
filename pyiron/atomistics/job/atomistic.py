@@ -450,7 +450,7 @@ class AtomisticGenericJob(GenericJobCore):
         return new_ham
 
     def trajectory(
-        self, stride=1, center_of_mass=False, atom_indices=None, snapshot_indices=None, overwrite_positions=None,
+        self, stride=1, center_of_mass=False, atom_indices=None, snapshot_indices=None, overwrite_positions=None
     ):
         """
 
