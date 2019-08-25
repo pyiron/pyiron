@@ -281,6 +281,38 @@ class TestLammps(unittest.TestCase):
         self.assertTrue(
             np.allclose(self.job_water_dump["output/generic/forces"], forces)
         )
+        self.job_water_dump.write_traj(filename="test.xyz",
+                                       file_format="xyz")
+        atom_indices = self.job_water_dump.structure.select_index("H")
+        snap_indices = [1, 3, 4]
+        orig_pos = self.job_water_dump.output.positions
+        self.job_water_dump.write_traj(filename="test.xyz",
+                                       file_format="xyz",
+                                       atom_indices=atom_indices,
+                                       snapshot_indices=snap_indices)
+        self.job_water_dump.write_traj(filename="test.xyz",
+                                       file_format="xyz",
+                                       atom_indices=atom_indices,
+                                       snapshot_indices=snap_indices,
+                                       overwrite_positions=np.zeros_like(orig_pos))
+        self.assertTrue(os.path.isfile(os.path.join(self.execution_path, "test.xyz")))
+        os.remove(os.path.join(self.execution_path, "test.xyz"))
+        self.assertTrue(np.array_equal(self.job_water_dump.trajectory()._positions,
+                                       orig_pos))
+        self.assertTrue(np.array_equal(self.job_water_dump.trajectory(stride=2)._positions,
+                                       orig_pos[::2]))
+        self.assertTrue(np.array_equal(
+            self.job_water_dump.trajectory(atom_indices=atom_indices,
+                                           snapshot_indices=snap_indices)._positions,
+            orig_pos[snap_indices][:, atom_indices, :]))
+
+        nx, ny, nz = orig_pos.shape
+        random_array = np.random.rand(nx, ny, nz)
+        self.assertTrue(np.array_equal(
+            self.job_water_dump.trajectory(atom_indices=atom_indices,
+                                           snapshot_indices=snap_indices,
+                                           overwrite_positions=random_array)._positions,
+            random_array[snap_indices][:, atom_indices, :]))
 
     def test_dump_parser(self):
         structure = Atoms(
