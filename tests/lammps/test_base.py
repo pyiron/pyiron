@@ -295,8 +295,7 @@ class TestLammps(unittest.TestCase):
                                        atom_indices=atom_indices,
                                        snapshot_indices=snap_indices,
                                        overwrite_positions=np.zeros_like(orig_pos))
-        self.assertTrue(os.path.isfile(os.path.join(self.execution_path, "test.xyz")))
-        os.remove(os.path.join(self.execution_path, "test.xyz"))
+        os.remove("test.xyz")
         self.assertTrue(np.array_equal(self.job_water_dump.trajectory()._positions,
                                        orig_pos))
         self.assertTrue(np.array_equal(self.job_water_dump.trajectory(stride=2)._positions,
