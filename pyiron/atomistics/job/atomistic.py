@@ -449,7 +449,7 @@ class AtomisticGenericJob(GenericJobCore):
         return new_ham
 
     def trajectory(
-        self, stride=1, center_of_mass=False, atom_indices=None, snapshot_indices=None
+        self, stride=1, center_of_mass=False, atom_indices=None, snapshot_indices=None, overwrite_positions=None
     ):
         """
 
@@ -458,17 +458,21 @@ class AtomisticGenericJob(GenericJobCore):
             center_of_mass (list/numpy.ndarray): The center of mass
             atom_indices (list/numpy.ndarray): The atom indices for which the trajectory should be generated
             snapshot_indices (list/numpy.ndarray): The snapshots for which the trajectory should be generated
+            overwrite_positions (list/numpy.ndarray): List of positions that are meant to overwrite the existing
+                                                      trajectory. Useful to wrap coordinates for example
 
         Returns:
             pyiron.atomistics.job.atomistic.Trajectory: Trajectory instance
 
         """
-        if snapshot_indices is None:
-            positions = self.output.positions
-            cells = self.output.cells
+        if overwrite_positions is not None:
+            positions = np.array(overwrite_positions).copy()
         else:
-            positions = self.output.positions[snapshot_indices]
-            cells = self.output.cells[snapshot_indices]
+            positions = self.output.positions.copy()
+        cells = self.output.cells
+        if snapshot_indices is not None:
+            positions = positions[snapshot_indices]
+            cells = cells[snapshot_indices]
         if atom_indices is None:
             return Trajectory(
                 positions[::stride],
@@ -494,6 +498,7 @@ class AtomisticGenericJob(GenericJobCore):
         center_of_mass=False,
         atom_indices=None,
         snapshot_indices=None,
+        overwrite_positions=None,
         **kwargs
     ):
         """
@@ -502,12 +507,14 @@ class AtomisticGenericJob(GenericJobCore):
         Args:
             filename (str): Filename of the output
             file_format (str): The specific file_format of the output
-            parallel (bool):
-            append (bool):
+            parallel (bool): ase parameter
+            append (bool): ase parameter
             stride (int): Writes trajectory every `stride` steps
             center_of_mass (bool): True if the positions are centered on the COM
             atom_indices (list/numpy.ndarray): The atom indices for which the trajectory should be generated
             snapshot_indices (list/numpy.ndarray): The snapshots for which the trajectory should be generated
+            overwrite_positions (list/numpy.ndarray): List of positions that are meant to overwrite the existing
+                                                      trajectory. Useful to wrap coordinates for example
             **kwargs: Additional ase arguments
 
         .. _ase.io.write: https://wiki.fysik.dtu.dk/ase/_modules/ase/io/formats.html#write
@@ -517,6 +524,7 @@ class AtomisticGenericJob(GenericJobCore):
             center_of_mass=center_of_mass,
             atom_indices=atom_indices,
             snapshot_indices=snapshot_indices,
+            overwrite_positions=overwrite_positions
         )
         # Using thr ASE output writer
         ase_write(
