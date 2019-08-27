@@ -535,6 +535,8 @@ class VaspBase(GenericDFTJob):
             int: number of EDDRMM warning
             int/None: number of ionic step where it occurs
         """
+        num_eddrmm = 0
+        snap = None
         file_name = os.path.join(self.working_directory, "error.out")
         if os.path.exists(file_name):
             with open(file_name, "r") as f:
@@ -544,10 +546,9 @@ class VaspBase(GenericDFTJob):
             warn_str = "WARNING in EDDRMM: call to ZHEGV failed, returncode ="
             lines_where = np.argwhere([warn_str in l for l in lines]).flatten()
             num_eddrmm = len(lines_where)
-            snap = None
             if num_eddrmm > 0:
                 snap = len(np.argwhere(["E0=" in l for l in lines[:lines_where[0]]]).flatten())
-            return num_eddrmm, snap
+        return num_eddrmm, snap
 
     def from_directory(self, directory):
         """
