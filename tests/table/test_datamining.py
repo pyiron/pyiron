@@ -62,6 +62,9 @@ class TestDatamining(unittest.TestCase):
         _ = table.add.get_energy_int
         _ = table.add.get_equilibrium_parameters
         _ = table.add.get_magnetic_structure
+        _ = table.add.get_average_waves
+        _ = table.add.get_ekin_error
+        _ = table.add.get_volume
         table.add["alat"] = get_alat
         table.run()
         df = table.get_dataframe()
@@ -80,6 +83,9 @@ class TestDatamining(unittest.TestCase):
         self.assertEqual(df["energy_int"].values[0], -17.72353582)
         self.assertEqual(df["alat"].values[0], 0.0)
         self.assertEqual(df["magnetic_structure"].values[0], "ferro-magnetic")
+        self.assertEqual(df["avg. plane waves"].values[0], 196.375)
+        self.assertEqual(df["energy_tot_wo_kin_corr"].values[0], -17.6003698)
+        self.assertEqual(df["volume"].values[0], 21.95199999999999)
 
 
 if __name__ == "__main__":
