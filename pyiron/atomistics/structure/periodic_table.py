@@ -44,7 +44,7 @@ class ChemicalElement(object):
             stringtypes = str
         if isinstance(self.sub, stringtypes):
             self._init_mendeleev(self.sub)
-        elif 'Parent' in self.sub.index and isinstance(self.sub.Parent, str):
+        elif "Parent" in self.sub.index and isinstance(self.sub.Parent, stringtypes):
             self._init_mendeleev(self.sub.Parent)
         elif len(self.sub) > 0:
             self._init_mendeleev(self.sub.Abbreviation)
