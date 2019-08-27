@@ -155,6 +155,7 @@ def job_table(
     sort_by="id",
     max_colwidth=200,
     element_lst=None,
+    job_name_contains='',
 ):
     """
     Access the job_table
@@ -173,6 +174,7 @@ def job_table(
         sort_by (str): Sort by a specific column
         max_colwidth (int): set the column width
         element_lst (list): list of elements required in the chemical formular - by default None
+        job_name_contains (str): a string which should be contained in every job_name
 
     Returns:
         pandas.Dataframe: Return the result as a pandas.Dataframe object
@@ -211,6 +213,8 @@ def job_table(
     df = pandas.DataFrame(job_dict)
     if len(job_dict) == 0:
         return df
+    if job_name_contains != '':
+        df = df[df.job.str.contains(job_name_contains)]
     if sort_by in columns:
         return df[columns].sort_values(by=sort_by)
     return df[columns]
