@@ -36,6 +36,7 @@ setup(
                       'h5io>=0.1.1',
                       'h5py',
                       'matplotlib',
+                      'mendeleev',
                       'numpy',
                       'pandas',
                       'pathlib2',
