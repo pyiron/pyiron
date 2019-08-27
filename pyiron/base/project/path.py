@@ -15,8 +15,10 @@ Classes for representing the file system path in pyiron
 """
 
 __author__ = "Jan Janssen, Joerg Neugebauer"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -58,6 +60,7 @@ class GenericPath(object):
 
     Author: Jan Janssen
     """
+
     def __init__(self, root_path, project_path):
         self._root_path = None
         self._project_path = None
@@ -93,10 +96,9 @@ class GenericPath(object):
         Returns:
             str: relative path of the current project / folder
         """
-        if self._project_path[-1] != '/':
-            self._project_path += '/'
+        if self._project_path[-1] != "/":
+            self._project_path += "/"
         return self._project_path
-
 
     @project_path.setter
     def project_path(self, new_path):
@@ -108,7 +110,9 @@ class GenericPath(object):
             new_path (str): new pyiron project path
 
         """
-        self._project_path = self._windows_path_to_unix_path(posixpath.normpath(new_path))
+        self._project_path = self._windows_path_to_unix_path(
+            posixpath.normpath(new_path)
+        )
 
     @property
     def path(self):
@@ -128,7 +132,7 @@ class GenericPath(object):
         Returns:
             str: name of the current project folder
         """
-        if self.project_path[-1] in ['/', '\\']:
+        if self.project_path[-1] in ["/", "\\"]:
             return self.project_path.split("/")[-2]
         else:
             return self.project_path.split("/")[-1]
@@ -184,8 +188,8 @@ class GenericPath(object):
             str: output path in unix format
         """
         linux_path = path.replace("\\", "/")
-        if linux_path[-1] != '/':
-            linux_path += '/'
+        if linux_path[-1] != "/":
+            linux_path += "/"
         return linux_path
 
 
@@ -214,9 +218,11 @@ class ProjectPath(GenericPath):
             previously opened projects / folders
         """
         if path == "":
-            raise ValueError('ProjectPath: path is not allowed to be empty!')
+            raise ValueError("ProjectPath: path is not allowed to be empty!")
         generic_path = self._convert_str_to_generic_path(path)
-        super(ProjectPath, self).__init__(generic_path.root_path, generic_path.project_path)
+        super(ProjectPath, self).__init__(
+            generic_path.root_path, generic_path.project_path
+        )
         self._history = []
 
     @property
@@ -243,7 +249,9 @@ class ProjectPath(GenericPath):
         """
         new_project = self.copy()
         new_project._create_path(new_project.path, rel_path)
-        new_project.project_path = os.path.normpath(os.path.join(new_project.project_path, rel_path)).replace('\\', '/')
+        new_project.project_path = os.path.normpath(
+            os.path.join(new_project.project_path, rel_path)
+        ).replace("\\", "/")
         if history:
             new_project.history.append(rel_path)
         return new_project
@@ -255,7 +263,7 @@ class ProjectPath(GenericPath):
         if self.history:
             path_lst = self.project_path.split("/")
             hist_lst = self.history[-1].split("/")
-            self.project_path = "/".join(path_lst[:-len(hist_lst)])
+            self.project_path = "/".join(path_lst[: -len(hist_lst)])
             del self.history[-1]
 
     def copy(self):
@@ -353,18 +361,22 @@ class ProjectPath(GenericPath):
         elif isinstance(path, string_types):
             path = os.path.normpath(path)
             if not os.path.isabs(path):
-                path_local = self._windows_path_to_unix_path(posixpath.abspath(os.curdir))
+                path_local = self._windows_path_to_unix_path(
+                    posixpath.abspath(os.curdir)
+                )
                 self._create_path(path_local, path)
                 path = posixpath.join(path_local, path)
-            elif not os.path.exists(path) and os.path.exists(os.path.normpath(os.path.join(path, '..'))):
+            elif not os.path.exists(path) and os.path.exists(
+                os.path.normpath(os.path.join(path, ".."))
+            ):
                 self._create_path(path)
-            # else: 
+            # else:
             #     raise ValueError(path, ' does not exist!')
             path = self._windows_path_to_unix_path(path)
             root_path, project_path = self._get_project_from_path(path)
             return GenericPath(root_path, project_path)
         else:
-            raise TypeError('Only string and GenericPath objects are supported.')
+            raise TypeError("Only string and GenericPath objects are supported.")
 
     def _create_path(self, path, rel_path=None):
         """

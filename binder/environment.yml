@@ -5,9 +5,11 @@ dependencies:
 - python
 - pyiron
 - lammps
+- gpaw
+- sphinxdft
 - nodejs
 - ipython
-- ipywidgets 
+- ipywidgets
 - notebook
 - ipykernel
-- nglview=2.0
+- nglview

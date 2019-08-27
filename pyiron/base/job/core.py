@@ -18,8 +18,10 @@ The JobCore the most fundamental pyiron job class.
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -142,27 +144,31 @@ class JobCore(PyironObject):
         Args:
             new_job_name (str): new job name
         """
-        new_job_name = new_job_name.replace('.', '_')
+        new_job_name = new_job_name.replace(".", "_")
         self._is_valid_job_name(job_name=new_job_name)
         child_ids = self.child_ids
         if child_ids:
             for child_id in child_ids:
                 ham = self.project.load(child_id)
-                ham.move_to(self.project.open(new_job_name + '_hdf5'))
+                ham.move_to(self.project.open(new_job_name + "_hdf5"))
         old_working_directory = self.working_directory
-        if len(self.project_hdf5.h5_path.split('/')) > 2:
-            new_location = self.project_hdf5.open('../' + new_job_name)
+        if len(self.project_hdf5.h5_path.split("/")) > 2:
+            new_location = self.project_hdf5.open("../" + new_job_name)
         else:
-            new_location = self.project_hdf5.__class__(self.project, new_job_name, h5_path='/' + new_job_name)
+            new_location = self.project_hdf5.__class__(
+                self.project, new_job_name, h5_path="/" + new_job_name
+            )
         if self.job_id:
-            self.project.db.item_update({'job': new_job_name, 'subjob': new_location.h5_path}, self.job_id)
+            self.project.db.item_update(
+                {"job": new_job_name, "subjob": new_location.h5_path}, self.job_id
+            )
         self._name = new_job_name
         self.project_hdf5.copy_to(new_location, maintain_name=False)
         self.project_hdf5.remove_file()
         self.project_hdf5 = new_location
         if os.path.exists(old_working_directory):
             shutil.move(old_working_directory, self.working_directory)
-            os.rmdir('/'.join(old_working_directory.split('/')[:-1]))
+            os.rmdir("/".join(old_working_directory.split("/")[:-1]))
 
     @property
     def status(self):
@@ -200,7 +206,9 @@ class JobCore(PyironObject):
     @property
     def database_entry(self):
         if not bool(self._database_property):
-            self._database_property = DatabaseProperties(job_dict=self.project.db.get_item_by_id(self.job_id))
+            self._database_property = DatabaseProperties(
+                job_dict=self.project.db.get_item_by_id(self.job_id)
+            )
         return self._database_property
 
     @property
@@ -227,7 +235,7 @@ class JobCore(PyironObject):
             parent_id (int): parent id
         """
         if self.job_id:
-            self.project.db.item_update({'parentid': parent_id}, self.job_id)
+            self.project.db.item_update({"parentid": parent_id}, self.job_id)
         self._parent_id = parent_id
 
     @property
@@ -256,7 +264,7 @@ class JobCore(PyironObject):
             master_id (int): master id
         """
         if self.job_id:
-            self.project.db.item_update({'masterid': master_id}, self.job_id)
+            self.project.db.item_update({"masterid": master_id}, self.job_id)
         self._master_id = master_id
 
     @property
@@ -271,7 +279,9 @@ class JobCore(PyironObject):
         if id_master is None:
             return []
         else:
-            id_l = self.project.db.get_items_dict({'masterid': str(id_master)}, return_all_columns=False)
+            id_l = self.project.db.get_items_dict(
+                {"masterid": str(id_master)}, return_all_columns=False
+            )
             return sorted([job["id"] for job in id_l])
 
     @property
@@ -351,7 +361,11 @@ class JobCore(PyironObject):
         if not project:
             project = self._hdf5
 
-        where_dict = {'job': str(job_name), 'project': str(project.project_path), 'subjob': str(project.h5_path)}
+        where_dict = {
+            "job": str(job_name),
+            "project": str(project.project_path),
+            "subjob": str(project.h5_path),
+        }
         if self.project.db.get_items_dict(where_dict, return_all_columns=False):
             return True
         else:
@@ -398,7 +412,11 @@ class JobCore(PyironObject):
         """
         if _protect_childs:
             if self._master_id:
-                s.logger.error("Job {0} is a child of a master job and cannot be deleted!".format(str(self.job_id)))
+                s.logger.error(
+                    "Job {0} is a child of a master job and cannot be deleted!".format(
+                        str(self.job_id)
+                    )
+                )
                 raise ValueError("Child jobs are protected and cannot be deleted!")
         for job_id in self.child_ids:
             job = self.project.load(job_id, convert_to_object=False)
@@ -415,18 +433,26 @@ class JobCore(PyironObject):
         """
         if "server" in self.project_hdf5.list_nodes():
             server_hdf_dict = self.project_hdf5["server"]
-            if "qid" in server_hdf_dict.keys() and str(self.status) in ['submitted', 'running', 'collect'] and server_hdf_dict["qid"] is not None:
+            if (
+                "qid" in server_hdf_dict.keys()
+                and str(self.status) in ["submitted", "running", "collect"]
+                and server_hdf_dict["qid"] is not None
+            ):
                 self.project._queue_delete_job(server_hdf_dict["qid"])
-        with self.project_hdf5.open('..') as hdf_parent:
+        with self.project_hdf5.open("..") as hdf_parent:
             try:
                 del hdf_parent[self.job_name]
                 shutil.rmtree(str(self.working_directory))
             except (NoSuchNodeError, KeyError, OSError):
-                print('This group does not exist in the HDF5 file {}'.format(self.job_name))
+                print(
+                    "This group does not exist in the HDF5 file {}".format(
+                        self.job_name
+                    )
+                )
         if self.project_hdf5.is_empty:
             if os.path.isfile(self.project_hdf5.file_name):
                 os.remove(self.project_hdf5.file_name)
-                dir_name = self.project_hdf5.file_name.split('.h5')[0] + '_hdf5'
+                dir_name = self.project_hdf5.file_name.split(".h5")[0] + "_hdf5"
                 if os.path.isdir(dir_name):
                     os.rmdir(dir_name)
         if self.job_id:
@@ -470,7 +496,9 @@ class JobCore(PyironObject):
         Returns:
             GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
         """
-        return self.project.load(job_specifier=job_specifier, convert_to_object=convert_to_object)
+        return self.project.load(
+            job_specifier=job_specifier, convert_to_object=convert_to_object
+        )
 
     def inspect(self, job_specifier):
         """
@@ -500,8 +528,8 @@ class JobCore(PyironObject):
         if not project:
             project = self.project_hdf5.copy()
         if convert_to_object:
-            with project.open('..') as job_dir:
-                job_dir._mode = 'a'
+            with project.open("..") as job_dir:
+                job_dir._mode = "a"
                 return self.to_object(project=job_dir, job_name=self._name)
         return self
 
@@ -515,8 +543,17 @@ class JobCore(PyironObject):
         Returns:
             bool: [True/False]
         """
-        return len([job["id"] for job in self.project.db.get_items_dict({'masterid': str(job_id)},
-                                                                        return_all_columns=False)]) > 0
+        return (
+            len(
+                [
+                    job["id"]
+                    for job in self.project.db.get_items_dict(
+                        {"masterid": str(job_id)}, return_all_columns=False
+                    )
+                ]
+            )
+            > 0
+        )
 
     def get_job_id(self, job_specifier=None):
         """
@@ -529,13 +566,21 @@ class JobCore(PyironObject):
             int: job ID of the job
         """
         if job_specifier:
-            return self.project.get_job_id(job_specifier, sub_job_name=self.project_hdf5.h5_path)
+            return self.project.get_job_id(
+                job_specifier
+            )  # , sub_job_name=self.project_hdf5.h5_path)
         else:
-            where_dict = {'job': str(self._name), 'project': str(self.project_hdf5.project_path),
-                          'subjob': str(self.project_hdf5.h5_path)}
-            try:
-                return self.project.db.get_items_dict(where_dict, return_all_columns=False)[-1]['id']
-            except IndexError:
+            where_dict = {
+                "job": str(self._name),
+                "project": str(self.project_hdf5.project_path),
+                "subjob": str(self.project_hdf5.h5_path),
+            }
+            response = self.project.db.get_items_dict(
+                where_dict, return_all_columns=False
+            )
+            if len(response) > 0:
+                return response[-1]["id"]
+            else:
                 return None
 
     def list_files(self):
@@ -559,7 +604,10 @@ class JobCore(PyironObject):
         Returns:
             list: list of child jobs
         """
-        return [self.project.load(child_id, convert_to_object=False).job_name for child_id in self.child_ids]
+        return [
+            self.project.load(child_id, convert_to_object=False).job_name
+            for child_id in self.child_ids
+        ]
 
     def list_groups(self):
         """
@@ -624,7 +672,7 @@ class JobCore(PyironObject):
         elif isinstance(project, self.project_hdf5.__class__):
             project = project.copy()
         else:
-            raise ValueError('Project type not supported. ', type(project))
+            raise ValueError("Project type not supported. ", type(project))
         new_job_core = self.copy()
         new_job_core._hdf5 = project.open(self.job_name)
         new_job_core._master_id = self._master_id
@@ -635,16 +683,19 @@ class JobCore(PyironObject):
         if self.job_id:
             if new_database_entry:
                 db_entry = self.project.db.get_item_by_id(self.job_id)
-                db_entry['project'] = new_job_core.project_hdf5.project_path
-                db_entry['projectpath'] = new_job_core.project_hdf5.root_path
-                db_entry['subjob'] = new_job_core.project_hdf5.h5_path
-                del db_entry['id']
+                db_entry["project"] = new_job_core.project_hdf5.project_path
+                db_entry["projectpath"] = new_job_core.project_hdf5.root_path
+                db_entry["subjob"] = new_job_core.project_hdf5.h5_path
+                del db_entry["id"]
                 job_id = self.project.db.add_item_dict(db_entry)
                 new_job_core._job_id = job_id
             else:
                 new_job_core._job_id = None
         if os.path.exists(self.working_directory):
-            shutil.copytree(self.working_directory, os.path.join(project.working_directory, self.job_name))
+            shutil.copytree(
+                self.working_directory,
+                os.path.join(project.working_directory, self.job_name),
+            )
         return new_job_core
 
     def move_to(self, project):
@@ -663,23 +714,28 @@ class JobCore(PyironObject):
             delete_hdf5_after_copy = True
         new_job = self.copy_to(project, new_database_entry=False)
         if self.project_hdf5.file_exists:
-            if len(self.project_hdf5.h5_path.split('/')) == 2:
+            if len(self.project_hdf5.h5_path.split("/")) == 2:
                 self.project_hdf5.remove_file()
             else:
                 self.project_hdf5.remove_group()
         self.project_hdf5 = new_job.project_hdf5.copy()
         if self._job_id:
             self.project.db.item_update(
-                {'subjob': self.project_hdf5.h5_path, 'projectpath': self.project_hdf5.root_path,
-                 'project': self.project_hdf5.project_path, }, self._job_id)
+                {
+                    "subjob": self.project_hdf5.h5_path,
+                    "projectpath": self.project_hdf5.root_path,
+                    "project": self.project_hdf5.project_path,
+                },
+                self._job_id,
+            )
         if delete_hdf5_after_copy:
-            if len(self.project_hdf5.h5_path.split('/')) == 2:
+            if len(self.project_hdf5.h5_path.split("/")) == 2:
                 self.project_hdf5.remove_file()
             else:
                 self.project_hdf5.remove_group()
         if os.path.exists(old_working_directory):
             shutil.rmtree(old_working_directory)
-            os.rmdir('/'.join(old_working_directory.split('/')[:-1]))
+            os.rmdir("/".join(old_working_directory.split("/")[:-1]))
 
     def rename(self, new_job_name):
         """
@@ -698,7 +754,9 @@ class JobCore(PyironObject):
             job_id (int):
 
         """
-        raise NotImplementedError("reset_job_id() should be implemented in the derived class")
+        raise NotImplementedError(
+            "reset_job_id() should be implemented in the derived class"
+        )
 
     def save(self):
         """
@@ -726,7 +784,9 @@ class JobCore(PyironObject):
             hdf (ProjectHDFio): Optional hdf5 file, otherwise self is used.
             group_name (str): Optional hdf5 group in the hdf5 file.
         """
-        raise NotImplementedError("from_hdf() should be implemented in the derived class")
+        raise NotImplementedError(
+            "from_hdf() should be implemented in the derived class"
+        )
 
     def __del__(self):
         """
@@ -754,11 +814,11 @@ class JobCore(PyironObject):
         if item_obj in self._list_ext_childs():
             # ToDo: Murn['strain_0.9'] - sucht im HDF5 file, dort gibt es aber die entsprechenden Gruppen noch nicht.
             child = self._hdf5[self._name + "_hdf5/" + item_obj]
-            print("job get: ", self._name + "_jobs", )
+            print("job get: ", self._name + "_jobs")
             if len(name_lst) == 1:
                 return child
             else:
-                return child['/'.join(name_lst[1:])]
+                return child["/".join(name_lst[1:])]
 
         try:
             hdf5_item = self._hdf5[item]
@@ -818,7 +878,9 @@ class JobCore(PyironObject):
         """
         try:
             if not job_name.isidentifier():
-                raise ValueError('Invalid name for a PyIron object (no "." or "#") allowed')
+                raise ValueError(
+                    'Invalid name for a PyIron object (no "." or "#") allowed'
+                )
         except AttributeError:
             pass  # no name check in Python 2.7
 
@@ -835,7 +897,10 @@ class JobCore(PyironObject):
             cwd = os.getcwd()
             try:
                 os.chdir(self.working_directory)
-                with tarfile.open(os.path.join(self.working_directory, self.job_name + ".tar.bz2"), "w:bz2") as tar:
+                with tarfile.open(
+                    os.path.join(self.working_directory, self.job_name + ".tar.bz2"),
+                    "w:bz2",
+                ) as tar:
                     for name in files_to_compress:
                         if "tar" not in name:
                             tar.add(name)
@@ -849,18 +914,20 @@ class JobCore(PyironObject):
             finally:
                 os.chdir(cwd)
         else:
-            print('The files are already compressed!')
+            print("The files are already compressed!")
 
     def decompress(self):
         """
         Decompress the output files of a compressed job object.
         """
         try:
-            tar_file_name = os.path.join(self.working_directory, self.job_name + ".tar.bz2")
+            tar_file_name = os.path.join(
+                self.working_directory, self.job_name + ".tar.bz2"
+            )
             with tarfile.open(tar_file_name, "r:bz2") as tar:
                 tar.extractall(self.working_directory)
             os.remove(tar_file_name)
-        except FileNotFoundError:
+        except IOError:
             pass
 
     def is_compressed(self):
@@ -886,7 +953,9 @@ class JobCore(PyironObject):
         try:
             cwd = os.getcwd()
             os.chdir(fpath)
-            with tarfile.open(os.path.join(fpath, self.job_name + ".tar.bz2"), "w:bz2") as tar:
+            with tarfile.open(
+                os.path.join(fpath, self.job_name + ".tar.bz2"), "w:bz2"
+            ) as tar:
                 for name in [h5_dir_name, h5_file_name]:
                     tar.add(name)
             for name in [h5_dir_name, h5_file_name]:
@@ -901,7 +970,7 @@ class JobCore(PyironObject):
     def self_unarchive(self):
         fpath = self.project_hdf5.file_path
         try:
-            tar_name=os.path.join(fpath, self.job_name + ".tar.bz2")
+            tar_name = os.path.join(fpath, self.job_name + ".tar.bz2")
             with tarfile.open(tar_name, "r:bz2") as tar:
                 tar.extractall(fpath)
             os.remove(tar_name)
@@ -909,13 +978,16 @@ class JobCore(PyironObject):
             pass
 
     def is_self_archived(self):
-        return os.path.isfile(os.path.join(self.project_hdf5.file_path, self.job_name + ".tar.bz2"))
+        return os.path.isfile(
+            os.path.join(self.project_hdf5.file_path, self.job_name + ".tar.bz2")
+        )
 
 
 class DatabaseProperties(object):
     """
     Access the database entry of the job
     """
+
     def __init__(self, job_dict=None):
         self._job_dict = job_dict
 
@@ -939,6 +1011,7 @@ class HDF5Content(object):
     """
     Access the HDF5 file of the job
     """
+
     def __init__(self, project_hdf5):
         self._project_hdf5 = project_hdf5
 

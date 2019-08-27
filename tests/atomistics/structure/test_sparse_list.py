@@ -1,3 +1,7 @@
+# coding: utf-8
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
+
 import unittest
 from pyiron.atomistics.structure.sparse_list import SparseList, SparseArray
 
@@ -120,10 +124,14 @@ class TestSparseArray(unittest.TestCase):
         self.assertEqual(len(self.aMatrix.spin), 6)
         self.aMatrix.spin[1::2] = True
         self.aMatrix.spin[0::2] = False
-        self.assertEqual(self.aMatrix.spin.list(), [False, True, False, True, False, True])
+        self.assertEqual(
+            self.aMatrix.spin.list(), [False, True, False, True, False, True]
+        )
 
     def test_keys(self):
-        self.assertEqual(sorted(list(self.aMatrix.keys())), ['aList', 'cList', 'list_1'])
+        self.assertEqual(
+            sorted(list(self.aMatrix.keys())), ["aList", "cList", "list_1"]
+        )
 
     def test_items(self):
         for key, val in self.aMatrix[2:4].items():
@@ -131,5 +139,5 @@ class TestSparseArray(unittest.TestCase):
                 self.assertEqual(val, [3, 4])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -9,7 +9,7 @@ The pyiron integrated development environment (IDE) for computational materials 
 pyiron paper (accepted)
 *****************************
 
-.. code-block:: bibtex 
+.. code-block:: bibtex
 
   @article{pyiron-paper,
     title = {pyiron: An integrated development environment for computational materials science},
@@ -24,12 +24,12 @@ pyiron paper (accepted)
     keywords = {Modelling workflow, Integrated development environment, Complex simulation protocols},
   }
 
-For all the other modules/ plugins in particular those hosted at https://gitlab.mpcdf.mpg.de/pyiron (MPIE internal) please ask the developers for the corrsponding references. We try to publish those under the open source license when the initial papers are published. Afterwards they are going to be added to the official `Github repository <https://github.com/pyiron>`_. 
+For all the other modules/ plugins in particular those hosted at https://gitlab.mpcdf.mpg.de/pyiron (MPIE internal) please ask the developers for the corrsponding references. We try to publish those under the open source license when the initial papers are published. Afterwards they are going to be added to the official `Github repository <https://github.com/pyiron>`_.
 
 **************
 external paper
 **************
-Some of the features in pyiron rely on external codes which should be cited separatly. In alphabetical order:  
+Some of the features in pyiron rely on external codes which should be cited separatly. In alphabetical order:
 
 ASE
 ===
@@ -50,7 +50,7 @@ pyiron is compatible with the `Atomic Simulation Environment (ASE) <https://wiki
 
 LAMMPS
 ======
-The `LAMMPS molecular dynamics simulator <http://lammps.sandia.gov>`_ is the default molecular dynamics code used by pyiron. 
+The `LAMMPS molecular dynamics simulator <http://lammps.sandia.gov>`_ is the default molecular dynamics code used by pyiron.
 
 .. code-block:: bibtex
 
@@ -69,7 +69,7 @@ The `LAMMPS molecular dynamics simulator <http://lammps.sandia.gov>`_ is the def
 
 VASP
 ====
-The `Vienna Ab initio Simulation Package <https://www.vasp.at>`_ is the default ab initio used by pyiron. 
+The `Vienna Ab initio Simulation Package <https://www.vasp.at>`_ is the default ab initio used by pyiron.
 
 .. code-block:: bibtex
 
@@ -120,4 +120,4 @@ The `Vienna Ab initio Simulation Package <https://www.vasp.at>`_ is the default 
   }
 
 .. toctree::
-   :maxdepth:2 
+   :maxdepth:2

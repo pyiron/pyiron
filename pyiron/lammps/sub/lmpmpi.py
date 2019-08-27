@@ -11,7 +11,7 @@ except ImportError:
 
 
 # Lammps executable
-job = lammps(cmdargs=['-screen', 'none'])
+job = lammps(cmdargs=["-screen", "none"])
 
 
 def extract_compute(funct_args):
@@ -51,11 +51,14 @@ def select_cmd(argument):
     Returns:
         function: the selected function
     """
-    switcher = {f.__name__: f for f in [extract_compute, get_thermo, scatter_atoms, command, gather_atoms]}
+    switcher = {
+        f.__name__: f
+        for f in [extract_compute, get_thermo, scatter_atoms, command, gather_atoms]
+    }
     return switcher.get(argument)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     while True:
         if MPI.COMM_WORLD.rank == 0:
             input_dict = pickle.load(sys.stdin.buffer)
@@ -64,10 +67,10 @@ if __name__ == '__main__':
         else:
             input_dict = None
         input_dict = MPI.COMM_WORLD.bcast(input_dict, root=0)
-        if input_dict['c'] == 'close':
+        if input_dict["c"] == "close":
             job.close()
             break
-        output = select_cmd(input_dict['c'])(input_dict['d'])
+        output = select_cmd(input_dict["c"])(input_dict["d"])
         if MPI.COMM_WORLD.rank == 0 and output is not None:
             # with open('process.txt', 'a') as file:
             #     print('Output:', output, file=file)

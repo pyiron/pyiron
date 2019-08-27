@@ -13,8 +13,10 @@ The Jobtable module provides a set of top level functions to interact with the d
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -24,10 +26,19 @@ __date__ = "Sep 1, 2017"
 s = Settings()
 
 
-def _job_dict(database, sql_query, user, project_path, recursive, job=None, sub_job_name="%", element_lst=None):
+def _job_dict(
+    database,
+    sql_query,
+    user,
+    project_path,
+    recursive,
+    job=None,
+    sub_job_name="%",
+    element_lst=None,
+):
     """
     Internal function to access the database from the project directly.
-    
+
     Args:
         database (DatabaseAccess): Database object
         sql_query (str): SQL query to enter a more specific request
@@ -73,39 +84,41 @@ def _job_dict(database, sql_query, user, project_path, recursive, job=None, sub_
     dict_clause = {}
     # FOR GET_ITEMS_SQL: clause = []
     if user is not None:
-        dict_clause['username'] = str(user)
+        dict_clause["username"] = str(user)
         # FOR GET_ITEMS_SQL: clause.append("username = '" + self.user + "'")
     if sql_query is not None:
         # FOR GET_ITEMS_SQL: clause.append(self.sql_query)
-        if 'AND' in sql_query:
-            cl_split = sql_query.split(' AND ')
-        elif 'and' in sql_query:
-            cl_split = sql_query.split(' and ')
+        if "AND" in sql_query:
+            cl_split = sql_query.split(" AND ")
+        elif "and" in sql_query:
+            cl_split = sql_query.split(" and ")
         else:
             cl_split = [sql_query]
-        dict_clause.update({str(element.split()[0]): element.split()[2] for element in cl_split})
+        dict_clause.update(
+            {str(element.split()[0]): element.split()[2] for element in cl_split}
+        )
     if job is not None:
-        dict_clause['job'] = str(job)
+        dict_clause["job"] = str(job)
 
     if recursive:
-        dict_clause['project'] = str(project_path) + '%'
+        dict_clause["project"] = str(project_path) + "%"
     else:
-        dict_clause['project'] = str(project_path)
+        dict_clause["project"] = str(project_path)
     if sub_job_name is None:
-        dict_clause['subjob'] = None
-    elif sub_job_name != '%':
-        dict_clause['subjob'] = str(sub_job_name)
+        dict_clause["subjob"] = None
+    elif sub_job_name != "%":
+        dict_clause["subjob"] = str(sub_job_name)
     if element_lst is not None:
-        dict_clause['element_lst'] = element_lst
+        dict_clause["element_lst"] = element_lst
 
-    s.logger.debug('sql_query: %s', str(dict_clause))
+    s.logger.debug("sql_query: %s", str(dict_clause))
     return database.get_items_dict(dict_clause)
 
 
 def get_db_columns(database):
     """
     Get column names
-    
+
     Args:
         database (DatabaseAccess): Database object
 
@@ -131,11 +144,22 @@ def get_db_columns(database):
     return database.get_table_headings()
 
 
-def job_table(database, sql_query, user, project_path, recursive=True, columns=None,
-              all_columns=False, sort_by="id", max_colwidth=200, element_lst=None):
+def job_table(
+    database,
+    sql_query,
+    user,
+    project_path,
+    recursive=True,
+    columns=None,
+    all_columns=False,
+    sort_by="id",
+    max_colwidth=200,
+    element_lst=None,
+    job_name_contains='',
+):
     """
     Access the job_table
-    
+
     Args:
         database (DatabaseAccess): Database object
         sql_query (str): SQL query to enter a more specific request
@@ -150,6 +174,7 @@ def job_table(database, sql_query, user, project_path, recursive=True, columns=N
         sort_by (str): Sort by a specific column
         max_colwidth (int): set the column width
         element_lst (list): list of elements required in the chemical formular - by default None
+        job_name_contains (str): a string which should be contained in every job_name
 
     Returns:
         pandas.Dataframe: Return the result as a pandas.Dataframe object
@@ -157,21 +182,39 @@ def job_table(database, sql_query, user, project_path, recursive=True, columns=N
     if columns is None:
         columns = ["job", "project", "chemicalformula"]
     all_db = [
-        'id', 'status', 'chemicalformula', 'job', 'subjob', 'projectpath', 'project', 'timestart', 'timestop',
-        'totalcputime', 'computer', 'hamilton', 'hamversion', 'parentid', 'masterid']
+        "id",
+        "status",
+        "chemicalformula",
+        "job",
+        "subjob",
+        "projectpath",
+        "project",
+        "timestart",
+        "timestop",
+        "totalcputime",
+        "computer",
+        "hamilton",
+        "hamversion",
+        "parentid",
+        "masterid",
+    ]
 
     if all_columns:
         columns = all_db
-    job_dict = _job_dict(database=database,
-                         sql_query=sql_query,
-                         user=user,
-                         project_path=project_path,
-                         recursive=recursive,
-                         element_lst=element_lst)
-    pandas.set_option('display.max_colwidth', max_colwidth)
+    job_dict = _job_dict(
+        database=database,
+        sql_query=sql_query,
+        user=user,
+        project_path=project_path,
+        recursive=recursive,
+        element_lst=element_lst,
+    )
+    pandas.set_option("display.max_colwidth", max_colwidth)
     df = pandas.DataFrame(job_dict)
     if len(job_dict) == 0:
         return df
+    if job_name_contains != '':
+        df = df[df.job.str.contains(job_name_contains)]
     if sort_by in columns:
         return df[columns].sort_values(by=sort_by)
     return df[columns]
@@ -205,7 +248,9 @@ def get_jobs(database, sql_query, user, project_path, recursive=True, columns=No
         # return {key: list() for key in columns}
     dictionary = {}
     for key in df.keys():
-        dictionary[key] = df[key].tolist()  # ToDo: Check difference of tolist and to_list
+        dictionary[key] = df[
+            key
+        ].tolist()  # ToDo: Check difference of tolist and to_list
     return dictionary
     # return {key: df[key].tolist() for key in df.keys()}
 
@@ -230,7 +275,7 @@ def get_job_ids(database, sql_query, user, project_path, recursive=True):
 def get_child_ids(database, sql_query, user, project_path, job_specifier, status=None):
     """
     Get the childs for a specific job
-    
+
     Args:
         database (DatabaseAccess): Database object
         sql_query (str): SQL query to enter a more specific request
@@ -246,16 +291,23 @@ def get_child_ids(database, sql_query, user, project_path, job_specifier, status
     if id_master is None:
         return []
     else:
-        search_dict = {'masterid': str(id_master)}
+        search_dict = {"masterid": str(id_master)}
         if status is not None:
-            search_dict['status'] = status
-        return sorted([job["id"] for job in database.get_items_dict(search_dict, return_all_columns=False)])
+            search_dict["status"] = status
+        return sorted(
+            [
+                job["id"]
+                for job in database.get_items_dict(
+                    search_dict, return_all_columns=False
+                )
+            ]
+        )
 
 
 def get_job_id(database, sql_query, user, project_path, job_specifier):
     """
     get the job_id for job named job_name in the local project path from database
-    
+
     Args:
         database (DatabaseAccess): Database object
         sql_query (str): SQL query to enter a more specific request
@@ -273,20 +325,31 @@ def get_job_id(database, sql_query, user, project_path, job_specifier):
         if isinstance(job_specifier, (int, np.integer)):
             return job_specifier  # is id
 
-    job_specifier.replace('.', '_')
-    if job_specifier[0] is not '/':
-        job_specifier = '/' + job_specifier
-    job_dict = _job_dict(database, sql_query, user, project_path, recursive=False,  # job=job_specifier,
-                         sub_job_name=job_specifier)
+    job_specifier.replace(".", "_")
+    # if job_specifier[0] is not '/':
+    #     sub_job_name = '/' + job_specifier
+    # else:
+    #     sub_job_name = job_specifier
+    # job_dict = _job_dict(database, sql_query, user, project_path, recursive=False,  # job=job_specifier,
+    #                      sub_job_name=sub_job_name)
+    # if len(job_dict) == 0:
+    #     job_dict = _job_dict(database, sql_query, user, project_path, recursive=True,  # job=job_specifier,
+    #                          sub_job_name=sub_job_name)
+    job_dict = _job_dict(
+        database, sql_query, user, project_path, recursive=False, job=job_specifier
+    )
     if len(job_dict) == 0:
-        job_dict = _job_dict(database, sql_query, user, project_path, recursive=True,  # job=job_specifier,
-                             sub_job_name=job_specifier)
+        job_dict = _job_dict(
+            database, sql_query, user, project_path, recursive=True, job=job_specifier
+        )
     if len(job_dict) == 0:
         return None
     elif len(job_dict) == 1:
         return job_dict[0]["id"]
     else:
-        raise ValueError("job name \'{0}\' in this project is not unique".format(job_dict))
+        raise ValueError(
+            "job name '{0}' in this project is not unique".format(job_dict)
+        )
 
 
 def set_job_status(database, sql_query, user, project_path, job_specifier, status):
@@ -303,7 +366,10 @@ def set_job_status(database, sql_query, user, project_path, job_specifier, statu
                      'running', 'aborted', 'collect', 'suspended', 'refresh', 'busy', 'finished']
 
     """
-    database.item_update({'status': str(status)}, get_job_id(database, sql_query, user, project_path, job_specifier))
+    database.item_update(
+        {"status": str(status)},
+        get_job_id(database, sql_query, user, project_path, job_specifier),
+    )
 
 
 def get_job_status(database, sql_query, user, project_path, job_specifier):
@@ -322,7 +388,9 @@ def get_job_status(database, sql_query, user, project_path, job_specifier):
              'aborted', 'collect', 'suspended', 'refresh', 'busy', 'finished']
     """
     try:
-        return database.get_item_by_id(get_job_id(database, sql_query, user, project_path, job_specifier))['status']
+        return database.get_item_by_id(
+            get_job_id(database, sql_query, user, project_path, job_specifier)
+        )["status"]
     except KeyError:
         return None
 
@@ -342,10 +410,17 @@ def get_job_working_directory(database, sql_query, user, project_path, job_speci
         str: working directory as absolute path
     """
     try:
-        db_entry = database.get_item_by_id(get_job_id(database, sql_query, user, project_path, job_specifier))
+        db_entry = database.get_item_by_id(
+            get_job_id(database, sql_query, user, project_path, job_specifier)
+        )
         if db_entry:
-            job_name = db_entry['subjob'][1:]
-            return os.path.join(db_entry['projectpath'], db_entry['project'], job_name + '_hdf5', job_name)
+            job_name = db_entry["subjob"][1:]
+            return os.path.join(
+                db_entry["projectpath"],
+                db_entry["project"],
+                job_name + "_hdf5",
+                job_name,
+            )
         else:
             return None
     except KeyError:

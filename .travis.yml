@@ -7,10 +7,12 @@ matrix:
       env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh" PYTHONVER="2.7"
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
-        - ./.ci_support/setup_miniconda.sh ${MINICONDA} ${PYTHONVER}
-        - ./.ci_support/setup_pyiron.sh
+        - ./.ci_support/setup_miniconda.sh ${MINICONDA}
+        - python .ci_support/pyironconfig.py
+        - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
       script:
-        - coverage run --omit pyiron/_version.py -m unittest discover tests
+        - coverage run -m unittest discover tests
+        - coverage combine
         # - ./.ci_support/build_notebooks_on_master.sh
 
     - name: test_linux_3_7
@@ -19,10 +21,12 @@ matrix:
       env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.7"
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
-        - ./.ci_support/setup_miniconda.sh ${MINICONDA} ${PYTHONVER}
-        - ./.ci_support/setup_pyiron.sh
+        - ./.ci_support/setup_miniconda.sh ${MINICONDA}
+        - python .ci_support/pyironconfig.py
+        - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
       script:
-        - coverage run --omit pyiron/_version.py -m unittest discover tests
+        - coverage run -m unittest discover tests
+        - coverage combine
         # - ./.ci_support/build_notebooks_on_master.sh
       after_success:
         - coveralls
@@ -49,10 +53,12 @@ matrix:
       env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh" PYTHONVER="2.7"
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
-        - ./.ci_support/setup_miniconda.sh ${MINICONDA} ${PYTHONVER}
-        - ./.ci_support/setup_pyiron.sh
+        - ./.ci_support/setup_miniconda.sh ${MINICONDA}
+        - python .ci_support/pyironconfig.py
+        - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
       script:
-        - coverage run --omit pyiron/_version.py -m unittest discover tests
+        - coverage run -m unittest discover tests
+        - coverage combine
         # - ./.ci_support/build_notebooks_on_master.sh
 
     - name: test_osx_3_7
@@ -61,10 +67,12 @@ matrix:
       env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" PYTHONVER="3.7"
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
-        - ./.ci_support/setup_miniconda.sh ${MINICONDA} ${PYTHONVER}
-        - ./.ci_support/setup_pyiron.sh
+        - ./.ci_support/setup_miniconda.sh ${MINICONDA}
+        - python .ci_support/pyironconfig.py
+        - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
       script:
-        - coverage run --omit pyiron/_version.py -m unittest discover tests
+        - coverage run -m unittest discover tests
+        - coverage combine
         # - ./.ci_support/build_notebooks_on_master.sh
 
     - stage: documentation
@@ -75,8 +83,9 @@ matrix:
       env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.7"
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
-        - ./.ci_support/setup_miniconda.sh ${MINICONDA} ${PYTHONVER}
-        - ./.ci_support/setup_pyiron.sh
+        - ./.ci_support/setup_miniconda.sh ${MINICONDA}
+        - python .ci_support/pyironconfig.py
+        - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
       script:
         - ./.ci_support/build_docs_on_master.sh
       deploy:

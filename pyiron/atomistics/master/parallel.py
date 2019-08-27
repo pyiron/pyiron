@@ -11,8 +11,10 @@ from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 from pyiron.base.master.generic import get_function_from_string
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -36,13 +38,15 @@ class AtomisticParallelMaster(ParallelMaster, AtomisticGenericJob):
         if self.ref_job:
             self._ref_job.structure = basis
         else:
-            raise ValueError('A structure can only be set after a reference job has been assinged.')
+            raise ValueError(
+                "A structure can only be set after a reference job has been assinged."
+            )
 
     def get_structure(self, iteration_step=-1):
         if iteration_step == 0:
             return self.structure
         else:
-            raise ValueError('iteration_step should be either 0.')
+            raise ValueError("iteration_step should be either 0.")
 
 
 class GenericOutput(OrderedDict):
@@ -59,8 +63,8 @@ class MapMaster(AtomisticParallelMaster):
             job_name:
         """
         super(MapMaster, self).__init__(project, job_name)
-        self.__name__ = 'MapMaster'
-        self.__version__ = '0.0.1'
+        self.__name__ = "MapMaster"
+        self.__version__ = "0.0.1"
         self._job_generator = MapJobGenerator(self)
         self._map_function = None
         self.parameter_list = []
@@ -83,19 +87,23 @@ class MapMaster(AtomisticParallelMaster):
         """
         super(MapMaster, self).to_hdf(hdf=hdf, group_name=group_name)
         if len(self.parameter_list) != 0:
-            with self.project_hdf5.open('input') as hdf5_input:
+            with self.project_hdf5.open("input") as hdf5_input:
                 first_element = self.parameter_list[0]
                 if isinstance(first_element, Atoms):
-                    with hdf5_input.open('structures') as hdf5_input_str:
+                    with hdf5_input.open("structures") as hdf5_input_str:
                         for ind, struct in enumerate(self.parameter_list):
-                            struct.to_hdf(hdf=hdf5_input_str, group_name='s_' + str(ind))
+                            struct.to_hdf(
+                                hdf=hdf5_input_str, group_name="s_" + str(ind)
+                            )
                 elif isinstance(first_element, (int, float, str, list)):
-                    hdf5_input['parameters_list'] = self.parameter_list
+                    hdf5_input["parameters_list"] = self.parameter_list
                 else:
                     raise TypeError()
                 if self._map_function is not None:
                     try:
-                        hdf5_input["map_function"] = inspect.getsource(self._map_function)
+                        hdf5_input["map_function"] = inspect.getsource(
+                            self._map_function
+                        )
                     except IOError:
                         hdf5_input["map_function"] = "None"
                 else:
@@ -110,13 +118,15 @@ class MapMaster(AtomisticParallelMaster):
             group_name (str): HDF5 subgroup name - optional
         """
         super(MapMaster, self).from_hdf(hdf=hdf, group_name=group_name)
-        with self.project_hdf5.open('input') as hdf5_input:
-            if 'structures' in hdf5_input.list_groups():
+        with self.project_hdf5.open("input") as hdf5_input:
+            if "structures" in hdf5_input.list_groups():
                 with hdf5_input.open("structures") as hdf5_input_str:
-                    self.parameter_list = [Atoms().from_hdf(hdf5_input_str, group_name)
-                                           for group_name in sorted(hdf5_input_str.list_groups())]
+                    self.parameter_list = [
+                        Atoms().from_hdf(hdf5_input_str, group_name)
+                        for group_name in sorted(hdf5_input_str.list_groups())
+                    ]
             else:
-                self.parameter_list = hdf5_input['parameters_list']
+                self.parameter_list = hdf5_input["parameters_list"]
             function_str = hdf5_input["map_function"]
             if function_str == "None":
                 self._map_function = None
