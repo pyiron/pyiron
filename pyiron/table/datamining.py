@@ -43,6 +43,9 @@ from pyiron.table.funct import (
     get_structure,
     get_forces,
     get_magnetic_structure,
+    get_average_waves,
+    get_ekin_error,
+    get_volume,
 )
 
 
@@ -86,6 +89,9 @@ class FunctionContainer(object):
             get_structure,
             get_forces,
             get_magnetic_structure,
+            get_average_waves,
+            get_ekin_error,
+            get_volume,
         ]
         self._system_function_dict = {
             func.__name__: False for func in self._system_function_lst

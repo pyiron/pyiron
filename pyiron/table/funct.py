@@ -58,6 +58,19 @@ def get_total_number_of_atoms(job):
     return {"Number_of_atoms": len(job["input/structure/indices"])}
 
 
+def get_average_waves(job):
+    positions, weights, planewaves = job["output/outcar/irreducible_kpoints"]
+    return {"avg. plane waves": sum(weights * planewaves) / sum(weights)}
+
+
+def get_ekin_error(job):
+    return {"energy_tot_wo_kin_corr": job["output/outcar/kin_energy_error"] + job["output/generic/energy_tot"][-1]}
+
+
+def get_volume(job):
+    return {"volume": job["output/generic/volume"][-1]}
+
+
 def get_elements(job):
     species = job["input/structure/species"]
     indices_lst = job["input/structure/indices"]
