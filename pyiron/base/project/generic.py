@@ -507,6 +507,7 @@ class Project(ProjectPath):
         all_columns=True,
         sort_by="id",
         element_lst=None,
+        job_name_contains='',
     ):
         """
         Access the job_table
@@ -520,6 +521,7 @@ class Project(ProjectPath):
             all_columns (bool): Select all columns - this overwrites the columns option.
             sort_by (str): Sort by a specific column
             element_lst (list): list of elements required in the chemical formular - by default None
+            job_name_contains (str): a string which should be contained in every job_name
 
         Returns:
             pandas.Dataframe: Return the result as a pandas.Dataframe object
@@ -534,6 +536,7 @@ class Project(ProjectPath):
             all_columns=all_columns,
             sort_by=sort_by,
             element_lst=element_lst,
+            job_name_contains=job_name_contains,
         )
 
     def get_jobs_status(self, recursive=True, element_lst=None):
