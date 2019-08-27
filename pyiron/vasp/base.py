@@ -473,20 +473,20 @@ class VaspBase(GenericDFTJob):
         if not snap is None:
             if self.get_eddrmm_handling() == "ignore":
                 self._logger.warn(
-                    "EDDRMM warnings are ignored. EDDRMM occures %1d times, first in ionic step %1d"
-                    % tuple([num_eddrmm, snap])
+                    "EDDRMM warnings are ignored. EDDRMM occures {} times, first in ionic step {}"
+                        .format(num_eddrmm, snap)
                 )
             elif self.get_eddrmm_handling() == "not_converged":
                 self.status.not_converged = True
                 self._logger.warn(
-                    "EDDRMM warning occurred %1d times first in ionic step %1d. Status is switched to 'not_converged'."
-                    % tuple([num_eddrmm, snap])
+                    "EDDRMM warning occurred {} times first in ionic step {}. Status is switched to 'not_converged'."
+                        .format(num_eddrmm, snap)
                 )
             elif self.get_eddrmm_handling() == "restart":
                 self.status.not_converged = True
                 self._logger.warn(
-                    "EDDRMM warning occurred %1d times first in ionic step %1d. Status is switched to 'not_converged'."
-                    % tuple([num_eddrmm, snap])
+                    "EDDRMM warning occurred {} times first in ionic step {}. Status is switched to 'not_converged'."
+                        .format(num_eddrmm, snap)
                 )
                 if not self.input.incar["ALGO"].lower() == "normal":
                     ham_new = self.copy_hamiltonian(self.name + "_normal")
@@ -791,7 +791,7 @@ class VaspBase(GenericDFTJob):
     def get_eddrmm_handling(self):
         """
         Returns:
-            str: status of EDDRMM
+            str: status of EDDRMM handling
         """
         return self.input._eddrmm
 
@@ -1664,6 +1664,8 @@ class Input:
             if "vasp_dict" in hdf5_input.list_nodes():
                 vasp_dict = hdf5_input["vasp_dict"]
                 self._eddrmm = vasp_dict["eddrmm_handling"]
+            else:
+                self._eddrmm = "ignore"
 
 
 class Output:
