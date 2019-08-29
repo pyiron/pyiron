@@ -288,7 +288,7 @@ class Server(
                 queue=self.queue,
                 cores=self.cores,
                 run_time_max=self.run_time,
-                memory_max=self.memory_limit,
+                memory_max=limit,
             )[2]
             if memory_max != limit:
                 self._memory_limit = memory_max
