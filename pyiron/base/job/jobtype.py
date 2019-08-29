@@ -42,6 +42,7 @@ JOB_CLASS_DICT = {'ScriptJob': 'pyiron.base.job.script',
                   'ExampleJob': 'pyiron.testing.randomatomistic',
                   'GpawJob': 'pyiron.gpaw.gpaw',
                   'Vasp': 'pyiron.vasp.vasp',
+                  'Gaussian': 'pyiron.gaussian.gaussian',
                   }
 
 

@@ -274,7 +274,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
             memory_max = s.queue_adapter.check_queue_parameters(queue=self.queue,
                                                                 cores=self.cores,
                                                                 run_time_max=self.run_time,
-                                                                memory_max=self.memory_limit)[2]
+                                                                memory_max=limit)[2]
             if memory_max != limit:
                 self._memory_limit = memory_max
                 print('Updated the memory limit to: ', memory_max)
