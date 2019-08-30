@@ -295,6 +295,30 @@ class TestLammps(unittest.TestCase):
                                        atom_indices=atom_indices,
                                        snapshot_indices=snap_indices,
                                        overwrite_positions=np.zeros_like(orig_pos))
+        self.assertRaises(ValueError, self.job_water_dump.write_traj, filename="test.xyz",
+                          file_format="xyz",
+                          atom_indices=atom_indices,
+                          snapshot_indices=snap_indices,
+                          overwrite_positions=np.zeros_like(orig_pos)[:-1])
+
+        self.job_water_dump.write_traj(filename="test.xyz",
+                                       file_format="xyz",
+                                       atom_indices=atom_indices,
+                                       snapshot_indices=snap_indices,
+                                       overwrite_positions=np.zeros_like(orig_pos),
+                                       overwrite_cells=self.job_water_dump.trajectory()._cells)
+        self.job_water_dump.write_traj(filename="test.xyz",
+                                       file_format="xyz",
+                                       atom_indices=atom_indices,
+                                       snapshot_indices=snap_indices,
+                                       overwrite_positions=np.zeros_like(orig_pos)[:-1],
+                                       overwrite_cells=self.job_water_dump.trajectory()._cells[:-1])
+        self.assertRaises(ValueError, self.job_water_dump.write_traj, filename="test.xyz",
+                          file_format="xyz",
+                          atom_indices=atom_indices,
+                          snapshot_indices=snap_indices,
+                          overwrite_positions=np.zeros_like(orig_pos),
+                          overwrite_cells=self.job_water_dump.trajectory()._cells[:-1])
         os.remove("test.xyz")
         self.assertTrue(np.array_equal(self.job_water_dump.trajectory()._positions,
                                        orig_pos))
@@ -307,11 +331,18 @@ class TestLammps(unittest.TestCase):
 
         nx, ny, nz = orig_pos.shape
         random_array = np.random.rand(nx, ny, nz)
+        random_cell = np.random.rand(nx, 3, 3)
         self.assertTrue(np.array_equal(
             self.job_water_dump.trajectory(atom_indices=atom_indices,
                                            snapshot_indices=snap_indices,
                                            overwrite_positions=random_array)._positions,
             random_array[snap_indices][:, atom_indices, :]))
+        self.assertTrue(np.array_equal(
+            self.job_water_dump.trajectory(atom_indices=atom_indices,
+                                           snapshot_indices=snap_indices,
+                                           overwrite_positions=random_array,
+                                           overwrite_cells=random_cell)._cells,
+            random_cell[snap_indices]))
 
     def test_dump_parser(self):
         structure = Atoms(
