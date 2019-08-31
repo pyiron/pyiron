@@ -468,26 +468,32 @@ class VaspBase(GenericDFTJob):
         """
         Collects errors from the VASP run
         """
-        file_name = os.path.join(self.working_directory, "error.out")
-        if os.path.exists(file_name):
-            with open(file_name, "r") as f:
-                lines = f.readlines()
-            # If the wrong convergence algorithm is chosen, we get the following error.
-            # https://cms.mpi.univie.ac.at/vasp-forum/viewtopic.php?f=4&t=17071
-            if not self.get_eddrmm_handling() == "ignore":
-                for l in lines:
-                    if "WARNING in EDDRMM: call to ZHEGV failed, returncode =" in l:
-                        if self.get_eddrmm_handling() == "not_converged":
-                            self.status.not_converged = True
-                            break
-                        elif self.get_eddrmm_handling() == "restart":
-                            self.status.not_converged = True
-                            if not self.input.incar["ALGO"].lower() == "normal":
-                                ham_new = self.copy_hamiltonian(self.name + "_normal")
-                                ham_new.input.incar["ALGO"] = "Normal"
-                                ham_new.set_eddrmm_handling()
-                                ham_new.run()
-                            break
+        num_eddrmm, snap = self._get_eddrmm_info()
+
+        if not snap is None:
+            if self.get_eddrmm_handling() == "ignore":
+                self._logger.warn(
+                    "EDDRMM warnings are ignored. EDDRMM occures {} times, first in ionic step {}"
+                        .format(num_eddrmm, snap)
+                )
+            elif self.get_eddrmm_handling() == "not_converged":
+                self.status.not_converged = True
+                self._logger.warn(
+                    "EDDRMM warning occurred {} times first in ionic step {}. Status is switched to 'not_converged'."
+                        .format(num_eddrmm, snap)
+                )
+            elif self.get_eddrmm_handling() == "restart":
+                self.status.not_converged = True
+                self._logger.warn(
+                    "EDDRMM warning occurred {} times first in ionic step {}. Status is switched to 'not_converged'."
+                        .format(num_eddrmm, snap)
+                )
+                if not self.input.incar["ALGO"].lower() == "normal":
+                    ham_new = self.copy_hamiltonian(self.name + "_normal")
+                    ham_new.input.incar["ALGO"] = "Normal"
+                    ham_new.set_eddrmm_handling()
+                    ham_new.run()
+                    self._logger.info("Job was restarted with 'ALGO' = 'Normal' to avoid EDDRMM warning.")
 
     def copy_hamiltonian(self, job_name):
         """
@@ -520,6 +526,29 @@ class VaspBase(GenericDFTJob):
                 )
                 files = os.listdir(directory)
         return files
+
+    def _get_eddrmm_info(self):
+        """
+        Counts the number of EDDRMM warnings and first ionic step of occurrence.
+
+        Returns:
+            int: number of EDDRMM warning
+            int/None: number of ionic step where it occurs
+        """
+        num_eddrmm = 0
+        snap = None
+        file_name = os.path.join(self.working_directory, "error.out")
+        if os.path.exists(file_name):
+            with open(file_name, "r") as f:
+                lines = f.readlines()
+            # If the wrong convergence algorithm is chosen, we get the following error.
+            # https://cms.mpi.univie.ac.at/vasp-forum/viewtopic.php?f=4&t=17071
+            warn_str = "WARNING in EDDRMM: call to ZHEGV failed, returncode ="
+            lines_where = np.argwhere([warn_str in l for l in lines]).flatten()
+            num_eddrmm = len(lines_where)
+            if num_eddrmm > 0:
+                snap = len(np.argwhere(["E0=" in l for l in lines[:lines_where[0]]]).flatten())
+        return num_eddrmm, snap
 
     def from_directory(self, directory):
         """
@@ -763,7 +792,7 @@ class VaspBase(GenericDFTJob):
     def get_eddrmm_handling(self):
         """
         Returns:
-            str: status of EDDRMM
+            str: status of EDDRMM handling
         """
         return self.input._eddrmm
 
@@ -1636,6 +1665,8 @@ class Input:
             if "vasp_dict" in hdf5_input.list_nodes():
                 vasp_dict = hdf5_input["vasp_dict"]
                 self._eddrmm = vasp_dict["eddrmm_handling"]
+            else:
+                self._eddrmm = "ignore"
 
 
 class Output:
