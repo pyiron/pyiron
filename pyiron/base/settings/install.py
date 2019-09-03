@@ -75,9 +75,6 @@ def _write_config_file(file_name='~/.pyiron', project_path='~/pyiron/projects', 
     if not os.path.exists(project_path):
         os.makedirs(project_path)
 
-    if not os.path.exists(resource_path):
-        os.makedirs(resource_path)
-        
     if not os.path.isfile(config_file):
         with open(config_file, 'w') as cf:
             cf.writelines(['[DEFAULT]\n',
