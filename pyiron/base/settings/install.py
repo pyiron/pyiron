@@ -71,7 +71,7 @@ def _write_config_file(file_name='~/.pyiron', project_path='~/pyiron/projects', 
     config_file   = os.path.normpath(os.path.abspath(os.path.expanduser(file_name)))
     project_path  = os.path.normpath(os.path.abspath(os.path.expanduser(project_path)))
     resource_path = os.path.normpath(os.path.abspath(os.path.expanduser(resource_path)))
-    
+
     if not os.path.exists(project_path):
         os.makedirs(project_path)
 
@@ -118,7 +118,7 @@ def install_pyiron(config_file_name='~/.pyiron',
         giturl_for_zip_file (str): url for the zipped resources file on github
         git_folder_name (str): name of the extracted folder
     """
-    # Build directories if install_pyiron has been skipped for custom pyiron config file       
+    # Build directories if install_pyiron has been skipped for custom pyiron config file
     _write_config_file(file_name=config_file_name, project_path=project_path, resource_path=resource_directory)
     _write_environ_var(config_file_name=config_file_name)
     _download_resources(zip_file=zip_file,

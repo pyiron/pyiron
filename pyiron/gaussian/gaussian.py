@@ -2,7 +2,7 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-import os
+import os,subprocess
 import numpy as np
 
 from pyiron.base.generic.parameters import GenericParameters
@@ -63,11 +63,34 @@ class Gaussian(AtomisticGenericJob):
             self.input.from_hdf(hdf5_input)
             self.structure = Atoms().from_hdf(hdf5_input)
 
+    def visualize_MO(self,index):
+        n_MO = self.output.scf_density.shape[0]
+        assert index > 0 and index <= n_MO
+        assert len(self.output.numbers) < 50 # check whether structure does not become too large for interactive calculation of cube file
+
+        #make cube file
+        path = self.path+'_hdf5/'+self.name+'/input'
+        out = subprocess.check_output(
+                "ml load Gaussian/g16_E.01-intel-2018a; cubegen 1 MO={} {}.fchk {}.cube".format(index,path,path),
+                stderr=subprocess.STDOUT,
+                universal_newlines=True,
+                shell=True,
+            )
+        #visualize cube file
+        try:
+            import nglview
+        except ImportError:
+            raise ImportError("The animate_nma_mode() function requires the package nglview to be installed")
+
+        picture = nglview.show_ase(self.structure)
+        picture.add_component('{}.cube'.format(path), opacity=.3)
+        return picture
+
     def do_nma(self):
         mol = tamkin.Molecule(self.output.numbers, self.output.positions, self.output.masses, self.output.energy_tot, self.output.forces *-1, self.output.hessian)
         self.nma = tamkin.NMA(mol)
 
-    def animate_nma_mode(self,index,amplitude=1.0*angstrom,frames=36,spacefill=False,particle_size=0.5):
+    def animate_nma_mode(self,index,amplitude=1.0,frames=24,spacefill=False,particle_size=0.5):
         coordinates = self.nma.coordinates
         symbols = [periodic[n].symbol for n in self.nma.numbers]
 
@@ -128,6 +151,10 @@ class GaussianOutput(GenericOutput):
     @property
     def hessian(self):
         return self._job['output/generic/hessian']
+
+    @property
+    def scf_density(self):
+        return self._job['output/generic/dft/scf_density']
 
 
 def write_input(input_dict,working_directory='.'):
