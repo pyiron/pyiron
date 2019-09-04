@@ -375,7 +375,10 @@ class AtomisticGenericJob(GenericJobCore):
         """
         db_dict = super(AtomisticGenericJob, self).db_entry()
         if self.structure:
-            parent_structure = self.structure.get_parent_basis()
+            if isinstance(self.structure, Atoms):
+                parent_structure = self.structure.get_parent_basis()
+            else:
+                parent_structure = self.structure.copy()
             db_dict["ChemicalFormula"] = parent_structure.get_chemical_formula()
         return db_dict
 
