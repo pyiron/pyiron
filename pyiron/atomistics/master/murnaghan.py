@@ -772,7 +772,12 @@ class Murnaghan(AtomisticParallelMaster):
             for job_id in self.child_ids:
                 ham = self.project_hdf5.inspect(job_id)
                 print("job_id: ", job_id, ham.status)
-                energy = ham["output/generic/energy_tot"][-1]
+                if "energy_tot" in ham["output/generic"]:
+                    energy = ham["output/generic/energy_tot"][-1]
+                elif "energy_pot" in ham["output/generic"]:
+                    energy = ham["output/generic/energy_pot"][-1]
+                else:
+                    raise ValueError('Neither energy_pot or energy_tot was found.')
                 volume = ham["output/generic/volume"][-1]
                 erg_lst.append(np.mean(energy))
                 err_lst.append(np.var(energy))
