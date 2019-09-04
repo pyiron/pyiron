@@ -63,7 +63,7 @@ class Gaussian(AtomisticGenericJob):
             self.input.from_hdf(hdf5_input)
             self.structure = Atoms().from_hdf(hdf5_input)
 
-    def nma(self):
+    def do_nma(self):
         mol = tamkin.Molecule(self.output.numbers, self.output.positions, self.output.masses, self.output.energy_tot, self.output.forces *-1, self.output.hessian)
         self.nma = tamkin.NMA(mol)
 
