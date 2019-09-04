@@ -13,3 +13,4 @@ dependencies:
 - notebook
 - ipykernel
 - nglview
+- seaborn

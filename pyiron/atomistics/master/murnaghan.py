@@ -9,6 +9,7 @@ import scipy.integrate
 import scipy.optimize as spy
 import scipy.constants
 import warnings
+from pyiron.atomistics.structure.atoms import Atoms, ase_to_pyiron
 from pyiron.atomistics.master.parallel import AtomisticParallelMaster
 from pyiron.base.master.parallel import JobGenerator
 
@@ -747,7 +748,10 @@ class Murnaghan(AtomisticParallelMaster):
                 hdf5["equilibrium_b_prime"] = fit_dict["b_prime_eq"]
 
             with self._hdf5.open("output") as hdf5:
-                self.get_structure(iteration_step=-1).to_hdf(hdf5)
+                structure = self.get_structure(iteration_step=-1)
+                if not isinstance(structure, Atoms):
+                    structure = ase_to_pyiron(structure)
+                structure.to_hdf(hdf5)
 
             self.fit_dict = fit_dict
         return fit_dict
@@ -772,7 +776,12 @@ class Murnaghan(AtomisticParallelMaster):
             for job_id in self.child_ids:
                 ham = self.project_hdf5.inspect(job_id)
                 print("job_id: ", job_id, ham.status)
-                energy = ham["output/generic/energy_tot"][-1]
+                if "energy_tot" in ham["output/generic"].list_nodes():
+                    energy = ham["output/generic/energy_tot"][-1]
+                elif "energy_pot" in ham["output/generic"].list_nodes():
+                    energy = ham["output/generic/energy_pot"][-1]
+                else:
+                    raise ValueError('Neither energy_pot or energy_tot was found.')
                 volume = ham["output/generic/volume"][-1]
                 erg_lst.append(np.mean(energy))
                 err_lst.append(np.var(energy))
