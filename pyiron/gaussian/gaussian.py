@@ -83,7 +83,17 @@ class Gaussian(AtomisticGenericJob):
             raise ImportError("The animate_nma_mode() function requires the package nglview to be installed")
 
         picture = nglview.show_ase(self.structure)
-        picture.add_component('{}.cube'.format(path), opacity=.3)
+        picture.add_component('{}.cube'.format(path))
+        picture.add_component('{}.cube'.format(path))
+        """
+        This function should always be accompanied with the following commands (in a separate cell)
+        
+        picture[1].update_surface(isolevel=1, color='blue', opacity=.3)
+        picture[2].update_surface(isolevel=-1, color='red', opacity=.3)
+        
+        This makes sure that the bonding and non-bonding MO's are plotted and makes them transparent
+        """
+            
         return picture
 
     def do_nma(self):
