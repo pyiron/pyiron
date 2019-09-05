@@ -142,19 +142,19 @@ class GaussianOutput(GenericOutput):
 
     @property
     def numbers(self):
-        return self._job['output/generic/numbers']
+        return self._job['output/structure/numbers']
 
     @property
     def masses(self):
-        return self._job['output/generic/masses']
-
-    @property
-    def hessian(self):
-        return self._job['output/generic/hessian']
+        return self._job['output/structure/masses']
 
     @property
     def scf_density(self):
-        return self._job['output/generic/dft/scf_density']
+        return self._job['output/structure/dft/scf_density']
+    
+    @property
+    def hessian(self):
+        return self._job['output/generic/hessian']
 
 
 def write_input(input_dict,working_directory='.'):
@@ -232,41 +232,44 @@ def fchk2dict(fchk):
     fchkdict['lot']         = fchk.lot
     fchkdict['basis_set']   = fchk.basis
 
-    fchkdict['generic/numbers']     = fchk.fields.get('Atomic numbers')
-    fchkdict['generic/masses']      = fchk.fields.get("Real atomic weights")*amu
-    fchkdict['generic/charges']     = fchk.fields.get('Mulliken Charges')
-    fchkdict['generic/dipole']      = fchk.fields.get('Dipole Moment')
-    fchkdict['generic/dft/n_electrons']         = fchk.fields.get('Number of electrons')
-    fchkdict['generic/dft/n_alpha_electrons']   = fchk.fields.get('Number of alpha electrons')
-    fchkdict['generic/dft/n_beta_electrons']    = fchk.fields.get('Number of beta electrons')
-    fchkdict['generic/dft/n_basis_functions']   = fchk.fields.get('Number of basis functions')
+    fchkdict['structure/numbers']     = fchk.fields.get('Atomic numbers')
+    fchkdict['structure/masses']      = fchk.fields.get("Real atomic weights")*amu
+    fchkdict['structure/charges']     = fchk.fields.get('Mulliken Charges')
+    fchkdict['structure/dipole']      = fchk.fields.get('Dipole Moment')
+    fchkdict['structure/dft/n_electrons']         = fchk.fields.get('Number of electrons')
+    fchkdict['structure/dft/n_alpha_electrons']   = fchk.fields.get('Number of alpha electrons')
+    fchkdict['structure/dft/n_beta_electrons']    = fchk.fields.get('Number of beta electrons')
+    fchkdict['structure/dft/n_basis_functions']   = fchk.fields.get('Number of basis functions')
 
     # Orbital information
-    fchkdict['generic/dft/alpha_orbital_e']     = fchk.fields.get('Alpha Orbital Energies')
-    fchkdict['generic/dft/beta_orbital_e']      = fchk.fields.get('Beta Orbital Energies')
+    fchkdict['structure/dft/alpha_orbital_e']     = fchk.fields.get('Alpha Orbital Energies')
+    fchkdict['structure/dft/beta_orbital_e']      = fchk.fields.get('Beta Orbital Energies')
 
     # Densities
-    fchkdict['generic/dft/scf_density']         = _triangle_to_dense(fchk.fields.get('Total SCF Density'))
-    fchkdict['generic/dft/spin_scf_density']    = _triangle_to_dense(fchk.fields.get('Spin SCF Density'))
+    fchkdict['structure/dft/scf_density']         = _triangle_to_dense(fchk.fields.get('Total SCF Density'))
+    fchkdict['structure/dft/spin_scf_density']    = _triangle_to_dense(fchk.fields.get('Spin SCF Density'))
 
     if fchk.lot.upper() in ['MP2', 'MP3', 'CC', 'CI']:
         # only one of the lots should be present, hence using the same key
-        fchkdict['generic/dft/post_scf_density']      = _triangle_to_dense(fchk.fields.get('Total {} Density'.format(fchk.lot)))
-        fchkdict['generic/dft/post_spin_scf_density'] = _triangle_to_dense(fchk.fields.get('Spin {} Density'.format(fchk.lot)))
+        fchkdict['structure/dft/post_scf_density']      = _triangle_to_dense(fchk.fields.get('Total {} Density'.format(fchk.lot)))
+        fchkdict['structure/dft/post_spin_scf_density'] = _triangle_to_dense(fchk.fields.get('Spin {} Density'.format(fchk.lot)))
 
     # Specific job information
     if fchkdict['jobtype'] == 'fopt':
+        fchkdict['structure/positions']   = fchk.get_optimization_coordinates()[-1]/angstrom
         fchkdict['generic/positions']     = fchk.get_optimization_coordinates()/angstrom
         fchkdict['generic/energy_tot']    = fchk.get_optimization_energies()/electronvolt
         fchkdict['generic/forces']        = fchk.get_optimization_gradients()/(electronvolt/angstrom) * -1
 
     if fchkdict['jobtype'] == 'freq':
+        fchkdict['structure/positions']   = fchk.fields.get('Current cartesian coordinates').reshape([-1, 3])/angstrom
         fchkdict['generic/positions']     = fchk.fields.get('Current cartesian coordinates').reshape([-1, 3])/angstrom
         fchkdict['generic/forces']        = fchk.fields.get('Cartesian Gradient').reshape([-1, 3])/(electronvolt/angstrom) *-1
         fchkdict['generic/hessian']       = fchk.get_hessian()/(electronvolt**2/angstrom**2)
         fchkdict['generic/energy_tot']    = fchk.fields.get('Total Energy')/electronvolt
 
     if fchkdict['jobtype'] == 'sp':
+        fchkdict['structure/positions']   = fchk.fields.get('Current cartesian coordinates').reshape([-1, 3])/angstrom
         fchkdict['generic/positions']     = fchk.fields.get('Current cartesian coordinates').reshape([-1, 3])/angstrom
         fchkdict['generic/energy_tot']    = fchk.fields.get('Total Energy')/electronvolt
 
