@@ -415,14 +415,15 @@ class AtomisticGenericJob(GenericJobCore):
             pyiron.atomistics.job.atomistic.Trajectory: Trajectory instance
 
         """
-        if snapshot_indices is None:
-            positions = self['output/generic/positions']
-            cells = self['output/generic/cells']
+        cells = self.output.cells
+        if overwrite_positions is not None:
+            positions = np.array(overwrite_positions).copy()
+            if overwrite_cells is not None:
+                if overwrite_cells.shape == (len(positions), 3, 3):
+                    cells = np.array(overwrite_cells).copy()
+                else:
+                    raise ValueError("overwrite_cells must be compatible with the positions!")
         else:
-<<<<<<< HEAD
-            positions = self['output/generic/positions'][snapshot_indices]
-            cells = self['output/generic/cells'][snapshot_indices]
-=======
             positions = self.output.positions.copy()
         if len(positions) != len(cells):
             raise ValueError("The positions must have the same length as the cells!")
@@ -436,14 +437,20 @@ class AtomisticGenericJob(GenericJobCore):
         if snapshot_indices is not None:
             positions = positions[snapshot_indices]
             cells = cells[snapshot_indices]
->>>>>>> 783672f8... Defining a dummy cell when visualizing clusters in nglview
         if atom_indices is None:
-            return Trajectory(positions[::stride], self.structure.get_parent_basis(),
-                              center_of_mass=center_of_mass, cells=cells[::stride])
+            return Trajectory(
+                positions[::stride],
+                self.structure.get_parent_basis(),
+                center_of_mass=center_of_mass,
+                cells=cells[::stride],
+            )
         else:
-            return Trajectory(positions[::stride, atom_indices, :],
-                              self.structure.get_parent_basis()[atom_indices], center_of_mass=center_of_mass,
-                              cells=cells[::stride])
+            return Trajectory(
+                positions[::stride, atom_indices, :],
+                self.structure.get_parent_basis()[atom_indices],
+                center_of_mass=center_of_mass,
+                cells=cells[::stride],
+            )
 
     def write_traj(self, filename, file_format=None, parallel=True, append=False, stride=1, center_of_mass=False,
                    atom_indices=None, snapshot_indices=None, **kwargs):
