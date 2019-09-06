@@ -1447,7 +1447,8 @@ class Atoms(object):
 
         if show_cell:
             if parent_basis.cell is not None:
-                view.add_unitcell()
+                if all(np.max(parent_basis.cell, axis=0) > 1e-2):
+                    view.add_unitcell()
 
         if vector_color is None and vector_field is not None:
             vector_color = (
