@@ -640,7 +640,11 @@ class AtomisticGenericJob(GenericJobCore):
         if not (self.structure is not None):
             raise AssertionError()
         snapshot = self.structure.copy()
-        if self.output.cells is None or self.output.cells[0] is None:
+        conditions = list()
+        if isinstance(np.array(self.output.cells), (list, np.ndarray)):
+            conditions.append(self.output.cells[0] is None)
+        conditions.append(self.output.cells is None)
+        if any(conditions):
             snapshot.cell = None
         else:
             snapshot.cell = self.output.cells[iteration_step]
