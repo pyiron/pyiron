@@ -486,7 +486,11 @@ class AtomisticGenericJob(GenericJobCore):
         if len(positions) != len(cells):
             raise ValueError("The positions must have the same length as the cells!")
 
-        if cells is None or cells[0] is None:
+        conditions = list()
+        if isinstance(np.array(cells), (list, np.ndarray)):
+            conditions.append(cells[0] is None)
+        conditions.append(cells is None)
+        if any(conditions):
             max_pos = np.max(np.max(positions, axis=0), axis=0)
             max_pos[np.abs(max_pos) < 1e-2] = 10
             cell = np.eye(3) * max_pos
@@ -636,7 +640,10 @@ class AtomisticGenericJob(GenericJobCore):
         if not (self.structure is not None):
             raise AssertionError()
         snapshot = self.structure.copy()
-        snapshot.cell = self.output.cells[iteration_step]
+        if self.output.cells is None or self.output.cells[0] is None:
+            snapshot.cell = None
+        else:
+            snapshot.cell = self.output.cells[iteration_step]
         snapshot.positions = self.output.positions[iteration_step]
         indices = self.output.indices
         if indices is not None and len(indices) > max([iteration_step, 0]):
