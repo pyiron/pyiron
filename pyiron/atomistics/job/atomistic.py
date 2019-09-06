@@ -486,6 +486,12 @@ class AtomisticGenericJob(GenericJobCore):
         if len(positions) != len(cells):
             raise ValueError("The positions must have the same length as the cells!")
 
+        if cells[0] is None:
+            max_pos = np.max(np.max(positions, axis=0), axis=0)
+            max_pos[np.abs(max_pos) < 1e-2] = 10
+            cell = np.eye(3) * max_pos
+            cells = np.array([cell] * len(positions))
+
         if snapshot_indices is not None:
             positions = positions[snapshot_indices]
             cells = cells[snapshot_indices]

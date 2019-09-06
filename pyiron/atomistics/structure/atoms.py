@@ -1167,7 +1167,11 @@ class Atoms(object):
             (str): The PDB-formatted representation of the structure.
         """
         from ase.geometry import cell_to_cellpar, cellpar_to_cell
-
+        if cell is None:
+            # Define a dummy cell if it doesn't exist (eg. for clusters)
+            max_pos = np.max(positions, axis=0)
+            max_pos[np.abs(max_pos) < 1e-2] = 10
+            cell = np.eye(3) * max_pos
         cellpar = cell_to_cellpar(cell)
         exportedcell = cellpar_to_cell(cellpar)
         rotation = np.linalg.solve(cell, exportedcell)
