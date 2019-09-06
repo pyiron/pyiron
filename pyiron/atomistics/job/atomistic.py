@@ -402,18 +402,23 @@ class AtomisticGenericJob(GenericJobCore):
             new_ham._generic_input['structure'] = 'continue_final'
         return new_ham
 
-    def trajectory(self, stride=1, center_of_mass=False, atom_indices=None, snapshot_indices=None):
+    def trajectory(
+        self, stride=1, center_of_mass=False, atom_indices=None,
+            snapshot_indices=None, overwrite_positions=None, overwrite_cells=None
+    ):
         """
-
         Args:
             stride (int): The trajectories are generated with every 'stride' steps
             center_of_mass (list/numpy.ndarray): The center of mass
             atom_indices (list/numpy.ndarray): The atom indices for which the trajectory should be generated
             snapshot_indices (list/numpy.ndarray): The snapshots for which the trajectory should be generated
-
+            overwrite_positions (list/numpy.ndarray): List of positions that are meant to overwrite the existing
+                                                      trajectory. Useful to wrap coordinates for example
+            overwrite_cells(list/numpy.ndarray): List of cells that are meant to overwrite the existing
+                                                 trajectory. Only used when `overwrite_positions` is defined. This must
+                                                 have the same length of `overwrite_positions`
         Returns:
             pyiron.atomistics.job.atomistic.Trajectory: Trajectory instance
-
         """
         cells = self.output.cells
         if overwrite_positions is not None:
