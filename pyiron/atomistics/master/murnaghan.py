@@ -501,13 +501,9 @@ class EnergyVolumeFit(object):
         Returns:
             list: [E0, B0, BP, V0], [E0_err, B0_err, BP_err, V0_err]
         """
-        try:
-            import matplotlib.pylab as plt
-        except ImportError:
-            import matplotlib.pyplot as plt
         vol_lst = np.array(volume_lst).flatten()
         eng_lst = np.array(energy_lst).flatten()
-        a, b, c = plt.polyfit(vol_lst, eng_lst, 2)
+        a, b, c = np.polyfit(vol_lst, eng_lst, 2)
         v0 = -b / (2 * a)
         ev_angs_to_gpa = (
             1e21
