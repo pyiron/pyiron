@@ -505,12 +505,8 @@ class EnergyVolumeFit(object):
         eng_lst = np.array(energy_lst).flatten()
         a, b, c = np.polyfit(vol_lst, eng_lst, 2)
         v0 = -b / (2 * a)
-        ev_angs_to_gpa = (
-            1e21
-            / scipy.constants.physical_constants["joule-electron volt relationship"][0]
-        )
         pfit_leastsq, perr_leastsq = fit_leastsq(
-            [a * v0 ** 2 + b * v0 + c, 2 * a * v0 * ev_angs_to_gpa, 4, v0],
+            [a * v0 ** 2 + b * v0 + c, 2 * a * v0 * eV_div_A3_to_GPa, 4, v0],
             vol_lst,
             eng_lst,
             fittype,
@@ -548,7 +544,7 @@ class EnergyVolumeFit(object):
             return ValueError("parameter 'fit_dict' has to be defined!")
         v = volume_lst
         e0 = self._fit_dict["energy_eq"]
-        b0 = self._fit_dict["bulkmodul_eq"] / 160.21766208
+        b0 = self._fit_dict["bulkmodul_eq"] / eV_div_A3_to_GPa
         b_p = self._fit_dict["b_prime_eq"]
         v0 = self._fit_dict["volume_eq"]
         if self._fit_dict["fit_type"] == "birch":
