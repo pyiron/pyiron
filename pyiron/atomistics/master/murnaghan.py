@@ -790,22 +790,9 @@ class Murnaghan(AtomisticParallelMaster):
                 E0 = self.fit_dict["energy_eq"]
                 B0 = self.fit_dict["bulkmodul_eq"]
                 BP = self.fit_dict["b_prime_eq"]
-                if self.input["fit_type"].lower() == "birchmurnaghan":
-                    eng_fit_lst = birchmurnaghan_energy(
-                        x_i, E0, B0 / eV_div_A3_to_GPa, BP, V0
-                    )
-                elif self.input["fit_type"].lower() == "vinet":
-                    eng_fit_lst = vinet_energy(x_i, E0, B0 / eV_div_A3_to_GPa, BP, V0)
-                elif self.input["fit_type"].lower() == "murnaghan":
-                    eng_fit_lst = murnaghan(x_i, E0, B0 / eV_div_A3_to_GPa, BP, V0)
-                elif self.input["fit_type"].lower() == "pouriertarantola":
-                    eng_fit_lst = pouriertarantola(
-                        x_i, E0, B0 / eV_div_A3_to_GPa, BP, V0
-                    )
-                elif self.input["fit_type"].lower() == "birch":
-                    eng_fit_lst = birch(x_i, E0, B0, BP, V0)
-                else:
-                    raise ValueError
+                eng_fit_lst = fitfunction(parameters=[E0, B0, BP, V0],
+                                          vol=x_i,
+                                          fittype=self.input["fit_type"])
                 plt.plot(
                     x_i,
                     eng_fit_lst,
