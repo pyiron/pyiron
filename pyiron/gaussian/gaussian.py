@@ -65,24 +65,24 @@ class Gaussian(AtomisticGenericJob):
 
     def visualize_MO(self,index,particle_size=0.5,show_bonds=True):
         n_MO = self.get('output/structure/dft/scf_density').shape[0]
-        assert index > 0 and index <= n_MO
+        assert index >= 0 and index < n_MO
         assert len(self.output.numbers) < 50 # check whether structure does not become too large for interactive calculation of cube file
-        
+
         # print orbital information
-        occ_alpha = int(self.get('output/structure/dft/n_alpha_electrons') >= index)
-        occ_beta = int(self.get('output/structure/dft/n_beta_electrons') >= index)
-        
+        occ_alpha = int(self.get('output/structure/dft/n_alpha_electrons') > index)
+        occ_beta = int(self.get('output/structure/dft/n_beta_electrons') > index)
+
         if self.get('output/structure/dft/beta_orbital_e') is None:
-            orbital_energy = self.get('output/structure/dft/alpha_orbital_e')[index-1]
+            orbital_energy = self.get('output/structure/dft/alpha_orbital_e')[index]
             print("Orbital energy = {} \t Occ. = {}".format(orbital_energy,occ_alpha+occ_beta))
         else:
-            orbital_energy = [self.get('output/structure/dft/alpha_orbital_e')[index-1],self.get('output/structure/dft/beta_orbital_e')[index-1]]
+            orbital_energy = [self.get('output/structure/dft/alpha_orbital_e')[index],self.get('output/structure/dft/beta_orbital_e')[index]]
             print("Orbital energies (alpha,beta) = {},{} \t Occ. = {},{}".format(orbital_energy[0],orbital_energy[1],occ_alpha,occ_beta))
-        
+
         # make cube file
         path = self.path+'_hdf5/'+self.name+'/input'
         out = subprocess.check_output(
-                "ml load Gaussian/g16_E.01-intel-2018a; cubegen 1 MO={} {}.fchk {}.cube".format(index,path,path),
+                "ml load Gaussian/g16_E.01-intel-2018a; cubegen 1 MO={} {}.fchk {}.cube".format(index+1,path,path),
                 stderr=subprocess.STDOUT,
                 universal_newlines=True,
                 shell=True,
@@ -118,13 +118,13 @@ class Gaussian(AtomisticGenericJob):
         view.add_component('{}.cube'.format(path))
         """
         This function should always be accompanied with the following commands (in a separate cell)
-        
+
         view[1].update_surface(isolevel=1, color='blue', opacity=.3)
         view[2].update_surface(isolevel=-1, color='red', opacity=.3)
-        
+
         This makes sure that the bonding and non-bonding MO's are plotted and makes them transparent
         """
-            
+
         return view
 
     def do_nma(self):
@@ -188,7 +188,7 @@ class GaussianOutput(GenericOutput):
     @property
     def masses(self):
         return self._job['output/structure/masses']
-    
+
     @property
     def hessian(self):
         return self._job['output/generic/hessian']
