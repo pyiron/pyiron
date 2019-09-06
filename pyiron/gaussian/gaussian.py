@@ -4,14 +4,17 @@
 
 import os,subprocess
 import numpy as np
+import matplotlib.pyplot as pt
 
 from pyiron.base.generic.parameters import GenericParameters
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob,GenericOutput,Trajectory
 from molmod.io.fchk import FCHKFile
-from molmod.units import amu,angstrom,electronvolt
+from molmod.units import amu,angstrom,electronvolt,centimeter
+from molmod.constants import lightspeed
 from molmod.periodic import periodic
 import tamkin
+
 
 __author__ = "Jan Janssen, Sander Borgmans"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
@@ -158,6 +161,49 @@ class Gaussian(AtomisticGenericJob):
         else:
             animation.add_ball_and_stick()
         return animation
+
+    def plot_IR_spectrum(self,width=10):
+        """
+        Plot IR spectrum based on Lorentzian width
+        Read from log file, implementing calculation of intensities from fchk would be cumbersome
+        """
+        # Read IR intensities from log file
+        path = self.path+'_hdf5/'+self.name+'/input.log'
+        ir_int = np.zeros(len(self.nma.freqs)-len(self.nma.zeros)) # get number of ir_intensities
+        with open(path,'r') as f:
+            lines = f.readlines()
+
+        # Assert normal termination
+        assert "Normal termination of Gaussian" in lines[-1]
+
+        counter=0
+        for line in lines:
+            if 'IR Inten    --' in line:
+                ints = np.array([float(i) for i in line[15:].split()])
+                ir_int[counter:counter+len(ints)] = ints
+                counter+=len(ints)
+
+
+        def Lorentz(x,p,w):
+            """
+            Lorentzian line shape function, p is position of max, w is FWHM and x is current frequency
+            """
+            return 1./(1.+((p-x)/(w/2.))**2)
+
+        freqs = self.nma.freqs*(electronvolt/angstrom)/(lightspeed/centimeter)
+        xr = np.linspace(0,4000,1000)
+        yr = np.zeros(xr.shape)
+
+        for n,intensity in enumerate(ir_int):
+            print(freqs[len(self.nma.zeros)+n],intensity)
+            yr+=intensity*Lorentz(xr,freqs[len(self.nma.zeros)+n],width)
+
+        pt.figure()
+        pt.plot(xr,yr)
+        pt.xlabel(r'Frequency (cm$^{-1}$)')
+        pt.ylabel('Intensity (a.u.)')
+        pt.show()
+
 
 class GaussianInput(GenericParameters):
     def __init__(self, input_file_name=None):
