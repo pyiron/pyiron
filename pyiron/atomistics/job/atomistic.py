@@ -419,8 +419,24 @@ class AtomisticGenericJob(GenericJobCore):
             positions = self['output/generic/positions']
             cells = self['output/generic/cells']
         else:
+<<<<<<< HEAD
             positions = self['output/generic/positions'][snapshot_indices]
             cells = self['output/generic/cells'][snapshot_indices]
+=======
+            positions = self.output.positions.copy()
+        if len(positions) != len(cells):
+            raise ValueError("The positions must have the same length as the cells!")
+
+        if cells[0] is None:
+            max_pos = np.max(np.max(positions, axis=0), axis=0)
+            max_pos[np.abs(max_pos) < 1e-2] = 10
+            cell = np.eye(3) * max_pos
+            cells = np.array([cell] * len(positions))
+
+        if snapshot_indices is not None:
+            positions = positions[snapshot_indices]
+            cells = cells[snapshot_indices]
+>>>>>>> 783672f8... Defining a dummy cell when visualizing clusters in nglview
         if atom_indices is None:
             return Trajectory(positions[::stride], self.structure.get_parent_basis(),
                               center_of_mass=center_of_mass, cells=cells[::stride])
