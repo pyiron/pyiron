@@ -1534,7 +1534,8 @@ class Atoms(object):
             view.add_ball_and_stick()
         if show_cell:
             if parent_basis.cell is not None:
-                view.add_unitcell()
+                if all(np.max(parent_basis.cell, axis=0) > 1e-2):
+                    view.add_unitcell()
         if show_axes:
             view.shape.add_arrow([-2, -2, -2], [2, -2, -2], [1, 0, 0], 0.5)
             view.shape.add_arrow([-2, -2, -2], [-2, 2, -2], [0, 1, 0], 0.5)
