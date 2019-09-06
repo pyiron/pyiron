@@ -536,8 +536,16 @@ class AtomisticGenericJob(GenericJobCore):
         """
         if not (self.structure is not None):
             raise AssertionError()
+            
         snapshot = self.structure.copy()
-        snapshot.cell = self.get("output/generic/cells")[iteration_step]
+        
+        if self.get("output/generic/cells") is None:
+            max_pos = np.max(np.max(positions, axis=0), axis=0)
+            max_pos[np.abs(max_pos) < 1e-2] = 10
+            cell = np.eye(3) * max_pos
+            snapshot.cell = np.array([cell] * len(positions))
+        else:
+            snapshot.cell = self.get("output/generic/cells")[iteration_step]
         snapshot.positions = self.get("output/generic/positions")[iteration_step]
         indices = self.get("output/generic/indices")
         if indices is not None:
