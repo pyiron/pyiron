@@ -509,54 +509,13 @@ class EnergyVolumeFit(object):
             1e21
             / scipy.constants.physical_constants["joule-electron volt relationship"][0]
         )
-        pfit_leastsq, perr_leastsq = self._fit_leastsq_funct(
+        pfit_leastsq, perr_leastsq = fit_leastsq(
             [a * v0 ** 2 + b * v0 + c, 2 * a * v0 * ev_angs_to_gpa, 4, v0],
             vol_lst,
             eng_lst,
-            fitfunction,
             fittype,
         )
         return pfit_leastsq, perr_leastsq  # [e0, b0, bP, v0]
-
-    @staticmethod
-    def _fit_leastsq_funct(p0, datax, datay, function, fittype):
-        """
-        Internal least square fit function
-
-        Args:
-            p0 (list): [E0, B0, BP, V0] list of fit parameters
-            datax (float/numpy.dnarray): volumes to fit
-            datay (float/numpy.dnarray): energies corresponding to the volumes
-            fittype (str): on of the following ['birch', 'birchmurnaghan', 'murnaghan', 'pouriertarantola', 'vinet']
-
-        Returns:
-            list: [E0, B0, BP, V0], [E0_err, B0_err, BP_err, V0_err]
-        """
-        # http://stackoverflow.com/questions/14581358/getting-standard-errors-on-fitted-parameters-using-the-optimize-leastsq-method-i
-
-        errfunc = lambda p, x, y, fittype: function(p, x, fittype) - y
-
-        pfit, pcov, infodict, errmsg, success = spy.leastsq(
-            errfunc, p0, args=(datax, datay, fittype), full_output=1, epsfcn=0.0001
-        )
-
-        if (len(datay) > len(p0)) and pcov is not None:
-            s_sq = (errfunc(pfit, datax, datay, fittype) ** 2).sum() / (
-                len(datay) - len(p0)
-            )
-            pcov = pcov * s_sq
-        else:
-            pcov = np.inf
-
-        error = []
-        for i in range(len(pfit)):
-            try:
-                error.append(np.absolute(pcov[i][i]) ** 0.5)
-            except:
-                error.append(0.00)
-        pfit_leastsq = pfit
-        perr_leastsq = np.array(error)
-        return pfit_leastsq, perr_leastsq
 
     @staticmethod
     def get_error(x_lst, y_lst, p_fit):
