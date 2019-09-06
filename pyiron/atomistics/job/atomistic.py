@@ -483,14 +483,20 @@ class AtomisticGenericJob(GenericJobCore):
                     raise ValueError("overwrite_cells must be compatible with the positions!")
         else:
             positions = self.output.positions.copy()
-        if len(positions) != len(cells):
-            raise ValueError("The positions must have the same length as the cells!")
 
-        if cells[0] is None:
+
+        conditions = list()
+        if isinstance(np.array(cells), (list, np.ndarray)):
+            conditions.append(cells[0] is None)
+        conditions.append(cells is None)
+        if any(conditions):
             max_pos = np.max(np.max(positions, axis=0), axis=0)
             max_pos[np.abs(max_pos) < 1e-2] = 10
             cell = np.eye(3) * max_pos
             cells = np.array([cell] * len(positions))
+        else:
+            if len(positions) != len(cells):
+                raise ValueError("The positions must have the same length as the cells!")
 
         if snapshot_indices is not None:
             positions = positions[snapshot_indices]
@@ -509,7 +515,7 @@ class AtomisticGenericJob(GenericJobCore):
                 center_of_mass=center_of_mass,
                 cells=cells[::stride],
             )
-
+        
     def write_traj(
         self,
         filename,
