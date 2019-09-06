@@ -63,12 +63,23 @@ class Gaussian(AtomisticGenericJob):
             self.input.from_hdf(hdf5_input)
             self.structure = Atoms().from_hdf(hdf5_input)
 
-    def visualize_MO(self,index):
-        n_MO = self.output.scf_density.shape[0]
+    def visualize_MO(self,index,particle_size=0.5,show_bonds=True):
+        n_MO = self.get('output/structure/dft/scf_density').shape[0]
         assert index > 0 and index <= n_MO
         assert len(self.output.numbers) < 50 # check whether structure does not become too large for interactive calculation of cube file
-
-        #make cube file
+        
+        # print orbital information
+        occ_alpha = int(self.get('output/structure/dft/n_alpha_electrons') >= index)
+        occ_beta = int(self.get('output/structure/dft/n_beta_electrons') >= index)
+        
+        if self.get('output/structure/dft/beta_orbital_e') is None:
+            orbital_energy = self.get('output/structure/dft/alpha_orbital_e')[index-1]
+            print("Orbital energy = {} \t Occ. = {}".format(orbital_energy,occ_alpha+occ_beta))
+        else:
+            orbital_energy = [self.get('output/structure/dft/alpha_orbital_e')[index-1],self.get('output/structure/dft/beta_orbital_e')[index-1]]
+            print("Orbital energies (alpha,beta) = {},{} \t Occ. = {},{}".format(orbital_energy[0],orbital_energy[1],occ_alpha,occ_beta))
+        
+        # make cube file
         path = self.path+'_hdf5/'+self.name+'/input'
         out = subprocess.check_output(
                 "ml load Gaussian/g16_E.01-intel-2018a; cubegen 1 MO={} {}.fchk {}.cube".format(index,path,path),
@@ -76,25 +87,45 @@ class Gaussian(AtomisticGenericJob):
                 universal_newlines=True,
                 shell=True,
             )
-        #visualize cube file
+        # visualize cube file
         try:
             import nglview
         except ImportError:
             raise ImportError("The animate_nma_mode() function requires the package nglview to be installed")
 
-        picture = nglview.show_ase(self.structure)
-        picture.add_component('{}.cube'.format(path))
-        picture.add_component('{}.cube'.format(path))
+        atom_numbers = []
+        atom_positions = []
+
+        with open('{}.cube'.format(path),'r') as f:
+            for i in range(2):
+                f.readline()
+            n_atoms = int(f.readline().split()[0][1:])
+            for i in range(3):
+                f.readline()
+            for n in range(n_atoms):
+                line = f.readline().split()
+                atom_numbers.append(int(line[0]))
+                atom_positions.append(np.array([float(m) for m in line[2:]])/angstrom)
+
+        structure = Atoms(numbers=np.array(atom_numbers),positions=atom_positions)
+        view = nglview.show_ase(structure)
+        if not show_bonds:
+            view.add_spacefill(radius_type='vdw', scale=0.5, radius=particle_size)
+            view.remove_ball_and_stick()
+        else:
+            view.add_ball_and_stick()
+        view.add_component('{}.cube'.format(path))
+        view.add_component('{}.cube'.format(path))
         """
         This function should always be accompanied with the following commands (in a separate cell)
         
-        picture[1].update_surface(isolevel=1, color='blue', opacity=.3)
-        picture[2].update_surface(isolevel=-1, color='red', opacity=.3)
+        view[1].update_surface(isolevel=1, color='blue', opacity=.3)
+        view[2].update_surface(isolevel=-1, color='red', opacity=.3)
         
         This makes sure that the bonding and non-bonding MO's are plotted and makes them transparent
         """
             
-        return picture
+        return view
 
     def do_nma(self):
         mol = tamkin.Molecule(self.output.numbers, self.output.positions, self.output.masses, self.output.energy_tot, self.output.forces *-1, self.output.hessian)
@@ -157,10 +188,6 @@ class GaussianOutput(GenericOutput):
     @property
     def masses(self):
         return self._job['output/structure/masses']
-
-    @property
-    def scf_density(self):
-        return self._job['output/structure/dft/scf_density']
     
     @property
     def hessian(self):
