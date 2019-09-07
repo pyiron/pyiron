@@ -83,13 +83,42 @@ class Settings(with_metaclass(Singleton)):
             "sql_user_key": None,
             "sql_database": None,
         }
-        environment_keys = os.environ.keys()
-        if "PYIRONCONFIG" in environment_keys:
-            config_file = environment_keys["PYIRONCONFIG"]
+        environment = os.environ
+        if "PYIRONCONFIG" in environment.keys():
+            config_file = environment["PYIRONCONFIG"]
         else:
             config_file = os.path.expanduser(os.path.join("~", ".pyiron"))
         if os.path.isfile(config_file):
             self._config_parse_file(config_file)
+        elif any(["PYIRON" in e for e in environment.keys()]):
+            if "PYIRONUSER" in environment.keys():
+                self._configuration["user"] = environment["PYIRONUSER"]
+            if "PYIRONRESOURCEPATHS" in environment.keys():
+                self._configuration["resource_paths"] = environment["PYIRONRESOURCEPATHS"]
+            if "PYIRONPROJECTPATHS" in environment.keys():
+                self._configuration["project_paths"] = environment["PYIRONPROJECTPATHS"]
+            if "PYIRONSQLCONNECTIONSTRING" in environment.keys():
+                self._configuration["sql_connection_string"] = environment["PYIRONSQLCONNECTIONSTRING"]
+            if "PYIRONSQLTABLENAME" in environment.keys():
+                self._configuration["sql_table_name"] = environment["PYIRONSQLTABLENAME"]
+            if "PYIRONSQLVIEWCONNECTIONSTRING" in environment.keys():
+                self._configuration["sql_view_connection_string"] = environment["PYIRONSQLVIEWCONNECTIONSTRING"]
+            if "PYIRONSQLVIEWTABLENAME" in environment.keys():
+                self._configuration["sql_view_table_name"] = environment["PYIRONSQLVIEWTABLENAME"]
+            if "PYIRONSQLVIEWUSER" in environment.keys():
+                self._configuration["sql_view_user"] = environment["PYIRONSQLVIEWUSER"]
+            if "PYIRONSQLVIEWUSERKEY" in environment.keys():
+                self._configuration["sql_view_user_key"] = environment["PYIRONSQLVIEWUSERKEY"]
+            if "PYIRONSQLFILE" in environment.keys():
+                self._configuration["sql_file"] = environment["PYIRONSQLFILE"]
+            if "PYIRONSQHOST" in environment.keys():
+                self._configuration["sql_host"] = environment["PYIRONSQLHOST"]
+            if "PYIRONSQLTYPE" in environment.keys():
+                self._configuration["sql_type"] = environment["PYIRONSQLTYPE"]
+            if "PYIRONSQLUSERKEY" in environment.keys():
+                self._configuration["sql_user_key"] = environment["PYIRONSQLUSERKEY"]
+            if "PYIRONSQLDATABASE" in environment.keys():
+                self._configuration["sql_database"] = environment["PYIRONSQLDATABASE"]
         else:
             user_input = None
             while user_input not in ["yes", "no"]:
