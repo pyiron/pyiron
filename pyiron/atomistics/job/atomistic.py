@@ -485,7 +485,10 @@ class AtomisticGenericJob(GenericJobCore):
             positions = self.output.positions.copy()
         conditions = list()
         if isinstance(cells, (list, np.ndarray)):
-            conditions.append(cells[0] is None)
+            if len(cells) == 0:
+                conditions.append(True)
+            else:
+                conditions.append(cells[0] is None)
         conditions.append(cells is None)
         if any(conditions):
             max_pos = np.max(np.max(positions, axis=0), axis=0)
@@ -641,7 +644,10 @@ class AtomisticGenericJob(GenericJobCore):
         snapshot = self.structure.copy()
         conditions = list()
         if isinstance(self.output.cells, (list, np.ndarray)):
-            conditions.append(self.output.cells[0] is None)
+            if len(self.output.cells) == 0:
+                conditions.append(True)
+            else:
+                conditions.append(self.output.cells[0] is None)
         conditions.append(self.output.cells is None)
         if any(conditions):
             snapshot.cell = None
