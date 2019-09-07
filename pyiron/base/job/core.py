@@ -369,7 +369,7 @@ class JobCore(PyironObject):
             "project": str(project.project_path),
             "subjob": str(project.h5_path),
         }
-        if self.project.db is not None
+        if self.project.db is not None:
             if self.project.db.get_items_dict(where_dict, return_all_columns=False):
                 return True
             else:
