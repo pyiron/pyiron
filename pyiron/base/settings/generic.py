@@ -91,65 +91,16 @@ class Settings(with_metaclass(Singleton)):
         if os.path.isfile(config_file):
             self._config_parse_file(config_file)
         elif any(["PYIRON" in e for e in environment.keys()]):
-            if "PYIRONUSER" in environment.keys():
-                self._configuration["user"] = environment["PYIRONUSER"]
-            if "PYIRONRESOURCEPATHS" in environment.keys():
-                self._configuration["resource_paths"] = environment["PYIRONRESOURCEPATHS"]
-            if "PYIRONPROJECTPATHS" in environment.keys():
-                self._configuration["project_paths"] = environment["PYIRONPROJECTPATHS"]
-            if "PYIRONSQLCONNECTIONSTRING" in environment.keys():
-                self._configuration["sql_connection_string"] = environment["PYIRONSQLCONNECTIONSTRING"]
-            if "PYIRONSQLTABLENAME" in environment.keys():
-                self._configuration["sql_table_name"] = environment["PYIRONSQLTABLENAME"]
-            if "PYIRONSQLVIEWCONNECTIONSTRING" in environment.keys():
-                self._configuration["sql_view_connection_string"] = environment["PYIRONSQLVIEWCONNECTIONSTRING"]
-            if "PYIRONSQLVIEWTABLENAME" in environment.keys():
-                self._configuration["sql_view_table_name"] = environment["PYIRONSQLVIEWTABLENAME"]
-            if "PYIRONSQLVIEWUSER" in environment.keys():
-                self._configuration["sql_view_user"] = environment["PYIRONSQLVIEWUSER"]
-            if "PYIRONSQLVIEWUSERKEY" in environment.keys():
-                self._configuration["sql_view_user_key"] = environment["PYIRONSQLVIEWUSERKEY"]
-            if "PYIRONSQLFILE" in environment.keys():
-                self._configuration["sql_file"] = environment["PYIRONSQLFILE"]
-            if "PYIRONSQHOST" in environment.keys():
-                self._configuration["sql_host"] = environment["PYIRONSQLHOST"]
-            if "PYIRONSQLTYPE" in environment.keys():
-                self._configuration["sql_type"] = environment["PYIRONSQLTYPE"]
-            if "PYIRONSQLUSERKEY" in environment.keys():
-                self._configuration["sql_user_key"] = environment["PYIRONSQLUSERKEY"]
-            if "PYIRONSQLDATABASE" in environment.keys():
-                self._configuration["sql_database"] = environment["PYIRONSQLDATABASE"]
+            self._configuration = self.get_config_from_environment(
+                environment=environment,
+                config=self._configuration
+            )
         else:
-            user_input = None
-            while user_input not in ["yes", "no"]:
-                user_input = input(
-                    "It appears that pyiron is not yet configured, do you want to create a default start configuration (recommended: yes). [yes/no]:"
-                )
-            if user_input.lower() == "yes" or user_input.lower() == "y":
-                install_pyiron(
-                    config_file_name=config_file,
-                    zip_file="resources.zip",
-                    resource_directory="~/pyiron/resources",
-                    giturl_for_zip_file="https://github.com/pyiron/pyiron-resources/archive/master.zip",
-                    git_folder_name="pyiron-resources-master",
-                )
-            else:
-                raise ValueError("pyiron was not installed!")
-            self._config_parse_file(config_file)
+            self._install_dialog(config_file=config_file)
+            self._config_parse_file(config_file=config_file)
 
         # Take dictionary as primary source - overwrite everything
-        if isinstance(config, dict):
-            for key, value in config.items():
-                if key not in ["resource_paths", "project_paths"] or isinstance(
-                    value, list
-                ):
-                    self._configuration[key] = value
-                elif isinstance(value, str):
-                    self._configuration[key] = [value]
-                else:
-                    TypeError(
-                        "Config dictionary parameter type not recognized ", key, value
-                    )
+        self._read_external_config(config=config)
 
         self._configuration["project_paths"] = [
             convert_path(path) + "/" if path[-1] != "/" else convert_path(path)
@@ -160,55 +111,9 @@ class Settings(with_metaclass(Singleton)):
         ]
 
         # Build the SQLalchemy connection strings
-        if self._configuration["sql_type"] == "Postgres":
-            self._configuration["sql_connection_string"] = (
-                "postgresql://"
-                + self._configuration["user"]
-                + ":"
-                + self._configuration["sql_user_key"]
-                + "@"
-                + self._configuration["sql_host"]
-                + "/"
-                + self._configuration["sql_database"]
-            )
-            if self._configuration["sql_view_user"] is not None:
-                self._configuration["sql_view_connection_string"] = (
-                    "postgresql://"
-                    + self._configuration["sql_view_user"]
-                    + ":"
-                    + self._configuration["sql_view_user_key"]
-                    + "@"
-                    + self._configuration["sql_host"]
-                    + "/"
-                    + self._configuration["sql_database"]
-                )
-        elif self._configuration["sql_type"] == "MySQL":
-            self._configuration["sql_connection_string"] = (
-                "mysql+pymysql://"
-                + self._configuration["user"]
-                + ":"
-                + self._configuration["sql_user_key"]
-                + "@"
-                + self._configuration["sql_host"]
-                + "/"
-                + self._configuration["sql_database"]
-            )
-        else:
-            # SQLite is raising ugly error messages when the database directory does not exist.
-            if self._configuration["sql_file"] is None:
-                self._configuration["sql_file"] = "/".join(
-                    [self._configuration["resource_paths"][0], "sqlite.db"]
-                )
-            if os.path.dirname(
-                self._configuration["sql_file"]
-            ) != "" and not os.path.exists(
-                os.path.dirname(self._configuration["sql_file"])
-            ):
-                os.makedirs(os.path.dirname(self._configuration["sql_file"]))
-            self._configuration[
-                "sql_connection_string"
-            ] = "sqlite:///" + self._configuration["sql_file"].replace("\\", "/")
-
+        self._configuration = self.convert_database_config(
+            config=self._configuration
+        )
         self._database = None
         self._use_local_database = False
         self._queue_adapter = None
@@ -506,6 +411,114 @@ class Settings(with_metaclass(Singleton)):
                 ).replace("\\", "/")
         if parser.has_option(section, "JOB_TABLE"):
             self._configuration["sql_table_name"] = parser.get(section, "JOB_TABLE")
+
+    @staticmethod
+    def convert_database_config(config):
+        # Build the SQLalchemy connection strings
+        if config["sql_type"] == "Postgres":
+            config["sql_connection_string"] = (
+                "postgresql://"
+                + config["user"]
+                + ":"
+                + config["sql_user_key"]
+                + "@"
+                + config["sql_host"]
+                + "/"
+                + config["sql_database"]
+            )
+            if config["sql_view_user"] is not None:
+                config["sql_view_connection_string"] = (
+                    "postgresql://"
+                    + config["sql_view_user"]
+                    + ":"
+                    + config["sql_view_user_key"]
+                    + "@"
+                    + config["sql_host"]
+                    + "/"
+                    + config["sql_database"]
+                )
+        elif config["sql_type"] == "MySQL":
+            config["sql_connection_string"] = (
+                "mysql+pymysql://"
+                + config["user"]
+                + ":"
+                + config["sql_user_key"]
+                + "@"
+                + config["sql_host"]
+                + "/"
+                + config["sql_database"]
+            )
+        else:
+            # SQLite is raising ugly error messages when the database directory does not exist.
+            if config["sql_file"] is None:
+                config["sql_file"] = "/".join(
+                    [config["resource_paths"][0], "sqlite.db"]
+                )
+            if os.path.dirname(
+                config["sql_file"]
+            ) != "" and not os.path.exists(
+                os.path.dirname(config["sql_file"])
+            ):
+                os.makedirs(os.path.dirname(config["sql_file"]))
+            config[
+                "sql_connection_string"
+            ] = "sqlite:///" + config["sql_file"].replace("\\", "/")
+        return config
+
+    def _read_external_config(self, config):
+        if isinstance(config, dict):
+            for key, value in config.items():
+                if key not in ["resource_paths", "project_paths"] or isinstance(
+                    value, list
+                ):
+                    self._configuration[key] = value
+                elif isinstance(value, str):
+                    self._configuration[key] = [value]
+                else:
+                    TypeError(
+                        "Config dictionary parameter type not recognized ", key, value
+                    )
+
+    @staticmethod
+    def _install_dialog(config_file):
+        user_input = None
+        while user_input not in ["yes", "no"]:
+            user_input = input(
+                "It appears that pyiron is not yet configured, do you want to create a default start configuration (recommended: yes). [yes/no]:"
+            )
+        if user_input.lower() == "yes" or user_input.lower() == "y":
+            install_pyiron(
+                config_file_name=config_file,
+                zip_file="resources.zip",
+                resource_directory="~/pyiron/resources",
+                giturl_for_zip_file="https://github.com/pyiron/pyiron-resources/archive/master.zip",
+                git_folder_name="pyiron-resources-master",
+            )
+        else:
+            raise ValueError("pyiron was not installed!")
+
+    @staticmethod
+    def get_config_from_environment(environment, config):
+        env_key_mapping = {
+            "PYIRONUSER": "user",
+            "PYIRONRESOURCEPATHS": "resource_paths",
+            "PYIRONPROJECTPATHS": "project_paths",
+            "PYIRONSQLCONNECTIONSTRING": "sql_connection_string",
+            "PYIRONSQLTABLENAME": "sql_table_name",
+            "PYIRONSQLVIEWCONNECTIONSTRING": "sql_view_connection_string",
+            "PYIRONSQLVIEWTABLENAME": "sql_view_table_name",
+            "PYIRONSQLVIEWUSER": "sql_view_user",
+            "PYIRONSQLVIEWUSERKEY": "sql_view_user_key",
+            "PYIRONSQLFILE": "sql_file",
+            "PYIRONSQHOST": "sql_host",
+            "PYIRONSQLTYPE": "sql_type",
+            "PYIRONSQLUSERKEY": "sql_user_key",
+            "PYIRONSQLDATABASE": "sql_database"
+        }
+        for k, v in env_key_mapping.items():
+            if k in environment.keys():
+                config[v] = environment[k]
+        return config
 
     @property
     def publication(self):
