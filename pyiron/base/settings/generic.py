@@ -90,18 +90,7 @@ class Settings(with_metaclass(Singleton)):
             config_file = os.path.expanduser(os.path.join("~", ".pyiron"))
         if os.path.isfile(config_file):
             self._config_parse_file(config_file)
-        elif not any(
-            [
-                env in environment_keys
-                for env in [
-                    "TRAVIS",
-                    "APPVEYOR",
-                    "CIRCLECI",
-                    "CONDA_BUILD",
-                    "GITLAB_CI",
-                ]
-            ]
-        ):
+        else:
             user_input = None
             while user_input not in ["yes", "no"]:
                 user_input = input(
