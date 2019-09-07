@@ -83,6 +83,7 @@ class Settings(with_metaclass(Singleton)):
             "sql_user_key": None,
             "sql_database": None,
             "project_check_enabled": True,
+            "disable_database": False,
         }
         environment = os.environ
         if "PYIRONCONFIG" in environment.keys():
@@ -112,9 +113,10 @@ class Settings(with_metaclass(Singleton)):
         ]
 
         # Build the SQLalchemy connection strings
-        self._configuration = self.convert_database_config(
-            config=self._configuration
-        )
+        if not self.database_is_disabled:
+            self._configuration = self.convert_database_config(
+                config=self._configuration
+            )
         self._database = None
         self._use_local_database = False
         self._queue_adapter = None
@@ -136,6 +138,10 @@ class Settings(with_metaclass(Singleton)):
     @property
     def project_check_enabled(self):
         return self._configuration["project_check_enabled"]
+
+    @property
+    def database_is_disabled(self):
+        return self._configuration["disable_database"]
 
     @property
     def publication_lst(self):
@@ -195,7 +201,7 @@ class Settings(with_metaclass(Singleton)):
         Internal function to open the connection to the database. Only after this function is called the database is
         accessable.
         """
-        if self._database is None:
+        if self._database is None and not self.database_is_disabled:
             self._database = DatabaseAccess(
                 self._configuration["sql_connection_string"],
                 self._configuration["sql_table_name"],
@@ -209,7 +215,7 @@ class Settings(with_metaclass(Singleton)):
             file_name (str): SQLite database file name
             cwd (str/None): directory where the SQLite database file is located in
         """
-        if not self._use_local_database:
+        if not self._use_local_database and not self.database_is_disabled:
             if cwd is None and not os.path.isabs(file_name):
                 file_name = os.path.join(os.path.abspath(os.path.curdir), file_name)
             elif cwd is not None:
@@ -220,13 +226,13 @@ class Settings(with_metaclass(Singleton)):
             )
             self._use_local_database = True
         else:
-            print("Database is already in local mode!")
+            print("Database is already in local mode or disabled!")
 
     def switch_to_central_database(self):
         """
         Switch to central database
         """
-        if self._use_local_database:
+        if self._use_local_database and not self.database_is_disabled:
             self.close_connection()
             self._database = DatabaseAccess(
                 self._configuration["sql_connection_string"],
@@ -234,13 +240,13 @@ class Settings(with_metaclass(Singleton)):
             )
             self._use_local_database = False
         else:
-            print("Database is already in central mode!")
+            print("Database is already in central mode or disabled!")
 
     def switch_to_viewer_mode(self):
         """
         Switch from user mode to viewer mode - if viewer_mode is enable pyiron has read only access to the database.
         """
-        if self._configuration["sql_view_connection_string"] is not None:
+        if self._configuration["sql_view_connection_string"] is not None and not self.database_is_disabled:
             if not self._database.viewer_mode:
                 self.close_connection()
                 self._database = DatabaseAccess(
@@ -257,7 +263,7 @@ class Settings(with_metaclass(Singleton)):
         """
         Switch from viewer mode to user mode - if viewer_mode is enable pyiron has read only access to the database.
         """
-        if self._configuration["sql_view_connection_string"] is not None:
+        if self._configuration["sql_view_connection_string"] is not None and not self.database_is_disabled:
             if self._database.viewer_mode:
                 self.close_connection()
                 self._database = DatabaseAccess(
@@ -371,6 +377,9 @@ class Settings(with_metaclass(Singleton)):
         if parser.has_option(section, "PROJECT_CHECK_ENABLED"):
             self._configuration["project_check_enabled"] = \
                 parser.getboolean(section, "PROJECT_CHECK_ENABLED")
+        if parser.has_option(section, "DISABLE_DATABASE"):
+            self._configuration["disable_database"] = \
+                parser.getboolean(section, "DISABLE_DATABASE")
         if parser.has_option(section, "RESOURCE_PATHS"):
             self._configuration["resource_paths"] = [
                 convert_path(c.strip())
@@ -524,10 +533,14 @@ class Settings(with_metaclass(Singleton)):
             "PYIRONSQLUSERKEY": "sql_user_key",
             "PYIRONSQLDATABASE": "sql_database",
             "PYIRONPROJECTCHECKENABLED": "project_check_enabled",
+            "PYIRONDISABLE": "disable_database",
         }
         for k, v in env_key_mapping.items():
             if k in environment.keys():
-                config[v] = environment[k]
+                if k in ["PYIRONPROJECTCHECKENABLED", "PYIRONDISABLE"]:
+                    config[v] = environment[k].lower() in ['t', 'true', 'y', 'yes']
+                else:
+                    config[v] = environment[k]
         return config
 
     @property

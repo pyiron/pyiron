@@ -465,7 +465,7 @@ class JobPath(JobPathBase):
     """
 
     def __init__(self, db, job_id=None, db_entry=None, user=None):
-        if not db_entry:
+        if db_entry is None and db is not None:
             db_entry = db.get_item_by_id(job_id)
         if db_entry is None:
             raise ValueError("job ID {0} does not exist!".format(job_id))

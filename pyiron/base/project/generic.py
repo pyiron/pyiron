@@ -120,8 +120,11 @@ class Project(ProjectPath):
         self._inspect_mode = False
         self._store = None
 
-        s.open_connection()
-        self.db = s.database
+        if not s.database_is_disabled:
+            s.open_connection()
+            self.db = s.database
+        else:
+            self.db = None
         self.job_type = JobTypeChoice()
 
     @property
@@ -142,7 +145,10 @@ class Project(ProjectPath):
         Returns:
             bool: returns TRUE when viewer_mode is enabled
         """
-        return self.db.viewer_mode
+        if self.db is not None:
+            return self.db.viewer_mode
+        else:
+            return None
 
     @property
     def name(self):
@@ -272,13 +278,16 @@ class Project(ProjectPath):
         """
         if not project:
             project = self.project_path
-        return get_child_ids(
-            database=self.db,
-            sql_query=self.sql_query,
-            user=self.user,
-            project_path=project,
-            job_specifier=job_specifier,
-        )
+        if self.db is not None:
+            return get_child_ids(
+                database=self.db,
+                sql_query=self.sql_query,
+                user=self.user,
+                project_path=project,
+                job_specifier=job_specifier,
+            )
+        else:
+            return []
 
     def get_db_columns(self):
         """
@@ -303,7 +312,10 @@ class Project(ProjectPath):
                  'timestop',
                  'totalcputime']
         """
-        return get_db_columns(self.db)
+        if self.db is not None:
+            return get_db_columns(self.db)
+        else:
+            return []
 
     def get_jobs(self, recursive=True, columns=None):
         """
@@ -319,14 +331,17 @@ class Project(ProjectPath):
         Returns:
             dict: columns are used as keys and point to a list of the corresponding values
         """
-        return get_jobs(
-            database=self.db,
-            sql_query=self.sql_query,
-            user=self.user,
-            project_path=self.project_path,
-            recursive=recursive,
-            columns=columns,
-        )
+        if self.db is not None:
+            return get_jobs(
+                database=self.db,
+                sql_query=self.sql_query,
+                user=self.user,
+                project_path=self.project_path,
+                recursive=recursive,
+                columns=columns,
+            )
+        else:
+            return {}
 
     def get_job_ids(self, recursive=True):
         """
@@ -338,13 +353,16 @@ class Project(ProjectPath):
         Returns:
             list: a list of job IDs
         """
-        return get_job_ids(
-            database=self.db,
-            sql_query=self.sql_query,
-            user=self.user,
-            project_path=self.project_path,
-            recursive=recursive,
-        )
+        if self.db is not None:
+            return get_job_ids(
+                database=self.db,
+                sql_query=self.sql_query,
+                user=self.user,
+                project_path=self.project_path,
+                recursive=recursive,
+            )
+        else:
+            return []
 
     def get_job_id(self, job_specifier):
         """
@@ -356,13 +374,16 @@ class Project(ProjectPath):
         Returns:
             int: job ID of the job
         """
-        return get_job_id(
-            database=self.db,
-            sql_query=self.sql_query,
-            user=self.user,
-            project_path=self.project_path,
-            job_specifier=job_specifier,
-        )
+        if self.db is not None:
+            return get_job_id(
+                database=self.db,
+                sql_query=self.sql_query,
+                user=self.user,
+                project_path=self.project_path,
+                job_specifier=job_specifier,
+            )
+        else:
+            return None
 
     def get_job_status(self, job_specifier, project=None):
         """
@@ -378,13 +399,16 @@ class Project(ProjectPath):
         """
         if not project:
             project = self.project_path
-        return get_job_status(
-            database=self.db,
-            sql_query=self.sql_query,
-            user=self.user,
-            project_path=project,
-            job_specifier=job_specifier,
-        )
+        if self.db is not None:
+            return get_job_status(
+                database=self.db,
+                sql_query=self.sql_query,
+                user=self.user,
+                project_path=project,
+                job_specifier=job_specifier,
+            )
+        else:
+            return None
 
     def get_job_working_directory(self, job_specifier, project=None):
         """
@@ -399,13 +423,16 @@ class Project(ProjectPath):
         """
         if not project:
             project = self.project_path
-        return get_job_working_directory(
-            database=self.db,
-            sql_query=self.sql_query,
-            user=self.user,
-            project_path=project,
-            job_specifier=job_specifier,
-        )
+        if self.db is not None:
+            return get_job_working_directory(
+                database=self.db,
+                sql_query=self.sql_query,
+                user=self.user,
+                project_path=project,
+                job_specifier=job_specifier,
+            )
+        else:
+            return None
 
     def get_project_size(self):
         """
@@ -526,18 +553,21 @@ class Project(ProjectPath):
         Returns:
             pandas.Dataframe: Return the result as a pandas.Dataframe object
         """
-        return job_table(
-            database=self.db,
-            sql_query=self.sql_query,
-            user=self.user,
-            project_path=self.project_path,
-            recursive=recursive,
-            columns=columns,
-            all_columns=all_columns,
-            sort_by=sort_by,
-            element_lst=element_lst,
-            job_name_contains=job_name_contains,
-        )
+        if self.db is not None:
+            return job_table(
+                database=self.db,
+                sql_query=self.sql_query,
+                user=self.user,
+                project_path=self.project_path,
+                recursive=recursive,
+                columns=columns,
+                all_columns=all_columns,
+                sort_by=sort_by,
+                element_lst=element_lst,
+                job_name_contains=job_name_contains,
+            )
+        else:
+            return pandas.DataFrame({})
 
     def get_jobs_status(self, recursive=True, element_lst=None):
         """
@@ -548,18 +578,21 @@ class Project(ProjectPath):
             element_lst (list): list of elements required in the chemical formular - by default None
 
         Returns:
-            prints an overview of the job status.
+            pandas.Series: prints an overview of the job status.
         """
-        df = job_table(
-            database=self.db,
-            sql_query=self.sql_query,
-            user=self.user,
-            project_path=self.project_path,
-            recursive=recursive,
-            all_columns=True,
-            element_lst=element_lst,
-        )
-        return df["status"].value_counts()
+        if self.db is not None:
+            df = job_table(
+                database=self.db,
+                sql_query=self.sql_query,
+                user=self.user,
+                project_path=self.project_path,
+                recursive=recursive,
+                all_columns=True,
+                element_lst=element_lst,
+            )
+            return df["status"].value_counts()
+        else:
+            return pandas.Series([])
 
     def keys(self):
         """
@@ -797,7 +830,7 @@ class Project(ProjectPath):
             pandas.DataFrame: Output from the queuing system - optimized for the Sun grid engine
         """
         df = queue_table(job_ids=[], project_only=False)
-        if len(df) != 0:
+        if len(df) != 0 and self.db is not None:
             return pandas.DataFrame(
                 [
                     self.db.get_item_by_id(
@@ -820,14 +853,15 @@ class Project(ProjectPath):
         """
         if status != "running":
             raise NotImplementedError()
-        job_id = get_job_id(
-            database=self.db,
-            sql_query=self.sql_query,
-            user=self.user,
-            project_path=self.project_path,
-            job_specifier=job_specifier,
-        )
-        self.refresh_job_status_based_on_job_id(job_id)
+        if self.db is not None:
+            job_id = get_job_id(
+                database=self.db,
+                sql_query=self.sql_query,
+                user=self.user,
+                project_path=self.project_path,
+                job_specifier=job_specifier,
+            )
+            self.refresh_job_status_based_on_job_id(job_id)
 
     def refresh_job_status_based_on_job_id(self, job_id, que_mode=True):
         """
@@ -838,7 +872,7 @@ class Project(ProjectPath):
             job_id (int): job ID
             que_mode (bool): [True/False] - default=True
         """
-        if job_id:
+        if job_id and self.db is not None:
             if (
                 not que_mode
                 and self.db.get_item_by_id(job_id)["status"] not in ["finished"]
@@ -891,8 +925,9 @@ class Project(ProjectPath):
                 s.logger.debug(
                     "hdf file does not exist. Removal from database will be attempted."
                 )
-                job_id = self.get_job_id(job_specifier)
-                self.db.delete_item(job_id)
+                if self.db is not None:
+                    job_id = self.get_job_id(job_specifier)
+                    self.db.delete_item(job_id)
         else:
             raise EnvironmentError("copy_to: is not available in Viewermode !")
 
@@ -989,14 +1024,15 @@ class Project(ProjectPath):
         """
         if not project:
             project = self.project_path
-        set_job_status(
-            database=self.db,
-            sql_query=self.sql_query,
-            user=self.user,
-            project_path=project,
-            job_specifier=job_specifier,
-            status=status,
-        )
+        if self.db is not None:
+            set_job_status(
+                database=self.db,
+                sql_query=self.sql_query,
+                user=self.user,
+                project_path=project,
+                job_specifier=job_specifier,
+                status=status,
+            )
 
     def values(self):
         """
@@ -1011,17 +1047,19 @@ class Project(ProjectPath):
         """
         Switch from user mode to viewer mode - if viewer_mode is enable pyiron has read only access to the database.
         """
-        s.switch_to_viewer_mode()
-        s.open_connection()
-        self.db = s.database
+        if self.db is not None:
+            s.switch_to_viewer_mode()
+            s.open_connection()
+            self.db = s.database
 
     def switch_to_user_mode(self):
         """
         Switch from viewer mode to user mode - if viewer_mode is enable pyiron has read only access to the database.
         """
-        s.switch_to_user_mode()
-        s.open_connection()
-        self.db = s.database
+        if self.db is not None:
+            s.switch_to_user_mode()
+            s.open_connection()
+            self.db = s.database
 
     def switch_to_local_database(self, file_name="pyiron.db", cwd=None):
         """
@@ -1031,19 +1069,21 @@ class Project(ProjectPath):
             file_name (str): file name or file path for the local database
             cwd (str): directory where the local database is located
         """
-        if cwd is None:
-            cwd = self.path
-        s.switch_to_local_database(file_name=file_name, cwd=cwd)
-        s.open_connection()
-        self.db = s.database
+        if self.db is not None:
+            if cwd is None:
+                cwd = self.path
+            s.switch_to_local_database(file_name=file_name, cwd=cwd)
+            s.open_connection()
+            self.db = s.database
 
     def switch_to_central_database(self):
         """
         Switch from local mode to central mode - if local_mode is enable pyiron is using a local database.
         """
-        s.switch_to_central_database()
-        s.open_connection()
-        self.db = s.database
+        if self.db is not None:
+            s.switch_to_central_database()
+            s.open_connection()
+            self.db = s.database
 
     def queue_delete_job(self, item):
         """
@@ -1215,18 +1255,19 @@ class Project(ProjectPath):
             key (str): key within the container
             value (dict, list, float, int): data to store
         """
-        if self._store is None:
-            where_dict = {
-                "job": "ProjectStore",
-                "project": str(self.project_path),
-                "subjob": "/ProjectStore",
-            }
-            store_job_id = self.db.get_items_dict(where_dict)["id"]
-            if store_job_id:
-                self._store = self.load(store_job_id)
-            else:
-                self._store = self.create_job("ProjectStore", "ProjectStore")
-        self._store[key] = value
+        if self.db is not None:
+            if self._store is None:
+                where_dict = {
+                    "job": "ProjectStore",
+                    "project": str(self.project_path),
+                    "subjob": "/ProjectStore",
+                }
+                store_job_id = self.db.get_items_dict(where_dict)["id"]
+                if store_job_id:
+                    self._store = self.load(store_job_id)
+                else:
+                    self._store = self.create_job("ProjectStore", "ProjectStore")
+            self._store[key] = value
 
     @staticmethod
     def _is_hdf5_dir(item):
@@ -1283,13 +1324,14 @@ class Project(ProjectPath):
         Args:
             job_name (str):
         """
-        db_entry_in_old_format = self.db.get_items_dict(
-            {"job": job_name, "project": self.project_path[:-1]}
-        )
-        if db_entry_in_old_format and len(db_entry_in_old_format) == 1:
-            self.db.item_update(
-                {"project": self.project_path}, db_entry_in_old_format[0]["id"]
+        if self.db is not None:
+            db_entry_in_old_format = self.db.get_items_dict(
+                {"job": job_name, "project": self.project_path[:-1]}
             )
-        elif db_entry_in_old_format:
-            for entry in db_entry_in_old_format:
-                self.db.item_update({"project": self.project_path}, entry["id"])
+            if db_entry_in_old_format and len(db_entry_in_old_format) == 1:
+                self.db.item_update(
+                    {"project": self.project_path}, db_entry_in_old_format[0]["id"]
+                )
+            elif db_entry_in_old_format:
+                for entry in db_entry_in_old_format:
+                    self.db.item_update({"project": self.project_path}, entry["id"])
