@@ -640,7 +640,7 @@ class AtomisticGenericJob(GenericJobCore):
             raise AssertionError()
         snapshot = self.structure.copy()
         conditions = list()
-        if isinstance(np.array(self.output.cells), (list, np.ndarray)):
+        if isinstance(self.output.cells, (list, np.ndarray)):
             conditions.append(self.output.cells[0] is None)
         conditions.append(self.output.cells is None)
         if any(conditions):
