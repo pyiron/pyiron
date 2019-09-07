@@ -82,6 +82,7 @@ class Settings(with_metaclass(Singleton)):
             "sql_type": "SQLite",
             "sql_user_key": None,
             "sql_database": None,
+            "project_check_enabled": True,
         }
         environment = os.environ
         if "PYIRONCONFIG" in environment.keys():
@@ -131,6 +132,10 @@ class Settings(with_metaclass(Singleton)):
     @property
     def queue_adapter(self):
         return self._queue_adapter
+
+    @property
+    def project_check_enabled(self):
+        return self._configuration["project_check_enabled"]
 
     @property
     def publication_lst(self):
@@ -285,6 +290,8 @@ class Settings(with_metaclass(Singleton)):
         """
         if full_path[-1] != "/":
             full_path += "/"
+        if not self.project_check_enabled:
+            return None
         for path in self._configuration["project_paths"]:
             if path in full_path:
                 return path
@@ -361,7 +368,9 @@ class Settings(with_metaclass(Singleton)):
             ]
         else:
             ValueError("No project path identified!")
-
+        if parser.has_option(section, "PROJECT_CHECK_ENABLED"):
+            self._configuration["project_check_enabled"] = \
+                parser.getboolean(section, "PROJECT_CHECK_ENABLED")
         if parser.has_option(section, "RESOURCE_PATHS"):
             self._configuration["resource_paths"] = [
                 convert_path(c.strip())
@@ -513,7 +522,8 @@ class Settings(with_metaclass(Singleton)):
             "PYIRONSQHOST": "sql_host",
             "PYIRONSQLTYPE": "sql_type",
             "PYIRONSQLUSERKEY": "sql_user_key",
-            "PYIRONSQLDATABASE": "sql_database"
+            "PYIRONSQLDATABASE": "sql_database",
+            "PYIRONPROJECTCHECKENABLED": "project_check_enabled",
         }
         for k, v in env_key_mapping.items():
             if k in environment.keys():

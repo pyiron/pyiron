@@ -470,12 +470,12 @@ class JobPath(JobPathBase):
         if db_entry is None:
             raise ValueError("job ID {0} does not exist!".format(job_id))
         hdf5_file = db_entry["subjob"].split("/")[1] + ".h5"
-        super(JobPath, self).__init__(
-            job_path=db_entry["projectpath"]
-            + db_entry["project"]
-            + hdf5_file
-            + db_entry["subjob"]
-        )
+        if db_entry["projectpath"] is not None:
+            job_path = db_entry["projectpath"]
+        else:
+            job_path = ''
+        job_path += db_entry["project"] + hdf5_file + db_entry["subjob"]
+        super(JobPath, self).__init__(job_path=job_path)
 
         if "hamilton" in db_entry.keys():
             self.__name__ = db_entry["hamilton"]

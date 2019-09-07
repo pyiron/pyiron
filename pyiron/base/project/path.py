@@ -122,7 +122,10 @@ class GenericPath(object):
         Returns:
             str: current project path
         """
-        return posixpath.join(self.root_path, self.project_path)
+        if self.root_path is not None:
+            return posixpath.join(self.root_path, self.project_path)
+        else:
+            return self.project_path
 
     @property
     def base_name(self):
@@ -187,10 +190,13 @@ class GenericPath(object):
         Returns:
             str: output path in unix format
         """
-        linux_path = path.replace("\\", "/")
-        if linux_path[-1] != "/":
-            linux_path += "/"
-        return linux_path
+        if path is not None:
+            linux_path = path.replace("\\", "/")
+            if linux_path[-1] != "/":
+                linux_path += "/"
+            return linux_path
+        else:
+            return None
 
 
 class ProjectPath(GenericPath):
@@ -407,5 +413,8 @@ class ProjectPath(GenericPath):
             str, str: root_path, project_path
         """
         root = Settings().top_path(full_path)
-        pr_path = posixpath.relpath(full_path, root)
-        return root, pr_path
+        if root is not None:
+            pr_path = posixpath.relpath(full_path, root)
+            return root, pr_path
+        else:
+            return None, full_path
