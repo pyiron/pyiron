@@ -483,9 +483,6 @@ class AtomisticGenericJob(GenericJobCore):
                     raise ValueError("overwrite_cells must be compatible with the positions!")
         else:
             positions = self.output.positions.copy()
-        if len(positions) != len(cells):
-            raise ValueError("The positions must have the same length as the cells!")
-
         conditions = list()
         if isinstance(np.array(cells), (list, np.ndarray)):
             conditions.append(cells[0] is None)
@@ -496,6 +493,8 @@ class AtomisticGenericJob(GenericJobCore):
             cell = np.eye(3) * max_pos
             cells = np.array([cell] * len(positions))
 
+        if len(positions) != len(cells):
+            raise ValueError("The positions must have the same length as the cells!")
         if snapshot_indices is not None:
             positions = positions[snapshot_indices]
             cells = cells[snapshot_indices]
