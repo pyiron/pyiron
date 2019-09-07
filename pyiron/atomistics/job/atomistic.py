@@ -484,7 +484,7 @@ class AtomisticGenericJob(GenericJobCore):
         else:
             positions = self.output.positions.copy()
         conditions = list()
-        if isinstance(np.array(cells), (list, np.ndarray)):
+        if isinstance(cells, (list, np.ndarray)):
             conditions.append(cells[0] is None)
         conditions.append(cells is None)
         if any(conditions):
