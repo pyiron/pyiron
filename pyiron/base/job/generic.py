@@ -1052,6 +1052,7 @@ class GenericJob(JobCore):
             self._hdf5.open(group_name)
         self._executable_activate_mpi()
         self._type_to_hdf()
+        self._hdf5["status"] = self.status.string
         self._server.to_hdf(self._hdf5)
         with self._hdf5.open("input") as hdf_input:
             generic_dict = {
