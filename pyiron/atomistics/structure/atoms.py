@@ -1167,7 +1167,11 @@ class Atoms(object):
             (str): The PDB-formatted representation of the structure.
         """
         from ase.geometry import cell_to_cellpar, cellpar_to_cell
-
+        if cell is None or any(np.max(cell, axis=0) < 1e-2):
+            # Define a dummy cell if it doesn't exist (eg. for clusters)
+            max_pos = np.max(positions, axis=0)
+            max_pos[np.abs(max_pos) < 1e-2] = 10
+            cell = np.eye(3) * max_pos
         cellpar = cell_to_cellpar(cell)
         exportedcell = cellpar_to_cell(cellpar)
         rotation = np.linalg.solve(cell, exportedcell)
@@ -1443,7 +1447,8 @@ class Atoms(object):
 
         if show_cell:
             if parent_basis.cell is not None:
-                view.add_unitcell()
+                if all(np.max(parent_basis.cell, axis=0) > 1e-2):
+                    view.add_unitcell()
 
         if vector_color is None and vector_field is not None:
             vector_color = (
@@ -1529,7 +1534,8 @@ class Atoms(object):
             view.add_ball_and_stick()
         if show_cell:
             if parent_basis.cell is not None:
-                view.add_unitcell()
+                if all(np.max(parent_basis.cell, axis=0) > 1e-2):
+                    view.add_unitcell()
         if show_axes:
             view.shape.add_arrow([-2, -2, -2], [2, -2, -2], [1, 0, 0], 0.5)
             view.shape.add_arrow([-2, -2, -2], [-2, 2, -2], [0, 1, 0], 0.5)
