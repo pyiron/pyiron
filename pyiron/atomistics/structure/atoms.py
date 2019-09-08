@@ -1019,9 +1019,10 @@ class Atoms(object):
         """
         pbc = np.array(self.pbc)
         if any(pbc):
-            positions = np.einsum("jk,ij->ik", np.linalg.inv(self.cell[pbc]), self.positions[:, pbc])
+            positions = self.positions.copy()
+            positions[:, pbc] = np.einsum("jk,ij->ik", np.linalg.inv(self.cell[pbc][:, pbc]), self.positions[:, pbc])
         else:
-            positions = self.positions
+            positions = self.positions.copy()
         if wrap:
             positions[:, pbc] = np.mod(positions[:, pbc], 1.0)
         return positions
