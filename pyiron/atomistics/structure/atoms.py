@@ -1011,12 +1011,17 @@ class Atoms(object):
 
     def get_scaled_positions(self, wrap=True):
         """
+        Returns the scaled/relative positions
 
         Returns:
+            numpy.ndarray: The relative positions of the atoms in the supercell
 
         """
         pbc = np.array(self.pbc)
-        positions = np.einsum("jk,ij->ik", np.linalg.inv(self.cell), self.positions)
+        if any(pbc):
+            positions = np.einsum("jk,ij->ik", np.linalg.inv(self.cell[pbc]), self.positions[:, pbc])
+        else:
+            positions = self.positions
         if wrap:
             positions[:, pbc] = np.mod(positions[:, pbc], 1.0)
         return positions
@@ -3352,14 +3357,14 @@ class Atoms(object):
             raise ValueError(
                 "Cell must be length 3 sequence, length 6 " "sequence or 3x3 matrix!"
             )
-
-        if np.linalg.det(cell) <= 0:
-            warnings.warn("You have set a singular matrix as the cell value. "
-                          "\n This works for clusters and 2D systems. If you are using a 3D supercell, \n "
-                          "this can cause issues in many codes.")
-        if scale_atoms:
-            M = np.linalg.solve(self.get_cell(complete=True), complete_cell(cell))
-            self.positions[:] = np.dot(self.positions, M)
+        if any(self.pbc):
+            cell_pbc = cell[self.pbc][:, self.pbc]
+            if np.linalg.det(cell_pbc) <= 0:
+                raise ValueError("Can't set a singular matrix/non-right hand orientation "
+                                 "as the cell value for a periodic crystal")
+            if scale_atoms:
+                M = np.linalg.solve(self.get_cell(complete=True), complete_cell(cell))
+                self.positions[:] = np.dot(self.positions, M)
         self._cell = cell
 
     def translate(self, displacement):
