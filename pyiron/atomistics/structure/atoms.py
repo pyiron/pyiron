@@ -3354,10 +3354,9 @@ class Atoms(object):
             )
 
         if np.linalg.det(cell) <= 0:
-            raise ValueError(
-                "Cell must be a full dimensional matrix with " "right hand orientation"
-            )
-
+            warnings.warn("You have set a singular matrix as the cell value. "
+                          "\n This works for clusters and 2D systems. If you are using a 3D supercell, \n "
+                          "this can cause issues in many codes.")
         if scale_atoms:
             M = np.linalg.solve(self.get_cell(complete=True), complete_cell(cell))
             self.positions[:] = np.dot(self.positions, M)
