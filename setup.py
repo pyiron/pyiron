@@ -42,6 +42,7 @@ setup(
                       'pathlib2',
                       'phonopy',
                       'psutil',
+                      'pyfileindex',
                       'pysqa',
                       'scipy',
                       'six',
