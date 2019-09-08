@@ -56,6 +56,44 @@ class FileTable(object):
                 'hamilton': h5io.read_hdf5(path, job + '/TYPE').split(".")[-1].split("'")[0],
                 'hamversion': h5io.read_hdf5(path, job + '/VERSION')}
 
+    def add_item_dict(self, par_dict):
+        par_dict = dict((key.lower(), value) for key, value in par_dict.items())
+        default_values = {'id': np.max(self._job_table.id.values) + 1,
+                          'status': 'initialized',
+                          'chemicalformula': None,
+                          'timestart': datetime.datetime.now(),
+                          'computer': None,
+                          'parentid': None,
+                          'masterid': None}
+        for k, v in zip(self._columns, default_values):
+            if k not in par_dict.keys():
+                par_dict[k] = v
+        self._job_table = pandas.concat([self._job_table, pandas.DataFrame([par_dict])[self._columns]]).reset_index(drop=True)
+        return par_dict['id']
+
+    def item_update(self, par_dict, item_id):
+        for k, v in par_dict.items():
+            self._job_table.loc[self._job_table.id == item_id, k] = v
+
+    def delete_item(self, item_id):
+        self._job_table = self._job_table[self._job_table.id != item_id].reset_index(drop=True)
+
+    def get_item_by_id(self, item_id):
+        return {k: list(v.values())[0] for k, v in self._job_table[self._job_table.id == item_id].to_dict().items()}
+
+    def get_items_dict(self, item_dict, return_all_columns=True):
+        df = self._job_table
+        for k, v in item_dict.items():
+            if "%" not in str(v):
+                df = df[df[k] == v]
+            else:
+                df = df[df[k].str.contains(v)]
+        df_dict = df.to_dict()
+        if return_all_columns:
+            return [{k: v[i] for k, v in df_dict.items()} for i in df_dict['id'].keys()]
+        else:
+            return [{'id': i} for i in df_dict['id'].values()]
+
     def update(self):
         self._fileindex.update()
         files_lst, working_dir_lst = zip(*[[project + subjob + '.h5', project + subjob + '_hdf5']
@@ -66,7 +104,7 @@ class FileTable(object):
         if len(df_new) > 0:
             job_lst = self.init_table(fileindex=df_new, working_dir_lst=list(working_dir_lst))
             df = pandas.DataFrame(job_lst)[self._columns]
-            self._job_table = pandas.concat([self._job_table, df])
+            self._job_table = pandas.concat([self._job_table, df]).reset_index(drop=True)
 
     def get_db_columns(self):
         return self._job_table.columns.values
@@ -77,25 +115,8 @@ class FileTable(object):
             project = self._project
         if columns is None:
             columns = ["job", "project", "chemicalformula"]
-        all_db = [
-            "id",
-            "status",
-            "chemicalformula",
-            "job",
-            "subjob",
-            "projectpath",
-            "project",
-            "timestart",
-            "timestop",
-            "totalcputime",
-            "computer",
-            "hamilton",
-            "hamversion",
-            "parentid",
-            "masterid",
-        ]
         if all_columns:
-            columns = all_db
+            columns = self._columns
         if recursive:
             df = self._job_table[self._job_table.project.str.contains(project)]
         else:
@@ -213,10 +234,10 @@ class FileTable(object):
             project = self._project
         job_id = self.get_job_id(project=project, job_specifier=job_specifier)
         self._job_table.loc[self._job_table.id == job_id, 'status'] = status
-        db_entry = self._job_table[self._job_table.id == job_id].to_dict()
-        h5io.write_hdf5(db_entry["project"][0] + db_entry["subjob"][0] + '.h5',
+        db_entry = self.get_item_by_id(item_id=job_id)
+        h5io.write_hdf5(db_entry["project"] + db_entry["subjob"] + '.h5',
                         status,
-                        title=db_entry["subjob"][0][1:] + '/status',
+                        title=db_entry["subjob"][1:] + '/status',
                         overwrite="update")
 
     def get_job_status(self, job_specifier, project=None):
@@ -259,12 +280,11 @@ class FileTable(object):
         if project is None:
             project = self._project
         try:
-            db_entry = self._job_table[
-                self._job_table.id == self.get_job_id(project=project, job_specifier=job_specifier)].to_dict()
-            if db_entry:
-                job_name = db_entry["subjob"][0][1:]
+            db_entry = self.get_item_by_id(item_id=self.get_job_id(project=project, job_specifier=job_specifier))
+            if db_entry and len(db_entry) > 0:
+                job_name = db_entry["subjob"][1:]
                 return os.path.join(
-                    db_entry["project"][0],
+                    db_entry["project"],
                     job_name + "_hdf5",
                     job_name,
                 )
