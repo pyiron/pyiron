@@ -482,6 +482,7 @@ class ParallelMaster(GenericMaster):
         db_dict["totalcputime"] = (db_dict["timestop"] - start_time).seconds
         self.project.db.item_update(db_dict, job_id)
         self.status.finished = True
+        self._hdf5["status"] = self.status.string
         self._logger.info(
             "{}, status: {}, parallel master".format(self.job_info_str, self.status)
         )
