@@ -13,8 +13,6 @@ Murat Han Celik
 import unittest
 import os
 from datetime import datetime
-from random import choice
-from string import ascii_uppercase
 from pyiron.base.database.filetable import FileTable
 
 
