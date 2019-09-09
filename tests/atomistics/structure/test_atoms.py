@@ -326,7 +326,6 @@ class TestAtoms(unittest.TestCase):
         struct_2d.set_cell(cell_2d)
         self.assertTrue(np.array_equal(struct_2d.get_scaled_positions(), positions_2d))
         struct_2d.set_cell(cell_2d, scale_atoms=True)
-        print(struct_2d.pbc, struct_2d.get_scaled_positions())
 
     def test_add(self):
         COX = self.C2 + Atom("O", position=[0, 0, -2])
