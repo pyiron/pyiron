@@ -17,8 +17,12 @@ class FileTable(object):
         df = pandas.DataFrame(self.init_table(fileindex=self._fileindex.dataframe))
         self._project = os.path.abspath(project)
         self._columns = ['id', 'status', 'chemicalformula', 'job', 'subjob', 'projectpath', 'project', 'timestart',
-                         'timestop', 'totalcputime', 'computer', 'hamilton', 'hamversion', 'parentid', 'masterid']
-        self._job_table = df[self._columns]
+                         'timestop', 'totalcputime', 'computer', 'hamilton', 'hamversion', 'parentid', 'masterid',
+                         'username']
+        if len(df) != 0:
+            self._job_table = df[self._columns]
+        else:
+            self._job_table = pandas.DataFrame({k: [] for k in self._columns})
 
     def init_table(self, fileindex, working_dir_lst=None):
         if working_dir_lst is None:
@@ -58,14 +62,18 @@ class FileTable(object):
 
     def add_item_dict(self, par_dict):
         par_dict = dict((key.lower(), value) for key, value in par_dict.items())
-        default_values = {'id': np.max(self._job_table.id.values) + 1,
+        if len(self._job_table) != 0:
+            job_id = np.max(self._job_table.id.values) + 1
+        else:
+            job_id = 0
+        default_values = {'id': job_id,
                           'status': 'initialized',
                           'chemicalformula': None,
                           'timestart': datetime.datetime.now(),
                           'computer': None,
                           'parentid': None,
                           'masterid': None}
-        for k, v in zip(self._columns, default_values):
+        for k, v in default_values.items():
             if k not in par_dict.keys():
                 par_dict[k] = v
         self._job_table = pandas.concat([self._job_table,
@@ -73,22 +81,33 @@ class FileTable(object):
         return par_dict['id']
 
     def item_update(self, par_dict, item_id):
+        if isinstance(item_id, list):
+            item_id = item_id[0]
+        if isinstance(item_id, str):
+            item_id = float(item_id)
+        if isinstance(item_id, float):
+            item_id = int(item_id)
         for k, v in par_dict.items():
             self._job_table.loc[self._job_table.id == item_id, k] = v
 
     def delete_item(self, item_id):
-        self._job_table = self._job_table[self._job_table.id != item_id].reset_index(drop=True)
+        if item_id in self._job_table.id.values:
+            self._job_table = self._job_table[self._job_table.id != item_id].reset_index(drop=True)
+        else:
+            raise ValueError
 
     def get_item_by_id(self, item_id):
         return {k: list(v.values())[0] for k, v in self._job_table[self._job_table.id == item_id].to_dict().items()}
 
     def get_items_dict(self, item_dict, return_all_columns=True):
         df = self._job_table
+        if not isinstance(item_dict, dict):
+            raise TypeError
         for k, v in item_dict.items():
             if "%" not in str(v):
                 df = df[df[k] == v]
             else:
-                df = df[df[k].str.contains(v)]
+                df = df[df[k].str.contains(v.replace('%', ''))]
         df_dict = df.to_dict()
         if return_all_columns:
             return [{k: v[i] for k, v in df_dict.items()} for i in df_dict['id'].keys()]
