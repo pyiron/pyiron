@@ -275,14 +275,13 @@ class Project(ProjectCore):
             pr_import = self.open("/".join(rel_path_lst))
         else:
             pr_import = self.open("/".join(project_to_import_from.split("/")[:-1]))
-        if self.db is not None and self.db.get_items_dict(
+        if self.db.get_items_dict(
             {"job": pyiron_job_name, "project": pr_import.project_path}
         ):
             print("The job exists already - skipped!")
         else:
             ham = pr_import.create_job(job_type=job_type, job_name=pyiron_job_name)
-            if self.db is not None:
-                ham._job_id = self.db.add_item_dict(ham.db_entry())
+            ham._job_id = self.db.add_item_dict(ham.db_entry())
             ham.refresh_job_status()
             print("job was stored with the job ID ", str(ham._job_id))
             try:

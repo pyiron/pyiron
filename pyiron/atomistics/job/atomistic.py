@@ -676,11 +676,10 @@ class AtomisticGenericJob(GenericJobCore):
     def _write_chemical_formular_to_database(self):
         if self.structure:
             parent_structure = self.structure.get_parent_basis()
-            if self.project.db is not None:
-                self.project.db.item_update(
-                    {"ChemicalFormula": parent_structure.get_chemical_formula()},
-                    self._job_id,
-                )
+            self.project.db.item_update(
+                {"ChemicalFormula": parent_structure.get_chemical_formula()},
+                self._job_id,
+            )
 
     def _before_successor_calc(self, ham):
         if ham._generic_input["structure"] == "continue_final":

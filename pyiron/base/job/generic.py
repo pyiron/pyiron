@@ -709,8 +709,7 @@ class GenericJob(JobCore):
             self.status.aborted = True
             raise ValueError("No executable set!")
         self.status.running = True
-        if self.project.db is not None:
-            self.project.db.item_update({"timestart": datetime.now()}, self.job_id)
+        self.project.db.item_update({"timestart": datetime.now()}, self.job_id)
         job_crashed, out = False, None
         try:
             if self.server.cores == 1 or not self.executable.mpi:

@@ -314,8 +314,6 @@ class Project(ProjectPath):
                  'totalcputime']
         """
         return get_db_columns(self.db)
-        else:
-            return []
 
     def get_jobs(self, recursive=True, columns=None):
         """

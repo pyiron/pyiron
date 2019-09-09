@@ -189,7 +189,7 @@ class JobCore(PyironObject):
         Returns:
             int: job id
         """
-        if not self._job_id and self.project.db is not None:
+        if not self._job_id:
             self._job_id = self.get_job_id()
         return self._job_id
 
@@ -205,14 +205,11 @@ class JobCore(PyironObject):
 
     @property
     def database_entry(self):
-        if self.project.db is not None:
-            if not bool(self._database_property):
-                self._database_property = DatabaseProperties(
-                    job_dict=self.project.db.get_item_by_id(self.job_id)
-                )
-            return self._database_property
-        else:
-            return None
+        if not bool(self._database_property):
+            self._database_property = DatabaseProperties(
+                job_dict=self.project.db.get_item_by_id(self.job_id)
+            )
+        return self._database_property
 
     @property
     def parent_id(self):
@@ -369,13 +366,10 @@ class JobCore(PyironObject):
             "project": str(project.project_path),
             "subjob": str(project.h5_path),
         }
-        if self.project.db is not None:
-            if self.project.db.get_items_dict(where_dict, return_all_columns=False):
-                return True
-            else:
-                return False
+        if self.project.db.get_items_dict(where_dict, return_all_columns=False):
+            return True
         else:
-            return os.path.exists(self.project_hdf5.file_name)
+            return False
 
     def show_hdf(self):
         """
@@ -549,20 +543,17 @@ class JobCore(PyironObject):
         Returns:
             bool: [True/False]
         """
-        if self.project.db is not None:
-            return (
-                len(
-                    [
-                        job["id"]
-                        for job in self.project.db.get_items_dict(
-                            {"masterid": str(job_id)}, return_all_columns=False
-                        )
-                    ]
-                )
-                > 0
+        return (
+            len(
+                [
+                    job["id"]
+                    for job in self.project.db.get_items_dict(
+                        {"masterid": str(job_id)}, return_all_columns=False
+                    )
+                ]
             )
-        else:
-            return False
+            > 0
+        )
 
     def get_job_id(self, job_specifier=None):
         """
@@ -574,26 +565,23 @@ class JobCore(PyironObject):
         Returns:
             int: job ID of the job
         """
-        if self.project.db is not None:
-            if job_specifier:
-                return self.project.get_job_id(
-                    job_specifier
-                )  # , sub_job_name=self.project_hdf5.h5_path)
-            else:
-                where_dict = {
-                    "job": str(self._name),
-                    "project": str(self.project_hdf5.project_path),
-                    "subjob": str(self.project_hdf5.h5_path),
-                }
-                response = self.project.db.get_items_dict(
-                    where_dict, return_all_columns=False
-                )
-                if len(response) > 0:
-                    return response[-1]["id"]
-                else:
-                    return None
+        if job_specifier:
+            return self.project.get_job_id(
+                job_specifier
+            )  # , sub_job_name=self.project_hdf5.h5_path)
         else:
-            return None
+            where_dict = {
+                "job": str(self._name),
+                "project": str(self.project_hdf5.project_path),
+                "subjob": str(self.project_hdf5.h5_path),
+            }
+            response = self.project.db.get_items_dict(
+                where_dict, return_all_columns=False
+            )
+            if len(response) > 0:
+                return response[-1]["id"]
+            else:
+                return None
 
     def list_files(self):
         """

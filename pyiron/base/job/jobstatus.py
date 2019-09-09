@@ -4,6 +4,7 @@
 
 import six
 from pyiron.base.database.generic import DatabaseAccess
+from pyiron.base.database.filetable import FileTable
 
 """
 The JobStatus class belongs to the GenericJob object.
@@ -96,7 +97,7 @@ class JobStatus(object):
         Args:
             db (DatabaseAccess): The database which should be responsible for this job.
         """
-        if db is not None and not isinstance(db, DatabaseAccess):
+        if db is not None and not isinstance(db, (DatabaseAccess, FileTable)):
             raise TypeError("The database has to be an DatabaseAccess object.")
         self._db = db
 
