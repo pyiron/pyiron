@@ -8,6 +8,7 @@ import posixpath
 import shutil
 import pandas
 import importlib
+import numpy as np
 from pyiron.base.project.path import ProjectPath
 from pyiron.base.settings.generic import Settings
 from pyiron.base.database.jobtable import (
@@ -875,26 +876,30 @@ class Project(ProjectPath):
             _unprotect (bool): [True/False] delete the job without validating the dependencies to other jobs
                                - default=False
         """
-        if not self.view_mode:
-            try:
-                job = self.load(job_specifier=job_specifier, convert_to_object=False)
-                if job is None:
-                    s.logger.warn(
-                        "Job '%s' does not exist and could not be removed",
-                        str(job_specifier),
-                    )
-                elif _unprotect:
-                    job.remove_child()
-                else:
-                    job.remove()
-            except IOError as _:
-                s.logger.debug(
-                    "hdf file does not exist. Removal from database will be attempted."
-                )
-                job_id = self.get_job_id(job_specifier)
-                self.db.delete_item(job_id)
+        if isinstance(job_specifier, (list, np.ndarray)):
+            for job_id in job_specifier:
+                self.remove_job(job_specifier=job_id, _unprotect=_unprotect)
         else:
-            raise EnvironmentError("copy_to: is not available in Viewermode !")
+            if not self.view_mode:
+                try:
+                    job = self.load(job_specifier=job_specifier, convert_to_object=False)
+                    if job is None:
+                        s.logger.warn(
+                            "Job '%s' does not exist and could not be removed",
+                            str(job_specifier),
+                        )
+                    elif _unprotect:
+                        job.remove_child()
+                    else:
+                        job.remove()
+                except IOError as _:
+                    s.logger.debug(
+                        "hdf file does not exist. Removal from database will be attempted."
+                    )
+                    job_id = self.get_job_id(job_specifier)
+                    self.db.delete_item(job_id)
+            else:
+                raise EnvironmentError("copy_to: is not available in Viewermode !")
 
     def remove_jobs(self, recursive=False):
         """
