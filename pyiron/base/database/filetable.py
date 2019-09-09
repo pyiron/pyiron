@@ -4,23 +4,45 @@ import pandas
 import datetime
 import h5io
 import sys
+from six import with_metaclass
 from pyfileindex import PyFileIndex
+
+
+class Singleton(type):
+    """
+    Implemented with suggestions from
+
+    http://stackoverflow.com/questions/6760685/creating-a-singleton-in-python
+
+    """
+
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
 
 
 def filter_function(file_name):
     return '.h5' in file_name
 
 
-class FileTable(object):
+class FileTable(with_metaclass(Singleton)):
     def __init__(self, project):
-        self._fileindex = PyFileIndex(path=project, filter_function=filter_function)
-        df = pandas.DataFrame(self.init_table(fileindex=self._fileindex.dataframe))
-        self._project = os.path.abspath(project)
+        self._fileindex = None
+        self._job_table = None
+        self._project = os.path.abspath(self._clean_project_name(project=project))
         self._columns = ['id', 'status', 'chemicalformula', 'job', 'subjob', 'projectpath', 'project', 'timestart',
                          'timestop', 'totalcputime', 'computer', 'hamilton', 'hamversion', 'parentid', 'masterid',
                          'username']
+        self.force_reset()
+
+    def force_reset(self):
+        self._fileindex = PyFileIndex(path=self._project, filter_function=filter_function)
+        df = pandas.DataFrame(self.init_table(fileindex=self._fileindex.dataframe))
         if len(df) != 0:
-            self._job_table = df[self._columns]
+            self._job_table = df[np.array(self._columns)]
         else:
             self._job_table = pandas.DataFrame({k: [] for k in self._columns})
 
@@ -56,6 +78,7 @@ class FileTable(object):
                 'timestop': time,
                 'totalcputime': 0.0,
                 'computer': None,
+                'username': None,
                 'parentid': None,
                 'hamilton': h5io.read_hdf5(path, job + '/TYPE').split(".")[-1].split("'")[0],
                 'hamversion': h5io.read_hdf5(path, job + '/VERSION')}
@@ -65,20 +88,23 @@ class FileTable(object):
         if len(self._job_table) != 0:
             job_id = np.max(self._job_table.id.values) + 1
         else:
-            job_id = 0
+            job_id = 1
         default_values = {'id': job_id,
                           'status': 'initialized',
                           'chemicalformula': None,
                           'timestart': datetime.datetime.now(),
                           'computer': None,
                           'parentid': None,
+                          'username': None,
+                          'timestop': None,
+                          'totalcputime': None,
                           'masterid': None}
         for k, v in default_values.items():
             if k not in par_dict.keys():
                 par_dict[k] = v
         self._job_table = pandas.concat([self._job_table,
                                          pandas.DataFrame([par_dict])[self._columns]]).reset_index(drop=True)
-        return par_dict['id']
+        return int(par_dict['id'])
 
     def item_update(self, par_dict, item_id):
         if isinstance(item_id, list):
@@ -116,15 +142,22 @@ class FileTable(object):
 
     def update(self):
         self._fileindex.update()
-        files_lst, working_dir_lst = zip(*[[project + subjob + '.h5', project + subjob + '_hdf5']
-                                           for project, subjob in zip(self._job_table.project.values,
-                                                                      self._job_table.subjob.values)])
-        df_new = self._fileindex.dataframe[
-            ~self._fileindex.dataframe.is_directory & ~self._fileindex.dataframe.path.isin(files_lst)]
+        if len(self._job_table) != 0:
+            files_lst, working_dir_lst = zip(*[[project + subjob + '.h5', project + subjob + '_hdf5']
+                                               for project, subjob in zip(self._job_table.project.values,
+                                                                          self._job_table.subjob.values)])
+            df_new = self._fileindex.dataframe[
+                ~self._fileindex.dataframe.is_directory & ~self._fileindex.dataframe.path.isin(files_lst)]
+        else:
+            files_lst, working_dir_lst = [], []
+            df_new = self._fileindex.dataframe[~self._fileindex.dataframe.is_directory]
         if len(df_new) > 0:
             job_lst = self.init_table(fileindex=df_new, working_dir_lst=list(working_dir_lst))
             df = pandas.DataFrame(job_lst)[self._columns]
-            self._job_table = pandas.concat([self._job_table, df]).reset_index(drop=True)
+            if len(files_lst) != 0 and len(working_dir_lst) != 0:
+                self._job_table = pandas.concat([self._job_table, df]).reset_index(drop=True)
+            else:
+                self._job_table = df
 
     def get_db_columns(self):
         return self.get_table_headings()
@@ -136,14 +169,19 @@ class FileTable(object):
                   job_name_contains=''):
         if project is None:
             project = self._project
+        else:
+            project = self._clean_project_name(project=project)
         if columns is None:
             columns = ["job", "project", "chemicalformula"]
         if all_columns:
             columns = self._columns
-        if recursive:
-            df = self._job_table[self._job_table.project.str.contains(project)]
+        if len(self._job_table) != 0:
+            if recursive:
+                df = self._job_table[self._job_table.project.str.contains(project)]
+            else:
+                df = self._job_table[self._job_table.project == project]
         else:
-            df = self._job_table[self._job_table.project == project]
+            df = self._job_table
         pandas.set_option("display.max_colwidth", max_colwidth)
         if len(df) == 0:
             return df
@@ -156,6 +194,8 @@ class FileTable(object):
     def get_jobs(self, project=None, recursive=True, columns=None):
         if project is None:
             project = self._project
+        else:
+            project = self._clean_project_name(project=project)
         if columns is None:
             columns = ["id", "project"]
         df = self.job_table(project=project, recursive=recursive, columns=columns)
@@ -173,13 +213,13 @@ class FileTable(object):
         return dictionary
 
     def get_job_ids(self, project=None, recursive=True):
-        if project is None:
-            project = self._project
         return self.get_jobs(project=project, recursive=recursive, columns=['id'])["id"]
 
     def get_job_id(self, job_specifier, project=None):
         if project is None:
             project = self._project
+        else:
+            project = self._clean_project_name(project=project)
         if sys.version_info.major == 2:
             if isinstance(job_specifier, (int, long, np.integer)):
                 return int(job_specifier)  # is id
@@ -228,6 +268,8 @@ class FileTable(object):
         """
         if project is None:
             project = self._project
+        else:
+            project = self._clean_project_name(project=project)
         id_master = self.get_job_id(project=project, job_specifier=job_specifier)
         if id_master is None:
             return []
@@ -255,6 +297,8 @@ class FileTable(object):
         """
         if project is None:
             project = self._project
+        else:
+            project = self._clean_project_name(project=project)
         job_id = self.get_job_id(project=project, job_specifier=job_specifier)
         self._job_table.loc[self._job_table.id == job_id, 'status'] = status
         db_entry = self.get_item_by_id(item_id=job_id)
@@ -280,6 +324,8 @@ class FileTable(object):
         """
         if project is None:
             project = self._project
+        else:
+            project = self._clean_project_name(project=project)
         try:
             return self._job_table[
                 self._job_table.id == self.get_job_id(project=project, job_specifier=job_specifier)].status.values[0]
@@ -302,6 +348,8 @@ class FileTable(object):
         """
         if project is None:
             project = self._project
+        else:
+            project = self._clean_project_name(project=project)
         try:
             db_entry = self.get_item_by_id(item_id=self.get_job_id(project=project, job_specifier=job_specifier))
             if db_entry and len(db_entry) > 0:
@@ -315,3 +363,10 @@ class FileTable(object):
                 return None
         except KeyError:
             return None
+
+    @staticmethod
+    def _clean_project_name(project):
+        if project[-1] == '/':
+            return project[:-1]
+        else:
+            return project
