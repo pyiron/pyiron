@@ -343,6 +343,20 @@ class TestLammps(unittest.TestCase):
                                            overwrite_positions=random_array,
                                            overwrite_cells=random_cell)._cells,
             random_cell[snap_indices]))
+        self.assertIsInstance(self.job_water_dump.get_structure(-1), Atoms)
+        # Test for clusters
+        with self.job_water_dump.project_hdf5.open("output/generic") as h_out:
+            h_out["cells"] = None
+        self.assertTrue(np.array_equal(
+            self.job_water_dump.trajectory(atom_indices=atom_indices,
+                                           snapshot_indices=snap_indices)._positions,
+            orig_pos[snap_indices][:, atom_indices, :]))
+        with self.job_water_dump.project_hdf5.open("output/generic") as h_out:
+            h_out["cells"] = np.array([np.zeros((3, 3))] * len(h_out["positions"]))
+        self.assertTrue(np.array_equal(
+            self.job_water_dump.trajectory(atom_indices=atom_indices,
+                                           snapshot_indices=snap_indices)._positions,
+            orig_pos[snap_indices][:, atom_indices, :]))
 
     def test_dump_parser(self):
         structure = Atoms(

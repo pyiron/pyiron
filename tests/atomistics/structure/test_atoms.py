@@ -310,6 +310,22 @@ class TestAtoms(unittest.TestCase):
             CO.cell = -np.eye(3)
         with self.assertRaises(ValueError):
             CO.cell = [2, 1]
+        dx = 1.0
+        r_o = [0, 0, 0]
+        r_h1 = [dx, 0, 0]
+        r_h2 = [0, dx, 0]
+        water = Atoms(elements=['H', 'H', 'O'], positions=[r_h1, r_h2, r_o])
+        water.cell = np.zeros((3, 3))
+        self.assertTrue(np.array_equal(water.cell, np.zeros((3, 3))))
+        self.assertTrue(np.array_equal(water.get_scaled_positions(), water.positions))
+        positions_2d = np.random.random((4, 3))
+        positions_2d[:, 2] = 0.0
+        cell_2d = np.eye(3)
+        cell_2d[2, 2] = 0.0
+        struct_2d = Atoms("C4", scaled_positions=positions_2d, cell=cell_2d, pbc=[True, True, False])
+        struct_2d.set_cell(cell_2d)
+        self.assertTrue(np.array_equal(struct_2d.get_scaled_positions(), positions_2d))
+        struct_2d.set_cell(cell_2d, scale_atoms=True)
 
     def test_add(self):
         COX = self.C2 + Atom("O", position=[0, 0, -2])
