@@ -32,7 +32,7 @@ class FileTable(with_metaclass(Singleton)):
     def __init__(self, project):
         self._fileindex = None
         self._job_table = None
-        self._project = os.path.abspath(self._clean_project_name(project=project))
+        self._project = os.path.abspath(project)
         self._columns = ['id', 'status', 'chemicalformula', 'job', 'subjob', 'projectpath', 'project', 'timestart',
                          'timestop', 'totalcputime', 'computer', 'hamilton', 'hamversion', 'parentid', 'masterid',
                          'username']
@@ -55,7 +55,7 @@ class FileTable(with_metaclass(Singleton)):
         for path, mtime in zip(fileindex.path, fileindex.mtime):
             job_dict = self.get_extract(path, mtime)
             job_dict['id'] = len(working_dir_lst) + 1
-            working_dir_lst.append(job_dict['project'] + job_dict['subjob'] + '_hdf5')
+            working_dir_lst.append(job_dict['project'][:-1] + job_dict['subjob'] + '_hdf5/')
             if job_dict['project'] in working_dir_lst:
                 job_dict['masterid'] = working_dir_lst.index(job_dict['project']) + 1
             else:
@@ -73,7 +73,7 @@ class FileTable(with_metaclass(Singleton)):
                 'job': job,
                 'subjob': '/' + job,
                 'projectpath': None,
-                'project': os.path.dirname(path),
+                'project': os.path.dirname(path) + '/',
                 'timestart': time,
                 'timestop': time,
                 'totalcputime': 0.0,
@@ -111,18 +111,18 @@ class FileTable(with_metaclass(Singleton)):
             item_id = item_id[0]
         if isinstance(item_id, str):
             item_id = float(item_id)
-        if isinstance(item_id, float):
-            item_id = int(item_id)
         for k, v in par_dict.items():
-            self._job_table.loc[self._job_table.id == item_id, k] = v
+            self._job_table.loc[self._job_table.id == int(item_id), k] = v
 
     def delete_item(self, item_id):
-        if item_id in self._job_table.id.values:
+        item_id = int(item_id)
+        if item_id in [int(v) for v in self._job_table.id.values]:
             self._job_table = self._job_table[self._job_table.id != item_id].reset_index(drop=True)
         else:
             raise ValueError
 
     def get_item_by_id(self, item_id):
+        item_id = int(item_id)
         return {k: list(v.values())[0] for k, v in self._job_table[self._job_table.id == item_id].to_dict().items()}
 
     def get_items_dict(self, item_dict, return_all_columns=True):
@@ -130,7 +130,9 @@ class FileTable(with_metaclass(Singleton)):
         if not isinstance(item_dict, dict):
             raise TypeError
         for k, v in item_dict.items():
-            if "%" not in str(v):
+            if k in ['id', 'parentid', 'masterid']:
+                df = df[df[k] == int(v)]
+            elif "%" not in str(v):
                 df = df[df[k] == v]
             else:
                 df = df[df[k].str.contains(v.replace('%', ''))]
@@ -169,8 +171,6 @@ class FileTable(with_metaclass(Singleton)):
                   job_name_contains=''):
         if project is None:
             project = self._project
-        else:
-            project = self._clean_project_name(project=project)
         if columns is None:
             columns = ["job", "project", "chemicalformula"]
         if all_columns:
@@ -194,8 +194,6 @@ class FileTable(with_metaclass(Singleton)):
     def get_jobs(self, project=None, recursive=True, columns=None):
         if project is None:
             project = self._project
-        else:
-            project = self._clean_project_name(project=project)
         if columns is None:
             columns = ["id", "project"]
         df = self.job_table(project=project, recursive=recursive, columns=columns)
@@ -218,8 +216,6 @@ class FileTable(with_metaclass(Singleton)):
     def get_job_id(self, job_specifier, project=None):
         if project is None:
             project = self._project
-        else:
-            project = self._clean_project_name(project=project)
         if sys.version_info.major == 2:
             if isinstance(job_specifier, (int, long, np.integer)):
                 return int(job_specifier)  # is id
@@ -245,7 +241,7 @@ class FileTable(with_metaclass(Singleton)):
         if len(job_id_lst) == 0:
             return None
         elif len(job_id_lst) == 1:
-            return job_id_lst[0]
+            return int(job_id_lst[0])
         else:
             raise ValueError(
                 "job name '{0}' in this project is not unique".format(job_specifier)
@@ -268,8 +264,6 @@ class FileTable(with_metaclass(Singleton)):
         """
         if project is None:
             project = self._project
-        else:
-            project = self._clean_project_name(project=project)
         id_master = self.get_job_id(project=project, job_specifier=job_specifier)
         if id_master is None:
             return []
@@ -297,8 +291,6 @@ class FileTable(with_metaclass(Singleton)):
         """
         if project is None:
             project = self._project
-        else:
-            project = self._clean_project_name(project=project)
         job_id = self.get_job_id(project=project, job_specifier=job_specifier)
         self._job_table.loc[self._job_table.id == job_id, 'status'] = status
         db_entry = self.get_item_by_id(item_id=job_id)
@@ -324,8 +316,6 @@ class FileTable(with_metaclass(Singleton)):
         """
         if project is None:
             project = self._project
-        else:
-            project = self._clean_project_name(project=project)
         try:
             return self._job_table[
                 self._job_table.id == self.get_job_id(project=project, job_specifier=job_specifier)].status.values[0]
@@ -348,8 +338,6 @@ class FileTable(with_metaclass(Singleton)):
         """
         if project is None:
             project = self._project
-        else:
-            project = self._clean_project_name(project=project)
         try:
             db_entry = self.get_item_by_id(item_id=self.get_job_id(project=project, job_specifier=job_specifier))
             if db_entry and len(db_entry) > 0:
@@ -363,10 +351,3 @@ class FileTable(with_metaclass(Singleton)):
                 return None
         except KeyError:
             return None
-
-    @staticmethod
-    def _clean_project_name(project):
-        if project[-1] == '/':
-            return project[:-1]
-        else:
-            return project
