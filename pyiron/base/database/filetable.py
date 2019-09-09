@@ -68,7 +68,8 @@ class FileTable(object):
         for k, v in zip(self._columns, default_values):
             if k not in par_dict.keys():
                 par_dict[k] = v
-        self._job_table = pandas.concat([self._job_table, pandas.DataFrame([par_dict])[self._columns]]).reset_index(drop=True)
+        self._job_table = pandas.concat([self._job_table,
+                                         pandas.DataFrame([par_dict])[self._columns]]).reset_index(drop=True)
         return par_dict['id']
 
     def item_update(self, par_dict, item_id):
@@ -107,6 +108,9 @@ class FileTable(object):
             self._job_table = pandas.concat([self._job_table, df]).reset_index(drop=True)
 
     def get_db_columns(self):
+        return self.get_table_headings()
+
+    def get_table_headings(self):
         return self._job_table.columns.values
 
     def job_table(self, project=None, recursive=True, columns=None, all_columns=False, sort_by="id", max_colwidth=200,
