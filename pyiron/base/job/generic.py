@@ -769,7 +769,8 @@ class GenericJob(JobCore):
         )
         s.queue_adapter.transfer_file_to_remote(
             file=self.project_hdf5.file_name,
-            transfer_back=True
+            transfer_back=True,
+            delete_remote=True,
         )
         if s.database_is_disabled:
             self.project.db.update()
