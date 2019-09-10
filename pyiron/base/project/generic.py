@@ -714,7 +714,7 @@ class Project(ProjectPath):
         Internal function to load an existing job either based on the job ID or based on the database entry dictionary.
 
         Args:
-            job_id (int): Job ID - optional, but either the job_id or the db_entry is required.
+            job_id (int/ None): Job ID - optional, but either the job_id or the db_entry is required.
             db_entry (dict): database entry dictionary - optional, but either the job_id or the db_entry is required.
             convert_to_object (bool): convert the object to an pyiron object or only access the HDF5 file - default=True
                                       accessing only the HDF5 file is about an order of magnitude faster, but only
