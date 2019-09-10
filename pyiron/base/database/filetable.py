@@ -145,7 +145,7 @@ class FileTable(with_metaclass(Singleton)):
     def update(self):
         self._fileindex.update()
         if len(self._job_table) != 0:
-            files_lst, working_dir_lst = zip(*[[project + subjob + '.h5', project + subjob + '_hdf5']
+            files_lst, working_dir_lst = zip(*[[project + subjob[1:] + '.h5', project + subjob[1:] + '_hdf5']
                                                for project, subjob in zip(self._job_table.project.values,
                                                                           self._job_table.subjob.values)])
             df_new = self._fileindex.dataframe[
