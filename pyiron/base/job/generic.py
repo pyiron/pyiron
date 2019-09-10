@@ -856,9 +856,13 @@ class GenericJob(JobCore):
             target=multiprocess_wrapper,
             args=(self.job_id, self.project_hdf5.working_directory, False),
         )
-        if self.master_id:
+        if self.master_id and self.server.run_mode.non_modal:
             del self
-        p.start()
+        if self.server.run_mode.non_modal:
+            p.start()
+        else:
+            self._process = p
+            self._process.start()
 
     def run_if_manually(self, _manually_print=True):
         """
