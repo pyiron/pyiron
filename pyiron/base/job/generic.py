@@ -1019,6 +1019,7 @@ class GenericJob(JobCore):
         self._logger.info("update master: {} {}".format(master_id, self.get_job_id()))
         if (
             master_id is not None
+            and not self.server.run_mode.thread
             and not self.server.run_mode.modal
             and not self.server.run_mode.interactive
         ):
