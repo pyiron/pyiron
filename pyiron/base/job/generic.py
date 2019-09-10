@@ -762,6 +762,18 @@ class GenericJob(JobCore):
         if job_crashed:
             self.status.aborted = True
 
+    def transfer_from_remote(self, delete_remote=True):
+        s.queue_adapter.get_job_from_remote(
+            working_directory='/'.join(self.working_directory.split('/')[:-1]),
+            delete_remote=delete_remote
+        )
+        s.queue_adapter.transfer_file_to_remote(
+            file=self.project_hdf5.file_name,
+            transfer_back=True
+        )
+        if s.database_is_disabled:
+            self.project.db.update()
+
     def run_if_interactive(self):
         """
         For jobs which executables are available as Python library, those can also be executed with a library call
@@ -874,11 +886,7 @@ class GenericJob(JobCore):
         """
         if s.queue_adapter is None:
             raise TypeError("No queue adapter defined.")
-        if s.database_is_disabled:
-            command = "python -m pyiron.base.job.wrappercmd -p " \
-                      + self.working_directory \
-                      + " -f " + self.project_hdf5.file_name + self.project_hdf5.h5_path
-        elif s.queue_adapter.remote_flag:
+        if s.queue_adapter.remote_flag:
             filename = s.queue_adapter.convert_path_to_remote(path=self.project_hdf5.file_name)
             working_directory = s.queue_adapter.convert_path_to_remote(path=self.working_directory)
             command = "python -m pyiron.base.job.wrappercmd -p " \
@@ -889,6 +897,10 @@ class GenericJob(JobCore):
                 file=self.project_hdf5.file_name,
                 transfer_back=False
             )
+        elif s.database_is_disabled:
+            command = "python -m pyiron.base.job.wrappercmd -p " \
+                      + self.working_directory \
+                      + " -f " + self.project_hdf5.file_name + self.project_hdf5.h5_path
         else:
             command = "python -m pyiron.base.job.wrappercmd -p " \
                       + self.working_directory \
