@@ -39,7 +39,7 @@ class JobWrapper(object):
     def __init__(self, working_directory, job_id=None, hdf5_file=None, h5_path=None, debug=False):
         self.working_directory = working_directory
         self._remote_flag = False
-        pr = Project(path=working_directory)
+        pr = Project(path=os.path.join(working_directory, '..', '..'))
         if job_id is not None:
             self.job = pr.load(int(job_id))
         else:
