@@ -38,7 +38,7 @@ class JobWrapper(object):
 
     def __init__(self, working_directory, job_id=None, hdf5_file=None, h5_path=None, debug=False):
         self.working_directory = working_directory
-
+        self._remote_flag = False
         pr = Project(path=working_directory)
         if job_id is not None:
             self.job = pr.load(int(job_id))
@@ -70,6 +70,7 @@ class JobWrapper(object):
                     )
                 },
                 convert_to_object=True)
+            self._remote_flag = True
 
         # setup logger
         self._logger = self.setup_logger(debug=debug)
@@ -102,7 +103,10 @@ class JobWrapper(object):
         """
         The job wrapper run command, sets the job status to 'running' and executes run_if_modal().
         """
-        self.job.run_static()
+        if not self._remote_flag:
+            self.job.run_static()
+        else:
+            self.job.run_if_scheduler()
 
 
 def job_wrapper_function(working_directory, job_id=None, file_path=None, debug=False):
