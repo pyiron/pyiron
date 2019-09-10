@@ -36,9 +36,10 @@ class JobWrapper(object):
         debug (bool): enable debug mode [True/False] (optional)
     """
 
-    def __init__(self, working_directory, job_id=None, hdf5_file=None, h5_path=None, debug=False):
+    def __init__(self, working_directory, job_id=None, hdf5_file=None, h5_path=None, submit_on_remote=False,
+                 debug=False):
         self.working_directory = working_directory
-        self._remote_flag = False
+        self._remote_flag = submit_on_remote
         pr = Project(path=os.path.join(working_directory, '..', '..'))
         if job_id is not None:
             self.job = pr.load(int(job_id))
@@ -70,7 +71,6 @@ class JobWrapper(object):
                     )
                 },
                 convert_to_object=True)
-            self._remote_flag = True
 
         # setup logger
         self._logger = self.setup_logger(debug=debug)
