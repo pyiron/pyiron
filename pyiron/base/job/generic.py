@@ -874,6 +874,20 @@ class GenericJob(JobCore):
         """
         if s.queue_adapter is None:
             raise TypeError("No queue adapter defined.")
+        if s.queue_adapter.remote_flag:
+            filename = s.queue_adapter.convert_path_to_remote(path=self.project_hdf5.file_name)
+            working_directory = s.queue_adapter.convert_path_to_remote(path=self.working_directory)
+            command = "python -m pyiron.base.job.wrappercmd -p " \
+                      + working_directory \
+                      + " -f " + filename + self.project_hdf5.h5_path
+            s.queue_adapter.transfer_file_to_remote(
+                file=filename,
+                transfer_back=False
+            )
+        else:
+            command = "python -m pyiron.base.job.wrappercmd -p " \
+                      + self.working_directory \
+                      + " -j " + str(self.job_id)
         try:
             que_id = s.queue_adapter.submit_job(
                 queue=self.server.queue,
@@ -882,10 +896,7 @@ class GenericJob(JobCore):
                 cores=self.server.cores,
                 run_time_max=self.server.run_time,
                 memory_max=self.server.memory_limit,
-                command="python -m pyiron.base.job.wrappercmd -p "
-                + self.working_directory
-                + " -j "
-                + str(self.job_id),
+                command=command,
             )
             self.server.queue_id = que_id
             self._server.to_hdf(self._hdf5)
