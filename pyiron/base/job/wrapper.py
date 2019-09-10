@@ -108,7 +108,8 @@ class JobWrapper(object):
         else:
             self.job.run_static()
 
-def job_wrapper_function(working_directory, job_id=None, file_path=None, debug=False):
+
+def job_wrapper_function(working_directory, job_id=None, file_path=None, submit_on_remote=False, debug=False):
     """
     Job Wrapper function - creates a JobWrapper object and calls run() on that object
 
@@ -119,7 +120,12 @@ def job_wrapper_function(working_directory, job_id=None, file_path=None, debug=F
         debug (bool): enable debug mode
     """
     if job_id is not None:
-        job = JobWrapper(working_directory=working_directory, job_id=job_id, debug=debug)
+        job = JobWrapper(
+            working_directory=working_directory,
+            job_id=job_id,
+            submit_on_remote=submit_on_remote,
+            debug=debug
+        )
     elif file_path is not None:
         hdf5_file = '.'.join(file_path.split('.')[:-1]) + '.' + file_path.split('.')[-1].split('/')[0]
         h5_path = '/'.join(file_path.split('.')[-1].split('/')[1:])
@@ -128,6 +134,7 @@ def job_wrapper_function(working_directory, job_id=None, file_path=None, debug=F
             job_id=None,
             hdf5_file=hdf5_file,
             h5_path='/' + h5_path,
+            submit_on_remote=submit_on_remote,
             debug=debug
         )
     else:
