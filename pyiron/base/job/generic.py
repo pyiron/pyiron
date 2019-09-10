@@ -881,7 +881,7 @@ class GenericJob(JobCore):
                       + working_directory \
                       + " -f " + filename + self.project_hdf5.h5_path
             s.queue_adapter.transfer_file_to_remote(
-                file=filename,
+                file=self.project_hdf5.file_name,
                 transfer_back=False
             )
         else:
