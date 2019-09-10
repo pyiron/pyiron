@@ -239,23 +239,25 @@ class SubmissionStatus(object):
         Internal function to update the database, with the current number of submitted jobs.
         """
         if self.job_id:
-            split_str = self.database.get_item_by_id(self.job_id)["computer"].split("#")
-            if len(split_str) > 2:
-                computer = split_str[:-1]
-            else:
-                computer = split_str
-            if self._total_jobs:
-                status = (
-                    computer[0]
-                    + "#"
-                    + computer[1]
-                    + "#"
-                    + str(self._submitted_jobs)
-                    + "/"
-                    + str(self._total_jobs)
-                )
-            else:
-                status = (
-                    computer[0] + "#" + computer[1] + "#" + str(self._submitted_jobs)
-                )
-            self.database.item_update({"computer": status}, self.job_id)
+            db_entry = self.database.get_item_by_id(self.job_id)
+            if db_entry["computer"] is not None:
+                split_str = db_entry["computer"].split("#")
+                if len(split_str) > 2:
+                    computer = split_str[:-1]
+                else:
+                    computer = split_str
+                if self._total_jobs:
+                    status = (
+                        computer[0]
+                        + "#"
+                        + computer[1]
+                        + "#"
+                        + str(self._submitted_jobs)
+                        + "/"
+                        + str(self._total_jobs)
+                    )
+                else:
+                    status = (
+                        computer[0] + "#" + computer[1] + "#" + str(self._submitted_jobs)
+                    )
+                self.database.item_update({"computer": status}, self.job_id)
