@@ -571,7 +571,7 @@ class ParallelMaster(GenericMaster):
                 job.run()
                 if job.server.run_mode.thread:
                     job_lst.append(job.python_execution_process)
-            _ = [process.communicate() for process in job_lst if process]
+            _ = [process.join() for process in job_lst if process]
             self.status.collect = True
             self.run()  # self.run_if_collect()
         else:
