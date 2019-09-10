@@ -68,7 +68,7 @@ class FileTable(with_metaclass(Singleton)):
         basename = os.path.basename(path)
         job = os.path.splitext(basename)[0]
         time = datetime.datetime.fromtimestamp(mtime)
-        return {'status': h5io.read_hdf5(path, job + '/status'),
+        return {'status': get_job_status_from_file(hdf5_file=path, job_name=job),
                 'chemicalformula': None,
                 'job': job,
                 'subjob': '/' + job,
@@ -80,8 +80,8 @@ class FileTable(with_metaclass(Singleton)):
                 'computer': None,
                 'username': None,
                 'parentid': None,
-                'hamilton': h5io.read_hdf5(path, job + '/TYPE').split(".")[-1].split("'")[0],
-                'hamversion': h5io.read_hdf5(path, job + '/VERSION')}
+                'hamilton': get_hamilton_from_file(hdf5_file=path, job_name=job),
+                'hamversion': get_hamilton_version_from_file(hdf5_file=path, job_name=job)}
 
     def add_item_dict(self, par_dict):
         par_dict = dict((key.lower(), value) for key, value in par_dict.items())
@@ -351,3 +351,15 @@ class FileTable(with_metaclass(Singleton)):
                 return None
         except KeyError:
             return None
+
+
+def get_hamilton_from_file(hdf5_file, job_name):
+    return h5io.read_hdf5(hdf5_file, job_name + '/TYPE').split(".")[-1].split("'")[0]
+
+
+def get_hamilton_version_from_file(hdf5_file, job_name):
+    return h5io.read_hdf5(hdf5_file, job_name + '/VERSION')
+
+
+def get_job_status_from_file(hdf5_file, job_name):
+    return h5io.read_hdf5(hdf5_file, job_name + '/status')
