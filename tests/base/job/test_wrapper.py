@@ -15,7 +15,7 @@ class TestJobWrapperFunction(unittest.TestCase):
         cls.project = Project(os.path.join(cls.file_location, "wrapper_testing"))
         cls.job = cls.project.create_job("ExampleJob", "job_test_run")
         cls.job.input["count"] = 12
-        cls.job.server.run_mod.manual = True
+        cls.job.server.run_mode.manual = True
         cls.job.run()
 
     @classmethod
