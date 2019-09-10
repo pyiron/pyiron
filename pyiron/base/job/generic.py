@@ -874,14 +874,17 @@ class GenericJob(JobCore):
         """
         if s.queue_adapter is None:
             raise TypeError("No queue adapter defined.")
-        if s.queue_adapter.remote_flag or s.database_is_disabled:
+        if s.database_is_disabled:
+            command = "python -m pyiron.base.job.wrappercmd -p " \
+                      + self.working_directory \
+                      + " -f " + self.project_hdf5.file_name + self.project_hdf5.h5_path
+        elif s.queue_adapter.remote_flag:
             filename = s.queue_adapter.convert_path_to_remote(path=self.project_hdf5.file_name)
             working_directory = s.queue_adapter.convert_path_to_remote(path=self.working_directory)
             command = "python -m pyiron.base.job.wrappercmd -p " \
                       + working_directory \
-                      + " -f " + filename + self.project_hdf5.h5_path
-            if s.queue_adapter.remote_flag:
-                command += " --submit"
+                      + " -f " + filename + self.project_hdf5.h5_path \
+                      + " --submit"
             s.queue_adapter.transfer_file_to_remote(
                 file=self.project_hdf5.file_name,
                 transfer_back=False
