@@ -103,11 +103,10 @@ class JobWrapper(object):
         """
         The job wrapper run command, sets the job status to 'running' and executes run_if_modal().
         """
-        if not self._remote_flag:
-            self.job.run_static()
-        else:
+        if self._remote_flag and self.job.server.queue is not None:
             self.job.run_if_scheduler()
-
+        else:
+            self.job.run_static()
 
 def job_wrapper_function(working_directory, job_id=None, file_path=None, debug=False):
     """
