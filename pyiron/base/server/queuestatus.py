@@ -154,7 +154,7 @@ def wait_for_job(job, interval_in_s=5, max_iterations=100):
         interval_in_s (int): interval when the job status is queried from the database - default 5 sec.
         max_iterations (int): maximum number of iterations - default 100
     """
-    if s.queue_adapter.remote_flag and job.server.queue is not None:
+    if s.queue_adapter is not None and s.queue_adapter.remote_flag and job.server.queue is not None:
         finished = False
         for _ in range(max_iterations):
             if not job.project.queue_check_job_is_waiting_or_running(job):
