@@ -6,7 +6,8 @@ import os
 import logging
 from pyiron.base.project.generic import Project
 from pyiron.base.settings.generic import Settings
-from pyiron.base.database.filetable import get_hamilton_from_file, get_hamilton_version_from_file, get_job_status_from_file
+from pyiron.base.database.filetable import get_hamilton_from_file, get_hamilton_version_from_file, \
+    get_job_status_from_file
 
 """
 The job wrapper is called from the run_job.py script, it restores the job from hdf5 and executes it.
@@ -33,6 +34,9 @@ class JobWrapper(object):
     Args:
         working_directory (str): working directory of the job
         job_id (int/ None): job ID
+        hdf5_file (str): path to the HDF5 file of the job
+        h5_path (str): path inside the HDF5 file to load the job
+        submit_on_remote (bool): submit to queuing system on remote host
         debug (bool): enable debug mode [True/False] (optional)
     """
 
@@ -118,6 +122,7 @@ def job_wrapper_function(working_directory, job_id=None, file_path=None, submit_
         job_id (int/ None): job id
         file_path (str): path to the HDF5 file
         debug (bool): enable debug mode
+        submit_on_remote (bool): submit to queuing system on remote host
     """
     if job_id is not None:
         job = JobWrapper(
