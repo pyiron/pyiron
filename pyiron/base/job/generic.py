@@ -775,6 +775,7 @@ class GenericJob(JobCore):
         )
         if s.database_is_disabled:
             self.project.db.update()
+        self.status.finished = True
 
     def run_if_interactive(self):
         """
@@ -1395,12 +1396,11 @@ class GenericJob(JobCore):
         if self.status.collect:
             if not self.convergence_check():
                 self.status.not_converged = True
-                self._hdf5["status"] = self.status.string
             else:
                 if self._compress_by_default:
                     self.compress()
                 self.status.finished = True
-                self._hdf5["status"] = self.status.string
+            self._hdf5["status"] = self.status.string
         if self.job_id is not None:
             self._calculate_successor()
         self.send_to_database()
