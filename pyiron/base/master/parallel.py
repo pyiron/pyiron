@@ -628,15 +628,26 @@ class ParallelMaster(GenericMaster):
             job.save()
             job.project_hdf5.create_working_directory()
             job.write_input()
-            job_lst.append(
-                (
-                    job.project.path,
-                    None,
-                    job.project_hdf5.file_name + job.project_hdf5.h5_path,
-                    False,
-                    False
+            if s.database_is_disabled or (s.queue_adapter is not None and s.queue_adapter.remote_flag):
+                job_lst.append(
+                    (
+                        job.project.path,
+                        None,
+                        job.project_hdf5.file_name + job.project_hdf5.h5_path,
+                        False,
+                        False
+                    )
                 )
-            )
+            else:
+                job_lst.append(
+                    (
+                        job.project.path,
+                        job.job_id,
+                        None,
+                        False,
+                        False
+                    )
+                )
         pool.map(job_wrap_function, job_lst)
         if s.database_is_disabled:
             self.project.db.update()
