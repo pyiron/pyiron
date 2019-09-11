@@ -608,6 +608,7 @@ class ParallelMaster(GenericMaster):
                 job = self.create_child_job(
                     self.ref_job.job_name + "_" + str(i)
                 )
+            job = self.modify_job(job=job, parameter=p)
             job_lst.append(job)
         results = pool.map_async(lambda j: j.run(), job_lst)
         pool.close()
