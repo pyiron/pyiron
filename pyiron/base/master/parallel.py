@@ -7,13 +7,14 @@ from collections import OrderedDict
 from datetime import datetime
 import numpy as np
 import pandas
-import time
+import multiprocessing
 import importlib
 from pyiron.base.job.generic import GenericJob
 from pyiron.base.master.generic import GenericMaster
 from pyiron.base.master.submissionstatus import SubmissionStatus
 from pyiron.base.generic.parameters import GenericParameters
 from pyiron.base.job.jobstatus import JobStatus
+from pyiron.base.job.wrapper import job_wrapper_function
 
 """
 The parallel master class is a metajob consisting of a list of jobs which are executed in parallel.
@@ -29,6 +30,14 @@ __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
+
+def job_wrap_function(parameters):
+    working_directory, job_id, file_path, submit_on_remote, debug = parameters
+    job_wrapper_function(
+        working_directory=working_directory,
+        job_id=job_id,
+        debug=debug,
+    )
 
 
 class ParallelMaster(GenericMaster):
@@ -551,30 +560,6 @@ class ParallelMaster(GenericMaster):
             self.status.collect = True
             self.run()
 
-    def _run_if_master_queue(self, job):
-        """
-        run function which is executed when the Parallelmaster is submitted to the queue. This run mode is similar to
-        the non modal run mode, as the number of cores assigned to the Parallelmaster determines how many subprocesses
-        can be started. But in contrast to the non modal mode where the Parallelmaster is suspended after the submission
-        of the child jobs in the queue the Parallelmaster stays active, as some queuing systems kill the jobs once the
-        primary task exited.
-
-        Args:
-            job (GenericJob): child job to be started
-        """
-        job_to_be_run_lst = self._next_job_series(job)
-        if self.project.db.get_item_by_id(self.job_id)["status"] != "busy":
-            self.status.suspended = True
-            job_lst = []
-            for job in job_to_be_run_lst:
-                job.run()
-                if job.server.run_mode.thread:
-                    job_lst.append(job.python_execution_process)
-            _ = [process.communicate() for process in job_lst if process]
-            self.run_if_refresh()
-        else:
-            self.run_static()
-
     def _run_if_master_non_modal_child_non_modal(self, job):
         """
         run function which is executed when the Parallelmaster as well as its childs are running in non modal mode.
@@ -620,21 +605,34 @@ class ParallelMaster(GenericMaster):
         Args:
             job (GenericJob): child job to be started
         """
-        while job is not None:
-            self._logger.debug("create job: %s %s", job.job_info_str, job.master_id)
-            if not job.status.finished:
-                self.submission_status.submit_next()
-                job.run()
-                self._logger.info(
-                    "{}: finished job {}".format(self.job_name, job.job_name)
+        pool = multiprocessing.Pool(self.server.cores)
+        job_lst = []
+        for i, p in enumerate(self._job_generator.parameter_list):
+            if hasattr(self._job_generator, "job_name"):
+                job = self.create_child_job(
+                    self._job_generator.job_name(parameter=p)
                 )
-            job = next(self._job_generator, None)
-            while job is None and not self.is_finished():
-                time.sleep(5)
-                job = next(self._job_generator, None)
-        if self.is_finished():
-            self.status.collect = True
-            self.run()
+            else:
+                job = self.create_child_job(
+                    self.ref_job.job_name + "_" + str(i)
+                )
+            job = self._job_generator.modify_job(job=job, parameter=p)
+            job.server.run_mode.modal = True
+            job.save()
+            job.project_hdf5.create_working_directory()
+            job.write_input()
+            job_lst.append(
+                (
+                    job.project.path,
+                    job.job_id,
+                    None,
+                    False,
+                    False
+                )
+            )
+        pool.map(job_wrap_function, job_lst)
+        self.status.collect = True
+        self.run()  # self.run_if_collect()
 
     def run_static(self):
         """
@@ -651,7 +649,7 @@ class ParallelMaster(GenericMaster):
             )
             job = next(self._job_generator, None)
             if self.server.run_mode.queue:
-                self._run_if_master_queue(job)
+                self._run_if_master_modal_child_non_modal(job=job)
             elif job.server.run_mode.queue:
                 self._run_if_child_queue(job)
             elif self.server.run_mode.non_modal and job.server.run_mode.non_modal:
