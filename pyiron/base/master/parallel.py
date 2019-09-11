@@ -572,8 +572,7 @@ class ParallelMaster(GenericMaster):
                 if job.server.run_mode.thread:
                     job_lst.append(job.python_execution_process)
             _ = [process.join() for process in job_lst if process]
-            self.status.collect = True
-            self.run()  # self.run_if_collect()
+            self.run_if_refresh()
         else:
             self.run_static()
 
