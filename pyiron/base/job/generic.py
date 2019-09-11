@@ -858,11 +858,13 @@ class GenericJob(JobCore):
         )
         if self.master_id and self.server.run_mode.non_modal:
             del self
-        if self.server.run_mode.non_modal:
             p.start()
         else:
-            self._process = p
-            self._process.start()
+            if self.server.run_mode.non_modal:
+                p.start()
+            else:
+                self._process = p
+                self._process.start()
 
     def run_if_manually(self, _manually_print=True):
         """
