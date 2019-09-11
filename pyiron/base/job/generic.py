@@ -709,7 +709,8 @@ class GenericJob(JobCore):
             self.status.aborted = True
             raise ValueError("No executable set!")
         self.status.running = True
-        self.project.db.item_update({"timestart": datetime.now()}, self.job_id)
+        if self.job_id is not None:
+            self.project.db.item_update({"timestart": datetime.now()}, self.job_id)
         job_crashed, out = False, None
         try:
             if self.server.cores == 1 or not self.executable.mpi:
@@ -1022,7 +1023,7 @@ class GenericJob(JobCore):
         """
         master_id = self.master_id
         project = self.project
-        self._logger.info("update master: {} {}".format(master_id, self.get_job_id()))
+        self._logger.info("update master: {} {} {}".format(master_id, self.get_job_id(), self.server.run_mode))
         if (
             master_id is not None
             and not self.server.run_mode.thread
@@ -1389,7 +1390,8 @@ class GenericJob(JobCore):
         """
         self.collect_output()
         self.collect_logfiles()
-        self.project.db.item_update(self._runtime(), self.job_id)
+        if self.job_id is not None:
+            self.project.db.item_update(self._runtime(), self.job_id)
         if self.status.collect:
             if not self.convergence_check():
                 self.status.not_converged = True
@@ -1399,7 +1401,8 @@ class GenericJob(JobCore):
                     self.compress()
                 self.status.finished = True
                 self._hdf5["status"] = self.status.string
-        self._calculate_successor()
+        if self.job_id is not None:
+            self._calculate_successor()
         self.send_to_database()
         self.update_master()
 

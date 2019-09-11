@@ -14,6 +14,8 @@ from pyiron.base.master.generic import GenericMaster
 from pyiron.base.master.submissionstatus import SubmissionStatus
 from pyiron.base.generic.parameters import GenericParameters
 from pyiron.base.job.jobstatus import JobStatus
+from pyiron.base.settings.generic import Settings
+from pyiron.base.job.wrapper import job_wrapper_function
 
 """
 The parallel master class is a metajob consisting of a list of jobs which are executed in parallel.
@@ -29,6 +31,19 @@ __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
+
+s = Settings()
+
+
+def job_wrap_function(parameters):
+    working_directory, job_id, file_path, submit_on_remote, debug = parameters
+    job_wrapper_function(
+        working_directory=working_directory,
+        job_id=job_id,
+        file_path=file_path,
+        submit_on_remote=submit_on_remote,
+        debug=debug,
+    )
 
 
 class ParallelMaster(GenericMaster):
@@ -608,11 +623,23 @@ class ParallelMaster(GenericMaster):
                 job = self.create_child_job(
                     self.ref_job.job_name + "_" + str(i)
                 )
-            job = self.modify_job(job=job, parameter=p)
-            job_lst.append(job)
-        results = pool.map_async(lambda j: j.run(), job_lst)
-        pool.close()
-        pool.join()
+            job = self._job_generator.modify_job(job=job, parameter=p)
+            job.server.run_mode.modal = True
+            job.save()
+            job.project_hdf5.create_working_directory()
+            job.write_input()
+            job_lst.append(
+                (
+                    job.project.path,
+                    None,
+                    job.project_hdf5.file_name + job.project_hdf5.h5_path,
+                    False,
+                    False
+                )
+            )
+        pool.map(job_wrap_function, job_lst)
+        if s.database_is_disabled:
+            self.project.db.update()
         self.status.collect = True
         self.run()  # self.run_if_collect()
 
