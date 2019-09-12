@@ -14,6 +14,7 @@ from pyiron.base.master.generic import GenericMaster
 from pyiron.base.master.submissionstatus import SubmissionStatus
 from pyiron.base.generic.parameters import GenericParameters
 from pyiron.base.job.jobstatus import JobStatus
+from pyiron.base.settings.generic import Settings
 from pyiron.base.job.wrapper import job_wrapper_function
 
 """
@@ -31,11 +32,16 @@ __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
 
+s = Settings()
+
+
 def job_wrap_function(parameters):
     working_directory, job_id, file_path, submit_on_remote, debug = parameters
     job_wrapper_function(
         working_directory=working_directory,
         job_id=job_id,
+        file_path=file_path,
+        submit_on_remote=submit_on_remote,
         debug=debug,
     )
 
@@ -491,6 +497,7 @@ class ParallelMaster(GenericMaster):
         db_dict["totalcputime"] = (db_dict["timestop"] - start_time).seconds
         self.project.db.item_update(db_dict, job_id)
         self.status.finished = True
+        self._hdf5["status"] = self.status.string
         self._logger.info(
             "{}, status: {}, parallel master".format(self.job_info_str, self.status)
         )
@@ -621,16 +628,29 @@ class ParallelMaster(GenericMaster):
             job.save()
             job.project_hdf5.create_working_directory()
             job.write_input()
-            job_lst.append(
-                (
-                    job.project.path,
-                    job.job_id,
-                    None,
-                    False,
-                    False
+            if s.database_is_disabled or (s.queue_adapter is not None and s.queue_adapter.remote_flag):
+                job_lst.append(
+                    (
+                        job.project.path,
+                        None,
+                        job.project_hdf5.file_name + job.project_hdf5.h5_path,
+                        False,
+                        False
+                    )
                 )
-            )
+            else:
+                job_lst.append(
+                    (
+                        job.project.path,
+                        job.job_id,
+                        None,
+                        False,
+                        False
+                    )
+                )
         pool.map(job_wrap_function, job_lst)
+        if s.database_is_disabled:
+            self.project.db.update()
         self.status.collect = True
         self.run()  # self.run_if_collect()
 

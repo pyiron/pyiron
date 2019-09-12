@@ -7,6 +7,7 @@ import copy
 import os
 import posixpath
 import time
+import math
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.template import PyironObject
 from tables import NoSuchNodeError
@@ -411,7 +412,7 @@ class JobCore(PyironObject):
                                     - default=True
         """
         if _protect_childs:
-            if self._master_id:
+            if self._master_id is not None and not math.isnan(self._master_id):
                 s.logger.error(
                     "Job {0} is a child of a master job and cannot be deleted!".format(
                         str(self.job_id)

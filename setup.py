@@ -43,6 +43,7 @@ setup(
         'pathlib2>=2.3.4',
         'phonopy>=2.3.2',
         'psutil>=5.6.3',
+        'pyfileindex>=0.0.2',
         'pysqa>=0.0.4',
         'scipy>=1.2.1',
         'six>=1.12.0',

@@ -154,15 +154,26 @@ def wait_for_job(job, interval_in_s=5, max_iterations=100):
         interval_in_s (int): interval when the job status is queried from the database - default 5 sec.
         max_iterations (int): maximum number of iterations - default 100
     """
-    finished = False
-    for _ in range(max_iterations):
-        job.refresh_job_status()
-        if job.status.finished or job.status.aborted or job.status.not_converged:
-            finished = True
-            break
-        time.sleep(interval_in_s)
-    if not finished:
-        raise ValueError("Maximum iterations reached, but the job was not finished.")
+    if s.queue_adapter is not None and s.queue_adapter.remote_flag and job.server.queue is not None:
+        finished = False
+        for _ in range(max_iterations):
+            if not job.project.queue_check_job_is_waiting_or_running(job):
+                job.transfer_from_remote()
+                finished = True
+                break
+            time.sleep(interval_in_s)
+        if not finished:
+            raise ValueError("Maximum iterations reached, but the job was not finished.")
+    else:
+        finished = False
+        for _ in range(max_iterations):
+            job.refresh_job_status()
+            if job.status.finished or job.status.aborted or job.status.not_converged:
+                finished = True
+                break
+            time.sleep(interval_in_s)
+        if not finished:
+            raise ValueError("Maximum iterations reached, but the job was not finished.")
 
 
 def _validate_que_request(item):
