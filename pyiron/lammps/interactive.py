@@ -10,6 +10,7 @@ import pandas as pd
 import pickle
 import subprocess
 import warnings
+from scipy import constants
 
 from pyiron.lammps.base import LammpsBase
 from pyiron.lammps.structure import UnfoldingPrism
@@ -563,23 +564,16 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             self._interactive_lib_command("compute st all stress/atom NULL")
             self._interactive_lib_command("run 0")
             self.interactive_cache["stress"] = []
-        ss = (
-            np.array(
-                [
-                    self._interactive_library.extract_compute("st", 1, 2)[i][
-                        j + (j != k) * (k + 2)
-                    ]
-                    for i in range(len(self.structure))
-                    for j in range(3)
-                    for k in range(3)
-                ]
-            ).reshape(len(self.structure), 3, 3)
-            / 1.602e6
-        )
+        id_lst = self._interactive_library.extract_atom("id", 0)
+        id_lst = np.array([id_lst[i] for i in range(len(self.structure))])-1
+        id_lst = np.arange(len(id_lst))[np.argsort(id_lst)]
+        ind = np.array([0, 3, 4, 3, 1, 5, 4, 5, 2])
+        ss = self._interactive_library.extract_compute("st", 1, 2)
+        ss = np.array([ss[i][j] for i in range(len(self.structure)) for j in range(6)]).reshape(-1, 6)[id_lst]
+        ss = ss[:, ind].reshape(len(self.structure), 3, 3)/constants.eV*constants.bar*constants.angstrom**3
         if np.matrix.trace(self._interactive_prism.R) != 3:
-            ss = np.dot(
-                np.dot(self._interactive_prism.R, ss), self._interactive_prism.R.T
-            )
+            ss = np.einsum('ij,njk->nik', self._interactive_prism.R, ss)
+            ss = np.einsum('nij,kj->nik', ss, self._interactive_prism.R)
         return ss
 
     def interactive_pressures_getter(self):
