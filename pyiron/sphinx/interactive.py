@@ -95,7 +95,10 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
 
     @coarse_run.setter
     def coarse_run(self, value):
+        if not isinstance(value, bool):
+            raise ValueError('coarse_run has to be a boolean')
         self._coarse_run = value
+        self.input["CoarseRun"] = self._coarse_run
 
     def interactive_cells_setter(self, cell):
         warnings.warn("cell size cannot be changed in SPHInX; function ignored")
