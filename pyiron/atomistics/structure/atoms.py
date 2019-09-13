@@ -2974,15 +2974,14 @@ class Atoms(object):
         Learn more about get_distances from the ase website:
         https://wiki.fysik.dtu.dk/ase/ase/geometry.html#ase.geometry.get_distances
         """
-        if (a0 is not None and len(np.array(a0).shape) != 2) or (
-            a1 is not None and len(np.array(a1).shape) != 2
-        ):
-            raise ValueError("a0 and a1 have to be None or Nx3 array")
         if a0 is None and a1 is not None:
             a0 = a1
             a1 = None
         if a0 is None:
             a0 = self.positions
+        a0 = np.array(a0).reshape(-1, 3)
+        if a1 is not None:
+            a1 = np.array(a1).reshape(-1, 3)
         if mic:
             vec, dist = get_distances(a0, a1, cell=self.cell, pbc=self.pbc)
         else:
