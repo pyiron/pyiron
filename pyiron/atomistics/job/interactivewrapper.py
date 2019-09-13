@@ -9,8 +9,10 @@ from pyiron.base.job.generic import GenericJob
 from pyiron.base.master.generic import GenericMaster
 
 __author__ = "Osamu Waseda, Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -36,7 +38,9 @@ class InteractiveWrapper(GenericMaster):
         if self.ref_job:
             self._ref_job.structure = basis
         else:
-            raise ValueError('A structure can only be set after a start job has been assinged.')
+            raise ValueError(
+                "A structure can only be set after a start job has been assinged."
+            )
 
     @property
     def ref_job(self):
@@ -68,6 +72,13 @@ class InteractiveWrapper(GenericMaster):
         if not ref_job.server.run_mode.interactive:
             warnings.warn("Run mode of the reference job not set to interactive")
         self.append(ref_job)
+
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        self.input.read_only = True
 
     def validate_ready_to_run(self):
         """
@@ -103,7 +114,10 @@ class InteractiveWrapper(GenericMaster):
         Returns:
 
         """
-        warnings.warn("get_final_structure() is deprecated - please use get_structure() instead.", DeprecationWarning)
+        warnings.warn(
+            "get_final_structure() is deprecated - please use get_structure() instead.",
+            DeprecationWarning,
+        )
         if self.ref_job:
             return self._ref_job.get_structure(iteration_step=-1)
         else:
@@ -120,7 +134,7 @@ class InteractiveWrapper(GenericMaster):
         if self._ref_job is not None and self._ref_job.job_id is None:
             self.append(self._ref_job)
         super(InteractiveWrapper, self).to_hdf(hdf=hdf, group_name=group_name)
-        with self.project_hdf5.open('input') as hdf5_input:
+        with self.project_hdf5.open("input") as hdf5_input:
             self.input.to_hdf(hdf5_input)
 
     def from_hdf(self, hdf=None, group_name=None):
@@ -132,7 +146,7 @@ class InteractiveWrapper(GenericMaster):
             group_name (str): HDF5 subgroup name - optional
         """
         super(InteractiveWrapper, self).from_hdf(hdf=hdf, group_name=group_name)
-        with self.project_hdf5.open('input') as hdf5_input:
+        with self.project_hdf5.open("input") as hdf5_input:
             self.input.from_hdf(hdf5_input)
 
     def collect_output(self):
@@ -175,7 +189,9 @@ class InteractiveWrapper(GenericMaster):
         """
         self.status.finished = True
         self._db_entry_update_run_time()
-        self._logger.info("{}, status: {}, monte carlo master".format(self.job_info_str, self.status))
+        self._logger.info(
+            "{}, status: {}, monte carlo master".format(self.job_info_str, self.status)
+        )
         self._calculate_successor()
         self.send_to_database()
         self.update_master()
@@ -191,11 +207,16 @@ class InteractiveWrapper(GenericMaster):
             dict, list, float, int: data or data object
         """
         child_id_lst = self.child_ids
-        child_name_lst = [self.project.db.get_item_by_id(child_id)["job"] for child_id in self.child_ids]
+        child_name_lst = [
+            self.project.db.get_item_by_id(child_id)["job"]
+            for child_id in self.child_ids
+        ]
         if isinstance(item, int):
             total_lst = child_name_lst + self._job_name_lst
             item = total_lst[item]
-        return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
+        return self._get_item_when_str(
+            item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst
+        )
 
 
 class ReferenceJobOutput(object):
@@ -252,4 +273,3 @@ class ReferenceJobOutput(object):
 
     def __dir__(self):
         return list(set(list(self._job.ref_job.interactive_cache.keys())))
-

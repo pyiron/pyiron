@@ -7,8 +7,10 @@ from pyiron.atomistics.md_analysis.trajectory_analysis import TrajectoryAnalysis
 import numpy as np
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -17,7 +19,6 @@ __date__ = "Sep 1, 2017"
 
 
 class WaterTrajectory(TrajectoryAnalysis):
-
     def __init__(self):
         super(WaterTrajectory, self).__init__()
         self.oxygen_indices = None
@@ -75,16 +76,20 @@ class WaterTrajectory(TrajectoryAnalysis):
                 hydronium_hydrogen_indices.append(h_ind_list)
                 hydronium_oxygen_indices.append(self.oxygen_indices[i])
 
-
         self.h1_indices = np.array(h1_indices)
         self.h2_indices = np.array(h2_indices)
         self.water_oxygen_indices = np.array(water_oxygens)
         self.hydroxyl_hydrogen_indices = np.array(hydroxyl_hydrogen_indices)
         self.hydroxyl_oxygen_indices = np.array(hydroxyl_oxygen_indices)
-        self.hydroxyl_indices = np.union1d(self.hydroxyl_oxygen_indices, self.hydroxyl_hydrogen_indices)
-        self.attached_hydrogen_indices = np.union1d(np.union1d(self.h1_indices, self.h2_indices),
-                                                    self.hydroxyl_hydrogen_indices)
-        self.proton_indices = np.setdiff1d(self.hydrogen_indices, self.attached_hydrogen_indices)
+        self.hydroxyl_indices = np.union1d(
+            self.hydroxyl_oxygen_indices, self.hydroxyl_hydrogen_indices
+        )
+        self.attached_hydrogen_indices = np.union1d(
+            np.union1d(self.h1_indices, self.h2_indices), self.hydroxyl_hydrogen_indices
+        )
+        self.proton_indices = np.setdiff1d(
+            self.hydrogen_indices, self.attached_hydrogen_indices
+        )
 
     def compute_orientations(self):
         pass

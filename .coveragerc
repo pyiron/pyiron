@@ -1,0 +1,5 @@
+# .coveragerc to control coverage.py
+[run]
+source = pyiron
+omit = pyiron/_version.py
+concurrency = multiprocessing

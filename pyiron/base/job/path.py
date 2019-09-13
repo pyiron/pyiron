@@ -2,19 +2,21 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
+import os
 import posixpath
-from pyiron.base.project.path import GenericPath
 from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.base.job.core import JobCore
 from pyiron.base.project.generic import Project
 
 """
-The JobPath class enables quick access to the HDF5 data file without loading the full object 
+The JobPath class enables quick access to the HDF5 data file without loading the full object
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -22,7 +24,7 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 
-class JobPath(JobCore):
+class JobPathBase(JobCore):
     """
     The JobPath class is derived from the JobCore and is used as a lean version of the GenericJob class. Instead of
     loading the full pyiron object the JobPath class only provides access to the HDF5 file, which should be enough
@@ -107,34 +109,27 @@ class JobPath(JobCore):
 
             path inside the HDF5 file - also stored as absolute path
     """
-    def __init__(self, db, job_id=None, db_entry=None, user=None):
-        if not db_entry:
-            db_entry = db.get_item_by_id(job_id)
-        if db_entry is None:
-            raise ValueError("job ID {0} does not exist!".format(job_id))
 
-        job_name = db_entry["job"]
+    def __init__(self, job_path):
+        job_path_lst = job_path.replace("\\", "/").split(".h5")
+        if len(job_path_lst) != 2:
+            raise ValueError
 
+        sub_job = job_path_lst[1]
         h5_path = None
-        sub_job = db_entry["subjob"]
-
         if sub_job is not None:
             if len(sub_job.strip()) > 0:
-                h5_path = '/'.join(sub_job.split('/')[:-1])
-        hdf5_file = sub_job.split('/')[1] + '.h5'
+                h5_path = "/".join(sub_job.split("/")[:-1])
 
-        gp = GenericPath(root_path=db_entry["projectpath"], project_path=db_entry["project"])
-        hdf_project = ProjectHDFio(project=Project(path=gp, user=user), file_name=hdf5_file, h5_path=h5_path, mode="r")
-        super(JobPath, self).__init__(hdf_project, job_name)
-
-        self.__name__ = db_entry["hamilton"]
-        self.__version__ = db_entry["hamversion"]
-
-        if 'id' in db_entry:
-            self._job_id = db_entry["id"]
-        self._status = db_entry["status"]
-        self._master_id = db_entry["masterid"]
-        self._parent_id = db_entry["parentid"]
+        hdf_project = ProjectHDFio(
+            project=Project(os.path.dirname(job_path_lst[0])),
+            file_name=job_path_lst[0].split("/")[-1] + ".h5",
+            h5_path=h5_path,
+            mode="r",
+        )
+        super(JobPathBase, self).__init__(
+            project=hdf_project, job_name=job_path_lst[1].split("/")[-1]
+        )
 
     @property
     def is_root(self):
@@ -145,16 +140,6 @@ class JobPath(JobCore):
             bool: [True/False]
         """
         return self.project_hdf5.is_root
-
-    # @property
-    # def is_open(self):
-    #     """
-    #     Check if the HDF5 file is currently opened in h5py
-    #
-    #     Returns:
-    #         bool: [True/False]
-    #     """
-    #     return self.project_hdf5.is_open
 
     @property
     def is_empty(self):
@@ -391,3 +376,117 @@ class JobPath(JobCore):
             with open(file_name) as f:
                 return f.readlines()
         return self.project_hdf5.__getitem__(item)
+
+
+class JobPath(JobPathBase):
+    """
+    The JobPath class is derived from the JobCore and is used as a lean version of the GenericJob class. Instead of
+    loading the full pyiron object the JobPath class only provides access to the HDF5 file, which should be enough
+    for most analysis.
+
+    Args:
+        db (DatabaseAccess): database object
+        job_id (int): Job ID - optional, but either a job ID or a database entry db_entry has to be provided.
+        db_entry (dict): database entry {"job":, "subjob":, "projectpath":, "project":, "hamilton":, "hamversion":,
+                                         "status":} and optional entries are {"id":, "masterid":, "parentid":}
+        user (str): current unix/linux/windows user who is running pyiron
+
+    Attributes:
+
+        .. attribute:: job_name
+
+            name of the job, which has to be unique within the project
+
+        .. attribute:: status
+
+            execution status of the job, can be one of the following [initialized, appended, created, submitted, running,
+                                                                      aborted, collect, suspended, refresh, busy, finished]
+
+        .. attribute:: job_id
+
+            unique id to identify the job in the pyiron database
+
+        .. attribute:: parent_id
+
+            job id of the predecessor job - the job which was executed before the current one in the current job series
+
+        .. attribute:: master_id
+
+            job id of the master job - a meta job which groups a series of jobs, which are executed either in parallel or in
+            serial.
+
+        .. attribute:: child_ids
+
+            list of child job ids - only meta jobs have child jobs - jobs which list the meta job as their master
+
+        .. attribute:: project
+
+            Project instance the jobs is located in
+
+        .. attribute:: project_hdf5
+
+            ProjectHDFio instance which points to the HDF5 file the job is stored in
+
+        .. attribute:: job_info_str
+
+            short string to describe the job by it is job_name and job ID - mainly used for logging
+
+        .. attribute:: working_directory
+
+            working directory of the job is executed in - outside the HDF5 file
+
+        .. attribute:: path
+
+            path to the job as a combination of absolute file system path and path within the HDF5 file.
+
+        .. attribute:: is_root
+
+            boolean if the HDF5 object is located at the root level of the HDF5 file
+
+        .. attribute:: is_open
+
+            boolean if the HDF5 file is currently opened - if an active file handler exists
+
+        .. attribute:: is_empty
+
+            boolean if the HDF5 file is empty
+
+        .. attribute:: base_name
+
+            name of the HDF5 file but without any file extension
+
+        .. attribute:: file_path
+
+            directory where the HDF5 file is located
+
+        .. attribute:: h5_path
+
+            path inside the HDF5 file - also stored as absolute path
+    """
+
+    def __init__(self, db, job_id=None, db_entry=None, user=None):
+        if db_entry is None and db is not None:
+            db_entry = db.get_item_by_id(job_id)
+        if db_entry is None:
+            raise ValueError("job ID {0} does not exist!".format(job_id))
+        hdf5_file = db_entry["subjob"].split("/")[1] + ".h5"
+        if db_entry["projectpath"] is not None:
+            job_path = db_entry["projectpath"]
+        else:
+            job_path = ''
+        job_path += db_entry["project"] + hdf5_file + db_entry["subjob"]
+        super(JobPath, self).__init__(job_path=job_path)
+
+        if "hamilton" in db_entry.keys():
+            self.__name__ = db_entry["hamilton"]
+        if "hamversion" in db_entry.keys():
+            self.__version__ = db_entry["hamversion"]
+
+        if "id" in db_entry.keys():
+            self._job_id = db_entry["id"]
+        if "status" in db_entry.keys():
+            self._status = db_entry["status"]
+        if "masterid" in db_entry.keys():
+            self._master_id = db_entry["masterid"]
+        if "parentid" in db_entry.keys():
+            self._parent_id = db_entry["parentid"]

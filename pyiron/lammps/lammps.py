@@ -2,12 +2,13 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-import warnings
 from pyiron.lammps.interactive import LammpsInteractive
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "- Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "- Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -34,15 +35,3 @@ class Lammps(LammpsInteractive):
         super(Lammps, self).__init__(project, job_name)
         self.__name__ = "Lammps"
         self._executable_activate(enforce=True)
-
-
-class LammpsInt(Lammps):
-    def __init__(self, project, job_name):
-        warnings.warn('Please use Lammps instead of LammpsInt')
-        super(LammpsInt, self).__init__(project=project, job_name=job_name)
-
-
-class LammpsInt2(Lammps):
-    def __init__(self, project, job_name):
-        warnings.warn('Please use Lammps instead of LammpsInt2')
-        super(LammpsInt2, self).__init__(project=project, job_name=job_name)

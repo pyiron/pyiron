@@ -69,4 +69,3 @@ Which output quantities are stored in pyiron?
 
 .. toctree::
    :maxdepth:2
-

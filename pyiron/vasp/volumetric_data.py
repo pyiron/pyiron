@@ -11,8 +11,10 @@ from pyiron.vasp.structure import atoms_from_string, get_species_list_from_potca
 from pyiron.atomistics.volumetric.generic import VolumetricData
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -44,10 +46,14 @@ class VaspVolumetricData(VolumetricData):
             normalize (boolean): Flag to normalize by the volume of the cell
         """
         try:
-            self.atoms, vol_data_list = self._read_vol_data(filename=filename, normalize=normalize)
+            self.atoms, vol_data_list = self._read_vol_data(
+                filename=filename, normalize=normalize
+            )
         except (ValueError, IndexError, TypeError):
             try:
-                self.atoms, vol_data_list = self._read_vol_data_old(filename=filename, normalize=normalize)
+                self.atoms, vol_data_list = self._read_vol_data_old(
+                    filename=filename, normalize=normalize
+                )
             except (ValueError, IndexError, TypeError):
                 raise ValueError("Unable to parse file: {}".format(filename))
         if self.atoms is not None:
@@ -84,7 +90,7 @@ class VaspVolumetricData(VolumetricData):
         data_count = 0
         atoms = None
         volume = None
-        with open(filename) as f:
+        with open(filename, "r") as f:
             for line in f:
                 line = line.strip()
                 if read_dataset:
@@ -114,7 +120,9 @@ class VaspVolumetricData(VolumetricData):
                             pot_str[-1] = "POTCAR"
                             potcar_file = "/".join(pot_str)
                             species = get_species_list_from_potcar(potcar_file)
-                            atoms = atoms_from_string(poscar_string, species_list=species)
+                            atoms = atoms_from_string(
+                                poscar_string, species_list=species
+                            )
                         volume = atoms.get_volume()
                         poscar_read = True
                 elif not dim:
@@ -133,7 +141,10 @@ class VaspVolumetricData(VolumetricData):
                 s.logger.warning("File:" + filename + "seems to be corrupted/empty")
                 return None, None
             if len(all_dataset) == 2:
-                data = {"total": all_dataset[0] / volume, "diff": all_dataset[1] / volume}
+                data = {
+                    "total": all_dataset[0] / volume,
+                    "diff": all_dataset[1] / volume,
+                }
                 return atoms, [data["total"], data["diff"]]
             else:
                 data = {"total": all_dataset[0] / volume}
@@ -153,9 +164,9 @@ class VaspVolumetricData(VolumetricData):
             list: A list of the volumetric data (length >1 for CHGCAR files with spin)
 
         """
-        if os.stat(filename).st_size == 0:
+        if not os.path.getsize(filename) > 0:
             s = Settings()
-            s.logger.warning("File:" + filename + "seems to be corrupted/empty")
+            s.logger.warning("File:" + filename + "seems to be empty! ")
             return None, None
         with open(filename, "r") as f:
             struct_lines = list()
@@ -201,14 +212,22 @@ class VaspVolumetricData(VolumetricData):
                         load_txt = np.hstack(load_txt)
                         if n_grid % 5 != 0:
                             add_line = np.genfromtxt(f, max_rows=1)
-                            load_txt = np.hstack(np.append(load_txt, np.hstack(add_line)))
-                        total_data = self._fastest_index_reshape(load_txt, [n_x, n_y, n_z])
+                            load_txt = np.hstack(
+                                np.append(load_txt, np.hstack(add_line))
+                            )
+                        total_data = self._fastest_index_reshape(
+                            load_txt, [n_x, n_y, n_z]
+                        )
                         if normalize:
                             total_data /= atoms.get_volume()
                         total_data_list.append(total_data)
             if len(total_data_list) == 0:
                 s = Settings()
-                s.logger.warning("File:" + filename + "seems to be corrupted/empty")
+                s.logger.warning(
+                    "File:"
+                    + filename
+                    + "seems to be corrupted/empty even after parsing!"
+                )
                 return None, None
             return atoms, total_data_list
 
@@ -227,7 +246,7 @@ class VaspVolumetricData(VolumetricData):
         """
         n_x, n_y, n_z = grid
         total_data = np.zeros((n_x, n_y, n_z))
-        all_data = raw_data[0:np.prod(grid)]
+        all_data = raw_data[0 : np.prod(grid)]
         all_indices = np.arange(len(all_data), dtype=int)
         x_indices = all_indices % n_x
         y_indices = all_indices / n_x % n_y

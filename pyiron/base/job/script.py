@@ -16,8 +16,10 @@ Jobclass to execute python scripts and jupyter notebooks
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -118,12 +120,13 @@ class ScriptJob(GenericJob):
 
             the absolute path to the python script
     """
+
     def __init__(self, project, job_name):
         super(ScriptJob, self).__init__(project, job_name)
         self.__version__ = "0.1"
         self.__name__ = "Script"
         self._script_path = None
-        self.input = GenericParameters(table_name='custom_dict')
+        self.input = GenericParameters(table_name="custom_dict")
 
     @property
     def script_path(self):
@@ -145,10 +148,20 @@ class ScriptJob(GenericJob):
         """
         if isinstance(path, str):
             self._script_path = self._get_abs_path(path)
-            self.executable = self._executable_command(working_directory=self.working_directory,
-                                                       script_path=self._script_path)
+            self.executable = self._executable_command(
+                working_directory=self.working_directory, script_path=self._script_path
+            )
         else:
-            raise TypeError('path should be a string, but ', path, ' is a ', type(path), ' instead.')
+            raise TypeError(
+                "path should be a string, but ", path, " is a ", type(path), " instead."
+            )
+
+    def set_input_to_read_only(self):
+        """
+        This function enforces read-only mode for the input classes, but it has to be implement in the individual
+        classes.
+        """
+        self.input.read_only = True
 
     def to_hdf(self, hdf=None, group_name=None):
         """
@@ -160,7 +173,7 @@ class ScriptJob(GenericJob):
         """
         super(ScriptJob, self).to_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input") as hdf5_input:
-            hdf5_input['path'] = self._script_path
+            hdf5_input["path"] = self._script_path
             self.input.to_hdf(hdf5_input)
 
     def from_hdf(self, hdf=None, group_name=None):
@@ -174,7 +187,7 @@ class ScriptJob(GenericJob):
         super(ScriptJob, self).from_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input") as hdf5_input:
             try:
-                self.script_path = hdf5_input['path']
+                self.script_path = hdf5_input["path"]
                 self.input.from_hdf(hdf5_input)
             except TypeError:
                 pass
@@ -184,7 +197,9 @@ class ScriptJob(GenericJob):
         Copy the script to the working directory - only python scripts and jupyter notebooks are supported
         """
         file_name = os.path.basename(self._script_path)
-        shutil.copyfile(src=self._script_path, dst=os.path.join(self.working_directory, file_name))
+        shutil.copyfile(
+            src=self._script_path, dst=os.path.join(self.working_directory, file_name)
+        )
 
     def collect_output(self):
         """
@@ -192,16 +207,20 @@ class ScriptJob(GenericJob):
         child job is already assigned to an master job nothing happens - master IDs are not overwritten.
         """
         for job in self.project.iter_jobs(recursive=False, convert_to_object=False):
-            pr_job = self.project.open(os.path.relpath(job.working_directory, self.project.path))
+            pr_job = self.project.open(
+                os.path.relpath(job.working_directory, self.project.path)
+            )
             for subjob_id in pr_job.get_job_ids(recursive=False):
-                if pr_job.db.get_item_by_id(subjob_id)['masterid'] is None:
-                    pr_job.db.item_update({'masterid': str(job.job_id)}, subjob_id)
+                if pr_job.db.get_item_by_id(subjob_id)["masterid"] is None:
+                    pr_job.db.item_update({"masterid": str(job.job_id)}, subjob_id)
 
     def run_if_lib(self):
         """
         Compatibility function - but library run mode is not available
         """
-        raise NotImplementedError("Library run mode is not implemented for script jobs.")
+        raise NotImplementedError(
+            "Library run mode is not implemented for script jobs."
+        )
 
     def collect_logfiles(self):
         """
@@ -223,12 +242,15 @@ class ScriptJob(GenericJob):
         """
         file_name = os.path.basename(script_path)
         path = os.path.join(working_directory, file_name)
-        if file_name[-6:] == '.ipynb':
-            return 'jupyter nbconvert --ExecutePreprocessor.timeout=9999999 --to notebook --execute ' + path
-        elif file_name[-3:] == '.py':
-            return 'python ' + path
+        if file_name[-6:] == ".ipynb":
+            return (
+                "jupyter nbconvert --ExecutePreprocessor.timeout=9999999 --to notebook --execute "
+                + path
+            )
+        elif file_name[-3:] == ".py":
+            return "python " + path
         else:
-            raise ValueError('Filename not recognized: ', path)
+            raise ValueError("Filename not recognized: ", path)
 
     def _executable_activate_mpi(self):
         """
@@ -255,28 +277,31 @@ class Notebook(object):
     """
     class for pyiron notebook objects
     """
+
     @staticmethod
     def get_custom_dict():
-        folder = Path('.').cwd().parts[-1]
-        hdf_file = Path('.').cwd().parents[1]/folder
-        hdf_file = str(hdf_file)+'.h5'
+        folder = Path(".").cwd().parts[-1]
+        hdf_file = Path(".").cwd().parents[1] / folder
+        hdf_file = str(hdf_file) + ".h5"
         if Path(hdf_file).exists():
             hdf = FileHDFio(hdf_file)
             custom_dict = GenericParameters()
-            for k, v in zip(hdf[folder+'/input/custom_dict/data_dict']['Parameter'],
-                            hdf[folder+'/input/custom_dict/data_dict']['Value']):
+            for k, v in zip(
+                hdf[folder + "/input/custom_dict/data_dict"]["Parameter"],
+                hdf[folder + "/input/custom_dict/data_dict"]["Value"],
+            ):
                 custom_dict[k] = v
             return custom_dict
         else:
-            print(hdf_file, 'not found')
+            print(hdf_file, "not found")
             return None
 
     @staticmethod
     def store_custom_output_dict(output_dict):
-        folder = Path('.').cwd().parts[-1]
-        hdf_file = Path('.').cwd().parents[1] / folder
-        hdf_file = str(hdf_file) + '.h5'
+        folder = Path(".").cwd().parts[-1]
+        hdf_file = Path(".").cwd().parents[1] / folder
+        hdf_file = str(hdf_file) + ".h5"
         hdf = FileHDFio(hdf_file)
-        hdf[folder].create_group('output')
+        hdf[folder].create_group("output")
         for k, v in output_dict.items():
-            hdf[folder + '/output'][k] = v
+            hdf[folder + "/output"][k] = v
