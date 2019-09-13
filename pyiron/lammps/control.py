@@ -84,7 +84,6 @@ class LammpsControl(GenericParameters):
                 + "dimension           3\n"
                 + "boundary            p p p\n"
                 + "atom_style          atomic\n"
-                + "atom_modify         map yes\n"
                 + "read_data           structure.inp\n"
                 + "include             potential.inp\n"
                 + "fix___ensemble      all nve\n"
