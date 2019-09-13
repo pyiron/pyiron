@@ -217,7 +217,7 @@ class FileTable(with_metaclass(Singleton)):
         if project is None:
             project = self._project
         if sys.version_info.major == 2:
-            if isinstance(job_specifier, (int, long, np.integer)):
+            if isinstance(job_specifier, (int, long, np.integer, float)):
                 return int(job_specifier)  # is id
         else:
             if isinstance(job_specifier, (int, np.integer)):
