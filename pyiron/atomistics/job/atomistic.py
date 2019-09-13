@@ -400,11 +400,10 @@ class AtomisticGenericJob(GenericJobCore):
         if isinstance(new_ham, GenericMaster) and not isinstance(self, GenericMaster):
             new_child = self.restart(snapshot=snapshot, job_name=None, job_type=None)
             new_ham.append(new_child)
-        if self.status.finished:
-            new_ham.structure = self.get_structure(iteration_step=snapshot)
-            new_ham._generic_input["structure"] = "atoms"
-        else:
-            new_ham._generic_input["structure"] = "continue_final"
+        new_ham.structure = self.get_structure(iteration_step=snapshot)
+        if new_ham.structure is None:
+            new_ham.structure = self.structure.copy()
+        new_ham._generic_input['structure'] = 'atoms'
         return new_ham
 
     # Required functions
