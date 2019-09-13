@@ -747,6 +747,12 @@ class TestAtoms(unittest.TestCase):
             self.assertTrue(np.all(np.dot(output, output) == np.identity(2)))
             self.assertEqual(len(w), 1)
 
+    def test_get_distances(self):
+        basis = Atoms("FeFe", positions=[3*[0], 3*[0.9]], cell=np.identity(3))
+        self.assertAlmostEqual(basis.get_distances(mic=False)[0, 1], 0.9*np.sqrt(3))
+        self.assertTrue(np.allclose(basis.get_distances(a0=0.5*np.ones(3)), basis.get_distances(a1=0.5*np.ones(3))))
+        self.assertTrue(np.allclose(basis.get_distances(vector=True)[0,1], -0.1*np.ones(3)))
+
     def test_cluster_analysis(self):
         import random
 
