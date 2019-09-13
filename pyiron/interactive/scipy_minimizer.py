@@ -37,10 +37,7 @@ class ScipyMinimizer(InteractiveWrapper):
     def minimizer(self, minim):
         list_of_minimizers = ["CG", "BFGS", "simple"]
         if minim not in list_of_minimizers:
-            print(
-                "ERROR: Minimizer has to be chosen from the following list:",
-                " ".join(list_of_minimizers),
-            )
+            raise ValueError("Minimizer has to be chosen from the following list:", " ".join(list_of_minimizers))
         else:
             self.input["minimizer"] = minim
 
