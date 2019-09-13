@@ -1,3 +1,7 @@
+# coding: utf-8
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
+
 import unittest
 
 # class TestExecutable(unittest.TestCase):
@@ -63,5 +67,5 @@ import unittest
 #                          '../../../../static/bin_cmmc/vasp/run_vasp_5.4_mpi.sh')
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

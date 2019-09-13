@@ -6,9 +6,11 @@ dependencies:
 - pyiron
 - lammps
 - gpaw
+- sphinxdft
 - nodejs
 - ipython
-- ipywidgets 
+- ipywidgets
 - notebook
 - ipykernel
 - nglview
+- seaborn

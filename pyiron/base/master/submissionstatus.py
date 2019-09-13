@@ -3,14 +3,17 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from pyiron.base.database.generic import DatabaseAccess
+from pyiron.base.database.filetable import FileTable
 
 """
 The SubmissionStatus class belongs to the GenericJob object. It is presently used only for the parallel master class.
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -52,9 +55,10 @@ class SubmissionStatus(object):
 
             number of jobs which have been submitted
     """
-    STATUS = ['initialized', 'finished']
 
-    def __init__(self, initial_status='initialized', db=None, job_id=None):
+    STATUS = ["initialized", "finished"]
+
+    def __init__(self, initial_status="initialized", db=None, job_id=None):
         self._submitted_jobs = 0
         self._total_jobs = None
         self._string = initial_status
@@ -79,8 +83,8 @@ class SubmissionStatus(object):
         Args:
             db (DatabaseAccess): The database which should be responsible for this job.
         """
-        if db and not isinstance(db, DatabaseAccess):
-            raise TypeError('The database has to be an DatabaseAccess object.')
+        if db and not isinstance(db, (DatabaseAccess, FileTable)):
+            raise TypeError("The database has to be an DatabaseAccess object.")
         self._db = db
 
     @property
@@ -91,7 +95,7 @@ class SubmissionStatus(object):
         Returns:
             bool: [True/False]
         """
-        return self.string == 'initialized'
+        return self.string == "initialized"
 
     @property
     def submitted(self):
@@ -101,7 +105,7 @@ class SubmissionStatus(object):
         Returns:
             bool: [True/False]
         """
-        return 'submitted_' in self.string
+        return "submitted_" in self.string
 
     @property
     def submitted_jobs(self):
@@ -158,7 +162,7 @@ class SubmissionStatus(object):
         Returns:
             bool: [True/False]
         """
-        return self.string == 'finished'
+        return self.string == "finished"
 
     @property
     def string(self):
@@ -174,13 +178,13 @@ class SubmissionStatus(object):
         total_jobs = self.total_jobs
         submitted_jobs = self.submitted_jobs
         if submitted_jobs == 0:
-            return 'initialized'
+            return "initialized"
         elif total_jobs and submitted_jobs == total_jobs:
-            return 'finished'
+            return "finished"
         elif total_jobs:
-            return 'submitted_{}_{}'.format(submitted_jobs, total_jobs)
+            return "submitted_{}_{}".format(submitted_jobs, total_jobs)
         else:
-            return 'submitted_{}'.format(submitted_jobs)
+            return "submitted_{}".format(submitted_jobs)
 
     def submit_next(self):
         """
@@ -193,10 +197,21 @@ class SubmissionStatus(object):
         Refresh the submission status, if a job_id is present load the current submission status from the database.
         """
         if self.job_id:
-            submission_status_lst = self.database.get_item_by_id(self.job_id)["computer"].split('#')[-1].split('/')
+            computer = self.database.get_item_by_id(self.job_id)["computer"]
+            if computer is not None:
+                submission_status_lst = (
+                    computer
+                    .split("#")[-1]
+                    .split("/")
+                )
+            else:
+                submission_status_lst = []
             if len(submission_status_lst) == 2:
                 self._submitted_jobs = int(submission_status_lst[0])
                 self._total_jobs = int(submission_status_lst[1])
+            elif len(submission_status_lst) == 0:
+                self._submitted_jobs = 0
+                self._total_jobs = None
             else:
                 self._submitted_jobs = int(submission_status_lst[0])
                 self._total_jobs = None
@@ -224,13 +239,25 @@ class SubmissionStatus(object):
         Internal function to update the database, with the current number of submitted jobs.
         """
         if self.job_id:
-            split_str = self.database.get_item_by_id(self.job_id)["computer"].split('#')
-            if len(split_str) > 2:
-                computer = split_str[:-1]
-            else:
-                computer = split_str
-            if self._total_jobs:
-                status = computer[0] + '#' + computer[1] + '#' + str(self._submitted_jobs) + '/' + str(self._total_jobs)
-            else:
-                status = computer[0] + '#' + computer[1] + '#' + str(self._submitted_jobs)
-            self.database.item_update({"computer": status}, self.job_id)
+            db_entry = self.database.get_item_by_id(self.job_id)
+            if db_entry["computer"] is not None:
+                split_str = db_entry["computer"].split("#")
+                if len(split_str) > 2:
+                    computer = split_str[:-1]
+                else:
+                    computer = split_str
+                if self._total_jobs:
+                    status = (
+                        computer[0]
+                        + "#"
+                        + computer[1]
+                        + "#"
+                        + str(self._submitted_jobs)
+                        + "/"
+                        + str(self._total_jobs)
+                    )
+                else:
+                    status = (
+                        computer[0] + "#" + computer[1] + "#" + str(self._submitted_jobs)
+                    )
+                self.database.item_update({"computer": status}, self.job_id)

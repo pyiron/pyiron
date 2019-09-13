@@ -13,20 +13,23 @@ import h5io
 import numpy as np
 from tables.exceptions import NoSuchNodeError
 import sys
+
 """
-Classes to map the Python objects to HDF5 data structures 
+Classes to map the Python objects to HDF5 data structures
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
 
-  
+
 class HDFStoreIO(pandas.HDFStore):
     """
     dict-like IO interface for storing pandas objects in PyTables either Fixed or Table format.
@@ -53,9 +56,17 @@ class HDFStoreIO(pandas.HDFStore):
                            If applying compression use the fletcher32 checksum
     """
 
-    def __init__(self, path, mode=None, complevel=None, complib=None, fletcher32=False, **kwargs):
-        super(HDFStoreIO, self).__init__(path, mode=mode, complevel=complevel, complib=complib, fletcher32=fletcher32,
-                                         **kwargs)
+    def __init__(
+        self, path, mode=None, complevel=None, complib=None, fletcher32=False, **kwargs
+    ):
+        super(HDFStoreIO, self).__init__(
+            path,
+            mode=mode,
+            complevel=complevel,
+            complib=complib,
+            fletcher32=fletcher32,
+            **kwargs
+        )
 
     def open(self, **kwargs):
         """
@@ -101,6 +112,7 @@ class FileHDFio(object):
     .. attribute:: is_empty
         boolean if the HDF5 file is empty
     """
+
     def __init__(self, file_name, h5_path="/", mode="a"):
         if not os.path.isabs(file_name):
             raise ValueError("file_name must be given as absolute path name")
@@ -141,7 +153,7 @@ class FileHDFio(object):
         Args:
             new_file_name (str): absolute path to the HDF5 file
         """
-        self._file_name = os.path.abspath(new_file_name).replace('\\', '/')
+        self._file_name = os.path.abspath(new_file_name).replace("\\", "/")
 
     @property
     def base_name(self):
@@ -222,8 +234,8 @@ class FileHDFio(object):
             bool: [True/False]
         """
         if self.file_exists:
-            store = HDFStoreIO(self.file_name, mode='r')
-            with store.open(mode='r'):
+            store = HDFStoreIO(self.file_name, mode="r")
+            with store.open(mode="r"):
                 len_nodes = len(eval("store.root._v_children.keys()"))
                 len_groups = len(eval("store.root._v_groups.keys()"))
                 return len_groups + len_nodes == 0
@@ -237,16 +249,16 @@ class FileHDFio(object):
 
         Args:
             hdf (FileHDFio): hdf file
-       
+
         Returns:
             float: file size in Bytes
         """
         return os.path.getsize(hdf.file_name)
 
-    def get_size(self, hdf):  
+    def get_size(self, hdf):
         """
         Get size of the groups inside the HDF5 file
-    
+
         Args:
             hdf (FileHDFio): hdf file
 
@@ -254,8 +266,9 @@ class FileHDFio(object):
             float: file size in Bytes
         """
         return sum([sys.getsizeof(hdf[p]) for p in hdf.list_nodes()]) + sum(
-            [self.get_size(hdf[p]) for p in hdf.list_groups()])
-          
+            [self.get_size(hdf[p]) for p in hdf.list_groups()]
+        )
+
     def copy(self):
         """
         Copy the Python object which links to the HDF5 file - in contrast to copy_to() which copies the content of the
@@ -284,9 +297,11 @@ class FileHDFio(object):
         if file_name is None:
             file_name = destination.file_name
         if self.file_exists:
-            with h5py.File(self.file_name, mode="r", libver='latest', swmr=True) as f_source:
-                with h5py.File(file_name, libver='latest', swmr=True) as f_target:
-                    if destination.h5_path[0] == '/':
+            with h5py.File(
+                self.file_name, mode="r", libver="latest", swmr=True
+            ) as f_source:
+                with h5py.File(file_name, libver="latest", swmr=True) as f_target:
+                    if destination.h5_path[0] == "/":
                         dest_path = destination.h5_path[1:]
                     else:
                         dest_path = destination.h5_path
@@ -301,18 +316,18 @@ class FileHDFio(object):
                         if maintain_name:
                             f_source.copy(self._h5_path, f_target[dest_path])
                         else:
-                            group_name_old = self._h5_path.split('/')[-1]
+                            group_name_old = self._h5_path.split("/")[-1]
                             try:
-                                f_target.create_group('/tmp')
+                                f_target.create_group("/tmp")
                             except ValueError:
                                 pass
-                            f_source.copy(self._h5_path, f_target['/tmp'])
+                            f_source.copy(self._h5_path, f_target["/tmp"])
                             try:
-                                f_target.move('/tmp/' + group_name_old, dest_path)
+                                f_target.move("/tmp/" + group_name_old, dest_path)
                             except ValueError:
                                 del f_target[dest_path]
-                                f_target.move('/tmp/' + group_name_old, dest_path)
-                            del f_target['/tmp']
+                                f_target.move("/tmp/" + group_name_old, dest_path)
+                            del f_target["/tmp"]
         return destination
 
     def create_group(self, name):
@@ -327,7 +342,7 @@ class FileHDFio(object):
             FileHDFio: FileHDFio object pointing to the new group
         """
         full_name = posixpath.join(self.h5_path, name)
-        with h5py.File(self.file_name, mode='a', libver='latest', swmr=True) as h:
+        with h5py.File(self.file_name, mode="a", libver="latest", swmr=True) as h:
             try:
                 h.create_group(full_name)
             except ValueError:
@@ -340,7 +355,9 @@ class FileHDFio(object):
         Remove an HDF5 group - if it exists. If the group does not exist no error message is raised.
         """
         try:
-            with h5py.File(self.file_name, mode='a', libver='latest', swmr=True) as hdf_file:
+            with h5py.File(
+                self.file_name, mode="a", libver="latest", swmr=True
+            ) as hdf_file:
                 del hdf_file[self.h5_path]
         except KeyError:
             pass
@@ -358,7 +375,9 @@ class FileHDFio(object):
         """
         new_h5_path = self.copy()
         if os.path.isabs(h5_rel_path):
-            raise ValueError("Absolute paths are not supported -> replace by relative path name!")
+            raise ValueError(
+                "Absolute paths are not supported -> replace by relative path name!"
+            )
 
         if h5_rel_path.strip() == ".":
             h5_rel_path = ""
@@ -376,7 +395,7 @@ class FileHDFio(object):
         last = self.history[-1].strip()
         if len(last) > 0:
             hist_lst = last.split("/")
-            self.h5_path = "/".join(path_lst[:-len(hist_lst)])
+            self.h5_path = "/".join(path_lst[: -len(hist_lst)])
             if len(self.h5_path.strip()) == 0:
                 self.h5_path = "/"
         del self.history[-1]
@@ -457,7 +476,7 @@ class FileHDFio(object):
             dict: {'groups': [list of groups], 'nodes': [list of nodes]}
         """
         if self.file_exists:
-            store = HDFStoreIO(self.file_name, mode='r')
+            store = HDFStoreIO(self.file_name, mode="r")
             with store.open(mode="r"):
                 try:
                     groups = set(eval(self._h5_group + "_v_groups.keys()"))
@@ -467,8 +486,10 @@ class FileHDFio(object):
                     nodes = set()
             iopy_nodes = self._filter_io_objects(groups)
             store.close()
-            return {"groups": sorted(list(groups - iopy_nodes)),
-                    "nodes": sorted(list((nodes - groups).union(iopy_nodes)))}
+            return {
+                "groups": sorted(list(groups - iopy_nodes)),
+                "nodes": sorted(list((nodes - groups).union(iopy_nodes))),
+            }
         else:
             return {"groups": [], "nodes": []}
 
@@ -572,17 +593,23 @@ class FileHDFio(object):
             exclude_groups_split = list()
             group_list = hdf_old.list_groups()
         else:
-            exclude_groups_split = [i.split('/', 1) for i in exclude_groups]
+            exclude_groups_split = [i.split("/", 1) for i in exclude_groups]
             check_groups = [i[-1] for i in exclude_groups_split]
-            group_list = list((set(hdf_old.list_groups()) ^ set(check_groups)) & set(hdf_old.list_groups()))
+            group_list = list(
+                (set(hdf_old.list_groups()) ^ set(check_groups))
+                & set(hdf_old.list_groups())
+            )
 
         if exclude_nodes is None or len(exclude_nodes) == 0:
             exclude_nodes_split = list()
             node_list = hdf_old.list_nodes()
         else:
-            exclude_nodes_split = [i.split('/', 1) for i in exclude_nodes]
+            exclude_nodes_split = [i.split("/", 1) for i in exclude_nodes]
             check_nodes = [i[-1] for i in exclude_nodes_split]
-            node_list = list((set(hdf_old.list_nodes()) ^ set(check_nodes)) & set(hdf_old.list_nodes()))
+            node_list = list(
+                (set(hdf_old.list_nodes()) ^ set(check_nodes))
+                & set(hdf_old.list_nodes())
+            )
         for p in node_list:
             hdf_new[p] = hdf_old[p]
         for p in group_list:
@@ -601,7 +628,9 @@ class FileHDFio(object):
         #         self.hd_copy(hdf_old[p], h_new, exclude_groups=exclude_groups, exclude_nodes=exclude_nodes)
         return hdf_new
 
-    def rewrite_hdf5(self, job_name, info=False, exclude_groups=None, exclude_nodes=None):
+    def rewrite_hdf5(
+        self, job_name, info=False, exclude_groups=None, exclude_nodes=None
+    ):
         """
         args:
             info (True/False): whether to give the information on how much space has been saved
@@ -610,20 +639,32 @@ class FileHDFio(object):
         """
         # hdf = self._hdf5
         if exclude_groups is None:
-            exclude_groups = ['interactive']
+            exclude_groups = ["interactive"]
         file_name = self.file_name
-        _path = file_name.split('/')[-1]
-        _path = _path.split('.')[-1]
+        _path = file_name.split("/")[-1]
+        _path = ".".join(_path.split(".")[:-1])
         # path = '/'.join(p_lst[:-1])
-        new_file = _path[-1] + '_rewrite'
+        new_file = _path + "_rewrite"
 
-        hdf_new = ProjectHDFio(project=self.project, file_name=new_file, h5_path='/' + job_name)
-        hdf_new = self.hd_copy(self, hdf_new, exclude_groups=exclude_groups, exclude_nodes=exclude_nodes)
+        hdf_new = ProjectHDFio(
+            project=self.project, file_name=new_file, h5_path="/" + job_name
+        )
+        hdf_new = self.hd_copy(
+            self, hdf_new, exclude_groups=exclude_groups, exclude_nodes=exclude_nodes
+        )
 
         if info:
-            print('job: {}'.format(job_name))
-            print('compression rate from old to new: {}'.format(self.file_size(self) / self.file_size(hdf_new)))
-            print('data size vs file size: {}'.format(self.get_size(hdf_new)/self.file_size(hdf_new)))
+            print("job: {}".format(job_name))
+            print(
+                "compression rate from old to new: {}".format(
+                    self.file_size(self) / self.file_size(hdf_new)
+                )
+            )
+            print(
+                "data size vs file size: {}".format(
+                    self.get_size(hdf_new) / self.file_size(hdf_new)
+                )
+            )
         self.remove_file()
         os.rename(hdf_new.file_name, file_name)
 
@@ -635,27 +676,50 @@ class FileHDFio(object):
             key (str): key to store the data
             value (pandas.DataFrame, pandas.Series, dict, list, float, int): basically any kind of data is supported
         """
-        if hasattr(value, "to_hdf") & (not isinstance(value, (pandas.DataFrame, pandas.Series))):
+        if hasattr(value, "to_hdf") & (
+            not isinstance(value, (pandas.DataFrame, pandas.Series))
+        ):
             value.to_hdf(self, key)
-        elif isinstance(value, (list, np.ndarray)) and len(value) > 0 and isinstance(value[0], (list, np.ndarray)) \
-                and len(value[0]) > 0 and not isinstance(value[0][0], str):
+        elif (
+            isinstance(value, (list, np.ndarray))
+            and len(value) > 0
+            and isinstance(value[0], (list, np.ndarray))
+            and len(value[0]) > 0
+            and not isinstance(value[0][0], str)
+        ):
             shape_lst = [np.shape(sub) for sub in value]
             if all([shape_lst[0][1:] == t[1:] for t in shape_lst]):
-                h5io.write_hdf5(self.file_name, np.array([np.array(v) for v in value]),
-                                title=posixpath.join(self.h5_path, key),
-                                overwrite="update", use_json=False)
+                h5io.write_hdf5(
+                    self.file_name,
+                    np.array([np.array(v) for v in value]),
+                    title=posixpath.join(self.h5_path, key),
+                    overwrite="update",
+                    use_json=False,
+                )
             else:
-                h5io.write_hdf5(self.file_name, value,
-                                title=posixpath.join(self.h5_path, key),
-                                overwrite="update", use_json=True)
-        elif isinstance(value, tuple): 
-            h5io.write_hdf5(self.file_name, list(value),
-                            title=posixpath.join(self.h5_path, key),
-                            overwrite="update", use_json=True)
+                h5io.write_hdf5(
+                    self.file_name,
+                    value,
+                    title=posixpath.join(self.h5_path, key),
+                    overwrite="update",
+                    use_json=True,
+                )
+        elif isinstance(value, tuple):
+            h5io.write_hdf5(
+                self.file_name,
+                list(value),
+                title=posixpath.join(self.h5_path, key),
+                overwrite="update",
+                use_json=True,
+            )
         else:
-            h5io.write_hdf5(self.file_name, value,
-                            title=posixpath.join(self.h5_path, key),
-                            overwrite="update", use_json=True)
+            h5io.write_hdf5(
+                self.file_name,
+                value,
+                title=posixpath.join(self.h5_path, key),
+                overwrite="update",
+                use_json=True,
+            )
 
     def __delitem__(self, key):
         """
@@ -666,8 +730,8 @@ class FileHDFio(object):
         """
         if self.file_exists:
             try:
-                store = HDFStoreIO(self.file_name, mode='a')
-                with store.open(mode='a'):
+                store = HDFStoreIO(self.file_name, mode="a")
+                with store.open(mode="a"):
                     del store[key]
             except (AttributeError, KeyError):
                 pass
@@ -727,8 +791,8 @@ class FileHDFio(object):
                 return self.values()
             raise NotImplementedError("Implement if needed, e.g. for [:]")
         else:
-            item_lst = item.split('/')
-            if len(item_lst) == 1 and item_lst[0] != '..':
+            item_lst = item.split("/")
+            if len(item_lst) == 1 and item_lst[0] != "..":
                 if item in self.list_nodes():
                     obj = h5io.read_hdf5(self.file_name, title=self._get_h5_path(item))
                     return obj
@@ -738,19 +802,25 @@ class FileHDFio(object):
                         return obj
                 raise ValueError("Unknown item: {}".format(item))
             else:
-                if item_lst[0] == '':  # absoute HDF5 path
-                    item_abs_lst = os.path.normpath(item).replace('\\', '/').split("/")
+                if item_lst[0] == "":  # absoute HDF5 path
+                    item_abs_lst = os.path.normpath(item).replace("\\", "/").split("/")
                 else:  # relative HDF5 path
-                    item_abs_lst = os.path.normpath(os.path.join(self.h5_path, item)).replace('\\', '/').split("/")
+                    item_abs_lst = (
+                        os.path.normpath(os.path.join(self.h5_path, item))
+                        .replace("\\", "/")
+                        .split("/")
+                    )
                     # print(item, item_abs_lst)
                     # item_abs_lst = os.path.normpath(os.path.join(self.h5_path, item)).replace('\\', '/').split("/")
-                if item_abs_lst[1] == '' and len(item_abs_lst) == 2:  # leaving the HDF5 file
+                if (
+                    item_abs_lst[1] == "" and len(item_abs_lst) == 2
+                ):  # leaving the HDF5 file
                     return self._create_project_from_hdf5()
-                elif item_abs_lst[1] == '':
-                    return self._create_project_from_hdf5()['/'.join(item_abs_lst[2:])]
+                elif item_abs_lst[1] == "":
+                    return self._create_project_from_hdf5()["/".join(item_abs_lst[2:])]
                 else:
                     hdf_object = self.copy()
-                    hdf_object.h5_path = '/'.join(item_abs_lst[:-1])
+                    hdf_object.h5_path = "/".join(item_abs_lst[:-1])
                     return hdf_object[item_abs_lst[-1]]
 
     def _read(self, item):
@@ -796,6 +866,7 @@ class FileHDFio(object):
             Project: pyiron project object
         """
         from pyiron.base.project.generic import Project
+
         return Project(path=self.file_path)
 
     def _get_h5_path(self, name):
@@ -820,9 +891,9 @@ class FileHDFio(object):
         Returns:
             str: h5io type
         """
-        store = HDFStoreIO(self.file_name, mode='r')
-        with store.open(mode='r'):
-            return str(eval(''.join([self._h5_group, name, "._v_title"])))
+        store = HDFStoreIO(self.file_name, mode="r")
+        with store.open(mode="r"):
+            return str(eval("".join([self._h5_group, name, "._v_title"])))
 
     def _filter_io_objects(self, groups):
         """
@@ -834,8 +905,18 @@ class FileHDFio(object):
         Returns:
             set: h5io objects
         """
-        h5io_types = ("dict", "list", "tuple", "pd_dataframe", "pd_series", "multiarray", "json")
-        group_h5io = set([group for group in groups if self._get_h5io_type(group) in h5io_types])
+        h5io_types = (
+            "dict",
+            "list",
+            "tuple",
+            "pd_dataframe",
+            "pd_series",
+            "multiarray",
+            "json",
+        )
+        group_h5io = set(
+            [group for group in groups if self._get_h5io_type(group) in h5io_types]
+        )
         return group_h5io
 
     def _walk(self, level=0):
@@ -941,16 +1022,21 @@ class ProjectHDFio(FileHDFio):
 
             working directory of the job is executed in - outside the HDF5 file
     """
+
     def __init__(self, project, file_name, h5_path=None, mode=None):
-        self._file_name = file_name.replace('\\', '/')
-        if '.h5' not in file_name:
-            self._file_name += '.h5'
+        self._file_name = file_name.replace("\\", "/")
+        if ".h5" not in file_name:
+            self._file_name += ".h5"
         if not h5_path:
-            h5_path = '/'
+            h5_path = "/"
         self._project = project.copy()
-        super(ProjectHDFio, self).__init__(file_name=os.path.join(self._project.path,
-                                                                  self._file_name).replace('\\', '/'),
-                                           h5_path=h5_path, mode=mode)
+        super(ProjectHDFio, self).__init__(
+            file_name=os.path.join(self._project.path, self._file_name).replace(
+                "\\", "/"
+            ),
+            h5_path=h5_path,
+            mode=mode,
+        )
 
     @property
     def base_name(self):
@@ -982,7 +1068,7 @@ class ProjectHDFio(FileHDFio):
         Returns:
             str: absolute path
         """
-        return os.path.join(self._project.path, self.h5_path[1:]).replace('\\', '/')
+        return os.path.join(self._project.path, self.h5_path[1:]).replace("\\", "/")
 
     @property
     def project(self):
@@ -1057,12 +1143,12 @@ class ProjectHDFio(FileHDFio):
         Returns:
             str: absolute path to the working directory
         """
-        project_full_path = '/'.join(self.file_name.split('/')[:-1])
-        file_name = self.file_name.split('/')[-1]
-        if '.h5' in file_name:
-            file_name = file_name.split('.h5')[0]
-        file_name += '_hdf5'
-        if self.h5_path[0] == '/':
+        project_full_path = "/".join(self.file_name.split("/")[:-1])
+        file_name = self.file_name.split("/")[-1]
+        if ".h5" in file_name:
+            file_name = file_name.split(".h5")[0]
+        file_name += "_hdf5"
+        if self.h5_path[0] == "/":
             h5_path = self.h5_path[1:]
         else:
             h5_path = self.h5_path
@@ -1119,7 +1205,9 @@ class ProjectHDFio(FileHDFio):
         Returns:
             ProjectHDFio: copy of the ProjectHDFio object
         """
-        new_h5 = ProjectHDFio(project=self._project, file_name=self._file_name, h5_path=self._h5_path)
+        new_h5 = ProjectHDFio(
+            project=self._project, file_name=self._file_name, h5_path=self._h5_path
+        )
         new_h5._filter = self._filter
         return new_h5
 
@@ -1154,10 +1242,14 @@ class ProjectHDFio(FileHDFio):
         Returns:
             pyiron object: defined by the pyiron class in class_name with the input from **qwargs
         """
-        class_name = class_name.split('.')[-1][:-2]
+        class_name = class_name.split(".")[-1][:-2]
         if class_name in self._project.job_type.job_class_dict.keys():
-            return getattr(importlib.import_module(self._project.job_type.job_class_dict[class_name]),
-                           class_name)(**qwargs)
+            return getattr(
+                importlib.import_module(
+                    self._project.job_type.job_class_dict[class_name]
+                ),
+                class_name,
+            )(**qwargs)
 
     def to_object(self, object_type=None, **qwargs):
         """
@@ -1170,20 +1262,26 @@ class ProjectHDFio(FileHDFio):
         Returns:
             GenericJob: pyiron object
         """
-        if 'job_name' not in qwargs:
-            qwargs['job_name'] = self.file_name.split('/')[-1].split('.h5')[0]
-        if 'project' not in qwargs:
-            qwargs['project'] = self.__class__(project=self._create_project_from_hdf5(), file_name=qwargs['job_name'])
-        if 'TYPE' not in self.list_nodes():
+        if "job_name" not in qwargs:
+            qwargs["job_name"] = self.file_name.split("/")[-1].split(".h5")[0]
+        if "project" not in qwargs:
+            qwargs["project"] = self.__class__(
+                project=self._create_project_from_hdf5(), file_name=qwargs["job_name"]
+            )
+        if "TYPE" not in self.list_nodes():
             if object_type is None:
-                raise ValueError("Objects can be only recovered from hdf5 if TYPE is given")
+                raise ValueError(
+                    "Objects can be only recovered from hdf5 if TYPE is given"
+                )
             else:
                 obj_type = object_type
         else:
             obj_type = self.get("TYPE")
             if object_type is not None:
                 if object_type != obj_type:
-                    raise ValueError("Object type in hdf5-file must be identical to input parameter")
+                    raise ValueError(
+                        "Object type in hdf5-file must be identical to input parameter"
+                    )
         new_obj = self.create_object(obj_type, **qwargs)
         if obj_type != str(type(new_obj)):  # Backwards compatibility
             self["TYPE"] = str(type(new_obj))
@@ -1227,8 +1325,9 @@ class ProjectHDFio(FileHDFio):
         Returns:
             GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
         """
-        return self._project.load(job_specifier=job_specifier,
-                                  convert_to_object=convert_to_object)
+        return self._project.load(
+            job_specifier=job_specifier, convert_to_object=convert_to_object
+        )
 
     def load_from_jobpath(self, job_id=None, db_entry=None, convert_to_object=True):
         """
@@ -1244,7 +1343,9 @@ class ProjectHDFio(FileHDFio):
         Returns:
             GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
         """
-        return self._project.load_from_jobpath(job_id=job_id, db_entry=db_entry, convert_to_object=convert_to_object)
+        return self._project.load_from_jobpath(
+            job_id=job_id, db_entry=db_entry, convert_to_object=convert_to_object
+        )
 
     def remove_job(self, job_specifier, _unprotect=False):
         """

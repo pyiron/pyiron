@@ -16,8 +16,10 @@ GenericParameters class defines the typical input file with a key value structur
 """
 
 __author__ = "Joerg Neugebauer"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -74,8 +76,16 @@ class GenericParameters(PyironObject):
 
             dictionary to replace certain character combinations
     """
-    def __init__(self, table_name=None, input_file_name=None, val_only=False, comment_char="#", separator_char=" ",
-                 end_value_char=""):
+
+    def __init__(
+        self,
+        table_name=None,
+        input_file_name=None,
+        val_only=False,
+        comment_char="#",
+        separator_char=" ",
+        end_value_char="",
+    ):
         self.__name__ = "GenericParameters"
         self.__version__ = "0.1"
 
@@ -270,7 +280,9 @@ class GenericParameters(PyironObject):
 
     @staticmethod
     def _read_only_error():
-        warnings.warn('The input in GenericParameters changed, while the state of the job was already finished.')
+        warnings.warn(
+            "The input in GenericParameters changed, while the state of the job was already finished."
+        )
 
     def load_string(self, input_str):
         """
@@ -311,10 +323,10 @@ class GenericParameters(PyironObject):
             file_name (str): absolute path to the input file
             ignore_trigger (str): trigger for lines to be ignored
         """
-        Settings().logger.debug('file: %s %s', file_name, os.path.isfile(file_name))
+        Settings().logger.debug("file: %s %s", file_name, os.path.isfile(file_name))
         if not os.path.isfile(file_name):
             raise ValueError("file does not exist: " + file_name)
-        with open(file_name, 'r') as f:
+        with open(file_name, "r") as f:
             lines = f.readlines()
             new_lines = np.array(lines).tolist()
             if ignore_trigger is not None:
@@ -325,7 +337,7 @@ class GenericParameters(PyironObject):
                         if ignore_trigger == line.strip()[0]:
                             del_ind.append(i)
                         elif ignore_trigger in line:
-                            lines[i] = line[:line.find("!")]
+                            lines[i] = line[: line.find("!")]
                 lines = np.array(lines)
                 new_lines = lines[np.setdiff1d(np.arange(len(lines)), del_ind)]
         new_dict = self._lines_to_dict(new_lines)
@@ -345,7 +357,7 @@ class GenericParameters(PyironObject):
         """
         Get the value of a specific parameter from GenericParameters - if the parameter is not available return
         default_value if that is set.
-        
+
         Args:
             parameter_name (str): parameter key
             default_value (str): default value to return is the parameter is not set
@@ -359,7 +371,7 @@ class GenericParameters(PyironObject):
             if multi_word_lst is not None:
                 num_words = len(multi_word_lst)
                 val = val.split(" ")
-                val = " ".join(val[(num_words - 1):])
+                val = " ".join(val[(num_words - 1) :])
             try:
                 val_v = eval(val)
             except (TypeError, NameError, SyntaxError):
@@ -393,7 +405,7 @@ class GenericParameters(PyironObject):
     def modify(self, separator=None, append_if_not_present=False, **modify_dict):
         """
         Modify values for existing parameters. The command is called as modify(param1=val1, param2=val2, ...)
-        
+
         Args:
             separator (str): needed if the parameter name contains special characters such as par:
                        use then as input: modify(separator=":", par=val) - optional
@@ -428,7 +440,7 @@ class GenericParameters(PyironObject):
     def set(self, separator=None, **set_dict):
         """
         Set the value of multiple parameters or create new parameter key, if they do not exist already.
-        
+
         Args:
             separator (float/int/str): separator string - optional
             **set_dict (dict): dictionary containing the parameter keys and their corresponding values to be set
@@ -438,26 +450,26 @@ class GenericParameters(PyironObject):
     def set_value(self, line, val):
         """
         Set the value of a parameter in a specific line
-        
+
         Args:
             line (float/int/str): line number - starting with 0
             val (str/bytes): value to be set
         """
-        if line < len(self._dataset['Value']):
+        if line < len(self._dataset["Value"]):
             if self.read_only and self._dataset["Value"][line] != val:
                 self._read_only_error()
             self._dataset["Value"][line] = val
-        elif line >= len(self._dataset['Value']):
+        elif line >= len(self._dataset["Value"]):
             new_array = []
             new_comments = []
             new_params = []
             for el in self._dataset["Value"]:
                 new_array.append(el)
-                new_comments.append('')
-                new_params.append('')
+                new_comments.append("")
+                new_params.append("")
             new_array.append(val)
-            new_comments.append('')
-            new_params.append('')
+            new_comments.append("")
+            new_params.append("")
             new_array = np.array(new_array)
             new_comments = np.array(new_comments)
             new_params = np.array(new_params)
@@ -468,7 +480,7 @@ class GenericParameters(PyironObject):
             self._read_only_check_dict(new_dict=new_dict)
             self._dataset = new_dict
         else:
-            raise ValueError('Wrong indexing')
+            raise ValueError("Wrong indexing")
 
     def remove_keys(self, key_list):
         """
@@ -515,7 +527,7 @@ class GenericParameters(PyironObject):
             hdf_child = hdf.create_group(self.table_name)
 
         self._type_to_hdf(hdf_child)
-        hdf_child['data_dict'] = self._dataset
+        hdf_child["data_dict"] = self._dataset
 
     def from_hdf(self, hdf, group_name=None):
         """
@@ -533,7 +545,7 @@ class GenericParameters(PyironObject):
         if isinstance(data, dict):
             self._dataset = data
         else:
-            self._dataset = data._read('data_dict')
+            self._dataset = data._read("data_dict")
 
     def get_string_lst(self):
         """
@@ -556,39 +568,53 @@ class GenericParameters(PyironObject):
             # special treatment for values that are bool or str
             if isinstance(v, bool):
                 v_str = self._bool_dict[v]
-            elif isinstance(v, str):  # TODO: introduce variable for string symbol (" or ')
+            elif isinstance(
+                v, str
+            ):  # TODO: introduce variable for string symbol (" or ')
                 v_str = v
             else:
                 v_str = str(v)
 
-            par = ' '.join(par.split(self.multi_word_separator))
+            par = " ".join(par.split(self.multi_word_separator))
             if par == "Comment":
                 string_lst.append(str(v) + self.end_value_char + "\n")
-            elif c.strip() == '':
+            elif c.strip() == "":
                 if self.val_only:
                     string_lst.append(v_str + self.end_value_char + "\n")
                 else:
-                    string_lst.append(par + self.separator_char + v_str + self.end_value_char + "\n")
+                    string_lst.append(
+                        par + self.separator_char + v_str + self.end_value_char + "\n"
+                    )
             else:
                 if self.val_only:
-                    string_lst.append(v_str + self.end_value_char + " " + self.comment_char + c + "\n")
+                    string_lst.append(
+                        v_str + self.end_value_char + " " + self.comment_char + c + "\n"
+                    )
                 else:
-                    string_lst.append(par + self.separator_char + v_str + " " + self.end_value_char
-                                      + self.comment_char + c + "\n")
+                    string_lst.append(
+                        par
+                        + self.separator_char
+                        + v_str
+                        + " "
+                        + self.end_value_char
+                        + self.comment_char
+                        + c
+                        + "\n"
+                    )
         return string_lst
 
     def write_file(self, file_name, cwd=None):
         """
         Write GenericParameters to input file
-        
+
         Args:
-            file_name (str): name of the file, either absolute (then cwd must be None) or relative 
+            file_name (str): name of the file, either absolute (then cwd must be None) or relative
             cwd (str): path name (default: None)
         """
         if cwd is not None:
             file_name = posixpath.join(cwd, file_name)
 
-        with open(file_name, 'w') as f:
+        with open(file_name, "w") as f:
             for line in self.get_string_lst():
                 f.write(line)
 
@@ -764,7 +790,7 @@ class GenericParameters(PyironObject):
             lst = self._dataset[key]
             val = np.array(val).tolist()
             lst = np.array(lst).tolist()
-            self._dataset[key] = lst[:line_number - shift] + val + lst[line_number:]
+            self._dataset[key] = lst[: line_number - shift] + val + lst[line_number:]
 
     def _refresh_block_line_hash_table(self):
         """
@@ -772,7 +798,7 @@ class GenericParameters(PyironObject):
         """
         self._block_line_dict = {}
         for i_line, par in enumerate(self._dataset["Parameter"]):
-            if par.strip() == '':
+            if par.strip() == "":
                 continue
             for key, val in self._block_dict.items():
                 par_single = par.split()[0]
@@ -805,11 +831,21 @@ class GenericParameters(PyironObject):
             if par_first in val:
                 parameter_found_in_block = True
                 i_last_block_line = max(self._block_line_dict[key])
-                self._insert(line_number=i_last_block_line + 1,
-                             data_dict={"Parameter": [parameter_name], "Value": [str(value)], "Comment": ['']})
+                self._insert(
+                    line_number=i_last_block_line + 1,
+                    data_dict={
+                        "Parameter": [parameter_name],
+                        "Value": [str(value)],
+                        "Comment": [""],
+                    },
+                )
                 return parameter_found_in_block
         else:
-            s.logger.warn('Unknown parameter (does not exist in block_dict): {}'.format(parameter_name))
+            s.logger.warn(
+                "Unknown parameter (does not exist in block_dict): {}".format(
+                    parameter_name
+                )
+            )
 
     def _append(self, **qwargs):
         """
@@ -882,23 +918,25 @@ class GenericParameters(PyironObject):
                     line = line.replace(key, val)
 
             sep = line.split(self.comment_char)
-            if len(line.strip()) > 0 and (line.strip()[0] == self.comment_char):  # comment line
+            if len(line.strip()) > 0 and (
+                line.strip()[0] == self.comment_char
+            ):  # comment line
                 lst["Parameter"].append("Comment")
                 lst["Value"].append(line[:-1])
                 lst["Comment"].append("")
-            elif not sep[0].strip() == '':
+            elif not sep[0].strip() == "":
                 sep[0] = sep[0].strip()
                 if self.val_only:  # Value only entries
                     val = sep[0]
-                    name = ''
+                    name = ""
                 else:
                     keypos = sep[0].find(self.separator_char)
                     if keypos == -1:  # Key only entries
                         name = sep[0]
-                        val = ''
+                        val = ""
                     else:  # Entires with key and value
                         name = sep[0][0:keypos]
-                        val = sep[0][keypos + len(self.separator_char):]
+                        val = sep[0][keypos + len(self.separator_char) :]
                 lst["Parameter"].append(name.strip())
                 lst["Value"].append(val.strip())
                 if len(sep) > 1:  # Handle comments
@@ -921,7 +959,7 @@ class GenericParameters(PyironObject):
         hdf["NAME"] = self.__name__
         hdf["TYPE"] = str(type(self))
         hdf["VERSION"] = self.__version__
-        hdf["OBJECT"] = 'GenericParameters'
+        hdf["OBJECT"] = "GenericParameters"
 
     def _find_line(self, key_name):
         """
@@ -945,7 +983,7 @@ class GenericParameters(PyironObject):
                 values = self._dataset["Value"][i_sel].split()
                 if len(values) < key_length:
                     continue
-                sel_value = values[:key_length - 1]
+                sel_value = values[: key_length - 1]
                 is_different = False
                 for i, sel in enumerate(sel_value):
                     if not (sel.strip() == multiple_key[i + 1].strip()):
@@ -966,5 +1004,10 @@ class GenericParameters(PyironObject):
             return i_line_lst[0], multi_word_lst[0]
         else:
             for i in i_line_lst:
-                print("dataset: ", i, self._dataset["Parameter"][i], self._dataset["Value"][i])
+                print(
+                    "dataset: ",
+                    i,
+                    self._dataset["Parameter"][i],
+                    self._dataset["Value"][i],
+                )
             raise ValueError("Multiple occurrences of key_name " + key_name, i_line_lst)
