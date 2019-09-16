@@ -863,11 +863,17 @@ class InputWriter(object):
 
     def _odict_to_spx_input(self, element, level=0):
         """
-        Convert collections.OrderedDict containing SPHInX input hierarchy to string.
+        Convert collections.OrderedDict containing SPHInX input
+        hierarchy to string.
+
         If the item contains:
             - no value -> considered as flag -> output format: flag;
-            - value is odict -> considered as a group -> output format: group { ...recursive... }
-            - else -> considered as parameter and value -> output format: parameter = value;
+            - value is odict
+                -> considered as a group
+                -> output format: group { ...recursive... }
+            - else
+                -> considered as parameter and value
+                -> output format: parameter = value;
         """
         line = ""
         for k, v in element.items():
@@ -907,7 +913,9 @@ class InputWriter(object):
         Args:
             file_name (str): name of the file to be written (optional)
             cwd (str): the current working directory (optinal)
-            main_str (str): the input to write, if no input is given the default input will be written. (optinal)
+            main_str (str): the input to write;
+                            if no input is given,
+                            the default input will be written. (optinal)
         """
         if main_str is None:
             main_str = odict(
