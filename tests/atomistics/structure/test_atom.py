@@ -30,7 +30,7 @@ class TestAtom(unittest.TestCase):
         self.assertEqual(self.Al_atom.element.tags["spin"], -1)
 
     def test_mass(self):
-        self.assertEqual(round(Atom("Si", (0, 0, 0)).mass, 4), 28.0855)
+        self.assertEqual(round(Atom("Si", (0, 0, 0)).mass, 4), 28.085)
 
     def test_number(self):
         self.assertEqual(self.Fe_atom.number, 26)

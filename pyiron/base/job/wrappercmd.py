@@ -14,9 +14,11 @@ def command_line(argv):
     debug = False
     project_path = None
     job_id = None
+    file_path = None
+    submit_on_remote = False
     try:
         opts, args = getopt.getopt(
-            argv, "dj:p:h", ["debug", "project_path=", "job_id=", "help"]
+            argv, "dj:p:f:sh", ["debug", "project_path=", "file_path=", "job_id=", "submit", "help"]
         )
     except getopt.GetoptError:
         print("cms.py --p <project_path> -j <job_id> <debug>")
@@ -32,7 +34,17 @@ def command_line(argv):
                 job_id = arg
             elif opt in ("-p", "--project_path"):
                 project_path = arg
-        job_wrapper_function(working_directory=project_path, job_id=job_id, debug=debug)
+            elif opt in ("-f", "--file_path"):
+                file_path = arg
+            elif opt in ("-s", "--submit"):
+                submit_on_remote = True
+        job_wrapper_function(
+            working_directory=project_path,
+            job_id=job_id,
+            file_path=file_path,
+            debug=debug,
+            submit_on_remote=submit_on_remote
+        )
         sys.exit()
 
 

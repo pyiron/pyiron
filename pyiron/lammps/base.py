@@ -231,11 +231,11 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
 
         """
-        del self.input.control["dump_modify"]
-        del self.input.control["dump"]
+        del self.input.control["dump_modify___1"]
+        del self.input.control["dump___1"]
         self.input.control[
-            "dump"
-        ] = "1 all h5md ${dumptime} dump.h5 position force create_group yes"
+            "dump___1"
+        ] = "all h5md ${dumptime} dump.h5 position force create_group yes"
 
     def write_input(self):
         """

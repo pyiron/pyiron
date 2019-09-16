@@ -709,7 +709,8 @@ class GenericJob(JobCore):
             self.status.aborted = True
             raise ValueError("No executable set!")
         self.status.running = True
-        self.project.db.item_update({"timestart": datetime.now()}, self.job_id)
+        if self.job_id is not None:
+            self.project.db.item_update({"timestart": datetime.now()}, self.job_id)
         job_crashed, out = False, None
         try:
             if self.server.cores == 1 or not self.executable.mpi:
@@ -761,6 +762,20 @@ class GenericJob(JobCore):
         self.run()
         if job_crashed:
             self.status.aborted = True
+
+    def transfer_from_remote(self, delete_remote=True):
+        s.queue_adapter.get_job_from_remote(
+            working_directory='/'.join(self.working_directory.split('/')[:-1]),
+            delete_remote=delete_remote
+        )
+        s.queue_adapter.transfer_file_to_remote(
+            file=self.project_hdf5.file_name,
+            transfer_back=True,
+            delete_remote=True,
+        )
+        if s.database_is_disabled:
+            self.project.db.update()
+        self.status.finished = True
 
     def run_if_interactive(self):
         """
@@ -843,9 +858,15 @@ class GenericJob(JobCore):
             target=multiprocess_wrapper,
             args=(self.job_id, self.project_hdf5.working_directory, False),
         )
-        if self.master_id:
+        if self.master_id and self.server.run_mode.non_modal:
             del self
-        p.start()
+            p.start()
+        else:
+            if self.server.run_mode.non_modal:
+                p.start()
+            else:
+                self._process = p
+                self._process.start()
 
     def run_if_manually(self, _manually_print=True):
         """
@@ -874,6 +895,25 @@ class GenericJob(JobCore):
         """
         if s.queue_adapter is None:
             raise TypeError("No queue adapter defined.")
+        if s.queue_adapter.remote_flag:
+            filename = s.queue_adapter.convert_path_to_remote(path=self.project_hdf5.file_name)
+            working_directory = s.queue_adapter.convert_path_to_remote(path=self.working_directory)
+            command = "python -m pyiron.base.job.wrappercmd -p " \
+                      + working_directory \
+                      + " -f " + filename + self.project_hdf5.h5_path \
+                      + " --submit"
+            s.queue_adapter.transfer_file_to_remote(
+                file=self.project_hdf5.file_name,
+                transfer_back=False
+            )
+        elif s.database_is_disabled:
+            command = "python -m pyiron.base.job.wrappercmd -p " \
+                      + self.working_directory \
+                      + " -f " + self.project_hdf5.file_name + self.project_hdf5.h5_path
+        else:
+            command = "python -m pyiron.base.job.wrappercmd -p " \
+                      + self.working_directory \
+                      + " -j " + str(self.job_id)
         try:
             que_id = s.queue_adapter.submit_job(
                 queue=self.server.queue,
@@ -882,10 +922,7 @@ class GenericJob(JobCore):
                 cores=self.server.cores,
                 run_time_max=self.server.run_time,
                 memory_max=self.server.memory_limit,
-                command="python -m pyiron.base.job.wrappercmd -p "
-                + self.working_directory
-                + " -j "
-                + str(self.job_id),
+                command=command,
             )
             self.server.queue_id = que_id
             self._server.to_hdf(self._hdf5)
@@ -987,9 +1024,10 @@ class GenericJob(JobCore):
         """
         master_id = self.master_id
         project = self.project
-        self._logger.info("update master: {} {}".format(master_id, self.get_job_id()))
+        self._logger.info("update master: {} {} {}".format(master_id, self.get_job_id(), self.server.run_mode))
         if (
             master_id is not None
+            and not self.server.run_mode.thread
             and not self.server.run_mode.modal
             and not self.server.run_mode.interactive
         ):
@@ -1052,6 +1090,7 @@ class GenericJob(JobCore):
             self._hdf5.open(group_name)
         self._executable_activate_mpi()
         self._type_to_hdf()
+        self._hdf5["status"] = self.status.string
         self._server.to_hdf(self._hdf5)
         with self._hdf5.open("input") as hdf_input:
             generic_dict = {
@@ -1352,7 +1391,8 @@ class GenericJob(JobCore):
         """
         self.collect_output()
         self.collect_logfiles()
-        self.project.db.item_update(self._runtime(), self.job_id)
+        if self.job_id is not None:
+            self.project.db.item_update(self._runtime(), self.job_id)
         if self.status.collect:
             if not self.convergence_check():
                 self.status.not_converged = True
@@ -1360,7 +1400,9 @@ class GenericJob(JobCore):
                 if self._compress_by_default:
                     self.compress()
                 self.status.finished = True
-        self._calculate_successor()
+            self._hdf5["status"] = self.status.string
+        if self.job_id is not None:
+            self._calculate_successor()
         self.send_to_database()
         self.update_master()
 

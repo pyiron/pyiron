@@ -27,6 +27,14 @@ class TestConfigSettingsStatic(unittest.TestCase):
             }
         )
 
+    def test_get_config_from_environment(self):
+        config = self.test_config.get_config_from_environment(environment={"PYIRONSQLFILE": '/a/b/c',
+                                                                  "SYSTEM": 'linux'},
+                                                              config={'user': 'pyiron'})
+        self.assertEqual(config['sql_file'], '/a/b/c')
+        self.assertEqual(config['user'], 'pyiron')
+        self.assertEqual(len(config), 2)
+
     # def test_db_connection_name(self):
     #     self.assertEqual(self.test_config.db_connection_name, 'test')
     #

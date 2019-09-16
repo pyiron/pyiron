@@ -53,6 +53,7 @@ JOB_CLASS_DICT = {
     "SxDynMat": "pyiron.thermodynamics.sxphonons",
     "SxPhonons": "pyiron.thermodynamics.sxphonons",
     "SxHarmPotTst": "pyiron.thermodynamics.sxphonons",
+    "Gaussian": "pyiron.gaussian.gaussian",
 }
 
 

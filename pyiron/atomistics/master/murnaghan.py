@@ -9,6 +9,7 @@ import scipy.integrate
 import scipy.optimize as spy
 import scipy.constants
 import warnings
+from pyiron.atomistics.structure.atoms import Atoms, ase_to_pyiron
 from pyiron.atomistics.master.parallel import AtomisticParallelMaster
 from pyiron.base.master.parallel import JobGenerator
 
@@ -500,66 +501,17 @@ class EnergyVolumeFit(object):
         Returns:
             list: [E0, B0, BP, V0], [E0_err, B0_err, BP_err, V0_err]
         """
-        try:
-            import matplotlib.pylab as plt
-        except ImportError:
-            import matplotlib.pyplot as plt
         vol_lst = np.array(volume_lst).flatten()
         eng_lst = np.array(energy_lst).flatten()
-        a, b, c = plt.polyfit(vol_lst, eng_lst, 2)
+        a, b, c = np.polyfit(vol_lst, eng_lst, 2)
         v0 = -b / (2 * a)
-        ev_angs_to_gpa = (
-            1e21
-            / scipy.constants.physical_constants["joule-electron volt relationship"][0]
-        )
-        pfit_leastsq, perr_leastsq = self._fit_leastsq_funct(
-            [a * v0 ** 2 + b * v0 + c, 2 * a * v0 * ev_angs_to_gpa, 4, v0],
+        pfit_leastsq, perr_leastsq = fit_leastsq(
+            [a * v0 ** 2 + b * v0 + c, 2 * a * v0 * eV_div_A3_to_GPa, 4, v0],
             vol_lst,
             eng_lst,
-            fitfunction,
             fittype,
         )
         return pfit_leastsq, perr_leastsq  # [e0, b0, bP, v0]
-
-    @staticmethod
-    def _fit_leastsq_funct(p0, datax, datay, function, fittype):
-        """
-        Internal least square fit function
-
-        Args:
-            p0 (list): [E0, B0, BP, V0] list of fit parameters
-            datax (float/numpy.dnarray): volumes to fit
-            datay (float/numpy.dnarray): energies corresponding to the volumes
-            fittype (str): on of the following ['birch', 'birchmurnaghan', 'murnaghan', 'pouriertarantola', 'vinet']
-
-        Returns:
-            list: [E0, B0, BP, V0], [E0_err, B0_err, BP_err, V0_err]
-        """
-        # http://stackoverflow.com/questions/14581358/getting-standard-errors-on-fitted-parameters-using-the-optimize-leastsq-method-i
-
-        errfunc = lambda p, x, y, fittype: function(p, x, fittype) - y
-
-        pfit, pcov, infodict, errmsg, success = spy.leastsq(
-            errfunc, p0, args=(datax, datay, fittype), full_output=1, epsfcn=0.0001
-        )
-
-        if (len(datay) > len(p0)) and pcov is not None:
-            s_sq = (errfunc(pfit, datax, datay, fittype) ** 2).sum() / (
-                len(datay) - len(p0)
-            )
-            pcov = pcov * s_sq
-        else:
-            pcov = np.inf
-
-        error = []
-        for i in range(len(pfit)):
-            try:
-                error.append(np.absolute(pcov[i][i]) ** 0.5)
-            except:
-                error.append(0.00)
-        pfit_leastsq = pfit
-        perr_leastsq = np.array(error)
-        return pfit_leastsq, perr_leastsq
 
     @staticmethod
     def get_error(x_lst, y_lst, p_fit):
@@ -592,7 +544,7 @@ class EnergyVolumeFit(object):
             return ValueError("parameter 'fit_dict' has to be defined!")
         v = volume_lst
         e0 = self._fit_dict["energy_eq"]
-        b0 = self._fit_dict["bulkmodul_eq"] / 160.21766208
+        b0 = self._fit_dict["bulkmodul_eq"] / eV_div_A3_to_GPa
         b_p = self._fit_dict["b_prime_eq"]
         v0 = self._fit_dict["volume_eq"]
         if self._fit_dict["fit_type"] == "birch":
@@ -747,7 +699,10 @@ class Murnaghan(AtomisticParallelMaster):
                 hdf5["equilibrium_b_prime"] = fit_dict["b_prime_eq"]
 
             with self._hdf5.open("output") as hdf5:
-                self.get_structure(iteration_step=-1).to_hdf(hdf5)
+                structure = self.get_structure(iteration_step=-1)
+                if not isinstance(structure, Atoms):
+                    structure = ase_to_pyiron(structure)
+                structure.to_hdf(hdf5)
 
             self.fit_dict = fit_dict
         return fit_dict
@@ -772,7 +727,12 @@ class Murnaghan(AtomisticParallelMaster):
             for job_id in self.child_ids:
                 ham = self.project_hdf5.inspect(job_id)
                 print("job_id: ", job_id, ham.status)
-                energy = ham["output/generic/energy_tot"][-1]
+                if "energy_tot" in ham["output/generic"].list_nodes():
+                    energy = ham["output/generic/energy_tot"][-1]
+                elif "energy_pot" in ham["output/generic"].list_nodes():
+                    energy = ham["output/generic/energy_pot"][-1]
+                else:
+                    raise ValueError('Neither energy_pot or energy_tot was found.')
                 volume = ham["output/generic/volume"][-1]
                 erg_lst.append(np.mean(energy))
                 err_lst.append(np.var(energy))
@@ -830,22 +790,9 @@ class Murnaghan(AtomisticParallelMaster):
                 E0 = self.fit_dict["energy_eq"]
                 B0 = self.fit_dict["bulkmodul_eq"]
                 BP = self.fit_dict["b_prime_eq"]
-                if self.input["fit_type"].lower() == "birchmurnaghan":
-                    eng_fit_lst = birchmurnaghan_energy(
-                        x_i, E0, B0 / eV_div_A3_to_GPa, BP, V0
-                    )
-                elif self.input["fit_type"].lower() == "vinet":
-                    eng_fit_lst = vinet_energy(x_i, E0, B0 / eV_div_A3_to_GPa, BP, V0)
-                elif self.input["fit_type"].lower() == "murnaghan":
-                    eng_fit_lst = murnaghan(x_i, E0, B0 / eV_div_A3_to_GPa, BP, V0)
-                elif self.input["fit_type"].lower() == "pouriertarantola":
-                    eng_fit_lst = pouriertarantola(
-                        x_i, E0, B0 / eV_div_A3_to_GPa, BP, V0
-                    )
-                elif self.input["fit_type"].lower() == "birch":
-                    eng_fit_lst = birch(x_i, E0, B0, BP, V0)
-                else:
-                    raise ValueError
+                eng_fit_lst = fitfunction(parameters=[E0, B0, BP, V0],
+                                          vol=x_i,
+                                          fittype=self.input["fit_type"])
                 plt.plot(
                     x_i,
                     eng_fit_lst,

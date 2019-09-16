@@ -243,9 +243,11 @@ class PyironTable(object):
         self.from_hdf()
         self._load_csv()
 
-    def create_table(self, enforce_update=False, level=3, file=None):
+    def create_table(self, enforce_update=False, level=3, file=None, job_status_list=None):
         skip_table_update = False
         filter_funct = self.filter_function
+        if job_status_list is None:
+            job_status_list = ["finished"]
         if self._is_file():
             if file is None:
                 file = FileHDFio(
@@ -263,7 +265,7 @@ class PyironTable(object):
             job_update_lst = [
                 job
                 for job in job_update_lst
-                if job.status in ["finished"] and filter_funct(job)
+                if job.status in job_status_list and filter_funct(job)
             ]
             keys_update_user_lst = [
                 key
@@ -289,7 +291,7 @@ class PyironTable(object):
             job_update_lst = [
                 job
                 for job in job_update_lst
-                if job.status in ["finished"] and filter_funct(job)
+                if job.status in job_status_list and filter_funct(job)
             ]
             keys_update_user_lst, keys_update_system_lst = [], []
         if not skip_table_update and len(job_update_lst) != 0:
@@ -307,7 +309,7 @@ class PyironTable(object):
             job_update_lst = [
                 job
                 for job in job_update_lst
-                if job is not None and job.status in ["finished"] and filter_funct(job)
+                if job is not None and job.status in job_status_list and filter_funct(job)
             ]
             function_lst = [
                 v
@@ -574,6 +576,14 @@ class TableJob(GenericJob):
             raise TypeError()
 
     def to_hdf(self, hdf=None, group_name=None):
+        """
+        Store pyiron table job in HDF5
+
+        Args:
+            hdf:
+            group_name:
+
+        """
         super(TableJob, self).to_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input") as hdf5_input:
             hdf5_input["bool_dict"] = {
@@ -602,6 +612,13 @@ class TableJob(GenericJob):
                 hdf5_output["table"] = json.dumps(self.pyiron_table._df.to_dict())
 
     def from_hdf(self, hdf=None, group_name=None):
+        """
+        Restore pyiron table job from HDF5
+
+        Args:
+            hdf:
+            group_name:
+        """
         super(TableJob, self).from_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input") as hdf5_input:
             if "project" in hdf5_input.list_nodes():
@@ -648,13 +665,22 @@ class TableJob(GenericJob):
         self.status.finished = True
         self.run()
 
-    def update_table(self):
+    def update_table(self, job_status_list=None):
+        """
+        Update the pyiron table object, add new columns if a new function was added or add new rows for new jobs
+
+        Args:
+            job_status_list (list/None): List of job status which are added to the table by default ["finished"]
+        """
+        if job_status_list is None:
+            job_status_list = ["finished"]
         self.project.db.item_update({"timestart": datetime.now()}, self.job_id)
         with self.project_hdf5.open("input") as hdf5_input:
             self._pyiron_table.create_table(
                 enforce_update=self._enforce_update,
                 file=hdf5_input,
                 level=self._project_level,
+                job_status_list=job_status_list,
             )
         self.to_hdf()
         self._pyiron_table._df.to_csv(
@@ -668,4 +694,9 @@ class TableJob(GenericJob):
         pass
 
     def get_dataframe(self):
+        """
+
+        Returns:
+            pandas.Dataframe
+        """
         return self.pyiron_table._df

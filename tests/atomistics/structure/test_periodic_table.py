@@ -37,7 +37,7 @@ class TestPeriodicTable(unittest.TestCase):
 
     def test_add_element_without_tags(self):
         fe_up = self.pse.add_element("Fe", "B_up")
-        self.assertEqual(int(fe_up.MeltingPoint), 1811)
+        self.assertEqual(int(fe_up.MeltingPoint), 1808)
 
     def test_add_Abbreviation_bug(self):
         fe_up = self.pse.add_element("Fe", "B_up")
@@ -54,7 +54,7 @@ class TestPeriodicTable(unittest.TestCase):
 
     def test_atomic_mass(self):
         el1 = self.pse.element("Fe")
-        self.assertAlmostEqual(el1.AtomicMass, 55.845001, places=6)
+        self.assertAlmostEqual(el1.AtomicMass, 55.845, places=3)
 
     def test_group(self):
         el1 = self.pse.element("Fe")
@@ -66,7 +66,7 @@ class TestPeriodicTable(unittest.TestCase):
 
     def test_add_MeltingPoint(self):
         el1 = self.pse.element("Fe")
-        self.assertEqual(int(el1.MeltingPoint), 1811)
+        self.assertEqual(int(el1.MeltingPoint), 1808)
 
     def test_set_item(self):
         el1 = self.pse.element("Fe")

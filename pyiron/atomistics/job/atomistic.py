@@ -375,7 +375,10 @@ class AtomisticGenericJob(GenericJobCore):
         """
         db_dict = super(AtomisticGenericJob, self).db_entry()
         if self.structure:
-            parent_structure = self.structure.get_parent_basis()
+            if isinstance(self.structure, Atoms):
+                parent_structure = self.structure.get_parent_basis()
+            else:
+                parent_structure = self.structure.copy()
             db_dict["ChemicalFormula"] = parent_structure.get_chemical_formula()
         return db_dict
 
@@ -449,7 +452,8 @@ class AtomisticGenericJob(GenericJobCore):
         return new_ham
 
     def trajectory(
-        self, stride=1, center_of_mass=False, atom_indices=None, snapshot_indices=None, overwrite_positions=None
+        self, stride=1, center_of_mass=False, atom_indices=None,
+            snapshot_indices=None, overwrite_positions=None, overwrite_cells=None
     ):
         """
 
@@ -460,16 +464,39 @@ class AtomisticGenericJob(GenericJobCore):
             snapshot_indices (list/numpy.ndarray): The snapshots for which the trajectory should be generated
             overwrite_positions (list/numpy.ndarray): List of positions that are meant to overwrite the existing
                                                       trajectory. Useful to wrap coordinates for example
+            overwrite_cells(list/numpy.ndarray): List of cells that are meant to overwrite the existing
+                                                 trajectory. Only used when `overwrite_positions` is defined. This must
+                                                 have the same length of `overwrite_positions`
 
         Returns:
             pyiron.atomistics.job.atomistic.Trajectory: Trajectory instance
 
         """
+        cells = self.output.cells
         if overwrite_positions is not None:
             positions = np.array(overwrite_positions).copy()
+            if overwrite_cells is not None:
+                if overwrite_cells.shape == (len(positions), 3, 3):
+                    cells = np.array(overwrite_cells).copy()
+                else:
+                    raise ValueError("overwrite_cells must be compatible with the positions!")
         else:
             positions = self.output.positions.copy()
-        cells = self.output.cells
+        conditions = list()
+        if isinstance(cells, (list, np.ndarray)):
+            if len(cells) == 0:
+                conditions.append(True)
+            else:
+                conditions.append(cells[0] is None)
+        conditions.append(cells is None)
+        if any(conditions):
+            max_pos = np.max(np.max(positions, axis=0), axis=0)
+            max_pos[np.abs(max_pos) < 1e-2] = 10
+            cell = np.eye(3) * max_pos
+            cells = np.array([cell] * len(positions))
+
+        if len(positions) != len(cells):
+            raise ValueError("The positions must have the same length as the cells!")
         if snapshot_indices is not None:
             positions = positions[snapshot_indices]
             cells = cells[snapshot_indices]
@@ -499,6 +526,7 @@ class AtomisticGenericJob(GenericJobCore):
         atom_indices=None,
         snapshot_indices=None,
         overwrite_positions=None,
+        overwrite_cells=None,
         **kwargs
     ):
         """
@@ -515,6 +543,9 @@ class AtomisticGenericJob(GenericJobCore):
             snapshot_indices (list/numpy.ndarray): The snapshots for which the trajectory should be generated
             overwrite_positions (list/numpy.ndarray): List of positions that are meant to overwrite the existing
                                                       trajectory. Useful to wrap coordinates for example
+            overwrite_cells(list/numpy.ndarray): List of cells that are meant to overwrite the existing
+                                                 trajectory. Only used when `overwrite_positions` is defined. This must
+                                                 have the same length of `overwrite_positions`
             **kwargs: Additional ase arguments
 
         .. _ase.io.write: https://wiki.fysik.dtu.dk/ase/_modules/ase/io/formats.html#write
@@ -524,7 +555,8 @@ class AtomisticGenericJob(GenericJobCore):
             center_of_mass=center_of_mass,
             atom_indices=atom_indices,
             snapshot_indices=snapshot_indices,
-            overwrite_positions=overwrite_positions
+            overwrite_positions=overwrite_positions,
+            overwrite_cells=overwrite_cells
         )
         # Using thr ASE output writer
         ase_write(
@@ -609,7 +641,17 @@ class AtomisticGenericJob(GenericJobCore):
         if not (self.structure is not None):
             raise AssertionError()
         snapshot = self.structure.copy()
-        snapshot.cell = self.output.cells[iteration_step]
+        conditions = list()
+        if isinstance(self.output.cells, (list, np.ndarray)):
+            if len(self.output.cells) == 0:
+                conditions.append(True)
+            else:
+                conditions.append(self.output.cells[0] is None)
+        conditions.append(self.output.cells is None)
+        if any(conditions):
+            snapshot.cell = None
+        else:
+            snapshot.cell = self.output.cells[iteration_step]
         snapshot.positions = self.output.positions[iteration_step]
         indices = self.output.indices
         if indices is not None and len(indices) > max([iteration_step, 0]):

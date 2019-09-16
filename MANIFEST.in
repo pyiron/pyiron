@@ -1,2 +1,3 @@
 include versioneer.py
 include pyiron/_version.py
+include LICENSE
