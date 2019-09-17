@@ -120,9 +120,9 @@ class LammpsControl(GenericParameters):
             + " "
             + str(f_tol)
             + " "
-            + str(max_iter)
+            + str(int(max_iter))
             + " "
-            + str(max_evaluations)
+            + str(int(max_evaluations))
         )
         self.remove_keys(["run", "velocity"])
         self.modify(variable___dumptime="equal " + str(n_print), thermo=n_print)
