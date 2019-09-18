@@ -73,7 +73,7 @@ class SxExtOpt(InteractiveInterface):
         )
         self._cell = structure.cell
         #self._elements = structure.get_parent_symbols()
-        magmom = np.char.mod('%d', structure.get_initial_magnetic_moments())
+        magmom = np.char.mod('%s', structure.get_initial_magnetic_moments())
         self._elements = np.char.add(structure.get_parent_symbols(),
                                      np.char.replace(magmom, '-', 'm'))
         self._positions = structure.positions
