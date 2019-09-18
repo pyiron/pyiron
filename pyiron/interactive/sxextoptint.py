@@ -72,10 +72,10 @@ class SxExtOpt(InteractiveInterface):
             selective_dynamics="selective_dynamics" in structure._tag_list.keys(),
         )
         self._cell = structure.cell
-        #self._elements = structure.get_parent_symbols()
         magmom = np.char.mod('%s', structure.get_initial_magnetic_moments())
-        self._elements = np.char.add(structure.get_parent_symbols(),
-                                     np.char.replace(magmom, '-', 'm'))
+        self._elements = np.char.add(structure.get_parent_symbols(), magmom)
+        self._elements = np.char.replace(self._elements, '-', 'm')
+        self._elements = np.char.replace(self._elements, '.', 'p')
         self._positions = structure.positions
         self._converged = False
 
