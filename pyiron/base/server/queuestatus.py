@@ -114,7 +114,7 @@ def queue_delete_job(item):
         return None
 
 
-def queue_enable_reservation(item):
+def queue_enable_reservation(item,reservation_id):
     """
     Enable a reservation for a particular job within the queuing system
 
@@ -126,7 +126,7 @@ def queue_enable_reservation(item):
     """
     que_id = _validate_que_request(item)
     if s.queue_adapter is not None:
-        return s.queue_adapter.enable_reservation(process_id=que_id)
+        return s.queue_adapter.enable_reservation(process_id=que_id,reservation_id=reservation_id)
     else:
         return None
 

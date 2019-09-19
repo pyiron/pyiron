@@ -908,7 +908,7 @@ class Project(ProjectPath):
         return queue_is_empty()
 
     @staticmethod
-    def queue_enable_reservation(item):
+    def queue_enable_reservation(item,reservation_id):
         """
         Enable a reservation for a particular job within the queuing system
 
@@ -918,7 +918,7 @@ class Project(ProjectPath):
         Returns:
             str: Output from the queuing system as string - optimized for the Sun grid engine
         """
-        return queue_enable_reservation(item)
+        return queue_enable_reservation(item,reservation_id)
 
     @staticmethod
     def queue_check_job_is_waiting_or_running(item):
