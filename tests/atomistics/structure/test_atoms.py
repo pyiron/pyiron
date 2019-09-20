@@ -315,9 +315,11 @@ class TestAtoms(unittest.TestCase):
         r_h1 = [dx, 0, 0]
         r_h2 = [0, dx, 0]
         water = Atoms(elements=['H', 'H', 'O'], positions=[r_h1, r_h2, r_o])
+        self.assertEqual(water.center_coordinates_in_unit_cell(), water)
         water.cell = np.zeros((3, 3))
         self.assertTrue(np.array_equal(water.cell, np.zeros((3, 3))))
         self.assertTrue(np.array_equal(water.get_scaled_positions(), water.positions))
+        self.assertEqual(water.center_coordinates_in_unit_cell(), water)
         positions_2d = np.random.random((4, 3))
         positions_2d[:, 2] = 0.0
         cell_2d = np.eye(3)
@@ -326,6 +328,7 @@ class TestAtoms(unittest.TestCase):
         struct_2d.set_cell(cell_2d)
         self.assertTrue(np.array_equal(struct_2d.get_scaled_positions(), positions_2d))
         struct_2d.set_cell(cell_2d, scale_atoms=True)
+        self.assertEqual(struct_2d.center_coordinates_in_unit_cell(), struct_2d)
 
     def test_add(self):
         COX = self.C2 + Atom("O", position=[0, 0, -2])
