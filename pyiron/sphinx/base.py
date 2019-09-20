@@ -19,7 +19,7 @@ from collections import OrderedDict as odict
 from collections import defaultdict
 
 from pyiron.dft.job.generic import GenericDFTJob
-from pyiron.vasp.potential import VaspPotentialFile, find_potential_file
+from pyiron.sphinx.potential import SphinxPotentialFile, find_potential_file
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
 
@@ -1001,7 +1001,7 @@ class InputWriter(object):
             cwd (str): the current working directory (optional)
             species_str (str): the input to write, if no input is given the default input will be written. (optional)
         """
-        potentials = VaspPotentialFile(xc=xc)
+        potentials = SphinxPotentialFile(xc=xc)
         if species_str is None:
             species_str = odict()
             for species_obj in self.structure.get_species_objects():
