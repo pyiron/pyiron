@@ -10,7 +10,7 @@ import sys
 from pathlib2 import Path
 from pyiron.base.settings.logger import setup_logger
 from pyiron.base.database.generic import DatabaseAccess
-from pyiron.base.settings.install import install_pyiron
+from pyiron.base.settings.install import install_pyiron,install_pyiron_env
 
 """
 The settings file provides the attributes of the configuration as properties.
@@ -98,14 +98,19 @@ class Settings(with_metaclass(Singleton)):
         else:
             self._install_dialog(config_file=config_file)
             self._config_parse_file(config_file=config_file)
-
+        
         # Take dictionary as primary source - overwrite everything
         self._read_external_config(config=config)
-
+        
+        if not isinstance(self._configuration["project_paths"],list): 
+            self._configuration["project_paths"] = [self._configuration["project_paths"]]
         self._configuration["project_paths"] = [
             convert_path(path) + "/" if path[-1] != "/" else convert_path(path)
             for path in self._configuration["project_paths"]
         ]
+        
+        if not isinstance(self._configuration["resource_paths"],list): 
+            self._configuration["resource_paths"] = [self._configuration["resource_paths"]]
         self._configuration["resource_paths"] = [
             convert_path(path) for path in self._configuration["resource_paths"]
         ]
@@ -283,8 +288,10 @@ class Settings(with_metaclass(Singleton)):
         Returns:
             str: path
         """
+        
         if full_path[-1] != "/":
             full_path += "/"
+        
         for path in self._configuration["project_paths"]:
             if path in full_path:
                 return path
@@ -482,20 +489,31 @@ class Settings(with_metaclass(Singleton)):
     @staticmethod
     def _install_dialog(config_file):
         user_input = None
-        while user_input not in ["yes", "no"]:
-            user_input = input(
-                "It appears that pyiron is not yet configured, do you want to create a default start configuration (recommended: yes). [yes/no]:"
-            )
-        if user_input.lower() == "yes" or user_input.lower() == "y":
-            install_pyiron(
-                config_file_name=config_file,
-                zip_file="resources.zip",
-                resource_directory="~/pyiron/resources",
-                giturl_for_zip_file="https://github.com/pyiron/pyiron-resources/archive/master.zip",
-                git_folder_name="pyiron-resources-master",
-            )
+        while user_input not in ['yes', 'no']:
+            user_input = input('It appears that pyiron is not yet configured, do you want to create a default start configuration (recommended: yes). [yes/no]: ')
+        if user_input.lower() == 'yes' or user_input.lower() == 'y':
+            install_pyiron(config_file_name=config_file,
+                           zip_file="resources.zip",
+                           resource_directory="~/pyiron/resources",
+                           giturl_for_zip_file="https://github.com/pyiron/pyiron-resources/archive/master.zip",
+                           git_folder_name="pyiron-resources-master")
         else:
-            raise ValueError("pyiron was not installed!")
+            user_input = None #reset input
+            while user_input not in ['yes', 'no']:
+                user_input = input('Do you want to provide an alternative configuration (recommended: yes). [yes/no]: ')
+            if user_input.lower() == 'yes' or user_input.lower() == 'y':
+                env_loc = input("Environment variable that acts as parent directory (DEFAULT = 'VSC_SCRATCH_KYUKON'): ")
+                location = input("Location for pyiron folder, within this parent directory (DEFAULT = 'nanoscale'): ")
+                if env_loc=='': env_loc='VSC_SCRATCH_KYUKON'
+                if location=='': location='nanoscale/'
+                if not location[-1]=='/': location+='/'
+                install_pyiron_env(env_loc=env_loc,
+                                   location=location,
+                                   zip_file="resources.zip",
+                                   giturl_for_zip_file="https://github.com/SanderBorgmans/pyiron-resources/archive/hpc_ugent.zip",
+                                   git_folder_name="pyiron-resources-hpc_ugent")
+            else:
+                raise ValueError('pyiron was not installed!')
 
     @staticmethod
     def get_config_from_environment(environment, config):
