@@ -838,6 +838,13 @@ class GenericOutput(object):
         return self._job["output/generic/volume"]
 
     @property
+    def indices(self):
+        if 'indices' in self._job["output/generic"].list_nodes():
+            return self._job["output/generic/indices"]
+        else:
+            return None
+
+    @property
     def displacements(self):
         """
         Output for 3-d displacements between successive snapshots, with minimum image convention.
