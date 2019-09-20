@@ -115,5 +115,5 @@ def find_potential_file(file_name=None, xc=None, path=None, pot_path_dict=None):
                     if file_name in file_lst:
                         return os.path.join(path, file_name)
     raise ValueError("Either the filename or the functional has to be defined.",
-                     file_name, xc, path, pot_path_dict)
+                     file_name, xc, path, pot_path_dict, s.resource_paths)
 
