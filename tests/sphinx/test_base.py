@@ -103,7 +103,7 @@ class TestSphinx(unittest.TestCase):
         os.remove(
             os.path.join(
                 cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/Fe_POTCAR",
+                "../static/sphinx/job_sphinx_hdf5/job_sphinx/Fe_GGA.atomicdata",
             )
         )
         os.rmdir(
@@ -200,7 +200,7 @@ class TestSphinx(unittest.TestCase):
             "KpointFolding=[4, 4, 4];\n",
             "EmptyStates=6;\n",
             "Sigma=0.2;\n",
-            "Xcorr=PBE;\n",
+            "Xcorr=JTH;\n",
             "Estep=400;\n",
             "Ediff=1e-07;\n",
             "WriteWaves=true;\n",
@@ -255,9 +255,9 @@ class TestSphinx(unittest.TestCase):
         file_content = [
             "species {\n",
             '\tname = "Fe";\n',
-            '\tpotType = "VASP";\n',
+            '\tpotType = "AtomPAW";\n',
             '\telement = "Fe";\n',
-            '\tpotential = "Fe_POTCAR";\n',
+            '\tpotential = "Fe_GGA.atomicdata";\n',
             "}\n",
         ]
         file_name = os.path.join(
