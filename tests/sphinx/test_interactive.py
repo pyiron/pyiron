@@ -93,7 +93,7 @@ class TestSphinx(unittest.TestCase):
         os.remove(
             os.path.join(
                 cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/Fe_POTCAR",
+                "../static/sphinx/job_sphinx_hdf5/job_sphinx/Fe_GGA.atomicdata",
             )
         )
         os.rmdir(
@@ -134,6 +134,7 @@ class TestSphinx(unittest.TestCase):
         self.sphinx.fix_spin_constraint = True
         self.sphinx.interactive_spin_constraints_setter(np.zeros(2))
         self.assertEqual(self.sphinx._interactive_library.command, ['set spinconstraint\n', '0.0\n', '0.0\n'])
+
 
 if __name__ == "__main__":
     unittest.main()
