@@ -314,7 +314,7 @@ def fchk2dict(fchk):
     fchkdict['jobtype']     = fchk.command.lower()
     fchkdict['lot']         = fchk.lot
     fchkdict['basis_set']   = fchk.basis
-
+    
     fchkdict['structure/numbers']     = fchk.fields.get('Atomic numbers')
     fchkdict['structure/masses']      = fchk.fields.get("Real atomic weights")*amu
     fchkdict['structure/charges']     = fchk.fields.get('Mulliken Charges')
