@@ -1366,7 +1366,7 @@ class Input(GenericParameters):
             "KpointFolding = [4,4,4]\n"
             "EmptyStates = auto\n"
             "Sigma = 0.2\n"
-            "Xcorr = PBE\n"
+            "Xcorr = JTH\n"
             "Estep = 400\n"
             "Ediff = 1.0e-7\n"
             "WriteWaves = True\n"
