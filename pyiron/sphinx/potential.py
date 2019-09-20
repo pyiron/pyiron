@@ -56,6 +56,13 @@ class SphinxPotentialFile(VaspPotentialAbstract):
                 backward_compatibility_name="defaultvasplda",
             )
             potential_df = potential_df[(potential_df["Model"] == "lda")]
+        elif xc == "JTH":
+            default_df = self._get_potential_default_df(
+                plugin_name="sphinx",
+                file_name_lst={"potentials_sphinx_jth_default.csv"},
+                backward_compatibility_name="defaultsphinxjth",
+            )
+            potential_df = potential_df[(potential_df["Model"] == "jth-gga-pbe")]
         else:
             raise ValueError(
                 'The exchange correlation functional has to be set and it can either be "LDA" or "PBE"'
@@ -93,18 +100,10 @@ class SphinxPotentialFile(VaspPotentialAbstract):
 def find_potential_file(file_name=None, xc=None, path=None, pot_path_dict=None):
     if path is not None:
         for resource_path in s.resource_paths:
-            if os.path.exists(os.path.join(resource_path, "vasp", "potentials", path)):
-                return os.path.join(resource_path, "vasp", "potentials", path)
             if os.path.exists(os.path.join(resource_path, "sphinx", "potentials", path)):
                 return os.path.join(resource_path, "sphinx", "potentials", path)
     elif xc is not None and file_name is not None:
         for resource_path in s.resource_paths:
-            if os.path.exists(
-                os.path.join(resource_path, "vasp", "potentials", pot_path_dict[xc])
-            ):
-                resource_path = os.path.join(
-                    resource_path, "vasp", "potentials", pot_path_dict[xc]
-                )
             if os.path.exists(
                 os.path.join(resource_path, "sphinx", "potentials", pot_path_dict[xc])
             ):

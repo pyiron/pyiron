@@ -671,6 +671,8 @@ class SphinxBase(GenericDFTJob):
                     cwd=self.working_directory,
                     spins_str=self._spins_str,
                 )
+        if self.input["Xcorr"] is "JTH":
+            self.input["Xcorr"] = "PBE"
         self.input.write_file(file_name="userparameters.sx", cwd=self.working_directory)
         self.input_writer.write_main(
             file_name="input.sx",
@@ -853,7 +855,7 @@ class InputWriter(object):
     The Sphinx Input writer is called to write the Sphinx specific input files.
     """
 
-    pot_path_dict = {"PBE": "paw-gga-pbe", "LDA": "paw-lda"}
+    pot_path_dict = {"PBE": "paw-gga-pbe", "LDA": "paw-lda", "JTH": "jth-gga-pbe"}
 
     def __init__(self):
         self.structure = None
@@ -1029,19 +1031,34 @@ class InputWriter(object):
                         path=potentials.find_default(elem)["Filename"].values[0][0],
                         pot_path_dict=self.pot_path_dict,
                     )
-                copyfile(potential_path, posixpath.join(cwd, elem + "_POTCAR"))
+                if xc == "JTH":
+                    copyfile(potential_path, posixpath.join(cwd, elem + "_GGA.atomicdata"))
+                else: 
+                    copyfile(potential_path, posixpath.join(cwd, elem + "_POTCAR"))
                 check_overlap_str = ""
                 species_str.setdefault("species", [])
-                species_str["species"].append(
-                    odict(
-                        [
-                            ("name", '"' + elem + '"'),
-                            ("potType", '"VASP"'),
-                            ("element", '"' + elem + '"'),
-                            ("potential", '"' + elem + "_POTCAR" + '"'),
-                        ]
+                if xc == "JTH":
+                    species_str["species"].append(
+                        odict(
+                            [
+                                ("name", '"' + elem + '"'),
+                                ("potType", '"AtomPAW"'),
+                                ("element", '"' + elem + '"'),
+                                ("potential", '"' + elem + "_GGA.atomicdata" + '"'),
+                            ]
+                        )
                     )
-                )
+                else: 
+                    species_str["species"].append(
+                        odict(
+                            [
+                                ("name", '"' + elem + '"'),
+                                ("potType", '"VASP"'),
+                                ("element", '"' + elem + '"'),
+                                ("potential", '"' + elem + "_POTCAR" + '"'),
+                            ]
+                        )
+                    )
                 if not check_overlap:
                     species_str["species"][-1]["checkOverlap"] = "false"
         if cwd is not None:
