@@ -839,10 +839,7 @@ class GenericOutput(object):
 
     @property
     def indices(self):
-        if 'indices' in self._job["output/generic"].list_nodes():
-            return self._job["output/generic/indices"]
-        else:
-            return None
+        return self._job["output/generic/indices"]
 
     @property
     def displacements(self):
