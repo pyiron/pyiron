@@ -100,7 +100,7 @@ class Settings(with_metaclass(Singleton)):
         else:
             self._install_dialog(config_file=config_file)
             self._config_parse_file(config_file=config_file)
-        
+
         # Take dictionary as primary source - overwrite everything
         self._read_external_config(config=config)
         ''''
@@ -108,7 +108,7 @@ class Settings(with_metaclass(Singleton)):
             convert_path(path) + "/" if path[-1] != "/" else convert_path(path)
             for path in self._configuration["project_paths"]
         ]
-        
+
         self._configuration["resource_paths"] = [
             convert_path(path) for path in self._configuration["resource_paths"]
         ]
@@ -134,7 +134,7 @@ class Settings(with_metaclass(Singleton)):
     @property
     def queue_adapter(self):
         return self._queue_adapter
-    
+
     @property
     def publication_lst(self):
         """

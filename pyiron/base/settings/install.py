@@ -106,7 +106,7 @@ def _write_full_environ_var(env_loc=None,location='~/'):
     else:
         full_path = '$' + env_loc + '/' + location # this should be correctly expanded by the shell
         download_path = os.environ[env_loc]+'/'+location
-    
+
     # Check whether bashrc already contains PYIRON variables, this can happen if bashrc has not been sourced yet
     with open(os.path.expanduser("~/.bashrc"), "r") as outfile:
         lines = outfile.readlines()
@@ -122,9 +122,9 @@ def _write_full_environ_var(env_loc=None,location='~/'):
         print('$ source ~/.bashrc')
     else:
         raise SystemError('Your .bashrc already has pyiron environment variables but has not been sourced. Please execute the following in your bash shell if you are certain these are defined correctly: source ~/.bashrc')
-        
+
     return download_path
-        
+
 
 def install_pyiron(config_file_name='~/.pyiron',
                    zip_file="resources.zip",
