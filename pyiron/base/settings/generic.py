@@ -104,7 +104,6 @@ class Settings(with_metaclass(Singleton)):
         
         # Take dictionary as primary source - overwrite everything
         self._read_external_config(config=config)
-        print(self._configuration)
         
         self._configuration["project_paths"] = [
             convert_path(path) + "/" if path[-1] != "/" else convert_path(path)
