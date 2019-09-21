@@ -117,6 +117,7 @@ def _write_full_environ_var(env_loc=None,location='~/'):
             outfile.write("# PYIRON env variables for pyiron file locations\n")
             outfile.write("export PYIRONRESOURCEPATHS={}\n".format(full_path + 'pyiron/resources'))
             outfile.write("export PYIRONPROJECTPATHS={}\n".format(full_path + 'pyiron/projects'))
+            outfile.write("export PYIRONPROJECTCHECKENABLED=FALSE") # to avoid symlinks being mixed up during reservations
         print('Please source the .bashrc after the initial configuration or reset your terminal.')
         print('')
         print('$ source ~/.bashrc')
