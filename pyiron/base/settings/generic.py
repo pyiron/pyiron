@@ -103,8 +103,7 @@ class Settings(with_metaclass(Singleton)):
         
         # Take dictionary as primary source - overwrite everything
         self._read_external_config(config=config)
-        
-        '''
+        ''''
         self._configuration["project_paths"] = [
             convert_path(path) + "/" if path[-1] != "/" else convert_path(path)
             for path in self._configuration["project_paths"]
@@ -114,7 +113,6 @@ class Settings(with_metaclass(Singleton)):
             convert_path(path) for path in self._configuration["resource_paths"]
         ]
         '''
-
         # Build the SQLalchemy connection strings
         self._configuration = self.convert_database_config(
             config=self._configuration
