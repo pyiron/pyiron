@@ -4,6 +4,7 @@
 
 from builtins import input
 import os
+import distutils.util
 import importlib
 from six import with_metaclass
 import sys
@@ -96,22 +97,20 @@ class Settings(with_metaclass(Singleton)):
                 environment=environment,
                 config=self._configuration
             )
+            self._read_external_config(config=self._configuration) # fix lists
         else:
             self._install_dialog(config_file=config_file)
             self._config_parse_file(config_file=config_file)
         
         # Take dictionary as primary source - overwrite everything
         self._read_external_config(config=config)
+        print(self._configuration)
         
-        if not isinstance(self._configuration["project_paths"],list): 
-            self._configuration["project_paths"] = [self._configuration["project_paths"]]
         self._configuration["project_paths"] = [
             convert_path(path) + "/" if path[-1] != "/" else convert_path(path)
             for path in self._configuration["project_paths"]
         ]
         
-        if not isinstance(self._configuration["resource_paths"],list): 
-            self._configuration["resource_paths"] = [self._configuration["resource_paths"]]
         self._configuration["resource_paths"] = [
             convert_path(path) for path in self._configuration["resource_paths"]
         ]
@@ -376,6 +375,7 @@ class Settings(with_metaclass(Singleton)):
         if parser.has_option(section, "PROJECT_CHECK_ENABLED"):
             self._configuration["project_check_enabled"] = \
                 parser.getboolean(section, "PROJECT_CHECK_ENABLED")
+        print(self._configuration["project_check_enabled"])
         if parser.has_option(section, "RESOURCE_PATHS"):
             self._configuration["resource_paths"] = [
                 convert_path(c.strip())
@@ -482,7 +482,9 @@ class Settings(with_metaclass(Singleton)):
     def _read_external_config(self, config):
         if isinstance(config, dict):
             for key, value in config.items():
-                if key not in ["resource_paths", "project_paths"] or isinstance(
+                if key in ["project_check_enabled"]:
+                    self._configuration[key] = distutils.util.strtobool(value)
+                elif key not in ["resource_paths", "project_paths"] or isinstance(
                     value, list
                 ):
                     self._configuration[key] = value
