@@ -4,7 +4,6 @@
 
 from builtins import input
 import os
-import distutils.util
 import importlib
 from six import with_metaclass
 import sys
@@ -83,7 +82,6 @@ class Settings(with_metaclass(Singleton)):
             "sql_type": "SQLite",
             "sql_user_key": None,
             "sql_database": None,
-            "project_check_enabled": True,
         }
         environment = os.environ
         if "PYIRONCONFIG" in environment.keys():
@@ -98,6 +96,7 @@ class Settings(with_metaclass(Singleton)):
                 config=self._configuration
             )
             self._read_external_config(config=self._configuration) # fix lists
+            # assume that the parsed directories are absolute
         else:
             self._install_dialog(config_file=config_file)
             self._config_parse_file(config_file=config_file)
@@ -105,6 +104,7 @@ class Settings(with_metaclass(Singleton)):
         # Take dictionary as primary source - overwrite everything
         self._read_external_config(config=config)
         
+        '''
         self._configuration["project_paths"] = [
             convert_path(path) + "/" if path[-1] != "/" else convert_path(path)
             for path in self._configuration["project_paths"]
@@ -113,6 +113,7 @@ class Settings(with_metaclass(Singleton)):
         self._configuration["resource_paths"] = [
             convert_path(path) for path in self._configuration["resource_paths"]
         ]
+        '''
 
         # Build the SQLalchemy connection strings
         self._configuration = self.convert_database_config(
@@ -136,10 +137,6 @@ class Settings(with_metaclass(Singleton)):
     def queue_adapter(self):
         return self._queue_adapter
     
-    @property
-    def project_check_enabled(self):
-        return self._configuration["project_check_enabled"]
-
     @property
     def publication_lst(self):
         """
@@ -293,8 +290,6 @@ class Settings(with_metaclass(Singleton)):
         """
         if full_path[-1] != "/":
             full_path += "/"
-        if not self.project_check_enabled:
-            return None
         for path in self._configuration["project_paths"]:
             if path in full_path:
                 return path
@@ -371,10 +366,6 @@ class Settings(with_metaclass(Singleton)):
             ]
         else:
             ValueError("No project path identified!")
-        if parser.has_option(section, "PROJECT_CHECK_ENABLED"):
-            self._configuration["project_check_enabled"] = \
-                parser.getboolean(section, "PROJECT_CHECK_ENABLED")
-        print(self._configuration["project_check_enabled"])
         if parser.has_option(section, "RESOURCE_PATHS"):
             self._configuration["resource_paths"] = [
                 convert_path(c.strip())
@@ -481,9 +472,7 @@ class Settings(with_metaclass(Singleton)):
     def _read_external_config(self, config):
         if isinstance(config, dict):
             for key, value in config.items():
-                if key in ["project_check_enabled"]:
-                    self._configuration[key] = distutils.util.strtobool(value)
-                elif key not in ["resource_paths", "project_paths"] or isinstance(
+                if key not in ["resource_paths", "project_paths"] or isinstance(
                     value, list
                 ):
                     self._configuration[key] = value
@@ -540,7 +529,6 @@ class Settings(with_metaclass(Singleton)):
             "PYIRONSQLTYPE": "sql_type",
             "PYIRONSQLUSERKEY": "sql_user_key",
             "PYIRONSQLDATABASE": "sql_database",
-            "PYIRONPROJECTCHECKENABLED": "project_check_enabled",
         }
         for k, v in env_key_mapping.items():
             if k in environment.keys():
