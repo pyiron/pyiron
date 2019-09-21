@@ -85,7 +85,7 @@ class Gaussian(AtomisticGenericJob):
         # make cube file
         path = self.path+'_hdf5/'+self.name+'/input'
         out = subprocess.check_output(
-                "ml purge;ml load Gaussian/g16_E.01-intel-2018a; cubegen 1 MO={} {}.fchk {}.cube".format(index+1,path,path),
+                "ml load Gaussian/g16_E.01-intel-2019a; cubegen 1 MO={} {}.fchk {}.cube".format(index+1,path,path),
                 stderr=subprocess.STDOUT,
                 universal_newlines=True,
                 shell=True,
@@ -314,7 +314,7 @@ def fchk2dict(fchk):
     fchkdict['jobtype']     = fchk.command.lower()
     fchkdict['lot']         = fchk.lot
     fchkdict['basis_set']   = fchk.basis
-
+    
     fchkdict['structure/numbers']     = fchk.fields.get('Atomic numbers')
     fchkdict['structure/masses']      = fchk.fields.get("Real atomic weights")*amu
     fchkdict['structure/charges']     = fchk.fields.get('Mulliken Charges')
