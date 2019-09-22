@@ -85,7 +85,7 @@ class Gaussian(AtomisticGenericJob):
         # make cube file
         path = self.path+'_hdf5/'+self.name+'/input'
         out = subprocess.check_output(
-                "ml load Gaussian/g16_E.01-intel-2019a; cubegen 1 MO={} {}.fchk {}.cube".format(index+1,path,path),
+                "ml load Gaussian/g16_E.01-intel-2019a;module use /apps/gent/CO7/haswell-ib/modules/all; cubegen 1 MO={} {}.fchk {}.cube".format(index+1,path,path),
                 stderr=subprocess.STDOUT,
                 universal_newlines=True,
                 shell=True,
