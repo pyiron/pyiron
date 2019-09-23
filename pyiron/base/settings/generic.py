@@ -90,7 +90,7 @@ class Settings(with_metaclass(Singleton)):
             config_file = os.path.expanduser(os.path.join("~", ".pyiron"))
         if os.path.isfile(config_file):
             self._config_parse_file(config_file)
-        elif any(["PYIRON" in e for e in environment.keys()]):
+        elif any(["PYIRON" in e for e in environment.keys() and e not in ["EBDEVELPYIRON","EBROOTPYIRON","EBEXTSLISTPYIRON","EBVERSIONPYIRON"]]):
             self._configuration = self.get_config_from_environment(
                 environment=environment,
                 config=self._configuration
