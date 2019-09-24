@@ -395,12 +395,12 @@ class Input(GenericParameters):
         Loads the default file content
         """
         file_content = (
-            "ionic_steps = 1000\n"
+            "ionic_steps = 1000 // maximum number of ionic steps\n"
             "ionic_energy = 1.0e-3\n"
             "ionic_forces = 1.0e-2\n"
-            "maxDist = 5\n"
-            "max_step_length = 1.0e-1\n"
-            "soft_mode_damping = 1.0\n"
+            "maxDist = 5 // maximum possible distance for considering neighbors\n"
+            "max_step_length = 1.0e-1 // maximum displacement at each step\n"
+            "soft_mode_damping = 1.0 // Tikhonov damper\n"
         )
         self.load_string(file_content)
 
