@@ -22,8 +22,8 @@ class TestConfigSettingsStatic(unittest.TestCase):
         cls.test_config = Settings(
             config={
                 "sql_file": "sqlite.db",
-                "project_paths": os.path.join(cls.resource_path, "../../../../.."),
-                "resource_paths": os.path.join(cls.resource_path, "../../../../static"),
+                "project_paths": os.path.abspath(os.path.join(cls.resource_path, "../../../../..")),
+                "resource_paths": os.path.abspath(os.path.join(cls.resource_path, "../../../../static")),
             }
         )
 
