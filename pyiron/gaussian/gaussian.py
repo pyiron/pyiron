@@ -354,7 +354,7 @@ def fchk2dict(fchk):
         fchkdict['structure/positions']   = fchk.fields.get('Current cartesian coordinates').reshape([-1, 3])/angstrom
         fchkdict['generic/positions']     = fchk.fields.get('Current cartesian coordinates').reshape([-1, 3])/angstrom
         fchkdict['generic/forces']        = fchk.fields.get('Cartesian Gradient').reshape([-1, 3])/(electronvolt/angstrom) *-1
-        fchkdict['generic/hessian']       = fchk.get_hessian()/(electronvolt**2/angstrom**2)
+        fchkdict['generic/hessian']       = fchk.get_hessian()/(electronvolt/angstrom**2)
         fchkdict['generic/energy_tot']    = fchk.fields.get('Total Energy')/electronvolt
 
     if fchkdict['jobtype'] == 'sp':
