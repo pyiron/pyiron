@@ -2,7 +2,7 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-import os,subprocess
+import os,subprocess,re
 import numpy as np
 import matplotlib.pyplot as pt
 
@@ -36,6 +36,7 @@ class Gaussian(AtomisticGenericJob):
 
     def write_input(self):
         input_dict = {'mem': self.server.memory_limit,
+                      'cores': self.server.cores,
                       'verbosity': self.input['verbosity'],
                       'lot': self.input['lot'],
                       'basis_set': self.input['basis_set'],
@@ -162,7 +163,7 @@ class Gaussian(AtomisticGenericJob):
             animation.add_ball_and_stick()
         return animation
 
-    def plot_IR_spectrum(self,width=10):
+    def plot_IR_spectrum(self,width=10,scale=1.0):
         """
         Plot IR spectrum based on Lorentzian width
         Read from log file, implementing calculation of intensities from fchk would be cumbersome
@@ -190,7 +191,7 @@ class Gaussian(AtomisticGenericJob):
             """
             return 1./(1.+((p-x)/(w/2.))**2)
 
-        freqs = self.nma.freqs*(electronvolt/angstrom)/(lightspeed/centimeter)
+        freqs = self.nma.freqs*(electronvolt/angstrom)/(lightspeed/centimeter) * scale
         xr = np.linspace(0,4000,1000)
         yr = np.zeros(xr.shape)
 
@@ -254,6 +255,11 @@ def write_input(input_dict,working_directory='.'):
     # Optional elements
     if not input_dict['mem'] is None:
         mem = input_dict['mem'] + 'B' * (input_dict['mem'][-1]!='B') # check if string ends in bytes
+        # convert pmem to mem
+        cores = input_dict['cores']
+        nmem = str(int(re.findall("\d+", mem)[0]) * cores)
+        mem_unit = re.findall("[a-zA-Z]+", mem)[0]
+        mem = nmem+mem_unit
     else:
         mem = "800MB" # default allocation
 
@@ -372,6 +378,16 @@ def collect_output(output_file):
     output_dict = fchk2dict(fchk)
 
     return output_dict
+
+def cleanup(self, files_to_remove=("input.chk")):
+    """
+    Removes excess files (by default: input.chk)
+    """
+    list_files = self.list_files()
+    for file in list_files:
+        if file in files_to_remove:
+            abs_file_path = os.path.join(self.working_directory, file)
+            os.remove(abs_file_path)
 
 # function from theochem iodata
 def _triangle_to_dense(triangle):
