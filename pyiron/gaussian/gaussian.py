@@ -137,6 +137,7 @@ class Gaussian(AtomisticGenericJob):
         self.nma = tamkin.NMA(mol)
 
     def animate_nma_mode(self,index,amplitude=1.0,frames=24,spacefill=False,particle_size=0.5):
+        print("This mode corresponds to a frequency of {} cm^-1".format(self.nma.freqs[index]/lightspeed/(1./centimeter)))
         coordinates = self.nma.coordinates
         symbols = [periodic[n].symbol for n in self.nma.numbers]
 
