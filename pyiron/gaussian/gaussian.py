@@ -132,7 +132,8 @@ class Gaussian(AtomisticGenericJob):
         return view
 
     def do_nma(self):
-        mol = tamkin.Molecule(self.output.numbers, self.output.positions, self.output.masses, self.output.energy_tot, self.output.forces *-1, self.output.hessian)
+        mol = tamkin.Molecule(self.output.numbers, self.output.positions*angstrom, self.output.masses, self.output.energy_tot*electronvolt,
+                                                   self.output.forces *-1 * electronvolt/angstrom, self.output.hessian * electronvolt/angstrom**2)
         self.nma = tamkin.NMA(mol)
 
     def animate_nma_mode(self,index,amplitude=1.0,frames=24,spacefill=False,particle_size=0.5):
@@ -148,7 +149,7 @@ class Gaussian(AtomisticGenericJob):
 
         for frame in range(frames):
             factor = amplitude*np.sin(2*np.pi*float(frame)/frames)
-            positions[frame] = coordinates + factor*mode.reshape((-1,3))
+            positions[frame] = (coordinates + factor*mode.reshape((-1,3)))/angstrom
 
         try:
             import nglview
@@ -191,7 +192,7 @@ class Gaussian(AtomisticGenericJob):
             """
             return 1./(1.+((p-x)/(w/2.))**2)
 
-        freqs = self.nma.freqs*(electronvolt/angstrom)/(lightspeed/centimeter) * scale
+        freqs = self.nma.freqs/lightspeed/(1./centimeter) * scale
         xr = np.linspace(0,4000,1000)
         yr = np.zeros(xr.shape)
 
