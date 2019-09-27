@@ -375,7 +375,7 @@ class GenericParameters(PyironObject):
                 val = " ".join(val[(num_words - 1) :])
             try:
                 val_v = literal_eval(val)
-            except (TypeError, NameError, SyntaxError):
+            except ValueError:
                 val_v = val
             if callable(val_v):
                 val_v = val
