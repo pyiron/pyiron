@@ -2106,6 +2106,7 @@ class Incar(GenericParameters):
             separator_char="=",
         )
         self._bool_dict = {True: ".TRUE.", False: ".FALSE."}
+        self._string_only = True
 
     def load_default(self):
         """
@@ -2135,6 +2136,7 @@ class Kpoints(GenericParameters):
             val_only=True,
             comment_char="!",
         )
+        self._string_only = True
 
     def set(self, method=None, size_of_mesh=None, shift=None):
         """

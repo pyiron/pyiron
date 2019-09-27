@@ -98,6 +98,7 @@ class GenericParameters(PyironObject):
         self._end_value_char = None
         self._replace_char_dict = None
         self._block_dict = None
+        self._string_only = False
         self._bool_dict = {True: "True", False: "False"}
         self._dataset = OrderedDict()
         self._block_line_dict = {}
@@ -173,6 +174,16 @@ class GenericParameters(PyironObject):
             val_only (bool): [True/False]
         """
         self._val_only = val_only
+
+    @property
+    def string_only(self):
+        """
+        Get the boolean option to switch string only mode
+
+        Returns:
+            bool: [True/False]
+        """
+        return self._string_only
 
     @property
     def comment_char(self):
@@ -372,13 +383,16 @@ class GenericParameters(PyironObject):
                 num_words = len(multi_word_lst)
                 val = val.split(" ")
                 val = " ".join(val[(num_words - 1) :])
-            try:
-                val_v = eval(val)
-            except (TypeError, NameError, SyntaxError):
-                val_v = val
-            if callable(val_v):
-                val_v = val
-            return val_v
+            if not self.string_only:
+                try:
+                    val_v = eval(val)
+                except (TypeError, NameError, SyntaxError):
+                    val_v = val
+                if callable(val_v):
+                    val_v = val
+                return val_v
+            else:
+                return val
         elif default_value is not None:
             return default_value
         else:
