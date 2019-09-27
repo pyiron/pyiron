@@ -8,6 +8,7 @@ import os
 import pandas
 import posixpath
 import warnings
+from ast import literal_eval
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.template import PyironObject
 
@@ -373,7 +374,7 @@ class GenericParameters(PyironObject):
                 val = val.split(" ")
                 val = " ".join(val[(num_words - 1) :])
             try:
-                val_v = eval(val)
+                val_v = literal_eval(val)
             except (TypeError, NameError, SyntaxError):
                 val_v = val
             if callable(val_v):
