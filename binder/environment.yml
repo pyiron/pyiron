@@ -9,3 +9,4 @@ dependencies:
 - nglview
 - seaborn
 - ovito
+- jupyterlab=1.1.4
