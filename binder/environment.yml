@@ -1,16 +1,10 @@
 channels:
 - conda-forge
 dependencies:
-- jupyterlab
 - python
 - pyiron
 - lammps
 - gpaw
 - sphinxdft
-- nodejs
-- ipython
-- ipywidgets
-- notebook
-- ipykernel
 - nglview
 - seaborn
