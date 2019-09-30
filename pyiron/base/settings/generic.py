@@ -581,4 +581,4 @@ def convert_path(path):
     Returns:
         str: absolute path in POSIX format
     """
-   return os.path.abspath(os.path.expanduser(path)).replace("\\", "/")
+    return os.path.abspath(os.path.expanduser(path)).replace("\\", "/")
