@@ -522,6 +522,8 @@ class Settings(with_metaclass(Singleton)):
             if k in environment.keys():
                 if k in ["PYIRONPROJECTCHECKENABLED", "PYIRONDISABLE"]:
                     config[v] = environment[k].lower() in ['t', 'true', 'y', 'yes']
+                elif k in ["PYIRONRESOURCEPATHS", "PYIRONPROJECTPATHS"]:
+                    config[v] = environment[k].split(':')
                 else:
                     config[v] = environment[k]
         return config
