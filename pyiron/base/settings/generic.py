@@ -564,16 +564,9 @@ class Settings(with_metaclass(Singleton)):
 def convert_path(path):
     """
     Convert path to POSIX path
-
     Args:
         path(str): input path
-
     Returns:
         str: absolute path in POSIX format
     """
-    if not (sys.version_info.major < 3 and os.name == "nt"):
-        return Path(path).expanduser().absolute().as_posix()
-    else:
-        return os.path.abspath(os.path.normpath(os.path.expanduser(path))).replace(
-            "\\", "/"
-        )
+    return os.path.abspath(os.path.expanduser(path)).replace("\\", "/")
