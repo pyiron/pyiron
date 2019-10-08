@@ -472,19 +472,19 @@ class VaspBase(GenericDFTJob):
 
         if not snap is None:
             if self.get_eddrmm_handling() == "ignore":
-                self._logger.warn(
+                self._logger.warning(
                     "EDDRMM warnings are ignored. EDDRMM occures {} times, first in ionic step {}"
                         .format(num_eddrmm, snap)
                 )
             elif self.get_eddrmm_handling() == "not_converged":
                 self.status.not_converged = True
-                self._logger.warn(
+                self._logger.warning(
                     "EDDRMM warning occurred {} times first in ionic step {}. Status is switched to 'not_converged'."
-                        .format(num_eddrmm, snap)
+                    .format(num_eddrmm, snap)
                 )
             elif self.get_eddrmm_handling() == "restart":
                 self.status.not_converged = True
-                self._logger.warn(
+                self._logger.warning(
                     "EDDRMM warning occurred {} times first in ionic step {}. Status is switched to 'not_converged'."
                         .format(num_eddrmm, snap)
                 )
@@ -611,13 +611,13 @@ class VaspBase(GenericDFTJob):
                             )
                         )
                 except (ValueError, IndexError, TypeError):
-                    self.logger.warn(
+                    self.logger.warning(
                         "Unable to parse initial magnetic moments from the INCAR file"
                     )
                 if len(init_moments) == len(self.structure):
                     self.structure.set_initial_magnetic_moments(init_moments)
                 else:
-                    self.logger.warn(
+                    self.logger.warning(
                         "Inconsistency during parsing initial magnetic moments from the INCAR file"
                     )
 
@@ -854,7 +854,7 @@ class VaspBase(GenericDFTJob):
         else:
             self.input.incar["ALGO"] = str(algorithm)
             if algorithm not in algorithm_list:
-                s.logger.warn(
+                s.logger.warning(
                     msg="Algorithm {} is unusual for VASP. "
                     "I hope you know what you are up to".format(algorithm)
                 )
@@ -1004,7 +1004,7 @@ class VaspBase(GenericDFTJob):
         if retain_electrostatic_potential:
             self.write_electrostatic_potential = retain_electrostatic_potential
         for key in kwargs.keys():
-            self.logger.warn("Tag {} not relevant for vasp".format(key))
+            self.logger.warning("Tag {} not relevant for vasp".format(key))
 
     def _set_kpoints(
         self,
@@ -1338,7 +1338,7 @@ class VaspBase(GenericDFTJob):
                     posixpath.join(self.working_directory, "CHGCAR")
                 )
             except IOError:
-                self.logger.warn(
+                self.logger.warning(
                     msg="A CHGCAR from job: {} is not generated and therefore it can't be read.".format(
                         self.job_name
                     )
@@ -1408,7 +1408,7 @@ class VaspBase(GenericDFTJob):
                     posixpath.join(self.working_directory, "CHGCAR")
                 )
             except IOError:
-                self.logger.warn(
+                self.logger.warning(
                     msg="A CHGCAR from job: {} is not generated and therefore it can't be read.".format(
                         self.job_name
                     )
@@ -1418,7 +1418,7 @@ class VaspBase(GenericDFTJob):
                     posixpath.join(self.working_directory, "WAVECAR")
                 )
             except IOError:
-                self.logger.warn(
+                self.logger.warning(
                     msg="A WAVECAR from job: {} is not generated and therefore it can't be read.".format(
                         self.job_name
                     )
@@ -1480,7 +1480,7 @@ class VaspBase(GenericDFTJob):
                     posixpath.join(self.working_directory, "WAVECAR")
                 )
             except IOError:
-                self.logger.warn(
+                self.logger.warning(
                     msg="A WAVECAR from job: {} is not generated and therefore it can't be read.".format(
                         self.job_name
                     )

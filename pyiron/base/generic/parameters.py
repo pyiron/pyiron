@@ -842,7 +842,7 @@ class GenericParameters(PyironObject):
                 )
                 return parameter_found_in_block
         else:
-            s.logger.warn(
+            s.logger.warning(
                 "Unknown parameter (does not exist in block_dict): {}".format(
                     parameter_name
                 )

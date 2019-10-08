@@ -740,8 +740,8 @@ class GenericJob(JobCore):
                 f_err.write(out)
         except subprocess.CalledProcessError as e:
             if not self.server.accept_crash:
-                self._logger.warn("Job aborted")
-                self._logger.warn(e.output)
+                self._logger.warning("Job aborted")
+                self._logger.warning(e.output)
                 self.status.aborted = True
                 error_file = posixpath.join(
                     self.project_hdf5.working_directory, "error.msg"
@@ -928,8 +928,8 @@ class GenericJob(JobCore):
             self._server.to_hdf(self._hdf5)
             print("Queue system id: ", que_id)
         except subprocess.CalledProcessError as e:
-            self._logger.warn("Job aborted")
-            self._logger.warn(e.output)
+            self._logger.warning("Job aborted")
+            self._logger.warning(e.output)
             self.status.aborted = True
             raise ValueError("run_queue.sh crashed")
         s.logger.debug("submitted %s", self.job_name)
