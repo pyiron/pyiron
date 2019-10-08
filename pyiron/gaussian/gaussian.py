@@ -347,7 +347,10 @@ def fchk2dict(fchk):
 
     # Specific job information
     if fchkdict['jobtype'] == 'fopt':
-        fchkdict['structure/positions']   = fchk.get_optimization_coordinates()[-1]/angstrom
+        if len(fchk.get_optimization_coordinates().shape) == 3:
+            fchkdict['structure/positions']   = fchk.get_optimization_coordinates()[-1]/angstrom
+        else:
+            fchkdict['structure/positions']   = fchk.get_optimization_coordinates()/angstrom
         fchkdict['generic/positions']     = fchk.get_optimization_coordinates()/angstrom
         fchkdict['generic/energy_tot']    = fchk.get_optimization_energies()/electronvolt
         fchkdict['generic/forces']        = fchk.get_optimization_gradients()/(electronvolt/angstrom) * -1
