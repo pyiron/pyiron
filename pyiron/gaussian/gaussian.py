@@ -45,8 +45,10 @@ class Gaussian(AtomisticGenericJob):
                       'title' : self.input['title'],
                       'spin_mult': self.input['spin_mult'],
                       'charge': self.input['charge'],
+                      'bsse_idx': self.input['bsse_idx'],
                       'symbols': self.structure.get_chemical_symbols().tolist(),
-                      'pos': self.structure.positions}
+                      'pos': self.structure.positions
+                      }
         write_input(input_dict=input_dict, working_directory=self.working_directory)
 
     def collect_output(self):
@@ -287,7 +289,12 @@ def write_input(input_dict,working_directory='.'):
             verbosity = verbosity_dict[verbosity]
     else:
         verbosity='n'
-
+     
+    if 'Counterpoise' in settings.keys():
+        if input_dict['bsse_idx'] is None or not len(input_dict['bsse_idx'])==len(pos) : # check if all elements are present for a BSSE calculation
+            raise ValueError('The Counterpoise setting requires a valid bsse_idx array')
+           
+    
     # Parse settings
     settings_string = ""
     for key,valuelst in settings.items():
@@ -295,7 +302,7 @@ def write_input(input_dict,working_directory='.'):
             valuelst = [valuelst]
         option = key + "({}) ".format(",".join(valuelst))*(len(valuelst)>0)
         settings_string += option
-
+        
     # Write to file
     route_section = "#{} {}/{} {} {}\n\n".format(verbosity,lot,basis_set,jobtype,settings_string)
     with open(os.path.join(working_directory, 'input.com'), 'w') as f:
@@ -303,10 +310,21 @@ def write_input(input_dict,working_directory='.'):
         f.write("%chk=input.chk\n")
         f.write(route_section)
         f.write("{}\n\n".format(title))
-        f.write("{} {}\n".format(charge,spin_mult))
-        for n,p in enumerate(pos):
-            f.write(" {}\t{: 1.6f}\t{: 1.6f}\t{: 1.6f}\n".format(symbols[n],p[0],p[1],p[2]))
-        f.write('\n\n') # don't know whether this is still necessary in G16
+        
+        if not 'Counterpoise' in settings.keys():
+            f.write("{} {}\n".format(charge,spin_mult))
+            for n,p in enumerate(pos):
+                f.write(" {}\t{: 1.6f}\t{: 1.6f}\t{: 1.6f}\n".format(symbols[n],p[0],p[1],p[2]))
+            f.write('\n\n') # don't know whether this is still necessary in G16
+        else:
+            if isinstance(charge,list) and isinstance(spin_mult,list): # for BSSE it is possible to define charge and multiplicity for the fragments separately
+                f.write(" ".join(["{},{}".format(charge[idx],spin_mult[idx]) for idx in range(int(settings['Counterpoise']))])) # first couple is for full system, then every fragment separately
+            else:
+                f.write("{} {}\n".format(charge,spin_mult))
+                
+            for n,p in enumerate(pos):
+                f.write(" {}(Fragment={})\t{: 1.6f}\t{: 1.6f}\t{: 1.6f}\n".format(symbols[n],input_dict['bsse_idx'][n],p[0],p[1],p[2]))
+            f.write('\n\n') # don't know whether this is still necessary in G16
 
 
 # we could use theochem iodata, should be more robust than molmod.io
@@ -366,8 +384,42 @@ def fchk2dict(fchk):
         fchkdict['structure/positions']   = fchk.fields.get('Current cartesian coordinates').reshape([-1, 3])/angstrom
         fchkdict['generic/positions']     = fchk.fields.get('Current cartesian coordinates').reshape([-1, 3])/angstrom
         fchkdict['generic/energy_tot']    = fchk.fields.get('Total Energy')/electronvolt
-
+       
     return fchkdict
+
+def read_bsse(output_file,output_dict):
+    # Check whether the route section contains the Counterpoise setting (if fchk module is update, route section can be loaded from dict)
+    cp = False
+    with open(output_file,'r') as f:
+        line = f.readline()
+        while line:
+            if 'Route' in line:
+                line = f.readline()
+                if 'counterpoise' in line.lower():
+                    cp = True
+                break
+                    
+    if cp:
+        # the log file has the same path and name as the output file aside from the file extension
+        log_file = output_file[:output_file.rfind('.')]
+
+        # BSSE energy lines can be found at the end of the file, so iterate backwards
+        found = False
+        it = _reverse_readline(log_file)
+        while not found:
+            line = next(it)
+            if 'complexation energy' in line:
+                found = True
+                output_dict['structure/bsse/complexation_energy_corrected'] = float(line[32:])
+                line = next(it) # go to next line
+                output_dict['structure/bsse/complexation_energy_raw'] = float(line[32:]) 
+                line = next(it) # go to next line
+                output_dict['structure/bsse/sum_of_fragments'] = float(line[32:])
+                line = next(it) # go to next line
+                output_dict['structure/bsse/BSSE_correction'] = float(line[32:])
+                line = next(it) # go to next line
+                output_dict['structure/bsse/E_tot_corrected'] = float(line[32:])
+    
 
 def collect_output(output_file):
     '''
@@ -378,21 +430,15 @@ def collect_output(output_file):
     '''
     # Read output
     fchk = FCHKFile(output_file)
-
+    
     # Translate to dict
     output_dict = fchk2dict(fchk)
+    
+    # Read BSSE output if it is present
+    read_bsse(output_file,output_dict)
 
     return output_dict
 
-def cleanup(self, files_to_remove=("input.chk")):
-    """
-    Removes excess files (by default: input.chk)
-    """
-    list_files = self.list_files()
-    for file in list_files:
-        if file in files_to_remove:
-            abs_file_path = os.path.join(self.working_directory, file)
-            os.remove(abs_file_path)
 
 # function from theochem iodata
 def _triangle_to_dense(triangle):
@@ -418,3 +464,36 @@ def _triangle_to_dense(triangle):
         result[:irow + 1, irow] = triangle[begin:end]
         begin = end
     return result
+
+def _reverse_readline(filename, buf_size=8192):
+    """A generator that returns the lines of a file in reverse order"""
+    """https://stackoverflow.com/questions/2301789/read-a-file-in-reverse-order-using-python"""
+    with open(filename) as fh:
+        segment = None
+        offset = 0
+        fh.seek(0, os.SEEK_END)
+        file_size = remaining_size = fh.tell()
+        while remaining_size > 0:
+            offset = min(file_size, offset + buf_size)
+            fh.seek(file_size - offset)
+            buffer = fh.read(min(remaining_size, buf_size))
+            remaining_size -= buf_size
+            lines = buffer.split('\n')
+            # The first line of the buffer is probably not a complete line so
+            # we'll save it and append it to the last line of the next buffer
+            # we read
+            if segment is not None:
+                # If the previous chunk starts right from the beginning of line
+                # do not concat the segment to the last line of new chunk.
+                # Instead, yield the segment first 
+                if buffer[-1] != '\n':
+                    lines[-1] += segment
+                else:
+                    yield segment
+            segment = lines[0]
+            for index in range(len(lines) - 1, 0, -1):
+                if lines[index]:
+                    yield lines[index]
+        # Don't yield None if the file was empty
+        if segment is not None:
+            yield segment
