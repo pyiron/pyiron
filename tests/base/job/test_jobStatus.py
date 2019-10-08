@@ -260,7 +260,6 @@ class TestJobStatus(unittest.TestCase):
         self.assertNotEqual(current_status, str(self.jobstatus_database))
         self.assertEqual(new_status, str(self.jobstatus_database))
         self.database.item_update({'status': 'finished'}, self.job_id)
-        self.jobstatus_database.refresh_status()
         finished_status = self.database.get_item_by_id(self.job_id)["status"]
         self.assertTrue(self.jobstatus_database.finished)
         self.assertNotEqual(current_status, str(self.jobstatus_database))

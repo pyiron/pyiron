@@ -214,6 +214,7 @@ class JobStatus(object):
 
     def __getattr__(self, name):
         if name in self._status_dict.keys():
+            self.refresh_status()
             return self._status_dict[name]
         else:
             super(JobStatus, self).__getattr__(name)
