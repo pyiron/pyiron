@@ -109,10 +109,7 @@ def queue_delete_job(item):
     """
     que_id = _validate_que_request(item)
     if s.queue_adapter is not None:
-        if isinstance(que_id, list):
-            return [s.queue_adapter.enable_reservation(process_id=q) for q in que_id]
-        else:
-            return s.queue_adapter.enable_reservation(process_id=que_id)
+        return s.queue_adapter.delete_job(process_id=que_id)
     else:
         return None
 
@@ -129,7 +126,10 @@ def queue_enable_reservation(item,reservation_id):
     """
     que_id = _validate_que_request(item)
     if s.queue_adapter is not None:
-        return s.queue_adapter.enable_reservation(process_id=que_id,reservation_id=reservation_id)
+        if isinstance(que_id, list):
+            return [s.queue_adapter.enable_reservation(process_id=q,reservation_id=reservation_id) for q in que_id]
+        else:
+            return s.queue_adapter.enable_reservation(process_id=que_id,reservation_id=reservation_id)
     else:
         return None
 
