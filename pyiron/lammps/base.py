@@ -367,7 +367,7 @@ class LammpsBase(AtomisticGenericJob):
 
         """
         file_name = self.job_file_name(file_name=file_name, cwd=cwd)
-        with h5py.File(file_name, "r", libver="latest", swmr=True) as h5md:
+        with h5py.File(file_name, mode="r", libver="latest", swmr=True) as h5md:
             positions = [
                 pos_i.tolist() for pos_i in h5md["/particles/all/position/value"]
             ]
