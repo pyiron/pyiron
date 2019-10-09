@@ -43,6 +43,7 @@ JOB_CLASS_DICT = {'ScriptJob': 'pyiron.base.job.script',
                   'GpawJob': 'pyiron.gpaw.gpaw',
                   'Vasp': 'pyiron.vasp.vasp',
                   'Gaussian': 'pyiron.gaussian.gaussian',
+                  'Yaff': 'pyiron.yaff.yaff',
                   }
 
 
