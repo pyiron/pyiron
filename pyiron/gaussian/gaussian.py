@@ -208,6 +208,23 @@ class Gaussian(AtomisticGenericJob):
         pt.xlabel(r'Frequency (cm$^{-1}$)')
         pt.ylabel('Intensity (a.u.)')
         pt.show()
+        
+        def bsse_to_pandas(self):
+        """
+        Convert bsse output of all frames to a pandas Dataframe object.
+
+        Args:
+
+        Returns:
+            pandas.Dataframe: output as dataframe
+        """
+        assert 'counterpoise' in [k.lower() for k in self.input['settings'].keys()] # check if there was a bsse calculation
+        tmp = {}
+        with job.project_hdf5.open('output/structure/bsse') as hdf:
+            for key in hdf.list_nodes():
+                tmp[key] = hdf[key]
+            df = pandas.DataFrame(tmp)   
+        return df
 
 
 class GaussianInput(GenericParameters):
@@ -293,6 +310,10 @@ def write_input(input_dict,working_directory='.'):
     if 'Counterpoise' in settings.keys():
         if input_dict['bsse_idx'] is None or not len(input_dict['bsse_idx'])==len(pos) : # check if all elements are present for a BSSE calculation
             raise ValueError('The Counterpoise setting requires a valid bsse_idx array')
+        # Check bsse idx (should start from 1 for Gaussian)
+        input_dict['bsse_idx'] = input_dict['bsse_idx'] - min(input_dict['bsse_idx']) + 1 
+        # Check if it only contains conseqcutive numbers (sum of set should be n*(n+1)/2)
+        assert sum(set(input_dict['bsse_idx'])) == (max(input_dict['bsse_idx'])*(max(input_dict['bsse_idx']) + 1))/2
 
     # Parse settings
     settings_string = ""
@@ -422,8 +443,8 @@ def read_bsse(output_file,output_dict):
 
         frames = 1 if isinstance(output_dict['generic/energy_tot'],float) else len(output_dict['generic/energy_tot'])
 
-        output_dict['structure/bsse/E_tot_corrected'] = np.zeros(frames)
-        output_dict['structure/bsse/BSSE_correction'] = np.zeros(frames)
+        output_dict['structure/bsse/energy_tot_corrected'] = np.zeros(frames)
+        output_dict['structure/bsse/bsse_correction'] = np.zeros(frames)
         output_dict['structure/bsse/sum_of_fragments'] = np.zeros(frames)
         output_dict['structure/bsse/complexation_energy_raw'] = np.zeros(frames)
         output_dict['structure/bsse/complexation_energy_corrected'] = np.zeros(frames)
@@ -436,16 +457,16 @@ def read_bsse(output_file,output_dict):
                 line = next(it)
                 if 'complexation energy' in line:
                     E_tot_corr,bsse_corr,sum_fragments,cE_raw,cE_corr = get_bsse_array(line,it)
-                    output_dict['structure/bsse/E_tot_corrected'][i] = E_tot_corr
-                    output_dict['structure/bsse/BSSE_correction'][i] = bsse_corr
+                    output_dict['structure/bsse/energy_tot_corrected'][i] = E_tot_corr
+                    output_dict['structure/bsse/bsse_correction'][i] = bsse_corr
                     output_dict['structure/bsse/sum_of_fragments'][i] = sum_fragments
                     output_dict['structure/bsse/complexation_energy_raw'][i] = cE_raw
                     output_dict['structure/bsse/complexation_energy_corrected'][i] = cE_corr
                     found = True
 
         if frames==1:
-            output_dict['structure/bsse/E_tot_corrected'] = output_dict['structure/bsse/E_tot_corrected'][0]
-            output_dict['structure/bsse/BSSE_correction'] = output_dict['structure/bsse/BSSE_correction'][0]
+            output_dict['structure/bsse/energy_tot_corrected'] = output_dict['structure/bsse/energy_tot_corrected'][0]
+            output_dict['structure/bsse/bsse_correction'] = output_dict['structure/bsse/bsse_correction'][0]
             output_dict['structure/bsse/sum_of_fragments'] = output_dict['structure/bsse/sum_of_fragments'][0]
             output_dict['structure/bsse/complexation_energy_raw'] = output_dict['structure/bsse/complexation_energy_raw'][0]
             output_dict['structure/bsse/complexation_energy_corrected'] = output_dict['structure/bsse/complexation_energy_corrected'][0]
