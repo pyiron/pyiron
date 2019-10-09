@@ -491,7 +491,7 @@ def _triangle_to_dense(triangle):
         begin = end
     return result
 
-
+'''
 def _reverse_readline(filename, buf_size=8192):
     """A generator that returns the lines of a file in reverse order"""
     """https://stackoverflow.com/questions/2301789/read-a-file-in-reverse-order-using-python"""
@@ -524,3 +524,4 @@ def _reverse_readline(filename, buf_size=8192):
         # Don't yield None if the file was empty
         if segment is not None:
             yield segment
+'''
