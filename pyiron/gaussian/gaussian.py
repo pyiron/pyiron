@@ -10,7 +10,7 @@ from pyiron.base.generic.parameters import GenericParameters
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob,GenericOutput,Trajectory
 from molmod.io.fchk import FCHKFile
-from molmod.units import amu,angstrom,electronvolt,centimeter
+from molmod.units import amu,angstrom,electronvolt,centimeter,kcalmol
 from molmod.constants import lightspeed
 from molmod.periodic import periodic
 import tamkin
