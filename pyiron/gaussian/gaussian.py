@@ -223,7 +223,7 @@ class Gaussian(AtomisticGenericJob):
         tmp = {}
         with self.project_hdf5.open('output/structure/bsse') as hdf:
             for key in hdf.list_nodes():
-                tmp[key] = hdf[key]
+                tmp[key] = hdf[key] if isinstance(hdf[key],np.ndarray) else [hdf[key]]
             df = pandas.DataFrame(tmp)
         return df
 
