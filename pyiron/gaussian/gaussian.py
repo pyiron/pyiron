@@ -390,7 +390,7 @@ def fchk2dict(fchk):
 def get_bsse_array(line,it):
     numeric_const_pattern = '[-+]? (?: (?: \d* \. \d+ ) | (?: \d+ \.? ) )(?: [Ee] [+-]? \d+ ) ?'
     rx = re.compile(numeric_const_pattern, re.VERBOSE)
-
+    
     cE_corr = float(rx.findall(line)[0]) * kcalmol
     line = next(it) # go to next line
     cE_raw = float(rx.findall(line)[0]) * kcalmol
@@ -400,7 +400,7 @@ def get_bsse_array(line,it):
     bsse_corr = float(rx.findall(line)[0])
     line = next(it) # go to next line
     E_tot_corr = float(rx.findall(line)[0])
-
+    
     return E_tot_corr,bsse_corr,sum_fragments,cE_raw,cE_corr
 
 
@@ -441,6 +441,7 @@ def read_bsse(output_file,output_dict):
                     output_dict['structure/bsse/sum_of_fragments'][i] = sum_fragments
                     output_dict['structure/bsse/complexation_energy_raw'][i] = cE_raw
                     output_dict['structure/bsse/complexation_energy_corrected'][i] = cE_corr
+                    found = True
 
         if frames==1:
             output_dict['structure/bsse/E_tot_corrected'] = output_dict['structure/bsse/E_tot_corrected'][0]
