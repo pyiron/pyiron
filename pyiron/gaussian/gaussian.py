@@ -221,7 +221,7 @@ class Gaussian(AtomisticGenericJob):
         """
         assert 'counterpoise' in [k.lower() for k in self.input['settings'].keys()] # check if there was a bsse calculation
         tmp = {}
-        with job.project_hdf5.open('output/structure/bsse') as hdf:
+        with self.project_hdf5.open('output/structure/bsse') as hdf:
             for key in hdf.list_nodes():
                 tmp[key] = hdf[key]
             df = pandas.DataFrame(tmp)
