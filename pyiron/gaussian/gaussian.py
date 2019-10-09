@@ -289,12 +289,11 @@ def write_input(input_dict,working_directory='.'):
             verbosity = verbosity_dict[verbosity]
     else:
         verbosity='n'
-     
+
     if 'Counterpoise' in settings.keys():
         if input_dict['bsse_idx'] is None or not len(input_dict['bsse_idx'])==len(pos) : # check if all elements are present for a BSSE calculation
             raise ValueError('The Counterpoise setting requires a valid bsse_idx array')
-           
-    
+
     # Parse settings
     settings_string = ""
     for key,valuelst in settings.items():
@@ -302,7 +301,7 @@ def write_input(input_dict,working_directory='.'):
             valuelst = [valuelst]
         option = key + "({}) ".format(",".join(valuelst))*(len(valuelst)>0)
         settings_string += option
-        
+
     # Write to file
     route_section = "#{} {}/{} {} {}\n\n".format(verbosity,lot,basis_set,jobtype,settings_string)
     with open(os.path.join(working_directory, 'input.com'), 'w') as f:
@@ -310,7 +309,7 @@ def write_input(input_dict,working_directory='.'):
         f.write("%chk=input.chk\n")
         f.write(route_section)
         f.write("{}\n\n".format(title))
-        
+
         if not 'Counterpoise' in settings.keys():
             f.write("{} {}\n".format(charge,spin_mult))
             for n,p in enumerate(pos):
@@ -321,7 +320,7 @@ def write_input(input_dict,working_directory='.'):
                 f.write(" ".join(["{},{}".format(charge[idx],spin_mult[idx]) for idx in range(int(settings['Counterpoise']))])) # first couple is for full system, then every fragment separately
             else:
                 f.write("{} {}\n".format(charge,spin_mult))
-                
+
             for n,p in enumerate(pos):
                 f.write(" {}(Fragment={})\t{: 1.6f}\t{: 1.6f}\t{: 1.6f}\n".format(symbols[n],input_dict['bsse_idx'][n],p[0],p[1],p[2]))
             f.write('\n\n') # don't know whether this is still necessary in G16
@@ -340,7 +339,7 @@ def fchk2dict(fchk):
     fchkdict['jobtype']     = fchk.command.lower()
     fchkdict['lot']         = fchk.lot
     fchkdict['basis_set']   = fchk.basis
-    
+
     fchkdict['structure/numbers']     = fchk.fields.get('Atomic numbers')
     fchkdict['structure/masses']      = fchk.fields.get("Real atomic weights")*amu
     fchkdict['structure/charges']     = fchk.fields.get('Mulliken Charges')
@@ -384,8 +383,23 @@ def fchk2dict(fchk):
         fchkdict['structure/positions']   = fchk.fields.get('Current cartesian coordinates').reshape([-1, 3])/angstrom
         fchkdict['generic/positions']     = fchk.fields.get('Current cartesian coordinates').reshape([-1, 3])/angstrom
         fchkdict['generic/energy_tot']    = fchk.fields.get('Total Energy')/electronvolt
-       
+
     return fchkdict
+
+
+def get_bsse_array(line,it):
+    cE_corr = float(line[32:])
+    line = next(it) # go to next line
+    cE_raw = float(line[32:])
+    line = next(it) # go to next line
+    sum_fragments = float(line[32:])
+    line = next(it) # go to next line
+    bsse_corr = float(line[32:])
+    line = next(it) # go to next line
+    E_tot_corr = float(line[32:])
+
+    return E_tot_corr,bsse_corr,sum_fragments,cE_raw,cE_corr
+
 
 def read_bsse(output_file,output_dict):
     # Check whether the route section contains the Counterpoise setting (if fchk module is update, route section can be loaded from dict)
@@ -393,33 +407,44 @@ def read_bsse(output_file,output_dict):
     with open(output_file,'r') as f:
         line = f.readline()
         while line:
-            if 'Route' in line:
-                line = f.readline()
-                if 'counterpoise' in line.lower():
+            if 'route' in line.lower():
+                if 'counterpoise' in f.readline().lower(): # read next line
                     cp = True
                 break
-                    
+            line = f.readline()
+
     if cp:
         # the log file has the same path and name as the output file aside from the file extension
-        log_file = output_file[:output_file.rfind('.')]
+        log_file = output_file[:output_file.rfind('.')] + '.log'
 
-        # BSSE energy lines can be found at the end of the file, so iterate backwards
-        found = False
+        frames = len(output_dict['generic/energy_tot'])
+        output_dict['structure/bsse/E_tot_corrected'] = np.zeros(frames)
+        output_dict['structure/bsse/BSSE_correction'] = np.zeros(frames)
+        output_dict['structure/bsse/sum_of_fragments'] = np.zeros(frames)
+        output_dict['structure/bsse/complexation_energy_raw'] = np.zeros(frames)
+        output_dict['structure/bsse/complexation_energy_corrected'] = np.zeros(frames)
+
         it = _reverse_readline(log_file)
-        while not found:
-            line = next(it)
-            if 'complexation energy' in line:
-                found = True
-                output_dict['structure/bsse/complexation_energy_corrected'] = float(line[32:])
-                line = next(it) # go to next line
-                output_dict['structure/bsse/complexation_energy_raw'] = float(line[32:]) 
-                line = next(it) # go to next line
-                output_dict['structure/bsse/sum_of_fragments'] = float(line[32:])
-                line = next(it) # go to next line
-                output_dict['structure/bsse/BSSE_correction'] = float(line[32:])
-                line = next(it) # go to next line
-                output_dict['structure/bsse/E_tot_corrected'] = float(line[32:])
-    
+        line = next(it)
+        for i in range(frames):
+            found = False
+            while not found:
+                line = next(it)
+                if 'complexation energy' in line:
+                    E_tot_corr,bsse_corr,sum_fragments,cE_raw,cE_corr = get_bsse_array(line,it)
+                    output_dict['structure/bsse/E_tot_corrected'][i] = E_tot_corr
+                    output_dict['structure/bsse/BSSE_correction'][i] = bsse_corr
+                    output_dict['structure/bsse/sum_of_fragments'][i] = sum_fragments
+                    output_dict['structure/bsse/complexation_energy_raw'][i] = cE_raw
+                    output_dict['structure/bsse/complexation_energy_corrected'][i] = cE_corr
+
+        if frames==1:
+            output_dict['structure/bsse/E_tot_corrected'] = output_dict['structure/bsse/E_tot_corrected'][0]
+            output_dict['structure/bsse/BSSE_correction'] = output_dict['structure/bsse/BSSE_correction'][0]
+            output_dict['structure/bsse/sum_of_fragments'] = output_dict['structure/bsse/sum_of_fragments'][0]
+            output_dict['structure/bsse/complexation_energy_raw'] = output_dict['structure/bsse/complexation_energy_raw'][0]
+            output_dict['structure/bsse/complexation_energy_corrected'] = output_dict['structure/bsse/complexation_energy_corrected'][0]
+
 
 def collect_output(output_file):
     '''
@@ -430,10 +455,10 @@ def collect_output(output_file):
     '''
     # Read output
     fchk = FCHKFile(output_file)
-    
+
     # Translate to dict
     output_dict = fchk2dict(fchk)
-    
+
     # Read BSSE output if it is present
     read_bsse(output_file,output_dict)
 
@@ -465,6 +490,7 @@ def _triangle_to_dense(triangle):
         begin = end
     return result
 
+'''
 def _reverse_readline(filename, buf_size=8192):
     """A generator that returns the lines of a file in reverse order"""
     """https://stackoverflow.com/questions/2301789/read-a-file-in-reverse-order-using-python"""
@@ -485,7 +511,7 @@ def _reverse_readline(filename, buf_size=8192):
             if segment is not None:
                 # If the previous chunk starts right from the beginning of line
                 # do not concat the segment to the last line of new chunk.
-                # Instead, yield the segment first 
+                # Instead, yield the segment first
                 if buffer[-1] != '\n':
                     lines[-1] += segment
                 else:
@@ -497,3 +523,4 @@ def _reverse_readline(filename, buf_size=8192):
         # Don't yield None if the file was empty
         if segment is not None:
             yield segment
+'''
