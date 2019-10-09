@@ -208,8 +208,9 @@ class Gaussian(AtomisticGenericJob):
         pt.xlabel(r'Frequency (cm$^{-1}$)')
         pt.ylabel('Intensity (a.u.)')
         pt.show()
-        
-        def bsse_to_pandas(self):
+
+
+    def bsse_to_pandas(self):
         """
         Convert bsse output of all frames to a pandas Dataframe object.
 
@@ -223,7 +224,7 @@ class Gaussian(AtomisticGenericJob):
         with job.project_hdf5.open('output/structure/bsse') as hdf:
             for key in hdf.list_nodes():
                 tmp[key] = hdf[key]
-            df = pandas.DataFrame(tmp)   
+            df = pandas.DataFrame(tmp)
         return df
 
 
@@ -311,7 +312,7 @@ def write_input(input_dict,working_directory='.'):
         if input_dict['bsse_idx'] is None or not len(input_dict['bsse_idx'])==len(pos) : # check if all elements are present for a BSSE calculation
             raise ValueError('The Counterpoise setting requires a valid bsse_idx array')
         # Check bsse idx (should start from 1 for Gaussian)
-        input_dict['bsse_idx'] = input_dict['bsse_idx'] - min(input_dict['bsse_idx']) + 1 
+        input_dict['bsse_idx'] = input_dict['bsse_idx'] - min(input_dict['bsse_idx']) + 1
         # Check if it only contains conseqcutive numbers (sum of set should be n*(n+1)/2)
         assert sum(set(input_dict['bsse_idx'])) == (max(input_dict['bsse_idx'])*(max(input_dict['bsse_idx']) + 1))/2
 
