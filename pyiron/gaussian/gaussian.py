@@ -417,7 +417,8 @@ def read_bsse(output_file,output_dict):
         # the log file has the same path and name as the output file aside from the file extension
         log_file = output_file[:output_file.rfind('.')] + '.log'
 
-        frames = len(output_dict['generic/energy_tot'])
+        frames = 1 if isinstance(output_dict['generic/energy_tot'],float) else len(output_dict['generic/energy_tot'])
+
         output_dict['structure/bsse/E_tot_corrected'] = np.zeros(frames)
         output_dict['structure/bsse/BSSE_correction'] = np.zeros(frames)
         output_dict['structure/bsse/sum_of_fragments'] = np.zeros(frames)
