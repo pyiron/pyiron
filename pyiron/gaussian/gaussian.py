@@ -373,15 +373,15 @@ def fchk2dict(fchk):
         fchkdict['generic/forces']        = fchk.get_optimization_gradients()/(electronvolt/angstrom) * -1
 
     if fchkdict['jobtype'] == 'freq':
-        fchkdict['structure/positions']   = fchk.fields.get('Current cartesian coordinates').reshape([-1, 3])/angstrom
-        fchkdict['generic/positions']     = fchk.fields.get('Current cartesian coordinates').reshape([-1, 3])/angstrom
+        fchkdict['structure/positions']   = fchk.fields.get('Current cartesian coordinates').reshape([1,-1, 3])/angstrom
+        fchkdict['generic/positions']     = fchk.fields.get('Current cartesian coordinates').reshape([1,-1, 3])/angstrom
         fchkdict['generic/forces']        = fchk.fields.get('Cartesian Gradient').reshape([-1, 3])/(electronvolt/angstrom) *-1
         fchkdict['generic/hessian']       = fchk.get_hessian()/(electronvolt/angstrom**2)
         fchkdict['generic/energy_tot']    = fchk.fields.get('Total Energy')/electronvolt
 
     if fchkdict['jobtype'] == 'sp':
-        fchkdict['structure/positions']   = fchk.fields.get('Current cartesian coordinates').reshape([-1, 3])/angstrom
-        fchkdict['generic/positions']     = fchk.fields.get('Current cartesian coordinates').reshape([-1, 3])/angstrom
+        fchkdict['structure/positions']   = fchk.fields.get('Current cartesian coordinates').reshape([1,-1, 3])/angstrom
+        fchkdict['generic/positions']     = fchk.fields.get('Current cartesian coordinates').reshape([1,-1, 3])/angstrom
         fchkdict['generic/energy_tot']    = fchk.fields.get('Total Energy')/electronvolt
 
     return fchkdict
@@ -390,17 +390,17 @@ def fchk2dict(fchk):
 def get_bsse_array(line,it):
     numeric_const_pattern = '[-+]? (?: (?: \d* \. \d+ ) | (?: \d+ \.? ) )(?: [Ee] [+-]? \d+ ) ?'
     rx = re.compile(numeric_const_pattern, re.VERBOSE)
-    
-    cE_corr = float(rx.findall(line)[0]) * kcalmol
+
+    cE_corr = float(rx.findall(line)[0]) * kcalmol/electronvolt
     line = next(it) # go to next line
-    cE_raw = float(rx.findall(line)[0]) * kcalmol
+    cE_raw = float(rx.findall(line)[0]) * kcalmol/electronvolt
     line = next(it) # go to next line
-    sum_fragments = float(rx.findall(line)[0])
+    sum_fragments = float(rx.findall(line)[0])/electronvolt
     line = next(it) # go to next line
-    bsse_corr = float(rx.findall(line)[0])
+    bsse_corr = float(rx.findall(line)[0])/electronvolt
     line = next(it) # go to next line
-    E_tot_corr = float(rx.findall(line)[0])
-    
+    E_tot_corr = float(rx.findall(line)[0])/electronvolt
+
     return E_tot_corr,bsse_corr,sum_fragments,cE_raw,cE_corr
 
 
