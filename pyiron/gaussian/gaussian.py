@@ -388,15 +388,18 @@ def fchk2dict(fchk):
 
 
 def get_bsse_array(line,it):
-    cE_corr = float(line[32:54]) # remove txt
+    numeric_const_pattern = '[-+]? (?: (?: \d* \. \d+ ) | (?: \d+ \.? ) )(?: [Ee] [+-]? \d+ ) ?'
+    rx = re.compile(numeric_const_pattern, re.VERBOSE)
+
+    cE_corr = float(rx.findall(line)[0]) * kcalmol
     line = next(it) # go to next line
-    cE_raw = float(line[32:54]) # remove txt
+    cE_raw = float(rx.findall(line)[0]) * kcalmol
     line = next(it) # go to next line
-    sum_fragments = float(line[32:])
+    sum_fragments = float(rx.findall(line)[0])
     line = next(it) # go to next line
-    bsse_corr = float(line[32:])
+    bsse_corr = float(rx.findall(line)[0])
     line = next(it) # go to next line
-    E_tot_corr = float(line[32:])
+    E_tot_corr = float(rx.findall(line)[0])
 
     return E_tot_corr,bsse_corr,sum_fragments,cE_raw,cE_corr
 
