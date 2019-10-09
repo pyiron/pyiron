@@ -388,9 +388,9 @@ def fchk2dict(fchk):
 
 
 def get_bsse_array(line,it):
-    cE_corr = float(line[32:])
+    cE_corr = float(line[32:55]) # remove txt
     line = next(it) # go to next line
-    cE_raw = float(line[32:])
+    cE_raw = float(line[32:55]) # remove txt
     line = next(it) # go to next line
     sum_fragments = float(line[32:])
     line = next(it) # go to next line
