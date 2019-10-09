@@ -2,7 +2,7 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-import os,subprocess,re
+import os,subprocess,re,pandas
 import numpy as np
 import matplotlib.pyplot as pt
 
