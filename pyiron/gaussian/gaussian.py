@@ -312,7 +312,7 @@ def write_input(input_dict,working_directory='.'):
         if input_dict['bsse_idx'] is None or not len(input_dict['bsse_idx'])==len(pos) : # check if all elements are present for a BSSE calculation
             raise ValueError('The Counterpoise setting requires a valid bsse_idx array')
         # Check bsse idx (should start from 1 for Gaussian)
-        input_dict['bsse_idx'] = input_dict['bsse_idx'] - min(input_dict['bsse_idx']) + 1
+        input_dict['bsse_idx'] = [k - min(input_dict['bsse_idx']) + 1 for k in input_dict['bsse_idx']]
         # Check if it only contains conseqcutive numbers (sum of set should be n*(n+1)/2)
         assert sum(set(input_dict['bsse_idx'])) == (max(input_dict['bsse_idx'])*(max(input_dict['bsse_idx']) + 1))/2
 
