@@ -211,9 +211,9 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             for potential in potential_lst:
                 if potential[0] in line:
                     line = line.replace(potential[0], potential[1])
-                # Don't write the kspace_style or pair style commands if the atom style is "full"
-                if not (style_full and ("kspace" in line or "pair" in line)):
-                    self._interactive_lib_command(line.split("\n")[0])
+            # Don't write the kspace_style or pair style commands if the atom style is "full"
+            if not (style_full and ("kspace" in line or "pair" in line)):
+                self._interactive_lib_command(line.split("\n")[0])
             if len(potential_lst)==0:
                 self._interactive_lib_command(line.split("\n")[0])
         if style_full:
