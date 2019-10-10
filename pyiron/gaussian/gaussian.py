@@ -327,7 +327,7 @@ def fchk2dict(fchk):
     fchkdict['basis_set']   = fchk.basis
 
     fchkdict['structure/numbers']     = fchk.fields.get('Atomic numbers')
-    fchkdict['structure/masses']      = fchk.fields.get("Real atomic weights")*amu
+    fchkdict['structure/masses']      = fchk.fields.get('Real atomic weights')*amu
     fchkdict['structure/charges']     = fchk.fields.get('Mulliken Charges')
     fchkdict['structure/dipole']      = fchk.fields.get('Dipole Moment')
     fchkdict['structure/dft/n_electrons']         = fchk.fields.get('Number of electrons')
