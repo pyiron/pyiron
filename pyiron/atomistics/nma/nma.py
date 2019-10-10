@@ -20,6 +20,7 @@ class NMA(tamkin.NMA):
     With the NMA object you can animate a certain mode and plot the IR spectrum.
     """
     def __init__(self,job, atomic_units=False):
+        self.job = job
         if not job['output/generic/hessian'] is None and not job['output/generic/forces'] is None:
             structure = job.get_structure(-1)
             if atomic_units:
@@ -53,7 +54,7 @@ class NMA(tamkin.NMA):
         except ImportError:
             raise ImportError("The animate_nma_mode() function requires the package nglview to be installed")
 
-        animation = nglview.show_asetraj(Trajectory(positions,self.structure))
+        animation = nglview.show_asetraj(Trajectory(positions,self.job.structure))
         if spacefill:
             animation.add_spacefill(radius_type='vdw', scale=0.5, radius=particle_size)
             animation.remove_ball_and_stick()
