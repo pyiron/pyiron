@@ -164,7 +164,7 @@ class Gaussian(AtomisticGenericJob):
                     modes[m] += [float(i) for i in lines[n+m+1][10:].split()]
 
         nma_zeros = 3*nrat-len(freqs)
-        freq_array = np.zeros(3*nr_at)
+        freq_array = np.zeros(3*nrat)
         freq_array[:nma_zeros] = np.array(low_freqs[:nma_zeros])
         freq_array[nma_zeros:] = np.array(freqs)
         freqs = freq_array
