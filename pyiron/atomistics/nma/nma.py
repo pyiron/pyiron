@@ -24,7 +24,7 @@ class NMA(tamkin.NMA):
             structure = job.get_structure(-1)
             if atomic_units:
                 mol = tamkin.Molecule(structure.get_atomic_numbers(),structure.get_positions(),np.array(structure.get_masses())*amu,
-                                  job['output/generic/energy_tot']*,job['output/generic/forces']*-1 ,job['output/generic/hessian'])
+                                  job['output/generic/energy_tot'],job['output/generic/forces']*-1 ,job['output/generic/hessian'])
             else:
                 mol = tamkin.Molecule(structure.get_atomic_numbers(),structure.get_positions()*angstrom,np.array(structure.get_masses())*amu,
                                   job['output/generic/energy_tot']*electronvolt,job['output/generic/forces']*-1*electronvolt/angstrom ,job['output/generic/hessian']*electronvolt/angstrom**2)
