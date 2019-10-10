@@ -275,9 +275,6 @@ class Yaff(AtomisticGenericJob):
         super(Yaff, self).__init__(project, job_name)
         self.__name__ = "Yaff"
         self._executable_activate(enforce=True)
-        #The following 2 lines are a temporary hack within a notebook itself ask Sander/Jan how to fix this
-        s = Settings()
-        self.executable.executable_path = os.path.join(s.resource_paths[0],'yaff/bin/run_yaff_2019.sh')
         self.input = YaffInput()
         self.output = YaffOutput(job=self)
         self.jobtype = None
@@ -346,6 +343,7 @@ class Yaff(AtomisticGenericJob):
             self.structure = Atoms().from_hdf(hdf5_input)
             self.jobtype = hdf5_input['generic/jobtype']
 
+
     def get_structure(self, iteration_step=-1, wrap_atoms=True):
         """
         Overwrite the get_structure routine from AtomisticGenericJob because we want to avoid
@@ -384,6 +382,49 @@ class Yaff(AtomisticGenericJob):
                 else:
                     ra[i] = (i*ra[i-1]+ys[i])/(i+1)
             ys = ra.copy()
+            
+        _ref(ys,ref)
+        
+        pp.clf()
+        pp.plot(xs, ys, linestyle)
+        pp.xlabel('%s [%s]' %(xkey, xunit))
+        pp.ylabel('%s [%s]' %(ykey, yunit))
+        pp.show()
+        
+        
+    def plot_multi(self, ykeys, xkey='generic/steps', xunit='au', yunit='au', ref=None, linestyle='-', rolling_average=False):
+        # Assume that all ykeys have the same length than the xkey
+        xs  = self['output/%s' %xkey]/parse_unit(xunit)
+        yss = np.array([self['output/%s' %ykey]/parse_unit(yunit) for ykey in ykeys])
+        
+        if rolling_average:
+            for ys in yss:
+                ra = np.zeros(len(ys))
+                for i, y in enumerate(ys):
+                    if i==0:
+                        ra[i] = ys[0]
+                    else:
+                        ra[i] = (i*ra[i-1]+ys[i])/(i+1)
+                ys = ra.copy()
+                
+        if not isinstance(ref,list):     
+            for ys in yss:
+                _ref(ys,ref)
+        else:
+            assert len(ref)==len(yss)
+            for n in range(len(ref)):
+                _ref(yss[n],ref[n])
+                
+        
+        pp.clf()
+        for n,ys in enuemrate(yss):
+            pp.plot(xs, ys, linestyle, label=ykeys[n])
+        pp.xlabel('%s [%s]' %(xkey, xunit))
+        pp.ylabel('[%s]' %(yunit))
+        pp.legend()
+        pp.show()    
+    
+    def _ref(ys,ref):
         if isinstance(ref, int):
             ys -= ys[ref]
         elif isinstance(ref, float):
@@ -395,11 +436,6 @@ class Yaff(AtomisticGenericJob):
                 ys -= max(ys)
             elif ref=='mean':
                 ys -= np.mean(ys)
-        pp.clf()
-        pp.plot(xs, ys, linestyle)
-        pp.xlabel('%s [%s]' %(xkey, xunit))
-        pp.ylabel('%s [%s]' %(ykey, yunit))
-        pp.show()
 
     def log(self):
         with open(os.path.join(self.working_directory, 'yaff.log')) as f:

@@ -24,6 +24,7 @@ from pyiron.atomistics.structure.atoms import CrystalStructure
 import pyiron.atomistics.structure.pyironase as ase
 from pyiron.atomistics.structure.pyironase import publication as publication_ase
 from pyiron.atomistics.structure.atoms import Atoms
+from pyiron.atomistics.nma.nma import NMA
 
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
@@ -545,6 +546,10 @@ class Project(ProjectCore):
         else:
             periodic_table.add_element(parent_element=parent_element, new_element=new_element_name)
         return periodic_table.element(new_element_name)
+    
+    @staticmethod
+    def apply_nma(job):
+        return NMA(job)
 
     # Graphical user interfaces
     def gui(self):

@@ -133,81 +133,45 @@ class Gaussian(AtomisticGenericJob):
 
         return view
 
-    def do_nma(self):
-        mol = tamkin.Molecule(self.output.numbers, self.output.positions*angstrom, self.output.masses, self.output.energy_tot*electronvolt,
-                                                   self.output.forces *-1 * electronvolt/angstrom, self.output.hessian * electronvolt/angstrom**2)
-        self.nma = tamkin.NMA(mol)
+    def read_NMA(self):
+        # Read number of atoms
+        nrat = len(self.output.numbers)
 
-    def animate_nma_mode(self,index,amplitude=1.0,frames=24,spacefill=False,particle_size=0.5):
-        print("This mode corresponds to a frequency of {} cm^-1".format(self.nma.freqs[index]/lightspeed/(1./centimeter)))
-        coordinates = self.nma.coordinates
-        symbols = [periodic[n].symbol for n in self.nma.numbers]
+        # Read IR frequencies and intensities from log file
+        low_freqs = []
+        freqs = []
+        ints = []
+        modes = [[] for i in range(nrat)]
 
-        mode = self.nma.modes[:,index]
-        if self.nma.masses3 is not None:
-            mode /= np.sqrt(self.nma.masses3)
-        mode /= np.linalg.norm(mode)
-
-        positions = np.zeros((frames,len(symbols),3))
-
-        for frame in range(frames):
-            factor = amplitude*np.sin(2*np.pi*float(frame)/frames)
-            positions[frame] = (coordinates + factor*mode.reshape((-1,3)))/angstrom
-
-        try:
-            import nglview
-        except ImportError:
-            raise ImportError("The animate_nma_mode() function requires the package nglview to be installed")
-
-        animation = nglview.show_asetraj(Trajectory(positions,self.structure))
-        if spacefill:
-            animation.add_spacefill(radius_type='vdw', scale=0.5, radius=particle_size)
-            animation.remove_ball_and_stick()
-        else:
-            animation.add_ball_and_stick()
-        return animation
-
-    def plot_IR_spectrum(self,width=10,scale=1.0):
-        """
-        Plot IR spectrum based on Lorentzian width
-        Read from log file, implementing calculation of intensities from fchk would be cumbersome
-        """
-        # Read IR intensities from log file
         path = self.path+'_hdf5/'+self.name+'/input.log'
-        ir_int = np.zeros(len(self.nma.freqs)-len(self.nma.zeros)) # get number of ir_intensities
         with open(path,'r') as f:
             lines = f.readlines()
 
         # Assert normal termination
         assert "Normal termination of Gaussian" in lines[-1]
 
-        counter=0
-        for line in lines:
+        # Find zero frequencies
+        for n in range(len(lines)):
+            line = lines[n]
+            if 'Low frequencies' in line:
+                low_freqs += [float(i) for i in line[20:].split()]
+            if 'Frequencies --' in line:
+                freqs += [float(i) for i in line[15:].split()]
             if 'IR Inten    --' in line:
-                ints = np.array([float(i) for i in line[15:].split()])
-                ir_int[counter:counter+len(ints)] = ints
-                counter+=len(ints)
+                ints += [float(i) for i in line[15:].split()]
+            if 'Atom  AN      X      Y      Z' in line:
+                for m in range(nrat):
+                    modes[m] += [float(i) for i in lines[n+m+1][10:].split()]
 
+        nma_zeros = 3*nrat-len(freqs)
+        freq_array = np.zeros(3*nr_at)
+        freq_array[:nma_zeros] = np.array(low_freqs[:nma_zeros])
+        freq_array[nma_zeros:] = np.array(freqs)
+        freqs = freq_array
+        ints = np.array(ints)
+        modes = np.array(modes).reshape(len(ints),nrat,3)
 
-        def Lorentz(x,p,w):
-            """
-            Lorentzian line shape function, p is position of max, w is FWHM and x is current frequency
-            """
-            return 1./(1.+((p-x)/(w/2.))**2)
-
-        freqs = self.nma.freqs/lightspeed/(1./centimeter) * scale
-        xr = np.linspace(0,4000,1000)
-        yr = np.zeros(xr.shape)
-
-        for n,intensity in enumerate(ir_int):
-            print(freqs[len(self.nma.zeros)+n],intensity)
-            yr+=intensity*Lorentz(xr,freqs[len(self.nma.zeros)+n],width)
-
-        pt.figure()
-        pt.plot(xr,yr)
-        pt.xlabel(r'Frequency (cm$^{-1}$)')
-        pt.ylabel('Intensity (a.u.)')
-        pt.show()
+        return freqs,ints,modes
 
 
     def bsse_to_pandas(self):
