@@ -33,13 +33,13 @@ class NMA(tamkin.NMA):
         super(NMA, self).__init__(mol)
 
     def animate_nma_mode(self,index,amplitude=1.0,frames=24,spacefill=False,particle_size=0.5):
-        print("This mode corresponds to a frequency of {} 1/cm".format(self.nma.freqs[index]/lightspeed/(1./centimeter)))
-        coordinates = self.nma.coordinates
-        symbols = [periodic[n].symbol for n in self.nma.numbers]
+        print("This mode corresponds to a frequency of {} 1/cm".format(self.freqs[index]/lightspeed/(1./centimeter)))
+        coordinates = self.coordinates
+        symbols = [periodic[n].symbol for n in self.numbers]
 
-        mode = self.nma.modes[:,index]
-        if self.nma.masses3 is not None:
-            mode /= np.sqrt(self.nma.masses3)
+        mode = self.modes[:,index]
+        if self.masses3 is not None:
+            mode /= np.sqrt(self.masses3)
         mode /= np.linalg.norm(mode)
 
         positions = np.zeros((frames,len(symbols),3))
@@ -73,7 +73,7 @@ class NMA(tamkin.NMA):
         Intensities can be provided (e.g. from a Gaussian job) or calculated from the charges
         """
         if not intensities is None:
-            assert len(intensities) == (len(self.nma.freqs)-self.nma.zeros)
+            assert len(intensities) == (len(self.freqs)-self.zeros)
         if intensities is None and charges is None:
             raise ValueError('This function requires the charges or the intensities to calculate the line shape')
         elif not intensities is None and not charges is None:
@@ -83,8 +83,8 @@ class NMA(tamkin.NMA):
             alphas = np.zeros(len(xr))
 
             # Calculate intensities
-            amps = self.nma.modes
-            for n, (wn, amps) in enumerate(zip(freqs[self.nma.zeros:],amps[self.nma.zeros:])):
+            amps = self.modes
+            for n, (wn, amps) in enumerate(zip(freqs[self.zeros:],amps[self.zeros:])):
                 if not charges is None:
                     intensity = 0.0
                     for k in range(3):
