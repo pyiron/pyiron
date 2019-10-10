@@ -120,9 +120,9 @@ class LammpsControl(GenericParameters):
             + " "
             + str(f_tol)
             + " "
-            + str(max_iter)
+            + str(int(max_iter))
             + " "
-            + str(max_evaluations)
+            + str(int(max_evaluations))
         )
         self.remove_keys(["run", "velocity"])
         self.modify(variable___dumptime="equal " + str(n_print), thermo=n_print)
@@ -375,5 +375,8 @@ class LammpsControl(GenericParameters):
 
         if initial_temperature > 0:
             self.set_initial_velocity(
-                initial_temperature, gaussian=True, job_name=job_name
+                temperature=initial_temperature,
+                seed=seed,
+                gaussian=True,
+                job_name=job_name
             )

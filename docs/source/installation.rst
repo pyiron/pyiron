@@ -97,6 +97,7 @@ After the installation of pyiron we need to configure pyiron. The default config
 .. code-block:: python
 
    > import pyiron
+   > pyiron.install()
    >>> It appears that pyiron is not yet configured, do you want to create a default start configuration (recommended: yes). [yes/no]:
    > yes
    > exit()

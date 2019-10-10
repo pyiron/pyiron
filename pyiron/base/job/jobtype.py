@@ -144,7 +144,7 @@ class JobType(object):
             raise TypeError()
         job = job_class(project, job_name)
         if job.status.aborted:
-            job.logger.warn(
+            job.logger.warning(
                 "Job aborted - please remove it and run again! {}".format(job.job_name)
             )
         if not job.status.initialized:
