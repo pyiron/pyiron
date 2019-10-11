@@ -167,7 +167,7 @@ class Gaussian(AtomisticGenericJob):
         freq_array = np.zeros(3*nrat)
         freq_array[:nma_zeros] = np.array(low_freqs[:nma_zeros])
         freq_array[nma_zeros:] = np.array(freqs)
-        freqs = freq_array
+        freqs = freq_array * (lightspeed/centimeter) # put into atomic units
         ints = np.array(ints)
         modes = np.array(modes).reshape(len(ints),nrat,3)
 

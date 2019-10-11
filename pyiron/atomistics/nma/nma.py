@@ -74,7 +74,7 @@ class NMA(tamkin.NMA):
         Intensities can be provided (e.g. from a Gaussian job) or calculated from the charges
         """
         if not intensities is None:
-            assert len(intensities) == (len(self.freqs)-self.zeros)
+            assert len(intensities) == (len(self.freqs)-len(self.zeros))
         if intensities is None and charges is None:
             raise ValueError('This function requires the charges or the intensities to calculate the line shape')
         elif not intensities is None and not charges is None:
@@ -85,12 +85,12 @@ class NMA(tamkin.NMA):
 
             # Calculate intensities
             amps = self.modes
-            for n, (wn, amps) in enumerate(zip(freqs[self.zeros:],amps[self.zeros:])):
+            for n, (wn, amps) in enumerate(zip(np.delete(freqs,self.zeros),np.delete(amps,self.zeros))):
                 if not charges is None:
                     intensity = 0.0
                     for k in range(3):
                         for i, qi in enumerate(charges):
-                            I = 3*(i-1)+k
+                            I = 3*(i-1)+ks
                             intensity += (qi*An[I])**2
                 else:
                     intensity = intensities[n]
