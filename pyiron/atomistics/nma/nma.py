@@ -62,12 +62,6 @@ class NMA(tamkin.NMA):
             animation.add_ball_and_stick()
         return animation
 
-    def _Lorentz(x,p,w):
-        """
-        Lorentzian line shape function, p is position of max, w is FWHM and x is current frequency
-        """
-        return 1./(1.+((p-x)/(w/2.))**2)
-
     def plot_IR_spectrum(self,width=10*lightspeed/centimeter,scale=1.0,intensities=None,charges=None):
         """
         Plot IR spectrum based on Lorentzian width, freqs can be scaled through scale
@@ -94,7 +88,7 @@ class NMA(tamkin.NMA):
                             intensity += (qi*An[I])**2
                 else:
                     intensity = intensities[n]
-                alphas += intensity*_Lorentz(xr,wn,width)
+                alphas += intensity*self._lorentz(xr,wn,width)
                 print('Mode %i:    freq = %.3f 1/cm    IR ampl. = %.3e a.u.' %(n, wn/(lightspeed/centimeter), intensity))
 
 
@@ -103,3 +97,10 @@ class NMA(tamkin.NMA):
             pp.xlabel('Frequency [1/cm]')
             pp.ylabel('Absorption [a.u.]')
             pt.show()
+    
+    @staticmethod
+    def _lorentz(x,p,w):
+        """
+        Lorentzian line shape function, p is position of max, w is FWHM and x is current frequency
+        """
+        return 1./(1.+((p-x)/(w/2.))**2)
