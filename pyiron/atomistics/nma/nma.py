@@ -85,7 +85,7 @@ class NMA(tamkin.NMA):
 
             # Calculate intensities
             amps = self.modes
-            for n, (wn, amps) in enumerate(zip(np.delete(freqs,self.zeros),np.delete(amps,self.zeros))):
+            for n, (wn, amps) in enumerate(zip(np.delete(self.freqs,self.zeros),np.delete(amps,self.zeros))):
                 if not charges is None:
                     intensity = 0.0
                     for k in range(3):
