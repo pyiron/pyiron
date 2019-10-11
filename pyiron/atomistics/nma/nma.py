@@ -94,8 +94,8 @@ class NMA(tamkin.NMA):
 
             pt.clf()
             pt.plot(xr/(lightspeed/centimeter),alphas)
-            pp.xlabel('Frequency [1/cm]')
-            pp.ylabel('Absorption [a.u.]')
+            pt.xlabel('Frequency [1/cm]')
+            pt.ylabel('Absorption [a.u.]')
             pt.show()
     
     @staticmethod
