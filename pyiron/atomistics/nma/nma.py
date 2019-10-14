@@ -80,14 +80,12 @@ class NMA(tamkin.NMA):
             # Calculate intensities
             amps = self.modes
             freqs = self.freqs * scale
-            for n, (wn, ampn) in enumerate(zip(np.delete(freqs,self.zeros),np.delete(amps,self.zeros))): #self.zeros contain the indices of the zero frequencies
+            for n, (wn, ampn) in enumerate(zip(np.delete(freqs,self.zeros),np.delete(amps,self.zeros,axis=0))): #self.zeros contain the indices of the zero frequencies
                 if not charges is None:
                     intensity = 0.0
                     for k in range(3):
                         for i, qi in enumerate(charges):
                             idx = 3*i+k
-                            print(idx,ampn)
-                            print(ampn[idx])
                             intensity += (qi*ampn[idx])**2
                 else:
                     intensity = intensities[n]
