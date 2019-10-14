@@ -32,7 +32,7 @@ class Gaussian(AtomisticGenericJob):
         self.__name__ = "Gaussian"
         self._executable_activate(enforce=True)
         self.input = GaussianInput()
-        self.output = GaussianOutput(job=self)
+        self.output = GenericOutput(job=self)
 
     def write_input(self):
         input_dict = {'mem': self.server.memory_limit,
