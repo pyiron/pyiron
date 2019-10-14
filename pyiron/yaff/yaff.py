@@ -273,6 +273,10 @@ class Yaff(AtomisticGenericJob):
                 numbers=system.numbers,
                 masses=system.masses,
             )
+        if system.ffatypes is not None:
+            self.ffatypes = system.ffatypes
+        if system.ffatype_ids is not None:
+            self.ffatype_ids = system.ffatype_ids
 
     def detect_ffatypes(self, ffatypes=None, ffatype_rules=None):
         '''
@@ -353,6 +357,8 @@ class Yaff(AtomisticGenericJob):
             self.structure.to_hdf(hdf5_input)
             self.input.to_hdf(hdf5_input)
             hdf5_input['generic/jobtype'] = self.jobtype
+            hdf5_input['generic/ffatypes'] = self.ffatypes
+            hdf5_input['generic/ffatype_ids'] = self.ffatype_ids
 
     def from_hdf(self, hdf=None, group_name=None):
         super(Yaff, self).from_hdf(hdf=hdf, group_name=group_name)
@@ -360,6 +366,8 @@ class Yaff(AtomisticGenericJob):
             self.input.from_hdf(hdf5_input)
             self.structure = Atoms().from_hdf(hdf5_input)
             self.jobtype = hdf5_input['generic/jobtype']
+            self.ffatypes = hdf5_input['generic/ffatypes']
+            self.ffatype_ids = hdf5_input['generic/ffatype_ids']
 
     def get_structure(self, iteration_step=-1, wrap_atoms=True):
         """
