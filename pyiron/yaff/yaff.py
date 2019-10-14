@@ -405,7 +405,7 @@ class Yaff(AtomisticGenericJob):
                     ra[i] = (i*ra[i-1]+ys[i])/(i+1)
             ys = ra.copy()
 
-        _ref(ys,ref)
+        self._ref(ys,ref)
 
         pp.clf()
         pp.plot(xs, ys, linestyle)
@@ -432,7 +432,7 @@ class Yaff(AtomisticGenericJob):
 
         if not isinstance(ref,list):
             for ys in yss:
-                _ref(ys,ref)
+                self._ref(ys,ref)
         else:
             assert len(ref)==len(yss)
             for n in range(len(ref)):
