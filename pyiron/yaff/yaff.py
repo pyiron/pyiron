@@ -366,7 +366,7 @@ class Yaff(AtomisticGenericJob):
             self.input.from_hdf(hdf5_input)
             self.structure = Atoms().from_hdf(hdf5_input)
             self.jobtype = hdf5_input['generic/jobtype']
-            self.ffatypes = np.asarray(hdf5_input['generic/ffatypes'],'S22')
+            self.ffatypes = list(hdf5_input['generic/ffatypes'])
             self.ffatype_ids = hdf5_input['generic/ffatype_ids']
 
     def get_structure(self, iteration_step=-1, wrap_atoms=True):
