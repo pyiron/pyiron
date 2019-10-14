@@ -85,8 +85,8 @@ class NMA(tamkin.NMA):
                     intensity = 0.0
                     for k in range(3):
                         for i, qi in enumerate(charges):
-                            idx = 3*(i-1)+k
-                            print(idx,amps)
+                            idx = 3*i+k
+                            print(idx,ampn,ampn[idx])
                             intensity += (qi*ampn[idx])**2
                 else:
                     intensity = intensities[n]
