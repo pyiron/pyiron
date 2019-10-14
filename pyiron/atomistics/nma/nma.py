@@ -98,7 +98,7 @@ class NMA(tamkin.NMA):
             pt.xlabel('Frequency [1/cm]')
             pt.ylabel('Absorption [a.u.]')
             pt.show()
-    
+
     @staticmethod
     def _lorentz(x,p,w):
         """

@@ -357,7 +357,7 @@ class Yaff(AtomisticGenericJob):
             self.structure.to_hdf(hdf5_input)
             self.input.to_hdf(hdf5_input)
             hdf5_input['generic/jobtype'] = self.jobtype
-            hdf5_input['generic/ffatypes'] = self.ffatypes
+            hdf5_input['generic/ffatypes'] = self.ffatypes.astype(h5py.special_dtype(vlen=str)) # in h5py 2.10.0 this changes to "h5py.string_dtype(encoding='utf-8')"
             hdf5_input['generic/ffatype_ids'] = self.ffatype_ids
 
     def from_hdf(self, hdf=None, group_name=None):
