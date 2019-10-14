@@ -208,24 +208,6 @@ charge 0
 """
         self.load_string(input_str)
 
-class GaussianOutput(GenericOutput):
-    """
-    Handles the output from a Gaussian simulation.
-    Adds extra properties to handle for NMA
-    """
-
-    @property
-    def numbers(self):
-        return self._job['output/structure/numbers']
-
-    @property
-    def masses(self):
-        return self._job['output/structure/masses']
-
-    @property
-    def hessian(self):
-        return self._job['output/generic/hessian']
-
 
 def write_input(input_dict,working_directory='.'):
     # Comments can be written with ! in Gaussian

@@ -17,14 +17,13 @@ import os, numpy as np, h5py, matplotlib.pyplot as pp
 def write_chk(input_dict,working_directory='.'):
     # collect data and initialize Yaff system
     if 'cell' in input_dict.keys() and input_dict['cell'] is not None:
-        system = System(input_dict['numbers'], input_dict['pos']*angstrom, rvecs=input_dict['cell']*angstrom)
+        system = System(input_dict['numbers'], input_dict['pos']*angstrom, ffatypes=input_dict['ffatypes'], ffatype_ids=input_dict['ffatype_ids'], rvecs=input_dict['cell']*angstrom)
     else:
-        system = System(input_dict['numbers'], input_dict['pos']*angstrom)
+        system = System(input_dict['numbers'], input_dict['pos']*angstrom, ffatypes=input_dict['ffatypes'], ffatype_ids=input_dict['ffatype_ids'])
     # determine masses, bonds and ffaypes from ffatype_rules
     system.detect_bonds()
     system.set_standard_masses()
-    system.detect_ffatypes(input_dict['ffatype_rules'])
-    # write dictionnairy to MolMod CHK file
+    # write dictionary to MolMod CHK file
     system.to_file(os.path.join(working_directory,'system.chk'))
 
 def write_pars(input_dict,working_directory='.'):
@@ -174,11 +173,11 @@ def hdf2dict(h5):
     if 'trajectory' in h5.keys() and 'pos' in h5['trajectory'].keys():
         hdict['generic/positions'] = h5['trajectory/pos'][:]/angstrom
     else:
-        hdict['generic/positions'] = h5['system/pos'][:]/angstrom
+        hdict['generic/positions'] = np.array([h5['system/pos'][:]/angstrom])
     if 'trajectory' in h5.keys() and 'cell' in h5['trajectory']:
         hdict['generic/cells'] = h5['trajectory/cell'][:]/angstrom
     elif 'rvecs' in h5['system'].keys():
-        hdict['generic/cells'] = h5['system/rvecs'][:]/angstrom
+        hdict['generic/cells'] = np.array([h5['system/rvecs'][:]/angstrom])
     else:
         hdict['generic/cells'] = None
     if 'trajectory' in h5.keys():
@@ -187,25 +186,25 @@ def hdf2dict(h5):
         if 'time' in h5['trajectory'].keys():
             hdict['generic/time'] = h5['trajectory/time'][:]
         if 'volume' in h5['trajectory']:
-            hdict['generic/volume'] = h5['trajectory/volume'][:]
+            hdict['generic/volume'] = h5['trajectory/volume'][:]/angstrom**3
         if 'epot' in h5['trajectory'].keys():
-            hdict['generic/energy_pot'] = h5['trajectory/epot'][:]
+            hdict['generic/energy_pot'] = h5['trajectory/epot'][:]/electronvolt
         if 'ekin' in h5['trajectory'].keys():
-            hdict['generic/energy_kin'] = h5['trajectory/ekin'][:]
+            hdict['generic/energy_kin'] = h5['trajectory/ekin'][:]/electronvolt
         if 'temp' in h5['trajectory'].keys():
             hdict['generic/temperature'] = h5['trajectory/temp'][:]
         if 'etot' in h5['trajectory'].keys():
-            hdict['generic/energy_tot'] = h5['trajectory/etot'][:]
+            hdict['generic/energy_tot'] = h5['trajectory/etot'][:]/electronvolt
         if 'econs' in h5['trajectory'].keys():
-            hdict['generic/energy_cons'] = h5['trajectory/econs'][:]
+            hdict['generic/energy_cons'] = h5['trajectory/econs'][:]/electronvolt
         if 'press' in h5['trajectory'].keys():
             hdict['generic/pressure'] = h5['trajectory/press'][:]
         if 'gradient' in h5['trajectory'].keys():
-            hdict['generic/forces'] = -h5['trajectory/gradient'][:]
+            hdict['generic/forces'] = -h5['trajectory/gradient'][:]/(electronvolt/angstrom)
     if 'hessian' in h5['system'].keys():
-        hdict['generic/energy_tot'] = h5['system/energy'][()]
-        hdict['generic/forces'] = -h5['system/gpos'][:]
-        hdict['generic/hessian'] = h5['system/hessian'][:]
+        hdict['generic/energy_tot'] = h5['system/energy'][()]/electronvolt
+        hdict['generic/forces'] = -h5['system/gpos'][:]/(electronvolt/angstrom)
+        hdict['generic/hessian'] = h5['system/hessian'][:]/(electronvolt/angstrom**2)
     return hdict
 
 def collect_output(output_file):
@@ -215,8 +214,6 @@ def collect_output(output_file):
     # translate to dict
     output_dict = hdf2dict(h5)
     return output_dict
-
-
 
 
 class YaffInput(GenericParameters):
@@ -247,29 +244,6 @@ nsteps 1000 #(GEN) number of steps for opt or md
         self.load_string(input_str)
 
 
-
-
-class YaffOutput(GenericOutput):
-    """
-    Handles the output from a Yaff simulation.
-    Adds extra properties to handle for NMA
-    """
-
-    @property
-    def numbers(self):
-        return self._job['output/structure/numbers']
-
-    @property
-    def masses(self):
-        return self._job['output/structure/masses']
-
-    @property
-    def hessian(self):
-        return self._job['output/generic/hessian']
-
-
-
-
 class Yaff(AtomisticGenericJob):
     def __init__(self, project, job_name):
         super(Yaff, self).__init__(project, job_name)
@@ -278,13 +252,57 @@ class Yaff(AtomisticGenericJob):
         self.input = YaffInput()
         self.output = YaffOutput(job=self)
         self.jobtype = None
+        self.ffatypes = None
+        self.ffatype_ids = None
+
+    def load_chk(self, fn):
+        system = System.from_file(fn)
+        system.set_standard_masses()
+        if len(system.pos.shape)!=2:
+            raise IOError("Something went wrong, positions in CHK file %s should have Nx3 dimensions" %fn)
+        if system.cell.rvecs is not None and len(system.cell.rvecs)>0:
+            self.structure = Atoms(
+                positions=system.pos.copy(),
+                numbers=system.numbers,
+                masses=system.masses,
+                cell=system.cell.rvecs,
+            )
+        else:
+            self.structure = Atoms(
+                positions=system.pos.copy(),
+                numbers=system.numbers,
+                masses=system.masses,
+            )
+
+    def detect_ffatypes(self, ffatypes=None, ffatype_rules=None):
+        '''
+            Define atom types either by explicitely giving them through the
+            ffatypes keyword, or by defining atype rules using the ATSELECT
+            language implemented in Yaff (see the Yaff documentation at
+            http://molmod.github.io/yaff/ug_atselect.html).
+        '''
+        numbers = np.array([pt[symbol].number for symbol in self.structure.get_chemical_symbols()])
+        system = System(numbers, self.structure.positions.copy(), rvecs=self.structure.cell)
+        system.detect_bonds()
+        if ffatypes is not None:
+            assert ffatype_rules is None, 'ffatypes and ffatype_rules cannot be defined both'
+            system.ffatypes = ffatypes
+            system.ffatype_ids = None
+            system._init_derived_ffatypes()
+        elif ffatype_rules is not None:
+            system.detect_ffatypes(ffatype_rules)
+        else:
+            raise IOError('Either ffatypes or ffatype_rules should be defined')
+        self.ffatypes = system.ffatypes.copy()
+        self.ffatype_ids = system.ffatype_ids.copy()
 
     def write_input(self):
         input_dict = {
             'jobtype': self.jobtype,
             'symbols': self.structure.get_chemical_symbols(),
             'numbers': np.array([pt[symbol].number for symbol in self.structure.get_chemical_symbols()]),
-            'ffatype_rules': self.input['ffatype_rules'],
+            'ffatypes': self.ffatypes,
+            'ffatype_ids': self.ffatype_ids,
             'ffpars': self.input['ffpars'],
             'pos': self.structure.positions,
             'rcut': self.input['rcut'],
@@ -306,7 +324,7 @@ class Yaff(AtomisticGenericJob):
         input_dict['cell'] = None
         if self.structure.cell is not None:
              input_dict['cell'] = self.structure.get_cell()
-        write_chk(input_dict=input_dict,working_directory=self.working_directory)
+        write_chk(input_dict,working_directory=self.working_directory)
         write_pars(input_dict=input_dict,working_directory=self.working_directory)
         if self.jobtype == 'opt':
             write_yopt(input_dict=input_dict,working_directory=self.working_directory)
@@ -343,7 +361,6 @@ class Yaff(AtomisticGenericJob):
             self.structure = Atoms().from_hdf(hdf5_input)
             self.jobtype = hdf5_input['generic/jobtype']
 
-
     def get_structure(self, iteration_step=-1, wrap_atoms=True):
         """
         Overwrite the get_structure routine from AtomisticGenericJob because we want to avoid
@@ -367,10 +384,7 @@ class Yaff(AtomisticGenericJob):
         else:
             return snapshot
 
-    def do_nma(self):
-        mol = tamkin.Molecule(self.output.numbers, self.output.positions, self.output.masses, self.output.energy_tot, self.output.forces*-1, self.output.hessian)
-        self.nma = tamkin.NMA(mol)
-
+    # Plot functions are deprecated while yaff is no longer in atomic units!
     def plot(self, ykey, xkey='generic/steps', xunit='au', yunit='au', ref=None, linestyle='-', rolling_average=False):
         xs = self['output/%s' %xkey]/parse_unit(xunit)
         ys = self['output/%s' %ykey]/parse_unit(yunit)
@@ -382,21 +396,22 @@ class Yaff(AtomisticGenericJob):
                 else:
                     ra[i] = (i*ra[i-1]+ys[i])/(i+1)
             ys = ra.copy()
-            
+
         _ref(ys,ref)
-        
+
         pp.clf()
         pp.plot(xs, ys, linestyle)
         pp.xlabel('%s [%s]' %(xkey, xunit))
         pp.ylabel('%s [%s]' %(ykey, yunit))
         pp.show()
-        
-        
+
+
+    # Plot functions are deprecated while yaff is no longer in atomic units!
     def plot_multi(self, ykeys, xkey='generic/steps', xunit='au', yunit='au', ref=None, linestyle='-', rolling_average=False):
         # Assume that all ykeys have the same length than the xkey
         xs  = self['output/%s' %xkey]/parse_unit(xunit)
         yss = np.array([self['output/%s' %ykey]/parse_unit(yunit) for ykey in ykeys])
-        
+
         if rolling_average:
             for ys in yss:
                 ra = np.zeros(len(ys))
@@ -406,24 +421,24 @@ class Yaff(AtomisticGenericJob):
                     else:
                         ra[i] = (i*ra[i-1]+ys[i])/(i+1)
                 ys = ra.copy()
-                
-        if not isinstance(ref,list):     
+
+        if not isinstance(ref,list):
             for ys in yss:
                 _ref(ys,ref)
         else:
             assert len(ref)==len(yss)
             for n in range(len(ref)):
                 _ref(yss[n],ref[n])
-                
-        
+
+
         pp.clf()
         for n,ys in enuemrate(yss):
             pp.plot(xs, ys, linestyle, label=ykeys[n])
         pp.xlabel('%s [%s]' %(xkey, xunit))
         pp.ylabel('[%s]' %(yunit))
         pp.legend()
-        pp.show()    
-    
+        pp.show()
+
     def _ref(ys,ref):
         if isinstance(ref, int):
             ys -= ys[ref]
@@ -447,15 +462,14 @@ class Yaff(AtomisticGenericJob):
             struct = self.structure
         else:
             struct = self.get_structure(iteration_step=snapshot, wrap_atoms=False)
-        pos = struct.positions.reshape(-1,3)
+        pos = struct.positions.reshape(-1,3)*angstrom
         cell = struct.cell
         if cell is None:
-            system = System(numbers, pos*angstrom)
+            system = System(numbers, pos, ffatypes=self.ffatypes, ffatype_ids=self.ffatype_ids)
         else:
-            system = System(numbers, pos*angstrom, rvecs=cell*angstrom)
+            system = System(numbers, pos, rvecs=cell*angstrom, ffatypes=self.ffatypes, ffatype_ids=self.ffatype_ids)
         system.detect_bonds()
         system.set_standard_masses()
-        system.detect_ffatypes(self.input['ffatype_rules'])
         return system
 
     def get_yaff_ff(self, system=None):
