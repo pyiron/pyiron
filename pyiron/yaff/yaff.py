@@ -262,14 +262,14 @@ class Yaff(AtomisticGenericJob):
             raise IOError("Something went wrong, positions in CHK file %s should have Nx3 dimensions" %fn)
         if system.cell.rvecs is not None and len(system.cell.rvecs)>0:
             self.structure = Atoms(
-                positions=system.pos.copy(),
+                positions=system.pos.copy()/angstrom,
                 numbers=system.numbers,
                 masses=system.masses,
-                cell=system.cell.rvecs,
+                cell=system.cell.rvecs/angstrom,
             )
         else:
             self.structure = Atoms(
-                positions=system.pos.copy(),
+                positions=system.pos.copy()/angstrom,
                 numbers=system.numbers,
                 masses=system.masses,
             )
@@ -286,7 +286,7 @@ class Yaff(AtomisticGenericJob):
             http://molmod.github.io/yaff/ug_atselect.html).
         '''
         numbers = np.array([pt[symbol].number for symbol in self.structure.get_chemical_symbols()])
-        system = System(numbers, self.structure.positions.copy(), rvecs=self.structure.cell)
+        system = System(numbers, self.structure.positions.copy()*angstrom, rvecs=self.structure.cell*angstrom)
         system.detect_bonds()
         if ffatypes is not None:
             assert ffatype_rules is None, 'ffatypes and ffatype_rules cannot be defined both'
