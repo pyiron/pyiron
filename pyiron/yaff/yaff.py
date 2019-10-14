@@ -440,7 +440,7 @@ class Yaff(AtomisticGenericJob):
 
 
         pp.clf()
-        for n,ys in enuemrate(yss):
+        for n,ys in enumerate(yss):
             pp.plot(xs, ys, linestyle, label=ykeys[n])
         pp.xlabel('%s [%s]' %(xkey, xunit))
         pp.ylabel('[%s]' %(yunit))
