@@ -446,7 +446,8 @@ class Yaff(AtomisticGenericJob):
         pp.ylabel('[%s]' %(yunit))
         pp.legend()
         pp.show()
-
+    
+    @staticmethod
     def _ref(ys,ref):
         if isinstance(ref, int):
             ys -= ys[ref]
