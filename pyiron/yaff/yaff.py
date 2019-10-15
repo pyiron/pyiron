@@ -107,7 +107,7 @@ def write_ynve(input_dict,working_directory='.'):
     body = common.format(
         rcut=input_dict['rcut']/angstrom, alpha_scale=input_dict['alpha_scale'],
         gcut_scale=input_dict['gcut_scale'], smooth_ei=input_dict['smooth_ei'],
-        h5step=1,
+        h5step=input_dict['h5step'],
     )
     body += """timestep = {timestep}*femtosecond
 
@@ -122,7 +122,7 @@ def write_ynvt(input_dict,working_directory='.'):
     body = common.format(
         rcut=input_dict['rcut']/angstrom, alpha_scale=input_dict['alpha_scale'],
         gcut_scale=input_dict['gcut_scale'], smooth_ei=input_dict['smooth_ei'],
-        h5step=1,
+        h5step=input_dict['h5step'],
     )
     body += """timestep = {timestep}*femtosecond
 temp = {temp}*kelvin
@@ -143,7 +143,7 @@ def write_ynpt(input_dict,working_directory='.'):
     body = common.format(
         rcut=input_dict['rcut']/angstrom, alpha_scale=input_dict['alpha_scale'],
         gcut_scale=input_dict['gcut_scale'], smooth_ei=input_dict['smooth_ei'],
-        h5step=1,
+        h5step=input_dict['h5step'],
     )
     body += """timestep = {timestep}*femtosecond
 temp = {temp}*kelvin
@@ -240,6 +240,7 @@ press None #(MD) pressure
 timecon_thermo 4134.137333664683 #(MD) timeconstant for thermostat
 timecon_baro 41341.37333664683 #(MD) timeconstant for barostat
 nsteps 1000 #(GEN) number of steps for opt or md
+h5step 5 #(GEN) stores system properties every h5step
 """
         self.load_string(input_str)
 
@@ -446,7 +447,7 @@ class Yaff(AtomisticGenericJob):
         pp.ylabel('[%s]' %(yunit))
         pp.legend()
         pp.show()
-    
+
     @staticmethod
     def _ref(ys,ref):
         if isinstance(ref, int):
