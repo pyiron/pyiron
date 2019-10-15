@@ -315,6 +315,7 @@ class Yaff(AtomisticGenericJob):
             'gcut_scale': self.input['gcut_scale'],
             'smooth_ei': self.input['smooth_ei'],
             'nsteps': self.input['nsteps'],
+            'h5step': self.input['h5step'],
             'gpos_rms': self.input['gpos_rms'],
             'dpos_rms': self.input['dpos_rms'],
             'grvecs_rms': self.input['grvecs_rms'],
