@@ -61,8 +61,8 @@ class RDF(object):
             select1 = None
 
         # Compute RDF
-        self.calculate(rspacing, rcut, start, stop, select0, select1, nimage=1)
-        self.coord_number = self.calc_coord_number()
+        self._calculate(rspacing, rcut, start, stop, select0, select1, nimage=1)
+        self.coord_number = self._calc_coord_number()
 
         if save:
             # Write out a data file containing the radial distance (column 1), the value of the RDF g(r) (column 2)  and the value of the rho g(r) (column 3)
@@ -73,24 +73,25 @@ class RDF(object):
             g.close()
 
 
-    def calculate(self, rspacing, rcut, start, stop, select0, select1, nimage=1):
+    def _calculate(self, rspacing, rcut, start, stop, select0, select1, nimage=1):
         RDFC = RDF_calculator(self.job, rspacing, rcut, start, stop, select0, select1, nimage=1)
+        self.bins = RDFC.bins
         self.d = RDFC.d
         self.rdf = RDFC.rdf
         self.cdf = RDFC.cdf
 
 
     @staticmethod
-    def trapezoidal(x, y):
+    def _trapezoidal(x, y):
         # Trapezoid rule for integration
         h = (x[-1]-x[0])/(len(x)-1)
         return h*(np.sum(y) - 0.5*y[0] - 0.5*y[-1])
 
 
-    def calc_coord_number(self):
+    def _calc_coord_number(self):
         coord_number = np.zeros(len(self.d))
         for i in range(1, len(coord_number)):
-            coord_number[i] = self.trapezoidal(self.d[0:i+1], 4*np.pi*self.cdf[0:i+1]*self.d[0:i+1]**2)
+            coord_number[i] = self._trapezoidal(self.d[0:i+1], 4*np.pi*self.cdf[0:i+1]*self.d[0:i+1]**2)
         return coord_number
 
 
@@ -100,15 +101,12 @@ class RDF(object):
         """
         pt.clf()
 
-        f, ax = pt.subplots(2, 2)
-        ax[0,0].plot(self.d, self.rdf, 'k-', drawstyle='steps-mid')
-        ax[0,0].set_ylabel('RDF')
-        ax[1,0].plot(self.d, self.cdf, 'k-', drawstyle='steps-mid')
-        ax[1,0].set_ylabel('CDF')
-        ax[1,0].set_xlabel(u'Distance [Å]')
-        ax[0,1].plot(self.d,self.coord_number)
-        ax[0,1].set_xlabel(u'Distance [Å]')
-        ax[0,1].set_ylabel('CN')
+        f, ax = pt.subplots(2, 1)
+        ax[0].plot(self.d, self.rdf, 'k-', drawstyle='steps-mid')
+        ax[0].set_ylabel('RDF')
+        ax[1].plot(self.d,self.coord_number)
+        ax[1].set_xlabel(u'Distance [Å]')
+        ax[1].set_ylabel('CN')
         pt.xlim(self.bins[0], self.bins[-1])
         pt.show()
 
