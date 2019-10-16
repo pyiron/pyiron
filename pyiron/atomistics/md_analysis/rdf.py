@@ -101,7 +101,7 @@ class RDF(object):
         """
         pt.clf()
 
-        f, ax = pt.subplots(2, 1)
+        f, ax = pt.subplots(2, 1, sharex=True)
         ax[0].plot(self.d, self.rdf, 'k-', drawstyle='steps-mid')
         ax[0].set_ylabel('RDF')
         ax[1].plot(self.d,self.coord_number)
