@@ -25,6 +25,7 @@ import pyiron.atomistics.structure.pyironase as ase
 from pyiron.atomistics.structure.pyironase import publication as publication_ase
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.nma.nma import NMA
+from pyiron.atomistics.md_analysis.rdf import RDF
 
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
@@ -546,10 +547,14 @@ class Project(ProjectCore):
         else:
             periodic_table.add_element(parent_element=parent_element, new_element=new_element_name)
         return periodic_table.element(new_element_name)
-    
+
     @staticmethod
     def apply_nma(job):
         return NMA(job)
+
+    @staticmethod
+    def calc_RDF(job):
+        return RDF(job)
 
     # Graphical user interfaces
     def gui(self):
