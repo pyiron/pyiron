@@ -11,7 +11,7 @@ from matplotlib.ticker import MaxNLocator
 from molmod.units import *
 
 
-def plot_temp_dist(job,temp=None, ndof=None)
+def plot_temp_dist(job,temp=None, ndof=None):
     """Plots the distribution of the weighted atomic velocities
 
        **Arguments:**
