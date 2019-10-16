@@ -9,6 +9,7 @@ import matplotlib.pyplot as pt
 from matplotlib.ticker import MaxNLocator
 
 from molmod.units import *
+from molmod.constants import *
 
 
 def plot_temp_dist(job,temp=None, ndof=None):
