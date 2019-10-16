@@ -36,6 +36,9 @@ from pyiron.table.funct import (
     get_energy_tot,
     get_energy_free,
     get_energy_int,
+    get_energy_tot_per_atom,
+    get_energy_free_per_atom,
+    get_energy_int_per_atom,
     get_f_states,
     get_e_band,
     get_majority_crystal_structure,
@@ -46,6 +49,7 @@ from pyiron.table.funct import (
     get_average_waves,
     get_ekin_error,
     get_volume,
+    get_volume_per_atom,
 )
 
 
@@ -82,6 +86,9 @@ class FunctionContainer(object):
             get_energy_tot,
             get_energy_free,
             get_energy_int,
+            get_energy_tot_per_atom,
+            get_energy_free_per_atom,
+            get_energy_int_per_atom,
             get_f_states,
             get_e_band,
             get_majority_crystal_structure,
@@ -92,6 +99,7 @@ class FunctionContainer(object):
             get_average_waves,
             get_ekin_error,
             get_volume,
+            get_volume_per_atom,
         ]
         self._system_function_dict = {
             func.__name__: False for func in self._system_function_lst
