@@ -62,7 +62,7 @@ class RDF(object):
 
         # Compute RDF
         self.calculate(rspacing, rcut, start, stop, select0, select1, nimage=1)
-        self.coord_number = calc_coord_number()
+        self.coord_number = self.calc_coord_number()
 
         if save:
             # Write out a data file containing the radial distance (column 1), the value of the RDF g(r) (column 2)  and the value of the rho g(r) (column 3)
@@ -205,7 +205,7 @@ class RDF_calculator(object):
         if self.cell.nvec != 3:
             raise ValueError('RDF can only be computed for 3D periodic systems.')
         if (2*self.rcut > self.cell.rspacings*(1+2*self.nimage)).any():
-            raise ValueError('The 2*rcut argument should not exceed any of the cell spacings.')
+            raise ValueError('The 2*rcut argument ({}) should not exceed any of the cell spacings (max:{}).'.format(2*self.rcut, max(self.cell.rspacings*(1+2*self.nimage))))
 
     # Compute iteration
     def compute_iteration(self):
