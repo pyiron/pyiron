@@ -32,7 +32,7 @@ class RDF(object):
 
                 rspacing
                     The width of the bins to build up the RDF.
-                    
+
                 nimage
                     number of periodic images taken into account
 
