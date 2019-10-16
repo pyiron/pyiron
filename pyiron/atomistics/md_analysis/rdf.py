@@ -61,7 +61,7 @@ class RDF(object):
             select1 = None
 
         # Compute RDF
-        self.calculate(rspacing, rcut, start=start, stop=stop, select0=select0, select1=select1, nimage=1)
+        self.calculate(rspacing, rcut, start, stop, select0, select1, nimage=1)
         self.coord_number = calc_coord_number()
 
         if save:
@@ -73,8 +73,8 @@ class RDF(object):
             g.close()
 
 
-    def calculate(self, rspacing, rcut, start=start, stop=stop, select0=select0, select1=select1, nimage=1):
-        RDFC = RDF_calculator(self.job, rspacing, rcut, start=start, stop=stop, select0=select0, select1=select1, nimage=1)
+    def calculate(self, rspacing, rcut, start, stop, select0, select1, nimage=1):
+        RDFC = RDF_calculator(self.job, rspacing, rcut, start, stop, select0, select1, nimage=1)
         self.d = RDFC.d
         self.rdf = RDFC.rdf
         self.cdf = RDFC.cdf
@@ -118,7 +118,7 @@ class RDF_calculator(object):
     """
         This class allows for the calculation of the RDF. This is based on the RDF class of Yaff (+ extension Aran Lamaire for CDF and CN)
     """
-    def __init__(self, job, rspacing, rcut, start=start, stop=stop, select0=select0, select1=select1, nimage=1):
+    def __init__(self, job, rspacing, rcut, start, stop, select0, select1, nimage=1):
         # Check arguments
         if select0 is not None:
             if len(select0) != len(set(select0)):
