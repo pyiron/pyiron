@@ -185,7 +185,7 @@ class RDF_calculator(object):
         if stop < 0:
             stop = self.frames - (stop+1)
         for i in range(start, stop):
-            self.read_offline(i)
+            self.read_frame(i)
             self.compute_iteration()
         self.compute_derived()
 
