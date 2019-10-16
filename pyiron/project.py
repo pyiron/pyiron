@@ -550,11 +550,27 @@ class Project(ProjectCore):
 
     @staticmethod
     def apply_nma(job):
+        """
+
+        Args:
+            job : The job object used to do a normal mode analysis, requires a gradient and hessian in the output
+        Returns:
+            atomistics.nma.nma.NMA instance
+        """
         return NMA(job)
 
     @staticmethod
-    def calc_RDF(job):
-        return RDF(job)
+    def calc_RDF(job,atom_1,atom_2,rcut=20*angstrom,rspacing=0.01*angstrom,start=0,stop=-1,nf=0,save=False,atomic_units=False):
+                """
+
+        Args:
+            job : The job object used to calculate the RDF, requires a trajectory of cells and positions
+            atom_1, atom_2: atoms for which to construct an RDF
+            other parameters are explained in RDF class
+        Returns:
+            atomistics.md_analysis.rdf.RDF instance
+        """
+        return RDF(job,atom_1,atom_2,rcut=rcut,rspacing=rspacing,start=start,stop=stop,nf=nf,save=save,atomic_units=atomic_units)
 
     # Graphical user interfaces
     def gui(self):
