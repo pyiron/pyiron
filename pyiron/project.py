@@ -561,7 +561,7 @@ class Project(ProjectCore):
 
     @staticmethod
     def calc_RDF(job,atom_1,atom_2,rcut=20*angstrom,rspacing=0.01*angstrom,start=0,stop=-1,nf=0,save=False,atomic_units=False):
-                """
+        """
 
         Args:
             job : The job object used to calculate the RDF, requires a trajectory of cells and positions
