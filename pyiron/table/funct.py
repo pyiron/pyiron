@@ -72,7 +72,7 @@ def get_volume(job):
 
 
 def get_volume_per_atom(job):
-    return {"volume": job["output/generic/volume"][-1] / get_total_number_of_atoms(job=job)}
+    return {"volume": job["output/generic/volume"][-1] / get_total_number_of_atoms(job=job)["Number_of_atoms"]}
 
 
 def get_elements(job):
@@ -136,7 +136,7 @@ def get_job_id(job):
 
 
 def get_energy_tot_per_atom(job):
-    return {"energy_tot": job["output/generic/energy_tot"][-1] / get_total_number_of_atoms(job=job)}
+    return {"energy_tot": job["output/generic/energy_tot"][-1] / get_total_number_of_atoms(job=job)["Number_of_atoms"]}
 
 
 def get_energy_tot(job):
@@ -144,7 +144,7 @@ def get_energy_tot(job):
 
 
 def get_energy_free_per_atom(job):
-    return {"energy_free": job["output/generic/dft/energy_free"][-1] / get_total_number_of_atoms(job=job)}
+    return {"energy_free": job["output/generic/dft/energy_free"][-1] / get_total_number_of_atoms(job=job)["Number_of_atoms"]}
 
 
 def get_energy_free(job):
@@ -152,7 +152,7 @@ def get_energy_free(job):
 
 
 def get_energy_int_per_atom(job):
-    return {"energy_int": job["output/generic/dft/energy_int"][-1] / get_total_number_of_atoms(job=job)}
+    return {"energy_int": job["output/generic/dft/energy_int"][-1] / get_total_number_of_atoms(job=job)["Number_of_atoms"]}
 
 
 def get_energy_int(job):
