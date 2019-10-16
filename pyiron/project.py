@@ -561,7 +561,7 @@ class Project(ProjectCore):
         return NMA(job)
 
     @staticmethod
-    def calc_RDF(job,atom_1,atom_2,rcut=20*angstrom,rspacing=0.01*angstrom,start=0,stop=-1,nf=0,save=False,atomic_units=False):
+    def calc_RDF(job,atom_1,atom_2,rcut=20*angstrom,rspacing=0.01*angstrom,nimage=1,start=0,stop=-1,nf=0,save=False,atomic_units=False):
         """
 
         Args:
@@ -571,7 +571,7 @@ class Project(ProjectCore):
         Returns:
             atomistics.md_analysis.rdf.RDF instance
         """
-        return RDF(job,atom_1,atom_2,rcut=rcut,rspacing=rspacing,start=start,stop=stop,nf=nf,save=save,atomic_units=atomic_units)
+        return RDF(job,atom_1,atom_2,rcut,rspacing,nimage,start,stop,nf,save,atomic_units)
 
     # Graphical user interfaces
     def gui(self):

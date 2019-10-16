@@ -14,7 +14,7 @@ class RDF(object):
     This is a generic module to construct a radial distribution function based on a job object.
     With the RDF object you can plot the rdf and the cdf, and calculate the coordination numbers.
     """
-    def __init__(self,job,atom_1,atom_2,rcut=20*angstrom,rspacing=0.01*angstrom,start=0,stop=-1,nf=0,save=False,atomic_units=False):
+    def __init__(self,job,atom_1,atom_2,rcut=20*angstrom,rspacing=0.01*angstrom,nimage=1,start=0,stop=-1,nf=0,save=False,atomic_units=False):
         ''' Computes RDF for two atoms: atom_1 and atom_2.
 
             **Arguments:**
@@ -32,6 +32,9 @@ class RDF(object):
 
                 rspacing
                     The width of the bins to build up the RDF.
+                    
+                nimage
+                    number of periodic images taken into account
 
                 start,stop
                     First and last index of the slice that is taken into account
@@ -61,7 +64,7 @@ class RDF(object):
             select1 = None
 
         # Compute RDF
-        self._calculate(rspacing, rcut, start, stop, select0, select1, nimage=1)
+        self._calculate(rspacing, rcut, start, stop, select0, select1, nimage)
         self.coord_number = self._calc_coord_number()
 
         if save:
@@ -73,8 +76,8 @@ class RDF(object):
             g.close()
 
 
-    def _calculate(self, rspacing, rcut, start, stop, select0, select1, nimage=1):
-        RDFC = RDF_calculator(self.job, rspacing, rcut, start, stop, select0, select1, nimage=1)
+    def _calculate(self, rspacing, rcut, start, stop, select0, select1, nimage):
+        RDFC = RDF_calculator(self.job, rspacing, rcut, start, stop, select0, select1, nimage)
         self.bins = RDFC.bins
         self.d = RDFC.d
         self.rdf = RDFC.rdf
@@ -116,7 +119,7 @@ class RDF_calculator(object):
     """
         This class allows for the calculation of the RDF. This is based on the RDF class of Yaff (+ extension Aran Lamaire for CDF and CN)
     """
-    def __init__(self, job, rspacing, rcut, start, stop, select0, select1, nimage=1):
+    def __init__(self, job, rspacing, rcut, start, stop, select0, select1, nimage):
         # Check arguments
         if select0 is not None:
             if len(select0) != len(set(select0)):
