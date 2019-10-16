@@ -27,6 +27,7 @@ from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.nma.nma import NMA
 from pyiron.atomistics.md_analysis.rdf import RDF
 
+from molmod.units import *
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
