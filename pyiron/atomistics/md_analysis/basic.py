@@ -44,7 +44,7 @@ def plot_temp_dist(job,temp=None, ndof=None):
     weights = np.array(np.array(structure.get_masses())*amu)/boltzmann
 
     # Load the temperatures from the output file
-    temps = eq_nvt['output/generic/temperature']
+    temps = job['output/generic/temperature']
     if temp is None:
         temp = temps.mean()
 
