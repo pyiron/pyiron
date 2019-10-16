@@ -71,6 +71,10 @@ def get_volume(job):
     return {"volume": job["output/generic/volume"][-1]}
 
 
+def get_volume_per_atom(job):
+    return {"volume": job["output/generic/volume"][-1] / get_total_number_of_atoms(job=job)}
+
+
 def get_elements(job):
     species = job["input/structure/species"]
     indices_lst = job["input/structure/indices"]
@@ -131,12 +135,24 @@ def get_job_id(job):
     return {"job_id": job.job_id}
 
 
+def get_energy_tot_per_atom(job):
+    return {"energy_tot": job["output/generic/energy_tot"][-1] / get_total_number_of_atoms(job=job)}
+
+
 def get_energy_tot(job):
     return {"energy_tot": job["output/generic/energy_tot"][-1]}
 
 
+def get_energy_free_per_atom(job):
+    return {"energy_free": job["output/generic/dft/energy_free"][-1] / get_total_number_of_atoms(job=job)}
+
+
 def get_energy_free(job):
     return {"energy_free": job["output/generic/dft/energy_free"][-1]}
+
+
+def get_energy_int_per_atom(job):
+    return {"energy_int": job["output/generic/dft/energy_int"][-1] / get_total_number_of_atoms(job=job)}
 
 
 def get_energy_int(job):
