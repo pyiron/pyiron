@@ -100,16 +100,16 @@ class RDF(object):
 
     def plot(self):
         """
-            Plot the RDF, CDF, and coordination number (integral of CDF)
+            Plot the RDF and coordination number (integral of CDF)
         """
-        pt.clf()
-
         f, ax = pt.subplots(2, 1, sharex=True)
         ax[0].plot(self.d, self.rdf, 'k-', drawstyle='steps-mid')
         ax[0].set_ylabel('RDF')
+        ax[0].set_ylim([0,5])
         ax[1].plot(self.d,self.coord_number)
         ax[1].set_xlabel(u'Distance [Å]')
         ax[1].set_ylabel('CN')
+        ax[1].set_ylim([0,10])
         pt.xlim(self.bins[0], self.bins[-1])
         pt.show()
 
