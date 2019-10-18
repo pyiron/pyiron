@@ -448,6 +448,7 @@ class LammpsStructure(GenericParameters):
                 print("Checkpoint 1")
                 # Write H ion if no oxygens are present in its vicinity
                 if len(np.intersect1d(neighbors.indices[id_el], o_indices)) == 0:
+                    print("Checkpoint 2")
                     id_mol += 1
                     molecule_lst.append([id_el, id_mol, id_species])
         m_lst = np.array(molecule_lst)
