@@ -416,41 +416,41 @@ class LammpsStructure(GenericParameters):
         molecule_lst, bonds_lst, angles_lst = [], [], []
 
         # Using a cutoff distance to draw the bonds (1.5 A for water) instead of the number of neighbors
-        # num_atoms_in_molecule = 3
         neighbors = self._structure.get_neighbors(cutoff=1.5)
-        # print "neighbors: ", neighbors.distances
         id_mol = 0
         indices = self._structure.indices
+        o_indices = self._structure.select_index("O")
+        h_indices = self._structure.select_index("H")
         for id_el, id_species in enumerate(indices):
             el = self._structure.species[id_species]
-            # print "id: ", id, el.Abbreviation, neighbors.indices[id][0:2]
             if el.Abbreviation in ["O"]:
-                # print "id_mol: ", id_mol
                 id_mol += 1
                 molecule_lst.append([id_el, id_mol, id_species])
                 # Just to ensure that the attached atoms are indeed H atoms
-                id_n1, id_n2 = np.intersect1d(neighbors.indices[id_el], self._structure.select_index("H"))[0:2]
-                # print "id: ", id, id_n1, len(el_lst), el_lst[1].id
-                molecule_lst.append(
-                    [id_n1, id_mol, species_translate_list[indices[id_n1]]]
-                )
-                molecule_lst.append(
-                    [id_n2, id_mol, species_translate_list[indices[id_n2]]]
-                )
+                water_hydrogens = np.intersect1d(neighbors.indices[id_el], h_indices)
+                if len(water_hydrogens) >= 2:
+                    id_n1, id_n2 = water_hydrogens[0:2]
+                    molecule_lst.append(
+                        [id_n1, id_mol, species_translate_list[indices[id_n1]]]
+                    )
+                    molecule_lst.append(
+                        [id_n2, id_mol, species_translate_list[indices[id_n2]]]
+                    )
 
-                bonds_lst.append([id_el + 1, id_n1 + 1])
-                bonds_lst.append([id_el + 1, id_n2 + 1])
+                    bonds_lst.append([id_el + 1, id_n1 + 1])
+                    bonds_lst.append([id_el + 1, id_n2 + 1])
 
-                angles_lst.append([id_n1 + 1, id_el + 1, id_n2 + 1])
+                    angles_lst.append([id_n1 + 1, id_el + 1, id_n2 + 1])
             elif el.Abbreviation not in ["H"]:  # non-bonded ions
                 id_mol += 1
                 molecule_lst.append([id_el, id_mol, id_species])
-
+            else:
+                # Write H ion if no oxygens are present in its vicinity
+                if len(np.intersect1d(neighbors.indices[id_el], o_indices)) == 0:
+                    id_mol += 1
+                    molecule_lst.append([id_el, id_mol, id_species])
         m_lst = np.array(molecule_lst)
         molecule_lst = m_lst[m_lst[:, 0].argsort()]
-        # print "m_lst: ", m_lst
-        # print "mol: ", molecule_lst
-
         atomtypes = (
             " Start File for LAMMPS \n"
             + "{0:d} atoms".format(len(self._structure))
