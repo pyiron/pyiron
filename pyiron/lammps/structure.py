@@ -412,18 +412,12 @@ class LammpsStructure(GenericParameters):
             ind = np.argwhere(sorted_species_list == el.Abbreviation).flatten()[-1]
             species_translate_list.append(ind)
 
-        # analyze structure to get molecule_ids, bonds, angles etc
+        # Drawing bonds only for water molecules
         molecule_lst, bonds_lst, angles_lst = [], [], []
 
-        # species_lst = structure.get_species_objects()
-        # for id_el, el in enumerate(structure.species):
-        #     el.id = id
-        # el_lst = structure.get_chemical_elements()
-
-        num_atoms_in_molecule = 3
-        neighbors = self._structure.get_neighbors(
-            num_neighbors=num_atoms_in_molecule + 2
-        )
+        # Using a cutoff distance to draw the bonds (1.5 A for water) instead of the number of neighbors
+        # num_atoms_in_molecule = 3
+        neighbors = self._structure.get_neighbors(cutoff=1.5)
         # print "neighbors: ", neighbors.distances
         id_mol = 0
         indices = self._structure.indices
@@ -435,8 +429,7 @@ class LammpsStructure(GenericParameters):
                 id_mol += 1
                 molecule_lst.append([id_el, id_mol, id_species])
                 # Just to ensure that the attached atoms are indeed H atoms
-                # id_n1, id_n2 = np.intersect1d(neighbors.indices[id_el], self._structure.select_index("H"))[0:2]
-                id_n1, id_n2 = neighbors.indices[id_el][0:2]
+                id_n1, id_n2 = np.intersect1d(neighbors.indices[id_el], self._structure.select_index("H"))[0:2]
                 # print "id: ", id, id_n1, len(el_lst), el_lst[1].id
                 molecule_lst.append(
                     [id_n1, id_mol, species_translate_list[indices[id_n1]]]
