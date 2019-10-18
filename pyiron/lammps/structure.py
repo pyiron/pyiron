@@ -415,8 +415,8 @@ class LammpsStructure(GenericParameters):
         # Drawing bonds only for water molecules
         molecule_lst, bonds_lst, angles_lst = [], [], []
 
-        # Using a cutoff distance to draw the bonds (1.5 A for water) instead of the number of neighbors
-        neighbors = self._structure.get_neighbors(cutoff=1.5)
+        # Using a cutoff distance to draw the bonds instead of the number of neighbors
+        neighbors = self._structure.get_neighbors(cutoff=5)
         id_mol = 0
         indices = self._structure.indices
         o_indices = self._structure.select_index("O")
@@ -444,13 +444,11 @@ class LammpsStructure(GenericParameters):
             elif el.Abbreviation not in ["H"]:  # non-bonded ions
                 id_mol += 1
                 molecule_lst.append([id_el, id_mol, id_species])
-            else:
-                print("Checkpoint 1")
-                # Write H ion if no oxygens are present in its vicinity
-                if len(np.intersect1d(neighbors.indices[id_el], o_indices)) == 0:
-                    print("Checkpoint 2")
-                    id_mol += 1
-                    molecule_lst.append([id_el, id_mol, id_species])
+            # else:
+            #     # Write H ion if no oxygens are present in its vicinity
+            #     if len(np.intersect1d(neighbors.indices[id_el], o_indices)) == 0:
+            #         id_mol += 1
+            #         molecule_lst.append([id_el, id_mol, id_species])
         m_lst = np.array(molecule_lst)
         molecule_lst = m_lst[m_lst[:, 0].argsort()]
         atomtypes = (
