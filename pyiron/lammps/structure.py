@@ -416,7 +416,7 @@ class LammpsStructure(GenericParameters):
         molecule_lst, bonds_lst, angles_lst = [], [], []
 
         # Using a cutoff distance to draw the bonds instead of the number of neighbors
-        neighbors = self._structure.get_neighbors(cutoff=5)
+        neighbors = self._structure.get_neighbors(cutoff=2)
         id_mol = 0
         indices = self._structure.indices
         o_indices = self._structure.select_index("O")
@@ -427,8 +427,8 @@ class LammpsStructure(GenericParameters):
                 id_mol += 1
                 molecule_lst.append([id_el, id_mol, id_species])
                 # Just to ensure that the attached atoms are indeed H atoms
-                # water_hydrogens = np.intersect1d(neighbors.indices[id_el], h_indices)
-                water_hydrogens = neighbors.indices[id_el]
+                bool_list = np.in1d(neighbors.indices[id_el], h_indices)
+                water_hydrogens = neighbors.indices[id_el][bool_list]
                 if len(water_hydrogens) >= 2:
                     id_n1, id_n2 = water_hydrogens[0:2]
                     molecule_lst.append(
