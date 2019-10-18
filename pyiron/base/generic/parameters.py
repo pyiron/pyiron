@@ -1004,11 +1004,4 @@ class GenericParameters(PyironObject):
         elif len(i_line_lst) == 1:
             return i_line_lst[0], multi_word_lst[0]
         else:
-            for i in i_line_lst:
-                print(
-                    "dataset: ",
-                    i,
-                    self._dataset["Parameter"][i],
-                    self._dataset["Value"][i],
-                )
             raise ValueError("Multiple occurrences of key_name " + key_name, i_line_lst)
