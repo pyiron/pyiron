@@ -109,10 +109,12 @@ def write_ynve(input_dict,working_directory='.'):
         gcut_scale=input_dict['gcut_scale'], smooth_ei=input_dict['smooth_ei'],
         h5step=input_dict['h5step'],
     )
-    body += """timestep = {timestep}*femtosecond
-
-vsl = VerletScreenLog(step=1000)
-md = VerletIntegrator(ff, timestep, hooks=[hdf5, vsl, restart])
+    if input_dict['mtd'] is not None:
+        body += input_dict['mtd']
+        body += "hooks.append(mtd)"
+    body += """
+hooks.append(VerletScreenLog(step=1000))
+md = VerletIntegrator(ff, {timestep}*femtosecond, hooks=hooks)
 md.run({nsteps})
 """.format(timestep=input_dict['timestep']/femtosecond, nsteps=input_dict['nsteps'])
     with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
@@ -124,13 +126,16 @@ def write_ynvt(input_dict,working_directory='.'):
         gcut_scale=input_dict['gcut_scale'], smooth_ei=input_dict['smooth_ei'],
         h5step=input_dict['h5step'],
     )
-    body += """timestep = {timestep}*femtosecond
+    if input_dict['mtd'] is not None:
+        body += input_dict['mtd']
+        body += "hooks.append(mtd)"
+    body += """
 temp = {temp}*kelvin
-
 thermo = NHCThermostat(temp, timecon={timecon_thermo}*femtosecond)
+hooks.append(thermo)
 
-vsl = VerletScreenLog(step=1000)
-md = VerletIntegrator(ff, timestep, hooks=[hdf5, thermo, vsl, restart])
+hooks.append(VerletScreenLog(step=1000))
+md = VerletIntegrator(ff, {timestep}*femtosecond, hooks=hooks)
 md.run({nsteps})
 """.format(
         temp=input_dict['temp']/kelvin,timestep=input_dict['timestep']/femtosecond,
@@ -145,16 +150,19 @@ def write_ynpt(input_dict,working_directory='.'):
         gcut_scale=input_dict['gcut_scale'], smooth_ei=input_dict['smooth_ei'],
         h5step=input_dict['h5step'],
     )
-    body += """timestep = {timestep}*femtosecond
+    if input_dict['mtd'] is not None:
+        body += input_dict['mtd']
+        body += "hooks.append(mtd)"
+    body += """
 temp = {temp}*kelvin
 press = {press}*bar
-
 thermo = NHCThermostat(temp, timecon={timecon_thermo}*femtosecond)
 baro = MTKBarostat(ff, temp, press, timecon={timecon_baro}*femtosecond)
 TBC = TBCombination(thermo, baro)
+hooks.append(TBC)
 
-vsl = VerletScreenLog(step=1000)
-md = VerletIntegrator(ff, timestep, hooks=[hdf5, TBC, vsl, restart])
+hooks.append(VerletScreenLog(step=1000))
+md = VerletIntegrator(ff, {timestep}*femtosecond, hooks=hooks)
 md.run({nsteps})
 """.format(
         temp=input_dict['temp']/kelvin,timestep=input_dict['timestep']/femtosecond,
@@ -255,6 +263,7 @@ class Yaff(AtomisticGenericJob):
         self.jobtype = None
         self.ffatypes = None
         self.ffatype_ids = None
+        self.mtd = None
 
     def load_chk(self, fn):
         system = System.from_file(fn)
@@ -326,6 +335,8 @@ class Yaff(AtomisticGenericJob):
             'press': self.input['press'],
             'timecon_thermo': self.input['timecon_thermo'],
             'timecon_baro': self.input['timecon_baro'],
+            'mtd': self.mtd,
+
         }
         input_dict['cell'] = None
         if self.structure.cell is not None:
