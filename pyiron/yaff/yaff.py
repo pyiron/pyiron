@@ -382,6 +382,10 @@ class Yaff(AtomisticGenericJob):
             assert isinstance(l[1], list) or isinstance(l[1], tuple)
         ickinds = np.array([ic[0] for ic in ics],dtype='S22')
         icindices = np.array([np.array(ic[1])+1 for ic in ics]) # plumed starts counting from 1
+        if not isinstance(height,list) and not isinstance(height,np.ndarray):
+            height = np.array([height])
+        if not isinstance(sigma,list) and not isinstance(sigma,np.ndarray):
+            sigma = np.array([sigma])
         self.mtd= {
             'ickinds': ickinds, 'icindices': icindices, 'height': height, 'sigma': sigma, 'pace': pace,
             'file': fn, 'file_colvar': fn_colvar, 'stride': stride
