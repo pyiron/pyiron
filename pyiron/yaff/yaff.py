@@ -37,6 +37,8 @@ from molmod.units import *
 from yaff import *
 import h5py, numpy as np
 
+log.set_file('yaff.log')
+
 #Setting up system and force field
 system = System.from_file('system.chk')
 ff = ForceField.generate(system, 'pars.txt', rcut={rcut}*angstrom, alpha_scale={alpha_scale}, gcut_scale={gcut_scale}, smooth_ei={smooth_ei})
