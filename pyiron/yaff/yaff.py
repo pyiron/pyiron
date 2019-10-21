@@ -37,7 +37,8 @@ from molmod.units import *
 from yaff import *
 import h5py, numpy as np
 
-log.set_file('yaff.log')
+logf = open('yaff.log')
+log.set_file(logf)
 
 #Setting up system and force field
 system = System.from_file('system.chk')
@@ -53,6 +54,10 @@ hooks = [hdf5, restart]
 #Setting up simulation
 """
 
+tail = """
+logf.close()
+"""
+
 def write_yopt(input_dict,working_directory='.'):
     body = common.format(
         rcut=input_dict['rcut']/angstrom, alpha_scale=input_dict['alpha_scale'],
@@ -66,6 +71,7 @@ def write_yopt(input_dict,working_directory='.'):
 opt = CGOptimizer(dof, hooks=[hdf5])
 opt.run({nsteps})
 """.format(nsteps=input_dict['nsteps'])
+    body+= tail
     with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
         f.write(body)
 
@@ -83,6 +89,7 @@ def write_yopt_cell(input_dict,working_directory='.'):
 opt = CGOptimizer(dof, hooks=[hdf5])
 opt.run({nsteps})
 """.format(nsteps=input_dict['nsteps'])
+    body+= tail
     with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
         f.write(body)
 
@@ -103,6 +110,7 @@ system.to_hdf5(f)
 f['system/energy'] = energy
 f['system/gpos'] = gpos
 f['system/hessian'] = hessian""".format(hessian_eps=input_dict['hessian_eps'])
+    body+= tail
     with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
         f.write(body)
 
@@ -123,6 +131,7 @@ hooks.append(VerletScreenLog(step=1000))
 md = VerletIntegrator(ff, {timestep}*femtosecond, hooks=hooks)
 md.run({nsteps})
 """.format(timestep=input_dict['timestep']/femtosecond, nsteps=input_dict['nsteps'])
+    body+= tail
     with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
         f.write(body)
 
@@ -150,6 +159,7 @@ md.run({nsteps})
         temp=input_dict['temp']/kelvin,timestep=input_dict['timestep']/femtosecond,
         timecon_thermo=input_dict['timecon_thermo']/femtosecond, nsteps=input_dict['nsteps']
     )
+    body+= tail
     with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
         f.write(body)
 
@@ -181,6 +191,7 @@ md.run({nsteps})
         press=input_dict['press']/bar,timecon_thermo=input_dict['timecon_thermo']/femtosecond,
         timecon_baro=input_dict['timecon_baro']/femtosecond, nsteps=input_dict['nsteps']
     )
+    body+= tail
     with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
         f.write(body)
 
