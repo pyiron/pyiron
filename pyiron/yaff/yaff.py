@@ -209,7 +209,7 @@ def write_plumed_mtd(input_dict,working_directory='.'):
         else:
             assert len(mtd['height'])>1
             height = ','.join(['%.2f' %h/kjmol for h in mtd['height']])
-        f.write('metad: METAD ARG=%s SIGMA=%s HEIGTH=%s PACE=%i FILE=%s \n' %(
+        f.write('metad: METAD ARG=%s SIGMA=%s HEIGHT=%s PACE=%i FILE=%s \n' %(
             ','.join([ 'ic%i' %i for i in range(len(mtd['ickinds'])) ]),
             sigma, height, mtd['pace'], mtd['file']
         ))
