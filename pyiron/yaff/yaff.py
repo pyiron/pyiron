@@ -457,6 +457,8 @@ class Yaff(AtomisticGenericJob):
             write_ynpt(input_dict=input_dict,working_directory=self.working_directory)
         else:
             raise IOError('Invalid job type for Yaff job, received %s' %self.jobtype)
+        if not self.mtd is None:
+            write_plumed_mtd(input_dict,working_directory=self.working_directory)
 
     def collect_output(self):
         output_dict = collect_output(output_file=os.path.join(self.working_directory, 'output.h5'))
