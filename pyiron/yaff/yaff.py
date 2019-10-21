@@ -192,9 +192,11 @@ def write_plumed_mtd(input_dict,working_directory='.'):
     #write plumed.dat file
     with open(os.path.join(working_directory, 'plumed.dat'), 'w') as f:
         #set units to atomic units
-        f.write('UNITS LENGTH=Bohr ENERGY=Ha TIME=atomic \n')
+        f.write('UNITS LENGTH=Bohr ENERGY=kj/mol TIME=atomic \n')
         #define ics
         for i, kind in enumerate(mtd['ickinds']):
+            if isinstance(kind, bytes):
+                kind = kind.decode()
             f.write('ic%i: %s ATOMS=%s \n' %(i, kind.upper(), ','.join([str(icidx) for icidx in mtd['icindices'][i]])))
         #define metadynamics
         if len(mtd['sigma'])==1:
@@ -203,10 +205,10 @@ def write_plumed_mtd(input_dict,working_directory='.'):
             assert len(mtd['sigma'])>1
             sigma = ','.join(['%.2f' %s for s in mtd['sigma']])
         if len(mtd['height'])==1:
-            height = '%.2f' %(mtd['height'])
+            height = '%.2f' %(mtd['height']/kjmol)
         else:
             assert len(mtd['height'])>1
-            height = ','.join(['%.2f' %h for h in mtd['height']])
+            height = ','.join(['%.2f' %h/kjmol for h in mtd['height']])
         f.write('metad: METAD ARG=%s SIGMA=%s HEIGTH=%s PACE=%i FILE=%s \n' %(
             ','.join([ 'ic%i' %i for i in range(len(mtd['ickinds'])) ]),
             sigma, height, mtd['pace'], mtd['file']
