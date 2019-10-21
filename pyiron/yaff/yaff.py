@@ -37,7 +37,7 @@ from molmod.units import *
 from yaff import *
 import h5py, numpy as np
 
-logf = open('yaff.log')
+logf = open('yaff.log', 'w')
 log.set_file(logf)
 
 #Setting up system and force field
