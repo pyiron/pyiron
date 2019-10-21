@@ -333,7 +333,7 @@ class Yaff(AtomisticGenericJob):
         if system.ffatype_ids is not None:
             self.ffatype_ids = system.ffatype_ids
 
-    def set_mtd(ics, height, sigma, pace, fn='HILLS', fn_colvar='COLVAR', stride=10):
+    def set_mtd(self, ics, height, sigma, pace, fn='HILLS', fn_colvar='COLVAR', stride=10):
         '''
             Setup a Metadynamics run using PLUMED along the internal coordinates
             defined in the ICs argument.
@@ -349,7 +349,7 @@ class Yaff(AtomisticGenericJob):
                         https://www.plumed.org/doc-v2.5/user-doc/html/_colvar.html
                         for more information).
 
-                    and [i, j, ...] is a list of atom indices involved in this
+                    and [i, j, ...] is a list of atom indices, starting from 0, involved in this
                     IC.
 
                     An example for a 1D metadynamica using the distance between
@@ -381,7 +381,7 @@ class Yaff(AtomisticGenericJob):
             assert isinstance(l[0], str)
             assert isinstance(l[1], list) or isinstance(l[1], tuple)
         ickinds = np.array([ic[0] for ic in ics])
-        icindices = np.array([np.array(ic[1]) for ic in ics])
+        icindices = np.array([np.array(ic[1])+1 for ic in ics]) # plumed starts counting from 1
         self.mtd= {
             'ickinds': ickinds, 'icindices': icindices, 'height': height, 'sigma': sigma, 'pace': pace,
             'file': fn, 'file_colvar': fn_colvar, 'stride': stride
