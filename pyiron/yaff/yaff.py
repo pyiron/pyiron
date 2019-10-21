@@ -380,7 +380,7 @@ class Yaff(AtomisticGenericJob):
             assert len(l)==2
             assert isinstance(l[0], str)
             assert isinstance(l[1], list) or isinstance(l[1], tuple)
-        ickinds = np.array([ic[0] for ic in ics])
+        ickinds = np.array([ic[0] for ic in ics],dtype='S22')
         icindices = np.array([np.array(ic[1])+1 for ic in ics]) # plumed starts counting from 1
         self.mtd= {
             'ickinds': ickinds, 'icindices': icindices, 'height': height, 'sigma': sigma, 'pace': pace,
@@ -488,7 +488,10 @@ class Yaff(AtomisticGenericJob):
 
             self.mtd = {}
             for key,val in hdf5_input['generic/mtd'].iteritems():
-                self.mtd[key] = val
+                if key=="ickinds":
+                    self.mtd[key] = np.char.decode(val)
+                else:
+                    self.mtd[key] = val
 
     def get_structure(self, iteration_step=-1, wrap_atoms=True):
         """
