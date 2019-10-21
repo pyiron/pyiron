@@ -508,7 +508,7 @@ class Yaff(AtomisticGenericJob):
             self.ffatype_ids = hdf5_input['generic/ffatype_ids']
 
             self.mtd = {}
-            for key,val in hdf5_input['generic/mtd'].iteritems():
+            for key,val in hdf5_input['generic/mtd'].items():
                 if key=="ickinds":
                     self.mtd[key] = np.char.decode(val)
                 else:
