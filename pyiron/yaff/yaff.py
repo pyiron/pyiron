@@ -475,7 +475,7 @@ class Yaff(AtomisticGenericJob):
 
             grp = hdf5_input.create_group('generic/mtd')
             for k,v in self.mtd.items():
-                grp.create_dataset(k,data=v)
+                grp[k] = v
 
     def from_hdf(self, hdf=None, group_name=None):
         super(Yaff, self).from_hdf(hdf=hdf, group_name=group_name)
