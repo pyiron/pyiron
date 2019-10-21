@@ -231,7 +231,7 @@ def write_plumed_mtd(input_dict,working_directory='.'):
             ','.join([ 'ic%i' %i for i in range(len(mtd['ickinds'])) ]),
             mtd['file_colvar'], mtd['stride']
         ))
-
+   
 def hdf2dict(h5):
     hdict = {}
     hdict['structure/numbers'] = h5['system/numbers'][:]
@@ -637,3 +637,15 @@ class Yaff(AtomisticGenericJob):
             gcut_scale=self.input['gcut_scale'], smooth_ei=self.input['smooth_ei']
         )
         return ff
+    
+    def mtd_sum_hills_1d(self,fn=None):
+        if fn is None:
+            fn = os.path.join(self.working_directory, self.mtd['file'])
+            
+        subprocess.check_output(
+            "ml load PLUMED/2.5.2-intel-2019a-Python-3.7.2; plumed sum_hills --hills {}".format(fn),
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
+            shell=True
+        )
+        
