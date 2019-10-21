@@ -212,7 +212,7 @@ def write_plumed_mtd(input_dict,working_directory='.'):
             sigma, height, mtd['pace'], mtd['file']
         ))
         #setup printing of colvar
-        f.write('PRINT ARG=%s,metad.bias FILE=%S STRIDE=%i' %(
+        f.write('PRINT ARG=%s,metad.bias FILE=%s STRIDE=%i' %(
             ','.join([ 'ic%i' %i for i in range(len(mtd['ickinds'])) ]),
             mtd['file_colvar'], mtd['stride']
         ))
