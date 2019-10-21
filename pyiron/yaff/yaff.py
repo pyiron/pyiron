@@ -46,6 +46,7 @@ f = h5py.File('output.h5', mode='w')
 hdf5 = HDF5Writer(f, step={h5step})
 r = h5py.File('restart.h5', mode='w')
 restart = RestartWriter(r, step=10000)
+hooks = [hdf5, restart]
 
 #Setting up simulation
 """
@@ -110,8 +111,11 @@ def write_ynve(input_dict,working_directory='.'):
         h5step=input_dict['h5step'],
     )
     if input_dict['mtd'] is not None:
-        body += input_dict['mtd']
-        body += "hooks.append(mtd)"
+        body += """
+plumed = ForcePartPlumed(ff.system, fn='plumed.dat')
+ff.add_part(plumed)
+hooks.append(plumed)
+"""
     body += """
 hooks.append(VerletScreenLog(step=1000))
 md = VerletIntegrator(ff, {timestep}*femtosecond, hooks=hooks)
@@ -127,8 +131,11 @@ def write_ynvt(input_dict,working_directory='.'):
         h5step=input_dict['h5step'],
     )
     if input_dict['mtd'] is not None:
-        body += input_dict['mtd']
-        body += "hooks.append(mtd)"
+        body += """
+plumed = ForcePartPlumed(ff.system, fn='plumed.dat')
+ff.add_part(plumed)
+hooks.append(plumed)
+"""
     body += """
 temp = {temp}*kelvin
 thermo = NHCThermostat(temp, timecon={timecon_thermo}*femtosecond)
@@ -151,8 +158,11 @@ def write_ynpt(input_dict,working_directory='.'):
         h5step=input_dict['h5step'],
     )
     if input_dict['mtd'] is not None:
-        body += input_dict['mtd']
-        body += "hooks.append(mtd)"
+        body += """
+plumed = ForcePartPlumed(ff.system, fn='plumed.dat')
+ff.add_part(plumed)
+hooks.append(plumed)
+"""
     body += """
 temp = {temp}*kelvin
 press = {press}*bar
