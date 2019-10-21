@@ -493,10 +493,10 @@ class Yaff(AtomisticGenericJob):
             hdf5_input['generic/jobtype'] = self.jobtype
             hdf5_input['generic/ffatypes'] = np.asarray(self.ffatypes,'S22')
             hdf5_input['generic/ffatype_ids'] = self.ffatype_ids
-
-            grp = hdf5_input.create_group('generic/mtd')
-            for k,v in self.mtd.items():
-                grp[k] = v
+            if not self.mtd is None:
+                grp = hdf5_input.create_group('generic/mtd')
+                for k,v in self.mtd.items():
+                    grp[k] = v
 
     def from_hdf(self, hdf=None, group_name=None):
         super(Yaff, self).from_hdf(hdf=hdf, group_name=group_name)
@@ -507,12 +507,13 @@ class Yaff(AtomisticGenericJob):
             self.ffatypes = np.char.decode(hdf5_input['generic/ffatypes']) # decode byte string literals
             self.ffatype_ids = hdf5_input['generic/ffatype_ids']
 
-            self.mtd = {}
-            for key,val in hdf5_input['generic/mtd'].items():
-                if key=="ickinds":
-                    self.mtd[key] = np.char.decode(val)
-                else:
-                    self.mtd[key] = val
+            if "mtd" in hdf5_input['generic'].keys():
+                self.mtd = {}
+                for key,val in hdf5_input['generic/mtd'].items():
+                    if key=='ickinds':
+                        self.mtd[key] = np.char.decode(val)
+                    else:
+                        self.mtd[key] = val
 
     def get_structure(self, iteration_step=-1, wrap_atoms=True):
         """
