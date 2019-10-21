@@ -641,9 +641,10 @@ class Yaff(AtomisticGenericJob):
     def mtd_sum_hills_1d(self,fn=None):
         if fn is None:
             fn = os.path.join(self.working_directory, self.mtd['file'])
+        fn_out = os.path.join(self.working_directory, 'fes.dat')
             
         subprocess.check_output(
-            "ml load PLUMED/2.5.2-intel-2019a-Python-3.7.2; plumed sum_hills --hills {}".format(fn),
+            "ml load PLUMED/2.5.2-intel-2019a-Python-3.7.2; plumed sum_hills --hills {} --outfile {}".format(fn,fn_out),
             stderr=subprocess.STDOUT,
             universal_newlines=True,
             shell=True
