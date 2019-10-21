@@ -9,7 +9,7 @@ log.set_level(log.silent)
 from molmod.units import *
 from molmod.constants import *
 from molmod.periodic import periodic as pt
-import tamkin
+import subprocess
 
 import os, numpy as np, h5py, matplotlib.pyplot as pp
 
