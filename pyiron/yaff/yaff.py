@@ -182,6 +182,41 @@ md.run({nsteps})
     with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
         f.write(body)
 
+def write_plumed_mtd(input_dict,working_directory='.'):
+    #make copy of input_dict['mtd'] that includes lower case definitions
+    #(allowing for case insenstive definition of input_dict['mtd'])
+    mtd = {}
+    for key, value in input_dict['mtd'].items():
+        mtd[key] = value
+        mtd[key.lower()] = value
+    #write plumed.dat file
+    with open(os.path.join(working_directory, 'plumed.dat'), 'w') as f:
+        #set units to atomic units
+        f.write('UNITS LENGTH=Bohr ENERGY=Ha TIME=atomic')
+        #define ics
+        for i, kind in enumerate(mtd['ickinds']):
+            f.write('ic%i: %s ATOMS=%s' %(i, kind.upper(), ','.join([str(icidx) for icidx in mtd['icindices'][i]])))
+        #define metadynamics
+        if len(mtd['sigma'])==1:
+            sigma = '%.2f' %(mtd['sigma'])
+        else:
+            assert len(mtd['sigma'])>1
+            sigma = ','.join(['%.2f' %s for s in mtd['sigma']])
+        if len(mtd['height'])==1:
+            height = '%.2f' %(mtd['height'])
+        else:
+            assert len(mtd['height'])>1
+            height = ','.join(['%.2f' %h for h in mtd['height']])
+        f.write('metad: METAD ARG=%s SIGMA=%s HEIGTH=%s PACE=%i FILE=%s' %(
+            ','.join([ 'ic%i' %i for i in range(len(mtd['ickinds'])) ]),
+            sigma, height, mtd['pace'], mtd['file']
+        ))
+        #setup printing of colvar
+        f.write('PRINT ARG=%s,metad.bias FILE=%S STRIDE=%i' %(
+            ','.join([ 'ic%i' %i for i in range(len(mtd['ickinds'])) ]),
+            mtd['file_colvar'], mtd['stride']
+        ))
+
 def hdf2dict(h5):
     hdict = {}
     hdict['structure/numbers'] = h5['system/numbers'][:]
@@ -298,6 +333,61 @@ class Yaff(AtomisticGenericJob):
         if system.ffatype_ids is not None:
             self.ffatype_ids = system.ffatype_ids
 
+    def set_mtd(ics, height, sigma, pace, fn='HILLS', fn_colvar='COLVAR', stride=10):
+        '''
+            Setup a Metadynamics run using PLUMED along the internal coordinates
+            defined in the ICs argument.
+
+            **Arguments**
+
+            ics     a list of entries defining each internal coordinate. Each
+                    of these entries should be of the form (kind, [i, j, ...])
+
+                    Herein, kind defines the kind of IC as implemented in PLUMED:
+
+                        i.e. distance, angle, torsion, volume, cell, ... see
+                        https://www.plumed.org/doc-v2.5/user-doc/html/_colvar.html
+                        for more information).
+
+                    and [i, j, ...] is a list of atom indices involved in this
+                    IC.
+
+                    An example for a 1D metadynamica using the distance between
+                    atoms 2 and 4:
+
+                        ics = [('distance', [2,4])]
+
+            height  the height of the Gaussian hills, can be a single value
+                    (the gaussian hills for each IC have identical height) or
+                    a list of values, one for each IC defined.
+
+            sigmas  the sigma of the Gaussian hills, can be a single value
+                    (the gaussian hills for each IC have identical height) or
+                    a list of values, one for each IC defined.
+
+            pace    the number of steps after which the gaussian hills are
+                    updated.
+
+            fn      the PLUMED output file for the gaussian hills
+
+            fn_colvar
+                    the PLUMED output file for logging of collective variables
+
+            stride  the number of steps after which the internal coordinate
+                    values and bias are printed to the COLVAR output file.
+        '''
+        for l in ics:
+            assert len(l)==2
+            assert isinstance(l[0], str)
+            assert isinstance(l[1], list) or isinstance(l[1], tuple)
+        ickinds = np.array([ic[0] for ic in ics])
+        icindices = np.array([np.array(ic[1]) for ic in ics])
+        self.mtd= {
+            'ickinds': ickinds, 'icindices': icindices, 'height': height, 'sigma': sigma, 'pace': pace,
+            'file': fn, 'file_colvar': fn_colvar, 'stride': stride
+        }
+
+
     def detect_ffatypes(self, ffatypes=None, ffatype_rules=None):
         '''
             Define atom types either by explicitely giving them through the
@@ -383,6 +473,10 @@ class Yaff(AtomisticGenericJob):
             hdf5_input['generic/ffatypes'] = np.asarray(self.ffatypes,'S22')
             hdf5_input['generic/ffatype_ids'] = self.ffatype_ids
 
+            grp = hdf5_input.create_group('generic/mtd')
+            for k,v in self.mtd.items():
+                grp.create_dataset(k,data=v)
+
     def from_hdf(self, hdf=None, group_name=None):
         super(Yaff, self).from_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input") as hdf5_input:
@@ -391,6 +485,10 @@ class Yaff(AtomisticGenericJob):
             self.jobtype = hdf5_input['generic/jobtype']
             self.ffatypes = np.char.decode(hdf5_input['generic/ffatypes']) # decode byte string literals
             self.ffatype_ids = hdf5_input['generic/ffatype_ids']
+
+            self.mtd = {}
+            for key,val in hdf5_input['generic/mtd'].iteritems():
+                self.mtd[key] = val
 
     def get_structure(self, iteration_step=-1, wrap_atoms=True):
         """
