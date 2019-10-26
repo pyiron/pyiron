@@ -487,7 +487,8 @@ class LammpsStructure(GenericParameters):
             id_atom, id_mol, id_species = atom
             # print id_atom, id_mol, id_species
             x, y, z = coords[id_atom]
-            el_id = self._structure.species[id_species].Abbreviation
+            ind = np.argwhere(np.array(species_translate_list) == id_species).flatten()[0]
+            el_id = self._structure.species[ind].Abbreviation
             atoms += (
                 format_str.format(
                     id_atom + 1, id_mol, id_species, q_dict[el_id], x, y, z
