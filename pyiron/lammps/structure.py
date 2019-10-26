@@ -406,11 +406,14 @@ class LammpsStructure(GenericParameters):
         for el in self._structure.get_species_symbols():
             q_dict[el] = float(self.potential.get("set group {} charge".format(el)))
 
-        species_translate_list = list()
-        sorted_species_list = self._structure.get_species_symbols()
-        for el in self._structure.species:
-            ind = np.argwhere(sorted_species_list == el.Abbreviation).flatten()[-1]
-            species_translate_list.append(ind)
+        # species_translate_list = list()
+        # sorted_species_list = self._structure.get_species_symbols()
+        # for el in self._structure.species:
+        #     ind = np.argwhere(sorted_species_list == el.Abbreviation).flatten()[-1]
+        #     species_translate_list.append(ind)
+
+        species_translate_list = [self.potential.get("group {} type".format(el.Abbreviation))
+                                  for el in self.structure.species]
 
         # Drawing bonds only for water molecules
         molecule_lst, bonds_lst, angles_lst = [], [], []
@@ -486,7 +489,7 @@ class LammpsStructure(GenericParameters):
             el_id = self._structure.species[id_species].Abbreviation
             atoms += (
                 format_str.format(
-                    id_atom + 1, id_mol, id_species + 1, q_dict[el_id], x, y, z
+                    id_atom + 1, id_mol, id_species, q_dict[el_id], x, y, z
                 )
                 + "\n"
             )
