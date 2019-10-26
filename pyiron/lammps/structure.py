@@ -474,9 +474,10 @@ class LammpsStructure(GenericParameters):
         cell_dimensions = self.simulation_cell()
 
         masses = "Masses" + "\n\n"
-        el_obj_list = self._structure.get_species_objects()
+        # el_obj_list = self._structure.get_species_objects()
+        el_obj_list = self._structure.species
         for object_id, el in enumerate(el_obj_list):
-            masses += "{0:3d} {1:f}".format(object_id + 1, el.AtomicMass) + "\n"
+            masses += "{0:3d} {1:f}".format(species_translate_list[object_id], el.AtomicMass) + "\n"
 
         atoms = "Atoms \n\n"
 
