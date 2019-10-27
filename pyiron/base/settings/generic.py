@@ -98,8 +98,9 @@ class Settings(with_metaclass(Singleton)):
                 config=self._configuration
             )
         else:
-            self._install_dialog(config_file=config_file)
-            self._config_parse_file(config_file=config_file)
+            print("Fall back to default configuration: "
+                  "{'resource_paths': ['~/pyiron/resources'], "
+                  "'project_paths': ['~/pyiron/projects']}")
 
         # Take dictionary as primary source - overwrite everything
         self._read_external_config(config=config)
@@ -498,24 +499,6 @@ class Settings(with_metaclass(Singleton)):
                     )
 
     @staticmethod
-    def _install_dialog(config_file):
-        user_input = None
-        while user_input not in ["yes", "no"]:
-            user_input = input(
-                "It appears that pyiron is not yet configured, do you want to create a default start configuration (recommended: yes). [yes/no]:"
-            )
-        if user_input.lower() == "yes" or user_input.lower() == "y":
-            install_pyiron(
-                config_file_name=config_file,
-                zip_file="resources.zip",
-                resource_directory="~/pyiron/resources",
-                giturl_for_zip_file="https://github.com/pyiron/pyiron-resources/archive/master.zip",
-                git_folder_name="pyiron-resources-master",
-            )
-        else:
-            raise ValueError("pyiron was not installed!")
-
-    @staticmethod
     def get_config_from_environment(environment, config):
         env_key_mapping = {
             "PYIRONUSER": "user",
@@ -539,6 +522,8 @@ class Settings(with_metaclass(Singleton)):
             if k in environment.keys():
                 if k in ["PYIRONPROJECTCHECKENABLED", "PYIRONDISABLE"]:
                     config[v] = environment[k].lower() in ['t', 'true', 'y', 'yes']
+                elif k in ["PYIRONRESOURCEPATHS", "PYIRONPROJECTPATHS"]:
+                    config[v] = environment[k].split(':')
                 else:
                     config[v] = environment[k]
         return config
@@ -581,9 +566,4 @@ def convert_path(path):
     Returns:
         str: absolute path in POSIX format
     """
-    if not (sys.version_info.major < 3 and os.name == "nt"):
-        return Path(path).expanduser().resolve().absolute().as_posix()
-    else:
-        return os.path.abspath(os.path.normpath(os.path.expanduser(path))).replace(
-            "\\", "/"
-        )
+    return os.path.abspath(os.path.expanduser(path)).replace("\\", "/")

@@ -367,7 +367,7 @@ class LammpsBase(AtomisticGenericJob):
 
         """
         file_name = self.job_file_name(file_name=file_name, cwd=cwd)
-        with h5py.File(file_name, "r", libver="latest", swmr=True) as h5md:
+        with h5py.File(file_name, mode="r", libver="latest", swmr=True) as h5md:
             positions = [
                 pos_i.tolist() for pos_i in h5md["/particles/all/position/value"]
             ]
@@ -450,7 +450,7 @@ class LammpsBase(AtomisticGenericJob):
         pressures = np.stack(
             (df.Pxx, df.Pxy, df.Pxz, df.Pxy, df.Pyy, df.Pyz, df.Pxz, df.Pyz, df.Pzz),
             axis=-1,
-        ).reshape(-1, 3, 3)
+        ).reshape(-1, 3, 3).astype('float64')
         pressures *= 0.0001  # bar -> GPa
         df = df.drop(
             columns=df.columns[

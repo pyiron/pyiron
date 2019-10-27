@@ -698,12 +698,12 @@ class Project(ProjectPath):
             GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
         """
         if self.sql_query is not None:
-            s.logger.warn(
+            s.logger.warning(
                 "SQL filter '%s' is active (may exclude job) ", self.sql_query
             )
         job_id = self.get_job_id(job_specifier=job_specifier)
         if job_id is None:
-            s.logger.warn("Job '%s' does not exist and cannot be loaded", job_specifier)
+            s.logger.warning("Job '%s' does not exist and cannot be loaded", job_specifier)
             return None
         return self.load_from_jobpath(
             job_id=job_id, convert_to_object=convert_to_object
@@ -916,7 +916,7 @@ class Project(ProjectPath):
                 try:
                     job = self.load(job_specifier=job_specifier, convert_to_object=False)
                     if job is None:
-                        s.logger.warn(
+                        s.logger.warning(
                             "Job '%s' does not exist and could not be removed",
                             str(job_specifier),
                         )

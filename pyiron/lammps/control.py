@@ -58,6 +58,8 @@ class LammpsControl(GenericParameters):
         )
         block_dict["compute"] = "compute"
         block_dict["control"] = (
+            "fix___ensemble",
+            "fix___langevin",
             "fix",
             "min_style",
             "min_modify",
@@ -375,5 +377,8 @@ class LammpsControl(GenericParameters):
 
         if initial_temperature > 0:
             self.set_initial_velocity(
-                initial_temperature, gaussian=True, job_name=job_name
+                temperature=initial_temperature,
+                seed=seed,
+                gaussian=True,
+                job_name=job_name
             )

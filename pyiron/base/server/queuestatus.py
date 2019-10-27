@@ -140,7 +140,10 @@ def queue_enable_reservation(item):
     """
     que_id = _validate_que_request(item)
     if s.queue_adapter is not None:
-        return s.queue_adapter.enable_reservation(process_id=que_id)
+        if isinstance(que_id, list):
+            return [s.queue_adapter.enable_reservation(process_id=q) for q in que_id]
+        else:
+            return s.queue_adapter.enable_reservation(process_id=que_id)
     else:
         return None
 
@@ -189,6 +192,14 @@ def _validate_que_request(item):
 
     if isinstance(item, int):
         que_id = item
+    elif static_isinstance(item.__class__, "pyiron.base.master.generic.GenericMaster"):
+        if item.server.queue_id:
+            que_id = item.server.queue_id
+        else:
+            queue_id_lst = [item.project.load(child_id).server.queue_id for child_id in item.child_ids]
+            que_id = [queue_id for queue_id in queue_id_lst if queue_id is not None]
+            if len(que_id) == 0:
+                raise ValueError("This job does not have a queue ID.")
     elif static_isinstance(item.__class__, "pyiron.base.job.generic.GenericJob"):
         if item.server.queue_id:
             que_id = item.server.queue_id

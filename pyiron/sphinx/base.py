@@ -346,7 +346,7 @@ class SphinxBase(GenericDFTJob):
                 posixpath.join(self.working_directory, "rho.sxb")
             )
         elif from_charge_density:
-            self._logger.warn(
+            self._logger.warning(
                 msg="A charge density from job: {} is not generated and therefore it can't be read.".format(
                     self.job_name
                 )
@@ -358,7 +358,7 @@ class SphinxBase(GenericDFTJob):
                 posixpath.join(self.working_directory, "waves.sxb")
             )
         elif from_wave_functions:
-            self._logger.warn(
+            self._logger.warning(
                 msg="A WAVECAR from job: {} is not generated and therefore it can't be read.".format(
                     self.job_name
                 )

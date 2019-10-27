@@ -81,7 +81,7 @@ class VaspInteractive(VaspBase, GenericInteractive):
                     text = " ".join(map("{:19.16f}".format, atom))
                     self._interactive_library.stdin.write(text + "\n")
             except BrokenPipeError:
-                self._logger.warn(
+                self._logger.warning(
                     "VASP calculation exited before interactive_close() - already converged?"
                 )
             for key in self.interactive_cache.keys():
