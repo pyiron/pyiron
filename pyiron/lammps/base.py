@@ -61,6 +61,14 @@ class LammpsBase(AtomisticGenericJob):
         s.publication_add(self.publication)
 
     @property
+    def bond_dict(self):
+        return self.input.bond_dict
+
+    @bond_dict.setter
+    def bond_dict(self, val):
+        self.input.bond_dict = val
+
+    @property
     def cutoff_radius(self):
         """
 
@@ -920,6 +928,11 @@ class Input:
     def __init__(self):
         self.control = LammpsControl()
         self.potential = LammpsPotential()
+        self.bond_dict = dict()
+        self.bond_dict["O"] = dict()
+        self.bond_dict["O"]["element_list"] = ["H"]
+        self.bond_dict["O"]["cutoff_list"] = [2.0]
+        self.bond_dict["O"]["bond_type_list"] = [1]
 
     def to_hdf(self, hdf5):
         """
@@ -933,6 +946,7 @@ class Input:
         with hdf5.open("input") as hdf5_input:
             self.control.to_hdf(hdf5_input)
             self.potential.to_hdf(hdf5_input)
+            hdf5_input["bond_dict"] = self.bond_dict
 
     def from_hdf(self, hdf5):
         """
@@ -946,6 +960,7 @@ class Input:
         with hdf5.open("input") as hdf5_input:
             self.control.from_hdf(hdf5_input)
             self.potential.from_hdf(hdf5_input)
+            self.bond_dict = hdf5_input["bond_dict"]
 
 
 def to_amat(l_list):
