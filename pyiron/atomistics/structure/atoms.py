@@ -1919,8 +1919,8 @@ class Atoms(object):
         neigh = self.get_neighbors(num_neighbors=num_neighbors)
         dist = np.linalg.norm(neigh.vecs-np.array(vector), axis=-1)
         if deviation:
-            return neigh.indices[np.arange(len(dist)), np.argmin(dist, axis=-1)], np.min(dist, axis=-1)
-        return neigh.indices[np.arange(len(dist)), np.argmin(dist, axis=-1)]
+            return neigh.indices[np.arange(len(dist))][np.argmin(dist, axis=-1)], np.min(dist, axis=-1)
+        return neigh.indices[np.arange(len(dist))][np.argmin(dist, axis=-1)]
 
     def get_shells(self, id_list=None, max_shell=2, max_num_neighbors=100):
         """
