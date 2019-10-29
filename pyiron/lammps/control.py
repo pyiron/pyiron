@@ -388,7 +388,7 @@ class LammpsControl(GenericParameters):
         mc_step_interval=100,
         swap_fraction=0.1,
         temperature_mc=None,
-        deltamu=0.,
+        delta_mu=0.,
         kappa=1000.,
         target_concentration=0.,
         temperature=None,
@@ -451,7 +451,7 @@ class LammpsControl(GenericParameters):
             str(mc_step_interval),
             str(swap_fraction),
             str(temperature_mc),
-            str(deltamu),
+            str(delta_mu),
             str(kappa),
             str(target_concentration)
         )
