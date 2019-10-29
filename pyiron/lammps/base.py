@@ -378,13 +378,13 @@ class LammpsBase(AtomisticGenericJob):
                 np.eye(3) * np.array(cell_i.tolist())
                 for cell_i in h5md["/particles/all/box/edges/value"]
             ]
-            species = [species_i.tolist() for species_i in h5md["/particles/all/species/value"]]
+            indices = [indices_i.tolist() for indices_i in h5md["/particles/all/indices/value"]]
         with self.project_hdf5.open("output/generic") as h5_file:
             h5_file["forces"] = np.array(forces)
             h5_file["positions"] = np.array(positions)
             h5_file["time"] = np.array(time)
             h5_file["cells"] = cell
-            h5_file["indices"] = species
+            h5_file["indices"] = indices
 
     def collect_errors(self, file_name, cwd=None):
         """
