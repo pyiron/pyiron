@@ -323,8 +323,10 @@ class LammpsBase(AtomisticGenericJob):
         if os.path.isfile(
             self.job_file_name(file_name="dump.h5", cwd=self.working_directory)
         ):
+            print("Collecting h5md file")
             self.collect_h5md_file(file_name="dump.h5", cwd=self.working_directory)
         else:
+            print("Collecting dump file")
             self.collect_dump_file(file_name="dump.out", cwd=self.working_directory)
         self.collect_output_log(file_name="log.lammps", cwd=self.working_directory)
         final_structure = self.get_structure(iteration_step=-1)
@@ -384,7 +386,7 @@ class LammpsBase(AtomisticGenericJob):
             h5_file["positions"] = np.array(positions)
             h5_file["time"] = np.array(time)
             h5_file["cells"] = cell
-            h5_file["species"] = species
+            h5_file["indices"] = species
 
     def collect_errors(self, file_name, cwd=None):
         """
@@ -716,7 +718,7 @@ class LammpsBase(AtomisticGenericJob):
             )
             for llst, llen in zip(l_start, l_end)
         ]
-
+        output["indices"] = np.array([cc["type"] for cc in content])
         forces = np.array(
             [np.stack((cc["fx"], cc["fy"], cc["fz"]), axis=-1) for cc in content]
         )
