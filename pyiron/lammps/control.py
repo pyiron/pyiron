@@ -444,6 +444,8 @@ class LammpsControl(GenericParameters):
 
         if temperature_mc is None:
             temperature_mc = temperature
+        if seed is None:
+            self.generate_seed_from_job(job_name=job_name)
 
         fix_vcsgc_str = "all sgcmc {0} {1} {2} {3} randseed {4} variance {5} {6}".format(
             str(mc_step_interval),
