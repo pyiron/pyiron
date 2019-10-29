@@ -501,6 +501,7 @@ class AtomisticGenericJob(GenericJobCore):
         if snapshot_indices is not None:
             positions = positions[snapshot_indices]
             cells = cells[snapshot_indices]
+            indices = indices[snapshot_indices]
         if atom_indices is None:
             return Trajectory(
                 positions[::stride],
