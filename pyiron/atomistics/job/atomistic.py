@@ -473,6 +473,7 @@ class AtomisticGenericJob(GenericJobCore):
 
         """
         cells = self.output.cells
+        indices = self['output/generic/indices']
         if overwrite_positions is not None:
             positions = np.array(overwrite_positions).copy()
             if overwrite_cells is not None:
@@ -506,6 +507,7 @@ class AtomisticGenericJob(GenericJobCore):
                 self.structure.get_parent_basis(),
                 center_of_mass=center_of_mass,
                 cells=cells[::stride],
+                indices=indices[::stride]
             )
         else:
             return Trajectory(
@@ -513,6 +515,7 @@ class AtomisticGenericJob(GenericJobCore):
                 self.structure.get_parent_basis()[atom_indices],
                 center_of_mass=center_of_mass,
                 cells=cells[::stride],
+                indices=indices[::stride, atom_indices, :]
             )
 
     def write_traj(
@@ -743,7 +746,7 @@ class Trajectory(object):
                                 varies
     """
 
-    def __init__(self, positions, structure, center_of_mass=False, cells=None):
+    def __init__(self, positions, structure, center_of_mass=False, cells=None, indices=None):
         if center_of_mass:
             pos = np.copy(positions)
             pos[:, :, 0] = (pos[:, :, 0].T - np.mean(pos[:, :, 0], axis=1)).T
@@ -754,11 +757,14 @@ class Trajectory(object):
             self._positions = positions
         self._structure = structure
         self._cells = cells
+        self._indices = indices
 
     def __getitem__(self, item):
         new_structure = self._structure.copy()
         if self._cells is not None:
             new_structure.cell = self._cells[item]
+        if self._indices is not None:
+            new_structure.indices = self._indices[item]
         new_structure.positions = self._positions[item]
         # This step is necessary for using ase.io.write for trajectories
         new_structure.arrays["positions"] = new_structure.positions
