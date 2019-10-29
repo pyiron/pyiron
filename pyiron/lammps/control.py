@@ -427,21 +427,152 @@ class LammpsControl(GenericParameters):
         """
         assert(n_ionic_steps % mc_step_interval == 0)
 
-        self.calc_md(
-            temperature=temperature,
-            pressure=pressure,
-            n_ionic_steps=n_ionic_steps,
-            time_step=time_step,
-            n_print=n_print,
-            temperature_damping_timescale=temperature_damping_timescale,
-            pressure_damping_timescale=pressure_damping_timescale,
-            seed=seed,
-            tloop=None,
-            initial_temperature=initial_temperature,
-            langevin=langevin,
-            job_name=job_name
+        # self.calc_md(
+        #     temperature=temperature,
+        #     pressure=pressure,
+        #     n_ionic_steps=n_ionic_steps,
+        #     time_step=time_step,
+        #     n_print=n_print,
+        #     temperature_damping_timescale=temperature_damping_timescale,
+        #     pressure_damping_timescale=pressure_damping_timescale,
+        #     seed=seed,
+        #     tloop=None,
+        #     initial_temperature=initial_temperature,
+        #     langevin=langevin,
+        #     job_name=job_name
+        # )
+        # self.remove_keys(["run"])
+
+        # Run is always showing up before the MC, so copy and paste MD code...
+        ########################### COPIED MD (except deprecated thermo and barostat variables)
+        # Conversion factors for transfroming pyiron units to Lammps units
+        fs_to_ps = spc.femto / spc.pico
+        fs_to_s = spc.femto / 1.0
+        GPa_to_bar = spc.giga * 1.0 / spc.bar
+        GPa_to_Pa = spc.giga
+        GPa_to_barye = spc.giga * 1.0 / (1.0e-6 * spc.bar)  # Lammps is in "barye"
+        GPa_to_atm = spc.giga * 1.0 / spc.atm
+        lammps_unit_conversions = {
+            "metal": {"time": fs_to_ps, "pressure": GPa_to_bar},
+            "si": {"time": fs_to_s, "pressure": GPa_to_Pa},
+            "cgs": {"time": fs_to_s, "pressure": GPa_to_barye},
+            "real": {"time": 1, "pressure": GPa_to_atm},
+            "electron": {"time": 1, "pressure": GPa_to_Pa},
+        }
+        time_units = lammps_unit_conversions[self["units"]]["time"]
+        pressure_units = lammps_unit_conversions[self["units"]]["pressure"]
+        # No need for temperature conversion; pyiron and all available Lammps units are both in Kelvin
+        # (well, except unitless Lennard-Jones units...)
+        if self["units"] == "lj":
+            raise NotImplementedError
+
+        # Transform time
+        if time_step is not None:
+            try:
+                self["timestep"] = time_step * time_units
+            except KeyError:
+                raise NotImplementedError()
+
+        # Transform thermostat strength
+        temperature_damping_timescale *= time_units
+
+        # Transform barostat strength
+        pressure_damping_timescale *= time_units
+
+        # Apply initial overheating (default uses the theorem of equipartition of energy between KE and PE)
+        if initial_temperature is None and temperature is not None:
+            initial_temperature = 2 * temperature
+
+        if seed is None:
+            seed = self.generate_seed_from_job(job_name=job_name)
+
+        # Set thermodynamic ensemble
+        if pressure is not None:  # NPT
+            if not hasattr(pressure, "__len__"):
+                pressure = pressure * np.ones(3)
+            else:
+                pressure = np.array(pressure)
+
+            if sum(pressure != None) == 0:
+                raise ValueError("Pressure cannot be three times None")
+
+            if len(pressure) != 3:
+                raise ValueError("Pressure must be a float or a 3d vector")
+
+            if temperature is None or temperature == 0.0:
+                raise ValueError("Target temperature for fix nvt/npt/nph cannot be 0")
+
+            pressure[pressure != None] *= pressure_units
+
+            pressure_string = ""
+            for coord, value in zip(["x", "y", "z"], pressure):
+                if value is not None:
+                    pressure_string += " {0} {1} {1} {2}".format(
+                        coord, str(value), str(pressure_damping_timescale)
+                    )
+
+            if langevin:  # NPT(Langevin)
+                fix_ensemble_str = "all nph" + pressure_string
+                self.modify(
+                    fix___langevin="all langevin {0} {1} {2} {3} zero yes".format(
+                        str(temperature),
+                        str(temperature),
+                        str(temperature_damping_timescale),
+                        str(seed),
+                    ),
+                    append_if_not_present=True,
+                )
+            else:  # NPT(Nose-Hoover)
+                fix_ensemble_str = "all npt temp {0} {1} {2}".format(
+                    str(temperature),
+                    str(temperature),
+                    str(temperature_damping_timescale),
+                )
+                fix_ensemble_str += pressure_string
+        elif temperature is not None:  # NVT
+            if temperature == 0.0:
+                raise ValueError("Target temperature for fix nvt/npt/nph cannot be 0.0")
+
+            if langevin:  # NVT(Langevin)
+                fix_ensemble_str = "all nve"
+                self.modify(
+                    fix___langevin="all langevin {0} {1} {2} {3} zero yes".format(
+                        str(temperature),
+                        str(temperature),
+                        str(temperature_damping_timescale),
+                        str(seed),
+                    ),
+                    append_if_not_present=True,
+                )
+            else:  # NVT(Nose-Hoover)
+                fix_ensemble_str = "all nvt temp {0} {1} {2}".format(
+                    str(temperature),
+                    str(temperature),
+                    str(temperature_damping_timescale),
+                )
+        else:  # NVE
+            if langevin:
+                warnings.warn("Temperature not set; Langevin ignored.")
+            fix_ensemble_str = "all nve"
+            initial_temperature = 0
+        ########################### MODIFIED MD
+
+        self.remove_keys(["minimize"])
+        self.modify(
+            fix___ensemble=fix_ensemble_str,
+            variable___dumptime=" equal {} ".format(n_print),
+            thermo=int(n_print),
+            append_if_not_present=True,
         )
-        self.remove_keys(["run"])
+
+        if initial_temperature > 0:
+            self.set_initial_velocity(
+                temperature=initial_temperature,
+                seed=seed,
+                gaussian=True,
+                job_name=job_name
+            )
+        ########################### END MD
 
         if temperature_mc is None:
             temperature_mc = temperature
