@@ -323,10 +323,8 @@ class LammpsBase(AtomisticGenericJob):
         if os.path.isfile(
             self.job_file_name(file_name="dump.h5", cwd=self.working_directory)
         ):
-            print("Collecting h5md file")
             self.collect_h5md_file(file_name="dump.h5", cwd=self.working_directory)
         else:
-            print("Collecting dump file")
             self.collect_dump_file(file_name="dump.out", cwd=self.working_directory)
         self.collect_output_log(file_name="log.lammps", cwd=self.working_directory)
         final_structure = self.get_structure(iteration_step=-1)
