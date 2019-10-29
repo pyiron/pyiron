@@ -384,7 +384,7 @@ class LammpsBase(AtomisticGenericJob):
             h5_file["positions"] = np.array(positions)
             h5_file["time"] = np.array(time)
             h5_file["cells"] = cell
-            h5_file["indices"] = indices
+            h5_file["indices"] = np.array(indices, dtype=int) - 1  # Lammps starts counting at 1, we start at 0
 
     def collect_errors(self, file_name, cwd=None):
         """
@@ -716,7 +716,7 @@ class LammpsBase(AtomisticGenericJob):
             )
             for llst, llen in zip(l_start, l_end)
         ]
-        output["indices"] = np.array([cc["type"] for cc in content])
+        output["indices"] = np.array([cc["type"] for cc in content], dtype=int) - 1  # Lammps starts counting at 1
         forces = np.array(
             [np.stack((cc["fx"], cc["fy"], cc["fz"]), axis=-1) for cc in content]
         )
