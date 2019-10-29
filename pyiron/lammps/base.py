@@ -635,7 +635,7 @@ class LammpsBase(AtomisticGenericJob):
             mc_step_interval=mc_step_interval,
             swap_fraction=swap_fraction,
             temperature_mc=temperature_mc,
-            deltamu=deltamu,
+            delta_mu=delta_mu,
             kappa=kappa,
             target_concentration=target_concentration,
             temperature=temperature,
