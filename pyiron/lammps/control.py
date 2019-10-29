@@ -382,3 +382,86 @@ class LammpsControl(GenericParameters):
                 gaussian=True,
                 job_name=job_name
             )
+
+    def calc_vcsgc_binary(
+        self,
+        mc_step_interval=100,
+        swap_fraction=0.1,
+        temperature_mc=None,
+        deltamu=0.,
+        kappa=1000.,
+        target_concentration=0.,
+        temperature=None,
+        pressure=None,
+        n_ionic_steps=1000,
+        time_step=1.0,
+        n_print=100,
+        temperature_damping_timescale=100.0,
+        pressure_damping_timescale=1000.0,
+        seed=None,
+        initial_temperature=None,
+        langevin=False,
+        job_name="",
+    ):
+        """
+        Run variance-constrained semi-grand-canonical MD/MC for a binary system.
+
+        https://vcsgc-lammps.materialsmodeling.org
+
+        Note:
+            For easy visualization later (with `get_structure`), it is highly recommended that the initial structure
+            contain at least one atom of each species.
+
+        Warning:
+            Assumes the units are metal, otherwise units for the constraints may be off.
+
+        Args:
+            mc_step_interval: How many steps of MD between each set of MC moves. (Default is 100.) Must divide the
+                number of ionic steps evenly.
+            swap_fraction: The fraction of atoms whose species is swapped at each MC phase. (Default is 0.1.)
+            temperature_mc: The temperature for accepting MC steps. (Default is None, which uses the MD temperature.)
+            deltamu: The chemical potential difference to replace the first species by the second in eV. (Default is
+                0 eV.)
+            kappa: Variance constraint for the MC. (Default is 1000.)
+            target_concentration: Variance constraint for the MC. (Default is 1000.)
+        """
+        assert(n_ionic_steps % mc_step_interval == 0)
+
+        self.calc_md(
+            temperature=temperature,
+            pressure=pressure,
+            n_ionic_steps=n_ionic_steps,
+            time_step=time_step,
+            n_print=n_print,
+            temperature_damping_timescale=temperature_damping_timescale,
+            pressure_damping_timescale=pressure_damping_timescale,
+            seed=seed,
+            tloop=None,
+            initial_temperature=initial_temperature,
+            langevin=langevin,
+            job_name=job_name
+        )
+
+        if temperature_mc is None:
+            temperature_mc = temperature
+
+        fix_vcsgc_str = "all sgcmc {0} {1} {2} {3} randseed {4} variance {5} {6}".format(
+            str(mc_step_interval),
+            str(swap_fraction),
+            str(temperature_mc),
+            str(deltamu),
+            str(kappa),
+            str(target_concentration)
+        )
+        self.modify(
+            fix___mc=fix_vcsgc_str,
+            append_if_not_present=True
+        )
+
+        self.remove_keys(["run"])
+        self.modify(
+            run=int(n_ionic_steps),
+            append_if_not_present=True,
+        )
+
+
