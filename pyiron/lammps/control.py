@@ -441,6 +441,7 @@ class LammpsControl(GenericParameters):
             langevin=langevin,
             job_name=job_name
         )
+        self.remove_keys(["run"])
 
         if temperature_mc is None:
             temperature_mc = temperature
@@ -461,7 +462,6 @@ class LammpsControl(GenericParameters):
             append_if_not_present=True
         )
 
-        self.remove_keys(["run"])
         self.modify(
             run=int(n_ionic_steps),
             append_if_not_present=True,
