@@ -452,6 +452,7 @@ class LammpsControl(GenericParameters):
             str(swap_fraction),
             str(temperature_mc),
             str(delta_mu),
+            str(seed),
             str(kappa),
             str(target_concentration)
         )
