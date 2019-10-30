@@ -447,7 +447,7 @@ class LammpsStructure(GenericParameters):
                         bonds_lst.append([id_el + 1, fi + 1])
                         bond_type_lst.append(bond_type)
                     print(len(final_ind) == 2 and val["angle_type_list"][i] is not None)
-                    if len(final_ind) == 2 and val["angle_type_list"][i] is not None:
+                    if len(final_ind) >= 2 and val["angle_type_list"][i] is not None:
                         angles_lst.append([final_ind[0] + 1, id_el + 1, final_ind[1] + 1])
                         angle_type_lst.append(angle_type)
         m_lst = np.array(molecule_lst)
