@@ -426,10 +426,8 @@ class LammpsStructure(GenericParameters):
         # Draw bonds between atoms is defined in self._bond_dict
         # Go through all elements for which bonds are defined
         for element, val in self._bond_dict.items():
-            print("element entry:", element)
             el_1_list = self._structure.select_index(element)
             for i, v in enumerate(val["element_list"]):
-                print("element list entry:", v)
                 el_2_list = self._structure.select_index(v)
                 cutoff_dist = val["cutoff_list"][i]
                 for j, ind in enumerate(neighbors.indices[el_1_list]):
@@ -446,14 +444,11 @@ class LammpsStructure(GenericParameters):
                     for fi in final_ind:
                         bonds_lst.append([id_el + 1, fi + 1])
                         bond_type_lst.append(bond_type)
-                    print(len(final_ind) == 2, val["angle_type_list"][i] is not None, val["angle_type_list"][i], val["angle_type_list"][i], final_ind)
                     if len(final_ind) >= 2 and val["angle_type_list"][i] is not None:
                         angles_lst.append([final_ind[0] + 1, id_el + 1, final_ind[1] + 1])
                         angle_type_lst.append(angle_type)
         m_lst = np.array(molecule_lst)
         molecule_lst = m_lst[m_lst[:, 0].argsort()]
-        print("Max num of bonds and angles", bond_type_lst, angle_type_lst)
-        print("Max num of bonds and angles", int(np.max(bond_type_lst)), int(np.max(angle_type_lst)))
         atomtypes = (
             " Start File for LAMMPS \n"
             + "{0:d} atoms".format(len(self._structure))
@@ -470,10 +465,7 @@ class LammpsStructure(GenericParameters):
             + " \n"
         )
 
-        print(atomtypes)
-
         cell_dimensions = self.simulation_cell()
-
         masses = "Masses" + "\n\n"
         # el_obj_list = self._structure.get_species_objects()
         el_obj_list = self._structure.species
