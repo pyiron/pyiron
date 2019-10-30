@@ -451,6 +451,7 @@ class LammpsStructure(GenericParameters):
                         angle_type_lst.append(angle_type)
         m_lst = np.array(molecule_lst)
         molecule_lst = m_lst[m_lst[:, 0].argsort()]
+        print("Max num of bonds and angles", bond_type_lst, angle_type_lst)
         print("Max num of bonds and angles", int(np.max(bond_type_lst)), int(np.max(angle_type_lst)))
         atomtypes = (
             " Start File for LAMMPS \n"
