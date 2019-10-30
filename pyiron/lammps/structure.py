@@ -426,8 +426,10 @@ class LammpsStructure(GenericParameters):
         # Draw bonds between atoms is defined in self._bond_dict
         # Go through all elements for which bonds are defined
         for element, val in self._bond_dict.items():
+            print("element entry:", element)
             el_1_list = self._structure.select_index(element)
             for i, v in enumerate(val["element_list"]):
+                print("element list entry:", v)
                 el_2_list = self._structure.select_index(v)
                 cutoff_dist = val["cutoff_list"][i]
                 for j, ind in enumerate(neighbors.indices[el_1_list]):
