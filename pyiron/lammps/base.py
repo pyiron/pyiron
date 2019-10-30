@@ -933,6 +933,7 @@ class Input:
         self.bond_dict["O"]["element_list"] = ["H"]
         self.bond_dict["O"]["cutoff_list"] = [2.0]
         self.bond_dict["O"]["bond_type_list"] = [1]
+        self.bond_dict["O"]["angle_type_list"] = [1]
 
     def to_hdf(self, hdf5):
         """
