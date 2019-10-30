@@ -406,54 +406,47 @@ class LammpsStructure(GenericParameters):
         q_dict = {}
         for el in self._structure.get_species_symbols():
             q_dict[el] = float(self.potential.get("set group {} charge".format(el)))
-
-        # species_translate_list = list()
-        # sorted_species_list = self._structure.get_species_symbols()
-        # for el in self._structure.species:
-        #     ind = np.argwhere(sorted_species_list == el.Abbreviation).flatten()[-1]
-        #     species_translate_list.append(ind)
-
         species_translate_list = [self.potential.get("group {} type".format(el.Abbreviation))
                                   for el in self.structure.species]
 
-        # Drawing bonds only for water molecules
         molecule_lst, bonds_lst, angles_lst = [], [], []
-
+        bond_type_lst, angle_type_lst = [], []
         # Using a cutoff distance to draw the bonds instead of the number of neighbors
-        neighbors = self._structure.get_neighbors(cutoff=2)
+        cutoff_list = list()
+        for val in self._bond_dict.values():
+            cutoff_list.append(np.max(val["cutoff_list"]))
+        max_cutoff = np.max(cutoff_list)
+        # Calculate neighbors only once
+        neighbors = self._structure.get_neighbors(cutoff=max_cutoff)
         id_mol = 0
         indices = self._structure.indices
-        o_indices = self._structure.select_index("O")
-        h_indices = self._structure.select_index("H")
         for id_el, id_species in enumerate(indices):
-            el = self._structure.species[id_species]
-            if el.Abbreviation in ["O"]:
-                id_mol += 1
-                molecule_lst.append([id_el, id_mol, species_translate_list[id_species]])
-                # Just to ensure that the attached atoms are indeed H atoms
-                bool_list = np.in1d(neighbors.indices[id_el], h_indices)
-                water_hydrogens = neighbors.indices[id_el][bool_list]
-                if len(water_hydrogens) >= 2:
-                    id_n1, id_n2 = water_hydrogens[0:2]
-                    molecule_lst.append(
-                        [id_n1, id_mol, species_translate_list[indices[id_n1]]]
-                    )
-                    molecule_lst.append(
-                        [id_n2, id_mol, species_translate_list[indices[id_n2]]]
-                    )
-
-                    bonds_lst.append([id_el + 1, id_n1 + 1])
-                    bonds_lst.append([id_el + 1, id_n2 + 1])
-
-                    angles_lst.append([id_n1 + 1, id_el + 1, id_n2 + 1])
-            elif el.Abbreviation not in ["H"]:  # non-bonded ions
-                id_mol += 1
-                molecule_lst.append([id_el, id_mol, species_translate_list[id_species]])
-            else:
-                # Write H ion if no oxygens are present in its vicinity
-                if len(np.intersect1d(neighbors.indices[id_el], o_indices)) == 0:
-                    id_mol += 1
-                    molecule_lst.append([id_el, id_mol, species_translate_list[id_species]])
+            id_mol += 1
+            molecule_lst.append([id_el, id_mol, species_translate_list[id_species]])
+        # Draw bonds between atoms is defined in self._bond_dict
+        # Go through all elements for which bonds are defined
+        for element, val in self._bond_dict.items():
+            el_1_list = self._structure.select_index(element)
+            for i, v in enumerate(val["element_list"]):
+                el_2_list = self._structure.select_index(v)
+                cutoff_dist = val["cutoff_list"][i]
+                for j, ind in enumerate(neighbors.indices[el_1_list]):
+                    # Only chose those indices within the cutoff distance and which belong
+                    # to the species defined in the element_list
+                    # i is the index of each bond type, and j is the element index
+                    id_el = el_1_list[j]
+                    bool_1 = neighbors.distances[id_el] <= cutoff_dist
+                    act_ind = ind[bool_1]
+                    bool_2 = np.in1d(act_ind, el_2_list)
+                    final_ind = act_ind[bool_2]
+                    bond_type = val["bond_type_list"][i]
+                    angle_type = val["angle_type_list"][i]
+                    for fi in final_ind:
+                        bonds_lst.append([id_el + 1, fi + 1])
+                        bond_type_lst.append(bond_type)
+                    if len(final_ind) == 2 and val["angle_type_list"][i] is not None:
+                        angles_lst.append([final_ind[0] + 1, id_el + 1, final_ind[1] + 1])
+                        angle_type_lst.append(angle_type)
         m_lst = np.array(molecule_lst)
         molecule_lst = m_lst[m_lst[:, 0].argsort()]
         atomtypes = (
@@ -466,9 +459,9 @@ class LammpsStructure(GenericParameters):
             + " \n"
             + "{0} atom types".format(self._structure.get_number_of_species())
             + " \n"
-            + "{0} bond types".format(1)
+            + "{0} bond types".format(int(np.max(bond_type_lst)))
             + " \n"
-            + "{0} angle types".format(1)
+            + "{0} angle types".format(int(np.max(angle_type_lst)))
             + " \n"
         )
 
@@ -502,7 +495,7 @@ class LammpsStructure(GenericParameters):
             for i_bond, id_vec in enumerate(bonds_lst):
                 bonds_str += (
                     "{0:d} {1:d} {2:d} {3:d}".format(
-                        i_bond + 1, 1, id_vec[0], id_vec[1]
+                        i_bond + 1, bond_type_lst[i_bond], id_vec[0], id_vec[1]
                     )
                     + "\n"
                 )
@@ -515,7 +508,7 @@ class LammpsStructure(GenericParameters):
                 # print "id: ", i_angle, id_vec
                 angles_str += (
                     "{0:d} {1:d} {2:d} {3:d} {4:d}".format(
-                        i_angle + 1, 1, id_vec[0], id_vec[1], id_vec[2]
+                        i_angle + 1, angle_type_lst[i_angle], id_vec[0], id_vec[1], id_vec[2]
                     )
                     + "\n"
                 )
