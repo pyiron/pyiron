@@ -62,11 +62,41 @@ class LammpsBase(AtomisticGenericJob):
 
     @property
     def bond_dict(self):
+        """
+        A dictionary which defines the nature of LAMMPS bonds that are to be drawn between atoms. To set the values, use
+        the function `define_bonds`.
+
+        Returns:
+            dict: Dictionary of the bond properties for every species
+
+        """
         return self.input.bond_dict
 
-    @bond_dict.setter
-    def bond_dict(self, val):
-        self.input.bond_dict = val
+    def define_bonds(self, species, element_list, cutoff_list, bond_type_list, angle_type_list=None):
+        """
+        Define the nature of bonds between different species. Make sure that the bonds between two species are defined
+        only once (no double counting).
+
+        Args:
+            species (str): Species for which the bonds are to be drawn (e.g. O, H, C ..)
+            element_list (list): List of species to which the bonds are to be made (e.g. O, H, C, ..)
+            cutoff_list (list): Draw bonds only for atoms within this cutoff distance
+            bond_type_list (list): Type of the bond as defined in the LAMMPS potential file
+            angle_type_list (list): Type of the angle as defined in the LAMMPS potential file
+
+        """
+        if isinstance(species, str):
+            if len(element_list) == len(cutoff_list) == bond_type_list:
+                self.input.bond_dict[species] = dict()
+                self.input.bond_dict[species]["element_list"] = element_list
+                self.input.bond_dict[species]["cutoff_list"] = cutoff_list
+                self.input.bond_dict[species]["bond_type_list"] = bond_type_list
+                if angle_type_list is not None:
+                    self.input.bond_dict[species]["angle_type_list"] = angle_type_list
+                else:
+                    self.input.bond_dict[species]["angle_type_list"] = [None]
+            else:
+                raise ValueError("The element list, cutoff list and the bond type list must have the same length")
 
     @property
     def cutoff_radius(self):
