@@ -84,6 +84,13 @@ class LammpsBase(AtomisticGenericJob):
             bond_type_list (list): Type of the bond as defined in the LAMMPS potential file
             angle_type_list (list): Type of the angle as defined in the LAMMPS potential file
 
+        Example:
+            The command below defined bonds between O and H atoms within a cutoff raduis of 2 $\AA$ with the bond and
+            angle types 1 defined in the potential file used
+
+            >> job_lammps.define_bonds(species="O", element_list-["H"], cutoff_list=[2.0], bond_type_list=[1],
+            angle_type_list=[1])
+
         """
         if isinstance(species, str):
             if len(element_list) == len(cutoff_list) == bond_type_list:
