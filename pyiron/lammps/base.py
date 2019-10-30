@@ -947,7 +947,6 @@ class Input:
         with hdf5.open("input") as hdf5_input:
             self.control.to_hdf(hdf5_input)
             self.potential.to_hdf(hdf5_input)
-            hdf5_input["bond_dict"] = self.bond_dict
 
     def from_hdf(self, hdf5):
         """
@@ -961,7 +960,8 @@ class Input:
         with hdf5.open("input") as hdf5_input:
             self.control.from_hdf(hdf5_input)
             self.potential.from_hdf(hdf5_input)
-            self.bond_dict = hdf5_input["bond_dict"]
+            if "bond_dict" in hdf5_input.list_nodes():
+                self.bond_dict = hdf5_input["bond_dict"]
 
 
 def to_amat(l_list):
