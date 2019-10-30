@@ -456,6 +456,16 @@ class LammpsStructure(GenericParameters):
                                 angle_type_lst.append(angle_type)
         m_lst = np.array(molecule_lst)
         molecule_lst = m_lst[m_lst[:, 0].argsort()]
+
+        if len(bond_type_lst) == 0:
+            num_bond_types = 0
+        else:
+            num_bond_types = int(np.max(bond_type_lst))
+        if len(angle_type_lst) == 0:
+            num_angle_types = 0
+        else:
+            num_angle_types = int(np.max(angle_type_lst))
+
         atomtypes = (
             " Start File for LAMMPS \n"
             + "{0:d} atoms".format(len(self._structure))
@@ -466,9 +476,9 @@ class LammpsStructure(GenericParameters):
             + " \n"
             + "{0} atom types".format(self._structure.get_number_of_species())
             + " \n"
-            + "{0} bond types".format(int(np.max(bond_type_lst)))
+            + "{0} bond types".format(num_bond_types)
             + " \n"
-            + "{0} angle types".format(int(np.max(angle_type_lst)))
+            + "{0} angle types".format(num_angle_types)
             + " \n"
         )
 
