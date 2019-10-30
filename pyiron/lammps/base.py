@@ -72,7 +72,7 @@ class LammpsBase(AtomisticGenericJob):
         """
         return self.input.bond_dict
 
-    def define_bonds(self, species, element_list, cutoff_list, bond_type_list, angle_type_list=None):
+    def define_bonds(self, species, element_list, cutoff_list, max_bond_list, bond_type_list, angle_type_list=None):
         """
         Define the nature of bonds between different species. Make sure that the bonds between two species are defined
         only once (no double counting).
@@ -81,6 +81,7 @@ class LammpsBase(AtomisticGenericJob):
             species (str): Species for which the bonds are to be drawn (e.g. O, H, C ..)
             element_list (list): List of species to which the bonds are to be made (e.g. O, H, C, ..)
             cutoff_list (list): Draw bonds only for atoms within this cutoff distance
+            max_bond_list (list): Maximum number of bonds drawn from each molecule
             bond_type_list (list): Type of the bond as defined in the LAMMPS potential file
             angle_type_list (list): Type of the angle as defined in the LAMMPS potential file
 
@@ -93,17 +94,19 @@ class LammpsBase(AtomisticGenericJob):
 
         """
         if isinstance(species, str):
-            if len(element_list) == len(cutoff_list) == bond_type_list:
+            if len(element_list) == len(cutoff_list) == bond_type_list == max_bond_list:
                 self.input.bond_dict[species] = dict()
                 self.input.bond_dict[species]["element_list"] = element_list
                 self.input.bond_dict[species]["cutoff_list"] = cutoff_list
                 self.input.bond_dict[species]["bond_type_list"] = bond_type_list
+                self.input.bond_dict[species]["max_bond_list"] = max_bond_list
                 if angle_type_list is not None:
                     self.input.bond_dict[species]["angle_type_list"] = angle_type_list
                 else:
                     self.input.bond_dict[species]["angle_type_list"] = [None]
             else:
-                raise ValueError("The element list, cutoff list and the bond type list must have the same length")
+                raise ValueError("The element list, cutoff list, max bond list, and the bond type list"
+                                 " must have the same length")
 
     @property
     def cutoff_radius(self):
@@ -969,6 +972,7 @@ class Input:
         self.bond_dict["O"] = dict()
         self.bond_dict["O"]["element_list"] = ["H"]
         self.bond_dict["O"]["cutoff_list"] = [2.0]
+        self.bond_dict["O"]["max_bond_list"] = [2]
         self.bond_dict["O"]["bond_type_list"] = [1]
         self.bond_dict["O"]["angle_type_list"] = [1]
 

@@ -439,11 +439,16 @@ class LammpsStructure(GenericParameters):
                     act_ind = ind[bool_1]
                     bool_2 = np.in1d(act_ind, el_2_list)
                     final_ind = act_ind[bool_2]
+                    # Get the bond and angle type
                     bond_type = val["bond_type_list"][i]
                     angle_type = val["angle_type_list"][i]
+                    # Draw only maximum allowed bonds
+                    final_ind = final_ind[:val["max_bond_list"][i]]
                     for fi in final_ind:
                         bonds_lst.append([id_el + 1, fi + 1])
                         bond_type_lst.append(bond_type)
+                    # Draw angles if at least 2 bonds are present and if an angle type is defined for this particular
+                    # set of bonds
                     if len(final_ind) >= 2 and val["angle_type_list"][i] is not None:
                         angles_lst.append([final_ind[0] + 1, id_el + 1, final_ind[1] + 1])
                         angle_type_lst.append(angle_type)
