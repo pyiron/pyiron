@@ -395,6 +395,16 @@ class LammpsBase(AtomisticGenericJob):
         and (b) Lammps indexing is dependent on the potential used and you may not be looking at the first element, or
         may have gaps in the elements you're looking at.
 
+        Warning:
+            This can result in weird species swaps for your output structures after a run, since Lammps writes indices
+            based on the order the species are declared in the Lammps input file, while pyiron writes them in the order
+            the species are added to the structure.
+
+        TODO:
+            Make a fix the obsolete that warning! Somewhere there must be index mapping code to *write* the Lammps input
+            we just need to do something similar when *reading* the Lammps output so that the original index-species
+            relationship is preserved.
+
         Args:
             indices (numpy.ndarray/list): The original integers.
 
