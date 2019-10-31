@@ -411,6 +411,7 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
             numpy.ndarray: Those integers mapped onto the first N integers.
         """
+        print(indices)
         original_indices = np.array(indices, dtype=int)
         unique_indices = np.unique(original_indices)  # Unique and sorted!
         for n, unique_i in enumerate(unique_indices):
