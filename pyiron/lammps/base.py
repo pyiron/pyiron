@@ -384,7 +384,29 @@ class LammpsBase(AtomisticGenericJob):
             h5_file["positions"] = np.array(positions)
             h5_file["time"] = np.array(time)
             h5_file["cells"] = cell
-            h5_file["indices"] = np.array(indices, dtype=int) - 1  # Lammps starts counting at 1, we start at 0
+            h5_file["indices"] = self.reorder_indices(indices)
+
+    @staticmethod
+    def reorder_indices(indices):
+        """
+        Given an array of integers, remaps those integers onto the range (0, number of unique integers).
+
+        This is necessary since Lammps dumps of structures (a) start counting at 1 while python starts counting at 0,
+        and (b) Lammps indexing is dependent on the potential used and you may not be looking at the first element, or
+        may have gaps in the elements you're looking at.
+
+        Args:
+            indices (numpy.ndarray/list): The original integers.
+
+        Returns:
+            numpy.ndarray: Those integers mapped onto the first N integers.
+        """
+        original_indices = np.array(indices, dtype=int)
+        unique_indices = np.unique(original_indices)  # Unique and sorted!
+        for n, unique_i in enumerate(unique_indices):
+            indices[np.argwhere(original_indices == unique_i).reshape(-1)] = n
+
+        return indices
 
     def collect_errors(self, file_name, cwd=None):
         """
@@ -782,7 +804,8 @@ class LammpsBase(AtomisticGenericJob):
             )
             for llst, llen in zip(l_start, l_end)
         ]
-        output["indices"] = np.array([cc["type"] for cc in content], dtype=int) - 1  # Lammps starts counting at 1
+        indices = np.array([cc["type"] for cc in content], dtype=int)
+        output["indices"] = self.reorder_indices(indices)
         forces = np.array(
             [np.stack((cc["fx"], cc["fy"], cc["fz"]), axis=-1) for cc in content]
         )
