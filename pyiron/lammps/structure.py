@@ -407,18 +407,13 @@ class LammpsStructure(GenericParameters):
             q_dict[el] = float(self.potential.get("set group {} charge".format(el)))
 
         species_translate_list = list()
-        sorted_species_list = self._structure.get_species_symbols()
+        sorted_species_list = np.array(self._potential.get_element_lst())
         for el in self._structure.species:
             ind = np.argwhere(sorted_species_list == el.Abbreviation).flatten()[-1]
             species_translate_list.append(ind)
 
         # analyze structure to get molecule_ids, bonds, angles etc
         molecule_lst, bonds_lst, angles_lst = [], [], []
-
-        # species_lst = structure.get_species_objects()
-        # for id_el, el in enumerate(structure.species):
-        #     el.id = id
-        # el_lst = structure.get_chemical_elements()
 
         num_atoms_in_molecule = 3
         neighbors = self._structure.get_neighbors(
@@ -439,10 +434,10 @@ class LammpsStructure(GenericParameters):
                 id_n1, id_n2 = neighbors.indices[id_el][0:2]
                 # print "id: ", id, id_n1, len(el_lst), el_lst[1].id
                 molecule_lst.append(
-                    [id_n1, id_mol, species_translate_list[indices[id_n1]]]
+                    [id_n1, id_mol, indices[id_n1]]
                 )
                 molecule_lst.append(
-                    [id_n2, id_mol, species_translate_list[indices[id_n2]]]
+                    [id_n2, id_mol, indices[id_n2]]
                 )
 
                 bonds_lst.append([id_el + 1, id_n1 + 1])
@@ -487,12 +482,12 @@ class LammpsStructure(GenericParameters):
         format_str = "{0:d} {1:d} {2:d} {3:f} {4:f} {5:f} {6:f}"
         for atom in molecule_lst:
             id_atom, id_mol, id_species = atom
-            # print id_atom, id_mol, id_species
             x, y, z = coords[id_atom]
             el_id = self._structure.species[id_species].Abbreviation
+#             print ('a: ', id_atom, el_id, species_translate_list[id_species], q_dict[el_id])
             atoms += (
                 format_str.format(
-                    id_atom + 1, id_mol, id_species + 1, q_dict[el_id], x, y, z
+                    id_atom + 1, id_mol, species_translate_list[id_species], q_dict[el_id], x, y, z
                 )
                 + "\n"
             )
