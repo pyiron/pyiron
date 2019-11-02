@@ -69,6 +69,22 @@ class Gaussian(AtomisticGenericJob):
             self.input.from_hdf(hdf5_input)
             self.structure = Atoms().from_hdf(hdf5_input)
 
+    def print_MO(self):
+        n_MO = self.get('output/structure/dft/scf_density').shape[0]
+        for n,index in enumerate(range(n_MO)):
+            # print orbital information
+            occ_alpha = int(self.get('output/structure/dft/n_alpha_electrons') > index)
+            occ_beta = int(self.get('output/structure/dft/n_beta_electrons') > index)
+
+            if self.get('output/structure/dft/beta_orbital_e') is None:
+                orbital_energy = self.get('output/structure/dft/alpha_orbital_e')[index]
+                print("#{}: \t Orbital energy = {} \t Occ. = {}".format(n,orbital_energy,occ_alpha+occ_beta))
+            else:
+                orbital_energy = [self.get('output/structure/dft/alpha_orbital_e')[index],self.get('output/structure/dft/beta_orbital_e')[index]]
+                print("#{}: \t Orbital energies (alpha,beta) = {},{} \t Occ. = {},{}".format(n,orbital_energy[0],orbital_energy[1],occ_alpha,occ_beta))
+
+
+
     def visualize_MO(self,index,particle_size=0.5,show_bonds=True):
         n_MO = self.get('output/structure/dft/scf_density').shape[0]
         assert index >= 0 and index < n_MO
