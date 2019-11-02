@@ -78,10 +78,10 @@ class Gaussian(AtomisticGenericJob):
 
             if self.get('output/structure/dft/beta_orbital_e') is None:
                 orbital_energy = self.get('output/structure/dft/alpha_orbital_e')[index]
-                print("#{}: \t Orbital energy = {} \t Occ. = {}".format(n,orbital_energy,occ_alpha+occ_beta))
+                print("#{}: \t Orbital energy = {:>10.5f} \t Occ. = {}".format(n,orbital_energy,occ_alpha+occ_beta))
             else:
                 orbital_energy = [self.get('output/structure/dft/alpha_orbital_e')[index],self.get('output/structure/dft/beta_orbital_e')[index]]
-                print("#{}: \t Orbital energies (alpha,beta) = {},{} \t Occ. = {},{}".format(n,orbital_energy[0],orbital_energy[1],occ_alpha,occ_beta))
+                print("#{}: \t Orbital energies (alpha,beta) = {:>10.5f},{:>10.5f} \t Occ. = {},{}".format(n,orbital_energy[0],orbital_energy[1],occ_alpha,occ_beta))
 
 
 
@@ -96,10 +96,10 @@ class Gaussian(AtomisticGenericJob):
 
         if self.get('output/structure/dft/beta_orbital_e') is None:
             orbital_energy = self.get('output/structure/dft/alpha_orbital_e')[index]
-            print("Orbital energy = {} \t Occ. = {}".format(orbital_energy,occ_alpha+occ_beta))
+            print("Orbital energy = {:>10.5f} \t Occ. = {}".format(orbital_energy,occ_alpha+occ_beta))
         else:
             orbital_energy = [self.get('output/structure/dft/alpha_orbital_e')[index],self.get('output/structure/dft/beta_orbital_e')[index]]
-            print("Orbital energies (alpha,beta) = {},{} \t Occ. = {},{}".format(orbital_energy[0],orbital_energy[1],occ_alpha,occ_beta))
+            print("Orbital energies (alpha,beta) = {:>10.5f},{:>10.5f} \t Occ. = {},{}".format(orbital_energy[0],orbital_energy[1],occ_alpha,occ_beta))
 
         # make cube file
         path = self.path+'_hdf5/'+self.name+'/input'
