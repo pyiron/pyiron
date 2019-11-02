@@ -211,9 +211,9 @@ def write_plumed_mtd(input_dict,working_directory='.'):
             if isinstance(kind, bytes):
                 kind = kind.decode()
             f.write('ic%i: %s ATOMS=%s \n' %(i, kind.upper(), ','.join([str(icidx) for icidx in mtd['icindices'][i]])))
-        
+
         #define metadynamics run
-        if 'sigma' in mtd.keys()    
+        if 'sigma' in mtd.keys():
             if len(mtd['sigma'])==1:
                 sigma = '%.2f' %(mtd['sigma'])
             else:
@@ -233,7 +233,7 @@ def write_plumed_mtd(input_dict,working_directory='.'):
                 ','.join([ 'ic%i' %i for i in range(len(mtd['ickinds'])) ]),
                 mtd['file_colvar'], mtd['stride']
             ))
-        
+
         # define umbrella sampling run
         if 'kappa' in mtd.keys():
             if len(mtd['kappa'])==1:
@@ -246,7 +246,7 @@ def write_plumed_mtd(input_dict,working_directory='.'):
             else:
                 assert len(mtd['loc'])>1
                 height = ','.join(['%.2f' %h for h in mtd['loc']])
-                
+
             f.write('umbrella: RESTRAINT ARG=%s KAPPA=%s AT=%s \n' %(
                 ','.join([ 'ic%i' %i for i in range(len(mtd['ickinds'])) ]),
                 kappa, loc
@@ -415,7 +415,7 @@ class Yaff(AtomisticGenericJob):
 
             stride  the number of steps after which the internal coordinate
                     values and bias are printed to the COLVAR output file.
-                    
+
             temp    the system temperature
         '''
         for l in ics:
@@ -433,7 +433,7 @@ class Yaff(AtomisticGenericJob):
             'file': fn, 'file_colvar': fn_colvar, 'stride': stride, 'temp': temp
         }
 
-        
+
     def set_us(self, ics, kappa, loc, fn_colvar='COLVAR', stride=10, temp=300):
         '''
             Setup an Umbrella sampling run using PLUMED along the internal coordinates
@@ -470,7 +470,7 @@ class Yaff(AtomisticGenericJob):
 
             stride  the number of steps after which the internal coordinate
                     values and bias are printed to the COLVAR output file.
-                    
+
             temp    the system temperature
         '''
         for l in ics:
@@ -720,16 +720,15 @@ class Yaff(AtomisticGenericJob):
             gcut_scale=self.input['gcut_scale'], smooth_ei=self.input['smooth_ei']
         )
         return ff
-    
+
     def mtd_sum_hills_1d(self,fn=None):
         if fn is None:
             fn = os.path.join(self.working_directory, self.mtd['file'])
         fn_out = os.path.join(self.working_directory, 'fes.dat')
-            
+
         subprocess.check_output(
             "ml load PLUMED/2.5.2-intel-2019a-Python-3.7.2; plumed sum_hills --hills {} --outfile {}".format(fn,fn_out),
             stderr=subprocess.STDOUT,
             universal_newlines=True,
             shell=True
         )
-        
