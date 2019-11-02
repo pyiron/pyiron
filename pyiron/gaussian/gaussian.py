@@ -135,7 +135,7 @@ class Gaussian(AtomisticGenericJob):
 
     def read_NMA(self):
         # Read number of atoms
-        nrat = len(self.output.numbers)
+        nrat = len(self.get('output/structure/numbers'))
 
         # Read IR frequencies and intensities from log file
         low_freqs = []
