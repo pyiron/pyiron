@@ -72,7 +72,7 @@ class Gaussian(AtomisticGenericJob):
     def visualize_MO(self,index,particle_size=0.5,show_bonds=True):
         n_MO = self.get('output/structure/dft/scf_density').shape[0]
         assert index >= 0 and index < n_MO
-        assert len(self.output.numbers) < 50 # check whether structure does not become too large for interactive calculation of cube file
+        assert len(self.get('output/structure/numbers')) < 50 # check whether structure does not become too large for interactive calculation of cube file
 
         # print orbital information
         occ_alpha = int(self.get('output/structure/dft/n_alpha_electrons') > index)
