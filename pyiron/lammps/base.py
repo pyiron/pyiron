@@ -450,7 +450,7 @@ class LammpsBase(AtomisticGenericJob):
         pressures = np.stack(
             (df.Pxx, df.Pxy, df.Pxz, df.Pxy, df.Pyy, df.Pyz, df.Pxz, df.Pyz, df.Pzz),
             axis=-1,
-        ).reshape(-1, 3, 3)
+        ).reshape(-1, 3, 3).astype('float64')
         pressures *= 0.0001  # bar -> GPa
         df = df.drop(
             columns=df.columns[
