@@ -412,11 +412,11 @@ class LammpsBase(AtomisticGenericJob):
             numpy.ndarray: Those integers mapped onto the first N integers.
         """
         original_indices = np.array(indices, dtype=int)
-        unique_indices = np.unique(original_indices)  # Unique and sorted!
+        unique_indices = np.unique(original_indices).astype(int)  # Unique and sorted!
+        flat_indices = np.array(indices, dtype=int).flatten()
         for n, unique_i in enumerate(unique_indices):
-            indices[np.argwhere(original_indices == unique_i)] = n
-
-        return indices
+            flat_indices[np.argwhere(original_indices.flatten() == unique_i).reshape(-1)] = n
+        return flat_indices.reshape(indices.shape)
 
     def collect_errors(self, file_name, cwd=None):
         """
