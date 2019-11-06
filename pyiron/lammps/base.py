@@ -411,11 +411,6 @@ class LammpsBase(AtomisticGenericJob):
             np.place(structure_indices, lammps_indices == i_lammps, i_struct)
         # TODO: Vectorize this for-loop for computational efficiency
 
-        print(lammps_species_order)
-        print(structure_species_order)
-        print(map_)
-        print(lammps_indices)
-        print(structure_indices)
         return structure_indices
 
     def collect_errors(self, file_name, cwd=None):
