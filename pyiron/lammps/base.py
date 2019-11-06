@@ -384,39 +384,39 @@ class LammpsBase(AtomisticGenericJob):
             h5_file["positions"] = np.array(positions)
             h5_file["time"] = np.array(time)
             h5_file["cells"] = cell
-            h5_file["indices"] = self.reorder_indices(indices)
+            h5_file["indices"] = self.remap_indices(indices)
 
-    @staticmethod
-    def reorder_indices(indices):
+    def remap_indices(self, lammps_indices):
         """
-        Given an array of integers, remaps those integers onto the range (0, number of unique integers).
+        Give the Lammps-dumped indices, re-maps these back onto the structure's indices to preserve the species.
 
-        This is necessary since Lammps dumps of structures (a) start counting at 1 while python starts counting at 0,
-        and (b) Lammps indexing is dependent on the potential used and you may not be looking at the first element, or
-        may have gaps in the elements you're looking at.
-
-        Warning:
-            This can result in weird species swaps for your output structures after a run, since Lammps writes indices
-            based on the order the species are declared in the Lammps input file, while pyiron writes them in the order
-            the species are added to the structure.
-
-        TODO:
-            Make a fix the obsolete that warning! Somewhere there must be index mapping code to *write* the Lammps input
-            we just need to do something similar when *reading* the Lammps output so that the original index-species
-            relationship is preserved.
+        The issue is that for an N-element potential, Lammps dumps the chemical index from 1 to N based on the order
+        that these species are written in the Lammps input file. But the indices for a given structure are based on the
+        order in which chemical species were added to that structure, and run from 0 up to the number of species
+        currently in that structure. Therefore we need to be a little careful with mapping.
 
         Args:
-            indices (numpy.ndarray/list): The original integers.
+            indices (numpy.ndarray/list): The Lammps-dumped integers.
 
         Returns:
-            numpy.ndarray: Those integers mapped onto the first N integers.
+            numpy.ndarray: Those integers mapped onto the structure.
         """
-        original_indices = np.array(indices, dtype=int)
-        unique_indices = np.unique(original_indices).astype(int)  # Unique and sorted!
-        flat_indices = np.array(indices, dtype=int).flatten()
-        for n, unique_i in enumerate(unique_indices):
-            flat_indices[np.argwhere(original_indices.flatten() == unique_i).reshape(-1)] = n
-        return flat_indices.reshape(indices.shape)
+        lammps_species_order = np.array(self.input.potential.get_element_lst())
+        structure_species_order = np.array([el.Abbreviation for el in self.structure.species])
+
+        map_ = np.array([int(np.argwhere(lammps_species_order == spec)[0]) + 1 for spec in structure_species_order])
+
+        structure_indices = np.array(lammps_indices)
+        for i_struct, i_lammps in enumerate(map_):
+            np.place(structure_indices, lammps_indices == i_lammps, i_struct)
+        # TODO: Vectorize this for-loop for computational efficiency
+
+        print(lammps_species_order)
+        print(structure_species_order)
+        print(map_)
+        print(lammps_indices)
+        print(structure_indices)
+        return structure_indices
 
     def collect_errors(self, file_name, cwd=None):
         """
@@ -815,7 +815,7 @@ class LammpsBase(AtomisticGenericJob):
             for llst, llen in zip(l_start, l_end)
         ]
         indices = np.array([cc["type"] for cc in content], dtype=int)
-        output["indices"] = self.reorder_indices(indices)
+        output["indices"] = self.remap_indices(indices)
         forces = np.array(
             [np.stack((cc["fx"], cc["fy"], cc["fz"]), axis=-1) for cc in content]
         )
