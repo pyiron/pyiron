@@ -1693,8 +1693,8 @@ class Output(object):
             self._parse_dict["scf_energy_free"] = energy_free_lst
         if len(self._parse_dict["forces"]) == 0 and len(forces) != 0:
             self._parse_dict["forces"] = forces
-        if len(self._parse_dict["magnetic_forces"]) == 0 and len(magnetic_forces) != 0:
-            self._parse_dict["magnetic_forces"] = magnetic_forces
+        if len(self._parse_dict["scf_magnetic_forces"]) == 0 and len(magnetic_forces) != 0:
+            self._parse_dict["scf_magnetic_forces"] = magnetic_forces
 
     def collect_relaxed_hist(self, file_name="relaxHist.sx", cwd=None):
         """
