@@ -34,6 +34,22 @@ class NMA(tamkin.NMA):
         super(NMA, self).__init__(mol)
 
     def animate_nma_mode(self,index,amplitude=1.0,frames=24,spacefill=False,particle_size=0.5):
+        '''
+            Visualize the normal mode corresponding to an index
+
+            **Arguments**
+
+            index       index corresponding to a normal mode
+
+            amplitude   size of the deviation of the normal mode
+
+            frames      number of frames that constitute the full mode (lower means faster movement)
+
+            spacefill   remove atom bonds
+
+            particle size
+                        size of the atoms in the structure
+        '''
         print("This mode corresponds to a frequency of {} 1/cm".format(self.freqs[index]/lightspeed/(1./centimeter)))
         coordinates = self.coordinates
         symbols = [periodic[n].symbol for n in self.numbers]
@@ -64,8 +80,20 @@ class NMA(tamkin.NMA):
 
     def plot_IR_spectrum(self,width=10*lightspeed/centimeter,scale=1.0,intensities=None,charges=None):
         """
-        Plot IR spectrum based on Lorentzian width, freqs can be scaled through scale
-        Intensities can be provided (e.g. from a Gaussian job) or calculated from the charges
+            Plot IR spectrum based on Lorentzian width, freqs can be scaled through scale
+            Intensities can be provided (e.g. from a Gaussian job) or calculated from the charges
+
+            **Arguments**
+
+            width       width of the Lorentzian function
+
+            scale       scales the frequencies with this factor
+
+            intensities
+                        IR intensities for spectrum, can be read from Gaussian job
+
+            charges     charges to calculate IR intensities, from e.g. Yaff simulation
+
         """
         if not intensities is None:
             assert len(intensities) == (len(self.freqs)-len(self.zeros))
