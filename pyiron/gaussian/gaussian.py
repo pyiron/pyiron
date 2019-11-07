@@ -70,6 +70,10 @@ class Gaussian(AtomisticGenericJob):
             self.structure = Atoms().from_hdf(hdf5_input)
 
     def print_MO(self):
+        '''
+            Print a list of the MO's with the corresponding orbital energy and occupation.
+        '''
+
         n_MO = self.get('output/structure/dft/scf_density').shape[0]
         for n,index in enumerate(range(n_MO)):
             # print orbital information
@@ -86,6 +90,18 @@ class Gaussian(AtomisticGenericJob):
 
 
     def visualize_MO(self,index,particle_size=0.5,show_bonds=True):
+        '''
+            Visualize the MO identified by its index.
+
+            **Arguments**
+
+            index       index of the MO, as listed by print_MO()
+
+            particle_size
+                        size of the atoms for visualization, lower value if orbital is too small to see
+
+            show_bonds  connect atoms or not
+        '''
         n_MO = self.get('output/structure/dft/scf_density').shape[0]
         assert index >= 0 and index < n_MO
         assert len(self.get('output/structure/numbers')) < 50 # check whether structure does not become too large for interactive calculation of cube file
@@ -150,6 +166,12 @@ class Gaussian(AtomisticGenericJob):
         return view
 
     def read_NMA(self):
+        '''
+            Reads the NMA output from the Gaussian .log file.
+
+            Returns:
+                    IR frequencies, intensities and corresponding eigenvectors (modes).
+        '''
         # Read number of atoms
         nrat = len(self.get('output/structure/numbers'))
 
@@ -193,8 +215,6 @@ class Gaussian(AtomisticGenericJob):
     def bsse_to_pandas(self):
         """
         Convert bsse output of all frames to a pandas Dataframe object.
-
-        Args:
 
         Returns:
             pandas.Dataframe: output as dataframe
