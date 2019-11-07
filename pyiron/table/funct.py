@@ -54,6 +54,10 @@ def get_n_kpts(job):
     return {"n_kpts": eval(job["input/kpoints/data_dict"]["Value"][3].split()[0])}
 
 
+def get_n_equ_kpts(job):
+    return {"n_equ_kpts": len(job['output/generic/dft/bands/k_points'])}
+
+
 def get_total_number_of_atoms(job):
     return {"Number_of_atoms": len(job["input/structure/indices"])}
 
