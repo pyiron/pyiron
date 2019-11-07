@@ -120,7 +120,7 @@ def write_ynve(input_dict,working_directory='.'):
         gcut_scale=input_dict['gcut_scale'], smooth_ei=input_dict['smooth_ei'],
         h5step=input_dict['h5step'],
     )
-    if input_dict['mtd'] is not None:
+    if input_dict['enhanced'] is not None:
         body += """
 plumed = ForcePartPlumed(ff.system, fn='plumed.dat')
 ff.add_part(plumed)
@@ -141,7 +141,7 @@ def write_ynvt(input_dict,working_directory='.'):
         gcut_scale=input_dict['gcut_scale'], smooth_ei=input_dict['smooth_ei'],
         h5step=input_dict['h5step'],
     )
-    if input_dict['mtd'] is not None:
+    if input_dict['enhanced'] is not None:
         body += """
 plumed = ForcePartPlumed(ff.system, fn='plumed.dat')
 ff.add_part(plumed)
@@ -169,7 +169,7 @@ def write_ynpt(input_dict,working_directory='.'):
         gcut_scale=input_dict['gcut_scale'], smooth_ei=input_dict['smooth_ei'],
         h5step=input_dict['h5step'],
     )
-    if input_dict['mtd'] is not None:
+    if input_dict['enhanced'] is not None:
         body += """
 plumed = ForcePartPlumed(ff.system, fn='plumed.dat')
 ff.add_part(plumed)
@@ -195,66 +195,69 @@ md.run({nsteps})
     with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
         f.write(body)
 
-def write_plumed_mtd(input_dict,working_directory='.'):
-    #make copy of input_dict['mtd'] that includes lower case definitions
-    #(allowing for case insenstive definition of input_dict['mtd'])
-    mtd = {}
-    for key, value in input_dict['mtd'].items():
-        mtd[key] = value
-        mtd[key.lower()] = value
+def write_plumed_enhanced(input_dict,working_directory='.'):
+    #make copy of input_dict['enhanced'] that includes lower case definitions
+    #(allowing for case insenstive definition of input_dict['enhanced'])
+    enhanced = {}
+    for key, value in input_dict['enhanced'].items():
+        enhanced[key] = value
+        enhanced[key.lower()] = value
     #write plumed.dat file
     with open(os.path.join(working_directory, 'plumed.dat'), 'w') as f:
         #set units to atomic units
         f.write('UNITS LENGTH=Bohr ENERGY=kj/mol TIME=atomic \n')
         #define ics
-        for i, kind in enumerate(mtd['ickinds']):
+        for i, kind in enumerate(enhanced['ickinds']):
             if isinstance(kind, bytes):
                 kind = kind.decode()
-            f.write('ic%i: %s ATOMS=%s \n' %(i, kind.upper(), ','.join([str(icidx) for icidx in mtd['icindices'][i]])))
+            if len( enhanced['icindices'][i] > 0):
+                f.write('ic%i: %s ATOMS=%s \n' %(i, kind.upper(), ','.join([str(icidx) for icidx in enhanced['icindices'][i]])))
+            else:
+                f.write('ic%i: %s \n' %(i, kind.upper(), ','.join([str(icidx) for icidx in enhanced['icindices'][i]])))
 
         #define metadynamics run
-        if 'sigma' in mtd.keys():
-            if len(mtd['sigma'])==1:
-                sigma = '%.2f' %(mtd['sigma'])
+        if 'sigma' in enhanced.keys():
+            if len(enhanced['sigma'])==1:
+                sigma = '%.2f' %(enhanced['sigma'])
             else:
-                assert len(mtd['sigma'])>1
-                sigma = ','.join(['%.2f' %s for s in mtd['sigma']])
-            if len(mtd['height'])==1:
-                height = '%.2f' %(mtd['height']/kjmol)
+                assert len(enhanced['sigma'])>1
+                sigma = ','.join(['%.2f' %s for s in enhanced['sigma']])
+            if len(enhanced['height'])==1:
+                height = '%.2f' %(enhanced['height']/kjmol)
             else:
-                assert len(mtd['height'])>1
-                height = ','.join(['%.2f' %h/kjmol for h in mtd['height']])
+                assert len(enhanced['height'])>1
+                height = ','.join(['%.2f' %h/kjmol for h in enhanced['height']])
             f.write('metad: METAD ARG=%s SIGMA=%s HEIGHT=%s PACE=%i FILE=%s \n' %(
-                ','.join([ 'ic%i' %i for i in range(len(mtd['ickinds'])) ]),
-                sigma, height, mtd['pace'], mtd['file']
+                ','.join([ 'ic%i' %i for i in range(len(enhanced['ickinds'])) ]),
+                sigma, height, enhanced['pace'], enhanced['file']
             ))
             #setup printing of colvar
             f.write('PRINT ARG=%s,metad.bias FILE=%s STRIDE=%i \n' %(
-                ','.join([ 'ic%i' %i for i in range(len(mtd['ickinds'])) ]),
-                mtd['file_colvar'], mtd['stride']
+                ','.join([ 'ic%i' %i for i in range(len(enhanced['ickinds'])) ]),
+                enhanced['file_colvar'], enhanced['stride']
             ))
 
         # define umbrella sampling run
-        if 'kappa' in mtd.keys():
-            if len(mtd['kappa'])==1:
-                kappa = '%.2f' %(mtd['kappa']/kjmol)
+        if 'kappa' in enhanced.keys():
+            if len(enhanced['kappa'])==1:
+                kappa = '%.2f' %(enhanced['kappa']/kjmol)
             else:
-                assert len(mtd['kappa'])>1
-                kappa = ','.join(['%.2f' %s/kjmol for s in mtd['kappa']])
-            if len(mtd['loc'])==1:
-                height = '%.2f' %(mtd['loc'])
+                assert len(enhanced['kappa'])>1
+                kappa = ','.join(['%.2f' %s/kjmol for s in enhanced['kappa']])
+            if len(enhanced['loc'])==1:
+                height = '%.2f' %(enhanced['loc'])
             else:
-                assert len(mtd['loc'])>1
-                height = ','.join(['%.2f' %h for h in mtd['loc']])
+                assert len(enhanced['loc'])>1
+                height = ','.join(['%.2f' %h for h in enhanced['loc']])
 
             f.write('umbrella: RESTRAINT ARG=%s KAPPA=%s AT=%s \n' %(
-                ','.join([ 'ic%i' %i for i in range(len(mtd['ickinds'])) ]),
+                ','.join([ 'ic%i' %i for i in range(len(enhanced['ickinds'])) ]),
                 kappa, loc
             ))
             #setup printing of colvar
             f.write('PRINT ARG=%s,umbrella.bias FILE=%s STRIDE=%i \n' %(
-                ','.join([ 'ic%i' %i for i in range(len(mtd['ickinds'])) ]),
-                mtd['file_colvar'], mtd['stride']
+                ','.join([ 'ic%i' %i for i in range(len(enhanced['ickinds'])) ]),
+                enhanced['file_colvar'], enhanced['stride']
             ))
 
 def hdf2dict(h5):
@@ -348,9 +351,17 @@ class Yaff(AtomisticGenericJob):
         self.jobtype = None
         self.ffatypes = None
         self.ffatype_ids = None
-        self.mtd = None
+        self.enhanced = None  # should have more generic name e.g. enhanced
 
     def load_chk(self, fn):
+        '''
+            Load the atom types, atom type ids and structure by reading a .chk file.
+
+            **Arguments**
+
+            fn      the path to the chk file
+        '''
+
         system = System.from_file(fn)
         system.set_standard_masses()
         if len(system.pos.shape)!=2:
@@ -390,7 +401,7 @@ class Yaff(AtomisticGenericJob):
                         for more information).
 
                     and [i, j, ...] is a list of atom indices, starting from 0, involved in this
-                    IC.
+                    IC. If no atom indices are required for e.g. volume, provide an empty list.
 
                     An example for a 1D metadynamica using the distance between
                     atoms 2 and 4:
@@ -428,7 +439,7 @@ class Yaff(AtomisticGenericJob):
             height = np.array([height])
         if not isinstance(sigma,list) and not isinstance(sigma,np.ndarray):
             sigma = np.array([sigma])
-        self.mtd= {
+        self.enhanced= {
             'ickinds': ickinds, 'icindices': icindices, 'height': height, 'sigma': sigma, 'pace': pace,
             'file': fn, 'file_colvar': fn_colvar, 'stride': stride, 'temp': temp
         }
@@ -441,7 +452,7 @@ class Yaff(AtomisticGenericJob):
 
             **Arguments**
 
-            ics     a list of entries defining each internal coordinate. Each
+            ics     a list of entries defining each an internal coordinate. Each
                     of these entries should be of the form (kind, [i, j, ...])
 
                     Herein, kind defines the kind of IC as implemented in PLUMED:
@@ -451,7 +462,7 @@ class Yaff(AtomisticGenericJob):
                         for more information).
 
                     and [i, j, ...] is a list of atom indices, starting from 0, involved in this
-                    IC.
+                    IC. If no atom indices are required for e.g. volume, provide an empty list.
 
                     An example for a 1D metadynamica using the distance between
                     atoms 2 and 4:
@@ -484,7 +495,7 @@ class Yaff(AtomisticGenericJob):
         if not isinstance(loc,list) and not isinstance(loc,np.ndarray):
             loc = np.array([loc])
         assert len(loc)==len(ics)
-        self.mtd= {
+        self.enhanced= {
             'ickinds': ickinds, 'icindices': icindices, 'kappa': kappa, 'loc': loc,
             'file_colvar': fn_colvar, 'stride': stride, 'temp': temp
         }
@@ -536,7 +547,7 @@ class Yaff(AtomisticGenericJob):
             'press': self.input['press'],
             'timecon_thermo': self.input['timecon_thermo'],
             'timecon_baro': self.input['timecon_baro'],
-            'mtd': self.mtd,
+            'enhanced': self.enhanced,
 
         }
         input_dict['cell'] = None
@@ -558,8 +569,8 @@ class Yaff(AtomisticGenericJob):
             write_ynpt(input_dict=input_dict,working_directory=self.working_directory)
         else:
             raise IOError('Invalid job type for Yaff job, received %s' %self.jobtype)
-        if not self.mtd is None:
-            write_plumed_mtd(input_dict,working_directory=self.working_directory)
+        if not self.enhanced is None:
+            write_plumed_enhanced(input_dict,working_directory=self.working_directory)
 
     def collect_output(self):
         output_dict = collect_output(output_file=os.path.join(self.working_directory, 'output.h5'))
@@ -575,9 +586,9 @@ class Yaff(AtomisticGenericJob):
             hdf5_input['generic/jobtype'] = self.jobtype
             hdf5_input['generic/ffatypes'] = np.asarray(self.ffatypes,'S22')
             hdf5_input['generic/ffatype_ids'] = self.ffatype_ids
-            if not self.mtd is None:
-                grp = hdf5_input.create_group('generic/mtd')
-                for k,v in self.mtd.items():
+            if not self.enhanced is None:
+                grp = hdf5_input.create_group('generic/enhanced')
+                for k,v in self.enhanced.items():
                     grp[k] = v
 
     def from_hdf(self, hdf=None, group_name=None):
@@ -589,13 +600,13 @@ class Yaff(AtomisticGenericJob):
             self.ffatypes = np.char.decode(hdf5_input['generic/ffatypes']) # decode byte string literals
             self.ffatype_ids = hdf5_input['generic/ffatype_ids']
 
-            if "mtd" in hdf5_input['generic'].keys():
-                self.mtd = {}
-                for key,val in hdf5_input['generic/mtd'].items():
+            if "enhanced" in hdf5_input['generic'].keys():
+                self.enhanced = {}
+                for key,val in hdf5_input['generic/enhanced'].items():
                     if key=='ickinds':
-                        self.mtd[key] = np.char.decode(val)
+                        self.enhanced[key] = np.char.decode(val)
                     else:
-                        self.mtd[key] = val
+                        self.enhanced[key] = val
 
     def get_structure(self, iteration_step=-1, wrap_atoms=True):
         """
@@ -722,8 +733,16 @@ class Yaff(AtomisticGenericJob):
         return ff
 
     def mtd_sum_hills_1d(self,fn=None):
+        '''
+            Creates a fes.dat file for plotting the free energy surface after a mtd simulation.
+
+            **Arguments**
+
+            fn      path to the hills file or hills files (comma separated)
+        '''
+
         if fn is None:
-            fn = os.path.join(self.working_directory, self.mtd['file'])
+            fn = os.path.join(self.working_directory, self.enhanced['file'])
         fn_out = os.path.join(self.working_directory, 'fes.dat')
 
         subprocess.check_output(
