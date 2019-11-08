@@ -68,6 +68,10 @@ class Gaussian(AtomisticGenericJob):
         with self.project_hdf5.open("input") as hdf5_input:
             self.input.from_hdf(hdf5_input)
             self.structure = Atoms().from_hdf(hdf5_input)
+            
+    def log(self):
+        with open(os.path.join(self.working_directory, 'input.log')) as f:
+            print(f.read())
 
     def print_MO(self):
         '''
