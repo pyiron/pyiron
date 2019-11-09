@@ -69,7 +69,7 @@ Please contact us if you are interested in using pyiron:
 News
 ****
 * **09th November 2019:** pyiron was downloaded over 10000 times on `conda-forge <https://anaconda.org/conda-forge/pyiron/>`_ and gained attention with over 50 stars on `github <https://github.com/pyiron/pyiron/stargazers/>`_.
-* **11th October 2019:** pyiron 0.2.9 released.
+* **10th October 2019:** pyiron 0.2.9 released.
 * **20th June 2019:** pyiron was downloaded over 5000 times on `conda-forge <https://anaconda.org/conda-forge/pyiron/>`_ and 70% of our code are `covered with unit tests <https://coveralls.io/github/pyiron/pyiron?branch=master>`_.
 * **10th May 2019:** pyiron documentation hosted on `readthedocs.org <https://pyiron.readthedocs.io>`_.
 * **24th March 2019:** pyiron 0.2.2 released.
