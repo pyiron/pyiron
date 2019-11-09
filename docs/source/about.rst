@@ -35,7 +35,7 @@ pyiron (called pyron) is developed in the `Computational Materials Design depart
 ************
 Getting Help
 ************
-Technical issues and bugs should be reported on `Github <https://github.com/pyiron>`_.
+Technical issues and bugs should be reported on `Github <https://github.com/pyiron>`_ all other questions can be asked on `stackoverflow using the tag pyiron <https://stackoverflow.com/questions/tagged/pyiron>`_. 
 
 ***************
 Release history
