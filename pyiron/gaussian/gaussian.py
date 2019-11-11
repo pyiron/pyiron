@@ -485,7 +485,7 @@ def read_EmpiricalDispersion(output_file,output_dict):
     while True:
         line = next(it)
         if search_term in line:
-            disp = float(line[38:-9]) # could be changed when new search terms are implemented
+            disp = float(line[38:-9])/electronvolt # could be changed when new search terms are implemented
             break
 
     output_dict['generic/energy_tot'] += disp
