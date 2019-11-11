@@ -406,19 +406,15 @@ class LammpsStructure(GenericParameters):
         for el in self._structure.get_species_symbols():
             q_dict[el] = float(self.potential.get("set group {} charge".format(el)))
 
+        m_dict = {}
         species_translate_list = list()
-        sorted_species_list = self._structure.get_species_symbols()
+        sorted_species_list = np.array(self._potential.get_element_lst())
         for el in self._structure.species:
             ind = np.argwhere(sorted_species_list == el.Abbreviation).flatten()[-1]
             species_translate_list.append(ind)
 
         # analyze structure to get molecule_ids, bonds, angles etc
         molecule_lst, bonds_lst, angles_lst = [], [], []
-
-        # species_lst = structure.get_species_objects()
-        # for id_el, el in enumerate(structure.species):
-        #     el.id = id
-        # el_lst = structure.get_chemical_elements()
 
         num_atoms_in_molecule = 3
         neighbors = self._structure.get_neighbors(
@@ -439,10 +435,10 @@ class LammpsStructure(GenericParameters):
                 id_n1, id_n2 = neighbors.indices[id_el][0:2]
                 # print "id: ", id, id_n1, len(el_lst), el_lst[1].id
                 molecule_lst.append(
-                    [id_n1, id_mol, species_translate_list[indices[id_n1]]]
+                    [id_n1, id_mol, indices[id_n1]]
                 )
                 molecule_lst.append(
-                    [id_n2, id_mol, species_translate_list[indices[id_n2]]]
+                    [id_n2, id_mol, indices[id_n2]]
                 )
 
                 bonds_lst.append([id_el + 1, id_n1 + 1])
@@ -466,7 +462,7 @@ class LammpsStructure(GenericParameters):
             + " \n"
             + "{0:d} angles".format(len(angles_lst))
             + " \n"
-            + "{0} atom types".format(self._structure.get_number_of_species())
+            + "{0} atom types".format(len(sorted_species_list))
             + " \n"
             + "{0} bond types".format(1)
             + " \n"
@@ -477,9 +473,9 @@ class LammpsStructure(GenericParameters):
         cell_dimensions = self.simulation_cell()
 
         masses = "Masses" + "\n\n"
-        el_obj_list = self._structure.get_species_objects()
-        for object_id, el in enumerate(el_obj_list):
-            masses += "{0:3d} {1:f}".format(object_id + 1, el.AtomicMass) + "\n"
+        for ic, el_p in enumerate(sorted_species_list):
+            mass = self._structure._pse[el_p].AtomicMass
+            masses += "{0:3d} {1:f}  # ({2}) \n".format(ic + 1, mass, el_p)
 
         atoms = "Atoms \n\n"
 
@@ -487,12 +483,12 @@ class LammpsStructure(GenericParameters):
         format_str = "{0:d} {1:d} {2:d} {3:f} {4:f} {5:f} {6:f}"
         for atom in molecule_lst:
             id_atom, id_mol, id_species = atom
-            # print id_atom, id_mol, id_species
             x, y, z = coords[id_atom]
             el_id = self._structure.species[id_species].Abbreviation
+#             print ('a: ', id_atom, el_id, species_translate_list[id_species], q_dict[el_id])
             atoms += (
                 format_str.format(
-                    id_atom + 1, id_mol, id_species + 1, q_dict[el_id], x, y, z
+                    id_atom + 1, id_mol, species_translate_list[id_species] + 1, q_dict[el_id], x, y, z
                 )
                 + "\n"
             )

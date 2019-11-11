@@ -1098,6 +1098,10 @@ class Atoms(object):
         warnings.filterwarnings("module")
         return analyse_ovito_voronoi_volume(atoms)
 
+    def analyse_pyscal_steinhardt_parameter(atoms, cutoff=3.5, n_clusters=2, q=[4, 6]):
+        from pyiron.atomistics.structure.pyscal import get_steinhardt_parameter_structure
+        return get_steinhardt_parameter_structure(structure=atoms, cutoff=cutoff, n_clusters=n_clusters, q=q)
+
     def analyse_phonopy_equivalent_atoms(atoms):
         from pyiron.atomistics.structure.phonopy import analyse_phonopy_equivalent_atoms
 
