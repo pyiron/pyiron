@@ -471,7 +471,7 @@ def read_EmpiricalDispersion(output_file,output_dict):
             if 'Route' in line:
                 if 'EmpiricalDispersion' in line:
                     idx = line.find('EmpiricalDispersion')
-                    if 'GD3' in line[idx:]
+                    if 'GD3' in line[idx:]:
                         search_term = 'Grimme-D3 Dispersion energy='
                     else:
                         raise NotImplementedError
