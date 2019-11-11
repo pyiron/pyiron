@@ -68,10 +68,11 @@ class Gaussian(AtomisticGenericJob):
         with self.project_hdf5.open("input") as hdf5_input:
             self.input.from_hdf(hdf5_input)
             self.structure = Atoms().from_hdf(hdf5_input)
-            
+
     def log(self):
         with open(os.path.join(self.working_directory, 'input.log')) as f:
             print(f.read())
+
 
     def print_MO(self):
         '''
@@ -459,13 +460,38 @@ def read_bsse(output_file,output_dict):
             output_dict['structure/bsse/complexation_energy_corrected'] = output_dict['structure/bsse/complexation_energy_corrected'][0]
 
 
+def read_EmpiricalDispersion(output_file,output_dict):
+    # Get dispersion term from log file if it is there
+    # dispersion term is not retrieved from gaussian output in fchk
+
+    disp = None
+    with open(output_file,'r') as f:
+        while True:
+            line = f.readline()
+            if 'Route' in line:
+                if 'EmpiricalDispersion' in line:
+                    idx = line.find('EmpiricalDispersion')
+                    if 'GD3' in line[idx:]
+                        search_term = 'Grimme-D3 Dispersion energy='
+                    else:
+                        raise NotImplementedError
+                else:
+                    return
+                break
+
+    # the log file has the same path and name as the output file aside from the file extension
+    log_file = output_file[:output_file.rfind('.')] + '.log'
+    it = _reverse_readline(log_file)
+    while True:
+        line = next(it)
+        if search_term in line:
+            disp = float(line[38:-9]) # could be changed when new search terms are implemented
+            break
+
+    output_dict['generic/energy_tot'] += disp
+
+
 def collect_output(output_file):
-    '''
-    # First check log file if terminated ok
-    with open(log_file,'r'):
-        lines = f.readlines()
-    if not 'Normal termination of Gaussian' in lines[-1]: raise ValueError('No normal termination of Gaussian')
-    '''
     # Read output
     fchk = FCHKFile(output_file)
 
@@ -474,6 +500,9 @@ def collect_output(output_file):
 
     # Read BSSE output if it is present
     read_bsse(output_file,output_dict)
+
+    # Correct energy if dispersion is present
+    read_EmpiricalDispersion(output_file,output_dict)
 
     return output_dict
 
