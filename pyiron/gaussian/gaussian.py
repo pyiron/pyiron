@@ -469,6 +469,7 @@ def read_EmpiricalDispersion(output_file,output_dict):
         while True:
             line = f.readline()
             if 'Route' in line:
+                line = f.readline()
                 if 'EmpiricalDispersion' in line:
                     idx = line.find('EmpiricalDispersion')
                     if 'GD3' in line[idx:]:
