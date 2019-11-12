@@ -171,13 +171,19 @@ class Server(
             )
             if cores != self.cores:
                 self._cores = cores
-                print("Updated the number of cores to: ", cores)
+                s.logger.debug(
+                    "Updated the number of cores to: ", cores
+                )
             if run_time_max != self.run_time:
                 self._run_time = run_time_max
-                print("Updated the run time limit to: ", run_time_max)
+                s.logger.debug(
+                    "Updated the run time limit to: ", run_time_max
+                )
             if memory_max != self.memory_limit:
                 self._memory_limit = memory_max
-                print("Updated the memory limit to: ", memory_max)
+                s.logger.debug(
+                    "Updated the memory limit to: ", memory_max
+                )
             self._active_queue = new_scheduler
             self.run_mode = "queue"
         else:
@@ -238,7 +244,9 @@ class Server(
             )[0]
             if cores != new_cores:
                 self._cores = cores
-                print("Updated the number of cores to: ", cores)
+                s.logger.debug(
+                    "Updated the number of cores to: ", cores
+                )
             else:
                 self._cores = new_cores
         else:
@@ -271,7 +279,9 @@ class Server(
             )[1]
             if run_time_max != new_run_time:
                 self._run_time = run_time_max
-                print("Updated the run time limit to: ", run_time_max)
+                s.logger.debug(
+                    "Updated the run time limit to: ", run_time_max
+                )
             else:
                 self._run_time = new_run_time
         else:
@@ -292,7 +302,9 @@ class Server(
             )[2]
             if memory_max != limit:
                 self._memory_limit = memory_max
-                print("Updated the memory limit to: ", memory_max)
+                s.logger.debug(
+                    "Updated the memory limit to: ", memory_max
+                )
             else:
                 self._memory_limit = limit
         else:
