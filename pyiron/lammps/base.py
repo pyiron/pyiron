@@ -732,7 +732,7 @@ class LammpsBase(AtomisticGenericJob):
         self._generic_input["n_ionic_steps"] = n_ionic_steps
         self._generic_input["n_print"] = n_print
         self._generic_input.remove_keys(["max_iter"])
-        self.input.control.calc_vcsgc_binary(
+        self.input.control.calc_vcsgc(
             delta_mu=delta_mu,
             ordered_element_list=self.input.potential.get_element_lst(),
             target_concentration=target_concentration,
