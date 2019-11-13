@@ -678,6 +678,81 @@ class LammpsBase(AtomisticGenericJob):
             job_name=self.job_name,
         )
 
+    def calc_vcsgc(
+        self,
+        delta_mu=None,
+        mc_step_interval=100,
+        swap_fraction=0.1,
+        temperature_mc=None,
+        kappa=1000.,
+        target_concentration=None,
+        temperature=None,
+        pressure=None,
+        n_ionic_steps=1000,
+        time_step=1.0,
+        n_print=100,
+        temperature_damping_timescale=100.0,
+        pressure_damping_timescale=1000.0,
+        seed=None,
+        initial_temperature=None,
+        langevin=False
+    ):
+        """
+        Run variance-constrained semi-grand-canonical MD/MC for a binary system. In addition to VC-SGC arguments, all
+        arguments for a regular MD calculation are also accepted.
+
+        https://vcsgc-lammps.materialsmodeling.org
+
+        Note:
+            For easy visualization later (with `get_structure`), it is highly recommended that the initial structure
+            contain at least one atom of each species.
+
+        Warning:
+            Assumes the units are metal, otherwise units for the constraints may be off.
+
+        Args:
+            delta_mu (dict): A dictionary of N-1 chemical potential differences, where N is the number of species *in
+                the potential*. Dictionary keys must be the chemical symbols of the two species the chemical potential
+                difference is for, separated by an underscore. E.g. for an X-Y-Z alloy, {'X_Y': -0.4, 'Y_Z': 0.6},
+                where -0.4 is the change in free energy to replace an X atom with a Y atom.
+            target_concentration: A dictionary of target simulation domain concentrations for each species *in the
+                potential*. Dictionary keys should be the chemical symbol of the corresponding species, and the sum of
+                all concentrations must be 1. (Default is None, which runs regular semi-grand-canonical MD/MC without
+                any variance constraint.)
+            kappa: Variance constraint for the MC. Larger value means a tighter adherence to the target concentrations.
+                (Default is 1000.)
+            mc_step_interval (int): How many steps of MD between each set of MC moves. (Default is 100.) Must divide the
+                number of ionic steps evenly.
+            swap_fraction (float): The fraction of atoms whose species is swapped at each MC phase. (Default is 0.1.)
+            temperature_mc (float): The temperature for accepting MC steps. (Default is None, which uses the MD
+                temperature.)
+        """
+        self._generic_input["calc_mode"] = "vcsgc"
+        self._generic_input["temperature"] = temperature
+        self._generic_input["n_ionic_steps"] = n_ionic_steps
+        self._generic_input["n_print"] = n_print
+        self._generic_input.remove_keys(["max_iter"])
+        self.input.control.calc_vcsgc_binary(
+            delta_mu=delta_mu,
+            ordered_element_list=self.input.potential.get_element_lst(),
+            target_concentration=target_concentration,
+            kappa=kappa,
+            mc_step_interval=mc_step_interval,
+            swap_fraction=swap_fraction,
+            temperature_mc=temperature_mc,
+            temperature=temperature,
+            pressure=pressure,
+            n_ionic_steps=n_ionic_steps,
+            time_step=time_step,
+            n_print=n_print,
+            temperature_damping_timescale=temperature_damping_timescale,
+            pressure_damping_timescale=pressure_damping_timescale,
+            seed=seed,
+            initial_temperature=initial_temperature,
+            langevin=langevin,
+            job_name=self.job_name,
+        )
+
     # define hdf5 input and output
     def to_hdf(self, hdf=None, group_name=None):
         """
