@@ -536,8 +536,11 @@ class LammpsControl(GenericParameters):
         if seed is None:
             self.generate_seed_from_job(job_name=job_name)
 
-        if len(delta_mu.keys()) - 1 != len(ordered_element_list):
-            raise ValueError()
+        if len(delta_mu.keys()) != len(ordered_element_list) - 1:
+            raise ValueError("Expected `delta_mu` to have {} items, but got {}".format(
+                len(ordered_element_list) - 1,
+                len(delta_mu.keys())
+            ))
 
         if set(np.unique(np.array([k.split("_") for k in delta_mu.keys()]).flatten())) != set(ordered_element_list):
             raise ValueError("Chemical potential differences must include all possible species, and may include no "
