@@ -586,7 +586,7 @@ class LammpsControl(GenericParameters):
 
             fix_vcsgc_str += " variance {0} {1}".format(
                 str(kappa),
-                str(" ".join([str(target_concentration[el]) for el in ordered_element_list]))
+                str(" ".join([str(target_concentration[el]) for el in ordered_element_list[1:]]))
             )
 
         self.modify(
