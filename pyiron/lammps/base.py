@@ -680,12 +680,12 @@ class LammpsBase(AtomisticGenericJob):
 
     def calc_vcsgc(
         self,
-        delta_mu=None,
+        mu,
+        target_concentration=None,
+        kappa=1000.,
         mc_step_interval=100,
         swap_fraction=0.1,
         temperature_mc=None,
-        kappa=1000.,
-        target_concentration=None,
         temperature=None,
         pressure=None,
         n_ionic_steps=1000,
@@ -733,7 +733,7 @@ class LammpsBase(AtomisticGenericJob):
         self._generic_input["n_print"] = n_print
         self._generic_input.remove_keys(["max_iter"])
         self.input.control.calc_vcsgc(
-            delta_mu=delta_mu,
+            mu=mu,
             ordered_element_list=self.input.potential.get_element_lst(),
             target_concentration=target_concentration,
             kappa=kappa,
