@@ -106,6 +106,15 @@ class Gaussian(AtomisticGenericJob):
                         size of the atoms for visualization, lower value if orbital is too small to see
 
             show_bonds  connect atoms or not
+
+            **Notes**
+
+            This function should always be accompanied with the following commands (in a separate cell)
+
+            view[1].update_surface(isolevel=1, color='blue', opacity=.3)
+            view[2].update_surface(isolevel=-1, color='red', opacity=.3)
+
+            This makes sure that the bonding and non-bonding MO's are plotted and makes them transparent
         '''
         n_MO = self.get('output/structure/dft/scf_density').shape[0]
         assert index >= 0 and index < n_MO
@@ -159,15 +168,6 @@ class Gaussian(AtomisticGenericJob):
             view.add_ball_and_stick()
         view.add_component('{}.cube'.format(path))
         view.add_component('{}.cube'.format(path))
-        """
-        This function should always be accompanied with the following commands (in a separate cell)
-
-        view[1].update_surface(isolevel=1, color='blue', opacity=.3)
-        view[2].update_surface(isolevel=-1, color='red', opacity=.3)
-
-        This makes sure that the bonding and non-bonding MO's are plotted and makes them transparent
-        """
-
         return view
 
     def read_NMA(self):
@@ -458,6 +458,13 @@ def read_bsse(output_file,output_dict):
             output_dict['structure/bsse/sum_of_fragments'] = output_dict['structure/bsse/sum_of_fragments'][0]
             output_dict['structure/bsse/complexation_energy_raw'] = output_dict['structure/bsse/complexation_energy_raw'][0]
             output_dict['structure/bsse/complexation_energy_corrected'] = output_dict['structure/bsse/complexation_energy_corrected'][0]
+        else:
+            # flip array sequence
+            output_dict['structure/bsse/energy_tot_corrected'] = output_dict['structure/bsse/energy_tot_corrected'][::-1]
+            output_dict['structure/bsse/bsse_correction'] = output_dict['structure/bsse/bsse_correction'][::-1]
+            output_dict['structure/bsse/sum_of_fragments'] = output_dict['structure/bsse/sum_of_fragments'][::-1]
+            output_dict['structure/bsse/complexation_energy_raw'] = output_dict['structure/bsse/complexation_energy_raw'][::-1]
+            output_dict['structure/bsse/complexation_energy_corrected'] = output_dict['structure/bsse/complexation_energy_corrected'][::-1]
 
 
 def read_EmpiricalDispersion(output_file,output_dict):
@@ -502,7 +509,7 @@ def collect_output(output_file):
     # Read BSSE output if it is present
     read_bsse(output_file,output_dict)
 
-    # Correct energy if dispersion is present
+    # Correct energy if empirical dispersion contribution is present
     read_EmpiricalDispersion(output_file,output_dict)
 
     return output_dict
