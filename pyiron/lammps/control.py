@@ -546,7 +546,7 @@ class LammpsControl(GenericParameters):
             raise ValueError("Chemical potential differences must include all possible species, and may include no "
                              "species not treated by the potential.")
 
-        if not np.all([len(np.unique(k.split("_")) == 2 for k in delta_mu.keys())]):
+        if not np.all([len(np.unique(k.split("_"))) == 2 for k in delta_mu.keys()]):
             raise ValueError("Chemical potential differences must be between exactly two unique species.")
 
         # Re-order the given chemical potential differences so they're all relative to the initial species in the potl
