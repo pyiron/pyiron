@@ -711,10 +711,10 @@ class LammpsBase(AtomisticGenericJob):
             Assumes the units are metal, otherwise units for the constraints may be off.
 
         Args:
-            delta_mu (dict): A dictionary of N-1 chemical potential differences, where N is the number of species *in
-                the potential*. Dictionary keys must be the chemical symbols of the two species the chemical potential
-                difference is for, separated by an underscore. E.g. for an X-Y-Z alloy, {'X_Y': -0.4, 'Y_Z': 0.6},
-                where -0.4 is the change in free energy to replace an X atom with a Y atom.
+            mu (dict): A dictionary of chemical potentials, one for each element the potential treats, where the
+                dictionary keys are just the chemical symbol. Note that only the *relative* chemical potentials are used
+                here, such that the swap acceptance probability is influenced by the chemical potential difference
+                between the two species (a more negative value increases the odds of swapping *to* that element.)
             target_concentration: A dictionary of target simulation domain concentrations for each species *in the
                 potential*. Dictionary keys should be the chemical symbol of the corresponding species, and the sum of
                 all concentrations must be 1. (Default is None, which runs regular semi-grand-canonical MD/MC without

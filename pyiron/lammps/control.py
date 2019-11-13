@@ -464,7 +464,7 @@ class LammpsControl(GenericParameters):
 
     def calc_vcsgc(
         self,
-        delta_mu,
+        mu,
         ordered_element_list,
         target_concentration=None,
         kappa=1000.,
@@ -497,10 +497,10 @@ class LammpsControl(GenericParameters):
             Assumes the units are metal, otherwise units for the constraints may be off.
 
         Args:
-            delta_mu (dict): A dictionary of N-1 chemical potential differences, where N is the number of species *in
-                the potential*. Dictionary keys must be the chemical symbols of the two species the chemical potential
-                difference is for, separated by an underscore. E.g. for an X-Y-Z alloy, {'X_Y': -0.4, 'Y_Z': 0.6},
-                where -0.4 is the change in free energy to replace an X atom with a Y atom.
+            mu (dict): A dictionary of chemical potentials, one for each element the potential treats, where the
+                dictionary keys are just the chemical symbol. Note that only the *relative* chemical potentials are used
+                here, such that the swap acceptance probability is influenced by the chemical potential difference
+                between the two species (a more negative value increases the odds of swapping *to* that element.)
             ordered_element_list (list): A list of the chemical species symbols in the order they appear in the
                 definition of the potential in the Lammps' input file.
             target_concentration: A dictionary of target simulation domain concentrations for each species *in the
@@ -536,42 +536,16 @@ class LammpsControl(GenericParameters):
         if seed is None:
             self.generate_seed_from_job(job_name=job_name)
 
-        if len(delta_mu.keys()) != len(ordered_element_list) - 1:
-            raise ValueError("Expected `delta_mu` to have {} items, but got {}".format(
-                len(ordered_element_list) - 1,
-                len(delta_mu.keys())
-            ))
+        if set(mu.keys()) != set(ordered_element_list):
+            raise ValueError("Exactly one chemical potential must be given for each element treated by the potential.")
 
-        if set(np.unique(np.array([k.split("_") for k in delta_mu.keys()]).flatten())) != set(ordered_element_list):
-            raise ValueError("Chemical potential differences must include all possible species, and may include no "
-                             "species not treated by the potential.")
-
-        if not np.all([len(np.unique(k.split("_"))) == 2 for k in delta_mu.keys()]):
-            raise ValueError("Chemical potential differences must be between exactly two unique species.")
-
-        # Re-order the given chemical potential differences so they're all relative to the initial species in the potl
-        n = len(ordered_element_list)
-        mat = np.zeros((n, n))
-        vec = np.empty(n)
-        order_dict = {}
-        for n, el in enumerate(ordered_element_list):
-            order_dict[el] = n
-        for n, (k, v) in enumerate(delta_mu.items()):
-            el1, el2 = k.split('_')
-            i, j = order_dict[el1], order_dict[el2]
-            mat[n, i] = 1
-            mat[n, j] = -1
-            vec[n] = v
-        mat[-1, 0] = 1
-        vec[-1] = 0.  # The initial species is our zero-energy reference
-        sol = np.linalg.solve(mat, vec)
-
+        calibrating_el = ordered_element_list[0]
         # Apply the actual SGC string
         fix_vcsgc_str = "all sgcmc {0} {1} {2} {3} randseed {4}".format(
             str(mc_step_interval),
             str(swap_fraction),
             str(temperature_mc),
-            str(" ".join(str(dmu) for dmu in sol[1:])),
+            str(" ".join(str(mu[el] - mu[calibrating_el]) for el in ordered_element_list[1:])),
             str(seed),
         )
 
