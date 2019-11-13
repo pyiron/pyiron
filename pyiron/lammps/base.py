@@ -969,6 +969,15 @@ class Input:
         self.control = LammpsControl()
         self.potential = LammpsPotential()
         self.bond_dict = dict()
+        # Set default bond parameters
+        self._load_default_bond_params()
+
+    def _load_default_bond_params(self):
+        """
+        Function to automatically load a few default bond params (wont automatically write them)
+
+        """
+        # Default bond properties of a water molecule
         self.bond_dict["O"] = dict()
         self.bond_dict["O"]["element_list"] = ["H"]
         self.bond_dict["O"]["cutoff_list"] = [2.0]
