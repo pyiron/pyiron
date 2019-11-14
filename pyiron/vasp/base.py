@@ -1057,8 +1057,12 @@ class VaspBase(GenericDFTJob):
                     raise ValueError("high_symmetry_points has to be defined")
             if trace is None:
                 raise ValueError("trace_points has to be defined")
-            self.input.kpoints._set_trace(self._get_trace_for_kpoints(trace))
-            self.input.kpoints.set(method="Line", n_trace=n_trace)
+            self.input.kpoints._set_trace(trace)
+            self.input.kpoints.set(
+                method="Line",
+                n_trace=n_trace,
+                trace_coord=self._get_trace_for_kpoints(trace)
+            )
         if scheme == "Manual":
             if manual_kpoints is None:
                 raise ValueError(
@@ -2182,7 +2186,7 @@ class Kpoints(GenericParameters):
 
     def _set_trace(self, trace):
         """
-        Sets value of k-points trace (line mode only)
+        Sets high symmetry points names of k-points trace (line mode only)
 
         Args:
             trace (list): new trace
@@ -2191,14 +2195,14 @@ class Kpoints(GenericParameters):
 
     def _get_trace(self):
         """
-        Returns value for k-points trace (Line mode only)
+        Returns high symmetry points name of k-points trace (Line mode only)
 
         Returns:
             list: trace values
         """
         return self._trace
 
-    def set(self, method=None, size_of_mesh=None, shift=None, n_trace=None):
+    def set(self, method=None, size_of_mesh=None, shift=None, n_trace=None, trace_coord=None):
         """
         Sets appropriate tags and values in the KPOINTS file
         Args:
@@ -2206,14 +2210,23 @@ class Kpoints(GenericParameters):
             size_of_mesh (list/numpy.ndarray): List of size 1x3 specifying the required mesh size
             shift (list): List of size 1x3 specifying the user defined shift from the Gamma point
             n_trace (int): Number of points per trace for line mode
+            trace_coord (list): coordinates of k-points trace in VASP KPOINTS format
         """
         if n_trace is not None:
-            if self._trace is None:
+            if self._trace is None or trace_coord is None:
                 raise ValueError("trace have to be defined")
+
             self.set_value(line=1, val=n_trace)
             self.set_value(line=3, val="rec")
-            for i, t in enumerate(self._trace):
+
+            trace_names = []
+            for i in range(len(self._trace) - 1):
+                trace_names.append(self._trace[i])
+                trace_names.append(self._trace[i + 1])
+
+            for i, t in enumerate(trace_coord):
                 val = " ".join([str(ii) for ii in t])
+                val = val + " !" + trace_names[i]
                 self.set_value(line=i + 4, val=val)
         if method is not None:
             self.set_value(line=2, val=method)
