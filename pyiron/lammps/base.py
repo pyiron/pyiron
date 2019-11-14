@@ -61,6 +61,54 @@ class LammpsBase(AtomisticGenericJob):
         s.publication_add(self.publication)
 
     @property
+    def bond_dict(self):
+        """
+        A dictionary which defines the nature of LAMMPS bonds that are to be drawn between atoms. To set the values, use
+        the function `define_bonds`.
+
+        Returns:
+            dict: Dictionary of the bond properties for every species
+
+        """
+        return self.input.bond_dict
+
+    def define_bonds(self, species, element_list, cutoff_list, max_bond_list, bond_type_list, angle_type_list=None):
+        """
+        Define the nature of bonds between different species. Make sure that the bonds between two species are defined
+        only once (no double counting).
+
+        Args:
+            species (str): Species for which the bonds are to be drawn (e.g. O, H, C ..)
+            element_list (list): List of species to which the bonds are to be made (e.g. O, H, C, ..)
+            cutoff_list (list): Draw bonds only for atoms within this cutoff distance
+            max_bond_list (list): Maximum number of bonds drawn from each molecule
+            bond_type_list (list): Type of the bond as defined in the LAMMPS potential file
+            angle_type_list (list): Type of the angle as defined in the LAMMPS potential file
+
+        Example:
+            The command below defined bonds between O and H atoms within a cutoff raduis of 2 $\AA$ with the bond and
+            angle types 1 defined in the potential file used
+
+            >> job_lammps.define_bonds(species="O", element_list-["H"], cutoff_list=[2.0], bond_type_list=[1],
+            angle_type_list=[1])
+
+        """
+        if isinstance(species, str):
+            if len(element_list) == len(cutoff_list) == bond_type_list == max_bond_list:
+                self.input.bond_dict[species] = dict()
+                self.input.bond_dict[species]["element_list"] = element_list
+                self.input.bond_dict[species]["cutoff_list"] = cutoff_list
+                self.input.bond_dict[species]["bond_type_list"] = bond_type_list
+                self.input.bond_dict[species]["max_bond_list"] = max_bond_list
+                if angle_type_list is not None:
+                    self.input.bond_dict[species]["angle_type_list"] = angle_type_list
+                else:
+                    self.input.bond_dict[species]["angle_type_list"] = [None]
+            else:
+                raise ValueError("The element list, cutoff list, max bond list, and the bond type list"
+                                 " must have the same length")
+
+    @property
     def cutoff_radius(self):
         """
 
@@ -787,7 +835,7 @@ class LammpsBase(AtomisticGenericJob):
         return new_ham
 
     def _get_lammps_structure(self, structure=None, cutoff_radius=None):
-        lmp_structure = LammpsStructure()
+        lmp_structure = LammpsStructure(bond_dict=self.input.bond_dict)
         lmp_structure.potential = self.input.potential
         lmp_structure.atom_type = self.input.control["atom_style"]
         if cutoff_radius is not None:
@@ -920,6 +968,22 @@ class Input:
     def __init__(self):
         self.control = LammpsControl()
         self.potential = LammpsPotential()
+        self.bond_dict = dict()
+        # Set default bond parameters
+        self._load_default_bond_params()
+
+    def _load_default_bond_params(self):
+        """
+        Function to automatically load a few default bond params (wont automatically write them)
+
+        """
+        # Default bond properties of a water molecule
+        self.bond_dict["O"] = dict()
+        self.bond_dict["O"]["element_list"] = ["H"]
+        self.bond_dict["O"]["cutoff_list"] = [2.0]
+        self.bond_dict["O"]["max_bond_list"] = [2]
+        self.bond_dict["O"]["bond_type_list"] = [1]
+        self.bond_dict["O"]["angle_type_list"] = [1]
 
     def to_hdf(self, hdf5):
         """
@@ -946,6 +1010,8 @@ class Input:
         with hdf5.open("input") as hdf5_input:
             self.control.from_hdf(hdf5_input)
             self.potential.from_hdf(hdf5_input)
+            if "bond_dict" in hdf5_input.list_nodes():
+                self.bond_dict = hdf5_input["bond_dict"]
 
 
 def to_amat(l_list):
