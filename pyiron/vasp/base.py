@@ -1103,7 +1103,7 @@ class VaspBase(GenericDFTJob):
             k_trace.append(self.structure.get_high_symmetry_points()[t])
             k_trace.append(self.structure.get_high_symmetry_points()[trace_roll[i]])
 
-        return k_trace[:-1]
+        return k_trace[:-2]
 
     def set_for_band_structure_calc(
         self, num_points, structure=None, read_charge_density=True
