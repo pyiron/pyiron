@@ -1685,8 +1685,13 @@ class Input:
             self.kpoints.to_hdf(hdf5_input)
             self.potcar.to_hdf(hdf5_input)
 
-            vasp_dict = {"eddrmm_handling": self._eddrmm}
-            hdf5_input["vasp_dict"] = vasp_dict
+            if "vasp_dict" in hdf5_input.list_nodes():
+                vasp_dict = hdf5_input["vasp_dict"]
+                vasp_dict.update({"eddrmm_handling": self._eddrmm})
+                hdf5_input["vasp_dict"] = vasp_dict
+            else:
+                vasp_dict = {"eddrmm_handling": self._eddrmm}
+                hdf5_input["vasp_dict"] = vasp_dict
 
     def from_hdf(self, hdf):
         """
@@ -1699,11 +1704,12 @@ class Input:
             self.incar.from_hdf(hdf5_input)
             self.kpoints.from_hdf(hdf5_input)
             self.potcar.from_hdf(hdf5_input)
+
+            self._eddrmm = "ignore"
             if "vasp_dict" in hdf5_input.list_nodes():
                 vasp_dict = hdf5_input["vasp_dict"]
-                self._eddrmm = vasp_dict["eddrmm_handling"]
-            else:
-                self._eddrmm = "ignore"
+                if "eddrmm_handling" in vasp_dict.keys():
+                    self._eddrmm = vasp_dict["eddrmm_handling"]
 
 
 class Output:
@@ -2242,6 +2248,45 @@ Monkhorst_Pack
                     kspace_per_in_ang=self._dataset["density_of_mesh"],
                 )
                 self.set(size_of_mesh=k_mesh)
+
+    def to_hdf(self, hdf, group_name=None):
+        """
+        Store the GenericParameters in an HDF5 file
+
+        Args:
+            hdf (ProjectHDFio): HDF5 group object
+            group_name (str): HDF5 subgroup name - optional
+        """
+        super(Kpoints, self).to_hdf(
+            hdf=hdf,
+            group_name=group_name
+        )
+        if self._trace is not None:
+            if "vasp_dict" in hdf.list_nodes():
+                vasp_dict = hdf["vasp_dict"]
+                vasp_dict.update({"trace": self._trace})
+                hdf["vasp_dict"] = vasp_dict
+            else:
+                vasp_dict = {"trace": self._trace}
+                hdf["vasp_dict"] = vasp_dict
+
+    def from_hdf(self, hdf, group_name=None):
+        """
+        Restore the GenericParameters from an HDF5 file
+
+        Args:
+            hdf (ProjectHDFio): HDF5 group object
+            group_name (str): HDF5 subgroup name - optional
+        """
+        super(Kpoints, self).from_hdf(
+            hdf=hdf,
+            group_name=group_name
+        )
+        self._trace = None
+        if "vasp_dict" in hdf.list_nodes():
+            vasp_dict = hdf["vasp_dict"]
+            if "trace" in vasp_dict.keys():
+                self._trace = vasp_dict["trace"]
 
 
 class Potcar(GenericParameters):
