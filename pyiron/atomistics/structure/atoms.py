@@ -94,6 +94,7 @@ class Atoms(object):
         elements=None,
         dimension=None,
         species=None,
+        high_symmetry_points=None,
         **qwargs
     ):
         if symbols is not None:
@@ -227,6 +228,7 @@ class Atoms(object):
             else:
                 self.pbc = pbc
         self.set_initial_magnetic_moments(magmoms)
+        self._high_symmetry_points = high_symmetry_points
 
     @property
     def cell(self):
@@ -305,6 +307,24 @@ class Atoms(object):
 
         """
         return np.array([self.species[el] for el in self.indices])
+
+    def get_high_symmetry_points(self):
+        """
+        Returns:
+            dict: high_symmetry_points
+        """
+        return self._high_symmetry_points
+
+    def set_high_symmetry_points(self, new_high_symmetry_points):
+        """
+        Sets new high symmetry points dictionary.
+
+        Args:
+            new_high_symmetry_points (dict): new high symmetry points
+        """
+        if not isinstance(new_high_symmetry_points, dict):
+            raise ValueError("has to be dict!")
+        self._high_symmetry_points = new_high_symmetry_points
 
     def new_array(self, name, a, dtype=None, shape=None):
         """
@@ -467,6 +487,9 @@ class Atoms(object):
 
             # print ('time in atoms.to_hdf: ', time.time() - time_start)
 
+            if self._high_symmetry_points is not None:
+                hdf_structure["high_symmetry_points"] = self._high_symmetry_points
+
     def from_hdf(self, hdf, group_name="structure"):
         """
         Retrieve the object from a HDF5 file
@@ -544,6 +567,10 @@ class Atoms(object):
 
                 if "bonds" in hdf_atoms.list_nodes():
                     self.bonds = hdf_atoms["explicit_bonds"]
+
+                self._high_symmetry_points = None
+                if "high_symmetry_points" in hdf_atoms.list_nodes():
+                    self._high_symmetry_points = hdf_atoms["high_symmetry_points"]
                 return self
 
         else:
@@ -603,6 +630,10 @@ class Atoms(object):
 
             if "bonds" in hdf_atoms.list_nodes():
                 self.bonds = hdf_atoms["explicit_bonds"]
+
+            self._high_symmetry_points = None
+            if "high_symmetry_points" in hdf_atoms.list_nodes():
+                self._high_symmetry_points = hdf_atoms["high_symmetry_points"]
             return self
 
     def center(self, vacuum=None, axis=(0, 1, 2)):
