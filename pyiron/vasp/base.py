@@ -1057,7 +1057,7 @@ class VaspBase(GenericDFTJob):
                     raise ValueError("high_symmetry_points has to be defined")
             if trace is None:
                 raise ValueError("trace_points has to be defined")
-            self.input.kpoints._set_trace(trace)
+            self.input.kpoints._set_trace(self._get_trace_for_kpoints(trace))
             self.input.kpoints.set(method="Line", n_trace=n_trace)
         if scheme == "Manual":
             if manual_kpoints is None:
