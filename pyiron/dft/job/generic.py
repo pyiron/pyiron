@@ -153,7 +153,6 @@ class GenericDFTJob(AtomisticGenericJob):
         weights=None,
         reciprocal=True,
         n_trace=None,
-        high_symmetry_points=None,
         trace=None,
     ):
         raise NotImplementedError(
@@ -171,7 +170,6 @@ class GenericDFTJob(AtomisticGenericJob):
         reciprocal=True,
         kpoints_per_angstrom=None,
         n_trace=None,
-        high_symmetry_points=None,
         trace=None,
     ):
         """
@@ -188,7 +186,6 @@ class GenericDFTJob(AtomisticGenericJob):
             reciprocal space)
             kpoints_per_angstrom (float): Number of kpoint per angstrom in each direction
             n_trace (int): Number of points per trace part for line mode
-            high_symmetry_points (dict): Name and reciprocal position of high symmetry points
             trace (list): ordered list of high symmetry points for line mode
         """
         if kpoints_per_angstrom is not None:
@@ -210,7 +207,6 @@ class GenericDFTJob(AtomisticGenericJob):
             weights=weights,
             reciprocal=reciprocal,
             n_trace=n_trace,
-            high_symmetry_points=high_symmetry_points,
             trace=trace,
         )
 
