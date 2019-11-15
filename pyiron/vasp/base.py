@@ -1016,7 +1016,6 @@ class VaspBase(GenericDFTJob):
         weights=None,
         reciprocal=True,
         n_trace=None,
-        high_symmetry_points=None,
         trace=None,
     ):
         """
@@ -1033,7 +1032,6 @@ class VaspBase(GenericDFTJob):
             reciprocal space)
             kmesh_density (float): Value of the required density
             n_trace (int): Number of points per trace part for line mode
-            high_symmetry_points (dict): Name and reciprocal position of high symmetry points
             trace (list): ordered list of high symmetry points for line mode
         """
         self.structure.get_high_symmetry_points()
@@ -1051,10 +1049,9 @@ class VaspBase(GenericDFTJob):
         if scheme == "Line":
             if n_trace is None:
                 raise ValueError("n_trace has to be defined")
+            high_symmetry_points = self.structure.get_high_symmetry_points()
             if high_symmetry_points is None:
-                high_symmetry_points = self.structure.get_high_symmetry_points()
-                if high_symmetry_points is None:
-                    raise ValueError("high_symmetry_points has to be defined")
+                raise ValueError("high_symmetry_points has to be defined")
             if trace is None:
                 raise ValueError("trace_points has to be defined")
             self.input.kpoints._set_trace(trace)
