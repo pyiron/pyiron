@@ -1034,7 +1034,6 @@ class VaspBase(GenericDFTJob):
             n_trace (int): Number of points per trace part for line mode
             trace (list): ordered list of high symmetry points for line mode
         """
-        self.structure.get_high_symmetry_points()
         if not symmetry_reduction:
             self.input.incar["ISYM"] = -1
         scheme_list = ["MP", "GP", "Line", "Manual"]
