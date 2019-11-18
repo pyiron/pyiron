@@ -822,14 +822,9 @@ class Project(ProjectPath):
         Returns:
             pandas.DataFrame: Output from the queuing system - optimized for the Sun grid engine
         """
-        if full_table:
-            pandas.set_option('display.max_rows', None)
-            pandas.set_option('display.max_columns', None)
-        else:
-            pandas.reset_option('display.max_rows')
-            pandas.reset_option('display.max_columns')
         return queue_table(
-            job_ids=self.get_job_ids(recursive=recursive), project_only=project_only
+            job_ids=self.get_job_ids(recursive=recursive), project_only=project_only,
+            full_table=full_table
         )
 
     def queue_table_global(self, full_table=False):
