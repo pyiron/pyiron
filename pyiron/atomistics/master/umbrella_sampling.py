@@ -26,6 +26,7 @@ class USJobGenerator(JobGenerator):
             return 'us_' + str(parameter[0]).replace('.', '_')
 
     def modify_job(self, job, parameter):
+        job.input['temp'] = self._job.input['temp']
         job.structure = parameter[1]
         job.set_us(self._job.input['ics'], self._job.input['kappa'], parameter[0], fn_colvar='COLVAR', stride=self._job.input['stride'], temp=self._job.input['temp'])
         return job
