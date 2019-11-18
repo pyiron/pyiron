@@ -228,7 +228,8 @@ class Atoms(object):
             else:
                 self.pbc = pbc
         self.set_initial_magnetic_moments(magmoms)
-        self.set_high_symmetry_points(high_symmetry_points)
+        if high_symmetry_points is not None:
+            self.set_high_symmetry_points(high_symmetry_points)
 
     @property
     def cell(self):
