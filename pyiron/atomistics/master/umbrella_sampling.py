@@ -12,26 +12,25 @@ class USJobGenerator(JobGenerator):
             (list)
         """
         # For now no different kappa for different locs implementation!
-        
-        assert isinstance(self._job.input['grid_range'], list) or isinstance(self._job.input['grid_range'], np.ndarray)
-        for loc in self._job.input['grid_range']:
-            structure = self.search_structure(job.input['md_job'],job.input['cv_f'],loc)
+
+        assert isinstance(self._job.input['cv_grid'], list) or isinstance(self._job.input['cv_grid'], np.ndarray)
+        for (loc,struc) in zip(self._job.input['cv_grid'],self._job.input['structures']):
             parameter_lst.append([np.round(loc,5), structure])
         return parameter_lst
-    
-    @staticmethod
-    def search_structure(job,f,cv):
-        # IMPLEMENT 
 
     @staticmethod
     def job_name(parameter):
-        return "strain_" + str(parameter[0]).replace('.', '_')
+        if isinstance(parameter[0], list) or isinstance(parameter[0], np.ndarray):
+            return 'us_' + '__'.join([str(loc).replace('.', '_') for loc in parameter[0]])
+        else:
+            return 'us_' + str(parameter[0]).replace('.', '_')
 
     def modify_job(self, job, parameter):
         job.structure = parameter[1]
+        job.set_us(self._job.input['ics'], self._job.input['kappa'], parameter[0], fn_colvar='COLVAR', stride=self._job.input['stride'], temp=self._job.input['temp'])
         return job
-    
-    
+
+
 class US(AtomisticParallelMaster):
     def __init__(self, project, job_name='us'):
         """
@@ -45,75 +44,123 @@ class US(AtomisticParallelMaster):
         self.__version__ = '0.1.0'
 
         # define default input
-        self.input['grid_range'] = (np.linspace(0,1,10), 'cv grid')
-        self.input['md_job'] = (None, 'job with md data for structure generation at cv grid points')
-        self.input['cv_f'] = (None, 'function to calculate CV from job object')
+        self.input['kappa']      = (1.*kjmol, 'the value of the force constant of the harmonic bias potential')
+        self.input['stride']     = (10, 'the number of steps after which the internal coordinate values and bias are printed to the COLVAR output file.')
+        self.input['temp']       = (300*kelvin, 'the system temperature')
+
+        self.input['cv_grid'] = (np.linspace(0,1,10), 'cv grid')
+        self.input['structures'] = (None, 'list with structures corresponding to grid points')
+
+        self.input['ics']        = ([('distance', [0,1])], 'ics')
+        for ic in self.input['ics']:
+            assert len(ic)==2
+            assert isinstance(ic[0], str)
+            assert isinstance(ic[1], list) or isinstance(ic[1], tuple)
+        self.input['ickinds'] = np.array([ic[0] for ic in self.input['ics']],dtype='S22')
+        self.input['icindices'] = np.array([np.array(ic[1])+1 for ic in self.input['ics']]) # plumed starts counting from 1
+
+
         self._job_generator = USJobGenerator(self)
 
     def list_structures(self):
-        if self.ref_job.structure is not None:
-            return [parameter[1] for parameter in self._job_generator.parameter_list]
-        else:
-            return []
+        return self.input['structures']
 
-    # Fix these functions    
-        
-    def collect_output(self):
-        if self.server.run_mode.interactive:
-            ham = self.project_hdf5.inspect(self.child_ids[0])
-            erg_lst = ham["output/generic/energy_tot"]
-            vol_lst = ham["output/generic/volume"]
-            arg_lst = np.argsort(vol_lst)
+    def generate_structures_traj(self,job,cv_f):
+        '''
+            Generates structure list based on cv grid and cv function using the trajectory data from another job (e.g. MD or MTD job)
 
-            self._output["volume"] = vol_lst[arg_lst]
-            self._output["energy"] = erg_lst[arg_lst]
-        else:
-            erg_lst, vol_lst, err_lst, id_lst = [], [], [], []
-            for job_id in self.child_ids:
-                ham = self.project_hdf5.inspect(job_id)
-                print('job_id: ', job_id, ham.status)
-                energy = ham["output/generic/energy_tot"][-1]
-                volume = ham["output/generic/volume"][-1]
-                erg_lst.append(np.mean(energy))
-                err_lst.append(np.var(energy))
-                vol_lst.append(volume)
-                id_lst.append(job_id)
-            vol_lst = np.array(vol_lst)
-            erg_lst = np.array(erg_lst)
-            err_lst = np.array(err_lst)
-            id_lst = np.array(id_lst)
-            arg_lst = np.argsort(vol_lst)
+            **Arguments**
 
-            self._output["volume"] = vol_lst[arg_lst]
-            self._output["energy"] = erg_lst[arg_lst]
-            self._output["error"] = err_lst[arg_lst]
-            self._output["id"] = id_lst[arg_lst]
+            job      job object which contains enough snapshots in the region of interest
+            cv_f     function object that takes a structure object as input and returns the corresponding CV(s)
+        '''
+        frames = job['output/generic/positions'].shape[0]
+        cv = np.zeros((frames,len(self.ics)))
 
-        with self.project_hdf5.open("output") as hdf5_out:
-            for key, val in self._output.items():
-                hdf5_out[key] = val
-        if self.input['fit_type'] == "polynomial":
-            self.fit_polynomial(fit_order=self.input['fit_order'])
-        else:
-            self._fit_eos_general(fittype=self.input['fit_type'])
+        for i in range(frames):
+            structure = job.get_structure(i)
+            cv[i] = cv_f(structure)
+
+        idx = np.zeros(len(self.input['cv_grid']),dtype=int)
+        for n,loc in enumerate(self.input['cv_grid']):
+            idx[n] = np.argmin(np.linalg.norm(loc-cv,axis=-1))
+
+        return [job.get_structure(i) for i in idx]
+
+    def generate_structures_ref(self,f):
+        '''
+            Generates structure list based on cv grid and reference structure
+
+            **Arguments**
+
+            f     function object that takes the reference structure object and a cv change as input and returns the altered structure
+        '''
+
+        assert self.ref_job.structure is not None
+        structures = []
+        for loc in self.input['cv_grid']:
+            structures.append(f(self.ref_job.structure,loc))
+        return structures
+
+
+    def wham(self):
+        '''
+            Executes the plumed post-processing functions
+
+        '''
+        locs = []
+        for job_id in self.child_ids:
+            job = self.project_hdf5.inspect(job_id)
+            print('job_id: ', job_id, job.status)
+            loc = job.enhanced['loc']
+            if isinstance(loc, list) or isinstance(loc, np.ndarray):
+                locs.append(",".join([str(l) for l in loc]))
+            else:
+                locs.append(str(loc))
+            job.write_traj(os.path.join(self.working_directory, 'alltraj.xyz'), append=True)
+
+        with open(os.path.join(self.working_directory, 'plumed.dat'), 'w') as f:
+            #set units to atomic units
+            f.write('UNITS LENGTH=Bohr ENERGY=kj/mol TIME=atomic \n')
+            #define ics
+            for i, kind in enumerate(self.input['ickinds']):
+                if isinstance(kind, bytes):
+                    kind = kind.decode()
+                if len( self.input['icindices'][i] > 0):
+                    f.write('ic%i: %s ATOMS=%s \n' %(i, kind.upper(), ','.join([str(icidx) for icidx in self.input['icindices'][i]])))
+                else:
+                    f.write('ic%i: %s \n' %(i, kind.upper(), ','.join([str(icidx) for icidx in self.input['icindices'][i]])))
+                f.write('umbrella: RESTRAINT ARG=%s KAPPA=%s AT=@replicas:{\n %s \n} \n' %(
+                ','.join([ 'ic%i' %i for i in range(len(enhanced['ickinds']))]),
+                kappa, '\n'.join([str(loc) for loc in locs])
+            ))
+
+            # Current implementation only works for 1D umbrella sampling
+            f.write('hh: WHAM_HISTOGRAM ARG=%s BIAS=umbrella.bias TEMP=%s GRID_MIN=%s GRID_MAX=%s GRID_BIN=%s \n' %(
+                ','.join([ 'ic%i' %i for i in range(len(enhanced['ickinds']))]), self.input['temp'],
+                np.min(locs), np.max(locs), len(locs)
+            ))
+
+            f.write('fes: CONVERT_TO_FES GRID=hh TEMP=%s \n' %(self.input['temp']))
+            f.write('DUMPGRID GRID=fes FILE=fes.dat ')
+
+            subprocess.check_output(
+            'ml load PLUMED/2.5.2-intel-2019a-Python-3.7.2; mpirun -np 6 plumed driver --ixyz alltraj.xyz --multi 6',
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
+            shell=True
+        )
+
 
     def get_structure(self, iteration_step=-1):
         """
 
-        Returns: Structure
+        Returns: Structure at free energy minimum
 
         """
-        if not (self.structure is not None):
-            raise AssertionError()
-        if iteration_step == -1:
-            snapshot = self.structure.copy()
-            old_vol = snapshot.get_volume()
-            new_vol = self["output/equilibrium_volume"]
-            k = (new_vol / old_vol) ** (1. / 3.)
-            new_cell = snapshot.cell * k
-            snapshot.set_cell(new_cell, scale_atoms=True)
-            return snapshot
-        elif iteration_step == 0:
-            return self.structure
-        else:
-            raise ValueError('iteration_step should be either 0 or -1.')
+
+        # Read minimal energy from fes
+        # Read corresponding job
+        # return average structure
+
+        raise NotImplementedError()
