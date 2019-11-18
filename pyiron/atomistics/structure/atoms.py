@@ -228,7 +228,7 @@ class Atoms(object):
             else:
                 self.pbc = pbc
         self.set_initial_magnetic_moments(magmoms)
-        self._high_symmetry_points = high_symmetry_points
+        self.set_high_symmetry_points(high_symmetry_points)
 
     @property
     def cell(self):
@@ -310,6 +310,8 @@ class Atoms(object):
 
     def get_high_symmetry_points(self):
         """
+        dictionary of high-symmetry points defined for this specific structure.
+
         Returns:
             dict: high_symmetry_points
         """

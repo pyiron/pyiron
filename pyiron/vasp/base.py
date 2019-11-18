@@ -1094,7 +1094,7 @@ class VaspBase(GenericDFTJob):
             list: trace points coordinates for VASP
         """
         for t in trace:
-            if not t in self.structure.get_high_symmetry_points().keys():
+            if t not in self.structure.get_high_symmetry_points().keys():
                 raise ValueError("trace point '{}' is not in high symmetry points".format(t))
 
         trace_roll = np.roll(trace, -1)
