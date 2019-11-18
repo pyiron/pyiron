@@ -532,6 +532,7 @@ class Project(ProjectPath):
         columns=None,
         all_columns=True,
         sort_by="id",
+        full_table=False,
         element_lst=None,
         job_name_contains='',
     ):
@@ -546,6 +547,7 @@ class Project(ProjectPath):
                             'hamversion', 'parentid', 'masterid']
             all_columns (bool): Select all columns - this overwrites the columns option.
             sort_by (str): Sort by a specific column
+            full_table (bool): Whether to show the entire pandas table
             element_lst (list): list of elements required in the chemical formular - by default None
             job_name_contains (str): a string which should be contained in every job_name
 
@@ -562,6 +564,7 @@ class Project(ProjectPath):
                 columns=columns,
                 all_columns=all_columns,
                 sort_by=sort_by,
+                full_table=full_table,
                 element_lst=element_lst,
                 job_name_contains=job_name_contains,
             )
@@ -573,6 +576,7 @@ class Project(ProjectPath):
                 all_columns=all_columns,
                 sort_by=sort_by,
                 max_colwidth=200,
+                full_table=full_table,
                 job_name_contains=job_name_contains)
 
     def get_jobs_status(self, recursive=True, element_lst=None):
@@ -813,6 +817,7 @@ class Project(ProjectPath):
         Args:
             project_only (bool): Query only for jobs within the current project - True by default
             recursive (bool): Include jobs from sub projects
+            full_table (bool): Whether to show the entire pandas table
 
         Returns:
             pandas.DataFrame: Output from the queuing system - optimized for the Sun grid engine
@@ -820,6 +825,9 @@ class Project(ProjectPath):
         if full_table:
             pandas.set_option('display.max_rows', None)
             pandas.set_option('display.max_columns', None)
+        else:
+            pandas.reset_option('display.max_rows')
+            pandas.reset_option('display.max_columns')
         return queue_table(
             job_ids=self.get_job_ids(recursive=recursive), project_only=project_only
         )
@@ -828,13 +836,13 @@ class Project(ProjectPath):
         """
         Display the queuing system table as pandas.Dataframe
 
+        Args:
+            full_table (bool): Whether to show the entire pandas table
+
         Returns:
             pandas.DataFrame: Output from the queuing system - optimized for the Sun grid engine
         """
-        if full_table:
-            pandas.set_option('display.max_rows', None)
-            pandas.set_option('display.max_columns', None)
-        df = queue_table(job_ids=[], project_only=False)
+        df = queue_table(job_ids=[], project_only=False, full_table=full_table)
         if len(df) != 0 and self.db is not None:
             return pandas.DataFrame(
                 [
