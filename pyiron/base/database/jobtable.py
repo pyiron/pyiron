@@ -154,6 +154,7 @@ def job_table(
     all_columns=False,
     sort_by="id",
     max_colwidth=200,
+    full_table=False,
     element_lst=None,
     job_name_contains='',
 ):
@@ -210,6 +211,9 @@ def job_table(
         element_lst=element_lst,
     )
     pandas.set_option("display.max_colwidth", max_colwidth)
+    if full_table:
+        pandas.set_option('display.max_rows', None)
+        pandas.set_optn('display.max_columns', None)
     df = pandas.DataFrame(job_dict)
     if len(job_dict) == 0:
         return df
