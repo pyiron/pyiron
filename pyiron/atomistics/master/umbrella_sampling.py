@@ -94,7 +94,7 @@ class US(AtomisticParallelMaster):
         return structures
 
 
-    def wham(self):
+    def collect_output(self):
         '''
             Executes the plumed post-processing functions
 
@@ -107,7 +107,7 @@ class US(AtomisticParallelMaster):
         for job_id in self.child_ids:
             job = self.project_hdf5.inspect(job_id)
             print('job_id: ', job_id, job.status)
-            loc = job.enhanced['loc']
+            loc = job['input/generic/enhanced/loc']
             if isinstance(loc, list) or isinstance(loc, np.ndarray):
                 locs.append(",".join([str(l) for l in loc]))
             else:
