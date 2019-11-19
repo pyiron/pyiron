@@ -52,7 +52,7 @@ class US(AtomisticParallelMaster):
         self.input['stride']     = (10, 'the number of steps after which the internal coordinate values and bias are printed to the COLVAR output file.')
         self.input['temp']       = (300*kelvin, 'the system temperature')
 
-        self.input['cv_grid']    = (np.linspace(0,1,10), 'cv grid')
+        self.input['cv_grid']    = (list(np.linspace(0,1,10)), 'cv grid, has to be a list')
         self.input['structures'] = (None, 'list with structures corresponding to grid points')
         self.input['ics']        = ([('distance', [0,1])], 'ics')
 
@@ -72,14 +72,9 @@ class US(AtomisticParallelMaster):
         '''
         
         cv = cv_f(job)
-
+        cv.reshape(-1,len(self.input['ics']))
         idx = np.zeros(len(self.input['cv_grid']),dtype=int)
         for n,loc in enumerate(self.input['cv_grid']):
-            print(loc)
-            print(cv)
-            print(loc-cv)
-            print(np.linalg.norm(loc-cv,axis=-1))
-            print(np.argmin(np.linalg.norm(loc-cv,axis=-1)))
             idx[n] = np.argmin(np.linalg.norm(loc-cv,axis=-1))
 
         return [job.get_structure(i) for i in idx]
