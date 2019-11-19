@@ -245,10 +245,10 @@ def write_plumed_enhanced(input_dict,working_directory='.'):
                 assert len(enhanced['kappa'])>1
                 kappa = ','.join(['%.2f' %s/kjmol for s in enhanced['kappa']])
             if len(enhanced['loc'])==1:
-                height = '%.2f' %(enhanced['loc'])
+                loc = '%.2f' %(enhanced['loc'])
             else:
                 assert len(enhanced['loc'])>1
-                height = ','.join(['%.2f' %h for h in enhanced['loc']])
+                loc = ','.join(['%.2f' %h for h in enhanced['loc']])
 
             f.write('umbrella: RESTRAINT ARG=%s KAPPA=%s AT=%s \n' %(
                 ','.join([ 'ic%i' %i for i in range(len(enhanced['ickinds'])) ]),
