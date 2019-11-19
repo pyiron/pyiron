@@ -1,6 +1,8 @@
 # coding: utf-8
 import numpy as np
 from molmod.units import *
+import subprocess
+
 from pyiron.atomistics.master.parallel import AtomisticParallelMaster
 from pyiron.base.master.parallel import JobGenerator
 
@@ -93,7 +95,7 @@ class US(AtomisticParallelMaster):
             structures.append(f(self.ref_job.structure,loc))
         return structures
 
-
+    """
     def collect_output(self):
         '''
             Executes the plumed post-processing functions
@@ -127,7 +129,7 @@ class US(AtomisticParallelMaster):
                     f.write('ic%i: %s \n' %(i, kind.upper(), ','.join([str(icidx) for icidx in icindices[i]])))
                 f.write('umbrella: RESTRAINT ARG=%s KAPPA=%s AT=@replicas:{\n %s \n} \n' %(
                 ','.join([ 'ic%i' %i for i in range(len(ickinds))]),
-                kappa, '\n'.join([str(loc) for loc in locs])
+                kappa/kjmol, '\n'.join([str(loc) for loc in locs])
             ))
 
             # Current implementation only works for 1D umbrella sampling
@@ -145,7 +147,66 @@ class US(AtomisticParallelMaster):
             universal_newlines=True,
             shell=True
         )
+    """
+        
+    def wham(self, h_min, h_max, bins, periodicity=None, tol=0.00001):
+        '''
+            Performs the weighted histogram analysis method to calculate the free energy surface
 
+            **Arguments**
+
+            h_min   lowest value that is taken into account, float or list if more than one cv is biased
+            
+            h_max   highest value that is taken into account, float or list if more than one cv is biased
+                    if one whole trajectory is outside of these borders an error occurs
+            
+            bins    number of bins between h_min and h_max, int
+            
+            periodicity
+                    periodicity of the collective variable
+                    1D: either a number, 'pi' for angles (2pi periodic) or an empty string ('') for periodicity of 360 degrees
+                    2D: either a number, 'pi' for angles (2pi periodic) or 0 if no periodicity is required
+                    
+            tol     if no free energy value changes between iteration for more than tol, wham is converged
+        '''    
+        def convert_val(val):
+            if isinstance(val, list) or isinstance(val, np.ndarray):
+                return [str(l) for l in val]
+            else:
+                return str(val)
+        
+        f_metadata = os.path.join(self.working_directory, 'metadata')
+        f_fes      = os.path.join(self.working_directory, 'fes.dat')
+        
+        with open(f_metadata, 'w') as f:
+            for job_id in self.child_ids:
+                job = self.project_hdf5.inspect(job_id)
+                print('job_id: ', job_id, job.status)
+                loc = convert_val(job['input/generic/enhanced/loc'])
+                kappa = convert_val(job['input/generic/enhanced/kappa'])
+                f.write('{}/COLVAR\t'.format(job.working_directory) + '\t'.join(loc) + '\t' + '\t'.join(loc) + '\n') # format of colvar needs to be TIME CV1 (CV2)
+        
+        if len(loc) == 1:
+            cmd = 'wham '
+            if not periodicity is None:
+                cmd += 'P{} '.format(periodicity)
+            cmd += ' '.join([hmin,hmax,int(bins),tol,self.input['temp'],0,f_metadata,f_fes])
+            
+        elif len(loc) == 2:
+            cmd = 'wham-2d '
+            periodic = ['Px='+str(periodicity[0]) if not periodicity[0] is None else '0', 'Py='+str(periodicity[1]) if not periodicity[1] is None else '0']
+            for i in range(2):
+                cmd += ' '.join([periodic[i],hmin[i],hmax[i],int(bins[i])])
+            cmd += ' '.join([tol,self.input['temp'],0,f_metadata,f_fes,1])
+        else:
+            raise NotImplementedError()
+            
+            subprocess.check_output(
+                cmd,
+                stderr=subprocess.STDOUT,
+                universal_newlines=True,
+                shell=True
+            )
 
     def get_structure(self, iteration_step=-1):
         """
