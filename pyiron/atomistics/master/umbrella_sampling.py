@@ -18,15 +18,15 @@ class USJobGenerator(JobGenerator):
         parameter_lst = []
         assert isinstance(self._job.input['cv_grid'], list) or isinstance(self._job.input['cv_grid'], np.ndarray)
         for (loc,structure) in zip(self._job.input['cv_grid'],self._job.structures):
-            parameter_lst.append([np.round(loc,5), structure])
+            parameter_lst.append([np.round(loc,3), structure])
         return parameter_lst
 
     @staticmethod
     def job_name(parameter):
         if isinstance(parameter[0], list) or isinstance(parameter[0], np.ndarray):
-            return 'us_' + '__'.join([str(loc).replace('.', '_') for loc in parameter[0]])
+            return 'us_' + '__'.join([str(loc).replace('.', '_').replace('-', 'm') for loc in parameter[0]])
         else:
-            return 'us_' + str(parameter[0]).replace('.', '_')
+            return 'us_' + str(parameter[0]).replace('.', '_').replace('-', 'm')
 
     def modify_job(self, job, parameter):
         job.input['temp'] = self._job.input['temp']
