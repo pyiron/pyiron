@@ -17,7 +17,7 @@ class USJobGenerator(JobGenerator):
         # For now no different kappa for different locs implementation!
         parameter_lst = []
         assert isinstance(self._job.input['cv_grid'], list) or isinstance(self._job.input['cv_grid'], np.ndarray)
-        for (loc,struc) in zip(self._job.input['cv_grid'],self._job.structures):
+        for (loc,structure) in zip(self._job.input['cv_grid'],self._job.structures):
             parameter_lst.append([np.round(loc,5), structure])
         return parameter_lst
 
