@@ -68,14 +68,10 @@ class US(AtomisticParallelMaster):
             **Arguments**
 
             job      job object which contains enough snapshots in the region of interest
-            cv_f     function object that takes a structure object as input and returns the corresponding CV(s)
+            cv_f     function object that takes a job object as input and returns the corresponding CV(s) list
         '''
-        frames = job['output/generic/positions'].shape[0]
-        cv = np.zeros((frames,len(self.input['ics'])))
-
-        for i in range(frames):
-            structure = job.get_structure(i)
-            cv[i] = cv_f(structure)
+        
+        cv = cv_f(job)
 
         idx = np.zeros(len(self.input['cv_grid']),dtype=int)
         for n,loc in enumerate(self.input['cv_grid']):
