@@ -1,7 +1,9 @@
 # coding: utf-8
 import numpy as np
+from molmod.units import *
 from pyiron.atomistics.master.parallel import AtomisticParallelMaster
 from pyiron.base.master.parallel import JobGenerator
+
 
 
 class USJobGenerator(JobGenerator):
