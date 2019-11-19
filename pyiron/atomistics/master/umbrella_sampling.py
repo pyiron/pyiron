@@ -71,7 +71,7 @@ class US(AtomisticParallelMaster):
             cv_f     function object that takes a structure object as input and returns the corresponding CV(s)
         '''
         frames = job['output/generic/positions'].shape[0]
-        cv = np.zeros((frames,len(self.ics)))
+        cv = np.zeros((frames,len(self.input['ics'])))
 
         for i in range(frames):
             structure = job.get_structure(i)
