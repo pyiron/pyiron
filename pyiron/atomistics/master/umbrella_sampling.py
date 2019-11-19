@@ -75,6 +75,11 @@ class US(AtomisticParallelMaster):
 
         idx = np.zeros(len(self.input['cv_grid']),dtype=int)
         for n,loc in enumerate(self.input['cv_grid']):
+            print(loc)
+            print(cv)
+            print(loc-cv)
+            print(np.linalg.norm(loc-cv,axis=-1))
+            print(np.argmin(np.linalg.norm(loc-cv,axis=-1)))
             idx[n] = np.argmin(np.linalg.norm(loc-cv,axis=-1))
 
         return [job.get_structure(i) for i in idx]
