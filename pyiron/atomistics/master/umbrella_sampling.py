@@ -17,7 +17,7 @@ class USJobGenerator(JobGenerator):
         # For now no different kappa for different locs implementation!
 
         assert isinstance(self._job.input['cv_grid'], list) or isinstance(self._job.input['cv_grid'], np.ndarray)
-        for (loc,struc) in zip(self._job.input['cv_grid'],self._job.input['structures']):
+        for (loc,struc) in zip(self._job.input['cv_grid'],self._job.structures):
             parameter_lst.append([np.round(loc,5), structure])
         return parameter_lst
 
@@ -53,13 +53,13 @@ class US(AtomisticParallelMaster):
         self.input['temp']       = (300*kelvin, 'the system temperature')
 
         self.input['cv_grid']    = (list(np.linspace(0,1,10)), 'cv grid, has to be a list')
-        self.input['structures'] = (None, 'list with structures corresponding to grid points')
         self.input['ics']        = ([('distance', [0,1])], 'ics')
-
+        
+        self.structures = None   # list with structures corresponding to grid points
         self._job_generator = USJobGenerator(self)
 
     def list_structures(self):
-        return self.input['structures']
+        return self.structures
 
     def generate_structures_traj(self,job,cv_f):
         '''
@@ -71,12 +71,11 @@ class US(AtomisticParallelMaster):
             cv_f     function object that takes a job object as input and returns the corresponding CV(s) list
         '''
         
-        cv = cv_f(job)
-        cv.reshape(-1,len(self.input['ics']))
+        cv = cv_f(job).reshape(-1,len(self.input['ics']))
         idx = np.zeros(len(self.input['cv_grid']),dtype=int)
         for n,loc in enumerate(self.input['cv_grid']):
             idx[n] = np.argmin(np.linalg.norm(loc-cv,axis=-1))
-
+            
         return [job.get_structure(i) for i in idx]
 
     def generate_structures_ref(self,f):
