@@ -112,7 +112,7 @@ class US(AtomisticParallelMaster):
                 locs.append(",".join([str(l) for l in loc]))
             else:
                 locs.append(str(loc))
-            job.write_traj(os.path.join(self.working_directory, 'alltraj.xyz'), append=True)
+            us.load(job_id).write_traj(os.path.join(self.working_directory, 'alltraj.xyz'), append=True)
 
         with open(os.path.join(self.working_directory, 'plumed.dat'), 'w') as f:
             #set units to atomic units
