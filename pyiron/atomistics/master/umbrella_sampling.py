@@ -56,7 +56,7 @@ class US(AtomisticParallelMaster):
 
         self.input['cv_grid']    = (list(np.linspace(0,1,10)), 'cv grid, has to be a list')
         self.input['ics']        = ([('distance', [0,1])], 'ics')
-        
+
         self.structures = None   # list with structures corresponding to grid points
         self._job_generator = USJobGenerator(self)
 
@@ -72,12 +72,12 @@ class US(AtomisticParallelMaster):
             job      job object which contains enough snapshots in the region of interest
             cv_f     function object that takes a job object as input and returns the corresponding CV(s) list
         '''
-        
+
         cv = cv_f(job).reshape(-1,len(self.input['ics']))
         idx = np.zeros(len(self.input['cv_grid']),dtype=int)
         for n,loc in enumerate(self.input['cv_grid']):
             idx[n] = np.argmin(np.linalg.norm(loc-cv,axis=-1))
-            
+
         return [job.get_structure(i) for i in idx]
 
     def generate_structures_ref(self,f):
@@ -101,10 +101,10 @@ class US(AtomisticParallelMaster):
             Executes the plumed post-processing functions
 
         '''
-        
+
         ickinds   = np.array([ic[0] for ic in self.input['ics']],dtype='S22')
         icindices = np.array([np.array(ic[1])+1 for ic in self.input['ics']]) # plumed starts counting from 1
-        
+
         locs = []
         for job_id in self.child_ids:
             job = self.project_hdf5.inspect(job_id)
@@ -148,7 +148,7 @@ class US(AtomisticParallelMaster):
             shell=True
         )
     """
-        
+
     def wham(self, h_min, h_max, bins, periodicity=None, tol=0.00001):
         '''
             Performs the weighted histogram analysis method to calculate the free energy surface
@@ -156,57 +156,59 @@ class US(AtomisticParallelMaster):
             **Arguments**
 
             h_min   lowest value that is taken into account, float or list if more than one cv is biased
-            
+
             h_max   highest value that is taken into account, float or list if more than one cv is biased
                     if one whole trajectory is outside of these borders an error occurs
-            
+
             bins    number of bins between h_min and h_max, int
-            
+
             periodicity
                     periodicity of the collective variable
                     1D: either a number, 'pi' for angles (2pi periodic) or an empty string ('') for periodicity of 360 degrees
                     2D: either a number, 'pi' for angles (2pi periodic) or 0 if no periodicity is required
-                    
+
             tol     if no free energy value changes between iteration for more than tol, wham is converged
-        '''    
-        def convert_val(val):
+        '''
+
+        def convert_val(val,unit=None):
+            scale = 1 if unit is None else unit
             if isinstance(val, list) or isinstance(val, np.ndarray):
-                return [str(l) for l in val]
+                return [str(l/scale) for l in val]
             else:
-                return str(val)
-        
+                return str(val/scale)
+
         f_metadata = os.path.join(self.working_directory, 'metadata')
         f_fes      = os.path.join(self.working_directory, 'fes.dat')
-        
+
         with open(f_metadata, 'w') as f:
             for job_id in self.child_ids:
                 job = self.project_hdf5.inspect(job_id)
                 print('job_id: ', job_id, job.status)
                 loc = convert_val(job['input/generic/enhanced/loc'])
-                kappa = convert_val(job['input/generic/enhanced/kappa'])
-                f.write('{}/COLVAR\t'.format(job.working_directory) + '\t'.join(loc) + '\t' + '\t'.join(loc) + '\n') # format of colvar needs to be TIME CV1 (CV2)
-        
+                kappa = convert_val(job['input/generic/enhanced/kappa'],unit=kjmol)
+                f.write('{}/COLVAR\t'.format(job.working_directory) + '\t'.join(loc) + '\t' + '\t'.join(kappa) + '\n') # format of colvar needs to be TIME CV1 (CV2)
+
         if len(loc) == 1:
-            cmd = 'wham '
+            cmd = './wham '
             if not periodicity is None:
                 cmd += 'P{} '.format(periodicity)
-            cmd += ' '.join([hmin,hmax,int(bins),tol,self.input['temp'],0,f_metadata,f_fes])
-            
+            cmd += ' '.join(map(str,[h_min,h_max,int(bins),tol,self.input['temp'],0,f_metadata,f_fes]))
+
         elif len(loc) == 2:
-            cmd = 'wham-2d '
+            cmd = './wham-2d '
             periodic = ['Px='+str(periodicity[0]) if not periodicity[0] is None else '0', 'Py='+str(periodicity[1]) if not periodicity[1] is None else '0']
             for i in range(2):
-                cmd += ' '.join([periodic[i],hmin[i],hmax[i],int(bins[i])])
+                cmd += ' '.join([periodic[i],h_min[i],h_max[i],int(bins[i])])
             cmd += ' '.join([tol,self.input['temp'],0,f_metadata,f_fes,1])
         else:
             raise NotImplementedError()
-            
-            subprocess.check_output(
-                cmd,
-                stderr=subprocess.STDOUT,
-                universal_newlines=True,
-                shell=True
-            )
+
+        subprocess.check_output(
+            cmd,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
+            shell=True
+        )
 
     def get_structure(self, iteration_step=-1):
         """
