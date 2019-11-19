@@ -52,17 +52,9 @@ class US(AtomisticParallelMaster):
         self.input['stride']     = (10, 'the number of steps after which the internal coordinate values and bias are printed to the COLVAR output file.')
         self.input['temp']       = (300*kelvin, 'the system temperature')
 
-        self.input['cv_grid'] = (np.linspace(0,1,10), 'cv grid')
+        self.input['cv_grid']    = (np.linspace(0,1,10), 'cv grid')
         self.input['structures'] = (None, 'list with structures corresponding to grid points')
-
         self.input['ics']        = ([('distance', [0,1])], 'ics')
-        for ic in self.input['ics']:
-            assert len(ic)==2
-            assert isinstance(ic[0], str)
-            assert isinstance(ic[1], list) or isinstance(ic[1], tuple)
-        self.input['ickinds'] = np.array([ic[0] for ic in self.input['ics']],dtype='S22')
-        self.input['icindices'] = np.array([np.array(ic[1])+1 for ic in self.input['ics']]) # plumed starts counting from 1
-
 
         self._job_generator = USJobGenerator(self)
 
@@ -112,6 +104,10 @@ class US(AtomisticParallelMaster):
             Executes the plumed post-processing functions
 
         '''
+        
+        ickinds   = np.array([ic[0] for ic in self.input['ics']],dtype='S22')
+        icindices = np.array([np.array(ic[1])+1 for ic in self.input['ics']]) # plumed starts counting from 1
+        
         locs = []
         for job_id in self.child_ids:
             job = self.project_hdf5.inspect(job_id)
@@ -127,21 +123,21 @@ class US(AtomisticParallelMaster):
             #set units to atomic units
             f.write('UNITS LENGTH=Bohr ENERGY=kj/mol TIME=atomic \n')
             #define ics
-            for i, kind in enumerate(self.input['ickinds']):
+            for i, kind in enumerate(ickinds):
                 if isinstance(kind, bytes):
                     kind = kind.decode()
-                if len( self.input['icindices'][i] > 0):
-                    f.write('ic%i: %s ATOMS=%s \n' %(i, kind.upper(), ','.join([str(icidx) for icidx in self.input['icindices'][i]])))
+                if len(icindices[i] > 0):
+                    f.write('ic%i: %s ATOMS=%s \n' %(i, kind.upper(), ','.join([str(icidx) for icidx in icindices[i]])))
                 else:
-                    f.write('ic%i: %s \n' %(i, kind.upper(), ','.join([str(icidx) for icidx in self.input['icindices'][i]])))
+                    f.write('ic%i: %s \n' %(i, kind.upper(), ','.join([str(icidx) for icidx in icindices[i]])))
                 f.write('umbrella: RESTRAINT ARG=%s KAPPA=%s AT=@replicas:{\n %s \n} \n' %(
-                ','.join([ 'ic%i' %i for i in range(len(enhanced['ickinds']))]),
+                ','.join([ 'ic%i' %i for i in range(len(ickinds))]),
                 kappa, '\n'.join([str(loc) for loc in locs])
             ))
 
             # Current implementation only works for 1D umbrella sampling
             f.write('hh: WHAM_HISTOGRAM ARG=%s BIAS=umbrella.bias TEMP=%s GRID_MIN=%s GRID_MAX=%s GRID_BIN=%s \n' %(
-                ','.join([ 'ic%i' %i for i in range(len(enhanced['ickinds']))]), self.input['temp'],
+                ','.join([ 'ic%i' %i for i in range(len(ickinds))]), self.input['temp'],
                 np.min(locs), np.max(locs), len(locs)
             ))
 
