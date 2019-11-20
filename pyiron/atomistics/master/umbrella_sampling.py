@@ -95,59 +95,43 @@ class US(AtomisticParallelMaster):
             structures.append(f(self.ref_job.structure,loc))
         return structures
 
-    """
     def collect_output(self):
-        '''
-            Executes the plumed post-processing functions
+        if self.server.run_mode.interactive:
+            job = self.project_hdf5.inspect(self.child_ids[0])
+            data = np.loadtxt(os.path.join(job.working_directory,'COLVAR'))
+            time_lst = data[:,0]
+            cv_lst = data[:,1]
+            bias_lst = data[:,2]
+            self._output["time"] = time_lst
+            self._output["cv"] = cv_lst
+            self._output["bias"] = bias_lst
+        else:
+            time_lst, cv_lst, bias_lst, id_lst = [], [], [], []
+            for job_id in self.child_ids:
+                job = self.project_hdf5.inspect(job_id)
+                print('job_id: ', job_id, job.status)
+                data = np.loadtxt(os.path.join(job.working_directory,'COLVAR'))
+                time = data[:,0]
+                cv = data[:,1]
+                bias = data[:,2]
+                time_lst.append(time)
+                cv_lst.append(cv)
+                bias_lst.append(bias)
+                id_lst.append(job_id)
+            time_lst = np.array(time_lst)
+            cv_lst = np.array(cv_lst)
+            bias_lst = np.array(bias_lst)
+            id_lst = np.array(id_lst)
 
-        '''
+            self._output["time"] = time_lst
+            self._output["cv"] = cv_lst
+            self._output["bias"] = bias_lst
+            self._output["id"] = id_lst
 
-        ickinds   = np.array([ic[0] for ic in self.input['ics']],dtype='S22')
-        icindices = np.array([np.array(ic[1])+1 for ic in self.input['ics']]) # plumed starts counting from 1
+        with self.project_hdf5.open("output") as hdf5_out:
+            for key, val in self._output.items():
+                hdf5_out[key] = val
 
-        locs = []
-        for job_id in self.child_ids:
-            job = self.project_hdf5.inspect(job_id)
-            print('job_id: ', job_id, job.status)
-            loc = job['input/generic/enhanced/loc']
-            if isinstance(loc, list) or isinstance(loc, np.ndarray):
-                locs.append(",".join([str(l) for l in loc]))
-            else:
-                locs.append(str(loc))
-            us.load(job_id).write_traj(os.path.join(self.working_directory, 'alltraj.xyz'), append=True)
-
-        with open(os.path.join(self.working_directory, 'plumed.dat'), 'w') as f:
-            #set units to atomic units
-            f.write('UNITS LENGTH=Bohr ENERGY=kj/mol TIME=atomic \n')
-            #define ics
-            for i, kind in enumerate(ickinds):
-                if isinstance(kind, bytes):
-                    kind = kind.decode()
-                if len(icindices[i] > 0):
-                    f.write('ic%i: %s ATOMS=%s \n' %(i, kind.upper(), ','.join([str(icidx) for icidx in icindices[i]])))
-                else:
-                    f.write('ic%i: %s \n' %(i, kind.upper(), ','.join([str(icidx) for icidx in icindices[i]])))
-                f.write('umbrella: RESTRAINT ARG=%s KAPPA=%s AT=@replicas:{\n %s \n} \n' %(
-                ','.join([ 'ic%i' %i for i in range(len(ickinds))]),
-                kappa/kjmol, '\n'.join([str(loc) for loc in locs])
-            ))
-
-            # Current implementation only works for 1D umbrella sampling
-            f.write('hh: WHAM_HISTOGRAM ARG=%s BIAS=umbrella.bias TEMP=%s GRID_MIN=%s GRID_MAX=%s GRID_BIN=%s \n' %(
-                ','.join([ 'ic%i' %i for i in range(len(ickinds))]), self.input['temp'],
-                np.min(locs), np.max(locs), len(locs)
-            ))
-
-            f.write('fes: CONVERT_TO_FES GRID=hh TEMP=%s \n' %(self.input['temp']))
-            f.write('DUMPGRID GRID=fes FILE=fes.dat ')
-
-            subprocess.check_output(
-            'ml load PLUMED/2.5.2-intel-2019a-Python-3.7.2; mpirun -np 6 plumed driver --ixyz alltraj.xyz --multi 6',
-            stderr=subprocess.STDOUT,
-            universal_newlines=True,
-            shell=True
-        )
-    """
 
     def wham(self, h_min, h_max, bins, periodicity=None, tol=0.00001):
         '''
@@ -209,6 +193,19 @@ class US(AtomisticParallelMaster):
             universal_newlines=True,
             shell=True
         )
+
+        data = np.loadtxt(os.path.join(self.working_directory,'fes.dat'))
+
+        if len(loc) == 1:
+            bins = data[:,0]
+            fes = data[:,1]
+        elif len(loc) == 2:
+            bins = data[:,0:2]
+            fes = data[:,2]
+
+        with self.project_hdf5.open("output") as hdf5_out:
+            hdf5_out["bins"] = bins
+            hdf5_out["fes"] = fes
 
     def get_structure(self, iteration_step=-1):
         """
