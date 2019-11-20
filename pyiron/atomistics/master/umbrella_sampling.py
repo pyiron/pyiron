@@ -1,7 +1,7 @@
 # coding: utf-8
 import numpy as np
 from molmod.units import *
-import subprocess
+import subprocess, os
 
 from pyiron.atomistics.master.parallel import AtomisticParallelMaster
 from pyiron.base.master.parallel import JobGenerator
@@ -132,6 +132,16 @@ class US(AtomisticParallelMaster):
             for key, val in self._output.items():
                 hdf5_out[key] = val
 
+    def check_overlap(self):
+        '''
+            Checks overlap between different umbrella simulations. Only works for 1D!
+
+            **Arguments**
+        '''
+        pt.figure()
+        for job_id in self.child_ids:
+            pt.plot(job['output/cv'])
+        pt.show()
 
     def wham(self, h_min, h_max, bins, periodicity=None, tol=0.00001):
         '''
