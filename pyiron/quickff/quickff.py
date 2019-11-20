@@ -211,10 +211,10 @@ class QuickFF(AtomisticGenericJob):
         #write nonbonded pars and config input files
         if self.fn_ei is not None:
             assert self.input['ei'] is not None
-            os.system('cp %s %s/%s'  %(self.fn_ei , self.working_directory, self.input['ei'])
+            os.system('cp %s %s/%s'  %(self.fn_ei , self.working_directory, self.input['ei']))
         if self.fn_vdw is not None:
             assert self.input['vdw'] is not None
-            os.system('cp %s %s/%s' %(self.fn_vdw, self.working_directory, self.input['vdw'])
+            os.system('cp %s %s/%s' %(self.fn_vdw, self.working_directory, self.input['vdw']))
         write_config(input_dict,working_directory=self.working_directory)
 
     def collect_output(self):
