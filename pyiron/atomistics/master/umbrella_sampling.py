@@ -95,42 +95,6 @@ class US(AtomisticParallelMaster):
             structures.append(f(self.ref_job.structure,loc))
         return structures
 
-    def collect_output(self):
-        if self.server.run_mode.interactive:
-            job = self.project_hdf5.inspect(self.child_ids[0])
-            data = np.loadtxt(os.path.join(job.working_directory,'COLVAR'))
-            time_lst = data[:,0]
-            cv_lst = data[:,1]
-            bias_lst = data[:,2]
-            self._output["time"] = time_lst
-            self._output["cv"] = cv_lst
-            self._output["bias"] = bias_lst
-        else:
-            time_lst, cv_lst, bias_lst, id_lst = [], [], [], []
-            for job_id in self.child_ids:
-                job = self.project_hdf5.inspect(job_id)
-                print('job_id: ', job_id, job.status)
-                data = np.loadtxt(os.path.join(job.working_directory,'COLVAR'))
-                time = data[:,0]
-                cv = data[:,1]
-                bias = data[:,2]
-                time_lst.append(time)
-                cv_lst.append(cv)
-                bias_lst.append(bias)
-                id_lst.append(job_id)
-            time_lst = np.array(time_lst)
-            cv_lst = np.array(cv_lst)
-            bias_lst = np.array(bias_lst)
-            id_lst = np.array(id_lst)
-
-            self._output["time"] = time_lst
-            self._output["cv"] = cv_lst
-            self._output["bias"] = bias_lst
-            self._output["id"] = id_lst
-
-        with self.project_hdf5.open("output") as hdf5_out:
-            for key, val in self._output.items():
-                hdf5_out[key] = val
 
     def check_overlap(self):
         '''

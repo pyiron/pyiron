@@ -303,12 +303,22 @@ def hdf2dict(h5):
         hdict['generic/hessian'] = h5['system/hessian'][:]/(electronvolt/angstrom**2)
     return hdict
 
+def read_colvar(output_file,output_dict):
+    colvar_file = output_file[:output_file.rfind('/')] + 'COLVAR'
+    if os.path.exists(colvar_file):
+        data = np.loadtxt(colvar_file)
+        output_dict['enhanced/time'] = data[:,0]
+        output_dict['enhanced/cv'] = data[1:-1]
+        output_dict['enhanced/bias'] = data[:,-1]
+
 def collect_output(output_file):
     # this routine basically reads and returns the output HDF5 file produced by Yaff
     # read output
     h5 = h5py.File(output_file, mode='r')
     # translate to dict
     output_dict = hdf2dict(h5)
+    # read colvar file if it is there
+    read_colvar(output_file,output_dict)
     return output_dict
 
 
