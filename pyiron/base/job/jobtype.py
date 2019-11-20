@@ -44,6 +44,7 @@ JOB_CLASS_DICT = {'ScriptJob': 'pyiron.base.job.script',
                   'Vasp': 'pyiron.vasp.vasp',
                   'Gaussian': 'pyiron.gaussian.gaussian',
                   'Yaff': 'pyiron.yaff.yaff',
+                  'QuickFF': 'pyiron.quickff.quickff',
                   'US': 'pyiron.atomistics.master.umbrella_sampling',
                   }
 

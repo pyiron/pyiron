@@ -357,7 +357,6 @@ class Yaff(AtomisticGenericJob):
         self.__name__ = "Yaff"
         self._executable_activate(enforce=True)
         self.input = YaffInput()
-        self.output = GenericOutput(job=self)
         self.jobtype = None
         self.ffatypes = None
         self.ffatype_ids = None

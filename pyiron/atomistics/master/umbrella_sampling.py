@@ -104,7 +104,7 @@ class US(AtomisticParallelMaster):
         '''
         pt.figure()
         for job_id in self.child_ids:
-            pt.plot(job['output/cv'])
+            pt.plot(job['output/enhanced/cv'])
         pt.show()
 
     def wham(self, h_min, h_max, bins, periodicity=None, tol=0.00001):

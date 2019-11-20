@@ -868,6 +868,7 @@ class GenericJob(JobCore):
         - ‘ListMaster': list of jobs
         - ‘Gaussian’:
         - ‘Yaff’:
+        - ‘QuickFF’:
         - ‘US’:
 
         Args:
@@ -879,7 +880,7 @@ class GenericJob(JobCore):
                                              ‘ConvergenceEncutParallel’, ‘ConvergenceKpointParallel’, ’PhonopyMaster’,
                                              ‘DefectFormationEnergy’, ‘LammpsASE’, ‘PipelineMaster’,
                                              ’TransformationPath’, ‘ThermoIntEamQh’, ‘ThermoIntDftEam’, ‘ScriptJob’,
-                                             ‘ListMaster’, ‘Gaussian’, ‘Yaff’, ‘US’]
+                                             ‘ListMaster’, ‘Gaussian’, ‘Yaff’, ‘QuickFF’, ‘US’]
             job_name (str): name of the job
 
         Returns:
