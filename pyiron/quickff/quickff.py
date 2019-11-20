@@ -143,6 +143,8 @@ class QuickFF(AtomisticGenericJob):
         self.aiener = None
         self.aigrad = None
         self.aihess = None
+        self.fn_ei = None
+        self.fn_vdw = None
 
     def read_abinitio(self, fn):
         numbers, coords, energy, grad, hess, masses, rvecs, pbc = read_abinitio(fn)
@@ -176,6 +178,14 @@ class QuickFF(AtomisticGenericJob):
         self.ffatypes = system.ffatypes.copy()
         self.ffatype_ids = system.ffatype_ids.copy()
 
+    def set_ei(self, fn):
+        self.input['ei'] = 'pars_ei.txt'
+        self.fn_ei = fn
+
+    def set_vdw(self, fn):
+        self.input['vdw'] = 'pars_vdw.txt'
+        self.fn_vdw = fn
+
     def write_input(self):
         #load system related input
         input_dict = {
@@ -199,12 +209,12 @@ class QuickFF(AtomisticGenericJob):
         #write input chk file
         write_chk(input_dict,working_directory=self.working_directory)
         #write nonbonded pars and config input files
-        if isinstance(self.input['ei'], str) and not self.input['ei'].endswith('.txt'):
-            write_pars(self.input['ei'],'pars_ei.txt',working_directory=self.working_directory)
-            self.input['ei'] = 'pars_ei.txt'
-        if isinstance(self.input['vdw'], str) and not self.input['vdw'].endswith('.txt'):
-            write_pars(self.input['vdw'],'pars_vdw.txt',working_directory=self.working_directory)
-            self.input['vdw'] = 'pars_vdw.txt'
+        if self.fn_ei is not None:
+            assert self.input['ei'] is not None
+            os.system('cp %s %s/%s'  %(self.fn_ei , self.working_directory, self.input['ei'])
+        if self.fn_vdw is not None:
+            assert self.input['vdw'] is not None
+            os.system('cp %s %s/%s' %(self.fn_vdw, self.working_directory, self.input['vdw'])
         write_config(input_dict,working_directory=self.working_directory)
 
     def collect_output(self):
