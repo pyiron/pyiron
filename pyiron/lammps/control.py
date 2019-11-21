@@ -541,7 +541,7 @@ class LammpsControl(GenericParameters):
             temperature_mc = temperature
 
         if seed is None:
-            self.generate_seed_from_job(job_name=job_name)
+            seed = self.generate_seed_from_job(job_name=job_name)
 
         if set(mu.keys()) != set(ordered_element_list):
             raise ValueError("Exactly one chemical potential must be given for each element treated by the potential.")
