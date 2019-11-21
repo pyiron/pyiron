@@ -450,8 +450,15 @@ class LammpsBase(AtomisticGenericJob):
             numpy.ndarray: Those integers mapped onto the structure.
         """
         lammps_species_order = np.array(self.input.potential.get_element_lst())
-        structure_species_order = np.array([el.Abbreviation for el in self.structure.species])
 
+        # If new Lammps indices are present for which we have no species, extend the species list
+        unique_lammps_indices = np.unique(lammps_indices)
+        if unique_lammps_indices > np.unique(self.structure.indices):
+            new_lammps_symbols = lammps_species_order[unique_lammps_indices]
+            self.structure.set_species([self.structure.convert_element(el) for el in new_lammps_symbols])
+
+        # Create a map between the lammps indices and structure indices to preserve species
+        structure_species_order = np.array([el.Abbreviation for el in self.structure.species])
         map_ = np.array([int(np.argwhere(lammps_species_order == spec)[0]) + 1 for spec in structure_species_order])
 
         structure_indices = np.array(lammps_indices)
@@ -460,6 +467,17 @@ class LammpsBase(AtomisticGenericJob):
         # TODO: Vectorize this for-loop for computational efficiency
 
         return structure_indices
+
+    def get_structure(self, iteration_step=-1, wrap_atoms=True):
+        snapshot = super(LammpsBase, self).get_structure(iteration_step=iteration_step, wrap_atoms=wrap_atoms)
+
+        # In case the number of species has changed since setting `self.structure`, update it.
+        unique_snapshot_indices = np.unique(snapshot.indices)
+        if len(unique_snapshot_indices) > len(snapshot.species):
+            new_lammps_indices = np.setdiff1d(unique_snapshot_indices, np.unique(self.structure.indices))
+            new_elements
+        return snapshot
+
 
     def collect_errors(self, file_name, cwd=None):
         """
