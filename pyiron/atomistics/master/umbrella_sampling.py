@@ -20,7 +20,7 @@ class USJobGenerator(JobGenerator):
         assert self._job.input['h_min'] is not None
         assert self._job.input['h_max'] is not None
         assert self._job.input['h_bins'] is not None
-        
+
         # Create parameter list
         parameter_lst = []
         for (loc,structure) in zip(self._job.input['cv_grid'],self._job.structures):
@@ -60,11 +60,11 @@ class US(AtomisticParallelMaster):
         self.input['temp']        = (300*kelvin, 'the system temperature')
         self.input['cv_grid']     = (list(np.linspace(0,1,10)), 'cv grid, has to be a list')
         self.input['cvs']         = ([('distance', [0,1])], 'cv(s), see Yaff input for description')
-        
+
         self.input['h_min']       = (None , 'lowest value(s) of the cv(s) for WHAM')
         self.input['h_max']       = (None , 'highest value(s) of the cv(s) for WHAM')
         self.input['h_bins']      = (None , 'bins between h_min and h_max for WHAM')
-        
+
         self.input['periodicity'] = (None , 'periodicity of cv(s)')
         self.input['tol']         = (0.00001 , 'WHAM converges if free energy changes < tol')
 
@@ -118,8 +118,8 @@ class US(AtomisticParallelMaster):
             job = self.project_hdf5.inspect(job_id)
             pt.plot(job['output/enhanced/cv'])
         pt.show()
-    
-    
+
+
     def wham(self, h_min, h_max, bins, f_metadata, f_fes, periodicity=None, tol=0.00001):
         '''
             Performs the weighted histogram analysis method to calculate the free energy surface
@@ -141,7 +141,7 @@ class US(AtomisticParallelMaster):
             tol     if no free energy value changes between iteration for more than tol, wham is converged
         '''
 
-        
+
         if isinstance(h_min,(int,float)):
             cmd = os.path.join(self.project.root_path,'wham')
             cmd += ' '
@@ -179,12 +179,12 @@ class US(AtomisticParallelMaster):
         # return average structure
 
         raise NotImplementedError()
-        
+
     def to_hdf(self, hdf=None, group_name=None):
         super(US, self).to_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open('input') as hdf5_input:
             self.input.to_hdf(hdf5_input)
-            
+
         with self.project_hdf5.open('input/structures') as hdf5_input:
             for n,(loc,structure) in enumerate(zip(self.input['cv_grid'],self.structures)):
                 #name = str(loc).replace('.', '_').replace('-', 'm') if isinstance(loc,(int,float)) else ','.join([str(l).replace('.', '_').replace('-', 'm') for l in loc])
@@ -195,14 +195,14 @@ class US(AtomisticParallelMaster):
         super(US, self).from_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open('input') as hdf5_input:
             self.input.from_hdf(hdf5_input)
-            
-        self.structures = []    
-        with self.project_hdf5.open('input/structures') as hdf5_input: 
+
+        self.structures = []
+        with self.project_hdf5.open('input/structures') as hdf5_input:
             for n,loc in enumerate(self.input['cv_grid']):
                 #name = str(loc).replace('.', '_').replace('-', 'm') if isinstance(loc,(int,float)) else ','.join([str(l).replace('.', '_').replace('-', 'm') for l in loc])
                 name = 'cv' + str(n)
                 self.structures.append(Atoms().from_hdf(hdf5_input,group_name=name))
-                
+
     def collect_output(self):
         def convert_val(val,unit=None):
             scale = 1 if unit is None else unit
@@ -210,11 +210,11 @@ class US(AtomisticParallelMaster):
                 return [str(l/scale) for l in val]
             else:
                 return str(val/scale)
-        
+
         # Files to store data of wham
         f_metadata = os.path.join(self.working_directory, 'metadata')
         f_fes      = os.path.join(self.working_directory, 'fes.dat')
-        
+
 
         with open(f_metadata, 'w') as f:
             for job_id in self.child_ids:
@@ -224,9 +224,9 @@ class US(AtomisticParallelMaster):
                 kappa = convert_val(job['input/generic/enhanced/kappa'],unit=kjmol)
                 f.write('{}/COLVAR\t'.format(job.working_directory) + '\t'.join(loc) + '\t' + '\t'.join(kappa) + '\n') # format of colvar needs to be TIME CV1 (CV2)
 
-        # Execute wham code        
+        # Execute wham code
         self.wham(self.input['h_min'], self.input['h_max'], self.input['h_bins'], f_metadata, f_fes, periodicity=self.input['periodicity'], tol=self.input['tol'])
-        
+
         # Process output of wham code
         data = np.loadtxt(os.path.join(self.working_directory,'fes.dat'))
 

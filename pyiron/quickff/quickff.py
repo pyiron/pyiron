@@ -9,6 +9,7 @@ from collections import OrderedDict
 from yaff import System, log as Yafflog, ForceField
 Yafflog.set_level(Yafflog.silent)
 from quickff import read_abinitio
+from quickff.tools import set_ffatypes
 from quickff.settings import key_checks
 from molmod.units import *
 from molmod.constants import *
@@ -49,6 +50,7 @@ def write_config(input_dict,working_directory='.'):
     with open(os.path.join(working_directory,'config.txt'), 'w') as f:
         for key in key_checks.keys():
             if key in input_dict.keys():
+                if key=='ffatypes': assert value is None
                 value = str(input_dict[key])
                 print('%s:   %s' %(key+' '*(30-len(key)), value), file=f)
 
@@ -156,25 +158,31 @@ class QuickFF(AtomisticGenericJob):
         self.aigrad = grad
         self.aihess = hess
 
-    def detect_ffatypes(self, ffatypes=None, ffatype_rules=None):
+    def detect_ffatypes(self, ffatypes=None, ffatype_rules=None, ffatype_level=None):
         '''
-            Define atom types either by explicitely giving them through the
-            ffatypes keyword, or by defining atype rules using the ATSELECT
+            Define atom types by explicitely giving them through the
+            ffatypes keyword, defining atype rules using the ATSELECT
             language implemented in Yaff (see the Yaff documentation at
-            http://molmod.github.io/yaff/ug_atselect.html).
+            http://molmod.github.io/yaff/ug_atselect.html) or by specifying
+            the ffatype_level employing the built-in routine in QuickFF.
         '''
         numbers = np.array([pt[symbol].number for symbol in self.structure.get_chemical_symbols()])
         system = System(numbers, self.structure.positions.copy()*angstrom, rvecs=self.structure.cell*angstrom)
         system.detect_bonds()
+
+        if not sum([ffatypes is None, ffatype_rules is None, ffatype_level is None]) == 1:
+            raise IOError('Exactly one of ffatypes, ffatype_rules and ffatype_level should be defined')
+
         if ffatypes is not None:
             assert ffatype_rules is None, 'ffatypes and ffatype_rules cannot be defined both'
             system.ffatypes = ffatypes
             system.ffatype_ids = None
             system._init_derived_ffatypes()
-        elif ffatype_rules is not None:
+        if ffatype_rules is not None:
             system.detect_ffatypes(ffatype_rules)
-        else:
-            raise IOError('Either ffatypes or ffatype_rules should be defined')
+        if ffatype_level is not None:
+            set_ffatypes(system, ffatype_level)
+
         self.ffatypes = system.ffatypes.copy()
         self.ffatype_ids = system.ffatype_ids.copy()
 
