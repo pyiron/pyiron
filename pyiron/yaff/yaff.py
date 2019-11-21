@@ -300,11 +300,9 @@ def hdf2dict(h5):
     return hdict
 
 def read_colvar(output_file,output_dict):
-    colvar_file = output_file[:output_file.rfind('/')] + 'COLVAR'
-    print(colvar_file)
+    colvar_file = os.path.join(output_file[:output_file.rfind('/')],'COLVAR')
     if os.path.exists(colvar_file):
         data = np.loadtxt(colvar_file)
-        print(data)
         output_dict['enhanced/time'] = data[:,0]
         output_dict['enhanced/cv'] = data[1:-1]
         output_dict['enhanced/bias'] = data[:,-1]
