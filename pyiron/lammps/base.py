@@ -680,12 +680,14 @@ class LammpsBase(AtomisticGenericJob):
 
     def calc_vcsgc(
         self,
-        mu,
+        mu=None,
         target_concentration=None,
         kappa=1000.,
         mc_step_interval=100,
         swap_fraction=0.1,
         temperature_mc=None,
+        window_size=None,
+        window_moves=None,
         temperature=None,
         pressure=None,
         n_ionic_steps=1000,
@@ -715,6 +717,7 @@ class LammpsBase(AtomisticGenericJob):
                 dictionary keys are just the chemical symbol. Note that only the *relative* chemical potentials are used
                 here, such that the swap acceptance probability is influenced by the chemical potential difference
                 between the two species (a more negative value increases the odds of swapping *to* that element.)
+                (Default is None, all elements have the same chemical potential.)
             target_concentration: A dictionary of target simulation domain concentrations for each species *in the
                 potential*. Dictionary keys should be the chemical symbol of the corresponding species, and the sum of
                 all concentrations must be 1. (Default is None, which runs regular semi-grand-canonical MD/MC without
@@ -726,7 +729,17 @@ class LammpsBase(AtomisticGenericJob):
             swap_fraction (float): The fraction of atoms whose species is swapped at each MC phase. (Default is 0.1.)
             temperature_mc (float): The temperature for accepting MC steps. (Default is None, which uses the MD
                 temperature.)
+            window_size (float): The size of the sampling window for parallel calculations as a fraction of something
+                unspecified in the VC-SGC docs, but it must lie between 0.5 and 1. (Default is None, window is
+                determined automatically.)
+            window_moves (int): The number of times the sampling window is moved during one MC cycle. (Default is None,
+                number of moves is determined automatically.)
         """
+        if mu is None:
+            mu = {}
+            for el in self.input.potential.get_element_lst():
+                mu[el] = 0.
+
         self._generic_input["calc_mode"] = "vcsgc"
         self._generic_input["temperature"] = temperature
         self._generic_input["n_ionic_steps"] = n_ionic_steps
@@ -740,6 +753,8 @@ class LammpsBase(AtomisticGenericJob):
             mc_step_interval=mc_step_interval,
             swap_fraction=swap_fraction,
             temperature_mc=temperature_mc,
+            window_size=window_size,
+            window_moves=window_moves,
             temperature=temperature,
             pressure=pressure,
             n_ionic_steps=n_ionic_steps,
