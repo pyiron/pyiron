@@ -1,5 +1,6 @@
 # coding: utf-8
 import numpy as np
+import matplotlib.pyplot as pt
 from molmod.units import *
 import subprocess, os
 
@@ -15,6 +16,12 @@ class USJobGenerator(JobGenerator):
         Returns:
             (list)
         '''
+        # Check if all post processing parameters are correctly defined
+        assert self._job.input['h_min'] is not None
+        assert self._job.input['h_max'] is not None
+        assert self._job.input['h_bins'] is not None
+        
+        # Create parameter list
         parameter_lst = []
         for (loc,structure) in zip(self._job.input['cv_grid'],self._job.structures):
             parameter_lst.append([np.round(loc,5), structure])
@@ -135,13 +142,15 @@ class US(AtomisticParallelMaster):
 
         
         if isinstance(h_min,(int,float)):
-            cmd = './wham '
+            cmd = os.path.join(self.project.root_path,'wham')
+            cmd += ' '
             if not periodicity is None:
                 cmd += 'P{} '.format(periodicity)
             cmd += ' '.join(map(str,[h_min,h_max,int(bins),tol,self.input['temp'],0,f_metadata,f_fes]))
 
         elif isinstance(h_min,list) and len(h_min) == 2:
-            cmd = './wham-2d '
+            cmd =  os.path.join(self.project.root_path,'wham-2d')
+            cmd += ' '
             periodic = ['Px='+str(periodicity[0]) if not periodicity[0] is None else '0', 'Py='+str(periodicity[1]) if not periodicity[1] is None else '0']
             for i in range(2):
                 cmd += ' '.join([periodic[i],h_min[i],h_max[i],int(bins[i])])
