@@ -427,11 +427,11 @@ class TestLammps(unittest.TestCase):
         self.job.calc_vcsgc(
             mu=mu,
             target_concentration=target_concentration,
-            kappa=10000.,  # Larger than usual since Mg chemical potential is so extreme
-            mc_step_interval=2,
+            kappa=1000000.,  # Larger than usual since Mg chemical potential is so extreme
+            mc_step_interval=1,
             swap_fraction=1.,
-            n_ionic_steps=8,
-            n_print=8,
+            n_ionic_steps=2,
+            n_print=2,
             temperature=300,
             pressure=None
         )
