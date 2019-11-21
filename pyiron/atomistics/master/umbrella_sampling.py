@@ -115,6 +115,7 @@ class US(AtomisticParallelMaster):
         '''
         pt.figure()
         for job_id in self.child_ids:
+            job = self.project_hdf5.inspect(job_id)
             pt.plot(job['output/enhanced/cv'])
         pt.show()
     
