@@ -5,22 +5,22 @@ import subprocess, os
 
 from pyiron.atomistics.master.parallel import AtomisticParallelMaster
 from pyiron.base.master.parallel import JobGenerator
-
-
+from pyiron.atomistics.structure.atoms import Atoms
 
 class USJobGenerator(JobGenerator):
     @property
     def parameter_list(self):
-        """
+        '''
 
         Returns:
             (list)
-        """
+        '''
         # For now no different kappa for different locs implementation!
         parameter_lst = []
         assert isinstance(self._job.input['cv_grid'], list) or isinstance(self._job.input['cv_grid'], np.ndarray)
+        assert isinstance(self._job.structures, list)
         for (loc,structure) in zip(self._job.input['cv_grid'],self._job.structures):
-            parameter_lst.append([np.round(loc,3), structure])
+            parameter_lst.append([np.round(loc,5), structure])
         return parameter_lst
 
     @staticmethod
@@ -39,12 +39,12 @@ class USJobGenerator(JobGenerator):
 
 class US(AtomisticParallelMaster):
     def __init__(self, project, job_name='us'):
-        """
+        '''
 
         Args:
             project:
             job_name:
-        """
+        '''
         super(US, self).__init__(project, job_name)
         self.__name__ = 'us'
         self.__version__ = '0.1.0'
@@ -177,19 +177,42 @@ class US(AtomisticParallelMaster):
             bins = data[:,0:2]
             fes = data[:,2]
 
-        with self.project_hdf5.open("output") as hdf5_out:
-            hdf5_out["bins"] = bins
-            hdf5_out["fes"] = fes
+        with self.project_hdf5.open('output') as hdf5_out:
+            hdf5_out['bins'] = bins
+            hdf5_out['fes'] = fes
 
     def get_structure(self, iteration_step=-1):
-        """
+        '''
 
         Returns: Structure at free energy minimum
 
-        """
+        '''
 
         # Read minimal energy from fes
         # Read corresponding job
         # return average structure
 
         raise NotImplementedError()
+        
+    def to_hdf(self, hdf=None, group_name=None):
+        super(US, self).to_hdf(hdf=hdf, group_name=group_name)
+        with self.project_hdf5.open('input') as hdf5_input:
+            self.input.to_hdf(hdf5_input)
+            
+        with self.project_hdf5.open('input/structures') as hdf5_input:
+            for n,(loc,structure) in enumerate(zip(self.input['cv_grid'],self.structures)):
+                #name = str(loc).replace('.', '_').replace('-', 'm') if isinstance(loc,(int,float)) else ','.join([str(l).replace('.', '_').replace('-', 'm') for l in loc])
+                name = 'cv' + str(n)
+                self.structure.to_hdf(hdf5_input,group_name=name)
+
+    def from_hdf(self, hdf=None, group_name=None):
+        super(US, self).from_hdf(hdf=hdf, group_name=group_name)
+        with self.project_hdf5.open('input') as hdf5_input:
+            self.input.from_hdf(hdf5_input)
+            
+        self.structures = []    
+        with self.project_hdf5.open('input/structures') as hdf5_input: 
+            for n,loc in enumerate(self.input['cv_grid']):
+                #name = str(loc).replace('.', '_').replace('-', 'm') if isinstance(loc,(int,float)) else ','.join([str(l).replace('.', '_').replace('-', 'm') for l in loc])
+                name = 'cv' + str(n)
+                self.structures.append(Atoms().from_hdf(hdf5_input,group_name=name))
