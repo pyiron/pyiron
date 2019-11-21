@@ -469,17 +469,6 @@ class LammpsBase(AtomisticGenericJob):
 
         return structure_indices
 
-    def get_structure(self, iteration_step=-1, wrap_atoms=True):
-        snapshot = super(LammpsBase, self).get_structure(iteration_step=iteration_step, wrap_atoms=wrap_atoms)
-
-        # In case the number of species has changed since setting `self.structure`, update it.
-        unique_snapshot_indices = np.unique(snapshot.indices)
-        if len(unique_snapshot_indices) > len(snapshot.species):
-            new_lammps_indices = np.setdiff1d(unique_snapshot_indices, np.unique(self.structure.indices))
-            new_elements
-        return snapshot
-
-
     def collect_errors(self, file_name, cwd=None):
         """
 
