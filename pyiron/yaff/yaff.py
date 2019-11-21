@@ -515,7 +515,10 @@ class Yaff(AtomisticGenericJob):
             the ffatype_level employing the built-in routine in QuickFF.
         '''
         numbers = np.array([pt[symbol].number for symbol in self.structure.get_chemical_symbols()])
-        system = System(numbers, self.structure.positions.copy()*angstrom, rvecs=self.structure.cell*angstrom)
+        if self.structure.cell is None:
+            system = System(numbers, self.structure.positions.copy()*angstrom)
+        else:
+            system = System(numbers, self.structure.positions.copy()*angstrom, rvecs=self.structure.cell*angstrom)
         system.detect_bonds()
 
         if not sum([ffatypes is None, ffatype_rules is None, ffatype_level is None]) == 1:
