@@ -471,6 +471,8 @@ class LammpsControl(GenericParameters):
         mc_step_interval=100,
         swap_fraction=0.1,
         temperature_mc=None,
+        window_size=None,
+        window_moves=None,
         temperature=None,
         pressure=None,
         n_ionic_steps=1000,
@@ -514,6 +516,11 @@ class LammpsControl(GenericParameters):
             swap_fraction (float): The fraction of atoms whose species is swapped at each MC phase. (Default is 0.1.)
             temperature_mc (float): The temperature for accepting MC steps. (Default is None, which uses the MD
                 temperature.)
+            window_size (float): The size of the sampling window for parallel calculations as a fraction of something
+                unspecified in the VC-SGC docs, but it must lie between 0.5 and 1. (Default is None, window is
+                determined automatically.)
+            window_moves (int): The number of times the sampling window is moved during one MC cycle. (Default is None,
+                number of moves is determined automatically.)
         """
         self.calc_md(
             temperature=temperature,
@@ -562,6 +569,16 @@ class LammpsControl(GenericParameters):
                 str(kappa),
                 str(" ".join([str(target_concentration[el]) for el in ordered_element_list[1:]]))
             )
+
+        # Set optional windowing parameters
+        if window_moves is not None:
+            if int(window_moves) != window_moves or window_moves < 0:
+                raise ValueError("Window moves must be a non-negative integer.")
+            fix_vcsgc_str += " window_moves {0}".format(window_moves)
+        if window_size is not None:
+            if not 0.5 <= window_moves <= 1.0:
+                raise ValueError("Window size must be a fraction between 0.5 and 1")
+            fix_vcsgc_str += " window_size {0}".format(window_size)
 
         self.modify(
             fix___vcsgc=fix_vcsgc_str,
