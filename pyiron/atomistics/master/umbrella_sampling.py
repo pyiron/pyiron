@@ -15,10 +15,7 @@ class USJobGenerator(JobGenerator):
         Returns:
             (list)
         '''
-        # For now no different kappa for different locs implementation!
         parameter_lst = []
-        assert isinstance(self._job.input['cv_grid'], list) or isinstance(self._job.input['cv_grid'], np.ndarray)
-        assert isinstance(self._job.structures, list)
         for (loc,structure) in zip(self._job.input['cv_grid'],self._job.structures):
             parameter_lst.append([np.round(loc,5), structure])
         return parameter_lst
@@ -31,9 +28,10 @@ class USJobGenerator(JobGenerator):
             return 'us_' + str(parameter[0]).replace('.', '_').replace('-', 'm')
 
     def modify_job(self, job, parameter):
+        # For now, no different kappa for different locs implementation!
         job.input['temp'] = self._job.input['temp']
         job.structure = parameter[1]
-        job.set_us(self._job.input['ics'], self._job.input['kappa'], parameter[0], fn_colvar='COLVAR', stride=self._job.input['stride'], temp=self._job.input['temp'])
+        job.set_us(self._job.input['cvs'], self._job.input['kappa'], parameter[0], fn_colvar='COLVAR', stride=self._job.input['stride'], temp=self._job.input['temp'])
         return job
 
 
@@ -50,12 +48,18 @@ class US(AtomisticParallelMaster):
         self.__version__ = '0.1.0'
 
         # define default input
-        self.input['kappa']      = (1.*kjmol, 'the value of the force constant of the harmonic bias potential')
-        self.input['stride']     = (10, 'the number of steps after which the internal coordinate values and bias are printed to the COLVAR output file.')
-        self.input['temp']       = (300*kelvin, 'the system temperature')
-
-        self.input['cv_grid']    = (list(np.linspace(0,1,10)), 'cv grid, has to be a list')
-        self.input['ics']        = ([('distance', [0,1])], 'ics')
+        self.input['kappa']       = (1.*kjmol, 'force constant of the harmonic bias potential')
+        self.input['stride']      = (10, 'step for output printed to COLVAR output file.')
+        self.input['temp']        = (300*kelvin, 'the system temperature')
+        self.input['cv_grid']     = (list(np.linspace(0,1,10)), 'cv grid, has to be a list')
+        self.input['cvs']         = ([('distance', [0,1])], 'cv(s), see Yaff input for description')
+        
+        self.input['h_min']       = (None , 'lowest value(s) of the cv(s) for WHAM')
+        self.input['h_max']       = (None , 'highest value(s) of the cv(s) for WHAM')
+        self.input['h_bins']      = (None , 'bins between h_min and h_max for WHAM')
+        
+        self.input['periodicity'] = (None , 'periodicity of cv(s)')
+        self.input['tol']         = (0.00001 , 'WHAM converges if free energy changes < tol')
 
         self.structures = None   # list with structures corresponding to grid points
         self._job_generator = USJobGenerator(self)
@@ -73,7 +77,7 @@ class US(AtomisticParallelMaster):
             cv_f     function object that takes a job object as input and returns the corresponding CV(s) list
         '''
 
-        cv = cv_f(job).reshape(-1,len(self.input['ics']))
+        cv = cv_f(job).reshape(-1,len(self.input['cvs']))
         idx = np.zeros(len(self.input['cv_grid']),dtype=int)
         for n,loc in enumerate(self.input['cv_grid']):
             idx[n] = np.argmin(np.linalg.norm(loc-cv,axis=-1))
@@ -106,8 +110,9 @@ class US(AtomisticParallelMaster):
         for job_id in self.child_ids:
             pt.plot(job['output/enhanced/cv'])
         pt.show()
-
-    def wham(self, h_min, h_max, bins, periodicity=None, tol=0.00001):
+    
+    
+    def wham(self, h_min, h_max, bins, f_metadata, f_fes, periodicity=None, tol=0.00001):
         '''
             Performs the weighted histogram analysis method to calculate the free energy surface
 
@@ -118,7 +123,7 @@ class US(AtomisticParallelMaster):
             h_max   highest value that is taken into account, float or list if more than one cv is biased
                     if one whole trajectory is outside of these borders an error occurs
 
-            bins    number of bins between h_min and h_max, int
+            bins    number of bins between h_min and h_max
 
             periodicity
                     periodicity of the collective variable
@@ -128,31 +133,14 @@ class US(AtomisticParallelMaster):
             tol     if no free energy value changes between iteration for more than tol, wham is converged
         '''
 
-        def convert_val(val,unit=None):
-            scale = 1 if unit is None else unit
-            if isinstance(val, list) or isinstance(val, np.ndarray):
-                return [str(l/scale) for l in val]
-            else:
-                return str(val/scale)
-
-        f_metadata = os.path.join(self.working_directory, 'metadata')
-        f_fes      = os.path.join(self.working_directory, 'fes.dat')
-
-        with open(f_metadata, 'w') as f:
-            for job_id in self.child_ids:
-                job = self.project_hdf5.inspect(job_id)
-                print('job_id: ', job_id, job.status)
-                loc = convert_val(job['input/generic/enhanced/loc'])
-                kappa = convert_val(job['input/generic/enhanced/kappa'],unit=kjmol)
-                f.write('{}/COLVAR\t'.format(job.working_directory) + '\t'.join(loc) + '\t' + '\t'.join(kappa) + '\n') # format of colvar needs to be TIME CV1 (CV2)
-
-        if len(loc) == 1:
+        
+        if isinstance(h_min,(int,float)):
             cmd = './wham '
             if not periodicity is None:
                 cmd += 'P{} '.format(periodicity)
             cmd += ' '.join(map(str,[h_min,h_max,int(bins),tol,self.input['temp'],0,f_metadata,f_fes]))
 
-        elif len(loc) == 2:
+        elif isinstance(h_min,list) and len(h_min) == 2:
             cmd = './wham-2d '
             periodic = ['Px='+str(periodicity[0]) if not periodicity[0] is None else '0', 'Py='+str(periodicity[1]) if not periodicity[1] is None else '0']
             for i in range(2):
@@ -168,18 +156,6 @@ class US(AtomisticParallelMaster):
             shell=True
         )
 
-        data = np.loadtxt(os.path.join(self.working_directory,'fes.dat'))
-
-        if len(loc) == 1:
-            bins = data[:,0]
-            fes = data[:,1]
-        elif len(loc) == 2:
-            bins = data[:,0:2]
-            fes = data[:,2]
-
-        with self.project_hdf5.open('output') as hdf5_out:
-            hdf5_out['bins'] = bins
-            hdf5_out['fes'] = fes
 
     def get_structure(self, iteration_step=-1):
         '''
@@ -216,3 +192,41 @@ class US(AtomisticParallelMaster):
                 #name = str(loc).replace('.', '_').replace('-', 'm') if isinstance(loc,(int,float)) else ','.join([str(l).replace('.', '_').replace('-', 'm') for l in loc])
                 name = 'cv' + str(n)
                 self.structures.append(Atoms().from_hdf(hdf5_input,group_name=name))
+                
+    def collect_output(self):
+        def convert_val(val,unit=None):
+            scale = 1 if unit is None else unit
+            if isinstance(val, list) or isinstance(val, np.ndarray):
+                return [str(l/scale) for l in val]
+            else:
+                return str(val/scale)
+        
+        # Files to store data of wham
+        f_metadata = os.path.join(self.working_directory, 'metadata')
+        f_fes      = os.path.join(self.working_directory, 'fes.dat')
+        
+
+        with open(f_metadata, 'w') as f:
+            for job_id in self.child_ids:
+                job = self.project_hdf5.inspect(job_id)
+                print('job_id: ', job_id, job.status)
+                loc = convert_val(job['input/generic/enhanced/loc'])
+                kappa = convert_val(job['input/generic/enhanced/kappa'],unit=kjmol)
+                f.write('{}/COLVAR\t'.format(job.working_directory) + '\t'.join(loc) + '\t' + '\t'.join(kappa) + '\n') # format of colvar needs to be TIME CV1 (CV2)
+
+        # Execute wham code        
+        self.wham(self.input['h_min'], self.input['h_max'], self.input['h_bins'], f_metadata, f_fes, periodicity=self.input['periodicity'], tol=self.input['tol'])
+        
+        # Process output of wham code
+        data = np.loadtxt(os.path.join(self.working_directory,'fes.dat'))
+
+        if len(loc) == 1:
+            bins = data[:,0]
+            fes = data[:,1]
+        elif len(loc) == 2:
+            bins = data[:,0:2]
+            fes = data[:,2]
+
+        with self.project_hdf5.open('output') as hdf5_out:
+            hdf5_out['bins'] = bins
+            hdf5_out['fes'] = fes
