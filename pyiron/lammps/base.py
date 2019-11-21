@@ -454,6 +454,7 @@ class LammpsBase(AtomisticGenericJob):
         # If new Lammps indices are present for which we have no species, extend the species list
         unique_lammps_indices = np.unique(lammps_indices)
         if len(unique_lammps_indices) > len(np.unique(self.structure.indices)):
+            unique_lammps_indices -= 1  # Convert from Lammps start counting at 1 to python start counting at 0
             new_lammps_symbols = lammps_species_order[unique_lammps_indices]
             self.structure.set_species([self.structure.convert_element(el) for el in new_lammps_symbols])
 
