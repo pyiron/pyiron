@@ -173,7 +173,7 @@ class LammpsStructure(GenericParameters):
         input_file_name:
     """
 
-    def __init__(self, input_file_name=None):
+    def __init__(self, input_file_name=None, bond_dict=None):
         super(LammpsStructure, self).__init__(
             input_file_name=input_file_name,
             table_name="structure_inp",
@@ -186,6 +186,7 @@ class LammpsStructure(GenericParameters):
         self.atom_type = None
         self.cutoff_radius = None
         self.digits = 10
+        self._bond_dict = bond_dict
 
     @property
     def potential(self):
@@ -405,54 +406,65 @@ class LammpsStructure(GenericParameters):
         q_dict = {}
         for el in self._structure.get_species_symbols():
             q_dict[el] = float(self.potential.get("set group {} charge".format(el)))
+        species_translate_list = [self.potential.get("group {} type".format(el.Abbreviation))
+                                  for el in self.structure.species]
 
-        m_dict = {}
-        species_translate_list = list()
-        sorted_species_list = np.array(self._potential.get_element_lst())
-        for el in self._structure.species:
-            ind = np.argwhere(sorted_species_list == el.Abbreviation).flatten()[-1]
-            species_translate_list.append(ind)
-
-        # analyze structure to get molecule_ids, bonds, angles etc
         molecule_lst, bonds_lst, angles_lst = [], [], []
-
-        num_atoms_in_molecule = 3
-        neighbors = self._structure.get_neighbors(
-            num_neighbors=num_atoms_in_molecule + 2
-        )
-        # print "neighbors: ", neighbors.distances
+        bond_type_lst, angle_type_lst = [], []
+        # Using a cutoff distance to draw the bonds instead of the number of neighbors
+        cutoff_list = list()
+        for val in self._bond_dict.values():
+            cutoff_list.append(np.max(val["cutoff_list"]))
+        max_cutoff = np.max(cutoff_list)
+        # Calculate neighbors only once
+        neighbors = self._structure.get_neighbors(cutoff=max_cutoff)
         id_mol = 0
         indices = self._structure.indices
         for id_el, id_species in enumerate(indices):
-            el = self._structure.species[id_species]
-            # print "id: ", id, el.Abbreviation, neighbors.indices[id][0:2]
-            if el.Abbreviation in ["O"]:
-                # print "id_mol: ", id_mol
-                id_mol += 1
-                molecule_lst.append([id_el, id_mol, id_species])
-                # Just to ensure that the attached atoms are indeed H atoms
-                # id_n1, id_n2 = np.intersect1d(neighbors.indices[id_el], self._structure.select_index("H"))[0:2]
-                id_n1, id_n2 = neighbors.indices[id_el][0:2]
-                # print "id: ", id, id_n1, len(el_lst), el_lst[1].id
-                molecule_lst.append(
-                    [id_n1, id_mol, indices[id_n1]]
-                )
-                molecule_lst.append(
-                    [id_n2, id_mol, indices[id_n2]]
-                )
-
-                bonds_lst.append([id_el + 1, id_n1 + 1])
-                bonds_lst.append([id_el + 1, id_n2 + 1])
-
-                angles_lst.append([id_n1 + 1, id_el + 1, id_n2 + 1])
-            elif el.Abbreviation not in ["H"]:  # non-bonded ions
-                id_mol += 1
-                molecule_lst.append([id_el, id_mol, id_species])
-
+            id_mol += 1
+            molecule_lst.append([id_el, id_mol, species_translate_list[id_species]])
+        # Draw bonds between atoms is defined in self._bond_dict
+        # Go through all elements for which bonds are defined
+        for element, val in self._bond_dict.items():
+            el_1_list = self._structure.select_index(element)
+            if el_1_list is not None:
+                if len(el_1_list) > 0:
+                    for i, v in enumerate(val["element_list"]):
+                        el_2_list = self._structure.select_index(v)
+                        cutoff_dist = val["cutoff_list"][i]
+                        for j, ind in enumerate(neighbors.indices[el_1_list]):
+                            # Only chose those indices within the cutoff distance and which belong
+                            # to the species defined in the element_list
+                            # i is the index of each bond type, and j is the element index
+                            id_el = el_1_list[j]
+                            bool_1 = neighbors.distances[id_el] <= cutoff_dist
+                            act_ind = ind[bool_1]
+                            bool_2 = np.in1d(act_ind, el_2_list)
+                            final_ind = act_ind[bool_2]
+                            # Get the bond and angle type
+                            bond_type = val["bond_type_list"][i]
+                            angle_type = val["angle_type_list"][i]
+                            # Draw only maximum allowed bonds
+                            final_ind = final_ind[:val["max_bond_list"][i]]
+                            for fi in final_ind:
+                                bonds_lst.append([id_el + 1, fi + 1])
+                                bond_type_lst.append(bond_type)
+                            # Draw angles if at least 2 bonds are present and if an angle type is defined for this
+                            # particular set of bonds
+                            if len(final_ind) >= 2 and val["angle_type_list"][i] is not None:
+                                angles_lst.append([final_ind[0] + 1, id_el + 1, final_ind[1] + 1])
+                                angle_type_lst.append(angle_type)
         m_lst = np.array(molecule_lst)
         molecule_lst = m_lst[m_lst[:, 0].argsort()]
-        # print "m_lst: ", m_lst
-        # print "mol: ", molecule_lst
+
+        if len(bond_type_lst) == 0:
+            num_bond_types = 0
+        else:
+            num_bond_types = int(np.max(bond_type_lst))
+        if len(angle_type_lst) == 0:
+            num_angle_types = 0
+        else:
+            num_angle_types = int(np.max(angle_type_lst))
 
         atomtypes = (
             " Start File for LAMMPS \n"
@@ -462,20 +474,20 @@ class LammpsStructure(GenericParameters):
             + " \n"
             + "{0:d} angles".format(len(angles_lst))
             + " \n"
-            + "{0} atom types".format(len(sorted_species_list))
+            + "{0} atom types".format(self._structure.get_number_of_species())
             + " \n"
-            + "{0} bond types".format(1)
+            + "{0} bond types".format(num_bond_types)
             + " \n"
-            + "{0} angle types".format(1)
+            + "{0} angle types".format(num_angle_types)
             + " \n"
         )
 
         cell_dimensions = self.simulation_cell()
-
         masses = "Masses" + "\n\n"
-        for ic, el_p in enumerate(sorted_species_list):
-            mass = self._structure._pse[el_p].AtomicMass
-            masses += "{0:3d} {1:f}  # ({2}) \n".format(ic + 1, mass, el_p)
+        # el_obj_list = self._structure.get_species_objects()
+        el_obj_list = self._structure.species
+        for object_id, el in enumerate(el_obj_list):
+            masses += "{0:3d} {1:f}".format(species_translate_list[object_id], el.AtomicMass) + "\n"
 
         atoms = "Atoms \n\n"
 
@@ -483,12 +495,13 @@ class LammpsStructure(GenericParameters):
         format_str = "{0:d} {1:d} {2:d} {3:f} {4:f} {5:f} {6:f}"
         for atom in molecule_lst:
             id_atom, id_mol, id_species = atom
+            # print id_atom, id_mol, id_species
             x, y, z = coords[id_atom]
-            el_id = self._structure.species[id_species].Abbreviation
-#             print ('a: ', id_atom, el_id, species_translate_list[id_species], q_dict[el_id])
+            ind = np.argwhere(np.array(species_translate_list) == id_species).flatten()[0]
+            el_id = self._structure.species[ind].Abbreviation
             atoms += (
                 format_str.format(
-                    id_atom + 1, id_mol, species_translate_list[id_species] + 1, q_dict[el_id], x, y, z
+                    id_atom + 1, id_mol, id_species, q_dict[el_id], x, y, z
                 )
                 + "\n"
             )
@@ -498,7 +511,7 @@ class LammpsStructure(GenericParameters):
             for i_bond, id_vec in enumerate(bonds_lst):
                 bonds_str += (
                     "{0:d} {1:d} {2:d} {3:d}".format(
-                        i_bond + 1, 1, id_vec[0], id_vec[1]
+                        i_bond + 1, bond_type_lst[i_bond], id_vec[0], id_vec[1]
                     )
                     + "\n"
                 )
@@ -511,7 +524,7 @@ class LammpsStructure(GenericParameters):
                 # print "id: ", i_angle, id_vec
                 angles_str += (
                     "{0:d} {1:d} {2:d} {3:d} {4:d}".format(
-                        i_angle + 1, 1, id_vec[0], id_vec[1], id_vec[2]
+                        i_angle + 1, angle_type_lst[i_angle], id_vec[0], id_vec[1], id_vec[2]
                     )
                     + "\n"
                 )
