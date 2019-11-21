@@ -37,7 +37,8 @@ from molmod.units import *
 from yaff import *
 import h5py, numpy as np
 
-log.set_file(open('yaff.log', 'w'))
+logf = open('yaff.log', 'w')
+log.set_file(logf)
 
 #Setting up system and force field
 system = System.from_file('system.chk')
@@ -54,7 +55,7 @@ hooks = [hdf5, restart]
 """
 
 tail = """
-log._file.close()
+#logf.close()
 """
 
 def write_yopt(input_dict,working_directory='.'):
