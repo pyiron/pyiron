@@ -521,7 +521,7 @@ class Yaff(AtomisticGenericJob):
             system = System(numbers, self.structure.positions.copy()*angstrom, rvecs=self.structure.cell*angstrom)
         system.detect_bonds()
 
-        if not sum([ffatypes is None, ffatype_rules is None, ffatype_level is None]) == 1:
+        if not sum([ffatypes is None, ffatype_rules is None, ffatype_level is None]) == 2:
             raise IOError('Exactly one of ffatypes, ffatype_rules and ffatype_level should be defined')
 
         if ffatypes is not None:

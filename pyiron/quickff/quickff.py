@@ -50,8 +50,8 @@ def write_config(input_dict,working_directory='.'):
     with open(os.path.join(working_directory,'config.txt'), 'w') as f:
         for key in key_checks.keys():
             if key in input_dict.keys():
-                if key=='ffatypes': assert value is None
                 value = str(input_dict[key])
+                if key=='ffatypes': assert value == 'None'
                 print('%s:   %s' %(key+' '*(30-len(key)), value), file=f)
 
 def collect_output(fn_pars, fn_sys):
@@ -173,7 +173,7 @@ class QuickFF(AtomisticGenericJob):
             system = System(numbers, self.structure.positions.copy()*angstrom, rvecs=self.structure.cell*angstrom)
         system.detect_bonds()
 
-        if not sum([ffatypes is None, ffatype_rules is None, ffatype_level is None]) == 1:
+        if not sum([ffatypes is None, ffatype_rules is None, ffatype_level is None]) == 2:
             raise IOError('Exactly one of ffatypes, ffatype_rules and ffatype_level should be defined')
 
         if ffatypes is not None:
