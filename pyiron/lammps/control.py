@@ -576,7 +576,7 @@ class LammpsControl(GenericParameters):
                 raise ValueError("Window moves must be a non-negative integer.")
             fix_vcsgc_str += " window_moves {0}".format(window_moves)
         if window_size is not None:
-            if not 0.5 <= window_moves <= 1.0:
+            if not 0.5 <= window_size <= 1.0:
                 raise ValueError("Window size must be a fraction between 0.5 and 1")
             fix_vcsgc_str += " window_size {0}".format(window_size)
 
