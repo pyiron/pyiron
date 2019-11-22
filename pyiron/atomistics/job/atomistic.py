@@ -476,7 +476,7 @@ class AtomisticGenericJob(GenericJobCore):
         if len(self.output.indices) != 0:
             indices = self.output.indices
         else:
-            indices = self.structure.indices
+            indices = [self.structure.indices] * len(cells)  # Use the same indices throughout
         if overwrite_positions is not None:
             positions = np.array(overwrite_positions).copy()
             if overwrite_cells is not None:
