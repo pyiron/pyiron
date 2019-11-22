@@ -518,8 +518,8 @@ class AtomisticGenericJob(GenericJobCore):
             if len(sub_struct.species) < len(self.structure.species):
                 # Then `sub_struct` has had its indices remapped so they run from 0 to the number of species - 1
                 # But the `indices` array is unaware of this and needs to be remapped to this new space
-                original_symbols = [el.Abbreviation for el in self.structure.species]
-                sub_symbols = [el.Abbreviation for el in sub_struct.species]
+                original_symbols = np.array([el.Abbreviation for el in self.structure.species])
+                sub_symbols = np.array([el.Abbreviation for el in sub_struct.species])
 
                 map_ = np.array([np.argwhere(original_symbols == symbol)[0, 0] for symbol in sub_symbols], dtype=int)
 
