@@ -450,6 +450,7 @@ class Project(ProjectPath):
         )
         return folder_size / (1024 * 1024.0)
 
+    @staticmethod
     def get_repository_status(self):
         """
         Finds the hashes for every `pyiron` module available.
