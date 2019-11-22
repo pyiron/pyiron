@@ -458,7 +458,7 @@ class TestLammps(unittest.TestCase):
             args['mc_step_interval'],
             args['swap_fraction'],
             args['temperature_mc'],
-            ' '.join(str([args['mu'][symbol] - args['mu'][symbols[0]]) for symbol in symbols[1:]]),
+            ' '.join([str(args['mu'][symbol] - args['mu'][symbols[0]]) for symbol in symbols[1:]]),
             args['seed']
         )
         self.job_vcsgc_input.calc_vcsgc(**args)
