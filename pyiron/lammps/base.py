@@ -449,18 +449,18 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
             numpy.ndarray: Those integers mapped onto the structure.
         """
-        lammps_species_order = np.array(self.input.potential.get_element_lst())
+        lammps_symbol_order = np.array(self.input.potential.get_element_lst())
 
         # If new Lammps indices are present for which we have no species, extend the species list
         unique_lammps_indices = np.unique(lammps_indices)
         if len(unique_lammps_indices) > len(np.unique(self.structure.indices)):
             unique_lammps_indices -= 1  # Convert from Lammps start counting at 1 to python start counting at 0
-            new_lammps_symbols = lammps_species_order[unique_lammps_indices]
+            new_lammps_symbols = lammps_symbol_order[unique_lammps_indices]
             self.structure.set_species([self.structure.convert_element(el) for el in new_lammps_symbols])
 
         # Create a map between the lammps indices and structure indices to preserve species
-        structure_species_order = np.array([el.Abbreviation for el in self.structure.species])
-        map_ = np.array([int(np.argwhere(lammps_species_order == spec)[0]) + 1 for spec in structure_species_order])
+        structure_symbol_order = np.array([el.Abbreviation for el in self.structure.species])
+        map_ = np.array([int(np.argwhere(lammps_symbol_order == symbol)[0]) + 1 for symbol in structure_symbol_order])
 
         structure_indices = np.array(lammps_indices)
         for i_struct, i_lammps in enumerate(map_):
