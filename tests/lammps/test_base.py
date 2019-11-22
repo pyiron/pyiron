@@ -429,6 +429,62 @@ class TestLammps(unittest.TestCase):
             ValueError, self.job_vcsgc_input.calc_vcsgc, window_size=0.3
         )
 
+        mu = {s: 0. for s in symbols}
+        mu[symbols[0]] = 1.
+        args = dict(
+            mu=mu,
+            target_concentration=None,
+            kappa=1000.0,
+            mc_step_interval=100,
+            swap_fraction=0.1,
+            temperature_mc=None,
+            window_size=None,
+            window_moves=None,
+            seed=1,
+            temperature=300,
+        )
+        input_string = 'all sgcmc {0} {1} {2} {3} randseed {4}'.format(
+            args['mc_step_interval'],
+            args['swap_fraction'],
+            args['temperature'],
+            ' '.join([args['mu'][symbol] - args['mu'][symbols[0]] for symbol in symbols[1:]]),
+            args['seed']
+        )
+        self.job_vcsgc_input.calc_vcsgc(**args)
+        self.assertEqual(self.job_vcsgc_input.input.control['fix___vcsgc'], input_string)
+
+        args['temperature_mc'] = 100.,
+        input_string = 'all sgcmc {0} {1} {2} {3} randseed {4}'.format(
+            args['mc_step_interval'],
+            args['swap_fraction'],
+            args['temperature_mc'],
+            ' '.join([args['mu'][symbol] - args['mu'][symbols[0]] for symbol in symbols[1:]]),
+            args['seed']
+        )
+        self.job_vcsgc_input.calc_vcsgc(**args)
+        self.assertEqual(self.job_vcsgc_input.input.control['fix___vcsgc'], input_string)
+
+        conc = {s: 0. for s in symbols}
+        conc[symbols[0]] = 0.5
+        conc[symbols[-1]] = 0.5
+        args['target_concentration'] = conc
+        input_string += ' variance {0} {1}'.format(
+            args['kappa'],
+            ' '.join([conc[symbol] for symbol in symbols[1:]])
+        )
+        self.job_vcsgc_input.calc_vcsgc(**args)
+        self.assertEqual(self.job_vcsgc_input.input.control['fix___vcsgc'], input_string)
+
+        args['window_moves'] = 10
+        input_string += ' window_moves {0}'.format(args['window_moves'])
+        self.job_vcsgc_input.calc_vcsgc(**args)
+        self.assertEqual(self.job_vcsgc_input.input.control['fix___vcsgc'], input_string)
+
+        args['window_size'] = 0.75
+        input_string += ' window_size {0}'.format(args['window_size'])
+        self.job_vcsgc_input.calc_vcsgc(**args)
+        self.assertEqual(self.job_vcsgc_input.input.control['fix___vcsgc'], input_string)
+
 
 if __name__ == "__main__":
     unittest.main()
