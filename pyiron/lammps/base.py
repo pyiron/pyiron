@@ -426,11 +426,48 @@ class LammpsBase(AtomisticGenericJob):
                 np.eye(3) * np.array(cell_i.tolist())
                 for cell_i in h5md["/particles/all/box/edges/value"]
             ]
+            indices = [indices_i.tolist() for indices_i in h5md["/particles/all/indices/value"]]
         with self.project_hdf5.open("output/generic") as h5_file:
             h5_file["forces"] = np.array(forces)
             h5_file["positions"] = np.array(positions)
             h5_file["time"] = np.array(time)
             h5_file["cells"] = cell
+            h5_file["indices"] = self.remap_indices(indices)
+
+    def remap_indices(self, lammps_indices):
+        """
+        Give the Lammps-dumped indices, re-maps these back onto the structure's indices to preserve the species.
+
+        The issue is that for an N-element potential, Lammps dumps the chemical index from 1 to N based on the order
+        that these species are written in the Lammps input file. But the indices for a given structure are based on the
+        order in which chemical species were added to that structure, and run from 0 up to the number of species
+        currently in that structure. Therefore we need to be a little careful with mapping.
+
+        Args:
+            indices (numpy.ndarray/list): The Lammps-dumped integers.
+
+        Returns:
+            numpy.ndarray: Those integers mapped onto the structure.
+        """
+        lammps_symbol_order = np.array(self.input.potential.get_element_lst())
+
+        # If new Lammps indices are present for which we have no species, extend the species list
+        unique_lammps_indices = np.unique(lammps_indices)
+        if len(unique_lammps_indices) > len(np.unique(self.structure.indices)):
+            unique_lammps_indices -= 1  # Convert from Lammps start counting at 1 to python start counting at 0
+            new_lammps_symbols = lammps_symbol_order[unique_lammps_indices]
+            self.structure.set_species([self.structure.convert_element(el) for el in new_lammps_symbols])
+
+        # Create a map between the lammps indices and structure indices to preserve species
+        structure_symbol_order = np.array([el.Abbreviation for el in self.structure.species])
+        map_ = np.array([int(np.argwhere(lammps_symbol_order == symbol)[0]) + 1 for symbol in structure_symbol_order])
+
+        structure_indices = np.array(lammps_indices)
+        for i_struct, i_lammps in enumerate(map_):
+            np.place(structure_indices, lammps_indices == i_lammps, i_struct)
+        # TODO: Vectorize this for-loop for computational efficiency
+
+        return structure_indices
 
     def collect_errors(self, file_name, cwd=None):
         """
@@ -631,6 +668,97 @@ class LammpsBase(AtomisticGenericJob):
             job_name=self.job_name,
         )
 
+    def calc_vcsgc(
+        self,
+        mu=None,
+        target_concentration=None,
+        kappa=1000.,
+        mc_step_interval=100,
+        swap_fraction=0.1,
+        temperature_mc=None,
+        window_size=None,
+        window_moves=None,
+        temperature=None,
+        pressure=None,
+        n_ionic_steps=1000,
+        time_step=1.0,
+        n_print=100,
+        temperature_damping_timescale=100.0,
+        pressure_damping_timescale=1000.0,
+        seed=None,
+        initial_temperature=None,
+        langevin=False
+    ):
+        """
+        Run variance-constrained semi-grand-canonical MD/MC for a binary system. In addition to VC-SGC arguments, all
+        arguments for a regular MD calculation are also accepted.
+
+        https://vcsgc-lammps.materialsmodeling.org
+
+        Note:
+            For easy visualization later (with `get_structure`), it is highly recommended that the initial structure
+            contain at least one atom of each species.
+
+        Warning:
+            - Assumes the units are metal, otherwise units for the constraints may be off.
+            - The fix does not yet support non-orthogonal simulation boxes; using one will give a runtime error.
+
+        Args:
+            mu (dict): A dictionary of chemical potentials, one for each element the potential treats, where the
+                dictionary keys are just the chemical symbol. Note that only the *relative* chemical potentials are used
+                here, such that the swap acceptance probability is influenced by the chemical potential difference
+                between the two species (a more negative value increases the odds of swapping *to* that element.)
+                (Default is None, all elements have the same chemical potential.)
+            target_concentration: A dictionary of target simulation domain concentrations for each species *in the
+                potential*. Dictionary keys should be the chemical symbol of the corresponding species, and the sum of
+                all concentrations must be 1. (Default is None, which runs regular semi-grand-canonical MD/MC without
+                any variance constraint.)
+            kappa: Variance constraint for the MC. Larger value means a tighter adherence to the target concentrations.
+                (Default is 1000.)
+            mc_step_interval (int): How many steps of MD between each set of MC moves. (Default is 100.) Must divide the
+                number of ionic steps evenly.
+            swap_fraction (float): The fraction of atoms whose species is swapped at each MC phase. (Default is 0.1.)
+            temperature_mc (float): The temperature for accepting MC steps. (Default is None, which uses the MD
+                temperature.)
+            window_size (float): The size of the sampling window for parallel calculations as a fraction of something
+                unspecified in the VC-SGC docs, but it must lie between 0.5 and 1. (Default is None, window is
+                determined automatically.)
+            window_moves (int): The number of times the sampling window is moved during one MC cycle. (Default is None,
+                number of moves is determined automatically.)
+        """
+        if mu is None:
+            mu = {}
+            for el in self.input.potential.get_element_lst():
+                mu[el] = 0.
+
+        self._generic_input["calc_mode"] = "vcsgc"
+        self._generic_input["temperature"] = temperature
+        self._generic_input["n_ionic_steps"] = n_ionic_steps
+        self._generic_input["n_print"] = n_print
+        self._generic_input.remove_keys(["max_iter"])
+        self.input.control.calc_vcsgc(
+            mu=mu,
+            ordered_element_list=self.input.potential.get_element_lst(),
+            target_concentration=target_concentration,
+            kappa=kappa,
+            mc_step_interval=mc_step_interval,
+            swap_fraction=swap_fraction,
+            temperature_mc=temperature_mc,
+            window_size=window_size,
+            window_moves=window_moves,
+            temperature=temperature,
+            pressure=pressure,
+            n_ionic_steps=n_ionic_steps,
+            time_step=time_step,
+            n_print=n_print,
+            temperature_damping_timescale=temperature_damping_timescale,
+            pressure_damping_timescale=pressure_damping_timescale,
+            seed=seed,
+            initial_temperature=initial_temperature,
+            langevin=langevin,
+            job_name=self.job_name,
+        )
+
     # define hdf5 input and output
     def to_hdf(self, hdf=None, group_name=None):
         """
@@ -762,7 +890,8 @@ class LammpsBase(AtomisticGenericJob):
             )
             for llst, llen in zip(l_start, l_end)
         ]
-
+        indices = np.array([cc["type"] for cc in content], dtype=int)
+        output["indices"] = self.remap_indices(indices)
         forces = np.array(
             [np.stack((cc["fx"], cc["fy"], cc["fz"]), axis=-1) for cc in content]
         )

@@ -509,7 +509,7 @@ class GenericInteractiveOutput(GenericOutput):
 
     @property
     def indices(self):
-        return self._lst_from_property(key="indices")
+        return self._lst_from_property(key="indices", prop=GenericOutput.indices.fget)
 
     @property
     def cells(self):
