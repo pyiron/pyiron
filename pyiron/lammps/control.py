@@ -485,7 +485,9 @@ class LammpsControl(GenericParameters):
                                  "potential.")
 
             if not np.isclose(np.sum([v for _, v in target_concentration.items()]), 1):
-                raise ValueError("Target concentrations must sum to 1.")
+                raise ValueError("Target concentrations must sum to 1 but were {}.".format(
+                    np.sum([v for _, v in target_concentration.items()])
+                ))
 
             fix_vcsgc_str += " variance {0} {1}".format(
                 str(kappa),
