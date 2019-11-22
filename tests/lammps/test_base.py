@@ -38,10 +38,6 @@ class TestLammps(unittest.TestCase):
             project=ProjectHDFio(project=cls.project, file_name="lammps_vcsgc_input"),
             job_name="lammps_vcsgc_input",
         )
-        cls.job_vcsgc_integration = Lammps(
-            project=ProjectHDFio(project=cls.project, file_name="lammps_vcsgc_integration"),
-            job_name="lammps_vcsgc_integration",
-        )
 
     @classmethod
     def tearDownClass(cls):
@@ -432,46 +428,6 @@ class TestLammps(unittest.TestCase):
         self.assertRaises(
             ValueError, self.job_vcsgc_input.calc_vcsgc, window_size=0.3
         )
-
-    def test_vcsgc_integration(self):
-        unit_cell = Atoms(
-            elements=4 * ["Al"],
-            positions=[
-                [0., 0., 0.],
-                [0., 2., 2.],
-                [2., 0., 2.],
-                [2., 2., 0.]
-            ],
-            cell=4 * np.eye(3)
-        )
-        self.job_vcsgc_integration.structure = unit_cell.repeat(15)
-        self.job_vcsgc_integration.structure[0] = 'Mg'
-        self.job_vcsgc_integration.potential = self.job_vcsgc_integration.list_potentials()[0]
-
-        mu = {s: 0. for s in self.job_vcsgc_integration.input.potential.get_element_lst()}
-        mu['Mg'] = -100  # Massive preference for Mg
-
-        target_concentration = dict(mu)
-        target_concentration['Al'] = 0.5
-        target_concentration['Mg'] = 0.5
-        # Shoot for equipotential
-
-        self.job_vcsgc_integration.calc_vcsgc(
-            mu=mu,
-            target_concentration=target_concentration,
-            kappa=1000000.,  # Larger than usual since Mg chemical potential is so extreme
-            mc_step_interval=1,
-            swap_fraction=1.,
-            n_ionic_steps=2,
-            n_print=2,
-            temperature=300,
-            pressure=None
-        )
-        self.job_vcsgc_integration.run()
-
-        symbols = np.array([el.Abbreviation for el in self.job_vcsgc_integration.get_structure(-1).elements])
-
-        self.assertEqual(np.sum(symbols == 'Mg'), np.sum(symbols == 'Al'))
 
 
 if __name__ == "__main__":
