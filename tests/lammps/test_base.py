@@ -365,6 +365,7 @@ class TestLammps(unittest.TestCase):
             positions=2.78 * np.outer(np.arange(2), np.ones(3)) * 0.5,
         )
         self.job_dump.structure = structure
+        self.job_dump.potential = self.job_dump.list_potentials()[0]
         file_directory = os.path.join(
             self.execution_path, "..", "static", "lammps_test_files"
         )
@@ -377,6 +378,9 @@ class TestLammps(unittest.TestCase):
         )
         self.assertTrue(
             np.array_equal(self.job_dump["output/generic/cells"].shape, (1, 3, 3))
+        )
+        self.assertTrue(
+            np.array_equal(self.job_dump["output/generic/indices"].shape, (1, 2))
         )
 
     def test_vcsgc_input(self):
