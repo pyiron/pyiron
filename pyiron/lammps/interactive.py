@@ -322,7 +322,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             self.interactive_structure_setter(self.structure)
 
     def run_if_interactive(self):
-        if self._generic_input["calc_mode"] == "md":
+        if self._generic_input["calc_mode"] in ["md", "vcsgc"]:
             self.input.control["run"] = self._generic_input["n_print"]
             super(LammpsInteractive, self).run_if_interactive()
             self._reset_interactive_run_command()
