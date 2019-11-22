@@ -519,7 +519,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_lib_command(self.potential.Config[0][1])
 
     def interactive_indices_getter(self):
-        indices = np.array(self._interactive_library.gather_atoms("type", 0, 1))
+        lammps_indices = np.array(self._interactive_library.gather_atoms("type", 0, 1))
+        indices = self.remap_indices(lammps_indices)
         return indices.tolist()
 
     def interactive_indices_setter(self, indices):
