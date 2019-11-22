@@ -70,6 +70,9 @@ class VolumetricData(object):
             raise ValueError("Attribute total_data should be a 3D array")
         self._total_data = val
 
+    def tmp(self, ind=2):
+        print("hello world")
+
     def get_average_along_axis(self, ind=2):
         """
         Get the lateral average along a certain axis direction. This function is adapted from the pymatgen vasp
