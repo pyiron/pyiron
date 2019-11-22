@@ -389,7 +389,7 @@ class TestLammps(unittest.TestCase):
 
     def test_vcsgc_input(self):
         unit_cell = Atoms(
-            elements=4 * ["Al"],
+            elements=['Al', 'Al', 'Al', 'Mg'],
             positions=[
                 [0., 0., 0.],
                 [0., 2., 2.],
