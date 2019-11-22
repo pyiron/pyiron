@@ -519,7 +519,7 @@ class AtomisticGenericJob(GenericJobCore):
                 self.structure.get_parent_basis()[atom_indices],
                 center_of_mass=center_of_mass,
                 cells=cells[::stride],
-                indices=indices[::stride, atom_indices, :]
+                indices=indices[::stride, atom_indices]
             )
 
     def write_traj(
