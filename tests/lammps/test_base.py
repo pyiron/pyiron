@@ -34,6 +34,14 @@ class TestLammps(unittest.TestCase):
             project=ProjectHDFio(project=cls.project, file_name="lammps_dump_static"),
             job_name="lammps_dump_static",
         )
+        cls.job_vcsgc_input = Lammps(
+            project=ProjectHDFio(project=cls.project, file_name="lammps_vcsgc_input"),
+            job_name="lammps_vcsgc_input",
+        )
+        cls.job_vcsgc_integration = Lammps(
+            project=ProjectHDFio(project=cls.project, file_name="lammps_vcsgc_integration"),
+            job_name="lammps_vcsgc_integration",
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -384,43 +392,43 @@ class TestLammps(unittest.TestCase):
         )
 
     def test_vcsgc_input(self):
-        self.job.structure = self.job.project.create_ase_bulk('Al', cubic=True)
-        self.job.potential = self.job.list_potentials()[0]
-        symbols = self.job.input.potential.get_element_lst()
+        self.job_vcsgc_input.structure = self.job_vcsgc_input.project.create_ase_bulk('Al', cubic=True)
+        self.job_vcsgc_input.potential = self.job_vcsgc_input.list_potentials()[0]
+        symbols = self.job_vcsgc_input.input.potential.get_element_lst()
 
         bad_element = {s: 0. for s in symbols}
         bad_element.update({'X': 1.})  # Non-existant chemical symbol
         self.assertRaises(
-            ValueError, self.job.calc_vcsgc, mu=bad_element
+            ValueError, self.job_vcsgc_input.calc_vcsgc, mu=bad_element
         )
 
         self.assertRaises(
-            ValueError, self.job.calc_vcsgc, target_concentration=bad_element
+            ValueError, self.job_vcsgc_input.calc_vcsgc, target_concentration=bad_element
         )
 
         bad_conc = {s: 0. for s in symbols}
         bad_conc['Al'] = 0.99
         self.assertRaises(
-            ValueError, self.job.calc_vcsgc, target_concentration=bad_conc
+            ValueError, self.job_vcsgc_input.calc_vcsgc, target_concentration=bad_conc
         )
 
         self.assertRaises(
-            ValueError, self.job.calc_vcsgc, window_moves=-1
+            ValueError, self.job_vcsgc_input.calc_vcsgc, window_moves=-1
         )
         self.assertRaises(
-            ValueError, self.job.calc_vcsgc, window_moves=1.1
+            ValueError, self.job_vcsgc_input.calc_vcsgc, window_moves=1.1
         )
 
         self.assertRaises(
-            ValueError, self.job.calc_vcsgc, window_size=0.3
+            ValueError, self.job_vcsgc_input.calc_vcsgc, window_size=0.3
         )
 
     def test_vcsgc_integration(self):
-        self.job.structure = self.job.project.create_ase_bulk('Al', cubic=True)
-        self.job.structure[0] = 'Mg'
-        self.job.potential = self.job.list_potentials()[0]
+        self.job_vcsgc_integration.structure = self.job_vcsgc_integration.project.create_ase_bulk('Al', cubic=True)
+        self.job_vcsgc_integration.structure[0] = 'Mg'
+        self.job_vcsgc_integration.potential = self.job_vcsgc_integration.list_potentials()[0]
 
-        mu = {s: 0. for s in self.job.input.potential.get_element_lst()}
+        mu = {s: 0. for s in self.job_vcsgc_integration.input.potential.get_element_lst()}
         mu['Mg'] = -100  # Massive preference for Mg
 
         target_concentration = dict(mu)
@@ -428,7 +436,7 @@ class TestLammps(unittest.TestCase):
         target_concentration['Mg'] = 0.5
         # Shoot for equipotential
 
-        self.job.calc_vcsgc(
+        self.job_vcsgc_integration.calc_vcsgc(
             mu=mu,
             target_concentration=target_concentration,
             kappa=1000000.,  # Larger than usual since Mg chemical potential is so extreme
@@ -439,9 +447,9 @@ class TestLammps(unittest.TestCase):
             temperature=300,
             pressure=None
         )
-        self.job.run()
+        self.job_vcsgc_integration.run()
 
-        symbols = np.array([el.Abbreviation for el in self.job.get_structure(-1).elements])
+        symbols = np.array([el.Abbreviation for el in self.job_vcsgc_integration.get_structure(-1).elements])
 
         self.assertEqual(np.sum(symbols == 'Mg'), np.sum(symbols == 'Al'))
 
