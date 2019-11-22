@@ -514,12 +514,27 @@ class AtomisticGenericJob(GenericJobCore):
                 indices=indices[::stride]
             )
         else:
+            sub_struct = self.structure.get_parent_basis()[atom_indices]
+            if len(sub_struct.species) < len(self.structure.species):
+                # Then `sub_struct` has had its indices remapped so they run from 0 to the number of species - 1
+                # But the `indices` array is unaware of this and needs to be remapped to this new space
+                original_symbols = [el.Abbreviation for el in self.structure.species]
+                sub_symbols = [el.Abbreviation for el in sub_struct.species]
+
+                map_ = np.array([np.argwhere(original_symbols == symbol)[0, 0] for symbol in sub_symbols], dtype=int)
+
+                remapped_indices = np.array(indices)
+                for i_sub, i_original in enumerate(map_):
+                    np.place(remapped_indices, indices == i_original, i_sub)
+            else:
+                remapped_indices = indices
+
             return Trajectory(
                 positions[::stride, atom_indices, :],
-                self.structure.get_parent_basis()[atom_indices],
+                sub_struct,
                 center_of_mass=center_of_mass,
                 cells=cells[::stride],
-                indices=indices[::stride, atom_indices]
+                indices=remapped_indices[::stride, atom_indices]
             )
 
     def write_traj(
