@@ -447,7 +447,7 @@ class TestLammps(unittest.TestCase):
             args['mc_step_interval'],
             args['swap_fraction'],
             args['temperature'],
-            ' '.join([args['mu'][symbol] - args['mu'][symbols[0]] for symbol in symbols[1:]]),
+            ' '.join([str(args['mu'][symbol] - args['mu'][symbols[0]]) for symbol in symbols[1:]]),
             args['seed']
         )
         self.job_vcsgc_input.calc_vcsgc(**args)
@@ -458,7 +458,7 @@ class TestLammps(unittest.TestCase):
             args['mc_step_interval'],
             args['swap_fraction'],
             args['temperature_mc'],
-            ' '.join([args['mu'][symbol] - args['mu'][symbols[0]] for symbol in symbols[1:]]),
+            ' '.join(str([args['mu'][symbol] - args['mu'][symbols[0]]) for symbol in symbols[1:]]),
             args['seed']
         )
         self.job_vcsgc_input.calc_vcsgc(**args)
@@ -470,7 +470,7 @@ class TestLammps(unittest.TestCase):
         args['target_concentration'] = conc
         input_string += ' variance {0} {1}'.format(
             args['kappa'],
-            ' '.join([conc[symbol] for symbol in symbols[1:]])
+            ' '.join([str(conc[symbol]) for symbol in symbols[1:]])
         )
         self.job_vcsgc_input.calc_vcsgc(**args)
         self.assertEqual(self.job_vcsgc_input.input.control['fix___vcsgc'], input_string)
