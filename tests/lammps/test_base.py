@@ -392,7 +392,17 @@ class TestLammps(unittest.TestCase):
         )
 
     def test_vcsgc_input(self):
-        self.job_vcsgc_input.structure = self.job_vcsgc_input.project.create_ase_bulk('Al', cubic=True)
+        unit_cell = Atoms(
+            elements=4 * ["Al"],
+            positions=[
+                [0., 0., 0.],
+                [0., 2., 2.],
+                [2., 0., 2.],
+                [2., 2., 0.]
+            ],
+            cell=4 * np.eye(3)
+        )
+        self.job_vcsgc_input.structure = unit_cell
         self.job_vcsgc_input.potential = self.job_vcsgc_input.list_potentials()[0]
         symbols = self.job_vcsgc_input.input.potential.get_element_lst()
 
@@ -424,7 +434,17 @@ class TestLammps(unittest.TestCase):
         )
 
     def test_vcsgc_integration(self):
-        self.job_vcsgc_integration.structure = self.job_vcsgc_integration.project.create_ase_bulk('Al', cubic=True)
+        unit_cell = Atoms(
+            elements=4 * ["Al"],
+            positions=[
+                [0., 0., 0.],
+                [0., 2., 2.],
+                [2., 0., 2.],
+                [2., 2., 0.]
+            ],
+            cell=4 * np.eye(3)
+        )
+        self.job_vcsgc_integration.structure = unit_cell.repeat(15)
         self.job_vcsgc_integration.structure[0] = 'Mg'
         self.job_vcsgc_integration.potential = self.job_vcsgc_integration.list_potentials()[0]
 
