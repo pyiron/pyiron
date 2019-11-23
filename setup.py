@@ -34,7 +34,7 @@ setup(
         'defusedxml>=0.5.0',
         'dill>=0.3.0',
         'future>=0.17.1',
-        'gitpython',
+        'gitpython>=2.1.11',
         'h5io>=0.1.1',
         'h5py>=2.9.0',
         'matplotlib>=2.2.4',
