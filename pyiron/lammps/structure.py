@@ -486,7 +486,7 @@ class LammpsStructure(GenericParameters):
 
         masses = "Masses" + "\n\n"
         for ic, el_p in enumerate(sorted_species_list):
-            mass = self.structure.pse[el_p].AtomicMass
+            mass = self.structure._pse[el_p].AtomicMass
             masses += "{0:3d} {1:f}  # ({2}) \n".format(ic + 1, mass, el_p)
 
         atoms = "Atoms \n\n"
