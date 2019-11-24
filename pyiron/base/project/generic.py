@@ -14,7 +14,7 @@ import pkgutil
 try:
     from git import Repo, InvalidGitRepositoryError
 except ImportError:
-    pass 
+    pass
 
 from pyiron.base.project.path import ProjectPath
 from pyiron.base.database.filetable import FileTable
