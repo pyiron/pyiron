@@ -10,7 +10,12 @@ import pandas
 import importlib
 import numpy as np
 import pkgutil
-from git import Repo, InvalidGitRepositoryError
+
+try:
+    from git import Repo, InvalidGitRepositoryError
+except ImportError:
+    pass 
+
 from pyiron.base.project.path import ProjectPath
 from pyiron.base.database.filetable import FileTable
 from pyiron.base.settings.generic import Settings
