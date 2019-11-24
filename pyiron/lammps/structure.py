@@ -466,27 +466,20 @@ class LammpsStructure(GenericParameters):
         else:
             num_angle_types = int(np.max(angle_type_lst))
 
-        atomtypes = (
-            " Start File for LAMMPS \n"
-            + "{0:d} atoms".format(len(self._structure))
-            + " \n"
-            + "{0:d} bonds".format(len(bonds_lst))
-            + " \n"
-            + "{0:d} angles".format(len(angles_lst))
-            + " \n"
-            + "{0} atom types".format(len(sorted_species_list))
-            + " \n"
-            + "{0} bond types".format(num_bond_types)
-            + " \n"
-            + "{0} angle types".format(num_angle_types)
-            + " \n"
-        )
-
+        atomtypes = list()
+        atomtypes.append(" Start File for LAMMPS ")
+        atomtypes.append("{0:d} atoms".format(len(self._structure)))
+        if len(bonds_lst) > 0:
+            atomtypes.append("{0:d} bonds".format(len(bonds_lst)))
+            atomtypes.append("{0} bond types".format(num_bond_types))
+        if len(angles_lst) > 0:
+            atomtypes.append("{0:d} angles".format(len(angles_lst)))
+            atomtypes.append("{0} angle types".format(num_angle_types))
+        atomtypes = (" \n".join(atomtypes))
         cell_dimensions = self.simulation_cell()
-
         masses = "Masses" + "\n\n"
         for ic, el_p in enumerate(sorted_species_list):
-            mass = self.structure._pse[el_p].AtomicMass
+            mass = self._structure._pse[el_p].AtomicMass
             masses += "{0:3d} {1:f}  # ({2}) \n".format(ic + 1, mass, el_p)
 
         atoms = "Atoms \n\n"
