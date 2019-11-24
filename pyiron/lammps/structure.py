@@ -475,8 +475,10 @@ class LammpsStructure(GenericParameters):
         if len(angles_lst) > 0:
             atomtypes.append("{0:d} angles".format(len(angles_lst)))
             atomtypes.append("{0} angle types".format(num_angle_types))
-        atomtypes = (" \n".join(atomtypes))
+        atomtypes = (" \n".join(atomtypes) + " \n")
+
         cell_dimensions = self.simulation_cell()
+
         masses = "Masses" + "\n\n"
         for ic, el_p in enumerate(sorted_species_list):
             mass = self._structure._pse[el_p].AtomicMass
