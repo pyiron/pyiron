@@ -458,11 +458,11 @@ class LammpsStructure(GenericParameters):
         molecule_lst = m_lst[m_lst[:, 0].argsort()]
 
         if len(bond_type_lst) == 0:
-            num_bond_types = 0
+            num_bond_types = 1
         else:
             num_bond_types = int(np.max(bond_type_lst))
         if len(angle_type_lst) == 0:
-            num_angle_types = 0
+            num_angle_types = 1
         else:
             num_angle_types = int(np.max(angle_type_lst))
 
