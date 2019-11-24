@@ -1198,7 +1198,7 @@ class GenericJob(JobCore):
             job_name = "{}_restart".format(self.job_name)
         if job_type is None:
             job_type = self.__name__
-        if job_type == self.__name__:
+        if job_type == self.__name__ or job_name not in self.project.job_table().job.tolist():
             new_ham = self.copy_to(
                 new_job_name=job_name, new_database_entry=False, input_only=True
             )
