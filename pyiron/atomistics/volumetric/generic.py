@@ -71,16 +71,15 @@ class VolumetricData(object):
         self._total_data = val
 
     @staticmethod
-    def gauss_f(d, FWHM=1):
+    def gauss_f(d, FWHM=0.529177):
         """
         Args:
             d: distance between target point and reference point
-            FWHM: Full width half maximum in bohr
+            FWHM: Full width half maximum in angstrom
         Returns:
             Gaussian reduction constant
         """
-        bohr_to_ang = 0.529177
-        sigma = FWHM * bohr_to_ang / (2 * np.sqrt(2 * np.log(2)))
+        sigma = FWHM / (2 * np.sqrt(2 * np.log(2)))
         d2 = d * d
         return np.exp(-1 / (2 * sigma ** 2) * d2)
 
@@ -102,13 +101,13 @@ class VolumetricData(object):
         Dist = np.linalg.norm(DN)
         return Dist
 
-    def spherical_average_potential(self, structure, spherical_center, rad=2, FWHM=1):
+    def spherical_average_potential(self, structure, spherical_center, rad=2, FWHM=0.529177):
         """
         Args:
             structure: crystal structure
             spherical_center: position of spherical_center in direct coordinate
             rad: radius of sphere to be considered in Angstrom (recommended value: 2)
-            FWHM: Full width half maximum of gaussian function in Bohr (recommended value: 1)
+            FWHM: Full width half maximum of gaussian function in Angstrom (recommended value: 0.529177)
         Returns:
             Spherical average at the target center
         """
@@ -175,13 +174,13 @@ class VolumetricData(object):
         Dist = np.linalg.norm(DN)
         return Dist
 
-    def cylindrical_average_potential(self, structure, spherical_center, axis_of_cyl, rad=2, FWHM=1):
+    def cylindrical_average_potential(self, structure, spherical_center, axis_of_cyl, rad=2, FWHM=0.529177):
         """
         Args:
             structure: crystal structure
             spherical_center: position of spherical_center in direct coordinate
             rad: radius of sphere to be considered in Angstrom (recommended value: 2)
-            FWHM: Full width half maximum of gaussian function in Bohr (recommended value: 1)
+            FWHM: Full width half maximum of gaussian function in Angstrom (recommended value: 0.529177)
             axis_of_cyl: Axis of cylinder (0 (x) or 1 (y) or 2 (z))
         Returns:
             Cylindrical average at the target center
