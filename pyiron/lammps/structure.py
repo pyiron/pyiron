@@ -482,17 +482,6 @@ class LammpsStructure(GenericParameters):
             + " \n"
         )
 
-        # atomtypes = list()
-        # atomtypes.append(" Start File for LAMMPS ")
-        # atomtypes.append("{0:d} atoms".format(len(self._structure)))
-        # if len(bonds_lst) > 0:
-        #     atomtypes.append("{0:d} bonds".format(len(bonds_lst)))
-        #     atomtypes.append("{0} bond types".format(num_bond_types))
-        # if len(angles_lst) > 0:
-        #     atomtypes.append("{0:d} angles".format(len(angles_lst)))
-        #     atomtypes.append("{0} angle types".format(num_angle_types))
-        # atomtypes = (" \n".join(atomtypes) + " \n")
-
         cell_dimensions = self.simulation_cell()
 
         masses = "Masses" + "\n\n"
