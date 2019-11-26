@@ -844,7 +844,7 @@ class LammpsBase(AtomisticGenericJob):
         with open(file_name, "r") as ff:
             dump = ff.readlines()
         prism = UnfoldingPrism(self.structure.cell, digits=15)
-        rotation_lammps2orig = np.linalg.inv(prism.R)
+        rotation_lammps2orig = prism.R.T
         time = np.genfromtxt(
             [
                 dump[nn]
