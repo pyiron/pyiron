@@ -83,9 +83,6 @@ class UnfoldingPrism(Prism):
         apre = np.array(((xhi, 0, 0), (xyp, yhi, 0), (xzp, yzp, zhi)))
         self.R = np.dot(np.linalg.inv(cell), apre)
 
-        # Actual lammps cell may be different from what is used to create R
-        eps = 1e-10
-
         def fold(vec, pvec, i):
             p = pvec[i]
             x = vec[i] + 0.5 * p
@@ -110,7 +107,7 @@ class UnfoldingPrism(Prism):
         self.ns = [n1, n2, n3]
 
         d_a = apre[0, 0] / 2 - apre[1, 0]
-        if np.abs(d_a) < eps:
+        if np.abs(d_a) < self.acc:
             if d_a < 0:
                 print("debug: apply shift")
                 apre[1, 0] += 2 * d_a
