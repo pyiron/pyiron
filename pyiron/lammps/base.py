@@ -879,7 +879,7 @@ class LammpsBase(AtomisticGenericJob):
                 )
             ).split()
         ).reshape(len(natoms), -1)
-        cells = np.array([to_amat(cc) for cc in cells])
+        cells = np.array([prism.unfold_cell(to_amat(cc)) for cc in cells])
         output["cells"] = cells
         l_start = np.where([ll.startswith("ITEM: ATOMS") for ll in dump])[0]
         l_end = l_start + natoms + 1
