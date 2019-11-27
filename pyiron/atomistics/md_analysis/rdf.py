@@ -103,14 +103,14 @@ class RDF(object):
             Plot the RDF and coordination number (integral of CDF)
         """
         f, ax = pt.subplots(2, 1, sharex=True)
-        ax[0].plot(self.d, self.rdf, 'k-', drawstyle='steps-mid')
+        ax[0].plot(self.d/angstrom, self.rdf, 'k-', drawstyle='steps-mid')
         ax[0].set_ylabel('RDF')
         ax[0].set_ylim([0,5])
-        ax[1].plot(self.d,self.coord_number)
+        ax[1].plot(self.d/angstrom,self.coord_number)
         ax[1].set_xlabel(u'Distance [Å]')
         ax[1].set_ylabel('CN')
         ax[1].set_ylim([0,10])
-        pt.xlim(self.bins[0], self.bins[-1])
+        pt.xlim(self.bins[0]/angstrom, self.bins[-1]/angstrom)
         pt.show()
 
 
@@ -155,8 +155,8 @@ class RDF_calculator(object):
         self.nsample = 0
         self.frames = len(self.job['output/generic/energy_tot'])
 
-        self.pos = self.job['output/generic/positions']
-        self.cells = self.job['output/generic/cells']
+        self.pos = self.job['output/generic/positions'] * angstrom # internal units are angstrom
+        self.cells = self.job['output/generic/cells'] * angstrom # internal units are angstrom
 
         # Determine the number of atoms
         structure = job.get_structure(-1)
