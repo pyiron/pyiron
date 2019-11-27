@@ -471,9 +471,6 @@ class GenericParameters(PyironObject):
             new_array.append(val)
             new_comments.append("")
             new_params.append("")
-            new_array = np.array(new_array).tolist()
-            new_comments = np.array(new_comments).tolist()
-            new_params = np.array(new_params).tolist()
             new_dict = OrderedDict()
             new_dict["Value"] = new_array
             new_dict["Comment"] = new_comments
@@ -1004,11 +1001,11 @@ class GenericParameters(PyironObject):
         elif len(i_line_lst) == 1:
             return i_line_lst[0], multi_word_lst[0]
         else:
+            error_msg = list()
+            error_msg.append("Multiple occurrences of key_name: " + key_name + ". They are as follows")
             for i in i_line_lst:
-                print(
-                    "dataset: ",
-                    i,
-                    self._dataset["Parameter"][i],
-                    self._dataset["Value"][i],
-                )
-            raise ValueError("Multiple occurrences of key_name " + key_name, i_line_lst)
+                error_msg.append("dataset: {}, {}, {}".format(i,
+                                                              self._dataset["Parameter"][i],
+                                                              self._dataset["Value"][i]))
+            error_msg = "\n".join(error_msg)
+            raise ValueError(error_msg)

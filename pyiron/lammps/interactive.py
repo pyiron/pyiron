@@ -138,26 +138,6 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                     % (lx, ly, lz)
                 )
 
-    def interactive_indices_setter(self, indices):
-        el_struct_lst = self._structure_current.get_species_symbols()
-        el_obj_lst = self._structure_current.get_species_objects()
-        el_eam_lst = self.input.potential.get_element_lst()
-        el_dict = {}
-        for id_eam, el_eam in enumerate(el_eam_lst):
-            if el_eam in el_struct_lst:
-                id_el = list(el_struct_lst).index(el_eam)
-                el = el_obj_lst[id_el]
-                el_dict[el] = id_eam + 1
-        elem_all = np.array(
-            [el_dict[self._structure_current.species[el]] for el in indices]
-        )
-        if self.server.run_mode.interactive and self.server.cores == 1:
-            self._interactive_library.scatter_atoms(
-                "type", 0, 1, (len(elem_all) * c_int)(*elem_all)
-            )
-        else:
-            self._interactive_library.scatter_atoms("type", 0, 1, elem_all)
-
     def interactive_volume_getter(self):
         return self._interactive_library.get_thermo("vol")
 
@@ -322,7 +302,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             self.interactive_structure_setter(self.structure)
 
     def run_if_interactive(self):
-        if self._generic_input["calc_mode"] == "md":
+        if self._generic_input["calc_mode"] in ["md", "vcsgc"]:
             self.input.control["run"] = self._generic_input["n_print"]
             super(LammpsInteractive, self).run_if_interactive()
             self._reset_interactive_run_command()
@@ -539,7 +519,29 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_lib_command(self.potential.Config[0][1])
 
     def interactive_indices_getter(self):
-        return super(LammpsInteractive, self).interactive_indices_getter().tolist()
+        lammps_indices = np.array(self._interactive_library.gather_atoms("type", 0, 1))
+        indices = self.remap_indices(lammps_indices)
+        return indices.tolist()
+
+    def interactive_indices_setter(self, indices):
+        el_struct_lst = self._structure_current.get_species_symbols()
+        el_obj_lst = self._structure_current.get_species_objects()
+        el_eam_lst = self.input.potential.get_element_lst()
+        el_dict = {}
+        for id_eam, el_eam in enumerate(el_eam_lst):
+            if el_eam in el_struct_lst:
+                id_el = list(el_struct_lst).index(el_eam)
+                el = el_obj_lst[id_el]
+                el_dict[el] = id_eam + 1
+        elem_all = np.array(
+            [el_dict[self._structure_current.species[el]] for el in indices]
+        )
+        if self.server.run_mode.interactive and self.server.cores == 1:
+            self._interactive_library.scatter_atoms(
+                "type", 0, 1, (len(elem_all) * c_int)(*elem_all)
+            )
+        else:
+            self._interactive_library.scatter_atoms("type", 0, 1, elem_all)
 
     def interactive_energy_pot_getter(self):
         return self._interactive_library.get_thermo("pe")

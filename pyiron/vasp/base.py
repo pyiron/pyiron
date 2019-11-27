@@ -999,6 +999,8 @@ class VaspBase(GenericDFTJob):
         self.input.incar["NSW"] = n_ionic_steps
         self.input.incar["NBLOCK"] = int(n_print)
         self.input.incar["POTIM"] = time_step
+        if "ISYM" not in self.input.incar.keys():
+            self.input.incar["ISYM"] = 0
         if retain_charge_density:
             self.write_charge_density = retain_charge_density
         if retain_electrostatic_potential:
@@ -1481,7 +1483,7 @@ class VaspBase(GenericDFTJob):
             files_to_compress = [
                 f
                 for f in list(self.list_files())
-                if f not in ["CHGCAR", "CONTCAR", "WAVECAR"]
+                if f not in ["CHGCAR", "CONTCAR", "WAVECAR", "STOPCAR"]
             ]
         # delete empty files
         for f in list(self.list_files()):

@@ -34,6 +34,10 @@ class TestLammps(unittest.TestCase):
             project=ProjectHDFio(project=cls.project, file_name="lammps_dump_static"),
             job_name="lammps_dump_static",
         )
+        cls.job_vcsgc_input = Lammps(
+            project=ProjectHDFio(project=cls.project, file_name="lammps_vcsgc_input"),
+            job_name="lammps_vcsgc_input",
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -365,6 +369,7 @@ class TestLammps(unittest.TestCase):
             positions=2.78 * np.outer(np.arange(2), np.ones(3)) * 0.5,
         )
         self.job_dump.structure = structure
+        self.job_dump.potential = self.job_dump.list_potentials()[0]
         file_directory = os.path.join(
             self.execution_path, "..", "static", "lammps_test_files"
         )
@@ -378,6 +383,107 @@ class TestLammps(unittest.TestCase):
         self.assertTrue(
             np.array_equal(self.job_dump["output/generic/cells"].shape, (1, 3, 3))
         )
+        self.assertTrue(
+            np.array_equal(self.job_dump["output/generic/indices"].shape, (1, 2))
+        )
+
+    def test_vcsgc_input(self):
+        unit_cell = Atoms(
+            elements=['Al', 'Al', 'Al', 'Mg'],
+            positions=[
+                [0., 0., 0.],
+                [0., 2., 2.],
+                [2., 0., 2.],
+                [2., 2., 0.]
+            ],
+            cell=4 * np.eye(3)
+        )
+        self.job_vcsgc_input.structure = unit_cell
+        self.job_vcsgc_input.potential = self.job_vcsgc_input.list_potentials()[0]
+        symbols = self.job_vcsgc_input.input.potential.get_element_lst()
+
+        bad_element = {s: 0. for s in symbols}
+        bad_element.update({'X': 1.})  # Non-existant chemical symbol
+        self.assertRaises(
+            ValueError, self.job_vcsgc_input.calc_vcsgc, mu=bad_element
+        )
+
+        self.assertRaises(
+            ValueError, self.job_vcsgc_input.calc_vcsgc, target_concentration=bad_element
+        )
+
+        bad_conc = {s: 0. for s in symbols}
+        bad_conc['Al'] = 0.99
+        self.assertRaises(
+            ValueError, self.job_vcsgc_input.calc_vcsgc, target_concentration=bad_conc
+        )
+
+        self.assertRaises(
+            ValueError, self.job_vcsgc_input.calc_vcsgc, window_moves=-1
+        )
+        self.assertRaises(
+            ValueError, self.job_vcsgc_input.calc_vcsgc, window_moves=1.1
+        )
+
+        self.assertRaises(
+            ValueError, self.job_vcsgc_input.calc_vcsgc, window_size=0.3
+        )
+
+        mu = {s: 0. for s in symbols}
+        mu[symbols[0]] = 1.
+        args = dict(
+            mu=mu,
+            target_concentration=None,
+            kappa=1000.0,
+            mc_step_interval=100,
+            swap_fraction=0.1,
+            temperature_mc=None,
+            window_size=None,
+            window_moves=None,
+            seed=1,
+            temperature=300,
+        )
+        input_string = 'all sgcmc {0} {1} {2} {3} randseed {4}'.format(
+            args['mc_step_interval'],
+            args['swap_fraction'],
+            args['temperature'],
+            ' '.join([str(args['mu'][symbol] - args['mu'][symbols[0]]) for symbol in symbols[1:]]),
+            args['seed']
+        )
+        self.job_vcsgc_input.calc_vcsgc(**args)
+        self.assertEqual(self.job_vcsgc_input.input.control['fix___vcsgc'], input_string)
+
+        args['temperature_mc'] = 100.,
+        input_string = 'all sgcmc {0} {1} {2} {3} randseed {4}'.format(
+            args['mc_step_interval'],
+            args['swap_fraction'],
+            args['temperature_mc'],
+            ' '.join([str(args['mu'][symbol] - args['mu'][symbols[0]]) for symbol in symbols[1:]]),
+            args['seed']
+        )
+        self.job_vcsgc_input.calc_vcsgc(**args)
+        self.assertEqual(self.job_vcsgc_input.input.control['fix___vcsgc'], input_string)
+
+        conc = {s: 0. for s in symbols}
+        conc[symbols[0]] = 0.5
+        conc[symbols[-1]] = 0.5
+        args['target_concentration'] = conc
+        input_string += ' variance {0} {1}'.format(
+            args['kappa'],
+            ' '.join([str(conc[symbol]) for symbol in symbols[1:]])
+        )
+        self.job_vcsgc_input.calc_vcsgc(**args)
+        self.assertEqual(self.job_vcsgc_input.input.control['fix___vcsgc'], input_string)
+
+        args['window_moves'] = 10
+        input_string += ' window_moves {0}'.format(args['window_moves'])
+        self.job_vcsgc_input.calc_vcsgc(**args)
+        self.assertEqual(self.job_vcsgc_input.input.control['fix___vcsgc'], input_string)
+
+        args['window_size'] = 0.75
+        input_string += ' window_size {0}'.format(args['window_size'])
+        self.job_vcsgc_input.calc_vcsgc(**args)
+        self.assertEqual(self.job_vcsgc_input.input.control['fix___vcsgc'], input_string)
 
 
 if __name__ == "__main__":

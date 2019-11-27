@@ -473,6 +473,10 @@ class AtomisticGenericJob(GenericJobCore):
 
         """
         cells = self.output.cells
+        if len(self.output.indices) != 0:
+            indices = self.output.indices
+        else:
+            indices = [self.structure.indices] * len(cells)  # Use the same indices throughout
         if overwrite_positions is not None:
             positions = np.array(overwrite_positions).copy()
             if overwrite_cells is not None:
@@ -500,19 +504,37 @@ class AtomisticGenericJob(GenericJobCore):
         if snapshot_indices is not None:
             positions = positions[snapshot_indices]
             cells = cells[snapshot_indices]
+            indices = indices[snapshot_indices]
         if atom_indices is None:
             return Trajectory(
                 positions[::stride],
                 self.structure.get_parent_basis(),
                 center_of_mass=center_of_mass,
                 cells=cells[::stride],
+                indices=indices[::stride]
             )
         else:
+            sub_struct = self.structure.get_parent_basis()[atom_indices]
+            if len(sub_struct.species) < len(self.structure.species):
+                # Then `sub_struct` has had its indices remapped so they run from 0 to the number of species - 1
+                # But the `indices` array is unaware of this and needs to be remapped to this new space
+                original_symbols = np.array([el.Abbreviation for el in self.structure.species])
+                sub_symbols = np.array([el.Abbreviation for el in sub_struct.species])
+
+                map_ = np.array([np.argwhere(original_symbols == symbol)[0, 0] for symbol in sub_symbols], dtype=int)
+
+                remapped_indices = np.array(indices)
+                for i_sub, i_original in enumerate(map_):
+                    np.place(remapped_indices, indices == i_original, i_sub)
+            else:
+                remapped_indices = indices
+
             return Trajectory(
                 positions[::stride, atom_indices, :],
-                self.structure.get_parent_basis()[atom_indices],
+                sub_struct,
                 center_of_mass=center_of_mass,
                 cells=cells[::stride],
+                indices=remapped_indices[::stride, atom_indices]
             )
 
     def write_traj(
@@ -743,7 +765,7 @@ class Trajectory(object):
                                 varies
     """
 
-    def __init__(self, positions, structure, center_of_mass=False, cells=None):
+    def __init__(self, positions, structure, center_of_mass=False, cells=None, indices=None):
         if center_of_mass:
             pos = np.copy(positions)
             pos[:, :, 0] = (pos[:, :, 0].T - np.mean(pos[:, :, 0], axis=1)).T
@@ -754,11 +776,14 @@ class Trajectory(object):
             self._positions = positions
         self._structure = structure
         self._cells = cells
+        self._indices = indices
 
     def __getitem__(self, item):
         new_structure = self._structure.copy()
         if self._cells is not None:
             new_structure.cell = self._cells[item]
+        if self._indices is not None:
+            new_structure.indices = self._indices[item]
         new_structure.positions = self._positions[item]
         # This step is necessary for using ase.io.write for trajectories
         new_structure.arrays["positions"] = new_structure.positions

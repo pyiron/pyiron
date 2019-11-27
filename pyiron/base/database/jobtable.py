@@ -154,6 +154,7 @@ def job_table(
     all_columns=False,
     sort_by="id",
     max_colwidth=200,
+    full_table=False,
     element_lst=None,
     job_name_contains='',
 ):
@@ -173,6 +174,7 @@ def job_table(
         all_columns (bool): Select all columns - this overwrites the columns option.
         sort_by (str): Sort by a specific column
         max_colwidth (int): set the column width
+        full_table (bool): Whether to show the entire pandas table
         element_lst (list): list of elements required in the chemical formular - by default None
         job_name_contains (str): a string which should be contained in every job_name
 
@@ -209,6 +211,12 @@ def job_table(
         recursive=recursive,
         element_lst=element_lst,
     )
+    if full_table:
+        pandas.set_option('display.max_rows', None)
+        pandas.set_option('display.max_columns', None)
+    else:
+        pandas.reset_option('display.max_rows')
+        pandas.reset_option('display.max_columns')
     pandas.set_option("display.max_colwidth", max_colwidth)
     df = pandas.DataFrame(job_dict)
     if len(job_dict) == 0:
