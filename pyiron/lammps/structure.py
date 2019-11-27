@@ -81,6 +81,7 @@ class UnfoldingPrism(Prism):
 
         # For rotating positions from ase to lammps
         apre = np.array(((xhi, 0, 0), (xyp, yhi, 0), (xzp, yzp, zhi)))
+        # np.linalg.inv(cell) ?= np.array([np.cross(b, c), np.cross(c, a), np.cross(a, b)]).T / np.linalg.det(cell)
         self.R = np.dot(np.linalg.inv(cell), apre)
 
         def fold(vec, pvec, i):
@@ -111,8 +112,8 @@ class UnfoldingPrism(Prism):
                 print("debug: apply shift")
                 apre[1, 0] += 2 * d_a
                 apre[2, 0] += 2 * d_a
+
         self.A = apre
-        self.Ainv = np.linalg.inv(self.A)
 
         if self.is_skewed() and (not (pbc[0] and pbc[1] and pbc[2])):
             raise RuntimeError(
@@ -123,15 +124,29 @@ class UnfoldingPrism(Prism):
         """
         Unfold LAMMPS cell to original
 
+        Let C be the pyiron cell and A be the Lammps cell, then define (in init) the rotation matrix between them as
+            R := C^inv.A
+        And recall that rotation matrices have the property
+            R^T == R^inv
+        Then left multiply the definition of R by C, and right multiply by R.T to get
+            C.R.R^T = C.C^inv.A.R^T
+        Then
+            C = A.R^T
+
+        After that, account for the folding process.
+
         Args:
             cell: LAMMPS cell,
 
         Returns:
             unfolded cell
         """
-        a = cell[0]
-        bp = cell[1]
-        cpp = cell[2]
+        # Rotation
+        ucell = np.dot(cell, self.R.T)
+        # Folding
+        a = ucell[0]
+        bp = ucell[1]
+        cpp = ucell[2]
         (n1, n2, n3) = self.ns
         b = bp - n1 * a
         c = cpp - n2 * bp - n3 * a

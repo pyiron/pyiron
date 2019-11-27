@@ -72,13 +72,13 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             (len(self.structure), 3),
         )
         if np.matrix.trace(self._interactive_prism.R) != 3:
-            positions = np.dot(positions, self._interactive_prism.R.T)
+            positions = np.matmul(positions, self._interactive_prism.R.T)
         return positions.tolist()
 
     def interactive_positions_setter(self, positions):
         if np.matrix.trace(self._interactive_prism.R) != 3:
             positions = np.array(positions).reshape(-1, 3)
-            positions = np.dot(positions, self._interactive_prism.R)
+            positions = np.matmul(positions, self._interactive_prism.R)
         positions = np.array(positions).flatten()
         if self.server.run_mode.interactive and self.server.cores == 1:
             self._interactive_library.scatter_atoms(
