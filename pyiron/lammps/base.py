@@ -873,7 +873,7 @@ class LammpsBase(AtomisticGenericJob):
             " ".join(
                 (
                     [
-                        " ".join(dump[nn : nn + 3])
+                        " ".join(dump[nn:nn + 3])
                         for nn in np.where(
                             [ll.startswith("ITEM: BOX BOUNDS") for ll in dump]
                         )[0]
