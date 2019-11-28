@@ -101,8 +101,35 @@ class LammpsControl(GenericParameters):
         self.load_string(file_content)
 
     def calc_minimize(
-        self, e_tol=0.0, f_tol=1e-8, max_iter=100000, pressure=None, n_print=100
+        self,
+        e_tol=0.0,
+        f_tol=1e-4,
+        max_iter=100000,
+        pressure=None,
+        n_print=100
     ):
+        """
+        Sets parameters required for minimization.
+
+        Args:
+            e_tol (float): If the magnitude of difference between energies of two consecutive steps is lower than or
+                equal to `e_tol`, the minimisation terminates. (Default is 0.0 eV.)
+            f_tol (float): If the magnitude of the global force vector at a step is lower than or equal to `f_tol`, the
+                minimisation terminates. (Default is 1e-4 eV/angstrom.)
+            max_iter (int): Maximum number of minimisation steps to carry out. If the minimisation converges before
+                `max_iter` steps, terminate at the converged step. If the minimisation does not converge up to
+                `max_iter` steps, terminate at the `max_iter` step. (Default is 100000.)
+            pressure (float/list/tuple/numpy.ndarray): Pressure in GPa at which minimisation is to be carried out. If
+                None, isochoric (constant volume) condition will be used. If a float, isotropic cell shape changes are
+                allowed. If array-like, (up to) the first six elements will be interpreted as the x, y, z, xy, xz, and
+                yz components of the pressure tensor, respectively. If this component-wise mode is used, cell changes
+                corresponding to any one element of the stress tensor can be selectively disabled by setting this
+                element to None. (Default is None, run isochorically.)
+            n_print (int): Write (dump or print) to the output file every n steps (Default: 100)
+        """
+        # This docstring is a source for the calc_minimize method in pyiron.lammps.base.LammpsBase.calc_minimize and
+        # pyiron.lammps.interactive.LammpsInteractive.calc_minimize -- Please ensure that changes to signature or
+        # defaults stay consistent!
         max_evaluations = 10 * max_iter
         GPA_TO_BAR = 1.0e4
         if pressure is not None:

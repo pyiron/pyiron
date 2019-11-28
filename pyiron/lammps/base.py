@@ -555,20 +555,14 @@ class LammpsBase(AtomisticGenericJob):
                 hdf_output[k] = np.array(v)
 
     def calc_minimize(
-        self, e_tol=0.0, f_tol=1e-2, max_iter=100000, pressure=None, n_print=100
+            self,
+            e_tol=0.0,
+            f_tol=1e-4,
+            max_iter=100000,
+            pressure=None,
+            n_print=100
     ):
-        """
-
-        Args:
-            e_tol:
-            f_tol:
-            max_iter:
-            pressure:
-            n_print:
-
-        Returns:
-
-        """
+        # Docstring set programmatically -- Ensure that changes to signature or defaults stay consistent!
         super(LammpsBase, self).calc_minimize(
             e_tol=e_tol,
             f_tol=f_tol,
@@ -583,6 +577,7 @@ class LammpsBase(AtomisticGenericJob):
             pressure=pressure,
             n_print=n_print,
         )
+    calc_minimize.__doc__ = LammpsControl.calc_minimize.__doc__
 
     def calc_static(self):
         """

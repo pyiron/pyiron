@@ -14,6 +14,7 @@ from scipy import constants
 
 from pyiron.lammps.base import LammpsBase
 from pyiron.lammps.structure import UnfoldingPrism
+from pyiron.lammps.control import LammpsControl
 from pyiron.atomistics.job.interactive import GenericInteractive
 
 __author__ = "Osamu Waseda, Jan Janssen"
@@ -231,23 +232,14 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self.interactive_structure_setter(self.structure)
 
     def calc_minimize(
-        self, e_tol=0.0, f_tol=1e-4, max_iter=1000, pressure=None, n_print=100
+            self,
+            e_tol=0.0,
+            f_tol=1e-4,
+            max_iter=100000,
+            pressure=None,
+            n_print=100
     ):
-        """
-        Sets parameters required for minimisation
-
-        Args:
-            e_tol (float): If the magnitude of difference between energies of two consecutive steps is lower
-                than or equal to e_tol, the minimisation terminates and is considered converged. (Default: 0.0)
-            f_tol (float): If the magnitude of the global force vector at a step is lower than or equal to
-                f_tol, the minimisation terminates and is considered converged. (Default: 1e-4)
-            max_iter (int): Maximum number of minimisation steps to carry out. If the minimisation converges
-                before 'max_iter' steps, terminate at the converged step. If the minimisation does
-                not converge up to 'max_iter' steps, terminate at the 'max_iter' step. Default: 1000)
-            pressure (float): Pressure at which minimisation is to be carried out. If 'None', isochoric
-                (constant volume) condition will be used. (Default: None)
-            n_print (int): Write (dump or print) to the output file every n steps (Default: 100)
-        """
+        # Docstring set programmatically -- Please ensure that changes to signature or defaults stay consistent!
         if self.server.run_mode.interactive_non_modal:
             warnings.warn(
                 "calc_minimize() is not implemented for the non modal interactive mode use calc_static()!"
@@ -264,6 +256,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             or self.server.run_mode.interactive_non_modal
         ):
             self.interactive_structure_setter(self.structure)
+    calc_minimize.__doc__ = LammpsControl.calc_minimize.__doc__
 
     def calc_md(
         self,
