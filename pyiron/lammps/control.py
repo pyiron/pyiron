@@ -120,11 +120,12 @@ class LammpsControl(GenericParameters):
                 `max_iter` steps, terminate at the converged step. If the minimisation does not converge up to
                 `max_iter` steps, terminate at the `max_iter` step. (Default is 100000.)
             pressure (float/list/tuple/numpy.ndarray): Pressure in GPa at which minimisation is to be carried out. If
-                None, isochoric (constant volume) condition will be used. If a float, isotropic cell shape changes are
-                allowed. If array-like, (up to) the first six elements will be interpreted as the x, y, z, xy, xz, and
-                yz components of the pressure tensor, respectively. If this component-wise mode is used, cell changes
-                corresponding to any one element of the stress tensor can be selectively disabled by setting this
-                element to None. (Default is None, run isochorically.)
+                None, isochoric (constant volume) condition will be used. If a float, cell shape changes are allowed.
+                in each of the three primary axes, but no shearing occurs. If array-like, (up to) the first six
+                elements will be interpreted as the x, y, z, xy, xz, and yz components of the pressure tensor,
+                respectively. If this component-wise mode is used, cell changes corresponding to any one element of the
+                stress tensor can be selectively disabled by setting this element to None. (Default is None, run
+                isochorically.)
             n_print (int): Write (dump or print) to the output file every n steps (Default: 100)
         """
         # This docstring is a source for the calc_minimize method in pyiron.lammps.base.LammpsBase.calc_minimize and
