@@ -67,7 +67,7 @@ class TestVasp(unittest.TestCase):
         self.assertEqual(self.job.potential, self.job._potential)
 
     def test_plane_wave_cutoff(self):
-        self.assertIsInstance(self.job.plane_wave_cutoff, (float, int, type(None))
+        self.assertIsInstance(self.job.plane_wave_cutoff, (float, int, type(None)))
         # self.assertIsInstance(self.job.plane_wave_cutoff, (float, int))
         self.job.plane_wave_cutoff = 350
         self.assertEqual(self.job.input.incar["ENCUT"], 350)
