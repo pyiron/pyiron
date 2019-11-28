@@ -104,15 +104,16 @@ class LammpsControl(GenericParameters):
         self, e_tol=0.0, f_tol=1e-8, max_iter=100000, pressure=None, n_print=100
     ):
         max_evaluations = 10 * max_iter
+        GPA_TO_BAR = 1.0e4
         if pressure is not None:
             if type(pressure) == float or type(pressure) == int:
                 pressure = pressure * np.ones(3)
             str_press = ""
-            for press, str_axis in zip(pressure, [" x ", " y ", " z "]):
+            for press, str_axis in zip(pressure, [" x ", " y ", " z ", " xy ", " xz ", " yz "][:len(pressure)]):
                 if press is not None:
-                    str_press += str_axis + str(press * 1.0e4)
+                    str_press += str_axis + str(press * GPA_TO_BAR)
             if len(str_press) == 0:
-                raise ValueError("Pressure values cannot be three times None")
+                raise ValueError("Pressure values cannot all be None")
             elif len(str_press) > 1:
                 str_press += " couple none"
             self.set(fix___ensemble=r"all box/relax" + str_press)
