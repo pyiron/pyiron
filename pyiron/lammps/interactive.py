@@ -32,7 +32,6 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
     def __init__(self, project, job_name):
         super(LammpsInteractive, self).__init__(project, job_name)
         self._check_opened = False
-        self._interactive_prism = None
         self._interactive_run_command = None
         self._interactive_grand_canonical = True
         self.interactive_cache = {
@@ -71,14 +70,14 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             np.array(self._interactive_library.gather_atoms("x", 1, 3)),
             (len(self.structure), 3),
         )
-        if np.matrix.trace(self._interactive_prism.R) != 3:
-            positions = np.matmul(positions, self._interactive_prism.R.T)
+        if np.matrix.trace(self._prism.R) != 3:
+            positions = np.matmul(positions, self._prism.R.T)
         return positions.tolist()
 
     def interactive_positions_setter(self, positions):
-        if np.matrix.trace(self._interactive_prism.R) != 3:
+        if np.matrix.trace(self._prism.R) != 3:
             positions = np.array(positions).reshape(-1, 3)
-            positions = np.matmul(positions, self._interactive_prism.R)
+            positions = np.matmul(positions, self._prism.R)
         positions = np.array(positions).flatten()
         if self.server.run_mode.interactive and self.server.cores == 1:
             self._interactive_library.scatter_atoms(
@@ -104,16 +103,16 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                 ],
             ]
         )
-        return self._interactive_prism.unfold_cell(cc)
+        return self._prism.unfold_cell(cc)
 
     def interactive_cells_setter(self, cell):
-        self._interactive_prism = UnfoldingPrism(cell)
-        lx, ly, lz, xy, xz, yz = self._interactive_prism.get_lammps_prism()
-        if np.matrix.trace(self._interactive_prism.R) != 3:
+        self._prism = UnfoldingPrism(cell)
+        lx, ly, lz, xy, xz, yz = self._prism.get_lammps_prism()
+        if np.matrix.trace(self._prism.R) != 3:
             warnings.warn(
                 "Warning: setting upper trangular matrix might slow down the calculation"
             )
-        if self._interactive_prism.is_skewed():
+        if self._prism.is_skewed():
             if self.structure._is_scaled:
                 self._interactive_lib_command(
                     "change_box all x final 0 %f y final 0 %f z final 0 %f \
@@ -146,8 +145,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             np.array(self._interactive_library.gather_atoms("f", 1, 3)),
             (len(self.structure), 3),
         )
-        if np.matrix.trace(self._interactive_prism.R) != 3:
-            ff = np.dot(ff, self._interactive_prism.R.T)
+        if np.matrix.trace(self._prism.R) != 3:
+            ff = np.matmul(ff, self._prism.R.T)
         return ff.tolist()
 
     def interactive_execute(self):
@@ -350,13 +349,13 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_lib_command("atom_style " + self.input.control["atom_style"])
 
         self._interactive_lib_command("atom_modify map array")
-        self._interactive_prism = UnfoldingPrism(structure.cell)
-        if np.matrix.trace(self._interactive_prism.R) != 3:
+        self._prism = UnfoldingPrism(structure.cell)
+        if np.matrix.trace(self._prism.R) != 3:
             warnings.warn(
                 "Warning: setting upper trangular matrix might slow down the calculation"
             )
-        xhi, yhi, zhi, xy, xz, yz = self._interactive_prism.get_lammps_prism()
-        if self._interactive_prism.is_skewed():
+        xhi, yhi, zhi, xy, xz, yz = self._prism.get_lammps_prism()
+        if self._prism.is_skewed():
             self._interactive_lib_command(
                 "region 1 prism"
                 + " 0.0 "
@@ -416,9 +415,9 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             "create_atoms 1 random " + str(len(structure)) + " 12345 1"
         )
         positions = structure.positions.flatten()
-        if np.matrix.trace(self._interactive_prism.R) != 3:
+        if np.matrix.trace(self._prism.R) != 3:
             positions = np.array(positions).reshape(-1, 3)
-            positions = np.dot(positions, self._interactive_prism.R)
+            positions = np.matmul(positions, self._prism.R)
         positions = positions.flatten()
         elem_all = np.array([el_dict[el] for el in structure.get_chemical_elements()])
         if self.server.run_mode.interactive and self.server.cores == 1:
@@ -574,9 +573,9 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         ss = self._interactive_library.extract_compute("st", 1, 2)
         ss = np.array([ss[i][j] for i in range(len(self.structure)) for j in range(6)]).reshape(-1, 6)[id_lst]
         ss = ss[:, ind].reshape(len(self.structure), 3, 3)/constants.eV*constants.bar*constants.angstrom**3
-        if np.matrix.trace(self._interactive_prism.R) != 3:
-            ss = np.einsum('ij,njk->nik', self._interactive_prism.R, ss)
-            ss = np.einsum('nij,kj->nik', ss, self._interactive_prism.R)
+        if np.matrix.trace(self._prism.R) != 3:
+            ss = np.einsum('ij,njk->nik', self._prism.R, ss)
+            ss = np.einsum('nij,kj->nik', ss, self._prism.R)
         return ss
 
     def interactive_pressures_getter(self):
@@ -599,9 +598,9 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                 ],
             ]
         )
-        if np.matrix.trace(self._interactive_prism.R) != 3:
+        if np.matrix.trace(self._prism.R) != 3:
             pp = np.dot(
-                np.dot(self._interactive_prism.R, pp), self._interactive_prism.R.T
+                np.dot(self._prism.R, pp), self._prism.R.T
             )
         return pp / 10000  # bar -> GPa
 

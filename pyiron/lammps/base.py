@@ -58,6 +58,7 @@ class LammpsBase(AtomisticGenericJob):
         self._cutoff_radius = None
         self._is_continuation = None
         self._compress_by_default = True
+        self._prism = None
         s.publication_add(self.publication)
 
     @property
@@ -294,6 +295,7 @@ class LammpsBase(AtomisticGenericJob):
         """
         if self.structure is None:
             raise ValueError("Input structure not set. Use method set_structure()")
+        self._prism = UnfoldingPrism(self.structure.cell)
         lmp_structure = self._get_lammps_structure(
             structure=self.structure, cutoff_radius=self.cutoff_radius
         )
@@ -846,8 +848,7 @@ class LammpsBase(AtomisticGenericJob):
         output = {}
         with open(file_name, "r") as ff:
             dump = ff.readlines()
-        prism = UnfoldingPrism(self.structure.cell, digits=15)
-        rotation_lammps2orig = prism.R.T
+
         time = np.genfromtxt(
             [
                 dump[nn]
@@ -858,6 +859,7 @@ class LammpsBase(AtomisticGenericJob):
         )
         time = np.array([time]).flatten()
         output["time"] = time
+
         natoms = np.genfromtxt(
             [
                 dump[nn]
@@ -869,6 +871,9 @@ class LammpsBase(AtomisticGenericJob):
             dtype=int,
         )
         natoms = np.array([natoms]).flatten()
+
+        prism = self._prism
+        rotation_lammps2orig = self._prism.R.T
         cells = np.genfromtxt(
             " ".join(
                 (
@@ -882,8 +887,11 @@ class LammpsBase(AtomisticGenericJob):
                 )
             ).split()
         ).reshape(len(natoms), -1)
-        cells = np.array([prism.unfold_cell(to_amat(cc)) for cc in cells])
-        output["cells"] = cells
+        lammps_cells = np.array([to_amat(cc) for cc in cells])
+        unfolded_cells = np.array([prism.unfold_cell(cell) for cell in lammps_cells])
+        output["cells"] = unfolded_cells
+
+
         l_start = np.where([ll.startswith("ITEM: ATOMS") for ll in dump])[0]
         l_end = l_start + natoms + 1
         content = [
@@ -893,22 +901,25 @@ class LammpsBase(AtomisticGenericJob):
             )
             for llst, llen in zip(l_start, l_end)
         ]
+
         indices = np.array([cc["type"] for cc in content], dtype=int)
         output["indices"] = self.remap_indices(indices)
+
         forces = np.array(
             [np.stack((cc["fx"], cc["fy"], cc["fz"]), axis=-1) for cc in content]
         )
-        output["forces"] = np.einsum("ijk,kl->ijl", forces, rotation_lammps2orig)
-        unwrapped_positions = np.array(
+        output["forces"] = np.matmul(forces, rotation_lammps2orig)
+
+        direct_unwrapped_positions = np.array(
             [np.stack((cc["xsu"], cc["ysu"], cc["zsu"]), axis=-1) for cc in content]
         )
-        positions = unwrapped_positions - np.floor(unwrapped_positions)
-        unwrapped_positions = np.einsum("ikj,ilk->ilj", cells, unwrapped_positions)
-        output["unwrapped_positions"] = np.einsum(
-            "ijk,kl->ijl", unwrapped_positions, rotation_lammps2orig
-        )
-        positions = np.einsum("ikj,ilk->ilj", cells, positions)
-        output["positions"] = np.einsum("ijk,kl->ijl", positions, rotation_lammps2orig)
+        unwrapped_positions = np.matmul(direct_unwrapped_positions, lammps_cells)
+        output["unwrapped_positions"] = np.matmul(unwrapped_positions, rotation_lammps2orig)
+
+        direct_positions = direct_unwrapped_positions - np.floor(direct_unwrapped_positions)
+        positions = np.matmul(direct_positions, lammps_cells)
+        output["positions"] = np.matmul(positions, rotation_lammps2orig)
+
         with self.project_hdf5.open("output/generic") as hdf_output:
             for k, v in output.items():
                 hdf_output[k] = v
@@ -975,10 +986,19 @@ class LammpsBase(AtomisticGenericJob):
         else:
             lmp_structure.cutoff_radius = self.cutoff_radius
         lmp_structure.el_eam_lst = self.input.potential.get_element_lst()
+
+        def structure_to_lammps(structure):
+            """Converts a structure to the Lammps coordinate frame"""
+            prism = UnfoldingPrism(structure.cell)
+            lammps_structure = structure.copy()
+            lammps_structure.cell = prism.A
+            lammps_structure.positions = np.matmul(structure.positions, prism.R)
+            return lammps_structure
+
         if structure is not None:
-            lmp_structure.structure = structure
+            lmp_structure.structure = structure_to_lammps(structure)
         else:
-            lmp_structure.structure = self.structure
+            lmp_structure.structure = structure_to_lammps(self.structure)
         if not set(lmp_structure.structure.get_species_symbols()).issubset(
             set(lmp_structure.el_eam_lst)
         ):
