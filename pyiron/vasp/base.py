@@ -2117,7 +2117,6 @@ class Incar(GenericParameters):
 SYSTEM =  ToDo  # jobname
 PREC = Accurate
 ALGO = Fast
-ENCUT = 250
 LREAL = False
 LWAVE = False
 LORBIT = 0
