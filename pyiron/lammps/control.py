@@ -331,21 +331,22 @@ class LammpsControl(GenericParameters):
             if not hasattr(pressure, "__len__"):
                 pressure = pressure * np.ones(3)
             else:
-                pressure = np.array(pressure)
+                pressure = np.array(pressure, dtype=float)
 
-            if sum(pressure != None) == 0:
+            not_none_mask = [p is not None for p in pressure]
+            if not np.any(not_none_mask):
                 raise ValueError("Pressure cannot be three times None")
 
-            if len(pressure) != 3:
-                raise ValueError("Pressure must be a float or a 3d vector")
+            if len(pressure) > 6:
+                raise ValueError("Pressure must be a float or a vector with length <= 6")
 
             if temperature is None or temperature == 0.0:
                 raise ValueError("Target temperature for fix nvt/npt/nph cannot be 0")
 
-            pressure[pressure != None] *= pressure_units
+            pressure[not_none_mask] *= pressure_units
 
             pressure_string = ""
-            for coord, value in zip(["x", "y", "z"], pressure):
+            for coord, value in zip(["x", "y", "z", "xy", "xz", "yz"][:len(pressure)], pressure):
                 if value is not None:
                     pressure_string += " {0} {1} {1} {2}".format(
                         coord, str(value), str(pressure_damping_timescale)

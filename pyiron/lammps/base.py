@@ -569,6 +569,7 @@ class LammpsBase(AtomisticGenericJob):
             pressure=pressure,
             n_print=n_print,
         )
+        self._ensure_requested_cell_deformation_allowed(pressure)
         self.input.control.calc_minimize(
             e_tol=e_tol,
             f_tol=f_tol,
@@ -650,6 +651,7 @@ class LammpsBase(AtomisticGenericJob):
             initial_temperature=initial_temperature,
             langevin=langevin,
         )
+        self._ensure_requested_cell_deformation_allowed(pressure)
         self.input.control.calc_md(
             temperature=temperature,
             pressure=pressure,
@@ -1108,6 +1110,25 @@ class LammpsBase(AtomisticGenericJob):
                         self.input.control[
                             "velocity___constraintz"
                         ] = "set NULL NULL 0.0"
+
+    def _ensure_requested_cell_deformation_allowed(self, pressure):
+        """
+        Lammps will not allow xy/xz/yz cell deformations in minimization or MD for non-triclinic cells. In case the
+        requested pressure for a calculation has these non-diagonal entries, we need to make sure it will run. One way
+        to do this is by invoking the lammps `change_box` command, but it is easier to just force our box to to be
+        triclinic by adding a very small cell perturbation (in the case where it isn't triclinic already).
+
+        Args:
+            pressure (float/int/list/numpy.ndarray/tuple): Between three and six pressures for the x, y, z, xy, xz, and
+                yz directions, in that order, or a single value.
+        """
+        if hasattr(pressure, '__len__'):
+            non_diagonal_pressures = np.any([p is not None for p in pressure[3:]])
+
+            if non_diagonal_pressures and not self._prism.is_skewed():
+                skew_structure = self.structure.copy()
+                skew_structure.cell[0, 1] += self._prism.acc
+                self.structure = skew_structure
 
 
 class Input:

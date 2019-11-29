@@ -76,7 +76,7 @@ class UnfoldingPrism(Prism):
             np.floor(np.log10(max((xhi, yhi, zhi)))) - digits
         )
         self.dir_prec = dec.Decimal("10.0") ** (-digits)
-        acc = float(self.car_prec)
+        self.acc = float(self.car_prec)
         self.eps = np.finfo(xhi).eps
 
         # For rotating positions from ase to lammps
@@ -107,7 +107,7 @@ class UnfoldingPrism(Prism):
         self.ns = [n1, n2, n3]
 
         d_a = apre[0, 0] / 2 - apre[1, 0]
-        if np.abs(d_a) < acc:
+        if np.abs(d_a) < self.acc:
             if d_a < 0:
                 print("debug: apply shift")
                 apre[1, 0] += 2 * d_a
