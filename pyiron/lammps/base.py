@@ -562,6 +562,7 @@ class LammpsBase(AtomisticGenericJob):
             n_print=100,
             style='cg'
     ):
+        self._ensure_requested_cell_deformation_allowed(pressure)
         # Docstring set programmatically -- Ensure that changes to signature or defaults stay consistent!
         super(LammpsBase, self).calc_minimize(
             e_tol=e_tol,
@@ -570,7 +571,6 @@ class LammpsBase(AtomisticGenericJob):
             pressure=pressure,
             n_print=n_print,
         )
-        self._ensure_requested_cell_deformation_allowed(pressure)
         self.input.control.calc_minimize(
             e_tol=e_tol,
             f_tol=f_tol,
@@ -640,6 +640,7 @@ class LammpsBase(AtomisticGenericJob):
             warnings.warn(
                 "calc_md() is not implemented for the non modal interactive mode use calc_static()!"
             )
+        self._ensure_requested_cell_deformation_allowed(pressure)
         super(LammpsBase, self).calc_md(
             temperature=temperature,
             pressure=pressure,
@@ -653,7 +654,6 @@ class LammpsBase(AtomisticGenericJob):
             initial_temperature=initial_temperature,
             langevin=langevin,
         )
-        self._ensure_requested_cell_deformation_allowed(pressure)
         self.input.control.calc_md(
             temperature=temperature,
             pressure=pressure,
@@ -1127,10 +1127,18 @@ class LammpsBase(AtomisticGenericJob):
         if hasattr(pressure, '__len__'):
             non_diagonal_pressures = np.any([p is not None for p in pressure[3:]])
 
-            if non_diagonal_pressures and not self._prism.is_skewed():
-                skew_structure = self.structure.copy()
-                skew_structure.cell[0, 1] += 2 * self._prism.acc
-                self.structure = skew_structure
+            if non_diagonal_pressures:
+                try:
+                    if self._prism.is_skewed():
+                        skew_structure = self.structure.copy()
+                        skew_structure.cell[0, 1] += 2 * self._prism.acc
+                        self.structure = skew_structure
+                except AttributeError:
+                    warnings.warn(
+                        "WARNING: Setting a calculation type which uses pressure before setting the structure risks " +
+                        "constraining your cell shape evolution if non-diagonal pressures are used but the structure " +
+                        "is not triclinic from the start of the calculation."
+                    )
 
 
 class Input:
