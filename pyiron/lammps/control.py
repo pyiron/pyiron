@@ -132,7 +132,10 @@ class LammpsControl(GenericParameters):
         # pyiron.lammps.interactive.LammpsInteractive.calc_minimize -- Please ensure that changes to signature or
         # defaults stay consistent!
         max_evaluations = 10 * max_iter
-        GPA_TO_BAR = 1.0e4
+        GPA_TO_BAR = spc.giga * 1.0 / spc.bar
+        if self["units"] != "metal":
+            raise NotImplementedError
+
         if pressure is not None:
             if type(pressure) == float or type(pressure) == int:
                 pressure = pressure * np.ones(3)
