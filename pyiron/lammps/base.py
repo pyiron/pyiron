@@ -295,7 +295,6 @@ class LammpsBase(AtomisticGenericJob):
         """
         if self.structure is None:
             raise ValueError("Input structure not set. Use method set_structure()")
-        self._prism = UnfoldingPrism(self.structure.cell)
         lmp_structure = self._get_lammps_structure(
             structure=self.structure, cutoff_radius=self.cutoff_radius
         )
