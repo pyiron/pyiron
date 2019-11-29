@@ -1129,7 +1129,7 @@ class LammpsBase(AtomisticGenericJob):
 
             if non_diagonal_pressures:
                 try:
-                    if self._prism.is_skewed():
+                    if not self._prism.is_skewed():
                         skew_structure = self.structure.copy()
                         skew_structure.cell[0, 1] += 2 * self._prism.acc
                         self.structure = skew_structure
