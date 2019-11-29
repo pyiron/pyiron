@@ -25,7 +25,8 @@ class InteractiveLibrary(object):
 class TestLammpsInteractive(unittest.TestCase):
     def setUp(self):
         self.job._interactive_library = InteractiveLibrary()
-        self.control_job._interactive_library = InteractiveLibrary()
+        self.minimize_job._interactive_library = InteractiveLibrary()
+        self.minimize_control_job._interactive_library = InteractiveLibrary()
 
     @classmethod
     def setUpClass(cls):
@@ -45,9 +46,13 @@ class TestLammpsInteractive(unittest.TestCase):
         cls.job.server.run_mode.interactive = True
         cls.job.structure = structure
 
-        cls.control_job = Lammps(
+        cls.minimize_job = Lammps(
             project=ProjectHDFio(project=cls.project, file_name="lammps"),
-            job_name="control_lammps",
+            job_name="minimize_lammps",
+        )
+        cls.minimize_control_job = Lammps(
+            project=ProjectHDFio(project=cls.project, file_name="lammps"),
+            job_name="minimize_control_lammps",
         )
         # cls.control_job.server.run_mode.interactive = True  # Fails if we then call, e.g. `calc_minimize`
 
@@ -87,26 +92,29 @@ class TestLammpsInteractive(unittest.TestCase):
 
     def test_calc_minimize_input(self):
         # Ensure defaults match control
-        self.job.input.control.calc_minimize()
-        self.job._interactive_lammps_input()
-        self.control_job.calc_minimize()
-        self.control_job._interactive_lammps_input()
+        atoms = Atoms("Fe8", positions=np.zeros((8, 3)), cell=np.eye(3))
+        self.minimize_control_job.structure = atoms
+        self.minimize_control_job.input.control.calc_minimize()
+        self.minimize_control_job._interactive_lammps_input()
+        self.minimize_job.structure = atoms
+        self.minimize_job.calc_minimize()
+        self.minimize_job._interactive_lammps_input()
 
         self.assertEqual(
-            self.job._interactive_library._command,
-            self.control_job._interactive_library._command
+            self.minimize_control_job._interactive_library._command,
+            self.minimize_job._interactive_library._command
         )
 
         # Ensure that pressure inputs are being parsed OK
-        self.control_job.calc_minimize(pressure=0)
-        self.control_job._interactive_lammps_input()
+        self.minimize_job.calc_minimize(pressure=0)
+        self.minimize_job._interactive_lammps_input()
         self.assertTrue(("fix ensemble all box/relax x 0.0 y 0.0 z 0.0 couple none" in
-                         self.control_job._interactive_library._command))
+                         self.minimize_job._interactive_library._command))
 
-        self.control_job.calc_minimize(pressure=[1, 2, None, 0., 0., None])
-        self.control_job._interactive_lammps_input()
+        self.minimize_job.calc_minimize(pressure=[1, 2, None, 0., 0., None])
+        self.minimize_job._interactive_lammps_input()
         self.assertTrue(("fix ensemble all box/relax x 10000.0 y 20000.0 xy 0.0 xz 0.0 couple none" in
-                         self.control_job._interactive_library._command))
+                         self.minimize_job._interactive_library._command))
 
 
 if __name__ == "__main__":

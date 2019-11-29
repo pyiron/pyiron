@@ -38,9 +38,13 @@ class TestLammps(unittest.TestCase):
             project=ProjectHDFio(project=cls.project, file_name="lammps_vcsgc_input"),
             job_name="lammps_vcsgc_input",
         )
-        cls.control_job = Lammps(
+        cls.minimize_job = Lammps(
             project=ProjectHDFio(project=cls.project, file_name="lammps"),
-            job_name="control_lammps",
+            job_name="minimize_lammps",
+        )
+        cls.minimize_control_job = Lammps(
+            project=ProjectHDFio(project=cls.project, file_name="lammps"),
+            job_name="minimize_control_lammps",
         )
 
     @classmethod
@@ -491,21 +495,25 @@ class TestLammps(unittest.TestCase):
 
     def test_calc_minimize_input(self):
         # Ensure that defaults match control defaults
-        self.control_job.input.control.calc_minimize()
-        self.job.calc_minimize()
+        atoms = Atoms("Fe", positions=np.zeros((8, 3)), cell=np.eye(3))
+        self.minimize_control_job.structure = atoms
+        self.minimize_control_job.input.control.calc_minimize()
+
+        self.minimize_job.sturcture = atoms
+        self.minimize_job.calc_minimize()
         for k in self.job.input.control.keys():
-            self.assertEqual(self.job.input.control[k], self.control_job.input.control[k])
+            self.assertEqual(self.minimize_job.input.control[k], self.minimize_control_job.input.control[k])
 
         # Ensure that pressure inputs are being parsed OK
-        self.control_job.calc_minimize(pressure=0)
+        self.minimize_control_job.calc_minimize(pressure=0)
         self.assertEqual(
-            self.control_job.input.control['fix___ensemble'],
+            self.minimize_control_job.input.control['fix___ensemble'],
             "all box/relax x 0.0 y 0.0 z 0.0 couple none"
         )
 
-        self.control_job.calc_minimize(pressure=[1, 2, None, 0., 0., None])
+        self.minimize_control_job.calc_minimize(pressure=[1, 2, None, 0., 0., None])
         self.assertEqual(
-            self.control_job.input.control['fix___ensemble'],
+            self.minimize_control_job.input.control['fix___ensemble'],
             "all box/relax x 10000.0 y 20000.0 xy 0.0 xz 0.0 couple none"
         )
 
