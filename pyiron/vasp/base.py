@@ -999,6 +999,8 @@ class VaspBase(GenericDFTJob):
         self.input.incar["NSW"] = n_ionic_steps
         self.input.incar["NBLOCK"] = int(n_print)
         self.input.incar["POTIM"] = time_step
+        if "ISYM" not in self.input.incar.keys():
+            self.input.incar["ISYM"] = 0
         if retain_charge_density:
             self.write_charge_density = retain_charge_density
         if retain_electrostatic_potential:
@@ -2115,7 +2117,6 @@ class Incar(GenericParameters):
 SYSTEM =  ToDo  # jobname
 PREC = Accurate
 ALGO = Fast
-ENCUT = 250
 LREAL = False
 LWAVE = False
 LORBIT = 0

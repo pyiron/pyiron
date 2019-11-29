@@ -471,9 +471,6 @@ class GenericParameters(PyironObject):
             new_array.append(val)
             new_comments.append("")
             new_params.append("")
-            new_array = np.array(new_array)
-            new_comments = np.array(new_comments)
-            new_params = np.array(new_params)
             new_dict = OrderedDict()
             new_dict["Value"] = new_array
             new_dict["Comment"] = new_comments
