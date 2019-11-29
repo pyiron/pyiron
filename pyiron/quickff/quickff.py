@@ -190,11 +190,11 @@ class QuickFF(AtomisticGenericJob):
         self.ffatype_ids = system.ffatype_ids.copy()
 
     def set_ei(self, fn):
-        self.input['ei'] = 'pars_ei.txt'
+        self.input['ei'] = fn.split('/')[-1]
         self.fn_ei = fn
 
     def set_vdw(self, fn):
-        self.input['vdw'] = 'pars_vdw.txt'
+        self.input['vdw'] = fn.split('/')[-1]
         self.fn_vdw = fn
 
     def write_input(self):

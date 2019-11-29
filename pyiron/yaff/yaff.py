@@ -67,6 +67,7 @@ def write_yopt(input_dict,working_directory='.'):
     body += """
 opt = CGOptimizer(dof, hooks=[hdf5])
 opt.run({nsteps})
+system.to_file('opt.chk')
 """.format(nsteps=input_dict['nsteps'])
     body+= tail
     with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
@@ -85,6 +86,7 @@ def write_yopt_cell(input_dict,working_directory='.'):
     body += """
 opt = CGOptimizer(dof, hooks=[hdf5])
 opt.run({nsteps})
+system.to_file('opt.chk')
 """.format(nsteps=input_dict['nsteps'])
     body+= tail
     with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
