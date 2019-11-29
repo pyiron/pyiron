@@ -238,7 +238,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             f_tol=1e-4,
             max_iter=100000,
             pressure=None,
-            n_print=100
+            n_print=100,
+            style='cg'
     ):
         # Docstring set programmatically -- Please ensure that changes to signature or defaults stay consistent!
         if self.server.run_mode.interactive_non_modal:
@@ -251,6 +252,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             max_iter=max_iter,
             pressure=pressure,
             n_print=n_print,
+            style=style,
         )
         if self.interactive_is_activated() and (
             self.server.run_mode.interactive

@@ -559,7 +559,8 @@ class LammpsBase(AtomisticGenericJob):
             f_tol=1e-4,
             max_iter=100000,
             pressure=None,
-            n_print=100
+            n_print=100,
+            style='cg'
     ):
         # Docstring set programmatically -- Ensure that changes to signature or defaults stay consistent!
         super(LammpsBase, self).calc_minimize(
@@ -576,6 +577,7 @@ class LammpsBase(AtomisticGenericJob):
             max_iter=max_iter,
             pressure=pressure,
             n_print=n_print,
+            style=style,
         )
     calc_minimize.__doc__ = LammpsControl.calc_minimize.__doc__
 

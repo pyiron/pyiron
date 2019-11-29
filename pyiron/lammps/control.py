@@ -106,7 +106,8 @@ class LammpsControl(GenericParameters):
         f_tol=1e-4,
         max_iter=100000,
         pressure=None,
-        n_print=100
+        n_print=100,
+        style='cg'
     ):
         """
         Sets parameters required for minimization.
@@ -127,11 +128,14 @@ class LammpsControl(GenericParameters):
                 stress tensor can be selectively disabled by setting this element to None. (Default is None, run
                 isochorically.)
             n_print (int): Write (dump or print) to the output file every n steps (Default: 100)
+            style ('cg'/'sd'/other values from Lammps docs): The style of the numeric minimization, either conjugate
+                gradient, steepest descent, or other keys permissible from the Lammps docs on 'min_style'. (Default
+                is 'cg' -- conjugate gradient.)
         """
         # This docstring is a source for the calc_minimize method in pyiron.lammps.base.LammpsBase.calc_minimize and
         # pyiron.lammps.interactive.LammpsInteractive.calc_minimize -- Please ensure that changes to signature or
         # defaults stay consistent!
-        max_evaluations = 10 * max_iter
+        max_evaluations = 100 * max_iter
         GPA_TO_BAR = spc.giga * 1.0 / spc.bar
         if self["units"] != "metal":
             raise NotImplementedError
@@ -150,6 +154,7 @@ class LammpsControl(GenericParameters):
             self.set(fix___ensemble=r"all box/relax" + str_press)
         else:
             self.remove_keys(["fix___nve"])
+        self.set(min_style=style)
         self.set(
             minimize=str(e_tol)
             + " "
