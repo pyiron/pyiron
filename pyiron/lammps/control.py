@@ -407,7 +407,8 @@ class LammpsControl(GenericParameters):
             pressure_damping_timescale *= time_units
 
         # Transform temperature
-        temperature *= temperature_units
+        if temperature is not None:
+            temperature *= temperature_units
 
         # Apply initial overheating (default uses the theorem of equipartition of energy between KE and PE)
         if initial_temperature is None and temperature is not None:
@@ -588,6 +589,8 @@ class LammpsControl(GenericParameters):
         energy_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["energy"]
 
         if temperature_mc is None:
+            if temperature is None:
+                raise ValueError("If temperature is not given, temperature_mc must be.")
             temperature_mc = temperature * temperature_units
 
         if seed is None:

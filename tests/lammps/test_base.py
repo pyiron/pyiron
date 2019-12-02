@@ -413,32 +413,37 @@ class TestLammps(unittest.TestCase):
         bad_element = {s: 0. for s in symbols}
         bad_element.update({'X': 1.})  # Non-existant chemical symbol
         self.assertRaises(
-            ValueError, self.job_vcsgc_input.calc_vcsgc, mu=bad_element
+            ValueError, self.job_vcsgc_input.calc_vcsgc, mu=bad_element, temperature_mc=300.
         )
 
         self.assertRaises(
-            ValueError, self.job_vcsgc_input.calc_vcsgc, target_concentration=bad_element
+            ValueError, self.job_vcsgc_input.calc_vcsgc, target_concentration=bad_element, temperature_mc=300.
         )
 
         bad_conc = {s: 0. for s in symbols}
         bad_conc['Al'] = 0.99
         self.assertRaises(
-            ValueError, self.job_vcsgc_input.calc_vcsgc, target_concentration=bad_conc
+            ValueError, self.job_vcsgc_input.calc_vcsgc, target_concentration=bad_conc, temperature_mc=300.
         )
 
         self.assertRaises(
-            ValueError, self.job_vcsgc_input.calc_vcsgc, window_moves=-1
+            ValueError, self.job_vcsgc_input.calc_vcsgc, window_moves=-1, temperature_mc=300.
         )
         self.assertRaises(
-            ValueError, self.job_vcsgc_input.calc_vcsgc, window_moves=1.1
+            ValueError, self.job_vcsgc_input.calc_vcsgc, window_moves=1.1, temperature_mc=300.
         )
 
         self.assertRaises(
-            ValueError, self.job_vcsgc_input.calc_vcsgc, window_size=0.3
+            ValueError, self.job_vcsgc_input.calc_vcsgc, window_size=0.3, temperature_mc=300.
         )
 
         mu = {s: 0. for s in symbols}
         mu[symbols[0]] = 1.
+        self.assertRaises(
+            ValueError, self.job_vcsgc_input.calc_vcsgc, mu=mu, temperature_mc=None, temperature=None
+        )
+
+
         args = dict(
             mu=mu,
             target_concentration=None,
@@ -449,7 +454,7 @@ class TestLammps(unittest.TestCase):
             window_size=None,
             window_moves=None,
             seed=1,
-            temperature=300,
+            temperature=300.0,
         )
         input_string = 'all sgcmc {0} {1} {2} {3} randseed {4}'.format(
             args['mc_step_interval'],
