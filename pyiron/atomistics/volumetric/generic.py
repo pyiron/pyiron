@@ -6,7 +6,7 @@ import numpy as np
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.vasp.structure import write_poscar
 
-__author__ = "Sudarsan Surendralal"
+__author__ = "Sudarsan Surendralal, Su-Hyun Yoo"
 __copyright__ = (
     "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH "
     "- Computational Materials Design (CM) Department"
@@ -71,15 +71,16 @@ class VolumetricData(object):
         self._total_data = val
 
     @staticmethod
-    def gauss_f(d, FWHM=0.529177):
+    def gauss_f(d, fwhm=0.529177):
         """
         Args:
-            d: distance between target point and reference point
-            FWHM: Full width half maximum in angstrom
+            d (float): distance between target point and reference point
+            fwhm (float): Full width half maximum in angstrom
+
         Returns:
-            Gaussian reduction constant
+            float: Gaussian reduction constant
         """
-        sigma = FWHM / (2 * np.sqrt(2 * np.log(2)))
+        sigma = fwhm / (2 * np.sqrt(2 * np.log(2)))
         d2 = d * d
         return np.exp(-1 / (2 * sigma ** 2) * d2)
 
@@ -97,33 +98,33 @@ class VolumetricData(object):
         unit_dist_in_grid = [np.sqrt(np.dot(lattice[0], lattice[0])) / grid_shape[0],
                              np.sqrt(np.dot(lattice[1], lattice[1])) / grid_shape[1],
                              np.sqrt(np.dot(lattice[2], lattice[2])) / grid_shape[2]]
-        DN = np.multiply(np.subtract(target_grid_point, n_grid_at_center), unit_dist_in_grid)
-        Dist = np.linalg.norm(DN)
-        return Dist
+        dn = np.multiply(np.subtract(target_grid_point, n_grid_at_center), unit_dist_in_grid)
+        dist = np.linalg.norm(dn)
+        return dist
 
-    def spherical_average_potential(self, structure, spherical_center, rad=2, FWHM=0.529177):
+    def spherical_average_potential(self, structure, spherical_center, rad=2, fwhm=0.529177):
         """
         Args:
             structure: crystal structure
             spherical_center: position of spherical_center in direct coordinate
             rad: radius of sphere to be considered in Angstrom (recommended value: 2)
-            FWHM: Full width half maximum of gaussian function in Angstrom (recommended value: 0.529177)
+            fwhm: Full width half maximum of gaussian function in Angstrom (recommended value: 0.529177)
         Returns:
             Spherical average at the target center
         """
         grid_shape = self._total_data.shape
 
-        ##Position of center of sphere at grid coordinates
+        ## Position of center of sphere at grid coordinates
         n_grid_at_center = [int(np.ceil(spherical_center[0] * grid_shape[0])),
                             int(np.ceil(spherical_center[1] * grid_shape[1])),
                             int(np.ceil(spherical_center[2] * grid_shape[2]))]
 
-        ##Unit distance between grids
+        ## Unit distance between grids
         dist_in_grid = [np.linalg.norm(structure.cell[0]) / grid_shape[0],
                         np.linalg.norm(structure.cell[1]) / grid_shape[1],
                         np.linalg.norm(structure.cell[2]) / grid_shape[2]]
 
-        ##Range of grids to be considered within the provided radius w.r.t. center of sphere
+        ## Range of grids to be considered within the provided radius w.r.t. center of sphere
         num_grid_in_sph = [[], []]
         for i, dist in enumerate(dist_in_grid):
             num_grid_in_sph[0].append(n_grid_at_center[i] - int(np.ceil(rad / dist)))
@@ -139,8 +140,8 @@ class VolumetricData(object):
                     if Dist <= rad:
                         sph_avg_tmp.append(
                             self._total_data[k % grid_shape[0], l % grid_shape[1], m % grid_shape[2]] * self.gauss_f(Dist,
-                                                                                                               FWHM))
-                        weight += self.gauss_f(Dist, FWHM)
+                                                                                                                     fwhm))
+                        weight += self.gauss_f(Dist, fwhm)
                     else:
                         pass
         sum_list = np.sum(sph_avg_tmp)
@@ -162,25 +163,25 @@ class VolumetricData(object):
         unit_dist_in_grid = [np.sqrt(np.dot(lattice[0], lattice[0])) / grid_shape[0],
                              np.sqrt(np.dot(lattice[1], lattice[1])) / grid_shape[1],
                              np.sqrt(np.dot(lattice[2], lattice[2])) / grid_shape[2]]
-        DN = np.multiply(np.subtract(target_grid_point, n_grid_at_center), unit_dist_in_grid)
+        dn = np.multiply(np.subtract(target_grid_point, n_grid_at_center), unit_dist_in_grid)
         if direction_of_cyl == 0:
-            DN[0] = 0
+            dn[0] = 0
         elif direction_of_cyl == 1:
-            DN[1] = 0
+            dn[1] = 0
         elif direction_of_cyl == 2:
-            DN[2] = 0
+            dn[2] = 0
         else:
             print("check the direction of cylindrical axis")
-        Dist = np.linalg.norm(DN)
-        return Dist
+        dist = np.linalg.norm(dn)
+        return dist
 
-    def cylindrical_average_potential(self, structure, spherical_center, axis_of_cyl, rad=2, FWHM=0.529177):
+    def cylindrical_average_potential(self, structure, spherical_center, axis_of_cyl, rad=2, fwhm=0.529177):
         """
         Args:
             structure: crystal structure
             spherical_center: position of spherical_center in direct coordinate
             rad: radius of sphere to be considered in Angstrom (recommended value: 2)
-            FWHM: Full width half maximum of gaussian function in Angstrom (recommended value: 0.529177)
+            fwhm: Full width half maximum of gaussian function in Angstrom (recommended value: 0.529177)
             axis_of_cyl: Axis of cylinder (0 (x) or 1 (y) or 2 (z))
         Returns:
             Cylindrical average at the target center
@@ -214,13 +215,13 @@ class VolumetricData(object):
             for l in range(num_grid_in_cyl[0][1], num_grid_in_cyl[1][1]):
                 for m in range(num_grid_in_cyl[0][2], num_grid_in_cyl[1][2]):
                     target_grid_point = [k, l, m]
-                    Dist = self.dist_between_two_grid_points_cyl(target_grid_point, n_grid_at_center, structure.cell,
-                                                            grid_shape, axis_of_cyl)
-                    if Dist <= rad:
+                    dist = self.dist_between_two_grid_points_cyl(target_grid_point, n_grid_at_center, structure.cell,
+                                                                 grid_shape, axis_of_cyl)
+                    if dist <= rad:
                         cyl_avg_tmp.append(
-                            self._total_data[k % grid_shape[0], l % grid_shape[1], m % grid_shape[2]] * self.gauss_f(Dist,
-                                                                                                               FWHM))
-                        weight += self.gauss_f(Dist, FWHM)
+                            self._total_data[k % grid_shape[0], l % grid_shape[1], m % grid_shape[2]]
+                            * self.gauss_f(dist, fwhm))
+                        weight += self.gauss_f(dist, fwhm)
                     else:
                         pass
         sum_list = np.sum(cyl_avg_tmp)
