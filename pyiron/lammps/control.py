@@ -368,12 +368,11 @@ class LammpsControl(GenericParameters):
             delta_press (float): Barostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
             job_name (str): Job name of the job to generate a unique random seed.
         """
-        time_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["time"]
-        pressure_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
-        # No need for temperature conversion; pyiron and all available Lammps units are both in Kelvin
-        # (well, except unitless Lennard-Jones units...)
-        if self["units"] == "lj":
+        if self["units"] not in LAMMPS_UNIT_CONVERSIONS.keys():
             raise NotImplementedError
+        time_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["time"]
+        temperature_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["temperature"]
+        pressure_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
 
         # Transform time
         if time_step is not None:
@@ -382,7 +381,7 @@ class LammpsControl(GenericParameters):
             except KeyError:
                 raise NotImplementedError()
 
-        # Transform thermostat strength
+        # Transform thermostat strength (time)
         if delta_temp is not None:
             warnings.warn(
                 "WARNING: `delta_temp` is deprecated, please use `temperature_damping_timescale`."
@@ -391,7 +390,7 @@ class LammpsControl(GenericParameters):
         else:
             temperature_damping_timescale *= time_units
 
-        # Transform barostat strength
+        # Transform barostat strength (time)
         if delta_press is not None:
             warnings.warn(
                 "WARNING: `delta_press` is deprecated, please use `pressure_damping_timescale`."
@@ -399,6 +398,9 @@ class LammpsControl(GenericParameters):
             pressure_damping_timescale = delta_press
         else:
             pressure_damping_timescale *= time_units
+
+        # Transform temperature
+        temperature *= temperature_units
 
         # Apply initial overheating (default uses the theorem of equipartition of energy between KE and PE)
         if initial_temperature is None and temperature is not None:
