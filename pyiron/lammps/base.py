@@ -703,7 +703,6 @@ class LammpsBase(AtomisticGenericJob):
             contain at least one atom of each species.
 
         Warning:
-            - Assumes the units are metal, otherwise units for the constraints may be off.
             - The fix does not yet support non-orthogonal simulation boxes; using one will give a runtime error.
 
         Args:
