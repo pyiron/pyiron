@@ -225,10 +225,17 @@ class LammpsControl(GenericParameters):
         # This docstring is a source for the calc_minimize method in pyiron.lammps.base.LammpsBase.calc_minimize and
         # pyiron.lammps.interactive.LammpsInteractive.calc_minimize -- Please ensure that changes to signature or
         # defaults stay consistent!
+
         max_evaluations = 100 * max_iter
-        GPA_TO_BAR = spc.giga * 1.0 / spc.bar
-        if self["units"] != "metal":
+
+        if self["units"] not in LAMMPS_UNIT_CONVERSIONS.keys():
             raise NotImplementedError
+        energy_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["energy"]
+        force_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["force"]
+        pressure_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
+
+        e_tol *= energy_units
+        f_tol *= force_units
 
         if pressure is not None:
             if type(pressure) == float or type(pressure) == int:
@@ -236,7 +243,7 @@ class LammpsControl(GenericParameters):
             str_press = ""
             for press, str_axis in zip(pressure, [" x ", " y ", " z ", " xy ", " xz ", " yz "][:len(pressure)]):
                 if press is not None:
-                    str_press += str_axis + str(press * GPA_TO_BAR)
+                    str_press += str_axis + str(press * pressure_units)
             if len(str_press) == 0:
                 raise ValueError("Pressure values cannot all be None")
             elif len(str_press) > 1:
@@ -575,8 +582,13 @@ class LammpsControl(GenericParameters):
             job_name=job_name,
         )
 
+        if self["units"] not in LAMMPS_UNIT_CONVERSIONS.keys():
+            raise NotImplementedError
+        temperature_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["temperature"]
+        energy_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["energy"]
+
         if temperature_mc is None:
-            temperature_mc = temperature
+            temperature_mc = temperature * temperature_units
 
         if seed is None:
             seed = self.generate_seed_from_job(job_name=job_name)
@@ -590,7 +602,7 @@ class LammpsControl(GenericParameters):
             str(mc_step_interval),
             str(swap_fraction),
             str(temperature_mc),
-            str(" ".join(str(mu[el] - mu[calibrating_el]) for el in ordered_element_list[1:])),
+            str(" ".join(str((mu[el] - mu[calibrating_el]) * energy_units) for el in ordered_element_list[1:])),
             str(seed),
         )
 
