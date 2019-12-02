@@ -353,7 +353,7 @@ class LammpsControl(GenericParameters):
                 performed. A length-3 list or array may be given to specify x-, y- and z-components individually. In
                 this case, floats and `None` may be mixed to allow relaxation only in particular directions.
             n_ionic_steps (int): Number of ionic steps
-            time_step (float): Step size between two steps. In fs if units==metal
+            time_step (float): Step size in fs between two steps.
             n_print (int):  Print frequency
             temperature_damping_timescale (float): The time associated with the thermostat adjusting the temperature.
                                                    (In fs. After rescaling to appropriate time units, is equivalent to
