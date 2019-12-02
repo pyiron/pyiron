@@ -986,7 +986,15 @@ class LammpsBase(AtomisticGenericJob):
         lmp_structure.el_eam_lst = self.input.potential.get_element_lst()
 
         def structure_to_lammps(structure):
-            """Converts a structure to the Lammps coordinate frame"""
+            """
+            Converts a structure to the Lammps coordinate frame
+
+            Args:
+                structure (pyiron.atomistics.structure.atoms.Atoms): Structure to convert.
+
+            Returns:
+                pyiron.atomistics.structure.atoms.Atoms: Structure with the LAMMPS coordinate frame.
+            """
             prism = UnfoldingPrism(structure.cell)
             lammps_structure = structure.copy()
             lammps_structure.cell = prism.A
