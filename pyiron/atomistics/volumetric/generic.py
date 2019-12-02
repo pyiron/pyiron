@@ -114,17 +114,17 @@ class VolumetricData(object):
         """
         grid_shape = self._total_data.shape
 
-        ## Position of center of sphere at grid coordinates
+        # Position of center of sphere at grid coordinates
         n_grid_at_center = [int(np.ceil(spherical_center[0] * grid_shape[0])),
                             int(np.ceil(spherical_center[1] * grid_shape[1])),
                             int(np.ceil(spherical_center[2] * grid_shape[2]))]
 
-        ## Unit distance between grids
+        # Unit distance between grids
         dist_in_grid = [np.linalg.norm(structure.cell[0]) / grid_shape[0],
                         np.linalg.norm(structure.cell[1]) / grid_shape[1],
                         np.linalg.norm(structure.cell[2]) / grid_shape[2]]
 
-        ## Range of grids to be considered within the provided radius w.r.t. center of sphere
+        # Range of grids to be considered within the provided radius w.r.t. center of sphere
         num_grid_in_sph = [[], []]
         for i, dist in enumerate(dist_in_grid):
             num_grid_in_sph[0].append(n_grid_at_center[i] - int(np.ceil(rad / dist)))
@@ -188,17 +188,17 @@ class VolumetricData(object):
         """
         grid_shape = self._total_data.shape
 
-        ##Position of center of sphere at grid coordinates
+        # Position of center of sphere at grid coordinates
         n_grid_at_center = [int(np.ceil(spherical_center[0] * grid_shape[0])),
                             int(np.ceil(spherical_center[1] * grid_shape[1])),
                             int(np.ceil(spherical_center[2] * grid_shape[2]))]
 
-        ##Unit distance between grids
+        # Unit distance between grids
         dist_in_grid = [np.linalg.norm(structure.cell[0]) / grid_shape[0],
                         np.linalg.norm(structure.cell[1]) / grid_shape[1],
                         np.linalg.norm(structure.cell[2]) / grid_shape[2]]
 
-        ##Range of grids to be considered within the provided radius w.r.t. center of sphere
+        # Range of grids to be considered within the provided radius w.r.t. center of sphere
         num_grid_in_cyl = [[], []]
 
         for i, dist in enumerate(dist_in_grid):
