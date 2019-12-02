@@ -22,6 +22,36 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 
+# Conversion factors for transfroming pyiron units to Lammps units
+FS_TO_PS = spc.femto / spc.pico
+FS_TO_S = spc.femto / 1.0
+GPA_TO_BAR = spc.giga * 1.0 / spc.bar
+GPA_TO_PA = spc.giga
+GPA_TO_BARYE = spc.giga * 1.0 / (1.0e-6 * spc.bar)  # Lammps is in "barye"
+GPA_TO_ATM = spc.giga * 1.0 / spc.atm
+LAMMPS_UNIT_CONVERSIONS = {
+    "metal": {
+        "time": FS_TO_PS,
+        "pressure": GPA_TO_BAR
+    },
+    "si": {
+        "time": FS_TO_S,
+        "pressure": GPA_TO_PA
+    },
+    "cgs": {
+        "time": FS_TO_S,
+        "pressure": GPA_TO_BARYE
+    },
+    "real": {
+        "time": 1,
+        "pressure": GPA_TO_ATM
+    },
+    "electron": {
+        "time": 1, "pressure": GPA_TO_PA
+    },
+}
+
+
 class LammpsControl(GenericParameters):
     def __init__(self, input_file_name=None, **qwargs):
         super(LammpsControl, self).__init__(
@@ -278,22 +308,8 @@ class LammpsControl(GenericParameters):
             delta_press (float): Barostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
             job_name (str): Job name of the job to generate a unique random seed.
         """
-        # Conversion factors for transfroming pyiron units to Lammps units
-        fs_to_ps = spc.femto / spc.pico
-        fs_to_s = spc.femto / 1.0
-        GPa_to_bar = spc.giga * 1.0 / spc.bar
-        GPa_to_Pa = spc.giga
-        GPa_to_barye = spc.giga * 1.0 / (1.0e-6 * spc.bar)  # Lammps is in "barye"
-        GPa_to_atm = spc.giga * 1.0 / spc.atm
-        lammps_unit_conversions = {
-            "metal": {"time": fs_to_ps, "pressure": GPa_to_bar},
-            "si": {"time": fs_to_s, "pressure": GPa_to_Pa},
-            "cgs": {"time": fs_to_s, "pressure": GPa_to_barye},
-            "real": {"time": 1, "pressure": GPa_to_atm},
-            "electron": {"time": 1, "pressure": GPa_to_Pa},
-        }
-        time_units = lammps_unit_conversions[self["units"]]["time"]
-        pressure_units = lammps_unit_conversions[self["units"]]["pressure"]
+        time_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["time"]
+        pressure_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
         # No need for temperature conversion; pyiron and all available Lammps units are both in Kelvin
         # (well, except unitless Lennard-Jones units...)
         if self["units"] == "lj":
