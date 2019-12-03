@@ -274,12 +274,12 @@ def find_potential_file(file_name=None, xc=None, path=None, pot_path_dict=None):
     raise ValueError("Either the filename or the functional has to be defined.")
 
 
-def get_enmax_among_species(species_lst, return_list=False, xc="PBE"):
+def get_enmax_among_species(symbol_lst, return_list=False, xc="PBE"):
     """
     Given a list of species symbols, finds the largest applicable encut.
 
     Args:
-        species_lst (list): The list of species symbols.
+        symbol_lst (list): The list of species symbols.
         return_list (bool): Whether to return the list of all ENMAX values (in the same order as `species_lst` along with
             the largest value). (Default is False.)
         xc ("GGA"/"PBE"/"LDA"): The exchange correlation functional for which the POTCARs were generated. (Default is "PBE".)
@@ -294,7 +294,7 @@ def get_enmax_among_species(species_lst, return_list=False, xc="PBE"):
     enmax_lst = []
     vpf = VaspPotentialFile(xc=xc)
 
-    for symbol in species_lst:
+    for symbol in symbol_lst:
         potcar_file = find_potential_file(
             path=vpf.find_default(symbol)['Filename'].values[0][0],
             pot_path_dict=pot_path_dict
