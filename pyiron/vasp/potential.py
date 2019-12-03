@@ -6,7 +6,6 @@ import os
 import pandas
 from pyiron.base.settings.generic import Settings
 from pyiron.atomistics.job.potentials import PotentialAbstract
-from pyiron.vasp.base import Potcar
 
 __author__ = "Jan Janssen"
 __copyright__ = (
@@ -289,13 +288,16 @@ def get_enmax_among_species(species_lst, return_list=False, xc="PBE"):
         (float): The largest ENMAX among the POTCAR files for all the species.
         [optional](list): The ENMAX value corresponding to each species.
     """
+    from pyiron.vasp.base import Potcar
+    pot_path_dict = Potcar.pot_path_dict
+
     enmax_lst = []
     vpf = VaspPotentialFile(xc=xc)
 
     for symbol in species_lst:
         potcar_file = find_potential_file(
             path=vpf.find_default(symbol)['Filename'].values[0][0],
-            pot_path_dict=Potcar.pot_path_dict
+            pot_path_dict=pot_path_dict
         )
         with open(potcar_file) as pf:
             for i, line in enumerate(pf):
