@@ -6,6 +6,7 @@ import os
 import pandas
 from pyiron.base.settings.generic import Settings
 from pyiron.atomistics.job.potentials import PotentialAbstract
+from pyiron.vasp.base import Potcar
 
 __author__ = "Jan Janssen"
 __copyright__ = (
@@ -272,3 +273,38 @@ def find_potential_file(file_name=None, xc=None, path=None, pot_path_dict=None):
                     if file_name in file_lst:
                         return os.path.join(path, file_name)
     raise ValueError("Either the filename or the functional has to be defined.")
+
+
+def get_enmax_among_species(species_lst, return_list=False, xc="PBE"):
+    """
+    Given a list of species symbols, finds the largest applicable encut.
+
+    Args:
+        species_lst (list): The list of species symbols.
+        return_list (bool): Whether to return the list of all ENMAX values (in the same order as `species_lst` along with
+            the largest value). (Default is False.)
+        xc ("GGA"/"PBE"/"LDA"): The exchange correlation functional for which the POTCARs were generated. (Default is "PBE".)
+
+    Returns:
+        (float): The largest ENMAX among the POTCAR files for all the species.
+        [optional](list): The ENMAX value corresponding to each species.
+    """
+    enmax_lst = []
+    vpf = VaspPotentialFile(xc=xc)
+
+    for symbol in species_lst:
+        potcar_file = find_potential_file(
+            path=vpf.find_default(symbol)['Filename'].values[0][0],
+            pot_path_dict=Potcar.pot_path_dict
+        )
+        with open(potcar_file) as pf:
+            for i, line in enumerate(pf):
+                if i == 14:
+                    encut_str = line.split()[2][:-1]
+                    enmax_lst.append(float(encut_str))
+                    break
+
+    if return_list:
+        return max(enmax_lst), enmax_lst
+    else:
+        return max(enmax_lst)
