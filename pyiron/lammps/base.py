@@ -169,6 +169,11 @@ class LammpsBase(AtomisticGenericJob):
             v = self.input.potential[val]
             if v is not None:
                 self.input.control[val] = v
+                if val == "units" and v != "metal":
+                    warnings.warn(
+                        "WARNING: Non-'metal' units are not fully supported. Your calculation should run OK, but "
+                        "results may not be saved in pyiron units."
+                    )
         self.input.potential.remove_structure_block()
 
     @property
