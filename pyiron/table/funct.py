@@ -67,6 +67,11 @@ def get_average_waves(job):
     return {"avg. plane waves": sum(weights * planewaves) / sum(weights)}
 
 
+def get_plane_waves(job):
+    _, weights, planewaves = job["output/outcar/irreducible_kpoints"]
+    return {"plane waves": sum(weights * planewaves)}
+
+
 def get_ekin_error(job):
     return {"energy_tot_wo_kin_corr": job["output/outcar/kin_energy_error"] + job["output/generic/energy_tot"][-1]}
 
