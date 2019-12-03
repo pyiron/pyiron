@@ -1081,6 +1081,16 @@ class Atoms(object):
         raise NotImplementedError("This function was removed!")
 
     def analyse_ovito_cna_adaptive(self, mode="total"):
+        """
+        Use Ovito's common neighbor analysis binding.
+
+        Args:
+            mode ("total"/"numeric"/"str"): Controls the style and level of detail of the output. (Default is "total", only
+                return a summary of the values in the structure.)
+
+        Returns:
+            (depends on `mode`)
+        """
         from pyiron.atomistics.structure.ovito import analyse_ovito_cna_adaptive
 
         warnings.filterwarnings("ignore")
