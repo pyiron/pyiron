@@ -83,7 +83,7 @@ class VaspBase(GenericDFTJob):
         self._output_parser = Output()
         self._potential = VaspPotentialSetter([])
         self._compress_by_default = True
-        self.get_enmax_among_species
+        self.get_enmax_among_species = get_enmax_among_species
         s.publication_add(self.publication)
 
     @property
