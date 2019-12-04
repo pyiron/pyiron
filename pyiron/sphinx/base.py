@@ -336,6 +336,12 @@ class SphinxBase(GenericDFTJob):
         from_charge_density=True,
         from_wave_functions=True,
     ):
+        if self.status!='finished':
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                self.collect_output()
+                if len(w) > 0:
+                    self.status.not_converged = True
         new_job = super(SphinxBase, self).restart(
             snapshot=snapshot, job_name=job_name, job_type=job_type
         )
