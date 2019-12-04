@@ -5,13 +5,11 @@
 from __future__ import print_function
 import os
 import posixpath
-from shutil import copyfile
 import subprocess
 import numpy as np
-import tables
 
 from pyiron.dft.job.generic import GenericDFTJob
-from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentialSetter
+from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentialSetter, Potcar
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
@@ -22,7 +20,7 @@ from pyiron.vasp.structure import read_atoms, write_poscar, vasp_sorter
 from pyiron.vasp.vasprun import Vasprun as Vr
 from pyiron.vasp.vasprun import VasprunError
 from pyiron.vasp.volumetric_data import VaspVolumetricData
-from pyiron.vasp.potential import find_potential_file
+from pyiron.vasp.potential import get_enmax_among_species
 from pyiron.dft.waves.electronic import ElectronicStructure
 from pyiron.dft.waves.bandstructure import Bandstructure
 import warnings
@@ -83,6 +81,7 @@ class VaspBase(GenericDFTJob):
         self._output_parser = Output()
         self._potential = VaspPotentialSetter([])
         self._compress_by_default = True
+        self.get_enmax_among_species = get_enmax_among_species
         s.publication_add(self.publication)
 
     @property
@@ -2297,153 +2296,6 @@ Monkhorst_Pack
             vasp_dict = hdf["vasp_dict"]
             if "trace" in vasp_dict.keys():
                 self._trace = vasp_dict["trace"]
-
-
-class Potcar(GenericParameters):
-    pot_path_dict = {"GGA": "paw-gga-pbe", "PBE": "paw-gga-pbe", "LDA": "paw-lda"}
-
-    def __init__(self, input_file_name=None, table_name="potcar"):
-        GenericParameters.__init__(
-            self,
-            input_file_name=input_file_name,
-            table_name=table_name,
-            val_only=False,
-            comment_char="#",
-        )
-        self._structure = None
-        self.electrons_per_atom_lst = list()
-        self.max_cutoff_lst = list()
-        self.el_path_lst = list()
-        self.el_path_dict = dict()
-        self.modified_elements = dict()
-
-    def potcar_set_structure(self, structure, modified_elements):
-        self._structure = structure
-        self._set_default_path_dict()
-        self._set_potential_paths()
-        self.modified_elements = modified_elements
-
-    def modify(self, **modify):
-        if "xc" in modify:
-            xc_type = modify["xc"]
-            self._set_default_path_dict()
-            if xc_type not in self.pot_path_dict:
-                raise ValueError("xc type not implemented: " + xc_type)
-        GenericParameters.modify(self, **modify)
-        if self._structure is not None:
-            self._set_potential_paths()
-
-    def _set_default_path_dict(self):
-        if self._structure is None:
-            return
-        vasp_potentials = VaspPotentialFile(xc=self.get("xc"))
-        for i, el_obj in enumerate(self._structure.get_species_objects()):
-            if isinstance(el_obj.Parent, str):
-                el = el_obj.Parent
-            else:
-                el = el_obj.Abbreviation
-            if isinstance(el_obj.tags, dict):
-                if "pseudo_potcar_file" in el_obj.tags.keys():
-                    new_element = el_obj.tags["pseudo_potcar_file"]
-                    vasp_potentials.add_new_element(
-                        parent_element=el, new_element=new_element
-                    )
-            key = vasp_potentials.find_default(el).Species.values[0][0]
-            val = vasp_potentials.find_default(el).Name.values[0]
-            self[key] = val
-
-    def _set_potential_paths(self):
-        element_list = (
-            self._structure.get_species_symbols()
-        )  # .ElementList.getSpecies()
-        object_list = self._structure.get_species_objects()
-        s.logger.debug("element list: {0}".format(element_list))
-        self.el_path_lst = list()
-        try:
-            xc = self.get("xc")
-        except tables.exceptions.NoSuchNodeError:
-            xc = self.get("xc")
-        s.logger.debug("XC: {0}".format(xc))
-        vasp_potentials = VaspPotentialFile(xc=xc)
-        for i, el_obj in enumerate(object_list):
-            if isinstance(el_obj.Parent, str):
-                el = el_obj.Parent
-            else:
-                el = el_obj.Abbreviation
-            if (
-                isinstance(el_obj.tags, dict)
-                and "pseudo_potcar_file" in el_obj.tags.keys()
-            ):
-                new_element = el_obj.tags["pseudo_potcar_file"]
-                vasp_potentials.add_new_element(
-                    parent_element=el, new_element=new_element
-                )
-                el_path = find_potential_file(
-                    path=vasp_potentials.find_default(new_element)["Filename"].values[
-                        0
-                    ][0],
-                    pot_path_dict=self.pot_path_dict,
-                )
-                if not (os.path.isfile(el_path)):
-                    raise ValueError("such a file does not exist in the pp directory")
-            else:
-                el_path = find_potential_file(
-                    path=vasp_potentials.find_default(el)["Filename"].values[0][0],
-                    pot_path_dict=self.pot_path_dict,
-                )
-
-            if not (os.path.isfile(el_path)):
-                raise AssertionError()
-            pot_name = "pot_" + str(i)
-
-            if pot_name in self._dataset["Parameter"]:
-                try:
-                    ind = self._dataset["Parameter"].index(pot_name)
-                except (ValueError, IndexError):
-                    indices = np.core.defchararray.find(
-                        self._dataset["Parameter"], pot_name
-                    )
-                    ind = np.where(indices == 0)[0][0]
-                self._dataset["Value"][ind] = el_path
-                self._dataset["Comment"][ind] = ""
-            else:
-                self._dataset["Parameter"].append("pot_" + str(i))
-                self._dataset["Value"].append(el_path)
-                self._dataset["Comment"].append("")
-            if el_obj.Abbreviation in self.modified_elements.keys():
-                self.el_path_lst.append(self.modified_elements[el_obj.Abbreviation])
-            else:
-                self.el_path_lst.append(el_path)
-
-    def write_file(self, file_name, cwd=None):
-        """
-        Args:
-            file_name:
-            cwd:
-        Returns:
-        """
-        self.electrons_per_atom_lst = list()
-        self.max_cutoff_lst = list()
-        self._set_potential_paths()
-        if cwd is not None:
-            file_name = posixpath.join(cwd, file_name)
-        f = open(file_name, "w")
-        for el_file in self.el_path_lst:
-            with open(el_file) as pot_file:
-                for i, line in enumerate(pot_file):
-                    f.write(line)
-                    if i == 1:
-                        self.electrons_per_atom_lst.append(int(float(line)))
-                    elif i == 14:
-                        mystr = line.split()[2][:-1]
-                        self.max_cutoff_lst.append(float(mystr))
-        f.close()
-
-    def load_default(self):
-        file_content = """\
-xc  GGA  # LDA, GGA
-"""
-        self.load_string(file_content)
 
 
 def get_k_mesh_by_cell(cell, kspace_per_in_ang=0.10):
