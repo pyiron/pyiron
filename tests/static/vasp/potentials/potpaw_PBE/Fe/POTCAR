@@ -1,9 +1,15 @@
-Poscar file generated with pyCMW
-1.0
-2.800000 0.000000 0.000000
-0.000000 2.800000 0.000000
-0.000000 0.000000 2.800000
-2 
-Direct
-0.000000000000000 0.000000000000000 0.000000000000000
-0.500000000000000 0.500000000000000 0.500000000000000
+# This
+# Is
+# Not
+# A
+# Real
+# POTCAR
+# File
+# Because
+# We
+# Don't
+# Have
+# The
+# Rights
+   ENMAX  =  42.0; ENMIN  =  41.99999 eV
+# Just edit it with fake content to meet your testing needs

@@ -14,14 +14,14 @@ class TestPotential(unittest.TestCase):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
 
     def test_get_enmax_among_species(self):
-        float_out = get_enmax_among_species(['Al'], return_list=False)
+        float_out = get_enmax_among_species(['Fe'], return_list=False)
         self.assertTrue(isinstance(float_out, float))
 
-        tuple_out = get_enmax_among_species(['Al'], return_list=True)
+        tuple_out = get_enmax_among_species(['Fe'], return_list=True)
         self.assertTrue(isinstance(tuple_out, tuple))
 
         self.assertRaises(KeyError, get_enmax_among_species, species_lst=['X'])
-        self.assertRaises(ValueError, get_enmax_among_species, species_lst=['Al'], xc='FOO')
+        self.assertRaises(ValueError, get_enmax_among_species, species_lst=['Fe'], xc='FOO')
 
 
 if __name__ == "__main__":
