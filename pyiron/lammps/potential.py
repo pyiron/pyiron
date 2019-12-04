@@ -64,7 +64,7 @@ class LammpsPotential(GenericParameters):
 
     @property
     def files(self):
-        if len(self._df["Filename"]) > 0 and list(self._df["Filename"])[0] != ['']:
+        if len(self._df["Filename"].values[0]) > 0 and self._df["Filename"].values[0] != ['']:
             absolute_file_paths = [
                 files for files in list(self._df["Filename"])[0] if os.path.isabs(files)
             ]
