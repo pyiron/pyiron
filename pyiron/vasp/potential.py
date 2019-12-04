@@ -11,7 +11,6 @@ import tables
 from pyiron.base.generic.parameters import GenericParameters
 from pyiron.base.settings.generic import Settings
 from pyiron.atomistics.job.potentials import PotentialAbstract
-from pyiron.vasp.base import s
 
 __author__ = "Jan Janssen"
 __copyright__ = (
