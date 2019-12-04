@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import os
-from os import path
+import posixpath
 
 import numpy as np
 import pandas
