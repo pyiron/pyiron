@@ -20,8 +20,8 @@ class TestPotential(unittest.TestCase):
         tuple_out = get_enmax_among_species(['Fe'], return_list=True)
         self.assertTrue(isinstance(tuple_out, tuple))
 
-        self.assertRaises(KeyError, get_enmax_among_species, species_lst=['X'])
-        self.assertRaises(ValueError, get_enmax_among_species, species_lst=['Fe'], xc='FOO')
+        self.assertRaises(KeyError, get_enmax_among_species, symbol_lst=['X'])
+        self.assertRaises(ValueError, get_enmax_among_species, symbol_lst=['Fe'], xc='FOO')
 
 
 if __name__ == "__main__":
