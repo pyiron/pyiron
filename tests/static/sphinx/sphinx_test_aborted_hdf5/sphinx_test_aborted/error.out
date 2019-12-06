@@ -1,5 +1,0 @@
-srun: error: cmfe193: tasks 19,26,34: Broken pipe
-srun: Terminating job step 88774.1
-slurmstepd: error: *** STEP 88774.1 ON cmfe193 CANCELLED AT 2019-11-30T03:05:15 ***
-srun: error: cmfe193: tasks 0-18,20-25,27-33,35-39: Terminated
-srun: Force Terminated job step 88774.1
