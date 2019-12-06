@@ -337,9 +337,14 @@ class SphinxBase(GenericDFTJob):
         from_wave_functions=True,
     ):
         if self.status!='finished':
+            self.decompress()
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
-                self.collect_output()
+                try:
+                    self.collect_output()
+                except AssertionError:
+                    from_charge_density=False
+                    from_wave_functions=False
                 if len(w) > 0:
                     self.status.not_converged = True
         new_job = super(SphinxBase, self).restart(
@@ -1548,6 +1553,9 @@ class Output(object):
 
         with open(posixpath.join(cwd, file_name), "r") as sphinx_log_file:
             log_file = sphinx_log_file.readlines()
+            if not np.any(["Enter Main Loop" in line for line in log_file]):
+                self._job.status.aborted = True
+                raise AssertionError("SPHInX did not enter the main loop; output not collected")
             if not np.any(["Program exited normally." in line for line in log_file]):
                 self._job.status.aborted = True
                 warnings.warn("SPHInX parsing failed; most likely SPHInX crashed.")

@@ -27,6 +27,7 @@ class TestSphinx(unittest.TestCase):
         cls.sphinx = cls.project.create_job("Sphinx", "job_sphinx")
         cls.sphinx_2_3 = cls.project.create_job("Sphinx", "sphinx_test_2_3")
         cls.sphinx_2_5 = cls.project.create_job("Sphinx", "sphinx_test_2_5")
+        cls.sphinx_aborted = cls.project.create_job("Sphinx", "sphinx_test_aborted")
         cls.sphinx.structure = cls.basis
         cls.sphinx_2_3.structure = Atoms(
             elements=["Fe", "Fe"],
@@ -38,6 +39,12 @@ class TestSphinx(unittest.TestCase):
             scaled_positions=[[0.0, 0.0, 0.0], [0.5, 0.5, 0.5]],
             cell=2.83 * np.eye(3),
         )
+        cls.sphinx_aborted.structure = Atoms(
+            elements=32*["Fe"],
+            scaled_positions=np.arange(32*3).reshape(-1, 3)/(32*3),
+            cell=3.5 * np.eye(3),
+        )
+        cls.sphinx_aborted.status.aborted = True
         cls.current_dir = os.path.abspath(os.getcwd())
         cls.sphinx._create_working_directory()
         cls.sphinx_2_3._create_working_directory()
@@ -115,7 +122,6 @@ class TestSphinx(unittest.TestCase):
         os.remove(
             os.path.join(cls.file_location, "../static/sphinx/sphinx_test_2_3.h5")
         )
-        # os.remove(os.path.join(cls.file_location, 'static/sphinx/job_sphinx_hdf5/job_sphinx/spins.in'))
 
     def test_write_basis(self):
         file_content = [
@@ -356,6 +362,10 @@ class TestSphinx(unittest.TestCase):
         with open(file_name) as structure_sx:
             lines = structure_sx.readlines()
         self.assertEqual(file_content, lines)
+
+    def test_collect_aborted(self):
+        with self.assertRaises(AssertionError):
+            self.sphinx_aborted.collect_output()
 
     def test_collect_2_5(self):
         output = self.sphinx_2_5._output_parser
