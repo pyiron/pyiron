@@ -587,6 +587,8 @@ class SphinxBase(GenericDFTJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
+        n_trace=None,
+        trace=None,
     ):
         """
         Function to setup the k-points for the Sphinx job
@@ -600,6 +602,8 @@ class SphinxBase(GenericDFTJob):
             scheme (str): Type of k-point generation scheme (only 'MP' implemented)
             mesh (list): Size of the mesh (in the MP scheme)
             center_shift (list): Shifts the center of the mesh from the gamma point by the given vector
+            n_trace (int): Number of points per trace part for line mode (not active in SPHInX)
+            trace (list): ordered list of high symmetry points for line mode (not active in SPHInX)
         """
         if not isinstance(symmetry_reduction, bool):
             raise ValueError("symmetry_reduction has to be a boolean")
