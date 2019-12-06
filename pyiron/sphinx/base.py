@@ -337,7 +337,7 @@ class SphinxBase(GenericDFTJob):
         from_charge_density=True,
         from_wave_functions=True,
     ):
-        if self.status!='finished':
+        if self.status!='finished' and not self.is_compressed():
             self.decompress()
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
