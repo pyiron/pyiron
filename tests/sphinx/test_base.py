@@ -49,7 +49,7 @@ class TestSphinx(unittest.TestCase):
         cls.sphinx._create_working_directory()
         cls.sphinx_2_3._create_working_directory()
         cls.sphinx.write_input()
-        cls.sphinx.version = "2.6.2"
+        cls.sphinx.version = "2.6"
         cls.sphinx_2_3.to_hdf()
         cls.sphinx_2_3.decompress()
         cls.sphinx_2_5.decompress()
@@ -122,7 +122,6 @@ class TestSphinx(unittest.TestCase):
         os.remove(
             os.path.join(cls.file_location, "../static/sphinx/sphinx_test_2_3.h5")
         )
-        # os.remove(os.path.join(cls.file_location, 'static/sphinx/job_sphinx_hdf5/job_sphinx/spins.in'))
 
     def test_write_basis(self):
         file_content = [
@@ -364,6 +363,10 @@ class TestSphinx(unittest.TestCase):
             lines = structure_sx.readlines()
         self.assertEqual(file_content, lines)
 
+    def test_collect_aborted(self):
+        with self.assertRaises(AssertionError):
+            self.sphinx_aborted.collect_output()
+
     def test_collect_2_5(self):
         output = self.sphinx_2_5._output_parser
         output.collect(directory=self.sphinx_2_5.working_directory)
@@ -526,9 +529,6 @@ class TestSphinx(unittest.TestCase):
         self.sphinx_2_3._output_parser.collect_relaxed_hist(
             file_name="relaxedHist_2.sx", cwd=self.sphinx_2_3.working_directory
         )
-
-    def test_restart(self):
-        _ = self.sphinx_aborted.restart()
 
 
 if __name__ == "__main__":

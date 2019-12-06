@@ -342,7 +342,7 @@ class SphinxBase(GenericDFTJob):
                 warnings.simplefilter("always")
                 try:
                     self.collect_output()
-                except IndexError:
+                except AssertionError:
                     from_charge_density=False
                     from_wave_functions=False
                 if len(w) > 0:
@@ -1553,6 +1553,9 @@ class Output(object):
 
         with open(posixpath.join(cwd, file_name), "r") as sphinx_log_file:
             log_file = sphinx_log_file.readlines()
+            if not np.any(["Enter Main Loop" in line for line in log_file]):
+                self._job.status.aborted = True
+                raise AssertionError("SPHInX did not enter the main loop; output not collected")
             if not np.any(["Program exited normally." in line for line in log_file]):
                 self._job.status.aborted = True
                 warnings.warn("SPHInX parsing failed; most likely SPHInX crashed.")

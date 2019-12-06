@@ -1,6 +1,6 @@
 scfDiag {
-	rhoMixing = 1.0;
-	spinMixing = 1.0;
+	rhoMixing = 0.5;
+	spinMixing = 0.5;
 	dEnergy = Ediff/27.21138602;
 	maxSteps = 400;
 	blockCCG {}

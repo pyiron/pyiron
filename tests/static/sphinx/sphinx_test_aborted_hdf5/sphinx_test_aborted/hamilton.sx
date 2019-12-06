@@ -1,3 +1,4 @@
 nEmptyStates = EmptyStates;
 ekt = Sigma;
 xc = Xcorr;
+spinPolarized;

@@ -5,3 +5,4 @@ kPoint {
 	relative;
 }
 folding = KpointFolding;
+saveMemory;
