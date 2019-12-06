@@ -8,6 +8,7 @@ import numpy as np
 import os
 import posixpath
 import re
+import stat
 from shutil import copyfile
 import scipy.constants
 import subprocess
@@ -858,7 +859,7 @@ class SphinxBase(GenericDFTJob):
                 f not in files_to_compress
                 and os.path.exists(filename)
                 and os.stat(filename).st_size == 0
-            ):
+            ) or stat.S_ISFIFO(os.stat(filename).st_mode):
                 os.remove(filename)
         super(SphinxBase, self).compress(files_to_compress=files_to_compress)
 
