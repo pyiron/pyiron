@@ -849,18 +849,19 @@ class SphinxBase(GenericDFTJob):
             files_to_compress (list): A list of files to compress (optional)
         """
         # delete empty files
+        if files_to_compress is None:
+            files_to_compress = [
+                f for f in list(self.list_files()) if (f not in ["rho.sxb", "waves.sxb"]
+                                                       and not stat.S_ISFIFO(os.stat(f).st_mode))
+            ]
         for f in list(self.list_files()):
             filename = os.path.join(self.working_directory, f)
             if (
                 f not in files_to_compress
                 and os.path.exists(filename)
                 and os.stat(filename).st_size == 0
-            ) or stat.S_ISFIFO(os.stat(filename).st_mode):
+            ):
                 os.remove(filename)
-        if files_to_compress is None:
-            files_to_compress = [
-                f for f in list(self.list_files()) if f not in ["rho.sxb", "waves.sxb"]
-            ]
         super(SphinxBase, self).compress(files_to_compress=files_to_compress)
 
 
