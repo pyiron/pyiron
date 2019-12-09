@@ -8,6 +8,7 @@ import numpy as np
 import os
 import posixpath
 import re
+import stat
 from shutil import copyfile
 import scipy.constants
 import subprocess
@@ -336,7 +337,7 @@ class SphinxBase(GenericDFTJob):
         from_charge_density=True,
         from_wave_functions=True,
     ):
-        if self.status!='finished':
+        if self.status!='finished' and not self.is_compressed():
             self.decompress()
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
@@ -587,6 +588,8 @@ class SphinxBase(GenericDFTJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
+        n_trace=None,
+        trace=None,
     ):
         """
         Function to setup the k-points for the Sphinx job
@@ -600,6 +603,8 @@ class SphinxBase(GenericDFTJob):
             scheme (str): Type of k-point generation scheme (only 'MP' implemented)
             mesh (list): Size of the mesh (in the MP scheme)
             center_shift (list): Shifts the center of the mesh from the gamma point by the given vector
+            n_trace (int): Number of points per trace part for line mode (not active in SPHInX)
+            trace (list): ordered list of high symmetry points for line mode (not active in SPHInX)
         """
         if not isinstance(symmetry_reduction, bool):
             raise ValueError("symmetry_reduction has to be a boolean")
@@ -843,11 +848,12 @@ class SphinxBase(GenericDFTJob):
         Args:
             files_to_compress (list): A list of files to compress (optional)
         """
+        # delete empty files
         if files_to_compress is None:
             files_to_compress = [
-                f for f in list(self.list_files()) if f not in ["rho.sxb", "waves.sxb"]
+                f for f in list(self.list_files()) if (f not in ["rho.sxb", "waves.sxb"]
+                                                       and not stat.S_ISFIFO(os.stat(os.path.join(self.working_directory, f)).st_mode))
             ]
-        # delete empty files
         for f in list(self.list_files()):
             filename = os.path.join(self.working_directory, f)
             if (
