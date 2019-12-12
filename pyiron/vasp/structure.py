@@ -170,7 +170,7 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
         atoms_dict["cell"] = np.array(unscaled_cell) * (
             (-atoms_dict["scaling_factor"]) ** (1.0 / 3.0)
         )
-    if "selective dynamics" in str(string):
+    if "selective dynamics" in string:
         atoms_dict["selective_dynamics"] = True
     no_of_species = len(string[5].split())
     species_dict = OrderedDict()
