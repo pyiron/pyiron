@@ -208,7 +208,7 @@ class TestSphinx(unittest.TestCase):
             "Sigma=0.2;\n",
             "Xcorr=PBE;\n",
             "Estep=400;\n",
-            "Ediff=1e-04;\n",
+            "Ediff=0.0001;\n",
             "WriteWaves=true;\n",
             "KJxc=false;\n",
             "SaveMemory=true;\n",
