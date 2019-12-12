@@ -132,6 +132,7 @@ class TestSphinx(unittest.TestCase):
             "\trelative;\n",
             "}\n",
             "folding = KpointFolding;\n",
+            "saveMemory;\n",
         ]
         with open(
             os.path.join(
