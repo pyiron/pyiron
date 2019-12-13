@@ -132,6 +132,7 @@ class TestSphinx(unittest.TestCase):
             "\trelative;\n",
             "}\n",
             "folding = KpointFolding;\n",
+            "saveMemory;\n",
         ]
         with open(
             os.path.join(
@@ -208,10 +209,10 @@ class TestSphinx(unittest.TestCase):
             "Sigma=0.2;\n",
             "Xcorr=PBE;\n",
             "Estep=400;\n",
-            "Ediff=1e-07;\n",
+            "Ediff=0.0001;\n",
             "WriteWaves=true;\n",
             "KJxc=false;\n",
-            "SaveMemory=false;\n",
+            "SaveMemory=true;\n",
             "CoarseRun=false;\n",
             "rhoMixing=1.0;\n",
             "spinMixing=1.0;\n",
