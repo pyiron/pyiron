@@ -912,7 +912,7 @@ class LammpsBase(AtomisticGenericJob):
         )
         output["forces"] = np.matmul(forces, rotation_lammps2orig)
 
-        if "vx" in content.columns.values and "vy" in content.columns.values and "vz" in content.columns.values:
+        if "vx" in content[0].columns.values and "vy" in content[0].columns.values and "vz" in content[0].columns.values:
             velocities = np.array(
                 [np.stack((cc["vx"], cc["vy"], cc["vz"]), axis=-1) for cc in content]
             )
