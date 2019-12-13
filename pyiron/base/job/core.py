@@ -8,6 +8,7 @@ import os
 import posixpath
 import time
 import math
+import stat
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.template import PyironObject
 from tables import NoSuchNodeError
@@ -903,7 +904,7 @@ class JobCore(PyironObject):
                     "w:bz2",
                 ) as tar:
                     for name in files_to_compress:
-                        if "tar" not in name:
+                        if "tar" not in name and not stat.S_ISFIFO(os.stat(name).st_mode):
                             tar.add(name)
                 for name in files_to_compress:
                     if "tar" not in name:
