@@ -69,9 +69,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
 
     def interactive_energy_pot_getter(self):
         self._interactive_pipe_write("get energy")
-        return np.array(
-            float(self._interactive_library_read.readline()) * HARTREE_TO_EV
-        )
+        return float(self._interactive_library_read.readline()) * HARTREE_TO_EV
 
     def interactive_forces_getter(self):
         self._interactive_pipe_write("get forces")
