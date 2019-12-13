@@ -149,13 +149,14 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
         pyiron.atomistics.structure.atoms.Atoms: The required structure object
 
     """
-    string = [s.strip().lower() for s in string]
+    string = [s.strip() for s in string]
+    string_lower = [s.lower() for s in string]
     atoms_dict = dict()
     atoms_dict["first_line"] = string[0]
     # del string[0]
     atoms_dict["selective_dynamics"] = False
     atoms_dict["relative"] = False
-    if "direct" in string or "d" in string:
+    if "direct" in string_lower or "d" in string_lower:
         atoms_dict["relative"] = True
     atoms_dict["scaling_factor"] = float(string[1])
     unscaled_cell = list()
@@ -170,7 +171,7 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
         atoms_dict["cell"] = np.array(unscaled_cell) * (
             (-atoms_dict["scaling_factor"]) ** (1.0 / 3.0)
         )
-    if "selective dynamics" in string:
+    if "selective dynamics" in string_lower:
         atoms_dict["selective_dynamics"] = True
     no_of_species = len(string[5].split())
     species_dict = OrderedDict()
