@@ -182,7 +182,7 @@ class LammpsControl(GenericParameters):
                 + "fix___ensemble      all nve\n"
                 + "variable___dumptime equal 100\n"
                 + "dump___1            all custom ${dumptime} dump.out id type xsu ysu zsu fx fy fz vx vy vz\n"
-                + 'dump_modify___1     sort id format line "%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g"\n'
+                + "dump_modify___1     sort id format line \"%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g\"\n"
                 + "thermo_style        custom step temp pe etotal pxx pxy pxz pyy pyz pzz vol\n"
                 + "thermo_modify       format float %20.15g\n"
                 + "thermo              100\n"
