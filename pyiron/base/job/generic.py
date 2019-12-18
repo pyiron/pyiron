@@ -489,8 +489,8 @@ class GenericJob(JobCore):
         Copy the content of the job including the HDF5 file to a new location
 
         Args:
-            project (ProjectHDFio): project to copy the job to
-            new_job_name (str): to duplicate the job within the same porject it is necessary to modify the job name
+            project (ProjectHDFio): The project to copy the job to
+            new_job_name (str): to duplicate the job within the same project it is necessary to modify the job name
                                 - optional
             input_only (bool): [True/False] to copy only the input - default False
             new_database_entry (bool): [True/False] to create a new database entry - default True
@@ -500,23 +500,32 @@ class GenericJob(JobCore):
         """
         if project is None and new_job_name is None:
             raise ValueError("copy_to requires either a new project or a new_job_name.")
+
         if not self.project_hdf5.file_exists:
             self.to_hdf()
             delete_file_after_copy = True
         else:
             delete_file_after_copy = False
-        if project is None and new_job_name is not None:
+
+        in_same_project = project is None
+        if not in_same_project:
+            in_same_project = project.path == self.project.path
+
+        if in_same_project:
             new_generic_job = self.copy()
             new_generic_job.reset_job_id()
+
             if len(self.project_hdf5.h5_path.split("/")) > 2:
                 new_location = self.project_hdf5.open("../" + new_job_name)
             else:
                 new_location = self.project_hdf5.__class__(
                     self.project, new_job_name, h5_path="/" + new_job_name
                 )
+
             new_generic_job._name = new_job_name
             new_generic_job.project_hdf5.copy_to(new_location, maintain_name=False)
             new_generic_job.project_hdf5 = new_location
+
             if new_database_entry:
                 new_generic_job.save()
         else:
@@ -525,15 +534,19 @@ class GenericJob(JobCore):
             )
             new_generic_job.reset_job_id(job_id=new_generic_job.job_id)
             new_generic_job.from_hdf()
+
         if input_only:
             if "output" in new_generic_job.project_hdf5.list_groups():
                 del new_generic_job.project_hdf5[
                     posixpath.join(new_generic_job.project_hdf5.h5_path, "output")
                 ]
+
         if delete_file_after_copy:
             self.project_hdf5.remove_file()
-        if project is not None and new_job_name:
+
+        if project is not None and new_job_name is not None:
             new_generic_job.job_name = new_job_name
+
         return new_generic_job
 
     def copy_file_to_working_directory(self, file):
