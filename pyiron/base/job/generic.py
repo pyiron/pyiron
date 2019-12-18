@@ -482,9 +482,7 @@ class GenericJob(JobCore):
         copied_self._job_id = None
         return copied_self
 
-    def copy_to(
-        self, project=None, new_job_name=None, input_only=False, new_database_entry=True
-    ):
+    def copy_to(self, project=None, new_job_name=None, input_only=False, new_database_entry=True):
         """
         Copy the content of the job including the HDF5 file to a new location.
 
