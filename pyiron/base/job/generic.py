@@ -486,14 +486,14 @@ class GenericJob(JobCore):
         self, project=None, new_job_name=None, input_only=False, new_database_entry=True
     ):
         """
-        Copy the content of the job including the HDF5 file to a new location
+        Copy the content of the job including the HDF5 file to a new location.
 
         Args:
-            project (ProjectHDFio): The project to copy the job to
-            new_job_name (str): to duplicate the job within the same project it is necessary to modify the job name
-                                - optional
-            input_only (bool): [True/False] to copy only the input - default False
-            new_database_entry (bool): [True/False] to create a new database entry - default True
+            project (ProjectHDFio): The project to copy the job to. (Default is None, use the same project.)
+            new_job_name (str): The new name to assign the duplicate job. Required if the project is `None` or the same
+                project as the copied job. (Default is None, try to keep the same name.)
+            input_only (bool): [True/False] Whether to copy only the input. (Default is False.)
+            new_database_entry (bool): [True/False] Whether to create a new database entry. (Default is True.)
 
         Returns:
             GenericJob: GenericJob object pointing to the new location.
