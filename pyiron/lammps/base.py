@@ -912,6 +912,12 @@ class LammpsBase(AtomisticGenericJob):
         )
         output["forces"] = np.matmul(forces, rotation_lammps2orig)
 
+        if np.all([flag in content[0].columns.values for flag in ["vx", "vy", "vz"]]):
+            velocities = np.array(
+                [np.stack((cc["vx"], cc["vy"], cc["vz"]), axis=-1) for cc in content]
+            )
+            output["velocities"] = np.matmul(velocities, rotation_lammps2orig)
+
         direct_unwrapped_positions = np.array(
             [np.stack((cc["xsu"], cc["ysu"], cc["zsu"]), axis=-1) for cc in content]
         )
