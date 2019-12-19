@@ -1032,7 +1032,7 @@ class Project(ProjectPath):
             enforce (bool): [True/False] delete jobs even though they are used in other projects - default=False
             enable (bool): [True/False] enable this command.
         """
-        if not enable:
+        if enable is not True:
             raise ValueError(
                 "To prevent users from accidentally deleting files - enable has to be set to True."
             )
