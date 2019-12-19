@@ -249,8 +249,7 @@ class LammpsControl(GenericParameters):
             elif len(str_press) > 1:
                 str_press += " couple none"
             self.set(fix___ensemble=r"all box/relax" + str_press)
-        else:
-            self.remove_keys(["fix___nve"])
+        self.remove_keys(["fix___nve"])
         self.set(min_style=style)
         self.set(
             minimize=str(e_tol)
