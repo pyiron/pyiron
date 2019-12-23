@@ -6,6 +6,7 @@ import os
 import numpy as np
 import unittest
 import warnings
+import scipy
 from pyiron.project import Project
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.atomistics.structure.atoms import Atoms
@@ -152,7 +153,7 @@ class TestSphinx(unittest.TestCase):
             "scfDiag {\n",
             "\trhoMixing = 1.0;\n",
             "\tspinMixing = 1.0;\n",
-            "\tdEnergy = Ediff/27.21138602;\n",
+            "\tdEnergy = Ediff/"+str(scipy.constants.physical_constants["Hartree energy in eV"][0])+";\n",
             "\tmaxSteps = 400;\n",
             "\tblockCCG {}\n",
             "}\n",
