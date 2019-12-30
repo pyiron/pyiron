@@ -316,6 +316,7 @@ class TestSphinx(unittest.TestCase):
         self.sphinx.calc_minimize(electronic_steps=100, ionic_steps=50)
         self.assertEqual(self.sphinx.input["Estep"], 100)
         self.assertEqual(self.sphinx.input["Istep"], 50)
+        self.assertEqual(self.sphinx._control_str['linQN']['maxSteps'], '50')
 
     def test_check_setup(self):
         self.assertFalse(self.sphinx.check_setup())
