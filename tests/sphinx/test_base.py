@@ -7,9 +7,16 @@ import numpy as np
 import unittest
 import warnings
 import scipy
+import scipy.constants
 from pyiron.project import Project
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.atomistics.structure.atoms import Atoms
+
+BOHR_TO_ANGSTROM = (
+    scipy.constants.physical_constants["Bohr radius"][0] / scipy.constants.angstrom
+)
+HARTREE_TO_EV = scipy.constants.physical_constants["Hartree energy in eV"][0]
+HARTREE_OVER_BOHR_TO_EV_OVER_ANGSTROM = HARTREE_TO_EV / BOHR_TO_ANGSTROM
 
 
 class TestSphinx(unittest.TestCase):
@@ -343,8 +350,10 @@ class TestSphinx(unittest.TestCase):
         self.assertEqual(self.sphinx.exchange_correlation_functional, "PBE")
 
     def test_write_structure(self):
+        cell = (self.sphinx.structure.cell/BOHR_TO_ANGSTROM).tolist()
+        pos_2 = (self.sphinx.structure.positions[1]/BOHR_TO_ANGSTROM).tolist()
         file_content = [
-            "cell = [[4.913287926190353, 0.0, 0.0], [0.0, 4.913287926190353, 0.0], [0.0, 0.0, 4.913287926190353]];\n",
+            "cell = "+str(cell)+";\n",
             "species {\n",
             '\telement = "Fe";\n',
             "\tatom {\n",
@@ -353,7 +362,7 @@ class TestSphinx(unittest.TestCase):
             "\t}\n",
             "\tatom {\n",
             '\t\tlabel = "spin_0.5";\n',
-            "\t\tcoords = [2.4566439630951766, 2.4566439630951766, 2.4566439630951766];\n",
+            "\t\tcoords = "+str(pos_2)+";\n",
             "\t}\n",
             "}\n",
         ]
