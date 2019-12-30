@@ -426,8 +426,8 @@ class TestSphinx(unittest.TestCase):
         residue_lst = (residue_lst*HARTREE_TO_EV).tolist()
         energy_int_lst = np.loadtxt(file_location+"energy.dat")[:,2].reshape(1, -1)
         energy_int_lst = (energy_int_lst*HARTREE_TO_EV).tolist()
-        with open(file_location+"sphinx.log") as ff:
-            energy_free_lst = [[float(line.split('=')[-1])*HARTREE_TO_EV for line in ff if line.startswith('F(')]]
+        with open(file_location+"sphinx.log") as ffile:
+            energy_free_lst = [[float(line.split('=')[-1])*HARTREE_TO_EV for line in ffile if line.startswith('F(')]]
         energy_zero_lst = [(0.5*(np.array(ff)+np.array(uu))).tolist() for ff, uu in zip(energy_free_lst, energy_int_lst)]
         eig_lst = [np.loadtxt(file_location+"eps.dat")[:, 1:].tolist()]
         self.sphinx_2_3.collect_output()
