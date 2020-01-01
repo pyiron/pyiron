@@ -58,6 +58,7 @@ class LammpsBase(AtomisticGenericJob):
         self._cutoff_radius = None
         self._is_continuation = None
         self._compress_by_default = True
+        self._prism = None
         s.publication_add(self.publication)
 
     @property
@@ -168,6 +169,11 @@ class LammpsBase(AtomisticGenericJob):
             v = self.input.potential[val]
             if v is not None:
                 self.input.control[val] = v
+                if val == "units" and v != "metal":
+                    warnings.warn(
+                        "WARNING: Non-'metal' units are not fully supported. Your calculation should run OK, but "
+                        "results may not be saved in pyiron units."
+                    )
         self.input.potential.remove_structure_block()
 
     @property
@@ -414,6 +420,9 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
 
         """
+        prism = UnfoldingPrism(self.structure.cell, digits=15)
+        if np.matrix.trace(prism.R) != 3:
+            raise RuntimeError("The Lammps output will not be mapped back to pyiron correctly.")
         file_name = self.job_file_name(file_name=file_name, cwd=cwd)
         with h5py.File(file_name, mode="r", libver="latest", swmr=True) as h5md:
             positions = [
@@ -550,20 +559,16 @@ class LammpsBase(AtomisticGenericJob):
                 hdf_output[k] = np.array(v)
 
     def calc_minimize(
-        self, e_tol=0.0, f_tol=1e-2, max_iter=100000, pressure=None, n_print=100
+            self,
+            e_tol=0.0,
+            f_tol=1e-4,
+            max_iter=100000,
+            pressure=None,
+            n_print=100,
+            style='cg'
     ):
-        """
-
-        Args:
-            e_tol:
-            f_tol:
-            max_iter:
-            pressure:
-            n_print:
-
-        Returns:
-
-        """
+        self._ensure_requested_cell_deformation_allowed(pressure)
+        # Docstring set programmatically -- Ensure that changes to signature or defaults stay consistent!
         super(LammpsBase, self).calc_minimize(
             e_tol=e_tol,
             f_tol=f_tol,
@@ -577,7 +582,9 @@ class LammpsBase(AtomisticGenericJob):
             max_iter=max_iter,
             pressure=pressure,
             n_print=n_print,
+            style=style,
         )
+    calc_minimize.__doc__ = LammpsControl.calc_minimize.__doc__
 
     def calc_static(self):
         """
@@ -638,6 +645,7 @@ class LammpsBase(AtomisticGenericJob):
             warnings.warn(
                 "calc_md() is not implemented for the non modal interactive mode use calc_static()!"
             )
+        self._ensure_requested_cell_deformation_allowed(pressure)
         super(LammpsBase, self).calc_md(
             temperature=temperature,
             pressure=pressure,
@@ -700,7 +708,6 @@ class LammpsBase(AtomisticGenericJob):
             contain at least one atom of each species.
 
         Warning:
-            - Assumes the units are metal, otherwise units for the constraints may be off.
             - The fix does not yet support non-orthogonal simulation boxes; using one will give a runtime error.
 
         Args:
@@ -843,8 +850,7 @@ class LammpsBase(AtomisticGenericJob):
         output = {}
         with open(file_name, "r") as ff:
             dump = ff.readlines()
-        prism = UnfoldingPrism(self.structure.cell, digits=15)
-        rotation_lammps2orig = np.linalg.inv(prism.R)
+
         time = np.genfromtxt(
             [
                 dump[nn]
@@ -855,6 +861,7 @@ class LammpsBase(AtomisticGenericJob):
         )
         time = np.array([time]).flatten()
         output["time"] = time
+
         natoms = np.genfromtxt(
             [
                 dump[nn]
@@ -866,11 +873,14 @@ class LammpsBase(AtomisticGenericJob):
             dtype=int,
         )
         natoms = np.array([natoms]).flatten()
+
+        prism = self._prism
+        rotation_lammps2orig = self._prism.R.T
         cells = np.genfromtxt(
             " ".join(
                 (
                     [
-                        " ".join(dump[nn : nn + 3])
+                        " ".join(dump[nn:nn + 3])
                         for nn in np.where(
                             [ll.startswith("ITEM: BOX BOUNDS") for ll in dump]
                         )[0]
@@ -879,8 +889,11 @@ class LammpsBase(AtomisticGenericJob):
                 )
             ).split()
         ).reshape(len(natoms), -1)
-        cells = np.array([to_amat(cc) for cc in cells])
-        output["cells"] = cells
+        lammps_cells = np.array([to_amat(cc) for cc in cells])
+        unfolded_cells = np.array([prism.unfold_cell(cell) for cell in lammps_cells])
+        output["cells"] = unfolded_cells
+
+
         l_start = np.where([ll.startswith("ITEM: ATOMS") for ll in dump])[0]
         l_end = l_start + natoms + 1
         content = [
@@ -890,22 +903,31 @@ class LammpsBase(AtomisticGenericJob):
             )
             for llst, llen in zip(l_start, l_end)
         ]
+
         indices = np.array([cc["type"] for cc in content], dtype=int)
         output["indices"] = self.remap_indices(indices)
+
         forces = np.array(
             [np.stack((cc["fx"], cc["fy"], cc["fz"]), axis=-1) for cc in content]
         )
-        output["forces"] = np.einsum("ijk,kl->ijl", forces, rotation_lammps2orig)
-        unwrapped_positions = np.array(
+        output["forces"] = np.matmul(forces, rotation_lammps2orig)
+
+        if np.all([flag in content[0].columns.values for flag in ["vx", "vy", "vz"]]):
+            velocities = np.array(
+                [np.stack((cc["vx"], cc["vy"], cc["vz"]), axis=-1) for cc in content]
+            )
+            output["velocities"] = np.matmul(velocities, rotation_lammps2orig)
+
+        direct_unwrapped_positions = np.array(
             [np.stack((cc["xsu"], cc["ysu"], cc["zsu"]), axis=-1) for cc in content]
         )
-        positions = unwrapped_positions - np.floor(unwrapped_positions)
-        unwrapped_positions = np.einsum("ikj,ilk->ilj", cells, unwrapped_positions)
-        output["unwrapped_positions"] = np.einsum(
-            "ijk,kl->ijl", unwrapped_positions, rotation_lammps2orig
-        )
-        positions = np.einsum("ikj,ilk->ilj", cells, positions)
-        output["positions"] = np.einsum("ijk,kl->ijl", positions, rotation_lammps2orig)
+        unwrapped_positions = np.matmul(direct_unwrapped_positions, lammps_cells)
+        output["unwrapped_positions"] = np.matmul(unwrapped_positions, rotation_lammps2orig)
+
+        direct_positions = direct_unwrapped_positions - np.floor(direct_unwrapped_positions)
+        positions = np.matmul(direct_positions, lammps_cells)
+        output["positions"] = np.matmul(positions, rotation_lammps2orig)
+
         with self.project_hdf5.open("output/generic") as hdf_output:
             for k, v in output.items():
                 hdf_output[k] = v
@@ -972,10 +994,27 @@ class LammpsBase(AtomisticGenericJob):
         else:
             lmp_structure.cutoff_radius = self.cutoff_radius
         lmp_structure.el_eam_lst = self.input.potential.get_element_lst()
+
+        def structure_to_lammps(structure):
+            """
+            Converts a structure to the Lammps coordinate frame
+
+            Args:
+                structure (pyiron.atomistics.structure.atoms.Atoms): Structure to convert.
+
+            Returns:
+                pyiron.atomistics.structure.atoms.Atoms: Structure with the LAMMPS coordinate frame.
+            """
+            prism = UnfoldingPrism(structure.cell)
+            lammps_structure = structure.copy()
+            lammps_structure.cell = prism.A
+            lammps_structure.positions = np.matmul(structure.positions, prism.R)
+            return lammps_structure
+
         if structure is not None:
-            lmp_structure.structure = structure
+            lmp_structure.structure = structure_to_lammps(structure)
         else:
-            lmp_structure.structure = self.structure
+            lmp_structure.structure = structure_to_lammps(self.structure)
         if not set(lmp_structure.structure.get_species_symbols()).issubset(
             set(lmp_structure.el_eam_lst)
         ):
@@ -1091,6 +1130,33 @@ class LammpsBase(AtomisticGenericJob):
                         self.input.control[
                             "velocity___constraintz"
                         ] = "set NULL NULL 0.0"
+
+    def _ensure_requested_cell_deformation_allowed(self, pressure):
+        """
+        Lammps will not allow xy/xz/yz cell deformations in minimization or MD for non-triclinic cells. In case the
+        requested pressure for a calculation has these non-diagonal entries, we need to make sure it will run. One way
+        to do this is by invoking the lammps `change_box` command, but it is easier to just force our box to to be
+        triclinic by adding a very small cell perturbation (in the case where it isn't triclinic already).
+
+        Args:
+            pressure (float/int/list/numpy.ndarray/tuple): Between three and six pressures for the x, y, z, xy, xz, and
+                yz directions, in that order, or a single value.
+        """
+        if hasattr(pressure, '__len__'):
+            non_diagonal_pressures = np.any([p is not None for p in pressure[3:]])
+
+            if non_diagonal_pressures:
+                try:
+                    if not self._prism.is_skewed():
+                        skew_structure = self.structure.copy()
+                        skew_structure.cell[0, 1] += 2 * self._prism.acc
+                        self.structure = skew_structure
+                except AttributeError:
+                    warnings.warn(
+                        "WARNING: Setting a calculation type which uses pressure before setting the structure risks " +
+                        "constraining your cell shape evolution if non-diagonal pressures are used but the structure " +
+                        "is not triclinic from the start of the calculation."
+                    )
 
 
 class Input:

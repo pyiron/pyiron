@@ -5,13 +5,11 @@
 from __future__ import print_function
 import os
 import posixpath
-from shutil import copyfile
 import subprocess
 import numpy as np
-import tables
 
 from pyiron.dft.job.generic import GenericDFTJob
-from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentialSetter
+from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentialSetter, Potcar
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
@@ -22,7 +20,7 @@ from pyiron.vasp.structure import read_atoms, write_poscar, vasp_sorter
 from pyiron.vasp.vasprun import Vasprun as Vr
 from pyiron.vasp.vasprun import VasprunError
 from pyiron.vasp.volumetric_data import VaspVolumetricData
-from pyiron.vasp.potential import find_potential_file
+from pyiron.vasp.potential import get_enmax_among_species
 from pyiron.dft.waves.electronic import ElectronicStructure
 from pyiron.dft.waves.bandstructure import Bandstructure
 import warnings
@@ -83,6 +81,7 @@ class VaspBase(GenericDFTJob):
         self._output_parser = Output()
         self._potential = VaspPotentialSetter([])
         self._compress_by_default = True
+        self.get_enmax_among_species = get_enmax_among_species
         s.publication_add(self.publication)
 
     @property
@@ -999,6 +998,8 @@ class VaspBase(GenericDFTJob):
         self.input.incar["NSW"] = n_ionic_steps
         self.input.incar["NBLOCK"] = int(n_print)
         self.input.incar["POTIM"] = time_step
+        if "ISYM" not in self.input.incar.keys():
+            self.input.incar["ISYM"] = 0
         if retain_charge_density:
             self.write_charge_density = retain_charge_density
         if retain_electrostatic_potential:
@@ -1015,6 +1016,8 @@ class VaspBase(GenericDFTJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
+        n_trace=None,
+        trace=None,
     ):
         """
         Function to setup the k-points for the VASP job
@@ -1029,8 +1032,9 @@ class VaspBase(GenericDFTJob):
             reciprocal (bool): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
             reciprocal space)
             kmesh_density (float): Value of the required density
+            n_trace (int): Number of points per trace part for line mode
+            trace (list): ordered list of high symmetry points for line mode
         """
-
         if not symmetry_reduction:
             self.input.incar["ISYM"] = -1
         scheme_list = ["MP", "GP", "Line", "Manual"]
@@ -1043,7 +1047,19 @@ class VaspBase(GenericDFTJob):
         if scheme == "GP":
             self.input.kpoints.set(size_of_mesh=[1, 1, 1], method="Gamma Point")
         if scheme == "Line":
-            raise NotImplementedError("The line mode is not implemented as yet")
+            if n_trace is None:
+                raise ValueError("n_trace has to be defined")
+            high_symmetry_points = self.structure.get_high_symmetry_points()
+            if high_symmetry_points is None:
+                raise ValueError("high_symmetry_points has to be defined")
+            if trace is None:
+                raise ValueError("trace_points has to be defined")
+            self.input.kpoints._set_trace(trace)
+            self.input.kpoints.set(
+                method="Line",
+                n_trace=n_trace,
+                trace_coord=self._get_trace_for_kpoints(trace)
+            )
         if scheme == "Manual":
             if manual_kpoints is None:
                 raise ValueError(
@@ -1067,6 +1083,28 @@ class VaspBase(GenericDFTJob):
                         line=3 + i,
                         val=" ".join([str(kpt[0]), str(kpt[1]), str(kpt[2]), str(wt)]),
                     )
+
+    def _get_trace_for_kpoints(self, trace):
+        """
+        gets the trace for k-points line mode in a VASP readable form.
+
+        Args:
+            trace (list): ordered list of names for k-points trace
+
+        Returns:
+            list: trace points coordinates for VASP
+        """
+        for t in trace:
+            if t not in self.structure.get_high_symmetry_points().keys():
+                raise ValueError("trace point '{}' is not in high symmetry points".format(t))
+
+        trace_roll = np.roll(trace, -1)
+        k_trace = []
+        for i, t in enumerate(trace):
+            k_trace.append(self.structure.get_high_symmetry_points()[t])
+            k_trace.append(self.structure.get_high_symmetry_points()[trace_roll[i]])
+
+        return k_trace[:-2]
 
     def set_for_band_structure_calc(
         self, num_points, structure=None, read_charge_density=True
@@ -1648,8 +1686,13 @@ class Input:
             self.kpoints.to_hdf(hdf5_input)
             self.potcar.to_hdf(hdf5_input)
 
-            vasp_dict = {"eddrmm_handling": self._eddrmm}
-            hdf5_input["vasp_dict"] = vasp_dict
+            if "vasp_dict" in hdf5_input.list_nodes():
+                vasp_dict = hdf5_input["vasp_dict"]
+                vasp_dict.update({"eddrmm_handling": self._eddrmm})
+                hdf5_input["vasp_dict"] = vasp_dict
+            else:
+                vasp_dict = {"eddrmm_handling": self._eddrmm}
+                hdf5_input["vasp_dict"] = vasp_dict
 
     def from_hdf(self, hdf):
         """
@@ -1662,11 +1705,12 @@ class Input:
             self.incar.from_hdf(hdf5_input)
             self.kpoints.from_hdf(hdf5_input)
             self.potcar.from_hdf(hdf5_input)
+
+            self._eddrmm = "ignore"
             if "vasp_dict" in hdf5_input.list_nodes():
                 vasp_dict = hdf5_input["vasp_dict"]
-                self._eddrmm = vasp_dict["eddrmm_handling"]
-            else:
-                self._eddrmm = "ignore"
+                if "eddrmm_handling" in vasp_dict.keys():
+                    self._eddrmm = vasp_dict["eddrmm_handling"]
 
 
 class Output:
@@ -2115,7 +2159,6 @@ class Incar(GenericParameters):
 SYSTEM =  ToDo  # jobname
 PREC = Accurate
 ALGO = Fast
-ENCUT = 250
 LREAL = False
 LWAVE = False
 LORBIT = 0
@@ -2135,15 +2178,52 @@ class Kpoints(GenericParameters):
             val_only=True,
             comment_char="!",
         )
+        self._trace = None
 
-    def set(self, method=None, size_of_mesh=None, shift=None):
+    def _set_trace(self, trace):
+        """
+        Sets high symmetry points names of k-points trace (line mode only)
+
+        Args:
+            trace (list): new trace
+        """
+        self._trace = trace
+
+    def _get_trace(self):
+        """
+        Returns high symmetry points name of k-points trace (Line mode only)
+
+        Returns:
+            list: trace values
+        """
+        return self._trace
+
+    def set(self, method=None, size_of_mesh=None, shift=None, n_trace=None, trace_coord=None):
         """
         Sets appropriate tags and values in the KPOINTS file
         Args:
             method (str): Type of meshing scheme (Gamma Point, MP, Manual or Line)
             size_of_mesh (list/numpy.ndarray): List of size 1x3 specifying the required mesh size
             shift (list): List of size 1x3 specifying the user defined shift from the Gamma point
+            n_trace (int): Number of points per trace for line mode
+            trace_coord (list): coordinates of k-points trace in VASP KPOINTS format
         """
+        if n_trace is not None:
+            if self._trace is None or trace_coord is None:
+                raise ValueError("trace have to be defined")
+
+            self.set_value(line=1, val=n_trace)
+            self.set_value(line=3, val="rec")
+
+            trace_names = []
+            for i in range(len(self._trace) - 1):
+                trace_names.append(self._trace[i])
+                trace_names.append(self._trace[i + 1])
+
+            for i, t in enumerate(trace_coord):
+                val = " ".join([str(ii) for ii in t])
+                val = val + " !" + trace_names[i]
+                self.set_value(line=i + 4, val=val)
         if method is not None:
             self.set_value(line=2, val=method)
         if size_of_mesh is not None:
@@ -2178,152 +2258,44 @@ Monkhorst_Pack
                 )
                 self.set(size_of_mesh=k_mesh)
 
-
-class Potcar(GenericParameters):
-    pot_path_dict = {"GGA": "paw-gga-pbe", "PBE": "paw-gga-pbe", "LDA": "paw-lda"}
-
-    def __init__(self, input_file_name=None, table_name="potcar"):
-        GenericParameters.__init__(
-            self,
-            input_file_name=input_file_name,
-            table_name=table_name,
-            val_only=False,
-            comment_char="#",
-        )
-        self._structure = None
-        self.electrons_per_atom_lst = list()
-        self.max_cutoff_lst = list()
-        self.el_path_lst = list()
-        self.el_path_dict = dict()
-        self.modified_elements = dict()
-
-    def potcar_set_structure(self, structure, modified_elements):
-        self._structure = structure
-        self._set_default_path_dict()
-        self._set_potential_paths()
-        self.modified_elements = modified_elements
-
-    def modify(self, **modify):
-        if "xc" in modify:
-            xc_type = modify["xc"]
-            self._set_default_path_dict()
-            if xc_type not in self.pot_path_dict:
-                raise ValueError("xc type not implemented: " + xc_type)
-        GenericParameters.modify(self, **modify)
-        if self._structure is not None:
-            self._set_potential_paths()
-
-    def _set_default_path_dict(self):
-        if self._structure is None:
-            return
-        vasp_potentials = VaspPotentialFile(xc=self.get("xc"))
-        for i, el_obj in enumerate(self._structure.get_species_objects()):
-            if isinstance(el_obj.Parent, str):
-                el = el_obj.Parent
-            else:
-                el = el_obj.Abbreviation
-            if isinstance(el_obj.tags, dict):
-                if "pseudo_potcar_file" in el_obj.tags.keys():
-                    new_element = el_obj.tags["pseudo_potcar_file"]
-                    vasp_potentials.add_new_element(
-                        parent_element=el, new_element=new_element
-                    )
-            key = vasp_potentials.find_default(el).Species.values[0][0]
-            val = vasp_potentials.find_default(el).Name.values[0]
-            self[key] = val
-
-    def _set_potential_paths(self):
-        element_list = (
-            self._structure.get_species_symbols()
-        )  # .ElementList.getSpecies()
-        object_list = self._structure.get_species_objects()
-        s.logger.debug("element list: {0}".format(element_list))
-        self.el_path_lst = list()
-        try:
-            xc = self.get("xc")
-        except tables.exceptions.NoSuchNodeError:
-            xc = self.get("xc")
-        s.logger.debug("XC: {0}".format(xc))
-        vasp_potentials = VaspPotentialFile(xc=xc)
-        for i, el_obj in enumerate(object_list):
-            if isinstance(el_obj.Parent, str):
-                el = el_obj.Parent
-            else:
-                el = el_obj.Abbreviation
-            if (
-                isinstance(el_obj.tags, dict)
-                and "pseudo_potcar_file" in el_obj.tags.keys()
-            ):
-                new_element = el_obj.tags["pseudo_potcar_file"]
-                vasp_potentials.add_new_element(
-                    parent_element=el, new_element=new_element
-                )
-                el_path = find_potential_file(
-                    path=vasp_potentials.find_default(new_element)["Filename"].values[
-                        0
-                    ][0],
-                    pot_path_dict=self.pot_path_dict,
-                )
-                if not (os.path.isfile(el_path)):
-                    raise ValueError("such a file does not exist in the pp directory")
-            else:
-                el_path = find_potential_file(
-                    path=vasp_potentials.find_default(el)["Filename"].values[0][0],
-                    pot_path_dict=self.pot_path_dict,
-                )
-
-            if not (os.path.isfile(el_path)):
-                raise AssertionError()
-            pot_name = "pot_" + str(i)
-
-            if pot_name in self._dataset["Parameter"]:
-                try:
-                    ind = self._dataset["Parameter"].index(pot_name)
-                except (ValueError, IndexError):
-                    indices = np.core.defchararray.find(
-                        self._dataset["Parameter"], pot_name
-                    )
-                    ind = np.where(indices == 0)[0][0]
-                self._dataset["Value"][ind] = el_path
-                self._dataset["Comment"][ind] = ""
-            else:
-                self._dataset["Parameter"].append("pot_" + str(i))
-                self._dataset["Value"].append(el_path)
-                self._dataset["Comment"].append("")
-            if el_obj.Abbreviation in self.modified_elements.keys():
-                self.el_path_lst.append(self.modified_elements[el_obj.Abbreviation])
-            else:
-                self.el_path_lst.append(el_path)
-
-    def write_file(self, file_name, cwd=None):
+    def to_hdf(self, hdf, group_name=None):
         """
+        Store the GenericParameters in an HDF5 file
+
         Args:
-            file_name:
-            cwd:
-        Returns:
+            hdf (ProjectHDFio): HDF5 group object
+            group_name (str): HDF5 subgroup name - optional
         """
-        self.electrons_per_atom_lst = list()
-        self.max_cutoff_lst = list()
-        self._set_potential_paths()
-        if cwd is not None:
-            file_name = posixpath.join(cwd, file_name)
-        f = open(file_name, "w")
-        for el_file in self.el_path_lst:
-            with open(el_file) as pot_file:
-                for i, line in enumerate(pot_file):
-                    f.write(line)
-                    if i == 1:
-                        self.electrons_per_atom_lst.append(int(float(line)))
-                    elif i == 14:
-                        mystr = line.split()[2][:-1]
-                        self.max_cutoff_lst.append(float(mystr))
-        f.close()
+        super(Kpoints, self).to_hdf(
+            hdf=hdf,
+            group_name=group_name
+        )
+        if self._trace is not None:
+            if "vasp_dict" in hdf.list_nodes():
+                vasp_dict = hdf["vasp_dict"]
+                vasp_dict.update({"trace": self._trace})
+                hdf["vasp_dict"] = vasp_dict
+            else:
+                vasp_dict = {"trace": self._trace}
+                hdf["vasp_dict"] = vasp_dict
 
-    def load_default(self):
-        file_content = """\
-xc  GGA  # LDA, GGA
-"""
-        self.load_string(file_content)
+    def from_hdf(self, hdf, group_name=None):
+        """
+        Restore the GenericParameters from an HDF5 file
+
+        Args:
+            hdf (ProjectHDFio): HDF5 group object
+            group_name (str): HDF5 subgroup name - optional
+        """
+        super(Kpoints, self).from_hdf(
+            hdf=hdf,
+            group_name=group_name
+        )
+        self._trace = None
+        if "vasp_dict" in hdf.list_nodes():
+            vasp_dict = hdf["vasp_dict"]
+            if "trace" in vasp_dict.keys():
+                self._trace = vasp_dict["trace"]
 
 
 def get_k_mesh_by_cell(cell, kspace_per_in_ang=0.10):

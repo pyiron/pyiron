@@ -1,0 +1,16 @@
+EnCut=500;
+KpointCoords=[0.5, 0.5, 0.5];
+KpointFolding=[12, 12, 12];
+EmptyStates=51;
+Sigma=0.08617;
+Xcorr=PBE;
+Estep=400;
+Ediff=0.0001;
+WriteWaves=true;
+KJxc=false;
+SaveMemory=true;
+CoarseRun=false;
+rhoMixing=0.5;
+spinMixing=0.5;
+CheckOverlap=true;
+THREADS=1;

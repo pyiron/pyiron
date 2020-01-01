@@ -38,6 +38,14 @@ class TestLammps(unittest.TestCase):
             project=ProjectHDFio(project=cls.project, file_name="lammps_vcsgc_input"),
             job_name="lammps_vcsgc_input",
         )
+        cls.minimize_job = Lammps(
+            project=ProjectHDFio(project=cls.project, file_name="lammps"),
+            job_name="minimize_lammps",
+        )
+        cls.minimize_control_job = Lammps(
+            project=ProjectHDFio(project=cls.project, file_name="lammps"),
+            job_name="minimize_control_lammps",
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -405,32 +413,37 @@ class TestLammps(unittest.TestCase):
         bad_element = {s: 0. for s in symbols}
         bad_element.update({'X': 1.})  # Non-existant chemical symbol
         self.assertRaises(
-            ValueError, self.job_vcsgc_input.calc_vcsgc, mu=bad_element
+            ValueError, self.job_vcsgc_input.calc_vcsgc, mu=bad_element, temperature_mc=300.
         )
 
         self.assertRaises(
-            ValueError, self.job_vcsgc_input.calc_vcsgc, target_concentration=bad_element
+            ValueError, self.job_vcsgc_input.calc_vcsgc, target_concentration=bad_element, temperature_mc=300.
         )
 
         bad_conc = {s: 0. for s in symbols}
         bad_conc['Al'] = 0.99
         self.assertRaises(
-            ValueError, self.job_vcsgc_input.calc_vcsgc, target_concentration=bad_conc
+            ValueError, self.job_vcsgc_input.calc_vcsgc, target_concentration=bad_conc, temperature_mc=300.
         )
 
         self.assertRaises(
-            ValueError, self.job_vcsgc_input.calc_vcsgc, window_moves=-1
+            ValueError, self.job_vcsgc_input.calc_vcsgc, window_moves=-1, temperature_mc=300.
         )
         self.assertRaises(
-            ValueError, self.job_vcsgc_input.calc_vcsgc, window_moves=1.1
+            ValueError, self.job_vcsgc_input.calc_vcsgc, window_moves=1.1, temperature_mc=300.
         )
 
         self.assertRaises(
-            ValueError, self.job_vcsgc_input.calc_vcsgc, window_size=0.3
+            ValueError, self.job_vcsgc_input.calc_vcsgc, window_size=0.3, temperature_mc=300.
         )
 
         mu = {s: 0. for s in symbols}
         mu[symbols[0]] = 1.
+        self.assertRaises(
+            ValueError, self.job_vcsgc_input.calc_vcsgc, mu=mu, temperature_mc=None, temperature=None
+        )
+
+
         args = dict(
             mu=mu,
             target_concentration=None,
@@ -441,7 +454,7 @@ class TestLammps(unittest.TestCase):
             window_size=None,
             window_moves=None,
             seed=1,
-            temperature=300,
+            temperature=300.0,
         )
         input_string = 'all sgcmc {0} {1} {2} {3} randseed {4}'.format(
             args['mc_step_interval'],
@@ -484,6 +497,30 @@ class TestLammps(unittest.TestCase):
         input_string += ' window_size {0}'.format(args['window_size'])
         self.job_vcsgc_input.calc_vcsgc(**args)
         self.assertEqual(self.job_vcsgc_input.input.control['fix___vcsgc'], input_string)
+
+    def test_calc_minimize_input(self):
+        # Ensure that defaults match control defaults
+        atoms = Atoms("Fe", positions=np.zeros((8, 3)), cell=np.eye(3))
+        self.minimize_control_job.structure = atoms
+        self.minimize_control_job.input.control.calc_minimize()
+
+        self.minimize_job.sturcture = atoms
+        self.minimize_job.calc_minimize()
+        for k in self.job.input.control.keys():
+            self.assertEqual(self.minimize_job.input.control[k], self.minimize_control_job.input.control[k])
+
+        # Ensure that pressure inputs are being parsed OK
+        self.minimize_control_job.calc_minimize(pressure=0)
+        self.assertEqual(
+            self.minimize_control_job.input.control['fix___ensemble'],
+            "all box/relax x 0.0 y 0.0 z 0.0 couple none"
+        )
+
+        self.minimize_control_job.calc_minimize(pressure=[1, 2, None, 0., 0., None])
+        self.assertEqual(
+            self.minimize_control_job.input.control['fix___ensemble'],
+            "all box/relax x 10000.0 y 20000.0 xy 0.0 xz 0.0 couple none"
+        )
 
 
 if __name__ == "__main__":

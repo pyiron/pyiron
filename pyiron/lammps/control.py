@@ -22,6 +22,96 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 
+# Conversion factors for transfroming pyiron units to Lammps units (alphabetical)
+AMU_TO_G = spc.atomic_mass * spc.kilo
+AMU_TO_KG = spc.atomic_mass
+ANG_PER_FS_TO_ANG_PER_PS = spc.pico / spc.femto
+ANG_PER_FS_TO_BOHR_PER_FS = spc.angstrom / spc.physical_constants['Bohr radius'][0]
+ANG_PER_FS_TO_CM_PER_S = (spc.angstrom / spc.femto) / spc.centi
+ANG_PER_FS_TO_M_PER_S = spc.angstrom / spc.femto
+ANG_TO_BOHR = spc.angstrom / spc.physical_constants['Bohr radius'][0]
+ANG_TO_CM = spc.angstrom / spc.centi
+ANG_TO_M = spc.angstrom
+EL_TO_COUL = spc.elementary_charge
+EV_PER_ANG_TO_DYNE = (spc.electron_volt / spc.angstrom) / spc.dyne
+EV_PER_ANG_TO_HA_PER_BOHR = spc.physical_constants["electron volt-hartree relationship"][0] * \
+                            spc.physical_constants['Bohr radius'][0] / spc.angstrom
+EV_PER_ANG_TO_KCAL_PER_MOL_ANG = spc.eV / (spc.kilo * spc.calorie / spc.N_A)
+EV_PER_ANG_TO_N = spc.electron_volt / spc.angstrom
+EV_TO_ERG = spc.electron_volt / spc.erg
+EV_TO_HA = spc.physical_constants["electron volt-hartree relationship"][0]
+EV_TO_J = spc.electron_volt
+EV_TO_KCAL_PER_MOL = spc.eV / (spc.kilo * spc.calorie / spc.N_A)
+FS_TO_PS = spc.femto / spc.pico
+FS_TO_S = spc.femto
+GPA_TO_ATM = spc.giga / spc.atm
+GPA_TO_BAR = spc.giga / spc.bar
+GPA_TO_BARYE = spc.giga / (spc.micro * spc.bar)  # "barye" = 1e-6 bar
+GPA_TO_PA = spc.giga
+
+# Conversions for most of the Lammps units to Pyiron units
+# Lammps units source doc: https://lammps.sandia.gov/doc/units.html
+# Pyrion units source doc: https://pyiron.github.io/source/faq.html
+# At time of writing, not all these conversion factors are used, but may be helpful later.
+LAMMPS_UNIT_CONVERSIONS = {
+    "metal": {
+        "mass": 1.,
+        "distance": 1.,
+        "time": FS_TO_PS,
+        "energy": 1.,
+        "velocity": ANG_PER_FS_TO_ANG_PER_PS,
+        "force": 1.,
+        "temperature": 1.,
+        "pressure": GPA_TO_BAR,
+        "charge": 1.
+    },
+    "si": {
+        "mass": AMU_TO_KG,
+        "distance": ANG_TO_M,
+        "time": FS_TO_S,
+        "energy": EV_TO_J,
+        "velocity": ANG_PER_FS_TO_M_PER_S,
+        "force": EV_PER_ANG_TO_N,
+        "temperature": 1.,
+        "pressure": GPA_TO_PA,
+        "charge": EL_TO_COUL
+    },
+    "cgs": {
+        "mass": AMU_TO_G,
+        "distance": ANG_TO_CM,
+        "time": FS_TO_S,
+        "energy": EV_TO_ERG,
+        "velocity": ANG_PER_FS_TO_CM_PER_S,
+        "force": EV_PER_ANG_TO_DYNE,
+        "temperature": 1.,
+        "pressure": GPA_TO_BARYE,
+        "charge": 4.8032044e-10  # In statCoulombs, but these are deprecated and thus not in scipt.constants
+    },
+    "real": {
+        "mass": 1.,
+        "distance": 1.,
+        "time": 1.,
+        "energy": EV_TO_KCAL_PER_MOL,
+        "velocity": 1.,
+        "force": EV_PER_ANG_TO_KCAL_PER_MOL_ANG,
+        "temperature": 1.,
+        "pressure": GPA_TO_ATM,
+        "charge": 1.
+    },
+    "electron": {
+        "mass": 1.,
+        "distance": ANG_TO_BOHR,
+        "time": 1.,
+        "energy": EV_TO_HA,
+        "velocity": ANG_PER_FS_TO_BOHR_PER_FS,
+        "force": EV_PER_ANG_TO_HA_PER_BOHR,
+        "temperature": 1.,
+        "pressure": GPA_TO_PA,
+        "charge": 1.
+    },
+}
+
+
 class LammpsControl(GenericParameters):
     def __init__(self, input_file_name=None, **qwargs):
         super(LammpsControl, self).__init__(
@@ -91,8 +181,8 @@ class LammpsControl(GenericParameters):
                 + "include             potential.inp\n"
                 + "fix___ensemble      all nve\n"
                 + "variable___dumptime equal 100\n"
-                + "dump___1            all custom ${dumptime} dump.out id type xsu ysu zsu fx fy fz\n"
-                + 'dump_modify___1     sort id format line "%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g"\n'
+                + "dump___1            all custom ${dumptime} dump.out id type xsu ysu zsu fx fy fz vx vy vz\n"
+                + "dump_modify___1     sort id format line \"%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g\"\n"
                 + "thermo_style        custom step temp pe etotal pxx pxy pxz pyy pyz pzz vol\n"
                 + "thermo_modify       format float %20.15g\n"
                 + "thermo              100\n"
@@ -101,23 +191,66 @@ class LammpsControl(GenericParameters):
         self.load_string(file_content)
 
     def calc_minimize(
-        self, e_tol=0.0, f_tol=1e-8, max_iter=100000, pressure=None, n_print=100
+        self,
+        e_tol=0.0,
+        f_tol=1e-4,
+        max_iter=100000,
+        pressure=None,
+        n_print=100,
+        style='cg'
     ):
-        max_evaluations = 10 * max_iter
+        """
+        Sets parameters required for minimization.
+
+        Args:
+            e_tol (float): If the magnitude of difference between energies of two consecutive steps is lower than or
+                equal to `e_tol`, the minimisation terminates. (Default is 0.0 eV.)
+            f_tol (float): If the magnitude of the global force vector at a step is lower than or equal to `f_tol`, the
+                minimisation terminates. (Default is 1e-4 eV/angstrom.)
+            max_iter (int): Maximum number of minimisation steps to carry out. If the minimisation converges before
+                `max_iter` steps, terminate at the converged step. If the minimisation does not converge up to
+                `max_iter` steps, terminate at the `max_iter` step. (Default is 100000.)
+            pressure (float/list/tuple/numpy.ndarray): Pressure in GPa at which minimisation is to be carried out. If
+                None, isochoric (constant volume) condition will be used. If a float, cell shape changes are allowed.
+                in each of the three primary axes, but no shearing occurs. If array-like, (up to) the first six
+                elements will be interpreted as the x, y, z, xy, xz, and yz components of the pressure tensor,
+                respectively. If this component-wise mode is used, cell changes corresponding to any one element of the
+                stress tensor can be selectively disabled by setting this element to None. (Default is None, run
+                isochorically.)
+            n_print (int): Write (dump or print) to the output file every n steps (Default: 100)
+            style ('cg'/'sd'/other values from Lammps docs): The style of the numeric minimization, either conjugate
+                gradient, steepest descent, or other keys permissible from the Lammps docs on 'min_style'. (Default
+                is 'cg' -- conjugate gradient.)
+        """
+        # This docstring is a source for the calc_minimize method in pyiron.lammps.base.LammpsBase.calc_minimize and
+        # pyiron.lammps.interactive.LammpsInteractive.calc_minimize -- Please ensure that changes to signature or
+        # defaults stay consistent!
+
+        max_evaluations = 100 * max_iter
+
+        if self["units"] not in LAMMPS_UNIT_CONVERSIONS.keys():
+            raise NotImplementedError
+        energy_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["energy"]
+        force_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["force"]
+        pressure_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
+
+        e_tol *= energy_units
+        f_tol *= force_units
+
         if pressure is not None:
             if type(pressure) == float or type(pressure) == int:
                 pressure = pressure * np.ones(3)
             str_press = ""
-            for press, str_axis in zip(pressure, [" x ", " y ", " z "]):
+            for press, str_axis in zip(pressure, [" x ", " y ", " z ", " xy ", " xz ", " yz "][:len(pressure)]):
                 if press is not None:
-                    str_press += str_axis + str(press * 1.0e4)
+                    str_press += str_axis + str(press * pressure_units)
             if len(str_press) == 0:
-                raise ValueError("Pressure values cannot be three times None")
+                raise ValueError("Pressure values cannot all be None")
             elif len(str_press) > 1:
                 str_press += " couple none"
             self.set(fix___ensemble=r"all box/relax" + str_press)
-        else:
-            self.remove_keys(["fix___nve"])
+        self.remove_keys(["fix___nve"])
+        self.set(min_style=style)
         self.set(
             minimize=str(e_tol)
             + " "
@@ -219,7 +352,7 @@ class LammpsControl(GenericParameters):
                 performed. A length-3 list or array may be given to specify x-, y- and z-components individually. In
                 this case, floats and `None` may be mixed to allow relaxation only in particular directions.
             n_ionic_steps (int): Number of ionic steps
-            time_step (float): Step size between two steps. In fs if units==metal
+            time_step (float): Step size in fs between two steps.
             n_print (int):  Print frequency
             temperature_damping_timescale (float): The time associated with the thermostat adjusting the temperature.
                                                    (In fs. After rescaling to appropriate time units, is equivalent to
@@ -241,26 +374,11 @@ class LammpsControl(GenericParameters):
             delta_press (float): Barostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
             job_name (str): Job name of the job to generate a unique random seed.
         """
-        # Conversion factors for transfroming pyiron units to Lammps units
-        fs_to_ps = spc.femto / spc.pico
-        fs_to_s = spc.femto / 1.0
-        GPa_to_bar = spc.giga * 1.0 / spc.bar
-        GPa_to_Pa = spc.giga
-        GPa_to_barye = spc.giga * 1.0 / (1.0e-6 * spc.bar)  # Lammps is in "barye"
-        GPa_to_atm = spc.giga * 1.0 / spc.atm
-        lammps_unit_conversions = {
-            "metal": {"time": fs_to_ps, "pressure": GPa_to_bar},
-            "si": {"time": fs_to_s, "pressure": GPa_to_Pa},
-            "cgs": {"time": fs_to_s, "pressure": GPa_to_barye},
-            "real": {"time": 1, "pressure": GPa_to_atm},
-            "electron": {"time": 1, "pressure": GPa_to_Pa},
-        }
-        time_units = lammps_unit_conversions[self["units"]]["time"]
-        pressure_units = lammps_unit_conversions[self["units"]]["pressure"]
-        # No need for temperature conversion; pyiron and all available Lammps units are both in Kelvin
-        # (well, except unitless Lennard-Jones units...)
-        if self["units"] == "lj":
+        if self["units"] not in LAMMPS_UNIT_CONVERSIONS.keys():
             raise NotImplementedError
+        time_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["time"]
+        temperature_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["temperature"]
+        pressure_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
 
         # Transform time
         if time_step is not None:
@@ -269,7 +387,7 @@ class LammpsControl(GenericParameters):
             except KeyError:
                 raise NotImplementedError()
 
-        # Transform thermostat strength
+        # Transform thermostat strength (time)
         if delta_temp is not None:
             warnings.warn(
                 "WARNING: `delta_temp` is deprecated, please use `temperature_damping_timescale`."
@@ -278,7 +396,7 @@ class LammpsControl(GenericParameters):
         else:
             temperature_damping_timescale *= time_units
 
-        # Transform barostat strength
+        # Transform barostat strength (time)
         if delta_press is not None:
             warnings.warn(
                 "WARNING: `delta_press` is deprecated, please use `pressure_damping_timescale`."
@@ -286,6 +404,10 @@ class LammpsControl(GenericParameters):
             pressure_damping_timescale = delta_press
         else:
             pressure_damping_timescale *= time_units
+
+        # Transform temperature
+        if temperature is not None:
+            temperature *= temperature_units
 
         # Apply initial overheating (default uses the theorem of equipartition of energy between KE and PE)
         if initial_temperature is None and temperature is not None:
@@ -299,21 +421,22 @@ class LammpsControl(GenericParameters):
             if not hasattr(pressure, "__len__"):
                 pressure = pressure * np.ones(3)
             else:
-                pressure = np.array(pressure)
+                pressure = np.array(pressure, dtype=float)
 
-            if sum(pressure != None) == 0:
+            not_none_mask = [p is not None for p in pressure]
+            if not np.any(not_none_mask):
                 raise ValueError("Pressure cannot be three times None")
 
-            if len(pressure) != 3:
-                raise ValueError("Pressure must be a float or a 3d vector")
+            if len(pressure) > 6:
+                raise ValueError("Pressure must be a float or a vector with length <= 6")
 
             if temperature is None or temperature == 0.0:
                 raise ValueError("Target temperature for fix nvt/npt/nph cannot be 0")
 
-            pressure[pressure != None] *= pressure_units
+            pressure[not_none_mask] *= pressure_units
 
             pressure_string = ""
-            for coord, value in zip(["x", "y", "z"], pressure):
+            for coord, value in zip(["x", "y", "z", "xy", "xz", "yz"][:len(pressure)], pressure):
                 if value is not None:
                     pressure_string += " {0} {1} {1} {2}".format(
                         coord, str(value), str(pressure_damping_timescale)
@@ -459,8 +582,15 @@ class LammpsControl(GenericParameters):
             job_name=job_name,
         )
 
+        if self["units"] not in LAMMPS_UNIT_CONVERSIONS.keys():
+            raise NotImplementedError
+        temperature_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["temperature"]
+        energy_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["energy"]
+
         if temperature_mc is None:
-            temperature_mc = temperature
+            if temperature is None:
+                raise ValueError("If temperature is not given, temperature_mc must be.")
+            temperature_mc = temperature * temperature_units
 
         if seed is None:
             seed = self.generate_seed_from_job(job_name=job_name)
@@ -474,7 +604,7 @@ class LammpsControl(GenericParameters):
             str(mc_step_interval),
             str(swap_fraction),
             str(temperature_mc),
-            str(" ".join(str(mu[el] - mu[calibrating_el]) for el in ordered_element_list[1:])),
+            str(" ".join(str((mu[el] - mu[calibrating_el]) * energy_units) for el in ordered_element_list[1:])),
             str(seed),
         )
 
