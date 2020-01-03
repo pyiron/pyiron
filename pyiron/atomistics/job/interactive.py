@@ -189,6 +189,15 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         for k in del_key_lst:
             del self.interactive_output_functions[k]
             del self.interactive_cache[k]
+        if (
+            len(list(self.interactive_cache.keys())) > 0
+            and len(self.interactive_cache[list(self.interactive_cache.keys())[0]])
+            % self._interactive_flush_frequency
+            == 0
+        ):
+            self.interactive_flush(path="interactive")
+        if self.server.run_mode.interactive_non_modal:
+            self._interactive_fetch_completed = True
 
     def interactive_flush(self, path="interactive", include_last_step=False):
         """
