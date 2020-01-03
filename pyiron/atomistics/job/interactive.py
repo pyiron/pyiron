@@ -48,6 +48,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
                                               'atom_spins': self.interactive_atom_spins_getter,
                                               'magnetic_forces': self.interactive_magnetic_forces_getter,
                                               'volume': self.interactive_volume_getter}
+        self.interactive_input_keys = ['cell', 'positions', 'magnetic_moments', 'indices']
         self.interactive_cache = defaultdict(list)
 
     @property
