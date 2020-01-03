@@ -1,0 +1,408 @@
+# coding: utf-8
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
+
+import numpy as np
+import os
+import scipy.constants
+import subprocess
+import warnings
+import time
+from pyiron.sphinx.base import SphinxBase
+from pyiron.atomistics.job.interactive import GenericInteractive
+from collections import OrderedDict as odict
+
+BOHR_TO_ANGSTROM = (
+    scipy.constants.physical_constants["Bohr radius"][0] / scipy.constants.angstrom
+)
+HARTREE_TO_EV = scipy.constants.physical_constants["Hartree energy in eV"][0]
+HARTREE_OVER_BOHR_TO_EV_OVER_ANGSTROM = HARTREE_TO_EV / BOHR_TO_ANGSTROM
+
+__author__ = "Osamu Waseda, Jan Janssen"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
+__version__ = "1.0"
+__maintainer__ = "Jan Janssen"
+__email__ = "janssen@mpie.de"
+__status__ = "development"
+__date__ = "Sep 1, 2017"
+
+
+class SphinxInteractive(SphinxBase, GenericInteractive):
+    def __init__(self, project, job_name):
+        super(SphinxInteractive, self).__init__(project, job_name)
+        self._interactive_write_input_files = True
+        self._interactive_library_read = None
+        self._interactive_fetch_completed = True
+        self.interactive_cache = {
+            "cells": [],
+            "energy_tot": [],
+            "energy_pot": [],
+            "forces": [],
+            "positions": [],
+            "indices": [],
+            "atom_spin_constraints": [],
+            "atom_spins": [],
+            "magnetic_forces": [],
+            "steps": [],
+            "computation_time": [],
+            "volume": [],
+        }
+
+    @property
+    def structure(self):
+        return GenericInteractive.structure.fget(self)
+
+    @structure.setter
+    def structure(self, structure):
+        GenericInteractive.structure.fset(self, structure)
+
+    def get_structure(self, iteration_step=-1, wrap_atoms=True):
+        return GenericInteractive.get_structure(
+            self, iteration_step=iteration_step, wrap_atoms=wrap_atoms
+        )
+
+    def interactive_energy_tot_getter(self):
+        return self.interactive_energy_pot_getter()
+
+    def interactive_energy_pot_getter(self):
+        self._interactive_pipe_write("get energy")
+        return float(self._interactive_library_read.readline()) * HARTREE_TO_EV
+
+    def interactive_forces_getter(self):
+        self._interactive_pipe_write("get forces")
+        ff = []
+        for _ in range(len(self.structure)):
+            line = self._interactive_library_read.readline().split()
+            ff.append(
+                [
+                    float(line[i]) * HARTREE_OVER_BOHR_TO_EV_OVER_ANGSTROM
+                    for i in range(3)
+                ]
+            )
+        ff = np.array(ff)[self.id_spx_to_pyi]
+        return ff
+
+    @property
+    def coarse_run(self):
+        if "CoarseRun" in list(self.input.get_pandas()["Parameter"]):
+            self._coarse_run = self.input["CoarseRun"]
+        return self._coarse_run
+
+    @coarse_run.setter
+    def coarse_run(self, value):
+        if not isinstance(value, bool):
+            raise ValueError('coarse_run has to be a boolean')
+        self._coarse_run = value
+        self.input["CoarseRun"] = self._coarse_run
+
+    def interactive_cells_setter(self, cell):
+        warnings.warn("cell size cannot be changed in SPHInX; function ignored")
+
+    def interactive_cells_getter(self):
+        self._interactive_pipe_write("get cell")
+        cc = []
+        for _ in range(3):
+            line = self._interactive_library_read.readline().split()
+            cc.append([float(line[i]) * BOHR_TO_ANGSTROM for i in range(3)])
+        return np.array(cc)
+
+    def interactive_positions_getter(self):
+        self._interactive_pipe_write("get structure")
+        xx = []
+        for _ in range(len(self.structure)):
+            line = self._interactive_library_read.readline().split()
+            xx.append([float(line[i]) * BOHR_TO_ANGSTROM for i in range(3)])
+        xx = np.array(xx)[self.id_spx_to_pyi]
+        return xx
+
+    def interactive_positions_setter(self, positions):
+        self._interactive_pipe_write("set structure")
+        positions = positions[self.id_pyi_to_spx]
+        positions = np.reshape(positions, 3 * len(self.structure)) / BOHR_TO_ANGSTROM
+        self._interactive_pipe_write(positions.tolist())
+
+    def interactive_spins_getter(self):
+        self._logger.debug("get spins - start ...")
+        self._interactive_pipe_write("get atomspin")
+        mm = []
+        for _ in range(len(self.structure)):
+            line = self._interactive_library_read.readline().split()
+            mm.append(float(line[0]))
+        mm = np.array(mm)[self.id_spx_to_pyi]
+        # self.interactive_cache['atom_spins'].append(mm)
+        self._logger.debug("get spins - done.")
+        return mm
+
+    def interactive_spin_constraints_setter(self, spins):
+        if self._generic_input["fix_spin_constraint"]:
+            self._logger.debug("set spin constraints - start ...")
+            self._spin_constraint_enabled = True
+            self._interactive_pipe_write("set spinconstraint")
+            spins = np.array(spins)[self.id_pyi_to_spx]
+            self._spin_constraints = np.array(spins)
+            self._interactive_pipe_write(spins.tolist())
+            # self.interactive_cache['atom_spin_constraints'].append(spins)
+            self._logger.debug("set spin constraints - done.")
+        else:
+            warnings.warn("Spin constraint not set -> set fix_spin_constraint = True")
+
+    def interactive_spin_constraints_getter(self):
+        return self._spin_constraints
+        # return self.interactive_cache['atom_spin_constraints'][-1]
+
+    def interactive_magnetic_forces_getter(self):
+        if self._generic_input["fix_spin_constraint"]:
+            self._interactive_pipe_write("get nu")
+            nn = []
+            for _ in range(len(self.structure)):
+                line = self._interactive_library_read.readline().split()
+                nn.append(HARTREE_TO_EV * float(line[0]))
+            nn = np.array(nn)[self.id_spx_to_pyi]
+            return nn
+        else:
+            return None
+
+    def interactive_initialize_interface(self):
+        self.server.threads = self.input["THREADS"]
+        if self.executable.executable_path == "":
+            self.status.aborted = True
+            raise ValueError("No executable set!")
+        if self.server.cores == 1 or not self.executable.mpi:
+            out = subprocess.Popen(
+                str(self.executable),
+                cwd=self.project_hdf5.working_directory,
+                shell=True,
+                stderr=subprocess.STDOUT,
+                universal_newlines=True,
+            )
+        else:
+            out = subprocess.Popen(
+                [
+                    self.executable.executable_path,
+                    str(self.server.cores),
+                    str(self.server.threads),
+                ],
+                cwd=self.project_hdf5.working_directory,
+                shell=False,
+                stderr=subprocess.STDOUT,
+                universal_newlines=True,
+            )
+        while not self._interactive_pipes_initialized:
+            time.sleep(1)
+        self._logger.debug("open interactive interface!")
+        self._interactive_library = open(
+            os.path.join(self.working_directory, "sxctrl"), "w"
+        )
+        self._interactive_library_read = open(
+            os.path.join(self.working_directory, "sxres"), "r"
+        )
+        self._logger.debug("interactive interface is opened!")
+        if (
+            np.all(self.structure.get_initial_magnetic_moments() == None)
+            and "atom_spins" in self.interactive_cache.keys()
+        ):
+            del self.interactive_cache["atom_spins"]
+        if self._generic_input["fix_spin_constraint"]:
+            self.interactive_spin_constraints_setter(
+                self._structure_current.get_initial_magnetic_moments()
+            )
+        else:
+            if "magnetic_forces" in self.interactive_cache.keys():
+                del self.interactive_cache["magnetic_forces"]
+            if "atom_spin_constraints" in self.interactive_cache.keys():
+                del self.interactive_cache["atom_spin_constraints"]
+        if len(self.restart_file_list) > 0:
+            self._logger.debug("restarting; interactive run - start ...")
+            self._interactive_pipe_write("run restart")
+            self.interactive_fetch()
+
+    def interactive_close(self):
+        if self.interactive_is_activated():
+            self._interactive_pipe_write("end")
+            self._interactive_library.close()
+            self._interactive_library_read.close()
+            self.status.collect = True
+            if self["energy.dat"] is not None:
+                self.run()
+            with self.project_hdf5.open("output") as h5:
+                if "interactive" in h5.list_groups():
+                    for key in ["positions", "cells"]:
+                        h5["generic/" + key] = h5["interactive/" + key]
+                    with self.project_hdf5.open("input") as hdf5_input:
+                        with hdf5_input.open("generic") as hdf5_generic:
+                            if "dft" not in hdf5_generic.list_groups():
+                                hdf5_generic.create_group("dft")
+                            with hdf5_generic.open("dft") as hdf5_dft:
+                                if (
+                                    "atom_spin_constraints"
+                                    in h5["interactive"].list_nodes()
+                                ):
+                                    hdf5_dft["atom_spin_constraints"] = h5[
+                                        "interactive/atom_spin_constraints"
+                                    ]
+            super(SphinxInteractive, self).interactive_close()
+
+    def calc_minimize(
+        self,
+        electronic_steps=None,
+        ionic_steps=None,
+        max_iter=None,
+        pressure=None,
+        algorithm=None,
+        retain_charge_density=False,
+        retain_electrostatic_potential=False,
+        ionic_energy=None,
+        ionic_forces=None,
+        volume_only=False,
+    ):
+        if (
+            self.server.run_mode.interactive
+            or self.server.run_mode.interactive_non_modal
+        ):
+            raise NotImplementedError(
+                "calc_minimize() is not implemented for the interactive mode use calc_static()!"
+            )
+        else:
+            super(SphinxInteractive, self).calc_minimize(
+                electronic_steps=electronic_steps,
+                ionic_steps=ionic_steps,
+                max_iter=max_iter,
+                pressure=pressure,
+                algorithm=algorithm,
+                retain_charge_density=retain_charge_density,
+                retain_electrostatic_potential=retain_electrostatic_potential,
+                ionic_energy=ionic_energy,
+                ionic_forces=ionic_forces,
+                volume_only=volume_only,
+            )
+
+    def run_if_interactive(self):
+        super(SphinxInteractive, self).run_if_interactive()
+        self._logger.debug("interactive run - start ...")
+        if self._coarse_run:
+            self._interactive_pipe_write("run coarseelectronicminimization")
+        else:
+            self._interactive_pipe_write("run electronicminimization")
+        self.interactive_fetch()
+
+    def run_if_interactive_non_modal(self):
+        if not self._interactive_fetch_completed:
+            print("Warning: interactive_fetch being effectuated")
+            self.interactive_fetch()
+        super(SphinxInteractive, self).run_if_interactive()
+        self._logger.debug("interactive run - start ...")
+        if self._coarse_run:
+            self._interactive_pipe_write("run coarseelectronicminimization")
+        else:
+            self._interactive_pipe_write("run electronicminimization")
+        self._interactive_fetch_completed = False
+
+    def interactive_fetch(self):
+        if (
+            self._interactive_fetch_completed
+            and self.server.run_mode.interactive_non_modal
+        ):
+            print("First run and then fetch")
+        else:
+            self.interactive_collect()
+            self._logger.debug("interactive run - done")
+
+    @property
+    def _interactive_pipes_initialized(self):
+        return os.path.exists(
+            os.path.join(self.working_directory, "sxctrl")
+        ) and os.path.exists(os.path.join(self.working_directory, "sxres"))
+
+    def _interactive_pipe_write(self, line):
+        if isinstance(line, str) or isinstance(line, int) or isinstance(line, float):
+            self._interactive_library.write(str(line) + "\n")
+            self._interactive_library.flush()
+        elif isinstance(line, list):
+            for subline in line:
+                self._interactive_pipe_write(subline)
+        else:
+            raise TypeError("only lists, strings and numbers are supported!")
+
+    def _interactive_pipe_read(self):
+        return self._interactive_library_read.readline()
+
+    def calc_static(
+        self,
+        electronic_steps=400,
+        blockSize=8,
+        dSpinMoment=1e-8,
+        algorithm=None,
+        retain_charge_density=False,
+        retain_electrostatic_potential=False,
+    ):
+        """
+        Function to setup the hamiltonian to perform static SCF DFT runs
+
+        Args:
+            retain_electrostatic_potential:
+            retain_charge_density:
+            algorithm:
+            electronic_steps (int): maximum number of electronic steps, which can be used to achieve convergence
+        """
+        super(SphinxInteractive, self).calc_static(
+            electronic_steps=electronic_steps,
+            algorithm=algorithm,
+            retain_charge_density=retain_charge_density,
+            retain_electrostatic_potential=retain_electrostatic_potential,
+        )
+
+    @property
+    def _control_str(self):
+        control_str = odict()
+        if (
+            self.server.run_mode.interactive
+            or self.server.run_mode.interactive_non_modal
+        ):
+            commands = [
+                odict(
+                    [
+                        ("id", '"restart"'),
+                        (
+                            "scfDiag",
+                            self._input_control_scf_string(
+                                maxSteps=10, keepRhoFixed=True, dEnergy=1.0e-4
+                            ),
+                        ),
+                    ]
+                )
+            ]
+            commands.append(
+                odict(
+                    [
+                        ("id", '"coarseelectronicminimization"'),
+                        (
+                            "scfDiag",
+                            self._input_control_scf_string(
+                                dEnergy="1000*Ediff/" + str(HARTREE_TO_EV)
+                            ),
+                        ),
+                    ]
+                )
+            )
+            commands.append(
+                odict(
+                    [
+                        ("id", '"electronicminimization"'),
+                        ("scfDiag", self._input_control_scf_string()),
+                    ]
+                )
+            )
+            control_str["extControl"] = odict()
+            control_str["extControl"]["bornOppenheimer"] = commands
+            return control_str
+        else:
+            return super(SphinxInteractive, self)._control_str
+
+
+class SphinxInt2(SphinxInteractive):
+    def __init__(self, project, job_name):
+        warnings.warn("Please use SphinxInt instead of SphinxInt2")
+        super(SphinxInt2, self).__init__(project=project, job_name=job_name)

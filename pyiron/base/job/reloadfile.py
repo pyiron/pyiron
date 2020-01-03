@@ -21,9 +21,11 @@ def command_line(argv):
     input_path = None
     output_path = None
     try:
-        opts, args = getopt.getopt(argv, "i:o:h", ["input_path=", "output_path=", "help"])
+        opts, args = getopt.getopt(
+            argv, "i:o:h", ["input_path=", "output_path=", "help"]
+        )
     except getopt.GetoptError:
-        print('python -m pyiron.base.job.reloadfile -i <inputpath> -o <outputpath>')
+        print("python -m pyiron.base.job.reloadfile -i <inputpath> -o <outputpath>")
         sys.exit()
     else:
         for opt, arg in opts:
@@ -31,9 +33,9 @@ def command_line(argv):
                 input_path = os.path.abspath(arg)
             if opt in ("-o", "--output_path"):
                 output_path = os.path.abspath(arg)
-        with h5py.File(input_path, 'r') as f:
+        with h5py.File(input_path, mode="r") as f:
             job_name = list(f.keys())[0]
-        project_path = os.path.join(os.path.abspath('.'), job_name + '.h5')
+        project_path = os.path.join(os.path.abspath("."), job_name + ".h5")
         shutil.copy(input_path, project_path)
 
         file = os.path.basename(project_path)
@@ -41,20 +43,24 @@ def command_line(argv):
 
         db_project_path = s.top_path(project_path)
         project = os.path.dirname(project_path)
-        db_project = (project + '/').replace(db_project_path, '')
-        job_reload = Project(project).load_from_jobpath(job_id=None,
-                                                        db_entry={'id': 1000,
-                                                                  'status': '',
-                                                                  'chemicalformula': '',
-                                                                  'job': job_name,
-                                                                  'subjob': '/' + job_name,
-                                                                  'projectpath': db_project_path,
-                                                                  'project': db_project,
-                                                                  'hamilton': '',
-                                                                  'hamversion': '',
-                                                                  'parentid': None,
-                                                                  'masterid': None},
-                                                        convert_to_object=True)
+        db_project = (project + "/").replace(db_project_path, "")
+        job_reload = Project(project).load_from_jobpath(
+            job_id=None,
+            db_entry={
+                "id": 1000,
+                "status": "",
+                "chemicalformula": "",
+                "job": job_name,
+                "subjob": "/" + job_name,
+                "projectpath": db_project_path,
+                "project": db_project,
+                "hamilton": "",
+                "hamversion": "",
+                "parentid": None,
+                "masterid": None,
+            },
+            convert_to_object=True,
+        )
         job_reload.status.initialized = True
         job_reload.server.run_mode.modal = True
         job_reload.run()

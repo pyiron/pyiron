@@ -9,8 +9,10 @@ from pyiron.base.job.path import JobPath
 from pyiron.atomistics.structure.atoms import Atoms
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -19,7 +21,6 @@ __date__ = "Sep 1, 2017"
 
 
 class TrajectoryAnalysis(object):
-
     def __init__(self):
         self._positions = None
         self.cells = None

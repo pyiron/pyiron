@@ -4,14 +4,17 @@
 
 import six
 from pyiron.base.database.generic import DatabaseAccess
+from pyiron.base.database.filetable import FileTable
 
 """
 The JobStatus class belongs to the GenericJob object.
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -19,8 +22,20 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 
-job_status_lst = ['initialized', 'appended', 'created', 'submitted', 'running', 'aborted', 'collect', 'suspended',
-                  'refresh', 'busy', 'finished', 'not_converged']
+job_status_lst = [
+    "initialized",
+    "appended",
+    "created",
+    "submitted",
+    "running",
+    "aborted",
+    "collect",
+    "suspended",
+    "refresh",
+    "busy",
+    "finished",
+    "not_converged",
+]
 
 
 class JobStatus(object):
@@ -58,8 +73,8 @@ class JobStatus(object):
             job status as string
     """
 
-    def __init__(self, initial_status='initialized', db=None, job_id=None):
-        super(JobStatus, self).__setattr__('_status_dict', {})
+    def __init__(self, initial_status="initialized", db=None, job_id=None):
+        super(JobStatus, self).__setattr__("_status_dict", {})
         self._db = None
         self._job_id = None
         self.string = initial_status
@@ -82,8 +97,8 @@ class JobStatus(object):
         Args:
             db (DatabaseAccess): The database which should be responsible for this job.
         """
-        if db and not isinstance(db, DatabaseAccess):
-            raise TypeError('The database has to be an DatabaseAccess object.')
+        if db is not None and not isinstance(db, (DatabaseAccess, FileTable)):
+            raise TypeError("The database has to be an DatabaseAccess object.")
         self._db = db
 
     @property
@@ -103,7 +118,7 @@ class JobStatus(object):
             unique_id (int): job id
         """
         if unique_id and not isinstance(unique_id, int):
-            raise TypeError('The Job_ID should be an integer.')
+            raise TypeError("The Job_ID should be an integer.")
         self._job_id = unique_id
         self.refresh_status()
 
@@ -154,8 +169,12 @@ class JobStatus(object):
             self._status_dict[status] = True
             self._status_write()
         else:
-            raise ('No valid job status: ', status, ' Instead use [initialized, appended, created, submitted, running,'
-                   'aborted, collect, suspended, refresh, busy, finished, not_converged].')
+            raise (
+                "No valid job status: ",
+                status,
+                " Instead use [initialized, appended, created, submitted, running,"
+                "aborted, collect, suspended, refresh, busy, finished, not_converged].",
+            )
 
     def refresh_status(self):
         """
@@ -166,7 +185,11 @@ class JobStatus(object):
             try:
                 status = self.database.get_item_by_id(self.job_id)["status"]
             except IndexError:
-                raise ('The job with the job ID ' + str(self.job_id) + ' is not listed in the database anymore.')
+                raise (
+                    "The job with the job ID "
+                    + str(self.job_id)
+                    + " is not listed in the database anymore."
+                )
             self._reset()
             self._status_dict[status] = True
 
@@ -176,7 +199,7 @@ class JobStatus(object):
         """
         if self.database and self.job_id:
             if self.database.get_item_by_id(self.job_id)["status"] != str(self.string):
-                self.database.item_update({'status': str(self.string)}, self.job_id)
+                self.database.item_update({"status": str(self.string)}, self.job_id)
 
     def _reset(self):
         """
@@ -192,9 +215,11 @@ class JobStatus(object):
             boolean (bool): True
         """
         if not isinstance(boolean, bool):
-            raise TypeError('The JobStatus can only be set to a boolean, more specifically to True only.')
+            raise TypeError(
+                "The JobStatus can only be set to a boolean, more specifically to True only."
+            )
         if boolean is False:
-            raise ValueError('The JobStatus can only be set to True.')
+            raise ValueError("The JobStatus can only be set to True.")
 
     def __repr__(self):
         """
@@ -222,17 +247,17 @@ class JobStatus(object):
     def __setattr__(self, name, value):
         if name in self._status_dict.keys():
             if not isinstance(value, bool):
-                raise TypeError('A run mode can only be activated using [True].')
+                raise TypeError("A run mode can only be activated using [True].")
             if value:
                 self.string = name
             else:
-                raise ValueError('A run mode can only be activated using [True].')
+                raise ValueError("A run mode can only be activated using [True].")
         else:
             super(JobStatus, self).__setattr__(name, value)
 
     def __dir__(self):
-        return list(self._status_dict.keys())     
-   
+        return list(self._status_dict.keys())
+
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             return other._status_dict == self._status_dict

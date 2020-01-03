@@ -8,8 +8,10 @@ from pyiron.atomistics.structure.sparse_list import SparseArrayElement
 from six import string_types
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -46,7 +48,7 @@ def abcproperty(index):
         spos[self.index][index] = value
         self.atoms.set_scaled_positions(spos)
 
-    return property(getter, setter, doc='ABC'[index] + '-coordinate')
+    return property(getter, setter, doc="ABC"[index] + "-coordinate")
 
 
 def xyzproperty(index):
@@ -58,40 +60,57 @@ def xyzproperty(index):
     def setter(self, value):
         self.position[index] = value
 
-    return property(getter, setter, doc='XYZ'[index] + '-coordinate')
+    return property(getter, setter, doc="XYZ"[index] + "-coordinate")
+
+
 # end ASE
 
 
 class Atom(SparseArrayElement):
-    def __init__(self, symbol='X', position=(0, 0, 0), tag=None, momentum=None, mass=None, magmom=None,
-                 charge=None, atoms=None, index=None, pse=None, element=None, **qwargs):
+    def __init__(
+        self,
+        symbol="X",
+        position=(0, 0, 0),
+        tag=None,
+        momentum=None,
+        mass=None,
+        magmom=None,
+        charge=None,
+        atoms=None,
+        index=None,
+        pse=None,
+        element=None,
+        **qwargs
+    ):
         if element is None and symbol:
             element = symbol
         if tag or momentum or mass or magmom or charge:
-            raise ValueError('Not supported parameter used!')
+            raise ValueError("Not supported parameter used!")
         SparseArrayElement.__init__(self, **qwargs)
         # super(SparseArrayElement, self).__init__(**qwargs)
         # verify that element is given (as string, ChemicalElement object or nucleus number
         if pse is None:
             pse = PeriodicTable()
 
-        if element is None or element=='X':
+        if element is None or element == "X":
             if "Z" in qwargs:
                 el_symbol = pse.atomic_number_to_abbreviation(qwargs["Z"])
-                self._lists['element'] = pse.element(el_symbol)
+                self._lists["element"] = pse.element(el_symbol)
             else:
-                raise ValueError('Need at least element name, Chemical element object or nucleus number')
+                raise ValueError(
+                    "Need at least element name, Chemical element object or nucleus number"
+                )
         else:
             if isinstance(element, string_types):
                 el_symbol = element
-                self._lists['element'] = pse.element(el_symbol)
+                self._lists["element"] = pse.element(el_symbol)
             elif isinstance(element, str):
                 el_symbol = element
-                self._lists['element'] = pse.element(el_symbol)
+                self._lists["element"] = pse.element(el_symbol)
             elif isinstance(element, ChemicalElement):
-                self._lists['element'] = element
+                self._lists["element"] = element
             else:
-                raise ValueError('Unknown element type')
+                raise ValueError("Unknown element type")
 
         self._position = np.array(position)
 
@@ -146,10 +165,13 @@ class Atom(SparseArrayElement):
     def __eq__(self, other):
         if not (isinstance(other, Atom)):
             return False
-        conditions = [np.allclose(self.position, other.position), self.symbol == other.symbol]
+        conditions = [
+            np.allclose(self.position, other.position),
+            self.symbol == other.symbol,
+        ]
         return all(conditions)
 
-    position = atomproperty('position', 'XYZ-coordinates')
+    position = atomproperty("position", "XYZ-coordinates")
 
     x = xyzproperty(0)
     y = xyzproperty(1)

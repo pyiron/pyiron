@@ -7,26 +7,43 @@ from collections import OrderedDict
 from datetime import datetime
 import numpy as np
 import pandas
-import time
+import multiprocessing
 import importlib
 from pyiron.base.job.generic import GenericJob
 from pyiron.base.master.generic import GenericMaster
 from pyiron.base.master.submissionstatus import SubmissionStatus
 from pyiron.base.generic.parameters import GenericParameters
 from pyiron.base.job.jobstatus import JobStatus
+from pyiron.base.settings.generic import Settings
+from pyiron.base.job.wrapper import job_wrapper_function
 
 """
-The parallel master class is a metajob consisting of a list of jobs which are executed in parallel. 
+The parallel master class is a metajob consisting of a list of jobs which are executed in parallel.
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
+
+s = Settings()
+
+
+def job_wrap_function(parameters):
+    working_directory, job_id, file_path, submit_on_remote, debug = parameters
+    job_wrapper_function(
+        working_directory=working_directory,
+        job_id=job_id,
+        file_path=file_path,
+        submit_on_remote=submit_on_remote,
+        debug=debug,
+    )
 
 
 class ParallelMaster(GenericMaster):
@@ -133,6 +150,7 @@ class ParallelMaster(GenericMaster):
 
             Total number of jobs
     """
+
     def __init__(self, project, job_name):
         self.input = GenericParameters("parameters")
         super(ParallelMaster, self).__init__(project, job_name=job_name)
@@ -211,7 +229,9 @@ class ParallelMaster(GenericMaster):
         if job_id is not None:
             self.submission_status = SubmissionStatus(db=self.project.db, job_id=job_id)
         else:
-            self.submission_status = SubmissionStatus(db=self.project.db, job_id=self.job_id)
+            self.submission_status = SubmissionStatus(
+                db=self.project.db, job_id=self.job_id
+            )
 
     def to_hdf(self, hdf=None, group_name=None):
         """
@@ -222,7 +242,7 @@ class ParallelMaster(GenericMaster):
             group_name (str): HDF5 subgroup name - optional
         """
         super(ParallelMaster, self).to_hdf(hdf=hdf, group_name=group_name)
-        with self.project_hdf5.open('input') as hdf5_input:
+        with self.project_hdf5.open("input") as hdf5_input:
             self.input.to_hdf(hdf5_input)
 
     def from_hdf(self, hdf=None, group_name=None):
@@ -234,7 +254,7 @@ class ParallelMaster(GenericMaster):
             group_name (str): HDF5 subgroup name - optional
         """
         super(ParallelMaster, self).from_hdf(hdf=hdf, group_name=group_name)
-        with self.project_hdf5.open('input') as hdf5_input:
+        with self.project_hdf5.open("input") as hdf5_input:
             self.input.from_hdf(hdf5_input)
 
     def write_input(self):
@@ -285,14 +305,14 @@ class ParallelMaster(GenericMaster):
         Display the output of the child jobs in a human readable print out
         """
         try:
-            display = getattr(importlib.import_module('IPython'), 'display')
+            display = getattr(importlib.import_module("IPython"), "display")
         except ModuleNotFoundError:
-            print('show_hdf() requires IPython to be installed.')
+            print("show_hdf() requires IPython to be installed.")
         else:
             for nn in self.project_hdf5.list_groups():
                 with self.project_hdf5.open(nn) as hdf_dir:
                     display.display(nn)
-                    if nn.strip() == 'output':
+                    if nn.strip() == "output":
                         display.display(self.output_to_pandas(h5_path=nn))
                         continue
                     for n in hdf_dir.list_groups():
@@ -320,7 +340,9 @@ class ParallelMaster(GenericMaster):
         database.
         """
         if self.job_id:
-            self.submission_status = SubmissionStatus(db=self.project.db, job_id=self.job_id)
+            self.submission_status = SubmissionStatus(
+                db=self.project.db, job_id=self.job_id
+            )
             self.submission_status.refresh()
 
     def interactive_ref_job_initialize(self):
@@ -329,7 +351,7 @@ class ParallelMaster(GenericMaster):
         """
         if len(self._job_name_lst) > 0:
             self._ref_job = self.pop(-1)
-            self._ref_job.job_name = self.job_name + '_' + self._ref_job.job_name
+            self._ref_job.job_name = self.job_name + "_" + self._ref_job.job_name
             if self._job_id is not None and self._ref_job._master_id is None:
                 self._ref_job.master_id = self.job_id
 
@@ -344,7 +366,9 @@ class ParallelMaster(GenericMaster):
         new_job.ref_job = self.ref_job
         return new_job
 
-    def copy_to(self, project=None, new_job_name=None, input_only=False, new_database_entry=True):
+    def copy_to(
+        self, project=None, new_job_name=None, input_only=False, new_database_entry=True
+    ):
         """
         Copy the content of the job including the HDF5 file to a new location
 
@@ -358,11 +382,15 @@ class ParallelMaster(GenericMaster):
         Returns:
             GenericJob: GenericJob object pointing to the new location.
         """
-        new_generic_job = super(ParallelMaster, self).copy_to(project=project, new_job_name=new_job_name,
-                                                              input_only=input_only,
-                                                              new_database_entry=new_database_entry)
-        new_generic_job.submission_status = SubmissionStatus(db=new_generic_job._hdf5.project.db,
-                                                             job_id=new_generic_job.job_id)
+        new_generic_job = super(ParallelMaster, self).copy_to(
+            project=project,
+            new_job_name=new_job_name,
+            input_only=input_only,
+            new_database_entry=new_database_entry,
+        )
+        new_generic_job.submission_status = SubmissionStatus(
+            db=new_generic_job._hdf5.project.db, job_id=new_generic_job.job_id
+        )
         return new_generic_job
 
     def is_finished(self):
@@ -376,8 +404,12 @@ class ParallelMaster(GenericMaster):
             return True
         if len(self.child_ids) < len(self._job_generator):
             return False
-        return set([self.project.db.get_item_by_id(child_id)['status']
-                    for child_id in self.child_ids]) < {'finished', 'busy', 'refresh', 'aborted', 'not_converged'}
+        return set(
+            [
+                self.project.db.get_item_by_id(child_id)["status"]
+                for child_id in self.child_ids
+            ]
+        ) < {"finished", "busy", "refresh", "aborted", "not_converged"}
 
     def iter_jobs(self, convert_to_object=True):
         """
@@ -389,8 +421,13 @@ class ParallelMaster(GenericMaster):
         Returns:
             yield: Yield of GenericJob or JobCore
         """
-        for job_id in self.child_ids:
+        for job_id in self._get_jobs_sorted():
             yield self.project.load(job_id, convert_to_object=convert_to_object)
+
+    def _get_jobs_sorted(self):
+        job_names = self.child_names.values()
+        return [j for j in [self._job_generator.job_name(p) for p in self._job_generator.parameter_list] if
+                j in job_names]
 
     def __getitem__(self, item):
         """
@@ -403,11 +440,16 @@ class ParallelMaster(GenericMaster):
             dict, list, float, int: data or data object
         """
         child_id_lst = self.child_ids
-        child_name_lst = [self.project.db.get_item_by_id(child_id)["job"] for child_id in self.child_ids]
+        child_name_lst = [
+            self.project.db.get_item_by_id(child_id)["job"]
+            for child_id in self.child_ids
+        ]
         if isinstance(item, int):
             total_lst = self._job_name_lst + child_name_lst
             item = total_lst[item]
-        return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
+        return self._get_item_when_str(
+            item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst
+        )
 
     def __len__(self):
         """
@@ -423,12 +465,16 @@ class ParallelMaster(GenericMaster):
         Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
         suspended previously, the job is going to be started again, to be continued.
         """
-        self._logger.info("{}, status: {}, finished: {} parallel master "
-                          "refresh".format(self.job_info_str, self.status, self.is_finished()))
+        self._logger.info(
+            "{}, status: {}, finished: {} parallel master "
+            "refresh".format(self.job_info_str, self.status, self.is_finished())
+        )
         if self.is_finished():
             self.status.collect = True
             self.run()  # self.run_if_collect()
-        elif (self.server.run_mode.non_modal or self.server.run_mode.queue) and not self.submission_status.finished:
+        elif (
+            self.server.run_mode.non_modal or self.server.run_mode.queue
+        ) and not self.submission_status.finished:
             self.run_static()
         else:
             self.refresh_job_status()
@@ -444,7 +490,9 @@ class ParallelMaster(GenericMaster):
         the simulation output using the standardized functions collect_output() and collect_logfiles(). Afterwards the
         status is set to 'finished'.
         """
-        self._logger.info("{}, status: {}, finished".format(self.job_info_str, self.status))
+        self._logger.info(
+            "{}, status: {}, finished".format(self.job_info_str, self.status)
+        )
         self.collect_output()
 
         job_id = self.get_job_id()
@@ -454,7 +502,10 @@ class ParallelMaster(GenericMaster):
         db_dict["totalcputime"] = (db_dict["timestop"] - start_time).seconds
         self.project.db.item_update(db_dict, job_id)
         self.status.finished = True
-        self._logger.info("{}, status: {}, parallel master".format(self.job_info_str, self.status))
+        self._hdf5["status"] = self.status.string
+        self._logger.info(
+            "{}, status: {}, parallel master".format(self.job_info_str, self.status)
+        )
         self.update_master()
         # self.send_to_database()
 
@@ -469,7 +520,10 @@ class ParallelMaster(GenericMaster):
         Returns:
             bool: [True/False]
         """
-        return self.get_child_cores() + job.server.cores + sum(cores_for_session) > self.server.cores
+        return (
+            self.get_child_cores() + job.server.cores + sum(cores_for_session)
+            > self.server.cores
+        )
 
     def _next_job_series(self, job):
         """
@@ -483,12 +537,14 @@ class ParallelMaster(GenericMaster):
         """
         job_to_be_run_lst, cores_for_session = [], []
         while job is not None:
-            self._logger.debug('create job: %s %s', job.job_info_str, job.master_id)
+            self._logger.debug("create job: %s %s", job.job_info_str, job.master_id)
             if not job.status.finished:
                 self.submission_status.submit_next()
                 job_to_be_run_lst.append(job)
                 cores_for_session.append(job.server.cores)
-                self._logger.info('{}: finished job {}'.format(self.job_name, job.job_name))
+                self._logger.info(
+                    "{}: finished job {}".format(self.job_name, job.job_name)
+                )
             job = next(self._job_generator, None)
             if job is not None and self._validate_cores(job, cores_for_session):
                 job = None
@@ -503,40 +559,18 @@ class ParallelMaster(GenericMaster):
             job (GenericJob): child job to be started
         """
         while job is not None:
-            self._logger.debug('create job: %s %s', job.job_info_str, job.master_id)
+            self._logger.debug("create job: %s %s", job.job_info_str, job.master_id)
             if not job.status.finished:
                 job.run()
-                self._logger.info('{}: submitted job {}'.format(self.job_name, job.job_name))
+                self._logger.info(
+                    "{}: submitted job {}".format(self.job_name, job.job_name)
+                )
             job = next(self._job_generator, None)
         self.submission_status.submitted_jobs = self.submission_status.total_jobs
         self.status.suspended = True
         if self.is_finished():
             self.status.collect = True
             self.run()
-
-    def _run_if_master_queue(self, job):
-        """
-        run function which is executed when the Parallelmaster is submitted to the queue. This run mode is similar to
-        the non modal run mode, as the number of cores assigned to the Parallelmaster determines how many subprocesses
-        can be started. But in contrast to the non modal mode where the Parallelmaster is suspended after the submission
-        of the child jobs in the queue the Parallelmaster stays active, as some queuing systems kill the jobs once the
-        primary task exited.
-
-        Args:
-            job (GenericJob): child job to be started
-        """
-        job_to_be_run_lst = self._next_job_series(job)
-        if self.project.db.get_item_by_id(self.job_id)['status'] != 'busy':
-            self.status.suspended = True
-            job_lst = []
-            for job in job_to_be_run_lst:
-                job.run()
-                if job.server.run_mode.thread:
-                    job_lst.append(job.python_execution_process)
-            _ = [process.communicate() for process in job_lst if process]
-            self.run_if_refresh()
-        else:
-            self.run_static()
 
     def _run_if_master_non_modal_child_non_modal(self, job):
         """
@@ -546,7 +580,7 @@ class ParallelMaster(GenericMaster):
             job (GenericJob): child job to be started
         """
         job_to_be_run_lst = self._next_job_series(job)
-        if self.project.db.get_item_by_id(self.job_id)['status'] != 'busy':
+        if self.project.db.get_item_by_id(self.job_id)["status"] != "busy":
             self.status.suspended = True
             for job in job_to_be_run_lst:
                 job.run()
@@ -563,11 +597,13 @@ class ParallelMaster(GenericMaster):
             job (GenericJob): child job to be started
         """
         while job is not None:
-            self._logger.debug('create job: %s %s', job.job_info_str, job.master_id)
+            self._logger.debug("create job: %s %s", job.job_info_str, job.master_id)
             if not job.status.finished:
                 self.submission_status.submit_next()
                 job.run()
-                self._logger.info('{}: finished job {}'.format(self.job_name, job.job_name))
+                self._logger.info(
+                    "{}: finished job {}".format(self.job_name, job.job_name)
+                )
             job = next(self._job_generator, None)
         if self.is_finished():
             self.status.collect = True
@@ -581,40 +617,71 @@ class ParallelMaster(GenericMaster):
         Args:
             job (GenericJob): child job to be started
         """
-        while job is not None:
-            self._logger.debug('create job: %s %s', job.job_info_str, job.master_id)
-            if not job.status.finished:
-                self.submission_status.submit_next()
-                job.run()
-                self._logger.info('{}: finished job {}'.format(self.job_name, job.job_name))
-            job = next(self._job_generator, None)
-            while job is None and not self.is_finished():
-                time.sleep(5)
-                job = next(self._job_generator, None)
-        if self.is_finished():
-            self.status.collect = True
-            self.run()
+        pool = multiprocessing.Pool(self.server.cores)
+        job_lst = []
+        for i, p in enumerate(self._job_generator.parameter_list):
+            if hasattr(self._job_generator, "job_name"):
+                job = self.create_child_job(
+                    self._job_generator.job_name(parameter=p)
+                )
+            else:
+                job = self.create_child_job(
+                    self.ref_job.job_name + "_" + str(i)
+                )
+            job = self._job_generator.modify_job(job=job, parameter=p)
+            job.server.run_mode.modal = True
+            job.save()
+            job.project_hdf5.create_working_directory()
+            job.write_input()
+            if s.database_is_disabled or (s.queue_adapter is not None and s.queue_adapter.remote_flag):
+                job_lst.append(
+                    (
+                        job.project.path,
+                        None,
+                        job.project_hdf5.file_name + job.project_hdf5.h5_path,
+                        False,
+                        False
+                    )
+                )
+            else:
+                job_lst.append(
+                    (
+                        job.project.path,
+                        job.job_id,
+                        None,
+                        False,
+                        False
+                    )
+                )
+        pool.map(job_wrap_function, job_lst)
+        if s.database_is_disabled:
+            self.project.db.update()
+        self.status.collect = True
+        self.run()  # self.run_if_collect()
 
     def run_static(self):
         """
         The run_static function is executed within the GenericJob class and depending on the run_mode of the
         Parallelmaster and its child jobs a more specific run function is selected.
         """
-        self._logger.info('{} run parallel master (modal)'.format(self.job_info_str))
+        self._logger.info("{} run parallel master (modal)".format(self.job_info_str))
         self.status.running = True
         self.submission_status.total_jobs = len(self._job_generator)
         self.submission_status.submitted_jobs = 0
         if self.job_id and not self.is_finished():
-            self._logger.debug("{} child project {}".format(self.job_name, self.project.__str__()))
+            self._logger.debug(
+                "{} child project {}".format(self.job_name, self.project.__str__())
+            )
             job = next(self._job_generator, None)
             if self.server.run_mode.queue:
-                self._run_if_master_queue(job)
+                self._run_if_master_modal_child_non_modal(job=job)
             elif job.server.run_mode.queue:
                 self._run_if_child_queue(job)
             elif self.server.run_mode.non_modal and job.server.run_mode.non_modal:
                 self._run_if_master_non_modal_child_non_modal(job)
-            elif (self.server.run_mode.modal and job.server.run_mode.modal) or \
-                    (self.server.run_mode.interactive and job.server.run_mode.interactive):
+            elif (self.server.run_mode.modal and job.server.run_mode.modal) or (
+                self.server.run_mode.interactive and job.server.run_mode.interactive
+            ):
                 self._run_if_master_modal_child_modal(job)
             elif self.server.run_mode.modal and job.server.run_mode.non_modal:
                 self._run_if_master_modal_child_non_modal(job)
@@ -625,8 +692,13 @@ class ParallelMaster(GenericMaster):
             self.run()
 
     def run_if_interactive(self):
-        if not (self.ref_job.server.run_mode.interactive or self.ref_job.server.run_mode.interactive_non_modal):
-            raise ValueError('The child job has to be run_mode interactive or interactive_non_modal.')
+        if not (
+            self.ref_job.server.run_mode.interactive
+            or self.ref_job.server.run_mode.interactive_non_modal
+        ):
+            raise ValueError(
+                "The child job has to be run_mode interactive or interactive_non_modal."
+            )
         if isinstance(self.ref_job, GenericMaster):
             self.run_static()
         elif self.server.cores == 1:
@@ -640,20 +712,31 @@ class ParallelMaster(GenericMaster):
                 number_of_jobs = len(self._job_generator.parameter_list)
             else:
                 number_of_jobs = self.server.cores
-            max_tasks_per_job = int(len(self._job_generator.parameter_list) // number_of_jobs) + 1
-            parameters_sub_lst = [self._job_generator.parameter_list[i:i + max_tasks_per_job]
-                                  for i in range(0, len(self._job_generator.parameter_list), max_tasks_per_job)]
-            list_of_sub_jobs = [self.create_child_job('job_' + str(i)) for i in range(number_of_jobs)]
+            max_tasks_per_job = (
+                int(len(self._job_generator.parameter_list) // number_of_jobs) + 1
+            )
+            parameters_sub_lst = [
+                self._job_generator.parameter_list[i : i + max_tasks_per_job]
+                for i in range(
+                    0, len(self._job_generator.parameter_list), max_tasks_per_job
+                )
+            ]
+            list_of_sub_jobs = [
+                self.create_child_job("job_" + str(i)) for i in range(number_of_jobs)
+            ]
             primary_job = list_of_sub_jobs[0]
             if not primary_job.server.run_mode.interactive_non_modal:
-                raise ValueError('The child job has to be run_mode interactive_non_modal.')
+                raise ValueError(
+                    "The child job has to be run_mode interactive_non_modal."
+                )
             if primary_job.server.cores != 1:
-                raise ValueError('The child job can only use a single core.')
+                raise ValueError("The child job can only use a single core.")
             for iteration in range(len(parameters_sub_lst[0])):
                 for job_ind, job in enumerate(list_of_sub_jobs):
                     if iteration < len(parameters_sub_lst[job_ind]):
-                        self._job_generator.modify_job(job=job,
-                                                       parameter=parameters_sub_lst[job_ind][iteration])
+                        self._job_generator.modify_job(
+                            job=job, parameter=parameters_sub_lst[job_ind][iteration]
+                        )
                         job.run()
                 for job_ind, job in enumerate(list_of_sub_jobs):
                     if iteration < len(parameters_sub_lst[job_ind]):
@@ -665,13 +748,16 @@ class ParallelMaster(GenericMaster):
             for key in primary_job.interactive_cache.keys():
                 output_sum = []
                 for job in list_of_sub_jobs:
-                    output = job['output/interactive/' + key]
+                    output = job["output/interactive/" + key]
                     if isinstance(output, np.ndarray):
                         output = output.tolist()
                     if isinstance(output, list):
                         output_sum += output
                     else:
-                        raise TypeError('output should be list or numpy.ndarray but it is ', type(output))
+                        raise TypeError(
+                            "output should be list or numpy.ndarray but it is ",
+                            type(output),
+                        )
                 self.ref_job.interactive_cache[key] = output_sum
             interactive_cache_backup = self.ref_job.interactive_cache.copy()
             self.ref_job.interactive_flush(path="generic", include_last_step=True)
@@ -693,15 +779,20 @@ class ParallelMaster(GenericMaster):
         """
         if not self.server.new_hdf:
             project = self.project
-            where_dict = {'job': str(job_name), 'project': str(self.project_hdf5.project_path),
-                          'subjob': str(self.project_hdf5.h5_path + '/' + job_name)}
-            response = self.project.db.get_items_dict(where_dict, return_all_columns=False)
+            where_dict = {
+                "job": str(job_name),
+                "project": str(self.project_hdf5.project_path),
+                "subjob": str(self.project_hdf5.h5_path + "/" + job_name),
+            }
+            response = self.project.db.get_items_dict(
+                where_dict, return_all_columns=False
+            )
             if len(response) > 0:
-                job_id = response[-1]['id']
+                job_id = response[-1]["id"]
             else:
                 job_id = None
         else:
-            project = self.project.open(self.job_name + '_hdf5')
+            project = self.project.open(self.job_name + "_hdf5")
             job_id = project.get_job_id(job_specifier=job_name)
         if job_id is not None:
             ham = project.load(job_id)
@@ -719,17 +810,22 @@ class ParallelMaster(GenericMaster):
         job = self.ref_job.copy()
         job = self._load_all_child_jobs(job_to_load=job)
         if self.server.new_hdf:
-            job.project_hdf5 = self.project_hdf5.create_hdf(path=self.project.open(self.job_name + '_hdf5').path,
-                                                            job_name=job_name)
+            job.project_hdf5 = self.project_hdf5.create_hdf(
+                path=self.project.open(self.job_name + "_hdf5").path, job_name=job_name
+            )
         else:
             job.project_hdf5 = self.project_hdf5.open(job_name)
         if isinstance(job, GenericMaster):
             for sub_job in job._job_object_dict.values():
                 self._child_job_update_hdf(parent_job=job, child_job=sub_job)
-        self._logger.debug("create_job:: {} {} {} {}".format(self.project_hdf5.path,
-                                                             self._name,
-                                                             self.project_hdf5.h5_path,
-                                                             str(self.get_job_id())))
+        self._logger.debug(
+            "create_job:: {} {} {} {}".format(
+                self.project_hdf5.path,
+                self._name,
+                self.project_hdf5.h5_path,
+                str(self.get_job_id()),
+            )
+        )
         job._name = job_name
         job.master_id = self.get_job_id()
         job.status.initialized = True
@@ -737,7 +833,7 @@ class ParallelMaster(GenericMaster):
             job.server.run_mode.non_modal = True
         elif self.server.run_mode.queue:
             job.server.run_mode.thread = True
-        self._logger.info('{}: run job {}'.format(self.job_name, job.job_name))
+        self._logger.info("{}: run job {}".format(self.job_name, job.job_name))
         return job
 
     def _db_server_entry(self):
@@ -750,16 +846,22 @@ class ParallelMaster(GenericMaster):
         """
         db_entry = super(ParallelMaster, self)._db_server_entry()
         if self.submission_status.total_jobs:
-            return db_entry + '#' + str(self.submission_status.submitted_jobs) + '/' + \
-                   str(self.submission_status.total_jobs)
+            return (
+                db_entry
+                + "#"
+                + str(self.submission_status.submitted_jobs)
+                + "/"
+                + str(self.submission_status.total_jobs)
+            )
         else:
-            return db_entry + '#' + str(self.submission_status.submitted_jobs)
+            return db_entry + "#" + str(self.submission_status.submitted_jobs)
 
 
 class GenericOutput(OrderedDict):
     """
     Generic Output just a place holder to store the output of the last child directly in the ParallelMaster.
     """
+
     def __init__(self):
         super(GenericOutput, self).__init__()
 
@@ -769,6 +871,7 @@ class JobGenerator(object):
     JobGenerator - this class implements the functions to generate the parameter list, modify the individual jobs
     according to the parameter list and generate the new job names according to the parameter list.
     """
+
     def __init__(self, job, no_job_checks=False):
         self._job = job
         if no_job_checks:
@@ -809,10 +912,14 @@ class JobGenerator(object):
         """
         if len(self.parameter_list_cached) > self._childcounter:
             current_paramenter = self.parameter_list_cached[self._childcounter]
-            if hasattr(self, 'job_name'):
-                job = self._job.create_child_job(self.job_name(parameter=current_paramenter))
+            if hasattr(self, "job_name"):
+                job = self._job.create_child_job(
+                    self.job_name(parameter=current_paramenter)
+                )
             else:
-                job = self._job.create_child_job(self._job.ref_job.job_name + '_' + str(self._childcounter))
+                job = self._job.create_child_job(
+                    self._job.ref_job.job_name + "_" + str(self._childcounter)
+                )
             if job is not None:
                 self._childcounter += 1
                 job = self.modify_job(job=job, parameter=current_paramenter)

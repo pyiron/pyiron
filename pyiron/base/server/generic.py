@@ -13,8 +13,10 @@ Server object class which is connected to each job containing the technical deta
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -24,7 +26,9 @@ __date__ = "Sep 1, 2017"
 s = Settings()
 
 
-class Server(PyironObject):  # add the option to return the job id and the hold id to the server object
+class Server(
+    PyironObject
+):  # add the option to return the job id and the hold id to the server object
     """
     Generic Server object to handle the execution environment for the job
 
@@ -69,7 +73,10 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
 
             defines whether a subjob should be stored in the same HDF5 file or in a new one.
     """
-    def __init__(self, host=None, queue=None, cores=1, threads=1, run_mode='modal', new_hdf=True):
+
+    def __init__(
+        self, host=None, queue=None, cores=1, threads=1, run_mode="modal", new_hdf=True
+    ):
         self._cores = cores
         self._threads = threads
         self._run_time = None
@@ -141,9 +148,9 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def queue(self):
         """
         The que selected for a current simulation
-        
+
         Returns:
-            (str): schedulers_name 
+            (str): schedulers_name
         """
         return self._active_queue
 
@@ -151,28 +158,36 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def queue(self, new_scheduler):
         """
         Set a que for the current simulation, by choosing one of the available que_names
-        
+
         Args:
             new_scheduler (str): scheduler name
         """
         if s.queue_adapter is not None:
-            cores, run_time_max, memory_max = s.queue_adapter.check_queue_parameters(queue=new_scheduler,
-                                                                                     cores=self.cores,
-                                                                                     run_time_max=self.run_time,
-                                                                                     memory_max=self.memory_limit)
+            cores, run_time_max, memory_max = s.queue_adapter.check_queue_parameters(
+                queue=new_scheduler,
+                cores=self.cores,
+                run_time_max=self.run_time,
+                memory_max=self.memory_limit,
+            )
             if cores != self.cores:
                 self._cores = cores
-                print('Updated the number of cores to: ', cores)
+                s.logger.debug(
+                    "Updated the number of cores to: ", cores
+                )
             if run_time_max != self.run_time:
                 self._run_time = run_time_max
-                print('Updated the run time limit to: ', run_time_max)
+                s.logger.debug(
+                    "Updated the run time limit to: ", run_time_max
+                )
             if memory_max != self.memory_limit:
                 self._memory_limit = memory_max
-                print('Updated the memory limit to: ', memory_max)
+                s.logger.debug(
+                    "Updated the memory limit to: ", memory_max
+                )
             self._active_queue = new_scheduler
-            self.run_mode = 'queue'
+            self.run_mode = "queue"
         else:
-            raise TypeError('No queue adapter defined.')
+            raise TypeError("No queue adapter defined.")
 
     @property
     def queue_id(self):
@@ -206,7 +221,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def cores(self):
         """
         The number of cores selected for the current simulation
-        
+
         Returns:
             (int): number of cores
         """
@@ -216,18 +231,22 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def cores(self, new_cores):
         """
         The number of cores selected for the current simulation
-        
+
         Args:
             new_cores (int): number of cores
         """
         if s.queue_adapter is not None and self._active_queue is not None:
-            cores = s.queue_adapter.check_queue_parameters(queue=self.queue,
-                                                           cores=new_cores,
-                                                           run_time_max=self.run_time,
-                                                           memory_max=self.memory_limit)[0]
+            cores = s.queue_adapter.check_queue_parameters(
+                queue=self.queue,
+                cores=new_cores,
+                run_time_max=self.run_time,
+                memory_max=self.memory_limit,
+            )[0]
             if cores != new_cores:
                 self._cores = cores
-                print('Updated the number of cores to: ', cores)
+                s.logger.debug(
+                    "Updated the number of cores to: ", cores
+                )
             else:
                 self._cores = new_cores
         else:
@@ -237,7 +256,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def run_time(self):
         """
         The run time in seconds selected for the current simulation
-        
+
         Returns:
             (int): run time in seconds
         """
@@ -247,18 +266,22 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def run_time(self, new_run_time):
         """
         The run time in seconds selected for the current simulation
-        
+
         Args:
             new_run_time (int): run time in seconds
         """
         if s.queue_adapter is not None and self._active_queue is not None:
-            run_time_max = s.queue_adapter.check_queue_parameters(queue=self.queue,
-                                                                  cores=self.cores,
-                                                                  run_time_max=new_run_time,
-                                                                  memory_max=self.memory_limit)[1]
+            run_time_max = s.queue_adapter.check_queue_parameters(
+                queue=self.queue,
+                cores=self.cores,
+                run_time_max=new_run_time,
+                memory_max=self.memory_limit,
+            )[1]
             if run_time_max != new_run_time:
                 self._run_time = run_time_max
-                print('Updated the run time limit to: ', run_time_max)
+                s.logger.debug(
+                    "Updated the run time limit to: ", run_time_max
+                )
             else:
                 self._run_time = new_run_time
         else:
@@ -271,13 +294,17 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     @memory_limit.setter
     def memory_limit(self, limit):
         if s.queue_adapter is not None and self._active_queue is not None:
-            memory_max = s.queue_adapter.check_queue_parameters(queue=self.queue,
-                                                                cores=self.cores,
-                                                                run_time_max=self.run_time,
-                                                                memory_max=self.memory_limit)[2]
+            memory_max = s.queue_adapter.check_queue_parameters(
+                queue=self.queue,
+                cores=self.cores,
+                run_time_max=self.run_time,
+                memory_max=limit,
+            )[2]
             if memory_max != limit:
                 self._memory_limit = memory_max
-                print('Updated the memory limit to: ', memory_max)
+                s.logger.debug(
+                    "Updated the memory limit to: ", memory_max
+                )
             else:
                 self._memory_limit = limit
         else:
@@ -287,7 +314,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def run_mode(self):
         """
         Get the run mode of the job
-        
+
         Returns:
             (str/pyiron.base.server.runmode.Runmode): ['modal', 'non_modal', 'queue', 'manual']
         """
@@ -297,22 +324,22 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def run_mode(self, new_mode):
         """
         Set the run mode of the job
-        
+
         Args:
-            new_mode (str): ['modal', 'non_modal', 'queue', 'manual'] 
+            new_mode (str): ['modal', 'non_modal', 'queue', 'manual']
         """
         self._run_mode.mode = new_mode
-        if new_mode == 'queue':
+        if new_mode == "queue":
             if s.queue_adapter is None:
-                raise TypeError('No queue adapter defined.')
+                raise TypeError("No queue adapter defined.")
             if self._active_queue is None:
-                self.queue = s.queue_adapter.config['queue_primary']
+                self.queue = s.queue_adapter.config["queue_primary"]
 
     @property
     def new_hdf(self):
         """
         New_hdf5 defines whether a subjob should be stored in the same HDF5 file or in a new one.
-        
+
         Returns:
             (bool): [True / False]
 
@@ -323,14 +350,16 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def new_hdf(self, new_hdf_bool):
         """
         New_hdf5 defines whether a subjob should be stored in the same HDF5 file or in a new one.
-        
+
         Args:
             new_hdf_bool (bool): [True / False]
         """
         if isinstance(new_hdf_bool, bool):
             self._new_hdf = new_hdf_bool
         else:
-            raise TypeError('The new_hdf5 is a boolean property, defining whether subjobs are stored in the same file.')
+            raise TypeError(
+                "The new_hdf5 is a boolean property, defining whether subjobs are stored in the same file."
+            )
 
     @property
     def queue_list(self):
@@ -369,7 +398,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def view_queues():
         """
         List the available Job scheduler provided by the system.
-        
+
         Returns:
             (pandas.DataFrame)
         """
@@ -381,7 +410,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def to_hdf(self, hdf, group_name=None):
         """
         Store Server object in HDF5 file
-        
+
         Args:
             hdf: HDF5 object
             group_name (str): node name in the HDF5 file
@@ -409,7 +438,7 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
     def from_hdf(self, hdf, group_name=None):
         """
         Recover Server object in HDF5 file
-        
+
         Args:
             hdf: HDF5 object
             group_name: node name in the HDF5 file
@@ -437,15 +466,15 @@ class Server(PyironObject):  # add the option to return the job id and the hold 
         if "memory_limit" in hdf_dict.keys():
             self._memory_limit = hdf_dict["memory_limit"]
         if "accept_crash" in hdf_dict.keys():
-            self._accept_crash = (hdf_dict["accept_crash"] == 1)
+            self._accept_crash = hdf_dict["accept_crash"] == 1
         if "threads" in hdf_dict.keys():
             self._threads = hdf_dict["threads"]
-        self._new_hdf = (hdf_dict["new_h5"] == 1)
+        self._new_hdf = hdf_dict["new_h5"] == 1
 
     def db_entry(self):
         """
         connect all the info regarding the server into a single word that can be used e.g. as entry in a database
-        
+
         Returns:
             (str): server info as single word
 
