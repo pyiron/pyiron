@@ -36,20 +36,6 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
         self._interactive_write_input_files = True
         self._interactive_library_read = None
         self._interactive_fetch_completed = True
-        self.interactive_cache = {
-            "cells": [],
-            "energy_tot": [],
-            "energy_pot": [],
-            "forces": [],
-            "positions": [],
-            "indices": [],
-            "atom_spin_constraints": [],
-            "atom_spins": [],
-            "magnetic_forces": [],
-            "steps": [],
-            "computation_time": [],
-            "volume": [],
-        }
 
     @property
     def structure(self):
