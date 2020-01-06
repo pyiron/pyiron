@@ -32,6 +32,10 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         self._interactive_fetch_completed = True
         self._interactive_species_lst = np.array([])
         self._periodic_table = PeriodicTable()
+        self.interactive_input_functions = {'index': self.interactive_index_organizer,
+                                            'cell': self.interactive_cell_organizer,
+                                            'positions': self.interactive_positions_organizer,
+                                            'magnetic_moments': self.interactive_magmom_organizer}
         self.interactive_output_functions =  {'cells': self.interactive_cells_getter,
                                               'energy_pot': self.interactive_energy_pot_getter,
                                               'energy_tot': self.interactive_energy_tot_getter,
@@ -126,55 +130,66 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
                 raise ValueError(
                     "The number of atoms changed, this is currently not supported!"
                 )
-            index_merge_lst = self._interactive_species_lst.tolist() + list(
-                self._structure_current.get_species_symbols()
-            )
-            el_lst = sorted(set(index_merge_lst), key=index_merge_lst.index)
-            current_structure_index = [
-                el_lst.index(el)
-                for el in self._structure_current.get_chemical_symbols()
-            ]
-            previous_structure_index = [
-                el_lst.index(el)
-                for el in self._structure_previous.get_chemical_symbols()
-            ]
             if not self._interactive_enforce_structure_reset:
-                if not np.allclose(
-                    self._structure_current.cell,
-                    self._structure_previous.cell,
-                    rtol=1e-15,
-                    atol=1e-15,
-                ):
-                    self._logger.debug("Generic library: cell changed!")
-                    self.interactive_cells_setter(self._structure_current.cell)
-                if not np.allclose(
-                    self._structure_current.get_scaled_positions(),
-                    self._structure_previous.get_scaled_positions(),
-                    rtol=1e-15,
-                    atol=1e-15,
-                ):
-                    self._logger.debug("Generic library: positions changed!")
-                    self.interactive_positions_setter(self._structure_current.positions)
-                if np.any(self._structure_current.get_initial_magnetic_moments()) and (
-                    None in self._structure_previous.get_initial_magnetic_moments()
-                    or not np.allclose(
-                        self._structure_current.get_initial_magnetic_moments(),
-                        self._structure_previous.get_initial_magnetic_moments(),
-                    )
-                ):
-                    self._logger.debug("Generic library: magnetic moments changed!")
-                    self.interactive_spin_constraints_setter(
-                        self._structure_current.get_initial_magnetic_moments()
-                    )
-                if not np.array_equal(
-                    np.array(current_structure_index),
-                    np.array(previous_structure_index),
-                ):
-                    self._logger.debug("Generic library: indices changed!")
-                    self.interactive_indices_setter(self._structure_current.indices)
+                functions_to_execute = list(self.interactive_input_functions.values())
+                for v in functions_to_execute:
+                    v()
             else:
                 self._logger.debug("Generic library: structure changed!")
                 self.interactive_structure_setter(self._structure_current)
+
+    def interactive_index_organizer(self):
+        index_merge_lst = self._interactive_species_lst.tolist() + list(
+            self._structure_current.get_species_symbols()
+        )
+        el_lst = sorted(set(index_merge_lst), key=index_merge_lst.index)
+        current_structure_index = [
+            el_lst.index(el)
+            for el in self._structure_current.get_chemical_symbols()
+        ]
+        previous_structure_index = [
+            el_lst.index(el)
+            for el in self._structure_previous.get_chemical_symbols()
+        ]
+        if not np.array_equal(
+            np.array(current_structure_index),
+            np.array(previous_structure_index),
+        ):
+            self._logger.debug("Generic library: indices changed!")
+            self.interactive_indices_setter(self._structure_current.indices)
+
+    def interactive_cell_organizer(self):
+        if not np.allclose(
+            self._structure_current.cell,
+            self._structure_previous.cell,
+            rtol=1e-15, atol=1e-15,
+        ):
+            self._logger.debug("Generic library: cell changed!")
+            self.interactive_cells_setter(self._structure_current.cell)
+
+    def interactive_positions_organizer(self):
+        if not np.allclose(
+            self._structure_current.get_scaled_positions(),
+            self._structure_previous.get_scaled_positions(),
+            rtol=1e-15,
+            atol=1e-15,
+        ):
+            self._logger.debug("Generic library: positions changed!")
+            self.interactive_positions_setter(self._structure_current.positions)
+
+    def interactive_magmom_organizer(self):
+        if all(self._structure_current.get_initial_magnetic_moments()==None):
+            del self.interactive_input_functions['magnetic_moments']
+        elif (None in self._structure_previous.get_initial_magnetic_moments()
+            or not np.allclose(
+                self._structure_current.get_initial_magnetic_moments(),
+                self._structure_previous.get_initial_magnetic_moments(),
+            )
+        ):
+            self._logger.debug("Generic library: magnetic moments changed!")
+            self.interactive_spin_constraints_setter(
+                self._structure_current.get_initial_magnetic_moments()
+            )
 
     def interactive_cells_getter(self):
         return self.initial_structure.cell
