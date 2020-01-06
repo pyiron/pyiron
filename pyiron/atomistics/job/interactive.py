@@ -201,12 +201,15 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         del_key_lst = []
         for k,v in self.interactive_output_functions.items():
             try:
-                self.interactive_cache[k].append(v())
+                value = v()
+                if value is not None:
+                    self.interactive_cache[k].append(value)
+                else:
+                    del_key_lst.append(k)
             except NotImplementedError:
                 del_key_lst.append(k)
         for k in del_key_lst:
             del self.interactive_output_functions[k]
-            del self.interactive_cache[k]
         if (
             len(list(self.interactive_cache.keys())) > 0
             and len(self.interactive_cache[list(self.interactive_cache.keys())[0]])
