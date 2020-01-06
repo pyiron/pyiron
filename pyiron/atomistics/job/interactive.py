@@ -165,7 +165,10 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             rtol=1e-15, atol=1e-15,
         ):
             self._logger.debug("Generic library: cell changed!")
-            self.interactive_cells_setter(self._structure_current.cell)
+            try:
+                self.interactive_cells_setter(self._structure_current.cell)
+            except NotImplementedError:
+                del self.interactive_input_functions['cell']
 
     def interactive_positions_organizer(self):
         if not np.allclose(

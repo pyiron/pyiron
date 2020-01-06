@@ -84,9 +84,6 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
         self._coarse_run = value
         self.input["CoarseRun"] = self._coarse_run
 
-    def interactive_cells_setter(self, cell):
-        warnings.warn("cell size cannot be changed in SPHInX; function ignored")
-
     def interactive_cells_getter(self):
         self._interactive_pipe_write("get cell")
         cc = []
