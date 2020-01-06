@@ -33,17 +33,6 @@ class VaspInteractive(VaspBase, GenericInteractive):
         super(VaspInteractive, self).__init__(project, job_name)
         self._interactive_write_input_files = True
         self._interactive_vasprun = None
-        self.interactive_cache = {
-            "cells": [],
-            "energy_pot": [],
-            "energy_tot": [],
-            "forces": [],
-            "positions": [],
-            "indices": [],
-            "steps": [],
-            "computation_time": [],
-            "volume": [],
-        }
 
     @property
     def structure(self):
