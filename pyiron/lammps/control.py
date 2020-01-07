@@ -146,25 +146,27 @@ class LammpsControl(GenericParameters):
             "kspace_style",
             "neighbor",
         )
-        block_dict["compute"] = "compute"
-        block_dict["control"] = (
-            "fix___ensemble",
-            "fix___langevin",
-            "fix___vcsgc",
+        block_dict["compute"] = (
+            "compute",
             "fix",
+            "variable",
+            "fix_modify",
+        )
+        block_dict["setup"] = (
             "min_style",
             "min_modify",
             "neigh_modify",
             "velocity",
+            "timestep",
+            "dielectric",
+            "reset_timestep",
+        )
+        block_dict["control"] = (
             "dump",
             "dump_modify",
             "thermo_style",
             "thermo_modify",
             "thermo",
-            "timestep",
-            "dielectric",
-            "fix_modify",
-            "reset_timestep",
         )
         block_dict["run"] = ("run", "minimize")
         block_dict["write_restart"] = "write_restart"

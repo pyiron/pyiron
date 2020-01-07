@@ -826,8 +826,8 @@ class GenericParameters(PyironObject):
         """
         for key, val in self._block_dict.items():
             par_first = parameter_name.split()[0].split(self.multi_word_separator)[0]
+            #val_first = [vv.split()[0].split(self.multi_word_separator)[0] for vv in val]
             if par_first in val:
-                parameter_found_in_block = True
                 i_last_block_line = max(self._block_line_dict[key])
                 self._insert(
                     line_number=i_last_block_line + 1,
@@ -837,13 +837,14 @@ class GenericParameters(PyironObject):
                         "Comment": [""],
                     },
                 )
-                return parameter_found_in_block
+                return True 
         else:
             s.logger.warning(
                 "Unknown parameter (does not exist in block_dict): {}".format(
                     parameter_name
                 )
             )
+        return False
 
     def _append(self, **qwargs):
         """
