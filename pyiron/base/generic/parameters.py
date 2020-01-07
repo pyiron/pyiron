@@ -799,7 +799,7 @@ class GenericParameters(PyironObject):
             if par.strip() == "":
                 continue
             for key, val in self._block_dict.items():
-                par_single = par.split()[0]
+                par_single = par.split()[0].split(self.multi_word_separator)[0]
                 if par_single in val:
                     if key in self._block_line_dict:
                         self._block_line_dict[key].append(i_line)

@@ -640,3 +640,57 @@ class LammpsControl(GenericParameters):
             fix___vcsgc=fix_vcsgc_str,
             append_if_not_present=True
         )
+
+    def measure_mean_value(self, key, every=1, repeat=None, freq=None):
+        """
+            Args:
+                key (str): property to take an average value of (e.g. 'energy_pot' v.i.)
+                every (int): number of steps there should be between two measurements
+                repeat (int): number of measurements for each output (default: n_print/every)
+                freq (int): output frequency (default: n_print)
+
+            Comments:
+                Currently available keys: 'energy_pot', 'energy_tot', 'temperature', 'volume', 'pressures'
+                Future keys: 'cells', 'forces', 'positions', 'unwrapped_positions', 'velocities'
+        """
+
+        if every<=0:
+            raise AssertionError('every must be a positive integer')
+        if freq is None:
+            freq = self['thermo']
+        if repeat is None:
+            repeat = int(freq/every)
+        if key=='energy_pot':
+            self._measure_mean_value('energy_pot', 'pe', every, repeat, freq)
+        elif key=='energy_tot':
+            self._measure_mean_value('energy_tot', 'etotal', every, repeat, freq)
+        elif key=='temperature':
+            self._measure_mean_value('temperature', 'temp', every, repeat, freq)
+        elif key=='volume':
+            self._measure_mean_value('volume', 'vol', every, repeat, freq)
+        elif key=='pressures':
+            self._measure_mean_value('Pxx', 'pxx', every, repeat, freq)
+            self._measure_mean_value('Pyy', 'pyy', every, repeat, freq)
+            self._measure_mean_value('Pzz', 'pzz', every, repeat, freq)
+            self._measure_mean_value('Pxy', 'pxy', every, repeat, freq)
+            self._measure_mean_value('Pxz', 'pxz', every, repeat, freq)
+            self._measure_mean_value('Pyz', 'pyz', every, repeat, freq)
+        else:
+            raise NotImplementedError(key+' is not implemented')
+
+    def _measure_mean_value(self, key_pyiron, key_lmp, every, repeat, freq):
+        """
+            Args:
+                key (str): property to take an average value of (e.g. 'energy_pot' v.i.)
+                every (int): number of steps there should be between two measurements
+                repeat (int): number of measurements for each output (default: n_print/every)
+                freq (int): output frequency (default: n_print)
+
+            Comments:
+                Currently available keys: 'energy_pot', 'energy_tot', 'temperature', 'volume'
+                Future keys: 'cells', 'forces', 'positions', 'pressures', 'unwrapped_positions', 'velocities'
+        """
+        self['variable___{}'.format(key_lmp)] = 'equal {}'.format(key_lmp)
+        self['fix___mean_{}'.format(key_pyiron)] = 'all ave/time {} {} {} v_{}'.format(every, repeat, freq, key_lmp)
+        self['thermo_style'] = self['thermo_style']+' f_mean_{}'.format(key_pyiron)
+
