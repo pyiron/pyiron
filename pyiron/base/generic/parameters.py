@@ -836,7 +836,7 @@ class GenericParameters(PyironObject):
                         "Comment": [""],
                     },
                 )
-                return True 
+                return True
         else:
             s.logger.warning(
                 "Unknown parameter (does not exist in block_dict): {}".format(
