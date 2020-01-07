@@ -35,19 +35,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._check_opened = False
         self._interactive_run_command = None
         self._interactive_grand_canonical = True
-        self.interactive_cache = {
-            "cells": [],
-            "energy_pot": [],
-            "energy_tot": [],
-            "forces": [],
-            "positions": [],
-            "pressures": [],
-            "steps": [],
-            "indices": [],
-            "temperature": [],
-            "computation_time": [],
-            "volume": [],
-        }
+        if "stress" in self.interactive_output_functions.keys():
+            del self.interactive_output_functions["stress"]
 
     @property
     def structure(self):

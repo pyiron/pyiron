@@ -1800,7 +1800,7 @@ class Output(object):
 
         if len(self._parse_dict["scf_energy_zero"]) == 0:
             self._parse_dict["scf_energy_zero"] = [
-                0.5 * (np.array(fr) + np.array(en))
+                (0.5 * (np.array(fr) + np.array(en))).tolist()
                 for fr, en in zip(
                     self._parse_dict["scf_energy_free"],
                     self._parse_dict["scf_energy_int"],

@@ -3467,7 +3467,13 @@ class Atoms(object):
 
         if pbc is None:
             pbc = self.pbc
-        self.positions = wrap_positions(self.positions, self.cell, pbc, center, eps)
+        self.positions = wrap_positions(
+            positions=self.positions,
+            cell=self.cell,
+            pbc=pbc,
+            center=center,
+            eps=eps
+        )
 
     def write(self, filename, format=None, **kwargs):
         """
