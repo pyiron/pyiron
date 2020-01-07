@@ -206,7 +206,7 @@ class RDF_calculator(object):
         if self.cell.nvec != 3:
             raise ValueError('RDF can only be computed for 3D periodic systems.')
         if (2*self.rcut > self.cell.rspacings*(1+2*self.nimage)).any():
-            raise ValueError('The 2*rcut argument ({}) should not exceed any of the cell spacings (max:{}).'.format(2*self.rcut, max(self.cell.rspacings*(1+2*self.nimage))))
+            raise ValueError('The 2*rcut argument ({}) should not exceed any of the cell spacings (max:{}).'.format(2*self.rcut, min(self.cell.rspacings*(1+2*self.nimage))))
 
     # Compute iteration
     def compute_iteration(self):
