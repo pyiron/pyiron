@@ -826,7 +826,6 @@ class GenericParameters(PyironObject):
         """
         for key, val in self._block_dict.items():
             par_first = parameter_name.split()[0].split(self.multi_word_separator)[0]
-            #val_first = [vv.split()[0].split(self.multi_word_separator)[0] for vv in val]
             if par_first in val:
                 i_last_block_line = max(self._block_line_dict[key])
                 self._insert(
