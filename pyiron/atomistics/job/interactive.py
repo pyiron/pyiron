@@ -181,7 +181,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             self.interactive_positions_setter(self._structure_current.positions)
 
     def interactive_magmom_organizer(self):
-        if np.all(self._structure_current.get_initial_magnetic_moments()==None):
+        if all(mm is None for mm in self._structure_current.get_initial_magnetic_moments()):
             del self.interactive_input_functions['magnetic_moments']
         elif (None in self._structure_previous.get_initial_magnetic_moments()
             or not np.allclose(
