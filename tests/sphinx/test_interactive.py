@@ -104,10 +104,8 @@ class TestSphinx(unittest.TestCase):
         os.rmdir(os.path.join(cls.file_location, "../static/sphinx/job_sphinx_hdf5"))
 
     def test_interactive_cells_setter(self):
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
+        with self.assertRaises(NotImplementedError) as c:
             self.sphinx.interactive_cells_setter(np.eye(3))
-            self.assertEqual(len(w), 1)
 
     def test_coarse_run(self):
         self.assertFalse(self.sphinx.coarse_run)
