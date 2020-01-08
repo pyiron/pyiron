@@ -46,6 +46,10 @@ class TestLammps(unittest.TestCase):
             project=ProjectHDFio(project=cls.project, file_name="lammps"),
             job_name="minimize_control_lammps",
         )
+        cls.job_read_restart = Lammps(
+            project=ProjectHDFio(project=cls.project, file_name="lammps"),
+            job_name="read_restart",
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -521,6 +525,14 @@ class TestLammps(unittest.TestCase):
             self.minimize_control_job.input.control['fix___ensemble'],
             "all box/relax x 10000.0 y 20000.0 xy 0.0 xz 0.0 couple none"
         )
+
+    def test_read_restart_file(self):
+        self.job_read_restart.read_restart_file()
+        self.assertIsNone(self.job_read_restart['dimension'])
+
+    def test_write_restart(self):
+        self.job_read_restart.write_restart_file()
+        self.assertEqual(self.job_read_restart.input.control['write_restart'], 'restart.out')
 
 
 if __name__ == "__main__":
