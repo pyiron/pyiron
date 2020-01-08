@@ -577,7 +577,7 @@ class LammpsBase(AtomisticGenericJob):
             self,
             e_tol=0.0,
             f_tol=1e-4,
-            max_iter=100000,
+            max_iter=1000000,
             pressure=None,
             n_print=100,
             style='cg'
