@@ -256,3 +256,10 @@ def get_magnetic_structure(job):
             return {"magnetic_structure": "para-magnetic"}
         else:
             return {"magnetic_structure": "unknown"}
+
+
+def get_e_conv_level(job):
+    return {'el_conv': np.max(np.abs(
+        job['output/generic/dft/scf_energy_free'][0] -
+        job['output/generic/dft/scf_energy_free'][0][-1]
+    )[-10:])}
