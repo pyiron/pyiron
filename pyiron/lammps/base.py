@@ -549,6 +549,11 @@ class LammpsBase(AtomisticGenericJob):
             axis=-1,
         ).reshape(-1, 3, 3).astype('float64')
         pressures *= 0.0001  # bar -> GPa
+
+        # Rotate pressures from Lammps frame to pyiron frame if necessary
+        rotation_lammps2orig = self._prism.R.T
+        pressures = np.matmul(pressures, rotation_lammps2orig)
+
         df = df.drop(
             columns=df.columns[
                 ((df.columns.str.len() == 3) & df.columns.str.startswith("P"))
