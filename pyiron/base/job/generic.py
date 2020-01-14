@@ -505,10 +505,7 @@ class GenericJob(JobCore):
         else:
             delete_file_after_copy = False
 
-        in_same_project = project is None
-        if not in_same_project:
-            in_same_project = project.path == self.project.path
-
+        in_same_project = project is None or project.path == self.project.path
         has_new_name = new_job_name is not None
 
         if in_same_project:
