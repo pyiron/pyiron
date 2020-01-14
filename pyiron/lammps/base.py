@@ -540,6 +540,9 @@ class LammpsBase(AtomisticGenericJob):
             "Volume": "volume",
         }
 
+        for key in df.columns[df.columns.str.startswith('f_mean')]:
+            h5_dict[key] = key.replace('f_', '')
+
         df = df.rename(index=str, columns=h5_dict)
         pressures = np.stack(
             (df.Pxx, df.Pxy, df.Pxz, df.Pxy, df.Pyy, df.Pyz, df.Pxz, df.Pyz, df.Pzz),
@@ -552,6 +555,18 @@ class LammpsBase(AtomisticGenericJob):
             ]
         )
         df["pressures"] = pressures.tolist()
+        if 'mean_Pxx' in df.columns:
+            pressures = np.stack(
+                (df.mean_Pxx, df.mean_Pxy, df.mean_Pxz, df.mean_Pxy, df.mean_Pyy, df.mean_Pyz, df.mean_Pxz, df.mean_Pyz, df.mean_Pzz),
+                axis=-1,
+            ).reshape(-1, 3, 3).astype('float64')
+            pressures *= 0.0001  # bar -> GPa
+            df = df.drop(
+                columns=df.columns[
+                    ((df.columns.str.len() == 8) & df.columns.str.startswith("mean_P"))
+                ]
+            )
+            df["mean_pressures"] = pressures.tolist()
 
         with self.project_hdf5.open("output/generic") as hdf_output:
             # This is a hack for backward comparability
@@ -562,7 +577,7 @@ class LammpsBase(AtomisticGenericJob):
             self,
             e_tol=0.0,
             f_tol=1e-4,
-            max_iter=100000,
+            max_iter=1000000,
             pressure=None,
             n_print=100,
             style='cg'
