@@ -510,20 +510,24 @@ class GenericJob(JobCore):
         else:
             delete_file_after_copy = False
 
-        # Get job, project, name, and location
-        new_generic_job = self.copy()
-        new_job_name = new_job_name or self.name
-        new_project = project or self.project
+        # Get new hdf location
+        project = project or self.project
         if in_same_project and len(self.project_hdf5.h5_path.split("/")) > 2:
             new_location = self.project_hdf5.open("../" + new_job_name)
         else:
-            new_location = self.project_hdf5.__class__(new_project, new_job_name, h5_path="/" + new_job_name)
+            new_location = self.project_hdf5.__class__(project, new_job_name, h5_path="/" + new_job_name)
 
-        # Copy
-        new_generic_job.reset_job_id(job_id=new_generic_job.job_id)
-        new_generic_job._name = new_job_name
-        new_generic_job.project_hdf5.copy_to(new_location, maintain_name=not has_new_name)
-        new_generic_job.project_hdf5 = new_location
+        # Copy job
+        if in_same_project:
+            new_generic_job = self.copy()
+            new_generic_job.reset_job_id()
+            new_generic_job._name = new_job_name
+            new_generic_job.project_hdf5.copy_to(new_location, maintain_name=False)
+            new_generic_job.project_hdf5 = new_location
+        else:
+            new_generic_job = super(GenericJob, self).copy_to(project, new_database_entry=new_database_entry)
+            new_generic_job.reset_job_id(job_id=new_generic_job.job_id)
+            new_generic_job.from_hdf()
 
         if new_database_entry:
             new_generic_job.save()
