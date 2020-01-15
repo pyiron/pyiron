@@ -822,7 +822,7 @@ class JobCore(PyironObject):
     def __setitem__(self, key, value):
         """
         stores data
-        
+
         args:
             key (str): key to store in hdf (full path)
             value (anything): value to store
