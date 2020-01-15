@@ -47,6 +47,11 @@ class DatabasePropertyIntegration(unittest.TestCase):
             job_inspect.content.output.__repr__(), job_inspect["output"].__repr__()
         )
 
+    def test_setitem(self):
+        self.ham['user/output/some_value'] = 0.3
+        self.assertEqual(self.ham['user/output/some_value'], 0.3)
+        with self.assertRaises(ValueError):
+            self.ham['input/value'] = 1
 
 if __name__ == "__main__":
     unittest.main()
