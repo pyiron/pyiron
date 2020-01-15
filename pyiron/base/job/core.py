@@ -801,6 +801,34 @@ class JobCore(PyironObject):
         del self._master_id
         del self._status
 
+    def _create_groups_recursively(self, hdf, key, value):
+        """
+        This function creates a new group if a group is not defined, simply passes to the
+        next level of hdf5 hierarchy or stores data if the key is already in the lowest level
+
+        args:
+            hdf (str): (partial) path to data
+            key (str): hdf key
+            value (anything): value to store
+        """
+        if key[0] not in hdf.list_groups():
+            hdf.create_group(key[0])
+        with hdf.open(key[0]) as hdf_group:
+            if len(key)==2:
+                hdf_group[key[1]] = value
+            else:
+                self._create_groups_recursively(hdf_group, key[1:], value)
+
+    def __setitem__(self, key, value):
+        """
+        stores data
+        
+        args:
+            key (str): key to store in hdf (full path)
+            value (anything): value to store
+        """
+        self._create_groups_recursively(self._hdf5, key.split('/'), value)
+
     def __getitem__(self, item):
         """
         Get/ read data from the HDF5 file
