@@ -648,6 +648,7 @@ class LammpsControl(GenericParameters):
                 every (int): number of steps there should be between two measurements
                 repeat (int): number of measurements for each output (default: n_print/every)
                 freq (int): output frequency (default: n_print)
+                name (str): name to give in the output string (ignored if a pyiron predefined tag is used)
 
             Comments:
                 Currently available keys: 'energy_pot', 'energy_tot', 'temperature', 'volume', 'pressures'
