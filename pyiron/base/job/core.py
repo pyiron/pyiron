@@ -801,36 +801,6 @@ class JobCore(PyironObject):
         del self._master_id
         del self._status
 
-    def _create_groups_recursively(self, hdf, key, value):
-        """
-        This function creates a new group if a group is not defined, simply passes to the
-        next level of hdf5 hierarchy or stores data if the key is already in the lowest level
-
-        Args:
-            hdf (str): (partial) path to data
-            key (str): hdf key
-            value (anything): value to store
-        """
-        if key[0] not in hdf.list_groups():
-            hdf.create_group(key[0])
-        with hdf.open(key[0]) as hdf_group:
-            if len(key)==2:
-                hdf_group[key[1]] = value
-            else:
-                self._create_groups_recursively(hdf_group, key[1:], value)
-
-    def __setitem__(self, key, value):
-        """
-        Stores data
-
-        Args:
-            key (str): key to store in hdf (full path)
-            value (anything): value to store
-        """
-        if key.startswith('output/') or key.startswith('input/'):
-            raise ValueError('output and input cannot be changed by user -> use a different path')
-        self._create_groups_recursively(self._hdf5, key.split('/'), value)
-
     def __getitem__(self, item):
         """
         Get/ read data from the HDF5 file
@@ -864,6 +834,18 @@ class JobCore(PyironObject):
             with open(file_name) as f:
                 return f.readlines()
         return None
+
+    def __setitem__(self, key, value):
+        """
+        Stores data
+
+        Args:
+            key (str): key to store in hdf (full path)
+            value (anything): value to store
+        """
+        if key.startswith('output/') or key.startswith('input/'):
+            raise ValueError('output and input cannot be changed by user -> use a different path')
+        self._hdf5[key] = value
 
     def __delitem__(self, key):
         """
