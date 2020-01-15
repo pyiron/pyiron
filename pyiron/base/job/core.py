@@ -827,6 +827,8 @@ class JobCore(PyironObject):
             key (str): key to store in hdf (full path)
             value (anything): value to store
         """
+        if key.startswith('output/') or key.startswith('input/'):
+            raise ValueError('output and input cannot be changed by user -> use a different path')
         self._create_groups_recursively(self._hdf5, key.split('/'), value)
 
     def __getitem__(self, item):
