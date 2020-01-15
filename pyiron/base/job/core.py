@@ -806,7 +806,7 @@ class JobCore(PyironObject):
         This function creates a new group if a group is not defined, simply passes to the
         next level of hdf5 hierarchy or stores data if the key is already in the lowest level
 
-        args:
+        Args:
             hdf (str): (partial) path to data
             key (str): hdf key
             value (anything): value to store
@@ -821,9 +821,9 @@ class JobCore(PyironObject):
 
     def __setitem__(self, key, value):
         """
-        stores data
+        Stores data
 
-        args:
+        Args:
             key (str): key to store in hdf (full path)
             value (anything): value to store
         """
