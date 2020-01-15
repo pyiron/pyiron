@@ -843,8 +843,8 @@ class JobCore(PyironObject):
             key (str): key to store in hdf (full path)
             value (anything): value to store
         """
-        if key.startswith('output/') or key.startswith('input/'):
-            raise ValueError('output and input cannot be changed by user -> use a different path')
+        if not key.startswith('user/'):
+            raise ValueError("user defined paths+values must begin with user/, e.g. job['user/key'] = value")
         self._hdf5[key] = value
 
     def __delitem__(self, key):
