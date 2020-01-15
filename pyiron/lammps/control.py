@@ -641,7 +641,7 @@ class LammpsControl(GenericParameters):
             append_if_not_present=True
         )
 
-    def measure_mean_value(self, key, every=1, repeat=None, freq=None):
+    def measure_mean_value(self, key, every=1, repeat=None, freq=None, name=None):
         """
             Args:
                 key (str): property to take an average value of (e.g. 'energy_pot' v.i.)
@@ -675,6 +675,11 @@ class LammpsControl(GenericParameters):
             self._measure_mean_value('Pxy', 'pxy', every, repeat, freq)
             self._measure_mean_value('Pxz', 'pxz', every, repeat, freq)
             self._measure_mean_value('Pyz', 'pyz', every, repeat, freq)
+        elif name is not None:
+            if '**' in key:
+                warnings.warn('** is replaced by ^ (as it is understood by LAMMPS)')
+                key = key.replace('**', '^')
+            self._measure_mean_value(name, key, every, repeat, freq)
         else:
             raise NotImplementedError(key+' is not implemented')
 
