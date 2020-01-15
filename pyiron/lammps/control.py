@@ -695,7 +695,7 @@ class LammpsControl(GenericParameters):
                 Currently available keys: 'energy_pot', 'energy_tot', 'temperature', 'volume'
                 Future keys: 'cells', 'forces', 'positions', 'pressures', 'unwrapped_positions', 'velocities'
         """
-        self['variable___{}'.format(key_lmp)] = 'equal {}'.format(key_lmp)
-        self['fix___mean_{}'.format(key_pyiron)] = 'all ave/time {} {} {} v_{}'.format(every, repeat, freq, key_lmp)
+        self['variable___{}'.format(key_pyiron)] = 'equal {}'.format(key_lmp)
+        self['fix___mean_{}'.format(key_pyiron)] = 'all ave/time {} {} {} v_{}'.format(every, repeat, freq, key_pyiron)
         self['thermo_style'] = self['thermo_style']+' f_mean_{}'.format(key_pyiron)
 
