@@ -1,10 +1,10 @@
 matrix:
   include:
     - stage: test
-      name: test_linux_2_7
+      name: test_linux_3_7
       os: linux
       language: python
-      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh" PYTHONVER="2.7"
+      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.7"
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
         - ./.ci_support/setup_miniconda.sh ${MINICONDA}
@@ -15,10 +15,10 @@ matrix:
         - coverage combine
         # - ./.ci_support/build_notebooks_on_master.sh
 
-    - name: test_linux_3_7
+    - name: test_linux_3_8
       os: linux
       language: python
-      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.7"
+      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.8"
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
         - ./.ci_support/setup_miniconda.sh ${MINICONDA}
@@ -47,10 +47,10 @@ matrix:
           on:
             tags: true
 
-    - name: test_osx_2_7
+    - name: test_osx_3_7
       os: osx
       language: generic
-      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh" PYTHONVER="2.7"
+      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" PYTHONVER="3.7"
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
         - ./.ci_support/setup_miniconda.sh ${MINICONDA}
@@ -61,10 +61,10 @@ matrix:
         - coverage combine
         # - ./.ci_support/build_notebooks_on_master.sh
 
-    - name: test_osx_3_7
+    - name: test_osx_3_8
       os: osx
       language: generic
-      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" PYTHONVER="3.7"
+      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" PYTHONVER="3.8"
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
         - ./.ci_support/setup_miniconda.sh ${MINICONDA}
