@@ -10,9 +10,6 @@ environment:
     - PYTHON_VERSION: 3.7
       CONDA: C:\Miniconda37
 
-    - PYTHON_VERSION: 3.8
-      CONDA: C:\Miniconda38
-
 version: '{build}'
 image: Visual Studio 2015
 
