@@ -7,9 +7,6 @@ environment:
     PROJECT_NAME: pyiron
 
   matrix:
-    - PYTHON_VERSION: 2.7
-      CONDA: C:\Miniconda
-
     - PYTHON_VERSION: 3.7
       CONDA: C:\Miniconda37
 
