@@ -567,6 +567,8 @@ class LammpsBase(AtomisticGenericJob):
                 axis=-1,
             ).reshape(-1, 3, 3).astype('float64')
             pressures *= 0.0001  # bar -> GPa
+            if np.matrix.trace(rotation_matrix) != 3:
+                pressures = rotation_matrix.T @ pressures @ rotation_matrix
             df = df.drop(
                 columns=df.columns[
                     ((df.columns.str.len() == 8) & df.columns.str.startswith("mean_P"))
