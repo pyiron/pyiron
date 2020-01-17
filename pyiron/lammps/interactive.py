@@ -585,10 +585,9 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                 ],
             ]
         )
-        if np.matrix.trace(self._prism.R) != 3:
-            pp = np.dot(
-                np.dot(self._prism.R, pp), self._prism.R.T
-            )
+        rotation_matrix = self._prism.R.T
+        if np.matrix.trace(rotation_matrix) != 3:
+            pp = rotation_matrix.T @ pp @ rotation_matrix
         return pp / 10000  # bar -> GPa
 
     def interactive_close(self):

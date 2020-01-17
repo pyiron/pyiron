@@ -551,8 +551,9 @@ class LammpsBase(AtomisticGenericJob):
         pressures *= 0.0001  # bar -> GPa
 
         # Rotate pressures from Lammps frame to pyiron frame if necessary
-        rotation_lammps2orig = self._prism.R.T
-        pressures = np.matmul(pressures, rotation_lammps2orig)
+        rotation_matrix = self._prism.R.T
+        if np.matrix.trace(rotation_matrix) != 3:
+            pressures = rotation_matrix.T @ pressures @ rotation_matrix
 
         df = df.drop(
             columns=df.columns[
@@ -603,6 +604,7 @@ class LammpsBase(AtomisticGenericJob):
             pressure=pressure,
             n_print=n_print,
             style=style,
+            rotation_matrix=self._prism.R
         )
     calc_minimize.__doc__ = LammpsControl.calc_minimize.__doc__
 
@@ -694,6 +696,7 @@ class LammpsBase(AtomisticGenericJob):
             delta_temp=delta_temp,
             delta_press=delta_press,
             job_name=self.job_name,
+            rotation_matrix=self._prism.R
         )
 
     def calc_vcsgc(
