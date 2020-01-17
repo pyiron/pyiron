@@ -366,14 +366,9 @@ class SparseArray(object):
     def __getattr__(self, item):
         # if not (item in ["_lists"]):
         #     print "item: ", item, hasattr(self, item)
-        if sys.version_info.major > 2:
-            if "_lists" in dir(self):  # Python 3
-                if item in self._lists.keys():
-                    return self._lists[item]
-        else:
-            if hasattr(self, "_lists"):
-                if item in self._lists.keys():
-                    return self._lists[item]
+        if "_lists" in dir(self):  # Python 3
+            if item in self._lists.keys():
+                return self._lists[item]
 
         return object.__getattribute__(self, item)
         # raise AttributeError("%r object has no attribute %r" %(self.__class__, item))
