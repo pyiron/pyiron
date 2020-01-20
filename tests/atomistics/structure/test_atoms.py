@@ -17,14 +17,13 @@ from pyiron.base.generic.hdfio import FileHDFio
 class TestAtoms(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
-        if sys.version_info[0] >= 3:
-            file_location = os.path.dirname(os.path.abspath(__file__))
-            if os.path.isfile(
+        file_location = os.path.dirname(os.path.abspath(__file__))
+        if os.path.isfile(
+            os.path.join(file_location, "../../static/atomistics/test_hdf")
+        ):
+            os.remove(
                 os.path.join(file_location, "../../static/atomistics/test_hdf")
-            ):
-                os.remove(
-                    os.path.join(file_location, "../../static/atomistics/test_hdf")
-                )
+            )
 
     @classmethod
     def setUpClass(cls):
@@ -183,39 +182,37 @@ class TestAtoms(unittest.TestCase):
         )
 
     def test_to_hdf(self):
-        if sys.version_info[0] >= 3:
-            filename = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "../../static/atomistics/test_hdf",
-            )
-            abs_filename = os.path.abspath(filename)
-            hdf_obj = FileHDFio(abs_filename)
-            pos, cell = generate_fcc_lattice()
-            basis = Atoms(symbols="Al", positions=pos, cell=cell)
-            basis.set_repeat([2, 2, 2])
-            basis.to_hdf(hdf_obj, "test_structure")
-            self.assertTrue(
-                np.array_equal(hdf_obj["test_structure/positions"], basis.positions)
-            )
-            basis_new = Atoms().from_hdf(hdf_obj, "test_structure")
-            self.assertEqual(basis, basis_new)
+        filename = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "../../static/atomistics/test_hdf",
+        )
+        abs_filename = os.path.abspath(filename)
+        hdf_obj = FileHDFio(abs_filename)
+        pos, cell = generate_fcc_lattice()
+        basis = Atoms(symbols="Al", positions=pos, cell=cell)
+        basis.set_repeat([2, 2, 2])
+        basis.to_hdf(hdf_obj, "test_structure")
+        self.assertTrue(
+            np.array_equal(hdf_obj["test_structure/positions"], basis.positions)
+        )
+        basis_new = Atoms().from_hdf(hdf_obj, "test_structure")
+        self.assertEqual(basis, basis_new)
 
     def test_from_hdf(self):
-        if sys.version_info[0] >= 3:
-            filename = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "../../static/atomistics/test_hdf",
-            )
-            abs_filename = os.path.abspath(filename)
-            hdf_obj = FileHDFio(abs_filename)
-            pos, cell = generate_fcc_lattice()
-            basis_store = Atoms(symbols="Al", positions=pos, cell=cell)
-            basis_store.set_repeat([2, 2, 2])
-            basis_store.to_hdf(hdf_obj, "simple_structure")
-            basis = Atoms().from_hdf(hdf_obj, group_name="simple_structure")
-            self.assertEqual(len(basis), 8)
-            self.assertEqual(basis.get_majority_species()["symbol"], "Al")
-            self.assertEqual(basis.get_spacegroup()["Number"], 225)
+        filename = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "../../static/atomistics/test_hdf",
+        )
+        abs_filename = os.path.abspath(filename)
+        hdf_obj = FileHDFio(abs_filename)
+        pos, cell = generate_fcc_lattice()
+        basis_store = Atoms(symbols="Al", positions=pos, cell=cell)
+        basis_store.set_repeat([2, 2, 2])
+        basis_store.to_hdf(hdf_obj, "simple_structure")
+        basis = Atoms().from_hdf(hdf_obj, group_name="simple_structure")
+        self.assertEqual(len(basis), 8)
+        self.assertEqual(basis.get_majority_species()["symbol"], "Al")
+        self.assertEqual(basis.get_spacegroup()["Number"], 225)
 
     def test_create_Fe_bcc(self):
         self.pse = PeriodicTable()

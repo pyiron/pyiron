@@ -9,11 +9,7 @@ from shutil import copytree, rmtree
 import tempfile
 import stat
 import sys
-
-if sys.version_info >= (3,):
-    import urllib.request as urllib2
-else:
-    import urllib as urllib2
+import urllib.request as urllib2
 
 __author__ = "Jan Janssen"
 __copyright__ = (

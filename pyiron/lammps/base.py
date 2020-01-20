@@ -151,10 +151,7 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
 
         """
-        if sys.version_info.major == 2:
-            stringtypes = (str, unicode)
-        else:
-            stringtypes = str
+        stringtypes = str
         if isinstance(potential_filename, stringtypes):
             if ".lmp" in potential_filename:
                 potential_filename = potential_filename.split(".lmp")[0]
@@ -515,21 +512,12 @@ class LammpsBase(AtomisticGenericJob):
             l_end = np.where([line.startswith("Loop") for line in f])[0]
             if len(l_start) > len(l_end):
                 l_end = np.append(l_end, [None])
-            if sys.version_info >= (3,):
-                df = [
-                    pd.read_csv(
-                        StringIO("\n".join(f[llst:llen])), delim_whitespace=True
-                    )
-                    for llst, llen in zip(l_start, l_end)
-                ]
-            else:
-                df = [
-                    pd.read_csv(
-                        StringIO(unicode("\n".join(f[llst:llen]))),
-                        delim_whitespace=True,
-                    )
-                    for llst, llen in zip(l_start, l_end)
-                ]
+            df = [
+                pd.read_csv(
+                    StringIO("\n".join(f[llst:llen])), delim_whitespace=True
+                )
+                for llst, llen in zip(l_start, l_end)
+            ]
         df = df[-1]
 
         h5_dict = {

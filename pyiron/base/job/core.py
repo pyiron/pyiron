@@ -835,6 +835,18 @@ class JobCore(PyironObject):
                 return f.readlines()
         return None
 
+    def __setitem__(self, key, value):
+        """
+        Stores data
+
+        Args:
+            key (str): key to store in hdf (full path)
+            value (anything): value to store
+        """
+        if not key.startswith('user/'):
+            raise ValueError("user defined paths+values must begin with user/, e.g. job['user/key'] = value")
+        self._hdf5[key] = value
+
     def __delitem__(self, key):
         """
         Delete item from the HDF5 file
