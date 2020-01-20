@@ -84,9 +84,10 @@ class TestLammpsInteractive(unittest.TestCase):
             [
                 "fix ensemble all nve",
                 "variable dumptime equal 100",
+                "variable thermotime equal 100",
                 "thermo_style custom step temp pe etotal pxx pxy pxz pyy pyz pzz vol",
                 "thermo_modify format float %20.15g",
-                "thermo 100",
+                "thermo ${thermotime}",
             ],
         )
 
