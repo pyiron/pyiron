@@ -11,7 +11,7 @@ import pandas
 import posixpath
 import h5io
 import numpy as np
-from tables.exceptions import NoSuchNodeError
+from tables.exceptions import NoSuchNodeError, HDF5ExtError
 import sys
 
 """
@@ -733,7 +733,7 @@ class FileHDFio(object):
                 store = HDFStoreIO(self.file_name, mode="a")
                 with store.open(mode="a"):
                     del store[key]
-            except (AttributeError, KeyError):
+            except (AttributeError, KeyError, HDF5ExtError):
                 pass
 
     def __str__(self):

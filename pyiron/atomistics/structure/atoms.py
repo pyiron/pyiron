@@ -94,6 +94,7 @@ class Atoms(object):
         elements=None,
         dimension=None,
         species=None,
+        high_symmetry_points=None,
         **qwargs
     ):
         if symbols is not None:
@@ -227,6 +228,10 @@ class Atoms(object):
             else:
                 self.pbc = pbc
         self.set_initial_magnetic_moments(magmoms)
+        self._high_symmetry_points = None
+        if high_symmetry_points is not None:
+            self.set_high_symmetry_points(high_symmetry_points)
+
 
     @property
     def cell(self):
@@ -305,6 +310,26 @@ class Atoms(object):
 
         """
         return np.array([self.species[el] for el in self.indices])
+
+    def get_high_symmetry_points(self):
+        """
+        dictionary of high-symmetry points defined for this specific structure.
+
+        Returns:
+            dict: high_symmetry_points
+        """
+        return self._high_symmetry_points
+
+    def set_high_symmetry_points(self, new_high_symmetry_points):
+        """
+        Sets new high symmetry points dictionary.
+
+        Args:
+            new_high_symmetry_points (dict): new high symmetry points
+        """
+        if not isinstance(new_high_symmetry_points, dict):
+            raise ValueError("has to be dict!")
+        self._high_symmetry_points = new_high_symmetry_points
 
     def new_array(self, name, a, dtype=None, shape=None):
         """
@@ -467,6 +492,9 @@ class Atoms(object):
 
             # print ('time in atoms.to_hdf: ', time.time() - time_start)
 
+            if self._high_symmetry_points is not None:
+                hdf_structure["high_symmetry_points"] = self._high_symmetry_points
+
     def from_hdf(self, hdf, group_name="structure"):
         """
         Retrieve the object from a HDF5 file
@@ -544,6 +572,10 @@ class Atoms(object):
 
                 if "bonds" in hdf_atoms.list_nodes():
                     self.bonds = hdf_atoms["explicit_bonds"]
+
+                self._high_symmetry_points = None
+                if "high_symmetry_points" in hdf_atoms.list_nodes():
+                    self._high_symmetry_points = hdf_atoms["high_symmetry_points"]
                 return self
 
         else:
@@ -603,6 +635,10 @@ class Atoms(object):
 
             if "bonds" in hdf_atoms.list_nodes():
                 self.bonds = hdf_atoms["explicit_bonds"]
+
+            self._high_symmetry_points = None
+            if "high_symmetry_points" in hdf_atoms.list_nodes():
+                self._high_symmetry_points = hdf_atoms["high_symmetry_points"]
             return self
 
     def center(self, vacuum=None, axis=(0, 1, 2)):
@@ -1081,6 +1117,16 @@ class Atoms(object):
         raise NotImplementedError("This function was removed!")
 
     def analyse_ovito_cna_adaptive(self, mode="total"):
+        """
+        Use Ovito's common neighbor analysis binding.
+
+        Args:
+            mode ("total"/"numeric"/"str"): Controls the style and level of detail of the output. (Default is "total", only
+                return a summary of the values in the structure.)
+
+        Returns:
+            (depends on `mode`)
+        """
         from pyiron.atomistics.structure.ovito import analyse_ovito_cna_adaptive
 
         warnings.filterwarnings("ignore")
@@ -1097,6 +1143,10 @@ class Atoms(object):
 
         warnings.filterwarnings("module")
         return analyse_ovito_voronoi_volume(atoms)
+
+    def analyse_pyscal_steinhardt_parameter(atoms, cutoff=3.5, n_clusters=2, q=[4, 6]):
+        from pyiron.atomistics.structure.pyscal import get_steinhardt_parameter_structure
+        return get_steinhardt_parameter_structure(structure=atoms, cutoff=cutoff, n_clusters=n_clusters, q=q)
 
     def analyse_phonopy_equivalent_atoms(atoms):
         from pyiron.atomistics.structure.phonopy import analyse_phonopy_equivalent_atoms
@@ -3442,7 +3492,13 @@ class Atoms(object):
 
         if pbc is None:
             pbc = self.pbc
-        self.positions = wrap_positions(self.positions, self.cell, pbc, center, eps)
+        self.positions = wrap_positions(
+            positions=self.positions,
+            cell=self.cell,
+            pbc=pbc,
+            center=center,
+            eps=eps
+        )
 
     def write(self, filename, format=None, **kwargs):
         """

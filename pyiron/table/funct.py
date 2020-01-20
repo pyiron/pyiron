@@ -54,6 +54,10 @@ def get_n_kpts(job):
     return {"n_kpts": eval(job["input/kpoints/data_dict"]["Value"][3].split()[0])}
 
 
+def get_n_equ_kpts(job):
+    return {"n_equ_kpts": len(job['output/generic/dft/bands/k_points'])}
+
+
 def get_total_number_of_atoms(job):
     return {"Number_of_atoms": len(job["input/structure/indices"])}
 
@@ -61,6 +65,11 @@ def get_total_number_of_atoms(job):
 def get_average_waves(job):
     _, weights, planewaves = job["output/outcar/irreducible_kpoints"]
     return {"avg. plane waves": sum(weights * planewaves) / sum(weights)}
+
+
+def get_plane_waves(job):
+    _, weights, planewaves = job["output/outcar/irreducible_kpoints"]
+    return {"plane waves": sum(weights * planewaves)}
 
 
 def get_ekin_error(job):
@@ -247,3 +256,10 @@ def get_magnetic_structure(job):
             return {"magnetic_structure": "para-magnetic"}
         else:
             return {"magnetic_structure": "unknown"}
+
+
+def get_e_conv_level(job):
+    return {'el_conv': np.max(np.abs(
+        job['output/generic/dft/scf_energy_free'][0] -
+        job['output/generic/dft/scf_energy_free'][0][-1]
+    )[-10:])}

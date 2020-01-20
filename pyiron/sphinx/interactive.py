@@ -36,20 +36,6 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
         self._interactive_write_input_files = True
         self._interactive_library_read = None
         self._interactive_fetch_completed = True
-        self.interactive_cache = {
-            "cells": [],
-            "energy_tot": [],
-            "energy_pot": [],
-            "forces": [],
-            "positions": [],
-            "indices": [],
-            "atom_spin_constraints": [],
-            "atom_spins": [],
-            "magnetic_forces": [],
-            "steps": [],
-            "computation_time": [],
-            "volume": [],
-        }
 
     @property
     def structure(self):
@@ -69,9 +55,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
 
     def interactive_energy_pot_getter(self):
         self._interactive_pipe_write("get energy")
-        return np.array(
-            float(self._interactive_library_read.readline()) * HARTREE_TO_EV
-        )
+        return float(self._interactive_library_read.readline()) * HARTREE_TO_EV
 
     def interactive_forces_getter(self):
         self._interactive_pipe_write("get forces")
@@ -99,9 +83,6 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
             raise ValueError('coarse_run has to be a boolean')
         self._coarse_run = value
         self.input["CoarseRun"] = self._coarse_run
-
-    def interactive_cells_setter(self, cell):
-        warnings.warn("cell size cannot be changed in SPHInX; function ignored")
 
     def interactive_cells_getter(self):
         self._interactive_pipe_write("get cell")

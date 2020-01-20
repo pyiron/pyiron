@@ -27,7 +27,7 @@ QUEUE_SCRIPT_PREFIX = "pi_"
 s = Settings()
 
 
-def queue_table(job_ids=[], project_only=True):
+def queue_table(job_ids=[], project_only=True, full_table=False):
     """
     Display the queuing system table as pandas.Dataframe
 
@@ -41,6 +41,12 @@ def queue_table(job_ids=[], project_only=True):
     if project_only and not job_ids:
         return []
     if s.queue_adapter is not None:
+        if full_table:
+            pandas.set_option('display.max_rows', None)
+            pandas.set_option('display.max_columns', None)
+        else:
+            pandas.reset_option('display.max_rows')
+            pandas.reset_option('display.max_columns')
         df = s.queue_adapter.get_status_of_my_jobs()
         if not project_only:
             return df[
