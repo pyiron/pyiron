@@ -30,6 +30,14 @@ class TestLammps(unittest.TestCase):
         self.assertEqual(lc['fix___mean_energy_pot'], 'all ave/time 1 ${mean_repeat_times} ${thermotime} v_energy_pot')
         lc.measure_mean_value('pressures')
         self.assertEqual(lc['variable___Pxx'], 'equal pxx')
+        lc.measure_mean_value('energy_tot', 2)
+        self.assertEqual(lc['fix___mean_energy_tot'], 'all ave/time 2 ${mean_repeat_times} ${thermotime} v_energy_tot')
+        lc.measure_mean_value('volume')
+        lc.measure_mean_value('temperature')
+        with self.assertWarns(Warning):
+            lc.measure_mean_value('pe**2', name='pepe')
+        with self.assertRaises(NotImplementedError):
+            lc.measure_mean_value('something')
 
 
 if __name__ == "__main__":
