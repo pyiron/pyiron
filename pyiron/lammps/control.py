@@ -175,20 +175,21 @@ class LammpsControl(GenericParameters):
     def load_default(self, file_content=None):
         if file_content is None:
             file_content = (
-                "units               metal\n"
-                + "dimension           3\n"
-                + "boundary            p p p\n"
-                + "atom_style          atomic\n"
-                + "read_data           structure.inp\n"
-                + "include             potential.inp\n"
-                + "fix___ensemble      all nve\n"
-                + "variable___dumptime equal 100\n"
-                + "dump___1            all custom ${dumptime} dump.out id type xsu ysu zsu fx fy fz vx vy vz\n"
-                + "dump_modify___1     sort id format line \"%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g\"\n"
-                + "thermo_style        custom step temp pe etotal pxx pxy pxz pyy pyz pzz vol\n"
-                + "thermo_modify       format float %20.15g\n"
-                + "thermo              100\n"
-                + "run                 0\n"
+                "units                 metal\n"
+                + "dimension             3\n"
+                + "boundary              p p p\n"
+                + "atom_style            atomic\n"
+                + "read_data             structure.inp\n"
+                + "include               potential.inp\n"
+                + "fix___ensemble        all nve\n"
+                + "variable___dumptime   equal 100\n"
+                + "variable___thermotime equal 100\n"
+                + "dump___1              all custom ${dumptime} dump.out id type xsu ysu zsu fx fy fz vx vy vz\n"
+                + "dump_modify___1       sort id format line \"%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g\"\n"
+                + "thermo_style          custom step temp pe etotal pxx pxy pxz pyy pyz pzz vol\n"
+                + "thermo_modify         format float %20.15g\n"
+                + "thermo                ${thermotime}\n"
+                + "run                   0\n"
             )
         self.load_string(file_content)
 
@@ -264,6 +265,7 @@ class LammpsControl(GenericParameters):
         )
         self.remove_keys(["run", "velocity"])
         self.modify(variable___dumptime="equal " + str(n_print), thermo=n_print)
+        self.modify(variable___thermotime="equal " + str(n_print), thermo=n_print)
 
     def calc_static(self):
         self.set(run="0")
@@ -500,6 +502,13 @@ class LammpsControl(GenericParameters):
             run=int(n_ionic_steps),
             append_if_not_present=True,
         )
+        self.modify(
+            fix___ensemble=fix_ensemble_str,
+            variable___thermotime=" equal {} ".format(n_print),
+            thermo=int(n_print),
+            run=int(n_ionic_steps),
+            append_if_not_present=True,
+        )
 
         if initial_temperature > 0:
             self.set_initial_velocity(
@@ -641,13 +650,12 @@ class LammpsControl(GenericParameters):
             append_if_not_present=True
         )
 
-    def measure_mean_value(self, key, every=1, repeat=None, freq=None, name=None):
+    def measure_mean_value(self, key, every=1, repeat=None, name=None):
         """
             Args:
                 key (str): property to take an average value of (e.g. 'energy_pot' v.i.)
                 every (int): number of steps there should be between two measurements
                 repeat (int): number of measurements for each output (default: n_print/every)
-                freq (int): output frequency (default: n_print)
                 name (str): name to give in the output string (ignored if a pyiron predefined tag is used)
 
             Comments:
@@ -657,34 +665,34 @@ class LammpsControl(GenericParameters):
 
         if every<=0:
             raise AssertionError('every must be a positive integer')
-        if freq is None:
-            freq = self['thermo']
         if repeat is None:
-            repeat = int(freq/every)
+            self['variable___mean_repeat_times'] = 'equal round(${thermotime}/'+str(every)+')'
+        else:
+            self['variable___mean_repeat_times'] = 'equal {}'.format(repeat)
         if key=='energy_pot':
-            self._measure_mean_value('energy_pot', 'pe', every, repeat, freq)
+            self._measure_mean_value('energy_pot', 'pe', every)
         elif key=='energy_tot':
-            self._measure_mean_value('energy_tot', 'etotal', every, repeat, freq)
+            self._measure_mean_value('energy_tot', 'etotal', every)
         elif key=='temperature':
-            self._measure_mean_value('temperature', 'temp', every, repeat, freq)
+            self._measure_mean_value('temperature', 'temp', every)
         elif key=='volume':
-            self._measure_mean_value('volume', 'vol', every, repeat, freq)
+            self._measure_mean_value('volume', 'vol', every)
         elif key=='pressures':
-            self._measure_mean_value('Pxx', 'pxx', every, repeat, freq)
-            self._measure_mean_value('Pyy', 'pyy', every, repeat, freq)
-            self._measure_mean_value('Pzz', 'pzz', every, repeat, freq)
-            self._measure_mean_value('Pxy', 'pxy', every, repeat, freq)
-            self._measure_mean_value('Pxz', 'pxz', every, repeat, freq)
-            self._measure_mean_value('Pyz', 'pyz', every, repeat, freq)
+            self._measure_mean_value('Pxx', 'pxx', every)
+            self._measure_mean_value('Pyy', 'pyy', every)
+            self._measure_mean_value('Pzz', 'pzz', every)
+            self._measure_mean_value('Pxy', 'pxy', every)
+            self._measure_mean_value('Pxz', 'pxz', every)
+            self._measure_mean_value('Pyz', 'pyz', every)
         elif name is not None:
             if '**' in key:
                 warnings.warn('** is replaced by ^ (as it is understood by LAMMPS)')
                 key = key.replace('**', '^')
-            self._measure_mean_value(name, key, every, repeat, freq)
+            self._measure_mean_value(name, key, every)
         else:
             raise NotImplementedError(key+' is not implemented')
 
-    def _measure_mean_value(self, key_pyiron, key_lmp, every, repeat, freq):
+    def _measure_mean_value(self, key_pyiron, key_lmp, every):
         """
             Args:
                 key (str): property to take an average value of (e.g. 'energy_pot' v.i.)
@@ -697,6 +705,6 @@ class LammpsControl(GenericParameters):
                 Future keys: 'cells', 'forces', 'positions', 'pressures', 'unwrapped_positions', 'velocities'
         """
         self['variable___{}'.format(key_pyiron)] = 'equal {}'.format(key_lmp)
-        self['fix___mean_{}'.format(key_pyiron)] = 'all ave/time {} {} {} v_{}'.format(every, repeat, freq, key_pyiron)
+        self['fix___mean_{}'.format(key_pyiron)] = 'all ave/time '+str(every)+' ${mean_repeat_times} ${thermotime} v_'+str(key_pyiron)
         self['thermo_style'] = self['thermo_style']+' f_mean_{}'.format(key_pyiron)
 
