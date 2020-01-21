@@ -34,6 +34,12 @@ class TestLammps(unittest.TestCase):
         self.assertEqual(lc['fix___mean_energy_tot'], 'all ave/time 2 ${mean_repeat_times} ${thermotime} v_energy_tot')
         lc.measure_mean_value('volume')
         lc.measure_mean_value('temperature')
+        lc.measure_mean_value('positions')
+        self.assertEqual(lc['compute___unwrap'], 'all property/atom xu yu zu')
+        lc.measure_mean_value('forces')
+        self.assertEqual(lc['variable___forces_0'], 'atom fx')
+        lc.measure_mean_value('velocities')
+        self.assertEqual(lc['variable___velocities_0'], 'atom vx')
         with self.assertWarns(Warning):
             lc.measure_mean_value('pe**2', name='pepe')
         with self.assertRaises(NotImplementedError):
