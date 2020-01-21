@@ -437,7 +437,7 @@ class LammpsControl(GenericParameters):
             if len(pressure) > 6:
                 raise ValueError("Pressure must be a float or a vector with length <= 6")
 
-            if temperature is None or temperature.max() <= 0.0 or temperature.min() < 0:
+            if temperature is None or temperature.min() <= 0:
                 raise ValueError("Target temperature for fix nvt/npt/nph cannot be 0 or negative")
 
             pressure[not_none_mask] *= pressure_units
@@ -468,7 +468,7 @@ class LammpsControl(GenericParameters):
                 )
                 fix_ensemble_str += pressure_string
         elif temperature is not None:  # NVT
-            if temperature.max() <= 0.0 or temperature.min() < 0:
+            if temperature.min() <= 0:
                 raise ValueError("Target temperature for fix nvt/npt/nph cannot be 0 or negative")
 
             if langevin:  # NVT(Langevin)
