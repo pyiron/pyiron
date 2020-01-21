@@ -29,7 +29,7 @@ class TestLammps(unittest.TestCase):
         lc.measure_mean_value('energy_pot')
         self.assertEqual(lc['fix___mean_energy_pot'], 'all ave/time 1 ${mean_repeat_times} ${thermotime} v_energy_pot')
         lc.measure_mean_value('pressures')
-        self.assertEqual(lc['variable___Pxx'], 'equal pxx')
+        self.assertEqual(lc['variable___pressure_1'], 'equal pyy')
         lc.measure_mean_value('energy_tot', 2)
         self.assertEqual(lc['fix___mean_energy_tot'], 'all ave/time 2 ${mean_repeat_times} ${thermotime} v_energy_tot')
         lc.measure_mean_value('volume')
