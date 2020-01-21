@@ -201,6 +201,10 @@ class TestLammps(unittest.TestCase):
         water.set_repeat([n, n, n])
         self.job_water.structure = water
         self.job_water.potential = "H2O_tip3p"
+        with self.assertRaises(ValueError):
+            self.job_water.calc_md(temperature=[0, 100])
+        with self.assertRaises(ValueError):
+            self.job_water.calc_md(pressure=0)
         self.job_water.calc_md(
             temperature=350,
             initial_temperature=350,
