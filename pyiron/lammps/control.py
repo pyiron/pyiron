@@ -659,8 +659,9 @@ class LammpsControl(GenericParameters):
                 name (str): name to give in the output string (ignored if a pyiron predefined tag is used)
 
             Comments:
-                Currently available keys: 'energy_pot', 'energy_tot', 'temperature', 'volume', 'pressures'
-                Future keys: 'cells', 'forces', 'positions', 'unwrapped_positions', 'velocities'
+                Currently available keys: 'energy_pot', 'energy_tot', 'temperature', 'volume',
+                                          'pressures', 'positions', 'forces, 'velocities'
+                Future keys: 'cells'
         """
 
         if every<=0:
@@ -687,6 +688,10 @@ class LammpsControl(GenericParameters):
                                            )
             self['dump___1'] = self['dump___1']+' '+' '.join(['f_mean_positions[{}]'.format(ii+1) for ii in range(3)])
             self['dump_modify___1'] = self['dump_modify___1'][:-1]+' '+' '.join(['%20.15g']*3)+'"'
+        elif key=='forces':
+            self._measure_mean_value('forces', ['fx', 'fy', 'fz'], every, atom=True)
+        elif key=='velocities':
+            self._measure_mean_value('velocities', ['vx', 'vy', 'vz'], every, atom=True)
         elif name is not None:
             if '**' in key:
                 warnings.warn('** is replaced by ^ (as it is understood by LAMMPS)')
@@ -704,8 +709,9 @@ class LammpsControl(GenericParameters):
                 freq (int): output frequency (default: n_print)
 
             Comments:
-                Currently available keys: 'energy_pot', 'energy_tot', 'temperature', 'volume', 'pressures'
-                Future keys: 'cells', 'forces', 'positions', 'unwrapped_positions', 'velocities'
+                Currently available keys: 'energy_pot', 'energy_tot', 'temperature', 'volume',
+                                          'pressures', 'positions', 'forces, 'velocities'
+                Future keys: 'cells'
         """
         if isinstance(key_lmp, str):
             self['variable___{}'.format(key_pyiron)] = 'equal {}'.format(key_lmp)
