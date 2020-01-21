@@ -919,7 +919,10 @@ class LammpsBase(AtomisticGenericJob):
 
         if 'f_mean_forces[1]' in content[0].keys():
             forces = np.array(
-                [np.stack((cc["f_mean_forces[1]"], cc["f_mean_forces[2]"], cc["f_mean_forces[3]"]), axis=-1) for cc in content]
+                [np.stack((cc["f_mean_forces[1]"],
+                           cc["f_mean_forces[2]"],
+                           cc["f_mean_forces[3]"]),
+                          axis=-1) for cc in content]
             )
             output["mean_forces"] = np.matmul(forces, rotation_lammps2orig)
 
@@ -931,7 +934,10 @@ class LammpsBase(AtomisticGenericJob):
 
         if 'f_mean_velocities[1]' in content[0].keys():
             velocities = np.array(
-                [np.stack((cc["f_mean_velocities[1]"], cc["f_mean_velocities[2]"], cc["f_mean_velocities[3]"]), axis=-1) for cc in content]
+                [np.stack((cc["f_mean_velocities[1]"],
+                           cc["f_mean_velocities[2]"],
+                           cc["f_mean_velocities[3]"]),
+                          axis=-1) for cc in content]
             )
             output["mean_velocities"] = np.matmul(velocities, rotation_lammps2orig)
         direct_unwrapped_positions = np.array(
@@ -941,10 +947,13 @@ class LammpsBase(AtomisticGenericJob):
         output["unwrapped_positions"] = np.matmul(unwrapped_positions, rotation_lammps2orig)
         if 'f_mean_positions[1]' in content[0].keys():
             direct_unwrapped_positions = np.array(
-                [np.stack((cc["f_mean_positions[1]"], cc["f_mean_positions[2]"], cc["f_mean_positions[3]"]), axis=-1) for cc in content]
+                [np.stack((cc["f_mean_positions[1]"],
+                           cc["f_mean_positions[2]"],
+                           cc["f_mean_positions[3]"]),
+                          axis=-1) for cc in content]
             )
             unwrapped_positions = np.matmul(direct_unwrapped_positions, lammps_cells)
-            output["mean_positions"] = np.matmul(unwrapped_positions, rotation_lammps2orig)
+            output["mean_unwrapped_positions"] = np.matmul(unwrapped_positions, rotation_lammps2orig)
 
         direct_positions = direct_unwrapped_positions - np.floor(direct_unwrapped_positions)
         positions = np.matmul(direct_positions, lammps_cells)
