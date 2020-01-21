@@ -718,7 +718,7 @@ class LammpsControl(GenericParameters):
             self['fix___mean_{}'.format(key_pyiron)] = 'all ave/time '+str(every)+' ${mean_repeat_times} ${thermotime} v_'+str(key_pyiron)
             self['thermo_style'] = self['thermo_style']+' f_mean_{}'.format(key_pyiron)
         else:
-            for ii, kk in enumerate(key_lmp):
+            for ii in range(len(key_lmp)):
                 if atom is True:
                     self['variable___{}_{}'.format(key_pyiron, ii)] = 'atom {}'.format(key_lmp[ii])
                 else:
@@ -732,6 +732,10 @@ class LammpsControl(GenericParameters):
                 self['dump___1'] = self['dump___1']+' '+' '.join(['f_mean_{}[{}]'.format(key_pyiron, ii+1) for ii in range(len(key_lmp))])
                 self['dump_modify___1'] = self['dump_modify___1'][:-1]+' '+' '.join(['%20.15g']*len(key_lmp))+'"'
             else:
-                self['fix___mean_{}'.format(key_pyiron)] = 'all ave/time '+str(every)+' ${mean_repeat_times} ${thermotime} '+str(' '.join(['v_{}_{}'.format(key_pyiron, ii) for ii in range(len(key_lmp))]))
+                self['fix___mean_{}'.format(key_pyiron)] = ('all ave/time '
+                                                            +str(every)
+                                                            +' ${mean_repeat_times} ${thermotime} '
+                                                            +str(' '.join(['v_{}_{}'.format(key_pyiron, ii) for ii in range(len(key_lmp))]))
+                                                           )
                 self['thermo_style'] = self['thermo_style']+' '+' '.join(['f_mean_{}[{}]'.format(key_pyiron, ii+1) for ii in range(len(key_lmp))])
 
