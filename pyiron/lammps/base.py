@@ -543,15 +543,17 @@ class LammpsBase(AtomisticGenericJob):
             ]
         )
         df["pressures"] = pressures.tolist()
-        if 'mean_Pxx' in df.columns:
+        if 'mean_pressure[1]' in df.columns:
             pressures = np.stack(
-                (df.mean_Pxx, df.mean_Pxy, df.mean_Pxz, df.mean_Pxy, df.mean_Pyy, df.mean_Pyz, df.mean_Pxz, df.mean_Pyz, df.mean_Pzz),
+                (df['mean_pressure[1]'], df['mean_pressure[4]'], df['mean_pressure[5]'],
+                 df['mean_pressure[4]'], df['mean_pressure[2]'], df['mean_pressure[6]'],
+                 df['mean_pressure[5]'], df['mean_pressure[6]'], df['mean_pressure[3]']),
                 axis=-1,
             ).reshape(-1, 3, 3).astype('float64')
             pressures *= 0.0001  # bar -> GPa
             df = df.drop(
                 columns=df.columns[
-                    ((df.columns.str.len() == 8) & df.columns.str.startswith("mean_P"))
+                    (df.columns.str.startswith("mean_pressure") & df.columns.str.endswith(']'))
                 ]
             )
             df["mean_pressures"] = pressures.tolist()
@@ -915,17 +917,43 @@ class LammpsBase(AtomisticGenericJob):
         )
         output["forces"] = np.matmul(forces, rotation_lammps2orig)
 
+        if 'f_mean_forces[1]' in content[0].keys():
+            forces = np.array(
+                [np.stack((cc["f_mean_forces[1]"],
+                           cc["f_mean_forces[2]"],
+                           cc["f_mean_forces[3]"]),
+                          axis=-1) for cc in content]
+            )
+            output["mean_forces"] = np.matmul(forces, rotation_lammps2orig)
+
         if np.all([flag in content[0].columns.values for flag in ["vx", "vy", "vz"]]):
             velocities = np.array(
                 [np.stack((cc["vx"], cc["vy"], cc["vz"]), axis=-1) for cc in content]
             )
             output["velocities"] = np.matmul(velocities, rotation_lammps2orig)
 
+        if 'f_mean_velocities[1]' in content[0].keys():
+            velocities = np.array(
+                [np.stack((cc["f_mean_velocities[1]"],
+                           cc["f_mean_velocities[2]"],
+                           cc["f_mean_velocities[3]"]),
+                          axis=-1) for cc in content]
+            )
+            output["mean_velocities"] = np.matmul(velocities, rotation_lammps2orig)
         direct_unwrapped_positions = np.array(
             [np.stack((cc["xsu"], cc["ysu"], cc["zsu"]), axis=-1) for cc in content]
         )
         unwrapped_positions = np.matmul(direct_unwrapped_positions, lammps_cells)
         output["unwrapped_positions"] = np.matmul(unwrapped_positions, rotation_lammps2orig)
+        if 'f_mean_positions[1]' in content[0].keys():
+            direct_unwrapped_positions = np.array(
+                [np.stack((cc["f_mean_positions[1]"],
+                           cc["f_mean_positions[2]"],
+                           cc["f_mean_positions[3]"]),
+                          axis=-1) for cc in content]
+            )
+            unwrapped_positions = np.matmul(direct_unwrapped_positions, lammps_cells)
+            output["mean_unwrapped_positions"] = np.matmul(unwrapped_positions, rotation_lammps2orig)
 
         direct_positions = direct_unwrapped_positions - np.floor(direct_unwrapped_positions)
         positions = np.matmul(direct_positions, lammps_cells)

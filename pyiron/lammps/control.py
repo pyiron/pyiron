@@ -653,7 +653,7 @@ class LammpsControl(GenericParameters):
             append_if_not_present=True
         )
 
-    def measure_mean_value(self, key, every=1, repeat=None, name=None):
+    def measure_mean_value(self, key, every=1, repeat=None, name=None, atom=False):
         """
             Args:
                 key (str): property to take an average value of (e.g. 'energy_pot' v.i.)
@@ -662,8 +662,9 @@ class LammpsControl(GenericParameters):
                 name (str): name to give in the output string (ignored if a pyiron predefined tag is used)
 
             Comments:
-                Currently available keys: 'energy_pot', 'energy_tot', 'temperature', 'volume', 'pressures'
-                Future keys: 'cells', 'forces', 'positions', 'unwrapped_positions', 'velocities'
+                Currently available keys: 'energy_pot', 'energy_tot', 'temperature', 'volume',
+                                          'pressures', 'positions', 'forces, 'velocities'
+                Future keys: 'cells'
         """
 
         if every<=0:
@@ -681,21 +682,28 @@ class LammpsControl(GenericParameters):
         elif key=='volume':
             self._measure_mean_value('volume', 'vol', every)
         elif key=='pressures':
-            self._measure_mean_value('Pxx', 'pxx', every)
-            self._measure_mean_value('Pyy', 'pyy', every)
-            self._measure_mean_value('Pzz', 'pzz', every)
-            self._measure_mean_value('Pxy', 'pxy', every)
-            self._measure_mean_value('Pxz', 'pxz', every)
-            self._measure_mean_value('Pyz', 'pyz', every)
+            self._measure_mean_value('pressure', ['pxx', 'pyy', 'pzz', 'pxy', 'pxz', 'pyz'], every)
+        elif key=='positions':
+            self['compute___unwrap'] = 'all property/atom xu yu zu'
+            self['fix___mean_positions'] = ('all ave/atom '
+                                            +str(every)
+                                            +' ${mean_repeat_times} ${thermotime} c_unwrap[*]'
+                                           )
+            self['dump___1'] = self['dump___1']+' '+' '.join(['f_mean_positions[{}]'.format(ii+1) for ii in range(3)])
+            self['dump_modify___1'] = self['dump_modify___1'][:-1]+' '+' '.join(['%20.15g']*3)+'"'
+        elif key=='forces':
+            self._measure_mean_value('forces', ['fx', 'fy', 'fz'], every, atom=True)
+        elif key=='velocities':
+            self._measure_mean_value('velocities', ['vx', 'vy', 'vz'], every, atom=True)
         elif name is not None:
             if '**' in key:
                 warnings.warn('** is replaced by ^ (as it is understood by LAMMPS)')
                 key = key.replace('**', '^')
-            self._measure_mean_value(name, key, every)
+            self._measure_mean_value(name, key, every, atom)
         else:
             raise NotImplementedError(key+' is not implemented')
 
-    def _measure_mean_value(self, key_pyiron, key_lmp, every):
+    def _measure_mean_value(self, key_pyiron, key_lmp, every, atom=False):
         """
             Args:
                 key (str): property to take an average value of (e.g. 'energy_pot' v.i.)
@@ -704,10 +712,37 @@ class LammpsControl(GenericParameters):
                 freq (int): output frequency (default: n_print)
 
             Comments:
-                Currently available keys: 'energy_pot', 'energy_tot', 'temperature', 'volume'
-                Future keys: 'cells', 'forces', 'positions', 'pressures', 'unwrapped_positions', 'velocities'
+                Currently available keys: 'energy_pot', 'energy_tot', 'temperature', 'volume',
+                                          'pressures', 'positions', 'forces, 'velocities'
+                Future keys: 'cells'
         """
-        self['variable___{}'.format(key_pyiron)] = 'equal {}'.format(key_lmp)
-        self['fix___mean_{}'.format(key_pyiron)] = 'all ave/time '+str(every)+' ${mean_repeat_times} ${thermotime} v_'+str(key_pyiron)
-        self['thermo_style'] = self['thermo_style']+' f_mean_{}'.format(key_pyiron)
+        if isinstance(key_lmp, str):
+            self['variable___{}'.format(key_pyiron)] = 'equal {}'.format(key_lmp)
+            self['fix___mean_{}'.format(key_pyiron)] = ('all ave/time '
+                                                        +str(every)
+                                                        +' ${mean_repeat_times} ${thermotime} v_'
+                                                        +str(key_pyiron))
+            self['thermo_style'] = self['thermo_style']+' f_mean_{}'.format(key_pyiron)
+        else:
+            if atom is True:
+                for ii, _ in enumerate(key_lmp):
+                    self['variable___{}_{}'.format(key_pyiron, ii)] = 'atom {}'.format(key_lmp[ii])
+                self['fix___mean_{}'.format(key_pyiron)] = ('all ave/atom '
+                                                            +str(every)+
+                                                            ' ${mean_repeat_times} ${thermotime} '
+                                                            +str(' '.join(['v_{}_{}'.format(key_pyiron, ii) for ii in range(len(key_lmp))]))
+                                                           )
+                self['dump___1'] = self['dump___1']+' '+' '.join(['f_mean_{}[{}]'.format(key_pyiron, ii+1) for ii in range(len(key_lmp))])
+                self['dump_modify___1'] = self['dump_modify___1'][:-1]+' '+' '.join(['%20.15g']*len(key_lmp))+'"'
+            else:
+                for ii, _ in enumerate(key_lmp):
+                    self['variable___{}_{}'.format(key_pyiron, ii)] = 'equal {}'.format(key_lmp[ii])
+                self['fix___mean_{}'.format(key_pyiron)] = ('all ave/time '
+                                                            +str(every)
+                                                            +' ${mean_repeat_times} ${thermotime} '
+                                                            +str(' '.join(['v_{}_{}'.format(key_pyiron, ii) for ii in range(len(key_lmp))]))
+                                                           )
+                self['thermo_style'] = (self['thermo_style']
+                                        +' '
+                                        +' '.join(['f_mean_{}[{}]'.format(key_pyiron, ii+1) for ii in range(len(key_lmp))]))
 
