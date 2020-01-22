@@ -417,7 +417,7 @@ class LammpsControl(GenericParameters):
             temperature = np.array([temperature], dtype=float).flatten()
             if len(temperature)==1:
                 temperature = np.array(2*temperature.tolist())
-            elif len(temperature) > 2:
+            elif len(temperature) != 2:
                 raise ValueError("At most two temperatures can be provided "
                                  "(for a linearly ramping target temperature), "
                                  "but got {}".format(len(temperature)))
