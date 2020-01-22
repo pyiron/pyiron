@@ -187,6 +187,7 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
             list: potential names
         """
+        print ("I am pot energy")
         return self.list_potentials()
 
     @property
