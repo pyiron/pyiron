@@ -49,9 +49,9 @@ class WaterTrajectory(TrajectoryAnalysis):
 
     def _set_trajectory(self):
         super(WaterTrajectory, self)._set_trajectory()
-        self.set_neighborhood()
+        self._set_neighborhood()
 
-    def set_neighborhood(self):
+    def _set_neighborhood(self):
         self.oxygen_indices = self.structure.select_index("O")
         self.hydrogen_indices = self.structure.select_index("H")
         water_oxygens = list()
