@@ -419,8 +419,8 @@ class LammpsControl(GenericParameters):
                 temperature = np.array(2*temperature.tolist())
             elif len(temperature) > 2:
                 raise ValueError("At most two temperatures can be provided "
-                                 +"(for a linearly ramping target temperature), "
-                                 +"but got {}".format(len(temperature))
+                                 "(for a linearly ramping target temperature), "
+                                 "but got {}".format(len(temperature)))
             temperature *= temperature_units
 
         # Apply initial overheating (default uses the theorem of equipartition of energy between KE and PE)
