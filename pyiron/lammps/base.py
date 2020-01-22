@@ -813,6 +813,11 @@ class LammpsBase(AtomisticGenericJob):
             ["dimension", "read_data", "boundary", "atom_style", "velocity"]
         )
 
+    def pot_per_atom(self):
+        self.input.control['compute___energy_pot_per_atom'] = 'all pe/atom'
+        self.input.control['dump___1'] += ' c_energy_pot_per_atom'
+        self.input.control['dump_modify___1'] = lmp.input.control['dump_modify___1'][:-1] + ' %20.15g"'
+
     def collect_dump_file(self, file_name="dump.out", cwd=None):
         """
         general purpose routine to extract static from a lammps dump file
@@ -931,6 +936,10 @@ class LammpsBase(AtomisticGenericJob):
         direct_positions = direct_unwrapped_positions - np.floor(direct_unwrapped_positions)
         positions = np.matmul(direct_positions, lammps_cells)
         output["positions"] = np.matmul(positions, rotation_lammps2orig)
+
+        keys = content[0].keys()
+        for kk in keys[keys.str.startswith('c_')]:
+            output[kk.replace('c_', '')] = np.array([cc[kk] for cc in content], dtype=int)
 
         with self.project_hdf5.open("output/generic") as hdf_output:
             for k, v in output.items():
