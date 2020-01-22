@@ -350,8 +350,11 @@ class LammpsControl(GenericParameters):
         Set an MD calculation within LAMMPS. Nosé Hoover is used by default.
 
         Args:
-            temperature (None/float): Target temperature. If set to None, an NVE calculation is performed.
-                                      It is required when the pressure is set or langevin is set
+            temperature (None/float/list): Target temperature value(-s). If set to None, an NVE calculation is performed.
+                                           It is required when the pressure is set or langevin is set
+                                           It can be a list of temperature values, containing the initial target
+                                           temperature and the final target temperature (in between the target value
+                                           is varied linearly).
             pressure (None/float/numpy.ndarray/list): Target pressure. If set to None, an NVE or an NVT calculation is
                 performed. A length-3 list or array may be given to specify x-, y- and z-components individually. In
                 this case, floats and `None` may be mixed to allow relaxation only in particular directions.
@@ -414,6 +417,10 @@ class LammpsControl(GenericParameters):
             temperature = np.array([temperature], dtype=float).flatten()
             if len(temperature)==1:
                 temperature = np.array(2*temperature.tolist())
+            elif len(temperature) > 2:
+                raise ValueError("At most two temperatures can be provided "
+                                 +"(for a linearly ramping target temperature), "
+                                 +"but got {}".format(len(temperature))
             temperature *= temperature_units
 
         # Apply initial overheating (default uses the theorem of equipartition of energy between KE and PE)

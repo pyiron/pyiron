@@ -620,8 +620,11 @@ class LammpsBase(AtomisticGenericJob):
         Set an MD calculation within LAMMPS. Nosé Hoover is used by default.
 
         Args:
-            temperature (None/float): Target temperature. If set to None, an NVE calculation is performed.
-                                      It is required when the pressure is set or langevin is set
+            temperature (None/float/list): Target temperature value(-s). If set to None, an NVE calculation is performed.
+                                           It is required when the pressure is set or langevin is set
+                                           It can be a list of temperature values, containing the initial target
+                                           temperature and the final target temperature (in between the target value
+                                           is varied linearly).
             pressure (None/float): Target pressure. If set to None, an NVE or an NVT calculation is performed.
                                    (This tag will allow for a list in the future as it is done for calc_minimize())
             n_ionic_steps (int): Number of ionic steps
