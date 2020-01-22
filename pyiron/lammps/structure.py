@@ -415,7 +415,7 @@ class LammpsStructure(GenericParameters):
             cutoff_list.append(np.max(val["cutoff_list"]))
         max_cutoff = np.max(cutoff_list)
         # Calculate neighbors only once
-        neighbors = self._structure.get_neighbors(cutoff=max_cutoff)
+        neighbors = self._structure.get_neighbors(cutoff_radius=max_cutoff)
         id_mol = 0
         indices = self._structure.indices
         for id_el, id_species in enumerate(indices):
