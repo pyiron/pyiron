@@ -431,7 +431,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         generated, the bonds and angles are created. This function needs to be generalized/extended to account for
         dissociated water. This function can also be used as an example to create bonds between other molecules.
         """
-        neighbors = self.structure.get_neighbors(cutoff=1.3)
+        neighbors = self.structure.get_neighbors(cutoff_radius=1.3)
         o_indices = self.structure.select_index("O")
         h_indices = self.structure.select_index("H")
         h1_indices = np.intersect1d(

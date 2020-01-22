@@ -350,8 +350,11 @@ class LammpsControl(GenericParameters):
         Set an MD calculation within LAMMPS. Nosé Hoover is used by default.
 
         Args:
-            temperature (None/float): Target temperature. If set to None, an NVE calculation is performed.
-                                      It is required when the pressure is set or langevin is set
+            temperature (None/float/list): Target temperature value(-s). If set to None, an NVE calculation is performed.
+                                           It is required when the pressure is set or langevin is set
+                                           It can be a list of temperature values, containing the initial target
+                                           temperature and the final target temperature (in between the target value
+                                           is varied linearly).
             pressure (None/float/numpy.ndarray/list): Target pressure. If set to None, an NVE or an NVT calculation is
                 performed. A length-3 list or array may be given to specify x-, y- and z-components individually. In
                 this case, floats and `None` may be mixed to allow relaxation only in particular directions.
@@ -411,11 +414,18 @@ class LammpsControl(GenericParameters):
 
         # Transform temperature
         if temperature is not None:
+            temperature = np.array([temperature], dtype=float).flatten()
+            if len(temperature)==1:
+                temperature = np.array(2*temperature.tolist())
+            elif len(temperature) != 2:
+                raise ValueError("At most two temperatures can be provided "
+                                 "(for a linearly ramping target temperature), "
+                                 "but got {}".format(len(temperature)))
             temperature *= temperature_units
 
         # Apply initial overheating (default uses the theorem of equipartition of energy between KE and PE)
         if initial_temperature is None and temperature is not None:
-            initial_temperature = 2 * temperature
+            initial_temperature = 2 * temperature[0]
 
         if seed is None:
             seed = self.generate_seed_from_job(job_name=job_name)
@@ -434,8 +444,8 @@ class LammpsControl(GenericParameters):
             if len(pressure) > 6:
                 raise ValueError("Pressure must be a float or a vector with length <= 6")
 
-            if temperature is None or temperature == 0.0:
-                raise ValueError("Target temperature for fix nvt/npt/nph cannot be 0")
+            if temperature is None or temperature.min() <= 0:
+                raise ValueError("Target temperature for fix nvt/npt/nph cannot be 0 or negative")
 
             pressure[not_none_mask] *= pressure_units
 
@@ -450,8 +460,8 @@ class LammpsControl(GenericParameters):
                 fix_ensemble_str = "all nph" + pressure_string
                 self.modify(
                     fix___langevin="all langevin {0} {1} {2} {3} zero yes".format(
-                        str(temperature),
-                        str(temperature),
+                        str(temperature[0]),
+                        str(temperature[1]),
                         str(temperature_damping_timescale),
                         str(seed),
                     ),
@@ -459,21 +469,21 @@ class LammpsControl(GenericParameters):
                 )
             else:  # NPT(Nose-Hoover)
                 fix_ensemble_str = "all npt temp {0} {1} {2}".format(
-                    str(temperature),
-                    str(temperature),
+                    str(temperature[0]),
+                    str(temperature[1]),
                     str(temperature_damping_timescale),
                 )
                 fix_ensemble_str += pressure_string
         elif temperature is not None:  # NVT
-            if temperature == 0.0:
-                raise ValueError("Target temperature for fix nvt/npt/nph cannot be 0.0")
+            if temperature.min() <= 0:
+                raise ValueError("Target temperature for fix nvt/npt/nph cannot be 0 or negative")
 
             if langevin:  # NVT(Langevin)
                 fix_ensemble_str = "all nve"
                 self.modify(
                     fix___langevin="all langevin {0} {1} {2} {3} zero yes".format(
-                        str(temperature),
-                        str(temperature),
+                        str(temperature[0]),
+                        str(temperature[1]),
                         str(temperature_damping_timescale),
                         str(seed),
                     ),
@@ -481,8 +491,8 @@ class LammpsControl(GenericParameters):
                 )
             else:  # NVT(Nose-Hoover)
                 fix_ensemble_str = "all nvt temp {0} {1} {2}".format(
-                    str(temperature),
-                    str(temperature),
+                    str(temperature[0]),
+                    str(temperature[1]),
                     str(temperature_damping_timescale),
                 )
         else:  # NVE
