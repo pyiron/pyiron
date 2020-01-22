@@ -51,7 +51,7 @@ class WaterTrajectory(TrajectoryAnalysis):
         super(WaterTrajectory, self)._set_trajectory()
         self.set_neighborhood()
 
-    def set_neighborhood(self, radius=5.0):
+    def set_neighborhood(self):
         self.oxygen_indices = self.structure.select_index("O")
         self.hydrogen_indices = self.structure.select_index("H")
         water_oxygens = list()
@@ -59,7 +59,7 @@ class WaterTrajectory(TrajectoryAnalysis):
         hydroxyl_oxygen_indices = list()
         hydronium_hydrogen_indices = list()
         hydronium_oxygen_indices = list()
-        neighbors = self.structure.get_neighbors(radius=radius, cutoff=self.bond_cutoff)
+        neighbors = self.structure.get_neighbors(cutoff=self.bond_cutoff)
         h1_indices = list()
         h2_indices = list()
         for i, ind_list in enumerate(np.array(neighbors.indices)[self.oxygen_indices]):
