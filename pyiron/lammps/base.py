@@ -20,7 +20,6 @@ from pyiron.base.pyio.parser import Logstatus, extract_data_from_file
 from pyiron.lammps.control import LammpsControl
 from pyiron.lammps.potential import LammpsPotential
 from pyiron.lammps.structure import LammpsStructure, UnfoldingPrism
-from pyiron.atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
 __copyright__ = (
