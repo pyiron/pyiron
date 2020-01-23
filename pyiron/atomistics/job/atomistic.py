@@ -856,7 +856,11 @@ class GenericOutput(object):
 
     @property
     def unwrapped_positions(self):
-        return self._job["output/generic/unwrapped_positions"]
+        unwrapped_positions = self._job["output/generic/unwrapped_positions"]
+        if unwrapped_positions is not None:
+            return unwrapped_positions
+        else:
+            return self._job.structure.positions+self.total_displacements
 
     @property
     def volume(self):
