@@ -939,7 +939,7 @@ class LammpsBase(AtomisticGenericJob):
 
         keys = content[0].keys()
         for kk in keys[keys.str.startswith('c_')]:
-            output[kk.replace('c_', '')] = np.array([cc[kk] for cc in content], dtype=int)
+            output[kk.replace('c_', '')] = np.array([cc[kk] for cc in content], dtype=float)
 
         with self.project_hdf5.open("output/generic") as hdf_output:
             for k, v in output.items():
