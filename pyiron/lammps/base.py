@@ -813,11 +813,6 @@ class LammpsBase(AtomisticGenericJob):
             ["dimension", "read_data", "boundary", "atom_style", "velocity"]
         )
 
-    def pot_per_atom(self):
-        self.input.control['compute___energy_pot_per_atom'] = 'all pe/atom'
-        self.input.control['dump___1'] += ' c_energy_pot_per_atom'
-        self.input.control['dump_modify___1'] = self.input.control['dump_modify___1'][:-1] + ' %20.15g"'
-
     def collect_dump_file(self, file_name="dump.out", cwd=None):
         """
         general purpose routine to extract static from a lammps dump file
