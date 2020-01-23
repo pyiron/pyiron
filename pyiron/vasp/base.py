@@ -1817,6 +1817,9 @@ class Output:
             log_dict["positions"] = self.vp_new.vasprun_dict["positions"]
             log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
             log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
+            log_dict["positions"] = np.einsum('nij,njk->nik',
+                                              log_dict["positions"],
+                                              log_dict["cells"])
             log_dict["positions_unwrapped"] = unwrap_coordinates(
                 positions=log_dict["positions"], cell=None, is_relative=True
             )
