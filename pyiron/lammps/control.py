@@ -714,7 +714,7 @@ class LammpsControl(GenericParameters):
         if self['compute___energy_pot_per_atom'] is None:
             self['compute___energy_pot_per_atom'] = 'all pe/atom'
             self['dump___1'] += ' c_energy_pot_per_atom'
-            self['dump_modify___1'] = self.input.control['dump_modify___1'][:-1] + ' %20.15g"'
+            self['dump_modify___1'] = self['dump_modify___1'][:-1] + ' %20.15g"'
 
     def _measure_mean_value(self, key_pyiron, key_lmp, every, atom=False):
         """
