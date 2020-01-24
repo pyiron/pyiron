@@ -13,7 +13,6 @@ from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentia
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
-from pyiron.atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
 from pyiron.vasp.outcar import Outcar
 from pyiron.vasp.procar import Procar
 from pyiron.vasp.structure import read_atoms, write_poscar, vasp_sorter
@@ -1817,14 +1816,9 @@ class Output:
             log_dict["positions"] = self.vp_new.vasprun_dict["positions"]
             log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
             log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
-            log_dict["positions_unwrapped"] = unwrap_coordinates(
-                positions=log_dict["positions"], cell=None, is_relative=True
-            )
-            for i, pos in enumerate(log_dict["positions"]):
-                log_dict["positions"][i] = np.dot(pos, log_dict["cells"][i])
-                log_dict["positions_unwrapped"][i] = np.dot(
-                    log_dict["positions_unwrapped"][i].copy(), log_dict["cells"][i]
-                )
+            log_dict["positions"] = np.einsum('nij,njk->nik',
+                                              log_dict["positions"],
+                                              log_dict["cells"])
             # log_dict["scf_energies"] = self.vp_new.vasprun_dict["scf_energies"]
             # log_dict["scf_dipole_moments"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
             self.electronic_structure = self.vp_new.get_electronic_structure()
