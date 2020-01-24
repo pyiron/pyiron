@@ -1,7 +1,7 @@
 variables:
-  linux: 'ubuntu-16.04'
-  mac: 'macos-10.13'
-  windows: 'vs2017-win2016'
+  linux: 'ubuntu-latest'
+  mac: 'macOS-latest'
+  windows: 'windows-latest'
 
 pr:
   branches:
