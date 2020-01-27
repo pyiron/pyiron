@@ -94,6 +94,7 @@ class Atoms(object):
         elements=None,
         dimension=None,
         species=None,
+        high_symmetry_points=None,
         **qwargs
     ):
         if symbols is not None:
@@ -227,6 +228,10 @@ class Atoms(object):
             else:
                 self.pbc = pbc
         self.set_initial_magnetic_moments(magmoms)
+        self._high_symmetry_points = None
+        if high_symmetry_points is not None:
+            self.set_high_symmetry_points(high_symmetry_points)
+
 
     @property
     def cell(self):
@@ -305,6 +310,26 @@ class Atoms(object):
 
         """
         return np.array([self.species[el] for el in self.indices])
+
+    def get_high_symmetry_points(self):
+        """
+        dictionary of high-symmetry points defined for this specific structure.
+
+        Returns:
+            dict: high_symmetry_points
+        """
+        return self._high_symmetry_points
+
+    def set_high_symmetry_points(self, new_high_symmetry_points):
+        """
+        Sets new high symmetry points dictionary.
+
+        Args:
+            new_high_symmetry_points (dict): new high symmetry points
+        """
+        if not isinstance(new_high_symmetry_points, dict):
+            raise ValueError("has to be dict!")
+        self._high_symmetry_points = new_high_symmetry_points
 
     def new_array(self, name, a, dtype=None, shape=None):
         """
@@ -467,6 +492,9 @@ class Atoms(object):
 
             # print ('time in atoms.to_hdf: ', time.time() - time_start)
 
+            if self._high_symmetry_points is not None:
+                hdf_structure["high_symmetry_points"] = self._high_symmetry_points
+
     def from_hdf(self, hdf, group_name="structure"):
         """
         Retrieve the object from a HDF5 file
@@ -544,6 +572,10 @@ class Atoms(object):
 
                 if "bonds" in hdf_atoms.list_nodes():
                     self.bonds = hdf_atoms["explicit_bonds"]
+
+                self._high_symmetry_points = None
+                if "high_symmetry_points" in hdf_atoms.list_nodes():
+                    self._high_symmetry_points = hdf_atoms["high_symmetry_points"]
                 return self
 
         else:
@@ -603,6 +635,10 @@ class Atoms(object):
 
             if "bonds" in hdf_atoms.list_nodes():
                 self.bonds = hdf_atoms["explicit_bonds"]
+
+            self._high_symmetry_points = None
+            if "high_symmetry_points" in hdf_atoms.list_nodes():
+                self._high_symmetry_points = hdf_atoms["high_symmetry_points"]
             return self
 
     def center(self, vacuum=None, axis=(0, 1, 2)):
@@ -1011,12 +1047,18 @@ class Atoms(object):
 
     def get_scaled_positions(self, wrap=True):
         """
+        Returns the scaled/relative positions
 
         Returns:
+            numpy.ndarray: The relative positions of the atoms in the supercell
 
         """
         pbc = np.array(self.pbc)
-        positions = np.einsum("jk,ij->ik", np.linalg.inv(self.cell), self.positions)
+        if any(pbc):
+            positions = self.positions.copy()
+            positions[:, pbc] = np.einsum("jk,ij->ik", np.linalg.inv(self.cell[pbc][:, pbc]), self.positions[:, pbc])
+        else:
+            positions = self.positions.copy()
         if wrap:
             positions[:, pbc] = np.mod(positions[:, pbc], 1.0)
         return positions
@@ -1040,18 +1082,21 @@ class Atoms(object):
 
     def center_coordinates_in_unit_cell(self, origin=0, eps=1e-4):
         """
-        compact atomic coordinates in supercell as given by a1, a2., a3
+        Wrap atomic coordinates within the supercell as given by a1, a2., a3
 
         Args:
-            origin:  0 to confine between 0 and 1, -0.5 to confine between -0.5 and 0.5
-            eps:
+            origin (float):  0 to confine between 0 and 1, -0.5 to confine between -0.5 and 0.5
+            eps (float): Tolerance to detect atoms at cell edges
 
         Returns:
 
+            pyiron.atomistics.structure.atoms.Atoms: Wrapped structure
+
         """
-        self.set_scaled_positions(
-            np.mod(self.get_scaled_positions(wrap=False) + eps, 1) - eps + origin
-        )
+        if any(self.pbc):
+            self.set_scaled_positions(
+                np.mod(self.get_scaled_positions(wrap=False) + eps, 1) - eps + origin
+            )
         return self
 
     def repeat(self, rep):
@@ -1072,6 +1117,16 @@ class Atoms(object):
         raise NotImplementedError("This function was removed!")
 
     def analyse_ovito_cna_adaptive(self, mode="total"):
+        """
+        Use Ovito's common neighbor analysis binding.
+
+        Args:
+            mode ("total"/"numeric"/"str"): Controls the style and level of detail of the output. (Default is "total", only
+                return a summary of the values in the structure.)
+
+        Returns:
+            (depends on `mode`)
+        """
         from pyiron.atomistics.structure.ovito import analyse_ovito_cna_adaptive
 
         warnings.filterwarnings("ignore")
@@ -1088,6 +1143,10 @@ class Atoms(object):
 
         warnings.filterwarnings("module")
         return analyse_ovito_voronoi_volume(atoms)
+
+    def analyse_pyscal_steinhardt_parameter(atoms, cutoff=3.5, n_clusters=2, q=[4, 6]):
+        from pyiron.atomistics.structure.pyscal import get_steinhardt_parameter_structure
+        return get_steinhardt_parameter_structure(structure=atoms, cutoff=cutoff, n_clusters=n_clusters, q=q)
 
     def analyse_phonopy_equivalent_atoms(atoms):
         from pyiron.atomistics.structure.phonopy import analyse_phonopy_equivalent_atoms
@@ -1167,7 +1226,11 @@ class Atoms(object):
             (str): The PDB-formatted representation of the structure.
         """
         from ase.geometry import cell_to_cellpar, cellpar_to_cell
-
+        if cell is None or any(np.max(cell, axis=0) < 1e-2):
+            # Define a dummy cell if it doesn't exist (eg. for clusters)
+            max_pos = np.max(positions, axis=0)
+            max_pos[np.abs(max_pos) < 1e-2] = 10
+            cell = np.eye(3) * max_pos
         cellpar = cell_to_cellpar(cell)
         exportedcell = cellpar_to_cell(cellpar)
         rotation = np.linalg.solve(cell, exportedcell)
@@ -1443,7 +1506,8 @@ class Atoms(object):
 
         if show_cell:
             if parent_basis.cell is not None:
-                view.add_unitcell()
+                if all(np.max(parent_basis.cell, axis=0) > 1e-2):
+                    view.add_unitcell()
 
         if vector_color is None and vector_field is not None:
             vector_color = (
@@ -1529,7 +1593,8 @@ class Atoms(object):
             view.add_ball_and_stick()
         if show_cell:
             if parent_basis.cell is not None:
-                view.add_unitcell()
+                if all(np.max(parent_basis.cell, axis=0) > 1e-2):
+                    view.add_unitcell()
         if show_axes:
             view.shape.add_arrow([-2, -2, -2], [2, -2, -2], [1, 0, 0], 0.5)
             view.shape.add_arrow([-2, -2, -2], [-2, 2, -2], [0, 1, 0], 0.5)
@@ -2962,15 +3027,14 @@ class Atoms(object):
         Learn more about get_distances from the ase website:
         https://wiki.fysik.dtu.dk/ase/ase/geometry.html#ase.geometry.get_distances
         """
-        if (a0 is not None and len(np.array(a0).shape) != 2) or (
-            a1 is not None and len(np.array(a1).shape) != 2
-        ):
-            raise ValueError("a0 and a1 have to be None or Nx3 array")
         if a0 is None and a1 is not None:
             a0 = a1
             a1 = None
         if a0 is None:
             a0 = self.positions
+        a0 = np.array(a0).reshape(-1, 3)
+        if a1 is not None:
+            a1 = np.array(a1).reshape(-1, 3)
         if mic:
             vec, dist = get_distances(a0, a1, cell=self.cell, pbc=self.pbc)
         else:
@@ -3346,15 +3410,14 @@ class Atoms(object):
             raise ValueError(
                 "Cell must be length 3 sequence, length 6 " "sequence or 3x3 matrix!"
             )
-
-        if np.linalg.det(cell) <= 0:
-            raise ValueError(
-                "Cell must be a full dimensional matrix with " "right hand orientation"
-            )
-
-        if scale_atoms:
-            M = np.linalg.solve(self.get_cell(complete=True), complete_cell(cell))
-            self.positions[:] = np.dot(self.positions, M)
+        if any(self.pbc):
+            cell_pbc = cell[self.pbc][:, self.pbc]
+            if np.linalg.det(cell_pbc) <= 0:
+                raise ValueError("Can't set a singular matrix/non-right hand orientation "
+                                 "as the cell value for a periodic crystal")
+            if scale_atoms:
+                M = np.linalg.solve(self.get_cell(complete=True), complete_cell(cell))
+                self.positions[:] = np.dot(self.positions, M)
         self._cell = cell
 
     def translate(self, displacement):
@@ -3404,7 +3467,13 @@ class Atoms(object):
 
         if pbc is None:
             pbc = self.pbc
-        self.positions = wrap_positions(self.positions, self.cell, pbc, center, eps)
+        self.positions = wrap_positions(
+            positions=self.positions,
+            cell=self.cell,
+            pbc=pbc,
+            center=center,
+            eps=eps
+        )
 
     def write(self, filename, format=None, **kwargs):
         """

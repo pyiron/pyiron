@@ -7,6 +7,7 @@ import os
 import importlib
 from six import with_metaclass
 import sys
+from configparser import ConfigParser
 from pathlib2 import Path
 from pyiron.base.settings.logger import setup_logger
 from pyiron.base.database.generic import DatabaseAccess
@@ -26,12 +27,6 @@ __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
-
-# Depending on the Python Version - a specific version of the config parser is required.
-if sys.version_info.major == 2:
-    from ConfigParser import ConfigParser
-else:
-    from configparser import ConfigParser
 
 
 class Singleton(type):
@@ -82,56 +77,28 @@ class Settings(with_metaclass(Singleton)):
             "sql_type": "SQLite",
             "sql_user_key": None,
             "sql_database": None,
+            "project_check_enabled": True,
+            "disable_database": False,
         }
-        environment_keys = os.environ.keys()
-        if "PYIRONCONFIG" in environment_keys:
-            config_file = environment_keys["PYIRONCONFIG"]
+        environment = os.environ
+        if "PYIRONCONFIG" in environment.keys():
+            config_file = environment["PYIRONCONFIG"]
         else:
             config_file = os.path.expanduser(os.path.join("~", ".pyiron"))
         if os.path.isfile(config_file):
             self._config_parse_file(config_file)
-        elif not any(
-            [
-                env in environment_keys
-                for env in [
-                    "TRAVIS",
-                    "APPVEYOR",
-                    "CIRCLECI",
-                    "CONDA_BUILD",
-                    "GITLAB_CI",
-                ]
-            ]
-        ):
-            user_input = None
-            while user_input not in ["yes", "no"]:
-                user_input = input(
-                    "It appears that pyiron is not yet configured, do you want to create a default start configuration (recommended: yes). [yes/no]:"
-                )
-            if user_input.lower() == "yes" or user_input.lower() == "y":
-                install_pyiron(
-                    config_file_name=config_file,
-                    zip_file="resources.zip",
-                    resource_directory="~/pyiron/resources",
-                    giturl_for_zip_file="https://github.com/pyiron/pyiron-resources/archive/master.zip",
-                    git_folder_name="pyiron-resources-master",
-                )
-            else:
-                raise ValueError("pyiron was not installed!")
-            self._config_parse_file(config_file)
+        elif any(["PYIRON" in e for e in environment.keys()]):
+            self._configuration = self.get_config_from_environment(
+                environment=environment,
+                config=self._configuration
+            )
+        else:
+            print("Fall back to default configuration: "
+                  "{'resource_paths': ['~/pyiron/resources'], "
+                  "'project_paths': ['~/pyiron/projects']}")
 
         # Take dictionary as primary source - overwrite everything
-        if isinstance(config, dict):
-            for key, value in config.items():
-                if key not in ["resource_paths", "project_paths"] or isinstance(
-                    value, list
-                ):
-                    self._configuration[key] = value
-                elif isinstance(value, str):
-                    self._configuration[key] = [value]
-                else:
-                    TypeError(
-                        "Config dictionary parameter type not recognized ", key, value
-                    )
+        self._read_external_config(config=config)
 
         self._configuration["project_paths"] = [
             convert_path(path) + "/" if path[-1] != "/" else convert_path(path)
@@ -142,55 +109,10 @@ class Settings(with_metaclass(Singleton)):
         ]
 
         # Build the SQLalchemy connection strings
-        if self._configuration["sql_type"] == "Postgres":
-            self._configuration["sql_connection_string"] = (
-                "postgresql://"
-                + self._configuration["user"]
-                + ":"
-                + self._configuration["sql_user_key"]
-                + "@"
-                + self._configuration["sql_host"]
-                + "/"
-                + self._configuration["sql_database"]
+        if not self.database_is_disabled:
+            self._configuration = self.convert_database_config(
+                config=self._configuration
             )
-            if self._configuration["sql_view_user"] is not None:
-                self._configuration["sql_view_connection_string"] = (
-                    "postgresql://"
-                    + self._configuration["sql_view_user"]
-                    + ":"
-                    + self._configuration["sql_view_user_key"]
-                    + "@"
-                    + self._configuration["sql_host"]
-                    + "/"
-                    + self._configuration["sql_database"]
-                )
-        elif self._configuration["sql_type"] == "MySQL":
-            self._configuration["sql_connection_string"] = (
-                "mysql+pymysql://"
-                + self._configuration["user"]
-                + ":"
-                + self._configuration["sql_user_key"]
-                + "@"
-                + self._configuration["sql_host"]
-                + "/"
-                + self._configuration["sql_database"]
-            )
-        else:
-            # SQLite is raising ugly error messages when the database directory does not exist.
-            if self._configuration["sql_file"] is None:
-                self._configuration["sql_file"] = "/".join(
-                    [self._configuration["resource_paths"][0], "sqlite.db"]
-                )
-            if os.path.dirname(
-                self._configuration["sql_file"]
-            ) != "" and not os.path.exists(
-                os.path.dirname(self._configuration["sql_file"])
-            ):
-                os.makedirs(os.path.dirname(self._configuration["sql_file"]))
-            self._configuration[
-                "sql_connection_string"
-            ] = "sqlite:///" + self._configuration["sql_file"].replace("\\", "/")
-
         self._database = None
         self._use_local_database = False
         self._queue_adapter = None
@@ -208,6 +130,14 @@ class Settings(with_metaclass(Singleton)):
     @property
     def queue_adapter(self):
         return self._queue_adapter
+
+    @property
+    def project_check_enabled(self):
+        return self._configuration["project_check_enabled"]
+
+    @property
+    def database_is_disabled(self):
+        return self._configuration["disable_database"]
 
     @property
     def publication_lst(self):
@@ -267,7 +197,7 @@ class Settings(with_metaclass(Singleton)):
         Internal function to open the connection to the database. Only after this function is called the database is
         accessable.
         """
-        if self._database is None:
+        if self._database is None and not self.database_is_disabled:
             self._database = DatabaseAccess(
                 self._configuration["sql_connection_string"],
                 self._configuration["sql_table_name"],
@@ -281,7 +211,7 @@ class Settings(with_metaclass(Singleton)):
             file_name (str): SQLite database file name
             cwd (str/None): directory where the SQLite database file is located in
         """
-        if not self._use_local_database:
+        if not self._use_local_database and not self.database_is_disabled:
             if cwd is None and not os.path.isabs(file_name):
                 file_name = os.path.join(os.path.abspath(os.path.curdir), file_name)
             elif cwd is not None:
@@ -292,13 +222,13 @@ class Settings(with_metaclass(Singleton)):
             )
             self._use_local_database = True
         else:
-            print("Database is already in local mode!")
+            print("Database is already in local mode or disabled!")
 
     def switch_to_central_database(self):
         """
         Switch to central database
         """
-        if self._use_local_database:
+        if self._use_local_database and not self.database_is_disabled:
             self.close_connection()
             self._database = DatabaseAccess(
                 self._configuration["sql_connection_string"],
@@ -306,13 +236,13 @@ class Settings(with_metaclass(Singleton)):
             )
             self._use_local_database = False
         else:
-            print("Database is already in central mode!")
+            print("Database is already in central mode or disabled!")
 
     def switch_to_viewer_mode(self):
         """
         Switch from user mode to viewer mode - if viewer_mode is enable pyiron has read only access to the database.
         """
-        if self._configuration["sql_view_connection_string"] is not None:
+        if self._configuration["sql_view_connection_string"] is not None and not self.database_is_disabled:
             if not self._database.viewer_mode:
                 self.close_connection()
                 self._database = DatabaseAccess(
@@ -329,7 +259,7 @@ class Settings(with_metaclass(Singleton)):
         """
         Switch from viewer mode to user mode - if viewer_mode is enable pyiron has read only access to the database.
         """
-        if self._configuration["sql_view_connection_string"] is not None:
+        if self._configuration["sql_view_connection_string"] is not None and not self.database_is_disabled:
             if self._database.viewer_mode:
                 self.close_connection()
                 self._database = DatabaseAccess(
@@ -362,6 +292,8 @@ class Settings(with_metaclass(Singleton)):
         """
         if full_path[-1] != "/":
             full_path += "/"
+        if not self.project_check_enabled:
+            return None
         for path in self._configuration["project_paths"]:
             if path in full_path:
                 return path
@@ -405,10 +337,7 @@ class Settings(with_metaclass(Singleton)):
             dict: dictionary with the environment configuration
         """
         # load config parser - depending on Python version
-        if sys.version_info.major == 2:
-            parser = ConfigParser()
-        else:
-            parser = ConfigParser(inline_comment_prefixes=(";",))
+        parser = ConfigParser(inline_comment_prefixes=(";",))
 
         # read config
         parser.read(config_file)
@@ -438,7 +367,12 @@ class Settings(with_metaclass(Singleton)):
             ]
         else:
             ValueError("No project path identified!")
-
+        if parser.has_option(section, "PROJECT_CHECK_ENABLED"):
+            self._configuration["project_check_enabled"] = \
+                parser.getboolean(section, "PROJECT_CHECK_ENABLED")
+        if parser.has_option(section, "DISABLE_DATABASE"):
+            self._configuration["disable_database"] = \
+                parser.getboolean(section, "DISABLE_DATABASE")
         if parser.has_option(section, "RESOURCE_PATHS"):
             self._configuration["resource_paths"] = [
                 convert_path(c.strip())
@@ -489,6 +423,103 @@ class Settings(with_metaclass(Singleton)):
         if parser.has_option(section, "JOB_TABLE"):
             self._configuration["sql_table_name"] = parser.get(section, "JOB_TABLE")
 
+    @staticmethod
+    def convert_database_config(config):
+        # Build the SQLalchemy connection strings
+        if config["sql_type"] == "Postgres":
+            config["sql_connection_string"] = (
+                "postgresql://"
+                + config["user"]
+                + ":"
+                + config["sql_user_key"]
+                + "@"
+                + config["sql_host"]
+                + "/"
+                + config["sql_database"]
+            )
+            if config["sql_view_user"] is not None:
+                config["sql_view_connection_string"] = (
+                    "postgresql://"
+                    + config["sql_view_user"]
+                    + ":"
+                    + config["sql_view_user_key"]
+                    + "@"
+                    + config["sql_host"]
+                    + "/"
+                    + config["sql_database"]
+                )
+        elif config["sql_type"] == "MySQL":
+            config["sql_connection_string"] = (
+                "mysql+pymysql://"
+                + config["user"]
+                + ":"
+                + config["sql_user_key"]
+                + "@"
+                + config["sql_host"]
+                + "/"
+                + config["sql_database"]
+            )
+        else:
+            # SQLite is raising ugly error messages when the database directory does not exist.
+            if config["sql_file"] is None:
+                config["sql_file"] = "/".join(
+                    [config["resource_paths"][0], "sqlite.db"]
+                )
+            if os.path.dirname(
+                config["sql_file"]
+            ) != "" and not os.path.exists(
+                os.path.dirname(config["sql_file"])
+            ):
+                os.makedirs(os.path.dirname(config["sql_file"]))
+            config[
+                "sql_connection_string"
+            ] = "sqlite:///" + config["sql_file"].replace("\\", "/")
+        return config
+
+    def _read_external_config(self, config):
+        if isinstance(config, dict):
+            for key, value in config.items():
+                if key not in ["resource_paths", "project_paths"] or isinstance(
+                    value, list
+                ):
+                    self._configuration[key] = value
+                elif isinstance(value, str):
+                    self._configuration[key] = [value]
+                else:
+                    TypeError(
+                        "Config dictionary parameter type not recognized ", key, value
+                    )
+
+    @staticmethod
+    def get_config_from_environment(environment, config):
+        env_key_mapping = {
+            "PYIRONUSER": "user",
+            "PYIRONRESOURCEPATHS": "resource_paths",
+            "PYIRONPROJECTPATHS": "project_paths",
+            "PYIRONSQLCONNECTIONSTRING": "sql_connection_string",
+            "PYIRONSQLTABLENAME": "sql_table_name",
+            "PYIRONSQLVIEWCONNECTIONSTRING": "sql_view_connection_string",
+            "PYIRONSQLVIEWTABLENAME": "sql_view_table_name",
+            "PYIRONSQLVIEWUSER": "sql_view_user",
+            "PYIRONSQLVIEWUSERKEY": "sql_view_user_key",
+            "PYIRONSQLFILE": "sql_file",
+            "PYIRONSQHOST": "sql_host",
+            "PYIRONSQLTYPE": "sql_type",
+            "PYIRONSQLUSERKEY": "sql_user_key",
+            "PYIRONSQLDATABASE": "sql_database",
+            "PYIRONPROJECTCHECKENABLED": "project_check_enabled",
+            "PYIRONDISABLE": "disable_database",
+        }
+        for k, v in env_key_mapping.items():
+            if k in environment.keys():
+                if k in ["PYIRONPROJECTCHECKENABLED", "PYIRONDISABLE"]:
+                    config[v] = environment[k].lower() in ['t', 'true', 'y', 'yes']
+                elif k in ["PYIRONRESOURCEPATHS", "PYIRONPROJECTPATHS"]:
+                    config[v] = environment[k].split(':')
+                else:
+                    config[v] = environment[k]
+        return config
+
     @property
     def publication(self):
         return {
@@ -527,9 +558,4 @@ def convert_path(path):
     Returns:
         str: absolute path in POSIX format
     """
-    if not (sys.version_info.major < 3 and os.name == "nt"):
-        return Path(path).expanduser().resolve().absolute().as_posix()
-    else:
-        return os.path.abspath(os.path.normpath(os.path.expanduser(path))).replace(
-            "\\", "/"
-        )
+    return os.path.abspath(os.path.expanduser(path)).replace("\\", "/")

@@ -327,7 +327,7 @@ class Outcar(object):
             kpoint_lst.append([float(l) for l in line.split()[0:3]])
             if weight:
                 weight_lst.append(float(line.split()[3]))
-        if planewaves:
+        if planewaves and trigger_plane_waves != 0:
             for line in lines[
                 trigger_plane_waves : trigger_plane_waves + number_irr_kpoints
             ]:

@@ -17,14 +17,13 @@ from pyiron.base.generic.hdfio import FileHDFio
 class TestAtoms(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
-        if sys.version_info[0] >= 3:
-            file_location = os.path.dirname(os.path.abspath(__file__))
-            if os.path.isfile(
+        file_location = os.path.dirname(os.path.abspath(__file__))
+        if os.path.isfile(
+            os.path.join(file_location, "../../static/atomistics/test_hdf")
+        ):
+            os.remove(
                 os.path.join(file_location, "../../static/atomistics/test_hdf")
-            ):
-                os.remove(
-                    os.path.join(file_location, "../../static/atomistics/test_hdf")
-                )
+            )
 
     @classmethod
     def setUpClass(cls):
@@ -183,39 +182,37 @@ class TestAtoms(unittest.TestCase):
         )
 
     def test_to_hdf(self):
-        if sys.version_info[0] >= 3:
-            filename = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "../../static/atomistics/test_hdf",
-            )
-            abs_filename = os.path.abspath(filename)
-            hdf_obj = FileHDFio(abs_filename)
-            pos, cell = generate_fcc_lattice()
-            basis = Atoms(symbols="Al", positions=pos, cell=cell)
-            basis.set_repeat([2, 2, 2])
-            basis.to_hdf(hdf_obj, "test_structure")
-            self.assertTrue(
-                np.array_equal(hdf_obj["test_structure/positions"], basis.positions)
-            )
-            basis_new = Atoms().from_hdf(hdf_obj, "test_structure")
-            self.assertEqual(basis, basis_new)
+        filename = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "../../static/atomistics/test_hdf",
+        )
+        abs_filename = os.path.abspath(filename)
+        hdf_obj = FileHDFio(abs_filename)
+        pos, cell = generate_fcc_lattice()
+        basis = Atoms(symbols="Al", positions=pos, cell=cell)
+        basis.set_repeat([2, 2, 2])
+        basis.to_hdf(hdf_obj, "test_structure")
+        self.assertTrue(
+            np.array_equal(hdf_obj["test_structure/positions"], basis.positions)
+        )
+        basis_new = Atoms().from_hdf(hdf_obj, "test_structure")
+        self.assertEqual(basis, basis_new)
 
     def test_from_hdf(self):
-        if sys.version_info[0] >= 3:
-            filename = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "../../static/atomistics/test_hdf",
-            )
-            abs_filename = os.path.abspath(filename)
-            hdf_obj = FileHDFio(abs_filename)
-            pos, cell = generate_fcc_lattice()
-            basis_store = Atoms(symbols="Al", positions=pos, cell=cell)
-            basis_store.set_repeat([2, 2, 2])
-            basis_store.to_hdf(hdf_obj, "simple_structure")
-            basis = Atoms().from_hdf(hdf_obj, group_name="simple_structure")
-            self.assertEqual(len(basis), 8)
-            self.assertEqual(basis.get_majority_species()["symbol"], "Al")
-            self.assertEqual(basis.get_spacegroup()["Number"], 225)
+        filename = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "../../static/atomistics/test_hdf",
+        )
+        abs_filename = os.path.abspath(filename)
+        hdf_obj = FileHDFio(abs_filename)
+        pos, cell = generate_fcc_lattice()
+        basis_store = Atoms(symbols="Al", positions=pos, cell=cell)
+        basis_store.set_repeat([2, 2, 2])
+        basis_store.to_hdf(hdf_obj, "simple_structure")
+        basis = Atoms().from_hdf(hdf_obj, group_name="simple_structure")
+        self.assertEqual(len(basis), 8)
+        self.assertEqual(basis.get_majority_species()["symbol"], "Al")
+        self.assertEqual(basis.get_spacegroup()["Number"], 225)
 
     def test_create_Fe_bcc(self):
         self.pse = PeriodicTable()
@@ -310,6 +307,25 @@ class TestAtoms(unittest.TestCase):
             CO.cell = -np.eye(3)
         with self.assertRaises(ValueError):
             CO.cell = [2, 1]
+        dx = 1.0
+        r_o = [0, 0, 0]
+        r_h1 = [dx, 0, 0]
+        r_h2 = [0, dx, 0]
+        water = Atoms(elements=['H', 'H', 'O'], positions=[r_h1, r_h2, r_o])
+        self.assertEqual(water.center_coordinates_in_unit_cell(), water)
+        water.cell = np.zeros((3, 3))
+        self.assertTrue(np.array_equal(water.cell, np.zeros((3, 3))))
+        self.assertTrue(np.array_equal(water.get_scaled_positions(), water.positions))
+        self.assertEqual(water.center_coordinates_in_unit_cell(), water)
+        positions_2d = np.random.random((4, 3))
+        positions_2d[:, 2] = 0.0
+        cell_2d = np.eye(3)
+        cell_2d[2, 2] = 0.0
+        struct_2d = Atoms("C4", scaled_positions=positions_2d, cell=cell_2d, pbc=[True, True, False])
+        struct_2d.set_cell(cell_2d)
+        self.assertTrue(np.array_equal(struct_2d.get_scaled_positions(), positions_2d))
+        struct_2d.set_cell(cell_2d, scale_atoms=True)
+        self.assertEqual(struct_2d.center_coordinates_in_unit_cell(), struct_2d)
 
     def test_add(self):
         COX = self.C2 + Atom("O", position=[0, 0, -2])
@@ -730,6 +746,12 @@ class TestAtoms(unittest.TestCase):
             output = np.rint(output * 2 / np.sqrt(3))
             self.assertTrue(np.all(np.dot(output, output) == np.identity(2)))
             self.assertEqual(len(w), 1)
+
+    def test_get_distances(self):
+        basis = Atoms("FeFe", positions=[3*[0], 3*[0.9]], cell=np.identity(3))
+        self.assertAlmostEqual(basis.get_distances(mic=False)[0, 1], 0.9*np.sqrt(3))
+        self.assertTrue(np.allclose(basis.get_distances(a0=0.5*np.ones(3)), basis.get_distances(a1=0.5*np.ones(3))))
+        self.assertTrue(np.allclose(basis.get_distances(vector=True)[0,1], -0.1*np.ones(3)))
 
     def test_cluster_analysis(self):
         import random

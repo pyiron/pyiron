@@ -22,10 +22,18 @@ class TestConfigSettingsStatic(unittest.TestCase):
         cls.test_config = Settings(
             config={
                 "sql_file": "sqlite.db",
-                "project_paths": os.path.join(cls.resource_path, "../../../../.."),
-                "resource_paths": os.path.join(cls.resource_path, "../../../../static"),
+                "project_paths": os.path.abspath(os.path.join(cls.resource_path, "../../../../..")),
+                "resource_paths": os.path.abspath(os.path.join(cls.resource_path, "../../../../static")),
             }
         )
+
+    def test_get_config_from_environment(self):
+        config = self.test_config.get_config_from_environment(environment={"PYIRONSQLFILE": '/a/b/c',
+                                                                  "SYSTEM": 'linux'},
+                                                              config={'user': 'pyiron'})
+        self.assertEqual(config['sql_file'], '/a/b/c')
+        self.assertEqual(config['user'], 'pyiron')
+        self.assertEqual(len(config), 2)
 
     # def test_db_connection_name(self):
     #     self.assertEqual(self.test_config.db_connection_name, 'test')

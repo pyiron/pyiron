@@ -7,6 +7,8 @@ import copy
 import os
 import posixpath
 import time
+import math
+import stat
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.template import PyironObject
 from tables import NoSuchNodeError
@@ -411,7 +413,7 @@ class JobCore(PyironObject):
                                     - default=True
         """
         if _protect_childs:
-            if self._master_id:
+            if self._master_id is not None and not math.isnan(self._master_id):
                 s.logger.error(
                     "Job {0} is a child of a master job and cannot be deleted!".format(
                         str(self.job_id)
@@ -833,6 +835,18 @@ class JobCore(PyironObject):
                 return f.readlines()
         return None
 
+    def __setitem__(self, key, value):
+        """
+        Stores data
+
+        Args:
+            key (str): key to store in hdf (full path)
+            value (anything): value to store
+        """
+        if not key.startswith('user/'):
+            raise ValueError("user defined paths+values must begin with user/, e.g. job['user/key'] = value")
+        self._hdf5[key] = value
+
     def __delitem__(self, key):
         """
         Delete item from the HDF5 file
@@ -902,7 +916,7 @@ class JobCore(PyironObject):
                     "w:bz2",
                 ) as tar:
                     for name in files_to_compress:
-                        if "tar" not in name:
+                        if "tar" not in name and not stat.S_ISFIFO(os.stat(name).st_mode):
                             tar.add(name)
                 for name in files_to_compress:
                     if "tar" not in name:

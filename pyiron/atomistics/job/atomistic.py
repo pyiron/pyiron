@@ -400,11 +400,10 @@ class AtomisticGenericJob(GenericJobCore):
         if isinstance(new_ham, GenericMaster) and not isinstance(self, GenericMaster):
             new_child = self.restart(snapshot=snapshot, job_name=None, job_type=None)
             new_ham.append(new_child)
-        if self.status.finished:
-            new_ham.structure = self.get_structure(iteration_step=snapshot)
-            new_ham._generic_input["structure"] = "atoms"
-        else:
-            new_ham._generic_input["structure"] = "continue_final"
+        new_ham.structure = self.get_structure(iteration_step=snapshot)
+        if new_ham.structure is None:
+            new_ham.structure = self.structure.copy()
+        new_ham._generic_input['structure'] = 'atoms'
         return new_ham
 
     # Required functions
@@ -474,6 +473,10 @@ class AtomisticGenericJob(GenericJobCore):
 
         """
         cells = self.output.cells
+        if len(self.output.indices) != 0:
+            indices = self.output.indices
+        else:
+            indices = [self.structure.indices] * len(cells)  # Use the same indices throughout
         if overwrite_positions is not None:
             positions = np.array(overwrite_positions).copy()
             if overwrite_cells is not None:
@@ -483,25 +486,55 @@ class AtomisticGenericJob(GenericJobCore):
                     raise ValueError("overwrite_cells must be compatible with the positions!")
         else:
             positions = self.output.positions.copy()
+        conditions = list()
+        if isinstance(cells, (list, np.ndarray)):
+            if len(cells) == 0:
+                conditions.append(True)
+            else:
+                conditions.append(cells[0] is None)
+        conditions.append(cells is None)
+        if any(conditions):
+            max_pos = np.max(np.max(positions, axis=0), axis=0)
+            max_pos[np.abs(max_pos) < 1e-2] = 10
+            cell = np.eye(3) * max_pos
+            cells = np.array([cell] * len(positions))
+
         if len(positions) != len(cells):
             raise ValueError("The positions must have the same length as the cells!")
-
         if snapshot_indices is not None:
             positions = positions[snapshot_indices]
             cells = cells[snapshot_indices]
+            indices = indices[snapshot_indices]
         if atom_indices is None:
             return Trajectory(
                 positions[::stride],
                 self.structure.get_parent_basis(),
                 center_of_mass=center_of_mass,
                 cells=cells[::stride],
+                indices=indices[::stride]
             )
         else:
+            sub_struct = self.structure.get_parent_basis()[atom_indices]
+            if len(sub_struct.species) < len(self.structure.species):
+                # Then `sub_struct` has had its indices remapped so they run from 0 to the number of species - 1
+                # But the `indices` array is unaware of this and needs to be remapped to this new space
+                original_symbols = np.array([el.Abbreviation for el in self.structure.species])
+                sub_symbols = np.array([el.Abbreviation for el in sub_struct.species])
+
+                map_ = np.array([np.argwhere(original_symbols == symbol)[0, 0] for symbol in sub_symbols], dtype=int)
+
+                remapped_indices = np.array(indices)
+                for i_sub, i_original in enumerate(map_):
+                    np.place(remapped_indices, indices == i_original, i_sub)
+            else:
+                remapped_indices = indices
+
             return Trajectory(
                 positions[::stride, atom_indices, :],
-                self.structure.get_parent_basis()[atom_indices],
+                sub_struct,
                 center_of_mass=center_of_mass,
                 cells=cells[::stride],
+                indices=remapped_indices[::stride, atom_indices]
             )
 
     def write_traj(
@@ -630,7 +663,17 @@ class AtomisticGenericJob(GenericJobCore):
         if not (self.structure is not None):
             raise AssertionError()
         snapshot = self.structure.copy()
-        snapshot.cell = self.output.cells[iteration_step]
+        conditions = list()
+        if isinstance(self.output.cells, (list, np.ndarray)):
+            if len(self.output.cells) == 0:
+                conditions.append(True)
+            else:
+                conditions.append(self.output.cells[0] is None)
+        conditions.append(self.output.cells is None)
+        if any(conditions):
+            snapshot.cell = None
+        else:
+            snapshot.cell = self.output.cells[iteration_step]
         snapshot.positions = self.output.positions[iteration_step]
         indices = self.output.indices
         if indices is not None and len(indices) > max([iteration_step, 0]):
@@ -722,7 +765,7 @@ class Trajectory(object):
                                 varies
     """
 
-    def __init__(self, positions, structure, center_of_mass=False, cells=None):
+    def __init__(self, positions, structure, center_of_mass=False, cells=None, indices=None):
         if center_of_mass:
             pos = np.copy(positions)
             pos[:, :, 0] = (pos[:, :, 0].T - np.mean(pos[:, :, 0], axis=1)).T
@@ -733,11 +776,14 @@ class Trajectory(object):
             self._positions = positions
         self._structure = structure
         self._cells = cells
+        self._indices = indices
 
     def __getitem__(self, item):
         new_structure = self._structure.copy()
         if self._cells is not None:
             new_structure.cell = self._cells[item]
+        if self._indices is not None:
+            new_structure.indices = self._indices[item]
         new_structure.positions = self._positions[item]
         # This step is necessary for using ase.io.write for trajectories
         new_structure.arrays["positions"] = new_structure.positions
@@ -815,6 +861,10 @@ class GenericOutput(object):
     @property
     def volume(self):
         return self._job["output/generic/volume"]
+
+    @property
+    def indices(self):
+        return self._job["output/generic/indices"]
 
     @property
     def displacements(self):

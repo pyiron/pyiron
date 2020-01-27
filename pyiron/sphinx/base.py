@@ -8,6 +8,7 @@ import numpy as np
 import os
 import posixpath
 import re
+import stat
 from shutil import copyfile
 import scipy.constants
 import subprocess
@@ -336,6 +337,17 @@ class SphinxBase(GenericDFTJob):
         from_charge_density=True,
         from_wave_functions=True,
     ):
+        if self.status!='finished' and not self.is_compressed():
+            self.decompress()
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                try:
+                    self.collect_output()
+                except AssertionError:
+                    from_charge_density=False
+                    from_wave_functions=False
+                if len(w) > 0:
+                    self.status.not_converged = True
         new_job = super(SphinxBase, self).restart(
             snapshot=snapshot, job_name=job_name, job_type=job_type
         )
@@ -346,7 +358,7 @@ class SphinxBase(GenericDFTJob):
                 posixpath.join(self.working_directory, "rho.sxb")
             )
         elif from_charge_density:
-            self._logger.warn(
+            self._logger.warning(
                 msg="A charge density from job: {} is not generated and therefore it can't be read.".format(
                     self.job_name
                 )
@@ -358,7 +370,7 @@ class SphinxBase(GenericDFTJob):
                 posixpath.join(self.working_directory, "waves.sxb")
             )
         elif from_wave_functions:
-            self._logger.warn(
+            self._logger.warning(
                 msg="A WAVECAR from job: {} is not generated and therefore it can't be read.".format(
                     self.job_name
                 )
@@ -576,6 +588,8 @@ class SphinxBase(GenericDFTJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
+        n_trace=None,
+        trace=None,
     ):
         """
         Function to setup the k-points for the Sphinx job
@@ -589,6 +603,8 @@ class SphinxBase(GenericDFTJob):
             scheme (str): Type of k-point generation scheme (only 'MP' implemented)
             mesh (list): Size of the mesh (in the MP scheme)
             center_shift (list): Shifts the center of the mesh from the gamma point by the given vector
+            n_trace (int): Number of points per trace part for line mode (not active in SPHInX)
+            trace (list): ordered list of high symmetry points for line mode (not active in SPHInX)
         """
         if not isinstance(symmetry_reduction, bool):
             raise ValueError("symmetry_reduction has to be a boolean")
@@ -832,11 +848,12 @@ class SphinxBase(GenericDFTJob):
         Args:
             files_to_compress (list): A list of files to compress (optional)
         """
+        # delete empty files
         if files_to_compress is None:
             files_to_compress = [
-                f for f in list(self.list_files()) if f not in ["rho.sxb", "waves.sxb"]
+                f for f in list(self.list_files()) if (f not in ["rho.sxb", "waves.sxb"]
+                                                       and not stat.S_ISFIFO(os.stat(os.path.join(self.working_directory, f)).st_mode))
             ]
-        # delete empty files
         for f in list(self.list_files()):
             filename = os.path.join(self.working_directory, f)
             if (
@@ -860,14 +877,21 @@ class InputWriter(object):
         self._spin_enabled = False
         self._id_pyi_to_spx = []
         self._id_spx_to_pyi = []
+        self.file_dict = {}
 
     def _odict_to_spx_input(self, element, level=0):
         """
-        Convert collections.OrderedDict containing SPHInX input hierarchy to string.
+        Convert collections.OrderedDict containing SPHInX input
+        hierarchy to string.
+
         If the item contains:
             - no value -> considered as flag -> output format: flag;
-            - value is odict -> considered as a group -> output format: group { ...recursive... }
-            - else -> considered as parameter and value -> output format: parameter = value;
+            - value is odict
+                -> considered as a group
+                -> output format: group { ...recursive... }
+            - else
+                -> considered as parameter and value
+                -> output format: parameter = value;
         """
         line = ""
         for k, v in element.items():
@@ -907,35 +931,46 @@ class InputWriter(object):
         Args:
             file_name (str): name of the file to be written (optional)
             cwd (str): the current working directory (optinal)
-            main_str (str): the input to write, if no input is given the default input will be written. (optinal)
+            main_str (str): the input to write;
+                            if no input is given,
+                            the default input will be written. (optinal)
         """
         if main_str is None:
-            main_str = odict(
-                [
-                    ("//" + str(job_name), None),
-                    ("//SPHinX input file generated by pyiron", None),
-                    ("format paw", None),
-                    ("include <parameters.sx>", None),
-                    ("include <userparameters.sx>", None),
-                ]
-            )
-            if enable_kjxc:
-                main_str["pawPot"] = odict(
-                    [("include <potentials.sx>", None), ("kjxc", None)]
-                )
-            else:
-                main_str["pawPot"] = odict([("include <potentials.sx>", None)])
-            main_str["structure"] = odict([("include <structure.sx>", None)])
-            main_str["basis"] = odict([("include <basis.sx>", None)])
-            main_str["PAWHamiltonian"] = odict([("include <hamilton.sx>", None)])
-            main_str["initialGuess"] = odict([("include <guess.sx>", None)])
-            if spin_constraint_enabled:
-                main_str["spinConstraint"] = odict([("file", '"spins.in"')])
-            main_str["main"] = odict([("include <control.sx>", None)])
+            self.file_dict['input'] = self.get_main(enable_kjxc=enable_kjxc,
+                                                    spin_constraint_enabled=spin_constraint_enabled,
+                                                    job_name=job_name)
+        else:
+            self.file_dict['input'] = main_str
         if cwd is not None:
             file_name = posixpath.join(cwd, file_name)
         with open(file_name, "w") as f:
-            f.write(self._odict_to_spx_input(main_str))
+            f.write(self._odict_to_spx_input(self.file_dict['input']))
+
+    @staticmethod
+    def get_main(enable_kjxc=False, spin_constraint_enabled=False, job_name=None):
+        line = odict(
+            [
+                ("//" + str(job_name), None),
+                ("//SPHinX input file generated by pyiron", None),
+                ("format paw", None),
+                ("include <parameters.sx>", None),
+                ("include <userparameters.sx>", None),
+            ]
+        )
+        if enable_kjxc:
+            line["pawPot"] = odict(
+                [("include <potentials.sx>", None), ("kjxc", None)]
+            )
+        else:
+            line["pawPot"] = odict([("include <potentials.sx>", None)])
+        line["structure"] = odict([("include <structure.sx>", None)])
+        line["basis"] = odict([("include <basis.sx>", None)])
+        line["PAWHamiltonian"] = odict([("include <hamilton.sx>", None)])
+        line["initialGuess"] = odict([("include <guess.sx>", None)])
+        if spin_constraint_enabled:
+            line["spinConstraint"] = odict([("file", '"spins.in"')])
+        line["main"] = odict([("include <control.sx>", None)])
+        return line
 
     @property
     def id_spx_to_pyi(self):
@@ -1333,10 +1368,10 @@ class Input(GenericParameters):
             "Sigma = 0.2\n"
             "Xcorr = PBE\n"
             "Estep = 400\n"
-            "Ediff = 1.0e-7\n"
+            "Ediff = 1.0e-4\n"
             "WriteWaves = True\n"
             "KJxc = False\n"
-            "SaveMemory = False\n"
+            "SaveMemory = True\n"
             "CoarseRun = False\n"
             "rhoMixing = 1.0\n"
             "spinMixing = 1.0\n"
@@ -1524,6 +1559,9 @@ class Output(object):
 
         with open(posixpath.join(cwd, file_name), "r") as sphinx_log_file:
             log_file = sphinx_log_file.readlines()
+            if not np.any(["Enter Main Loop" in line for line in log_file]):
+                self._job.status.aborted = True
+                raise AssertionError("SPHInX did not enter the main loop; output not collected")
             if not np.any(["Program exited normally." in line for line in log_file]):
                 self._job.status.aborted = True
                 warnings.warn("SPHInX parsing failed; most likely SPHInX crashed.")
@@ -1675,8 +1713,8 @@ class Output(object):
             self._parse_dict["scf_energy_free"] = energy_free_lst
         if len(self._parse_dict["forces"]) == 0 and len(forces) != 0:
             self._parse_dict["forces"] = forces
-        if len(self._parse_dict["magnetic_forces"]) == 0 and len(magnetic_forces) != 0:
-            self._parse_dict["magnetic_forces"] = magnetic_forces
+        if len(self._parse_dict["scf_magnetic_forces"]) == 0 and len(magnetic_forces) != 0:
+            self._parse_dict["scf_magnetic_forces"] = magnetic_forces
 
     def collect_relaxed_hist(self, file_name="relaxHist.sx", cwd=None):
         """
@@ -1762,7 +1800,7 @@ class Output(object):
 
         if len(self._parse_dict["scf_energy_zero"]) == 0:
             self._parse_dict["scf_energy_zero"] = [
-                0.5 * (np.array(fr) + np.array(en))
+                (0.5 * (np.array(fr) + np.array(en))).tolist()
                 for fr, en in zip(
                     self._parse_dict["scf_energy_free"],
                     self._parse_dict["scf_energy_int"],

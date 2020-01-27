@@ -1,0 +1,6 @@
+species {
+	name = "Fe";
+	potType = "VASP";
+	element = "Fe";
+	potential = "Fe_POTCAR";
+}

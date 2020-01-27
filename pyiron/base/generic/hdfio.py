@@ -11,7 +11,7 @@ import pandas
 import posixpath
 import h5io
 import numpy as np
-from tables.exceptions import NoSuchNodeError
+from tables.exceptions import NoSuchNodeError, HDF5ExtError
 import sys
 
 """
@@ -300,7 +300,7 @@ class FileHDFio(object):
             with h5py.File(
                 self.file_name, mode="r", libver="latest", swmr=True
             ) as f_source:
-                with h5py.File(file_name, libver="latest", swmr=True) as f_target:
+                with h5py.File(file_name, mode="a", libver="latest", swmr=True) as f_target:
                     if destination.h5_path[0] == "/":
                         dest_path = destination.h5_path[1:]
                     else:
@@ -733,7 +733,7 @@ class FileHDFio(object):
                 store = HDFStoreIO(self.file_name, mode="a")
                 with store.open(mode="a"):
                     del store[key]
-            except (AttributeError, KeyError):
+            except (AttributeError, KeyError, HDF5ExtError):
                 pass
 
     def __str__(self):

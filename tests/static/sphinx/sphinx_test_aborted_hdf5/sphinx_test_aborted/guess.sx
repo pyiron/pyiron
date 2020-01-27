@@ -1,0 +1,135 @@
+waves {
+	lcao {}
+	pawBasis;
+}
+rho {
+	atomicOrbitals;
+	atomicSpin {
+		label = "spin_-2.0";
+		spin = -2.0;
+	}
+	atomicSpin {
+		label = "spin_-2.0";
+		spin = -2.0;
+	}
+	atomicSpin {
+		label = "spin_-2.0";
+		spin = -2.0;
+	}
+	atomicSpin {
+		label = "spin_-2.0";
+		spin = -2.0;
+	}
+	atomicSpin {
+		label = "spin_2.0";
+		spin = 2.0;
+	}
+	atomicSpin {
+		label = "spin_2.0";
+		spin = 2.0;
+	}
+	atomicSpin {
+		label = "spin_2.0";
+		spin = 2.0;
+	}
+	atomicSpin {
+		label = "spin_2.0";
+		spin = 2.0;
+	}
+	atomicSpin {
+		label = "spin_2.0";
+		spin = 2.0;
+	}
+	atomicSpin {
+		label = "spin_2.0";
+		spin = 2.0;
+	}
+	atomicSpin {
+		label = "spin_2.0";
+		spin = 2.0;
+	}
+	atomicSpin {
+		label = "spin_2.0";
+		spin = 2.0;
+	}
+	atomicSpin {
+		label = "spin_-2.0";
+		spin = -2.0;
+	}
+	atomicSpin {
+		label = "spin_-2.0";
+		spin = -2.0;
+	}
+	atomicSpin {
+		label = "spin_-2.0";
+		spin = -2.0;
+	}
+	atomicSpin {
+		label = "spin_-2.0";
+		spin = -2.0;
+	}
+	atomicSpin {
+		label = "spin_2.0";
+		spin = 2.0;
+	}
+	atomicSpin {
+		label = "spin_2.0";
+		spin = 2.0;
+	}
+	atomicSpin {
+		label = "spin_2.0";
+		spin = 2.0;
+	}
+	atomicSpin {
+		label = "spin_2.0";
+		spin = 2.0;
+	}
+	atomicSpin {
+		label = "spin_-2.0";
+		spin = -2.0;
+	}
+	atomicSpin {
+		label = "spin_-2.0";
+		spin = -2.0;
+	}
+	atomicSpin {
+		label = "spin_-2.0";
+		spin = -2.0;
+	}
+	atomicSpin {
+		label = "spin_-2.0";
+		spin = -2.0;
+	}
+	atomicSpin {
+		label = "spin_-2.0";
+		spin = -2.0;
+	}
+	atomicSpin {
+		label = "spin_-2.0";
+		spin = -2.0;
+	}
+	atomicSpin {
+		label = "spin_-2.0";
+		spin = -2.0;
+	}
+	atomicSpin {
+		label = "spin_-2.0";
+		spin = -2.0;
+	}
+	atomicSpin {
+		label = "spin_2.0";
+		spin = 2.0;
+	}
+	atomicSpin {
+		label = "spin_2.0";
+		spin = 2.0;
+	}
+	atomicSpin {
+		label = "spin_2.0";
+		spin = 2.0;
+	}
+	atomicSpin {
+		label = "spin_2.0";
+		spin = 2.0;
+	}
+}
