@@ -2,10 +2,14 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-import pyscal.core as pc
 from sklearn import cluster
 from pyiron.lammps.structure import UnfoldingPrism
 from pyiron.atomistics.structure.atoms import pyiron_to_ase
+
+try:
+    import pyscal.core as pc
+except ImportError:
+    pass  # pyscal is currently not available on windows
 
 __author__ = "Jan Janssen"
 __copyright__ = (
