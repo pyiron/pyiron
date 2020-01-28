@@ -18,10 +18,11 @@ class TestAtoms(unittest.TestCase):
                         'Fe',
                         cubic=True
                     ).repeat([3, 3, 3])
-                )
+                ),
+                n_clusters=1
             )
             self.assertEqual(sum(sysq[0]), 1.9639610121239321)
-            self.assertEqual(sum(ind), 53)
+            self.assertEqual(sum(ind), 54)
 
     def test_bcc_triclinic(self):
         if os.name != "nt":
@@ -31,23 +32,25 @@ class TestAtoms(unittest.TestCase):
                         'Fe',
                         cubic=False
                     ).repeat([3, 3, 3])
-                )
+                ),
+                n_clusters=1
             )
             self.assertEqual(sum(sysq[0]), 2.1642207792631947)
-            self.assertTrue(sum(ind) in [9, 18])
+            self.assertEqual(sum(ind), 27)
 
     def test_fcc_cubic(self):
         if os.name != "nt":
             sysq, ind = get_steinhardt_parameter_structure(
                 ase_to_pyiron(
-                bulk(
-                    'Al',
-                    cubic=True
-                ).repeat([3, 3, 3])
-                )
+                    bulk(
+                        'Al',
+                        cubic=True
+                    ).repeat([3, 3, 3])
+                ),
+                n_clusters=1
             )
             self.assertEqual(sum(sysq[0]), 20.621590627301256)
-            self.assertTrue(sum(ind) in [36, 72])
+            self.assertEqual(sum(ind), 108)
 
     def test_fcc_triclinic(self):
         if os.name != "nt":
@@ -57,10 +60,11 @@ class TestAtoms(unittest.TestCase):
                         'Al',
                         cubic=False
                     ).repeat([3, 3, 3])
-                )
+                ),
+                n_clusters=1
             )
             self.assertEqual(sum(sysq[0]), 4.393254735603798)
-            self.assertTrue(sum(ind) in [12, 15])
+            self.assertEqual(sum(ind), 27)
 
     def test_hcp_triclinic(self):
         if os.name != "nt":
@@ -70,7 +74,8 @@ class TestAtoms(unittest.TestCase):
                         'Mg',
                         cubic=False
                     ).repeat([3, 3, 3])
-                )
+                ),
+                n_clusters=1
             )
             self.assertEqual(sum(sysq[0]), 10.116252659874087)
-            self.assertTrue(sum(ind) in [18, 36])
+            self.assertEqual(sum(ind), 54)
