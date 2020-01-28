@@ -20,8 +20,8 @@ class TestAtoms(unittest.TestCase):
                     ).repeat([3, 3, 3])
                 )
             )
-            self.assertEqual(sysq, 0)
-            self.assertEqual(ind, 0)
+            self.assertEqual(sum(sysq[0]), 1.9639610121239321)
+            self.assertEqual(sum(ind), 53)
 
     def test_bcc_triclinic(self):
         if os.name != "nt":
@@ -33,8 +33,8 @@ class TestAtoms(unittest.TestCase):
                     ).repeat([3, 3, 3])
                 )
             )
-            self.assertEqual(sysq, 0)
-            self.assertEqual(ind, 0)
+            self.assertEqual(sum(sysq[0]), 2.1642207792631947)
+            self.assertTrue(sum(ind) in [9, 18])
 
     def test_fcc_cubic(self):
         if os.name != "nt":
@@ -46,8 +46,8 @@ class TestAtoms(unittest.TestCase):
                 ).repeat([3, 3, 3])
                 )
             )
-            self.assertEqual(sysq, 0)
-            self.assertEqual(ind, 0)
+            self.assertEqual(sum(sysq[0]), 20.621590627301256)
+            self.assertTrue(sum(ind) in [36, 72])
 
     def test_fcc_triclinic(self):
         if os.name != "nt":
@@ -59,21 +59,8 @@ class TestAtoms(unittest.TestCase):
                     ).repeat([3, 3, 3])
                 )
             )
-            self.assertEqual(sysq, 0)
-            self.assertEqual(ind, 0)
-
-    def test_hcp_cubic(self):
-        if os.name != "nt":
-            sysq, ind = get_steinhardt_parameter_structure(
-             ase_to_pyiron(
-                 bulk(
-                     'Mg',
-                     cubic=True
-                 ).repeat([3, 3, 3])
-             )
-            )
-            self.assertEqual(sysq, 0)
-            self.assertEqual(ind, 0)
+            self.assertEqual(sum(sysq[0]), 4.393254735603798)
+            self.assertTrue(sum(ind) in [12, 15])
 
     def test_hcp_triclinic(self):
         if os.name != "nt":
@@ -85,5 +72,5 @@ class TestAtoms(unittest.TestCase):
                     ).repeat([3, 3, 3])
                 )
             )
-            self.assertEqual(sysq, 0)
-            self.assertEqual(ind, 0)
+            self.assertEqual(sum(sysq[0]), 10.116252659874087)
+            self.assertTrue(sum(ind) in [18, 36])
