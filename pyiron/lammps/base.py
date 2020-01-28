@@ -186,6 +186,7 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
             list: potential names
         """
+
         return self.list_potentials()
 
     @property
@@ -929,6 +930,10 @@ class LammpsBase(AtomisticGenericJob):
         direct_positions = direct_unwrapped_positions - np.floor(direct_unwrapped_positions)
         positions = np.matmul(direct_positions, lammps_cells)
         output["positions"] = np.matmul(positions, rotation_lammps2orig)
+
+        keys = content[0].keys()
+        for kk in keys[keys.str.startswith('c_')]:
+            output[kk.replace('c_', '')] = np.array([cc[kk] for cc in content], dtype=float)
 
         with self.project_hdf5.open("output/generic") as hdf_output:
             for k, v in output.items():

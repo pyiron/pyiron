@@ -710,6 +710,12 @@ class LammpsControl(GenericParameters):
         else:
             raise NotImplementedError(key+' is not implemented')
 
+    def energy_pot_per_atom(self):
+        if self['compute___energy_pot_per_atom'] is None:
+            self['compute___energy_pot_per_atom'] = 'all pe/atom'
+            self['dump___1'] += ' c_energy_pot_per_atom'
+            self['dump_modify___1'] = self['dump_modify___1'][:-1] + ' %20.15g"'
+
     def _measure_mean_value(self, key_pyiron, key_lmp, every, atom=False):
         """
             Args:
