@@ -33,7 +33,7 @@ def get_steinhardt_parameter_job(job, cutoff=3.50, n_clusters=2, q=[4, 6]):
 
 
 def get_steinhardt_parameter_structure(structure, cutoff=3.50, n_clusters=2, q=[4, 6]):
-    sys = pyscal.core.System()
+    sys = pc.System()
     sys.read_inputfile(
         pyiron_to_ase(structure), 
         format='ase', 
