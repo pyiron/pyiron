@@ -21,7 +21,6 @@ class TestAtoms(unittest.TestCase):
                 ),
                 n_clusters=1
             )
-            self.assertEqual(sum(sysq[0]), 1.9639610121239321)
             self.assertEqual(sum(ind), 54)
 
     def test_bcc_triclinic(self):
@@ -35,7 +34,6 @@ class TestAtoms(unittest.TestCase):
                 ),
                 n_clusters=1
             )
-            self.assertEqual(sum(sysq[0]), 2.1642207792631947)
             self.assertEqual(sum(ind), 27)
 
     def test_fcc_cubic(self):
@@ -49,7 +47,6 @@ class TestAtoms(unittest.TestCase):
                 ),
                 n_clusters=1
             )
-            self.assertEqual(sum(sysq[0]), 20.621590627301256)
             self.assertEqual(sum(ind), 108)
 
     def test_fcc_triclinic(self):
@@ -63,7 +60,6 @@ class TestAtoms(unittest.TestCase):
                 ),
                 n_clusters=1
             )
-            self.assertEqual(sum(sysq[0]), 4.393254735603798)
             self.assertEqual(sum(ind), 27)
 
     def test_hcp_triclinic(self):
@@ -77,5 +73,4 @@ class TestAtoms(unittest.TestCase):
                 ),
                 n_clusters=1
             )
-            self.assertEqual(sum(sysq[0]), 10.116252659874087)
             self.assertEqual(sum(ind), 54)
