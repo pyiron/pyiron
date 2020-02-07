@@ -9,6 +9,9 @@ try:
 except ImportError:
     pass
 
+# Protocol signals
+control_data = bytes([1])
+control_stop = bytes([0])
 
 # Lammps executable
 job = lammps(cmdargs=["-screen", "none"])
@@ -58,21 +61,42 @@ def select_cmd(argument):
     return switcher.get(argument)
 
 
+def send_data(arr, buff):
+    data_str = pickle.dumps(arr)
+    dlen = len(data_str).to_bytes(8, byteorder='big')
+    buff.write(control_data)
+    buff.write(dlen)
+    buff.write(data_str)
+    buff.flush()
+
+
+def recv_data(buff):
+    data = buff.read(1)
+    if data == control_data:
+        data = buff.read(8)
+        dlen = int.from_bytes(data, byteorder='big')
+        data = buff.read(dlen)
+        return pickle.loads(data)
+    elif data == control_stop:
+        return None
+    else:
+        raise ValueError('Unexpected Signal!')
+
+
 if __name__ == "__main__":
     while True:
         if MPI.COMM_WORLD.rank == 0:
-            input_dict = pickle.load(sys.stdin.buffer)
+            input_dict = recv_data(buff=sys.stdin.buffer)
             # with open('process.txt', 'a') as file:
             #     print('Input:', input_dict, file=file)
         else:
             input_dict = None
         input_dict = MPI.COMM_WORLD.bcast(input_dict, root=0)
-        if input_dict["c"] == "close":
+        if input_dict is None:
             job.close()
             break
         output = select_cmd(input_dict["c"])(input_dict["d"])
         if MPI.COMM_WORLD.rank == 0 and output is not None:
             # with open('process.txt', 'a') as file:
             #     print('Output:', output, file=file)
-            pickle.dump(output, sys.stdout.buffer)
-            sys.stdout.flush()
+            send_data(arr=output, buff=sys.stdout.buffer)

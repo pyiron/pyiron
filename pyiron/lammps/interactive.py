@@ -29,6 +29,11 @@ __status__ = "production"
 __date__ = "Sep 1, 2018"
 
 
+# Protocol signals
+control_data = bytes([1])
+control_stop = bytes([0])
+
+
 class LammpsInteractive(LammpsBase, GenericInteractive):
     def __init__(self, project, job_name):
         super(LammpsInteractive, self).__init__(project, job_name)
@@ -623,8 +628,15 @@ class LammpsLibrary(object):
             command (str): command to be send to the
             data:
         """
-        # print('send: ', {'c': command, 'd': data})
-        pickle.dump({"c": command, "d": data}, self._process.stdin)
+        data_str = pickle.dumps({"c": command, "d": data})
+        dlen = len(data_str).to_bytes(8, byteorder='big')
+        self._process.stdin.write(control_data)
+        self._process.stdin.write(dlen)
+        self._process.stdin.write(data_str)
+        self._process.stdin.flush()
+
+    def _send_stop(self):
+        self._process.stdin.write(control_stop)
         self._process.stdin.flush()
 
     def _receive(self):
@@ -634,9 +646,16 @@ class LammpsLibrary(object):
         Returns:
             data
         """
-        output = pickle.load(self._process.stdout)
-        # print(output)
-        return output
+        data = self._process.stdout.read(1)
+        if data == control_data:
+            data = self._process.stdout.read(8)
+            dlen = int.from_bytes(data, byteorder='big')
+            data = self._process.stdout.read(dlen)
+            return pickle.loads(data)
+        elif data == control_stop:
+            return None
+        else:
+            raise ValueError('Unexpected Signal!')
 
     def command(self, command):
         """
@@ -696,7 +715,7 @@ class LammpsLibrary(object):
         return self._receive()
 
     def close(self):
-        self._send(command="close")
+        self._send_stop()
         self._process.kill()
         self._process = None
 
