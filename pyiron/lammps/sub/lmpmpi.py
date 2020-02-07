@@ -14,7 +14,7 @@ control_data = bytes([1])
 control_stop = bytes([0])
 
 # Lammps executable
-job = lammps(cmdargs=["-screen", "none"])
+job = lammps(comm=MPI.COMM_WORLD, cmdargs=["-screen", "none"])
 
 
 def extract_compute(funct_args):
