@@ -1,0 +1,272 @@
+01-16 09:37 exampleExecutable.module INFO     creating an instance
+01-16 09:37 exampleExecutable.module DEBUG    type: alpha <class 'float'>
+01-16 09:37 exampleExecutable.module INFO     Execute program
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/random_testing_atomistic/%'}
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/random_testing_atomistic/%'}
+01-16 09:37 pyiron_log   INFO     run job: job_test_run id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: job_test_run id: 627, status: created
+01-16 09:37 pyiron_log   INFO     job: job_test_run id: 627, status: submitted, run job (modal)
+01-16 09:37 pyiron_log   INFO     job: job_test_run id: 627, status: collect, output: /Users/huber/anaconda3/lib/python3.6/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+Execution started
+
+01-16 09:37 pyiron_log   INFO     run job: job_test_run id: 627, status: collect
+01-16 09:37 pyiron_log   INFO     update master: None 627 modal
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/random_testing/%'}
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/random_testing/%'}
+01-16 09:37 pyiron_log   INFO     run job: job_test_run id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: job_test_run id: 627, status: created
+01-16 09:37 exampleExecutable.module INFO     creating an instance
+01-16 09:37 exampleExecutable.module DEBUG    type: alpha <class 'float'>
+01-16 09:37 exampleExecutable.module INFO     Execute program
+01-16 09:37 pyiron_log   INFO     run job: job_test_run id: 627, status: running
+01-16 09:37 exampleExecutable.module INFO     creating an instance
+01-16 09:37 exampleExecutable.module DEBUG    type: alpha <class 'float'>
+01-16 09:37 exampleExecutable.module INFO     Execute program
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/random_testing_lib/%'}
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/random_testing_lib/%'}
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/random_testing_non_modal/%'}
+01-16 09:37 pyiron_log   INFO     run job: job_non_modal id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: job_non_modal id: 627, status: created
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/random_testing_non_modal/'}
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/random_testing_non_modal/'}
+01-16 09:37 pyiron_log   DEBUG    Remove job with ID 627 
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/random_testing_non_modal/%'}
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/testing_serial/%'}
+01-16 09:37 pyiron_log   DEBUG    run_fast: False
+01-16 09:37 pyiron_log   INFO     run job: sequence_convergence id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: sequence_convergence id: 627, status: created
+01-16 09:37 pyiron_log   INFO     run serial master job: sequence_convergence id: 627
+01-16 09:37 pyiron_log   INFO     SerialMaster: run job job_convergence
+01-16 09:37 pyiron_log   INFO     run job: job_convergence id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: job_convergence id: 628, status: created
+01-16 09:37 pyiron_log   INFO     job: job_convergence id: 628, status: submitted, run job (modal)
+01-16 09:37 pyiron_log   INFO     job: job_convergence id: 628, status: collect, output: /Users/huber/anaconda3/lib/python3.6/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+Execution started
+
+01-16 09:37 pyiron_log   INFO     run job: job_convergence id: 628, status: collect
+01-16 09:37 pyiron_log   INFO     update master: 627 628 modal
+01-16 09:37 pyiron_log   INFO     Does the convergence goal exit: True
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/testing_serial/sequence_convergence_hdf5/'}
+01-16 09:37 pyiron_log   INFO     run serial master job: sequence_convergence id: 627
+01-16 09:37 pyiron_log   INFO     SerialMaster: run job job_convergence_1
+01-16 09:37 pyiron_log   INFO     run job: job_convergence_1 id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: job_convergence_1 id: 629, status: created
+01-16 09:37 pyiron_log   INFO     job: job_convergence_1 id: 629, status: submitted, run job (modal)
+01-16 09:37 pyiron_log   INFO     job: job_convergence_1 id: 629, status: collect, output: /Users/huber/anaconda3/lib/python3.6/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+Execution started
+
+01-16 09:37 pyiron_log   INFO     run job: job_convergence_1 id: 629, status: collect
+01-16 09:37 pyiron_log   INFO     update master: 627 629 modal
+01-16 09:37 pyiron_log   INFO     Does the convergence goal exit: True
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/testing_serial/sequence_convergence_hdf5/'}
+01-16 09:37 pyiron_log   INFO     run serial master job: sequence_convergence id: 627
+01-16 09:37 pyiron_log   INFO     SerialMaster: run job job_convergence_2
+01-16 09:37 pyiron_log   INFO     run job: job_convergence_2 id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: job_convergence_2 id: 630, status: created
+01-16 09:37 pyiron_log   INFO     job: job_convergence_2 id: 630, status: submitted, run job (modal)
+01-16 09:37 pyiron_log   INFO     job: job_convergence_2 id: 630, status: collect, output: /Users/huber/anaconda3/lib/python3.6/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+Execution started
+
+01-16 09:37 pyiron_log   INFO     run job: job_convergence_2 id: 630, status: collect
+01-16 09:37 pyiron_log   INFO     update master: 627 630 modal
+01-16 09:37 pyiron_log   INFO     Does the convergence goal exit: True
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/testing_serial/sequence_convergence_hdf5/'}
+01-16 09:37 pyiron_log   INFO     run serial master job: sequence_convergence id: 627
+01-16 09:37 pyiron_log   INFO     SerialMaster: run job job_convergence_3
+01-16 09:37 pyiron_log   INFO     run job: job_convergence_3 id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: job_convergence_3 id: 631, status: created
+01-16 09:37 pyiron_log   INFO     job: job_convergence_3 id: 631, status: submitted, run job (modal)
+01-16 09:37 pyiron_log   INFO     job: job_convergence_3 id: 631, status: collect, output: /Users/huber/anaconda3/lib/python3.6/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+Execution started
+
+01-16 09:37 pyiron_log   INFO     run job: job_convergence_3 id: 631, status: collect
+01-16 09:37 pyiron_log   INFO     update master: 627 631 modal
+01-16 09:37 pyiron_log   INFO     Does the convergence goal exit: True
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/testing_serial/sequence_convergence_hdf5/'}
+01-16 09:37 pyiron_log   INFO     run serial master job: sequence_convergence id: 627
+01-16 09:37 pyiron_log   INFO     SerialMaster: run job job_convergence_4
+01-16 09:37 pyiron_log   INFO     run job: job_convergence_4 id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: job_convergence_4 id: 632, status: created
+01-16 09:37 pyiron_log   INFO     job: job_convergence_4 id: 632, status: submitted, run job (modal)
+01-16 09:37 pyiron_log   INFO     job: job_convergence_4 id: 632, status: collect, output: /Users/huber/anaconda3/lib/python3.6/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+Execution started
+
+01-16 09:37 pyiron_log   INFO     run job: job_convergence_4 id: 632, status: collect
+01-16 09:37 pyiron_log   INFO     update master: 627 632 modal
+01-16 09:37 pyiron_log   INFO     Does the convergence goal exit: True
+01-16 09:37 pyiron_log   INFO     run job: sequence_convergence id: 627, status: collect
+01-16 09:37 pyiron_log   INFO     update master: None 627 modal
+01-16 09:37 pyiron_log   DEBUG    run_fast: False
+01-16 09:37 pyiron_log   INFO     run job: sequence_multi id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: sequence_multi id: 627, status: created
+01-16 09:37 pyiron_log   INFO     run serial master job: sequence_multi id: 627
+01-16 09:37 pyiron_log   INFO     SerialMaster: run job job_multi
+01-16 09:37 pyiron_log   INFO     run job: job_multi id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: job_multi id: 628, status: created
+01-16 09:37 pyiron_log   INFO     job: job_multi id: 628, status: submitted, run job (modal)
+01-16 09:37 pyiron_log   INFO     job: job_multi id: 628, status: collect, output: /Users/huber/anaconda3/lib/python3.6/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+Execution started
+
+01-16 09:37 pyiron_log   INFO     run job: job_multi id: 628, status: collect
+01-16 09:37 pyiron_log   INFO     update master: 627 628 modal
+01-16 09:37 pyiron_log   INFO     Does the convergence goal exit: False
+01-16 09:37 pyiron_log   INFO     run job: sequence_multi id: 627, status: collect
+01-16 09:37 pyiron_log   INFO     update master: None 627 modal
+01-16 09:37 pyiron_log   DEBUG    run_fast: False
+01-16 09:37 pyiron_log   INFO     run job: sequence_multi id: 627, status: created
+01-16 09:37 pyiron_log   INFO     run serial master job: sequence_multi id: 627
+01-16 09:37 pyiron_log   INFO     SerialMaster: run job job_multi_0
+01-16 09:37 pyiron_log   INFO     run job: job_multi_0 id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: job_multi_0 id: 629, status: created
+01-16 09:37 pyiron_log   INFO     job: job_multi_0 id: 629, status: submitted, run job (modal)
+01-16 09:37 pyiron_log   INFO     job: job_multi_0 id: 629, status: collect, output: /Users/huber/anaconda3/lib/python3.6/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+Execution started
+
+01-16 09:37 pyiron_log   INFO     run job: job_multi_0 id: 629, status: collect
+01-16 09:37 pyiron_log   INFO     update master: 627 629 modal
+01-16 09:37 pyiron_log   INFO     Does the convergence goal exit: False
+01-16 09:37 pyiron_log   INFO     run job: sequence_multi id: 627, status: collect
+01-16 09:37 pyiron_log   INFO     update master: None 627 modal
+01-16 09:37 pyiron_log   DEBUG    run_fast: False
+01-16 09:37 pyiron_log   INFO     run job: sequence_single id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: sequence_single id: 627, status: created
+01-16 09:37 pyiron_log   INFO     run serial master job: sequence_single id: 627
+01-16 09:37 pyiron_log   INFO     SerialMaster: run job job_single
+01-16 09:37 pyiron_log   INFO     run job: job_single id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: job_single id: 628, status: created
+01-16 09:37 pyiron_log   INFO     job: job_single id: 628, status: submitted, run job (modal)
+01-16 09:37 pyiron_log   INFO     job: job_single id: 628, status: collect, output: /Users/huber/anaconda3/lib/python3.6/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+Execution started
+
+01-16 09:37 pyiron_log   INFO     run job: job_single id: 628, status: collect
+01-16 09:37 pyiron_log   INFO     update master: 627 628 modal
+01-16 09:37 pyiron_log   INFO     Does the convergence goal exit: False
+01-16 09:37 pyiron_log   INFO     run job: sequence_single id: 627, status: collect
+01-16 09:37 pyiron_log   INFO     update master: None 627 modal
+01-16 09:37 pyiron_log   DEBUG    run_fast: False
+01-16 09:37 pyiron_log   INFO     run job: sequence_single_nh id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: sequence_single_nh id: 627, status: created
+01-16 09:37 pyiron_log   INFO     run serial master job: sequence_single_nh id: 627
+01-16 09:37 pyiron_log   INFO     SerialMaster: run job job_single_nh
+01-16 09:37 pyiron_log   INFO     run job: job_single_nh id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: job_single_nh id: 628, status: created
+01-16 09:37 pyiron_log   INFO     job: job_single_nh id: 628, status: submitted, run job (modal)
+01-16 09:37 pyiron_log   INFO     job: job_single_nh id: 628, status: collect, output: /Users/huber/anaconda3/lib/python3.6/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+Execution started
+
+01-16 09:37 pyiron_log   INFO     run job: job_single_nh id: 628, status: collect
+01-16 09:37 pyiron_log   INFO     update master: 627 628 modal
+01-16 09:37 pyiron_log   INFO     Does the convergence goal exit: False
+01-16 09:37 pyiron_log   INFO     run job: sequence_single_nh id: 627, status: collect
+01-16 09:37 pyiron_log   INFO     update master: None 627 modal
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/testing_serial/%'}
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/testing_serial_non_modal/%'}
+01-16 09:37 pyiron_log   DEBUG    run_fast: False
+01-16 09:37 pyiron_log   INFO     run job: sequence_convergence id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: sequence_convergence id: 627, status: created
+01-16 09:37 pyiron_log   DEBUG    run_fast: False
+01-16 09:37 pyiron_log   INFO     run job: sequence_single_nm id: None, status: initialized
+01-16 09:37 pyiron_log   DEBUG    run_fast: False
+01-16 09:37 pyiron_log   INFO     run job: sequence_single_nm id: 628, status: created
+01-16 09:37 pyiron_log   INFO     run serial master job: sequence_single_nm id: 628
+01-16 09:37 pyiron_log   INFO     run serial master job: sequence_convergence id: 627
+01-16 09:37 pyiron_log   INFO     SerialMaster: run job job_single_nm
+01-16 09:37 pyiron_log   INFO     run job: job_single_nm id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: job_single_nm id: 629, status: created
+01-16 09:37 pyiron_log   INFO     SerialMaster: run job job_convergence
+01-16 09:37 pyiron_log   INFO     run job: job_convergence id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: job_convergence id: 630, status: created
+01-16 09:37 pyiron_log   INFO     job: job_single_nm id: 629, status: submitted, run job (modal)
+01-16 09:37 pyiron_log   INFO     job: job_convergence id: 630, status: submitted, run job (modal)
+01-16 09:37 pyiron_log   INFO     job: job_single_nm id: 629, status: collect, output: /Users/huber/anaconda3/lib/python3.6/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+Execution started
+
+01-16 09:37 pyiron_log   INFO     run job: job_single_nm id: 629, status: collect
+01-16 09:37 pyiron_log   INFO     update master: 628 629 non_modal
+01-16 09:37 pyiron_log   INFO     run_if_refresh() called
+01-16 09:37 pyiron_log   INFO     job: job_convergence id: 630, status: collect, output: /Users/huber/anaconda3/lib/python3.6/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+Execution started
+
+01-16 09:37 pyiron_log   INFO     run job: job_convergence id: 630, status: collect
+01-16 09:37 pyiron_log   INFO     update master: 627 630 non_modal
+01-16 09:37 pyiron_log   INFO     run_if_refresh() called
+01-16 09:37 pyiron_log   INFO     Does the convergence goal exit: True
+01-16 09:37 pyiron_log   INFO     run serial master job: sequence_convergence id: 627
+01-16 09:37 pyiron_log   INFO     SerialMaster: run job job_convergence_1
+01-16 09:37 pyiron_log   INFO     run job: job_convergence_1 id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: job_convergence_1 id: 631, status: created
+01-16 09:37 pyiron_log   INFO     job: job_convergence_1 id: 631, status: submitted, run job (modal)
+01-16 09:37 pyiron_log   INFO     Does the convergence goal exit: False
+01-16 09:37 pyiron_log   INFO     run job: sequence_single_nm id: 628, status: collect
+01-16 09:37 pyiron_log   INFO     update master: None 628 modal
+01-16 09:37 pyiron_log   DEBUG    run_fast: False
+01-16 09:37 pyiron_log   INFO     run job: sequence_single_nma id: None, status: initialized
+01-16 09:37 pyiron_log   INFO     run job: sequence_single_nma id: 632, status: created
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/testing_serial_non_modal/%'}
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/testing_serial_non_modal/%'}
+01-16 09:37 pyiron_log   DEBUG    run_fast: False
+01-16 09:37 pyiron_log   DEBUG    Remove job with ID 627 
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/testing_serial_non_modal/%'}
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/testing_serial_non_modal/%'}
+01-16 09:37 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/testing/testing_serial_non_modal/%'}
+01-16 09:37 pyiron_log   DEBUG    Remove job with ID 632 
+01-16 09:37 pyiron_log   WARNING  Job aborted
+01-16 09:37 pyiron_log   WARNING  /Users/huber/anaconda3/lib/python3.6/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+Traceback (most recent call last):
+  File "/Users/huber/anaconda3/lib/python3.6/runpy.py", line 193, in _run_module_as_main
+    "__main__", mod_spec)
+  File "/Users/huber/anaconda3/lib/python3.6/runpy.py", line 85, in _run_code
+    exec(code, run_globals)
+  File "/Users/huber/Liam/pyiron/pyiron_repos/pyiron/pyiron/testing/executable.py", line 32, in <module>
+    filemode="w",
+  File "/Users/huber/anaconda3/lib/python3.6/logging/__init__.py", line 1806, in basicConfig
+    h = FileHandler(filename, mode)
+  File "/Users/huber/anaconda3/lib/python3.6/logging/__init__.py", line 1020, in __init__
+    self.baseFilename = os.path.abspath(filename)
+  File "/Users/huber/anaconda3/lib/python3.6/posixpath.py", line 376, in abspath
+    cwd = os.getcwd()
+FileNotFoundError: [Errno 2] No such file or directory
+
+01-16 09:38 pyiron_log   INFO     run job: vasp_complete id: None, status: initialized
+01-16 09:38 pyiron_log   DEBUG    No magnetic moments
+01-16 09:38 pyiron_log   DEBUG    No on site coulomb interactions
+01-16 09:38 pyiron_log   DEBUG    element list: ['Fe']
+01-16 09:38 pyiron_log   DEBUG    XC: PBE
+01-16 09:38 pyiron_log   DEBUG    element list: ['Fe']
+01-16 09:38 pyiron_log   DEBUG    XC: PBE
+01-16 09:38 pyiron_log   DEBUG    element list: ['Fe']
+01-16 09:38 pyiron_log   DEBUG    XC: PBE
+01-16 09:38 pyiron_log   INFO     run job: vasp_complete id: 627, status: created
+01-16 09:38 pyiron_log   INFO     run job: vasp_complete id: 627, status: collect
+01-16 09:38 pyiron_log   INFO     collect_warnings() is not yet implemented for VASP
+01-16 09:38 pyiron_log   INFO     update master: None 627 manual
+01-16 09:38 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/vasp/test_vasp/'}
+01-16 09:38 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/vasp/test_vasp/'}
+01-16 09:38 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/vasp/test_vasp/'}
+01-16 09:38 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/vasp/test_vasp/%'}
+01-16 09:38 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/vasp/test_vasp/%'}
+01-16 09:38 pyiron_log   DEBUG    Remove job with ID 627 
+01-16 09:38 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/vasp/test_vasp/%'}
+01-16 09:38 pyiron_log   DEBUG    file: /Users/huber/Liam/pyiron/pyiron_repos/pyiron/tests/static/vasp_test_files/full_job_sample/INCAR True
+01-16 09:38 pyiron_log   DEBUG    file: /Users/huber/Liam/pyiron/pyiron_repos/pyiron/tests/static/vasp_test_files/full_job_sample/KPOINTS True
+01-16 09:38 pyiron_log   DEBUG    sql_query: {'job': 'full_job_sample', 'project': 'pyiron/tests/vasp/vasp_import_testing/'}
+01-16 09:38 pyiron_log   DEBUG    sql_query: {'job': 'full_job_sample', 'project': 'pyiron/tests/vasp/vasp_import_testing/%'}
+01-16 09:38 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/vasp/vasp_import_testing/%'}
+01-16 09:38 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/vasp/vasp_import_testing/%'}
+01-16 09:38 pyiron_log   DEBUG    Remove job with ID 627 
+01-16 09:38 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/vasp/vasp_import_testing/static/%'}
+01-16 09:38 pyiron_log   DEBUG    sql_query: {'project': 'pyiron/tests/vasp/vasp_import_testing/%'}
+01-16 09:38 pyiron_log   WARNING  File:/Users/huber/Liam/pyiron/pyiron_repos/pyiron/tests/vasp/../static/vasp_test_files/chgcar_samples/CHGCAR_emptyseems to be empty! 

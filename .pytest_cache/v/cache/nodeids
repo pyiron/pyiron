@@ -1,0 +1,3 @@
+[
+  "tests/testing/test_serialMaster_non_modal.py::TestSerialMaster::test_convergence_goal"
+]
