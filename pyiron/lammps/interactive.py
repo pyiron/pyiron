@@ -4,6 +4,7 @@
 
 from ctypes import c_double, c_int
 import importlib
+import inspect
 import numpy as np
 import os
 import pandas as pd
@@ -664,7 +665,7 @@ class LammpsLibrary(object):
         Args:
             command (str):
         """
-        self._send(command="command", data=command)
+        self._send(command=inspect.stack()[0][3], data=command)
 
     def gather_atoms(self, *args):
         """
@@ -676,7 +677,7 @@ class LammpsLibrary(object):
         Returns:
             np.array
         """
-        self._send(command="gather_atoms", data=list(args))
+        self._send(command=inspect.stack()[0][3], data=list(args))
         return self._receive()
 
     def scatter_atoms(self, *args):
@@ -686,7 +687,7 @@ class LammpsLibrary(object):
         Args:
             *args:
         """
-        self._send(command="scatter_atoms", data=list(args))
+        self._send(command=inspect.stack()[0][3], data=list(args))
 
     def get_thermo(self, *args):
         """
@@ -698,7 +699,7 @@ class LammpsLibrary(object):
         Returns:
 
         """
-        self._send(command="get_thermo", data=list(args))
+        self._send(command=inspect.stack()[0][3], data=list(args))
         return self._receive()
 
     def extract_compute(self, *args):
@@ -711,7 +712,7 @@ class LammpsLibrary(object):
         Returns:
 
         """
-        self._send(command="extract_compute", data=list(args))
+        self._send(command=inspect.stack()[0][3], data=list(args))
         return self._receive()
 
     def close(self):
