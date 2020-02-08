@@ -622,6 +622,7 @@ class LammpsLibrary(object):
             stderr=subprocess.PIPE,
             stdin=subprocess.PIPE,
             cwd=working_directory,
+            bufsize=1,
         )
         self._debug = False
 
