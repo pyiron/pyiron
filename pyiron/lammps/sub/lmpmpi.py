@@ -80,7 +80,7 @@ def recv_data(buff):
         data = buff.read(dlen)
         return pickle.loads(data)
     elif data == control_stop:
-        return None
+        return {'c': 'close', 'b': False}
     else:
         raise ValueError('Unexpected Signal!')
 
@@ -98,8 +98,13 @@ if __name__ == "__main__":
         else:
             input_dict = None
         input_dict = MPI.COMM_WORLD.bcast(input_dict, root=0)
-        if input_dict is None:
-            job.close()
+        if input_dict['c'] == 'close':
+            if MPI.COMM_WORLD.rank == 0:
+                with open('process.txt', 'a') as file:
+                    print('END', file=file)
+            # job.close()
+            MPI.COMM_WORLD.Barrier()
+            MPI.Finalize()
             break
         output = select_cmd(input_dict["c"])(input_dict["d"])
         if MPI.COMM_WORLD.rank == 0 and output is not None:
