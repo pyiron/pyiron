@@ -41,7 +41,9 @@ def command(funct_args):
 
 
 def gather_atoms(funct_args):
-    return np.array(job.gather_atoms(*funct_args))
+    atoms = job.gather_atoms(*funct_args)
+    if MPI.COMM_WORLD.rank == 0:
+        return np.array(atoms)
 
 
 def select_cmd(argument):
@@ -87,8 +89,12 @@ if __name__ == "__main__":
     while True:
         if MPI.COMM_WORLD.rank == 0:
             input_dict = recv_data(buff=sys.stdin.buffer)
-            # with open('process.txt', 'a') as file:
-            #     print('Input:', input_dict, file=file)
+            if input_dict['b']:
+                with open('process.txt', 'a') as file:
+                    if input_dict['c'] == 'command':
+                        print('Input:', input_dict, file=file)
+                    else:
+                        print('Input:', input_dict['c'], file=file)
         else:
             input_dict = None
         input_dict = MPI.COMM_WORLD.bcast(input_dict, root=0)
@@ -97,6 +103,7 @@ if __name__ == "__main__":
             break
         output = select_cmd(input_dict["c"])(input_dict["d"])
         if MPI.COMM_WORLD.rank == 0 and output is not None:
-            # with open('process.txt', 'a') as file:
-            #     print('Output:', output, file=file)
+            if input_dict['b']:
+                with open('process.txt', 'a') as file:
+                    print('Output:', file=file)
             send_data(arr=output, buff=sys.stdout.buffer)

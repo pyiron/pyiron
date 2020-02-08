@@ -41,6 +41,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._check_opened = False
         self._interactive_run_command = None
         self._interactive_grand_canonical = True
+        self._enable_mpi_log = False
         if "stress" in self.interactive_output_functions.keys():
             del self.interactive_output_functions["stress"]
 
@@ -220,6 +221,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             self._interactive_library = LammpsLibrary(
                 cores=self.server.cores, working_directory=self.working_directory
             )
+            if self._enable_mpi_log:
+                self._interactive_library._debug = True
         if not all(self.structure.pbc):
             self.input.control["boundary"] = " ".join(
                 ["p" if coord else "f" for coord in self.structure.pbc]
@@ -620,6 +623,7 @@ class LammpsLibrary(object):
             stdin=subprocess.PIPE,
             cwd=working_directory,
         )
+        self._debug = False
 
     def _send(self, command, data=None):
         """
@@ -629,7 +633,7 @@ class LammpsLibrary(object):
             command (str): command to be send to the
             data:
         """
-        data_str = pickle.dumps({"c": command, "d": data})
+        data_str = pickle.dumps({"c": command, "d": data, "b": self._debug})
         dlen = len(data_str).to_bytes(8, byteorder='big')
         self._process.stdin.write(control_data)
         self._process.stdin.write(dlen)
