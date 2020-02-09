@@ -385,7 +385,6 @@ class VaspBase(GenericDFTJob):
                 self.structure = self.get_final_structure_from_file(filename="CONTCAR")
             except IOError:
                 self.structure = self.get_final_structure_from_file(filename="POSCAR")
-            print("resetting the sorted indices")
             self.sorted_indices = np.array(range(len(self.structure)))
         self._output_parser.structure = self.structure.copy()
         try:
@@ -591,6 +590,8 @@ class VaspBase(GenericDFTJob):
             else:
                 structure = vp_new.get_initial_structure()
             self.structure = structure
+            # Always set the sorted_indices to the original order when importing from jobs
+            self.sorted_indices = np.arange(len(self.structure), dtype=int)
             # Read initial magnetic moments from the INCAR file and set it to the structure
             magmom_loc = np.array(self.input.incar._dataset["Parameter"]) == "MAGMOM"
             if any(magmom_loc):
