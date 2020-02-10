@@ -590,6 +590,8 @@ class VaspBase(GenericDFTJob):
             else:
                 structure = vp_new.get_initial_structure()
             self.structure = structure
+            # Always set the sorted_indices to the original order when importing from jobs
+            self.sorted_indices = np.arange(len(self.structure), dtype=int)
             # Read initial magnetic moments from the INCAR file and set it to the structure
             magmom_loc = np.array(self.input.incar._dataset["Parameter"]) == "MAGMOM"
             if any(magmom_loc):
