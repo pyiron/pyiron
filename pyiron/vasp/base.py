@@ -1026,7 +1026,7 @@ class VaspBase(GenericDFTJob):
 
         Args:
             mesh (list): Size of the mesh (ignored if scheme is not set to 'MP' or kpoints_per_angstrom is set)
-            scheme (str): Type of k-point generation scheme (MP/G(gamma)/GP(gamma point)/Manual/Line)
+            scheme (str): Type of k-point generation scheme (MP/GC(gamma centered)/GP(gamma point)/Manual/Line)
             center_shift (list): Shifts the center of the mesh from the gamma point by the given vector in relative coordinates
             symmetry_reduction (boolean): Tells if the symmetry reduction is to be applied to the k-points
             manual_kpoints (list/numpy.ndarray): Manual list of k-points
@@ -1076,7 +1076,7 @@ class VaspBase(GenericDFTJob):
 
         Args:
             mesh (list): Size of the mesh (in the MP scheme)
-            scheme (str): Type of k-point generation scheme (MP/G(gamma)/GP(gamma point)/Manual/Line)
+            scheme (str): Type of k-point generation scheme (MP/GC(gamma centered)/GP(gamma point)/Manual/Line)
             center_shift (list): Shifts the center of the mesh from the gamma point by the given vector
             symmetry_reduction (boolean): Tells if the symmetry reduction is to be applied to the k-points
             manual_kpoints (list/numpy.ndarray): Manual list of k-points
@@ -1089,17 +1089,17 @@ class VaspBase(GenericDFTJob):
         """
         if not symmetry_reduction:
             self.input.incar["ISYM"] = -1
-        scheme_list = ["MP", "G", "GP", "Line", "Manual"]
+        scheme_list = ["MP", "GC", "GP", "Line", "Manual"]
         if not (scheme in scheme_list):
             raise AssertionError()
         if scheme == "MP":
             if mesh is None:
                 mesh = [int(val) for val in self.input.kpoints[3].split()]
             self.input.kpoints.set(size_of_mesh=mesh, shift=center_shift)
-        if scheme == "G":
+        if scheme == "GC":
             if mesh is None:
                 mesh = [int(val) for val in self.input.kpoints[3].split()]
-            self.input.kpoints.set(size_of_mesh=mesh, shift=center_shift, method="Gamma")
+            self.input.kpoints.set(size_of_mesh=mesh, shift=center_shift, method="Gamma centered")
         if scheme == "GP":
             self.input.kpoints.set(size_of_mesh=[1, 1, 1], method="Gamma Point")
         if scheme == "Line":
@@ -2253,7 +2253,7 @@ class Kpoints(GenericParameters):
         """
         Sets appropriate tags and values in the KPOINTS file
         Args:
-            method (str): Type of meshing scheme (Gamma Point, Gamma, MP, Manual or Line)
+            method (str): Type of meshing scheme (Gamma, MP, Manual or Line)
             size_of_mesh (list/numpy.ndarray): List of size 1x3 specifying the required mesh size
             shift (list): List of size 1x3 specifying the user defined shift from the Gamma point
             n_trace (int): Number of points per trace for line mode
