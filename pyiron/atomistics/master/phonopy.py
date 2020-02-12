@@ -121,6 +121,8 @@ class PhonopyJob(AtomisticParallelMaster):
         self.__name__ = "PhonopyJob"
         self.__version__ = "0.0.1"
         self.input["interaction_range"] = (10.0, "Minimal size of supercell, Ang")
+        self.input["primitive_matrix"] = ("none", "'none' or 'auto'")
+        self.input["supercell"] = ("range", "supercell size ('range' or [x,y,z])")
         self.input["factor"] = (
             VaspToTHz,
             "Frequency unit conversion factor (default for VASP)",
@@ -154,6 +156,7 @@ class PhonopyJob(AtomisticParallelMaster):
                 self.phonopy = Phonopy(
                     unitcell=self._phonopy_unit_cell,
                     supercell_matrix=self._phonopy_supercell_matrix(),
+                    primitive_matrix= None if self.input["primitive_matrix"]=="none" else self.input["primitive_matrix"],
                     factor=self.input["factor"],
                 )
                 self.phonopy.generate_displacements(distance=self.input["displacement"])
@@ -169,16 +172,22 @@ class PhonopyJob(AtomisticParallelMaster):
             return []
 
     def _phonopy_supercell_matrix(self):
-        if self.structure is not None:
-            supercell_range = np.ceil(
-                self.input["interaction_range"]
-                / np.array(
-                    [np.linalg.norm(vec) for vec in self._phonopy_unit_cell.get_cell()]
+        def _compute_supercell():
+            if self.structure is not None:
+                supercell_range = np.ceil(
+                    self.input["interaction_range"]
+                    / np.array(
+                        [np.linalg.norm(vec) for vec in self._phonopy_unit_cell.get_cell()]
+                    )
                 )
-            )
-            return np.eye(3) * supercell_range
+                return np.eye(3) * supercell_range
+            else:
+                return np.eye(3)
+
+        if self.input["supercell"]=="range":
+            return _compute_supercell()
         else:
-            return np.eye(3)
+            return np.eye(3) * self.input["supercell"]
 
     def run_static(self):
         # Initialise the phonopy object before starting the first calculation.
