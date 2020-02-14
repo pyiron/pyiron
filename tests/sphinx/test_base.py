@@ -241,6 +241,14 @@ class TestSphinx(unittest.TestCase):
         self.sphinx.plane_wave_cutoff = 340
         self.assertEqual(self.sphinx.plane_wave_cutoff, 340)
 
+    def test_set_empty_states(self):
+        with self.assertRaises(ValueError):
+            self.sphinx.set_empty_states(-1)
+        self.sphinx.set_empty_states(666)
+        self.assertEqual(self.sphinx.input["EmptyStates"], 666)
+        self.sphinx.set_empty_states()
+        self.assertEqual(self.sphinx.input["EmptyStates"], "auto")
+
     def test_write_guess(self):
         file_content = [
             "waves {\n",
