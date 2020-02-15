@@ -15,7 +15,7 @@ The job wrapper is called from the run_job.py script, it restores the job from h
 
 __author__ = "Joerg Neugebauer"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
