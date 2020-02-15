@@ -12,7 +12,7 @@ from molmod.io.fchk import FCHKFile
 from molmod.units import amu
 
 __author__ = "Jan Janssen, Sander Borgmans"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
+__copyright__ = "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - " \
                 "- Computational Materials Design (CM) Department"
 __version__ = "1.0"
 __maintainer__ = ""
