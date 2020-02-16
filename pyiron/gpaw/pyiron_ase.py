@@ -263,8 +263,10 @@ class AseAdapter(object):
                 "energy_kin": [],
                 "momenta": [],
                 "positions": [],
-                "energy_tot": []
+                "energy_pot": []
             }
+            self._ham.run()
+            self._ham.interactive_cache = {}
         elif self._ham.server.run_mode.interactive:
             self.interactive_cache = {
                 "velocities": [],
@@ -301,7 +303,7 @@ class AseAdapter(object):
             self._ham.interactive_positions_setter(self.arrays["positions"])
             self.interactive_cache["positions"].append(self.arrays["positions"])
             self._ham.interactive_execute()
-            self.interactive_cache["energy_tot"].append(ham_lmp.interactive_energy_pot_getter())
+            self.interactive_cache["energy_pot"].append(self._ham.interactive_energy_pot_getter())
             return np.array(self._ham.interactive_forces_getter())
         else:
             self._ham.structure.positions = self.arrays["positions"]
@@ -318,19 +320,27 @@ class AseAdapter(object):
         self._ham.interactive_store_in_cache(
             "energy_kin", self.interactive_cache["energy_kin"]
         )
-        self._ham.interactive_store_in_cache(
-            "energy_tot",
-            (
-                np.array(self._ham.output.energy_pot)
-                + np.array(self.interactive_cache["energy_kin"])
-            ).tolist(),
-        )
         if self._fast_mode:
             self._ham.interactive_store_in_cache(
                 "positions", self.interactive_cache["positions"]
             )
             self._ham.interactive_store_in_cache(
-                "energy_tot", self.interactive_cache["energy_tot"]
+                "energy_pot", self.interactive_cache["energy_pot"][::2]
+            )
+            self._ham.interactive_store_in_cache(
+                "energy_tot",
+                (
+                    np.array(self.interactive_cache["energy_pot"][::2])
+                    + np.array(self.interactive_cache["energy_kin"])
+                ).tolist(),
+            )
+        else:
+            self._ham.interactive_store_in_cache(
+                "energy_tot",
+                (
+                    np.array(self._ham.output.energy_pot)
+                    + np.array(self.interactive_cache["energy_kin"])
+                ).tolist(),
             )
         self._ham.interactive_close()
 
