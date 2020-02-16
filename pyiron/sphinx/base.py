@@ -26,7 +26,7 @@ from pyiron.base.generic.parameters import GenericParameters
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -562,7 +562,7 @@ class SphinxBase(GenericDFTJob):
         Function to set the number of empty states.
 
         Args:
-            n_empty_states (int or 'auto'): Number of empty states. 'auto' if the default value is to be used.
+            n_empty_states (int/None): Number of empty states. If None, sets it to 'auto'.
 
         Comments:
             If this number is too low, the algorithm will not be able to able to swap wave functions
@@ -574,9 +574,11 @@ class SphinxBase(GenericDFTJob):
 
             The default value is 0.5*NIONS+3 for non-magnetic systems and 1.5*NIONS+3 for magnetic systems
         """
-        if n_empty_states is not None or n_empty_states < 0:
-            raise ValueError("Number of empty states must be greater than 0")
-        if n_empty_states is not None:
+        if n_empty_states is None:
+            self.input["EmptyStates"] = "auto"
+        else:
+            if n_empty_states < 0:
+                raise ValueError("Number of empty states must be greater than 0")
             self.input["EmptyStates"] = n_empty_states
 
     def _set_kpoints(
