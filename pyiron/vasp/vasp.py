@@ -1,7 +1,7 @@
 # coding: utf-8
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
-
+from pyiron.dft.job.generic import GenericDFTJob
 from pyiron.vasp.interactive import VaspInteractive
 
 __author__ = "Sudarsan Surendralal"
@@ -54,3 +54,27 @@ class Vasp(VaspInteractive):
             None
         )  # Reset the version number to the executable is set automatically
         self._executable_activate(enforce=True)
+
+    @property
+    def structure(self):
+        """
+
+        Returns:
+
+        """
+        return VaspInteractive.structure.fget(self)
+
+    @structure.setter
+    def structure(self, structure):
+        """
+
+        Args:
+            structure:
+
+        Returns:
+
+        """
+        VaspInteractive.structure.fset(self,structure)
+        if structure is not None:
+            #update kpoints
+            self.input.kpoints.update_kmesh(structure)

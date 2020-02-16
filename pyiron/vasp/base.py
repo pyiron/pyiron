@@ -8,7 +8,7 @@ import posixpath
 import subprocess
 import numpy as np
 
-from pyiron.dft.job.generic import GenericDFTJob
+from pyiron.dft.job.generic import GenericDFTJob, get_k_mesh_by_density
 from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentialSetter, Potcar
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron.base.settings.generic import Settings
@@ -107,6 +107,8 @@ class VaspBase(GenericDFTJob):
             self._potential = VaspPotentialSetter(
                 element_lst=structure.get_species_symbols().tolist()
             )
+            #update kpoints
+            self.input.kpoints.update_kmesh(structure)
 
     @property
     def potential(self):
@@ -1020,6 +1022,7 @@ class VaspBase(GenericDFTJob):
         kpoints_per_angstrom=None,
         n_trace=None,
         trace=None,
+        kmesh_density_per_inverse_angstrom=None
     ):
         """
         Function to setup the k-points
@@ -1036,7 +1039,20 @@ class VaspBase(GenericDFTJob):
             kpoints_per_angstrom (float): Number of kpoint per angstrom in each direction
             n_trace (int): Number of points per trace part for line mode
             trace (list): ordered list of high symmetry points for line mode
+            kmesh_density_per_inverse_angstrom (float): spacing of kpoints (recommended value is 0.1 for tight settings)
         """
+
+        if kmesh_density_per_inverse_angstrom is not None:
+            if mesh is not None:
+                warnings.warn("mesh value is overwritten by kmesh_density_per_inverse_angsrtrom")
+
+            self.input.kpoints.set_kmesh_density(kmesh_density_per_inverse_angstrom)
+            if self.structure is not None:
+                self.input.kpoints.update_kmesh(self.structure)
+                mesh = self.get_k_mesh_by_density(kmesh_density_per_inverse_angstrom=kmesh_density_per_inverse_angstrom)
+        else:
+            self.input.kpoints.set_kmesh_density(kmesh_density_per_inverse_angstrom)
+
         if kpoints_per_angstrom is not None:
             if mesh is not None:
                 warnings.warn("mesh value is overwritten by kpoints_per_angstrom")
@@ -1714,6 +1730,8 @@ class Input:
             directory (str): The working directory for the VASP run
         """
         self.incar.write_file(file_name="INCAR", cwd=directory)
+        #update k-points
+        self.kpoints.update_kmesh(structure=structure)
         self.kpoints.write_file(file_name="KPOINTS", cwd=directory)
         self.potcar.potcar_set_structure(structure, modified_elements)
         self.potcar.write_file(file_name="POTCAR", cwd=directory)
@@ -2230,6 +2248,18 @@ class Kpoints(GenericParameters):
             comment_char="!",
         )
         self._trace = None
+        self._kmesh_density_per_inverse_angstrom = None
+
+    @property
+    def kmesh_density_per_inverse_angstrom(self):
+        return self._kmesh_density_per_inverse_angstrom
+
+    @kmesh_density_per_inverse_angstrom.setter
+    def kmesh_density_per_inverse_angstrom(self, val):
+        self._kmesh_density_per_inverse_angstrom = val
+
+    def set_kmesh_density(self, val):
+        self.kmesh_density_per_inverse_angstrom = val
 
     def _set_trace(self, trace):
         """
@@ -2297,17 +2327,17 @@ Monkhorst_Pack
 """
         self.load_string(file_content)
 
-    def set_kmesh_by_density(self, structure):
-        if (
-            "density_of_mesh" in self._dataset
-            and self._dataset["density_of_mesh"] is not None
-        ):
-            if self._dataset["density_of_mesh"] != 0.0:
-                k_mesh = get_k_mesh_by_cell(
+    def update_kmesh(self, structure):
+        if (self.kmesh_density_per_inverse_angstrom is not None) and (structure is not None):
+            if self.kmesh_density_per_inverse_angstrom != 0.0:
+                k_mesh = get_k_mesh_by_density(
                     structure.get_cell(),
-                    kspace_per_in_ang=self._dataset["density_of_mesh"],
+                    kmesh_density_per_inverse_angstrom=self.kmesh_density_per_inverse_angstrom,
                 )
+                print("kmesh_density_per_inverse_angstrom = ",self.kmesh_density_per_inverse_angstrom)
+                print("Update k-mesh =",k_mesh)
                 self.set(size_of_mesh=k_mesh)
+
 
     def to_hdf(self, hdf, group_name=None):
         """
@@ -2321,14 +2351,17 @@ Monkhorst_Pack
             hdf=hdf,
             group_name=group_name
         )
+        vasp_dict = hdf["vasp_dict"] if "vasp_dict" in hdf.list_nodes() else {}
+
         if self._trace is not None:
-            if "vasp_dict" in hdf.list_nodes():
-                vasp_dict = hdf["vasp_dict"]
-                vasp_dict.update({"trace": self._trace})
-                hdf["vasp_dict"] = vasp_dict
-            else:
-                vasp_dict = {"trace": self._trace}
-                hdf["vasp_dict"] = vasp_dict
+            vasp_dict.update({"trace":
+                                  self._trace})
+        if self.kmesh_density_per_inverse_angstrom is not None:
+            vasp_dict.update({"kmesh_density_per_inverse_angstrom":
+                                  self.kmesh_density_per_inverse_angstrom})
+        if len(vasp_dict)>0:
+            hdf["vasp_dict"] = vasp_dict
+
 
     def from_hdf(self, hdf, group_name=None):
         """
@@ -2343,23 +2376,15 @@ Monkhorst_Pack
             group_name=group_name
         )
         self._trace = None
-        if "vasp_dict" in hdf.list_nodes():
-            vasp_dict = hdf["vasp_dict"]
-            if "trace" in vasp_dict.keys():
-                self._trace = vasp_dict["trace"]
+        vasp_dict = hdf["vasp_dict"] if "vasp_dict" in hdf.list_nodes() else {}
+        if "trace" in vasp_dict.keys():
+            self._trace = vasp_dict["trace"]
+
+        if "kmesh_density_per_inverse_angstrom" in vasp_dict.keys():
+            self.kmesh_density_per_inverse_angstrom = vasp_dict["kmesh_density_per_inverse_angstrom"]
 
 
-def get_k_mesh_by_cell(cell, kspace_per_in_ang=0.10):
-    """
-    Args:
-        cell:
-        kspace_per_in_ang:
-    Returns:
-    """
-    latlens = [np.linalg.norm(lat) for lat in cell]
-    kmesh = np.ceil(np.array([2 * np.pi / ll for ll in latlens]) / kspace_per_in_ang)
-    kmesh[kmesh < 1] = 1
-    return kmesh
+
 
 
 class VaspCollectError(ValueError):

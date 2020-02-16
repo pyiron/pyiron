@@ -78,13 +78,12 @@ class GenericDFTJob(AtomisticGenericJob):
     def get_k_mesh_by_cell(self, cell=None, kpoints_per_angstrom=1):
         if cell is None:
             cell = self.structure.cell
-        latlens = [np.linalg.norm(lat) for lat in cell]
-        kmesh = np.rint(
-            np.array([2 * np.pi / ll for ll in latlens]) * kpoints_per_angstrom
-        )
-        if kmesh.min() <= 0:
-            warnings.warn("kpoint per angstrom too low")
-        return [int(k) for k in kmesh]
+        return get_k_mesh_by_cell(cell, kpoints_per_angstrom)
+
+    def get_k_mesh_by_density(self, cell=None, kmesh_density_per_inverse_angstrom=1):
+        if cell is None:
+            cell = self.structure.cell
+        return get_k_mesh_by_density(cell, kmesh_density_per_inverse_angstrom)
 
     @property
     def fix_spin_constraint(self):
@@ -138,11 +137,6 @@ class GenericDFTJob(AtomisticGenericJob):
             "set_mixing_parameters is not implemented for this code."
         )
 
-    # def set_kmesh_density(self, kspace_per_in_ang=0.10):
-    #    mesh = self._get_k_mesh_by_cell(self.structure, kspace_per_in_ang)
-    #    self.set_kpoints(mesh=mesh, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
-    #                     weights=None, reciprocal=True)
-
     def _set_kpoints(
         self,
         mesh=None,
@@ -170,7 +164,7 @@ class GenericDFTJob(AtomisticGenericJob):
         reciprocal=True,
         kpoints_per_angstrom=None,
         n_trace=None,
-        trace=None,
+        trace=None
     ):
         """
         Function to setup the k-points
@@ -273,3 +267,42 @@ class GenericDFTJob(AtomisticGenericJob):
         raise NotImplementedError(
             "The set_empty_states function is not implemented for this code."
         )
+
+def get_k_mesh_by_cell(cell, kpoints_per_angstrom=1):
+    """
+    Args:
+        cell:
+        kpoints_per_angstrom:
+    Returns:
+    """
+    omega = np.linalg.det(cell)
+    l1, l2, l3 = cell
+    g1 = 2 * np.pi / omega * np.cross(l2, l3)
+    g2 = 2 * np.pi / omega * np.cross(l3, l1)
+    g3 = 2 * np.pi / omega * np.cross(l1, l2)
+
+    kmesh = np.rint(
+        np.array([np.linalg.norm(g) for g in [g1, g2, g3]]) * kpoints_per_angstrom
+    )
+    if kmesh.min() <= 0:
+        warnings.warn("kpoint per angstrom too low")
+    return [int(k) for k in kmesh]
+
+def get_k_mesh_by_density(cell, kmesh_density_per_inverse_angstrom=1.0):
+    """
+    Args:
+        cell:
+        kmesh_density_per_inverse_angstrom:
+    Returns:
+    """
+    omega = np.linalg.det(cell)
+    l1, l2, l3 = cell
+    g1 = 2 * np.pi / omega * np.cross(l2, l3)
+    g2 = 2 * np.pi / omega * np.cross(l3, l1)
+    g3 = 2 * np.pi / omega * np.cross(l1, l2)
+
+    kmesh = np.rint(
+        np.array([np.linalg.norm(g) for g in [g1, g2, g3]]) / kmesh_density_per_inverse_angstrom
+    )
+    kmesh[kmesh < 1] = 1
+    return [int(k) for k in kmesh]
