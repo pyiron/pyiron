@@ -3114,7 +3114,7 @@ class Atoms(object):
             numpy.array()
         """
         if "spin" in self._tag_list._lists.keys():
-            return np.array(list(self.spin.values()))
+            return np.array(list(self.spin))
         else:
             spin_lst = [
                 element.tags["spin"] if "spin" in element.tags.keys() else None
