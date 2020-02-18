@@ -1629,14 +1629,16 @@ class Output(object):
                     [line == end_line for line in file_content[start_line:]]
                 )[0][0]
                 return file_content[start_line : start_line + end_line]
-
-            line = [ll for ll in log_file if ll.startswith("|    folding: ")][0].split()
-            n_k_points = np.prod(np.array([line[2], line[4], line[6]], dtype=int))
             k_points = get_partial_log(
                 log_file,
                 "| Symmetrized k-points:               in cartesian coordinates\n",
                 "\n",
             )[2:-1]
+            if np.any(["| Using Monkhorst-Pack mesh" in line for line in log_file]):
+                line = [ll for ll in log_file if ll.startswith("|    folding: ")][0].split()
+                n_k_points = np.prod(np.array([line[2], line[4], line[6]], dtype=int))
+            else:
+                n_k_points = len(k_points)
             self._parse_dict["bands_k_weights"] = (
                 np.array([float(kk.split()[6]) for kk in k_points]) * n_k_points
             )
