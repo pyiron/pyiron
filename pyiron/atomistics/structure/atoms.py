@@ -3119,8 +3119,8 @@ class Atoms(object):
         if len(epsilon) == 3 or len(epsilon) == 1:
             epsilon = epsilon*np.eye(3)
         epsilon.reshape(3,3)
-        if epsilon.min()<-1.0:
-            raise ValueError("Illegal strain value")
+        if epsilon.min() < -1.0:
+            raise ValueError("Strain value too negative")
         if return_box:
             structure_copy = self.copy()
         else:
