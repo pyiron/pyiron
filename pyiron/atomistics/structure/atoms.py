@@ -3106,6 +3106,30 @@ class Atoms(object):
             else:
                 self.selective_dynamics[atom_ind] = [False, False, False]
 
+    def apply_strain(self, epsilon, return_box=False):
+        """
+            Args:
+                epsilon (float/list/ndarray): epsilon matrix. If a single number is set, the same strain
+                                              is applied in each direction. If a 3-dim vector is set, it
+                                              will be multiplied by a unit matrix.
+                return_box (bool): whether to return a box. If set to True, only the returned box will 
+                                   have the desired strain and the original box will stay unchanged.
+        """
+        epsilon = np.array([epsilon]).flatten()
+        if len(epsilon) == 3 or len(epsilon) == 1:
+            epsilon = epsilon*np.eye(3)
+        epsilon.reshape(3,3)
+        if epsilon.min()<-1.0:
+            raise ValueError("Illegal strain value")
+        structure_copy = self.copy()
+        cell = structure_copy.cell.copy()
+        cell = np.matmul(epsilon+np.eye(3), cell)
+        structure_copy.set_cell(cell, scale_atoms=True)
+        if return_box:
+            return structure_copy
+        else:
+            self = structure_copy
+
     def get_initial_magnetic_moments(self):
         """
         Get array of initial magnetic moments.
