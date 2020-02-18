@@ -3121,14 +3121,15 @@ class Atoms(object):
         epsilon.reshape(3,3)
         if epsilon.min()<-1.0:
             raise ValueError("Illegal strain value")
-        structure_copy = self.copy()
+        if return_box:
+            structure_copy = self.copy()
+        else:
+            structure_copy = self
         cell = structure_copy.cell.copy()
         cell = np.matmul(epsilon+np.eye(3), cell)
         structure_copy.set_cell(cell, scale_atoms=True)
         if return_box:
             return structure_copy
-        else:
-            self = structure_copy
 
     def get_initial_magnetic_moments(self):
         """
