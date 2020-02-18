@@ -617,6 +617,7 @@ class SphinxBase(GenericDFTJob):
         if weights is not None:
             raise ValueError("manual weights are not implmented in SPHInX yet")
         if scheme == "MP":
+            self._kpoints_odict = None
             if mesh is not None:
                 self.input["KpointFolding"] = (
                         "[" + str(mesh[0]) + ", " + str(mesh[1]) + ", " + str(mesh[2]) + "]"
@@ -643,7 +644,7 @@ class SphinxBase(GenericDFTJob):
             kpoints = odict([("relative", None)])
             for point in trace:
                 if point not in self.structure.get_high_symmetry_points().keys():
-                    raise ValueError("trace point '{}' is not in high symmetry points".format(point))
+                    raise AssertionError("trace point '{}' is not in high symmetry points".format(point))
 
             kpoints["from"] = odict(
                 [
