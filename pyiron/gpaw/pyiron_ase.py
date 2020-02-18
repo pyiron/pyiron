@@ -254,10 +254,25 @@ class AseJob(InteractiveBase):
 
 
 class AseAdapter(object):
-    def __init__(self, ham):
+    def __init__(self, ham, fast_mode=False):
         self._ham = ham
-        if self._ham.server.run_mode.interactive:
-            self.interactive_cache = {"velocities": [], "energy_kin": [], "momenta": []}
+        self._fast_mode = fast_mode
+        if self._ham.server.run_mode.interactive and fast_mode:
+            self.interactive_cache = {
+                "velocities": [],
+                "energy_kin": [],
+                "momenta": [],
+                "positions": [],
+                "energy_pot": []
+            }
+            self._ham.run()
+            self._ham.interactive_cache = {}
+        elif self._ham.server.run_mode.interactive:
+            self.interactive_cache = {
+                "velocities": [],
+                "energy_kin": [],
+                "momenta": []
+            }
         self.constraints = []
         try:
             self.arrays = {
@@ -284,12 +299,19 @@ class AseAdapter(object):
         self.arrays["positions"] = positions
 
     def get_forces(self, md=True):
-        self._ham.structure.positions = self.arrays["positions"]
-        if self._ham.server.run_mode.interactive:
-            self._ham.run()
+        if self._fast_mode:
+            self._ham.interactive_positions_setter(self.arrays["positions"])
+            self.interactive_cache["positions"].append(self.arrays["positions"])
+            self._ham.interactive_execute()
+            self.interactive_cache["energy_pot"].append(self._ham.interactive_energy_pot_getter())
+            return np.array(self._ham.interactive_forces_getter())
         else:
-            self._ham.run(run_again=True)
-        return self._ham.output.forces[-1]
+            self._ham.structure.positions = self.arrays["positions"]
+            if self._ham.server.run_mode.interactive:
+                self._ham.run()
+            else:
+                self._ham.run(run_again=True)
+            return self._ham.output.forces[-1]
 
     def interactive_close(self):
         self._ham.interactive_store_in_cache(
@@ -298,13 +320,28 @@ class AseAdapter(object):
         self._ham.interactive_store_in_cache(
             "energy_kin", self.interactive_cache["energy_kin"]
         )
-        self._ham.interactive_store_in_cache(
-            "energy_tot",
-            (
-                np.array(self._ham.output.energy_pot)
-                + np.array(self.interactive_cache["energy_kin"])
-            ).tolist(),
-        )
+        if self._fast_mode:
+            self._ham.interactive_store_in_cache(
+                "positions", self.interactive_cache["positions"]
+            )
+            self._ham.interactive_store_in_cache(
+                "energy_pot", self.interactive_cache["energy_pot"][::2]
+            )
+            self._ham.interactive_store_in_cache(
+                "energy_tot",
+                (
+                    np.array(self.interactive_cache["energy_pot"][::2])
+                    + np.array(self.interactive_cache["energy_kin"])
+                ).tolist(),
+            )
+        else:
+            self._ham.interactive_store_in_cache(
+                "energy_tot",
+                (
+                    np.array(self._ham.output.energy_pot)
+                    + np.array(self.interactive_cache["energy_kin"])
+                ).tolist(),
+            )
         self._ham.interactive_close()
 
     def get_number_of_atoms(self):
@@ -414,7 +451,10 @@ class AseAdapter(object):
         m = self.get_masses()
         com = np.dot(m, self.arrays["positions"]) / m.sum()
         if scaled:
-            return np.linalg.solve(self._ham.output.cells[-1].T, com)
+            if self._fast_mode:
+                return np.linalg.solve(self._ham.structure.cells[-1].T, com)
+            else:
+                return np.linalg.solve(self._ham.output.cells[-1].T, com)
         else:
             return com
 
