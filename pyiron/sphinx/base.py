@@ -649,7 +649,7 @@ class SphinxBase(GenericDFTJob):
                 [
                     ("coords", str(self.structure.get_high_symmetry_points()[trace[0]])),
                     ("relative", None),
-                    ("label", trace[0]),
+                    ("label", '"' + trace[0] + '"'),
                 ]
             )
             for i, point in enumerate(trace[1:]):
@@ -659,7 +659,7 @@ class SphinxBase(GenericDFTJob):
                         ("coords", str(self.structure.get_high_symmetry_points()[point])),
                         ("nPoints", n_trace),
                         ("relative", None),
-                        ("label", point),
+                        ("label", '"' + point + '"'),
                     ]
                 )
 
@@ -944,8 +944,6 @@ class InputWriter(object):
             for vv in v:
                 if vv is None:
                     line += level * "\t" + str(k) + ";\n"
-                elif isinstance(vv, str):
-                    line += level * "\t\"" + k + "\";\n"
                 elif type(vv) == odict:
                     if len(vv) == 0:
                         line += level * "\t" + k + " {}\n"
