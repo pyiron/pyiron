@@ -1635,14 +1635,7 @@ class Output(object):
                 "| Symmetrized k-points:               in cartesian coordinates\n",
                 "\n",
             )[2:-1]
-            if np.any(["| Using Monkhorst-Pack mesh" in line for line in log_file]):
-                line = [ll for ll in log_file if ll.startswith("|    folding: ")][0].split()
-                n_k_points = np.prod(np.array([line[2], line[4], line[6]], dtype=int))
-            else:
-                n_k_points = len(k_points)
-            self._parse_dict["bands_k_weights"] = (
-                np.array([float(kk.split()[6]) for kk in k_points]) * n_k_points
-            )
+            self._parse_dict["bands_k_weights"] = np.array([float(kk.split()[6]) for kk in k_points])
             k_points = (
                 np.array(
                     [[float(kk.split()[i]) for i in range(2, 5)] for kk in k_points]
