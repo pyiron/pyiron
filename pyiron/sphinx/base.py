@@ -654,7 +654,7 @@ class SphinxBase(GenericDFTJob):
                 ]
             )
             for i, point in enumerate(trace[1:]):
-                name = "ktrace{}".format(i)
+                name = "to___{}".format(i)
                 kpoints[name] = odict(
                     [
                         ("coords", str(self.structure.get_high_symmetry_points()[point])),
@@ -929,17 +929,13 @@ class InputWriter(object):
             - value is odict
                 -> considered as a group
                 -> output format: group { ...recursive... }
-            - value is str
-                -> consider as parameter and value
-                -> output format: paramaeter = "value";
             - else
                 -> considered as parameter and value
                 -> output format: parameter = value;
         """
         line = ""
         for k, v in element.items():
-            if k[:6] == "ktrace": # for k point trace only
-                k = "to"
+            k = k.split("___")[0]
             if type(v) != list:
                 v = [v]
             for vv in v:
