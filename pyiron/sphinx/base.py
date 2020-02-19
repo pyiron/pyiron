@@ -619,19 +619,9 @@ class SphinxBase(GenericDFTJob):
         if scheme == "MP":
             self._kpoints_odict = None
             if mesh is not None:
-                self.input["KpointFolding"] = (
-                        "[" + str(mesh[0]) + ", " + str(mesh[1]) + ", " + str(mesh[2]) + "]"
-                )
+                self.input["KpointFolding"] = str(list(mesh))
             if center_shift is not None:
-                self.input["KpointCoords"] = (
-                        "["
-                        + str(center_shift[0])
-                        + ", "
-                        + str(center_shift[1])
-                        + ", "
-                        + str(center_shift[2])
-                        + "]"
-                )
+                self.input["KpointCoords"] = str(list(center_shift))
         elif scheme == "Line":
             if n_trace is None:
                 raise ValueError("n_trace has to be defined")
