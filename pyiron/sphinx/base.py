@@ -637,7 +637,7 @@ class SphinxBase(GenericDFTJob):
                 raise ValueError("n_trace has to be defined")
             high_symmetry_points = self.structure.get_high_symmetry_points()
             if high_symmetry_points is None:
-                raise ValueError("high_symmetry_points has to be defined")
+                raise ValueError("no 'high_symmetry_points' defined for 'structure'.")
             if trace is None:
                 raise ValueError("trace_points has to be defined")
 
