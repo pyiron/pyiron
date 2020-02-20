@@ -64,6 +64,7 @@ RUN cd /tmp \
     && rm miniconda.sh \
     && ${CONDA_DIR}/bin/conda install --yes conda==${MINICONDA_VER} \
     && conda env update -n root -f "${HOME}/binder/environment.yml" \
+    && conda install --yes -c conda-forge nodejs \
     && ${SHELL} ${HOME}/binder/postBuild \
     && conda clean --all -y \
     && rm ${HOME}/Dockerfile ${HOME}/deploy.sh
