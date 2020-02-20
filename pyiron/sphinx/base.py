@@ -71,7 +71,6 @@ class SphinxBase(GenericDFTJob):
         self.input_writer = InputWriter()
 
         self._kpoints_odict = None
-        self._control_str_for_bs_calc = False
         self._generic_input["restart_for_band_structure"] = False
 
     @property
