@@ -70,6 +70,8 @@ class SphinxBase(GenericDFTJob):
         self._output_parser = Output(self)
         self.input_writer = InputWriter()
 
+        self._kpoints_odict = None
+
     @property
     def id_pyi_to_spx(self):
         if self.input_writer.id_pyi_to_spx is None:
@@ -602,7 +604,7 @@ class SphinxBase(GenericDFTJob):
             weights (list): Manually supplied weights to each k-point in case of the manual mode (not implemented)
             manual_kpoints (list): Manual list of k-points (not implemented)
             symmetry_reduction (bool): Tells if the symmetry reduction is to be applied to the k-points
-            scheme (str): Type of k-point generation scheme (only 'MP' implemented)
+            scheme (str): Type of k-point generation scheme ('MP' or 'Line')
             mesh (list): Size of the mesh (in the MP scheme)
             center_shift (list): Shifts the center of the mesh from the gamma point by the given vector
             n_trace (int): Number of points per trace part for line mode (not active in SPHInX)
@@ -614,22 +616,47 @@ class SphinxBase(GenericDFTJob):
             raise ValueError("manual_kpoints is not implemented in SPHInX yet")
         if weights is not None:
             raise ValueError("manual weights are not implmented in SPHInX yet")
-        if scheme != "MP":
-            raise ValueError("only Monkhorst-Pack mesh is implemented in SPHInX")
-        if mesh is not None:
-            self.input["KpointFolding"] = (
-                "[" + str(mesh[0]) + ", " + str(mesh[1]) + ", " + str(mesh[2]) + "]"
+        if scheme == "MP":
+            self._kpoints_odict = None
+            if mesh is not None:
+                self.input["KpointFolding"] = str(list(mesh))
+            if center_shift is not None:
+                self.input["KpointCoords"] = str(list(center_shift))
+        elif scheme == "Line":
+            if n_trace is None:
+                raise ValueError("n_trace has to be defined")
+            high_symmetry_points = self.structure.get_high_symmetry_points()
+            if high_symmetry_points is None:
+                raise ValueError("no 'high_symmetry_points' defined for 'structure'.")
+            if trace is None:
+                raise ValueError("trace_points has to be defined")
+
+            kpoints = odict([("relative", None)])
+            for point in trace:
+                if point not in self.structure.get_high_symmetry_points().keys():
+                    raise AssertionError("trace point '{}' is not in high symmetry points".format(point))
+
+            kpoints["from"] = odict(
+                [
+                    ("coords", str(self.structure.get_high_symmetry_points()[trace[0]])),
+                    ("relative", None),
+                    ("label", '"' + trace[0] + '"'),
+                ]
             )
-        if center_shift is not None:
-            self.input["KpointCoords"] = (
-                "["
-                + str(center_shift[0])
-                + ", "
-                + str(center_shift[1])
-                + ", "
-                + str(center_shift[2])
-                + "]"
-            )
+            for i, point in enumerate(trace[1:]):
+                name = "to___{}".format(i)
+                kpoints[name] = odict(
+                    [
+                        ("coords", str(self.structure.get_high_symmetry_points()[point])),
+                        ("nPoints", n_trace),
+                        ("relative", None),
+                        ("label", '"' + point + '"'),
+                    ]
+                )
+
+            self._kpoints_odict = odict([("kPoints", kpoints)])
+        else:
+            raise ValueError("only Monkhorst-Pack mesh and Line mode are implemented in SPHInX")
 
     def write_input(self):
         """
@@ -677,6 +704,7 @@ class SphinxBase(GenericDFTJob):
                 cwd=self.working_directory,
                 basis_str=self._basis_str,
                 save_memory=save_memory,
+                kpoints_odict=self._kpoints_odict
             )
             self.input_writer.write_hamilton(
                 file_name="hamilton.sx",
@@ -897,6 +925,7 @@ class InputWriter(object):
         """
         line = ""
         for k, v in element.items():
+            k = k.split("___")[0]
             if type(v) != list:
                 v = [v]
             for vv in v:
@@ -1172,7 +1201,7 @@ class InputWriter(object):
             f.write(self._odict_to_spx_input(structure_str))
 
     def write_basis(
-        self, file_name="basis.sx", cwd=None, basis_str=None, save_memory=False
+        self, file_name="basis.sx", cwd=None, basis_str=None, save_memory=False, kpoints_odict=None
     ):
         """
         Write the Sphinx bases set configuration file named basis.sx
@@ -1181,11 +1210,12 @@ class InputWriter(object):
             file_name (str): name of the file to be written (optional)
             cwd (str): the current working directory (optinal)
             basis_str (str): the input to write, if no input is given the default input will be written. (optinal)
+            kpoints_odict (collection.OrderedDict):
         """
-        if basis_str is None:
-            basis_str = odict(
+
+        if kpoints_odict is None:
+            kpoints = odict(
                 [
-                    ("eCut", "EnCut/13.606"),
                     (
                         "kPoint",
                         odict(
@@ -1196,9 +1226,15 @@ class InputWriter(object):
                             ]
                         ),
                     ),
-                    ("folding", "KpointFolding"),
+                    ("folding", "KpointFolding")
                 ]
             )
+        else:
+            kpoints = kpoints_odict
+
+        if basis_str is None:
+            basis_str = odict([("eCut", "EnCut/13.606")])
+            basis_str.update(kpoints)
             if save_memory:
                 basis_str["saveMemory"] = None
         if cwd is not None:
@@ -1580,17 +1616,12 @@ class Output(object):
                     [line == end_line for line in file_content[start_line:]]
                 )[0][0]
                 return file_content[start_line : start_line + end_line]
-
-            line = [ll for ll in log_file if ll.startswith("|    folding: ")][0].split()
-            n_k_points = np.prod(np.array([line[2], line[4], line[6]], dtype=int))
             k_points = get_partial_log(
                 log_file,
                 "| Symmetrized k-points:               in cartesian coordinates\n",
                 "\n",
             )[2:-1]
-            self._parse_dict["bands_k_weights"] = (
-                np.array([float(kk.split()[6]) for kk in k_points]) * n_k_points
-            )
+            self._parse_dict["bands_k_weights"] = np.array([float(kk.split()[6]) for kk in k_points])
             k_points = (
                 np.array(
                     [[float(kk.split()[i]) for i in range(2, 5)] for kk in k_points]

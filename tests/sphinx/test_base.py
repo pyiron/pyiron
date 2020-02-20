@@ -11,9 +11,10 @@ import scipy.constants
 from pyiron.project import Project
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.atomistics.structure.atoms import Atoms
+from collections import OrderedDict as odict
 
 BOHR_TO_ANGSTROM = (
-    scipy.constants.physical_constants["Bohr radius"][0] / scipy.constants.angstrom
+        scipy.constants.physical_constants["Bohr radius"][0] / scipy.constants.angstrom
 )
 HARTREE_TO_EV = scipy.constants.physical_constants["Hartree energy in eV"][0]
 HARTREE_OVER_BOHR_TO_EV_OVER_ANGSTROM = HARTREE_TO_EV / BOHR_TO_ANGSTROM
@@ -48,8 +49,8 @@ class TestSphinx(unittest.TestCase):
             cell=2.83 * np.eye(3),
         )
         cls.sphinx_aborted.structure = Atoms(
-            elements=32*["Fe"],
-            scaled_positions=np.arange(32*3).reshape(-1, 3)/(32*3),
+            elements=32 * ["Fe"],
+            scaled_positions=np.arange(32 * 3).reshape(-1, 3) / (32 * 3),
             cell=3.5 * np.eye(3),
         )
         cls.sphinx_aborted.status.aborted = True
@@ -143,10 +144,10 @@ class TestSphinx(unittest.TestCase):
             "saveMemory;\n",
         ]
         with open(
-            os.path.join(
-                self.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/basis.sx",
-            )
+                os.path.join(
+                    self.file_location,
+                    "../static/sphinx/job_sphinx_hdf5/job_sphinx/basis.sx",
+                )
         ) as basis_sx:
             lines = basis_sx.readlines()
         self.assertEqual(file_content, lines)
@@ -160,7 +161,7 @@ class TestSphinx(unittest.TestCase):
             "scfDiag {\n",
             "\trhoMixing = 1.0;\n",
             "\tspinMixing = 1.0;\n",
-            "\tdEnergy = Ediff/"+str(scipy.constants.physical_constants["Hartree energy in eV"][0])+";\n",
+            "\tdEnergy = Ediff/" + str(scipy.constants.physical_constants["Hartree energy in eV"][0]) + ";\n",
             "\tmaxSteps = 400;\n",
             "\tblockCCG {}\n",
             "}\n",
@@ -240,6 +241,64 @@ class TestSphinx(unittest.TestCase):
             self.sphinx.plane_wave_cutoff = -1
         self.sphinx.plane_wave_cutoff = 340
         self.assertEqual(self.sphinx.plane_wave_cutoff, 340)
+
+    def test_set_kpoints(self):
+
+        mesh = [2, 3, 4]
+        center_shift = [0.1, 0.1, 0.1]
+
+        high_sym_points = {
+            "G": [0, 0, 0],
+            "X": [0.5, 0, 0],
+            "Y": [0, 0.5, 0],
+            "M": [0.5, 0.5, 0]
+        }
+        trace = ["G", "X", "M", "Y"]
+        trace_wrong = ["G", "banana", "X"]
+        kpoints_dict = odict([('kPoints',
+                               odict([('relative', None),
+                                      ('from',
+                                       odict([('coords', '[0, 0, 0]'),
+                                              ('relative', None),
+                                              ('label', '"G"')])),
+                                      ('to___0',
+                                       odict([('coords', '[0.5, 0, 0]'),
+                                              ('nPoints', 20),
+                                              ('relative', None),
+                                              ('label', '"X"')])),
+                                      ('to___1',
+                                       odict([('coords', '[0.5, 0.5, 0]'),
+                                              ('nPoints', 20),
+                                              ('relative', None),
+                                              ('label', '"M"')])),
+                                      ('to___2',
+                                       odict([('coords', '[0, 0.5, 0]'),
+                                              ('nPoints', 20),
+                                              ('relative', None),
+                                              ('label', '"Y"')]))]))])
+
+        with self.assertRaises(ValueError):
+            self.sphinx.set_kpoints(symmetry_reduction="pyiron rules!")
+        with self.assertRaises(ValueError):
+            self.sphinx.set_kpoints(scheme="no valid scheme")
+        with self.assertRaises(ValueError):
+            self.sphinx.set_kpoints(scheme="Line", trace=trace)
+        with self.assertRaises(ValueError):
+            self.sphinx.set_kpoints(scheme="Line", trace=trace, n_trace=20)
+
+        self.sphinx.structure.set_high_symmetry_points(high_sym_points)
+        with self.assertRaises(ValueError):
+            self.sphinx.set_kpoints(scheme="Line", n_trace=20)
+        with self.assertRaises(AssertionError):
+            self.sphinx.set_kpoints(scheme="Line", trace=trace_wrong, n_trace=20)
+
+        self.sphinx.set_kpoints(scheme="Line", trace=trace, n_trace=20)
+        self.assertEqual(kpoints_dict, self.sphinx._kpoints_odict)
+
+        self.sphinx.set_kpoints(scheme="MP", mesh=mesh, center_shift=center_shift)
+        self.assertIsNone(self.sphinx._kpoints_odict)
+        self.assertEqual(self.sphinx.input["KpointFolding"], mesh)
+        self.assertEqual(self.sphinx.input["KpointCoords"], center_shift)
 
     def test_set_empty_states(self):
         with self.assertRaises(ValueError):
@@ -359,10 +418,10 @@ class TestSphinx(unittest.TestCase):
         self.assertEqual(self.sphinx.exchange_correlation_functional, "PBE")
 
     def test_write_structure(self):
-        cell = (self.sphinx.structure.cell/BOHR_TO_ANGSTROM).tolist()
-        pos_2 = (self.sphinx.structure.positions[1]/BOHR_TO_ANGSTROM).tolist()
+        cell = (self.sphinx.structure.cell / BOHR_TO_ANGSTROM).tolist()
+        pos_2 = (self.sphinx.structure.positions[1] / BOHR_TO_ANGSTROM).tolist()
         file_content = [
-            "cell = "+str(cell)+";\n",
+            "cell = " + str(cell) + ";\n",
             "species {\n",
             '\telement = "Fe";\n',
             "\tatom {\n",
@@ -371,7 +430,7 @@ class TestSphinx(unittest.TestCase):
             "\t}\n",
             "\tatom {\n",
             '\t\tlabel = "spin_0.5";\n',
-            "\t\tcoords = "+str(pos_2)+";\n",
+            "\t\tcoords = " + str(pos_2) + ";\n",
             "\t}\n",
             "}\n",
         ]
@@ -393,8 +452,8 @@ class TestSphinx(unittest.TestCase):
         self.assertTrue(
             all(
                 (
-                    output._parse_dict["scf_computation_time"][0]
-                    - np.roll(output._parse_dict["scf_computation_time"][0], 1)
+                        output._parse_dict["scf_computation_time"][0]
+                        - np.roll(output._parse_dict["scf_computation_time"][0], 1)
                 )[1:]
                 > 0
             )
@@ -431,14 +490,15 @@ class TestSphinx(unittest.TestCase):
         file_location = os.path.join(
             self.file_location, "../static/sphinx/sphinx_test_2_3_hdf5/sphinx_test_2_3/"
         )
-        residue_lst = np.loadtxt(file_location+"residue.dat")[:,1].reshape(1, -1)
-        residue_lst = (residue_lst*HARTREE_TO_EV).tolist()
-        energy_int_lst = np.loadtxt(file_location+"energy.dat")[:,2].reshape(1, -1)
-        energy_int_lst = (energy_int_lst*HARTREE_TO_EV).tolist()
-        with open(file_location+"sphinx.log") as ffile:
-            energy_free_lst = [[float(line.split('=')[-1])*HARTREE_TO_EV for line in ffile if line.startswith('F(')]]
-        energy_zero_lst = [(0.5*(np.array(ff)+np.array(uu))).tolist() for ff, uu in zip(energy_free_lst, energy_int_lst)]
-        eig_lst = [np.loadtxt(file_location+"eps.dat")[:, 1:].tolist()]
+        residue_lst = np.loadtxt(file_location + "residue.dat")[:, 1].reshape(1, -1)
+        residue_lst = (residue_lst * HARTREE_TO_EV).tolist()
+        energy_int_lst = np.loadtxt(file_location + "energy.dat")[:, 2].reshape(1, -1)
+        energy_int_lst = (energy_int_lst * HARTREE_TO_EV).tolist()
+        with open(file_location + "sphinx.log") as ffile:
+            energy_free_lst = [[float(line.split('=')[-1]) * HARTREE_TO_EV for line in ffile if line.startswith('F(')]]
+        energy_zero_lst = [(0.5 * (np.array(ff) + np.array(uu))).tolist() for ff, uu in
+                           zip(energy_free_lst, energy_int_lst)]
+        eig_lst = [np.loadtxt(file_location + "eps.dat")[:, 1:].tolist()]
         self.sphinx_2_3.collect_output()
         self.assertEqual(
             residue_lst, self.sphinx_2_3._output_parser._parse_dict["scf_residue"]
@@ -459,7 +519,7 @@ class TestSphinx(unittest.TestCase):
             self.sphinx_2_3._output_parser._parse_dict["scf_energy_free"],
         )
         self.assertEqual(
-            21.952*BOHR_TO_ANGSTROM**3, self.sphinx_2_3._output_parser._parse_dict["volume"]
+            21.952 * BOHR_TO_ANGSTROM ** 3, self.sphinx_2_3._output_parser._parse_dict["volume"]
         )
 
     def test_structure_parsing(self):
