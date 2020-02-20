@@ -1439,6 +1439,8 @@ class GenericJob(JobCore):
             self.parent_id = parent_id
             self.run()
         else:
+            self.logger.warning("The job {} is being loaded instead of running. To re-run use the argument "
+                                "'run_again=True'".format(self.job_name))
             self.from_hdf()
 
     def _executable_activate(self, enforce=False):
