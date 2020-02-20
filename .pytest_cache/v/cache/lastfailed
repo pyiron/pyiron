@@ -1,5 +1,0 @@
-{
-  "tests/base/job/test_copyto.py::TestCopyTo::test_copy_to_project": true,
-  "tests/base/job/test_copyto.py::TestCopyTo::test_copy_to_project_ex": true,
-  "tests/testing/test_serialMaster_non_modal.py::TestSerialMaster::test_convergence_goal": true
-}
