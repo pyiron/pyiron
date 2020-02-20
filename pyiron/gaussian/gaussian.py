@@ -26,12 +26,13 @@ __status__ = "trial"
 __date__ = "Aug 27, 2019"
 
 
-class Gaussian(AtomisticGenericJob):
+class Gaussian(GenericDFTJob):
     def __init__(self, project, job_name):
         super(Gaussian, self).__init__(project, job_name)
         self.__name__ = "Gaussian"
         self._executable_activate(enforce=True)
         self.input = GaussianInput()
+
 
     def write_input(self):
         input_dict = {'mem': self.server.memory_limit,
@@ -50,11 +51,13 @@ class Gaussian(AtomisticGenericJob):
                       }
         write_input(input_dict=input_dict, working_directory=self.working_directory)
 
+
     def collect_output(self):
         output_dict = collect_output(output_file=os.path.join(self.working_directory, 'input.fchk'))
         with self.project_hdf5.open("output") as hdf5_output:
             for k, v in output_dict.items():
                 hdf5_output[k] = v
+
 
     def to_hdf(self, hdf=None, group_name=None):
         super(Gaussian, self).to_hdf(hdf=hdf, group_name=group_name)
@@ -62,15 +65,111 @@ class Gaussian(AtomisticGenericJob):
             self.structure.to_hdf(hdf5_input)
             self.input.to_hdf(hdf5_input)
 
+
     def from_hdf(self, hdf=None, group_name=None):
         super(Gaussian, self).from_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input") as hdf5_input:
             self.input.from_hdf(hdf5_input)
             self.structure = Atoms().from_hdf(hdf5_input)
 
+
     def log(self):
         with open(os.path.join(self.working_directory, 'input.log')) as f:
             print(f.read())
+
+
+    def calc_minimize(self, electronic_steps=None, ionic_steps=None, max_iter=None, pressure=None, algorithm=None, retain_charge_density=False,
+                            retain_electrostatic_potential=False, ionic_energy=None, ionic_forces=None, volume_only=False):
+        """
+            Function to setup the hamiltonian to perform ionic relaxations using DFT. The convergence goal can be set using
+            either the iconic_energy as an limit for fluctuations in energy or the iconic_forces.
+            Args:
+                retain_electrostatic_potential:
+                retain_charge_density:
+                algorithm: SCF algorithm
+                pressure:
+                max_iter:
+                electronic_steps (int): maximum number of electronic steps per electronic convergence
+                ionic_steps (int): maximum number of ionic steps
+                ionic_energy:
+                ionic_forces ('tight' or 'verytight'): convergence criterium for Berny opt (optional)
+        """
+
+        self.input['settings'] = {}
+        opt_settings = []
+
+        if electronic_steps is not None:
+            if not 'SCF' in self.input['settings']:
+                self.input['settings']['SCF'] = []
+            self.input['settings']['SCF'].append("MaxCycle={}".format(electronic_steps))
+
+        if ionic_steps is not None:
+            opt_settings.append("MaxCycles={}".format(ionic_steps))
+
+        if pressure is not None:
+            raise ValueError('This option is invalid, pressure minimization is not implemented in Gaussian.')
+
+        if algorithm is not None:
+            if not 'SCF' in self.input['settings']:
+                self.input['settings']['SCF'] = []
+            self.input['settings']['SCF'].append(algorithm)
+
+        if ionic_energy is not None:
+            raise ValueError('This option is invalid, to tighten the convergence criteria use ionic_forces.')
+
+        if ionic_forces is not None:
+            assert isinstance(ionic_forces,str)
+            opt_settings.append(ionic_forces)
+
+        self.input['jobtype'] = 'opt' + '({})'.format(",".join(opt_settings))*(len(opt_settings)>0)
+
+        super(Gaussian, self).calc_minimize(
+            electronic_steps=electronic_steps,
+            ionic_steps=ionic_steps,
+            max_iter=max_iter,
+            pressure=pressure,
+            algorithm=algorithm,
+            retain_charge_density=retain_charge_density,
+            retain_electrostatic_potential=retain_electrostatic_potential,
+            ionic_energy=ionic_energy,
+            ionic_forces=ionic_forces,
+            volume_only=volume_only,
+        )
+
+
+    def calc_static(self, electronic_steps=None, algorithm=None, retain_charge_density=False, retain_electrostatic_potential=False):
+        """
+        Function to setup the hamiltonian to perform static SCF DFT runs
+        Args:
+            retain_electrostatic_potential:
+            retain_charge_density:
+            algorithm (str): SCF algorithm
+            electronic_steps (int): maximum number of electronic steps, which can be used to achieve convergence
+        """
+        self.input['settings'] = {}
+
+        if electronic_steps is not None:
+            if not 'SCF' in self.input['settings']:
+                self.input['settings']['SCF'] = []
+            self.input['settings']['SCF'].append("MaxCycle={}".format(electronic_steps))
+
+        if algorithm is not None:
+            if not 'SCF' in self.input['settings']:
+                self.input['settings']['SCF'] = []
+            self.input['settings']['SCF'].append(algorithm)
+
+        self.input['jobtype'] = 'sp'
+
+        super(Gaussian, self).calc_static(
+            electronic_steps=electronic_steps,
+            algorithm=algorithm,
+            retain_charge_density=retain_charge_density,
+            retain_electrostatic_potential=retain_electrostatic_potential,
+        )
+
+
+    def calc_md(self, temperature=None,  n_ionic_steps=1000, time_step=None, n_print=100):
+        raise NotImplementedError("calc_md() not implemented in Gaussian.")
 
 
     def print_MO(self):
@@ -90,7 +189,6 @@ class Gaussian(AtomisticGenericJob):
             else:
                 orbital_energy = [self.get('output/structure/dft/alpha_orbital_e')[index],self.get('output/structure/dft/beta_orbital_e')[index]]
                 print("#{}: \t Orbital energies (alpha,beta) = {:>10.5f},{:>10.5f} \t Occ. = {},{}".format(n,orbital_energy[0],orbital_energy[1],occ_alpha,occ_beta))
-
 
 
     def visualize_MO(self,index,particle_size=0.5,show_bonds=True):
@@ -168,6 +266,7 @@ class Gaussian(AtomisticGenericJob):
         view.add_component('{}.cube'.format(path))
         view.add_component('{}.cube'.format(path))
         return view
+
 
     def read_NMA(self):
         '''
