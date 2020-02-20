@@ -11,7 +11,7 @@ The Flexible master uses a list of functions to connect multiple jobs in a serie
 
 __author__ = "Jan Janssen, Liam Huber"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"

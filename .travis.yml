@@ -119,4 +119,4 @@ matrix:
           script: ./deploy.sh
           on:
              all_branches: true
-             repo: pyiron/examples
+             repo: pyiron/pyiron

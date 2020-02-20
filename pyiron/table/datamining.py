@@ -58,7 +58,7 @@ from pyiron.table.funct import (
 
 __author__ = "Uday Gajera, Jan Janssen, Joerg Neugebauer"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "0.0.1"
