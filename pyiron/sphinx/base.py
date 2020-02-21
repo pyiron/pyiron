@@ -71,6 +71,7 @@ class SphinxBase(GenericDFTJob):
         self.input_writer = InputWriter()
 
         self._kpoints_odict = None
+        self._generic_input["restart_for_band_structure"] = False
 
     @property
     def id_pyi_to_spx(self):
@@ -187,7 +188,7 @@ class SphinxBase(GenericDFTJob):
     def _control_str(self):
         control_str = odict()
         control_str.setdefault("scfDiag", [])
-        if len(self.restart_file_list) != 0:
+        if len(self.restart_file_list) != 0 and not self._generic_input["restart_for_band_structure"]:
             control_str["scfDiag"].append(
                 self._input_control_scf_string(
                     maxSteps=10, keepRhoFixed=True, dEnergy=1.0e-4
@@ -208,7 +209,10 @@ class SphinxBase(GenericDFTJob):
                 [("scfDiag", self._input_control_scf_string())]
             )
         else:
-            control_str["scfDiag"].append(self._input_control_scf_string())
+            if self._generic_input["restart_for_band_structure"]:
+                control_str["scfDiag"].append(self._input_control_scf_string(keepRhoFixed=True))
+            else:
+                control_str["scfDiag"].append(self._input_control_scf_string())
             if self.executable.version is not None:
                 vers_num = [
                     int(vv) for vv in self.executable.version.split("_")[0].split(".")
@@ -318,18 +322,60 @@ class SphinxBase(GenericDFTJob):
     ):
         raise NotImplementedError("calc_md() not implemented in SPHInX.")
 
-    def restart_from_charge_density(self, job_name=None):
+    def restart_from_charge_density(
+            self,
+            snapshot=-1,
+            job_name=None,
+            job_type=None,
+            band_structure_calc=False
+    ):
         """
         Restart a new job created from an existing Vasp calculation by reading the charge density.
 
         Args:
-            job_name (str): Job name (full path required)
+            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
+            job_name (str): Job name
+            job_type (str): Job type. If not specified a Vasp job type is assumed
+            band_structure_calc (bool): has to be True for band structure calculations.
 
         Returns:
-            None (currently the SPHInX implementation does not allow for a restart via return value)
+            pyiron.sphinx.sphinx.sphinx: new job instance
         """
-        self.restart_file_list.append(job_name)
-        return None
+        ham_new = self.restart(
+            snapshot=snapshot,
+            job_name=job_name,
+            job_type=job_type,
+            from_wave_functions=False,
+            from_charge_density=True
+        )
+        if band_structure_calc:
+            ham_new._generic_input["restart_for_band_structure"] = True
+        return ham_new
+
+    def restart_from_wave_functions(
+            self,
+            snapshot=-1,
+            job_name=None,
+            job_type=None,
+    ):
+        """
+        Restart a new job created from an existing Vasp calculation by reading the wave functions.
+
+        Args:
+            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
+            job_name (str): Job name
+            job_type (str): Job type. If not specified a Vasp job type is assumed
+
+        Returns:
+            pyiron.sphinx.sphinx.sphinx: new job instance
+        """
+        return self.restart(
+            snapshot=snapshot,
+            job_name=job_name,
+            job_type=job_type,
+            from_wave_functions=True,
+            from_charge_density=False
+        )
 
     def restart(
         self,
