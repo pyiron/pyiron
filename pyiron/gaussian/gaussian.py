@@ -78,20 +78,14 @@ class Gaussian(GenericDFTJob):
             print(f.read())
 
 
-    def calc_minimize(self, electronic_steps=None, ionic_steps=None, max_iter=None, pressure=None, algorithm=None, retain_charge_density=False,
-                            retain_electrostatic_potential=False, ionic_energy=None, ionic_forces=None, volume_only=False):
+    def calc_minimize(self, electronic_steps=None, ionic_steps=None, algorithm=None, ionic_forces=None):
         """
             Function to setup the hamiltonian to perform ionic relaxations using DFT. The convergence goal can be set using
             either the iconic_energy as an limit for fluctuations in energy or the iconic_forces.
             Args:
-                retain_electrostatic_potential:
-                retain_charge_density:
                 algorithm: SCF algorithm
-                pressure:
-                max_iter:
                 electronic_steps (int): maximum number of electronic steps per electronic convergence
                 ionic_steps (int): maximum number of ionic steps
-                ionic_energy:
                 ionic_forces ('tight' or 'verytight'): convergence criterium for Berny opt (optional)
         """
 
@@ -106,16 +100,10 @@ class Gaussian(GenericDFTJob):
         if ionic_steps is not None:
             opt_settings.append("MaxCycles={}".format(ionic_steps))
 
-        if pressure is not None:
-            raise ValueError('This option is invalid, pressure minimization is not implemented in Gaussian.')
-
         if algorithm is not None:
             if not 'SCF' in self.input['settings']:
                 self.input['settings']['SCF'] = []
             self.input['settings']['SCF'].append(algorithm)
-
-        if ionic_energy is not None:
-            raise ValueError('This option is invalid, to tighten the convergence criteria use ionic_forces.')
 
         if ionic_forces is not None:
             assert isinstance(ionic_forces,str)
@@ -126,18 +114,12 @@ class Gaussian(GenericDFTJob):
         super(Gaussian, self).calc_minimize(
             electronic_steps=electronic_steps,
             ionic_steps=ionic_steps,
-            max_iter=max_iter,
-            pressure=pressure,
             algorithm=algorithm,
-            retain_charge_density=retain_charge_density,
-            retain_electrostatic_potential=retain_electrostatic_potential,
-            ionic_energy=ionic_energy,
-            ionic_forces=ionic_forces,
-            volume_only=volume_only,
+            ionic_forces=ionic_forces
         )
 
 
-    def calc_static(self, electronic_steps=None, algorithm=None, retain_charge_density=False, retain_electrostatic_potential=False):
+    def calc_static(self, electronic_steps=None, algorithm=None):
         """
         Function to setup the hamiltonian to perform static SCF DFT runs
         Args:
@@ -162,9 +144,7 @@ class Gaussian(GenericDFTJob):
 
         super(Gaussian, self).calc_static(
             electronic_steps=electronic_steps,
-            algorithm=algorithm,
-            retain_charge_density=retain_charge_density,
-            retain_electrostatic_potential=retain_electrostatic_potential,
+            algorithm=algorithm
         )
 
 

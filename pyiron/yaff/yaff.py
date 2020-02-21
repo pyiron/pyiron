@@ -361,62 +361,71 @@ class Yaff(AtomisticGenericJob):
         self.enhanced = None  # should have more generic name e.g. enhanced
 
 
-    def calc_minimize(self, e_tol=0.0, f_tol=1e-2, max_iter=100000, pressure=None, n_print=100):
-        """
-        """
-
-        super(Yaff, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure, n_print=n_print)
-
-
-    def calc_static(self):
-        """
+    def calc_minimize(self, cell=False, gpos_tol=1e-8, dpos_tol=1e-6, grvecs_tol=1e-8, drvecs_tol=1e-6, max_iter=1000, n_print=5):
         """
 
+        """
+        if cell:
+            self.input['jobtype'] = 'opt_cell'
+        else:
+            self.input['jobtype'] = 'opt'
+        self.input['nsteps']     = max_iter
+        self.input['h5step']     = n_print
+        self.input['gpos_tol']   = gpos_tol
+        self.input['dpos_tol']   = dpos_tol
+        self.input['grvecs_tol'] = grvecs_tol
+        self.input['drvecs_tol'] = drvecs_tol
+
+        super(Yaff, self).calc_minimize(max_iter=max_iter, n_print=n_print)
+
+
+    def calc_static(self,hessian_eps=1e-3):
+        """
+            Set up a static force field calculation, which immediately also calculates the hessian
+        """
+
+        self.input['jobtype'] = 'hess'
+        self.input['hessian_eps'] = hessian_eps
         super(Yaff, self).calc_static()
 
 
-    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=1.0, n_print=100,
-                temperature_damping_timescale=100.0, pressure_damping_timescale=1000.0, seed=None, tloop=None, initial_temperature=None,
-                langevin=False, delta_temp=None, delta_press=None):
+    def calc_md(self, temperature=None, pressure=None, nsteps=1000, time_step=41.341373336646825, n_print=5,
+                timecon_thermo=4134.137333664683, timecon_baro=41341.37333664683):
 
         """
-        Set an MD calculation within LAMMPS. Nosé Hoover is used by default.
+        Set an MD calculation within Yaff. Nosé Hoover chain is used by default.
 
         Args:
             temperature (None/float): Target temperature. If set to None, an NVE calculation is performed.
                                       It is required when the pressure is set or langevin is set
             pressure (None/float): Target pressure. If set to None, an NVE or an NVT calculation is performed.
-                                   (This tag will allow for a list in the future as it is done for calc_minimize())
             n_ionic_steps (int): Number of ionic steps
-            time_step (float): Step size between two steps. In fs if units==metal
+            time_step (float): Step size between two steps.
             n_print (int):  Print frequency
-            temperature_damping_timescale (float): The time associated with the thermostat adjusting the temperature.
-                                                   (In fs. After rescaling to appropriate time units, is equivalent to
-                                                   Lammps' `Tdamp`.)
-            pressure_damping_timescale (float): The time associated with the barostat adjusting the temperature.
-                                                (In fs. After rescaling to appropriate time units, is equivalent to
-                                                Lammps' `Pdamp`.)
-            seed (int):  Seed for the random number generation (required for the velocity creation)
-            tloop:
-            initial_temperature (None/float):  Initial temperature according to which the initial velocity field
-                                               is created. If None, the initial temperature will be twice the target
-                                               temperature (which would go immediately down to the target temperature
-                                               as described in equipartition theorem). If 0, the velocity field is not
-                                               initialized (in which case  the initial velocity given in structure will
-                                               be used). If any other number is given, this value is going to be used
-                                               for the initial temperature.
-            langevin (bool): (True or False) Activate Langevin dynamics
-            delta_temp (float): Thermostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
-            delta_press (float): Barostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
-        """
+            timecon_thermo (float): The time associated with the thermostat adjusting the temperature.
+            timecon_baro (float): The time associated with the barostat adjusting the temperature.
 
-        super(Yaff, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
-                                        time_step=time_step, n_print=n_print,
-                                        temperature_damping_timescale=temperature_damping_timescale,
-                                        pressure_damping_timescale=pressure_damping_timescale,
-                                        seed=seed, tloop=tloop, initial_temperature=initial_temperature,
-                                        langevin=langevin)
-        return
+        """
+        self.input['temp'] = temperature
+        self.input['press'] = pressure
+        self.input['nsteps'] = nsteps
+        self.input['timestep'] = timestep
+        self.input['h5step'] = n_print
+        self.input['timecon_thermo'] = timecon_thermo
+        self.input['timecon_baro'] = timecon_baro
+
+        if temperature is None:
+            self.input['jobtype'] = 'nve'
+        else:
+            if pressure is None:
+                self.input['jobtype'] = 'nvt'
+            else:
+                self.input['jobtype'] = 'npt'
+
+        super(Yaff, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=nsteps,
+                                  time_step=time_step, n_print=n_print,
+                                  temperature_damping_timescale=timecon_thermo,
+                                  pressure_damping_timescale=timecon_baro)
 
     def load_chk(self, fn):
         '''
