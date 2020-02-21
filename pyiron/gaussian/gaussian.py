@@ -90,28 +90,28 @@ class Gaussian(GenericDFTJob):
                 ionic_steps (int): maximum number of ionic steps
                 ionic_forces ('tight' or 'verytight'): convergence criterium for Berny opt (optional)
         '''
-
-        self.input['settings'] = {}
+        settings = {}
         opt_settings = []
 
         if electronic_steps is not None:
-            if not 'SCF' in self.input['settings']:
-                self.input['settings']['SCF'] = []
-            self.input['settings']['SCF'].append("MaxCycle={}".format(electronic_steps))
+            if not 'SCF' in settings:
+                settings['SCF'] = []
+            settings['SCF'].append("MaxCycle={}".format(electronic_steps))
 
         if ionic_steps is not None:
             opt_settings.append("MaxCycles={}".format(ionic_steps))
 
         if algorithm is not None:
-            if not 'SCF' in self.input['settings']:
-                self.input['settings']['SCF'] = []
-            self.input['settings']['SCF'].append(algorithm)
+            if not 'SCF' in settings:
+                settings['SCF'] = []
+            settings['SCF'].append(algorithm)
 
         if ionic_forces is not None:
             assert isinstance(ionic_forces,str)
             opt_settings.append(ionic_forces)
 
         self.input['jobtype'] = 'opt' + '({})'.format(",".join(opt_settings))*(len(opt_settings)>0)
+        self.input['settings'] = settings
 
         super(Gaussian, self).calc_minimize(
             electronic_steps=electronic_steps,
@@ -130,19 +130,20 @@ class Gaussian(GenericDFTJob):
                 algorithm (str): SCF algorithm
                 electronic_steps (int): maximum number of electronic steps, which can be used to achieve convergence
         '''
-        self.input['settings'] = {}
-
+        settings = {}
+        
         if electronic_steps is not None:
-            if not 'SCF' in self.input['settings']:
-                self.input['settings']['SCF'] = []
-            self.input['settings']['SCF'].append("MaxCycle={}".format(electronic_steps))
+            if not 'SCF' in settings:
+                settings['SCF'] = []
+            settings['SCF'].append("MaxCycle={}".format(electronic_steps))
 
         if algorithm is not None:
-            if not 'SCF' in self.input['settings']:
-                self.input['settings']['SCF'] = []
-            self.input['settings']['SCF'].append(algorithm)
+            if not 'SCF' in settings:
+                settings['SCF'] = []
+            settings['SCF'].append(algorithm)
 
         self.input['jobtype'] = 'sp'
+        self.input['settings'] = settings
 
         super(Gaussian, self).calc_static(
             electronic_steps=electronic_steps,
