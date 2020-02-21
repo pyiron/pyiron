@@ -389,8 +389,8 @@ class Yaff(AtomisticGenericJob):
         super(Yaff, self).calc_static()
 
 
-    def calc_md(self, temperature=None, pressure=None, nsteps=1000, time_step=41.341373336646825, n_print=5,
-                timecon_thermo=4134.137333664683, timecon_baro=41341.37333664683):
+    def calc_md(self, temperature=None, pressure=None, nsteps=1000, time_step=1.0*femtosecond, n_print=5,
+                timecon_thermo=100.0*femtosecond, timecon_baro=1000.0*femtosecond):
 
         """
         Set an MD calculation within Yaff. Nosé Hoover chain is used by default.

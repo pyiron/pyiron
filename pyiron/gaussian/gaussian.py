@@ -123,8 +123,6 @@ class Gaussian(GenericDFTJob):
         """
         Function to setup the hamiltonian to perform static SCF DFT runs
         Args:
-            retain_electrostatic_potential:
-            retain_charge_density:
             algorithm (str): SCF algorithm
             electronic_steps (int): maximum number of electronic steps, which can be used to achieve convergence
         """
