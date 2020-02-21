@@ -356,10 +356,67 @@ class Yaff(AtomisticGenericJob):
         self.__name__ = "Yaff"
         self._executable_activate(enforce=True)
         self.input = YaffInput()
-        self.jobtype = None
         self.ffatypes = None
         self.ffatype_ids = None
         self.enhanced = None  # should have more generic name e.g. enhanced
+
+
+    def calc_minimize(self, e_tol=0.0, f_tol=1e-2, max_iter=100000, pressure=None, n_print=100):
+        """
+        """
+
+        super(Yaff, self).calc_minimize(e_tol=e_tol, f_tol=f_tol, max_iter=max_iter, pressure=pressure, n_print=n_print)
+
+
+    def calc_static(self):
+        """
+        """
+
+        super(Yaff, self).calc_static()
+
+
+    def calc_md(self, temperature=None, pressure=None, n_ionic_steps=1000, time_step=1.0, n_print=100,
+                temperature_damping_timescale=100.0, pressure_damping_timescale=1000.0, seed=None, tloop=None, initial_temperature=None,
+                langevin=False, delta_temp=None, delta_press=None):
+
+        """
+        Set an MD calculation within LAMMPS. Nosé Hoover is used by default.
+
+        Args:
+            temperature (None/float): Target temperature. If set to None, an NVE calculation is performed.
+                                      It is required when the pressure is set or langevin is set
+            pressure (None/float): Target pressure. If set to None, an NVE or an NVT calculation is performed.
+                                   (This tag will allow for a list in the future as it is done for calc_minimize())
+            n_ionic_steps (int): Number of ionic steps
+            time_step (float): Step size between two steps. In fs if units==metal
+            n_print (int):  Print frequency
+            temperature_damping_timescale (float): The time associated with the thermostat adjusting the temperature.
+                                                   (In fs. After rescaling to appropriate time units, is equivalent to
+                                                   Lammps' `Tdamp`.)
+            pressure_damping_timescale (float): The time associated with the barostat adjusting the temperature.
+                                                (In fs. After rescaling to appropriate time units, is equivalent to
+                                                Lammps' `Pdamp`.)
+            seed (int):  Seed for the random number generation (required for the velocity creation)
+            tloop:
+            initial_temperature (None/float):  Initial temperature according to which the initial velocity field
+                                               is created. If None, the initial temperature will be twice the target
+                                               temperature (which would go immediately down to the target temperature
+                                               as described in equipartition theorem). If 0, the velocity field is not
+                                               initialized (in which case  the initial velocity given in structure will
+                                               be used). If any other number is given, this value is going to be used
+                                               for the initial temperature.
+            langevin (bool): (True or False) Activate Langevin dynamics
+            delta_temp (float): Thermostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
+            delta_press (float): Barostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
+        """
+
+        super(Yaff, self).calc_md(temperature=temperature, pressure=pressure, n_ionic_steps=n_ionic_steps,
+                                        time_step=time_step, n_print=n_print,
+                                        temperature_damping_timescale=temperature_damping_timescale,
+                                        pressure_damping_timescale=pressure_damping_timescale,
+                                        seed=seed, tloop=tloop, initial_temperature=initial_temperature,
+                                        langevin=langevin)
+        return
 
     def load_chk(self, fn):
         '''
@@ -541,7 +598,7 @@ class Yaff(AtomisticGenericJob):
 
     def write_input(self):
         input_dict = {
-            'jobtype': self.jobtype,
+            'jobtype': self.input['jobtype'],
             'symbols': self.structure.get_chemical_symbols(),
             'numbers': np.array([pt[symbol].number for symbol in self.structure.get_chemical_symbols()]),
             'ffatypes': self.ffatypes,
@@ -572,20 +629,20 @@ class Yaff(AtomisticGenericJob):
              input_dict['cell'] = self.structure.get_cell()
         write_chk(input_dict,working_directory=self.working_directory)
         write_pars(input_dict=input_dict,working_directory=self.working_directory)
-        if self.jobtype == 'opt':
+        if self.input['jobtype'] == 'opt':
             write_yopt(input_dict=input_dict,working_directory=self.working_directory)
-        elif self.jobtype == 'opt_cell':
+        elif self.input['jobtype'] == 'opt_cell':
             write_yopt_cell(input_dict=input_dict,working_directory=self.working_directory)
-        elif self.jobtype == 'hess':
+        elif self.input['jobtype'] == 'hess':
             write_yhess(input_dict=input_dict,working_directory=self.working_directory)
-        elif self.jobtype == 'nve':
+        elif self.input['jobtype'] == 'nve':
             write_ynve(input_dict=input_dict,working_directory=self.working_directory)
-        elif self.jobtype == 'nvt':
+        elif self.input['jobtype'] == 'nvt':
             write_ynvt(input_dict=input_dict,working_directory=self.working_directory)
-        elif self.jobtype == 'npt':
+        elif self.input['jobtype'] == 'npt':
             write_ynpt(input_dict=input_dict,working_directory=self.working_directory)
         else:
-            raise IOError('Invalid job type for Yaff job, received %s' %self.jobtype)
+            raise IOError('Invalid job type for Yaff job, received %s' %self.input['jobtype'])
         if not self.enhanced is None:
             write_plumed_enhanced(input_dict,working_directory=self.working_directory)
 
@@ -600,7 +657,6 @@ class Yaff(AtomisticGenericJob):
         with self.project_hdf5.open("input") as hdf5_input:
             self.structure.to_hdf(hdf5_input)
             self.input.to_hdf(hdf5_input)
-            hdf5_input['generic/jobtype'] = self.jobtype
             hdf5_input['generic/ffatypes'] = np.asarray(self.ffatypes,'S22')
             hdf5_input['generic/ffatype_ids'] = self.ffatype_ids
             if not self.enhanced is None:
@@ -613,7 +669,6 @@ class Yaff(AtomisticGenericJob):
         with self.project_hdf5.open("input") as hdf5_input:
             self.input.from_hdf(hdf5_input)
             self.structure = Atoms().from_hdf(hdf5_input)
-            self.jobtype = hdf5_input['generic/jobtype']
             self.ffatypes = np.char.decode(hdf5_input['generic/ffatypes']) # decode byte string literals
             self.ffatype_ids = hdf5_input['generic/ffatype_ids']
 
