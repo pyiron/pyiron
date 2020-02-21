@@ -79,15 +79,17 @@ class Gaussian(GenericDFTJob):
 
 
     def calc_minimize(self, electronic_steps=None, ionic_steps=None, algorithm=None, ionic_forces=None):
-        """
+        '''
             Function to setup the hamiltonian to perform ionic relaxations using DFT. The convergence goal can be set using
             either the iconic_energy as an limit for fluctuations in energy or the iconic_forces.
-            Args:
+
+            **Arguments**
+
                 algorithm: SCF algorithm
                 electronic_steps (int): maximum number of electronic steps per electronic convergence
                 ionic_steps (int): maximum number of ionic steps
                 ionic_forces ('tight' or 'verytight'): convergence criterium for Berny opt (optional)
-        """
+        '''
 
         self.input['settings'] = {}
         opt_settings = []
@@ -120,12 +122,14 @@ class Gaussian(GenericDFTJob):
 
 
     def calc_static(self, electronic_steps=None, algorithm=None):
-        """
-        Function to setup the hamiltonian to perform static SCF DFT runs
-        Args:
-            algorithm (str): SCF algorithm
-            electronic_steps (int): maximum number of electronic steps, which can be used to achieve convergence
-        """
+        '''
+            Function to setup the hamiltonian to perform static SCF DFT runs
+
+            **Arguments**
+
+                algorithm (str): SCF algorithm
+                electronic_steps (int): maximum number of electronic steps, which can be used to achieve convergence
+        '''
         self.input['settings'] = {}
 
         if electronic_steps is not None:
@@ -294,12 +298,12 @@ class Gaussian(GenericDFTJob):
 
 
     def bsse_to_pandas(self):
-        """
+        '''
         Convert bsse output of all frames to a pandas Dataframe object.
 
         Returns:
             pandas.Dataframe: output as dataframe
-        """
+        '''
         assert 'counterpoise' in [k.lower() for k in self.input['settings'].keys()] # check if there was a bsse calculation
         tmp = {}
         with self.project_hdf5.open('output/structure/bsse') as hdf:
@@ -314,9 +318,9 @@ class GaussianInput(GenericParameters):
         super(GaussianInput, self).__init__(input_file_name=input_file_name, table_name="input_inp", comment_char="#")
 
     def load_default(self):
-        """
+        '''
         Loading the default settings for the input file.
-        """
+        '''
         input_str = """\
 lot HF
 basis_set 6-311G(d,p)
@@ -593,7 +597,7 @@ def collect_output(output_file):
 
 # function from theochem iodata
 def _triangle_to_dense(triangle):
-    """Convert a symmetric matrix in triangular storage to a dense square matrix.
+    '''Convert a symmetric matrix in triangular storage to a dense square matrix.
     Parameters
     ----------
     triangle
@@ -604,7 +608,7 @@ def _triangle_to_dense(triangle):
     -------
     ndarray
         a square symmetric matrix.
-    """
+    '''
     if triangle is None: return None
     nrow = int(np.round((np.sqrt(1 + 8 * len(triangle)) - 1) / 2))
     result = np.zeros((nrow, nrow))
@@ -618,8 +622,8 @@ def _triangle_to_dense(triangle):
 
 
 def _reverse_readline(filename, buf_size=8192):
-    """A generator that returns the lines of a file in reverse order"""
-    """https://stackoverflow.com/questions/2301789/read-a-file-in-reverse-order-using-python"""
+    '''A generator that returns the lines of a file in reverse order'''
+    '''https://stackoverflow.com/questions/2301789/read-a-file-in-reverse-order-using-python'''
     with open(filename) as fh:
         segment = None
         offset = 0

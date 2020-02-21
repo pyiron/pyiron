@@ -326,9 +326,9 @@ class YaffInput(GenericParameters):
         super(YaffInput, self).__init__(input_file_name=input_file_name,table_name="input_inp",comment_char="#")
 
     def load_default(self):
-        """
+        '''
         Loading the default settings for the input file.
-        """
+        '''
         input_str = """\
 rcut 28.345892008818783 #(FF) real space cutoff
 alpha_scale 3.2 #(FF) scale for ewald alpha parameter
@@ -362,9 +362,19 @@ class Yaff(AtomisticGenericJob):
 
 
     def calc_minimize(self, cell=False, gpos_tol=1e-8, dpos_tol=1e-6, grvecs_tol=1e-8, drvecs_tol=1e-6, max_iter=1000, n_print=5):
-        """
+        '''
+            Set up an optimization calculation.
 
-        """
+            **Arguments**
+
+            cell (bool): Set True if the cell also has to be optimized
+            gpos_tol (float): Convergence criterion for RMS of gradients towards atomic coordinates
+            dpos_tol (float): Convergence criterion for RMS of differences of atomic coordinates
+            grvecs_tol (float): Convergence criterion for RMS of gradients towards cell parameters
+            drvecs_tol (float): Convergence criterion for RMS of differences of cell parameters
+            max_iter (int): Maximum number of optimization steps
+            n_print (int):  Print frequency
+        '''
         if cell:
             self.input['jobtype'] = 'opt_cell'
         else:
@@ -380,9 +390,13 @@ class Yaff(AtomisticGenericJob):
 
 
     def calc_static(self,hessian_eps=1e-3):
-        """
+        '''
             Set up a static force field calculation, which immediately also calculates the hessian
-        """
+
+            **Arguments**
+
+            hessian_eps (float): Step size in finite differences for numerical derivatives of the forces
+        '''
 
         self.input['jobtype'] = 'hess'
         self.input['hessian_eps'] = hessian_eps
@@ -392,20 +406,21 @@ class Yaff(AtomisticGenericJob):
     def calc_md(self, temperature=None, pressure=None, nsteps=1000, time_step=1.0*femtosecond, n_print=5,
                 timecon_thermo=100.0*femtosecond, timecon_baro=1000.0*femtosecond):
 
-        """
-        Set an MD calculation within Yaff. Nosé Hoover chain is used by default.
+        '''
+            Set an MD calculation within Yaff. Nosé Hoover chain is used by default.
 
-        Args:
+            **Arguments**
+
             temperature (None/float): Target temperature. If set to None, an NVE calculation is performed.
-                                      It is required when the pressure is set or langevin is set
+                                      It is required when the pressure is set
             pressure (None/float): Target pressure. If set to None, an NVE or an NVT calculation is performed.
-            n_ionic_steps (int): Number of ionic steps
+            nsteps (int): Number of md steps
             time_step (float): Step size between two steps.
             n_print (int):  Print frequency
             timecon_thermo (float): The time associated with the thermostat adjusting the temperature.
             timecon_baro (float): The time associated with the barostat adjusting the temperature.
 
-        """
+        '''
         self.input['temp'] = temperature
         self.input['press'] = pressure
         self.input['nsteps'] = nsteps
