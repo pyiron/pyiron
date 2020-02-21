@@ -92,6 +92,21 @@ system.to_file('opt.chk')
     with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
         f.write(body)
 
+def write_ysp(input_dict,working_directory='.'):
+    body = common.format(
+        rcut=input_dict['rcut']/angstrom, alpha_scale=input_dict['alpha_scale'],
+        gcut_scale=input_dict['gcut_scale'], smooth_ei=input_dict['smooth_ei'],
+        h5step=1,
+    )
+    body +="""
+energy = ff.compute()
+system.to_hdf5(f)
+f['system/energy'] = energy
+"""
+    body+= tail
+    with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
+        f.write(body)
+
 def write_yhess(input_dict,working_directory='.'):
     body = common.format(
         rcut=input_dict['rcut']/angstrom, alpha_scale=input_dict['alpha_scale'],
@@ -389,17 +404,12 @@ class Yaff(AtomisticGenericJob):
         super(Yaff, self).calc_minimize(max_iter=max_iter, n_print=n_print)
 
 
-    def calc_static(self,hessian_eps=1e-3):
+    def calc_static(self):
         '''
-            Set up a static force field calculation, which immediately also calculates the hessian
-
-            **Arguments**
-
-            hessian_eps (float): Step size in finite differences for numerical derivatives of the forces
+            Set up a static force field calculation.
         '''
 
-        self.input['jobtype'] = 'hess'
-        self.input['hessian_eps'] = hessian_eps
+        self.input['jobtype'] = 'sp'
         super(Yaff, self).calc_static()
 
 
@@ -653,7 +663,9 @@ class Yaff(AtomisticGenericJob):
              input_dict['cell'] = self.structure.get_cell()
         write_chk(input_dict,working_directory=self.working_directory)
         write_pars(input_dict=input_dict,working_directory=self.working_directory)
-        if self.input['jobtype'] == 'opt':
+        if self.input['jobtype'] == 'sp':
+            write_ysp(input_dict=input_dict,working_directory=self.working_directory)
+        elif self.input['jobtype'] == 'opt':
             write_yopt(input_dict=input_dict,working_directory=self.working_directory)
         elif self.input['jobtype'] == 'opt_cell':
             write_yopt_cell(input_dict=input_dict,working_directory=self.working_directory)
