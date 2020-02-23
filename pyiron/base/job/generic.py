@@ -172,10 +172,6 @@ class GenericJob(JobCore):
             signal.signal(sig, self.signal_intercept)
 
     @property
-    def python_execution_process(self):
-        return self._process
-
-    @property
     def version(self):
         """
         Get the version of the hamiltonian, which is also the version of the executable unless a custom executable is
