@@ -251,7 +251,6 @@ class Atoms(object):
             else:
                 self.set_cell(value)
 
-
     @property
     def species(self):
         """
