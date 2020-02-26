@@ -1075,12 +1075,12 @@ class Atoms(object):
         return len(self)
 
     def set_absolute(self):
-        warnings.warn("set_relative is deprecated as of 2020/02/26. It is not guaranteed from v. 0.3")
+        warnings.warn("set_relative is deprecated as of 2020/02/26. It is not guaranteed from v. 0.3", DeprecationWarning)
         if self._is_scaled:
             self._is_scaled = False
 
     def set_relative(self):
-        warnings.warn("set_relative is deprecated as of 2020/02/26. It is not guaranteed from v. 0.3")
+        warnings.warn("set_relative is deprecated as of 2020/02/26. It is not guaranteed from v. 0.3", DeprecationWarning)
         if not self._is_scaled:
             self._is_scaled = True
 

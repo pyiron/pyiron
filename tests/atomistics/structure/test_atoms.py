@@ -503,7 +503,11 @@ class TestAtoms(unittest.TestCase):
         self.assertAlmostEqual(basis.positions[-1, 0], basis_absolute.positions[-1, 0])
         basis = lattice.copy()
         basis_relative = lattice.copy()
-        basis_relative.set_relative()
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            basis_relative.set_relative()
+            self.assertEqual(len(w), 1)
+            self.assertIsInstance(w[-1].message, DeprecationWarning)
         basis.positions[-1, 0] = 0.5
         basis_relative.positions[-1, 0] = 0.5
         self.assertAlmostEqual(basis.positions[-1, 0], basis_relative.positions[-1, 0])
@@ -511,6 +515,11 @@ class TestAtoms(unittest.TestCase):
         self.assertAlmostEqual(basis.get_volume(), 27)
         basis.set_cell(np.append(np.ones(3), 90 - np.random.random(3)).flatten())
         self.assertLess(basis.get_volume(), 1)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            basis_absolute.set_absolute()
+            self.assertEqual(len(w), 1)
+            self.assertIsInstance(w[-1].message, DeprecationWarning)
 
     def test_repeat(self):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
@@ -666,6 +675,11 @@ class TestAtoms(unittest.TestCase):
         self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
         basis.set_repeat(2)
         self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            neigh = basis.get_neighbors(cutoff=10)
+            self.assertEqual(len(w), 1)
+            self.assertIsInstance(w[-1].message, DeprecationWarning)
         # print nbr_dict.distances
         # print [set(s) for s in nbr_dict.shells]
 
