@@ -31,20 +31,6 @@ pyiron
     :alt: Screenshot of pyiron running inside jupyterlab.
 
 
-For users - test pyiron with mybinder: 
-
-.. image:: https://mybinder.org/badge_logo.svg
-     :target: https://mybinder.org/v2/gh/pyiron/pyiron/master
-     :alt: mybinder
- 
- 
-For developers - browse the pyiron code with gitpod: 
-
-.. image:: https://gitpod.io/button/open-in-gitpod.svg
-     :target: https://gitpod.io/#https://github.com/pyiron/pyiron
-     :alt: Gitpod
-
-
 pyiron - an integrated development environment (IDE) for computational materials science. It combines several tools in a common platform:
 
  - Atomic structure objects – compatible to the `Atomic Simulation Environment (ASE) <https://wiki.fysik.dtu.dk/ase/>`_.
@@ -100,6 +86,19 @@ Finally a first lammps calculation can be executed by::
     job.potential = job.list_potentials()[0]
     job.run()
 
+
+Getting started:
+----------------
+For users - test pyiron with mybinder: 
+.. image:: https://mybinder.org/badge_logo.svg
+     :target: https://mybinder.org/v2/gh/pyiron/pyiron/master
+     :alt: mybinder
+ 
+ 
+For developers - browse the pyiron code with gitpod: 
+.. image:: https://gitpod.io/button/open-in-gitpod.svg
+     :target: https://gitpod.io/#https://github.com/pyiron/pyiron
+     :alt: Gitpod
 
 
 License and Acknowledgments
