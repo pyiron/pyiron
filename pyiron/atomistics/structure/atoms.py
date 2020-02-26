@@ -239,6 +239,8 @@ class Atoms(object):
         numpy.ndarray: A size 3x3 array which gives the lattice vectors of the cell as [a1, a2, a3]
 
         """
+        if self._cell is None:
+            return None
         return self._cell.copy()
 
     @cell.setter
