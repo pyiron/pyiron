@@ -34,6 +34,7 @@ pyiron
 .. image:: https://gitpod.io/button/open-in-gitpod.svg
     :target: https://gitpod.io/#https://github.com/pyiron/pyiron
     :alt: Gitpod
+    :align: center
 
 
 pyiron - an integrated development environment (IDE) for computational materials science. It combines several tools in a common platform:
