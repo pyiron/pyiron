@@ -239,17 +239,11 @@ class Atoms(object):
         numpy.ndarray: A size 3x3 array which gives the lattice vectors of the cell as [a1, a2, a3]
 
         """
-        return self._cell
+        return self._cell.copy()
 
     @cell.setter
     def cell(self, value):
-        if value is None:
-            self._cell = None
-        else:
-            if self._is_scaled:
-                self.set_cell(value, scale_atoms=True)
-            else:
-                self.set_cell(value)
+        raise NotImplementedError('cell cannot be changed directly; use set_cell instead')
 
     @property
     def species(self):
