@@ -482,6 +482,8 @@ class TestAtoms(unittest.TestCase):
             element="Al", bravais_basis="fcc", lattice_constants=4
         )
         basis_relative = lattice.copy()
+        with self.assertRaises(NotImplementedError):
+            basis_relative.cell = np.ones(3)
         cell = basis_relative.cell
         cell[0, 0] = 6
         basis_relative.set_cell(cell, True)
