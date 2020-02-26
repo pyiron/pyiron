@@ -1888,7 +1888,7 @@ class Output:
                     :, sorted_indices, :, :
                 ] = self.electronic_structure.resolved_densities[:, :, :, :].copy()
             self.structure.positions = log_dict["positions"][-1]
-            self.structure.cell = log_dict["cells"][-1]
+            self.structure.set_cell(log_dict["cells"][-1])
 
         elif outcar_working:
             # log_dict = self.outcar.parse_dict.copy()
