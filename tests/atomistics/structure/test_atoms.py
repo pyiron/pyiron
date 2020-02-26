@@ -949,6 +949,8 @@ class TestAtoms(unittest.TestCase):
         basis_Fe = CrystalStructure("Fe", bravais_basis="bcc", lattice_constants=2.85)
         x = basis_Fe.get_spherical_coordinates([0, 0, 0])
         self.assertAlmostEqual(x[0, 0], 0)
+        x = basis_Fe.get_spherical_coordinates()
+        self.assertAlmostEqual(x[1, 2], 0.25*np.pi)
 
     def test_occupy_lattice(self):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
