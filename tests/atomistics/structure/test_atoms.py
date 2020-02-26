@@ -299,21 +299,23 @@ class TestAtoms(unittest.TestCase):
         )
         self.assertTrue((CO.get_cell() == np.identity(3)).all())
         self.assertTrue((CO.cell == np.identity(3)).all())
-        CO.cell[2][2] = 10.0
-        self.assertTrue(CO.cell[2, 2] == 10.0)
+        cell = CO.cell
+        cell[2][2] = 10.0
+        CO.set_cell(cell)
+        self.assertEqual(CO.cell[2, 2], 10.0)
         self.assertAlmostEqual(CO.get_volume(), 10)
         self.assertAlmostEqual(CO.get_volume(per_atom=True), 0.5 * 10)
         with self.assertRaises(ValueError):
-            CO.cell = -np.eye(3)
+            CO.set_cell(-np.eye(3))
         with self.assertRaises(ValueError):
-            CO.cell = [2, 1]
+            CO.set_cell([2, 1])
         dx = 1.0
         r_o = [0, 0, 0]
         r_h1 = [dx, 0, 0]
         r_h2 = [0, dx, 0]
         water = Atoms(elements=['H', 'H', 'O'], positions=[r_h1, r_h2, r_o])
         self.assertEqual(water.center_coordinates_in_unit_cell(), water)
-        water.cell = np.zeros((3, 3))
+        water.set_cell(np.zeros((3, 3)))
         self.assertTrue(np.array_equal(water.cell, np.zeros((3, 3))))
         self.assertTrue(np.array_equal(water.get_scaled_positions(), water.positions))
         self.assertEqual(water.center_coordinates_in_unit_cell(), water)
@@ -492,8 +494,8 @@ class TestAtoms(unittest.TestCase):
         )
         basis = lattice.copy()
         self.assertAlmostEqual(
-            basis.get_scaled_positions()[-1, 0],
-            basis_relative.get_scaled_positions()[-1, 0],
+            basis.get_scaled_positions(wrap=False)[-1, 0],
+            basis_relative.get_scaled_positions(wrap=False)[-1, 0],
         )
         cell = basis.cell
         cell[0, 0] = 6
@@ -929,7 +931,7 @@ class TestAtoms(unittest.TestCase):
 
     def test_get_scaled_positions(self):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
-        basis_Mg.cell += 0.1 * np.random.random((3, 3))
+        basis_Mg.set_cell(basis_Mg.cell+0.1 * np.random.random((3, 3)))
         basis_Mg = basis_Mg.center_coordinates_in_unit_cell()
         self.assertTrue(
             np.allclose(

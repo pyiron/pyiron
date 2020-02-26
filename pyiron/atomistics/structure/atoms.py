@@ -548,10 +548,10 @@ class Atoms(object):
                 self.dimension = hdf_atoms["dimension"]
                 self.units = hdf_atoms["units"]
 
-                self.cell = None
+                self._cell = None
                 if "cell" in hdf_atoms.list_groups():
                     with hdf_atoms.open("cell") as hdf_cell:
-                        self.cell = hdf_cell["cell"]
+                        self._cell = hdf_cell["cell"]
                         self.pbc = hdf_cell["pbc"]
 
                 # Backward compatibility
