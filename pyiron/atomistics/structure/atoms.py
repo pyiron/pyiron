@@ -3144,8 +3144,8 @@ class Atoms(object):
             x = self.positions.copy()
         x = np.array(x).reshape(-1, 3)
         r = np.linalg.norm(x, axis=-1)
-        theta = np.arctan2(x[:,2], x[:,1])
-        phi = np.arctan2(np.linalg.norm(x[:,:2], axis=-1), x[:,2])
+        phi = np.arctan2(x[:,2], x[:,1])
+        theta = np.arctan2(np.linalg.norm(x[:,:2], axis=-1), x[:,2])
         return np.stack((r, theta, phi), axis=-1)
 
     def get_initial_magnetic_moments(self):
