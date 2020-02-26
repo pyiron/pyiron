@@ -31,11 +31,10 @@ pyiron
     :alt: Screenshot of pyiron running inside jupyterlab.
 
 
-.. image:: https://gitpod.io/button/open-in-gitpod.svg
-    :target: https://gitpod.io/#https://github.com/pyiron/pyiron
-    :alt: Gitpod
-    :align: center
-
+.. raw:: html
+   <h1 align="center">
+   <a href="https://gitpod.io/#https://github.com/pyiron/pyiron"><img src="https://gitpod.io/button/open-in-gitpod.svg" alt="Gitpod"></a>
+   </h1>
 
 pyiron - an integrated development environment (IDE) for computational materials science. It combines several tools in a common platform:
 
