@@ -482,11 +482,11 @@ class TestAtoms(unittest.TestCase):
             element="Al", bravais_basis="fcc", lattice_constants=4
         )
         basis_relative = lattice.copy()
-        cell = basis_relative.cell
+        cell = basis_relative.cell.copy()
         cell[0, 0] = 6
         basis_relative.set_cell(cell, True)
         basis_absolute = lattice.copy()
-        cell = basis_absolute.cell
+        cell = basis_absolute.cell.copy()
         cell[0, 0] = 6
         basis_absolute.set_cell(cell)
         self.assertAlmostEqual(
@@ -497,7 +497,7 @@ class TestAtoms(unittest.TestCase):
             basis.get_scaled_positions(wrap=False)[-1, 0],
             basis_relative.get_scaled_positions(wrap=False)[-1, 0],
         )
-        cell = basis.cell
+        cell = basis.cell.copy()
         cell[0, 0] = 6
         basis.set_cell(cell)
         self.assertAlmostEqual(basis.positions[-1, 0], basis_absolute.positions[-1, 0])
