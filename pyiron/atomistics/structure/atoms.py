@@ -654,7 +654,7 @@ class Atoms(object):
         c = self.cell
         if c is None:
             c = np.identity(self.dimension)
-            self.cell = c
+            self.set_cell(c)
 
         dirs = np.zeros_like(c)
         for i in range(3):
