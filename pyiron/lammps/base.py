@@ -1014,7 +1014,7 @@ class LammpsBase(AtomisticGenericJob):
             """
             prism = UnfoldingPrism(structure.cell)
             lammps_structure = structure.copy()
-            lammps_structure.cell = prism.A
+            lammps_structure.set_cell(prism.A)
             lammps_structure.positions = np.matmul(structure.positions, prism.R)
             return lammps_structure
 

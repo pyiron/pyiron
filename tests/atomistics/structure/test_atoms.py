@@ -299,21 +299,23 @@ class TestAtoms(unittest.TestCase):
         )
         self.assertTrue((CO.get_cell() == np.identity(3)).all())
         self.assertTrue((CO.cell == np.identity(3)).all())
-        CO.cell[2][2] = 10.0
-        self.assertTrue(CO.cell[2, 2] == 10.0)
+        cell = CO.cell.copy()
+        cell[2][2] = 10.0
+        CO.set_cell(cell)
+        self.assertEqual(CO.cell[2, 2], 10.0)
         self.assertAlmostEqual(CO.get_volume(), 10)
         self.assertAlmostEqual(CO.get_volume(per_atom=True), 0.5 * 10)
         with self.assertRaises(ValueError):
-            CO.cell = -np.eye(3)
+            CO.set_cell(-np.eye(3))
         with self.assertRaises(ValueError):
-            CO.cell = [2, 1]
+            CO.set_cell([2, 1])
         dx = 1.0
         r_o = [0, 0, 0]
         r_h1 = [dx, 0, 0]
         r_h2 = [0, dx, 0]
         water = Atoms(elements=['H', 'H', 'O'], positions=[r_h1, r_h2, r_o])
         self.assertEqual(water.center_coordinates_in_unit_cell(), water)
-        water.cell = np.zeros((3, 3))
+        water.set_cell(np.zeros((3, 3)))
         self.assertTrue(np.array_equal(water.cell, np.zeros((3, 3))))
         self.assertTrue(np.array_equal(water.get_scaled_positions(), water.positions))
         self.assertEqual(water.center_coordinates_in_unit_cell(), water)
@@ -480,31 +482,44 @@ class TestAtoms(unittest.TestCase):
             element="Al", bravais_basis="fcc", lattice_constants=4
         )
         basis_relative = lattice.copy()
-        basis_relative.set_relative()
-        basis_relative.cell[0, 0] = 6
+        cell = basis_relative.cell.copy()
+        cell[0, 0] = 6
+        basis_relative.set_cell(cell, True)
         basis_absolute = lattice.copy()
-        basis_absolute.set_absolute()
-        basis_absolute.cell[0, 0] = 6
+        cell = basis_absolute.cell.copy()
+        cell[0, 0] = 6
+        basis_absolute.set_cell(cell)
         self.assertAlmostEqual(
             basis_relative.positions[-1, 0] * 1.5, basis_absolute.positions[-1, 0]
         )
         basis = lattice.copy()
         self.assertAlmostEqual(
-            basis.get_scaled_positions()[-1, 0],
-            basis_relative.get_scaled_positions()[-1, 0],
+            basis.get_scaled_positions(wrap=False)[-1, 0],
+            basis_relative.get_scaled_positions(wrap=False)[-1, 0],
         )
-        basis.cell[0, 0] = 6
+        cell = basis.cell.copy()
+        cell[0, 0] = 6
+        basis.set_cell(cell)
         self.assertAlmostEqual(basis.positions[-1, 0], basis_absolute.positions[-1, 0])
         basis = lattice.copy()
         basis_relative = lattice.copy()
-        basis_relative.set_relative()
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            basis_relative.set_relative()
+            self.assertEqual(len(w), 1)
+            self.assertIsInstance(w[-1].message, DeprecationWarning)
         basis.positions[-1, 0] = 0.5
         basis_relative.positions[-1, 0] = 0.5
         self.assertAlmostEqual(basis.positions[-1, 0], basis_relative.positions[-1, 0])
-        basis.cell = 3 * np.ones(3)
+        basis.set_cell(3 * np.ones(3))
         self.assertAlmostEqual(basis.get_volume(), 27)
-        basis.cell = np.append(np.ones(3), 90 - np.random.random(3)).flatten()
+        basis.set_cell(np.append(np.ones(3), 90 - np.random.random(3)).flatten())
         self.assertLess(basis.get_volume(), 1)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            basis_absolute.set_absolute()
+            self.assertEqual(len(w), 1)
+            self.assertIsInstance(w[-1].message, DeprecationWarning)
 
     def test_repeat(self):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
@@ -660,6 +675,11 @@ class TestAtoms(unittest.TestCase):
         self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
         basis.set_repeat(2)
         self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            neigh = basis.get_neighbors(cutoff=10)
+            self.assertEqual(len(w), 1)
+            self.assertIsInstance(w[-1].message, DeprecationWarning)
         # print nbr_dict.distances
         # print [set(s) for s in nbr_dict.shells]
 
@@ -925,7 +945,7 @@ class TestAtoms(unittest.TestCase):
 
     def test_get_scaled_positions(self):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
-        basis_Mg.cell += 0.1 * np.random.random((3, 3))
+        basis_Mg.set_cell(basis_Mg.cell+0.1 * np.random.random((3, 3)))
         basis_Mg = basis_Mg.center_coordinates_in_unit_cell()
         self.assertTrue(
             np.allclose(

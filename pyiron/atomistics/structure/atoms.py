@@ -658,7 +658,7 @@ class Atoms(object):
         c = self.cell
         if c is None:
             c = np.identity(self.dimension)
-            self.cell = c
+            self.set_cell(c)
 
         dirs = np.zeros_like(c)
         for i in range(3):
@@ -693,7 +693,9 @@ class Atoms(object):
         translation = np.zeros(3)
         for i in axes:
             nowlen = np.sqrt(np.dot(c[i], c[i]))
-            self.cell[i] *= 1 + longer[i] / nowlen
+            cell = self.cell.copy()
+            cell[i] *= 1 + longer[i] / nowlen
+            self.set_cell(cell)
             translation += shift[i] * c[i] / nowlen
         self.positions += translation
         if self.pbc is None:
@@ -1073,10 +1075,12 @@ class Atoms(object):
         return len(self)
 
     def set_absolute(self):
+        warnings.warn("set_relative is deprecated as of 2020/02/26. It is not guaranteed from v. 0.3", DeprecationWarning)
         if self._is_scaled:
             self._is_scaled = False
 
     def set_relative(self):
+        warnings.warn("set_relative is deprecated as of 2020/02/26. It is not guaranteed from v. 0.3", DeprecationWarning)
         if not self._is_scaled:
             self._is_scaled = True
 
@@ -3331,7 +3335,7 @@ class Atoms(object):
                 - np.cross(rotcell, s * vector)
                 + np.outer(np.dot(rotcell, vector), (1.0 - c) * vector)
             )
-            self.cell = rotcell
+            self.set_cell(rotcell)
 
     def rotate_euler(self, center=(0, 0, 0), phi=0.0, theta=0.0, psi=0.0):
         """Rotate atoms via Euler angles.

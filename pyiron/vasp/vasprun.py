@@ -661,7 +661,7 @@ class Vasprun(object):
         """
         try:
             basis = self.get_initial_structure()
-            basis.cell = self.vasprun_dict["final_structure"]["cell"]
+            basis.set_cell(self.vasprun_dict["final_structure"]["cell"])
             positions = self.vasprun_dict["final_structure"]["positions"]
             if len(positions[positions > 1.01]) > 0:
                 basis.positions = positions
