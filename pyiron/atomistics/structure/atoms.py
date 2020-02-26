@@ -687,7 +687,9 @@ class Atoms(object):
         translation = np.zeros(3)
         for i in axes:
             nowlen = np.sqrt(np.dot(c[i], c[i]))
-            self.cell[i] *= 1 + longer[i] / nowlen
+            cell = self.cell
+            cell[i] *= 1 + longer[i] / nowlen
+            self.set_cell(cell)
             translation += shift[i] * c[i] / nowlen
         self.positions += translation
         if self.pbc is None:
@@ -3325,7 +3327,7 @@ class Atoms(object):
                 - np.cross(rotcell, s * vector)
                 + np.outer(np.dot(rotcell, vector), (1.0 - c) * vector)
             )
-            self.cell = rotcell
+            self.set_cell(rotcell)
 
     def rotate_euler(self, center=(0, 0, 0), phi=0.0, theta=0.0, psi=0.0):
         """Rotate atoms via Euler angles.

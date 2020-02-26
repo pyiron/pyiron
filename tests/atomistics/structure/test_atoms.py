@@ -480,11 +480,13 @@ class TestAtoms(unittest.TestCase):
             element="Al", bravais_basis="fcc", lattice_constants=4
         )
         basis_relative = lattice.copy()
-        basis_relative.set_relative()
-        basis_relative.cell[0, 0] = 6
+        cell = basis_relative.cell
+        cell[0, 0] = 6
+        basis_relative.set_cell(cell, True)
         basis_absolute = lattice.copy()
-        basis_absolute.set_absolute()
-        basis_absolute.cell[0, 0] = 6
+        cell = basis_absolute.cell
+        cell[0, 0] = 6
+        basis_absolute.set_cell(cell)
         self.assertAlmostEqual(
             basis_relative.positions[-1, 0] * 1.5, basis_absolute.positions[-1, 0]
         )
@@ -493,7 +495,9 @@ class TestAtoms(unittest.TestCase):
             basis.get_scaled_positions()[-1, 0],
             basis_relative.get_scaled_positions()[-1, 0],
         )
-        basis.cell[0, 0] = 6
+        cell = basis.cell
+        cell[0, 0] = 6
+        basis.set_cell(cell)
         self.assertAlmostEqual(basis.positions[-1, 0], basis_absolute.positions[-1, 0])
         basis = lattice.copy()
         basis_relative = lattice.copy()
@@ -501,9 +505,9 @@ class TestAtoms(unittest.TestCase):
         basis.positions[-1, 0] = 0.5
         basis_relative.positions[-1, 0] = 0.5
         self.assertAlmostEqual(basis.positions[-1, 0], basis_relative.positions[-1, 0])
-        basis.cell = 3 * np.ones(3)
+        basis.set_cell(3 * np.ones(3))
         self.assertAlmostEqual(basis.get_volume(), 27)
-        basis.cell = np.append(np.ones(3), 90 - np.random.random(3)).flatten()
+        basis.set_cell(np.append(np.ones(3), 90 - np.random.random(3)).flatten())
         self.assertLess(basis.get_volume(), 1)
 
     def test_repeat(self):
