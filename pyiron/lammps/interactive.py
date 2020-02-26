@@ -106,6 +106,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
 
         is_skewed = self._prism.is_skewed()
         is_scaled = self.structure._is_scaled
+        if is_scaled:
+            warnings.warn('set_relative() is deprecated as of 2020-02-26. It is not guaranteed to work in pyiron vers. 0.3')
 
         if is_skewed and is_scaled:
             self._interactive_lib_command(
