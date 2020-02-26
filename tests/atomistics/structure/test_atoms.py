@@ -299,7 +299,7 @@ class TestAtoms(unittest.TestCase):
         )
         self.assertTrue((CO.get_cell() == np.identity(3)).all())
         self.assertTrue((CO.cell == np.identity(3)).all())
-        cell = CO.cell
+        cell = CO.cell.copy()
         cell[2][2] = 10.0
         CO.set_cell(cell)
         self.assertEqual(CO.cell[2, 2], 10.0)
