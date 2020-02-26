@@ -31,6 +31,11 @@ pyiron
     :alt: Screenshot of pyiron running inside jupyterlab.
 
 
+.. image:: https://gitpod.io/button/open-in-gitpod.svg
+     :target: https://gitpod.io/#https://github.com/pyiron/pyiron
+     :alt: Gitpod
+
+
 pyiron - an integrated development environment (IDE) for computational materials science. It combines several tools in a common platform:
 
  - Atomic structure objects – compatible to the `Atomic Simulation Environment (ASE) <https://wiki.fysik.dtu.dk/ase/>`_.

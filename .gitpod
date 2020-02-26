@@ -1,0 +1,5 @@
+tasks:
+  - init: pip install .
+github:
+  prebuilds:
+    pullRequestsFromForks: true
