@@ -694,7 +694,7 @@ class Atoms(object):
         translation = np.zeros(3)
         for i in axes:
             nowlen = np.sqrt(np.dot(c[i], c[i]))
-            cell = self.cell
+            cell = self.cell.copy()
             cell[i] *= 1 + longer[i] / nowlen
             self.set_cell(cell)
             translation += shift[i] * c[i] / nowlen
