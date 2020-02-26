@@ -241,11 +241,18 @@ class Atoms(object):
         """
         if self._cell is None:
             return None
-        return self._cell.copy()
+        return self._cell
 
     @cell.setter
     def cell(self, value):
-        raise NotImplementedError('cell cannot be changed directly; use set_cell instead')
+        if value is None:
+            self._cell = None
+        else:
+            if self._is_scaled:
+                self.set_cell(value, scale_atoms=True)
+            else:
+                self.set_cell(value)
+
 
     @property
     def species(self):
@@ -1071,10 +1078,12 @@ class Atoms(object):
         return len(self)
 
     def set_absolute(self):
+        warnings.warn("set_relative is deprecated as of 2020/02/26. It is not guaranteed to work in v. 0.3")
         if self._is_scaled:
             self._is_scaled = False
 
     def set_relative(self):
+        warnings.warn("set_relative is deprecated as of 2020/02/26. It is not guaranteed to work in v. 0.3")
         if not self._is_scaled:
             self._is_scaled = True
 
