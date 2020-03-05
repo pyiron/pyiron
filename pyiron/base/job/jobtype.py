@@ -45,6 +45,7 @@ JOB_CLASS_DICT = {
     "ExampleJob": "pyiron.testing.randomatomistic",
     "GpawJob": "pyiron.gpaw.gpaw",
     "Vasp": "pyiron.vasp.vasp",
+    "VaspMetadyn": "pyiron.vasp.metadyn",
     "TableJob": "pyiron.table.datamining",
     "ScipyMinimizer": "pyiron.interactive.scipy_minimizer",
     "SxExtOptInteractive": "pyiron.interactive.sxextoptint",
