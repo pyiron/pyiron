@@ -32,6 +32,17 @@ class MetadynInput(Input):
         super(MetadynInput, self).__init__()
         self.iconst = Iconst()
 
+    def write(self, structure, modified_elements, directory=None):
+        """
+        Writes all the input files to a specified directory
+
+        Args:
+            structure (atomistics.structure.atoms.Atoms instance): Structure to be written
+            directory (str): The working directory for the VASP run
+        """
+        super(MetadynInput, self).write(structure, modified_elements, directory)
+        self.iconst.write_file(file_name="ICONST", cwd=directory)
+
 
 class Iconst(GenericParameters):
     """
@@ -50,9 +61,8 @@ class Iconst(GenericParameters):
         """
         Loads the default file content
         """
-        file_content = """\
-ICONST file generated with pyiron
-"""
+        file_content = """ """
         self.load_string(file_content)
+
 
 
