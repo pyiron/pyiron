@@ -2031,7 +2031,7 @@ class Atoms(object):
         if shell is None:
             shell_lst = np.unique(neigh_list.shells)
         else:
-            shell_lst = np.flatten([shell])
+            shell_lst = np.array([shell]).flatten()
         if restraint_matrix is None:
             restraint_matrix = np.ones((Natom, Natom)) == 1
         elif type(restraint_matrix) == list and len(restraint_matrix) == 2:
