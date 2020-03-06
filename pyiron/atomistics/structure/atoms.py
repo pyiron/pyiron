@@ -2005,7 +2005,7 @@ class Atoms(object):
         return shell_dict
 
     def get_shell_matrix(
-        self, shell, id_list=None, restraint_matrix=None, max_num_neighbors=100
+        self, shell=None, id_list=None, restraint_matrix=None, num_neighbors=100
     ):
         """
 
@@ -2013,7 +2013,7 @@ class Atoms(object):
             neigh_list: user defined get_neighbors (recommended if atoms are displaced from the ideal positions)
             id_list: cf. get_neighbors
             radius: cf. get_neighbors
-            max_num_neighbors: cf. get_neighbors
+            num_neighbors: cf. get_neighbors
             restraint_matrix: NxN matrix with True or False, where False will remove the entries.
                               If an integer is given the sum of the chemical indices corresponding to the number will
                               be set to True and the rest to False
@@ -2022,13 +2022,16 @@ class Atoms(object):
             NxN matrix with 1 for the pairs of atoms in the given shell
 
         """
-        assert (
-            isinstance(shell, int) and shell > 0
-        ), "Parameter 'shell' must be an integer greater than 0"
+        if shell is not None and shell<=0:
+            raise ValueError("Parameter 'shell' must be an integer greater than 0")
         neigh_list = self.get_neighbors(
-            num_neighbors=max_num_neighbors, id_list=id_list
+            num_neighbors=num_neighbors, id_list=id_list
         )
-        Natom = len(neigh_list.shells)
+        Natom = len(self)
+        if shell is None:
+            shell_lst = np.unique(neigh_list.shells)
+        else:
+            shell_lst = np.flatten([shell])
         if restraint_matrix is None:
             restraint_matrix = np.ones((Natom, Natom)) == 1
         elif type(restraint_matrix) == list and len(restraint_matrix) == 2:
@@ -2037,14 +2040,20 @@ class Atoms(object):
                 1 * (self.get_chemical_symbols() == restraint_matrix[1]),
             )
             restraint_matrix = (restraint_matrix + restraint_matrix.transpose()) > 0
-        shell_matrix = np.zeros((Natom, Natom))
-        for ii, ss in enumerate(neigh_list.shells):
-            unique, counts = np.unique(
-                neigh_list.indices[ii][ss == np.array(shell)], return_counts=True
-            )
-            shell_matrix[ii][unique] = counts
-        shell_matrix[restraint_matrix == False] = 0
-        return shell_matrix
+        shell_matrix_lst = []
+        for shell in shell_lst:
+            shell_matrix = np.zeros((Natom, Natom))
+            for ii, ss in enumerate(neigh_list.shells):
+                unique, counts = np.unique(
+                    neigh_list.indices[ii][ss == np.array(shell)], return_counts=True
+                )
+                shell_matrix[ii][unique] = counts
+            shell_matrix[restraint_matrix == False] = 0
+            shell_matrix_lst.append(shell_matrix)
+        if len(shell_matrix_lst)==1:
+            return shell_matrix_lst[0]
+        else:
+            return shell_matrix_lst
 
     def get_shell_radius(self, shell=1, id_list=None):
         """
