@@ -776,7 +776,7 @@ class VaspBase(GenericDFTJob):
         Sets the way, how EDDRMM warning is handled.
 
         Args:
-            status (str): new status of EDDRMM handling (can be 'warning', 'ignore', or 'restart')
+            status (str): new status of EDDRMM handling (can be 'warn', 'ignore', or 'restart')
         """
         if status == "warn" or status == "ignore" or status == "restart":
             self.input._eddrmm = status
@@ -1697,7 +1697,7 @@ class Input:
         self.kpoints = Kpoints(table_name="kpoints")
         self.potcar = Potcar(table_name="potcar")
 
-        self._eddrmm = "not_converged"
+        self._eddrmm = "warn"
 
     def write(self, structure, modified_elements, directory=None):
         """
