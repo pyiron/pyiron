@@ -1760,7 +1760,15 @@ class Input:
             if "vasp_dict" in hdf5_input.list_nodes():
                 vasp_dict = hdf5_input["vasp_dict"]
                 if "eddrmm_handling" in vasp_dict.keys():
-                    self._eddrmm = vasp_dict["eddrmm_handling"]
+                    self._eddrmm = self._eddrmm_backwards_compatibility(vasp_dict["eddrmm_handling"])
+
+    @staticmethod
+    def _eddrmm_backwards_compatibility(eddrmm_value):
+        """On 9-03-2020, the EDDRMM flag 'not_converged' was switched to 'warn'."""
+        if eddrmm_value == 'not_converged':
+            return 'warn'
+        else:
+            return eddrmm_value
 
 
 class Output:
