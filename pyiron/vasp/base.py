@@ -468,7 +468,7 @@ class VaspBase(GenericDFTJob):
         """
         num_eddrmm, snap = self._get_eddrmm_info()
 
-        warning_string = "EDDRMM warnings are ignored. EDDRMM occures {} times, first in ionic step {}."
+        warning_string = "EDDRMM warnings occured {} times, first in ionic step {}."
         status_string = "Status is switched to 'warning'."
 
         if not snap is None:
