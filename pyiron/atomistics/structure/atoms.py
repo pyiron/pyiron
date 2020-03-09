@@ -2865,6 +2865,7 @@ class Atoms(object):
                 )
             replace_list = list()
             new_species = list(np.array(self.species).copy())
+
             for sp in self.species:
                 replace_list.append(
                     np.array_equal(
@@ -2899,7 +2900,7 @@ class Atoms(object):
                         if i != ind and rep:
                             delete_indices.append(i)
                             # del new_species[i]
-                            new_indices[new_indices > i] -= 1
+                            new_indices[new_indices >= i] -= 1
                     self.indices = new_indices.copy()
                     new_species = np.array(new_species)[
                         np.setdiff1d(np.arange(len(new_species)), delete_indices)
