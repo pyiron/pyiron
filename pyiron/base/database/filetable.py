@@ -32,7 +32,7 @@ class FileTable(with_metaclass(Singleton)):
     def __init__(self, project):
         self._fileindex = None
         self._job_table = None
-        self._project = os.path.abspath(project)
+        self._project = os.path.realpath(project)
         self._columns = ['id', 'status', 'chemicalformula', 'job', 'subjob', 'projectpath', 'project', 'timestart',
                          'timestop', 'totalcputime', 'computer', 'hamilton', 'hamversion', 'parentid', 'masterid',
                          'username']
