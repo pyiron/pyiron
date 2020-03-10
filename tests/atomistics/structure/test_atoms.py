@@ -266,6 +266,7 @@ class TestAtoms(unittest.TestCase):
             len(basis_new._tag_list), len(basis[mg_indices]) + len(basis[o_indices])
         )
         self.assertEqual(basis_new.get_spacegroup()["Number"], 225)
+        self.assertEqual(basis[:-3], basis[0:len(basis)-4])
 
     def test_positions(self):
         self.assertEqual(self.CO2[1:].positions[1:].tolist(), [[0.0, 1.5, 0.0]])
@@ -1264,6 +1265,49 @@ class TestAtoms(unittest.TestCase):
         lat_1.set_scaled_positions(1 / 4 + lat_1.get_scaled_positions())
         lat_1[:] = "V"  # vacancies
         self.assertEqual(lat_1.get_chemical_formula(), "V108")
+        basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
+        basis_Mg.set_repeat(3)
+        basis_Mg[:-3] = "Al"
+        self.assertEqual(basis_Mg.get_chemical_formula(), 'Al105Mg3')
+        basis_Mg[4:-len(basis_Mg)+7] = "C"
+        self.assertEqual(basis_Mg.get_chemical_formula(), 'Al102C3Mg3')
+        basis_Mg[4:] = "C"
+        self.assertEqual(basis_Mg.get_chemical_formula(), 'Al4C104')
+        basis_Mg[:] = "Mg"
+        self.assertEqual(basis_Mg.get_chemical_formula(), 'Mg108')
+        basis_Mg[::2] = "Al"
+        self.assertEqual(basis_Mg.get_chemical_formula(), 'Al54Mg54')
+        struct = CrystalStructure("Al", bravais_basis="fcc", lattice_constant=4.2, bravais_lattice="cubic")
+        struct[0] = 'Mg'
+        self.assertEqual(struct.get_chemical_formula(), 'Al3Mg')
+        struct[1] = 'Cu'
+        self.assertEqual(struct.get_chemical_formula(), 'Al2CuMg')
+        struct[0] = 'Cu'
+        struct[1] = 'Cu'
+        struct[2] = 'Cu'
+        struct[3] = 'Cu'
+        self.assertEqual(struct.get_chemical_formula(), 'Cu4')
+        struct = CrystalStructure("Al", bravais_basis="fcc", lattice_constant=4.2, bravais_lattice="cubic")
+        struct[0] = 'Mg'
+        self.assertEqual(struct.get_chemical_formula(), 'Al3Mg')
+        struct[1] = 'Cu'
+        self.assertEqual(struct.get_chemical_formula(), 'Al2CuMg')
+        struct[0:] = 'N'
+        self.assertEqual(struct.get_chemical_formula(), 'N4')
+        struct = CrystalStructure("Al", bravais_basis="fcc", lattice_constant=4.2, bravais_lattice="cubic")
+        struct[0] = 'Mg'
+        self.assertEqual(struct.get_chemical_formula(), 'Al3Mg')
+        struct[1] = 'Cu'
+        self.assertEqual(struct.get_chemical_formula(), 'Al2CuMg')
+        struct[0:] = 'Cu'
+        self.assertEqual(struct.get_chemical_formula(), 'Cu4')
+        struct = CrystalStructure("Al", bravais_basis="fcc", lattice_constant=4.2, bravais_lattice="cubic")
+        struct[0] = 'Mg'
+        self.assertEqual(struct.get_chemical_formula(), 'Al3Mg')
+        struct[1] = 'Cu'
+        self.assertEqual(struct.get_chemical_formula(), 'Al2CuMg')
+        struct[0:] = 'Mg'
+        self.assertEqual(struct.get_chemical_formula(), 'Mg4')
 
 
 def generate_fcc_lattice(a=4.2):

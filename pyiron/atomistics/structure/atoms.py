@@ -2837,19 +2837,24 @@ class Atoms(object):
                     if len(key) == 0:
                         return
             else:
-                if key.start is not None:
-                    if key.stop is not None:
-                        key = np.arange(key.start, key.stop, key.step)
-                    else:
-                        if key.start >= 0:
-                            key = np.arange(key.start, len(self), key.step)
-                        else:
-                            key = np.arange(len(self) + key.start, len(self), key.step)
+                # Generating the correct numpy array from a slice input
+                if key.start is None:
+                    start_val = 0
+                elif key.start < 0:
+                    start_val = key.start + len(self)
                 else:
-                    if key.stop is not None:
-                        key = np.arange(0, key.stop, key.step)
-                    else:
-                        key = np.arange(0, len(self), key.step)
+                    start_val = key.start
+                if key.stop is None:
+                    stop_val = len(self)
+                elif key.stop < 0:
+                    stop_val = key.stop + len(self)
+                else:
+                    stop_val = key.stop
+                if key.step is None:
+                    step_val = 1
+                else:
+                    step_val = key.step
+                key = np.arange(start_val, stop_val, step_val)
             if isinstance(value, (str, np.str, np.str_, int, np.integer)):
                 el = PeriodicTable().element(value)
             elif isinstance(value, ChemicalElement):
@@ -2860,6 +2865,7 @@ class Atoms(object):
                 )
             replace_list = list()
             new_species = list(np.array(self.species).copy())
+
             for sp in self.species:
                 replace_list.append(
                     np.array_equal(
@@ -2894,7 +2900,7 @@ class Atoms(object):
                         if i != ind and rep:
                             delete_indices.append(i)
                             # del new_species[i]
-                            new_indices[new_indices > i] -= 1
+                            new_indices[new_indices >= i] -= 1
                     self.indices = new_indices.copy()
                     new_species = np.array(new_species)[
                         np.setdiff1d(np.arange(len(new_species)), delete_indices)
