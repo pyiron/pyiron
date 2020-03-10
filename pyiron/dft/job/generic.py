@@ -119,7 +119,7 @@ class GenericDFTJob(AtomisticGenericJob):
 
 
         """
-        snapshot = super(GenericDFTJob).get_structure(
+        snapshot = super(GenericDFTJob, self).get_structure(
             iteration_step=iteration_step, wrap_atoms=wrap_atoms
         )
         spins = self.get("output/generic/dft/atom_spins")
