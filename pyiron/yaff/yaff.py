@@ -735,7 +735,7 @@ class Yaff(AtomisticGenericJob):
         if indices is not None:
             snapshot.indices = indices[iteration_step]
         if wrap_atoms and cells is not None:
-            return snapshot.center_coordinates_in_unit_cell()
+            return snapshot.center()
         else:
             return snapshot
 
