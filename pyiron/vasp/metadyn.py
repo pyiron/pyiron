@@ -118,6 +118,7 @@ class VaspMetadyn(Vasp):
         Call routines that generate the INCAR, POTCAR, KPOINTS and POSCAR input files
         """
         self.write_constraints()
+        self.to_hdf()
         super(VaspMetadyn, self).write_input()
 
 
