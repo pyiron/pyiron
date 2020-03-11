@@ -111,7 +111,7 @@ class VaspMetadyn(Vasp):
             self._set_complex_constraint(constraint_type=constraint["constraint_type"],
                                          coefficients=coefficients, biased=constraint["biased"])
             increment_list.append(constraint["increment"])
-        self.input.incar["INCREM"] = " ".join(increment_list)
+        self.input.incar["INCREM"] = " ".join(map(str, increment_list))
 
     def write_input(self):
         """
