@@ -26,7 +26,9 @@ class VaspMetadyn(Vasp):
         self.__name__ = "VaspMetadyn"
         self.input = MetadynInput()
         self.supported_primitive_constraints = ["bond", "angle", "torsion", "x_pos", "y_pos", "z_pos"]
+        self.supported_complex_constraints = ["linear_combination", "norm", "coordination_number"]
         self._constraint_dict = dict()
+        self._complex_constraints = dict()
         self.input.incar["LBLUEOUT"] = True
 
     def set_dynamic_constraint(self, name, constraint_type, atom_indices, biased=False, increment=0.0):
@@ -41,7 +43,7 @@ class VaspMetadyn(Vasp):
         self._constraint_dict[name]["biased"] = biased
         self._constraint_dict[name]["increment"] = increment
 
-    def _set_dynamic_constraint_iconst(self, constraint_type, atom_indices, biased=False):
+    def _set_primitive_constraint_iconst(self, constraint_type, atom_indices, biased=False):
         if self.structure is None:
             raise ValueError("The structure has to be set before a dynamic constraint is assigned")
         constraint_dict = {"bond": "R", "angle": "A", "torsion": "T",
@@ -70,11 +72,44 @@ class VaspMetadyn(Vasp):
         constraint_string = "{} {} {}".format(constraint_dict[constraint_type], a_ind, status)
         self.input.iconst.set_value(line, constraint_string)
 
+    def set_complex_coordinate(self, name, constraint_type, coefficient_dict, biased=False, increment=0.0):
+        if self.structure is None:
+            raise ValueError("The structure has to be set before a dynamic constraint is assigned")
+        if constraint_type not in self.supported_complex_constraints:
+            raise ValueError("Use a compatible complex constraint type")
+        self._complex_constraints[name] = dict()
+        self._complex_constraints[name]["constraint_type"] = constraint_type
+        if len(list(coefficient_dict.keys())) != len(list(self._constraint_dict.keys())):
+            raise ValueError("The number of coefficients should match the number of primitive contstraints")
+        self._complex_constraints[name]["coefficient_dict"] = coefficient_dict
+        self._complex_constraints[name]["biased"] = biased
+        self._complex_constraints[name]["increment"] = increment
+
+    def _set_complex_coordinate(self, constraint_type, coefficients, biased=False):
+        constraint_dict = {"linear_combination": "S", "norm": "C", "coordination_number": "D"}
+        if constraint_type not in list(constraint_dict.keys()):
+            raise ValueError("Use a compatible constraint type")
+        status = 0
+        if biased:
+            status = 5
+        coeffs = " ".join(map(str, coefficients))
+        constraint_string = "{} {} {}".format(constraint_dict[constraint_type], coeffs, status)
+        line = len(self.input.iconst._dataset["Value"])
+        self.input.iconst.set_value(line, constraint_string)
+
     def write_constraints(self):
         increment_list = list()
-        for constraint in self._constraint_dict.values():
-            self._set_dynamic_constraint_iconst(constraint_type=constraint["constraint_type"],
-                                                atom_indices=constraint["atom_indices"], biased=constraint["biased"])
+        linear_constraint_order = list()
+        for key, constraint in self._constraint_dict.items():
+            linear_constraint_order.append(key)
+            self._set_primitive_constraint_iconst(constraint_type=constraint["constraint_type"],
+                                                  atom_indices=constraint["atom_indices"], biased=constraint["biased"])
+            increment_list.append(constraint["increment"])
+
+        for constraint in self._complex_constraints.values():
+            coefficients = [constraint["coefficient_dict"][val] for val in linear_constraint_order]
+            self._set_complex_coordinate(constraint_type=constraint["constraint_type"],
+                                         coefficients=coefficients, biased=constraint["biased"])
             increment_list.append(constraint["increment"])
         self.input.incar["INCREM"] = " ".join(increment_list)
 
