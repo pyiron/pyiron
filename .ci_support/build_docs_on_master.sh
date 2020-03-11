@@ -2,7 +2,7 @@
 
 if [ "$TRAVIS_BRANCH" = "master" ]; then
     # install
-    conda install -y -c conda-forge sphinx nbsphinx ipywidgets sphinx_rtd_theme pylint Graphviz sphinxcontrib-applehelp "tornado<6" seaborn ovito mpi4py pyscal
+    conda install -y -c conda-forge sphinx nbsphinx ipywidgets sphinx_rtd_theme pylint Graphviz sphinxcontrib-applehelp tornado seaborn ovito mpi4py pyscal
 
     git config --global user.email "${GH_EMAIL}"
     git config --global user.name "${GH_USER}"
