@@ -54,7 +54,7 @@ setup(
         'tables>=3.5.1',
         'tamkin>=1.2.6',
         'tqdm>=4.35.0',
-        'yaff>=1.2.4'
+        'yaff>=1.4.2'
     ],
     cmdclass=versioneer.get_cmdclass(),
     )
