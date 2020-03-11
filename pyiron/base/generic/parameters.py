@@ -37,7 +37,7 @@ class GenericParameters(PyironObject):
 
     Args:
         table_name (str): name of the input file inside the HDF5 file - optional
-        input_file_name (str): name of the input file (if None default parameters are used)
+        input_file_name (str/Nonetype): name of the input file (if None default parameters are used)
         val_only (bool): input format consists of value (comments) only
         comment_char (str): separator that characterizes comment (e.g. "#" for python)
         separator_char (str): separator that characterizes the split between key and value - default=' '
