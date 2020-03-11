@@ -53,7 +53,8 @@ setup(
         'sqlalchemy>=1.3.8',
         'tables>=3.5.1',
         'tamkin>=1.2.6',
-        'tqdm>=4.35.0'
+        'tqdm>=4.35.0',
+        'yaff>=1.2.4'
     ],
     cmdclass=versioneer.get_cmdclass(),
     )
