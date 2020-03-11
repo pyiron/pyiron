@@ -27,6 +27,7 @@ class VaspMetadyn(Vasp):
         self.input = MetadynInput()
         self.supported_primitive_constraints = ["bond", "angle", "torsion", "x_pos", "y_pos", "z_pos"]
         self._constraint_dict = dict()
+        self.input.incar["LBLUEOUT"] = True
 
     def set_dynamic_constraint(self, name, constraint_type, atom_indices, biased=False, increment=0.0):
         if self.structure is None:
