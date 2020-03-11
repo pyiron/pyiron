@@ -332,7 +332,7 @@ def vasp_sorter(structure):
         indices = structure.select_index(species)
         for i in indices:
             sorted_indices.append(i)
-    return sorted_indices
+    return np.array(sorted_indices)
 
 
 def manip_contcar(filename, new_filename, add_pos):
