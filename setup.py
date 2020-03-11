@@ -39,6 +39,7 @@ setup(
         'h5py>=2.9.0',
         'matplotlib>=2.2.4',
         'mendeleev>=0.5.1',
+        'molmod>=1.4.5',
         'numpy>=1.16.4',
         'pandas>=0.24.2',
         'pathlib2>=2.3.4',
@@ -51,6 +52,7 @@ setup(
         'spglib>=1.14.1',
         'sqlalchemy>=1.3.8',
         'tables>=3.5.1',
+        'tamkin>=1.2.6',
         'tqdm>=4.35.0'
     ],
     cmdclass=versioneer.get_cmdclass(),
