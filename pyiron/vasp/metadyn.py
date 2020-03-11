@@ -31,7 +31,7 @@ class VaspMetadyn(Vasp):
         self._complex_constraints = dict()
         self.input.incar["LBLUEOUT"] = True
 
-    def set_dynamic_constraint(self, name, constraint_type, atom_indices, biased=False, increment=0.0):
+    def set_primitive_constraint(self, name, constraint_type, atom_indices, biased=False, increment=0.0):
         if self.structure is None:
             raise ValueError("The structure has to be set before a dynamic constraint is assigned")
         self._constraint_dict[name] = dict()
@@ -72,7 +72,7 @@ class VaspMetadyn(Vasp):
         constraint_string = "{} {} {}".format(constraint_dict[constraint_type], a_ind, status)
         self.input.iconst.set_value(line, constraint_string)
 
-    def set_complex_coordinate(self, name, constraint_type, coefficient_dict, biased=False, increment=0.0):
+    def set_complex_constraint(self, name, constraint_type, coefficient_dict, biased=False, increment=0.0):
         if self.structure is None:
             raise ValueError("The structure has to be set before a dynamic constraint is assigned")
         if constraint_type not in self.supported_complex_constraints:
@@ -85,7 +85,7 @@ class VaspMetadyn(Vasp):
         self._complex_constraints[name]["biased"] = biased
         self._complex_constraints[name]["increment"] = increment
 
-    def _set_complex_coordinate(self, constraint_type, coefficients, biased=False):
+    def _set_complex_constraint(self, constraint_type, coefficients, biased=False):
         constraint_dict = {"linear_combination": "S", "norm": "C", "coordination_number": "D"}
         if constraint_type not in list(constraint_dict.keys()):
             raise ValueError("Use a compatible constraint type")
@@ -108,7 +108,7 @@ class VaspMetadyn(Vasp):
 
         for constraint in self._complex_constraints.values():
             coefficients = [constraint["coefficient_dict"][val] for val in linear_constraint_order]
-            self._set_complex_coordinate(constraint_type=constraint["constraint_type"],
+            self._set_complex_constraint(constraint_type=constraint["constraint_type"],
                                          coefficients=coefficients, biased=constraint["biased"])
             increment_list.append(constraint["increment"])
         self.input.incar["INCREM"] = " ".join(increment_list)
