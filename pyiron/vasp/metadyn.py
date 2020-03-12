@@ -5,7 +5,10 @@
 import numpy as np
 from pyiron.base.generic.parameters import GenericParameters
 from pyiron.vasp.vasp import Vasp
-from pyiron.vasp.base import Input
+from pyiron.vasp.base import Input, Output
+from pyiron.vasp.report import Report
+import os
+import posixpath
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = (
@@ -25,6 +28,7 @@ class VaspMetadyn(Vasp):
         super(VaspMetadyn, self).__init__(project, job_name)
         self.__name__ = "VaspMetadyn"
         self.input = MetadynInput()
+        self._output_parser = MetadynOutput()
         self.supported_primitive_constraints = ["bond", "angle", "torsion", "x_pos", "y_pos", "z_pos"]
         self.supported_complex_constraints = ["linear_combination", "norm", "coordination_number"]
         self._constraint_dict = dict()
@@ -154,3 +158,30 @@ class MetadynInput(Input):
         with hdf.open("input") as hdf5_input:
             self.iconst.from_hdf(hdf5_input)
             self.penaltypot.from_hdf(hdf5_input)
+
+
+class MetadynOutput(Output):
+
+    def __init__(self):
+        super(MetadynOutput, self).__init__()
+        self.report_file = Report()
+
+    def collect(self, directory=os.getcwd(), sorted_indices=None):
+        super(MetadynOutput, self).collect(directory=directory, sorted_indices=sorted_indices)
+        files_present = os.listdir(directory)
+        if "REPORT" in files_present:
+            self.report_file.from_file(filename=posixpath.join(directory, "REPORT"))
+
+    def to_hdf(self, hdf):
+        """
+        Save the object in a HDF5 file
+
+        Args:
+            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+
+        """
+        super(MetadynOutput, self).to_hdf(hdf)
+        with hdf.open("output") as hdf5_output:
+            with hdf5_output.open("constrained_md") as hdf5_const:
+                for key, value in self.report_file.parse_dict.items():
+                    hdf5_const[key] = value
