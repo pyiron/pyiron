@@ -1009,3 +1009,11 @@ class GenericParameters(PyironObject):
                                                               self._dataset["Value"][i]))
             error_msg = "\n".join(error_msg)
             raise ValueError(error_msg)
+
+    def clear_all(self):
+        """
+        Clears all fields in the object
+        """
+        self._dataset["Parameter"] = []
+        self._dataset["Value"] = []
+        self._dataset["Comment"] = []
