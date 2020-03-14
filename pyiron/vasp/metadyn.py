@@ -125,6 +125,16 @@ class VaspMetadyn(Vasp):
         self.to_hdf()
         super(VaspMetadyn, self).write_input()
 
+    def to_hdf(self, hdf=None, group_name=None):
+        self.input._constraint_dict = self._constraint_dict
+        self.input._complex_constraints = self._complex_constraints
+        super(VaspMetadyn, self).to_hdf(hdf=hdf, group_name=group_name)
+
+    def from_hdf(self, hdf=None, group_name=None):
+        super(VaspMetadyn, self).from_hdf(hdf=hdf, group_name=group_name)
+        self._constraint_dict = self.input._constraint_dict
+        self._complex_constraints = self.input._complex_constraints
+
 
 class MetadynInput(Input):
 
@@ -133,6 +143,8 @@ class MetadynInput(Input):
         self.iconst = GenericParameters(input_file_name=None, table_name="iconst", val_only=True, comment_char="!")
         self.penaltypot = GenericParameters(input_file_name=None, table_name="penaltypot", val_only=True,
                                             comment_char="!")
+        self._constraint_dict = dict()
+        self._complex_constraints = dict()
 
     def write(self, structure, modified_elements, directory=None):
         """
@@ -152,12 +164,18 @@ class MetadynInput(Input):
         with hdf.open("input") as hdf5_input:
             self.iconst.to_hdf(hdf5_input)
             self.penaltypot.to_hdf(hdf5_input)
+            hdf5_input["constraint_dict"] = self._constraint_dict
+            hdf5_input["complex_constraint_dict"] = self._complex_constraints
 
     def from_hdf(self, hdf):
         super(MetadynInput, self).from_hdf(hdf)
         with hdf.open("input") as hdf5_input:
             self.iconst.from_hdf(hdf5_input)
             self.penaltypot.from_hdf(hdf5_input)
+            if "constraint_dict" in hdf5_input.list_nodes():
+                self._constraint_dict = hdf5_input["constraint_dict"]
+            if "complex_constraint_dict" in hdf5_input.list_nodes():
+                self._complex_constraints = hdf5_input["complex_constraint_dict"]
 
 
 class MetadynOutput(Output):
