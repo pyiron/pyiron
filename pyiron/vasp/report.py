@@ -40,5 +40,7 @@ class Report(object):
             rel_lines = [lines[i] for i, line in enumerate(lines) if "cc>" in line]
             cv = np.genfromtxt(rel_lines, usecols=[2])
             fe = cumtrapz(lam, cv)
-            self.parse_dict["cv"] = cv[1:]
+            self.parse_dict["cv_full"] = cv
+            self.parse_dict["derivative"] = lam
+            self.parse_dict["cv"] = cv[:-1]
             self.parse_dict["free_energy"] = fe
