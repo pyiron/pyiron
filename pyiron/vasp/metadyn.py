@@ -104,6 +104,8 @@ class VaspMetadyn(Vasp):
     def write_constraints(self):
         increment_list = list()
         linear_constraint_order = list()
+        # Clear the existing ICONST file
+        self.input.iconst.clear_all()
         for key, constraint in self._constraint_dict.items():
             linear_constraint_order.append(key)
             self._set_primitive_constraint_iconst(constraint_type=constraint["constraint_type"],
