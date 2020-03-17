@@ -27,14 +27,6 @@ class TestGaussian(unittest.TestCase):
             cls.execution_path = os.path.dirname(os.path.abspath(__file__))
             cls.project = Project(os.path.join(cls.execution_path, "test_gaussian"))
             cls.job = cls.project.create_job("Gaussian", "trial")
-            cls.job_complete = Gaussian(
-                project=ProjectHDFio(project=cls.project, file_name="gaussian_complete"),
-                job_name="gaussian_complete",
-            )
-            log_file = posixpath.join(
-                cls.execution_path, "../static/gaussian_test_files/sp/input.log"
-            )
-            cls.job_complete.structure = ase_to_pyiron(read(log_file))
 
         @classmethod
         def tearDownClass(cls):
@@ -45,6 +37,11 @@ class TestGaussian(unittest.TestCase):
 
         def setUp(self):
             self.job.structure = None
+            self.project.remove_job("gaussian_complete")
+            self.job_complete = Gaussian(
+                project=ProjectHDFio(project=self.project, file_name="gaussian_complete"),
+                job_name="gaussian_complete",
+            )
 
         def test_init(self):
             self.assertEqual(self.job.__name__, "Gaussian")
@@ -96,6 +93,9 @@ class TestGaussian(unittest.TestCase):
 
 
         def test_run_sp_complete(self):
+            self.job_complete.structure = ase_to_pyiron(read(
+                posixpath.join(self.execution_path, "../static/gaussian_test_files/sp/input.log")
+            ))
             self.job_complete.input['lot'] = 'B3LYP'
             self.job_complete.input['basis_set'] = '6-31+G(d)'
             self.job_complete.calc_static()
@@ -108,6 +108,7 @@ class TestGaussian(unittest.TestCase):
             self.job_complete.restart_file_list.append(
                 posixpath.join(file_directory, "input.fchk")
             )
+
             self.job_complete.run(run_mode="manual")
             self.job_complete.status.collect = True
             self.job_complete.run()
@@ -145,9 +146,12 @@ class TestGaussian(unittest.TestCase):
                 self.assertTrue(all([node in hdf_nodes for node in nodes]))
 
         def test_run_bsse_complete(self):
+            self.job_complete.structure = ase_to_pyiron(read(
+                posixpath.join(self.execution_path, "../static/gaussian_test_files/bsse/input.log")
+            ))
             self.job_complete.input['lot'] = 'B3LYP'
             self.job_complete.input['basis_set'] = '6-31+G(d)'
-            self.job_complete.calc_static()
+            self.job_complete.calc_minimize()
             file_directory = posixpath.join(
                 self.execution_path, '../static/gaussian_test_files/bsse'
             )
@@ -193,12 +197,27 @@ class TestGaussian(unittest.TestCase):
                 hdf_nodes = h_gen.list_nodes()
                 self.assertTrue(all([node in hdf_nodes for node in nodes]))
 
+            nodes = [
+                "energy_tot_corrected",
+                "bsse_correction",
+                "sum_of_fragments",
+                "complexation_energy_raw",
+                "complexation_energy_corrected",
+            ]
+            with self.job_complete.project_hdf5.open("output/structure/bsse") as h_gen:
+                hdf_nodes = h_gen.list_nodes()
+                self.assertTrue(all([node in hdf_nodes for node in nodes]))
+
 
         def test_run_empdisp_complete(self):
+            self.job_complete.structure = ase_to_pyiron(read(
+                posixpath.join(self.execution_path, "../static/gaussian_test_files/empdisp/input.log")
+            ))
             self.job_complete.input['lot'] = 'B3LYP'
-            self.job_complete.input['basis_set'] = '6-31+G(d)'
+            self.job_complete.input['basis_set'] = '6-311+G*'
             self.job_complete.input['settings'] = {'EmpiricalDispersion':['GD3']}
             self.job_complete.calc_static()
+
             file_directory = posixpath.join(
                 self.execution_path, '../static/gaussian_test_files/empdisp'
             )
@@ -208,9 +227,11 @@ class TestGaussian(unittest.TestCase):
             self.job_complete.restart_file_list.append(
                 posixpath.join(file_directory, "input.fchk")
             )
+
             self.job_complete.run(run_mode="manual")
             self.job_complete.status.collect = True
             self.job_complete.run()
+
             nodes = [
                 "positions",
                 "energy_tot",
@@ -252,3 +273,7 @@ class TestGaussian(unittest.TestCase):
                 output = buf.getvalue()
 
             self.assertTrue("R6Disp" in output)
+
+
+if __name__ == "__main__":
+    unittest.main()
