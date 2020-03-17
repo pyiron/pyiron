@@ -95,7 +95,7 @@ class TestGaussian(unittest.TestCase):
             self.assertEqual(self.job.structure, atoms)
 
 
-        def test_run_complete(self):
+        def test_run_sp_complete(self):
             self.job_complete.input['lot'] = 'B3LYP'
             self.job_complete.input['basis_set'] = '6-31+G(d)'
             self.job_complete.calc_static()
@@ -143,3 +143,112 @@ class TestGaussian(unittest.TestCase):
             with self.job_complete.project_hdf5.open("output/structure/dft") as h_gen:
                 hdf_nodes = h_gen.list_nodes()
                 self.assertTrue(all([node in hdf_nodes for node in nodes]))
+
+        def test_run_bsse_complete(self):
+            self.job_complete.input['lot'] = 'B3LYP'
+            self.job_complete.input['basis_set'] = '6-31+G(d)'
+            self.job_complete.calc_static()
+            file_directory = posixpath.join(
+                self.execution_path, '../static/gaussian_test_files/bsse'
+            )
+            self.job_complete.restart_file_list.append(
+                posixpath.join(file_directory, "input.log")
+            )
+            self.job_complete.restart_file_list.append(
+                posixpath.join(file_directory, "input.fchk")
+            )
+            self.job_complete.run(run_mode="manual")
+            self.job_complete.status.collect = True
+            self.job_complete.run()
+            nodes = [
+                "positions",
+                "energy_tot",
+            ]
+            with self.job_complete.project_hdf5.open("output/generic") as h_gen:
+                hdf_nodes = h_gen.list_nodes()
+                self.assertTrue(all([node in hdf_nodes for node in nodes]))
+
+            nodes = [
+                "charges",
+                "dipole",
+                "masses",
+                "numbers",
+                "positions",
+            ]
+            with self.job_complete.project_hdf5.open("output/structure") as h_gen:
+                hdf_nodes = h_gen.list_nodes()
+                self.assertTrue(all([node in hdf_nodes for node in nodes]))
+
+            nodes = [
+                "alpha_orbital_e",
+                "beta_orbital_e",
+                "n_alpha_electrons",
+                "n_basis_functions",
+                "n_beta_electrons",
+                "n_electrons",
+                "scf_density",
+                "spin_scf_density",
+            ]
+            with self.job_complete.project_hdf5.open("output/structure/dft") as h_gen:
+                hdf_nodes = h_gen.list_nodes()
+                self.assertTrue(all([node in hdf_nodes for node in nodes]))
+
+
+        def test_run_empdisp_complete(self):
+            self.job_complete.input['lot'] = 'B3LYP'
+            self.job_complete.input['basis_set'] = '6-31+G(d)'
+            self.job_complete.input['settings'] = {'EmpiricalDispersion':['GD3']}
+            self.job_complete.calc_static()
+            file_directory = posixpath.join(
+                self.execution_path, '../static/gaussian_test_files/empdisp'
+            )
+            self.job_complete.restart_file_list.append(
+                posixpath.join(file_directory, "input.log")
+            )
+            self.job_complete.restart_file_list.append(
+                posixpath.join(file_directory, "input.fchk")
+            )
+            self.job_complete.run(run_mode="manual")
+            self.job_complete.status.collect = True
+            self.job_complete.run()
+            nodes = [
+                "positions",
+                "energy_tot",
+            ]
+            with self.job_complete.project_hdf5.open("output/generic") as h_gen:
+                hdf_nodes = h_gen.list_nodes()
+                self.assertTrue(all([node in hdf_nodes for node in nodes]))
+
+            nodes = [
+                "charges",
+                "dipole",
+                "masses",
+                "numbers",
+                "positions",
+            ]
+            with self.job_complete.project_hdf5.open("output/structure") as h_gen:
+                hdf_nodes = h_gen.list_nodes()
+                self.assertTrue(all([node in hdf_nodes for node in nodes]))
+
+            nodes = [
+                "alpha_orbital_e",
+                "beta_orbital_e",
+                "n_alpha_electrons",
+                "n_basis_functions",
+                "n_beta_electrons",
+                "n_electrons",
+                "scf_density",
+                "spin_scf_density",
+            ]
+            with self.job_complete.project_hdf5.open("output/structure/dft") as h_gen:
+                hdf_nodes = h_gen.list_nodes()
+                self.assertTrue(all([node in hdf_nodes for node in nodes]))
+
+            import io
+            from contextlib import redirect_stdout
+
+            with io.StringIO() as buf, redirect_stdout(buf):
+                self.job_complete.log()
+                output = buf.getvalue()
+
+            self.assertTrue("R6Disp" in output)

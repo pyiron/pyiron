@@ -90,7 +90,7 @@ class Gaussian(GenericDFTJob):
                 ionic_steps (int): maximum number of ionic steps
                 ionic_forces ('tight' or 'verytight'): convergence criterium for Berny opt (optional)
         '''
-        settings = {}
+        if not isinstance(settings,dict): settings = {}
         opt_settings = []
 
         if electronic_steps is not None:
@@ -130,8 +130,9 @@ class Gaussian(GenericDFTJob):
                 algorithm (str): SCF algorithm
                 electronic_steps (int): maximum number of electronic steps, which can be used to achieve convergence
         '''
-        settings = {}
-        
+
+        if not isinstance(settings,dict): settings = {}
+
         if electronic_steps is not None:
             if not 'SCF' in settings:
                 settings['SCF'] = []
