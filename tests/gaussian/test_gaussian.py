@@ -3,18 +3,19 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import unittest
-import os
+import os,sys
 import posixpath
 
 from ase.io import read
+from ase.io.gaussian import * # load all gaussian io modules, such that import statements are not tainted by pyiron's atoms class
 
+from pyiron import ase_to_pyiron
 from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.base.project.generic import Project
+from pyiron.project import Project as Pr
 
 from pyiron.gaussian.gaussian import GaussianInput
 from pyiron.gaussian.gaussian import Gaussian
-
-
 
 class TestGaussian(unittest.TestCase):
         """
@@ -33,7 +34,7 @@ class TestGaussian(unittest.TestCase):
             log_file = posixpath.join(
                 cls.execution_path, "../static/gaussian_test_files/sp/input.log"
             )
-            cls.job_complete.structure = read(log_file)
+            cls.job_complete.structure = ase_to_pyiron(read(log_file))
 
         @classmethod
         def tearDownClass(cls):
@@ -51,16 +52,15 @@ class TestGaussian(unittest.TestCase):
 
 
         def test_input(self):
-            self.assertIsInstance(self.job.input['lot'], (string))
-            self.assertIsInstance(self.job.input['basis_set'], (string))
+            self.assertIsInstance(self.job.input['lot'], (str))
+            self.assertIsInstance(self.job.input['basis_set'], (str))
             self.assertIsInstance(self.job.input['spin_mult'], (int))
             self.assertIsInstance(self.job.input['charge'], (int))
-            # self.assertIsInstance(self.job.plane_wave_cutoff, (float, int))
             self.job.input['lot'] = 'B3LYP'
             self.assertEqual(self.job.input['lot'], 'B3LYP')
             self.job.input['basis_set'] = 'sto-3g'
             self.assertEqual(self.job.input['basis_set'], 'sto-3g')
-            self.job.input['spin_mult'] = 1
+            self.job.input['spin_mult'] = 2
             self.assertEqual(self.job.input['spin_mult'], 2)
             self.job.input['charge'] = 1
             self.assertEqual(self.job.input['charge'], 1)
@@ -86,7 +86,7 @@ class TestGaussian(unittest.TestCase):
 
         def test_set_structure(self):
             self.assertEqual(self.job.structure, None)
-            atoms = create_atoms(elements=['H', 'H', 'O'], positions=[[0.,0.,0.], [1.,0.,0.], [0.,1.,0.]])
+            atoms = Pr.create_atoms(elements=['H', 'H', 'O'], positions=[[0.,0.,0.], [1.,0.,0.], [0.,1.,0.]])
             self.job.structure = atoms
             self.assertEqual(self.job.structure, atoms)
             self.job.structure = None
@@ -143,4 +143,3 @@ class TestGaussian(unittest.TestCase):
             with self.job_complete.project_hdf5.open("output/structure/dft") as h_gen:
                 hdf_nodes = h_gen.list_nodes()
                 self.assertTrue(all([node in hdf_nodes for node in nodes]))
-                
