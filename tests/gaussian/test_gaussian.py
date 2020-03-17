@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import unittest
-import os,sys
+import os
 import posixpath
 
 from ase.io import read
