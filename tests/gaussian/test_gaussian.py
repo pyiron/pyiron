@@ -6,8 +6,7 @@ import unittest
 import os
 import posixpath
 
-from ase.io import read
-from ase.io.gaussian import * # load all gaussian io modules, such that import statements are not tainted by pyiron's atoms class
+from ase.io.gaussian import read_gaussian
 
 from pyiron import ase_to_pyiron
 from pyiron.base.generic.hdfio import ProjectHDFio
@@ -27,6 +26,10 @@ class TestGaussian(unittest.TestCase):
             cls.execution_path = os.path.dirname(os.path.abspath(__file__))
             cls.project = Project(os.path.join(cls.execution_path, "test_gaussian"))
             cls.job = cls.project.create_job("Gaussian", "trial")
+            cls.job_complete = Gaussian(
+                project=ProjectHDFio(project=cls.project, file_name="gaussian_complete"),
+                job_name="gaussian_complete",
+            )
 
         @classmethod
         def tearDownClass(cls):
@@ -93,8 +96,8 @@ class TestGaussian(unittest.TestCase):
 
 
         def test_run_sp_complete(self):
-            self.job_complete.structure = ase_to_pyiron(read(
-                posixpath.join(self.execution_path, "../static/gaussian_test_files/sp/input.log")
+            self.job_complete.structure = ase_to_pyiron(read_gaussian(
+                posixpath.join(self.execution_path, "../static/gaussian_test_files/sp/input.com")
             ))
             self.job_complete.input['lot'] = 'B3LYP'
             self.job_complete.input['basis_set'] = '6-31+G(d)'
@@ -146,8 +149,8 @@ class TestGaussian(unittest.TestCase):
                 self.assertTrue(all([node in hdf_nodes for node in nodes]))
 
         def test_run_bsse_complete(self):
-            self.job_complete.structure = ase_to_pyiron(read(
-                posixpath.join(self.execution_path, "../static/gaussian_test_files/bsse/input.log")
+            self.job_complete.structure = ase_to_pyiron(read_gaussian(
+                posixpath.join(self.execution_path, "../static/gaussian_test_files/bsse/input.com")
             ))
             self.job_complete.input['lot'] = 'B3LYP'
             self.job_complete.input['basis_set'] = '6-31+G(d)'
@@ -210,8 +213,8 @@ class TestGaussian(unittest.TestCase):
 
 
         def test_run_empdisp_complete(self):
-            self.job_complete.structure = ase_to_pyiron(read(
-                posixpath.join(self.execution_path, "../static/gaussian_test_files/empdisp/input.log")
+            self.job_complete.structure = ase_to_pyiron(read_gaussian(
+                posixpath.join(self.execution_path, "../static/gaussian_test_files/empdisp/input.com")
             ))
             self.job_complete.input['lot'] = 'B3LYP'
             self.job_complete.input['basis_set'] = '6-311+G*'
