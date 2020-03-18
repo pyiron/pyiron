@@ -6,7 +6,7 @@ import unittest
 import os
 import posixpath
 
-from ase.io.gaussian import read_gaussian
+from ase.io.gaussian import read_gaussian_out
 
 from pyiron import ase_to_pyiron
 from pyiron.base.generic.hdfio import ProjectHDFio
@@ -96,8 +96,8 @@ class TestGaussian(unittest.TestCase):
 
 
         def test_run_sp_complete(self):
-            self.job_complete.structure = ase_to_pyiron(read_gaussian(
-                posixpath.join(self.execution_path, "../static/gaussian_test_files/sp/input.com")
+            self.job_complete.structure = ase_to_pyiron(read_gaussian_out(
+                posixpath.join(self.execution_path, "../static/gaussian_test_files/sp/input.log")
             ))
             self.job_complete.input['lot'] = 'B3LYP'
             self.job_complete.input['basis_set'] = '6-31+G(d)'
@@ -149,8 +149,8 @@ class TestGaussian(unittest.TestCase):
                 self.assertTrue(all([node in hdf_nodes for node in nodes]))
 
         def test_run_bsse_complete(self):
-            self.job_complete.structure = ase_to_pyiron(read_gaussian(
-                posixpath.join(self.execution_path, "../static/gaussian_test_files/bsse/input.com")
+            self.job_complete.structure = ase_to_pyiron(read_gaussian_out(
+                posixpath.join(self.execution_path, "../static/gaussian_test_files/bsse/input.log")
             ))
             self.job_complete.input['lot'] = 'B3LYP'
             self.job_complete.input['basis_set'] = '6-31+G(d)'
@@ -213,8 +213,8 @@ class TestGaussian(unittest.TestCase):
 
 
         def test_run_empdisp_complete(self):
-            self.job_complete.structure = ase_to_pyiron(read_gaussian(
-                posixpath.join(self.execution_path, "../static/gaussian_test_files/empdisp/input.com")
+            self.job_complete.structure = ase_to_pyiron(read_gaussian_out(
+                posixpath.join(self.execution_path, "../static/gaussian_test_files/empdisp/input.log")
             ))
             self.job_complete.input['lot'] = 'B3LYP'
             self.job_complete.input['basis_set'] = '6-311+G*'
