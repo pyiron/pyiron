@@ -3506,6 +3506,14 @@ class Atoms(object):
                 self.positions[:] = np.dot(self.positions, M)
         self._cell = cell
 
+    def set_calculator(self, calc=None):
+        """Attach calculator object."""
+        pass
+     
+    def get_calculator(self):
+        """Get currently attached calculator object."""
+        return None
+        
     def translate(self, displacement):
         """
         Translate atomic positions.
