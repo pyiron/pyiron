@@ -6,95 +6,160 @@ import unittest
 import os
 import posixpath
 
-from ase.io.gaussian import read_gaussian_out
+from molmod.units import *
 
 from pyiron import ase_to_pyiron
 from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.base.project.generic import Project
 from pyiron.project import Project as Pr
 
-from pyiron.gaussian.gaussian import GaussianInput
-from pyiron.gaussian.gaussian import Gaussian
+from pyiron.yaff.yaff import YaffInput
+from pyiron.yaff.yaff import Yaff
 
-class TestGaussian(unittest.TestCase):
+class TestYaff(unittest.TestCase):
         """
-        Tests the pyiron.pyiron.gaussian Gaussian class
+        Tests the pyiron.yaff.yaff Yaff class
         """
 
         @classmethod
         def setUpClass(cls):
             cls.execution_path = os.path.dirname(os.path.abspath(__file__))
-            cls.project = Project(os.path.join(cls.execution_path, "test_gaussian"))
-            cls.job = cls.project.create_job("Gaussian", "trial")
+            cls.project = Project(os.path.join(cls.execution_path, "test_yaff"))
+            cls.job = cls.project.create_job("Yaff", "trial")
             cls.job_complete = Gaussian(
-                project=ProjectHDFio(project=cls.project, file_name="gaussian_complete"),
-                job_name="gaussian_complete",
+                project=ProjectHDFio(project=cls.project, file_name="yaff_complete"),
+                job_name="yaff_complete",
             )
 
         @classmethod
         def tearDownClass(cls):
             cls.execution_path = os.path.dirname(os.path.abspath(__file__))
-            project = Project(os.path.join(cls.execution_path, "test_gaussian"))
+            project = Project(os.path.join(cls.execution_path, "test_yaff"))
             project.remove_jobs(recursive=True)
             project.remove(enable=True)
 
         def setUp(self):
             self.job.structure = None
-            self.project.remove_job("gaussian_complete")
+            self.project.remove_job("Yaff_complete")
             self.job_complete = Gaussian(
-                project=ProjectHDFio(project=self.project, file_name="gaussian_complete"),
-                job_name="gaussian_complete",
+                project=ProjectHDFio(project=self.project, file_name="yaff_complete"),
+                job_name="yaff_complete",
             )
 
         def test_init(self):
-            self.assertEqual(self.job.__name__, "Gaussian")
-            self.assertIsInstance(self.job.input, GaussianInput)
+            self.assertEqual(self.job.__name__, "Yaff")
+            self.assertIsInstance(self.job.input, YaffInput)
+            self.assertEqual(self.job.ffatypes, None)
+            self.assertEqual(self.job.ffatype_ids, None)
+            self.assertEqual(self.job.enhanced, None)
 
 
         def test_input(self):
-            self.assertIsInstance(self.job.input['lot'], (str))
-            self.assertIsInstance(self.job.input['basis_set'], (str))
-            self.assertIsInstance(self.job.input['spin_mult'], (int))
-            self.assertIsInstance(self.job.input['charge'], (int))
-            self.job.input['lot'] = 'B3LYP'
-            self.assertEqual(self.job.input['lot'], 'B3LYP')
-            self.job.input['basis_set'] = 'sto-3g'
-            self.assertEqual(self.job.input['basis_set'], 'sto-3g')
-            self.job.input['spin_mult'] = 2
-            self.assertEqual(self.job.input['spin_mult'], 2)
-            self.job.input['charge'] = 1
-            self.assertEqual(self.job.input['charge'], 1)
+            self.assertIsInstance(self.job.input['rcut'], (float))
+            self.assertIsInstance(self.job.input['alpha_scale'], (float))
+            self.assertIsInstance(self.job.input['gcut_scale'], (float))
+            self.assertIsInstance(self.job.input['smooth_ei'], (bool))
+            self.assertIsInstance(self.job.input['gpos_rms'], (float))
+            self.assertIsInstance(self.job.input['dpos_rms'], (float))
+            self.assertIsInstance(self.job.input['grvecs_rms'], (float))
+            self.assertIsInstance(self.job.input['drvecs_rms'], (float))
+            self.assertIsInstance(self.job.input['hessian_eps'], (float))
+            self.assertIsInstance(self.job.input['timestep'], (float))
+            self.assertIsInstance(self.job.input['temp'], (None))
+            self.assertIsInstance(self.job.input['press'], (None))
+            self.assertIsInstance(self.job.input['timecon_thermo'], (float))
+            self.assertIsInstance(self.job.input['timecon_baro'], (float))
+            self.assertIsInstance(self.job.input['nsteps'], (int))
+            self.assertIsInstance(self.job.input['h5step'], (int))
+            self.job.input['temp'] = 300*kelvin
+            self.assertEqual(self.job.input['temp'], 300*kelvin)
+            self.job.input['press'] = 1e5*pascal
+            self.assertEqual(self.job.input['press'], 1e5*pascal)
+            self.job.ffatypes = ['H', 'N']
+            self.assertEqual(self.job.ffatypes, ['H', 'N'])
+            self.job.ffatype_ids = [0,1]
+            self.assertEqual(self.job.ffatype_ids, [0,1])
+            self.job.enhanced = {}
+            self.assertEqual(self.job.enhanced, {})
+
+
+        def test_set_mtd(self):
+            assert True
+
+        def test_set_us(self):
+            assert True
 
 
         def test_calc_static(self):
-            self.job.calc_static(
-                electronic_steps=90,
-            )
+            self.job.calc_static()
             self.assertEqual(self.job.input['jobtype'], 'sp')
-            self.assertEqual(self.job.input['settings'], {'SCF':['MaxCycle=90']})
-
 
         def test_calc_minimize(self):
-            self.job.calc_minimize(
-                electronic_steps=80,
-                ionic_steps=90,
-                algorithm=None,
-                ionic_forces='tight',
+            self.job.calc_minimize(gpos_tol=1e-8, dpos_tol=1e-6, grvecs_tol=1e-8, drvecs_tol=1e-6, max_iter=2000, n_print=10)
+            self.assertEqual(self.job.input['jobtype'], 'opt')
+            self.assertEqual(self.job.input['gpos_rms'], 1e-8)
+            self.assertEqual(self.job.input['dpos_rms'], 1e-6)
+            self.assertEqual(self.job.input['grvecs_rms'], 1e-8)
+            self.assertEqual(self.job.input['drvecs_rms'], 1e-6)
+            self.assertEqual(self.job.input['nsteps'], 2000)
+            self.assertEqual(self.job.input['h5step'], 10)
+
+        def test_calc_minimize_cell(self):
+            self.job.calc_minimize(cell=True)
+            self.assertEqual(self.job.input['jobtype'], 'opt_cell')
+
+        def test_calc_md_nve(self):
+            self.job.md(time_step=1.0*femtosecond)
+            self.assertEqual(self.job.input['jobtype'], 'nve')
+            self.assertEqual(self.job.input['timestep'], 1.0*femtosecond)
+
+        def test_calc_md_nvt(self):
+            self.job.md(temperature=300*kelvin, time_step=1.0*femtosecond,timecon_thermo=100.0*femtosecond
             )
-            self.assertEqual(self.job.input['jobtype'], 'opt(MaxCycles=90,tight)')
-            self.assertEqual(self.job.input['settings'], {'SCF':['MaxCycle=80']})
+            self.assertEqual(self.job.input['jobtype'], 'nvt')
+            self.assertEqual(self.job.input['temp'], 300*kelvin)
+            self.assertEqual(self.job.input['timestep'], 1.0*femtosecond)
+            self.assertEqual(self.job.input['timecon_thermo'], 100.0*femtosecond)
+
+        def test_calc_md_npt(self):
+            self.job.md(temperature=300*kelvin, pressure=1*bar, time_step=1.0*femtosecond,
+                        timecon_thermo=100.0*femtosecond,timecon_baro=1000.0*femtosecond
+            )
+            self.assertEqual(self.job.input['jobtype'], 'npt')
+            self.assertEqual(self.job.input['temp'], 300*kelvin)
+            self.assertEqual(self.job.input['press'], 1*bar)
+            self.assertEqual(self.job.input['timestep'], 1.0*femtosecond)
+            self.assertEqual(self.job.input['timecon_thermo'], 100.0*femtosecond)
+            self.assertEqual(self.job.input['timecon_baro'], 1000.0*femtosecond)
 
         def test_set_structure(self):
             self.assertEqual(self.job.structure, None)
-            atoms = Pr.create_atoms(elements=['H', 'H', 'O'], positions=[[0.,0.,0.], [1.,0.,0.], [0.,1.,0.]])
-            self.job.structure = atoms
-            self.assertEqual(self.job.structure, atoms)
-            self.job.structure = None
-            self.assertEqual(self.job.structure, None)
-            self.job.structure = atoms
-            self.assertEqual(self.job.structure, atoms)
+            self.job.load_chk(posixpath.join(self.execution_path, "../static/yaff_test_files/sp/input.chk"))
+            self.assertIsInstance(self.job.structure, (Atoms))
 
+            ffatypes = self.job.ffatypes
+            ffatype_ids = self.job.ffatype_ids
 
+            self.job.detect_ffatypes(ffatype_level='high')
+            self.assertEqual(self.job.ffatypes, ffatypes)
+            self.assertEqual(self.job.ffatype_ids, ffatype_ids)
+
+            full_list = [ffatypes[i] for i in ffatype_ids]
+            self.job.detect_ffatypes(ffatypes=full_list)
+            self.assertEqual(self.job.ffatypes, ffatypes)
+            self.assertEqual(self.job.ffatype_ids, ffatype_ids)
+
+            rules =[
+                ('H', '1 & =1%8'),
+                ('O', '8 & =2%1'),
+            ]
+            self.job.detect_ffatypes(ffatype_rules=rules)
+            self.assertEqual(self.job.ffatypes, ffatypes)
+            self.assertEqual(self.job.ffatype_ids, ffatype_ids)
+
+            self.assertRaises(IOError, self.job.detect_ffatypes, ffatype_rules=rules, ffatype_level='high')
+
+        '''
         def test_run_sp_complete(self):
             self.job_complete.structure = ase_to_pyiron(read_gaussian_out(
                 posixpath.join(self.execution_path, "../static/gaussian_test_files/sp/input.log")
@@ -276,6 +341,7 @@ class TestGaussian(unittest.TestCase):
                 output = buf.getvalue()
 
             self.assertTrue("R6Disp" in output)
+        '''
 
 
 if __name__ == "__main__":

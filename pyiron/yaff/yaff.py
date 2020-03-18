@@ -396,10 +396,10 @@ class Yaff(AtomisticGenericJob):
             self.input['jobtype'] = 'opt'
         self.input['nsteps']     = max_iter
         self.input['h5step']     = n_print
-        self.input['gpos_tol']   = gpos_tol
-        self.input['dpos_tol']   = dpos_tol
-        self.input['grvecs_tol'] = grvecs_tol
-        self.input['drvecs_tol'] = drvecs_tol
+        self.input['gpos_rms']   = gpos_tol
+        self.input['dpos_rms']   = dpos_tol
+        self.input['grvecs_rms'] = grvecs_tol
+        self.input['drvecs_rms'] = drvecs_tol
 
         super(Yaff, self).calc_minimize(max_iter=max_iter, n_print=n_print)
 
@@ -618,7 +618,6 @@ class Yaff(AtomisticGenericJob):
             raise IOError('Exactly one of ffatypes, ffatype_rules and ffatype_level should be defined')
 
         if ffatypes is not None:
-            assert ffatype_rules is None, 'ffatypes and ffatype_rules cannot be defined both'
             system.ffatypes = ffatypes
             system.ffatype_ids = None
             system._init_derived_ffatypes()
