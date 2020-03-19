@@ -185,6 +185,9 @@ class SxExtOpt(InteractiveInterface):
         if self.interactive_is_activated():
             self._interactive_library.close()
             self._interactive_library_read.close()
+            os.remove(posixpath.join(self.working_directory, "control"))
+            os.remove(posixpath.join(self.working_directory, "response"))
+
 
     def interactive_is_activated(self):
         if self._interactive_library is None:
@@ -264,8 +267,6 @@ class SxExtOpt(InteractiveInterface):
         self.end()
         if self.interactive_is_activated():
             self.interactive_close()
-        os.remove("control")
-        os.remove("response")
 
 
 class SxExtOptInteractive(InteractiveWrapper):
