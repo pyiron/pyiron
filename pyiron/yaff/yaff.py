@@ -281,10 +281,16 @@ def hdf2dict(h5):
     hdict['structure/masses'] = h5['system/masses'][:]
     hdict['structure/ffatypes'] = h5['system/ffatypes'][:]
     hdict['structure/ffatype_ids'] = h5['system/ffatype_ids'][:]
+    if 'energy' in h5['system'].keys():
+        hdict['generic/energy_pot'] = h5['system/energy'][()]/electronvolt
     if 'trajectory' in h5.keys() and 'pos' in h5['trajectory'].keys():
         hdict['generic/positions'] = h5['trajectory/pos'][:]/angstrom
     else:
         hdict['generic/positions'] = np.array([h5['system/pos'][:]/angstrom])
+    if 'trajectory' in h5.keys() and 'pos' in h5['trajectory'].keys():
+        hdict['structure/positions'] = h5['trajectory/pos'][-1]/angstrom
+    else:
+        hdict['structure/positions'] = np.array([h5['system/pos'][:]/angstrom])
     if 'trajectory' in h5.keys() and 'cell' in h5['trajectory']:
         hdict['generic/cells'] = h5['trajectory/cell'][:]/angstrom
     elif 'rvecs' in h5['system'].keys():
@@ -313,7 +319,6 @@ def hdf2dict(h5):
         if 'gradient' in h5['trajectory'].keys():
             hdict['generic/forces'] = -h5['trajectory/gradient'][:]/(electronvolt/angstrom)
     if 'hessian' in h5['system'].keys():
-        hdict['generic/energy_tot'] = h5['system/energy'][()]/electronvolt
         hdict['generic/forces'] = -h5['system/gpos'][:]/(electronvolt/angstrom)
         hdict['generic/hessian'] = h5['system/hessian'][:]/(electronvolt/angstrom**2)
     return hdict

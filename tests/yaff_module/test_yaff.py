@@ -3,16 +3,15 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import unittest
-import os,sys
+import os
 import posixpath
 
+import numpy as np
 from molmod.units import *
 
-from pyiron import ase_to_pyiron
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.base.project.generic import Project
-from pyiron.project import Project as Pr
 
 from pyiron.yaff.yaff import YaffInput
 from pyiron.yaff.yaff import Yaff
@@ -87,11 +86,26 @@ class TestYaff(unittest.TestCase):
 
 
         def test_set_mtd(self):
-            assert True
+            self.job.set_mtd([('torsion',[0,1,2,3])],1*kjmol,5.*deg, 40, stride=20, temp=300.)
+            np.testing.assert_array_equal(self.job.enhanced['ickinds'], np.array(['torsion'],dtype='S22'))
+            np.testing.assert_array_equal(self.job.enhanced['icindices'], np.array([[1,2,3,4]])) # plumed starts counting from 1
+            np.testing.assert_array_equal(self.job.enhanced['height'], np.array([1*kjmol]))
+            np.testing.assert_array_equal(self.job.enhanced['sigma'], np.array([5*deg]))
+            self.assertEqual(self.job.enhanced['pace'], 40)
+            self.assertEqual(self.job.enhanced['file'], 'HILLS')
+            self.assertEqual(self.job.enhanced['file_colvar'], 'COLVAR')
+            self.assertEqual(self.job.enhanced['stride'], 20)
+            self.assertEqual(self.job.enhanced['temp'], 300.)
 
         def test_set_us(self):
-            assert True
-
+            self.job.set_us([('torsion',[0,1,2,3])],10*kjmol,5.*deg, fn_colvar='COLVAR', temp=300.)
+            np.testing.assert_array_equal(self.job.enhanced['ickinds'], np.array(['torsion'],dtype='S22'))
+            np.testing.assert_array_equal(self.job.enhanced['icindices'], np.array([[1,2,3,4]])) # plumed starts counting from 1
+            np.testing.assert_array_equal(self.job.enhanced['kappa'], np.array([10*kjmol]))
+            np.testing.assert_array_equal(self.job.enhanced['loc'], np.array([5*deg]))
+            self.assertEqual(self.job.enhanced['file_colvar'], 'COLVAR')
+            self.assertEqual(self.job.enhanced['stride'], 10)
+            self.assertEqual(self.job.enhanced['temp'], 300.)
 
         def test_calc_static(self):
             self.job.calc_static()
@@ -162,38 +176,56 @@ class TestYaff(unittest.TestCase):
 
             self.assertRaises(IOError, self.job.detect_ffatypes, ffatype_rules=rules, ffatype_level='high')
 
-        '''
+
         def test_run_sp_complete(self):
-            self.job_complete.structure = ase_to_pyiron(read_gaussian_out(
-                posixpath.join(self.execution_path, "../static/gaussian_test_files/sp/input.log")
-            ))
-            self.job_complete.input['lot'] = 'B3LYP'
-            self.job_complete.input['basis_set'] = '6-31+G(d)'
+            self.job_complete.load_chk(
+                posixpath.join(self.execution_path, "../static/yaff_test_files/sp/system.chk")
+            )
+
+            ffpars = """
+            BONDHARM:UNIT  K kjmol/A**2
+            BONDHARM:UNIT  R0 A
+            BONDHARM:PARS  H O  4.9657739952e+03  9.6881765966e-01
+
+            BENDAHARM:UNIT  K kjmol/rad**2
+            BENDAHARM:UNIT  THETA0 deg
+            BENDAHARM:PARS  H O H  3.0369893169e+02  9.6006623652e+01
+
+            FIXQ:UNIT Q0 e
+            FIXQ:UNIT P e
+            FIXQ:UNIT R angstrom
+            FIXQ:SCALE 1 1.0
+            FIXQ:SCALE 2 1.0
+            FIXQ:SCALE 3 1.0
+            FIXQ:DIELECTRIC 1.0
+            FIXQ:ATOM   H  0.4505087957  0.7309000000
+            FIXQ:ATOM   O -0.9012059960  1.1325000000
+            """
+
+            self.job_complete.input['ffpars'] = ffpars
             self.job_complete.calc_static()
             file_directory = posixpath.join(
-                self.execution_path, '../static/gaussian_test_files/sp'
+                self.execution_path, '../static/yaff_test_files/sp'
             )
             self.job_complete.restart_file_list.append(
-                posixpath.join(file_directory, "input.log")
-            )
-            self.job_complete.restart_file_list.append(
-                posixpath.join(file_directory, "input.fchk")
+                posixpath.join(file_directory, "output.h5")
             )
 
             self.job_complete.run(run_mode="manual")
             self.job_complete.status.collect = True
             self.job_complete.run()
             nodes = [
+                "energy_pot",
                 "positions",
-                "energy_tot",
+                "cells",
             ]
             with self.job_complete.project_hdf5.open("output/generic") as h_gen:
                 hdf_nodes = h_gen.list_nodes()
                 self.assertTrue(all([node in hdf_nodes for node in nodes]))
 
             nodes = [
-                "charges",
-                "dipole",
+                "ffatype_ids",
+                "ffatypes",
                 "masses",
                 "numbers",
                 "positions",
@@ -202,50 +234,58 @@ class TestYaff(unittest.TestCase):
                 hdf_nodes = h_gen.list_nodes()
                 self.assertTrue(all([node in hdf_nodes for node in nodes]))
 
-            nodes = [
-                "alpha_orbital_e",
-                "beta_orbital_e",
-                "n_alpha_electrons",
-                "n_basis_functions",
-                "n_beta_electrons",
-                "n_electrons",
-                "scf_density",
-                "spin_scf_density",
-            ]
-            with self.job_complete.project_hdf5.open("output/structure/dft") as h_gen:
-                hdf_nodes = h_gen.list_nodes()
-                self.assertTrue(all([node in hdf_nodes for node in nodes]))
 
-        def test_run_bsse_complete(self):
-            self.job_complete.structure = ase_to_pyiron(read_gaussian_out(
-                posixpath.join(self.execution_path, "../static/gaussian_test_files/bsse/input.log")
-            ))
-            self.job_complete.input['lot'] = 'B3LYP'
-            self.job_complete.input['basis_set'] = '6-31+G(d)'
+        def test_run_minimize_complete(self):
+            self.job_complete.load_chk(
+                posixpath.join(self.execution_path, "../static/yaff_test_files/opt/opt.chk")
+            )
+
+            ffpars = """
+            BONDHARM:UNIT  K kjmol/A**2
+            BONDHARM:UNIT  R0 A
+            BONDHARM:PARS  H O  4.9657739952e+03  9.6881765966e-01
+
+            BENDAHARM:UNIT  K kjmol/rad**2
+            BENDAHARM:UNIT  THETA0 deg
+            BENDAHARM:PARS  H O H  3.0369893169e+02  9.6006623652e+01
+
+            FIXQ:UNIT Q0 e
+            FIXQ:UNIT P e
+            FIXQ:UNIT R angstrom
+            FIXQ:SCALE 1 1.0
+            FIXQ:SCALE 2 1.0
+            FIXQ:SCALE 3 1.0
+            FIXQ:DIELECTRIC 1.0
+            FIXQ:ATOM   H  0.4505087957  0.7309000000
+            FIXQ:ATOM   O -0.9012059960  1.1325000000
+            """
+
+            self.job_complete.input['ffpars'] = ffpars
             self.job_complete.calc_minimize()
             file_directory = posixpath.join(
-                self.execution_path, '../static/gaussian_test_files/bsse'
+                self.execution_path, '../static/yaff_test_files/opt'
             )
             self.job_complete.restart_file_list.append(
-                posixpath.join(file_directory, "input.log")
+                posixpath.join(file_directory, "output.h5")
             )
-            self.job_complete.restart_file_list.append(
-                posixpath.join(file_directory, "input.fchk")
-            )
+
             self.job_complete.run(run_mode="manual")
             self.job_complete.status.collect = True
             self.job_complete.run()
             nodes = [
+                "energy_pot",
                 "positions",
-                "energy_tot",
+                "cells",
+                "steps",
+                "volume",
             ]
             with self.job_complete.project_hdf5.open("output/generic") as h_gen:
                 hdf_nodes = h_gen.list_nodes()
                 self.assertTrue(all([node in hdf_nodes for node in nodes]))
 
             nodes = [
-                "charges",
-                "dipole",
+                "ffatype_ids",
+                "ffatypes",
                 "masses",
                 "numbers",
                 "positions",
@@ -253,99 +293,6 @@ class TestYaff(unittest.TestCase):
             with self.job_complete.project_hdf5.open("output/structure") as h_gen:
                 hdf_nodes = h_gen.list_nodes()
                 self.assertTrue(all([node in hdf_nodes for node in nodes]))
-
-            nodes = [
-                "alpha_orbital_e",
-                "beta_orbital_e",
-                "n_alpha_electrons",
-                "n_basis_functions",
-                "n_beta_electrons",
-                "n_electrons",
-                "scf_density",
-                "spin_scf_density",
-            ]
-            with self.job_complete.project_hdf5.open("output/structure/dft") as h_gen:
-                hdf_nodes = h_gen.list_nodes()
-                self.assertTrue(all([node in hdf_nodes for node in nodes]))
-
-            nodes = [
-                "energy_tot_corrected",
-                "bsse_correction",
-                "sum_of_fragments",
-                "complexation_energy_raw",
-                "complexation_energy_corrected",
-            ]
-            with self.job_complete.project_hdf5.open("output/structure/bsse") as h_gen:
-                hdf_nodes = h_gen.list_nodes()
-                self.assertTrue(all([node in hdf_nodes for node in nodes]))
-
-
-        def test_run_empdisp_complete(self):
-            self.job_complete.structure = ase_to_pyiron(read_gaussian_out(
-                posixpath.join(self.execution_path, "../static/gaussian_test_files/empdisp/input.log")
-            ))
-            self.job_complete.input['lot'] = 'B3LYP'
-            self.job_complete.input['basis_set'] = '6-311+G*'
-            self.job_complete.input['settings'] = {'EmpiricalDispersion':['GD3']}
-            self.job_complete.calc_static()
-
-            file_directory = posixpath.join(
-                self.execution_path, '../static/gaussian_test_files/empdisp'
-            )
-            self.job_complete.restart_file_list.append(
-                posixpath.join(file_directory, "input.log")
-            )
-            self.job_complete.restart_file_list.append(
-                posixpath.join(file_directory, "input.fchk")
-            )
-
-            self.job_complete.run(run_mode="manual")
-            self.job_complete.status.collect = True
-            self.job_complete.run()
-
-            nodes = [
-                "positions",
-                "energy_tot",
-            ]
-            with self.job_complete.project_hdf5.open("output/generic") as h_gen:
-                hdf_nodes = h_gen.list_nodes()
-                self.assertTrue(all([node in hdf_nodes for node in nodes]))
-
-            nodes = [
-                "charges",
-                "dipole",
-                "masses",
-                "numbers",
-                "positions",
-            ]
-            with self.job_complete.project_hdf5.open("output/structure") as h_gen:
-                hdf_nodes = h_gen.list_nodes()
-                self.assertTrue(all([node in hdf_nodes for node in nodes]))
-
-            nodes = [
-                "alpha_orbital_e",
-                "beta_orbital_e",
-                "n_alpha_electrons",
-                "n_basis_functions",
-                "n_beta_electrons",
-                "n_electrons",
-                "scf_density",
-                "spin_scf_density",
-            ]
-            with self.job_complete.project_hdf5.open("output/structure/dft") as h_gen:
-                hdf_nodes = h_gen.list_nodes()
-                self.assertTrue(all([node in hdf_nodes for node in nodes]))
-
-            import io
-            from contextlib import redirect_stdout
-
-            with io.StringIO() as buf, redirect_stdout(buf):
-                self.job_complete.log()
-                output = buf.getvalue()
-
-            self.assertTrue("R6Disp" in output)
-        '''
-
 
 if __name__ == "__main__":
     unittest.main()
