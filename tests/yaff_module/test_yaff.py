@@ -3,12 +3,13 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import unittest
-import os
+import os,sys
 import posixpath
 
 from molmod.units import *
 
 from pyiron import ase_to_pyiron
+from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.base.project.generic import Project
 from pyiron.project import Project as Pr
@@ -26,7 +27,7 @@ class TestYaff(unittest.TestCase):
             cls.execution_path = os.path.dirname(os.path.abspath(__file__))
             cls.project = Project(os.path.join(cls.execution_path, "test_yaff"))
             cls.job = cls.project.create_job("Yaff", "trial")
-            cls.job_complete = Gaussian(
+            cls.job_complete = Yaff(
                 project=ProjectHDFio(project=cls.project, file_name="yaff_complete"),
                 job_name="yaff_complete",
             )
@@ -39,9 +40,11 @@ class TestYaff(unittest.TestCase):
             project.remove(enable=True)
 
         def setUp(self):
-            self.job.structure = None
-            self.project.remove_job("Yaff_complete")
-            self.job_complete = Gaussian(
+            self.project.remove_job("trial")
+            self.job = self.project.create_job("Yaff", "trial")
+
+            self.project.remove_job("yaff_complete")
+            self.job_complete = Yaff(
                 project=ProjectHDFio(project=self.project, file_name="yaff_complete"),
                 job_name="yaff_complete",
             )
@@ -65,8 +68,8 @@ class TestYaff(unittest.TestCase):
             self.assertIsInstance(self.job.input['drvecs_rms'], (float))
             self.assertIsInstance(self.job.input['hessian_eps'], (float))
             self.assertIsInstance(self.job.input['timestep'], (float))
-            self.assertIsInstance(self.job.input['temp'], (None))
-            self.assertIsInstance(self.job.input['press'], (None))
+            self.assertIsInstance(self.job.input['temp'], (type(None)))
+            self.assertIsInstance(self.job.input['press'], (type(None)))
             self.assertIsInstance(self.job.input['timecon_thermo'], (float))
             self.assertIsInstance(self.job.input['timecon_baro'], (float))
             self.assertIsInstance(self.job.input['nsteps'], (int))
@@ -109,12 +112,12 @@ class TestYaff(unittest.TestCase):
             self.assertEqual(self.job.input['jobtype'], 'opt_cell')
 
         def test_calc_md_nve(self):
-            self.job.md(time_step=1.0*femtosecond)
+            self.job.calc_md(time_step=1.0*femtosecond)
             self.assertEqual(self.job.input['jobtype'], 'nve')
             self.assertEqual(self.job.input['timestep'], 1.0*femtosecond)
 
         def test_calc_md_nvt(self):
-            self.job.md(temperature=300*kelvin, time_step=1.0*femtosecond,timecon_thermo=100.0*femtosecond
+            self.job.calc_md(temperature=300*kelvin, time_step=1.0*femtosecond,timecon_thermo=100.0*femtosecond
             )
             self.assertEqual(self.job.input['jobtype'], 'nvt')
             self.assertEqual(self.job.input['temp'], 300*kelvin)
@@ -122,7 +125,7 @@ class TestYaff(unittest.TestCase):
             self.assertEqual(self.job.input['timecon_thermo'], 100.0*femtosecond)
 
         def test_calc_md_npt(self):
-            self.job.md(temperature=300*kelvin, pressure=1*bar, time_step=1.0*femtosecond,
+            self.job.calc_md(temperature=300*kelvin, pressure=1*bar, time_step=1.0*femtosecond,
                         timecon_thermo=100.0*femtosecond,timecon_baro=1000.0*femtosecond
             )
             self.assertEqual(self.job.input['jobtype'], 'npt')
@@ -140,22 +143,22 @@ class TestYaff(unittest.TestCase):
             ffatypes = self.job.ffatypes
             ffatype_ids = self.job.ffatype_ids
 
-            self.job.detect_ffatypes(ffatype_level='high')
-            self.assertEqual(self.job.ffatypes, ffatypes)
-            self.assertEqual(self.job.ffatype_ids, ffatype_ids)
+            self.job.detect_ffatypes(ffatype_level='low')
+            self.assertCountEqual(self.job.ffatypes, ffatypes)
+            self.assertCountEqual(self.job.ffatype_ids, ffatype_ids)
 
             full_list = [ffatypes[i] for i in ffatype_ids]
             self.job.detect_ffatypes(ffatypes=full_list)
-            self.assertEqual(self.job.ffatypes, ffatypes)
-            self.assertEqual(self.job.ffatype_ids, ffatype_ids)
+            self.assertCountEqual(self.job.ffatypes, ffatypes)
+            self.assertCountEqual(self.job.ffatype_ids, ffatype_ids)
 
             rules =[
                 ('H', '1 & =1%8'),
                 ('O', '8 & =2%1'),
             ]
             self.job.detect_ffatypes(ffatype_rules=rules)
-            self.assertEqual(self.job.ffatypes, ffatypes)
-            self.assertEqual(self.job.ffatype_ids, ffatype_ids)
+            self.assertCountEqual(self.job.ffatypes, ffatypes)
+            self.assertCountEqual(self.job.ffatype_ids, ffatype_ids)
 
             self.assertRaises(IOError, self.job.detect_ffatypes, ffatype_rules=rules, ffatype_level='high')
 

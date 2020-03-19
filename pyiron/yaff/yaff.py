@@ -4,6 +4,7 @@ from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob, GenericOutput
 from pyiron.base.settings.generic import Settings
 
+
 from yaff import System, log, ForceField
 from quickff.tools import set_ffatypes
 log.set_level(log.silent)
@@ -434,7 +435,7 @@ class Yaff(AtomisticGenericJob):
         self.input['temp'] = temperature
         self.input['press'] = pressure
         self.input['nsteps'] = nsteps
-        self.input['timestep'] = timestep
+        self.input['timestep'] = time_step
         self.input['h5step'] = n_print
         self.input['timecon_thermo'] = timecon_thermo
         self.input['timecon_baro'] = timecon_baro
