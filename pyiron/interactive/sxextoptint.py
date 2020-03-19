@@ -75,14 +75,14 @@ class SxExtOpt(InteractiveInterface):
         )
         self._cell = structure.cell
         if ssa:
+            self._elements = structure.get_parent_symbols()
+        else:
             magmom = structure.get_initial_magnetic_moments()
             magmom[magmom!=None] = np.round(magmom[magmom!=None], decimals=1)
             magmom = np.char.mod('%s', magmom)
             self._elements = np.char.add(structure.get_parent_symbols(), magmom)
             self._elements = np.char.replace(self._elements, '-', 'm')
             self._elements = np.char.replace(self._elements, '.', 'p')
-        else:
-            self._elements = structure.get_parent_symbols()
         self._positions = structure.positions
         self._converged = False
 
