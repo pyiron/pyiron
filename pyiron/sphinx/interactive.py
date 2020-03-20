@@ -226,8 +226,6 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
                                     hdf5_dft["atom_spin_constraints"] = h5[
                                         "interactive/atom_spin_constraints"
                                     ]
-            os.remove(posixpath.join(self.working_directory, "sxctrl"))
-            os.remove(posixpath.join(self.working_directory, "sxres"))
             super(SphinxInteractive, self).interactive_close()
 
     def calc_minimize(
