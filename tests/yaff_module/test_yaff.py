@@ -294,5 +294,180 @@ class TestYaff(unittest.TestCase):
                 hdf_nodes = h_gen.list_nodes()
                 self.assertTrue(all([node in hdf_nodes for node in nodes]))
 
+
+        def test_run_md_complete(self):
+            self.job_complete.load_chk(
+                posixpath.join(self.execution_path, "../static/yaff_test_files/md/system.chk")
+            )
+
+            ffpars = """
+            BONDHARM:UNIT  K kjmol/A**2
+            BONDHARM:UNIT  R0 A
+            BONDHARM:PARS  H O  4.9657739952e+03  9.6881765966e-01
+
+            BENDAHARM:UNIT  K kjmol/rad**2
+            BENDAHARM:UNIT  THETA0 deg
+            BENDAHARM:PARS  H O H  3.0369893169e+02  9.6006623652e+01
+
+            FIXQ:UNIT Q0 e
+            FIXQ:UNIT P e
+            FIXQ:UNIT R angstrom
+            FIXQ:SCALE 1 1.0
+            FIXQ:SCALE 2 1.0
+            FIXQ:SCALE 3 1.0
+            FIXQ:DIELECTRIC 1.0
+            FIXQ:ATOM   H  0.4505087957  0.7309000000
+            FIXQ:ATOM   O -0.9012059960  1.1325000000
+            """
+
+            self.job_complete.input['ffpars'] = ffpars
+            self.job_complete.calc_md(temperature=300*kelvin, nsteps=1000, time_step=1.0*femtosecond)
+            file_directory = posixpath.join(
+                self.execution_path, '../static/yaff_test_files/md'
+            )
+            self.job_complete.restart_file_list.append(
+                posixpath.join(file_directory, "output.h5")
+            )
+
+            self.job_complete.run(run_mode="manual")
+            self.job_complete.status.collect = True
+            self.job_complete.run()
+            nodes = [
+                "energy_pot",
+                "energy_kin",
+                "energy_tot",
+                "energy_cons",
+                "positions",
+                "cells",
+                "steps",
+                "volume",
+                "temperature",
+                "time",
+            ]
+            with self.job_complete.project_hdf5.open("output/generic") as h_gen:
+                hdf_nodes = h_gen.list_nodes()
+                self.assertTrue(all([node in hdf_nodes for node in nodes]))
+
+            nodes = [
+                "ffatype_ids",
+                "ffatypes",
+                "masses",
+                "numbers",
+                "positions",
+            ]
+            with self.job_complete.project_hdf5.open("output/structure") as h_gen:
+                hdf_nodes = h_gen.list_nodes()
+                self.assertTrue(all([node in hdf_nodes for node in nodes]))
+
+        def test_run_metadynamics_complete(self):
+            self.job_complete.load_chk(
+                posixpath.join(self.execution_path, "../static/yaff_test_files/metadynamics/system.chk")
+            )
+
+            ffpars = """
+            # BONDHARM
+            #---------
+            BONDHARM:UNIT  K kjmol/A**2
+            BONDHARM:UNIT  R0 A
+            BONDHARM:PARS      H1_n        N3  4.1645524453e+03  1.0246931776e+00
+
+            # BENDAHARM
+            #----------
+            BENDAHARM:UNIT  K kjmol/rad**2
+            BENDAHARM:UNIT  THETA0 deg
+            BENDAHARM:PARS      H1_n        N3      H1_n  3.3770180977e+02  1.0417265544e+02
+
+            # SQOOPDIST
+            #----------
+            SQOOPDIST:UNIT  K kjmol/A**4
+            SQOOPDIST:UNIT  D0 A**2
+            SQOOPDIST:PARS      H1_n      H1_n      H1_n        N3  2.9152308037e+01  5.6225686721e+00
+
+            # Cross
+            #------
+            Cross:UNIT  KSS kjmol/angstrom**2
+            Cross:UNIT  KBS0 kjmol/(angstrom*rad)
+            Cross:UNIT  KBS1 kjmol/(angstrom*rad)
+            Cross:UNIT  R0 angstrom
+            Cross:UNIT  R1 angstrom
+            Cross:UNIT  THETA0 deg
+            Cross:PARS      H1_n        N3      H1_n  -4.0297219155e+01   1.2044509670e+02   1.2044509670e+02  1.0217511358e+00  1.0217511358e+00  1.0594536883e+02
+
+            #Fixed charges
+            #---------------
+            FIXQ:UNIT Q0 e
+            FIXQ:UNIT P e
+            FIXQ:UNIT R angstrom
+            FIXQ:SCALE 1 1.0
+            FIXQ:SCALE 2 1.0
+            FIXQ:SCALE 3 1.0
+            FIXQ:DIELECTRIC 1.0
+
+            # Atomic parameters
+            # ----------------------------------------------------
+            # KEY        label  Q_0A              R_A
+            # ----------------------------------------------------
+            FIXQ:ATOM       N3  0.0000000000  1.1039000000
+            FIXQ:ATOM     H1_n  0.0000000000  0.7309000000
+            # Bond parameters
+            # ----------------------------------------------------
+            # KEY         label0   label1           P_AB
+            # ----------------------------------------------------
+            FIXQ:BOND      H1_n        N3   0.3816559688
+            """
+
+            self.job_complete.input['ffpars'] = ffpars
+            self.job_complete.calc_md(temperature=300*kelvin, nsteps=1000, time_step=0.5*femtosecond, n_print=1)
+            self.job_complete.set_mtd([('torsion',[0,1,2,3])],1*kjmol,5.*deg,40)
+            file_directory = posixpath.join(
+                self.execution_path, '../static/yaff_test_files/metadynamics'
+            )
+            self.job_complete.restart_file_list.append(
+                posixpath.join(file_directory, "output.h5")
+            )
+            self.job_complete.restart_file_list.append(
+                posixpath.join(file_directory, "COLVAR")
+            )
+
+            self.job_complete.run(run_mode="manual")
+            self.job_complete.status.collect = True
+            self.job_complete.run()
+
+            nodes = [
+                "bias",
+                "cv",
+                "time",
+            ]
+            with self.job_complete.project_hdf5.open("output/enhanced") as h_gen:
+                hdf_nodes = h_gen.list_nodes()
+                self.assertTrue(all([node in hdf_nodes for node in nodes]))
+
+            nodes = [
+                "energy_pot",
+                "energy_kin",
+                "energy_tot",
+                "energy_cons",
+                "positions",
+                "cells",
+                "steps",
+                "volume",
+                "temperature",
+                "time",
+            ]
+            with self.job_complete.project_hdf5.open("output/generic") as h_gen:
+                hdf_nodes = h_gen.list_nodes()
+                self.assertTrue(all([node in hdf_nodes for node in nodes]))
+
+            nodes = [
+                "ffatype_ids",
+                "ffatypes",
+                "masses",
+                "numbers",
+                "positions",
+            ]
+            with self.job_complete.project_hdf5.open("output/structure") as h_gen:
+                hdf_nodes = h_gen.list_nodes()
+                self.assertTrue(all([node in hdf_nodes for node in nodes]))
+
 if __name__ == "__main__":
     unittest.main()

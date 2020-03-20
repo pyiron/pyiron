@@ -1,4 +1,3 @@
-from pyiron import Project, ase_to_pyiron
 from pyiron.base.generic.parameters import GenericParameters
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob, GenericOutput
@@ -228,7 +227,7 @@ def write_plumed_enhanced(input_dict,working_directory='.'):
             if len( enhanced['icindices'][i] > 0):
                 f.write('ic%i: %s ATOMS=%s \n' %(i, kind.upper(), ','.join([str(icidx) for icidx in enhanced['icindices'][i]])))
             else:
-                f.write('ic%i: %s \n' %(i, kind.upper(), ','.join([str(icidx) for icidx in enhanced['icindices'][i]])))
+                f.write('ic%i: %s \n' %(i, kind.upper()))
 
         #define metadynamics run
         if 'sigma' in enhanced.keys():
