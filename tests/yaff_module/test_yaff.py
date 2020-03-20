@@ -39,10 +39,12 @@ class TestYaff(unittest.TestCase):
             project.remove(enable=True)
 
         def setUp(self):
-            self.project.remove_job("trial")
+            if self.project.load('trials') is not None:
+                self.project.remove_job("trial")
             self.job = self.project.create_job("Yaff", "trial")
 
-            self.project.remove_job("yaff_complete")
+            if self.project.load('yaff_complete') is not None:
+                self.project.remove_job("yaff_complete")
             self.job_complete = Yaff(
                 project=ProjectHDFio(project=self.project, file_name="yaff_complete"),
                 job_name="yaff_complete",
