@@ -441,6 +441,12 @@ class TestYaff(unittest.TestCase):
                 "time",
             ]
             with self.job_complete.project_hdf5.open("output/enhanced") as h_gen:
+                print('jan debug:', h_gen.list_nodes())
+            with self.job_complete.project_hdf5.open("output/generic") as h_gen:
+                print('jan debug:', h_gen.list_nodes())
+            with self.job_complete.project_hdf5.open("output/structure") as h_gen:
+                print('jan debug:', h_gen.list_nodes())
+            with self.job_complete.project_hdf5.open("output/enhanced") as h_gen:
                 hdf_nodes = h_gen.list_nodes()
                 self.assertTrue(all([node in hdf_nodes for node in nodes]))
 
