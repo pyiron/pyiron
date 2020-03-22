@@ -323,6 +323,7 @@ def hdf2dict(h5):
     return hdict
 
 def read_colvar(output_file,output_dict):
+    print('debug read_colvar: ', output_file, output_file.rfind('/'))
     colvar_file = os.path.join(output_file[:output_file.rfind('/')],'COLVAR')
     if os.path.exists(colvar_file):
         data = np.loadtxt(colvar_file)
