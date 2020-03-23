@@ -9,4 +9,9 @@ dependencies:
 - nglview
 - seaborn
 - ovito
+- pyscal
+- yaff
+- quickff
+- tamkin
+- molmod
 - jupyterlab=1.1.4
