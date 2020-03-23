@@ -47,7 +47,7 @@ setup(
         'psutil>=5.7.0',
         'pyfileindex>=0.0.4',
         'pysqa>=0.0.7',
-        # 'quickff>=2.2.4',
+        'quickff>=2.2.4',
         'scipy>=1.4.1',
         'six>=1.14.0',
         'spglib>=1.14.1',
