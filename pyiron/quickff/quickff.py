@@ -16,7 +16,7 @@ from molmod.constants import *
 from molmod.io.chk import load_chk, dump_chk
 from molmod.periodic import periodic as pt
 
-import os, numpy as np, h5py, matplotlib.pyplot as pp
+import os, posixpath, numpy as np, h5py, matplotlib.pyplot as pp
 
 
 def write_chk(input_dict, working_directory='.'):
@@ -29,9 +29,9 @@ def write_chk(input_dict, working_directory='.'):
     system.detect_bonds()
     system.set_standard_masses()
     # write dictionnairy to MolMod CHK file
-    system.to_file(os.path.join(working_directory,'input.chk'))
+    system.to_file(posixpath.join(working_directory,'input.chk'))
     # Reload input.chk as dictionairy and add AI input data
-    d = load_chk(os.path.join(working_directory,'input.chk'))
+    d = load_chk(posixpath.join(working_directory,'input.chk'))
 
     assert isinstance(input_dict['aiener'], float), "AI energy not defined in input, use job.read_abintio(...)"
     assert isinstance(input_dict['aigrad'], np.ndarray), "AI gradient not defined in input, use job.read_abintio(...)"
@@ -39,15 +39,15 @@ def write_chk(input_dict, working_directory='.'):
     d['energy'] = input_dict['aiener']
     d['grad'] = input_dict['aigrad']
     d['hess'] = input_dict['aihess']
-    dump_chk(os.path.join(working_directory,'input.chk'), d)
+    dump_chk(posixpath.join(working_directory,'input.chk'), d)
 
 def write_pars(pars,fn,working_directory='.'):
-    with open(os.path.join(working_directory,fn), 'w') as f:
+    with open(posixpath.join(working_directory,fn), 'w') as f:
         for line in pars:
             f.write(line)
 
 def write_config(input_dict,working_directory='.'):
-    with open(os.path.join(working_directory,'config.txt'), 'w') as f:
+    with open(posixpath.join(working_directory,'config.txt'), 'w') as f:
         for key in key_checks.keys():
             if key in input_dict.keys():
                 value = str(input_dict[key])
@@ -229,7 +229,7 @@ class QuickFF(AtomisticGenericJob):
         write_config(input_dict,working_directory=self.working_directory)
 
     def collect_output(self):
-        output_dict = collect_output(os.path.join(self.working_directory, self.input['fn_yaff']), os.path.join(self.working_directory, self.input['fn_sys']))
+        output_dict = collect_output(posixpath.join(self.working_directory, self.input['fn_yaff']), posixpath.join(self.working_directory, self.input['fn_sys']))
         with self.project_hdf5.open("output") as hdf5_output:
             for k, v in output_dict.items():
                 hdf5_output[k] = v
@@ -254,16 +254,16 @@ class QuickFF(AtomisticGenericJob):
         raise NotImplementedError
 
     def log(self):
-        with open(os.path.join(self.working_directory, 'quickff.log')) as f:
+        with open(posixpath.join(self.working_directory, 'quickff.log')) as f:
             print(f.read())
 
     def get_yaff_system(self):
-        system = System.from_file(os.path.join(self.working_directory, self.input['fn_sys']))
+        system = System.from_file(posixpath.join(self.working_directory, self.input['fn_sys']))
         return system
 
     def get_yaff_ff(self, rcut=15*angstrom, alpha_scale=3.2, gcut_scale=1.5, smooth_ei=True):
         system = self.get_yaff_system()
-        fn_pars = os.path.join(self.working_directory, self.input['fn_yaff'])
+        fn_pars = posixpath.join(self.working_directory, self.input['fn_yaff'])
         if not os.path.isfile(fn_pars):
             raise IOError('No pars.txt file find in job working directory. Have you already run the job?')
         ff = ForceField.generate(
