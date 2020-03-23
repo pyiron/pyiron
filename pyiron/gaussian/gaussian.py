@@ -115,7 +115,10 @@ class Gaussian(GenericDFTJob):
             opt_settings.append(ionic_forces)
 
         self.input['jobtype'] = 'opt' + '({})'.format(",".join(opt_settings))*(len(opt_settings)>0)
-        self.input['settings'] = settings
+        if not isinstance(self.input['settings'],dict):
+            self.input['settings'] = settings
+        else:
+            self.input['settings'].update(settings)
 
         super(Gaussian, self).calc_minimize(
             electronic_steps=electronic_steps,
@@ -135,7 +138,6 @@ class Gaussian(GenericDFTJob):
                 electronic_steps (int): maximum number of electronic steps, which can be used to achieve convergence
         '''
         settings = {}
-        
         if electronic_steps is not None:
             if not 'SCF' in settings:
                 settings['SCF'] = []
@@ -147,7 +149,10 @@ class Gaussian(GenericDFTJob):
             settings['SCF'].append(algorithm)
 
         self.input['jobtype'] = 'sp'
-        self.input['settings'] = settings
+        if not isinstance(self.input['settings'],dict):
+            self.input['settings'] = settings
+        else:
+            self.input['settings'].update(settings)
 
         super(Gaussian, self).calc_static(
             electronic_steps=electronic_steps,
