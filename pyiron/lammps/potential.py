@@ -123,6 +123,37 @@ class LammpsPotential(GenericParameters):
                 pass
         super(LammpsPotential, self).from_hdf(hdf, group_name=group_name)
         
+    def get(self, parameter_name, default_value=None):
+        """
+        Get the value of a specific parameter from GenericParameters - if the parameter is not available return
+        default_value if that is set.
+
+        Args:
+            parameter_name (str): parameter key
+            default_value (str): default value to return is the parameter is not set
+
+        Returns:
+            str: value of the parameter
+        """
+        i_line, multi_word_lst = self._find_line(parameter_name)
+        if i_line > -1:
+            val = self._dataset["Value"][i_line]
+            if multi_word_lst is not None:
+                num_words = len(multi_word_lst)
+                val = val.split(" ")
+                val = " ".join(val[(num_words - 1) :])
+            try:
+                val_v = literal_eval(val)
+            except (ValueError, SyntaxError):
+                val_v = val
+            if callable(val_v):
+                val_v = val
+            return val_v
+        elif default_value is not None:
+            return default_value
+        else:
+            raise NameError("parameter not found: " + parameter_name)
+            
     def _find_line(self, key_name):
         """
         Internal helper function to find a line by key name
