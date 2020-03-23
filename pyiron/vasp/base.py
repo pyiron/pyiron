@@ -468,24 +468,18 @@ class VaspBase(GenericDFTJob):
         """
         num_eddrmm, snap = self._get_eddrmm_info()
 
-        if not snap is None:
+        warning_string = "EDDRMM warnings occured {} times, first in ionic step {}."
+        status_string = "Status is switched to 'warning'."
+
+        if snap is not None:
             if self.get_eddrmm_handling() == "ignore":
-                self._logger.warning(
-                    "EDDRMM warnings are ignored. EDDRMM occures {} times, first in ionic step {}"
-                        .format(num_eddrmm, snap)
-                )
-            elif self.get_eddrmm_handling() == "not_converged":
-                self.status.not_converged = True
-                self._logger.warning(
-                    "EDDRMM warning occurred {} times first in ionic step {}. Status is switched to 'not_converged'."
-                    .format(num_eddrmm, snap)
-                )
+                self._logger.warning(warning_string.format(num_eddrmm, snap))
+            elif self.get_eddrmm_handling() == "warn":
+                self.status.warning = True
+                self._logger.warning(warning_string.format(num_eddrmm, snap) + status_string)
             elif self.get_eddrmm_handling() == "restart":
-                self.status.not_converged = True
-                self._logger.warning(
-                    "EDDRMM warning occurred {} times first in ionic step {}. Status is switched to 'not_converged'."
-                        .format(num_eddrmm, snap)
-                )
+                self.status.warning = True
+                self._logger.warning(warning_string.format(num_eddrmm, snap) + status_string)
                 if not self.input.incar["ALGO"].lower() == "normal":
                     ham_new = self.copy_hamiltonian(self.name + "_normal")
                     ham_new.input.incar["ALGO"] = "Normal"
@@ -777,14 +771,14 @@ class VaspBase(GenericDFTJob):
         else:
             s.logger.debug("No magnetic moments")
 
-    def set_eddrmm_handling(self, status="not_converged"):
+    def set_eddrmm_handling(self, status="warn"):
         """
         Sets the way, how EDDRMM warning is handled.
 
         Args:
-            status (str): new status of EDDRMM handling (can be 'not_converged', 'ignore', or 'restart')
+            status (str): new status of EDDRMM handling (can be 'warn', 'ignore', or 'restart')
         """
-        if status == "not_converged" or status == "ignore" or status == "restart":
+        if status == "warn" or status == "ignore" or status == "restart":
             self.input._eddrmm = status
         else:
             raise ValueError
@@ -1703,7 +1697,7 @@ class Input:
         self.kpoints = Kpoints(table_name="kpoints")
         self.potcar = Potcar(table_name="potcar")
 
-        self._eddrmm = "not_converged"
+        self._eddrmm = "warn"
 
     def write(self, structure, modified_elements, directory=None):
         """
@@ -1766,7 +1760,15 @@ class Input:
             if "vasp_dict" in hdf5_input.list_nodes():
                 vasp_dict = hdf5_input["vasp_dict"]
                 if "eddrmm_handling" in vasp_dict.keys():
-                    self._eddrmm = vasp_dict["eddrmm_handling"]
+                    self._eddrmm = self._eddrmm_backwards_compatibility(vasp_dict["eddrmm_handling"])
+
+    @staticmethod
+    def _eddrmm_backwards_compatibility(eddrmm_value):
+        """On 9-03-2020, the EDDRMM flag 'not_converged' was switched to 'warn'."""
+        if eddrmm_value == 'not_converged':
+            return 'warn'
+        else:
+            return eddrmm_value
 
 
 class Output:
