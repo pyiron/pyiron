@@ -39,7 +39,7 @@ class TestYaff(unittest.TestCase):
             project.remove(enable=True)
 
         def setUp(self):
-            if self.project.load('trials') is not None:
+            if self.project.load('trial') is not None:
                 self.project.remove_job("trial")
             self.job = self.project.create_job("Yaff", "trial")
 
