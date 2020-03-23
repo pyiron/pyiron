@@ -324,7 +324,6 @@ class SphinxBase(GenericDFTJob):
 
     def restart_from_charge_density(
             self,
-            snapshot=-1,
             job_name=None,
             job_type=None,
             band_structure_calc=False
@@ -333,7 +332,6 @@ class SphinxBase(GenericDFTJob):
         Restart a new job created from an existing Vasp calculation by reading the charge density.
 
         Args:
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Vasp job type is assumed
             band_structure_calc (bool): has to be True for band structure calculations.
@@ -342,7 +340,6 @@ class SphinxBase(GenericDFTJob):
             pyiron.sphinx.sphinx.sphinx: new job instance
         """
         ham_new = self.restart(
-            snapshot=snapshot,
             job_name=job_name,
             job_type=job_type,
             from_wave_functions=False,
@@ -354,7 +351,6 @@ class SphinxBase(GenericDFTJob):
 
     def restart_from_wave_functions(
             self,
-            snapshot=-1,
             job_name=None,
             job_type=None,
     ):
@@ -362,7 +358,6 @@ class SphinxBase(GenericDFTJob):
         Restart a new job created from an existing Vasp calculation by reading the wave functions.
 
         Args:
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Vasp job type is assumed
 
@@ -370,7 +365,6 @@ class SphinxBase(GenericDFTJob):
             pyiron.sphinx.sphinx.sphinx: new job instance
         """
         return self.restart(
-            snapshot=snapshot,
             job_name=job_name,
             job_type=job_type,
             from_wave_functions=True,
@@ -379,7 +373,6 @@ class SphinxBase(GenericDFTJob):
 
     def restart(
         self,
-        snapshot=-1,
         job_name=None,
         job_type=None,
         from_charge_density=True,
@@ -397,7 +390,7 @@ class SphinxBase(GenericDFTJob):
                 if len(w) > 0:
                     self.status.not_converged = True
         new_job = super(SphinxBase, self).restart(
-            snapshot=snapshot, job_name=job_name, job_type=job_type
+            job_name=job_name, job_type=job_type
         )
         if from_charge_density and os.path.isfile(
             posixpath.join(self.working_directory, "rho.sxb")
