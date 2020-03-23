@@ -55,6 +55,7 @@ JOB_CLASS_DICT = {
     "SxHarmPotTst": "pyiron.thermodynamics.sxphonons",
     "Gaussian": "pyiron.gaussian.gaussian",
     "Yaff": "pyiron.yaff.yaff",
+    "QuickFF": "pyiron.quickff.quickff",
 }
 
 

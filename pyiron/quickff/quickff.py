@@ -1,7 +1,7 @@
-from pyiron import Project, ase_to_pyiron
+from pyiron import Project
 from pyiron.base.generic.parameters import GenericParameters
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.atomistics.job.atomistic import AtomisticGenericJob, GenericOutput
+from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 from pyiron.base.settings.generic import Settings
 
 from collections import OrderedDict
