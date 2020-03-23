@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
+import numpy as np
 import pandas as pd
 import shutil
 import os
