@@ -12,7 +12,7 @@ from molmod.constants import *
 from molmod.periodic import periodic as pt
 import subprocess
 
-import os, numpy as np, h5py, matplotlib.pyplot as pp
+import os, posixpath, numpy as np, h5py, matplotlib.pyplot as pp
 
 
 def write_chk(input_dict,working_directory='.'):
@@ -25,10 +25,10 @@ def write_chk(input_dict,working_directory='.'):
     system.detect_bonds()
     system.set_standard_masses()
     # write dictionary to MolMod CHK file
-    system.to_file(os.path.join(working_directory,'system.chk'))
+    system.to_file(posixpath.join(working_directory,'system.chk'))
 
 def write_pars(input_dict,working_directory='.'):
-    with open(os.path.join(working_directory,'pars.txt'), 'w') as f:
+    with open(posixpath.join(working_directory,'pars.txt'), 'w') as f:
         for line in input_dict['ffpars']:
             f.write(line)
 
@@ -70,7 +70,7 @@ opt.run({nsteps})
 system.to_file('opt.chk')
 """.format(nsteps=input_dict['nsteps'])
     body+= tail
-    with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
+    with open(posixpath.join(working_directory,'yscript.py'), 'w') as f:
         f.write(body)
 
 def write_yopt_cell(input_dict,working_directory='.'):
@@ -89,7 +89,7 @@ opt.run({nsteps})
 system.to_file('opt.chk')
 """.format(nsteps=input_dict['nsteps'])
     body+= tail
-    with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
+    with open(posixpath.join(working_directory,'yscript.py'), 'w') as f:
         f.write(body)
 
 def write_ysp(input_dict,working_directory='.'):
@@ -104,7 +104,7 @@ system.to_hdf5(f)
 f['system/energy'] = energy
 """
     body+= tail
-    with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
+    with open(posixpath.join(working_directory,'yscript.py'), 'w') as f:
         f.write(body)
 
 def write_yhess(input_dict,working_directory='.'):
@@ -125,7 +125,7 @@ f['system/energy'] = energy
 f['system/gpos'] = gpos
 f['system/hessian'] = hessian""".format(hessian_eps=input_dict['hessian_eps'])
     body+= tail
-    with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
+    with open(posixpath.join(working_directory,'yscript.py'), 'w') as f:
         f.write(body)
 
 def write_ynve(input_dict,working_directory='.'):
@@ -146,7 +146,7 @@ md = VerletIntegrator(ff, {timestep}*femtosecond, hooks=hooks)
 md.run({nsteps})
 """.format(timestep=input_dict['timestep']/femtosecond, nsteps=input_dict['nsteps'])
     body+= tail
-    with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
+    with open(posixpath.join(working_directory,'yscript.py'), 'w') as f:
         f.write(body)
 
 def write_ynvt(input_dict,working_directory='.'):
@@ -174,7 +174,7 @@ md.run({nsteps})
         timecon_thermo=input_dict['timecon_thermo']/femtosecond, nsteps=input_dict['nsteps']
     )
     body+= tail
-    with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
+    with open(posixpath.join(working_directory,'yscript.py'), 'w') as f:
         f.write(body)
 
 def write_ynpt(input_dict,working_directory='.'):
@@ -206,7 +206,7 @@ md.run({nsteps})
         timecon_baro=input_dict['timecon_baro']/femtosecond, nsteps=input_dict['nsteps']
     )
     body+= tail
-    with open(os.path.join(working_directory,'yscript.py'), 'w') as f:
+    with open(posixpath.join(working_directory,'yscript.py'), 'w') as f:
         f.write(body)
 
 def write_plumed_enhanced(input_dict,working_directory='.'):
@@ -217,7 +217,7 @@ def write_plumed_enhanced(input_dict,working_directory='.'):
         enhanced[key] = value
         enhanced[key.lower()] = value
     #write plumed.dat file
-    with open(os.path.join(working_directory, 'plumed.dat'), 'w') as f:
+    with open(posixpath.join(working_directory, 'plumed.dat'), 'w') as f:
         #set units to atomic units
         f.write('UNITS LENGTH=Bohr ENERGY=kj/mol TIME=atomic \n')
         #define ics
@@ -323,7 +323,7 @@ def hdf2dict(h5):
     return hdict
 
 def read_colvar(output_file,output_dict):
-    colvar_file = os.path.join(output_file[:output_file.rfind('/')],'COLVAR')
+    colvar_file = posixpath.join(output_file[:output_file.rfind('/')],'COLVAR')
     if os.path.exists(colvar_file):
         data = np.loadtxt(colvar_file)
         output_dict['enhanced/time'] = data[:,0]
@@ -687,7 +687,7 @@ class Yaff(AtomisticGenericJob):
             write_plumed_enhanced(input_dict,working_directory=self.working_directory)
 
     def collect_output(self):
-        output_dict = collect_output(output_file=os.path.join(self.working_directory, 'output.h5'))
+        output_dict = collect_output(output_file=posixpath.join(self.working_directory, 'output.h5'))
         with self.project_hdf5.open("output") as hdf5_output:
             for k, v in output_dict.items():
                 hdf5_output[k] = v
@@ -813,7 +813,7 @@ class Yaff(AtomisticGenericJob):
                 ys -= np.mean(ys)
 
     def log(self):
-        with open(os.path.join(self.working_directory, 'yaff.log')) as f:
+        with open(posixpath.join(self.working_directory, 'yaff.log')) as f:
             print(f.read())
 
     def get_yaff_system(self, snapshot=0):
@@ -835,7 +835,7 @@ class Yaff(AtomisticGenericJob):
     def get_yaff_ff(self, system=None):
         if system is None:
             system = self.get_yaff_system()
-        fn_pars = os.path.join(self.working_directory, 'pars.txt')
+        fn_pars = posixpath.join(self.working_directory, 'pars.txt')
         if not os.path.isfile(fn_pars):
             raise IOError('No pars.txt file find in job working directory. Have you already run the job?')
         ff = ForceField.generate(
@@ -854,8 +854,8 @@ class Yaff(AtomisticGenericJob):
         '''
 
         if fn is None:
-            fn = os.path.join(self.working_directory, self.enhanced['file'])
-        fn_out = os.path.join(self.working_directory, 'fes.dat')
+            fn = posixpath.join(self.working_directory, self.enhanced['file'])
+        fn_out = posixpath.join(self.working_directory, 'fes.dat')
 
         subprocess.check_output(
             "ml load PLUMED/2.5.2-intel-2019a-Python-3.7.2; plumed sum_hills --hills {} --outfile {}".format(fn,fn_out),
