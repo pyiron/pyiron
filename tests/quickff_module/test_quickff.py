@@ -111,9 +111,9 @@ class TestQuickFF(unittest.TestCase):
             self.job.set_ei(posixpath.join(self.execution_path, "../static/quickff_test_files/pars_mbisgauss.txt"))
             self.assertEqual(self.job.input['ei'], 'pars_mbisgauss.txt')
             self.assertEqual(self.job.fn_ei, posixpath.join(self.execution_path, "../static/quickff_test_files/pars_mbisgauss.txt"))
-            self.job.set_ei(posixpath.join(self.execution_path, "../static/quickff_test_files/pars_vdw.txt"))
-            self.assertEqual(self.job.input['ei'], 'pars_vdw.txt')
-            self.assertEqual(self.job.fn_ei, posixpath.join(self.execution_path, "../static/quickff_test_files/pars_vdw.txt"))
+            self.job.set_vdw(posixpath.join(self.execution_path, "../static/quickff_test_files/pars_vdw.txt"))
+            self.assertEqual(self.job.input['vdw'], 'pars_vdw.txt')
+            self.assertEqual(self.job.fn_vdw, posixpath.join(self.execution_path, "../static/quickff_test_files/pars_vdw.txt"))
 
 
         def test_set_structure(self):
