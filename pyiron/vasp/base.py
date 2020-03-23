@@ -497,7 +497,7 @@ class VaspBase(GenericDFTJob):
         Returns:
             pyiron.vasp.vasp.Vasp: New job
         """
-        ham_new = self.restart(snapshot=0, job_name=job_name)
+        ham_new = self.restart(job_name=job_name)
         ham_new.structure = self.structure
         return ham_new
 
@@ -1379,12 +1379,11 @@ class VaspBase(GenericDFTJob):
                 es_obj.from_hdf(ho, "electrostatic_potential")
             return es_obj
 
-    def restart(self, snapshot=-1, job_name=None, job_type=None):
+    def restart(self, job_name=None, job_type=None):
         """
         Restart a new job created from an existing Vasp calculation.
 
         Args:
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Vasp job type is assumed
 
@@ -1392,7 +1391,7 @@ class VaspBase(GenericDFTJob):
             new_ham (vasp.vasp.Vasp instance): New job
         """
         new_ham = super(VaspBase, self).restart(
-            snapshot=snapshot, job_name=job_name, job_type=job_type
+            job_name=job_name, job_type=job_type
         )
         if new_ham.__name__ == self.__name__:
             new_ham.input.potcar["xc"] = self.input.potcar["xc"]
@@ -1400,7 +1399,6 @@ class VaspBase(GenericDFTJob):
 
     def restart_from_charge_density(
         self,
-        snapshot=-1,
         job_name=None,
         job_type=None,
         icharg=None,
@@ -1410,7 +1408,6 @@ class VaspBase(GenericDFTJob):
         Restart a new job created from an existing Vasp calculation by reading the charge density.
 
         Args:
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Vasp job type is assumed
             icharg (int): Vasp ICHARG tag
@@ -1419,7 +1416,7 @@ class VaspBase(GenericDFTJob):
         Returns:
             new_ham (vasp.vasp.Vasp instance): New job
         """
-        new_ham = self.restart(snapshot=snapshot, job_name=job_name, job_type=job_type)
+        new_ham = self.restart(job_name=job_name, job_type=job_type)
         if new_ham.__name__ == self.__name__:
             try:
                 new_ham.restart_file_list.append(
@@ -1467,7 +1464,6 @@ class VaspBase(GenericDFTJob):
 
     def restart_from_wave_and_charge(
         self,
-        snapshot=-1,
         job_name=None,
         job_type=None,
         icharg=None,
@@ -1479,7 +1475,6 @@ class VaspBase(GenericDFTJob):
         function.
 
         Args:
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Vasp job type is assumed
             icharg (int): Vasp ICHARG tag
@@ -1489,7 +1484,7 @@ class VaspBase(GenericDFTJob):
         Returns:
             new_ham (vasp.vasp.Vasp instance): New job
         """
-        new_ham = self.restart(snapshot=snapshot, job_name=job_name, job_type=job_type)
+        new_ham = self.restart(job_name=job_name, job_type=job_type)
         if new_ham.__name__ == self.__name__:
             try:
                 new_ham.restart_file_list.append(
@@ -1546,14 +1541,13 @@ class VaspBase(GenericDFTJob):
         super(VaspBase, self).compress(files_to_compress=files_to_compress)
 
     def restart_from_wave_functions(
-        self, snapshot=-1, job_name=None, job_type=None, istart=1
+        self, job_name=None, job_type=None, istart=1
     ):
 
         """
         Restart a new job created from an existing Vasp calculation by reading the wave functions.
 
         Args:
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Vasp job type is assumed
             istart (int): Vasp ISTART tag
@@ -1561,7 +1555,7 @@ class VaspBase(GenericDFTJob):
         Returns:
             new_ham (vasp.vasp.Vasp instance): New job
         """
-        new_ham = self.restart(snapshot=snapshot, job_name=job_name, job_type=job_type)
+        new_ham = self.restart(job_name=job_name, job_type=job_type)
         if new_ham.__name__ == self.__name__:
             try:
                 new_ham.restart_file_list.append(

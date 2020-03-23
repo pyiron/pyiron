@@ -1182,14 +1182,13 @@ class GenericJob(JobCore):
         }
         return db_dict
 
-    def restart(self, snapshot=-1, job_name=None, job_type=None):
+    def restart(self, job_name=None, job_type=None):
         """
         Create an restart calculation from the current calculation - in the GenericJob this is the same as create_job().
         A restart is only possible after the current job has finished. If you want to run the same job again with
         different input parameters use job.run(run_again=True) instead.
 
         Args:
-            snapshot (int): time step from which to restart the calculation - default=-1 - the last time step
             job_name (str): job name of the new calculation - default=<job_name>_restart
             job_type (str): job type of the new calculation - default is the same type as the exeisting calculation
 
