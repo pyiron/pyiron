@@ -1,0 +1,160 @@
+
+_____/\\\________/\\\___/\\\\\\\\\______/\\\\\\\\\\\\\\\__/\\\\\\\\\\\\\\\______
+_____\///\\\____/\\\/__/\\\\\\\\\\\\\___\ \\\///////////__\ \\\///////////______
+________\///\\\/\\\/___/\\\/////////\\\__\ \\\_____________\ \\\________________
+___________\///\\\/____\ \\\_______\ \\\__\ \\\\\\\\\\\_____\ \\\\\\\\\\\_______
+______________\ \\\_____\ \\\\\\\\\\\\\\\__\ \\\///////______\ \\\///////_______
+_______________\ \\\_____\ \\\/////////\\\__\ \\\_____________\ \\\_____________
+________________\ \\\_____\ \\\_______\ \\\__\ \\\_____________\ \\\____________
+_________________\ \\\_____\ \\\_______\ \\\__\ \\\_____________\ \\\___________
+__________________\///______\///________\///___\///______________\///___________
+
+                  Welcome to Yaff 1.6.0 - Yet another force field
+
+                                   Written by
+      Toon Verstraelen(1)*, Louis Vanduyfhuys(1) and Steven Vandenbrande(1)
+
+(1) Center for Molecular Modeling, Ghent University Belgium.
+* mailto: Toon.Verstraelen@UGent.be
+
+In a not-too-distant future, this program will be renamed to NINJAFF, which
+stands for 'NINJAFF is not just another force field code'. Please, bear with us.
+
+
+    ENV User:           vsc41947
+    ENV Platform:       Linux-3.10.0-1062.9.1.el7.ug.x86_64-x86_64-with-centos-7
+    ENV                 .7.1908-Core
+    ENV Time:           2020-03-19T17:39:03.198220
+    ENV Python version: 3.7.2 (default, Apr  9 2019, 14:23:44) [GCC 8.2.0]
+    ENV YAFF version:   1.6.0
+    ENV Current Dir:    /kyukon/scratch/gent/vo/000/gvo00003/vsc41947/pyiron/pro
+    ENV                 jects/testing_notebooks/yaff_tests/opt_hdf5/opt
+    ENV Command line:   yscript.py
+
+  UNITS The following units will be used below:
+  UNITS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  UNITS Kind          Conversion               Format Notation
+  UNITS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  UNITS        energy 3.808799176039228e-04    %10.1f kJ/mol
+  UNITS   temperature 1.000000000000000e+00    %10.1f K
+  UNITS        length 1.889726133921252e+00    %10.4f A
+  UNITS     invlength 5.291772082999999e-01    %10.5f A^-1
+  UNITS          area 3.571064861224962e+00    %10.3f A^2
+  UNITS        volume 6.748334594184680e+00    %10.3f A^3
+  UNITS          time 4.134137333664683e+01    %10.1f fs
+  UNITS          mass 1.822888627353289e+03    %10.5f amu
+  UNITS        charge 1.000000000000000e+00    %10.5f e
+  UNITS         force 2.015529714951779e-04    %10.1f kJ/mol/A
+  UNITS    forceconst 1.066572387803877e-04    %10.1f kJ/mol/A**2
+  UNITS      velocity 4.571028926719556e-02    %10.5f A/fs
+  UNITS  acceleration 1.105679022682005e-03    %10.5f A/fs**2
+  UNITS         angle 1.745329251994330e-02    %10.5f deg
+  UNITS            c6 1.000000000000000e+00    %10.5f E_h*a_0**6
+  UNITS            c8 1.000000000000000e+00    %10.5f E_h*a_0**6
+  UNITS           c12 1.000000000000000e+00    %10.5f E_h*a_0**12
+  UNITS     diffconst 8.637992821731958e-05    %10.5f A**2/ps
+  UNITS       density 1.626726283270276e+02    %10.3f g/cm^3
+  UNITS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  UNITS The internal data is divided by the corresponding conversion factor
+  UNITS before it gets printed on screen.
+
+    SYS Unit cell
+    SYS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    SYS Number of periodic dimensions: 0
+    SYS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    SYS Analysis of the bonds:
+    SYS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    SYS  First   Second   Count
+    SYS      1        8       2
+    SYS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    SYS Analysis of the neighbors:
+    SYS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    SYS Number of first neighbors:       2
+    SYS Number of second neighbors:      1
+    SYS Number of third neighbors:       0
+    SYS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    SYS Element   Neighboring elements   Count
+    SYS       1                      8       2
+    SYS       8                    1,1       1
+    SYS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    SYS The following atom types are present in the system:
+    SYS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    SYS              Atom type   ID   Number of atoms
+    SYS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    SYS                      H    0         2
+    SYS                      O    1         1
+    SYS ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+    GEN Generating force field from pars.txt
+
+ FPINIT Force part: valence
+ FPINIT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    GEN WARNING!! No charge transfer parameter for atom pair (1,0) with fftype
+    GEN           (O,H).
+    GEN WARNING!! No charge transfer parameter for atom pair (2,1) with fftype
+    GEN           (H,O).
+
+ FPINIT Force part: pair_ei
+ FPINIT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ FPINIT   scalings:          1.000 1.000 1.000
+ FPINIT   real space cutoff:    15.0000
+ FPINIT   truncation:     switch3     4.0000
+ FPINIT   alpha:                    0.00000
+ FPINIT   relative permittivity: 1.000
+ FPINIT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ FFINIT Force field with 2 parts: valence, pair_ei.
+ FFINIT Neighborlist present: True
+
+  CGOPT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  CGOPT Conv.val. = the highest ratio of a convergence criterion over its
+  CGOPT             threshold.
+  CGOPT N         = the number of convergence criteria that is not met.
+  CGOPT Worst     = the name of the convergence criterion that is worst.
+  CGOPT counter  Conv.val.  N           Worst     Energy   Walltime
+  CGOPT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  CGOPT       0  2.000e+00 -1      first_step     -526.5        0.0
+  CGOPT       1  6.219e+06  4        gpos_rms     -554.1        0.0
+  CGOPT       2  4.642e+06  4        gpos_rms     -575.4        0.0
+  CGOPT       3  2.630e+06  4        gpos_rms     -620.7        0.0
+  CGOPT       4  6.264e+05  4        gpos_rms     -623.9        0.0
+  CGOPT       5  1.162e+05  4        gpos_rms     -624.1        0.0
+  CGOPT       6  8.230e+03  4        dpos_rms     -624.1        0.0
+  CGOPT       7  3.274e+02  4        gpos_rms     -624.1        0.0
+  CGOPT       8  2.286e+01  2        dpos_rms     -624.1        0.0
+  CGOPT       9  2.080e-03  0        gpos_rms     -624.1        0.0
+  CGOPT ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    ENV User:           vsc41947
+    ENV Platform:       Linux-3.10.0-1062.9.1.el7.ug.x86_64-x86_64-with-centos-7
+    ENV                 .7.1908-Core
+    ENV Time:           2020-03-19T17:39:03.351306
+    ENV Python version: 3.7.2 (default, Apr  9 2019, 14:23:44) [GCC 8.2.0]
+    ENV YAFF version:   1.6.0
+    ENV Current Dir:    /kyukon/scratch/gent/vo/000/gvo00003/vsc41947/pyiron/pro
+    ENV                 jects/testing_notebooks/yaff_tests/opt_hdf5/opt
+    ENV Command line:   yscript.py
+
+  TIMER Overview of CPU time usage.
+  TIMER ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  TIMER Label             Total      Own
+  TIMER ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  TIMER CGOPT               0.1      0.0                                        
+  TIMER CGOPT hooks         0.0      0.0 WWW                                    
+  TIMER Generator           0.0      0.0                                        
+  TIMER Nlists              0.0      0.0                                        
+  TIMER PP ei               0.0      0.0                                        
+  TIMER Total               0.7      0.6 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+  TIMER Valence             0.0      0.0                                        
+  TIMER ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+__/\\\__________________________________________________________________/\\\____
+  \ \\\                                                                 \ \\\
+   \ \\\      End of file. Thanks for using Yaff! Come back soon!!       \ \\\
+____\///__________________________________________________________________\///__
+
