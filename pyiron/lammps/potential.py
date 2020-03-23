@@ -121,6 +121,57 @@ class LammpsPotential(GenericParameters):
             except ValueError:
                 pass
         super(LammpsPotential, self).from_hdf(hdf, group_name=group_name)
+        
+    def _find_line(self, key_name):
+        """
+        Internal helper function to find a line by key name
+
+        Args:
+            key_name (str): key name
+
+        Returns:
+            list: [line index, line]
+        """
+        params = self._dataset["Parameter"]
+        multiple_key = key_name.split()
+        multi_word_lst = [None]
+        if len(multiple_key) > 1:
+            key_length = len(multiple_key)
+            first = multiple_key[0]
+            i_line_first_lst = np.where(np.array(params) == first)[0]
+            i_line_lst, multi_word_lst = [], []
+            for i_sel in i_line_first_lst:
+                values = self._dataset["Value"][i_sel].split()
+                if len(values) < key_length:
+                    continue
+                sel_value = values[: key_length - 1]
+                is_different = False
+                for i, sel in enumerate(sel_value):
+                    if not (sel.strip() == multiple_key[i + 1].strip()):
+                        is_different = True
+                        continue
+                if is_different:
+                    continue
+                multi_word_lst.append([params[i_sel]] + sel_value)
+                i_line_lst.append(i_sel)
+        else:
+            if len(params) > 0:
+                i_line_lst = np.where(np.array(params) == key_name)[0]
+            else:
+                i_line_lst = []
+        if len(i_line_lst) == 0:
+            return -1, None
+        elif len(i_line_lst) == 1:
+            return i_line_lst[0], multi_word_lst[0]
+        else:
+            error_msg = list()
+            error_msg.append("Multiple occurrences of key_name: " + key_name + ". They are as follows")
+            for i in i_line_lst:
+                error_msg.append("dataset: {}, {}, {}".format(i,
+                                                              self._dataset["Parameter"][i],
+                                                              self._dataset["Value"][i]))
+            error_msg = "\n".join(error_msg)
+            raise ValueError(error_msg)
 
 
 class LammpsPotentialFile(PotentialAbstract):
