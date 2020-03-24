@@ -126,7 +126,7 @@ class LammpsPotential(GenericParameters):
         
     def get(self, parameter_name, default_value=None):
         """
-        Get the value of a specific parameter from GenericParameters - if the parameter is not available return
+        Get the value of a specific parameter from LammpsPotential - if the parameter is not available return
         default_value if that is set.
 
         Args:
