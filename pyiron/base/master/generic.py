@@ -531,10 +531,7 @@ class GenericMaster(GenericJob):
             parent_job:
             child_job:
         """
-        child_job.project_hdf5.file_name = parent_job.project_hdf5.file_name
-        child_job.project_hdf5.h5_path = (
-            parent_job.project_hdf5.h5_path + "/" + child_job.job_name
-        )
+        child_job.project_hdf5.h5_path = child_job.job_name
         if isinstance(child_job, GenericMaster):
             for sub_job_name in child_job._job_name_lst:
                 self._child_job_update_hdf(
