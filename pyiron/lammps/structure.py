@@ -402,10 +402,10 @@ class LammpsStructure(GenericParameters):
 
         # extract electric charges from potential file
         q_dict = {}
-        for el in self._structure.get_species_symbols():
-            q_dict[el] = float(self.potential.get("set group {} charge".format(el)))
-        species_translate_list = [self.potential.get("group {} type".format(el.Abbreviation))
-                                  for el in self.structure.species]
+        species_translate_list = []
+        for el in self.structure.get_species_symbols():
+            q_dict[el] = self.potential.get_charge(el)
+            species_translate_list.append(self.potential.get_element_id(el))
         sorted_species_list = np.array(self._potential.get_element_lst())
         molecule_lst, bonds_lst, angles_lst = [], [], []
         bond_type_lst, angle_type_lst = [], []
