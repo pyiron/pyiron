@@ -154,7 +154,7 @@ class LammpsPotential(GenericParameters):
             return default_value
         else:
             raise NameError("parameter not found: " + parameter_name)
-            
+
     def _find_line(self, key_name):
         """
         Internal helper function to find a line by key name
