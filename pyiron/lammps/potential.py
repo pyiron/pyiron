@@ -123,7 +123,7 @@ class LammpsPotential(GenericParameters):
             except ValueError:
                 pass
         super(LammpsPotential, self).from_hdf(hdf, group_name=group_name)
-        
+
     def get(self, parameter_name, default_value=None):
         """
         Get the value of a specific parameter from LammpsPotential - if the parameter is not available return
