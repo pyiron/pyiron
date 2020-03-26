@@ -55,7 +55,8 @@ setup(
         'tables>=3.6.1',
         'tamkin>=1.2.6',
         'tqdm>=4.43.0',
-        'yaff>=1.4.2'
+        'yaff>=1.4.2',
+        'seekpath>=1.9.4'
     ],
     cmdclass=versioneer.get_cmdclass(),
     )

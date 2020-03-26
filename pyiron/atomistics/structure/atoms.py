@@ -13,6 +13,7 @@ import warnings
 from ase.geometry import cellpar_to_cell, complete_cell, get_distances
 from matplotlib.colors import rgb2hex
 from scipy.interpolate import interp1d
+import seekpath
 
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
@@ -94,7 +95,6 @@ class Atoms(object):
         elements=None,
         dimension=None,
         species=None,
-        high_symmetry_points=None,
         **qwargs
     ):
         if symbols is not None:
@@ -229,8 +229,7 @@ class Atoms(object):
                 self.pbc = pbc
         self.set_initial_magnetic_moments(magmoms)
         self._high_symmetry_points = None
-        if high_symmetry_points is not None:
-            self.set_high_symmetry_points(high_symmetry_points)
+        self._high_symmetry_path = None
 
 
     @property
@@ -320,7 +319,7 @@ class Atoms(object):
         """
         return self._high_symmetry_points
 
-    def set_high_symmetry_points(self, new_high_symmetry_points):
+    def _set_high_symmetry_points(self, new_high_symmetry_points):
         """
         Sets new high symmetry points dictionary.
 
@@ -330,6 +329,51 @@ class Atoms(object):
         if not isinstance(new_high_symmetry_points, dict):
             raise ValueError("has to be dict!")
         self._high_symmetry_points = new_high_symmetry_points
+
+    def add_high_symmetry_points(self, new_points):
+        """
+        Adds new points to the dict of existing high symmetry points.
+
+        Args:
+            new_points (dict): Points to add
+        """
+        if self.get_high_symmetry_points() is None:
+            raise AssertionError("Construct high symmetry points first. Use self.band_structure_calculations().")
+        else:
+            self._high_symmetry_points.update(new_points)
+
+    def get_high_symmetry_path(self):
+        """
+        Path used for band structure calculations
+
+        Returns:
+            dict: dict of pathes with start and end points.
+
+        """
+        return self._high_symmetry_path
+
+    def _set_high_symmetry_path(self, new_path):
+        """
+        Sets new list for the high symmetry path used for band structure calculations.
+
+        Args:
+            new_path (dict): dictionary of lists of tuples with start and end point.
+                E.G. {"my_path": [('Gamma', 'X'), ('X', 'Y')]}
+        """
+        self._high_symmetry_path = new_path
+
+    def add_high_symmetry_path(self, path):
+        """
+        Adds a new path to the dictionary of pathes for band structure calculations.
+
+        Args:
+            path (dict): dictionary of lists of tuples with start and end point.
+                E.G. {"my_path": [('Gamma', 'X'), ('X', 'Y')]}
+        """
+        if self.get_high_symmetry_path() is None:
+            raise AssertionError("Construct high symmetry path first. Use self.band_structure_calculations().")
+        else:
+            self._high_symmetry_path.update(path)
 
     def new_array(self, name, a, dtype=None, shape=None):
         """
@@ -495,6 +539,9 @@ class Atoms(object):
             if self._high_symmetry_points is not None:
                 hdf_structure["high_symmetry_points"] = self._high_symmetry_points
 
+            if self._high_symmetry_path is not None:
+                hdf_structure["high_symmetry_path"] = self._high_symmetry_path
+
     def from_hdf(self, hdf, group_name="structure"):
         """
         Retrieve the object from a HDF5 file
@@ -576,6 +623,10 @@ class Atoms(object):
                 self._high_symmetry_points = None
                 if "high_symmetry_points" in hdf_atoms.list_nodes():
                     self._high_symmetry_points = hdf_atoms["high_symmetry_points"]
+
+                self._high_symmetry_path = None
+                if "high_symmetry_path" in hdf_atoms.list_nodes():
+                    self._high_symmetry_path = hdf_atoms["high_symmetry_path"]
                 return self
 
         else:
@@ -1102,6 +1153,55 @@ class Atoms(object):
                 np.mod(self.get_scaled_positions(wrap=False) + eps, 1) - eps + origin
             )
         return self
+
+    def band_structure_calculation(self,
+                                   with_time_reversal=True,
+                                   recipe='hpkot',
+                                   threshold=1e-07,
+                                   symprec=1e-05,
+                                   angle_tolerance=-1.0,
+                                   ):
+        """
+        Creates a new structure!
+
+        Uses 'seekpath' to create a new structure with high symmetry points and path for band structure calculations.
+
+        Args:
+            with_time_reversal (bool): if False, and the group has no inversion symmetry,
+                additional lines are returned as described in the HPKOT paper.
+            recipe (str): choose the reference publication that defines the special points and paths.
+                Currently, only 'hpkot' is implemented.
+            threshold (float): the threshold to use to verify if we are in and edge case
+                (e.g., a tetragonal cell, but a==c). For instance, in the tI lattice, if abs(a-c) < threshold,
+                a EdgeCaseWarning is issued. Note that depending on the bravais lattice,
+                the meaning of the threshold is different (angle, length, …)
+            symprec (float): the symmetry precision used internally by SPGLIB
+            angle_tolerance (float): the angle_tolerance used internally by SPGLIB
+
+        Returns:
+            pyiron.atomistics.structure.atoms.Atoms: new structure
+        """
+        input_structure = (self.cell, self.get_scaled_positions(), self.indices)
+        sp_dict = seekpath.get_path(structure=input_structure,
+                                    with_time_reversal=with_time_reversal,
+                                    recipe=recipe,
+                                    threshold=threshold,
+                                    symprec=symprec,
+                                    angle_tolerance=angle_tolerance,
+                                    )
+
+        original_element_list = [el.Abbreviation for el in self.species]
+        element_list = [original_element_list[l] for l in sp_dict["primitive_types"]]
+        positions = sp_dict["primitive_positions"]
+        pbc = self.pbc
+        cell = sp_dict["primitive_lattice"]
+
+        struc_new = Atoms(elements=element_list, positions=positions, pbc=pbc, cell=cell)
+
+        struc_new._set_high_symmetry_points(sp_dict["point_coords"])
+        struc_new._set_high_symmetry_path({"standard": sp_dict["path"]})
+
+        return struc_new
 
     def repeat(self, rep):
         """Create new repeated atoms object.

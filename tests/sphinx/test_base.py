@@ -286,7 +286,7 @@ class TestSphinx(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.sphinx.set_kpoints(scheme="Line", trace=trace, n_trace=20)
 
-        self.sphinx.structure.set_high_symmetry_points(high_sym_points)
+        self.sphinx.structure._set_high_symmetry_points(high_sym_points)
         with self.assertRaises(ValueError):
             self.sphinx.set_kpoints(scheme="Line", n_trace=20)
         with self.assertRaises(AssertionError):
