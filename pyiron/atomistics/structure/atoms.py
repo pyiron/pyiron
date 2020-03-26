@@ -2005,7 +2005,7 @@ class Atoms(object):
         return shell_dict
 
     def get_shell_matrix(
-        self, shell=None, id_list=None, restraint_matrix=None, num_neighbors=100
+        self, shell=None, id_list=None, restraint_matrix=None, num_neighbors=100, tolerance=2
     ):
         """
 
@@ -2014,6 +2014,7 @@ class Atoms(object):
             id_list: cf. get_neighbors
             radius: cf. get_neighbors
             num_neighbors: cf. get_neighbors
+            tolerance: cf. get_neighbors
             restraint_matrix: NxN matrix with True or False, where False will remove the entries.
                               If an integer is given the sum of the chemical indices corresponding to the number will
                               be set to True and the rest to False
@@ -2025,7 +2026,7 @@ class Atoms(object):
         if shell is not None and shell<=0:
             raise ValueError("Parameter 'shell' must be an integer greater than 0")
         neigh_list = self.get_neighbors(
-            num_neighbors=num_neighbors, id_list=id_list
+            num_neighbors=num_neighbors, id_list=id_list, tolerance=tolerance
         )
         Natom = len(self)
         if shell is None:
