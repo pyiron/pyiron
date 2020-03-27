@@ -1181,7 +1181,7 @@ class Atoms(object):
         Returns:
             pyiron.atomistics.structure.atoms.Atoms: new structure
         """
-        input_structure = (self.cell, self.get_scaled_positions(), self.indices)
+        input_structure = (np.transpose(self.cell), self.get_scaled_positions(), self.indices)
         sp_dict = seekpath.get_path(structure=input_structure,
                                     with_time_reversal=with_time_reversal,
                                     recipe=recipe,
@@ -1194,7 +1194,7 @@ class Atoms(object):
         element_list = [original_element_list[l] for l in sp_dict["primitive_types"]]
         positions = sp_dict["primitive_positions"]
         pbc = self.pbc
-        cell = sp_dict["primitive_lattice"]
+        cell = np.transpose(sp_dict["primitive_lattice"])
 
         struc_new = Atoms(elements=element_list, scaled_positions=positions, pbc=pbc, cell=cell)
 
