@@ -1097,20 +1097,25 @@ class VaspBase(GenericDFTJob):
         if scheme == "GP":
             self.input.kpoints.set(size_of_mesh=[1, 1, 1], method="Gamma Point")
         if scheme == "Line":
-            if n_path is None:
+            if n_path is None and self.input.kpoints._n_path is None:
                 raise ValueError("n_path has to be defined")
             high_symmetry_points = self.structure.get_high_symmetry_points()
             if high_symmetry_points is None:
                 raise ValueError("high_symmetry_points has to be defined")
+
             if path_name is None and self.input.kpoints._path_name is None:
                 raise ValueError("path_name has to be defined")
             if path_name not in self.structure.get_high_symmetry_path().keys():
                 raise ValueError("path_name is not a valid key of high_symmetry_path")
+
             if path_name is not None:
-                self.input.kpoints._set_path_name(path_name)
+                self.input.kpoints._path_name = path_name
+            if n_path is not None:
+                self.input.kpoints._n_path = n_path
+
             self.input.kpoints.set(
                 method="Line",
-                n_path=n_path,
+                n_path=self.input.kpoints._n_path,
                 path=self._get_path_for_kpoints(self.input.kpoints._path_name)
             )
         if scheme == "Manual":
@@ -2226,24 +2231,7 @@ class Kpoints(GenericParameters):
             comment_char="!",
         )
         self._path_name = None
-
-    def _set_path_name(self, path_name):
-        """
-        Sets high symmetry points names of k-points trace (line mode only)
-
-        Args:
-            path_name (str): new path
-        """
-        self._path_name = path_name
-
-    def _get_trace(self):
-        """
-        Returns high symmetry points name of k-points trace (Line mode only)
-
-        Returns:
-            list: trace values
-        """
-        return self._path_name
+        self._n_path = None
 
     def set(self, method=None, size_of_mesh=None, shift=None, n_path=None, path=None):
         """
@@ -2256,7 +2244,7 @@ class Kpoints(GenericParameters):
             path (list): List of tuples including path coorinate and name.
         """
         if n_path is not None:
-            if self._path_name is None or path is None:
+            if path is None:
                 raise ValueError("trace have to be defined")
 
             self.set_value(line=1, val=n_path)
@@ -2313,8 +2301,10 @@ Monkhorst_Pack
             group_name=group_name
         )
         if self._path_name is not None:
+            line_dict = {"path_name": self._path_name,
+                         "n_path": self._n_path}
             with hdf.open("kpoints") as hdf_kpoints:
-                hdf_kpoints["path_name"] = self._path_name
+                hdf_kpoints["line_dict"] = line_dict
 
     def from_hdf(self, hdf, group_name=None):
         """
@@ -2329,9 +2319,11 @@ Monkhorst_Pack
             group_name=group_name
         )
         self._path_name = None
+        self._n_path = None
         with hdf.open("kpoints") as hdf_kpoints:
-            if "path_name" is hdf_kpoints.list_nodes():
-                self._path_name = hdf_kpoints["path_name"]
+            if "line_dict" is hdf_kpoints.list_nodes():
+                self._path_name = hdf_kpoints["line_dict"]["path_name"]
+                self._n_path = hdf_kpoints["line_dict"]["n_path"]
 
 
 def get_k_mesh_by_cell(cell, kspace_per_in_ang=0.10):
