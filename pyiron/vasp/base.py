@@ -1012,8 +1012,8 @@ class VaspBase(GenericDFTJob):
         weights=None,
         reciprocal=True,
         kpoints_per_angstrom=None,
-        n_trace=None,
-        trace=None,
+        n_path=None,
+        path_name=None,
     ):
         """
         Function to setup the k-points
@@ -1028,8 +1028,8 @@ class VaspBase(GenericDFTJob):
             reciprocal (bool): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
             reciprocal space)
             kpoints_per_angstrom (float): Number of kpoint per angstrom in each direction
-            n_trace (int): Number of points per trace part for line mode
-            trace (list): ordered list of high symmetry points for line mode
+            n_path (int): Number of points per trace part for line mode
+            path_name (str): Name of high symmetry path used for band structure calculations.
         """
         if kpoints_per_angstrom is not None:
             if mesh is not None:
@@ -1049,8 +1049,8 @@ class VaspBase(GenericDFTJob):
             manual_kpoints=manual_kpoints,
             weights=weights,
             reciprocal=reciprocal,
-            n_trace=n_trace,
-            trace=trace,
+            n_path=n_path,
+            path_name=path_name,
         )
 
     def _set_kpoints(
@@ -1062,8 +1062,8 @@ class VaspBase(GenericDFTJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
-        n_trace=None,
-        trace=None,
+        n_path=None,
+        path_name=None,
     ):
         """
         Function to setup the k-points for the VASP job
@@ -1078,8 +1078,8 @@ class VaspBase(GenericDFTJob):
             reciprocal (bool): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
             reciprocal space)
             kmesh_density (float): Value of the required density
-            n_trace (int): Number of points per trace part for line mode
-            trace (list): ordered list of high symmetry points for line mode
+            n_path (int): Number of points per trace part for line mode
+            path_name (str): Name of high symmetry path used for band structure calculations.
         """
         if not symmetry_reduction:
             self.input.incar["ISYM"] = -1
@@ -1097,18 +1097,20 @@ class VaspBase(GenericDFTJob):
         if scheme == "GP":
             self.input.kpoints.set(size_of_mesh=[1, 1, 1], method="Gamma Point")
         if scheme == "Line":
-            if n_trace is None:
-                raise ValueError("n_trace has to be defined")
+            if n_path is None:
+                raise ValueError("n_path has to be defined")
             high_symmetry_points = self.structure.get_high_symmetry_points()
             if high_symmetry_points is None:
                 raise ValueError("high_symmetry_points has to be defined")
-            if trace is None:
-                raise ValueError("trace_points has to be defined")
-            self.input.kpoints._set_trace(trace)
+            if path_name is None:
+                raise ValueError("path_name has to be defined")
+            if path_name not in self.structure.get_high_symmetry_path().keys():
+                raise ValueError("path_name is not a valid key of high_symmetry_path")
+            self.input.kpoints._set_path_name(path_name)
             self.input.kpoints.set(
                 method="Line",
-                n_trace=n_trace,
-                trace_coord=self._get_trace_for_kpoints(trace)
+                n_path=n_path,
+                path=self._get_path_for_kpoints(path_name)
             )
         if scheme == "Manual":
             if manual_kpoints is None:
@@ -1134,27 +1136,24 @@ class VaspBase(GenericDFTJob):
                         val=" ".join([str(kpt[0]), str(kpt[1]), str(kpt[2]), str(wt)]),
                     )
 
-    def _get_trace_for_kpoints(self, trace):
+    def _get_path_for_kpoints(self, path_name):
         """
         gets the trace for k-points line mode in a VASP readable form.
 
         Args:
-            trace (list): ordered list of names for k-points trace
+            path_name (str): Name of the path used for band structure calculation from structure instance.
 
         Returns:
-            list: trace points coordinates for VASP
+            list: list of tuples of position and path name
         """
-        for t in trace:
-            if t not in self.structure.get_high_symmetry_points().keys():
-                raise ValueError("trace point '{}' is not in high symmetry points".format(t))
+        path = self.structure.get_high_symmetry_path()[path_name]
 
-        trace_roll = np.roll(trace, -1)
         k_trace = []
-        for i, t in enumerate(trace):
-            k_trace.append(self.structure.get_high_symmetry_points()[t])
-            k_trace.append(self.structure.get_high_symmetry_points()[trace_roll[i]])
+        for t in path:
+            k_trace.append((self.structure.get_high_symmetry_points()[t[0]], t[0]))
+            k_trace.append((self.structure.get_high_symmetry_points()[t[1]], t[1]))
 
-        return k_trace[:-2]
+        return k_trace
 
     def set_for_band_structure_calc(
         self, num_points, structure=None, read_charge_density=True
@@ -2225,16 +2224,16 @@ class Kpoints(GenericParameters):
             val_only=True,
             comment_char="!",
         )
-        self._trace = None
+        self._path_name = None
 
-    def _set_trace(self, trace):
+    def _set_path_name(self, path_name):
         """
         Sets high symmetry points names of k-points trace (line mode only)
 
         Args:
-            trace (list): new trace
+            path_name (str): new path
         """
-        self._trace = trace
+        self._path_name = path_name
 
     def _get_trace(self):
         """
@@ -2243,33 +2242,28 @@ class Kpoints(GenericParameters):
         Returns:
             list: trace values
         """
-        return self._trace
+        return self._path_name
 
-    def set(self, method=None, size_of_mesh=None, shift=None, n_trace=None, trace_coord=None):
+    def set(self, method=None, size_of_mesh=None, shift=None, n_path=None, path=None):
         """
         Sets appropriate tags and values in the KPOINTS file
         Args:
             method (str): Type of meshing scheme (Gamma, MP, Manual or Line)
             size_of_mesh (list/numpy.ndarray): List of size 1x3 specifying the required mesh size
             shift (list): List of size 1x3 specifying the user defined shift from the Gamma point
-            n_trace (int): Number of points per trace for line mode
-            trace_coord (list): coordinates of k-points trace in VASP KPOINTS format
+            n_path (int): Number of points per trace for line mode
+            path (list): List of tuples including path coorinate and name.
         """
-        if n_trace is not None:
-            if self._trace is None or trace_coord is None:
+        if n_path is not None:
+            if self._path_name is None or path is None:
                 raise ValueError("trace have to be defined")
 
-            self.set_value(line=1, val=n_trace)
+            self.set_value(line=1, val=n_path)
             self.set_value(line=3, val="rec")
 
-            trace_names = []
-            for i in range(len(self._trace) - 1):
-                trace_names.append(self._trace[i])
-                trace_names.append(self._trace[i + 1])
-
-            for i, t in enumerate(trace_coord):
-                val = " ".join([str(ii) for ii in t])
-                val = val + " !" + trace_names[i]
+            for i, t in enumerate(path):
+                val = " ".join([str(ii) for ii in t[0]])
+                val = val + " !" + t[1]
                 self.set_value(line=i + 4, val=val)
         if method is not None:
             self.set_value(line=2, val=method)
@@ -2317,13 +2311,13 @@ Monkhorst_Pack
             hdf=hdf,
             group_name=group_name
         )
-        if self._trace is not None:
+        if self._path_name is not None:
             if "vasp_dict" in hdf.list_nodes():
                 vasp_dict = hdf["vasp_dict"]
-                vasp_dict.update({"trace": self._trace})
+                vasp_dict.update({"path_name": self._path_name})
                 hdf["vasp_dict"] = vasp_dict
             else:
-                vasp_dict = {"trace": self._trace}
+                vasp_dict = {"path_name": self._path_name}
                 hdf["vasp_dict"] = vasp_dict
 
     def from_hdf(self, hdf, group_name=None):
@@ -2338,11 +2332,11 @@ Monkhorst_Pack
             hdf=hdf,
             group_name=group_name
         )
-        self._trace = None
+        self._path_name = None
         if "vasp_dict" in hdf.list_nodes():
             vasp_dict = hdf["vasp_dict"]
-            if "trace" in vasp_dict.keys():
-                self._trace = vasp_dict["trace"]
+            if "path_name" in vasp_dict.keys():
+                self._path_name = vasp_dict["path_name"]
 
 
 def get_k_mesh_by_cell(cell, kspace_per_in_ang=0.10):
