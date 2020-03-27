@@ -2312,13 +2312,8 @@ Monkhorst_Pack
             group_name=group_name
         )
         if self._path_name is not None:
-            if "vasp_dict" in hdf.list_nodes():
-                vasp_dict = hdf["vasp_dict"]
-                vasp_dict.update({"path_name": self._path_name})
-                hdf["vasp_dict"] = vasp_dict
-            else:
-                vasp_dict = {"path_name": self._path_name}
-                hdf["vasp_dict"] = vasp_dict
+            with hdf.open("kpoints") as hdf_kpoints:
+                hdf_kpoints["path_name"] = self._path_name
 
     def from_hdf(self, hdf, group_name=None):
         """
@@ -2333,10 +2328,9 @@ Monkhorst_Pack
             group_name=group_name
         )
         self._path_name = None
-        if "vasp_dict" in hdf.list_nodes():
-            vasp_dict = hdf["vasp_dict"]
-            if "path_name" in vasp_dict.keys():
-                self._path_name = vasp_dict["path_name"]
+        with hdf.open("kpoints") as hdf_kpoints:
+            if "path_name" is hdf_kpoints.list_nodes():
+                self._path_name = hdf_kpoints["path_name"]
 
 
 def get_k_mesh_by_cell(cell, kspace_per_in_ang=0.10):
