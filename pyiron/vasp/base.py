@@ -1102,15 +1102,16 @@ class VaspBase(GenericDFTJob):
             high_symmetry_points = self.structure.get_high_symmetry_points()
             if high_symmetry_points is None:
                 raise ValueError("high_symmetry_points has to be defined")
-            if path_name is None:
+            if path_name is None and self.input.kpoints._path_name is None:
                 raise ValueError("path_name has to be defined")
             if path_name not in self.structure.get_high_symmetry_path().keys():
                 raise ValueError("path_name is not a valid key of high_symmetry_path")
-            self.input.kpoints._set_path_name(path_name)
+            if path_name is not None:
+                self.input.kpoints._set_path_name(path_name)
             self.input.kpoints.set(
                 method="Line",
                 n_path=n_path,
-                path=self._get_path_for_kpoints(path_name)
+                path=self._get_path_for_kpoints(self.input.kpoints._path_name)
             )
         if scheme == "Manual":
             if manual_kpoints is None:
