@@ -72,6 +72,8 @@ class SphinxBase(GenericDFTJob):
 
         self._kpoints_odict = None
         self._generic_input["restart_for_band_structure"] = False
+        self._generic_input["kpath_name"] = None
+        self._generic_input["n_kpath"] = None
 
     @property
     def id_pyi_to_spx(self):
@@ -631,8 +633,8 @@ class SphinxBase(GenericDFTJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
-        n_trace=None,
-        trace=None,
+        n_path=None,
+        path_name=None,
     ):
         """
         Function to setup the k-points for the Sphinx job
@@ -646,8 +648,8 @@ class SphinxBase(GenericDFTJob):
             scheme (str): Type of k-point generation scheme ('MP' or 'Line')
             mesh (list): Size of the mesh (in the MP scheme)
             center_shift (list): Shifts the center of the mesh from the gamma point by the given vector
-            n_trace (int): Number of points per trace part for line mode (not active in SPHInX)
-            trace (list): ordered list of high symmetry points for line mode (not active in SPHInX)
+            n_trace (int): Number of points per trace part for line mode
+            path_name (str): Name of high symmetry path used for band structure calculations.
         """
         if not isinstance(symmetry_reduction, bool):
             raise ValueError("symmetry_reduction has to be a boolean")
@@ -662,34 +664,58 @@ class SphinxBase(GenericDFTJob):
             if center_shift is not None:
                 self.input["KpointCoords"] = str(list(center_shift))
         elif scheme == "Line":
-            if n_trace is None:
-                raise ValueError("n_trace has to be defined")
-            high_symmetry_points = self.structure.get_high_symmetry_points()
-            if high_symmetry_points is None:
+            if n_path is None and self._generic_input["n_path"] is None:
+                raise ValueError("'n_path' has to be defined")
+            if n_path is None:
+                n_path = self._generic_input["n_path"]
+            else:
+                self._generic_input["n_path"] = n_path
+
+            if self.structure.get_high_symmetry_points() is None:
                 raise ValueError("no 'high_symmetry_points' defined for 'structure'.")
-            if trace is None:
-                raise ValueError("trace_points has to be defined")
+
+            if path_name is None and self._generic_input["path_name"] is None:
+                raise ValueError("'path_name' has to be defined")
+            if path_name is None:
+                path_name = self._generic_input["path_name"]
+            else:
+                self._generic_input["path_name"] = path_name
+
+            path = self.structure.get_high_symmetry_path()[path_name]
 
             kpoints = odict([("relative", None)])
-            for point in trace:
-                if point not in self.structure.get_high_symmetry_points().keys():
-                    raise AssertionError("trace point '{}' is not in high symmetry points".format(point))
 
             kpoints["from"] = odict(
                 [
-                    ("coords", str(self.structure.get_high_symmetry_points()[trace[0]])),
-                    ("relative", None),
-                    ("label", '"' + trace[0] + '"'),
+                    ("coords", str(self.structure.get_high_symmetry_points()[path[0][0]])),
+                    ("label", '"' + path[0][0] + '"'),
                 ]
             )
-            for i, point in enumerate(trace[1:]):
-                name = "to___{}".format(i)
+            kpoints["to___0"] = odict(
+                [
+                    ("coords", str(self.structure.get_high_symmetry_points()[path[0][1]])),
+                    ("nPoints", n_path),
+                    ("label", '"' + path[0][1] + '"'),
+                ]
+            )
+
+            for i, path in enumerate(zip(path[:-1], np.roll(path, -1, 0)[:-1])):
+                if not path[0][1] == path[1][0]:
+                    name = "to___{}___1".format(i)
+                    kpoints[name] = odict(
+                        [
+                            ("coords", str(self.structure.get_high_symmetry_points()[path[1][0]])),
+                            ("nPoints", 0),
+                            ("label", '"' + path[1][0] + '"'),
+                        ]
+                    )
+
+                name = "to___{}".format(i + 1)
                 kpoints[name] = odict(
                     [
-                        ("coords", str(self.structure.get_high_symmetry_points()[point])),
-                        ("nPoints", n_trace),
-                        ("relative", None),
-                        ("label", '"' + point + '"'),
+                        ("coords", str(self.structure.get_high_symmetry_points()[path[1][1]])),
+                        ("nPoints", n_path),
+                        ("label", '"' + path[1][1] + '"'),
                     ]
                 )
 
