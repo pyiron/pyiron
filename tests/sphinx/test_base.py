@@ -40,7 +40,7 @@ class TestSphinx(unittest.TestCase):
         cls.sphinx_aborted = cls.project.create_job("Sphinx", "sphinx_test_aborted")
         cls.sphinx.structure = cls.basis
         cls.sphinx_bs.structure = cls.project.create_structure("Fe", "bcc", 2.81)
-        cls.sphinx_bs.structure = cls.sphinx_bs.structure.band_structure_calculation()
+        cls.sphinx_bs.structure = cls.sphinx_bs.structure.create_line_mode_structure()
         cls.sphinx_2_3.structure = Atoms(
             elements=["Fe", "Fe"],
             scaled_positions=[[0.0, 0.0, 0.0], [0.5, 0.5, 0.5]],
