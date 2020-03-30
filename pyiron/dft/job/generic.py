@@ -152,8 +152,8 @@ class GenericDFTJob(AtomisticGenericJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
-        n_trace=None,
-        trace=None,
+        n_path=None,
+        path_name=None,
     ):
         raise NotImplementedError(
             "The set_kpoints function is not implemented for this code."
@@ -169,8 +169,8 @@ class GenericDFTJob(AtomisticGenericJob):
         weights=None,
         reciprocal=True,
         kpoints_per_angstrom=None,
-        n_trace=None,
-        trace=None,
+        n_path=None,
+        path_name=None,
     ):
         """
         Function to setup the k-points
@@ -185,8 +185,8 @@ class GenericDFTJob(AtomisticGenericJob):
             reciprocal (bool): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
             reciprocal space)
             kpoints_per_angstrom (float): Number of kpoint per angstrom in each direction
-            n_trace (int): Number of points per trace part for line mode
-            trace (list): ordered list of high symmetry points for line mode
+            n_path (int): Number of points per trace part for line mode
+            path_name (str): Name of high symmetry path used for band structure calculations.
         """
         if kpoints_per_angstrom is not None:
             if mesh is not None:
@@ -206,8 +206,8 @@ class GenericDFTJob(AtomisticGenericJob):
             manual_kpoints=manual_kpoints,
             weights=weights,
             reciprocal=reciprocal,
-            n_trace=n_trace,
-            trace=trace,
+            n_path=n_path,
+            path_name=path_name,
         )
 
     def calc_static(
