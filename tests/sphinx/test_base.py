@@ -253,46 +253,46 @@ class TestSphinx(unittest.TestCase):
             "Y": [0, 0.5, 0],
             "M": [0.5, 0.5, 0]
         }
-        trace = ["G", "X", "M", "Y"]
-        trace_wrong = ["G", "banana", "X"]
+        trace = {"my_path": [("G", "X"), ("X", "Y"), ("M", "G")]}
         kpoints_dict = odict([('kPoints',
                                odict([('relative', None),
                                       ('from',
                                        odict([('coords', '[0, 0, 0]'),
-                                              ('relative', None),
                                               ('label', '"G"')])),
                                       ('to___0',
                                        odict([('coords', '[0.5, 0, 0]'),
                                               ('nPoints', 20),
-                                              ('relative', None),
                                               ('label', '"X"')])),
                                       ('to___1',
-                                       odict([('coords', '[0.5, 0.5, 0]'),
-                                              ('nPoints', 20),
-                                              ('relative', None),
-                                              ('label', '"M"')])),
-                                      ('to___2',
                                        odict([('coords', '[0, 0.5, 0]'),
                                               ('nPoints', 20),
-                                              ('relative', None),
-                                              ('label', '"Y"')]))]))])
+                                              ('label', '"Y"')])),
+                                      ('to___1___1',
+                                       odict([('coords', '[0.5, 0.5, 0]'),
+                                              ('nPoints', 0),
+                                              ('label', '"M"')])),
+                                      ('to___2',
+                                       odict([('coords', '[0, 0, 0]'),
+                                              ('nPoints', 20),
+                                              ('label', '"G"')]))]))])
 
         with self.assertRaises(ValueError):
             self.sphinx.set_kpoints(symmetry_reduction="pyiron rules!")
         with self.assertRaises(ValueError):
             self.sphinx.set_kpoints(scheme="no valid scheme")
         with self.assertRaises(ValueError):
-            self.sphinx.set_kpoints(scheme="Line", trace=trace)
+            self.sphinx.set_kpoints(scheme="Line", path_name="my_path")
         with self.assertRaises(ValueError):
-            self.sphinx.set_kpoints(scheme="Line", trace=trace, n_trace=20)
+            self.sphinx.set_kpoints(scheme="Line", path_name="my_path", n_path=20)
 
-        self.sphinx.structure._set_high_symmetry_points(high_sym_points)
+        self.sphinx.structure.add_high_symmetry_points(high_sym_points)
+        self.sphinx.structure.add_high_symmetry_path(trace)
         with self.assertRaises(ValueError):
-            self.sphinx.set_kpoints(scheme="Line", n_trace=20)
+            self.sphinx.set_kpoints(scheme="Line", n_path=20)
         with self.assertRaises(AssertionError):
-            self.sphinx.set_kpoints(scheme="Line", trace=trace_wrong, n_trace=20)
+            self.sphinx.set_kpoints(scheme="Line", path_name="worng name", n_path=20)
 
-        self.sphinx.set_kpoints(scheme="Line", trace=trace, n_trace=20)
+        self.sphinx.set_kpoints(scheme="Line", path_name="my_path", n_path=20)
         self.assertEqual(kpoints_dict, self.sphinx._kpoints_odict)
 
         self.sphinx.set_kpoints(scheme="MP", mesh=mesh, center_shift=center_shift)
