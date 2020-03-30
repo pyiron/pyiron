@@ -72,8 +72,8 @@ class SphinxBase(GenericDFTJob):
 
         self._kpoints_odict = None
         self._generic_input["restart_for_band_structure"] = False
-        self._generic_input["kpath_name"] = None
-        self._generic_input["n_kpath"] = None
+        self._generic_input["path_name"] = None
+        self._generic_input["n_path"] = None
 
     @property
     def id_pyi_to_spx(self):
