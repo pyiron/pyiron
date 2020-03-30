@@ -681,7 +681,10 @@ class SphinxBase(GenericDFTJob):
             else:
                 self._generic_input["path_name"] = path_name
 
-            path = self.structure.get_high_symmetry_path()[path_name]
+            try:
+                path = self.structure.get_high_symmetry_path()[path_name]
+            except KeyError:
+                raise AssertionError("'{}' is not a valid path!".format(path_name))
 
             kpoints = odict([("relative", None)])
 
