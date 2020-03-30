@@ -1199,7 +1199,7 @@ class Atoms(object):
         struc_new = Atoms(elements=element_list, scaled_positions=positions, pbc=pbc, cell=cell)
 
         struc_new._set_high_symmetry_points(sp_dict["point_coords"])
-        struc_new._set_high_symmetry_path({"standard": sp_dict["path"]})
+        struc_new._set_high_symmetry_path({"full": sp_dict["path"]})
 
         return struc_new
 
