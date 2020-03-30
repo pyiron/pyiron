@@ -688,14 +688,14 @@ class SphinxBase(GenericDFTJob):
             kpoints["from"] = odict(
                 [
                     ("coords", str(self.structure.get_high_symmetry_points()[path[0][0]])),
-                    ("label", '"' + path[0][0] + '"'),
+                    ("label", '"' + path[0][0].replace("'", "p") + '"'),
                 ]
             )
             kpoints["to___0"] = odict(
                 [
                     ("coords", str(self.structure.get_high_symmetry_points()[path[0][1]])),
                     ("nPoints", n_path),
-                    ("label", '"' + path[0][1] + '"'),
+                    ("label", '"' + path[0][1].replace("'", "p") + '"'),
                 ]
             )
 
@@ -706,7 +706,7 @@ class SphinxBase(GenericDFTJob):
                         [
                             ("coords", str(self.structure.get_high_symmetry_points()[path[1][0]])),
                             ("nPoints", 0),
-                            ("label", '"' + path[1][0] + '"'),
+                            ("label", '"' + path[1][0].replace("'", "p") + '"'),
                         ]
                     )
 
@@ -715,7 +715,7 @@ class SphinxBase(GenericDFTJob):
                     [
                         ("coords", str(self.structure.get_high_symmetry_points()[path[1][1]])),
                         ("nPoints", n_path),
-                        ("label", '"' + path[1][1] + '"'),
+                        ("label", '"' + path[1][1].replace("'", "p") + '"'),
                     ]
                 )
 
