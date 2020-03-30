@@ -338,7 +338,7 @@ class Atoms(object):
             new_points (dict): Points to add
         """
         if self.get_high_symmetry_points() is None:
-            raise AssertionError("Construct high symmetry points first. Use self.band_structure_calculations().")
+            raise AssertionError("Construct high symmetry points first. Use self.create_line_mode_structure().")
         else:
             self._high_symmetry_points.update(new_points)
 
@@ -371,9 +371,19 @@ class Atoms(object):
                 E.G. {"my_path": [('Gamma', 'X'), ('X', 'Y')]}
         """
         if self.get_high_symmetry_path() is None:
-            raise AssertionError("Construct high symmetry path first. Use self.band_structure_calculations().")
-        else:
-            self._high_symmetry_path.update(path)
+            raise AssertionError("Construct high symmetry path first. Use self.create_line_mode_structure().")
+
+        for values_all in path.values():
+            for values in values_all:
+                if not len(values) == 2:
+                    raise ValueError(
+                        "'{}' is not a propper trace! It has to contain exactly 2 values! (start and end point)".format(
+                            values))
+                for v in values:
+                    if v not in self.get_high_symmetry_points().keys():
+                        raise ValueError("'{}' is not a valid high symmetry point".format(v))
+
+        self._high_symmetry_path.update(path)
 
     def new_array(self, name, a, dtype=None, shape=None):
         """
@@ -1154,7 +1164,7 @@ class Atoms(object):
             )
         return self
 
-    def band_structure_calculation(self,
+    def create_line_mode_structure(self,
                                    with_time_reversal=True,
                                    recipe='hpkot',
                                    threshold=1e-07,
