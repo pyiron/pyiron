@@ -1172,8 +1172,6 @@ class Atoms(object):
                                    angle_tolerance=-1.0,
                                    ):
         """
-        Creates a new structure!
-
         Uses 'seekpath' to create a new structure with high symmetry points and path for band structure calculations.
 
         Args:
