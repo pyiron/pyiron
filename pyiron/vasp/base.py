@@ -59,7 +59,7 @@ class VaspBase(GenericDFTJob):
         >>> ham = VaspBase(job_name="trial_job")
         >>> ham.input.incar[IBRION] = -1
         >>> ham.input.incar[ISMEAR] = 0
-        >>> ham.input.kpoints.set(size_of_mesh=[6, 6, 6])
+        >>> ham.input.kpoints.set_kpoints_file(size_of_mesh=[6, 6, 6])
 
         However, the according to pyiron's philosophy, it is recommended to avoid using code specific tags like IBRION,
         ISMEAR etc. Therefore the recommended way to set this calculation is as follows:
@@ -1089,13 +1089,13 @@ class VaspBase(GenericDFTJob):
         if scheme == "MP":
             if mesh is None:
                 mesh = [int(val) for val in self.input.kpoints[3].split()]
-            self.input.kpoints.set(size_of_mesh=mesh, shift=center_shift)
+            self.input.kpoints.set_kpoints_file(size_of_mesh=mesh, shift=center_shift)
         if scheme == "GC":
             if mesh is None:
                 mesh = [int(val) for val in self.input.kpoints[3].split()]
-            self.input.kpoints.set(size_of_mesh=mesh, shift=center_shift, method="Gamma centered")
+            self.input.kpoints.set_kpoints_file(size_of_mesh=mesh, shift=center_shift, method="Gamma centered")
         if scheme == "GP":
-            self.input.kpoints.set(size_of_mesh=[1, 1, 1], method="Gamma Point")
+            self.input.kpoints.set_kpoints_file(size_of_mesh=[1, 1, 1], method="Gamma Point")
         if scheme == "Line":
             if n_path is None and self.input.kpoints._n_path is None:
                 raise ValueError("n_path has to be defined")
@@ -1113,7 +1113,7 @@ class VaspBase(GenericDFTJob):
             if n_path is not None:
                 self.input.kpoints._n_path = n_path
 
-            self.input.kpoints.set(
+            self.input.kpoints.set_kpoints_file(
                 method="Line",
                 n_path=self.input.kpoints._n_path,
                 path=self._get_path_for_kpoints(self.input.kpoints._path_name)
@@ -2233,7 +2233,7 @@ class Kpoints(GenericParameters):
         self._path_name = None
         self._n_path = None
 
-    def set(self, method=None, size_of_mesh=None, shift=None, n_path=None, path=None):
+    def set_kpoints_file(self, method=None, size_of_mesh=None, shift=None, n_path=None, path=None):
         """
         Sets appropriate tags and values in the KPOINTS file
         Args:
@@ -2286,7 +2286,7 @@ Monkhorst_Pack
                     structure.get_cell(),
                     kspace_per_in_ang=self._dataset["density_of_mesh"],
                 )
-                self.set(size_of_mesh=k_mesh)
+                self.set_kpoints_file(size_of_mesh=k_mesh)
 
     def to_hdf(self, hdf, group_name=None):
         """
