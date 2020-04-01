@@ -182,6 +182,12 @@ class SphinxBase(GenericDFTJob):
                 [("type", self.input["preconditioner"])]
             )
         control_str[algorithm] = odict()
+        if self.input["maxStepsCCG"] is not None:
+            control_str[algorithm]["maxStepsCCG"] = self.input["maxStepsCCG"]
+        if self.input["blockSize"] is not None and algorithm == "blockCCG":
+            control_str[algorithm]["blockSize"] = self.input["blockSize"]
+        if self.input["nSloppy"] is not None and algorithm == "blockCCG":
+            control_str[algorithm]["nSloppy"] = self.input["nSloppy"]
         if self.input["WriteWaves"] is False:
             control_str["noWavesStorage"] = None
         return control_str
