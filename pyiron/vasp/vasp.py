@@ -34,7 +34,7 @@ class Vasp(VaspInteractive):
         >>> ham = Vasp(job_name="trial_job")
         >>> ham.input.incar[IBRION] = -1
         >>> ham.input.incar[ISMEAR] = 0
-        >>> ham.input.kpoints.set(size_of_mesh=[6, 6, 6])
+        >>> ham.input.kpoints.set_kpoints_file(size_of_mesh=[6, 6, 6])
 
         However, the according to pyiron's philosophy, it is recommended to avoid using code specific tags like IBRION,
         ISMEAR etc. Therefore the recommended way to set this calculation is as follows:

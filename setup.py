@@ -49,6 +49,7 @@ setup(
         'pysqa>=0.0.7',
         'quickff>=2.2.4',
         'scipy>=1.4.1',
+        'seekpath>=1.9.4',
         'six>=1.14.0',
         'spglib>=1.14.1',
         'sqlalchemy>=1.3.14',
