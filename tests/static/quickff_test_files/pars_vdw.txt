@@ -1,0 +1,17 @@
+# van der Waals
+#==============
+# The following mathemetical form is supported:
+#  - MM3:   EPSILON*(1.84e5*exp(-12*r/SIGMA)-2.25*(SIGMA/r)^6)
+#  - LJ:    4.0*EPSILON*((SIGMA/r)^12 - (SIGMA/r)^6)
+
+MM3:UNIT SIGMA angstrom
+MM3:UNIT EPSILON kcalmol
+MM3:SCALE 1 0.0
+MM3:SCALE 2 0.0
+MM3:SCALE 3 1.0
+
+# ---------------------------------------------
+# KEY      ffatype    SIGMA  EPSILON  ONLYPAULI
+# ---------------------------------------------
+MM3:PARS        C    1.960    0.056    0       #
+MM3:PARS        H    1.620    0.020    0

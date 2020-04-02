@@ -274,6 +274,8 @@ class SxExtOpt(InteractiveInterface):
         self.end()
         if self.interactive_is_activated():
             self.interactive_close()
+        os.remove("control")
+        os.remove("response")
 
 
 class SxExtOptInteractive(InteractiveWrapper):
