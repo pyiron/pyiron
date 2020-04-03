@@ -11,7 +11,7 @@ from pyiron.dft.waves.dos import Dos
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH "
     "- Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -164,8 +164,8 @@ class ElectronicStructure(object):
     @property
     def eigenvalue_matrix(self):
         """
-        numpy.ndarray: A getter function to return the eigenvalue_matrix. The eigenvalue for a given kpoint index i and band index j
-                       is given by eigenvalue_matrix[i][j]
+        numpy.ndarray: A getter function to return the eigenvalue_matrix. The eigenvalue for a given kpoint index i and
+                       band index j is given by eigenvalue_matrix[i][j]
 
         """
         if self._eigenvalue_matrix is None and len(self.kpoints) > 0:
@@ -183,8 +183,8 @@ class ElectronicStructure(object):
     @property
     def occupancy_matrix(self):
         """
-        numpy.ndarray: A getter function to return the occupancy_matrix. The occupancy for a given kpoint index i and band index j
-                       is given by occupancy_matrix[i][j]
+        numpy.ndarray: A getter function to return the occupancy_matrix. The occupancy for a given kpoint index i and
+                       band index j is given by occupancy_matrix[i][j]
         """
         if self._occupancy_matrix is None and len(self.kpoints) > 0:
             self._occupancy_matrix = np.zeros(
@@ -675,7 +675,7 @@ class ElectronicStructure(object):
             pass
         if not self.is_metal:
             output_string.append(
-                "Band Gap: {}".format(self.get_band_gap(resolution=1.0e-4)["band_gap"])
+                "Band Gap: {} eV".format(self.get_band_gap(resolution=1.0e-4)["band_gap"])
             )
         return "\n".join(output_string)
 

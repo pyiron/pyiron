@@ -20,11 +20,10 @@ from pyiron.base.pyio.parser import Logstatus, extract_data_from_file
 from pyiron.lammps.control import LammpsControl
 from pyiron.lammps.potential import LammpsPotential
 from pyiron.lammps.structure import LammpsStructure, UnfoldingPrism
-from pyiron.atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH "
     "- Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -58,7 +57,56 @@ class LammpsBase(AtomisticGenericJob):
         self._cutoff_radius = None
         self._is_continuation = None
         self._compress_by_default = True
+        self._prism = None
         s.publication_add(self.publication)
+
+    @property
+    def bond_dict(self):
+        """
+        A dictionary which defines the nature of LAMMPS bonds that are to be drawn between atoms. To set the values, use
+        the function `define_bonds`.
+
+        Returns:
+            dict: Dictionary of the bond properties for every species
+
+        """
+        return self.input.bond_dict
+
+    def define_bonds(self, species, element_list, cutoff_list, max_bond_list, bond_type_list, angle_type_list=None):
+        """
+        Define the nature of bonds between different species. Make sure that the bonds between two species are defined
+        only once (no double counting).
+
+        Args:
+            species (str): Species for which the bonds are to be drawn (e.g. O, H, C ..)
+            element_list (list): List of species to which the bonds are to be made (e.g. O, H, C, ..)
+            cutoff_list (list): Draw bonds only for atoms within this cutoff distance
+            max_bond_list (list): Maximum number of bonds drawn from each molecule
+            bond_type_list (list): Type of the bond as defined in the LAMMPS potential file
+            angle_type_list (list): Type of the angle as defined in the LAMMPS potential file
+
+        Example:
+            The command below defined bonds between O and H atoms within a cutoff raduis of 2 $\AA$ with the bond and
+            angle types 1 defined in the potential file used
+
+            >> job_lammps.define_bonds(species="O", element_list-["H"], cutoff_list=[2.0], bond_type_list=[1],
+            angle_type_list=[1])
+
+        """
+        if isinstance(species, str):
+            if len(element_list) == len(cutoff_list) == bond_type_list == max_bond_list:
+                self.input.bond_dict[species] = dict()
+                self.input.bond_dict[species]["element_list"] = element_list
+                self.input.bond_dict[species]["cutoff_list"] = cutoff_list
+                self.input.bond_dict[species]["bond_type_list"] = bond_type_list
+                self.input.bond_dict[species]["max_bond_list"] = max_bond_list
+                if angle_type_list is not None:
+                    self.input.bond_dict[species]["angle_type_list"] = angle_type_list
+                else:
+                    self.input.bond_dict[species]["angle_type_list"] = [None]
+            else:
+                raise ValueError("The element list, cutoff list, max bond list, and the bond type list"
+                                 " must have the same length")
 
     @property
     def cutoff_radius(self):
@@ -102,10 +150,7 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
 
         """
-        if sys.version_info.major == 2:
-            stringtypes = (str, unicode)
-        else:
-            stringtypes = str
+        stringtypes = str
         if isinstance(potential_filename, stringtypes):
             if ".lmp" in potential_filename:
                 potential_filename = potential_filename.split(".lmp")[0]
@@ -120,6 +165,11 @@ class LammpsBase(AtomisticGenericJob):
             v = self.input.potential[val]
             if v is not None:
                 self.input.control[val] = v
+                if val == "units" and v != "metal":
+                    warnings.warn(
+                        "WARNING: Non-'metal' units are not fully supported. Your calculation should run OK, but "
+                        "results may not be saved in pyiron units."
+                    )
         self.input.potential.remove_structure_block()
 
     @property
@@ -136,6 +186,7 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
             list: potential names
         """
+
         return self.list_potentials()
 
     @property
@@ -366,8 +417,11 @@ class LammpsBase(AtomisticGenericJob):
         Returns:
 
         """
+        prism = UnfoldingPrism(self.structure.cell, digits=15)
+        if np.matrix.trace(prism.R) != 3:
+            raise RuntimeError("The Lammps output will not be mapped back to pyiron correctly.")
         file_name = self.job_file_name(file_name=file_name, cwd=cwd)
-        with h5py.File(file_name, "r", libver="latest", swmr=True) as h5md:
+        with h5py.File(file_name, mode="r", libver="latest", swmr=True) as h5md:
             positions = [
                 pos_i.tolist() for pos_i in h5md["/particles/all/position/value"]
             ]
@@ -378,11 +432,48 @@ class LammpsBase(AtomisticGenericJob):
                 np.eye(3) * np.array(cell_i.tolist())
                 for cell_i in h5md["/particles/all/box/edges/value"]
             ]
+            indices = [indices_i.tolist() for indices_i in h5md["/particles/all/indices/value"]]
         with self.project_hdf5.open("output/generic") as h5_file:
             h5_file["forces"] = np.array(forces)
             h5_file["positions"] = np.array(positions)
             h5_file["time"] = np.array(time)
             h5_file["cells"] = cell
+            h5_file["indices"] = self.remap_indices(indices)
+
+    def remap_indices(self, lammps_indices):
+        """
+        Give the Lammps-dumped indices, re-maps these back onto the structure's indices to preserve the species.
+
+        The issue is that for an N-element potential, Lammps dumps the chemical index from 1 to N based on the order
+        that these species are written in the Lammps input file. But the indices for a given structure are based on the
+        order in which chemical species were added to that structure, and run from 0 up to the number of species
+        currently in that structure. Therefore we need to be a little careful with mapping.
+
+        Args:
+            indices (numpy.ndarray/list): The Lammps-dumped integers.
+
+        Returns:
+            numpy.ndarray: Those integers mapped onto the structure.
+        """
+        lammps_symbol_order = np.array(self.input.potential.get_element_lst())
+
+        # If new Lammps indices are present for which we have no species, extend the species list
+        unique_lammps_indices = np.unique(lammps_indices)
+        if len(unique_lammps_indices) > len(np.unique(self.structure.indices)):
+            unique_lammps_indices -= 1  # Convert from Lammps start counting at 1 to python start counting at 0
+            new_lammps_symbols = lammps_symbol_order[unique_lammps_indices]
+            self.structure.set_species([self.structure.convert_element(el) for el in new_lammps_symbols])
+
+        # Create a map between the lammps indices and structure indices to preserve species
+        structure_symbol_order = np.array([el.Abbreviation for el in self.structure.species])
+        map_ = np.array([int(np.argwhere(lammps_symbol_order == symbol)[0]) + 1 for symbol in structure_symbol_order])
+
+        structure_indices = np.array(lammps_indices)
+        for i_struct, i_lammps in enumerate(map_):
+            np.place(structure_indices, lammps_indices == i_lammps, i_struct)
+        # TODO: Vectorize this for-loop for computational efficiency
+
+        return structure_indices
 
     def collect_errors(self, file_name, cwd=None):
         """
@@ -421,21 +512,12 @@ class LammpsBase(AtomisticGenericJob):
             l_end = np.where([line.startswith("Loop") for line in f])[0]
             if len(l_start) > len(l_end):
                 l_end = np.append(l_end, [None])
-            if sys.version_info >= (3,):
-                df = [
-                    pd.read_csv(
-                        StringIO("\n".join(f[llst:llen])), delim_whitespace=True
-                    )
-                    for llst, llen in zip(l_start, l_end)
-                ]
-            else:
-                df = [
-                    pd.read_csv(
-                        StringIO(unicode("\n".join(f[llst:llen]))),
-                        delim_whitespace=True,
-                    )
-                    for llst, llen in zip(l_start, l_end)
-                ]
+            df = [
+                pd.read_csv(
+                    StringIO("\n".join(f[llst:llen])), delim_whitespace=True
+                )
+                for llst, llen in zip(l_start, l_end)
+            ]
         df = df[-1]
 
         h5_dict = {
@@ -446,11 +528,14 @@ class LammpsBase(AtomisticGenericJob):
             "Volume": "volume",
         }
 
+        for key in df.columns[df.columns.str.startswith('f_mean')]:
+            h5_dict[key] = key.replace('f_', '')
+
         df = df.rename(index=str, columns=h5_dict)
         pressures = np.stack(
             (df.Pxx, df.Pxy, df.Pxz, df.Pxy, df.Pyy, df.Pyz, df.Pxz, df.Pyz, df.Pzz),
             axis=-1,
-        ).reshape(-1, 3, 3)
+        ).reshape(-1, 3, 3).astype('float64')
         pressures *= 0.0001  # bar -> GPa
         df = df.drop(
             columns=df.columns[
@@ -458,6 +543,20 @@ class LammpsBase(AtomisticGenericJob):
             ]
         )
         df["pressures"] = pressures.tolist()
+        if 'mean_pressure[1]' in df.columns:
+            pressures = np.stack(
+                (df['mean_pressure[1]'], df['mean_pressure[4]'], df['mean_pressure[5]'],
+                 df['mean_pressure[4]'], df['mean_pressure[2]'], df['mean_pressure[6]'],
+                 df['mean_pressure[5]'], df['mean_pressure[6]'], df['mean_pressure[3]']),
+                axis=-1,
+            ).reshape(-1, 3, 3).astype('float64')
+            pressures *= 0.0001  # bar -> GPa
+            df = df.drop(
+                columns=df.columns[
+                    (df.columns.str.startswith("mean_pressure") & df.columns.str.endswith(']'))
+                ]
+            )
+            df["mean_pressures"] = pressures.tolist()
 
         with self.project_hdf5.open("output/generic") as hdf_output:
             # This is a hack for backward comparability
@@ -465,20 +564,16 @@ class LammpsBase(AtomisticGenericJob):
                 hdf_output[k] = np.array(v)
 
     def calc_minimize(
-        self, e_tol=0.0, f_tol=1e-2, max_iter=100000, pressure=None, n_print=100
+            self,
+            e_tol=0.0,
+            f_tol=1e-4,
+            max_iter=1000000,
+            pressure=None,
+            n_print=100,
+            style='cg'
     ):
-        """
-
-        Args:
-            e_tol:
-            f_tol:
-            max_iter:
-            pressure:
-            n_print:
-
-        Returns:
-
-        """
+        self._ensure_requested_cell_deformation_allowed(pressure)
+        # Docstring set programmatically -- Ensure that changes to signature or defaults stay consistent!
         super(LammpsBase, self).calc_minimize(
             e_tol=e_tol,
             f_tol=f_tol,
@@ -492,7 +587,9 @@ class LammpsBase(AtomisticGenericJob):
             max_iter=max_iter,
             pressure=pressure,
             n_print=n_print,
+            style=style,
         )
+    calc_minimize.__doc__ = LammpsControl.calc_minimize.__doc__
 
     def calc_static(self):
         """
@@ -519,40 +616,12 @@ class LammpsBase(AtomisticGenericJob):
         delta_temp=None,
         delta_press=None,
     ):
-        """
-        Set an MD calculation within LAMMPS. Nosé Hoover is used by default.
-
-        Args:
-            temperature (None/float): Target temperature. If set to None, an NVE calculation is performed.
-                                      It is required when the pressure is set or langevin is set
-            pressure (None/float): Target pressure. If set to None, an NVE or an NVT calculation is performed.
-                                   (This tag will allow for a list in the future as it is done for calc_minimize())
-            n_ionic_steps (int): Number of ionic steps
-            time_step (float): Step size between two steps. In fs if units==metal
-            n_print (int):  Print frequency
-            temperature_damping_timescale (float): The time associated with the thermostat adjusting the temperature.
-                                                   (In fs. After rescaling to appropriate time units, is equivalent to
-                                                   Lammps' `Tdamp`.)
-            pressure_damping_timescale (float): The time associated with the barostat adjusting the temperature.
-                                                (In fs. After rescaling to appropriate time units, is equivalent to
-                                                Lammps' `Pdamp`.)
-            seed (int):  Seed for the random number generation (required for the velocity creation)
-            tloop:
-            initial_temperature (None/float):  Initial temperature according to which the initial velocity field
-                                               is created. If None, the initial temperature will be twice the target
-                                               temperature (which would go immediately down to the target temperature
-                                               as described in equipartition theorem). If 0, the velocity field is not
-                                               initialized (in which case  the initial velocity given in structure will
-                                               be used). If any other number is given, this value is going to be used
-                                               for the initial temperature.
-            langevin (bool): (True or False) Activate Langevin dynamics
-            delta_temp (float): Thermostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
-            delta_press (float): Barostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
-        """
+        # Docstring set programmatically -- Ensure that changes to signature or defaults stay consistent!
         if self.server.run_mode.interactive_non_modal:
             warnings.warn(
                 "calc_md() is not implemented for the non modal interactive mode use calc_static()!"
             )
+        self._ensure_requested_cell_deformation_allowed(pressure)
         super(LammpsBase, self).calc_md(
             temperature=temperature,
             pressure=pressure,
@@ -580,6 +649,97 @@ class LammpsBase(AtomisticGenericJob):
             langevin=langevin,
             delta_temp=delta_temp,
             delta_press=delta_press,
+            job_name=self.job_name,
+        )
+    calc_md.__doc__ = LammpsControl.calc_md.__doc__
+
+    def calc_vcsgc(
+        self,
+        mu=None,
+        target_concentration=None,
+        kappa=1000.,
+        mc_step_interval=100,
+        swap_fraction=0.1,
+        temperature_mc=None,
+        window_size=None,
+        window_moves=None,
+        temperature=None,
+        pressure=None,
+        n_ionic_steps=1000,
+        time_step=1.0,
+        n_print=100,
+        temperature_damping_timescale=100.0,
+        pressure_damping_timescale=1000.0,
+        seed=None,
+        initial_temperature=None,
+        langevin=False
+    ):
+        """
+        Run variance-constrained semi-grand-canonical MD/MC for a binary system. In addition to VC-SGC arguments, all
+        arguments for a regular MD calculation are also accepted.
+
+        https://vcsgc-lammps.materialsmodeling.org
+
+        Note:
+            For easy visualization later (with `get_structure`), it is highly recommended that the initial structure
+            contain at least one atom of each species.
+
+        Warning:
+            - The fix does not yet support non-orthogonal simulation boxes; using one will give a runtime error.
+
+        Args:
+            mu (dict): A dictionary of chemical potentials, one for each element the potential treats, where the
+                dictionary keys are just the chemical symbol. Note that only the *relative* chemical potentials are used
+                here, such that the swap acceptance probability is influenced by the chemical potential difference
+                between the two species (a more negative value increases the odds of swapping *to* that element.)
+                (Default is None, all elements have the same chemical potential.)
+            target_concentration: A dictionary of target simulation domain concentrations for each species *in the
+                potential*. Dictionary keys should be the chemical symbol of the corresponding species, and the sum of
+                all concentrations must be 1. (Default is None, which runs regular semi-grand-canonical MD/MC without
+                any variance constraint.)
+            kappa: Variance constraint for the MC. Larger value means a tighter adherence to the target concentrations.
+                (Default is 1000.)
+            mc_step_interval (int): How many steps of MD between each set of MC moves. (Default is 100.) Must divide the
+                number of ionic steps evenly.
+            swap_fraction (float): The fraction of atoms whose species is swapped at each MC phase. (Default is 0.1.)
+            temperature_mc (float): The temperature for accepting MC steps. (Default is None, which uses the MD
+                temperature.)
+            window_size (float): The size of the sampling window for parallel calculations as a fraction of something
+                unspecified in the VC-SGC docs, but it must lie between 0.5 and 1. (Default is None, window is
+                determined automatically.)
+            window_moves (int): The number of times the sampling window is moved during one MC cycle. (Default is None,
+                number of moves is determined automatically.)
+        """
+        if mu is None:
+            mu = {}
+            for el in self.input.potential.get_element_lst():
+                mu[el] = 0.
+
+        self._generic_input["calc_mode"] = "vcsgc"
+        self._generic_input["temperature"] = temperature
+        self._generic_input["n_ionic_steps"] = n_ionic_steps
+        self._generic_input["n_print"] = n_print
+        self._generic_input.remove_keys(["max_iter"])
+        self.input.control.calc_vcsgc(
+            mu=mu,
+            ordered_element_list=self.input.potential.get_element_lst(),
+            target_concentration=target_concentration,
+            kappa=kappa,
+            mc_step_interval=mc_step_interval,
+            swap_fraction=swap_fraction,
+            temperature_mc=temperature_mc,
+            window_size=window_size,
+            window_moves=window_moves,
+            temperature=temperature,
+            pressure=pressure,
+            n_ionic_steps=n_ionic_steps,
+            time_step=time_step,
+            n_print=n_print,
+            temperature_damping_timescale=temperature_damping_timescale,
+            pressure_damping_timescale=pressure_damping_timescale,
+            seed=seed,
+            initial_temperature=initial_temperature,
+            langevin=langevin,
             job_name=self.job_name,
         )
 
@@ -667,8 +827,7 @@ class LammpsBase(AtomisticGenericJob):
         output = {}
         with open(file_name, "r") as ff:
             dump = ff.readlines()
-        prism = UnfoldingPrism(self.structure.cell, digits=15)
-        rotation_lammps2orig = np.linalg.inv(prism.R)
+
         time = np.genfromtxt(
             [
                 dump[nn]
@@ -679,6 +838,7 @@ class LammpsBase(AtomisticGenericJob):
         )
         time = np.array([time]).flatten()
         output["time"] = time
+
         natoms = np.genfromtxt(
             [
                 dump[nn]
@@ -690,11 +850,14 @@ class LammpsBase(AtomisticGenericJob):
             dtype=int,
         )
         natoms = np.array([natoms]).flatten()
+
+        prism = self._prism
+        rotation_lammps2orig = self._prism.R.T
         cells = np.genfromtxt(
             " ".join(
                 (
                     [
-                        " ".join(dump[nn : nn + 3])
+                        " ".join(dump[nn:nn + 3])
                         for nn in np.where(
                             [ll.startswith("ITEM: BOX BOUNDS") for ll in dump]
                         )[0]
@@ -703,8 +866,11 @@ class LammpsBase(AtomisticGenericJob):
                 )
             ).split()
         ).reshape(len(natoms), -1)
-        cells = np.array([to_amat(cc) for cc in cells])
-        output["cells"] = cells
+        lammps_cells = np.array([to_amat(cc) for cc in cells])
+        unfolded_cells = np.array([prism.unfold_cell(cell) for cell in lammps_cells])
+        output["cells"] = unfolded_cells
+
+
         l_start = np.where([ll.startswith("ITEM: ATOMS") for ll in dump])[0]
         l_end = l_start + natoms + 1
         content = [
@@ -715,20 +881,60 @@ class LammpsBase(AtomisticGenericJob):
             for llst, llen in zip(l_start, l_end)
         ]
 
+        indices = np.array([cc["type"] for cc in content], dtype=int)
+        output["indices"] = self.remap_indices(indices)
+
         forces = np.array(
             [np.stack((cc["fx"], cc["fy"], cc["fz"]), axis=-1) for cc in content]
         )
-        output["forces"] = np.einsum("ijk,kl->ijl", forces, rotation_lammps2orig)
-        unwrapped_positions = np.array(
+        output["forces"] = np.matmul(forces, rotation_lammps2orig)
+
+        if 'f_mean_forces[1]' in content[0].keys():
+            forces = np.array(
+                [np.stack((cc["f_mean_forces[1]"],
+                           cc["f_mean_forces[2]"],
+                           cc["f_mean_forces[3]"]),
+                          axis=-1) for cc in content]
+            )
+            output["mean_forces"] = np.matmul(forces, rotation_lammps2orig)
+
+        if np.all([flag in content[0].columns.values for flag in ["vx", "vy", "vz"]]):
+            velocities = np.array(
+                [np.stack((cc["vx"], cc["vy"], cc["vz"]), axis=-1) for cc in content]
+            )
+            output["velocities"] = np.matmul(velocities, rotation_lammps2orig)
+
+        if 'f_mean_velocities[1]' in content[0].keys():
+            velocities = np.array(
+                [np.stack((cc["f_mean_velocities[1]"],
+                           cc["f_mean_velocities[2]"],
+                           cc["f_mean_velocities[3]"]),
+                          axis=-1) for cc in content]
+            )
+            output["mean_velocities"] = np.matmul(velocities, rotation_lammps2orig)
+        direct_unwrapped_positions = np.array(
             [np.stack((cc["xsu"], cc["ysu"], cc["zsu"]), axis=-1) for cc in content]
         )
-        positions = unwrapped_positions - np.floor(unwrapped_positions)
-        unwrapped_positions = np.einsum("ikj,ilk->ilj", cells, unwrapped_positions)
-        output["unwrapped_positions"] = np.einsum(
-            "ijk,kl->ijl", unwrapped_positions, rotation_lammps2orig
-        )
-        positions = np.einsum("ikj,ilk->ilj", cells, positions)
-        output["positions"] = np.einsum("ijk,kl->ijl", positions, rotation_lammps2orig)
+        unwrapped_positions = np.matmul(direct_unwrapped_positions, lammps_cells)
+        output["unwrapped_positions"] = np.matmul(unwrapped_positions, rotation_lammps2orig)
+        if 'f_mean_positions[1]' in content[0].keys():
+            direct_unwrapped_positions = np.array(
+                [np.stack((cc["f_mean_positions[1]"],
+                           cc["f_mean_positions[2]"],
+                           cc["f_mean_positions[3]"]),
+                          axis=-1) for cc in content]
+            )
+            unwrapped_positions = np.matmul(direct_unwrapped_positions, lammps_cells)
+            output["mean_unwrapped_positions"] = np.matmul(unwrapped_positions, rotation_lammps2orig)
+
+        direct_positions = direct_unwrapped_positions - np.floor(direct_unwrapped_positions)
+        positions = np.matmul(direct_positions, lammps_cells)
+        output["positions"] = np.matmul(positions, rotation_lammps2orig)
+
+        keys = content[0].keys()
+        for kk in keys[keys.str.startswith('c_')]:
+            output[kk.replace('c_', '')] = np.array([cc[kk] for cc in content], dtype=float)
+
         with self.project_hdf5.open("output/generic") as hdf_output:
             for k, v in output.items():
                 hdf_output[k] = v
@@ -746,12 +952,11 @@ class LammpsBase(AtomisticGenericJob):
         print("This function is outdated use the potential setter instead!")
         self.potential = file_name
 
-    def next(self, snapshot=-1, job_name=None, job_type=None):
+    def next(self, job_name=None, job_type=None):
         """
         Restart a new job created from an existing Lammps calculation.
         Args:
             project (pyiron.project.Project instance): Project instance at which the new job should be created
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Lammps job type is assumed
 
@@ -759,15 +964,14 @@ class LammpsBase(AtomisticGenericJob):
             new_ham (lammps.lammps.Lammps instance): New job
         """
         return super(LammpsBase, self).restart(
-            snapshot=snapshot, job_name=job_name, job_type=job_type
+            job_name=job_name, job_type=job_type
         )
 
-    def restart(self, snapshot=-1, job_name=None, job_type=None):
+    def restart(self, job_name=None, job_type=None):
         """
         Restart a new job created from an existing Lammps calculation.
         Args:
             project (pyiron.project.Project instance): Project instance at which the new job should be created
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Lammps job type is assumed
 
@@ -775,7 +979,7 @@ class LammpsBase(AtomisticGenericJob):
             new_ham (lammps.lammps.Lammps instance): New job
         """
         new_ham = super(LammpsBase, self).restart(
-            snapshot=snapshot, job_name=job_name, job_type=job_type
+            job_name=job_name, job_type=job_type
         )
         if new_ham.__name__ == self.__name__:
             new_ham.potential = self.potential
@@ -787,7 +991,7 @@ class LammpsBase(AtomisticGenericJob):
         return new_ham
 
     def _get_lammps_structure(self, structure=None, cutoff_radius=None):
-        lmp_structure = LammpsStructure()
+        lmp_structure = LammpsStructure(bond_dict=self.input.bond_dict)
         lmp_structure.potential = self.input.potential
         lmp_structure.atom_type = self.input.control["atom_style"]
         if cutoff_radius is not None:
@@ -795,10 +999,27 @@ class LammpsBase(AtomisticGenericJob):
         else:
             lmp_structure.cutoff_radius = self.cutoff_radius
         lmp_structure.el_eam_lst = self.input.potential.get_element_lst()
+
+        def structure_to_lammps(structure):
+            """
+            Converts a structure to the Lammps coordinate frame
+
+            Args:
+                structure (pyiron.atomistics.structure.atoms.Atoms): Structure to convert.
+
+            Returns:
+                pyiron.atomistics.structure.atoms.Atoms: Structure with the LAMMPS coordinate frame.
+            """
+            prism = UnfoldingPrism(structure.cell)
+            lammps_structure = structure.copy()
+            lammps_structure.set_cell(prism.A)
+            lammps_structure.positions = np.matmul(structure.positions, prism.R)
+            return lammps_structure
+
         if structure is not None:
-            lmp_structure.structure = structure
+            lmp_structure.structure = structure_to_lammps(structure)
         else:
-            lmp_structure.structure = self.structure
+            lmp_structure.structure = structure_to_lammps(self.structure)
         if not set(lmp_structure.structure.get_species_symbols()).issubset(
             set(lmp_structure.el_eam_lst)
         ):
@@ -915,11 +1136,54 @@ class LammpsBase(AtomisticGenericJob):
                             "velocity___constraintz"
                         ] = "set NULL NULL 0.0"
 
+    def _ensure_requested_cell_deformation_allowed(self, pressure):
+        """
+        Lammps will not allow xy/xz/yz cell deformations in minimization or MD for non-triclinic cells. In case the
+        requested pressure for a calculation has these non-diagonal entries, we need to make sure it will run. One way
+        to do this is by invoking the lammps `change_box` command, but it is easier to just force our box to to be
+        triclinic by adding a very small cell perturbation (in the case where it isn't triclinic already).
+
+        Args:
+            pressure (float/int/list/numpy.ndarray/tuple): Between three and six pressures for the x, y, z, xy, xz, and
+                yz directions, in that order, or a single value.
+        """
+        if hasattr(pressure, '__len__'):
+            non_diagonal_pressures = np.any([p is not None for p in pressure[3:]])
+
+            if non_diagonal_pressures:
+                try:
+                    if not self._prism.is_skewed():
+                        skew_structure = self.structure.copy()
+                        skew_structure.cell[0, 1] += 2 * self._prism.acc
+                        self.structure = skew_structure
+                except AttributeError:
+                    warnings.warn(
+                        "WARNING: Setting a calculation type which uses pressure before setting the structure risks " +
+                        "constraining your cell shape evolution if non-diagonal pressures are used but the structure " +
+                        "is not triclinic from the start of the calculation."
+                    )
+
 
 class Input:
     def __init__(self):
         self.control = LammpsControl()
         self.potential = LammpsPotential()
+        self.bond_dict = dict()
+        # Set default bond parameters
+        self._load_default_bond_params()
+
+    def _load_default_bond_params(self):
+        """
+        Function to automatically load a few default bond params (wont automatically write them)
+
+        """
+        # Default bond properties of a water molecule
+        self.bond_dict["O"] = dict()
+        self.bond_dict["O"]["element_list"] = ["H"]
+        self.bond_dict["O"]["cutoff_list"] = [2.0]
+        self.bond_dict["O"]["max_bond_list"] = [2]
+        self.bond_dict["O"]["bond_type_list"] = [1]
+        self.bond_dict["O"]["angle_type_list"] = [1]
 
     def to_hdf(self, hdf5):
         """
@@ -946,6 +1210,8 @@ class Input:
         with hdf5.open("input") as hdf5_input:
             self.control.from_hdf(hdf5_input)
             self.potential.from_hdf(hdf5_input)
+            if "bond_dict" in hdf5_input.list_nodes():
+                self.bond_dict = hdf5_input["bond_dict"]
 
 
 def to_amat(l_list):

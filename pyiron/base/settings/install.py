@@ -9,15 +9,11 @@ from shutil import copytree, rmtree
 import tempfile
 import stat
 import sys
-
-if sys.version_info >= (3,):
-    import urllib.request as urllib2
-else:
-    import urllib as urllib2
+import urllib.request as urllib2
 
 __author__ = "Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -46,6 +42,8 @@ def _download_resources(
     user_directory = os.path.normpath(
         os.path.abspath(os.path.expanduser(resource_directory))
     )
+    if os.path.exists(user_directory) and not os.listdir(user_directory):
+        os.rmdir(user_directory)
     temp_directory = tempfile.gettempdir()
     temp_zip_file = os.path.join(temp_directory, zip_file)
     temp_extract_folder = os.path.join(temp_directory, git_folder_name)
@@ -96,6 +94,31 @@ def _write_config_file(
         )
         if not os.path.exists(project_path):
             os.makedirs(project_path)
+
+
+def install_dialog():
+    user_input = None
+    if "PYIRONCONFIG" in os.environ.keys():
+        config_file = os.environ["PYIRONCONFIG"]
+    else:
+        config_file = "~/.pyiron"
+    if not os.path.exists(os.path.expanduser(config_file)):
+        while user_input not in ["yes", "no"]:
+            user_input = input(
+                "It appears that pyiron is not yet configured, do you want to create a default start configuration (recommended: yes). [yes/no]:"
+            )
+        if user_input.lower() == "yes" or user_input.lower() == "y":
+            install_pyiron(
+                config_file_name="~/.pyiron",
+                zip_file="resources.zip",
+                resource_directory="~/pyiron/resources",
+                giturl_for_zip_file="https://github.com/pyiron/pyiron-resources/archive/master.zip",
+                git_folder_name="pyiron-resources-master",
+            )
+        else:
+            raise ValueError("pyiron was not installed!")
+    else:
+        print("pyiron is already installed.")
 
 
 def install_pyiron(

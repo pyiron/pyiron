@@ -37,7 +37,7 @@ pyiron - an integrated development environment (IDE) for computational materials
     :align: center
     :alt: Screenshot of pyiron running inside jupyterlab.
 
-pyiron (called pyron) is developed in the `Computational Materials Design department <https://www.mpie.de/CM>`_ of `Joerg Neugebauer <https://www.mpie.de/person/43010/2763386>`_ at the `Max Planck Insitut für Eisenforschung (Max Planck Insitute for iron research) <https://www.mpie.de/2281/en>`_. While its original focus was to provide a framework to develop and run complex simulation protocols as needed for ab initio thermodynamics it quickly evolved into a versatile tool to manage a wide variety of simulation tasks. In 2016 the `Interdisciplinary Centre for Advanced Materials Simulation (ICAMS) <http://www.icams.de>`_ joined the development of the framework with a specific focus on high throughput applications. In 2018 pyiron was released as open-source project.
+pyiron (called pyron) is developed in the `Computational Materials Design department <https://www.mpie.de/CM>`_ of `Joerg Neugebauer <https://www.mpie.de/person/43010/2763386>`_ at the `Max Planck Institut für Eisenforschung (Max Planck Institute for iron research) <https://www.mpie.de/2281/en>`_. While its original focus was to provide a framework to develop and run complex simulation protocols as needed for ab initio thermodynamics it quickly evolved into a versatile tool to manage a wide variety of simulation tasks. In 2016 the `Interdisciplinary Centre for Advanced Materials Simulation (ICAMS) <http://www.icams.de>`_ joined the development of the framework with a specific focus on high throughput applications. In 2018 pyiron was released as open-source project.
 
 .. note::
 
@@ -68,6 +68,9 @@ Please contact us if you are interested in using pyiron:
 ****
 News
 ****
+* **20th December 2019:** Announcement of the `1st pyiron workshop <http://potentials.rub.de>`_ in Bochum (Germany) from the 31st of March to the 2nd of April 2020. 
+* **09th November 2019:** pyiron was downloaded over 10000 times on `conda-forge <https://anaconda.org/conda-forge/pyiron/>`_ and gained attention with over 50 stars on `github <https://github.com/pyiron/pyiron/stargazers/>`_.
+* **10th October 2019:** pyiron 0.2.9 released.
 * **20th June 2019:** pyiron was downloaded over 5000 times on `conda-forge <https://anaconda.org/conda-forge/pyiron/>`_ and 70% of our code are `covered with unit tests <https://coveralls.io/github/pyiron/pyiron?branch=master>`_.
 * **10th May 2019:** pyiron documentation hosted on `readthedocs.org <https://pyiron.readthedocs.io>`_.
 * **24th March 2019:** pyiron 0.2.2 released.

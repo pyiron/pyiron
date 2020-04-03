@@ -13,7 +13,7 @@ Set of functions to interact with the queuing system directly from within pyiron
 
 __author__ = "Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -27,7 +27,7 @@ QUEUE_SCRIPT_PREFIX = "pi_"
 s = Settings()
 
 
-def queue_table(job_ids=[], project_only=True):
+def queue_table(job_ids=[], project_only=True, full_table=False):
     """
     Display the queuing system table as pandas.Dataframe
 
@@ -41,6 +41,12 @@ def queue_table(job_ids=[], project_only=True):
     if project_only and not job_ids:
         return []
     if s.queue_adapter is not None:
+        if full_table:
+            pandas.set_option('display.max_rows', None)
+            pandas.set_option('display.max_columns', None)
+        else:
+            pandas.reset_option('display.max_rows')
+            pandas.reset_option('display.max_columns')
         df = s.queue_adapter.get_status_of_my_jobs()
         if not project_only:
             return df[
@@ -140,7 +146,10 @@ def queue_enable_reservation(item):
     """
     que_id = _validate_que_request(item)
     if s.queue_adapter is not None:
-        return s.queue_adapter.enable_reservation(process_id=que_id)
+        if isinstance(que_id, list):
+            return [s.queue_adapter.enable_reservation(process_id=q) for q in que_id]
+        else:
+            return s.queue_adapter.enable_reservation(process_id=que_id)
     else:
         return None
 
@@ -189,6 +198,14 @@ def _validate_que_request(item):
 
     if isinstance(item, int):
         que_id = item
+    elif static_isinstance(item.__class__, "pyiron.base.master.generic.GenericMaster"):
+        if item.server.queue_id:
+            que_id = item.server.queue_id
+        else:
+            queue_id_lst = [item.project.load(child_id).server.queue_id for child_id in item.child_ids]
+            que_id = [queue_id for queue_id in queue_id_lst if queue_id is not None]
+            if len(que_id) == 0:
+                raise ValueError("This job does not have a queue ID.")
     elif static_isinstance(item.__class__, "pyiron.base.job.generic.GenericJob"):
         if item.server.queue_id:
             que_id = item.server.queue_id

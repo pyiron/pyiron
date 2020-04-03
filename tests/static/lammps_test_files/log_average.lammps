@@ -1,0 +1,100 @@
+LAMMPS (7 Aug 2019)
+units metal
+dimension 3
+boundary p p p
+atom_style atomic
+read_data structure.inp
+  orthogonal box = (0 0 0) to (2.85531 2.85531 2.85531)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  2 atoms
+  read_data CPU = 0.000164986 secs
+include potential.inp
+pair_style eam/alloy
+pair_coeff * * Fe-C-Bec07.eam Fe C
+fix ensemble all nvt temp 300.0 300.0 0.1
+variable dumptime  equal 100
+variable thermotime  equal 100
+variable mean_repeat_times equal round(${thermotime}/100)
+variable mean_repeat_times equal round(100/100)
+variable pressure_0 equal pxx
+variable pressure_1 equal pyy
+variable pressure_2 equal pzz
+variable pressure_3 equal pxy
+variable pressure_4 equal pxz
+variable pressure_5 equal pyz
+fix mean_pressure all ave/time 100 ${mean_repeat_times} ${thermotime} v_pressure_0 v_pressure_1 v_pressure_2 v_pressure_3 v_pressure_4 v_pressure_5
+fix mean_pressure all ave/time 100 1 ${thermotime} v_pressure_0 v_pressure_1 v_pressure_2 v_pressure_3 v_pressure_4 v_pressure_5
+fix mean_pressure all ave/time 100 1 100 v_pressure_0 v_pressure_1 v_pressure_2 v_pressure_3 v_pressure_4 v_pressure_5
+variable energy_pot equal pe
+fix mean_energy_pot all ave/time 100 ${mean_repeat_times} ${thermotime} v_energy_pot
+fix mean_energy_pot all ave/time 100 1 ${thermotime} v_energy_pot
+fix mean_energy_pot all ave/time 100 1 100 v_energy_pot
+compute unwrap all property/atom xu yu zu
+fix mean_positions all ave/atom 100 ${mean_repeat_times} ${thermotime} c_unwrap[*]
+fix mean_positions all ave/atom 100 1 ${thermotime} c_unwrap[*]
+fix mean_positions all ave/atom 100 1 100 c_unwrap[*]
+variable forces_0 atom fx
+variable forces_1 atom fy
+variable forces_2 atom fz
+fix mean_forces all ave/atom 100 ${mean_repeat_times} ${thermotime} v_forces_0 v_forces_1 v_forces_2
+fix mean_forces all ave/atom 100 1 ${thermotime} v_forces_0 v_forces_1 v_forces_2
+fix mean_forces all ave/atom 100 1 100 v_forces_0 v_forces_1 v_forces_2
+variable velocities_0 atom vx
+variable velocities_1 atom vy
+variable velocities_2 atom vz
+fix mean_velocities all ave/atom 100 ${mean_repeat_times} ${thermotime} v_velocities_0 v_velocities_1 v_velocities_2
+fix mean_velocities all ave/atom 100 1 ${thermotime} v_velocities_0 v_velocities_1 v_velocities_2
+fix mean_velocities all ave/atom 100 1 100 v_velocities_0 v_velocities_1 v_velocities_2
+timestep 0.001
+velocity all create 600.0 95987 dist gaussian
+dump 1 all custom ${dumptime} dump.out id type xsu ysu zsu fx fy fz vx vy vz f_mean_positions[1] f_mean_positions[2] f_mean_positions[3] f_mean_forces[1] f_mean_forces[2] f_mean_forces[3] f_mean_velocities[1] f_mean_velocities[2] f_mean_velocities[3]
+dump 1 all custom 100 dump.out id type xsu ysu zsu fx fy fz vx vy vz f_mean_positions[1] f_mean_positions[2] f_mean_positions[3] f_mean_forces[1] f_mean_forces[2] f_mean_forces[3] f_mean_velocities[1] f_mean_velocities[2] f_mean_velocities[3]
+dump_modify 1 sort id format line "%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g"
+thermo_style custom step temp pe etotal pxx pxy pxz pyy pyz pzz vol f_mean_pressure[1] f_mean_pressure[2] f_mean_pressure[3] f_mean_pressure[4] f_mean_pressure[5] f_mean_pressure[6] f_mean_energy_pot
+thermo_modify format float %20.15g
+thermo 100
+run 100
+Neighbor list info ...
+  update every 1 steps, delay 10 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 7.3
+  ghost atom cutoff = 7.3
+  binsize = 3.65, bins = 1 1 1
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair eam/alloy, perpetual
+      attributes: half, newton on
+      pair build: half/bin/atomonly/newton
+      stencil: half/bin/3d/newton
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 5.741 | 5.741 | 5.741 Mbytes
+Step Temp PotEng TotEng Pxx Pxy Pxz Pyy Pyz Pzz Volume f_mean_pressure[1] f_mean_pressure[2] f_mean_pressure[3] f_mean_pressure[4] f_mean_pressure[5] f_mean_pressure[6] f_mean_energy_pot 
+       0                  600    -8.02596461247695    -7.94840852547695     6612.51755361564      3449.1429748548    -3869.25143626309     1799.10257776791     -2018.2334077934     2264.05710533302     23.2788195556051     6612.51755361564     1799.10257776791     2264.05710533302      3449.1429748548    -3869.25143626309     -2018.2334077934    -8.02596461247695 
+     100     34.9200264026377    -7.95318991200314    -7.94867614432693      3457.9876878008      8293.1808509035     -9325.6916367435     12879.0933229819    -5575.40535940473     11922.5685128284     23.2788195556051      3457.9876878008     12879.0933229819     11922.5685128284      8293.1808509035     -9325.6916367435    -5575.40535940473    -7.95318991200314 
+Loop time of 0.00145006 on 1 procs for 100 steps with 2 atoms
+
+Performance: 5958.367 ns/day, 0.004 hours/ns, 68962.578 timesteps/s
+100.1% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.00082779 | 0.00082779 | 0.00082779 |   0.0 | 57.09
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00037503 | 0.00037503 | 0.00037503 |   0.0 | 25.86
+Output  | 7.2002e-05 | 7.2002e-05 | 7.2002e-05 |   0.0 |  4.97
+Modify  | 0.00010657 | 0.00010657 | 0.00010657 |   0.0 |  7.35
+Other   |            | 6.866e-05  |            |       |  4.74
+
+Nlocal:    2 ave 2 max 2 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:    557 ave 557 max 557 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:    136 ave 136 max 136 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 136
+Ave neighs/atom = 68
+Neighbor list builds = 0
+Dangerous builds = 0
+Total wall time: 0:00:00

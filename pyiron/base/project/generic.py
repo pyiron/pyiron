@@ -9,6 +9,13 @@ import shutil
 import pandas
 import importlib
 import numpy as np
+import pkgutil
+
+try:
+    from git import Repo, InvalidGitRepositoryError
+except ImportError:
+    pass
+
 from pyiron.base.project.path import ProjectPath
 from pyiron.base.database.filetable import FileTable
 from pyiron.base.settings.generic import Settings
@@ -41,7 +48,7 @@ The project object is the central import point of pyiron - all other objects can
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -448,6 +455,28 @@ class Project(ProjectPath):
         )
         return folder_size / (1024 * 1024.0)
 
+    @staticmethod
+    def get_repository_status():
+        """
+        Finds the hashes for every `pyiron` module available.
+
+        Returns:
+            pandas.DataFrame: The name of each module and the hash for its current git head.
+        """
+        module_names = [name for _, name, _ in pkgutil.iter_modules() if name.startswith("pyiron")]
+
+        report = pandas.DataFrame(columns=['Module', 'Git head'], index=range(len(module_names)))
+        for i, name in enumerate(module_names):
+            try:
+                module = importlib.import_module(name)
+                repo = Repo(os.path.dirname(os.path.dirname(module.__file__)))
+                hash_ = repo.head.reference.commit.hexsha
+                report.loc[i] = [name, hash_]
+            except InvalidGitRepositoryError:
+                report.loc[i] = [name, 'Not a repo']
+
+        return report
+
     def groups(self):
         """
         Filter project by groups
@@ -532,6 +561,7 @@ class Project(ProjectPath):
         columns=None,
         all_columns=True,
         sort_by="id",
+        full_table=False,
         element_lst=None,
         job_name_contains='',
     ):
@@ -546,6 +576,7 @@ class Project(ProjectPath):
                             'hamversion', 'parentid', 'masterid']
             all_columns (bool): Select all columns - this overwrites the columns option.
             sort_by (str): Sort by a specific column
+            full_table (bool): Whether to show the entire pandas table
             element_lst (list): list of elements required in the chemical formular - by default None
             job_name_contains (str): a string which should be contained in every job_name
 
@@ -562,6 +593,7 @@ class Project(ProjectPath):
                 columns=columns,
                 all_columns=all_columns,
                 sort_by=sort_by,
+                full_table=full_table,
                 element_lst=element_lst,
                 job_name_contains=job_name_contains,
             )
@@ -573,6 +605,7 @@ class Project(ProjectPath):
                 all_columns=all_columns,
                 sort_by=sort_by,
                 max_colwidth=200,
+                full_table=full_table,
                 job_name_contains=job_name_contains)
 
     def get_jobs_status(self, recursive=True, element_lst=None):
@@ -698,12 +731,12 @@ class Project(ProjectPath):
             GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
         """
         if self.sql_query is not None:
-            s.logger.warn(
+            s.logger.warning(
                 "SQL filter '%s' is active (may exclude job) ", self.sql_query
             )
         job_id = self.get_job_id(job_specifier=job_specifier)
         if job_id is None:
-            s.logger.warn("Job '%s' does not exist and cannot be loaded", job_specifier)
+            s.logger.warning("Job '%s' does not exist and cannot be loaded", job_specifier)
             return None
         return self.load_from_jobpath(
             job_id=job_id, convert_to_object=convert_to_object
@@ -806,29 +839,34 @@ class Project(ProjectPath):
         new._filter = ["nodes"]
         return new
 
-    def queue_table(self, project_only=True, recursive=True):
+    def queue_table(self, project_only=True, recursive=True, full_table=False):
         """
         Display the queuing system table as pandas.Dataframe
 
         Args:
             project_only (bool): Query only for jobs within the current project - True by default
             recursive (bool): Include jobs from sub projects
+            full_table (bool): Whether to show the entire pandas table
 
         Returns:
             pandas.DataFrame: Output from the queuing system - optimized for the Sun grid engine
         """
         return queue_table(
-            job_ids=self.get_job_ids(recursive=recursive), project_only=project_only
+            job_ids=self.get_job_ids(recursive=recursive), project_only=project_only,
+            full_table=full_table
         )
 
-    def queue_table_global(self):
+    def queue_table_global(self, full_table=False):
         """
         Display the queuing system table as pandas.Dataframe
+
+        Args:
+            full_table (bool): Whether to show the entire pandas table
 
         Returns:
             pandas.DataFrame: Output from the queuing system - optimized for the Sun grid engine
         """
-        df = queue_table(job_ids=[], project_only=False)
+        df = queue_table(job_ids=[], project_only=False, full_table=full_table)
         if len(df) != 0 and self.db is not None:
             return pandas.DataFrame(
                 [
@@ -916,7 +954,7 @@ class Project(ProjectPath):
                 try:
                     job = self.load(job_specifier=job_specifier, convert_to_object=False)
                     if job is None:
-                        s.logger.warn(
+                        s.logger.warning(
                             "Job '%s' does not exist and could not be removed",
                             str(job_specifier),
                         )
@@ -994,7 +1032,7 @@ class Project(ProjectPath):
             enforce (bool): [True/False] delete jobs even though they are used in other projects - default=False
             enable (bool): [True/False] enable this command.
         """
-        if not enable:
+        if enable is not True:
             raise ValueError(
                 "To prevent users from accidentally deleting files - enable has to be set to True."
             )

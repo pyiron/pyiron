@@ -28,7 +28,7 @@ class TestVasprun(unittest.TestCase):
         )
         file_list = sorted(os.listdir(cls.direc))
         del file_list[file_list.index("vasprun_spoilt.xml")]
-        cls.num_species = [3, 1, 2, 2, 3, 4, 2]
+        cls.num_species = [3, 1, 2, 2, 3, 4, 4, 2]
 
         for f in file_list:
             vp = Vasprun()

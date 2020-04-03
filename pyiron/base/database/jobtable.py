@@ -14,7 +14,7 @@ The Jobtable module provides a set of top level functions to interact with the d
 
 __author__ = "Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -154,6 +154,7 @@ def job_table(
     all_columns=False,
     sort_by="id",
     max_colwidth=200,
+    full_table=False,
     element_lst=None,
     job_name_contains='',
 ):
@@ -173,6 +174,7 @@ def job_table(
         all_columns (bool): Select all columns - this overwrites the columns option.
         sort_by (str): Sort by a specific column
         max_colwidth (int): set the column width
+        full_table (bool): Whether to show the entire pandas table
         element_lst (list): list of elements required in the chemical formular - by default None
         job_name_contains (str): a string which should be contained in every job_name
 
@@ -209,6 +211,12 @@ def job_table(
         recursive=recursive,
         element_lst=element_lst,
     )
+    if full_table:
+        pandas.set_option('display.max_rows', None)
+        pandas.set_option('display.max_columns', None)
+    else:
+        pandas.reset_option('display.max_rows')
+        pandas.reset_option('display.max_columns')
     pandas.set_option("display.max_colwidth", max_colwidth)
     df = pandas.DataFrame(job_dict)
     if len(job_dict) == 0:
@@ -318,12 +326,8 @@ def get_job_id(database, sql_query, user, project_path, job_specifier):
     Returns:
         int: job ID of the job
     """
-    if sys.version_info.major == 2:
-        if isinstance(job_specifier, (int, long, np.integer)):
-            return int(job_specifier)  # is id
-    else:
-        if isinstance(job_specifier, (int, np.integer)):
-            return job_specifier  # is id
+    if isinstance(job_specifier, (int, np.integer)):
+        return job_specifier  # is id
 
     job_specifier.replace(".", "_")
     # if job_specifier[0] is not '/':

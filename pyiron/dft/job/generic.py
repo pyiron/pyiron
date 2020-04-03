@@ -8,7 +8,7 @@ import warnings
 
 __author__ = "Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -119,7 +119,7 @@ class GenericDFTJob(AtomisticGenericJob):
 
 
         """
-        snapshot = super(GenericDFTJob).get_structure(
+        snapshot = super(GenericDFTJob, self).get_structure(
             iteration_step=iteration_step, wrap_atoms=wrap_atoms
         )
         spins = self.get("output/generic/dft/atom_spins")
@@ -152,6 +152,8 @@ class GenericDFTJob(AtomisticGenericJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
+        n_path=None,
+        path_name=None,
     ):
         raise NotImplementedError(
             "The set_kpoints function is not implemented for this code."
@@ -167,6 +169,8 @@ class GenericDFTJob(AtomisticGenericJob):
         weights=None,
         reciprocal=True,
         kpoints_per_angstrom=None,
+        n_path=None,
+        path_name=None,
     ):
         """
         Function to setup the k-points
@@ -181,6 +185,8 @@ class GenericDFTJob(AtomisticGenericJob):
             reciprocal (bool): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
             reciprocal space)
             kpoints_per_angstrom (float): Number of kpoint per angstrom in each direction
+            n_path (int): Number of points per trace part for line mode
+            path_name (str): Name of high symmetry path used for band structure calculations.
         """
         if kpoints_per_angstrom is not None:
             if mesh is not None:
@@ -200,6 +206,8 @@ class GenericDFTJob(AtomisticGenericJob):
             manual_kpoints=manual_kpoints,
             weights=weights,
             reciprocal=reciprocal,
+            n_path=n_path,
+            path_name=path_name,
         )
 
     def calc_static(

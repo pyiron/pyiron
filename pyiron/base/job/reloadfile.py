@@ -33,7 +33,7 @@ def command_line(argv):
                 input_path = os.path.abspath(arg)
             if opt in ("-o", "--output_path"):
                 output_path = os.path.abspath(arg)
-        with h5py.File(input_path, "r") as f:
+        with h5py.File(input_path, mode="r") as f:
             job_name = list(f.keys())[0]
         project_path = os.path.join(os.path.abspath("."), job_name + ".h5")
         shutil.copy(input_path, project_path)

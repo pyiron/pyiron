@@ -17,7 +17,7 @@ from defusedxml.ElementTree import ParseError
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -217,24 +217,16 @@ class Vasprun(object):
                                         else:
                                             count += 1
                                     if species_key is not None:
-                                        pse.add_element(elements[1].text, species_key)
+                                        pse.add_element(clean_character(elements[1].text), species_key)
                                         special_element = pse.element(species_key)
                                         species_dict[special_element] = dict()
-                                        species_dict[special_element]["n_atoms"] = int(
-                                            elements[0].text
-                                        )
-                                        species_dict[special_element][
-                                            "valence"
-                                        ] = float(elements[3].text)
+                                        species_dict[special_element]["n_atoms"] = int(elements[0].text)
+                                        species_dict[special_element]["valence"] = float(elements[3].text)
                                 else:
                                     species_key = elements[1].text
                                     species_dict[species_key] = dict()
-                                    species_dict[species_key]["n_atoms"] = int(
-                                        elements[0].text
-                                    )
-                                    species_dict[species_key]["valence"] = float(
-                                        elements[3].text
-                                    )
+                                    species_dict[species_key]["n_atoms"] = int(elements[0].text)
+                                    species_dict[species_key]["valence"] = float(elements[3].text)
         d["species_dict"] = species_dict
         species_list = list()
         for key, val in species_dict.items():
@@ -669,7 +661,7 @@ class Vasprun(object):
         """
         try:
             basis = self.get_initial_structure()
-            basis.cell = self.vasprun_dict["final_structure"]["cell"]
+            basis.set_cell(self.vasprun_dict["final_structure"]["cell"])
             positions = self.vasprun_dict["final_structure"]["positions"]
             if len(positions[positions > 1.01]) > 0:
                 basis.positions = positions

@@ -7,10 +7,11 @@ from pyiron.base.job.interactive import InteractiveBase
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob, GenericOutput
+from collections import defaultdict
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -31,24 +32,27 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         self._interactive_fetch_completed = True
         self._interactive_species_lst = np.array([])
         self._periodic_table = PeriodicTable()
-        self.interactive_cache = {
-            "cells": [],
-            "energy_pot": [],
-            "energy_tot": [],
-            "forces": [],
-            "positions": [],
-            "pressures": [],
-            "stress": [],
-            "steps": [],
-            "temperature": [],
-            "indices": [],
-            "computation_time": [],
-            "unwrapped_positions": [],
-            "atom_spin_constraints": [],
-            "atom_spins": [],
-            "magnetic_forces": [],
-            "volume": [],
-        }
+        self.interactive_input_functions = {'index': self.interactive_index_organizer,
+                                            'cell': self.interactive_cell_organizer,
+                                            'positions': self.interactive_positions_organizer,
+                                            'magnetic_moments': self.interactive_magmom_organizer}
+        self.interactive_output_functions =  {'cells': self.interactive_cells_getter,
+                                              'energy_pot': self.interactive_energy_pot_getter,
+                                              'energy_tot': self.interactive_energy_tot_getter,
+                                              'forces': self.interactive_forces_getter,
+                                              'positions': self.interactive_positions_getter,
+                                              'pressures': self.interactive_pressures_getter,
+                                              'stress': self.interactive_stress_getter,
+                                              'steps': self.interactive_steps_getter,
+                                              'temperature': self.interactive_temperatures_getter,
+                                              'indices': self.interactive_indices_getter,
+                                              'computation_time': self.interactive_computation_time_getter,
+                                              'unwrapped_positions': self.interactive_unwrapped_positions_getter,
+                                              'atom_spin_constraints': self.interactive_atom_spin_constraints_getter,
+                                              'atom_spins': self.interactive_atom_spins_getter,
+                                              'magnetic_forces': self.interactive_magnetic_forces_getter,
+                                              'volume': self.interactive_volume_getter}
+        self.interactive_cache = defaultdict(list)
 
     @property
     def interactive_enforce_structure_reset(self):
@@ -126,112 +130,86 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
                 raise ValueError(
                     "The number of atoms changed, this is currently not supported!"
                 )
-            index_merge_lst = self._interactive_species_lst.tolist() + list(
-                self._structure_current.get_species_symbols()
-            )
-            el_lst = sorted(set(index_merge_lst), key=index_merge_lst.index)
-            current_structure_index = [
-                el_lst.index(el)
-                for el in self._structure_current.get_chemical_symbols()
-            ]
-            previous_structure_index = [
-                el_lst.index(el)
-                for el in self._structure_previous.get_chemical_symbols()
-            ]
             if not self._interactive_enforce_structure_reset:
-                if not np.allclose(
-                    self._structure_current.cell,
-                    self._structure_previous.cell,
-                    rtol=1e-15,
-                    atol=1e-15,
-                ):
-                    self._logger.debug("Generic library: cell changed!")
-                    self.interactive_cells_setter(self._structure_current.cell)
-                if not np.allclose(
-                    self._structure_current.get_scaled_positions(),
-                    self._structure_previous.get_scaled_positions(),
-                    rtol=1e-15,
-                    atol=1e-15,
-                ):
-                    self._logger.debug("Generic library: positions changed!")
-                    self.interactive_positions_setter(self._structure_current.positions)
-                if np.any(self._structure_current.get_initial_magnetic_moments()) and (
-                    None in self._structure_previous.get_initial_magnetic_moments()
-                    or not np.allclose(
-                        self._structure_current.get_initial_magnetic_moments(),
-                        self._structure_previous.get_initial_magnetic_moments(),
-                    )
-                ):
-                    self._logger.debug("Generic library: magnetic moments changed!")
-                    self.interactive_spin_constraints_setter(
-                        self._structure_current.get_initial_magnetic_moments()
-                    )
-                if not np.array_equal(
-                    np.array(current_structure_index),
-                    np.array(previous_structure_index),
-                ):
-                    self._logger.debug("Generic library: indices changed!")
-                    self.interactive_indices_setter(self._structure_current.indices)
+                functions_to_execute = list(self.interactive_input_functions.values())
+                for v in functions_to_execute:
+                    v()
             else:
                 self._logger.debug("Generic library: structure changed!")
                 self.interactive_structure_setter(self._structure_current)
+
+    def interactive_index_organizer(self):
+        index_merge_lst = self._interactive_species_lst.tolist() + list(
+            self._structure_current.get_species_symbols()
+        )
+        el_lst = sorted(set(index_merge_lst), key=index_merge_lst.index)
+        current_structure_index = [
+            el_lst.index(el)
+            for el in self._structure_current.get_chemical_symbols()
+        ]
+        previous_structure_index = [
+            el_lst.index(el)
+            for el in self._structure_previous.get_chemical_symbols()
+        ]
+        if not np.array_equal(
+            np.array(current_structure_index),
+            np.array(previous_structure_index),
+        ):
+            self._logger.debug("Generic library: indices changed!")
+            self.interactive_indices_setter(self._structure_current.indices)
+
+    def interactive_cell_organizer(self):
+        if not np.allclose(
+            self._structure_current.cell,
+            self._structure_previous.cell,
+            rtol=1e-15, atol=1e-15,
+        ):
+            self._logger.debug("Generic library: cell changed!")
+            try:
+                self.interactive_cells_setter(self._structure_current.cell)
+            except NotImplementedError:
+                del self.interactive_input_functions['cell']
+
+    def interactive_positions_organizer(self):
+        if not np.allclose(
+            self._structure_current.get_scaled_positions(),
+            self._structure_previous.get_scaled_positions(),
+            rtol=1e-15,
+            atol=1e-15,
+        ):
+            self._logger.debug("Generic library: positions changed!")
+            self.interactive_positions_setter(self._structure_current.positions)
+
+    def interactive_magmom_organizer(self):
+        if all(mm is None for mm in self._structure_current.get_initial_magnetic_moments()):
+            del self.interactive_input_functions['magnetic_moments']
+        elif (None in self._structure_previous.get_initial_magnetic_moments()
+            or not np.allclose(
+                self._structure_current.get_initial_magnetic_moments(),
+                self._structure_previous.get_initial_magnetic_moments(),
+            )
+        ):
+            self._logger.debug("Generic library: magnetic moments changed!")
+            self.interactive_spin_constraints_setter(
+                self._structure_current.get_initial_magnetic_moments()
+            )
 
     def interactive_cells_getter(self):
         return self.initial_structure.cell
 
     def interactive_collect(self):
-        if "cells" in self.interactive_cache.keys():
-            self.interactive_cache["cells"].append(self.interactive_cells_getter())
-        if "energy_pot" in self.interactive_cache.keys():
-            self.interactive_cache["energy_pot"].append(
-                self.interactive_energy_pot_getter()
-            )
-        if "energy_tot" in self.interactive_cache.keys():
-            self.interactive_cache["energy_tot"].append(
-                self.interactive_energy_tot_getter()
-            )
-        if "forces" in self.interactive_cache.keys():
-            self.interactive_cache["forces"].append(self.interactive_forces_getter())
-        if "positions" in self.interactive_cache.keys():
-            self.interactive_cache["positions"].append(
-                self.interactive_positions_getter()
-            )
-        if "pressures" in self.interactive_cache.keys():
-            self.interactive_cache["pressures"].append(
-                self.interactive_pressures_getter()
-            )
-        if "stress" in self.interactive_cache.keys():
-            self.interactive_cache["stress"].append(self.interactive_stress_getter())
-        if "steps" in self.interactive_cache.keys():
-            self.interactive_cache["steps"].append(self.interactive_steps_getter())
-        if "temperature" in self.interactive_cache.keys():
-            self.interactive_cache["temperature"].append(
-                self.interactive_temperatures_getter()
-            )
-        if "computation_time" in self.interactive_cache.keys():
-            self.interactive_cache["computation_time"].append(
-                self.interactive_time_getter()
-            )
-        if "indices" in self.interactive_cache.keys():
-            self.interactive_cache["indices"].append(self.interactive_indices_getter())
-        if "atom_spins" in self.interactive_cache.keys():
-            self.interactive_cache["atom_spins"].append(self.interactive_spins_getter())
-        if "atom_spin_constraints" in self.interactive_cache.keys():
-            if self._generic_input["fix_spin_constraint"]:
-                self.interactive_cache["atom_spin_constraints"].append(
-                    self.interactive_spin_constraints_getter()
-                )
-        if "magnetic_forces" in self.interactive_cache.keys():
-            if self._generic_input["fix_spin_constraint"]:
-                self.interactive_cache["magnetic_forces"].append(
-                    self.interactive_magnetic_forces_getter()
-                )
-        if "unwrapped_positions" in self.interactive_cache.keys():
-            self.interactive_cache["unwrapped_positions"].append(
-                self.interactive_unwrapped_positions_getter()
-            )
-        if "volume" in self.interactive_cache.keys():
-            self.interactive_cache["volume"].append(self.interactive_volume_getter())
+        del_key_lst = []
+        for k,v in self.interactive_output_functions.items():
+            try:
+                value = v()
+                if value is not None:
+                    self.interactive_cache[k].append(value)
+                else:
+                    del_key_lst.append(k)
+            except NotImplementedError:
+                del_key_lst.append(k)
+        for k in del_key_lst:
+            del self.interactive_output_functions[k]
         if (
             len(list(self.interactive_cache.keys())) > 0
             and len(self.interactive_cache[list(self.interactive_cache.keys())[0]])
@@ -376,6 +354,16 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             "interactive_spin_constraints_getter() is not implemented!"
         )
 
+    def interactive_atom_spin_constraints_getter(self):
+        raise NotImplementedError(
+            "interactive_atom_spin_constraints_getter() is not implemented!"
+        )
+
+    def interactive_atom_spins_getter(self):
+        raise NotImplementedError(
+            "interactive_atom_spins_getter() is not implemented!"
+        )
+
     def interactive_magnetic_forces_getter(self):
         raise NotImplementedError(
             "interactive_magnetic_forces_getter() is not implemented!"
@@ -402,6 +390,9 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
 
     def interactive_structure_setter(self, structure):
         raise NotImplementedError("interactive_structure_setter() is not implemented!")
+
+    def interactive_computation_time_getter(self):
+        raise NotImplementedError("interactive_computation_time_getter() is not implemented!")
 
     def interactive_temperatures_getter(self):
         raise NotImplementedError(
@@ -509,7 +500,7 @@ class GenericInteractiveOutput(GenericOutput):
 
     @property
     def indices(self):
-        return self._lst_from_property(key="indices")
+        return self._lst_from_property(key="indices", prop=GenericOutput.indices.fget)
 
     @property
     def cells(self):

@@ -16,7 +16,7 @@ from pyiron.base.master.parallel import JobGenerator
 
 __author__ = "Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -41,6 +41,38 @@ class SxUniqDispl(AtomisticGenericJob):
         self.input = GenericParameters(table_name="displacement")
         self.input["displacement"] = 0.01
         self.structure_lst = []
+        self._id_pyi_to_spx = []
+        self._id_spx_to_pyi = []
+
+    @property
+    def id_spx_to_pyi(self):
+        if self.structure is None:
+            return None
+        if len(self._id_spx_to_pyi) == 0:
+            self._initialize_order()
+        return self._id_spx_to_pyi
+
+    @property
+    def id_pyi_to_spx(self):
+        if self.structure is None:
+            return None
+        if len(self._id_pyi_to_spx) == 0:
+            self._initialize_order()
+        return self._id_pyi_to_spx
+
+    def _initialize_order(self):
+        for elm_species in self.structure.get_species_objects():
+            self._id_pyi_to_spx.append(
+                np.arange(len(self.structure))[
+                    self.structure.get_chemical_symbols() == elm_species.Abbreviation
+                ]
+            )
+        self._id_pyi_to_spx = np.array(
+            [ooo for oo in self._id_pyi_to_spx for ooo in oo]
+        )
+        self._id_spx_to_pyi = np.array([0] * len(self._id_pyi_to_spx))
+        for i, p in enumerate(self._id_pyi_to_spx):
+            self._id_spx_to_pyi[p] = i
 
     def set_input_to_read_only(self):
         """
@@ -66,14 +98,13 @@ class SxUniqDispl(AtomisticGenericJob):
 
     def extract_structure(self, working_directory):
         structure_lst = [self.structure]
-        parser = Output()
+        parser = Output(self)
         for f in os.listdir(working_directory):
             if "input-disp" in f:
                 structure_template = self.structure.copy()
                 parser.collect_relaxed_hist(file_name=f, cwd=working_directory)
-                symbols, positions, cell = parser._snapshots[0]
-                structure_template.cell = cell
-                structure_template.positions = np.array(positions)
+                structure_template.cell = parser._parse_dict["cell"][0]
+                structure_template.positions = parser._parse_dict["positions"][0]
                 structure_lst.append(structure_template)
         return structure_lst
 

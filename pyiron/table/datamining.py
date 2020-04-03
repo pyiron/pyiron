@@ -29,6 +29,7 @@ from pyiron.table.funct import (
     get_ismear,
     get_encut,
     get_n_kpts,
+    get_n_equ_kpts,
     get_number_of_final_electronic_steps,
     get_majority_species,
     get_job_name,
@@ -36,6 +37,10 @@ from pyiron.table.funct import (
     get_energy_tot,
     get_energy_free,
     get_energy_int,
+    get_energy_tot_per_atom,
+    get_energy_free_per_atom,
+    get_energy_int_per_atom,
+    get_e_conv_level,
     get_f_states,
     get_e_band,
     get_majority_crystal_structure,
@@ -44,14 +49,16 @@ from pyiron.table.funct import (
     get_forces,
     get_magnetic_structure,
     get_average_waves,
+    get_plane_waves,
     get_ekin_error,
     get_volume,
+    get_volume_per_atom,
 )
 
 
 __author__ = "Uday Gajera, Jan Janssen, Joerg Neugebauer"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "0.0.1"
@@ -75,6 +82,7 @@ class FunctionContainer(object):
             get_ismear,
             get_encut,
             get_n_kpts,
+            get_n_equ_kpts,
             get_number_of_final_electronic_steps,
             get_majority_species,
             get_job_name,
@@ -82,6 +90,10 @@ class FunctionContainer(object):
             get_energy_tot,
             get_energy_free,
             get_energy_int,
+            get_energy_tot_per_atom,
+            get_energy_free_per_atom,
+            get_energy_int_per_atom,
+            get_e_conv_level,
             get_f_states,
             get_e_band,
             get_majority_crystal_structure,
@@ -90,8 +102,10 @@ class FunctionContainer(object):
             get_forces,
             get_magnetic_structure,
             get_average_waves,
+            get_plane_waves,
             get_ekin_error,
             get_volume,
+            get_volume_per_atom,
         ]
         self._system_function_dict = {
             func.__name__: False for func in self._system_function_lst

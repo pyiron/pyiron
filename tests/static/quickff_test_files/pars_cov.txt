@@ -1,0 +1,49 @@
+# BONDHARM
+#---------
+BONDHARM:UNIT  K kjmol/A**2
+BONDHARM:UNIT  R0 A
+
+BONDHARM:PARS         C         C  4.0155888021e+03  1.3978653806e+00
+BONDHARM:PARS         C         H  3.3672976552e+03  1.0904380845e+00
+
+
+# BENDAHARM
+#----------
+BENDAHARM:UNIT  K kjmol/rad**2
+BENDAHARM:UNIT  THETA0 deg
+
+BENDAHARM:PARS         C         C         C  5.9895700589e+02  1.1996312446e+02
+BENDAHARM:PARS         C         C         H  3.2756770485e+02  1.2017400903e+02
+
+
+# TORSION
+#--------
+TORSION:UNIT  A kjmol
+TORSION:UNIT  PHI0 deg
+
+TORSION:PARS         C         C         C         C  2 3.5401076842e+01  0.0000000000e+00
+TORSION:PARS         C         C         C         H  2 3.1983017111e+01  0.0000000000e+00
+TORSION:PARS         H         C         C         H  2 1.6742932859e+01  0.0000000000e+00
+
+
+# OOPDIST
+#--------
+OOPDIST:UNIT  K kjmol/A**2
+OOPDIST:UNIT  D0 A
+
+OOPDIST:PARS         C         C         H         C  1.5834593142e+02  1.0162063925e-07
+
+
+# Cross
+#------
+Cross:UNIT  KSS kjmol/angstrom**2
+Cross:UNIT  KBS0 kjmol/(angstrom*rad)
+Cross:UNIT  KBS1 kjmol/(angstrom*rad)
+Cross:UNIT  R0 angstrom
+Cross:UNIT  R1 angstrom
+Cross:UNIT  THETA0 deg
+
+Cross:PARS         C         C         C   5.1349347565e+02   4.3475750248e+01   4.3475750248e+01  1.3978653806e+00  1.3978653806e+00  1.1996312446e+02
+Cross:PARS         C         C         H   4.3660281752e+01   1.1395679276e+02   1.3995658237e+02  1.3978653806e+00  1.0904380845e+00  1.2017400903e+02
+
+

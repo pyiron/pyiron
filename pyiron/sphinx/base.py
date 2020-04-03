@@ -8,6 +8,7 @@ import numpy as np
 import os
 import posixpath
 import re
+import stat
 from shutil import copyfile
 import scipy.constants
 import subprocess
@@ -25,7 +26,7 @@ from pyiron.base.generic.parameters import GenericParameters
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -68,6 +69,11 @@ class SphinxBase(GenericDFTJob):
         self._save_memory = False
         self._output_parser = Output(self)
         self.input_writer = InputWriter()
+
+        self._kpoints_odict = None
+        self._generic_input["restart_for_band_structure"] = False
+        self._generic_input["path_name"] = None
+        self._generic_input["n_path"] = None
 
     @property
     def id_pyi_to_spx(self):
@@ -176,6 +182,12 @@ class SphinxBase(GenericDFTJob):
                 [("type", self.input["preconditioner"])]
             )
         control_str[algorithm] = odict()
+        if self.input["maxStepsCCG"] is not None:
+            control_str[algorithm]["maxStepsCCG"] = self.input["maxStepsCCG"]
+        if self.input["blockSize"] is not None and algorithm == "blockCCG":
+            control_str[algorithm]["blockSize"] = self.input["blockSize"]
+        if self.input["nSloppy"] is not None and algorithm == "blockCCG":
+            control_str[algorithm]["nSloppy"] = self.input["nSloppy"]
         if self.input["WriteWaves"] is False:
             control_str["noWavesStorage"] = None
         return control_str
@@ -184,7 +196,7 @@ class SphinxBase(GenericDFTJob):
     def _control_str(self):
         control_str = odict()
         control_str.setdefault("scfDiag", [])
-        if len(self.restart_file_list) != 0:
+        if len(self.restart_file_list) != 0 and not self._generic_input["restart_for_band_structure"]:
             control_str["scfDiag"].append(
                 self._input_control_scf_string(
                     maxSteps=10, keepRhoFixed=True, dEnergy=1.0e-4
@@ -205,7 +217,10 @@ class SphinxBase(GenericDFTJob):
                 [("scfDiag", self._input_control_scf_string())]
             )
         else:
-            control_str["scfDiag"].append(self._input_control_scf_string())
+            if self._generic_input["restart_for_band_structure"]:
+                control_str["scfDiag"].append(self._input_control_scf_string(keepRhoFixed=True))
+            else:
+                control_str["scfDiag"].append(self._input_control_scf_string())
             if self.executable.version is not None:
                 vers_num = [
                     int(vv) for vv in self.executable.version.split("_")[0].split(".")
@@ -315,29 +330,75 @@ class SphinxBase(GenericDFTJob):
     ):
         raise NotImplementedError("calc_md() not implemented in SPHInX.")
 
-    def restart_from_charge_density(self, job_name=None):
+    def restart_from_charge_density(
+            self,
+            job_name=None,
+            job_type=None,
+            band_structure_calc=False
+    ):
         """
         Restart a new job created from an existing Vasp calculation by reading the charge density.
 
         Args:
-            job_name (str): Job name (full path required)
+            job_name (str): Job name
+            job_type (str): Job type. If not specified a Vasp job type is assumed
+            band_structure_calc (bool): has to be True for band structure calculations.
 
         Returns:
-            None (currently the SPHInX implementation does not allow for a restart via return value)
+            pyiron.sphinx.sphinx.sphinx: new job instance
         """
-        self.restart_file_list.append(job_name)
-        return None
+        ham_new = self.restart(
+            job_name=job_name,
+            job_type=job_type,
+            from_wave_functions=False,
+            from_charge_density=True
+        )
+        if band_structure_calc:
+            ham_new._generic_input["restart_for_band_structure"] = True
+        return ham_new
+
+    def restart_from_wave_functions(
+            self,
+            job_name=None,
+            job_type=None,
+    ):
+        """
+        Restart a new job created from an existing Vasp calculation by reading the wave functions.
+
+        Args:
+            job_name (str): Job name
+            job_type (str): Job type. If not specified a Vasp job type is assumed
+
+        Returns:
+            pyiron.sphinx.sphinx.sphinx: new job instance
+        """
+        return self.restart(
+            job_name=job_name,
+            job_type=job_type,
+            from_wave_functions=True,
+            from_charge_density=False
+        )
 
     def restart(
         self,
-        snapshot=-1,
         job_name=None,
         job_type=None,
         from_charge_density=True,
         from_wave_functions=True,
     ):
+        if self.status!='finished' and not self.is_compressed():
+            # self.decompress()
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                try:
+                    self.collect_output()
+                except AssertionError:
+                    from_charge_density=False
+                    from_wave_functions=False
+                if len(w) > 0:
+                    self.status.not_converged = True
         new_job = super(SphinxBase, self).restart(
-            snapshot=snapshot, job_name=job_name, job_type=job_type
+            job_name=job_name, job_type=job_type
         )
         if from_charge_density and os.path.isfile(
             posixpath.join(self.working_directory, "rho.sxb")
@@ -346,7 +407,7 @@ class SphinxBase(GenericDFTJob):
                 posixpath.join(self.working_directory, "rho.sxb")
             )
         elif from_charge_density:
-            self._logger.warn(
+            self._logger.warning(
                 msg="A charge density from job: {} is not generated and therefore it can't be read.".format(
                     self.job_name
                 )
@@ -358,7 +419,7 @@ class SphinxBase(GenericDFTJob):
                 posixpath.join(self.working_directory, "waves.sxb")
             )
         elif from_wave_functions:
-            self._logger.warn(
+            self._logger.warning(
                 msg="A WAVECAR from job: {} is not generated and therefore it can't be read.".format(
                     self.job_name
                 )
@@ -550,7 +611,7 @@ class SphinxBase(GenericDFTJob):
         Function to set the number of empty states.
 
         Args:
-            n_empty_states (int or 'auto'): Number of empty states. 'auto' if the default value is to be used.
+            n_empty_states (int/None): Number of empty states. If None, sets it to 'auto'.
 
         Comments:
             If this number is too low, the algorithm will not be able to able to swap wave functions
@@ -562,9 +623,11 @@ class SphinxBase(GenericDFTJob):
 
             The default value is 0.5*NIONS+3 for non-magnetic systems and 1.5*NIONS+3 for magnetic systems
         """
-        if n_empty_states is not None or n_empty_states < 0:
-            raise ValueError("Number of empty states must be greater than 0")
-        if n_empty_states is not None:
+        if n_empty_states is None:
+            self.input["EmptyStates"] = "auto"
+        else:
+            if n_empty_states < 0:
+                raise ValueError("Number of empty states must be greater than 0")
             self.input["EmptyStates"] = n_empty_states
 
     def _set_kpoints(
@@ -576,6 +639,8 @@ class SphinxBase(GenericDFTJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
+        n_path=None,
+        path_name=None,
     ):
         """
         Function to setup the k-points for the Sphinx job
@@ -586,9 +651,11 @@ class SphinxBase(GenericDFTJob):
             weights (list): Manually supplied weights to each k-point in case of the manual mode (not implemented)
             manual_kpoints (list): Manual list of k-points (not implemented)
             symmetry_reduction (bool): Tells if the symmetry reduction is to be applied to the k-points
-            scheme (str): Type of k-point generation scheme (only 'MP' implemented)
+            scheme (str): Type of k-point generation scheme ('MP' or 'Line')
             mesh (list): Size of the mesh (in the MP scheme)
             center_shift (list): Shifts the center of the mesh from the gamma point by the given vector
+            n_trace (int): Number of points per trace part for line mode
+            path_name (str): Name of high symmetry path used for band structure calculations.
         """
         if not isinstance(symmetry_reduction, bool):
             raise ValueError("symmetry_reduction has to be a boolean")
@@ -596,22 +663,74 @@ class SphinxBase(GenericDFTJob):
             raise ValueError("manual_kpoints is not implemented in SPHInX yet")
         if weights is not None:
             raise ValueError("manual weights are not implmented in SPHInX yet")
-        if scheme != "MP":
-            raise ValueError("only Monkhorst-Pack mesh is implemented in SPHInX")
-        if mesh is not None:
-            self.input["KpointFolding"] = (
-                "[" + str(mesh[0]) + ", " + str(mesh[1]) + ", " + str(mesh[2]) + "]"
+        if scheme == "MP":
+            self._kpoints_odict = None
+            if mesh is not None:
+                self.input["KpointFolding"] = str(list(mesh))
+            if center_shift is not None:
+                self.input["KpointCoords"] = str(list(center_shift))
+        elif scheme == "Line":
+            if n_path is None and self._generic_input["n_path"] is None:
+                raise ValueError("'n_path' has to be defined")
+            if n_path is None:
+                n_path = self._generic_input["n_path"]
+            else:
+                self._generic_input["n_path"] = n_path
+
+            if self.structure.get_high_symmetry_points() is None:
+                raise ValueError("no 'high_symmetry_points' defined for 'structure'.")
+
+            if path_name is None and self._generic_input["path_name"] is None:
+                raise ValueError("'path_name' has to be defined")
+            if path_name is None:
+                path_name = self._generic_input["path_name"]
+            else:
+                self._generic_input["path_name"] = path_name
+
+            try:
+                path = self.structure.get_high_symmetry_path()[path_name]
+            except KeyError:
+                raise AssertionError("'{}' is not a valid path!".format(path_name))
+
+            kpoints = odict([("relative", None)])
+
+            kpoints["from"] = odict(
+                [
+                    ("coords", str(self.structure.get_high_symmetry_points()[path[0][0]])),
+                    ("label", '"' + path[0][0].replace("'", "p") + '"'),
+                ]
             )
-        if center_shift is not None:
-            self.input["KpointCoords"] = (
-                "["
-                + str(center_shift[0])
-                + ", "
-                + str(center_shift[1])
-                + ", "
-                + str(center_shift[2])
-                + "]"
+            kpoints["to___0"] = odict(
+                [
+                    ("coords", str(self.structure.get_high_symmetry_points()[path[0][1]])),
+                    ("nPoints", n_path),
+                    ("label", '"' + path[0][1].replace("'", "p") + '"'),
+                ]
             )
+
+            for i, path in enumerate(zip(path[:-1], np.roll(path, -1, 0)[:-1])):
+                if not path[0][1] == path[1][0]:
+                    name = "to___{}___1".format(i)
+                    kpoints[name] = odict(
+                        [
+                            ("coords", str(self.structure.get_high_symmetry_points()[path[1][0]])),
+                            ("nPoints", 0),
+                            ("label", '"' + path[1][0].replace("'", "p") + '"'),
+                        ]
+                    )
+
+                name = "to___{}".format(i + 1)
+                kpoints[name] = odict(
+                    [
+                        ("coords", str(self.structure.get_high_symmetry_points()[path[1][1]])),
+                        ("nPoints", n_path),
+                        ("label", '"' + path[1][1].replace("'", "p") + '"'),
+                    ]
+                )
+
+            self._kpoints_odict = odict([("kPoints", kpoints)])
+        else:
+            raise ValueError("only Monkhorst-Pack mesh and Line mode are implemented in SPHInX")
 
     def write_input(self):
         """
@@ -659,6 +778,7 @@ class SphinxBase(GenericDFTJob):
                 cwd=self.working_directory,
                 basis_str=self._basis_str,
                 save_memory=save_memory,
+                kpoints_odict=self._kpoints_odict
             )
             self.input_writer.write_hamilton(
                 file_name="hamilton.sx",
@@ -834,11 +954,12 @@ class SphinxBase(GenericDFTJob):
         Args:
             files_to_compress (list): A list of files to compress (optional)
         """
+        # delete empty files
         if files_to_compress is None:
             files_to_compress = [
-                f for f in list(self.list_files()) if f not in ["rho.sxb", "waves.sxb"]
+                f for f in list(self.list_files()) if (f not in ["rho.sxb", "waves.sxb"]
+                                                       and not stat.S_ISFIFO(os.stat(os.path.join(self.working_directory, f)).st_mode))
             ]
-        # delete empty files
         for f in list(self.list_files()):
             filename = os.path.join(self.working_directory, f)
             if (
@@ -880,6 +1001,7 @@ class InputWriter(object):
         """
         line = ""
         for k, v in element.items():
+            k = k.split("___")[0]
             if type(v) != list:
                 v = [v]
             for vv in v:
@@ -1170,7 +1292,7 @@ class InputWriter(object):
             f.write(self._odict_to_spx_input(structure_str))
 
     def write_basis(
-        self, file_name="basis.sx", cwd=None, basis_str=None, save_memory=False
+        self, file_name="basis.sx", cwd=None, basis_str=None, save_memory=False, kpoints_odict=None
     ):
         """
         Write the Sphinx bases set configuration file named basis.sx
@@ -1179,11 +1301,12 @@ class InputWriter(object):
             file_name (str): name of the file to be written (optional)
             cwd (str): the current working directory (optinal)
             basis_str (str): the input to write, if no input is given the default input will be written. (optinal)
+            kpoints_odict (collection.OrderedDict):
         """
-        if basis_str is None:
-            basis_str = odict(
+
+        if kpoints_odict is None:
+            kpoints = odict(
                 [
-                    ("eCut", "EnCut/13.606"),
                     (
                         "kPoint",
                         odict(
@@ -1194,9 +1317,15 @@ class InputWriter(object):
                             ]
                         ),
                     ),
-                    ("folding", "KpointFolding"),
+                    ("folding", "KpointFolding")
                 ]
             )
+        else:
+            kpoints = kpoints_odict
+
+        if basis_str is None:
+            basis_str = odict([("eCut", "EnCut/13.606")])
+            basis_str.update(kpoints)
             if save_memory:
                 basis_str["saveMemory"] = None
         if cwd is not None:
@@ -1368,10 +1497,10 @@ class Input(GenericParameters):
             "Sigma = 0.2\n"
             "Xcorr = JTH\n"
             "Estep = 400\n"
-            "Ediff = 1.0e-7\n"
+            "Ediff = 1.0e-4\n"
             "WriteWaves = True\n"
             "KJxc = False\n"
-            "SaveMemory = False\n"
+            "SaveMemory = True\n"
             "CoarseRun = False\n"
             "rhoMixing = 1.0\n"
             "spinMixing = 1.0\n"
@@ -1559,6 +1688,9 @@ class Output(object):
 
         with open(posixpath.join(cwd, file_name), "r") as sphinx_log_file:
             log_file = sphinx_log_file.readlines()
+            if not np.any(["Enter Main Loop" in line for line in log_file]):
+                self._job.status.aborted = True
+                raise AssertionError("SPHInX did not enter the main loop; output not collected")
             if not np.any(["Program exited normally." in line for line in log_file]):
                 self._job.status.aborted = True
                 warnings.warn("SPHInX parsing failed; most likely SPHInX crashed.")
@@ -1575,17 +1707,12 @@ class Output(object):
                     [line == end_line for line in file_content[start_line:]]
                 )[0][0]
                 return file_content[start_line : start_line + end_line]
-
-            line = [ll for ll in log_file if ll.startswith("|    folding: ")][0].split()
-            n_k_points = np.prod(np.array([line[2], line[4], line[6]], dtype=int))
             k_points = get_partial_log(
                 log_file,
                 "| Symmetrized k-points:               in cartesian coordinates\n",
                 "\n",
             )[2:-1]
-            self._parse_dict["bands_k_weights"] = (
-                np.array([float(kk.split()[6]) for kk in k_points]) * n_k_points
-            )
+            self._parse_dict["bands_k_weights"] = np.array([float(kk.split()[6]) for kk in k_points])
             k_points = (
                 np.array(
                     [[float(kk.split()[i]) for i in range(2, 5)] for kk in k_points]
@@ -1710,8 +1837,8 @@ class Output(object):
             self._parse_dict["scf_energy_free"] = energy_free_lst
         if len(self._parse_dict["forces"]) == 0 and len(forces) != 0:
             self._parse_dict["forces"] = forces
-        if len(self._parse_dict["magnetic_forces"]) == 0 and len(magnetic_forces) != 0:
-            self._parse_dict["magnetic_forces"] = magnetic_forces
+        if len(self._parse_dict["scf_magnetic_forces"]) == 0 and len(magnetic_forces) != 0:
+            self._parse_dict["scf_magnetic_forces"] = magnetic_forces
 
     def collect_relaxed_hist(self, file_name="relaxHist.sx", cwd=None):
         """
@@ -1797,7 +1924,7 @@ class Output(object):
 
         if len(self._parse_dict["scf_energy_zero"]) == 0:
             self._parse_dict["scf_energy_zero"] = [
-                0.5 * (np.array(fr) + np.array(en))
+                (0.5 * (np.array(fr) + np.array(en))).tolist()
                 for fr, en in zip(
                     self._parse_dict["scf_energy_free"],
                     self._parse_dict["scf_energy_int"],

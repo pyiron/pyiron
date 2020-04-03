@@ -20,7 +20,7 @@ except (ImportError, TypeError, AttributeError):
 
 __author__ = "Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -382,12 +382,11 @@ class AtomisticGenericJob(GenericJobCore):
             db_dict["ChemicalFormula"] = parent_structure.get_chemical_formula()
         return db_dict
 
-    def restart(self, snapshot=-1, job_name=None, job_type=None):
+    def restart(self, job_name=None, job_type=None):
         """
         Restart a new job created from an existing calculation.
         Args:
             project (pyiron.project.Project instance): Project instance at which the new job should be created
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type
 
@@ -395,12 +394,12 @@ class AtomisticGenericJob(GenericJobCore):
             new_ham: New job
         """
         new_ham = super(AtomisticGenericJob, self).restart(
-            snapshot=snapshot, job_name=job_name, job_type=job_type
+            job_name=job_name, job_type=job_type
         )
         if isinstance(new_ham, GenericMaster) and not isinstance(self, GenericMaster):
-            new_child = self.restart(snapshot=snapshot, job_name=None, job_type=None)
+            new_child = self.restart(job_name=None, job_type=None)
             new_ham.append(new_child)
-        new_ham.structure = self.get_structure(iteration_step=snapshot)
+        new_ham.structure = self.get_structure(iteration_step=-1)
         if new_ham.structure is None:
             new_ham.structure = self.structure.copy()
         new_ham._generic_input['structure'] = 'atoms'
@@ -473,6 +472,10 @@ class AtomisticGenericJob(GenericJobCore):
 
         """
         cells = self.output.cells
+        if len(self.output.indices) != 0:
+            indices = self.output.indices
+        else:
+            indices = [self.structure.indices] * len(cells)  # Use the same indices throughout
         if overwrite_positions is not None:
             positions = np.array(overwrite_positions).copy()
             if overwrite_cells is not None:
@@ -500,19 +503,37 @@ class AtomisticGenericJob(GenericJobCore):
         if snapshot_indices is not None:
             positions = positions[snapshot_indices]
             cells = cells[snapshot_indices]
+            indices = indices[snapshot_indices]
         if atom_indices is None:
             return Trajectory(
                 positions[::stride],
                 self.structure.get_parent_basis(),
                 center_of_mass=center_of_mass,
                 cells=cells[::stride],
+                indices=indices[::stride]
             )
         else:
+            sub_struct = self.structure.get_parent_basis()[atom_indices]
+            if len(sub_struct.species) < len(self.structure.species):
+                # Then `sub_struct` has had its indices remapped so they run from 0 to the number of species - 1
+                # But the `indices` array is unaware of this and needs to be remapped to this new space
+                original_symbols = np.array([el.Abbreviation for el in self.structure.species])
+                sub_symbols = np.array([el.Abbreviation for el in sub_struct.species])
+
+                map_ = np.array([np.argwhere(original_symbols == symbol)[0, 0] for symbol in sub_symbols], dtype=int)
+
+                remapped_indices = np.array(indices)
+                for i_sub, i_original in enumerate(map_):
+                    np.place(remapped_indices, indices == i_original, i_sub)
+            else:
+                remapped_indices = indices
+
             return Trajectory(
                 positions[::stride, atom_indices, :],
-                self.structure.get_parent_basis()[atom_indices],
+                sub_struct,
                 center_of_mass=center_of_mass,
                 cells=cells[::stride],
+                indices=remapped_indices[::stride, atom_indices]
             )
 
     def write_traj(
@@ -743,7 +764,7 @@ class Trajectory(object):
                                 varies
     """
 
-    def __init__(self, positions, structure, center_of_mass=False, cells=None):
+    def __init__(self, positions, structure, center_of_mass=False, cells=None, indices=None):
         if center_of_mass:
             pos = np.copy(positions)
             pos[:, :, 0] = (pos[:, :, 0].T - np.mean(pos[:, :, 0], axis=1)).T
@@ -754,11 +775,14 @@ class Trajectory(object):
             self._positions = positions
         self._structure = structure
         self._cells = cells
+        self._indices = indices
 
     def __getitem__(self, item):
         new_structure = self._structure.copy()
         if self._cells is not None:
             new_structure.cell = self._cells[item]
+        if self._indices is not None:
+            new_structure.indices = self._indices[item]
         new_structure.positions = self._positions[item]
         # This step is necessary for using ase.io.write for trajectories
         new_structure.arrays["positions"] = new_structure.positions
@@ -831,7 +855,11 @@ class GenericOutput(object):
 
     @property
     def unwrapped_positions(self):
-        return self._job["output/generic/unwrapped_positions"]
+        unwrapped_positions = self._job["output/generic/unwrapped_positions"]
+        if unwrapped_positions is not None:
+            return unwrapped_positions
+        else:
+            return self._job.structure.positions+self.total_displacements
 
     @property
     def volume(self):

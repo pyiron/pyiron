@@ -13,6 +13,7 @@ import warnings
 from ase.geometry import cellpar_to_cell, complete_cell, get_distances
 from matplotlib.colors import rgb2hex
 from scipy.interpolate import interp1d
+import seekpath
 
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
@@ -35,7 +36,7 @@ except ImportError:
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -227,6 +228,9 @@ class Atoms(object):
             else:
                 self.pbc = pbc
         self.set_initial_magnetic_moments(magmoms)
+        self._high_symmetry_points = None
+        self._high_symmetry_path = None
+
 
     @property
     def cell(self):
@@ -305,6 +309,81 @@ class Atoms(object):
 
         """
         return np.array([self.species[el] for el in self.indices])
+
+    def get_high_symmetry_points(self):
+        """
+        dictionary of high-symmetry points defined for this specific structure.
+
+        Returns:
+            dict: high_symmetry_points
+        """
+        return self._high_symmetry_points
+
+    def _set_high_symmetry_points(self, new_high_symmetry_points):
+        """
+        Sets new high symmetry points dictionary.
+
+        Args:
+            new_high_symmetry_points (dict): new high symmetry points
+        """
+        if not isinstance(new_high_symmetry_points, dict):
+            raise ValueError("has to be dict!")
+        self._high_symmetry_points = new_high_symmetry_points
+
+    def add_high_symmetry_points(self, new_points):
+        """
+        Adds new points to the dict of existing high symmetry points.
+
+        Args:
+            new_points (dict): Points to add
+        """
+        if self.get_high_symmetry_points() is None:
+            raise AssertionError("Construct high symmetry points first. Use self.create_line_mode_structure().")
+        else:
+            self._high_symmetry_points.update(new_points)
+
+    def get_high_symmetry_path(self):
+        """
+        Path used for band structure calculations
+
+        Returns:
+            dict: dict of pathes with start and end points.
+
+        """
+        return self._high_symmetry_path
+
+    def _set_high_symmetry_path(self, new_path):
+        """
+        Sets new list for the high symmetry path used for band structure calculations.
+
+        Args:
+            new_path (dict): dictionary of lists of tuples with start and end point.
+                E.G. {"my_path": [('Gamma', 'X'), ('X', 'Y')]}
+        """
+        self._high_symmetry_path = new_path
+
+    def add_high_symmetry_path(self, path):
+        """
+        Adds a new path to the dictionary of pathes for band structure calculations.
+
+        Args:
+            path (dict): dictionary of lists of tuples with start and end point.
+                E.G. {"my_path": [('Gamma', 'X'), ('X', 'Y')]}
+        """
+        if self.get_high_symmetry_path() is None:
+            raise AssertionError("Construct high symmetry path first. Use self.create_line_mode_structure().")
+
+        for values_all in path.values():
+            for values in values_all:
+                if not len(values) == 2:
+                    raise ValueError(
+                        "'{}' is not a propper trace! It has to contain exactly 2 values! (start and end point)".format(
+                            values))
+                for v in values:
+                    if v not in self.get_high_symmetry_points().keys():
+                        raise ValueError("'{}' is not a valid high symmetry point".format(v))
+
+        self._high_symmetry_path.update(path)
 
     def new_array(self, name, a, dtype=None, shape=None):
         """
@@ -467,6 +546,12 @@ class Atoms(object):
 
             # print ('time in atoms.to_hdf: ', time.time() - time_start)
 
+            if self._high_symmetry_points is not None:
+                hdf_structure["high_symmetry_points"] = self._high_symmetry_points
+
+            if self._high_symmetry_path is not None:
+                hdf_structure["high_symmetry_path"] = self._high_symmetry_path
+
     def from_hdf(self, hdf, group_name="structure"):
         """
         Retrieve the object from a HDF5 file
@@ -544,6 +629,14 @@ class Atoms(object):
 
                 if "bonds" in hdf_atoms.list_nodes():
                     self.bonds = hdf_atoms["explicit_bonds"]
+
+                self._high_symmetry_points = None
+                if "high_symmetry_points" in hdf_atoms.list_nodes():
+                    self._high_symmetry_points = hdf_atoms["high_symmetry_points"]
+
+                self._high_symmetry_path = None
+                if "high_symmetry_path" in hdf_atoms.list_nodes():
+                    self._high_symmetry_path = hdf_atoms["high_symmetry_path"]
                 return self
 
         else:
@@ -603,6 +696,10 @@ class Atoms(object):
 
             if "bonds" in hdf_atoms.list_nodes():
                 self.bonds = hdf_atoms["explicit_bonds"]
+
+            self._high_symmetry_points = None
+            if "high_symmetry_points" in hdf_atoms.list_nodes():
+                self._high_symmetry_points = hdf_atoms["high_symmetry_points"]
             return self
 
     def center(self, vacuum=None, axis=(0, 1, 2)):
@@ -622,7 +719,7 @@ class Atoms(object):
         c = self.cell
         if c is None:
             c = np.identity(self.dimension)
-            self.cell = c
+            self.set_cell(c)
 
         dirs = np.zeros_like(c)
         for i in range(3):
@@ -657,7 +754,9 @@ class Atoms(object):
         translation = np.zeros(3)
         for i in axes:
             nowlen = np.sqrt(np.dot(c[i], c[i]))
-            self.cell[i] *= 1 + longer[i] / nowlen
+            cell = self.cell.copy()
+            cell[i] *= 1 + longer[i] / nowlen
+            self.set_cell(cell)
             translation += shift[i] * c[i] / nowlen
         self.positions += translation
         if self.pbc is None:
@@ -1037,28 +1136,80 @@ class Atoms(object):
         return len(self)
 
     def set_absolute(self):
+        warnings.warn("set_relative is deprecated as of 2020/02/26. It is not guaranteed from v. 0.3", DeprecationWarning)
         if self._is_scaled:
             self._is_scaled = False
 
     def set_relative(self):
+        warnings.warn("set_relative is deprecated as of 2020/02/26. It is not guaranteed from v. 0.3", DeprecationWarning)
         if not self._is_scaled:
             self._is_scaled = True
 
     def center_coordinates_in_unit_cell(self, origin=0, eps=1e-4):
         """
-        compact atomic coordinates in supercell as given by a1, a2., a3
+        Wrap atomic coordinates within the supercell as given by a1, a2., a3
 
         Args:
-            origin:  0 to confine between 0 and 1, -0.5 to confine between -0.5 and 0.5
-            eps:
+            origin (float):  0 to confine between 0 and 1, -0.5 to confine between -0.5 and 0.5
+            eps (float): Tolerance to detect atoms at cell edges
 
         Returns:
 
+            pyiron.atomistics.structure.atoms.Atoms: Wrapped structure
+
         """
-        self.set_scaled_positions(
-            np.mod(self.get_scaled_positions(wrap=False) + eps, 1) - eps + origin
-        )
+        if any(self.pbc):
+            self.set_scaled_positions(
+                np.mod(self.get_scaled_positions(wrap=False) + eps, 1) - eps + origin
+            )
         return self
+
+    def create_line_mode_structure(self,
+                                   with_time_reversal=True,
+                                   recipe='hpkot',
+                                   threshold=1e-07,
+                                   symprec=1e-05,
+                                   angle_tolerance=-1.0,
+                                   ):
+        """
+        Uses 'seekpath' to create a new structure with high symmetry points and path for band structure calculations.
+
+        Args:
+            with_time_reversal (bool): if False, and the group has no inversion symmetry,
+                additional lines are returned as described in the HPKOT paper.
+            recipe (str): choose the reference publication that defines the special points and paths.
+                Currently, only 'hpkot' is implemented.
+            threshold (float): the threshold to use to verify if we are in and edge case
+                (e.g., a tetragonal cell, but a==c). For instance, in the tI lattice, if abs(a-c) < threshold,
+                a EdgeCaseWarning is issued. Note that depending on the bravais lattice,
+                the meaning of the threshold is different (angle, length, …)
+            symprec (float): the symmetry precision used internally by SPGLIB
+            angle_tolerance (float): the angle_tolerance used internally by SPGLIB
+
+        Returns:
+            pyiron.atomistics.structure.atoms.Atoms: new structure
+        """
+        input_structure = (self.cell, self.get_scaled_positions(), self.indices)
+        sp_dict = seekpath.get_path(structure=input_structure,
+                                    with_time_reversal=with_time_reversal,
+                                    recipe=recipe,
+                                    threshold=threshold,
+                                    symprec=symprec,
+                                    angle_tolerance=angle_tolerance,
+                                    )
+
+        original_element_list = [el.Abbreviation for el in self.species]
+        element_list = [original_element_list[l] for l in sp_dict["primitive_types"]]
+        positions = sp_dict["primitive_positions"]
+        pbc = self.pbc
+        cell = sp_dict["primitive_lattice"]
+
+        struc_new = Atoms(elements=element_list, scaled_positions=positions, pbc=pbc, cell=cell)
+
+        struc_new._set_high_symmetry_points(sp_dict["point_coords"])
+        struc_new._set_high_symmetry_path({"full": sp_dict["path"]})
+
+        return struc_new
 
     def repeat(self, rep):
         """Create new repeated atoms object.
@@ -1078,6 +1229,16 @@ class Atoms(object):
         raise NotImplementedError("This function was removed!")
 
     def analyse_ovito_cna_adaptive(self, mode="total"):
+        """
+        Use Ovito's common neighbor analysis binding.
+
+        Args:
+            mode ("total"/"numeric"/"str"): Controls the style and level of detail of the output. (Default is "total", only
+                return a summary of the values in the structure.)
+
+        Returns:
+            (depends on `mode`)
+        """
         from pyiron.atomistics.structure.ovito import analyse_ovito_cna_adaptive
 
         warnings.filterwarnings("ignore")
@@ -1094,6 +1255,10 @@ class Atoms(object):
 
         warnings.filterwarnings("module")
         return analyse_ovito_voronoi_volume(atoms)
+
+    def analyse_pyscal_steinhardt_parameter(atoms, cutoff=3.5, n_clusters=2, q=[4, 6]):
+        from pyiron.atomistics.structure.pyscal import get_steinhardt_parameter_structure
+        return get_steinhardt_parameter_structure(structure=atoms, cutoff=cutoff, n_clusters=n_clusters, q=q)
 
     def analyse_phonopy_equivalent_atoms(atoms):
         from pyiron.atomistics.structure.phonopy import analyse_phonopy_equivalent_atoms
@@ -1894,6 +2059,31 @@ class Atoms(object):
         ]
         return neigh_return
 
+    def find_neighbors_by_vector(self, vector, deviation=False, num_neighbors=96):
+        """
+        Args:
+            vector (list/np.ndarray): vector by which positions are translated (and neighbors are searched)
+            deviation (bool): whether to return distance between the expect positions and real positions
+            num_neighbors (int): number of neighbors to take into account in get_neighbors
+
+        Returns:
+            np.ndarray: list of id's for the specified translation
+
+        Example:
+            a_0 = 2.832
+            structure = pr.create_structure('Fe', 'bcc', a_0)
+            id_list = structure.find_neighbors_by_vector([0, 0, a_0])
+            # In this example, you get a list of neighbor atom id's at z+=a_0 for each atom.
+            # This is particularly powerful for SSA when the magnetic structure has to be translated
+            # in each direction.
+        """
+
+        neigh = self.get_neighbors(num_neighbors=num_neighbors)
+        dist = np.linalg.norm(neigh.vecs-np.array(vector), axis=-1)
+        if deviation:
+            return neigh.indices[np.arange(len(dist)), np.argmin(dist, axis=-1)], np.min(dist, axis=-1)
+        return neigh.indices[np.arange(len(dist)), np.argmin(dist, axis=-1)]
+
     def get_shells(self, id_list=None, max_shell=2, max_num_neighbors=100):
         """
 
@@ -1923,7 +2113,7 @@ class Atoms(object):
         return shell_dict
 
     def get_shell_matrix(
-        self, shell, id_list=None, restraint_matrix=None, max_num_neighbors=100
+        self, shell=None, id_list=None, restraint_matrix=None, num_neighbors=100, tolerance=2
     ):
         """
 
@@ -1931,7 +2121,8 @@ class Atoms(object):
             neigh_list: user defined get_neighbors (recommended if atoms are displaced from the ideal positions)
             id_list: cf. get_neighbors
             radius: cf. get_neighbors
-            max_num_neighbors: cf. get_neighbors
+            num_neighbors: cf. get_neighbors
+            tolerance: cf. get_neighbors
             restraint_matrix: NxN matrix with True or False, where False will remove the entries.
                               If an integer is given the sum of the chemical indices corresponding to the number will
                               be set to True and the rest to False
@@ -1940,13 +2131,16 @@ class Atoms(object):
             NxN matrix with 1 for the pairs of atoms in the given shell
 
         """
-        assert (
-            isinstance(shell, int) and shell > 0
-        ), "Parameter 'shell' must be an integer greater than 0"
+        if shell is not None and shell<=0:
+            raise ValueError("Parameter 'shell' must be an integer greater than 0")
         neigh_list = self.get_neighbors(
-            num_neighbors=max_num_neighbors, id_list=id_list
+            num_neighbors=num_neighbors, id_list=id_list, tolerance=tolerance
         )
-        Natom = len(neigh_list.shells)
+        Natom = len(self)
+        if shell is None:
+            shell_lst = np.unique(neigh_list.shells)
+        else:
+            shell_lst = np.array([shell]).flatten()
         if restraint_matrix is None:
             restraint_matrix = np.ones((Natom, Natom)) == 1
         elif type(restraint_matrix) == list and len(restraint_matrix) == 2:
@@ -1955,14 +2149,20 @@ class Atoms(object):
                 1 * (self.get_chemical_symbols() == restraint_matrix[1]),
             )
             restraint_matrix = (restraint_matrix + restraint_matrix.transpose()) > 0
-        shell_matrix = np.zeros((Natom, Natom))
-        for ii, ss in enumerate(neigh_list.shells):
-            unique, counts = np.unique(
-                neigh_list.indices[ii][ss == np.array(shell)], return_counts=True
-            )
-            shell_matrix[ii][unique] = counts
-        shell_matrix[restraint_matrix == False] = 0
-        return shell_matrix
+        shell_matrix_lst = []
+        for shell in shell_lst:
+            shell_matrix = np.zeros((Natom, Natom))
+            for ii, ss in enumerate(neigh_list.shells):
+                unique, counts = np.unique(
+                    neigh_list.indices[ii][ss == np.array(shell)], return_counts=True
+                )
+                shell_matrix[ii][unique] = counts
+            shell_matrix[restraint_matrix == False] = 0
+            shell_matrix_lst.append(shell_matrix)
+        if len(shell_matrix_lst)==1:
+            return shell_matrix_lst[0]
+        else:
+            return shell_matrix_lst
 
     def get_shell_radius(self, shell=1, id_list=None):
         """
@@ -2746,19 +2946,24 @@ class Atoms(object):
                     if len(key) == 0:
                         return
             else:
-                if key.start is not None:
-                    if key.stop is not None:
-                        key = np.arange(key.start, key.stop, key.step)
-                    else:
-                        if key.start >= 0:
-                            key = np.arange(key.start, len(self), key.step)
-                        else:
-                            key = np.arange(len(self) + key.start, len(self), key.step)
+                # Generating the correct numpy array from a slice input
+                if key.start is None:
+                    start_val = 0
+                elif key.start < 0:
+                    start_val = key.start + len(self)
                 else:
-                    if key.stop is not None:
-                        key = np.arange(0, key.stop, key.step)
-                    else:
-                        key = np.arange(0, len(self), key.step)
+                    start_val = key.start
+                if key.stop is None:
+                    stop_val = len(self)
+                elif key.stop < 0:
+                    stop_val = key.stop + len(self)
+                else:
+                    stop_val = key.stop
+                if key.step is None:
+                    step_val = 1
+                else:
+                    step_val = key.step
+                key = np.arange(start_val, stop_val, step_val)
             if isinstance(value, (str, np.str, np.str_, int, np.integer)):
                 el = PeriodicTable().element(value)
             elif isinstance(value, ChemicalElement):
@@ -2769,6 +2974,7 @@ class Atoms(object):
                 )
             replace_list = list()
             new_species = list(np.array(self.species).copy())
+
             for sp in self.species:
                 replace_list.append(
                     np.array_equal(
@@ -2803,7 +3009,7 @@ class Atoms(object):
                         if i != ind and rep:
                             delete_indices.append(i)
                             # del new_species[i]
-                            new_indices[new_indices > i] -= 1
+                            new_indices[new_indices >= i] -= 1
                     self.indices = new_indices.copy()
                     new_species = np.array(new_species)[
                         np.setdiff1d(np.arange(len(new_species)), delete_indices)
@@ -3028,6 +3234,48 @@ class Atoms(object):
             else:
                 self.selective_dynamics[atom_ind] = [False, False, False]
 
+    def apply_strain(self, epsilon, return_box=False):
+        """
+            Args:
+                epsilon (float/list/ndarray): epsilon matrix. If a single number is set, the same strain
+                                              is applied in each direction. If a 3-dim vector is set, it
+                                              will be multiplied by a unit matrix.
+                return_box (bool): whether to return a box. If set to True, only the returned box will 
+                                   have the desired strain and the original box will stay unchanged.
+        """
+        epsilon = np.array([epsilon]).flatten()
+        if len(epsilon) == 3 or len(epsilon) == 1:
+            epsilon = epsilon*np.eye(3)
+        epsilon.reshape(3,3)
+        if epsilon.min() < -1.0:
+            raise ValueError("Strain value too negative")
+        if return_box:
+            structure_copy = self.copy()
+        else:
+            structure_copy = self
+        cell = structure_copy.cell.copy()
+        cell = np.matmul(epsilon+np.eye(3), cell)
+        structure_copy.set_cell(cell, scale_atoms=True)
+        if return_box:
+            return structure_copy
+
+    def get_spherical_coordinates(self, x=None):
+        """
+            Args:
+                x (list/ndarray): coordinates to transform. If not set, the positions
+                                  in structure will be returned.
+
+            Returns:
+                array in spherical coordinates
+        """
+        if x is None:
+            x = self.positions.copy()
+        x = np.array(x).reshape(-1, 3)
+        r = np.linalg.norm(x, axis=-1)
+        phi = np.arctan2(x[:,2], x[:,1])
+        theta = np.arctan2(np.linalg.norm(x[:,:2], axis=-1), x[:,2])
+        return np.stack((r, theta, phi), axis=-1)
+
     def get_initial_magnetic_moments(self):
         """
         Get array of initial magnetic moments.
@@ -3211,7 +3459,7 @@ class Atoms(object):
                 - np.cross(rotcell, s * vector)
                 + np.outer(np.dot(rotcell, vector), (1.0 - c) * vector)
             )
-            self.cell = rotcell
+            self.set_cell(rotcell)
 
     def rotate_euler(self, center=(0, 0, 0), phi=0.0, theta=0.0, psi=0.0):
         """Rotate atoms via Euler angles.
@@ -3367,6 +3615,14 @@ class Atoms(object):
                 self.positions[:] = np.dot(self.positions, M)
         self._cell = cell
 
+    def set_calculator(self, calc=None):
+        """Attach calculator object."""
+        pass
+     
+    def get_calculator(self):
+        """Get currently attached calculator object."""
+        return None
+        
     def translate(self, displacement):
         """
         Translate atomic positions.
@@ -3414,7 +3670,13 @@ class Atoms(object):
 
         if pbc is None:
             pbc = self.pbc
-        self.positions = wrap_positions(self.positions, self.cell, pbc, center, eps)
+        self.positions = wrap_positions(
+            positions=self.positions,
+            cell=self.cell,
+            pbc=pbc,
+            center=center,
+            eps=eps
+        )
 
     def write(self, filename, format=None, **kwargs):
         """

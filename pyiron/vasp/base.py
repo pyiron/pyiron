@@ -5,31 +5,28 @@
 from __future__ import print_function
 import os
 import posixpath
-from shutil import copyfile
 import subprocess
 import numpy as np
-import tables
 
 from pyiron.dft.job.generic import GenericDFTJob
-from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentialSetter
+from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentialSetter, Potcar
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
-from pyiron.atomistics.md_analysis.trajectory_analysis import unwrap_coordinates
 from pyiron.vasp.outcar import Outcar
 from pyiron.vasp.procar import Procar
 from pyiron.vasp.structure import read_atoms, write_poscar, vasp_sorter
 from pyiron.vasp.vasprun import Vasprun as Vr
 from pyiron.vasp.vasprun import VasprunError
 from pyiron.vasp.volumetric_data import VaspVolumetricData
-from pyiron.vasp.potential import find_potential_file
+from pyiron.vasp.potential import get_enmax_among_species
 from pyiron.dft.waves.electronic import ElectronicStructure
 from pyiron.dft.waves.bandstructure import Bandstructure
 import warnings
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -62,7 +59,7 @@ class VaspBase(GenericDFTJob):
         >>> ham = VaspBase(job_name="trial_job")
         >>> ham.input.incar[IBRION] = -1
         >>> ham.input.incar[ISMEAR] = 0
-        >>> ham.input.kpoints.set(size_of_mesh=[6, 6, 6])
+        >>> ham.input.kpoints.set_kpoints_file(size_of_mesh=[6, 6, 6])
 
         However, the according to pyiron's philosophy, it is recommended to avoid using code specific tags like IBRION,
         ISMEAR etc. Therefore the recommended way to set this calculation is as follows:
@@ -83,6 +80,7 @@ class VaspBase(GenericDFTJob):
         self._output_parser = Output()
         self._potential = VaspPotentialSetter([])
         self._compress_by_default = True
+        self.get_enmax_among_species = get_enmax_among_species
         s.publication_add(self.publication)
 
     @property
@@ -470,24 +468,18 @@ class VaspBase(GenericDFTJob):
         """
         num_eddrmm, snap = self._get_eddrmm_info()
 
-        if not snap is None:
+        warning_string = "EDDRMM warnings occured {} times, first in ionic step {}."
+        status_string = "Status is switched to 'warning'."
+
+        if snap is not None:
             if self.get_eddrmm_handling() == "ignore":
-                self._logger.warn(
-                    "EDDRMM warnings are ignored. EDDRMM occures {} times, first in ionic step {}"
-                        .format(num_eddrmm, snap)
-                )
-            elif self.get_eddrmm_handling() == "not_converged":
-                self.status.not_converged = True
-                self._logger.warn(
-                    "EDDRMM warning occurred {} times first in ionic step {}. Status is switched to 'not_converged'."
-                        .format(num_eddrmm, snap)
-                )
+                self._logger.warning(warning_string.format(num_eddrmm, snap))
+            elif self.get_eddrmm_handling() == "warn":
+                self.status.warning = True
+                self._logger.warning(warning_string.format(num_eddrmm, snap) + status_string)
             elif self.get_eddrmm_handling() == "restart":
-                self.status.not_converged = True
-                self._logger.warn(
-                    "EDDRMM warning occurred {} times first in ionic step {}. Status is switched to 'not_converged'."
-                        .format(num_eddrmm, snap)
-                )
+                self.status.warning = True
+                self._logger.warning(warning_string.format(num_eddrmm, snap) + status_string)
                 if not self.input.incar["ALGO"].lower() == "normal":
                     ham_new = self.copy_hamiltonian(self.name + "_normal")
                     ham_new.input.incar["ALGO"] = "Normal"
@@ -505,7 +497,7 @@ class VaspBase(GenericDFTJob):
         Returns:
             pyiron.vasp.vasp.Vasp: New job
         """
-        ham_new = self.restart(snapshot=0, job_name=job_name)
+        ham_new = self.restart(job_name=job_name)
         ham_new.structure = self.structure
         return ham_new
 
@@ -592,6 +584,8 @@ class VaspBase(GenericDFTJob):
             else:
                 structure = vp_new.get_initial_structure()
             self.structure = structure
+            # Always set the sorted_indices to the original order when importing from jobs
+            self.sorted_indices = np.arange(len(self.structure), dtype=int)
             # Read initial magnetic moments from the INCAR file and set it to the structure
             magmom_loc = np.array(self.input.incar._dataset["Parameter"]) == "MAGMOM"
             if any(magmom_loc):
@@ -611,13 +605,13 @@ class VaspBase(GenericDFTJob):
                             )
                         )
                 except (ValueError, IndexError, TypeError):
-                    self.logger.warn(
+                    self.logger.warning(
                         "Unable to parse initial magnetic moments from the INCAR file"
                     )
                 if len(init_moments) == len(self.structure):
                     self.structure.set_initial_magnetic_moments(init_moments)
                 else:
-                    self.logger.warn(
+                    self.logger.warning(
                         "Inconsistency during parsing initial magnetic moments from the INCAR file"
                     )
 
@@ -777,14 +771,14 @@ class VaspBase(GenericDFTJob):
         else:
             s.logger.debug("No magnetic moments")
 
-    def set_eddrmm_handling(self, status="not_converged"):
+    def set_eddrmm_handling(self, status="warn"):
         """
         Sets the way, how EDDRMM warning is handled.
 
         Args:
-            status (str): new status of EDDRMM handling (can be 'not_converged', 'ignore', or 'restart')
+            status (str): new status of EDDRMM handling (can be 'warn', 'ignore', or 'restart')
         """
-        if status == "not_converged" or status == "ignore" or status == "restart":
+        if status == "warn" or status == "ignore" or status == "restart":
             self.input._eddrmm = status
         else:
             raise ValueError
@@ -854,7 +848,7 @@ class VaspBase(GenericDFTJob):
         else:
             self.input.incar["ALGO"] = str(algorithm)
             if algorithm not in algorithm_list:
-                s.logger.warn(
+                s.logger.warning(
                     msg="Algorithm {} is unusual for VASP. "
                     "I hope you know what you are up to".format(algorithm)
                 )
@@ -999,12 +993,65 @@ class VaspBase(GenericDFTJob):
         self.input.incar["NSW"] = n_ionic_steps
         self.input.incar["NBLOCK"] = int(n_print)
         self.input.incar["POTIM"] = time_step
+        if "ISYM" not in self.input.incar.keys():
+            self.input.incar["ISYM"] = 0
         if retain_charge_density:
             self.write_charge_density = retain_charge_density
         if retain_electrostatic_potential:
             self.write_electrostatic_potential = retain_electrostatic_potential
         for key in kwargs.keys():
-            self.logger.warn("Tag {} not relevant for vasp".format(key))
+            self.logger.warning("Tag {} not relevant for vasp".format(key))
+
+    def set_kpoints(
+        self,
+        mesh=None,
+        scheme="MP",
+        center_shift=None,
+        symmetry_reduction=True,
+        manual_kpoints=None,
+        weights=None,
+        reciprocal=True,
+        kpoints_per_angstrom=None,
+        n_path=None,
+        path_name=None,
+    ):
+        """
+        Function to setup the k-points
+
+        Args:
+            mesh (list): Size of the mesh (ignored if scheme is not set to 'MP' or kpoints_per_angstrom is set)
+            scheme (str): Type of k-point generation scheme (MP/GC(gamma centered)/GP(gamma point)/Manual/Line)
+            center_shift (list): Shifts the center of the mesh from the gamma point by the given vector in relative coordinates
+            symmetry_reduction (boolean): Tells if the symmetry reduction is to be applied to the k-points
+            manual_kpoints (list/numpy.ndarray): Manual list of k-points
+            weights(list/numpy.ndarray): Manually supplied weights to each k-point in case of the manual mode
+            reciprocal (bool): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
+            reciprocal space)
+            kpoints_per_angstrom (float): Number of kpoint per angstrom in each direction
+            n_path (int): Number of points per trace part for line mode
+            path_name (str): Name of high symmetry path used for band structure calculations.
+        """
+        if kpoints_per_angstrom is not None:
+            if mesh is not None:
+                warnings.warn("mesh value is overwritten by kpoints_per_angstrom")
+            mesh = self.get_k_mesh_by_cell(kpoints_per_angstrom=kpoints_per_angstrom)
+        if mesh is not None:
+            if np.min(mesh) <= 0:
+                raise ValueError("mesh values must be larger than 0")
+        if center_shift is not None:
+            if np.min(center_shift) < 0 or np.max(center_shift) > 1:
+                warnings.warn("center_shift is given in relative coordinates")
+        self._set_kpoints(
+            mesh=mesh,
+            scheme=scheme,
+            center_shift=center_shift,
+            symmetry_reduction=symmetry_reduction,
+            manual_kpoints=manual_kpoints,
+            weights=weights,
+            reciprocal=reciprocal,
+            n_path=n_path,
+            path_name=path_name,
+        )
 
     def _set_kpoints(
         self,
@@ -1015,13 +1062,15 @@ class VaspBase(GenericDFTJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
+        n_path=None,
+        path_name=None,
     ):
         """
         Function to setup the k-points for the VASP job
 
         Args:
             mesh (list): Size of the mesh (in the MP scheme)
-            scheme (str): Type of k-point generation scheme (MP/GP(gamma point)/Manual/Line)
+            scheme (str): Type of k-point generation scheme (MP/GC(gamma centered)/GP(gamma point)/Manual/Line)
             center_shift (list): Shifts the center of the mesh from the gamma point by the given vector
             symmetry_reduction (boolean): Tells if the symmetry reduction is to be applied to the k-points
             manual_kpoints (list/numpy.ndarray): Manual list of k-points
@@ -1029,21 +1078,46 @@ class VaspBase(GenericDFTJob):
             reciprocal (bool): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
             reciprocal space)
             kmesh_density (float): Value of the required density
+            n_path (int): Number of points per trace part for line mode
+            path_name (str): Name of high symmetry path used for band structure calculations.
         """
-
         if not symmetry_reduction:
             self.input.incar["ISYM"] = -1
-        scheme_list = ["MP", "GP", "Line", "Manual"]
+        scheme_list = ["MP", "GC", "GP", "Line", "Manual"]
         if not (scheme in scheme_list):
             raise AssertionError()
         if scheme == "MP":
             if mesh is None:
                 mesh = [int(val) for val in self.input.kpoints[3].split()]
-            self.input.kpoints.set(size_of_mesh=mesh, shift=center_shift)
+            self.input.kpoints.set_kpoints_file(size_of_mesh=mesh, shift=center_shift)
+        if scheme == "GC":
+            if mesh is None:
+                mesh = [int(val) for val in self.input.kpoints[3].split()]
+            self.input.kpoints.set_kpoints_file(size_of_mesh=mesh, shift=center_shift, method="Gamma centered")
         if scheme == "GP":
-            self.input.kpoints.set(size_of_mesh=[1, 1, 1], method="Gamma Point")
+            self.input.kpoints.set_kpoints_file(size_of_mesh=[1, 1, 1], method="Gamma Point")
         if scheme == "Line":
-            raise NotImplementedError("The line mode is not implemented as yet")
+            if n_path is None and self.input.kpoints._n_path is None:
+                raise ValueError("n_path has to be defined")
+            high_symmetry_points = self.structure.get_high_symmetry_points()
+            if high_symmetry_points is None:
+                raise ValueError("high_symmetry_points has to be defined")
+
+            if path_name is None and self.input.kpoints._path_name is None:
+                raise ValueError("path_name has to be defined")
+            if path_name not in self.structure.get_high_symmetry_path().keys():
+                raise ValueError("path_name is not a valid key of high_symmetry_path")
+
+            if path_name is not None:
+                self.input.kpoints._path_name = path_name
+            if n_path is not None:
+                self.input.kpoints._n_path = n_path
+
+            self.input.kpoints.set_kpoints_file(
+                method="Line",
+                n_path=self.input.kpoints._n_path,
+                path=self._get_path_for_kpoints(self.input.kpoints._path_name)
+            )
         if scheme == "Manual":
             if manual_kpoints is None:
                 raise ValueError(
@@ -1067,6 +1141,25 @@ class VaspBase(GenericDFTJob):
                         line=3 + i,
                         val=" ".join([str(kpt[0]), str(kpt[1]), str(kpt[2]), str(wt)]),
                     )
+
+    def _get_path_for_kpoints(self, path_name):
+        """
+        gets the trace for k-points line mode in a VASP readable form.
+
+        Args:
+            path_name (str): Name of the path used for band structure calculation from structure instance.
+
+        Returns:
+            list: list of tuples of position and path name
+        """
+        path = self.structure.get_high_symmetry_path()[path_name]
+
+        k_trace = []
+        for t in path:
+            k_trace.append((self.structure.get_high_symmetry_points()[t[0]], t[0]))
+            k_trace.append((self.structure.get_high_symmetry_points()[t[1]], t[1]))
+
+        return k_trace
 
     def set_for_band_structure_calc(
         self, num_points, structure=None, read_charge_density=True
@@ -1291,12 +1384,11 @@ class VaspBase(GenericDFTJob):
                 es_obj.from_hdf(ho, "electrostatic_potential")
             return es_obj
 
-    def restart(self, snapshot=-1, job_name=None, job_type=None):
+    def restart(self, job_name=None, job_type=None):
         """
         Restart a new job created from an existing Vasp calculation.
 
         Args:
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Vasp job type is assumed
 
@@ -1304,7 +1396,7 @@ class VaspBase(GenericDFTJob):
             new_ham (vasp.vasp.Vasp instance): New job
         """
         new_ham = super(VaspBase, self).restart(
-            snapshot=snapshot, job_name=job_name, job_type=job_type
+            job_name=job_name, job_type=job_type
         )
         if new_ham.__name__ == self.__name__:
             new_ham.input.potcar["xc"] = self.input.potcar["xc"]
@@ -1312,7 +1404,6 @@ class VaspBase(GenericDFTJob):
 
     def restart_from_charge_density(
         self,
-        snapshot=-1,
         job_name=None,
         job_type=None,
         icharg=None,
@@ -1322,7 +1413,6 @@ class VaspBase(GenericDFTJob):
         Restart a new job created from an existing Vasp calculation by reading the charge density.
 
         Args:
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Vasp job type is assumed
             icharg (int): Vasp ICHARG tag
@@ -1331,14 +1421,14 @@ class VaspBase(GenericDFTJob):
         Returns:
             new_ham (vasp.vasp.Vasp instance): New job
         """
-        new_ham = self.restart(snapshot=snapshot, job_name=job_name, job_type=job_type)
+        new_ham = self.restart(job_name=job_name, job_type=job_type)
         if new_ham.__name__ == self.__name__:
             try:
                 new_ham.restart_file_list.append(
                     posixpath.join(self.working_directory, "CHGCAR")
                 )
             except IOError:
-                self.logger.warn(
+                self.logger.warning(
                     msg="A CHGCAR from job: {} is not generated and therefore it can't be read.".format(
                         self.job_name
                     )
@@ -1379,7 +1469,6 @@ class VaspBase(GenericDFTJob):
 
     def restart_from_wave_and_charge(
         self,
-        snapshot=-1,
         job_name=None,
         job_type=None,
         icharg=None,
@@ -1391,7 +1480,6 @@ class VaspBase(GenericDFTJob):
         function.
 
         Args:
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Vasp job type is assumed
             icharg (int): Vasp ICHARG tag
@@ -1401,14 +1489,14 @@ class VaspBase(GenericDFTJob):
         Returns:
             new_ham (vasp.vasp.Vasp instance): New job
         """
-        new_ham = self.restart(snapshot=snapshot, job_name=job_name, job_type=job_type)
+        new_ham = self.restart(job_name=job_name, job_type=job_type)
         if new_ham.__name__ == self.__name__:
             try:
                 new_ham.restart_file_list.append(
                     posixpath.join(self.working_directory, "CHGCAR")
                 )
             except IOError:
-                self.logger.warn(
+                self.logger.warning(
                     msg="A CHGCAR from job: {} is not generated and therefore it can't be read.".format(
                         self.job_name
                     )
@@ -1418,7 +1506,7 @@ class VaspBase(GenericDFTJob):
                     posixpath.join(self.working_directory, "WAVECAR")
                 )
             except IOError:
-                self.logger.warn(
+                self.logger.warning(
                     msg="A WAVECAR from job: {} is not generated and therefore it can't be read.".format(
                         self.job_name
                     )
@@ -1444,7 +1532,7 @@ class VaspBase(GenericDFTJob):
             files_to_compress = [
                 f
                 for f in list(self.list_files())
-                if f not in ["CHGCAR", "CONTCAR", "WAVECAR"]
+                if f not in ["CHGCAR", "CONTCAR", "WAVECAR", "STOPCAR"]
             ]
         # delete empty files
         for f in list(self.list_files()):
@@ -1458,14 +1546,13 @@ class VaspBase(GenericDFTJob):
         super(VaspBase, self).compress(files_to_compress=files_to_compress)
 
     def restart_from_wave_functions(
-        self, snapshot=-1, job_name=None, job_type=None, istart=1
+        self, job_name=None, job_type=None, istart=1
     ):
 
         """
         Restart a new job created from an existing Vasp calculation by reading the wave functions.
 
         Args:
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Vasp job type is assumed
             istart (int): Vasp ISTART tag
@@ -1473,14 +1560,14 @@ class VaspBase(GenericDFTJob):
         Returns:
             new_ham (vasp.vasp.Vasp instance): New job
         """
-        new_ham = self.restart(snapshot=snapshot, job_name=job_name, job_type=job_type)
+        new_ham = self.restart(job_name=job_name, job_type=job_type)
         if new_ham.__name__ == self.__name__:
             try:
                 new_ham.restart_file_list.append(
                     posixpath.join(self.working_directory, "WAVECAR")
                 )
             except IOError:
-                self.logger.warn(
+                self.logger.warning(
                     msg="A WAVECAR from job: {} is not generated and therefore it can't be read.".format(
                         self.job_name
                     )
@@ -1609,7 +1696,7 @@ class Input:
         self.kpoints = Kpoints(table_name="kpoints")
         self.potcar = Potcar(table_name="potcar")
 
-        self._eddrmm = "not_converged"
+        self._eddrmm = "warn"
 
     def write(self, structure, modified_elements, directory=None):
         """
@@ -1648,8 +1735,13 @@ class Input:
             self.kpoints.to_hdf(hdf5_input)
             self.potcar.to_hdf(hdf5_input)
 
-            vasp_dict = {"eddrmm_handling": self._eddrmm}
-            hdf5_input["vasp_dict"] = vasp_dict
+            if "vasp_dict" in hdf5_input.list_nodes():
+                vasp_dict = hdf5_input["vasp_dict"]
+                vasp_dict.update({"eddrmm_handling": self._eddrmm})
+                hdf5_input["vasp_dict"] = vasp_dict
+            else:
+                vasp_dict = {"eddrmm_handling": self._eddrmm}
+                hdf5_input["vasp_dict"] = vasp_dict
 
     def from_hdf(self, hdf):
         """
@@ -1662,11 +1754,20 @@ class Input:
             self.incar.from_hdf(hdf5_input)
             self.kpoints.from_hdf(hdf5_input)
             self.potcar.from_hdf(hdf5_input)
+
+            self._eddrmm = "ignore"
             if "vasp_dict" in hdf5_input.list_nodes():
                 vasp_dict = hdf5_input["vasp_dict"]
-                self._eddrmm = vasp_dict["eddrmm_handling"]
-            else:
-                self._eddrmm = "ignore"
+                if "eddrmm_handling" in vasp_dict.keys():
+                    self._eddrmm = self._eddrmm_backwards_compatibility(vasp_dict["eddrmm_handling"])
+
+    @staticmethod
+    def _eddrmm_backwards_compatibility(eddrmm_value):
+        """On 9-03-2020, the EDDRMM flag 'not_converged' was switched to 'warn'."""
+        if eddrmm_value == 'not_converged':
+            return 'warn'
+        else:
+            return eddrmm_value
 
 
 class Output:
@@ -1773,14 +1874,9 @@ class Output:
             log_dict["positions"] = self.vp_new.vasprun_dict["positions"]
             log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
             log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
-            log_dict["positions_unwrapped"] = unwrap_coordinates(
-                positions=log_dict["positions"], cell=None, is_relative=True
-            )
-            for i, pos in enumerate(log_dict["positions"]):
-                log_dict["positions"][i] = np.dot(pos, log_dict["cells"][i])
-                log_dict["positions_unwrapped"][i] = np.dot(
-                    log_dict["positions_unwrapped"][i].copy(), log_dict["cells"][i]
-                )
+            log_dict["positions"] = np.einsum('nij,njk->nik',
+                                              log_dict["positions"],
+                                              log_dict["cells"])
             # log_dict["scf_energies"] = self.vp_new.vasprun_dict["scf_energies"]
             # log_dict["scf_dipole_moments"] = self.vp_new.vasprun_dict["scf_dipole_moments"]
             self.electronic_structure = self.vp_new.get_electronic_structure()
@@ -1793,7 +1889,7 @@ class Output:
                     :, sorted_indices, :, :
                 ] = self.electronic_structure.resolved_densities[:, :, :, :].copy()
             self.structure.positions = log_dict["positions"][-1]
-            self.structure.cell = log_dict["cells"][-1]
+            self.structure.set_cell(log_dict["cells"][-1])
 
         elif outcar_working:
             # log_dict = self.outcar.parse_dict.copy()
@@ -2115,7 +2211,6 @@ class Incar(GenericParameters):
 SYSTEM =  ToDo  # jobname
 PREC = Accurate
 ALGO = Fast
-ENCUT = 250
 LREAL = False
 LWAVE = False
 LORBIT = 0
@@ -2135,15 +2230,30 @@ class Kpoints(GenericParameters):
             val_only=True,
             comment_char="!",
         )
+        self._path_name = None
+        self._n_path = None
 
-    def set(self, method=None, size_of_mesh=None, shift=None):
+    def set_kpoints_file(self, method=None, size_of_mesh=None, shift=None, n_path=None, path=None):
         """
         Sets appropriate tags and values in the KPOINTS file
         Args:
-            method (str): Type of meshing scheme (Gamma Point, MP, Manual or Line)
+            method (str): Type of meshing scheme (Gamma, MP, Manual or Line)
             size_of_mesh (list/numpy.ndarray): List of size 1x3 specifying the required mesh size
             shift (list): List of size 1x3 specifying the user defined shift from the Gamma point
+            n_path (int): Number of points per trace for line mode
+            path (list): List of tuples including path coorinate and name.
         """
+        if n_path is not None:
+            if path is None:
+                raise ValueError("trace have to be defined")
+
+            self.set_value(line=1, val=n_path)
+            self.set_value(line=3, val="rec")
+
+            for i, t in enumerate(path):
+                val = " ".join([str(ii) for ii in t[0]])
+                val = val + " !" + t[1]
+                self.set_value(line=i + 4, val=val)
         if method is not None:
             self.set_value(line=2, val=method)
         if size_of_mesh is not None:
@@ -2176,154 +2286,44 @@ Monkhorst_Pack
                     structure.get_cell(),
                     kspace_per_in_ang=self._dataset["density_of_mesh"],
                 )
-                self.set(size_of_mesh=k_mesh)
+                self.set_kpoints_file(size_of_mesh=k_mesh)
 
-
-class Potcar(GenericParameters):
-    pot_path_dict = {"GGA": "paw-gga-pbe", "PBE": "paw-gga-pbe", "LDA": "paw-lda"}
-
-    def __init__(self, input_file_name=None, table_name="potcar"):
-        GenericParameters.__init__(
-            self,
-            input_file_name=input_file_name,
-            table_name=table_name,
-            val_only=False,
-            comment_char="#",
-        )
-        self._structure = None
-        self.electrons_per_atom_lst = list()
-        self.max_cutoff_lst = list()
-        self.el_path_lst = list()
-        self.el_path_dict = dict()
-        self.modified_elements = dict()
-
-    def potcar_set_structure(self, structure, modified_elements):
-        self._structure = structure
-        self._set_default_path_dict()
-        self._set_potential_paths()
-        self.modified_elements = modified_elements
-
-    def modify(self, **modify):
-        if "xc" in modify:
-            xc_type = modify["xc"]
-            self._set_default_path_dict()
-            if xc_type not in self.pot_path_dict:
-                raise ValueError("xc type not implemented: " + xc_type)
-        GenericParameters.modify(self, **modify)
-        if self._structure is not None:
-            self._set_potential_paths()
-
-    def _set_default_path_dict(self):
-        if self._structure is None:
-            return
-        vasp_potentials = VaspPotentialFile(xc=self.get("xc"))
-        for i, el_obj in enumerate(self._structure.get_species_objects()):
-            if isinstance(el_obj.Parent, str):
-                el = el_obj.Parent
-            else:
-                el = el_obj.Abbreviation
-            if isinstance(el_obj.tags, dict):
-                if "pseudo_potcar_file" in el_obj.tags.keys():
-                    new_element = el_obj.tags["pseudo_potcar_file"]
-                    vasp_potentials.add_new_element(
-                        parent_element=el, new_element=new_element
-                    )
-            key = vasp_potentials.find_default(el).Species.values[0][0]
-            val = vasp_potentials.find_default(el).Name.values[0]
-            self[key] = val
-
-    def _set_potential_paths(self):
-        element_list = (
-            self._structure.get_species_symbols()
-        )  # .ElementList.getSpecies()
-        object_list = self._structure.get_species_objects()
-        s.logger.debug("element list: {0}".format(element_list))
-        self.el_path_lst = list()
-        try:
-            xc = self.get("xc")
-        except tables.exceptions.NoSuchNodeError:
-            xc = self.get("xc")
-        s.logger.debug("XC: {0}".format(xc))
-        vasp_potentials = VaspPotentialFile(xc=xc)
-        for i, el_obj in enumerate(object_list):
-            if isinstance(el_obj.Parent, str):
-                el = el_obj.Parent
-            else:
-                el = el_obj.Abbreviation
-            if (
-                isinstance(el_obj.tags, dict)
-                and "pseudo_potcar_file" in el_obj.tags.keys()
-            ):
-                new_element = el_obj.tags["pseudo_potcar_file"]
-                vasp_potentials.add_new_element(
-                    parent_element=el, new_element=new_element
-                )
-                el_path = find_potential_file(
-                    path=vasp_potentials.find_default(new_element)["Filename"].values[
-                        0
-                    ][0],
-                    pot_path_dict=self.pot_path_dict,
-                )
-                if not (os.path.isfile(el_path)):
-                    raise ValueError("such a file does not exist in the pp directory")
-            else:
-                el_path = find_potential_file(
-                    path=vasp_potentials.find_default(el)["Filename"].values[0][0],
-                    pot_path_dict=self.pot_path_dict,
-                )
-
-            if not (os.path.isfile(el_path)):
-                raise AssertionError()
-            pot_name = "pot_" + str(i)
-
-            if pot_name in self._dataset["Parameter"]:
-                try:
-                    ind = self._dataset["Parameter"].index(pot_name)
-                except (ValueError, IndexError):
-                    indices = np.core.defchararray.find(
-                        self._dataset["Parameter"], pot_name
-                    )
-                    ind = np.where(indices == 0)[0][0]
-                self._dataset["Value"][ind] = el_path
-                self._dataset["Comment"][ind] = ""
-            else:
-                self._dataset["Parameter"].append("pot_" + str(i))
-                self._dataset["Value"].append(el_path)
-                self._dataset["Comment"].append("")
-            if el_obj.Abbreviation in self.modified_elements.keys():
-                self.el_path_lst.append(self.modified_elements[el_obj.Abbreviation])
-            else:
-                self.el_path_lst.append(el_path)
-
-    def write_file(self, file_name, cwd=None):
+    def to_hdf(self, hdf, group_name=None):
         """
+        Store the GenericParameters in an HDF5 file
+
         Args:
-            file_name:
-            cwd:
-        Returns:
+            hdf (ProjectHDFio): HDF5 group object
+            group_name (str): HDF5 subgroup name - optional
         """
-        self.electrons_per_atom_lst = list()
-        self.max_cutoff_lst = list()
-        self._set_potential_paths()
-        if cwd is not None:
-            file_name = posixpath.join(cwd, file_name)
-        f = open(file_name, "w")
-        for el_file in self.el_path_lst:
-            with open(el_file) as pot_file:
-                for i, line in enumerate(pot_file):
-                    f.write(line)
-                    if i == 1:
-                        self.electrons_per_atom_lst.append(int(float(line)))
-                    elif i == 14:
-                        mystr = line.split()[2][:-1]
-                        self.max_cutoff_lst.append(float(mystr))
-        f.close()
+        super(Kpoints, self).to_hdf(
+            hdf=hdf,
+            group_name=group_name
+        )
+        if self._path_name is not None:
+            line_dict = {"path_name": self._path_name,
+                         "n_path": self._n_path}
+            with hdf.open("kpoints") as hdf_kpoints:
+                hdf_kpoints["line_dict"] = line_dict
 
-    def load_default(self):
-        file_content = """\
-xc  GGA  # LDA, GGA
-"""
-        self.load_string(file_content)
+    def from_hdf(self, hdf, group_name=None):
+        """
+        Restore the GenericParameters from an HDF5 file
+
+        Args:
+            hdf (ProjectHDFio): HDF5 group object
+            group_name (str): HDF5 subgroup name - optional
+        """
+        super(Kpoints, self).from_hdf(
+            hdf=hdf,
+            group_name=group_name
+        )
+        self._path_name = None
+        self._n_path = None
+        with hdf.open("kpoints") as hdf_kpoints:
+            if "line_dict" is hdf_kpoints.list_nodes():
+                self._path_name = hdf_kpoints["line_dict"]["path_name"]
+                self._n_path = hdf_kpoints["line_dict"]["n_path"]
 
 
 def get_k_mesh_by_cell(cell, kspace_per_in_ang=0.10):

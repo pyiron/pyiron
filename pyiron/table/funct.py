@@ -54,6 +54,10 @@ def get_n_kpts(job):
     return {"n_kpts": eval(job["input/kpoints/data_dict"]["Value"][3].split()[0])}
 
 
+def get_n_equ_kpts(job):
+    return {"n_equ_kpts": len(job['output/generic/dft/bands/k_points'])}
+
+
 def get_total_number_of_atoms(job):
     return {"Number_of_atoms": len(job["input/structure/indices"])}
 
@@ -63,12 +67,21 @@ def get_average_waves(job):
     return {"avg. plane waves": sum(weights * planewaves) / sum(weights)}
 
 
+def get_plane_waves(job):
+    _, weights, planewaves = job["output/outcar/irreducible_kpoints"]
+    return {"plane waves": sum(weights * planewaves)}
+
+
 def get_ekin_error(job):
     return {"energy_tot_wo_kin_corr": job["output/outcar/kin_energy_error"] + job["output/generic/energy_tot"][-1]}
 
 
 def get_volume(job):
     return {"volume": job["output/generic/volume"][-1]}
+
+
+def get_volume_per_atom(job):
+    return {"volume": job["output/generic/volume"][-1] / get_total_number_of_atoms(job=job)["Number_of_atoms"]}
 
 
 def get_elements(job):
@@ -131,12 +144,24 @@ def get_job_id(job):
     return {"job_id": job.job_id}
 
 
+def get_energy_tot_per_atom(job):
+    return {"energy_tot": job["output/generic/energy_tot"][-1] / get_total_number_of_atoms(job=job)["Number_of_atoms"]}
+
+
 def get_energy_tot(job):
     return {"energy_tot": job["output/generic/energy_tot"][-1]}
 
 
+def get_energy_free_per_atom(job):
+    return {"energy_free": job["output/generic/dft/energy_free"][-1] / get_total_number_of_atoms(job=job)["Number_of_atoms"]}
+
+
 def get_energy_free(job):
     return {"energy_free": job["output/generic/dft/energy_free"][-1]}
+
+
+def get_energy_int_per_atom(job):
+    return {"energy_int": job["output/generic/dft/energy_int"][-1] / get_total_number_of_atoms(job=job)["Number_of_atoms"]}
 
 
 def get_energy_int(job):
@@ -231,3 +256,10 @@ def get_magnetic_structure(job):
             return {"magnetic_structure": "para-magnetic"}
         else:
             return {"magnetic_structure": "unknown"}
+
+
+def get_e_conv_level(job):
+    return {'el_conv': np.max(np.abs(
+        job['output/generic/dft/scf_energy_free'][0] -
+        job['output/generic/dft/scf_energy_free'][0][-1]
+    )[-10:])}

@@ -15,7 +15,7 @@ Jobtype class to create GenericJob type objects
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -54,6 +54,8 @@ JOB_CLASS_DICT = {
     "SxPhonons": "pyiron.thermodynamics.sxphonons",
     "SxHarmPotTst": "pyiron.thermodynamics.sxphonons",
     "Gaussian": "pyiron.gaussian.gaussian",
+    "Yaff": "pyiron.yaff.yaff",
+    "QuickFF": "pyiron.quickff.quickff",
 }
 
 
@@ -144,7 +146,7 @@ class JobType(object):
             raise TypeError()
         job = job_class(project, job_name)
         if job.status.aborted:
-            job.logger.warn(
+            job.logger.warning(
                 "Job aborted - please remove it and run again! {}".format(job.job_name)
             )
         if not job.status.initialized:
