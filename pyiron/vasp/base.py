@@ -1402,6 +1402,33 @@ class VaspBase(GenericDFTJob):
             new_ham.input.potcar["xc"] = self.input.potcar["xc"]
         return new_ham
 
+    def restart_for_band_structure_calculations(
+            self,
+            job_name=None,
+            job_type=None,
+            icharg=None,
+            self_consistent_calc=None,
+    ):
+        """
+        Restart a new job created from an existing Vasp calculation by reading the charge density
+        for band structure calculations.
+
+        Args:
+            job_name (str): Job name
+            job_type (str): Job type. If not specified a Vasp job type is assumed
+            icharg (int): Vasp ICHARG tag
+            self_consistent_calc (boolean): Tells if the new calculation is self consistent
+
+        Returns:
+            new_ham (vasp.vasp.Vasp instance): New job
+        """
+        return self.restart_from_charge_density(
+            job_name=job_name,
+            job_type=job_type,
+            icharg=icharg,
+            self_consistent_calc=self_consistent_calc
+        )
+
     def restart_from_charge_density(
         self,
         job_name=None,
