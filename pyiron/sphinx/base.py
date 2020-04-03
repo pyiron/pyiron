@@ -752,14 +752,24 @@ class SphinxBase(GenericDFTJob):
         check_overlap = self.input["CheckOverlap"]
         enable_kjxc = self.input["KJxc"]
         if self._main_str is None:
-            self.input_writer.write_potentials(
-                file_name="potentials.sx",
-                cwd=self.working_directory,
-                species_str=self._species_str,
-                check_overlap=check_overlap,
-                xc=self.input["Xcorr"],
-                potformat=self.input["PotType"]
-            )
+            if self.input["VaspPot"]:
+                self.input_writer.write_potentials(
+                    file_name="potentials.sx",
+                    cwd=self.working_directory,
+                    species_str=self._species_str,
+                    check_overlap=check_overlap,
+                    xc=self.input["Xcorr"],
+                    potformat="VASP"
+                )
+            else:
+                self.input_writer.write_potentials(
+                    file_name="potentials.sx",
+                    cwd=self.working_directory,
+                    species_str=self._species_str,
+                    check_overlap=check_overlap,
+                    xc=self.input["Xcorr"],
+                    potformat="JTH"
+                )
             self.input_writer.write_guess(
                 file_name="guess.sx",
                 cwd=self.working_directory,
