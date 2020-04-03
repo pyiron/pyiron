@@ -342,7 +342,6 @@ class SphinxBase(GenericDFTJob):
         Args:
             job_name (str): Job name
             job_type (str): Job type. If not specified a Vasp job type is assumed
-            band_structure_calc (bool): has to be True for band structure calculations.
 
         Returns:
             pyiron.sphinx.sphinx.sphinx: new job instance
