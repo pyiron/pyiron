@@ -73,7 +73,7 @@ class SphinxBase(GenericDFTJob):
         self._output_parser = Output(self)
         self.input_writer = InputWriter()
         if self.check_vasp_potentials():
-            self.input["PotType"] = "VASP"  # use VASP potentials if available
+            self.input["VaspPot"] = True  # use VASP potentials if available
         self._kpoints_odict = None
         self._generic_input["restart_for_band_structure"] = False
         self._generic_input["path_name"] = None
@@ -752,14 +752,24 @@ class SphinxBase(GenericDFTJob):
         check_overlap = self.input["CheckOverlap"]
         enable_kjxc = self.input["KJxc"]
         if self._main_str is None:
-            self.input_writer.write_potentials(
-                file_name="potentials.sx",
-                cwd=self.working_directory,
-                species_str=self._species_str,
-                check_overlap=check_overlap,
-                xc=self.input["Xcorr"],
-                potformat=self.input["PotType"]
-            )
+            if self.input["VaspPot"]:
+                self.input_writer.write_potentials(
+                    file_name="potentials.sx",
+                    cwd=self.working_directory,
+                    species_str=self._species_str,
+                    check_overlap=check_overlap,
+                    xc=self.input["Xcorr"],
+                    potformat="VASP"
+                )
+            else:
+                self.input_writer.write_potentials(
+                    file_name="potentials.sx",
+                    cwd=self.working_directory,
+                    species_str=self._species_str,
+                    check_overlap=check_overlap,
+                    xc=self.input["Xcorr"],
+                    potformat="JTH"
+                )
             self.input_writer.write_guess(
                 file_name="guess.sx",
                 cwd=self.working_directory,
@@ -1513,7 +1523,7 @@ class Input(GenericParameters):
             "EmptyStates = auto\n"
             "Sigma = 0.2\n"
             "Xcorr = PBE\n"
-            "PotType = JTH\n"
+            "VaspPot = False\n"
             "Estep = 400\n"
             "Ediff = 1.0e-4\n"
             "WriteWaves = True\n"

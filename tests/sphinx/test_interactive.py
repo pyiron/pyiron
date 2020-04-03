@@ -32,7 +32,7 @@ class TestSphinx(unittest.TestCase):
         cls.sphinx.structure.set_initial_magnetic_moments(np.ones(2))
         cls.current_dir = os.path.abspath(os.getcwd())
         cls.sphinx._create_working_directory()
-        cls.sphinx.input["PotType"] = "JTH"
+        cls.sphinx.input["VaspPot"] = False
         cls.sphinx.write_input()
         cls.sphinx.version = "2.6"
         cls.sphinx.server.run_mode.interactive = True
