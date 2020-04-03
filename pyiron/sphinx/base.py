@@ -73,7 +73,7 @@ class SphinxBase(GenericDFTJob):
         self._output_parser = Output(self)
         self.input_writer = InputWriter()
         if self.check_vasp_potentials():
-            self.input["PotType"] = "VASP"  # use VASP potentials if available
+            self.input["VaspPot"] = True  # use VASP potentials if available
         self._kpoints_odict = None
         self._generic_input["restart_for_band_structure"] = False
         self._generic_input["path_name"] = None
@@ -1513,7 +1513,7 @@ class Input(GenericParameters):
             "EmptyStates = auto\n"
             "Sigma = 0.2\n"
             "Xcorr = PBE\n"
-            "PotType = JTH\n"
+            "VaspPot = False\n"
             "Estep = 400\n"
             "Ediff = 1.0e-4\n"
             "WriteWaves = True\n"
