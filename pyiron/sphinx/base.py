@@ -20,7 +20,10 @@ from collections import OrderedDict as odict
 from collections import defaultdict
 
 from pyiron.dft.job.generic import GenericDFTJob
-from pyiron.sphinx.potential import SphinxPotentialFile, find_potential_file
+from pyiron.vasp.potential import VaspPotentialFile
+from pyiron.vasp.potential import find_potential_file as find_potential_file_vasp
+from pyiron.sphinx.potential import SphinxJTHPotentialFile
+from pyiron.sphinx.potential import find_potential_file as find_potential_file_jth
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
 
@@ -69,7 +72,8 @@ class SphinxBase(GenericDFTJob):
         self._save_memory = False
         self._output_parser = Output(self)
         self.input_writer = InputWriter()
-
+        if self.check_vasp_potentials():
+            self.input["PotType"] = "VASP"  # use VASP potentials if available
         self._kpoints_odict = None
         self._generic_input["restart_for_band_structure"] = False
         self._generic_input["path_name"] = None
@@ -754,6 +758,7 @@ class SphinxBase(GenericDFTJob):
                 species_str=self._species_str,
                 check_overlap=check_overlap,
                 xc=self.input["Xcorr"],
+                potformat=self.input["PotType"]
             )
             self.input_writer.write_guess(
                 file_name="guess.sx",
@@ -791,8 +796,6 @@ class SphinxBase(GenericDFTJob):
                     cwd=self.working_directory,
                     spins_str=self._spins_str,
                 )
-        if self.input["Xcorr"] is "JTH":
-            self.input["Xcorr"] = "PBE"
         self.input.write_file(file_name="userparameters.sx", cwd=self.working_directory)
         self.input_writer.write_main(
             file_name="input.sx",
@@ -970,13 +973,15 @@ class SphinxBase(GenericDFTJob):
                 os.remove(filename)
         super(SphinxBase, self).compress(files_to_compress=files_to_compress)
 
+    @staticmethod
+    def check_vasp_potentials():
+        return any([os.path.exists(os.path.join(p, 'vasp')) for p in s.resource_paths])
+
 
 class InputWriter(object):
     """
     The Sphinx Input writer is called to write the Sphinx specific input files.
     """
-
-    pot_path_dict = {"PBE": "paw-gga-pbe", "LDA": "paw-lda", "JTH": "jth-gga-pbe"}
 
     def __init__(self):
         self.structure = None
@@ -1116,6 +1121,7 @@ class InputWriter(object):
         species_str=None,
         check_overlap=True,
         xc=None,
+        potformat='JTH',
     ):
         """
         Write the Sphinx potential configuration named potentials.sx.
@@ -1125,7 +1131,16 @@ class InputWriter(object):
             cwd (str): the current working directory (optional)
             species_str (str): the input to write, if no input is given the default input will be written. (optional)
         """
-        potentials = SphinxPotentialFile(xc=xc)
+        if potformat == 'JTH':
+            potentials = SphinxJTHPotentialFile(xc=xc)
+            find_potential_file = find_potential_file_jth
+            pot_path_dict = {"PBE": "jth-gga-pbe"}
+        elif potformat == 'VASP':
+            potentials = VaspPotentialFile(xc=xc)
+            find_potential_file = find_potential_file_vasp
+            pot_path_dict = {"PBE": "paw-gga-pbe", "LDA": "paw-lda"}
+        else:
+            raise ValueError('Only JTH and VASP potentials are supported!')
         if species_str is None:
             species_str = odict()
             for species_obj in self.structure.get_species_objects():
@@ -1153,13 +1168,13 @@ class InputWriter(object):
                         path=potentials.find_default(elem)["Filename"].values[0][0],
                         pot_path_dict=self.pot_path_dict,
                     )
-                if xc == "JTH":
+                if potformat == "JTH":
                     copyfile(potential_path, posixpath.join(cwd, elem + "_GGA.atomicdata"))
                 else: 
                     copyfile(potential_path, posixpath.join(cwd, elem + "_POTCAR"))
                 check_overlap_str = ""
                 species_str.setdefault("species", [])
-                if xc == "JTH":
+                if potformat == "JTH":
                     species_str["species"].append(
                         odict(
                             [
@@ -1170,7 +1185,7 @@ class InputWriter(object):
                             ]
                         )
                     )
-                else: 
+                elif potformat == "VASP":
                     species_str["species"].append(
                         odict(
                             [
@@ -1181,6 +1196,8 @@ class InputWriter(object):
                             ]
                         )
                     )
+                else:
+                    raise ValueError()
                 if not check_overlap:
                     species_str["species"][-1]["checkOverlap"] = "false"
         if cwd is not None:
@@ -1495,7 +1512,8 @@ class Input(GenericParameters):
             "KpointFolding = [4,4,4]\n"
             "EmptyStates = auto\n"
             "Sigma = 0.2\n"
-            "Xcorr = JTH\n"
+            "Xcorr = PBE\n"
+            "PotType = JTH\n"
             "Estep = 400\n"
             "Ediff = 1.0e-4\n"
             "WriteWaves = True\n"

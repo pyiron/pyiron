@@ -21,7 +21,7 @@ __date__ = "Sep 20, 2019"
 s = Settings()
 
 
-class SphinxPotentialFile(VaspPotentialAbstract):
+class SphinxJTHPotentialFile(VaspPotentialAbstract):
     """
     The Potential class is derived from the PotentialAbstract class, but instead of loading the potentials from a list,
     the potentials are loaded from a file.
@@ -37,27 +37,6 @@ class SphinxPotentialFile(VaspPotentialAbstract):
         )
         if xc == "PBE":
             default_df = self._get_potential_default_df(
-                plugin_name="vasp",
-                file_name_lst={"potentials_vasp_pbe_default.csv"},
-                backward_compatibility_name="defaultvasppbe",
-            )
-            potential_df = potential_df[(potential_df["Model"] == "gga-pbe")]
-        elif xc == "GGA":
-            default_df = self._get_potential_default_df(
-                plugin_name="vasp",
-                file_name_lst={"potentials_vasp_pbe_default.csv"},
-                backward_compatibility_name="defaultvasppbe",
-            )
-            potential_df = potential_df[(potential_df["Model"] == "gga-pbe")]
-        elif xc == "LDA":
-            default_df = self._get_potential_default_df(
-                plugin_name="vasp",
-                file_name_lst={"potentials_vasp_lda_default.csv"},
-                backward_compatibility_name="defaultvasplda",
-            )
-            potential_df = potential_df[(potential_df["Model"] == "lda")]
-        elif xc == "JTH":
-            default_df = self._get_potential_default_df(
                 plugin_name="sphinx",
                 file_name_lst={"potentials_sphinx_jth_default.csv"},
                 backward_compatibility_name="defaultsphinxjth",
@@ -67,7 +46,7 @@ class SphinxPotentialFile(VaspPotentialAbstract):
             raise ValueError(
                 'The exchange correlation functional has to be set and it can either be "LDA" or "PBE"'
             )
-        super(SphinxPotentialFile, self).__init__(
+        super(SphinxJTHPotentialFile, self).__init__(
             potential_df=potential_df,
             default_df=default_df,
             selected_atoms=selected_atoms,
