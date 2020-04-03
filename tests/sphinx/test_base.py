@@ -72,12 +72,6 @@ class TestSphinx(unittest.TestCase):
         cls.sphinx_2_3.decompress()
         cls.sphinx_2_5.decompress()
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
-        print(os.listdir(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/",
-            )
-        ))
         os.remove(
             os.path.join(
                 cls.file_location,
