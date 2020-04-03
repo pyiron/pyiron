@@ -60,6 +60,7 @@ class TestSphinx(unittest.TestCase):
         cls.current_dir = os.path.abspath(os.getcwd())
         cls.sphinx._create_working_directory()
         cls.sphinx_2_3._create_working_directory()
+        cls.sphinx.input["PotType"] = "JTH"
         cls.sphinx.write_input()
         cls.sphinx.version = "2.6"
         cls.sphinx_2_3.to_hdf()
@@ -122,7 +123,7 @@ class TestSphinx(unittest.TestCase):
         os.remove(
             os.path.join(
                 cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/Fe_POTCAR",
+                "../static/sphinx/job_sphinx_hdf5/job_sphinx/Fe_GGA.atomicdata",
             )
         )
         os.rmdir(
@@ -220,6 +221,7 @@ class TestSphinx(unittest.TestCase):
             "EmptyStates=6;\n",
             "Sigma=0.2;\n",
             "Xcorr=PBE;\n",
+            "PotType=JTH;\n",
             "Estep=400;\n",
             "Ediff=0.0001;\n",
             "WriteWaves=true;\n",
@@ -331,9 +333,9 @@ class TestSphinx(unittest.TestCase):
         file_content = [
             "species {\n",
             '\tname = "Fe";\n',
-            '\tpotType = "VASP";\n',
+            '\tpotType = "AtomPAW";\n',
             '\telement = "Fe";\n',
-            '\tpotential = "Fe_POTCAR";\n',
+            '\tpotential = "Fe_GGA.atomicdata";\n',
             "}\n",
         ]
         file_name = os.path.join(
