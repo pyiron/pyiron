@@ -1722,15 +1722,15 @@ class Output(object):
             if not np.any(["Program exited normally." in line for line in log_file]):
                 self._job.status.aborted = True
                 warnings.warn("SPHInX parsing failed; most likely SPHInX crashed.")
-            main_start = np.where(["Enter Main Loop" in line for line in log_file])[0][
-                0
-            ]
+            main_start = np.where(["Enter Main Loop" in line for line in log_file])[0][0]
             log_main = log_file[main_start:]
 
+            self._parse_dict["n_valence"] = {log_file[ii-1].split()[1]:int(ll.split('=')[-1])
+                                             for ii, ll in enumerate(log_file)
+                                             if ll.startswith('| Z')}
+
             def get_partial_log(file_content, start_line, end_line):
-                start_line = np.where([line == start_line for line in file_content])[0][
-                    0
-                ]
+                start_line = np.where([line == start_line for line in file_content])[0][0]
                 end_line = np.where(
                     [line == end_line for line in file_content[start_line:]]
                 )[0][0]
@@ -1998,6 +1998,7 @@ class Output(object):
                         "bands_k_weights",
                         "bands_eigen_values",
                         "atom_scf_spins",
+                        "n_valence",
                     ]:
                         if len(self._parse_dict[k]) > 0:
                             hdf5_dft[k] = self._parse_dict[k]
