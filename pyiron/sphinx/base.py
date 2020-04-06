@@ -2054,6 +2054,10 @@ class SphinxOutput(GenericOutput):
             Check whether there are still empty bands available.
 
             args:
+                plot (bool): plots occupancy of the last step
+
+            returns:
+                True if there are still empty bands
         """
         import matplotlib.pylab as plt
         elec_dict = self._job['output/generic/dft']['n_valence']
