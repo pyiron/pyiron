@@ -26,6 +26,7 @@ from pyiron.sphinx.potential import SphinxJTHPotentialFile
 from pyiron.sphinx.potential import find_potential_file as find_potential_file_jth
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
+from pyiron.atomistics.job.atomistic import GenericOutput
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = (
@@ -61,6 +62,7 @@ class SphinxBase(GenericDFTJob):
 
     def __init__(self, project, job_name):
         super(SphinxBase, self).__init__(project, job_name)
+        self.output = SphinxOutput(job=self)
         self.input = Input()
         self._main_str = None
         self._species_str = None
@@ -2041,3 +2043,39 @@ class Output(object):
         """
         Load output from an HDF5 file
         """
+
+
+class SphinxOutput(GenericOutput):
+    def __init__(self, job):
+        super(SphinxOutput, self).__init__(job)
+
+    def check_band_occupancy(self, plot=True):
+        """
+            Check whether there are still empty bands available.
+
+            args:
+        """
+        import matplotlib.pylab as plt
+        elec_dict = self._job['output/generic/dft']['n_valence']
+        if elec_dict is None:
+            raise AssertionError('Number of electrons not parsed')
+        n_elec = np.sum([elec_dict[k]
+                         for k in self._job.structure.get_chemical_symbols()])
+        n_elec = int(np.ceil(n_elec/2))
+        bands = self._job['output/generic/dft/bands_occ'][-1]
+        bands = bands.reshape(-1, bands.shape[-1])
+        max_occ = np.sum(bands>0, axis=-1).max()
+        n_bands = bands.shape[-1]
+        if plot:
+            xticks = np.arange(1, n_bands+1)
+            plt.xlabel('Electron number')
+            plt.ylabel('Occupancy')
+            plt.axvline(n_elec, label='#electrons: {}'.format(n_elec))
+            plt.axvline(max_occ, color='red', label='Max occupancy: {}'.format(max_occ))
+            plt.axvline(n_bands, color='green', label='Number of bands: {}'.format(n_bands))
+            plt.plot(xticks, bands.T, 'x', color='black')
+            plt.legend()
+        if max_occ < n_bands:
+            return True
+        else:
+            return False
