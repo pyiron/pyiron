@@ -336,8 +336,7 @@ class SphinxBase(GenericDFTJob):
         for band structures.
 
         Args:
-            job_name (str): Job name
-            job_type (str): Job type. If not specified a Sphinx job type is assumed
+            job_name (str/None): Job name
 
         Returns:
             pyiron.sphinx.sphinx.sphinx: new job instance
