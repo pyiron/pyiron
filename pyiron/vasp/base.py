@@ -1420,6 +1420,33 @@ class VaspBase(GenericDFTJob):
             self_consistent_calc=None
         )
 
+    def _get_icharg_value(self, icharg=None, self_consistent_calc=None):
+        """
+        Gives the correct ICHARG value for the restart calculation.
+
+        Args:
+            icharg (int/None): If given, this value will be checked for validity and returned.
+            self_consistent_calc (bool/None): If 'True' returns 1, if 'False' returns 11,
+                if 'None' returns based on the job either 1 or 11.
+
+        Returns:
+            int: the icharg tag
+
+        """
+        if icharg is None:
+            if self_consistent_calc is True:
+                return 1
+            if self_consistent_calc is False:
+                return 11
+            if ("ICHARG" in self.input.incar.keys() and int(self.input.incar["ICHARG"]) > 9):
+                return 11
+            return 1
+        if icharg not in [0, 1, 2, 4, 10, 11, 12]:
+            raise ValueError(
+                "The value '{}' is not a proper input for 'icharg'. Look at VASP manual.".format(icharg)
+            )
+        return icharg
+
     def restart_from_charge_density(
         self,
         job_name=None,
@@ -1433,8 +1460,9 @@ class VaspBase(GenericDFTJob):
         Args:
             job_name (str/None): Job name
             job_type (str/None): Job type. If not specified a Vasp job type is assumed
-            icharg (int/None): Vasp ICHARG tag
-            self_consistent_calc (boolean/None): Tells if the new calculation is self consistent
+            icharg (int/None): If given, this value will be checked for validity and returned.
+            self_consistent_calc (bool/None): If 'True' returns 1, if 'False' returns 11,
+                if 'None' returns based on the job either 1 or 11.
 
         Returns:
             new_ham (vasp.vasp.Vasp instance): New job
@@ -1451,22 +1479,11 @@ class VaspBase(GenericDFTJob):
                         self.job_name
                     )
                 )
-            if self_consistent_calc:
-                icharg = 1
-            elif self_consistent_calc is not None:
-                icharg = 11
-            if icharg is None:
-                if (
-                    "ICHARG" in self.input.incar.keys()
-                    and int(self.input.incar["ICHARG"]) > 9
-                ):
-                    icharg = 11
-                else:
-                    icharg = 1
-            new_ham.input.incar["ICHARG"] = icharg
-            return new_ham
-        else:
-            return new_ham
+            new_ham.input.incar["ICHARG"] = self._get_icharg_value(
+                icharg=icharg,
+                self_consistent_calc=self_consistent_calc,
+            )
+        return new_ham
 
     def append_charge_density(self, job_specifier=None, path=None):
         """
@@ -1498,10 +1515,11 @@ class VaspBase(GenericDFTJob):
         function.
 
         Args:
-            job_name (str): Job name
-            job_type (str): Job type. If not specified a Vasp job type is assumed
-            icharg (int): Vasp ICHARG tag
-            self_consistent_calc (boolean): Tells if the new calculation is self consistent
+            job_name (str/None): Job name
+            job_type (str/None): Job type. If not specified a Vasp job type is assumed
+            icharg (int/None): If given, this value will be checked for validity and returned.
+            self_consistent_calc (bool/None): If 'True' returns 1, if 'False' returns 11,
+                if 'None' returns based on the job either 1 or 11.
             istart (int): Vasp ISTART tag
 
         Returns:
@@ -1531,12 +1549,10 @@ class VaspBase(GenericDFTJob):
                 )
             new_ham.input.incar["ISTART"] = istart
 
-            if icharg is None:
-                new_ham.input.incar["ICHARG"] = 1
-                if not self_consistent_calc:
-                    new_ham.input.incar["ICHARG"] = 11
-            else:
-                new_ham.input.incar["ICHARG"] = icharg
+            new_ham.input.incar["ICHARG"] = self._get_icharg_value(
+                icharg=icharg,
+                self_consistent_calc=self_consistent_calc,
+            )
         return new_ham
 
     def compress(self, files_to_compress=None):
@@ -1571,8 +1587,8 @@ class VaspBase(GenericDFTJob):
         Restart a new job created from an existing Vasp calculation by reading the wave functions.
 
         Args:
-            job_name (str): Job name
-            job_type (str): Job type. If not specified a Vasp job type is assumed
+            job_name (str/None): Job name
+            job_type (str/None): Job type. If not specified a Vasp job type is assumed
             istart (int): Vasp ISTART tag
 
         Returns:
