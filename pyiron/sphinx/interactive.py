@@ -202,7 +202,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
             self._interactive_pipe_write("run restart")
             self.interactive_fetch()
 
-    def _interactive_to_output(self):
+    def _output_interactive_to_generic(self):
         with self.project_hdf5.open("output") as h5:
             if "interactive" in h5.list_groups():
                 for key in ["positions", "cells", "indices", "cells"]:
@@ -222,7 +222,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
 
     def collect_output(self, force_update=False):
         super(SphinxInteractive, self).collect_output(force_update=force_update)
-        self._interactive_to_output()
+        self._output_interactive_to_generic()
 
     def interactive_close(self):
         if self.interactive_is_activated():
@@ -232,7 +232,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
             self.status.collect = True
             if self["energy.dat"] is not None:
                 self.run()
-            self._interactive_to_output()
+            self._output_interactive_to_generic()
             super(SphinxInteractive, self).interactive_close()
 
     def calc_minimize(
