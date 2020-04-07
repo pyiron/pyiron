@@ -202,6 +202,28 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
             self._interactive_pipe_write("run restart")
             self.interactive_fetch()
 
+    def _interactive_to_output(self):
+        with self.project_hdf5.open("output") as h5:
+            if "interactive" in h5.list_groups():
+                for key in ["positions", "cells"]:
+                    h5["generic/" + key] = h5["interactive/" + key]
+                with self.project_hdf5.open("input") as hdf5_input:
+                    with hdf5_input.open("generic") as hdf5_generic:
+                        if "dft" not in hdf5_generic.list_groups():
+                            hdf5_generic.create_group("dft")
+                        with hdf5_generic.open("dft") as hdf5_dft:
+                            if (
+                                "atom_spin_constraints"
+                                in h5["interactive"].list_nodes()
+                            ):
+                                hdf5_dft["atom_spin_constraints"] = h5[
+                                    "interactive/atom_spin_constraints"
+                                ]
+
+    def collect_output(self, force_update=False):
+        super(SphinxInteractive, self).collect_output(force_update=force_update)
+        self._interactive_to_output()
+
     def interactive_close(self):
         if self.interactive_is_activated():
             self._interactive_pipe_write("end")
@@ -210,22 +232,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
             self.status.collect = True
             if self["energy.dat"] is not None:
                 self.run()
-            with self.project_hdf5.open("output") as h5:
-                if "interactive" in h5.list_groups():
-                    for key in ["positions", "cells"]:
-                        h5["generic/" + key] = h5["interactive/" + key]
-                    with self.project_hdf5.open("input") as hdf5_input:
-                        with hdf5_input.open("generic") as hdf5_generic:
-                            if "dft" not in hdf5_generic.list_groups():
-                                hdf5_generic.create_group("dft")
-                            with hdf5_generic.open("dft") as hdf5_dft:
-                                if (
-                                    "atom_spin_constraints"
-                                    in h5["interactive"].list_nodes()
-                                ):
-                                    hdf5_dft["atom_spin_constraints"] = h5[
-                                        "interactive/atom_spin_constraints"
-                                    ]
+            self._interactive_to_output()
             super(SphinxInteractive, self).interactive_close()
 
     def calc_minimize(
