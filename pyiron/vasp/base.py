@@ -1408,7 +1408,7 @@ class VaspBase(GenericDFTJob):
         for band structure calculations.
 
         Args:
-            job_name (str): Job name
+            job_name (str/None): Job name
 
         Returns:
             new_ham (vasp.vasp.Vasp instance): New job
