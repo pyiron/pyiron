@@ -143,6 +143,11 @@ class GenericDFTJob(AtomisticGenericJob):
     #    self.set_kpoints(mesh=mesh, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
     #                     weights=None, reciprocal=True)
 
+    def restart_for_band_structure_calculations(self, job_name=None):
+        raise NotImplementedError(
+            "restart_for_band_structure_calculations is not implemented for this code."
+        )
+
     def _set_kpoints(
         self,
         mesh=None,
