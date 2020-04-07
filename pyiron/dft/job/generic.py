@@ -144,6 +144,16 @@ class GenericDFTJob(AtomisticGenericJob):
     #                     weights=None, reciprocal=True)
 
     def restart_for_band_structure_calculations(self, job_name=None):
+        """
+        Restart a new job created from an existing calculation by reading the charge density
+        for band structure calculations.
+
+        Args:
+            job_name (str/None): Job name
+
+        Returns:
+            new_ham (pyiron.dft.job.generic.GenericDFTJob): New job
+        """
         raise NotImplementedError(
             "restart_for_band_structure_calculations is not implemented for this code."
         )
