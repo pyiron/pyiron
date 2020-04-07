@@ -482,6 +482,10 @@ class TestSphinx(unittest.TestCase):
                     len(output._parse_dict[list_one]), len(output._parse_dict[list_two])
                 )
 
+    def test_check_band_occupancy(self):
+        self.sphinx_2_5.collect_output()
+        self.assertTrue(self.sphinx_2_5.output.check_band_occupancy())
+
     def test_collect_2_3(self):
         file_location = os.path.join(
             self.file_location, "../static/sphinx/sphinx_test_2_3_hdf5/sphinx_test_2_3/"
