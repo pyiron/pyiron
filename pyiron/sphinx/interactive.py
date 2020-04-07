@@ -205,7 +205,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
     def _interactive_to_output(self):
         with self.project_hdf5.open("output") as h5:
             if "interactive" in h5.list_groups():
-                for key in ["positions", "cells"]:
+                for key in ["positions", "cells", "indices", "cells"]:
                     h5["generic/" + key] = h5["interactive/" + key]
                 with self.project_hdf5.open("input") as hdf5_input:
                     with hdf5_input.open("generic") as hdf5_generic:
