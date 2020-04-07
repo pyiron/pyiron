@@ -330,25 +330,21 @@ class SphinxBase(GenericDFTJob):
     ):
         raise NotImplementedError("calc_md() not implemented in SPHInX.")
 
-    def restart_for_band_structure_calculations(
-            self,
-            job_name=None,
-            job_type=None,
-    ):
+    def restart_for_band_structure_calculations(self, job_name=None):
         """
         Restart a new job created from an existing Vasp calculation by reading the charge density
         for band structures.
 
         Args:
             job_name (str): Job name
-            job_type (str): Job type. If not specified a Vasp job type is assumed
+            job_type (str): Job type. If not specified a Sphinx job type is assumed
 
         Returns:
             pyiron.sphinx.sphinx.sphinx: new job instance
         """
         return self.restart_from_charge_density(
             job_name=job_name,
-            job_type=job_type,
+            job_type=None,
             band_structure_calc=True
         )
 
@@ -362,8 +358,8 @@ class SphinxBase(GenericDFTJob):
         Restart a new job created from an existing Vasp calculation by reading the charge density.
 
         Args:
-            job_name (str): Job name
-            job_type (str): Job type. If not specified a Vasp job type is assumed
+            job_name (str/None): Job name
+            job_type (str/None): Job type. If not specified a Vasp job type is assumed
             band_structure_calc (bool): has to be True for band structure calculations.
 
         Returns:

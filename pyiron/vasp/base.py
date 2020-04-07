@@ -1431,10 +1431,10 @@ class VaspBase(GenericDFTJob):
         Restart a new job created from an existing Vasp calculation by reading the charge density.
 
         Args:
-            job_name (str): Job name
-            job_type (str): Job type. If not specified a Vasp job type is assumed
-            icharg (int): Vasp ICHARG tag
-            self_consistent_calc (boolean): Tells if the new calculation is self consistent
+            job_name (str/None): Job name
+            job_type (str/None): Job type. If not specified a Vasp job type is assumed
+            icharg (int/None): Vasp ICHARG tag
+            self_consistent_calc (boolean/None): Tells if the new calculation is self consistent
 
         Returns:
             new_ham (vasp.vasp.Vasp instance): New job
