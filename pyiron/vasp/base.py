@@ -1507,7 +1507,7 @@ class VaspBase(GenericDFTJob):
         job_name=None,
         job_type=None,
         icharg=None,
-        self_consistent_calc=False,
+        self_consistent_calc=None,
         istart=1,
     ):
         """
