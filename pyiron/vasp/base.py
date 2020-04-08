@@ -1420,7 +1420,7 @@ class VaspBase(GenericDFTJob):
             self_consistent_calc=None
         )
 
-    def _get_icharg_value(self, icharg=None, self_consistent_calc=None):
+    def get_icharg_value(self, icharg=None, self_consistent_calc=None):
         """
         Gives the correct ICHARG value for the restart calculation.
 
@@ -1479,7 +1479,7 @@ class VaspBase(GenericDFTJob):
                         self.job_name
                     )
                 )
-            new_ham.input.incar["ICHARG"] = self._get_icharg_value(
+            new_ham.input.incar["ICHARG"] = self.get_icharg_value(
                 icharg=icharg,
                 self_consistent_calc=self_consistent_calc,
             )
@@ -1549,7 +1549,7 @@ class VaspBase(GenericDFTJob):
                 )
             new_ham.input.incar["ISTART"] = istart
 
-            new_ham.input.incar["ICHARG"] = self._get_icharg_value(
+            new_ham.input.incar["ICHARG"] = self.get_icharg_value(
                 icharg=icharg,
                 self_consistent_calc=self_consistent_calc,
             )
