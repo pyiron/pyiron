@@ -1004,7 +1004,10 @@ class SphinxBase(GenericDFTJob):
 
     @staticmethod
     def check_vasp_potentials():
-        return any([os.path.exists(os.path.join(p, 'vasp')) for p in s.resource_paths])
+        return any([
+            os.path.exists(os.path.join(p, 'vasp', 'potentials', 'potpaw', 'Fe')) 
+            for p in s.resource_paths
+        ])
 
 
 class InputWriter(object):
