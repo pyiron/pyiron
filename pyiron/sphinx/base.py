@@ -1005,7 +1005,7 @@ class SphinxBase(GenericDFTJob):
     @staticmethod
     def check_vasp_potentials():
         return any([
-            os.path.exists(os.path.join(p, 'vasp', 'potentials', 'potpaw', 'Fe')) 
+            os.path.exists(os.path.join(p, 'vasp', 'potentials', 'potpaw', 'Fe', 'POTCAR')) 
             for p in s.resource_paths
         ])
 
