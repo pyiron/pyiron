@@ -185,7 +185,7 @@ class DatabaseAccess(object):
         expr = expr.replace("%", "(.)*")
         expr = expr.replace("_", ".")
         expr = "^" + expr
-        if expr[-1] is not "%":
+        if expr[-1] != "%":
             expr += "$"
         reg = re.compile(expr)
         if item is not None:
