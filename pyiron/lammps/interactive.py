@@ -16,7 +16,7 @@ from pyiron.lammps.base import LammpsBase
 from pyiron.lammps.structure import UnfoldingPrism
 from pyiron.lammps.control import LammpsControl
 from pyiron.atomistics.job.interactive import GenericInteractive
-from pylammpsmpi.lammps import LammpsLibrary
+from pylammpsmpi import LammpsLibrary
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = (
