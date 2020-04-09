@@ -2321,7 +2321,7 @@ Monkhorst_Pack
         self._path_name = None
         self._n_path = None
         with hdf.open("kpoints") as hdf_kpoints:
-            if "line_dict" is hdf_kpoints.list_nodes():
+            if "line_dict" in hdf_kpoints.list_nodes():
                 self._path_name = hdf_kpoints["line_dict"]["path_name"]
                 self._n_path = hdf_kpoints["line_dict"]["n_path"]
 
