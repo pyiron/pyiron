@@ -878,16 +878,30 @@ class GenericOutput(object):
         - the ID's are not consistent (i.e. you can also not change the number of atoms)
         - there are atoms which move by more than half a box length in any direction within two snapshots (due to periodic boundary conditions)
         """
+        return self.get_displacements(self._job.structure, self.positions, self.cells)
+
+    @staticmethod
+    def get_displacements(structure, positions, cells):
+        """
+        Output for 3-d displacements between successive snapshots, with minimum image convention.
+        For the total displacements from the initial configuration, use total_displacements
+        This algorithm collapses if:
+        - the ID's are not consistent (i.e. you can also not change the number of atoms)
+        - there are atoms which move by more than half a box length in any direction within two snapshots (due to periodic boundary conditions)
+        """
         displacement = np.tensordot(
-            self.positions, np.linalg.inv(self._job.structure.cell), axes=([2, 0])
+            positions, np.linalg.inv(structure.cell), axes=([2, 0])
         )
+        # displacement = np.array(
+        #     [np.tensordot(pos, np.linalg.inv(cell), axes=([1, 1])) for pos, cell in zip(positions, cells)])
         displacement -= np.append(
-            self._job.structure.get_scaled_positions(), displacement
-        ).reshape(len(self.positions) + 1, len(self._job.structure), 3)[:-1]
+            structure.get_scaled_positions(), displacement
+        ).reshape(len(positions) + 1, len(structure), 3)[:-1]
         displacement -= np.rint(displacement)
         displacement = np.tensordot(
-            displacement, self._job.structure.cell, axes=([2, 0])
+            displacement, structure.cell, axes=([2, 0])
         )
+        # displacement = np.array([np.tensordot(pos, cell, axes=([1, 1])) for pos, cell in zip(displacement, cells)])
         return displacement
 
     @property
