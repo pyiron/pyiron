@@ -906,7 +906,7 @@ class GenericOutput(object):
             structure.get_scaled_positions(), displacement
         ).reshape(len(positions) + 1, len(structure), 3)[:-1]
         displacement -= np.rint(displacement)
-        displacement = np.array([np.tensordot(pos, cell, axes=([1, 1])) for pos, cell in zip(displacement, cells)])
+        displacement = np.einsum('nki,nji->nkj', displacement, cells)
         return displacement
 
     @property
