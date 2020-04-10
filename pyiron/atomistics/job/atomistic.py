@@ -900,19 +900,13 @@ class GenericOutput(object):
             numpy.ndarray: Displacements (N_steps x N_atoms x 3)
 
         """
-        displacement = np.tensordot(
-            positions, np.linalg.inv(structure.cell), axes=([2, 0])
-        )
-        # displacement = np.array(
-        #     [np.tensordot(pos, np.linalg.inv(cell), axes=([1, 1])) for pos, cell in zip(positions, cells)])
+        displacement = np.array(
+            [np.tensordot(pos, np.linalg.inv(cell), axes=([1, 1])) for pos, cell in zip(positions, cells)])
         displacement -= np.append(
             structure.get_scaled_positions(), displacement
         ).reshape(len(positions) + 1, len(structure), 3)[:-1]
         displacement -= np.rint(displacement)
-        displacement = np.tensordot(
-            displacement, structure.cell, axes=([2, 0])
-        )
-        # displacement = np.array([np.tensordot(pos, cell, axes=([1, 1])) for pos, cell in zip(displacement, cells)])
+        displacement = np.array([np.tensordot(pos, cell, axes=([1, 1])) for pos, cell in zip(displacement, cells)])
         return displacement
 
     @property
