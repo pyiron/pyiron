@@ -876,7 +876,8 @@ class GenericOutput(object):
         For the total displacements from the initial configuration, use total_displacements
         This algorithm collapses if:
         - the ID's are not consistent (i.e. you can also not change the number of atoms)
-        - there are atoms which move by more than half a box length in any direction within two snapshots (due to periodic boundary conditions)
+        - there are atoms which move by more than half a box length in any direction within two snapshots (due to
+        periodic boundary conditions)
         """
         return self.get_displacements(self._job.structure, self.positions, self.cells)
 
@@ -887,7 +888,17 @@ class GenericOutput(object):
         For the total displacements from the initial configuration, use total_displacements
         This algorithm collapses if:
         - the ID's are not consistent (i.e. you can also not change the number of atoms)
-        - there are atoms which move by more than half a box length in any direction within two snapshots (due to periodic boundary conditions)
+        - there are atoms which move by more than half a box length in any direction within two snapshots (due to
+        periodic boundary conditions)
+
+        Args:
+            structure (pyiron.atomistics.structure.atoms.Atoms): The initial structure
+            positions (numpy.ndarray): List of positions in cartesian coordinates (N_steps x N_atoms x 3)
+            cells (numpy.cells): List of cells (N_steps x 3 x 3)
+
+        Returns:
+            numpy.ndarray: Displacements (N_steps x N_atoms x 3)
+
         """
         displacement = np.tensordot(
             positions, np.linalg.inv(structure.cell), axes=([2, 0])
