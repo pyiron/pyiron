@@ -8,7 +8,7 @@ environment:
 
   matrix:
     - PYTHON_VERSION: 3.7
-      CONDA: C:\Miniconda37
+      CONDA: C:\Miniconda37-x64
 
 version: '{build}'
 image: Visual Studio 2015
