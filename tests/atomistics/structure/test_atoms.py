@@ -213,6 +213,10 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(len(basis), 8)
         self.assertEqual(basis.get_majority_species()["symbol"], "Al")
         self.assertEqual(basis.get_spacegroup()["Number"], 225)
+        basis = hdf_obj["simple_structure"].to_object()
+        self.assertEqual(len(basis), 8)
+        self.assertEqual(basis.get_majority_species()["symbol"], "Al")
+        self.assertEqual(basis.get_spacegroup()["Number"], 225)
 
     def test_create_Fe_bcc(self):
         self.pse = PeriodicTable()
