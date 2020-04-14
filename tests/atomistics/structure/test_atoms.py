@@ -11,7 +11,8 @@ from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron.atomistics.structure.sparse_list import SparseList
 from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement
-from pyiron.base.generic.hdfio import FileHDFio
+from pyiron.base.generic.hdfio import FileHDFio, ProjectHDFio
+from pyiron.base.project.generic import Project
 
 
 class TestAtoms(unittest.TestCase):
@@ -23,6 +24,12 @@ class TestAtoms(unittest.TestCase):
         ):
             os.remove(
                 os.path.join(file_location, "../../static/atomistics/test_hdf")
+            )
+        if os.path.isfile(
+            os.path.join(file_location, "../../static/atomistics/test.h5")
+        ):
+            os.remove(
+                os.path.join(file_location, "../../static/atomistics/test.h5")
             )
 
     @classmethod
@@ -210,6 +217,25 @@ class TestAtoms(unittest.TestCase):
         basis_store.set_repeat([2, 2, 2])
         basis_store.to_hdf(hdf_obj, "simple_structure")
         basis = Atoms().from_hdf(hdf_obj, group_name="simple_structure")
+        self.assertEqual(len(basis), 8)
+        self.assertEqual(basis.get_majority_species()["symbol"], "Al")
+        self.assertEqual(basis.get_spacegroup()["Number"], 225)
+
+    def test_to_object(self):
+        filename = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "../../static/atomistics",
+        )
+        abs_filename = os.path.abspath(filename)
+        hdf_obj = ProjectHDFio(
+            project=Project(abs_filename),
+            file_name="test.h5"
+        )
+        pos, cell = generate_fcc_lattice()
+        basis_store = Atoms(symbols="Al", positions=pos, cell=cell)
+        basis_store.set_repeat([2, 2, 2])
+        basis_store.to_hdf(hdf_obj, "simple_structure")
+        basis = hdf_obj["simple_structure"].to_object()
         self.assertEqual(len(basis), 8)
         self.assertEqual(basis.get_majority_species()["symbol"], "Al")
         self.assertEqual(basis.get_spacegroup()["Number"], 225)
