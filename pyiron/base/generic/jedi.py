@@ -16,11 +16,11 @@ def fix_ipython_autocomplete(enable=True):
     `here <https://github.com/ipython/ipython/issues/11653>`_).
     
     To set the correct behaviour we should use in IPython environment::
-    
+
         %config Completer.use_jedi = False
-    
+
     or add to IPython config (``<HOME>\.ipython\profile_default\ipython_config.py``)::
-        
+
         c.Completer.use_jedi = False
     """
 
