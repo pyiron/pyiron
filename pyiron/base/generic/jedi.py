@@ -23,13 +23,13 @@ def fix_ipython_autocomplete(enable=True):
         
         c.Completer.use_jedi = False
     """
-    
+
     try:
         __IPYTHON__
     except NameError:
         pass
     else:
-        from IPython import __version__      
+        from IPython import __version__
         major = int(__version__.split('.')[0])
         if major >= 6:
             from IPython import get_ipython
