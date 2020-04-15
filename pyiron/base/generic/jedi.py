@@ -1,4 +1,6 @@
-# https://github.com/ipython/ipython/issues/11653
+# coding: utf-8
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
 
 
 def fix_ipython_autocomplete(enable=True):
