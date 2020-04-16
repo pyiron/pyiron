@@ -35,8 +35,10 @@ install:
 # Load the conda root environment, configure and install some packages
 - '"%CONDA%\Scripts\activate.bat"'
 - "conda config --set always_yes yes --set changeps1 no"
+- "conda config --add channels conda-forge"
+- "conda config --set channel_priority strict"
 - "conda update -q conda"
-- "conda install -c conda-forge python=%PYTHON_VERSION% ase coveralls coverage defusedxml dill future gitpython h5io h5py matplotlib mendeleev molmod numpy pandas pathlib2 phonopy psutil pyfileindex pylammpsmpi pysqa pytables quickff scipy seekpath six spglib sqlalchemy tamkin tqdm yaff"
+- "conda install python=%PYTHON_VERSION% ase coveralls coverage defusedxml dill future gitpython h5io h5py matplotlib mendeleev molmod numpy pandas pathlib2 phonopy psutil pyfileindex pylammpsmpi pysqa pytables quickff scipy seekpath six spglib sqlalchemy tamkin tqdm yaff"
 - "conda info -a"
 - "pip install --pre ."
 
