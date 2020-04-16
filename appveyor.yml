@@ -38,6 +38,7 @@ install:
 - "conda config --add channels conda-forge"
 - "conda config --set channel_priority strict"
 - "conda update -q conda"
+- "conda config --set restore_free_channel true"
 - "conda install ase coveralls coverage defusedxml dill future gitpython h5io h5py matplotlib mendeleev molmod numpy pandas pathlib2 phonopy psutil pyfileindex pylammpsmpi pysqa pytables quickff scipy seekpath six spglib sqlalchemy tamkin tqdm yaff"
 - "conda info -a"
 - "pip install --pre ."
