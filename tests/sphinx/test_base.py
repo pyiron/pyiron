@@ -392,8 +392,16 @@ class TestSphinx(unittest.TestCase):
 
     def test_get_scf_group(self):
         with warnings.catch_warnings(record=True) as w:
-            scf = self.sphinx_bs.get_scf_group(algorithm="wrong")
+            test_scf = self.sphinx_bs.get_scf_group(algorithm="wrong")
             self.assertEqual(len(w), 1)
+            ref_scf = {
+                'rhoMixing': '1.0',
+                'spinMixing': '1.0',
+                'dEnergy': 'Ediff/27.211386245988',
+                'maxSteps': '400',
+                'blockCCG': {}
+                }
+            self.assertEqual(test_scf, ref_scf)
 
         ref_scf = {
             'rhoMixing': '1.0',
