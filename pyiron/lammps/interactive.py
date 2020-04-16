@@ -16,7 +16,11 @@ from pyiron.lammps.base import LammpsBase
 from pyiron.lammps.structure import UnfoldingPrism
 from pyiron.lammps.control import LammpsControl
 from pyiron.atomistics.job.interactive import GenericInteractive
-from pylammpsmpi import LammpsLibrary
+
+try:  # mpi4py is only supported on Linux and Mac Os X
+    from pylammpsmpi import LammpsLibrary
+except ImportError:
+    pass
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = (
