@@ -704,10 +704,7 @@ class SphinxBase(GenericDFTJob):
     def from_directory(self, directory):
         try:
             if not self.status.finished:
-                subprocess.call(
-                    "module load sphinx && sx2aims", cwd=directory,
-                    shell=True
-                )
+                os.system("module load sphinx && sx2aims")
                 # self._output_parser.to_hdf(self._hdf5)
                 if directory[-1] == "/":
                     directory = directory[:-1]
@@ -723,9 +720,7 @@ class SphinxBase(GenericDFTJob):
                     )
                 pwd = os.getcwd()
                 os.chdir(directory)
-                subprocess.call(
-                    "rm geometry.in", shell=True,
-                )
+                os.remove("geometry.in")
                 os.chdir(pwd)
                 self._output_parser.collect(directory=directory)
                 self.to_hdf(self._hdf5)
