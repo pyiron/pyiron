@@ -721,10 +721,12 @@ class SphinxBase(GenericDFTJob):
                         + directory
                         + "/geometry.in"
                     )
+                pwd = os.getcwd()
+                os.chdir(directory)
                 subprocess.call(
-                    "rm " + directory + "/geometry.in", cwd=directory,
-                    shell=True
+                    "rm geometry.in", shell=True,
                 )
+                os.chdir(pwd)
                 self._output_parser.collect(directory=directory)
                 self.to_hdf(self._hdf5)
             else:
@@ -779,9 +781,9 @@ class SphinxBase(GenericDFTJob):
             n_pulay_steps (int): number of previous densities to use for
                                  the Pulay mixing (default: 7)
             density_mixing_parameter (float): mixing proportion m defined by
-            
+
                 rho^n = (m-1)*rho^(n-1)+m*preconditioner*rho_(opt) (default: 1)
-            
+
             spin_mixing_parameter (float): linear mixing parameter for
                                            spin densities (default: 1)
 
@@ -912,6 +914,7 @@ class SphinxBase(GenericDFTJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
+        kpoints_per_angstrom=None,
         n_path=None,
         path_name=None,
     ):
@@ -931,7 +934,9 @@ class SphinxBase(GenericDFTJob):
             mesh (list): Size of the mesh (in the MP scheme)
             center_shift (list): Shifts the center of the mesh from the
                                  gamma point by the given vector
-            n_trace (int): Number of points per trace part for line mode
+            kpoints_per_angstrom (float): Number of kpoint per angstrom
+                                          in each direction
+            n_path (int): Number of points per trace part for line mode
             path_name (str): Name of high symmetry path used for band
                              structure calculations.
         """
@@ -946,7 +951,13 @@ class SphinxBase(GenericDFTJob):
 
         if scheme == "MP":
             # Remove Kpoints and set Kpoint
-
+            if kpoints_per_angstrom is not None:
+                if mesh is not None:
+                    warnings.warn("mesh value is overwritten "
+                    + "by kpoints_per_angstrom")
+                mesh = self.get_k_mesh_by_cell(
+                    kpoints_per_angstrom=kpoints_per_angstrom
+                    )
             if "kPoints" in self.input.basis:
                 del self.input.basis["kPoints"]
             self.input.basis["kPoint"] = {}
@@ -1080,9 +1091,9 @@ class SphinxBase(GenericDFTJob):
             self.input.basis.set_flag("saveMemory")
 
         self.set_guess_group()
-        
+
         self.input.hamilton = Group({
-            "nEmptyStates": "auto",  # will be updated based on structure
+            "nEmptyStates": "auto",
             "ekt": "Sigma",
             "xc": "Xcorr"
         })
@@ -1465,7 +1476,7 @@ class InputWriter(object):
                 copyfile(potential_path, posixpath.join(
                     cwd, elem + "_GGA.atomicdata"
                 ))
-            else: 
+            else:
                 copyfile(potential_path, posixpath.join(
                     cwd, elem + "_POTCAR"
                 ))
@@ -1503,7 +1514,7 @@ class InputWriter(object):
 
 
     def write_spin_constraints(self, file_name="spins.in", cwd=None,
-                               spins_list=[]):
+                               spins_list=None):
         """
         Write a text file containing a list of all spins named spins.in -
         which is used for the external control scripts.
@@ -1515,7 +1526,8 @@ class InputWriter(object):
                 given the default input will be written. (optional)
         """
         s.logger.debug(f"Writing {file_name}")
-        if len(spins_list) == 0:
+        if spins_list is None or len(spins_list) == 0:
+            spins_list = []
             s.logger.debug("Getting magnetic moments via \
                 get_initial_magnetic_moments")
             if any(self.structure.get_initial_magnetic_moments().flatten()
