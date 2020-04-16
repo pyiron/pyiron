@@ -40,7 +40,7 @@ install:
 # - "conda config --set channel_priority strict"
 - "conda update -q conda"
 # - "conda config --set restore_free_channel true"
-- "conda install -c conda-forge python=%PYTHON_VERSION% ase=3.19.1 coveralls coverage defusedxml=0.6.0 dill=0.3.1.1 future=0.18.2 gitpython=3.1.1 h5io=0.1.1 h5py=2.10.0 matplotlib=3.2.1 mendeleev=0.6.0 molmod=1.4.5 numpy=1.18.1 pandas=1.0.3 pathlib2=2.3.5 phonopy=2.5.0 psutil=5.7.0 pyfileindex=0.0.4 pysqa=0.0.7 pytables=3.6.1 quickff=2.2.4 scipy=1.4.1 seekpath=1.9.5 six=1.14.0 spglib=1.14.1 sqlalchemy=1.3.16 tamkin=1.2.6 tqdm=4.45.0 yaff=1.4.2" 
+- "conda install -c conda-forge python=%PYTHON_VERSION% ase=3.19.1 coveralls coverage defusedxml=0.6.0 dill=0.3.1.1 future=0.18.2 gitpython=3.1.1 h5io=0.1.1 h5py=2.10.0 matplotlib=3.2.1 mendeleev=0.6.0 molmod=1.4.5 mpi4py numpy=1.18.1 pandas=1.0.3 pathlib2=2.3.5 phonopy=2.5.0 psutil=5.7.0 pyfileindex=0.0.4 pysqa=0.0.7 pytables=3.6.1 quickff=2.2.4 scipy=1.4.1 seekpath=1.9.5 six=1.14.0 spglib=1.14.1 sqlalchemy=1.3.16 tamkin=1.2.6 tqdm=4.45.0 yaff=1.4.2" 
 - "conda info -a"
 - "pip install --pre ."
 
