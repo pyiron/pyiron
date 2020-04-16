@@ -245,9 +245,7 @@ class SphinxBase(GenericDFTJob):
         else:
             selective_dynamics_list = [3 * [False]] * len(
                 self.structure.positions)
-        for i_elem, elm_species in enumerate(
-            self.structure.get_species_objects()
-            ):
+        for elm_species in self.structure.get_species_objects():
             if elm_species.Parent:
                 element = elm_species.Parent
             else:
@@ -1603,7 +1601,7 @@ class Group(dict):
 
             if k == "eCut":
                 line += level*"\t" + f"{k} = {v}/13.606;\n"
-                
+
             elif k in ["scfDiag", "atomicSpin"]:
                 for step in content[k]:
                     line += (
