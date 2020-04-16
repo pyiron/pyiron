@@ -8,7 +8,7 @@ import scipy.constants
 import subprocess
 import warnings
 import time
-from pyiron.sphinx.base import SphinxBase
+from pyiron.sphinx.base import SphinxBase, Group
 from pyiron.atomistics.job.interactive import GenericInteractive
 from collections import OrderedDict as odict
 
@@ -337,9 +337,8 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
             retain_electrostatic_potential=retain_electrostatic_potential,
         )
 
-    @property
-    def _control_str(self):
-        control_str = odict()
+    def get_main_group(self):
+        main_group = Group()
         if (
             self.server.run_mode.interactive
             or self.server.run_mode.interactive_non_modal
@@ -350,7 +349,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
                         ("id", '"restart"'),
                         (
                             "scfDiag",
-                            self._input_control_scf_string(
+                            self.get_scf_group(
                                 maxSteps=10, keepRhoFixed=True, dEnergy=1.0e-4
                             ),
                         ),
@@ -363,7 +362,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
                         ("id", '"coarseelectronicminimization"'),
                         (
                             "scfDiag",
-                            self._input_control_scf_string(
+                            self.get_scf_group(
                                 dEnergy="1000*Ediff/" + str(HARTREE_TO_EV)
                             ),
                         ),
@@ -374,15 +373,15 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
                 odict(
                     [
                         ("id", '"electronicminimization"'),
-                        ("scfDiag", self._input_control_scf_string()),
+                        ("scfDiag", self.get_scf_group()),
                     ]
                 )
             )
-            control_str["extControl"] = odict()
-            control_str["extControl"]["bornOppenheimer"] = commands
-            return control_str
+            main_group.main.extControl = Group()
+            main_group.extControl.bornOppenheimer = commands
+            return main_group
         else:
-            return super(SphinxInteractive, self)._control_str
+            return super(SphinxInteractive, self).get_main_group
 
 
 class SphinxInt2(SphinxInteractive):

@@ -23,6 +23,7 @@ from pyiron.dft.job.generic import GenericDFTJob
 from pyiron.vasp.potential import VaspPotentialFile
 from pyiron.vasp.potential import find_potential_file \
     as find_potential_file_vasp
+from pyiron.sphinx.structure import read_atoms
 from pyiron.sphinx.potential import SphinxJTHPotentialFile
 from pyiron.sphinx.potential import find_potential_file \
     as find_potential_file_jth
@@ -701,27 +702,17 @@ class SphinxBase(GenericDFTJob):
         if self.status.finished:
             self._output_parser.from_hdf(self._hdf5)
 
-    def from_directory(self, directory):
+    def from_directory(self, directory, file_name="structure.sx"):
         try:
             if not self.status.finished:
-                os.system("module load sphinx && sx2aims")
-                # self._output_parser.to_hdf(self._hdf5)
-                if directory[-1] == "/":
-                    directory = directory[:-1]
-                if os.path.isfile(directory + "/geometry.in"):
-                    self.structure = ase_to_pyiron(
-                        io.read(filename=directory + "/geometry.in")
-                    )
+
+                file_path = posixpath.join(directory, file_name)
+                if os.path.isfile(file_path):
+                    self.structure = read_atoms(file_path)
                 else:
-                    print(
-                        "WARNING: input structure not found: "
-                        + directory
-                        + "/geometry.in"
-                    )
-                pwd = os.getcwd()
-                os.chdir(directory)
-                os.remove("geometry.in")
-                os.chdir(pwd)
+                    raise ValueError(f"File {file_path} not found. "
+                    + "Please double check the directory and file name.")
+
                 self._output_parser.collect(directory=directory)
                 self.to_hdf(self._hdf5)
             else:
