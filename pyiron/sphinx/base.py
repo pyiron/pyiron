@@ -130,11 +130,10 @@ class SphinxBase(GenericDFTJob):
             raise ValueError("Cutoff radius value not valid")
         elif val < 50:
             warnings.warn(
-                "The given cutoff is either very small (probably \
-                too small) or was accidentally given in Ry --> \
-                converting given cutoff to eV (1eV = 13.606 Ry)."
+                "The given cutoff is either very small (probably "
+                + "too small) or was accidentally given in Ry. "
+                + "Please make sure it is in eV (1eV = 13.606 Ry)."
             )
-            val *= 13.606
         self.input["EnCut"] = val
 
     @property
@@ -175,6 +174,8 @@ class SphinxBase(GenericDFTJob):
         SCF group setting for SPHInX
         for all args refer to calc_static or calc_minimize
         """
+
+        scf_group = Group()
         if algorithm.upper() == "CCG":
             algorithm = "CCG"
         elif algorithm.upper() != "BLOCKCCG":
@@ -184,7 +185,7 @@ class SphinxBase(GenericDFTJob):
                 SyntaxWarning,
             )
             algorithm = "blockCCG"
-        scf_group = Group({})
+
         if keepRhoFixed:
             scf_group["keepRhoFixed"] = True
         else:

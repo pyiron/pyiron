@@ -61,7 +61,10 @@ class TestSphinx(unittest.TestCase):
         cls.sphinx._create_working_directory()
         cls.sphinx_2_3._create_working_directory()
         cls.sphinx.input["VaspPot"] = False
+        cls.sphinx.structure.add_tag(selective_dynamics=(True, True, True))
+        cls.sphinx.structure.selective_dynamics[1] = (False, False, False)
         cls.sphinx.load_default_groups()
+        cls.sphinx.input.structure.symmetry = {}
         cls.sphinx.write_input()
         cls.sphinx.version = "2.6"
         cls.sphinx_2_3.to_hdf()
@@ -244,6 +247,11 @@ class TestSphinx(unittest.TestCase):
     def test_plane_wave_cutoff(self):
         with self.assertRaises(ValueError):
             self.sphinx.plane_wave_cutoff = -1
+
+        with warnings.catch_warnings(record=True) as w:
+            self.sphinx.plane_wave_cutoff = 25
+            self.assertEqual(len(w), 1)
+
         self.sphinx.plane_wave_cutoff = 340
         self.assertEqual(self.sphinx.plane_wave_cutoff, 340)
 
@@ -382,6 +390,36 @@ class TestSphinx(unittest.TestCase):
         self.assertEqual(self.sphinx.input["Istep"], 50)
         self.assertEqual(self.sphinx.input.main['linQN']['maxSteps'], '50')
 
+    def test_get_scf_group(self):
+        with warnings.catch_warnings(record=True) as w:
+            scf = self.sphinx_bs.get_scf_group(algorithm="wrong")
+            self.assertEqual(len(w), 1)
+
+        ref_scf = {
+            'rhoMixing': '1.0',
+            'spinMixing': '1.0',
+            'nPulaySteps': '0',
+            'dEnergy': 'Ediff/27.211386245988',
+            'maxSteps': '400',
+            'preconditioner': {
+                'type': 0
+                },
+            'blockCCG': {
+            'maxStepsCCG': 0,
+            'blockSize': 0,
+            'nSloppy': 0},
+            'noWavesStorage': True
+            }
+
+        self.sphinx_bs.input["nPulaySteps"] = 0
+        self.sphinx_bs.input["preconditioner"] = 0
+        self.sphinx_bs.input["maxStepsCCG"] = 0
+        self.sphinx_bs.input["blockSize"] = 0
+        self.sphinx_bs.input["nSloppy"] = 0
+        self.sphinx_bs.input["WriteWaves"] = False
+        test_scf = self.sphinx_bs.get_scf_group()
+        self.assertEqual(test_scf, ref_scf)
+
     def test_check_setup(self):
         self.assertFalse(self.sphinx.check_setup())
 
@@ -420,11 +458,14 @@ class TestSphinx(unittest.TestCase):
 
         file_content = [
             "cell = " + str(cell) + ";\n",
+            "symmetry {\n",
+            "}\n",
             "species {\n",
             '\telement = "Fe";\n',
             "\tatom {\n",
             '\t\tlabel = "spin_0.5";\n',
             "\t\tcoords = [0.0, 0.0, 0.0];\n",
+            "\t\tmovable;\n",
             "\t}\n",
             "\tatom {\n",
             '\t\tlabel = "spin_0.5";\n',
