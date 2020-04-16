@@ -131,14 +131,14 @@ class SphinxBase(GenericDFTJob):
             warnings.warn(
                 "The given cutoff is either very small (probably \
                 too small) or was accidentally given in Ry --> \
-                convertinging given cutoff to eV (1eV = 13.606 Ry)."
+                converting given cutoff to eV (1eV = 13.606 Ry)."
             )
             val *= 13.606
-        self.input.basis["eCut"] = val
+        self.input["EnCut"] = val
 
     @property
     def exchange_correlation_functional(self):
-        return self.input.basis["xc"]
+        return self.input["Xcorr"]
 
     @exchange_correlation_functional.setter
     def exchange_correlation_functional(self, val):
@@ -149,14 +149,14 @@ class SphinxBase(GenericDFTJob):
         Returns:
         """
         if val.upper() in ["PBE", "LDA"]:
-            self.input.basis["xc"] = val.upper()
+            self.input["Xcorr"] = val.upper()
         else:
             warnings.warn(
                 "Exchange correlation function not recognized (\
                     recommended: PBE or LDA)",
                 SyntaxWarning,
             )
-            self.input.basis["xc"] = val
+            self.input["Xcorr"] = val
 
     def set_input_to_read_only(self):
         """
@@ -215,12 +215,11 @@ class SphinxBase(GenericDFTJob):
         return scf_group
 
 
-    def set_structure_group(self, symmetry_enabled=True, keep_angstrom=False):
+    def set_structure_group(self, keep_angstrom=False):
         """
         create a Sphinx Group object based on self.structure
 
         Args:
-            symmetry_enabled (bool): turn symmetry on or off
             keep_angstrom (bool): Store distances in Angstroms or Bohr
         """
         if keep_angstrom:
@@ -284,16 +283,18 @@ class SphinxBase(GenericDFTJob):
                     )
                 if all(selective):
                     self.input.structure[
-                        "species"][-1]["atom"][-1]["movable"] = None
+                        "species"][-1]["atom"][-1]["movable"] = True
                 elif any(selective):
                     for ss, xx in zip(selective, ["X", "Y", "Z"]):
                         if ss:
                             self.input.structure["species"][-1]["atom"][
-                                -1]["movable" + xx] = None
-        if not symmetry_enabled:
-            self.input.structure["symmetry"] = odict(
-                [("operator", odict([("S", "[[1,0,0],[0,1,0],[0,0,1]]")]))]
-            )
+                                -1]["movable" + xx] = True
+        if not self.fix_symmetry:
+            self.input.structure.set_group("symmetry", {
+                "operator": {
+                    "S": "[[1,0,0],[0,1,0],[0,0,1]]"
+                }
+            })
 
 
     def set_species_group(self, check_overlap=True, potformat='JTH'):
@@ -301,8 +302,13 @@ class SphinxBase(GenericDFTJob):
         Build the species Group object based on self.structure
 
         Args:
-
+            check_overlap (bool): Whether to check overlap
+                (see set_check_overlap)
+            potformat (str): type of pseudopotentials that will be
+                read. Options are JTH or VASP.
         """
+
+        self.input.species = Group()
         for species_obj in self.structure.get_species_objects():
             if species_obj.Parent is not None:
                 elem = species_obj.Parent
@@ -338,11 +344,16 @@ class SphinxBase(GenericDFTJob):
 
 
     def set_main_group(self):
+        """
+        Build the main Group object based the general
+        settings in self.input.
+        """
 
+        self.input.main = Group()
         self.input.main.setdefault("scfDiag", [])
         if len(self.restart_file_list) != 0 \
         and not self._generic_input["restart_for_band_structure"]:
-            self.input.main["scfDiag"].append(
+            self.input.main.scfDiag.append(
                 self.get_scf_group(
                     maxSteps=10, keepRhoFixed=True, dEnergy=1.0e-4
                 )
@@ -383,7 +394,12 @@ class SphinxBase(GenericDFTJob):
 
     def set_guess_group(self):
         """
+        Build the guess Group object based on
+        self.restart_file_list. Allows restarts from
+        wavefunctions or charge densities.
         """
+
+        self.input.guess = Group()
         charge_density_file = None
         for ff in self.restart_file_list:
             if "rho.sxb" in ff.split("/")[-1]:
@@ -437,7 +453,9 @@ class SphinxBase(GenericDFTJob):
         retain_electrostatic_potential=False,
     ):
         """
-        Function to setup the hamiltonian to perform static SCF DFT runs
+        Function to setup the hamiltonian to perform static SCF DFT runs.
+        Loads defaults for all Sphinx input groups, including a static
+        main Group.
 
         Args:
             retain_electrostatic_potential:
@@ -457,7 +475,7 @@ class SphinxBase(GenericDFTJob):
             retain_charge_density=retain_charge_density,
             retain_electrostatic_potential=retain_electrostatic_potential,
         )
-        self.set_main_group()
+        self.load_default_groups()
 
 
     def calc_minimize(
@@ -478,6 +496,10 @@ class SphinxBase(GenericDFTJob):
         using DFT. The convergence goal can be set using either the
         ionic_energy as a limit for fluctuations in energy or the
         ionic_forces.
+
+        Loads defaults for all Sphinx input groups, including a
+        linQN-based main Group.       
+
         Args:
             retain_electrostatic_potential:
             retain_charge_density:
@@ -522,7 +544,7 @@ class SphinxBase(GenericDFTJob):
             ionic_forces=ionic_forces,
             volume_only=volume_only,
         )
-        self.set_main_group()
+        self.load_default_groups()
 
 
     def calc_md(
@@ -925,6 +947,8 @@ class SphinxBase(GenericDFTJob):
                 )
 
         if scheme == "MP":
+            # Remove Kpoints and set Kpoint
+
             if "kPoints" in self.input.basis:
                 del self.input.basis["kPoints"]
             self.input.basis["kPoint"] = {}
@@ -935,8 +959,12 @@ class SphinxBase(GenericDFTJob):
                 self.input["KpointCoords"] = str(list(center_shift))
                 self.input.basis["kPoint"]["coords"] = "KpointCoords"
         elif scheme == "Line":
+            # Remove Kpoint and set Kpoints
+
             if "kPoint" in self.input.basis:
                 del self.input.basis["kPoint"]
+                del self.input["KpointFolding"]
+                del self.input["KpointCoords"]
             if n_path is None and self._generic_input["n_path"] is None:
                 raise ValueError("'n_path' has to be defined")
             if n_path is None:
@@ -1005,10 +1033,11 @@ class SphinxBase(GenericDFTJob):
 
     def load_default_groups(self):
         """
-        Populates input groups with the default values.
-        Groups with self.rigid=True will not be modified.
-
+        Populates input groups with the default values. Nearly
+        every default simply points to a variable stored in
+        self.input, which will later be written to userparameters.sx.
         """
+
         if self.structure is None:
             raise ValueError(f"{self.job_name} has not been assigned "
                 + "a structure. Please load one first (e.g. "
@@ -1035,52 +1064,41 @@ class SphinxBase(GenericDFTJob):
         else:
             potformat = "JTH"
 
-        if not self.input.species.rigid:
-            self.set_species_group(
-                check_overlap=self.input["CheckOverlap"],
-                potformat=potformat,
-            )
+        self.set_species_group(
+            check_overlap=self.input["CheckOverlap"],
+            potformat=potformat,
+        )
 
-        if not self.input.basis.rigid:
-            self.input.basis = Group({
-                "eCut": "EnCut",
-                "kPoint": Group({
-                    "coords": "KpointCoords",
-                    "weight": 1,
-                    "relative": True
-                }),
-                "folding": "KpointFolding",
-            })
-            if self.input["SaveMemory"] is True:
-                self.input.basis.set_flag("saveMemory")
+        self.input.basis = Group({
+            "eCut": "EnCut",
+            "kPoint": Group({
+                "coords": "KpointCoords",
+                "weight": 1,
+                "relative": True
+            }),
+            "folding": "KpointFolding",
+        })
+        if self.input["SaveMemory"] is True:
+            self.input.basis.set_flag("saveMemory")
 
-        if not self.input.guess.rigid:
-            self.set_guess_group()
+        self.set_guess_group()
         
-        if not self.input.hamilton.rigid:
-            self.input.hamilton = Group({
-                "nEmptyStates": "auto",  # will be updated based on structure
-                "ekt": "Sigma",
-                "xc": "Xcorr"
-            })
+        self.input.hamilton = Group({
+            "nEmptyStates": "auto",  # will be updated based on structure
+            "ekt": "Sigma",
+            "xc": "Xcorr"
+        })
 
-        if not self.input.main.rigid:
-            self.set_main_group()
-            if self.input["WriteWaves"] is False:
-                self.input.main.set_flag("noWavesStorage")
+        self.set_main_group()
+        if self.input["WriteWaves"] is False:
+            self.input.main.set_flag("noWavesStorage")
+
 
     def write_input(self):
         """
         The write_input function is called when the job is executed to
         generate all the required input files for the Sphinx job.
-
-        In practice, all input groups are "gently" populated with
-        default values- the defaults do not overwrite any parameters
-        in groups that were manually set by the user and fixed via
-        group.rigid = True.
         """
-
-        self.load_default_groups()
 
         # self.input --> userparameters.sx (general variables)
         self.input.write_file(
@@ -1142,6 +1160,9 @@ class SphinxBase(GenericDFTJob):
         self._output_parser.to_hdf(self._hdf5, force_update=force_update)
 
     def convergence_check(self):
+        """
+        Checks if job has converged according to given cutoffs.
+        """
         if (
             self._generic_input["calc_mode"] == "minimize"
             and self._output_parser._parse_dict["scf_convergence"][-1]
@@ -1207,7 +1228,8 @@ class SphinxBase(GenericDFTJob):
         if "eCut" not in self.input.basis:
             warnings.warn(
                 "The SPHInX input groups have not been set. Set "
-                + "them manually or via job.load_default_groups()."
+                + "them manually, or via job.calc_static() etc., or "
+                + "via job.load_default_groups()."
             )
             return False
 
@@ -1282,7 +1304,7 @@ class SphinxBase(GenericDFTJob):
         mean the simulation won't run if it returns False.
         """
 
-        if len([k for k in self.input.main if k != "rigid"]) == 0:
+        if len(self.input.main) == 0:
             print("self.input.main group not initialized; "
             + "setting it e.g. via job.calc_static()")
             self.calc_static()
@@ -1443,7 +1465,9 @@ class InputWriter(object):
         with open(file_name, "w") as f:
             f.write(f"cell = {group.cell};\n")
             if "symmetry" in group:
-                f.write("\tsymmetry {")
+                f.write("symmetry {\n")
+                f.write(group.symmetry.to_sx_str(level=1))
+                f.write("}\n")
             for species in group["species"]:
                 f.write("species {\n")
                 elt = species["element"]
@@ -1536,17 +1560,20 @@ class InputWriter(object):
 
 class Group(dict):
     def __init__(self, *args, **kw):
-
         super(Group, self).__init__(*args, **kw)
-        self.rigid = False
 
     def __setitem__(self, key, value):
         if isinstance(value, dict):
             value = Group(value)
         super(Group, self).__setitem__(key, value)
 
+    def __setattr__(self, key, value):
+        if isinstance(value, dict):
+            value = Group(value)
+        super(Group, self).__setitem__(key, value)
+
     __getattr__ = dict.get
-    __setattr__ = dict.__setitem__
+    # __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
     def set(self, name, content):
@@ -1579,11 +1606,8 @@ class Group(dict):
             content = self
         for k, v in content.items():
             k = k.split("___")[0]
-            
-            if k == "rigid":
-                pass
 
-            elif k == "eCut":
+            if k == "eCut":
                 line += level*"\t" + f"{k} = {v}/13.606;\n"
                 
             elif k in ["scfDiag", "atomicSpin"]:
