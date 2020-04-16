@@ -1420,7 +1420,6 @@ class InputWriter(object):
         self._id_spx_to_pyi = []
         self.file_dict = {}
 
-
     def copy_potentials(self, potformat="JTH", xc=None, cwd=None):
 
         if potformat == 'JTH':
