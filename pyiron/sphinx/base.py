@@ -1108,6 +1108,7 @@ class SphinxBase(GenericDFTJob):
 
         # self.input.species --> pawPot.sx
         # and copy potential files to working directory
+        print("SPECIES GROUP: ", self.input.species)
         self.input_writer.write_species(self.input.species,
             cwd=self.working_directory, file_name="pawPot.sx")
         if self.input["VaspPot"]:
