@@ -36,7 +36,7 @@ install:
 - '"%CONDA%\Scripts\activate.bat"'
 - "conda config --set always_yes yes --set changeps1 no"
 - "conda install -c anaconda setuptools"
-# - "conda config --add channels conda-forge"
+- "conda config --add channels conda-forge"
 # - "conda config --set channel_priority strict"
 - "conda update -q conda"
 # - "conda config --set restore_free_channel true"
