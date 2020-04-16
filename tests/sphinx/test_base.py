@@ -61,6 +61,7 @@ class TestSphinx(unittest.TestCase):
         cls.sphinx._create_working_directory()
         cls.sphinx_2_3._create_working_directory()
         cls.sphinx.input["VaspPot"] = False
+        cls.sphinx.load_default_groups()
         cls.sphinx.write_input()
         cls.sphinx.version = "2.6.2"
         cls.sphinx_2_3.to_hdf()
@@ -175,8 +176,7 @@ class TestSphinx(unittest.TestCase):
             "\tspinMixing = 1.0;\n",
             "\tdEnergy = Ediff/" + str(scipy.constants.physical_constants["Hartree energy in eV"][0]) + ";\n",
             "\tmaxSteps = 400;\n",
-            "\tblockCCG {\n",
-            "\t}\n",
+            "\tblockCCG {}\n",
             "}\n",
             "evalForces {\n",
             '\tfile = "relaxHist.sx";\n',
@@ -273,7 +273,6 @@ class TestSphinx(unittest.TestCase):
             'to___2': odict([
                 ('coords', '[0.5, -0.5, 0.5]'), ('nPoints', 20), ('label', '"H"')
             ]),
-            'rigid': False
         }
 
         with self.assertRaises(ValueError):
@@ -310,8 +309,7 @@ class TestSphinx(unittest.TestCase):
 
         file_content = [
             "waves {\n",
-            "\tlcao {\n",
-            "\t}\n",
+            "\tlcao {}\n",
             "\tpawBasis;\n",
             "}\n",
             "rho {\n",

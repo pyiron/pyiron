@@ -104,7 +104,7 @@ class SphinxBase(GenericDFTJob):
 
     @property
     def plane_wave_cutoff(self):
-        return self.input.basis["eCut"]
+        return self.input["EnCut"]
 
     @property
     def fix_spin_constraint(self):
