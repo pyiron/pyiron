@@ -11,9 +11,6 @@ import re
 import stat
 from shutil import copyfile
 import scipy.constants
-import subprocess
-from ase import io
-from pyiron.atomistics.structure.atoms import ase_to_pyiron
 import warnings
 import json
 from collections import OrderedDict as odict
