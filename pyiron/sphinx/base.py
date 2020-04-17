@@ -359,7 +359,7 @@ class SphinxBase(GenericDFTJob):
                 )
             )
         if self.input["Istep"] is not None:
-            self.input.main["linQN"] = odict()
+            self.input.main["linQN"] = Group()
             self.input.main["linQN"]["maxSteps"] = str(self.input["Istep"])
             if self.input["dE"] is None and self.input["dF"] is None:
                 self.input["dE"] = 1e-3
@@ -371,8 +371,9 @@ class SphinxBase(GenericDFTJob):
                 self.input.main["linQN"]["dF"] = str(
                     self.input["dF"] / HARTREE_OVER_BOHR_TO_EV_OVER_ANGSTROM
                 )
-            self.input.main["linQN"]["bornOppenheimer"] = self.get_scf_group()
-
+            self.input.main["linQN"]["bornOppenheimer"] = Group()
+            self.input.main.linQN.bornOppenheimer["scfDiag"] = \
+                self.get_scf_group()
         else:
             if self._generic_input["restart_for_band_structure"]:
                 self.input.main["scfDiag"].append(
@@ -1598,13 +1599,14 @@ class Group(dict):
         line = ""
         if content == "__self__":
             content = self
+
         for k, v in content.items():
             k = k.split("___")[0]
 
             if k == "eCut":
                 line += level*"\t" + f"{k} = {v}/13.606;\n"
 
-            elif k in ["scfDiag", "atomicSpin"]:
+            elif isinstance(v, list):
                 for step in content[k]:
                     line += (
                         level * "\t"
