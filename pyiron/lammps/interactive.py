@@ -81,7 +81,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                 "x", 1, 3, (len(positions) * c_double)(*positions)
             )
         else:
-            self._interactive_library.scatter_atoms("x", 1, 3, positions)
+            self._interactive_library.scatter_atoms("x", positions)
         self._interactive_lib_command("change_box all remap")
 
     def interactive_cells_getter(self):
@@ -424,8 +424,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                 "type", 0, 1, (len(elem_all) * c_int)(*elem_all)
             )
         else:
-            self._interactive_library.scatter_atoms("x", 1, 3, positions)
-            self._interactive_library.scatter_atoms("type", 0, 1, elem_all)
+            self._interactive_library.scatter_atoms("x", positions)
+            self._interactive_library.scatter_atoms("type", elem_all)
         self._interactive_lib_command("change_box all remap")
         # if self.input.control['atom_style'] == "full":
         # Do not scatter or manipulate when you have water/ use atom_style full in your system
@@ -536,7 +536,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                 "type", 0, 1, (len(elem_all) * c_int)(*elem_all)
             )
         else:
-            self._interactive_library.scatter_atoms("type", 0, 1, elem_all)
+            self._interactive_library.scatter_atoms("type", elem_all)
 
     def interactive_energy_pot_getter(self):
         return self._interactive_library.get_thermo("pe")
