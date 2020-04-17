@@ -83,12 +83,6 @@ class TestSphinx(unittest.TestCase):
         os.remove(
             os.path.join(
                 cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/spinConstraint.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
                 "../static/sphinx/job_sphinx_hdf5/job_sphinx/structure.sx",
             )
         )

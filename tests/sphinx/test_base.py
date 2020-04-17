@@ -39,6 +39,7 @@ class TestSphinx(unittest.TestCase):
         cls.sphinx_2_5 = cls.project.create_job("Sphinx", "sphinx_test_2_5")
         cls.sphinx_aborted = cls.project.create_job("Sphinx", "sphinx_test_aborted")
         cls.sphinx.structure = cls.basis
+        cls.sphinx.fix_spin_constraint = True
         cls.sphinx_bs.structure = cls.project.create_structure("Fe", "bcc", 2.81)
         cls.sphinx_bs.structure = cls.sphinx_bs.structure.create_line_mode_structure()
         cls.sphinx_2_3.structure = Atoms(
@@ -116,6 +117,12 @@ class TestSphinx(unittest.TestCase):
             os.path.join(
                 cls.file_location,
                 "../static/sphinx/job_sphinx_hdf5/job_sphinx/spinConstraint.sx",
+            )
+        )
+        os.remove(
+            os.path.join(
+                cls.file_location,
+                "../static/sphinx/job_sphinx_hdf5/job_sphinx/spins.in",
             )
         )
         os.remove(
@@ -224,16 +231,16 @@ class TestSphinx(unittest.TestCase):
             "EmptyStates=6;\n",
             "Sigma=0.2;\n",
             "Xcorr=PBE;\n",
-            "VaspPot=False;\n",
+            "VaspPot=false;\n",
             "Estep=400;\n",
             "Ediff=0.0001;\n",
-            "WriteWaves=True;\n",
-            "KJxc=False;\n",
-            "SaveMemory=True;\n",
-            "CoarseRun=False;\n",
+            "WriteWaves=true;\n",
+            "KJxc=false;\n",
+            "SaveMemory=true;\n",
+            "CoarseRun=false;\n",
             "rhoMixing=1.0;\n",
             "spinMixing=1.0;\n",
-            "CheckOverlap=True;\n",
+            "CheckOverlap=true;\n",
             "THREADS=1;\n",
         ]
         file_name = os.path.join(
@@ -356,7 +363,7 @@ class TestSphinx(unittest.TestCase):
         self.assertEqual(file_content, lines)
 
     def test_fix_spin_constraint(self):
-        self.assertIsNone(self.sphinx.fix_spin_constraint)
+        self.assertTrue(self.sphinx.fix_spin_constraint)
         with self.assertRaises(ValueError):
             self.sphinx.fix_spin_constraint = 3
         self.sphinx.fix_spin_constraint = False

@@ -1080,10 +1080,12 @@ class SphinxBase(GenericDFTJob):
         self.set_guess_group()
 
         self.input.hamilton = Group({
-            "nEmptyStates": "auto",
+            "nEmptyStates": "EmptyStates",
             "ekt": "Sigma",
             "xc": "Xcorr"
         })
+        if self._spin_enabled:
+            self.input.hamilton.set_flag("spinPolarized")
 
         self.set_main_group()
         if self.input["WriteWaves"] is False:
@@ -1113,7 +1115,8 @@ class SphinxBase(GenericDFTJob):
             f.write("basis { include <basis.sx>; }\n")
             f.write("PAWHamiltonian { include <PAWHamiltonian.sx>; }\n")
             f.write("initialGuess { include <initialGuess.sx>; }\n")
-            f.write("spinConstraint { include <spinConstraint.sx>; }\n")
+            if self._generic_input["fix_spin_constraint"]:
+                f.write("spinConstraint { include <spinConstraint.sx>; }\n")
             f.write("main { include <main.sx>; }\n")
 
     def write_group(self, group, file_name):
@@ -1188,10 +1191,11 @@ class SphinxBase(GenericDFTJob):
 
         # Spin constraints, if set via _generic_input.
         if self._generic_input["fix_spin_constraint"]:
-            self.input_writer.write_spin_constraints()
-            self.input.spin.setdefault("file", "spins.in")
-
-        self.write_group(self.input.spin, file_name="spinConstraint.sx")
+            self.input_writer.write_spin_constraints(
+                cwd=self.working_directory
+                )
+            self.input.spin.setdefault("file", "'spins.in'")
+            self.write_group(self.input.spin, file_name="spinConstraint.sx")
 
         # self.input.main --> main.sx
         self.write_group(self.input.main, file_name="main.sx")
@@ -1328,7 +1332,7 @@ class SphinxBase(GenericDFTJob):
                         reciprocal points: "
                     + str(self.get_n_ir_reciprocal_points())
                 )
-            if self.input.hamilton["nEmptyStates"] == "auto":
+            if self.input["EmptyStates"] == "auto":
                 if any(self.structure.get_initial_magnetic_moments() != None):
                     warnings.warn(
                         "Number of empty states was not specified. Default: "
@@ -1369,7 +1373,7 @@ class SphinxBase(GenericDFTJob):
                     of OpenMP threads"
             )
         if "nEmptyStates" in self.input.hamilton and \
-            self.input.hamilton["nEmptyStates"] != "auto"\
+            self.input.hamilton["nEmptyStates"] != "EmptyStates"\
             and self.input.hamilton["nEmptyStates"] < 0:
             raise AssertionError("Number of empty states not valid")
 
@@ -1652,7 +1656,7 @@ class Input(GenericParameters):
             separator_char="=",
             end_value_char=";",
         )
-
+        self._bool_dict = {True: "true", False: "false"}
         self.species = Group()
         self.structure = Group()
         self.basis = Group()
