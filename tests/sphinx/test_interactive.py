@@ -33,6 +33,7 @@ class TestSphinx(unittest.TestCase):
         cls.current_dir = os.path.abspath(os.getcwd())
         cls.sphinx._create_working_directory()
         cls.sphinx.input["VaspPot"] = False
+        cls.sphinx.load_default_groups()
         cls.sphinx.write_input()
         cls.sphinx.version = "2.6"
         cls.sphinx.server.run_mode.interactive = True
@@ -52,19 +53,19 @@ class TestSphinx(unittest.TestCase):
         os.remove(
             os.path.join(
                 cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/control.sx",
+                "../static/sphinx/job_sphinx_hdf5/job_sphinx/main.sx",
             )
         )
         os.remove(
             os.path.join(
                 cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/guess.sx",
+                "../static/sphinx/job_sphinx_hdf5/job_sphinx/initialGuess.sx",
             )
         )
         os.remove(
             os.path.join(
                 cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/hamilton.sx",
+                "../static/sphinx/job_sphinx_hdf5/job_sphinx/PAWHamiltonian.sx",
             )
         )
         os.remove(
@@ -76,7 +77,7 @@ class TestSphinx(unittest.TestCase):
         os.remove(
             os.path.join(
                 cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/potentials.sx",
+                "../static/sphinx/job_sphinx_hdf5/job_sphinx/pawPot.sx",
             )
         )
         os.remove(
