@@ -1122,34 +1122,6 @@ class SphinxBase(GenericDFTJob):
         with open(file_name, "w") as f:
             f.write(group.to_sx_str())
 
-    def write_species(self, file_name):
-        file_name = posixpath.join(self.working_directory, file_name)
-        with open(file_name, "w") as f:
-            for i in range(len(self.input.species["species"])):
-                f.write("species {\n")
-                for k, v in self.input.species["species"][i].items():
-                    f.write(f"\t{k} = {v};\n")
-                f.write("}\n")
-
-    def write_structure(self, file_name):
-        file_name = posixpath.join(self.working_directory, file_name)
-        with open(file_name, "w") as f:
-            f.write(f"cell = {self.input.structure.cell};\n")
-            if "symmetry" in self.input.structure:
-                f.write("symmetry {\n")
-                f.write(self.input.structure.symmetry.to_sx_str(level=1))
-                f.write("}\n")
-            for species in self.input.structure["species"]:
-                f.write("species {\n")
-                elt = species["element"]
-                f.write(f"\telement = {elt};\n")
-                for atom in species["atom"]:
-                    f.write("\tatom {\n")
-                    f.write(Group(atom).to_sx_str(level=2))
-                    f.write("\t}\n")
-                f.write("}\n")
-
-
     def write_input(self):
         """
         The write_input function is called when the job is executed to
@@ -1164,7 +1136,7 @@ class SphinxBase(GenericDFTJob):
 
         # self.input.species --> pawPot.sx
         # and copy potential files to working directory
-        self.write_species(file_name="pawPot.sx")
+        self.write_group(self.input.species, file_name="pawPot.sx")
         if self.input["VaspPot"]:
             potformat = "VASP"
         else:
@@ -1176,7 +1148,7 @@ class SphinxBase(GenericDFTJob):
             )
 
         # self.input.structure --> structure.sx
-        self.write_structure(file_name="structure.sx")
+        self.write_group(self.input.structure, file_name="structure.sx")
 
         # self.input.basis --> basis.sx
         self.write_group(self.input.basis, file_name="basis.sx")

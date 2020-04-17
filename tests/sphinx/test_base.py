@@ -473,8 +473,6 @@ class TestSphinx(unittest.TestCase):
 
         file_content = [
             "cell = " + str(cell) + ";\n",
-            "symmetry {\n",
-            "}\n",
             "species {\n",
             '\telement = "Fe";\n',
             "\tatom {\n",
@@ -487,6 +485,7 @@ class TestSphinx(unittest.TestCase):
             "\t\tcoords = " + str(pos_2) + ";\n",
             "\t}\n",
             "}\n",
+            "symmetry {}\n",
         ]
         file_name = os.path.join(
             self.file_location,
