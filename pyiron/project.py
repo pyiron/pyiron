@@ -24,7 +24,7 @@ from pyiron.vasp.potential import VaspPotential
 from pyiron.atomistics.structure.atoms import CrystalStructure
 import pyiron.atomistics.structure.pyironase as ase
 from pyiron.atomistics.structure.pyironase import publication as publication_ase
-from pyiron.atomistics.structure.atoms import Atoms
+from pyiron.atomistics.structure.atoms import Atoms, create_surface
 
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
@@ -622,71 +622,8 @@ class Project(ProjectCore):
             pyiron.atomistics.structure.atoms.Atoms instance: Required surface
 
         """
-        # https://gitlab.com/ase/ase/blob/master/ase/lattice/surface.py
-        s.publication_add(publication_ase())
-        if pbc is None:
-            pbc = np.array([True, True, True])
-        from ase.build import (
-            add_adsorbate,
-            add_vacuum,
-            bcc100,
-            bcc110,
-            bcc111,
-            diamond100,
-            diamond111,
-            fcc100,
-            fcc110,
-            fcc111,
-            fcc211,
-            hcp0001,
-            hcp10m10,
-            mx2,
-            hcp0001_root,
-            fcc111_root,
-            bcc111_root,
-            root_surface,
-            root_surface_analysis,
-            surface,
-        )
-
-        for surface_class in [
-            add_adsorbate,
-            add_vacuum,
-            bcc100,
-            bcc110,
-            bcc111,
-            diamond100,
-            diamond111,
-            fcc100,
-            fcc110,
-            fcc111,
-            fcc211,
-            hcp0001,
-            hcp10m10,
-            mx2,
-            hcp0001_root,
-            fcc111_root,
-            bcc111_root,
-            root_surface,
-            root_surface_analysis,
-            surface,
-        ]:
-            if surface_type == surface_class.__name__:
-                surface_type = surface_class
-                break
-        if isinstance(surface_type, types.FunctionType):
-            if center:
-                surface = surface_type(
-                    symbol=element, size=size, vacuum=vacuum, **kwargs
-                )
-            else:
-                surface = surface_type(symbol=element, size=size, **kwargs)
-                z_max = np.max(surface.positions[:, 2])
-                surface.cell[2, 2] = z_max + vacuum
-            surface.pbc = pbc
-            return surface
-        else:
-            return None
+        return create_surface(element=element, surface_type=surface_type,
+                              size=size, vacuum=vacuum, center=center, pbc=pbc, **kwargs)
 
     @staticmethod
     def inspect_periodic_table():

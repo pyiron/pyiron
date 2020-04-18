@@ -14,7 +14,7 @@ from ase.geometry import cellpar_to_cell, complete_cell, get_distances
 from matplotlib.colors import rgb2hex
 from scipy.interpolate import interp1d
 import seekpath
-
+import types
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
 from pyiron.atomistics.structure.periodic_table import (
@@ -22,7 +22,9 @@ from pyiron.atomistics.structure.periodic_table import (
     ChemicalElement,
     ElementColorDictionary,
 )
+import pyiron.atomistics.structure.pyironase as ase
 from pyiron.base.settings.generic import Settings
+from pyiron.atomistics.structure.pyironase import publication as publication_ase
 from scipy.spatial import cKDTree, Voronoi
 
 try:
@@ -4283,6 +4285,95 @@ def ase_to_pyiron(ase_obj):
             else:
                 warnings.warn("Unsupported ASE constraint: " + constraint_dict["name"])
     return pyiron_atoms
+
+
+def create_surface(
+    element, surface_type, size=(1, 1, 1), vacuum=1.0, center=False, pbc=None, **kwargs
+):
+    """
+    Generate a surface based on the ase.build.surface module.
+
+    Args:
+        element (str): Element name
+        surface_type (str): The string specifying the surface type generators available through ase (fcc111,
+        hcp0001 etc.)
+        size (tuple): Size of the surface
+        vacuum (float): Length of vacuum layer added to the surface along the z direction
+        center (bool): Tells if the surface layers have to be at the center or at one end along the z-direction
+        pbc (list/numpy.ndarray): List of booleans specifying the periodic boundary conditions along all three
+                                  directions. If None, it is set to [True, True, True]
+        **kwargs: Additional, arguments you would normally pass to the structure generator like 'a', 'b',
+        'orthogonal' etc.
+
+    Returns:
+        pyiron.atomistics.structure.atoms.Atoms instance: Required surface
+
+    """
+    # https://gitlab.com/ase/ase/blob/master/ase/lattice/surface.py
+    s.publication_add(publication_ase())
+    if pbc is None:
+        pbc = np.array([True, True, True])
+    from ase.build import (
+        add_adsorbate,
+        add_vacuum,
+        bcc100,
+        bcc110,
+        bcc111,
+        diamond100,
+        diamond111,
+        fcc100,
+        fcc110,
+        fcc111,
+        fcc211,
+        hcp0001,
+        hcp10m10,
+        mx2,
+        hcp0001_root,
+        fcc111_root,
+        bcc111_root,
+        root_surface,
+        root_surface_analysis,
+        surface,
+    )
+
+    for surface_class in [
+        add_adsorbate,
+        add_vacuum,
+        bcc100,
+        bcc110,
+        bcc111,
+        diamond100,
+        diamond111,
+        fcc100,
+        fcc110,
+        fcc111,
+        fcc211,
+        hcp0001,
+        hcp10m10,
+        mx2,
+        hcp0001_root,
+        fcc111_root,
+        bcc111_root,
+        root_surface,
+        root_surface_analysis,
+        surface,
+    ]:
+        if surface_type == surface_class.__name__:
+            surface_type = surface_class
+            break
+    if isinstance(surface_type, types.FunctionType):
+        if center:
+            surface = surface_type(
+                symbol=element, size=size, vacuum=vacuum, **kwargs
+            )
+        else:
+            surface = surface_type(symbol=element, size=size, **kwargs)
+            z_max = np.max(surface.positions[:, 2])
+            surface.cell[2, 2] = z_max + vacuum
+        surface.pbc = pbc
+        return surface
+    else:
+        return None
 
 
 def pyiron_to_ase(pyiron_obj):
