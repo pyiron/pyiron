@@ -22,9 +22,7 @@ from pyiron.atomistics.structure.periodic_table import (
     ChemicalElement,
     ElementColorDictionary,
 )
-import pyiron.atomistics.structure.pyironase as ase
 from pyiron.base.settings.generic import Settings
-from pyiron.atomistics.structure.pyironase import publication as publication_ase
 from scipy.spatial import cKDTree, Voronoi
 
 try:
@@ -4310,6 +4308,7 @@ def create_surface(
 
     """
     # https://gitlab.com/ase/ase/blob/master/ase/lattice/surface.py
+    from pyiron.atomistics.structure.pyironase import publication as publication_ase
     s.publication_add(publication_ase())
     if pbc is None:
         pbc = np.array([True, True, True])
@@ -4423,6 +4422,7 @@ def create_ase_bulk(
 
         pyiron.atomistics.structure.atoms.Atoms: Required bulk structure
     """
+    from pyiron.atomistics.structure.pyironase import publication as publication_ase
     s.publication_add(publication_ase())
     from ase.build import bulk
 
