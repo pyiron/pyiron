@@ -8,7 +8,7 @@ import numpy as np
 import os
 import warnings
 from pyiron.atomistics.structure.atom import Atom
-from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
+from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure, create_ase_bulk, create_surface
 from pyiron.atomistics.structure.sparse_list import SparseList
 from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement
 from pyiron.base.generic.hdfio import FileHDFio, ProjectHDFio
@@ -1334,6 +1334,12 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(struct.get_chemical_formula(), 'Al2CuMg')
         struct[0:] = 'Mg'
         self.assertEqual(struct.get_chemical_formula(), 'Mg4')
+
+    def test_static_functions(self):
+        self.assertIsInstance(create_ase_bulk("Al"), Atoms)
+        surface = create_surface("Al", "fcc111", size=(4, 4, 4), vacuum=10)
+        self.assertTrue(all(surface.pbc))
+        self.assertIsInstance(surface, Atoms)
 
 
 def generate_fcc_lattice(a=4.2):

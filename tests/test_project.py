@@ -29,6 +29,7 @@ class TestProject(unittest.TestCase):
         self.assertIsInstance(surface, Atoms)
         surface = self.project.create_surface("Al", "fcc111", size=(4, 4, 4), vacuum=10, pbc=[True, True, False])
         self.assertFalse(all(surface.pbc))
+        self.assertIsInstance(self.project.create_structure("Al", "fcc", 4.05), Atoms)
 
 
 if __name__ == "__main__":

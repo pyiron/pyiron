@@ -5,8 +5,6 @@
 from __future__ import print_function
 import os
 import posixpath
-import numpy as np
-import types
 from string import punctuation
 from pyiron.base.project.generic import Project as ProjectCore
 
@@ -23,8 +21,7 @@ from pyiron.lammps.potential import LammpsPotentialFile
 from pyiron.vasp.potential import VaspPotential
 from pyiron.atomistics.structure.atoms import CrystalStructure
 import pyiron.atomistics.structure.pyironase as ase
-from pyiron.atomistics.structure.pyironase import publication as publication_ase
-from pyiron.atomistics.structure.atoms import Atoms, create_surface
+from pyiron.atomistics.structure.atoms import Atoms, create_surface, create_ase_bulk
 
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
@@ -488,43 +485,26 @@ class Project(ProjectCore):
         orthorhombic=False,
         cubic=False,
     ):
-        """Creating bulk systems using ASE bulk module.
+        """
+        Creating bulk systems using ASE bulk module. Crystal structure and lattice constant(s) will be guessed if not
+        provided.
 
-            Crystal structure and lattice constant(s) will be guessed if not
-            provided.
+        name (str): Chemical symbol or symbols as in 'MgO' or 'NaCl'.
+        crystalstructure (str): Must be one of sc, fcc, bcc, hcp, diamond, zincblende,
+                                rocksalt, cesiumchloride, fluorite or wurtzite.
+        a (float): Lattice constant.
+        c (float): Lattice constant.
+        c_over_a (float): c/a ratio used for hcp.  Default is ideal ratio: sqrt(8/3).
+        u (float): Internal coordinate for Wurtzite structure.
+        orthorhombic (bool): Construct orthorhombic unit cell instead of primitive cell which is the default.
+        cubic (bool): Construct cubic unit cell if possible.
 
-            name: str
-                Chemical symbol or symbols as in 'MgO' or 'NaCl'.
-            crystalstructure: str
-                Must be one of sc, fcc, bcc, hcp, diamond, zincblende,
-                rocksalt, cesiumchloride, fluorite or wurtzite.
-            a: float
-                Lattice constant.
-            c: float
-                Lattice constant.
-            c_over_a: float
-                c/a ratio used for hcp.  Default is ideal ratio: sqrt(8/3).
-            u: float
-                Internal coordinate for Wurtzite structure.
-            orthorhombic: bool
-                Construct orthorhombic unit cell instead of primitive cell
-                which is the default.
-            cubic: bool
-                Construct cubic unit cell if possible.
-            """
-        s.publication_add(publication_ase())
-        from ase.build import bulk
+        Returns:
 
-        return bulk(
-            name=name,
-            crystalstructure=crystalstructure,
-            a=a,
-            c=c,
-            covera=covera,
-            u=u,
-            orthorhombic=orthorhombic,
-            cubic=cubic,
-        )
+            pyiron.atomistics.structure.atoms.Atoms: Required bulk structure
+        """
+        return create_ase_bulk(name=name, crystalstructure=crystalstructure, a=a, c=c, covera=covera, u=u,
+                               orthorhombic=orthorhombic, cubic=cubic)
 
     @staticmethod
     def create_atoms(

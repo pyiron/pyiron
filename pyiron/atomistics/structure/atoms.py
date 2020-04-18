@@ -4376,6 +4376,49 @@ def create_surface(
         return None
 
 
+def create_ase_bulk(
+    name,
+    crystalstructure=None,
+    a=None,
+    c=None,
+    covera=None,
+    u=None,
+    orthorhombic=False,
+    cubic=False,
+):
+    """
+    Creating bulk systems using ASE bulk module. Crystal structure and lattice constant(s) will be guessed if not
+    provided.
+
+    name (str): Chemical symbol or symbols as in 'MgO' or 'NaCl'.
+    crystalstructure (str): Must be one of sc, fcc, bcc, hcp, diamond, zincblende,
+                            rocksalt, cesiumchloride, fluorite or wurtzite.
+    a (float): Lattice constant.
+    c (float): Lattice constant.
+    c_over_a (float): c/a ratio used for hcp.  Default is ideal ratio: sqrt(8/3).
+    u (float): Internal coordinate for Wurtzite structure.
+    orthorhombic (bool): Construct orthorhombic unit cell instead of primitive cell which is the default.
+    cubic (bool): Construct cubic unit cell if possible.
+
+    Returns:
+
+        pyiron.atomistics.structure.atoms.Atoms: Required bulk structure
+    """
+    s.publication_add(publication_ase())
+    from ase.build import bulk
+
+    return bulk(
+        name=name,
+        crystalstructure=crystalstructure,
+        a=a,
+        c=c,
+        covera=covera,
+        u=u,
+        orthorhombic=orthorhombic,
+        cubic=cubic,
+    )
+
+
 def pyiron_to_ase(pyiron_obj):
     try:
         from pyiron.atomistics.structure.pyironase import ASEAtoms
