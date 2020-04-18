@@ -1118,16 +1118,22 @@ class Atoms(object):
         """
         pbc = np.array(self.pbc)
         # check if each side is non-zero even if None values exist in cell
-        non_zero_sides = np.linalg.norm(np.array(self.cell, dtype=float), axis=1) > 1e-7
+        if self.cell is None:
+            non_zero_sides = np.array([False, False, False])
+        else:
+            non_zero_sides = np.linalg.norm(np.array(self.cell, dtype=float), axis=1) > 1e-7
         positions = self.positions.copy()
         # Only perform the dot product over non zero side (regardless of PBC)
         if any(non_zero_sides):
             positions[:, non_zero_sides] = np.einsum("jk,ij->ik",
                                                      np.linalg.inv(self.cell[non_zero_sides][:, non_zero_sides]),
                                                      self.positions[:, non_zero_sides])
-        # perform the wrapping along the periodic directions only
-        if wrap:
-            positions[:, pbc] = np.mod(positions[:, pbc], 1.0)
+            # perform the wrapping along the periodic directions only
+            if wrap:
+                positions[:, pbc] = np.mod(positions[:, pbc], 1.0)
+        else:
+            warnings.warn("Scaled positions do not exist for structures without non-zero cell parameters. \n"
+                          "Returning cartesian coordinates")
         return positions
 
     def get_number_of_atoms(self):
