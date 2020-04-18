@@ -460,13 +460,15 @@ class Project(ProjectCore):
     @staticmethod
     def create_structure(element, bravais_basis, lattice_constant):
         """
+        Create a crystal structure using pyiron's native crystal structure generator
 
         Args:
-            element:
-            bravais_basis:
-            lattice_constant:
+            element (str): Element name
+            bravais_basis (str): Basis type
+            lattice_constant (float/list): Lattice constants
 
         Returns:
+            pyiron.atomistics.structure.atoms.Atoms: The required crystal structure
 
         """
         return CrystalStructure(
