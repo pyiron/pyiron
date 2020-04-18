@@ -1064,7 +1064,7 @@ class SphinxBase(GenericDFTJob):
         )
 
         self.input.basis = Group({
-            "eCut": "EnCut",
+            "eCut": "EnCut/13.606",
             "kPoint": Group({
                 "coords": "KpointCoords",
                 "weight": 1,
@@ -1543,8 +1543,10 @@ class Group(dict):
     def set(self, name, content):
         self[name] = content
 
-    def set_group(self, name, group):
-        self.set(name, group)
+    def set_group(self, name, content=None):
+        if content is None:
+            content = Group()
+        self.set(name, content)
 
     def set_flag(self, flag, val=True):
         self.set(flag, val)
@@ -1572,10 +1574,7 @@ class Group(dict):
         for k, v in content.items():
             k = k.split("___")[0]
 
-            if k == "eCut":
-                line += level*"\t" + f"{k} = {v}/13.606;\n"
-
-            elif isinstance(v, list):
+            if isinstance(v, list):
                 for step in content[k]:
                     line += (
                         level * "\t"
