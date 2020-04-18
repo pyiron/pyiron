@@ -19,9 +19,8 @@ from pyiron.atomistics.generic.object_type import ObjectType, ObjectTypeChoice
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.lammps.potential import LammpsPotentialFile
 from pyiron.vasp.potential import VaspPotential
-from pyiron.atomistics.structure.atoms import CrystalStructure
 import pyiron.atomistics.structure.pyironase as ase
-from pyiron.atomistics.structure.atoms import Atoms, create_surface, create_ase_bulk
+from pyiron.atomistics.structure.atoms import Atoms, create_surface, create_ase_bulk, create_structure
 
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
@@ -468,11 +467,7 @@ class Project(ProjectCore):
             pyiron.atomistics.structure.atoms.Atoms: The required crystal structure
 
         """
-        return CrystalStructure(
-            element=element,
-            bravais_basis=bravais_basis,
-            lattice_constants=[lattice_constant],
-        )
+        return create_structure(element=element, bravais_basis=bravais_basis, lattice_constant=lattice_constant)
 
     @staticmethod
     def create_ase_bulk(

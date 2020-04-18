@@ -4376,6 +4376,25 @@ def create_surface(
         return None
 
 
+def create_structure(element, bravais_basis, lattice_constant):
+    """
+    Create a crystal structure using pyiron's native crystal structure generator
+
+    Args:
+        element (str): Element name
+        bravais_basis (str): Basis type
+        lattice_constant (float/list): Lattice constants
+
+    Returns:
+        pyiron.atomistics.structure.atoms.Atoms: The required crystal structure
+
+    """
+    return CrystalStructure(
+        element=element,
+        bravais_basis=bravais_basis,
+        lattice_constants=[lattice_constant],
+    )
+
 def create_ase_bulk(
     name,
     crystalstructure=None,
