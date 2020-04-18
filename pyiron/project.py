@@ -601,26 +601,31 @@ class Project(ProjectCore):
 
     @staticmethod
     def create_surface(
-        element, surface_type, size=(1, 1, 1), vacuum=1.0, center=False, **kwargs
+        element, surface_type, size=(1, 1, 1), vacuum=1.0, center=False, pbc=None, **kwargs
     ):
         """
-        Generates surfaces instances based on the ase.build.surface module.
+        Generate a surface based on the ase.build.surface module.
+
         Args:
             element (str): Element name
             surface_type (str): The string specifying the surface type generators available through ase (fcc111,
             hcp0001 etc.)
-            size (turple): Size of the surface
+            size (tuple): Size of the surface
             vacuum (float): Length of vacuum layer added to the surface along the z direction
-            center (boolean): Tells if the surface layers have to be at the center or at one end along the z-direction
+            center (bool): Tells if the surface layers have to be at the center or at one end along the z-direction
+            pbc (list/numpy.ndarray): List of booleans specifying the periodic boundary conditions along all three
+                                      directions. If None, it is set to [True, True, True]
             **kwargs: Additional, arguments you would normally pass to the structure generator like 'a', 'b',
             'orthogonal' etc.
 
         Returns:
-            surface (atomistics.structure.atoms.Atoms instance)
+            pyiron.atomistics.structure.atoms.Atoms instance: Required surface
 
         """
         # https://gitlab.com/ase/ase/blob/master/ase/lattice/surface.py
         s.publication_add(publication_ase())
+        if pbc is None:
+            pbc = np.array([True, True, True])
         from ase.build import (
             add_adsorbate,
             add_vacuum,
@@ -678,6 +683,7 @@ class Project(ProjectCore):
                 surface = surface_type(symbol=element, size=size, **kwargs)
                 z_max = np.max(surface.positions[:, 2])
                 surface.cell[2, 2] = z_max + vacuum
+            surface.pbc = pbc
             return surface
         else:
             return None
