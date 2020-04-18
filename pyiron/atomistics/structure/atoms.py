@@ -1117,11 +1117,15 @@ class Atoms(object):
 
         """
         pbc = np.array(self.pbc)
-        if any(pbc):
-            positions = self.positions.copy()
-            positions[:, pbc] = np.einsum("jk,ij->ik", np.linalg.inv(self.cell[pbc][:, pbc]), self.positions[:, pbc])
-        else:
-            positions = self.positions.copy()
+        # check if each side is non-zero even if None values exist in cell
+        non_zero_sides = np.linalg.norm(np.array(self.cell, dtype=float), axis=1) > 1e-7
+        positions = self.positions.copy()
+        # Only perform the dot product over non zero side (regardless of PBC)
+        if any(non_zero_sides):
+            positions[:, non_zero_sides] = np.einsum("jk,ij->ik",
+                                                     np.linalg.inv(self.cell[non_zero_sides][:, non_zero_sides]),
+                                                     self.positions[:, non_zero_sides])
+        # perform the wrapping along the periodic directions only
         if wrap:
             positions[:, pbc] = np.mod(positions[:, pbc], 1.0)
         return positions
