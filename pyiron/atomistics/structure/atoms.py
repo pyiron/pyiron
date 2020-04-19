@@ -14,7 +14,6 @@ from ase.geometry import cellpar_to_cell, complete_cell, get_distances
 from matplotlib.colors import rgb2hex
 from scipy.interpolate import interp1d
 import seekpath
-
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
 from pyiron.atomistics.structure.periodic_table import (
