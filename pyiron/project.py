@@ -20,7 +20,8 @@ from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.lammps.potential import LammpsPotentialFile
 from pyiron.vasp.potential import VaspPotential
 import pyiron.atomistics.structure.pyironase as ase
-from pyiron.atomistics.structure.atoms import Atoms, create_surface, create_ase_bulk, create_structure
+from pyiron.atomistics.structure.atoms import Atoms
+from pyiron.atomistics.structure.generator import create_surface, create_ase_bulk, create_structure
 
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
