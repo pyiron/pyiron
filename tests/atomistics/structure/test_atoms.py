@@ -3,12 +3,12 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import unittest
-import sys
 import numpy as np
 import os
 import warnings
 from pyiron.atomistics.structure.atom import Atom
-from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure, create_ase_bulk, create_surface
+from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
+from pyiron.atomistics.structure.generator import create_ase_bulk, create_surface
 from pyiron.atomistics.structure.sparse_list import SparseList
 from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement
 from pyiron.base.generic.hdfio import FileHDFio, ProjectHDFio
