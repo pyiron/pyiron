@@ -952,12 +952,11 @@ class LammpsBase(AtomisticGenericJob):
         print("This function is outdated use the potential setter instead!")
         self.potential = file_name
 
-    def next(self, snapshot=-1, job_name=None, job_type=None):
+    def next(self, job_name=None, job_type=None):
         """
         Restart a new job created from an existing Lammps calculation.
         Args:
             project (pyiron.project.Project instance): Project instance at which the new job should be created
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Lammps job type is assumed
 
@@ -965,15 +964,14 @@ class LammpsBase(AtomisticGenericJob):
             new_ham (lammps.lammps.Lammps instance): New job
         """
         return super(LammpsBase, self).restart(
-            snapshot=snapshot, job_name=job_name, job_type=job_type
+            job_name=job_name, job_type=job_type
         )
 
-    def restart(self, snapshot=-1, job_name=None, job_type=None):
+    def restart(self, job_name=None, job_type=None):
         """
         Restart a new job created from an existing Lammps calculation.
         Args:
             project (pyiron.project.Project instance): Project instance at which the new job should be created
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Lammps job type is assumed
 
@@ -981,7 +979,7 @@ class LammpsBase(AtomisticGenericJob):
             new_ham (lammps.lammps.Lammps instance): New job
         """
         new_ham = super(LammpsBase, self).restart(
-            snapshot=snapshot, job_name=job_name, job_type=job_type
+            job_name=job_name, job_type=job_type
         )
         if new_ham.__name__ == self.__name__:
             new_ham.potential = self.potential

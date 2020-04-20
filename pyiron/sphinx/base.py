@@ -20,9 +20,13 @@ from collections import OrderedDict as odict
 from collections import defaultdict
 
 from pyiron.dft.job.generic import GenericDFTJob
-from pyiron.vasp.potential import VaspPotentialFile, find_potential_file
+from pyiron.vasp.potential import VaspPotentialFile
+from pyiron.vasp.potential import find_potential_file as find_potential_file_vasp
+from pyiron.sphinx.potential import SphinxJTHPotentialFile
+from pyiron.sphinx.potential import find_potential_file as find_potential_file_jth
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
+from pyiron.atomistics.job.atomistic import GenericOutput
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = (
@@ -58,6 +62,7 @@ class SphinxBase(GenericDFTJob):
 
     def __init__(self, project, job_name):
         super(SphinxBase, self).__init__(project, job_name)
+        self.output = SphinxOutput(job=self)
         self.input = Input()
         self._main_str = None
         self._species_str = None
@@ -69,9 +74,12 @@ class SphinxBase(GenericDFTJob):
         self._save_memory = False
         self._output_parser = Output(self)
         self.input_writer = InputWriter()
-
+        if self.check_vasp_potentials():
+            self.input["VaspPot"] = True  # use VASP potentials if available
         self._kpoints_odict = None
         self._generic_input["restart_for_band_structure"] = False
+        self._generic_input["path_name"] = None
+        self._generic_input["n_path"] = None
 
     @property
     def id_pyi_to_spx(self):
@@ -180,6 +188,12 @@ class SphinxBase(GenericDFTJob):
                 [("type", self.input["preconditioner"])]
             )
         control_str[algorithm] = odict()
+        if self.input["maxStepsCCG"] is not None:
+            control_str[algorithm]["maxStepsCCG"] = self.input["maxStepsCCG"]
+        if self.input["blockSize"] is not None and algorithm == "blockCCG":
+            control_str[algorithm]["blockSize"] = self.input["blockSize"]
+        if self.input["nSloppy"] is not None and algorithm == "blockCCG":
+            control_str[algorithm]["nSloppy"] = self.input["nSloppy"]
         if self.input["WriteWaves"] is False:
             control_str["noWavesStorage"] = None
         return control_str
@@ -322,9 +336,25 @@ class SphinxBase(GenericDFTJob):
     ):
         raise NotImplementedError("calc_md() not implemented in SPHInX.")
 
+    def restart_for_band_structure_calculations(self, job_name=None):
+        """
+        Restart a new job created from an existing Vasp calculation by reading the charge density
+        for band structures.
+
+        Args:
+            job_name (str/None): Job name
+
+        Returns:
+            pyiron.sphinx.sphinx.sphinx: new job instance
+        """
+        return self.restart_from_charge_density(
+            job_name=job_name,
+            job_type=None,
+            band_structure_calc=True
+        )
+
     def restart_from_charge_density(
             self,
-            snapshot=-1,
             job_name=None,
             job_type=None,
             band_structure_calc=False
@@ -333,16 +363,14 @@ class SphinxBase(GenericDFTJob):
         Restart a new job created from an existing Vasp calculation by reading the charge density.
 
         Args:
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
-            job_name (str): Job name
-            job_type (str): Job type. If not specified a Vasp job type is assumed
+            job_name (str/None): Job name
+            job_type (str/None): Job type. If not specified a Vasp job type is assumed
             band_structure_calc (bool): has to be True for band structure calculations.
 
         Returns:
             pyiron.sphinx.sphinx.sphinx: new job instance
         """
         ham_new = self.restart(
-            snapshot=snapshot,
             job_name=job_name,
             job_type=job_type,
             from_wave_functions=False,
@@ -354,7 +382,6 @@ class SphinxBase(GenericDFTJob):
 
     def restart_from_wave_functions(
             self,
-            snapshot=-1,
             job_name=None,
             job_type=None,
     ):
@@ -362,7 +389,6 @@ class SphinxBase(GenericDFTJob):
         Restart a new job created from an existing Vasp calculation by reading the wave functions.
 
         Args:
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Vasp job type is assumed
 
@@ -370,7 +396,6 @@ class SphinxBase(GenericDFTJob):
             pyiron.sphinx.sphinx.sphinx: new job instance
         """
         return self.restart(
-            snapshot=snapshot,
             job_name=job_name,
             job_type=job_type,
             from_wave_functions=True,
@@ -379,7 +404,6 @@ class SphinxBase(GenericDFTJob):
 
     def restart(
         self,
-        snapshot=-1,
         job_name=None,
         job_type=None,
         from_charge_density=True,
@@ -397,7 +421,7 @@ class SphinxBase(GenericDFTJob):
                 if len(w) > 0:
                     self.status.not_converged = True
         new_job = super(SphinxBase, self).restart(
-            snapshot=snapshot, job_name=job_name, job_type=job_type
+            job_name=job_name, job_type=job_type
         )
         if from_charge_density and os.path.isfile(
             posixpath.join(self.working_directory, "rho.sxb")
@@ -638,8 +662,8 @@ class SphinxBase(GenericDFTJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
-        n_trace=None,
-        trace=None,
+        n_path=None,
+        path_name=None,
     ):
         """
         Function to setup the k-points for the Sphinx job
@@ -653,8 +677,8 @@ class SphinxBase(GenericDFTJob):
             scheme (str): Type of k-point generation scheme ('MP' or 'Line')
             mesh (list): Size of the mesh (in the MP scheme)
             center_shift (list): Shifts the center of the mesh from the gamma point by the given vector
-            n_trace (int): Number of points per trace part for line mode (not active in SPHInX)
-            trace (list): ordered list of high symmetry points for line mode (not active in SPHInX)
+            n_trace (int): Number of points per trace part for line mode
+            path_name (str): Name of high symmetry path used for band structure calculations.
         """
         if not isinstance(symmetry_reduction, bool):
             raise ValueError("symmetry_reduction has to be a boolean")
@@ -669,34 +693,61 @@ class SphinxBase(GenericDFTJob):
             if center_shift is not None:
                 self.input["KpointCoords"] = str(list(center_shift))
         elif scheme == "Line":
-            if n_trace is None:
-                raise ValueError("n_trace has to be defined")
-            high_symmetry_points = self.structure.get_high_symmetry_points()
-            if high_symmetry_points is None:
+            if n_path is None and self._generic_input["n_path"] is None:
+                raise ValueError("'n_path' has to be defined")
+            if n_path is None:
+                n_path = self._generic_input["n_path"]
+            else:
+                self._generic_input["n_path"] = n_path
+
+            if self.structure.get_high_symmetry_points() is None:
                 raise ValueError("no 'high_symmetry_points' defined for 'structure'.")
-            if trace is None:
-                raise ValueError("trace_points has to be defined")
+
+            if path_name is None and self._generic_input["path_name"] is None:
+                raise ValueError("'path_name' has to be defined")
+            if path_name is None:
+                path_name = self._generic_input["path_name"]
+            else:
+                self._generic_input["path_name"] = path_name
+
+            try:
+                path = self.structure.get_high_symmetry_path()[path_name]
+            except KeyError:
+                raise AssertionError("'{}' is not a valid path!".format(path_name))
 
             kpoints = odict([("relative", None)])
-            for point in trace:
-                if point not in self.structure.get_high_symmetry_points().keys():
-                    raise AssertionError("trace point '{}' is not in high symmetry points".format(point))
 
             kpoints["from"] = odict(
                 [
-                    ("coords", str(self.structure.get_high_symmetry_points()[trace[0]])),
-                    ("relative", None),
-                    ("label", '"' + trace[0] + '"'),
+                    ("coords", str(self.structure.get_high_symmetry_points()[path[0][0]])),
+                    ("label", '"' + path[0][0].replace("'", "p") + '"'),
                 ]
             )
-            for i, point in enumerate(trace[1:]):
-                name = "to___{}".format(i)
+            kpoints["to___0"] = odict(
+                [
+                    ("coords", str(self.structure.get_high_symmetry_points()[path[0][1]])),
+                    ("nPoints", n_path),
+                    ("label", '"' + path[0][1].replace("'", "p") + '"'),
+                ]
+            )
+
+            for i, path in enumerate(zip(path[:-1], np.roll(path, -1, 0)[:-1])):
+                if not path[0][1] == path[1][0]:
+                    name = "to___{}___1".format(i)
+                    kpoints[name] = odict(
+                        [
+                            ("coords", str(self.structure.get_high_symmetry_points()[path[1][0]])),
+                            ("nPoints", 0),
+                            ("label", '"' + path[1][0].replace("'", "p") + '"'),
+                        ]
+                    )
+
+                name = "to___{}".format(i + 1)
                 kpoints[name] = odict(
                     [
-                        ("coords", str(self.structure.get_high_symmetry_points()[point])),
-                        ("nPoints", n_trace),
-                        ("relative", None),
-                        ("label", '"' + point + '"'),
+                        ("coords", str(self.structure.get_high_symmetry_points()[path[1][1]])),
+                        ("nPoints", n_path),
+                        ("label", '"' + path[1][1].replace("'", "p") + '"'),
                     ]
                 )
 
@@ -720,13 +771,24 @@ class SphinxBase(GenericDFTJob):
         check_overlap = self.input["CheckOverlap"]
         enable_kjxc = self.input["KJxc"]
         if self._main_str is None:
-            self.input_writer.write_potentials(
-                file_name="potentials.sx",
-                cwd=self.working_directory,
-                species_str=self._species_str,
-                check_overlap=check_overlap,
-                xc=self.input["Xcorr"],
-            )
+            if self.input["VaspPot"]:
+                self.input_writer.write_potentials(
+                    file_name="potentials.sx",
+                    cwd=self.working_directory,
+                    species_str=self._species_str,
+                    check_overlap=check_overlap,
+                    xc=self.input["Xcorr"],
+                    potformat="VASP"
+                )
+            else:
+                self.input_writer.write_potentials(
+                    file_name="potentials.sx",
+                    cwd=self.working_directory,
+                    species_str=self._species_str,
+                    check_overlap=check_overlap,
+                    xc=self.input["Xcorr"],
+                    potformat="JTH"
+                )
             self.input_writer.write_guess(
                 file_name="guess.sx",
                 cwd=self.working_directory,
@@ -940,13 +1002,18 @@ class SphinxBase(GenericDFTJob):
                 os.remove(filename)
         super(SphinxBase, self).compress(files_to_compress=files_to_compress)
 
+    @staticmethod
+    def check_vasp_potentials():
+        return any([
+            os.path.exists(os.path.join(p, 'vasp', 'potentials', 'potpaw', 'Fe', 'POTCAR')) 
+            for p in s.resource_paths
+        ])
+
 
 class InputWriter(object):
     """
     The Sphinx Input writer is called to write the Sphinx specific input files.
     """
-
-    pot_path_dict = {"PBE": "paw-gga-pbe", "LDA": "paw-lda"}
 
     def __init__(self):
         self.structure = None
@@ -1086,6 +1153,7 @@ class InputWriter(object):
         species_str=None,
         check_overlap=True,
         xc=None,
+        potformat='JTH',
     ):
         """
         Write the Sphinx potential configuration named potentials.sx.
@@ -1095,7 +1163,16 @@ class InputWriter(object):
             cwd (str): the current working directory (optional)
             species_str (str): the input to write, if no input is given the default input will be written. (optional)
         """
-        potentials = VaspPotentialFile(xc=xc)
+        if potformat == 'JTH':
+            potentials = SphinxJTHPotentialFile(xc=xc)
+            find_potential_file = find_potential_file_jth
+            pot_path_dict = {"PBE": "jth-gga-pbe"}
+        elif potformat == 'VASP':
+            potentials = VaspPotentialFile(xc=xc)
+            find_potential_file = find_potential_file_vasp
+            pot_path_dict = {"PBE": "paw-gga-pbe", "LDA": "paw-lda"}
+        else:
+            raise ValueError('Only JTH and VASP potentials are supported!')
         if species_str is None:
             species_str = odict()
             for species_obj in self.structure.get_species_objects():
@@ -1113,7 +1190,7 @@ class InputWriter(object):
                         path=potentials.find_default(new_element)["Filename"].values[0][
                             0
                         ],
-                        pot_path_dict=self.pot_path_dict,
+                        pot_path_dict=pot_path_dict,
                     )
                     assert os.path.isfile(
                         potential_path
@@ -1121,21 +1198,38 @@ class InputWriter(object):
                 else:
                     potential_path = find_potential_file(
                         path=potentials.find_default(elem)["Filename"].values[0][0],
-                        pot_path_dict=self.pot_path_dict,
+                        pot_path_dict=pot_path_dict,
                     )
-                copyfile(potential_path, posixpath.join(cwd, elem + "_POTCAR"))
+                if potformat == "JTH":
+                    copyfile(potential_path, posixpath.join(cwd, elem + "_GGA.atomicdata"))
+                else: 
+                    copyfile(potential_path, posixpath.join(cwd, elem + "_POTCAR"))
                 check_overlap_str = ""
                 species_str.setdefault("species", [])
-                species_str["species"].append(
-                    odict(
-                        [
-                            ("name", '"' + elem + '"'),
-                            ("potType", '"VASP"'),
-                            ("element", '"' + elem + '"'),
-                            ("potential", '"' + elem + "_POTCAR" + '"'),
-                        ]
+                if potformat == "JTH":
+                    species_str["species"].append(
+                        odict(
+                            [
+                                ("name", '"' + elem + '"'),
+                                ("potType", '"AtomPAW"'),
+                                ("element", '"' + elem + '"'),
+                                ("potential", '"' + elem + "_GGA.atomicdata" + '"'),
+                            ]
+                        )
                     )
-                )
+                elif potformat == "VASP":
+                    species_str["species"].append(
+                        odict(
+                            [
+                                ("name", '"' + elem + '"'),
+                                ("potType", '"VASP"'),
+                                ("element", '"' + elem + '"'),
+                                ("potential", '"' + elem + "_POTCAR" + '"'),
+                            ]
+                        )
+                    )
+                else:
+                    raise ValueError()
                 if not check_overlap:
                     species_str["species"][-1]["checkOverlap"] = "false"
         if cwd is not None:
@@ -1451,6 +1545,7 @@ class Input(GenericParameters):
             "EmptyStates = auto\n"
             "Sigma = 0.2\n"
             "Xcorr = PBE\n"
+            "VaspPot = False\n"
             "Estep = 400\n"
             "Ediff = 1.0e-4\n"
             "WriteWaves = True\n"
@@ -1649,15 +1744,21 @@ class Output(object):
             if not np.any(["Program exited normally." in line for line in log_file]):
                 self._job.status.aborted = True
                 warnings.warn("SPHInX parsing failed; most likely SPHInX crashed.")
-            main_start = np.where(["Enter Main Loop" in line for line in log_file])[0][
-                0
-            ]
+            main_start = np.where([
+                "Enter Main Loop" in line
+                for line in log_file]
+            )[0][0]
             log_main = log_file[main_start:]
 
+            self._parse_dict["n_valence"] = {log_file[ii-1].split()[1]:int(ll.split('=')[-1])
+                                             for ii, ll in enumerate(log_file)
+                                             if ll.startswith('| Z')}
+
             def get_partial_log(file_content, start_line, end_line):
-                start_line = np.where([line == start_line for line in file_content])[0][
-                    0
-                ]
+                start_line = np.where([
+                    line == start_line
+                    for line in file_content]
+                )[0][0]
                 end_line = np.where(
                     [line == end_line for line in file_content[start_line:]]
                 )[0][0]
@@ -1925,6 +2026,7 @@ class Output(object):
                         "bands_k_weights",
                         "bands_eigen_values",
                         "atom_scf_spins",
+                        "n_valence",
                     ]:
                         if len(self._parse_dict[k]) > 0:
                             hdf5_dft[k] = self._parse_dict[k]
@@ -1967,3 +2069,43 @@ class Output(object):
         """
         Load output from an HDF5 file
         """
+
+
+class SphinxOutput(GenericOutput):
+    def __init__(self, job):
+        super(SphinxOutput, self).__init__(job)
+
+    def check_band_occupancy(self, plot=True):
+        """
+            Check whether there are still empty bands available.
+
+            args:
+                plot (bool): plots occupancy of the last step
+
+            returns:
+                True if there are still empty bands
+        """
+        import matplotlib.pylab as plt
+        elec_dict = self._job['output/generic/dft']['n_valence']
+        if elec_dict is None:
+            raise AssertionError('Number of electrons not parsed')
+        n_elec = np.sum([elec_dict[k]
+                         for k in self._job.structure.get_chemical_symbols()])
+        n_elec = int(np.ceil(n_elec/2))
+        bands = self._job['output/generic/dft/bands_occ'][-1]
+        bands = bands.reshape(-1, bands.shape[-1])
+        max_occ = np.sum(bands>0, axis=-1).max()
+        n_bands = bands.shape[-1]
+        if plot:
+            xticks = np.arange(1, n_bands+1)
+            plt.xlabel('Electron number')
+            plt.ylabel('Occupancy')
+            plt.axvline(n_elec, label='#electrons: {}'.format(n_elec))
+            plt.axvline(max_occ, color='red', label='Max occupancy: {}'.format(max_occ))
+            plt.axvline(n_bands, color='green', label='Number of bands: {}'.format(n_bands))
+            plt.plot(xticks, bands.T, 'x', color='black')
+            plt.legend()
+        if max_occ < n_bands:
+            return True
+        else:
+            return False
