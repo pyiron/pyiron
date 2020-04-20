@@ -23,6 +23,39 @@ __date__ = "March 1, 2020"
 
 
 class VaspMetadyn(Vasp):
+    """
+    Class to setup and run and analyze VASP and VASP metadynamics simulations. For more details see the appropriate `VASP
+    documentation`_
+
+    This class is a derivative of pyiron.objects.job.generic.GenericJob. The functions in these modules are written in
+    such the function names and attributes are very generic (get_structure(), molecular_dynamics(), version) but the
+    functions are written to handle VASP specific input/output.
+
+    Args:
+        project (pyiron.project.Project instance):  Specifies the project path among other attributes
+        job_name (str): Name of the job
+
+    Examples:
+        Let's say you need to run a vasp simulation where you would like to control the input parameters manually. To
+        set up a static dft run with Gaussian smearing and a k-point MP mesh of [6, 6, 6]. You would have to set it up
+        as shown below:
+
+        >>> ham = Vasp(job_name="trial_job")
+        >>> ham.input.incar[IBRION] = -1
+        >>> ham.input.incar[ISMEAR] = 0
+        >>> ham.input.kpoints.set(size_of_mesh=[6, 6, 6])
+
+        However, the according to pyiron's philosophy, it is recommended to avoid using code specific tags like IBRION,
+        ISMEAR etc. Therefore the recommended way to set this calculation is as follows:
+
+        >>> ham = Vasp(job_name="trial_job")
+        >>> ham.calc_static()
+        >>> ham.set_occupancy_smearing(smearing="gaussian")
+        >>> ham.set_kpoints(mesh=[6, 6, 6])
+        The exact same tags as in the first examples are set automatically.
+
+    .. _VASP documentation: https://cms.mpi.univie.ac.at/vasp/vasp/Advanced_MD_techniques.html
+    """
 
     def __init__(self, project, job_name):
         super(VaspMetadyn, self).__init__(project, job_name)
@@ -33,9 +66,21 @@ class VaspMetadyn(Vasp):
         self.supported_complex_constraints = ["linear_combination", "norm", "coordination_number"]
         self._constraint_dict = dict()
         self._complex_constraints = dict()
+        # This is necessary to write the constrained dynamics output to the REPORT file
         self.input.incar["LBLUEOUT"] = True
 
     def set_primitive_constraint(self, name, constraint_type, atom_indices, biased=False, increment=0.0):
+        """
+        Function to set primitive geometric constraints  in VASP.
+
+        Args:
+            name (str): Name of the constraint
+            constraint_type (str): Type of the constraint  (has to be part of `supported_primitive_constraints`
+            atom_indices (int/list/numpy.ndarray): Indices of the atoms for which the constraint should be applied
+            biased (bool): True if potential bias is to be applied (biased MD and metadynamics calculations)
+            increment (float): Increment in the constraint variable at every time step
+
+        """
         if self.structure is None:
             raise ValueError("The structure has to be set before a dynamic constraint is assigned")
         self._constraint_dict[name] = dict()
@@ -77,6 +122,18 @@ class VaspMetadyn(Vasp):
         self.input.iconst.set_value(line, constraint_string)
 
     def set_complex_constraint(self, name, constraint_type, coefficient_dict, biased=False, increment=0.0):
+        """
+        Set complex constraints based on defined primitive constraints.
+
+        Args:
+            name (str): Name of the complex constraint
+            constraint_type (str): Type of the constraint  (has to be part of `supported_complex_constraints`
+            coefficient_dict (dict): Dictionary containing the primitive constraint name as the key and the
+                                     constraint coefficient as the values
+            biased (bool): True if potential bias is to be applied (biased MD and metadynamics calculations)
+            increment (float): Increment in the constraint variable at every time step
+
+        """
         if self.structure is None:
             raise ValueError("The structure has to be set before a dynamic constraint is assigned")
         if constraint_type not in self.supported_complex_constraints:
@@ -102,6 +159,9 @@ class VaspMetadyn(Vasp):
         self.input.iconst.set_value(line, constraint_string)
 
     def write_constraints(self):
+        """
+        Function to write constraint parameters in the INCAR and ICONST files
+        """
         increment_list = list()
         linear_constraint_order = list()
         # Clear the existing ICONST file
