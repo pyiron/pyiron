@@ -1600,7 +1600,6 @@ class Group(dict):
         super(Group, self).__setitem__(key, value)
 
     __getattr__ = dict.get
-    # __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
     def set(self, name, content):
@@ -1619,15 +1618,6 @@ class Group(dict):
 
     def remove(self, name):
         del self[name]
-
-    def remove_group(self, group):
-        self.remove(group)
-
-    def remove_flag(self, flag):
-        self.remove(flag)
-
-    def remove_parameter(self, parameter):
-        self.remove(parameter)
 
     def to_sx_str(self, content="__self__", level=0):
         line = ""
