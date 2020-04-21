@@ -581,7 +581,7 @@ class SphinxBase(GenericDFTJob):
 
     def restart_for_band_structure_calculations(self, job_name=None):
         """
-        Restart a new job created from an existing Vasp calculation
+        Restart a new job created from an existing calculation
         by reading the charge density for band structures.
 
         Args:
@@ -599,17 +599,18 @@ class SphinxBase(GenericDFTJob):
     def restart_from_charge_density(
             self,
             job_name=None,
-            job_type=None,
+            job_type="Sphinx",
             band_structure_calc=False
     ):
         """
-        Restart a new job created from an existing Vasp calculation
+        Restart a new job created from an existing calculation
         by reading the charge density.
 
         Args:
             job_name (str/None): Job name
-            job_type (str/None): Job type. If not specified a Vasp
-                                 job type is assumed
+            job_type (str/None): Job type. If not specified a Sphinx
+                                 job type is assumed (actually this is
+                                 all that's currently supported)
             band_structure_calc (bool): has to be True for band
                                         structure calculations.
 
@@ -629,16 +630,17 @@ class SphinxBase(GenericDFTJob):
     def restart_from_wave_functions(
             self,
             job_name=None,
-            job_type=None,
+            job_type="Sphinx",
     ):
         """
-        Restart a new job created from an existing Vasp calculation
+        Restart a new job created from an existing calculation
         by reading the wave functions.
 
         Args:
             job_name (str): Job name
-            job_type (str): Job type. If not specified a Vasp
-                            job type is assumed
+            job_type (str): Job type. If not specified a Sphinx
+                            job type is assumed (actually this is
+                            all that's currently supported.)
 
         Returns:
             pyiron.sphinx.sphinx.sphinx: new job instance
