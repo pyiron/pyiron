@@ -51,11 +51,29 @@ HARTREE_OVER_BOHR_TO_EV_OVER_ANGSTROM = HARTREE_TO_EV / BOHR_TO_ANGSTROM
 
 class SphinxBase(GenericDFTJob):
     """
-    Class to setup and run Sphinx simulations which is a derivative
-    of pyiron_atomistics.job.generic.GenericJob. The functions in
-    these modules are written in such the function names and attributes
-    are very generic (get_structure(), molecular_dynamics(), version) but
-    the functions are written to handle Sphinx specific input and output.
+    Class to setup and run Sphinx simulations.
+    
+    Inherits pyiron_atomistics.job.generic.GenericJob. The functions in
+    these modules are written such that the function names and attributes
+    are very Pyiron-generic (get_structure(), molecular_dynamics(),
+    version) but internally handle Sphinx specific input and output.
+
+    Alternatively, because SPHInX inputs are built on a group-based
+    format, users have the option to set specific groups and parameters
+    directly, e.g.
+
+    ```python
+    # Modify/add a new parameter via
+    job.input.hamilton.nEmptyStates = 15
+    job.input.hamilton.dipoleCorrection = True
+    # or
+    job.input.hamilton.set("nEmptyStates", 15)
+    job.input.hamilton.set("dipoleCorrection", True)
+    # Modify/add a sub-group via
+    job.input.guess.rho.charged = {"charge": 2, "z": 25}
+    # or  
+    job.input.guess.rho.set("charged", {"charge": 2, "z": 25})
+    ```
 
     Args:
         project: Project object (defines path where job will be
@@ -69,14 +87,6 @@ class SphinxBase(GenericDFTJob):
         self.output = SphinxOutput(job=self)
         self.input = Input()
         self.input.load_default()
-
-        # self._main_str = None
-        # self._species_str = None
-        # self._structure_str = None
-        # self._basis_str = None
-        # self._hamilston_str = None
-        # self._guess_str = None
-        # self._spins_str = None
         self._save_memory = False
         self._spin_enabled = False
         self._output_parser = Output(self)
@@ -102,7 +112,16 @@ class SphinxBase(GenericDFTJob):
 
     @property
     def plane_wave_cutoff(self):
-        return self.input["EnCut"]
+        if "eCut" in self.input.basis:
+            if "EnCut" in self.input.basis["eCut"]:
+                return self.input["EnCut"]
+            else:
+                warnings.warn("WARNING: cutoff was modified "
+                + "directly in job.input.basis; the following "
+                + "value is in Ry)")
+                return self.input.basis["eCut"]
+        else:
+            return self.input["EnCut"]
 
     @property
     def fix_spin_constraint(self):
@@ -451,11 +470,13 @@ class SphinxBase(GenericDFTJob):
         retain_electrostatic_potential=False,
     ):
         """
-        Function to setup the hamiltonian to perform static SCF DFT runs.
+        Setup the hamiltonian to perform a static SCF run.
+
         Loads defaults for all Sphinx input groups, including a static
         main Group.
 
         Args:
+            electronic_steps (float): max # of electronic steps
             retain_electrostatic_potential:
             retain_charge_density:
             algorithm (str): CCG or blockCCG (not implemented)
@@ -490,8 +511,9 @@ class SphinxBase(GenericDFTJob):
         volume_only=False,
     ):
         """
-        Function to setup the hamiltonian to perform ionic relaxations
-        using DFT. The convergence goal can be set using either the
+        Setup the hamiltonian to perform ionic relaxations.
+        
+        The convergence goal can be set using either the
         ionic_energy as a limit for fluctuations in energy or the
         ionic_forces.
 
@@ -835,6 +857,7 @@ class SphinxBase(GenericDFTJob):
     ):
         """
         Sets the electronic and ionic convergence precision.
+
         For ionic convergence either the energy or the force
         precision is required.
 
@@ -1027,8 +1050,9 @@ class SphinxBase(GenericDFTJob):
 
     def load_default_groups(self):
         """
-        Populates input groups with the default values. Nearly
-        every default simply points to a variable stored in
+        Populates input groups with the default values.
+        
+        Nearly every default simply points to a variable stored in
         self.input, which will later be written to userparameters.sx.
         """
 
@@ -1118,14 +1142,26 @@ class SphinxBase(GenericDFTJob):
             f.write("main { include <main.sx>; }\n")
 
     def write_group(self, group, file_name):
+        """
+        Write a Sphinx input group to its respective file.
+
+        e.g. job.write_group(job.input.basis, "basis.sx")
+
+        Args:
+            group (Group): input group content to write
+            file_name (str): Name of file to which the group will be written
+                (in the job's working directory)
+        """
+
         file_name = posixpath.join(self.working_directory, file_name)
         with open(file_name, "w") as f:
             f.write(group.to_sx_str())
 
     def write_input(self):
         """
-        The write_input function is called when the job is executed to
-        generate all the required input files for the Sphinx job.
+        Generate all the required input files for the Sphinx job.
+
+        Automatically called by job.run()
         """
 
         # self.input --> userparameters.sx (general variables)
@@ -1523,6 +1559,24 @@ class InputWriter(object):
 
 
 class Group(dict):
+
+    """
+    Dictionary-like object to store SPHInX inputs.
+
+    Attributes (sub-groups, parameters, & flags) can be set
+    and accessed via dot notation, or as standard dictionary
+    key/values.
+
+    `to_sx_str` converts the Group to the c++-like format
+    expected by SPHInX, for writing files.
+
+    E.g.
+    ```python
+    Group.set("vdwCorrection", {"method": "D2"})
+    Group.set("nEmptyStates", 15)
+    ```
+    """
+
     def __init__(self, *args, **kw):
         super(Group, self).__init__(*args, **kw)
 
