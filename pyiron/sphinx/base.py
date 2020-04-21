@@ -71,7 +71,7 @@ class SphinxBase(GenericDFTJob):
     job.input.hamilton.set("dipoleCorrection", True)
     # Modify/add a sub-group via
     job.input.guess.rho.charged = {"charge": 2, "z": 25}
-    # or  
+    # or
     job.input.guess.rho.set("charged", {"charge": 2, "z": 25})
     ```
 
@@ -91,6 +91,9 @@ class SphinxBase(GenericDFTJob):
         self._spin_enabled = False
         self._output_parser = Output(self)
         self.input_writer = InputWriter()
+        self.original_positions = None
+        self.original_species = None
+        self.original_cell = None
         if self.check_vasp_potentials():
             self.input["VaspPot"] = True  # use VASP potentials if available
         self._kpoints_odict = None
@@ -281,7 +284,7 @@ class SphinxBase(GenericDFTJob):
                 element = elm_species.Abbreviation
             self.input.structure.setdefault("species", [])
             self.input.structure["species"].append(
-                odict([("element", '"' + str(element) + '"')])
+                Group({"element": '"' + str(element) + '"'})
             )
             elm_list = np.array(
                 self.structure.get_chemical_symbols() == \
@@ -294,7 +297,7 @@ class SphinxBase(GenericDFTJob):
                 np.array(selective_dynamics_list)[elm_list],
             ):
                 self.input.structure["species"][-1].setdefault("atom", [])
-                self.input.structure["species"][-1]["atom"].append(odict())
+                self.input.structure["species"][-1]["atom"].append(Group())
                 if self._spin_enabled:
                     self.input.structure["species"][-1]["atom"][-1]["label"] \
                         = '"spin_' + str(elm_magmon) + '"'
@@ -1058,7 +1061,7 @@ class SphinxBase(GenericDFTJob):
     def load_default_groups(self):
         """
         Populates input groups with the default values.
-        
+
         Nearly every default simply points to a variable stored in
         self.input, which will later be written to userparameters.sx.
         """
@@ -1069,6 +1072,11 @@ class SphinxBase(GenericDFTJob):
                 + f"{self.job_name}.structure = ...)")
 
         self._coarse_run = self.input["CoarseRun"]
+
+        # For checking if the structure is changed later
+        self.original_positions = self.structure.positions.copy()
+        self.original_species = [s.symbol for s in self.structure.species]
+        self.original_cell = self.structure.cell.copy()
 
         if np.any(
             self.structure.get_initial_magnetic_moments().flatten() != None):
@@ -1177,8 +1185,32 @@ class SphinxBase(GenericDFTJob):
             cwd=self.working_directory
         )
 
+        # self.input.structure --> structure.sx
+        if not np.all(
+                self.structure.positions == self.original_positions
+            )\
+            or not np.all(
+                [s.symbol for s in self.structure.species]
+                == self.original_species
+            )\
+            or not np.all(
+                self.structure.cell == self.original_cell
+            ):
+            # If the structure was modified via job.structure
+            # since load_default_groups() was last called,
+            # refresh those changes into job.input.structure
+            self.set_structure_group()
+        self.write_group(self.input.structure, file_name="structure.sx")
+
         # self.input.species --> pawPot.sx
         # and copy potential files to working directory
+        if not np.all(
+            [s.symbol for s in self.structure.species]
+            == self.original_species):
+            # If the species were modified via job.structure
+            # since load_default_groups() was last called,
+            # refresh those changes into job.input.species
+            self.set_species_group()
         self.write_group(self.input.species, file_name="pawPot.sx")
         if self.input["VaspPot"]:
             potformat = "VASP"
@@ -1189,9 +1221,6 @@ class SphinxBase(GenericDFTJob):
             xc=self.input["Xcorr"],
             cwd=self.working_directory
             )
-
-        # self.input.structure --> structure.sx
-        self.write_group(self.input.structure, file_name="structure.sx")
 
         # self.input.basis --> basis.sx
         self.write_group(self.input.basis, file_name="basis.sx")
