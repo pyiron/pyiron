@@ -98,6 +98,17 @@ class SphinxBase(GenericDFTJob):
         self._generic_input["path_name"] = None
         self._generic_input["n_path"] = None
 
+    def get_version_float(self):
+        version_str = self.executable.version.split("_")[0]
+        version_float = float(
+            version_str.split(".")[0]
+        )
+        if len(version_str.split(".")) > 1:
+            version_float += float(
+                "0." + "".join(version_str.split(".")[1:])
+                )
+        return version_float
+
     @property
     def id_pyi_to_spx(self):
         if self.input_writer.id_pyi_to_spx is None:
@@ -402,7 +413,7 @@ class SphinxBase(GenericDFTJob):
                     int(vv)
                     for vv in self.executable.version.split("_")[0].split(".")
                 ]
-                if vers_num[0] > 2 or (vers_num[0] == 2 and vers_num[1] > 5):
+                if self.get_version_float() > 2.5:
                     self.input.main["evalForces"] = odict(
                         [("file", '"relaxHist.sx"')]
                         )
@@ -693,8 +704,8 @@ class SphinxBase(GenericDFTJob):
                 self.working_directory, "waves.sxb")
         elif from_wave_functions:
             self._logger.warning(
-                msg=f"A WAVECAR from job: {self.job_name} "
-                + "is not generated and therefore it can't be read."
+                msg="No wavefunction file (waves.sxb) was found for "
+                f"job {self.job_name} in {self.working_directory}."
             )
         return new_job
 
@@ -760,21 +771,13 @@ class SphinxBase(GenericDFTJob):
         """
         if not isinstance(check_overlap, bool):
             raise ValueError("check_overlap has to be a boolean")
-        if self.executable.version != "2.5.1" and not check_overlap:
-            vers_num = [
-                int(vv)
-                for vv in self.executable.version.split("_")[0].split(".")
-            ]
-            if (
-                vers_num[0] < 2
-                or vers_num[1] < 5
-                or (vers_num[0] <= 2 and sum(vers_num[1:]) <= 5)
-            ):
-                warnings.warn(
-                    "SPHInX executable version has to be 2.5.1 or above "
-                    + "in order for the overlap to be considered. "
-                    + "Change it via job.executable.version"
-                )
+
+        if self.get_version_float() < 2.51 and not check_overlap:
+            warnings.warn(
+                "SPHInX executable version has to be 2.5.1 or above "
+                + "in order for the overlap to be considered. "
+                + "Change it via job.executable.version"
+            )
         self.input["CheckOverlap"] = check_overlap
 
     def set_mixing_parameters(
