@@ -705,7 +705,7 @@ class SphinxBase(GenericDFTJob):
         elif from_wave_functions:
             self._logger.warning(
                 msg="No wavefunction file (waves.sxb) was found for "
-                f"job {self.job_name} in {self.working_directory}."
+                + f"job {self.job_name} in {self.working_directory}."
             )
         return new_job
 
@@ -850,7 +850,7 @@ class SphinxBase(GenericDFTJob):
         """
         if smearing is not None and not isinstance(smearing, str):
             raise ValueError(
-                "Smearing must be a string (only fermi is supported in SPHInX)"
+                "Smearing must be a string"
             )
         if width is not None and width < 0:
             raise ValueError("Smearing value must be a float >= 0")
@@ -956,10 +956,12 @@ class SphinxBase(GenericDFTJob):
         if not isinstance(symmetry_reduction, bool):
             raise ValueError("symmetry_reduction has to be a boolean")
         if manual_kpoints is not None:
-            raise ValueError("manual_kpoints is not implemented in SPHInX yet")
+            raise ValueError("manual_kpoints is not yet implemented in "
+                + "Pyiron for SPHInX")
         if weights is not None:
             raise ValueError(
-                "manual weights are not implmented in SPHInX yet"
+                "manual weights are not yet implmented in Pyiron for "
+                + "SPHInX"
                 )
 
         if scheme == "MP":
@@ -1050,7 +1052,7 @@ class SphinxBase(GenericDFTJob):
             self.input.basis["kPoints"] = Group(kpoints)
         else:
             raise ValueError("only Monkhorst-Pack mesh and Line mode\
-                are implemented in SPHInX")
+                are currently implemented in Pyiron for SPHInX")
 
 
     def load_default_groups(self):
@@ -1434,17 +1436,19 @@ class InputWriter(object):
         self._id_pyi_to_spx = []
         self._id_spx_to_pyi = []
         self.file_dict = {}
+        self.pot_path_dict = {}
 
     def copy_potentials(self, potformat="JTH", xc=None, cwd=None):
 
         if potformat == 'JTH':
             potentials = SphinxJTHPotentialFile(xc=xc)
             find_potential_file = find_potential_file_jth
-            pot_path_dict = {"PBE": "jth-gga-pbe"}
+            self.pot_path_dict.setdefault("PBE", "jth-gga-pbe")
         elif potformat == 'VASP':
             potentials = VaspPotentialFile(xc=xc)
             find_potential_file = find_potential_file_vasp
-            pot_path_dict = {"PBE": "paw-gga-pbe", "LDA": "paw-lda"}
+            self.pot_path_dict.setdefault("PBE", "paw-gga-pbe")
+            self.pot_path_dict.setdefault("LDA", "paw-lda")
         else:
             raise ValueError('Only JTH and VASP potentials are supported!')
 
@@ -1462,7 +1466,7 @@ class InputWriter(object):
                 potential_path = find_potential_file(
                     path=potentials.find_default(new_element)[
                         "Filename"].values[0][0],
-                    pot_path_dict=pot_path_dict,
+                    pot_path_dict=self.pot_path_dict,
                 )
                 assert os.path.isfile(
                     potential_path
@@ -1471,7 +1475,7 @@ class InputWriter(object):
                 potential_path = find_potential_file(
                     path=potentials.find_default(elem)[
                         "Filename"].values[0][0],
-                    pot_path_dict=pot_path_dict,
+                    pot_path_dict=self.pot_path_dict,
                 )
             if potformat == "JTH":
                 copyfile(potential_path, posixpath.join(
