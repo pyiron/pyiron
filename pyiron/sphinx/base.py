@@ -52,7 +52,7 @@ HARTREE_OVER_BOHR_TO_EV_OVER_ANGSTROM = HARTREE_TO_EV / BOHR_TO_ANGSTROM
 class SphinxBase(GenericDFTJob):
     """
     Class to setup and run Sphinx simulations.
-    
+
     Inherits pyiron_atomistics.job.generic.GenericJob. The functions in
     these modules are written such that the function names and attributes
     are very Pyiron-generic (get_structure(), molecular_dynamics(),
