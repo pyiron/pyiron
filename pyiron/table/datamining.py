@@ -194,7 +194,7 @@ class PyironTable(object):
     Class for easy, efficient, and pythonic analysis of data from pyiron projects
 
     Args:
-        project (pyiron.project.Project): The project to analyze
+        project (pyiron.project.Project/None): The project to analyze
         name (str): Name of the pyiron table
     """
     def __init__(self, project, name=None):
