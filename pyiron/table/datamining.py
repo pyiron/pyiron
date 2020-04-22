@@ -69,6 +69,10 @@ __date__ = "Sep 1, 2018"
 
 
 class FunctionContainer(object):
+    """
+    Class which is able to append, store and retreive a set of functions.
+
+    """
     def __init__(self):
         self._user_function_dict = {}
         self._system_function_lst = [
@@ -168,27 +172,38 @@ class FunctionContainer(object):
 
 
 class JobFilters(object):
+    """
+    Certain predefined job filters
+
+    """
     @staticmethod
     def job_type(job_type):
         def filter_job_type(job):
             return job.__name__ == job_type
-
         return filter_job_type
 
     @staticmethod
     def job_name_contains(job_name_segment):
         def filter_job_name_segment(job):
             return job_name_segment in job.job_name
-
         return filter_job_name_segment
 
 
 class PyironTable(object):
+    """
+    Class for easy, efficient, and pythonic analysis of data from pyiron projects
+
+    Args:
+        project (pyiron.project.Project): The project to analyze
+        name (str): Name of the pyiron table
+    """
     def __init__(self, project, name=None):
         self._project = project
         self._df = pandas.DataFrame({})
         self.convert_to_object = False
         self._name = name
+        self._database_filter_function = None
+        self._database_filter_function_str = None
         self._filter_function = None
         self._filter_function_str = None
         self._filter = JobFilters()
