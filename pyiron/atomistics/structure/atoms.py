@@ -3107,7 +3107,8 @@ class Atoms(object):
 
     # ASE compatibility
     def write(self, filename, format=None, **kwargs):
-        """Write atoms object to a file.
+        """
+        Write atoms object to a recognized file format using ase parsers.
 
         see ase.io.write for formats.
         kwargs are passed to ase.io.write.
