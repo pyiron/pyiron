@@ -526,7 +526,7 @@ class SphinxBase(GenericDFTJob):
     ):
         """
         Setup the hamiltonian to perform ionic relaxations.
-        
+
         The convergence goal can be set using either the
         ionic_energy as a limit for fluctuations in energy or the
         ionic_forces.
@@ -1630,6 +1630,12 @@ class Group(dict):
 
     __getattr__ = dict.get
     __delattr__ = dict.__delitem__
+
+    def __str__(self):
+        return self.to_sx_str()
+
+    def __repr__(self):
+        return self.to_sx_str()
 
     def set(self, name, content):
         self[name] = content
