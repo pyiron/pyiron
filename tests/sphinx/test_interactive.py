@@ -47,37 +47,7 @@ class TestSphinx(unittest.TestCase):
         os.remove(
             os.path.join(
                 cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/basis.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/main.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/initialGuess.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/PAWHamiltonian.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
                 "../static/sphinx/job_sphinx_hdf5/job_sphinx/input.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/pawPot.sx",
             )
         )
         os.remove(
