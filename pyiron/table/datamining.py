@@ -216,6 +216,13 @@ class PyironTable(object):
 
     @property
     def filter(self):
+        """
+        Object containing pre-defined filter functions
+
+        Returns:
+            pyiron.table.datamining.JobFilters: The object containing the filters
+
+        """
         return self._filter
 
     @property
@@ -231,12 +238,22 @@ class PyironTable(object):
 
     @property
     def name(self):
+        """
+        Name of the table. Takes the project name if not specified
+
+        Returns:
+            str: Name of the table
+
+        """
         if self._name is None:
             return self._project.name
         return self._name
 
     @property
     def filter_function(self):
+        """
+        Function to filter each job before more expensive functions are applied
+        """
         if self._filter_function is None:
 
             def always_true(job):
