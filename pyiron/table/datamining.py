@@ -328,7 +328,7 @@ class PyironTable(object):
             job_stored_ids = self._get_job_ids()
             job_update_lst = [
                 self._project.inspect(job_id)
-                for job_id in self._get_job_ids_from_project()
+                for job_id in self._get_filtered_job_ids_from_project()
                 if job_id not in job_stored_ids
             ]
             job_update_lst = [
@@ -356,7 +356,7 @@ class PyironTable(object):
         else:
             job_update_lst = [
                 self._project.inspect(job_id) 
-                for job_id in self._get_job_ids_from_project()
+                for job_id in self._get_filtered_job_ids_from_project()
             ]
             job_update_lst = [
                 job
@@ -529,12 +529,9 @@ class PyironTable(object):
         else:
             return np.array([])
 
-    def _get_job_ids_from_project(self):
-        return self._project.get_job_ids()
-
-    def _get_filtered_job_ids(self, recursive=True):
+    def _get_filtered_job_ids_from_project(self, recursive=True):
         project_table = self._project.job_table(recursive=recursive)
-
+        return project_table[self.db_filter_function(project_table)]["id"].tolist()
 
     def _apply_list_of_functions_on_job(self, job, fucntion_lst):
         diff_dict = {}
