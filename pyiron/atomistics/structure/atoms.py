@@ -3106,6 +3106,15 @@ class Atoms(object):
         return el_list
 
     # ASE compatibility
+    def write(self, filename, format=None, **kwargs):
+        """
+        Write atoms object to a recognized file format using ase parsers.
+
+        see ase.io.write for formats.
+        kwargs are passed to ase.io.write.
+        """
+        pyiron_to_ase(self).write(filename=filename, format=format, **kwargs)
+    
     @staticmethod
     def get_calculator():
         return None
