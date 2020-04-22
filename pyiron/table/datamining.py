@@ -593,6 +593,14 @@ class TableJob(GenericJob):
         self._project_level = level
 
     @property
+    def db_filter_function(self):
+        return self._pyiron_table.db_filter_function
+
+    @db_filter_function.setter
+    def db_filter_function(self, funct):
+        self._pyiron_table.db_filter_function = funct
+
+    @property
     def filter_function(self):
         return self._pyiron_table.filter_function
 
@@ -681,6 +689,14 @@ class TableJob(GenericJob):
                 except (OSError, IOError):
                     if self.pyiron_table._filter_function_str is not None:
                         hdf5_input["filter"] = self.pyiron_table._filter_function_str
+            if self.pyiron_table._db_filter_function is not None:
+                try:
+                    hdf5_input["db_filter"] = inspect.getsource(
+                        self.pyiron_table._db_filter_function
+                    )
+                except (OSError, IOError):
+                    if self.pyiron_table._db_filter_function_str is not None:
+                        hdf5_input["db_filter"] = self.pyiron_table._db_filter_function_str
         if len(self.pyiron_table._df) != 0:
             with self.project_hdf5.open("output") as hdf5_output:
                 hdf5_output["table"] = json.dumps(self.pyiron_table._df.to_dict())
@@ -706,9 +722,14 @@ class TableJob(GenericJob):
                 project._inspect_mode = project_dict["inspect_mode"]
                 self.analysis_project = project
             if "filter" in hdf5_input.list_nodes():
-                self._filter_function_str = hdf5_input["filter"]
+                self.pyiron_table._filter_function_str = hdf5_input["filter"]
                 self.pyiron_table.filter_function = get_function_from_string(
                     hdf5_input["filter"]
+                )
+            if "db_filter" in hdf5_input.list_nodes():
+                self.pyiron_table._db_filter_function_str = hdf5_input["db_filter"]
+                self.pyiron_table.db_filter_function = get_function_from_string(
+                    hdf5_input["db_filter"]
                 )
             bool_dict = hdf5_input["bool_dict"]
             self._enforce_update = bool_dict["enforce_update"]
