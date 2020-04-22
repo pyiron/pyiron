@@ -202,8 +202,8 @@ class PyironTable(object):
         self._df = pandas.DataFrame({})
         self.convert_to_object = False
         self._name = name
-        self._database_filter_function = None
-        self._database_filter_function_str = None
+        self._db_filter_function = None
+        self._db_filter_function_str = None
         self._filter_function = None
         self._filter_function_str = None
         self._filter = JobFilters()
@@ -248,6 +248,33 @@ class PyironTable(object):
         if self._name is None:
             return self._project.name
         return self._name
+
+    @property
+    def db_filter_function(self):
+        """
+        Function to filter the a project database table before job specific functions are applied.
+
+        The function must take a pyiron project table in the pandas.DataFrame format (project.job_table()) and return a
+        boolean pandas.DataSeries with the same number of rows as the project table
+
+        Example:
+
+            def function(df):
+                return (df["chemicalformula"=="H2"]) & (df["hamilton"=="Vasp"])
+
+        """
+        if self._db_filter_function is None:
+            return lambda job: True
+        else:
+            return self._db_filter_function
+
+    @db_filter_function.setter
+    def db_filter_function(self, funct):
+        self._db_filter_function = funct
+        try:
+            self._db_filter_function_str = inspect.getsource(funct)
+        except (OSError, IOError):
+            pass
 
     @property
     def filter_function(self):
@@ -504,6 +531,10 @@ class PyironTable(object):
 
     def _get_job_ids_from_project(self):
         return self._project.get_job_ids()
+
+    def _get_filtered_job_ids(self, recursive=True):
+        project_table = self._project.job_table(recursive=recursive)
+
 
     def _apply_list_of_functions_on_job(self, job, fucntion_lst):
         diff_dict = {}
