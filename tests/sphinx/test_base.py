@@ -65,7 +65,7 @@ class TestSphinx(unittest.TestCase):
         cls.sphinx.structure.add_tag(selective_dynamics=(True, True, True))
         cls.sphinx.structure.selective_dynamics[1] = (False, False, False)
         cls.sphinx.load_default_groups()
-        cls.sphinx.input.structure.symmetry = {}
+        cls.sphinx.fix_symmetry = False
         cls.sphinx.write_input()
         cls.sphinx.version = "2.6"
         cls.sphinx_2_3.to_hdf()
@@ -485,7 +485,11 @@ class TestSphinx(unittest.TestCase):
             "\t\tcoords = " + str(pos_2) + ";\n",
             "\t}\n",
             "}\n",
-            "symmetry {}\n",
+            "symmetry {\n",
+            "\toperator {\n",
+            "\t\tS = [[1,0,0],[0,1,0],[0,0,1]];\n",
+            "\t}\n",
+            "}\n"
         ]
         file_name = os.path.join(
             self.file_location,

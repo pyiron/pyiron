@@ -247,7 +247,7 @@ class SphinxBase(GenericDFTJob):
         return scf_group
 
 
-    def set_structure_group(self, keep_angstrom=False):
+    def load_structure_group(self, keep_angstrom=False):
         """
         create a Sphinx Group object based on self.structure
 
@@ -327,7 +327,7 @@ class SphinxBase(GenericDFTJob):
             })
 
 
-    def set_species_group(self, check_overlap=True, potformat='JTH'):
+    def load_species_group(self, check_overlap=True, potformat='JTH'):
         """
         Build the species Group object based on self.structure
 
@@ -373,7 +373,7 @@ class SphinxBase(GenericDFTJob):
             self.input.species["species"][-1]["checkOverlap"] = "false"
 
 
-    def set_main_group(self):
+    def load_main_group(self):
         """
         Build the main Group object based the general
         settings in self.input.
@@ -423,7 +423,7 @@ class SphinxBase(GenericDFTJob):
             else:
                 warnings.warn("executable version could not be identified")
 
-    def set_guess_group(self):
+    def load_guess_group(self):
         """
         Build the guess Group object based on
         self.restart_file_list. Allows restarts from
@@ -1064,6 +1064,13 @@ class SphinxBase(GenericDFTJob):
 
         Nearly every default simply points to a variable stored in
         self.input, which will later be written to userparameters.sx.
+
+        Does not load job.input.structure or job.input.species.
+        These groups should usually be modified via job.structure,
+        in which case they will be set at the last minute when
+        the job is run. These groups can be synced to job.structure
+        at any time using job.load_structure_group() and
+        job.load_species_group().
         """
 
         if self.structure is None:
@@ -1072,11 +1079,6 @@ class SphinxBase(GenericDFTJob):
                 + f"{self.job_name}.structure = ...)")
 
         self._coarse_run = self.input["CoarseRun"]
-
-        # For checking if the structure is changed later
-        self.original_positions = self.structure.positions.copy()
-        self.original_species = [s.symbol for s in self.structure.species]
-        self.original_cell = self.structure.cell.copy()
 
         if np.any(
             self.structure.get_initial_magnetic_moments().flatten() != None):
@@ -1088,19 +1090,6 @@ class SphinxBase(GenericDFTJob):
                     1.5 * len(self.structure) + 3)
             else:
                 self.input["EmptyStates"] = int(len(self.structure) + 3)
-        self.input_writer.structure = self.structure
-
-        self.set_structure_group()
-
-        if self.input["VaspPot"]:
-            potformat = "VASP"
-        else:
-            potformat = "JTH"
-
-        self.set_species_group(
-            check_overlap=self.input["CheckOverlap"],
-            potformat=potformat,
-        )
 
         self.input.basis = Group({
             "eCut": "EnCut/13.606",
@@ -1114,7 +1103,7 @@ class SphinxBase(GenericDFTJob):
         if self.input["SaveMemory"] is True:
             self.input.basis.set_flag("saveMemory")
 
-        self.set_guess_group()
+        self.load_guess_group()
 
         self.input.hamilton = Group({
             "nEmptyStates": "EmptyStates",
@@ -1124,7 +1113,7 @@ class SphinxBase(GenericDFTJob):
         if self._spin_enabled:
             self.input.hamilton.set_flag("spinPolarized")
 
-        self.set_main_group()
+        self.load_main_group()
         if self.input["WriteWaves"] is False:
             self.input.main.set_flag("noWavesStorage")
 
@@ -1185,37 +1174,29 @@ class SphinxBase(GenericDFTJob):
             cwd=self.working_directory
         )
 
+        # If the structure group was not modified directly by the
+        # user, via job.input.structure (which is likely True),
+        # load it based on job.structure.
+        if len(self.input.structure) == 0:
+            self.load_structure_group()
+
         # self.input.structure --> structure.sx
-        if not np.all(
-                self.structure.positions == self.original_positions
-            )\
-            or not np.all(
-                [s.symbol for s in self.structure.species]
-                == self.original_species
-            )\
-            or not np.all(
-                self.structure.cell == self.original_cell
-            ):
-            # If the structure was modified via job.structure
-            # since load_default_groups() was last called,
-            # refresh those changes into job.input.structure
-            self.set_structure_group()
         self.write_group(self.input.structure, file_name="structure.sx")
+
+        # If the species group was not modified directly by the user,
+        # via job.input.species (which is likely True),
+        # load it based on job.structure.
+        if len(self.input.species) == 0:
+            self.load_species_group()
 
         # self.input.species --> pawPot.sx
         # and copy potential files to working directory
-        if not np.all(
-            [s.symbol for s in self.structure.species]
-            == self.original_species):
-            # If the species were modified via job.structure
-            # since load_default_groups() was last called,
-            # refresh those changes into job.input.species
-            self.set_species_group()
         self.write_group(self.input.species, file_name="pawPot.sx")
         if self.input["VaspPot"]:
             potformat = "VASP"
         else:
             potformat = "JTH"
+        self.input_writer.structure = self.structure
         self.input_writer.copy_potentials(
             potformat=potformat,
             xc=self.input["Xcorr"],
