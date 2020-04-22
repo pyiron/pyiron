@@ -255,11 +255,7 @@ class PyironTable(object):
         Function to filter each job before more expensive functions are applied
         """
         if self._filter_function is None:
-
-            def always_true(job):
-                return True
-
-            return always_true
+            return lambda job: True
         else:
             return self._filter_function
 
