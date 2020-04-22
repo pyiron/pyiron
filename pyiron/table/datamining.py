@@ -264,7 +264,9 @@ class PyironTable(object):
 
         """
         if self._db_filter_function is None:
-            return lambda job_table: pandas.Series([True] * len(job_table), index=job_table.index)
+            def always_true(job_table):
+                return pandas.Series([True] * len(job_table), index=job_table.index)
+            return always_true
         else:
             return self._db_filter_function
 
