@@ -922,7 +922,7 @@ class SphinxBase(GenericDFTJob):
                     )
             self.input["EmptyStates"] = n_empty_states
 
-    def set_kpoints(
+    def _set_kpoints(
         self,
         mesh=None,
         scheme="MP",
