@@ -525,7 +525,8 @@ class PyironTable(object):
 
     def _get_filtered_job_ids_from_project(self, recursive=True):
         project_table = self._project.job_table(recursive=recursive)
-        return project_table[self.db_filter_function(project_table)]["id"].tolist()
+        filter_funct = self.db_filter_function
+        return project_table[filter_funct(project_table)]["id"].tolist()
 
     def _apply_list_of_functions_on_job(self, job, fucntion_lst):
         diff_dict = {}
