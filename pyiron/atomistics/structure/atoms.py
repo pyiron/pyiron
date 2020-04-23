@@ -1124,9 +1124,11 @@ class Atoms(object):
         positions = self.positions.copy()
         # Only perform the dot product over non zero side (regardless of PBC)
         if any(non_zero_sides):
-            positions[:, non_zero_sides] = np.einsum("jk,ij->ik",
-                                                     np.linalg.inv(self.cell[non_zero_sides][:, non_zero_sides]),
-                                                     self.positions[:, non_zero_sides])
+            positions[:, non_zero_sides] = np.einsum(
+                "jk,ij->ik",
+                np.linalg.inv(self.cell[non_zero_sides][:, non_zero_sides]),
+                self.positions[:, non_zero_sides]
+            )
             # perform the wrapping along the periodic directions only
             if wrap:
                 positions[:, pbc] = np.mod(positions[:, pbc], 1.0)
