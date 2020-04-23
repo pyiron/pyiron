@@ -5,7 +5,7 @@
 import unittest
 import os
 from pyiron.project import Project
-from pyiron.table.funct import _get_majority
+from pyiron.table.funct import get_majority
 
 
 class TestDatamining(unittest.TestCase):
@@ -23,9 +23,9 @@ class TestDatamining(unittest.TestCase):
 
     def test_get_majority(self):
         lst = [1, 1, 2]
-        majority = _get_majority(lst=lst, minority=False)
+        majority = get_majority(lst=lst, minority=False)
         self.assertTrue(majority == 1)
-        majority, minority = _get_majority(lst=lst, minority=True)
+        majority, minority = get_majority(lst=lst, minority=True)
         self.assertTrue(majority == 1)
         self.assertTrue(minority == [2])
 

@@ -17,7 +17,7 @@ def _get_value_from_incar(job, key):
     )
 
 
-def _get_majority(lst, minority=False):
+def get_majority(lst, minority=False):
     elements_dict = {name: lst.count(name) for name in set(lst)}
     max_value = np.max(list(elements_dict.values()))
     majority_element = [
@@ -120,7 +120,7 @@ def get_number_of_final_electronic_steps(job):
 def get_majority_species(job):
     indices_lst = job["input/structure/indices"].tolist()
     element_lst = job["input/structure/species"]
-    majority_element, minority_lst = _get_majority(
+    majority_element, minority_lst = get_majority(
         [element_lst[ind] for ind in indices_lst], minority=True
     )
     return {"majority_element": majority_element, "minority_element_list": minority_lst}
@@ -133,7 +133,7 @@ def get_majority_crystal_structure(job):
         ind for ind, el in enumerate(basis) if el.symbol == majority_element
     ]
     type_list = list(basis[majority_index].analyse_ovito_cna_adaptive(mode="str"))
-    return {"crystal_structure": _get_majority(type_list, minority=False)}
+    return {"crystal_structure": get_majority(type_list, minority=False)}
 
 
 def get_job_name(job):
