@@ -264,9 +264,7 @@ class PyironTable(object):
 
         """
         if self._db_filter_function is None:
-            def always_true(job_table):
-                return pandas.Series([True] * len(job_table), index=job_table.index)
-            return always_true
+            return always_true_pandas
         else:
             return self._db_filter_function
 
@@ -797,3 +795,16 @@ class TableJob(GenericJob):
             pandas.Dataframe
         """
         return self.pyiron_table._df
+
+
+def always_true_pandas(job_table):
+    """
+    A function which returns a pandas Series with all True values based on the size of the input pandas dataframe
+    Args:
+        job_table (pandas.DataFrame): Input dataframe
+
+    Returns:
+        pandas.Series: A series of True values
+
+    """
+    return pandas.Series([True] * len(job_table), index=job_table.index)
