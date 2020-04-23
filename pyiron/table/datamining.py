@@ -202,10 +202,10 @@ class PyironTable(object):
         self._df = pandas.DataFrame({})
         self.convert_to_object = False
         self._name = name
-        self._db_filter_function = None
-        self._db_filter_function_str = None
-        self._filter_function = None
-        self._filter_function_str = None
+        self._db_filter_function = always_true_pandas
+        self._db_filter_function_str = inspect.getsource(always_true_pandas)
+        self._filter_function = always_true
+        self._filter_function_str = inspect.getsource(always_true)
         self._filter = JobFilters()
         self.add = FunctionContainer()
         self._csv_file = None
@@ -263,10 +263,7 @@ class PyironTable(object):
                 return (df["chemicalformula"=="H2"]) & (df["hamilton"=="Vasp"])
 
         """
-        if self._db_filter_function is None:
-            return always_true_pandas
-        else:
-            return self._db_filter_function
+        return self._db_filter_function
 
     @db_filter_function.setter
     def db_filter_function(self, funct):
@@ -281,10 +278,7 @@ class PyironTable(object):
         """
         Function to filter each job before more expensive functions are applied
         """
-        if self._filter_function is None:
-            return lambda job: True
-        else:
-            return self._filter_function
+        return self._filter_function
 
     @filter_function.setter
     def filter_function(self, funct):
@@ -808,3 +802,14 @@ def always_true_pandas(job_table):
 
     """
     return pandas.Series([True] * len(job_table), index=job_table.index)
+
+
+def always_true(_):
+    """
+    A function that always returns True no matter what!
+
+    Returns:
+        bool: True
+
+    """
+    return True
