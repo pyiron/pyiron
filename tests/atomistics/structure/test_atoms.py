@@ -1341,6 +1341,27 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(all(surface.pbc))
         self.assertIsInstance(surface, Atoms)
 
+    def test_non_periodic(self):
+        structure = CrystalStructure("Fe", bravais_basis="bcc", lattice_constant=4.2)
+        pos = structure.repeat([1, 1, 2]).positions.copy()
+        structure = CrystalStructure("Fe", bravais_basis="bcc", lattice_constant=4.2)
+        structure.pbc = [False, False, True]
+        pos_new = structure.repeat([1, 1, 2]).positions.copy()
+        self.assertTrue(np.allclose(pos, pos_new))
+        c3 = Atoms("C3", positions=[[0, 0, 0], [0, 0, 2], [0, 2, 0]])
+        c3.get_scaled_positions()
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            c3.get_scaled_positions()
+            self.assertEqual(len(w), 1)
+            self.assertTrue(np.allclose(c3.get_scaled_positions(), c3.positions))
+        c3 = Atoms("C3", positions=[[0, 0, 0], [0, 0, 2], [0, 2, 0]], cell=np.eye(3)*10)
+        c3.get_scaled_positions()
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            c3.get_scaled_positions()
+            self.assertEqual(len(w), 0)
+
 
 def generate_fcc_lattice(a=4.2):
     positions = [[0, 0, 0]]
