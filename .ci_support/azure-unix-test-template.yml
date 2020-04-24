@@ -19,7 +19,7 @@ steps:
 
 - bash: |
     source activate pyiron
-    conda env update --file  environment.yml
+    conda env update --file environment.yml
   displayName: pyiron environment
 
 - bash: |
