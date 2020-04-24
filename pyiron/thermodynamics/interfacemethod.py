@@ -607,7 +607,7 @@ def calc_temp_iteration(basis, temperature_next, project_parameter, timestep, nv
     basis = ham_npt_liquid_low.get_structure()
     basis_no_selective = remove_selective_dynamics(basis)
     basis_relative = basis_no_selective.copy()
-    strain_lst, pressure_lst, temperature_lst, pressure_std_lst, temperature_std_lst, _ = strain_circle(
+    strain_lst, pressure_lst, temperature_lst, _, _, _ = strain_circle(
         basis_relative=basis_relative,
         temperature_next=temperature_next,
         nve_run_time_steps=nve_run_time_steps,
@@ -625,7 +625,7 @@ def calc_temp_iteration(basis, temperature_next, project_parameter, timestep, nv
         project_parameter=project_parameter,
         debug_plot=debug_plot
     )
-    strain_value_lst, ratio_value_lst, pressure_value_lst, temperature_value_lst, sl_flag = ratio_selection(
+    strain_value_lst, _, pressure_value_lst, temperature_value_lst, sl_flag = ratio_selection(
         strain_lst=strain_lst,
         ratio_lst=ratio_lst,
         pressure_lst=pressure_lst,
