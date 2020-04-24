@@ -36,8 +36,7 @@ install:
 - '"%CONDA%\Scripts\activate.bat"'
 - "conda config --set always_yes yes --set changeps1 no"
 - "conda install -q python=%PYTHON_VERSION%"
-- "conda update --file .ci_support/environment.yml"
-- "activate pyiron"
+- "conda env update --file .ci_support/environment.yml"
 - "conda info -a"
 - "pip install --pre ."
 
