@@ -98,12 +98,6 @@ class TestSphinx(unittest.TestCase):
         os.remove(
             os.path.join(
                 cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/userparameters.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
                 "../static/sphinx/job_sphinx_hdf5/job_sphinx/Fe_GGA.atomicdata",
             )
         )
@@ -129,7 +123,6 @@ class TestSphinx(unittest.TestCase):
             '\n',
             'format paw;\n',
             'include <parameters.sx>;\n',
-            'include <userparameters.sx>;\n',
             '\n',
             'pawPot {\n',
             '\tspecies {\n',
@@ -143,19 +136,19 @@ class TestSphinx(unittest.TestCase):
             'structure { include <structure.sx>; }\n',
             '\n',
             'basis {\n',
-            '\teCut = EnCut/13.606;\n',
+            '\teCut = 24.989539079445393;\n',
             '\tkPoint {\n',
-            '\t\tcoords = KpointCoords;\n',
+            '\t\tcoords = [0.5, 0.5, 0.5];\n',
             '\t\tweight = 1;\n',
             '\t\trelative;\n', '\t}\n',
-            '\tfolding = KpointFolding;\n',
+            '\tfolding = [4, 4, 4];\n',
             '\tsaveMemory;\n',
             '}\n',
             '\n',
             'PAWHamiltonian {\n',
-            '\tnEmptyStates = EmptyStates;\n',
-            '\tekt = Sigma;\n',
-            '\txc = Xcorr;\n',
+            '\tnEmptyStates = 6;\n',
+            '\tekt = 0.007349864435130998;\n',
+            '\txc = PBE;\n',
             '\tspinPolarized;\n',
             '}\n',
             '\n',
@@ -185,7 +178,7 @@ class TestSphinx(unittest.TestCase):
             '\tscfDiag {\n',
             '\t\trhoMixing = 1.0;\n',
             '\t\tspinMixing = 1.0;\n',
-            '\t\tdEnergy = Ediff/27.211386245988;\n',
+            '\t\tdEnergy = 3.674932217565499e-06;\n',
             '\t\tmaxSteps = 400;\n',
             '\t\tblockCCG {}\n',
             '\t}\n',
@@ -201,34 +194,6 @@ class TestSphinx(unittest.TestCase):
             lines = input_sx.readlines()
         self.assertEqual(file_content, lines)
 
-    def test_write_userparameters(self):
-
-        file_content = [
-            "EnCut=340;\n",
-            "KpointCoords=[0.5, 0.5, 0.5];\n",
-            "KpointFolding=[4, 4, 4];\n",
-            "EmptyStates=6;\n",
-            "Sigma=0.2;\n",
-            "Xcorr=PBE;\n",
-            "VaspPot=false;\n",
-            "Estep=400;\n",
-            "Ediff=0.0001;\n",
-            "WriteWaves=true;\n",
-            "KJxc=false;\n",
-            "SaveMemory=true;\n",
-            "CoarseRun=false;\n",
-            "rhoMixing=1.0;\n",
-            "spinMixing=1.0;\n",
-            "CheckOverlap=true;\n",
-            "THREADS=1;\n",
-        ]
-        file_name = os.path.join(
-            self.file_location,
-            "../static/sphinx/job_sphinx_hdf5/job_sphinx/userparameters.sx",
-        )
-        with open(file_name) as userparameters_sx:
-            lines = userparameters_sx.readlines()
-        self.assertEqual(file_content, lines)
 
     def test_plane_wave_cutoff(self):
         with self.assertRaises(ValueError):
@@ -265,6 +230,7 @@ class TestSphinx(unittest.TestCase):
             'to___2': odict([
                 ('coords', '[0.5, -0.5, 0.5]'), ('nPoints', 20), ('label', '"H"')
             ]),
+            'locked': False
         }
 
         with self.assertRaises(ValueError):
@@ -308,22 +274,22 @@ class TestSphinx(unittest.TestCase):
         self.sphinx.calc_static(algorithm="wrong_algorithm")
         self.assertFalse(
             "keepRho"
-            in self.sphinx.input.main.to_sx_str()
+            in self.sphinx.input.main.to_sphinx()
         )
         self.assertTrue(
             "blockCCG"
-            in self.sphinx.input.main.to_sx_str()
+            in self.sphinx.input.main.to_sphinx()
         )
         self.sphinx.restart_file_list.append("randomfile")
         self.sphinx.calc_static(algorithm="ccg")
         self.assertTrue(
             "keepRho"
-            in self.sphinx.input.main.to_sx_str()
+            in self.sphinx.input.main.to_sphinx()
         )
         self.assertEqual(self.sphinx.input["Estep"], 400)
         self.assertTrue(
             "CCG"
-            in self.sphinx.input.main.to_sx_str()
+            in self.sphinx.input.main.to_sphinx()
         )
 
     def test_calc_minimize(self):
@@ -339,17 +305,16 @@ class TestSphinx(unittest.TestCase):
             ref_scf = {
                 'rhoMixing': '1.0',
                 'spinMixing': '1.0',
-                'dEnergy': 'Ediff/27.211386245988',
+                'dEnergy': 3.674932217565499e-06,
                 'maxSteps': '400',
-                'blockCCG': {}
-                }
+                'blockCCG': {}}
             self.assertEqual(test_scf, ref_scf)
 
         ref_scf = {
             'rhoMixing': '1.0',
             'spinMixing': '1.0',
             'nPulaySteps': '0',
-            'dEnergy': 'Ediff/27.211386245988',
+            'dEnergy': 3.674932217565499e-06,
             'maxSteps': '400',
             'preconditioner': {
                 'type': 0
