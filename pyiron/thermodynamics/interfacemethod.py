@@ -22,7 +22,7 @@ __date__ = "Apr 24, 2020"
 
 def freeze_one_half(basis):
     basis.add_tag(selective_dynamics=None)
-    x, y, z = basis.scaled_pos_xyz()
+    _, _, z = basis.scaled_pos_xyz()
     for selector, ind in zip(z < 0.5, range(len(basis))):
         if selector:
             basis.selective_dynamics[ind] = [True, True, True]
@@ -419,7 +419,7 @@ def get_nve_job_name(temperature_next, strain, steps_lst, nve_run_time_steps):
 
 def plot_solid_liquid_ratio(temperature_next, strain_lst, nve_run_time_steps, project_parameter, debug_plot=True):
     cna_str = project_parameter['crystalstructure'].upper()
-    ratio_lst, strain_value_lst = [], []
+    ratio_lst = []
     for strain in strain_lst:
         job_name = get_nve_job_name(
             temperature_next=temperature_next,
@@ -607,7 +607,7 @@ def calc_temp_iteration(basis, temperature_next, project_parameter, timestep, nv
     basis = ham_npt_liquid_low.get_structure()
     basis_no_selective = remove_selective_dynamics(basis)
     basis_relative = basis_no_selective.copy()
-    strain_lst, pressure_lst, temperature_lst, pressure_std_lst, temperature_std_lst, ovito_dict_lst = strain_circle(
+    strain_lst, pressure_lst, temperature_lst, pressure_std_lst, temperature_std_lst, _ = strain_circle(
         basis_relative=basis_relative,
         temperature_next=temperature_next,
         nve_run_time_steps=nve_run_time_steps,
