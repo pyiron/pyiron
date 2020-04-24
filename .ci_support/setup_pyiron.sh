@@ -1,4 +1,5 @@
 #!/bin/bash
-conda create -q --yes -f .ci_support/environment.yml python=${1}
+conda install python=${1}
+conda update --file .ci_support/environment.yml
 source activate pyiron
 pip install --pre .
