@@ -35,9 +35,7 @@ install:
 # Load the conda root environment, configure and install some packages
 - '"%CONDA%\Scripts\activate.bat"'
 - "conda config --set always_yes yes --set changeps1 no"
-- "conda install -c anaconda setuptools"
-- "conda update -q conda"
-- "conda create -q --yes -f environment.yml python=%PYTHON_VERSION%"
+- "conda create -q --yes -f .ci_support/environment.yml python=%PYTHON_VERSION%"
 - "activate pyiron"
 - "conda info -a"
 - "pip install --pre ."
