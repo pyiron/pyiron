@@ -250,18 +250,16 @@ class SphinxBase(GenericDFTJob):
         """
         if keep_angstrom:
             structure_group = Group(
-                [("cell", str(np.array(self.structure.cell).tolist()))]
+                [("cell", np.array(self.structure.cell).tolist())]
             )
         else:
             structure_group = Group(
                 [
                     (
                         "cell",
-                        str(
-                            np.array(
-                                self.structure.cell * 1 / BOHR_TO_ANGSTROM
-                            ).tolist()
-                        ),
+                        np.array(
+                            self.structure.cell * 1 / BOHR_TO_ANGSTROM
+                        ).tolist(),
                     )
                 ]
             )
@@ -297,12 +295,12 @@ class SphinxBase(GenericDFTJob):
                         = '"spin_' + str(elm_magmon) + '"'
                 if keep_angstrom:
                     structure_group[
-                        "species"][-1]["atom"][-1]["coords"] = str(
+                        "species"][-1]["atom"][-1]["coords"] = (
                         np.array(elm_pos).tolist()
                     )
                 else:
                     structure_group[
-                        "species"][-1]["atom"][-1]["coords"] = str(
+                        "species"][-1]["atom"][-1]["coords"] = (
                         np.array(elm_pos * 1 / BOHR_TO_ANGSTROM).tolist()
                     )
                 if all(selective):
@@ -446,12 +444,12 @@ class SphinxBase(GenericDFTJob):
         self.input.basis.setdefault("eCut", self.input["EnCut"]/RYDBERG_TO_EV)
         self.input.basis.setdefault("kPoint", Group())
         self.input.basis.kPoint.setdefault(
-            "coords", str(self.input["KpointCoords"])
+            "coords", self.input["KpointCoords"]
             )
         self.input.basis.kPoint.setdefault("weight", 1)
         self.input.basis.kPoint.setdefault("relative", True)
         self.input.basis.setdefault(
-            "folding", str(self.input["KpointFolding"])
+            "folding", self.input["KpointFolding"]
             )
         self.input.basis.setdefault("saveMemory", self.input["SaveMemory"])
 
@@ -1038,14 +1036,16 @@ class SphinxBase(GenericDFTJob):
                     )
             if "kPoints" in self.input.basis:
                 del self.input.basis["kPoints"]
-            self.input.basis["kPoint"] = {}
+            self.input.basis.setdefault("kPoint", {})
             if mesh is not None:
-                self.input["KpointFolding"] = str(list(mesh))
+                self.input["KpointFolding"] = list(mesh)
                 self.input.basis["folding"] = self.input["KpointFolding"]
             if center_shift is not None:
-                self.input["KpointCoords"] = str(list(center_shift))
+                self.input["KpointCoords"] = list(center_shift)
                 self.input.basis["kPoint"]["coords"] = \
                     self.input["KpointCoords"]
+                self.input.basis.kPoint["weight"] = 1
+                self.input.basis.kPoint["relative"] = True
 
         elif scheme == "Line":
             # Remove Kpoint and set Kpoints
@@ -1084,12 +1084,12 @@ class SphinxBase(GenericDFTJob):
 
             kpoints["from"] = odict([
                 ("coords",
-                str(self.structure.get_high_symmetry_points()[path[0][0]])),
+                self.structure.get_high_symmetry_points()[path[0][0]]),
                 ("label", '"' + path[0][0].replace("'", "p") + '"'),
             ])
             kpoints["to___0"] = odict([
                 ("coords",
-                str(self.structure.get_high_symmetry_points()[path[0][1]])),
+                self.structure.get_high_symmetry_points()[path[0][1]]),
                 ("nPoints", n_path),
                 ("label", '"' + path[0][1].replace("'", "p") + '"'),
             ])
@@ -1099,8 +1099,8 @@ class SphinxBase(GenericDFTJob):
                     name = "to___{}___1".format(i)
                     kpoints[name] = odict([
                         ("coords",
-                        str(self.structure.get_high_symmetry_points()[
-                            path[1][0]])
+                        self.structure.get_high_symmetry_points()[
+                            path[1][0]]
                         ),
                         ("nPoints", 0),
                         ("label", '"' + path[1][0].replace("'", "p") + '"'),
@@ -1109,8 +1109,7 @@ class SphinxBase(GenericDFTJob):
                 name = "to___{}".format(i + 1)
                 kpoints[name] = odict([(
                     "coords",
-                    str(self.structure.get_high_symmetry_points()[path[1][1]])
-                    ),
+                    self.structure.get_high_symmetry_points()[path[1][1]]),
                     ("nPoints", n_path),
                     ("label", '"' + path[1][1].replace("'", "p") + '"'),
                 ])
@@ -1224,6 +1223,11 @@ class SphinxBase(GenericDFTJob):
                 )
             self.input.spin.setdefault("file", '"spins.in"')
 
+        # In case the entire group was
+        # set/overwritten as a normal dict.
+        for group in self.input.groups:
+            group = Group(group)
+
         # write input.sx
         file_name = posixpath.join(self.working_directory, "input.sx")
         with open(file_name, "w") as f:
@@ -1328,11 +1332,10 @@ class SphinxBase(GenericDFTJob):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
 
-            """
-            Check for parameters that were not modified but
-            possibly should have (encut, kpoints, smearing, etc.),
-            or were set to nonsensical values.
-            """
+            # Check for parameters that were not modified but
+            # possibly should have (encut, kpoints, smearing, etc.),
+            # or were set to nonsensical values.
+
             if (
                 not (
                     isinstance(self.input.basis["eCut"], int)
@@ -1443,12 +1446,12 @@ class SphinxBase(GenericDFTJob):
 
             if (
                 "KpointCoords" in self.input.keys() \
-                and str(self.input["KpointCoords"])\
+                and self.input["KpointCoords"]\
                     != self.input.basis.kPoint.coords
                 ) \
             or (
                 "KpointFolding" in self.input.keys() \
-                and str(self.input["KpointFolding"])\
+                and self.input["KpointFolding"]\
                     != self.input.basis.folding
                 ):
 
@@ -1728,28 +1731,38 @@ class Group(dict):
         line = ""
 
         if content == "__self__":
-            content=self
+            content = self
 
         for k, v in content.items():
             k = k.split("___")[0]
 
             if isinstance(v, list):
-                for step in content[k]:
-                    line += (
-                        indent * "\t"
-                        + k
-                        + " {\n"
-                        + content.to_sphinx(step, indent+1)
-                        + indent * "\t"
-                        + "}\n"
-                    )
+                if k in ["folding", "coords"]:
+                    line += indent * "\t" + f"{k} = {str(v)};\n"
+                elif k == "cell":
+                    line += indent * "\t" + k + "[\n"
+                    for vector in content[k]:
+                        line += (indent+1) * "\t" + f"{str(vector)},\n"
+                    line += indent * "\t" + "];\n"
+                else:
+                    for step in content[k]:
+                        line += (
+                            indent * "\t"
+                            + k
+                            + " {\n"
+                            + content.to_sphinx(step, indent+1)
+                            + indent * "\t"
+                            + "}\n"
+                        )
 
             else:
                 v = [v]
                 for vv in v:
                     if isinstance(vv, bool):
                         if vv is True:
-                            line += indent * "\t" + str(k) + ";\n"
+                            line += indent * "\t" + k + ";\n"
+                        elif vv is False:
+                            line += indent * "\t" + k + ' = false;\n'
 
                     elif isinstance(vv, dict):
                         if len(vv) == 0:

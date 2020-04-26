@@ -140,7 +140,8 @@ class TestSphinx(unittest.TestCase):
             '\tkPoint {\n',
             '\t\tcoords = [0.5, 0.5, 0.5];\n',
             '\t\tweight = 1;\n',
-            '\t\trelative;\n', '\t}\n',
+            '\t\trelative;\n',
+            '\t}\n',
             '\tfolding = [4, 4, 4];\n',
             '\tsaveMemory;\n',
             '}\n',
@@ -168,6 +169,7 @@ class TestSphinx(unittest.TestCase):
             '\t\t\tspin = 0.5;\n',
             '\t\t}\n',
             '\t}\n',
+            '\tnoWavesStorage = false;\n',
             '}\n',
             '\n',
             'spinConstraint {\n',
@@ -185,6 +187,7 @@ class TestSphinx(unittest.TestCase):
             '\tevalForces {\n',
             '\t\tfile = "relaxHist.sx";\n',
             '\t}\n',
+            '\tnoWavesStorage = false;\n',
             '}\n'
         ]
         file_name = os.path.join(
@@ -216,19 +219,19 @@ class TestSphinx(unittest.TestCase):
         kpoints_group = {
             'relative': True,
             'from': odict([
-                ('coords', '[0.0, 0.0, 0.0]'), ('label', '"GAMMA"')
+                ('coords',  [0.0, 0.0, 0.0]), ('label', '"GAMMA"')
             ]),
             'to___0': odict([
-                ('coords', '[0.5, -0.5, 0.5]'), ('nPoints', 20), ('label', '"H"')
+                ('coords', [0.5, -0.5, 0.5]), ('nPoints', 20), ('label', '"H"')
             ]),
             'to___1': odict([
-                ('coords', '[0.0, 0.0, 0.5]'), ('nPoints', 20), ('label', '"N"')
+                ('coords', [0.0, 0.0, 0.5]), ('nPoints', 20), ('label', '"N"')
             ]),
             'to___1___1': odict([
-                ('coords', '[0.25, 0.25, 0.25]'), ('nPoints', 0), ('label', '"P"')
+                ('coords', [0.25, 0.25, 0.25]), ('nPoints', 0), ('label', '"P"')
             ]),
             'to___2': odict([
-                ('coords', '[0.5, -0.5, 0.5]'), ('nPoints', 20), ('label', '"H"')
+                ('coords', [0.5, -0.5, 0.5]), ('nPoints', 20), ('label', '"H"')
             ]),
             'locked': False
         }
@@ -338,8 +341,75 @@ class TestSphinx(unittest.TestCase):
     def test_check_setup(self):
         self.assertFalse(self.sphinx.check_setup())
 
+    def test_set_check_overlap(self):
+        self.assertRaises(
+            ValueError, self.sphinx_bs.set_check_overlap, 0
+        )
+
+    def test_set_occupancy_smearing(self):
+        self.assertRaises(
+            ValueError, self.sphinx_bs.set_occupancy_smearing, 0.1, 0.1
+        )
+        self.assertRaises(
+            ValueError, self.sphinx_bs.set_occupancy_smearing, "fermi", -0.1
+        )
+        self.sphinx_bs.set_occupancy_smearing("fermi", 0.1)
+
+    def test_load_default_groups(self):
+        backup  = self.sphinx_bs.structure.copy()
+        self.sphinx_bs.structure = None
+        self.assertRaises(
+            ValueError, self.sphinx_bs.load_default_groups
+        )
+        self.sphinx_bs.structure = backup
+
     def test_validate_ready_to_run(self):
-        self.sphinx.validate_ready_to_run()
+        with warnings.catch_warnings(record=True) as w:
+            backup = self.sphinx.input.basis.eCut
+            self.sphinx.input.basis.eCut = 400
+            self.assertFalse(self.sphinx.validate_ready_to_run())
+            self.sphinx.input.basis.eCut = backup
+
+        with warnings.catch_warnings(record=True) as w:
+            backup = self.sphinx.input.basis.kPoint.copy()
+            self.sphinx.input.basis.kPoint = {
+                "coords": [0.5, 0.5, 0.25],
+                "weight": 1
+            }
+            self.assertFalse(self.sphinx.validate_ready_to_run())
+            self.sphinx.input.basis.kPoint = backup
+
+        with warnings.catch_warnings(record=True) as w:
+            backup = self.sphinx.input.hamilton.ekt
+            self.sphinx.input.hamilton.ekt = 0.0001
+            self.assertFalse(self.sphinx.validate_ready_to_run())
+            self.sphinx.input.hamilton.ekt = backup
+
+        with warnings.catch_warnings(record=True) as w:
+            backup = self.sphinx.input.hamilton.xc
+            self.sphinx.input.hamilton.xc = "Wrong"
+            self.assertFalse(self.sphinx.validate_ready_to_run())
+            self.sphinx.input.hamilton.xc = backup
+
+        with warnings.catch_warnings(record=True) as w:
+            backup = self.sphinx.input.hamilton.xc
+            self.sphinx.input.hamilton.xc = "Wrong"
+            self.assertFalse(self.sphinx.validate_ready_to_run())
+            self.sphinx.input.hamilton.xc = backup
+
+        with warnings.catch_warnings(record=True) as w:
+            backup = self.sphinx.input.hamilton.nEmptyStates
+            self.sphinx.input.hamilton.nEmptyStates = 100
+            self.assertFalse(self.sphinx.validate_ready_to_run())
+            self.sphinx.input.hamilton.nEmptyStates = backup
+
+        with warnings.catch_warnings(record=True) as w:
+            backup = self.sphinx.input.structure.copy()
+            self.sphinx.input.structure.cell = [[0,0,0],[0,0,0],[0,0,0]]
+            self.assertFalse(self.sphinx.validate_ready_to_run())
+            self.sphinx.input.structure = backup
+
+        self.assertTrue(self.sphinx.validate_ready_to_run())
 
     def test_set_mixing_parameters(self):
         self.assertRaises(
@@ -372,24 +442,28 @@ class TestSphinx(unittest.TestCase):
         pos_2 = (self.sphinx.structure.positions[1] / BOHR_TO_ANGSTROM).tolist()
 
         file_content = [
-            "cell = " + str(cell) + ";\n",
-            "species {\n",
+            'cell[\n',
+            f'\t{cell[0]},\n',
+            f'\t{cell[1]},\n',
+            f'\t{cell[2]},\n',
+            '];\n',
+            'species {\n',
             '\telement = "Fe";\n',
-            "\tatom {\n",
+            '\tatom {\n',
             '\t\tlabel = "spin_0.5";\n',
-            "\t\tcoords = [0.0, 0.0, 0.0];\n",
-            "\t\tmovable;\n",
-            "\t}\n",
-            "\tatom {\n",
+            '\t\tcoords = [0.0, 0.0, 0.0];\n',
+            '\t\tmovable;\n',
+            '\t}\n',
+            '\tatom {\n',
             '\t\tlabel = "spin_0.5";\n',
-            "\t\tcoords = " + str(pos_2) + ";\n",
-            "\t}\n",
-            "}\n",
-            "symmetry {\n",
-            "\toperator {\n",
-            "\t\tS = [[1,0,0],[0,1,0],[0,0,1]];\n",
-            "\t}\n",
-            "}\n"
+            '\t\tcoords = [2.4566439620135014, 2.4566439620135014, 2.4566439620135014];\n',
+            '\t}\n',
+            '}\n',
+            'symmetry {\n',
+            '\toperator {\n',
+            '\t\tS = [[1,0,0],[0,1,0],[0,0,1]];\n',
+            '\t}\n',
+            '}\n'
         ]
         file_name = os.path.join(
             self.file_location,
