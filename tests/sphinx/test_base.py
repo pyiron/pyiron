@@ -364,50 +364,43 @@ class TestSphinx(unittest.TestCase):
         self.sphinx_bs.structure = backup
 
     def test_validate_ready_to_run(self):
-        with warnings.catch_warnings(record=True) as w:
-            backup = self.sphinx.input.basis.eCut
-            self.sphinx.input.basis.eCut = 400
-            self.assertFalse(self.sphinx.validate_ready_to_run())
-            self.sphinx.input.basis.eCut = backup
+        backup = self.sphinx.input.basis.eCut
+        self.sphinx.input.basis.eCut = 400
+        self.assertFalse(self.sphinx.validate_ready_to_run())
+        self.sphinx.input.basis.eCut = backup
 
-        with warnings.catch_warnings(record=True) as w:
-            backup = self.sphinx.input.basis.kPoint.copy()
-            self.sphinx.input.basis.kPoint = {
-                "coords": [0.5, 0.5, 0.25],
-                "weight": 1
-            }
-            self.assertFalse(self.sphinx.validate_ready_to_run())
-            self.sphinx.input.basis.kPoint = backup
+        backup = self.sphinx.input.basis.kPoint.copy()
+        self.sphinx.input.basis.kPoint = {
+            "coords": [0.5, 0.5, 0.25],
+            "weight": 1
+        }
+        self.assertFalse(self.sphinx.validate_ready_to_run())
+        self.sphinx.input.basis.kPoint = backup
 
-        with warnings.catch_warnings(record=True) as w:
-            backup = self.sphinx.input.hamilton.ekt
-            self.sphinx.input.hamilton.ekt = 0.0001
-            self.assertFalse(self.sphinx.validate_ready_to_run())
-            self.sphinx.input.hamilton.ekt = backup
+        backup = self.sphinx.input.hamilton.ekt
+        self.sphinx.input.hamilton.ekt = 0.0001
+        self.assertFalse(self.sphinx.validate_ready_to_run())
+        self.sphinx.input.hamilton.ekt = backup
 
-        with warnings.catch_warnings(record=True) as w:
-            backup = self.sphinx.input.hamilton.xc
-            self.sphinx.input.hamilton.xc = "Wrong"
-            self.assertFalse(self.sphinx.validate_ready_to_run())
-            self.sphinx.input.hamilton.xc = backup
+        backup = self.sphinx.input.hamilton.xc
+        self.sphinx.input.hamilton.xc = "Wrong"
+        self.assertFalse(self.sphinx.validate_ready_to_run())
+        self.sphinx.input.hamilton.xc = backup
 
-        with warnings.catch_warnings(record=True) as w:
-            backup = self.sphinx.input.hamilton.xc
-            self.sphinx.input.hamilton.xc = "Wrong"
-            self.assertFalse(self.sphinx.validate_ready_to_run())
-            self.sphinx.input.hamilton.xc = backup
+        backup = self.sphinx.input.hamilton.xc
+        self.sphinx.input.hamilton.xc = "Wrong"
+        self.assertFalse(self.sphinx.validate_ready_to_run())
+        self.sphinx.input.hamilton.xc = backup
 
-        with warnings.catch_warnings(record=True) as w:
-            backup = self.sphinx.input.hamilton.nEmptyStates
-            self.sphinx.input.hamilton.nEmptyStates = 100
-            self.assertFalse(self.sphinx.validate_ready_to_run())
-            self.sphinx.input.hamilton.nEmptyStates = backup
+        backup = self.sphinx.input.hamilton.nEmptyStates
+        self.sphinx.input.hamilton.nEmptyStates = 100
+        self.assertFalse(self.sphinx.validate_ready_to_run())
+        self.sphinx.input.hamilton.nEmptyStates = backup
 
-        with warnings.catch_warnings(record=True) as w:
-            backup = self.sphinx.input.structure.copy()
-            self.sphinx.input.structure.cell = [[0,0,0],[0,0,0],[0,0,0]]
-            self.assertFalse(self.sphinx.validate_ready_to_run())
-            self.sphinx.input.structure = backup
+        backup = self.sphinx.input.structure.copy()
+        self.sphinx.input.structure.cell = [[0,0,0],[0,0,0],[0,0,0]]
+        self.assertFalse(self.sphinx.validate_ready_to_run())
+        self.sphinx.input.structure = backup
 
         self.assertTrue(self.sphinx.validate_ready_to_run())
 
