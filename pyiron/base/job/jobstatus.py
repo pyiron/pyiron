@@ -243,8 +243,8 @@ class JobStatus(object):
         if name in self._status_dict.keys():
             self.refresh_status()
             return self._status_dict[name]
-        else:
-            super(JobStatus, self).__getattr__(name)
+        raise AttributeError("'{}' object has no attribute '{}'".format(
+                                self.__class__.__name__, name))
 
     def __setattr__(self, name, value):
         if name in self._status_dict.keys():
