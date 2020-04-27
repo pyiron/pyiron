@@ -751,8 +751,9 @@ class SphinxBase(GenericDFTJob):
             posixpath.join(self.working_directory, "rho.sxb")
         ):
             new_job.input.sphinx.initialGuess.rho.remove("atomicOrbitals")
-            new_job.input.sphinx.initialGuess["rho"]["file"] = posixpath.join(
-                self.working_directory, "rho.sxb")
+            new_job.input.sphinx.initialGuess["rho"]["file"] = '"{}"'.format(posixpath.join(
+                self.working_directory, "rho.sxb"))
+            new_job.restart_file_list.append(posixpath.join(self.working_directory, "rho.sxb"))
 
         elif from_charge_density:
             self._logger.warning(
@@ -762,8 +763,11 @@ class SphinxBase(GenericDFTJob):
         if from_wave_functions and os.path.isfile(
             posixpath.join(self.working_directory, "waves.sxb")
         ):
-            new_job.input.sphinx.initialGuess["waves"]["file"] = posixpath.join(
-                self.working_directory, "waves.sxb")
+            # new_job.input.sphinx.initialGuess.set_group("exchange")
+            # new_job.input.sphinx.initialGuess["exchange"]["file"] = posixpath.join(
+            new_job.input.sphinx.initialGuess["waves"]["file"] = '"{}"'.format(posixpath.join(
+                self.working_directory, "waves.sxb"))
+            new_job.restart_file_list.append(posixpath.join(self.working_directory, "waves.sxb"))
         elif from_wave_functions:
             self._logger.warning(
                 msg="No wavefunction file (waves.sxb) was found for "
