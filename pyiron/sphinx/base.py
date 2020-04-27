@@ -750,9 +750,6 @@ class SphinxBase(GenericDFTJob):
         if from_charge_density and os.path.isfile(
             posixpath.join(self.working_directory, "rho.sxb")
         ):
-            new_job.input.sphinx.initialGuess.rho.remove("atomicOrbitals")
-            new_job.input.sphinx.initialGuess["rho"]["file"] = '"{}"'.format(posixpath.join(
-                self.working_directory, "rho.sxb"))
             new_job.restart_file_list.append(posixpath.join(self.working_directory, "rho.sxb"))
 
         elif from_charge_density:
@@ -763,16 +760,13 @@ class SphinxBase(GenericDFTJob):
         if from_wave_functions and os.path.isfile(
             posixpath.join(self.working_directory, "waves.sxb")
         ):
-            # new_job.input.sphinx.initialGuess.set_group("exchange")
-            # new_job.input.sphinx.initialGuess["exchange"]["file"] = posixpath.join(
-            new_job.input.sphinx.initialGuess["waves"]["file"] = '"{}"'.format(posixpath.join(
-                self.working_directory, "waves.sxb"))
             new_job.restart_file_list.append(posixpath.join(self.working_directory, "waves.sxb"))
         elif from_wave_functions:
             self._logger.warning(
                 msg="No wavefunction file (waves.sxb) was found for "
                 + f"job {self.job_name} in {self.working_directory}."
             )
+        new_job.load_default_groups()
         return new_job
 
     def to_hdf(self, hdf=None, group_name=None):
@@ -1371,7 +1365,7 @@ class SphinxBase(GenericDFTJob):
             if not (
                 isinstance(self.input.sphinx.basis["folding"], np.ndarray)
                 or len(self.input.sphinx.basis["folding"]) != 3
-            ) or self.input.sphinx.basis["folding"] == np.array([4,4,4]):
+            ) or self.input.sphinx.basis["folding"].tolist() == [4,4,4]:
                 warnings.warn(
                     "K point folding wrong or not modified from default "+
                     "[4,4,4]; change it via job.set_kpoints()"
@@ -1417,14 +1411,7 @@ class SphinxBase(GenericDFTJob):
             "job.input.main": self.input.sphinx.main
         }
 
-        if self._generic_input["fix_spin_constraint"]:
-            all_groups["job.input.spin"] = self.input.spin
-
         if np.any([len(all_groups[group]) == 0 for group in all_groups]):
-
-            if self._generic_input["fix_spin_constraint"]:
-                group_names.append("job.input.spin")
-
             raise AssertionError(
                 "The following input groups have not been loaded: "
                 + "\n"
