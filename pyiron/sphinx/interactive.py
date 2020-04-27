@@ -344,7 +344,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
             retain_electrostatic_potential=retain_electrostatic_potential,
         )
 
-    def get_main_group(self):
+    def load_main_group(self):
         main_group = Group()
         if (
             self.server.run_mode.interactive
@@ -370,7 +370,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
                         (
                             "scfDiag",
                             self.get_scf_group(
-                                dEnergy="1000*Ediff/" + str(HARTREE_TO_EV)
+                                dEnergy=1000*self.input["Ediff"] / HARTREE_TO_EV
                             ),
                         ),
                     ]
@@ -384,11 +384,11 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
                     ]
                 )
             )
-            main_group.main.extControl = Group()
-            main_group.extControl.bornOppenheimer = commands
-            return main_group
+            self.input.sphinx.main.extControl = Group()
+            self.input.sphinx.main.extControl.set_group('bornOppenheimer')
+            self.input.sphinx.main.extControl.bornOppenheimer = commands
         else:
-            return super(SphinxInteractive, self).get_main_group
+            super(SphinxInteractive, self).load_main_group()
 
 
 class SphinxInt2(SphinxInteractive):

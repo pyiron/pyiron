@@ -1180,12 +1180,6 @@ class SphinxBase(GenericDFTJob):
         Automatically called by job.run()
         """
 
-        # self.input --> userparameters.sx (general variables)
-        # self.input.write_file(
-        #     file_name="userparameters.sx",
-        #     cwd=self.working_directory
-        # )
-
         # If the structure group was not modified directly by the
         # user, via job.input.structure (which is likely True),
         # load it based on job.structure.
@@ -1250,10 +1244,6 @@ class SphinxBase(GenericDFTJob):
             f.write("format paw;\n")
             f.write("include <parameters.sx>;\n\n")
             f.write(self.input.sphinx.to_sphinx(indent=0))
-            #if self._generic_input["fix_spin_constraint"]:
-            #    f.write("spinConstraint {\n")
-            #    f.write(self.input.spin.to_sphinx(indent=1))
-            #    f.write("}\n\n")
 
     def collect_output(self, force_update=False):
         """
