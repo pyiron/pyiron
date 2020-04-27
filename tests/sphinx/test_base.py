@@ -357,9 +357,7 @@ class TestSphinx(unittest.TestCase):
         self.assertFalse(self.sphinx_bs.check_setup())
 
     def test_set_check_overlap(self):
-        self.assertRaises(
-            ValueError, self.sphinx_bs.set_check_overlap, 0
-        )
+        self.assertRaises(ValueError, self.sphinx_bs.set_check_overlap, 0)
 
     def test_set_occupancy_smearing(self):
         self.assertRaises(
