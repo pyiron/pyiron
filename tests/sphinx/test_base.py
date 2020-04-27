@@ -341,6 +341,21 @@ class TestSphinx(unittest.TestCase):
     def test_check_setup(self):
         self.assertFalse(self.sphinx.check_setup())
 
+        self.sphinx_bs.load_default_groups()
+        self.sphinx_bs.input.basis.kPoint = {"coords": "0.5, 0.5, 0.5"}
+        self.assertFalse(self.sphinx_bs.check_setup())
+
+        self.sphinx_bs.load_default_groups()
+        self.sphinx_bs.server.cores = 2000
+        self.assertFalse(self.sphinx_bs.check_setup())
+
+        self.sphinx_bs.input["EmptyStates"] = "auto"
+        self.assertFalse(self.sphinx_bs.check_setup())
+        self.sphinx_bs.structure.add_tag(spin=None)
+        for i in range(len(self.sphinx_bs.structure)):
+            self.sphinx_bs.structure.spin[i] = 4
+        self.assertFalse(self.sphinx_bs.check_setup())
+
     def test_set_check_overlap(self):
         self.assertRaises(
             ValueError, self.sphinx_bs.set_check_overlap, 0
@@ -364,6 +379,19 @@ class TestSphinx(unittest.TestCase):
         self.sphinx_bs.structure = backup
 
     def test_validate_ready_to_run(self):
+
+        backup = self.sphinx_bs.structure.copy()
+        self.sphinx_bs.structure = None
+        self.assertRaises(AssertionError, self.sphinx_bs.validate_ready_to_run)
+        self.sphinx_bs.structure = backup
+
+        self.sphinx_bs.input["THREADS"] = 20
+        self.sphinx_bs.server.cores = 10
+        self.assertRaises(AssertionError, self.sphinx_bs.validate_ready_to_run)
+
+        self.sphinx_bs.input.main = {}
+        self.assertRaises(AssertionError, self.sphinx_bs.validate_ready_to_run)
+
         backup = self.sphinx.input.basis.eCut
         self.sphinx.input.basis.eCut = 400
         self.assertFalse(self.sphinx.validate_ready_to_run())

@@ -1217,7 +1217,17 @@ class SphinxBase(GenericDFTJob):
             )
 
         # Write spin constraints, if set via _generic_input.
+        all_groups = [
+            self.input.species,
+            self.input.structure,
+            self.input.basis,
+            self.input.hamilton,
+            self.input.guess,
+            self.input.main
+        ]
+
         if self._generic_input["fix_spin_constraint"]:
+            all_groups.append(self.input.spin)
             self.input_writer.write_spin_constraints(
                 cwd=self.working_directory
                 )
@@ -1225,7 +1235,7 @@ class SphinxBase(GenericDFTJob):
 
         # In case the entire group was
         # set/overwritten as a normal dict.
-        for group in self.input.groups:
+        for group in all_groups:
             group = Group(group)
 
         # write input.sx
@@ -1403,10 +1413,31 @@ class SphinxBase(GenericDFTJob):
         mean the simulation won't run if it returns False.
         """
 
-        if np.all([len(group) == 0 for group in self.input.groups]):
+        all_groups = {
+            "job.input.species": self.input.species,
+            "job.input.structure": self.input.structure,
+            "job.input.basis": self.input.basis,
+            "job.input.hamilton": self.input.hamilton,
+            "job.input.guess": self.input.guess,
+            "job.input.main": self.input.main
+        }
+
+        if self._generic_input["fix_spin_constraint"]:
+            all_groups["job.input.spin"] = self.input.spin
+
+        if np.any([len(all_groups[group]) == 0 for group in all_groups]):
+
+            if self._generic_input["fix_spin_constraint"]:
+                group_names.append("job.input.spin")
+
             raise AssertionError(
-                "No SPHInX input groups have been loaded. Please "
-                + "set them manually or via job.calc_static() etc."
+                "The following input groups have not been loaded: "
+                + "\n"
+                + ", ".join([
+                    g for g in all_groups if len(all_groups[g]) == 0
+                    ])
+                + "\n"
+                + "Please set them manually or via job.calc_static() etc."
             )
         if self.structure is None:
             raise AssertionError(
@@ -1806,15 +1837,6 @@ class Input(GenericParameters):
         self.guess = Group()
         self.spin = Group()
         self.main = Group()
-        self.groups = [
-            self.species,
-            self.structure,
-            self.basis,
-            self.hamilton,
-            self.guess,
-            self.spin,
-            self.main
-        ]
 
     def load_default(self):
         """
