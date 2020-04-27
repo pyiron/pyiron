@@ -745,12 +745,13 @@ class SphinxBase(GenericDFTJob):
         )
 
         new_job.input = self.input
+        new_job.load_default_groups()
 
         if from_charge_density and os.path.isfile(
             posixpath.join(self.working_directory, "rho.sxb")
         ):
-            new_job.input.initialGuess.remove_flag("atomicOrbitals")
-            new_job.input.initialGuess["rho"]["file"] = posixpath.join(
+            new_job.input.sphinx.initialGuess.rho.remove("atomicOrbitals")
+            new_job.input.sphinx.initialGuess["rho"]["file"] = posixpath.join(
                 self.working_directory, "rho.sxb")
 
         elif from_charge_density:
@@ -761,8 +762,7 @@ class SphinxBase(GenericDFTJob):
         if from_wave_functions and os.path.isfile(
             posixpath.join(self.working_directory, "waves.sxb")
         ):
-            new_job.input.initialGuess.remove_flag("atomicOrbitals")
-            new_job.input.initialGuess["rho"]["fromWaves"] = posixpath.join(
+            new_job.input.sphinx.initialGuess["waves"]["file"] = posixpath.join(
                 self.working_directory, "waves.sxb")
         elif from_wave_functions:
             self._logger.warning(
@@ -1232,11 +1232,12 @@ class SphinxBase(GenericDFTJob):
         ]
 
         if self._generic_input["fix_spin_constraint"]:
-            all_groups.append(self.input.spin)
+            self.input.sphinx.spinConstraint = Group()
+            all_groups.append(self.input.sphinx.spinConstraint)
             self.input_writer.write_spin_constraints(
                 cwd=self.working_directory
                 )
-            self.input.spin.setdefault("file", '"spins.in"')
+            self.input.sphinx.spinConstraint.setdefault("file", '"spins.in"')
 
         # In case the entire group was
         # set/overwritten as a normal dict.
@@ -1747,7 +1748,8 @@ class Group(dict):
         self.set(parameter, val)
 
     def remove(self, name):
-        del self[name]
+        if name in self.keys():
+            del self[name]
 
     def to_sphinx(self, content="__self__", indent=0):
         line = ""
