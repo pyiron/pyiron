@@ -250,7 +250,7 @@ class SphinxBase(GenericDFTJob):
         """
         if keep_angstrom:
             structure_group = Group(
-                [("cell", np.array(self.structure.cell).tolist())]
+                [("cell", np.array(self.structure.cell))]
             )
         else:
             structure_group = Group(
@@ -259,7 +259,7 @@ class SphinxBase(GenericDFTJob):
                         "cell",
                         np.array(
                             self.structure.cell * 1 / BOHR_TO_ANGSTROM
-                        ).tolist(),
+                        ),
                     )
                 ]
             )
@@ -296,12 +296,12 @@ class SphinxBase(GenericDFTJob):
                 if keep_angstrom:
                     structure_group[
                         "species"][-1]["atom"][-1]["coords"] = (
-                        np.array(elm_pos).tolist()
+                        np.array(elm_pos)
                     )
                 else:
                     structure_group[
                         "species"][-1]["atom"][-1]["coords"] = (
-                        np.array(elm_pos * 1 / BOHR_TO_ANGSTROM).tolist()
+                        np.array(elm_pos * 1 / BOHR_TO_ANGSTROM)
                     )
                 if all(selective):
                     structure_group[
@@ -444,12 +444,12 @@ class SphinxBase(GenericDFTJob):
         self.input.sphinx.basis.setdefault("eCut", self.input["EnCut"]/RYDBERG_TO_EV)
         self.input.sphinx.basis.setdefault("kPoint", Group())
         self.input.sphinx.basis.kPoint.setdefault(
-            "coords", self.input["KpointCoords"]
+            "coords", np.array(self.input["KpointCoords"])
             )
         self.input.sphinx.basis.kPoint.setdefault("weight", 1)
         self.input.sphinx.basis.kPoint.setdefault("relative", True)
         self.input.sphinx.basis.setdefault(
-            "folding", self.input["KpointFolding"]
+            "folding", np.array(self.input["KpointFolding"])
             )
         self.input.sphinx.basis.setdefault("saveMemory", self.input["SaveMemory"])
 
@@ -1042,11 +1042,11 @@ class SphinxBase(GenericDFTJob):
             self.input.sphinx.basis.setdefault("kPoint", {})
             if mesh is not None:
                 self.input["KpointFolding"] = list(mesh)
-                self.input.sphinx.basis["folding"] = self.input["KpointFolding"]
+                self.input.sphinx.basis["folding"] = np.array(self.input["KpointFolding"])
             if center_shift is not None:
                 self.input["KpointCoords"] = list(center_shift)
                 self.input.sphinx.basis["kPoint"]["coords"] = \
-                    self.input["KpointCoords"]
+                    np.array(self.input["KpointCoords"])
                 self.input.sphinx.basis.kPoint["weight"] = 1
                 self.input.sphinx.basis.kPoint["relative"] = True
 
@@ -1191,9 +1191,11 @@ class SphinxBase(GenericDFTJob):
         # If the structure group was not modified directly by the
         # user, via job.input.structure (which is likely True),
         # load it based on job.structure.
-        structure_sync = self.input.sphinx.structure == self.get_structure_group()
+        structure_sync = (str(self.input.sphinx.structure)
+                          == str(self.get_structure_group()))
         if not structure_sync and not self.input.sphinx.structure.locked:
             self.load_structure_group()
+        # self.input.sphinx.structure.cell = str(self.input.sphinx.structure.cell)
 
         # self.input.sphinx.structure --> structure.sx
         # with open(
@@ -1346,7 +1348,7 @@ class SphinxBase(GenericDFTJob):
                     "340 eV; change it via job.set_encut()"
                 )
             if not (
-                isinstance(self.input.sphinx.basis["kPoint"]["coords"], list)
+                isinstance(self.input.sphinx.basis["kPoint"]["coords"], np.ndarray)
                 or len(self.input.sphinx.basis["kPoint"]["coords"]) != 3
             ):
                 warnings.warn("K point coordinates seem to be inappropriate")
@@ -1362,9 +1364,9 @@ class SphinxBase(GenericDFTJob):
                     "0.2 eV; change it via job.set_occupancy_smearing()"
                 )
             if not (
-                isinstance(self.input.sphinx.basis["folding"], list)
+                isinstance(self.input.sphinx.basis["folding"], np.ndarray)
                 or len(self.input.sphinx.basis["folding"]) != 3
-            ) or self.input.sphinx.basis["folding"] == [4,4,4]:
+            ) or self.input.sphinx.basis["folding"] == np.array([4,4,4]):
                 warnings.warn(
                     "K point folding wrong or not modified from default "+
                     "[4,4,4]; change it via job.set_kpoints()"
@@ -1465,20 +1467,21 @@ class SphinxBase(GenericDFTJob):
 
             if (
                 "KpointCoords" in self.input.keys() \
-                and self.input["KpointCoords"]\
-                    != self.input.sphinx.basis.kPoint.coords
+                and np.array(self.input["KpointCoords"]).tolist()\
+                    != np.array(self.input.sphinx.basis.kPoint.coords).tolist()
                 ) \
             or (
                 "KpointFolding" in self.input.keys() \
-                and self.input["KpointFolding"]\
-                    != self.input.sphinx.basis.folding
+                and np.array(self.input["KpointFolding"]).tolist()\
+                    != np.array(self.input.sphinx.basis.folding).tolist()
                 ):
 
                 warnings.warn("job.input.basis.kPoint was modified directly. "
                 + "It is recommended to set all k-point settings via "
                 + "job.set_kpoints()")
 
-            structure_sync = self.input.sphinx.structure == self.get_structure_group()
+            structure_sync = (str(self.input.sphinx.structure)
+                              == str(self.get_structure_group()))
             if not structure_sync and not self.input.sphinx.structure.locked:
                 warnings.warn(
                     "job.input.structure != job.structure. "
@@ -1491,7 +1494,6 @@ class SphinxBase(GenericDFTJob):
                     + "job.load_structure_group() after making changes "
                     + "to job.structure."
                     )
-            self.input.sphinx.structure.cell = str(self.input.sphinx.structure.cell)
 
             if len(w) > 0:
                 print("WARNING:")
@@ -1778,6 +1780,8 @@ class Group(dict):
                             + "}\n"
                         )
                 else:
+                    if isinstance(vv, np.ndarray):
+                        vv = vv.tolist()
                     line += indent * "\t" + k + " = " + str(vv) + ";\n"
         return line
 
