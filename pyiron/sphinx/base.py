@@ -743,6 +743,9 @@ class SphinxBase(GenericDFTJob):
         new_job = super(SphinxBase, self).restart(
             job_name=job_name, job_type=job_type
         )
+
+        new_job.input = self.input
+
         if from_charge_density and os.path.isfile(
             posixpath.join(self.working_directory, "rho.sxb")
         ):
