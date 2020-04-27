@@ -67,7 +67,8 @@ def read_atoms(filename="structure.sx"):
                         position_string = " ".join(
                             file_string[i + j + k].split("=")[-1]
                         )
-                        replace_list = ["[", "]", ";", "}"]
+                        replace_list = ["[", "]", ";", "}",
+                            "movable", "X", "Y", "Z"]
                         for rep in replace_list:
                             position_string = (
                                 "".join(position_string).replace(rep, " ").split()
