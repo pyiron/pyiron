@@ -331,7 +331,7 @@ class SphinxBase(GenericDFTJob):
             keep_angstrom=keep_angstrom
             )
 
-    def load_species_group(self, check_overlap=True, potformat='JTH'):
+    def load_species_group(self, check_overlap=True, potformat='VASP'):
         """
         Build the species Group object based on self.structure
 
