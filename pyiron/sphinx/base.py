@@ -1491,6 +1491,7 @@ class SphinxBase(GenericDFTJob):
                     + "job.load_structure_group() after making changes "
                     + "to job.structure."
                     )
+            self.input.sphinx.structure.cell = str(self.input.sphinx.structure.cell)
 
             if len(w) > 0:
                 print("WARNING:")
@@ -1805,7 +1806,6 @@ class Input(GenericParameters):
         self.sphinx.basis = Group()
         self.sphinx.PAWHamiltonian = Group()
         self.sphinx.initialGuess = Group()
-        self.sphinx.spin = Group()
         self.sphinx.main = Group()
 
     def load_default(self):
