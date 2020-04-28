@@ -85,7 +85,7 @@ class SphinxBase(GenericDFTJob):
 
     def __init__(self, project, job_name):
         super(SphinxBase, self).__init__(project, job_name)
-        self.output = SphinxOutput(job=self)
+        # self.output = SphinxOutput(job=self)
         self.input = Input()
         self.input.load_default()
         self._save_memory = False
