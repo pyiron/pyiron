@@ -1402,15 +1402,14 @@ class SphinxBase(GenericDFTJob):
         }
 
         if np.any([len(all_groups[group]) == 0 for group in all_groups]):
-            raise AssertionError(
-                "The following input groups have not been loaded: "
-                + "\n"
+            warnings.warn("The following input groups have not been loaded:\n"
                 + ", ".join([
                     g for g in all_groups if len(all_groups[g]) == 0
                     ])
                 + "\n"
-                + "Please set them manually or via job.calc_static() etc."
+                + "They are set to default values."
             )
+            self.load_default_groups()
         if self.structure is None:
             raise AssertionError(
                 "Structure not set; set it via job.structure = "
