@@ -1447,12 +1447,12 @@ class SphinxBase(GenericDFTJob):
             if (
                 "KpointCoords" in self.input.keys() \
                 and np.array(self.input["KpointCoords"]).tolist()\
-                    != np.array(self.input.sphinx.basis.kPoint.coords).tolist()
+                    != np.array(self.input.sphinx.basis.kPoint['coords']).tolist()
                 ) \
             or (
                 "KpointFolding" in self.input.keys() \
                 and np.array(self.input["KpointFolding"]).tolist()\
-                    != np.array(self.input.sphinx.basis.folding).tolist()
+                    != np.array(self.input.sphinx.basis['folding']).tolist()
                 ):
 
                 warnings.warn("job.input.basis.kPoint was modified directly. "

@@ -34,14 +34,14 @@ class TestSphinx(unittest.TestCase):
             cell=2.6 * np.eye(3),
         )
         cls.sphinx = cls.project.create_job("Sphinx", "job_sphinx")
-        cls.sphinx_bs = cls.project.create_job("Sphinx", "sphinx_test_bs")
+        cls.sphinx_band_structure = cls.project.create_job("Sphinx", "sphinx_test_bs")
         cls.sphinx_2_3 = cls.project.create_job("Sphinx", "sphinx_test_2_3")
         cls.sphinx_2_5 = cls.project.create_job("Sphinx", "sphinx_test_2_5")
         cls.sphinx_aborted = cls.project.create_job("Sphinx", "sphinx_test_aborted")
         cls.sphinx.structure = cls.basis
         cls.sphinx.fix_spin_constraint = True
-        cls.sphinx_bs.structure = cls.project.create_structure("Fe", "bcc", 2.81)
-        cls.sphinx_bs.structure = cls.sphinx_bs.structure.create_line_mode_structure()
+        cls.sphinx_band_structure.structure = cls.project.create_structure("Fe", "bcc", 2.81)
+        cls.sphinx_band_structure.structure = cls.sphinx_band_structure.structure.create_line_mode_structure()
         cls.sphinx_2_3.structure = Atoms(
             elements=["Fe", "Fe"],
             scaled_positions=[[0.0, 0.0, 0.0], [0.5, 0.5, 0.5]],
@@ -67,7 +67,10 @@ class TestSphinx(unittest.TestCase):
         cls.sphinx.load_default_groups()
         cls.sphinx.fix_symmetry = False
         cls.sphinx.write_input()
-        cls.sphinx.version = "2.6"
+        try:
+            cls.sphinx.version = "2.6"
+        except ValueError:
+            cls.sphinx.version = "2.6.2_default"
         cls.sphinx_2_3.to_hdf()
         cls.sphinx_2_3.decompress()
         cls.sphinx_2_5.decompress()
@@ -237,26 +240,26 @@ class TestSphinx(unittest.TestCase):
         }
 
         with self.assertRaises(ValueError):
-            self.sphinx_bs.set_kpoints(symmetry_reduction="pyiron rules!")
+            self.sphinx_band_structure.set_kpoints(symmetry_reduction="pyiron rules!")
         with self.assertRaises(ValueError):
-            self.sphinx_bs.set_kpoints(scheme="no valid scheme")
+            self.sphinx_band_structure.set_kpoints(scheme="no valid scheme")
         with self.assertRaises(ValueError):
-            self.sphinx_bs.set_kpoints(scheme="Line", path_name="my_path")
+            self.sphinx_band_structure.set_kpoints(scheme="Line", path_name="my_path")
 
-        self.sphinx_bs.structure.add_high_symmetry_path(trace)
+        self.sphinx_band_structure.structure.add_high_symmetry_path(trace)
         with self.assertRaises(ValueError):
-            self.sphinx_bs.set_kpoints(scheme="Line", n_path=20)
+            self.sphinx_band_structure.set_kpoints(scheme="Line", n_path=20)
         with self.assertRaises(AssertionError):
-            self.sphinx_bs.set_kpoints(scheme="Line", path_name="wrong name", n_path=20)
+            self.sphinx_band_structure.set_kpoints(scheme="Line", path_name="wrong name", n_path=20)
 
-        self.sphinx_bs.set_kpoints(scheme="Line", path_name="my_path", n_path=20)
-        self.assertTrue("kPoint" not in self.sphinx_bs.input.basis)
-        self.assertEqual(kpoints_group, self.sphinx_bs.input.basis.kPoints)
+        self.sphinx_band_structure.set_kpoints(scheme="Line", path_name="my_path", n_path=20)
+        self.assertTrue("kPoint" not in self.sphinx_band_structure.input.sphinx.basis)
+        self.assertEqual(kpoints_group, self.sphinx_band_structure.input.sphinx.basis.kPoints)
 
-        self.sphinx_bs.set_kpoints(scheme="MP", mesh=mesh, center_shift=center_shift)
-        self.assertTrue("kPoints" not in self.sphinx_bs.input.basis)
-        self.assertEqual(self.sphinx_bs.input["KpointFolding"], mesh)
-        self.assertEqual(self.sphinx_bs.input["KpointCoords"], center_shift)
+        self.sphinx_band_structure.set_kpoints(scheme="MP", mesh=mesh, center_shift=center_shift)
+        self.assertTrue("kPoints" not in self.sphinx_band_structure.input.sphinx.basis)
+        self.assertEqual(self.sphinx_band_structure.input["KpointFolding"], mesh)
+        self.assertEqual(self.sphinx_band_structure.input["KpointCoords"], center_shift)
 
     def test_set_empty_states(self):
         with self.assertRaises(ValueError):
@@ -277,33 +280,33 @@ class TestSphinx(unittest.TestCase):
         self.sphinx.calc_static(algorithm="wrong_algorithm")
         self.assertFalse(
             "keepRho"
-            in self.sphinx.input.main.to_sphinx()
+            in self.sphinx.input.sphinx.main.to_sphinx()
         )
         self.assertTrue(
             "blockCCG"
-            in self.sphinx.input.main.to_sphinx()
+            in self.sphinx.input.sphinx.main.to_sphinx()
         )
         self.sphinx.restart_file_list.append("randomfile")
         self.sphinx.calc_static(algorithm="ccg")
         self.assertTrue(
             "keepRho"
-            in self.sphinx.input.main.to_sphinx()
+            in self.sphinx.input.sphinx.main.to_sphinx()
         )
         self.assertEqual(self.sphinx.input["Estep"], 400)
         self.assertTrue(
             "CCG"
-            in self.sphinx.input.main.to_sphinx()
+            in self.sphinx.input.sphinx.main.to_sphinx()
         )
 
     def test_calc_minimize(self):
         self.sphinx.calc_minimize(electronic_steps=100, ionic_steps=50)
         self.assertEqual(self.sphinx.input["Estep"], 100)
         self.assertEqual(self.sphinx.input["Istep"], 50)
-        self.assertEqual(self.sphinx.input.main['linQN']['maxSteps'], '50')
+        self.assertEqual(self.sphinx.input.sphinx.main['linQN']['maxSteps'], '50')
 
     def test_get_scf_group(self):
         with warnings.catch_warnings(record=True) as w:
-            test_scf = self.sphinx_bs.get_scf_group(algorithm="wrong")
+            test_scf = self.sphinx_band_structure.get_scf_group(algorithm="wrong")
             self.assertEqual(len(w), 1)
             ref_scf = {
                 'rhoMixing': '1.0',
@@ -329,104 +332,104 @@ class TestSphinx(unittest.TestCase):
             'noWavesStorage': True
             }
 
-        self.sphinx_bs.input["nPulaySteps"] = 0
-        self.sphinx_bs.input["preconditioner"] = 0
-        self.sphinx_bs.input["maxStepsCCG"] = 0
-        self.sphinx_bs.input["blockSize"] = 0
-        self.sphinx_bs.input["nSloppy"] = 0
-        self.sphinx_bs.input["WriteWaves"] = False
-        test_scf = self.sphinx_bs.get_scf_group()
+        self.sphinx_band_structure.input["nPulaySteps"] = 0
+        self.sphinx_band_structure.input["preconditioner"] = 0
+        self.sphinx_band_structure.input["maxStepsCCG"] = 0
+        self.sphinx_band_structure.input["blockSize"] = 0
+        self.sphinx_band_structure.input["nSloppy"] = 0
+        self.sphinx_band_structure.input["WriteWaves"] = False
+        test_scf = self.sphinx_band_structure.get_scf_group()
         self.assertEqual(test_scf, ref_scf)
 
     def test_check_setup(self):
         self.assertFalse(self.sphinx.check_setup())
 
-        self.sphinx_bs.load_default_groups()
-        self.sphinx_bs.input.basis.kPoint = {"coords": "0.5, 0.5, 0.5"}
-        self.assertFalse(self.sphinx_bs.check_setup())
+        self.sphinx_band_structure.load_default_groups()
+        self.sphinx_band_structure.input.sphinx.basis.kPoint = {"coords": "0.5, 0.5, 0.5"}
+        self.assertFalse(self.sphinx_band_structure.check_setup())
 
-        self.sphinx_bs.load_default_groups()
-        self.sphinx_bs.server.cores = 2000
-        self.assertFalse(self.sphinx_bs.check_setup())
+        self.sphinx_band_structure.load_default_groups()
+        self.sphinx_band_structure.server.cores = 2000
+        self.assertFalse(self.sphinx_band_structure.check_setup())
 
-        self.sphinx_bs.input["EmptyStates"] = "auto"
-        self.assertFalse(self.sphinx_bs.check_setup())
-        self.sphinx_bs.structure.add_tag(spin=None)
-        for i in range(len(self.sphinx_bs.structure)):
-            self.sphinx_bs.structure.spin[i] = 4
-        self.assertFalse(self.sphinx_bs.check_setup())
+        self.sphinx_band_structure.input["EmptyStates"] = "auto"
+        self.assertFalse(self.sphinx_band_structure.check_setup())
+        self.sphinx_band_structure.structure.add_tag(spin=None)
+        for i in range(len(self.sphinx_band_structure.structure)):
+            self.sphinx_band_structure.structure.spin[i] = 4
+        self.assertFalse(self.sphinx_band_structure.check_setup())
 
     def test_set_check_overlap(self):
-        self.assertRaises(ValueError, self.sphinx_bs.set_check_overlap, 0)
+        self.assertRaises(ValueError, self.sphinx_band_structure.set_check_overlap, 0)
 
     def test_set_occupancy_smearing(self):
         self.assertRaises(
-            ValueError, self.sphinx_bs.set_occupancy_smearing, 0.1, 0.1
+            ValueError, self.sphinx_band_structure.set_occupancy_smearing, 0.1, 0.1
         )
         self.assertRaises(
-            ValueError, self.sphinx_bs.set_occupancy_smearing, "fermi", -0.1
+            ValueError, self.sphinx_band_structure.set_occupancy_smearing, "fermi", -0.1
         )
-        self.sphinx_bs.set_occupancy_smearing("fermi", 0.1)
+        self.sphinx_band_structure.set_occupancy_smearing("fermi", 0.1)
 
     def test_load_default_groups(self):
-        backup  = self.sphinx_bs.structure.copy()
-        self.sphinx_bs.structure = None
+        backup  = self.sphinx_band_structure.structure.copy()
+        self.sphinx_band_structure.structure = None
         self.assertRaises(
-            ValueError, self.sphinx_bs.load_default_groups
+            ValueError, self.sphinx_band_structure.load_default_groups
         )
-        self.sphinx_bs.structure = backup
+        self.sphinx_band_structure.structure = backup
 
     def test_validate_ready_to_run(self):
 
-        backup = self.sphinx_bs.structure.copy()
-        self.sphinx_bs.structure = None
-        self.assertRaises(AssertionError, self.sphinx_bs.validate_ready_to_run)
-        self.sphinx_bs.structure = backup
+        backup = self.sphinx_band_structure.structure.copy()
+        self.sphinx_band_structure.structure = None
+        self.assertRaises(AssertionError, self.sphinx_band_structure.validate_ready_to_run)
+        self.sphinx_band_structure.structure = backup
 
-        self.sphinx_bs.input["THREADS"] = 20
-        self.sphinx_bs.server.cores = 10
-        self.assertRaises(AssertionError, self.sphinx_bs.validate_ready_to_run)
+        self.sphinx_band_structure.input["THREADS"] = 20
+        self.sphinx_band_structure.server.cores = 10
+        self.assertRaises(AssertionError, self.sphinx_band_structure.validate_ready_to_run)
 
-        self.sphinx_bs.input.main = {}
-        self.assertRaises(AssertionError, self.sphinx_bs.validate_ready_to_run)
+        self.sphinx_band_structure.input.sphinx.main = {}
+        self.assertRaises(AssertionError, self.sphinx_band_structure.validate_ready_to_run)
 
-        backup = self.sphinx.input.basis.eCut
-        self.sphinx.input.basis.eCut = 400
+        backup = self.sphinx.input.sphinx.basis.eCut
+        self.sphinx.input.sphinx.basis.eCut = 400
         self.assertFalse(self.sphinx.validate_ready_to_run())
-        self.sphinx.input.basis.eCut = backup
+        self.sphinx.input.sphinx.basis.eCut = backup
 
-        backup = self.sphinx.input.basis.kPoint.copy()
-        self.sphinx.input.basis.kPoint = {
+        backup = self.sphinx.input.sphinx.basis.kPoint.copy()
+        self.sphinx.input.sphinx.basis.kPoint = {
             "coords": [0.5, 0.5, 0.25],
             "weight": 1
         }
         self.assertFalse(self.sphinx.validate_ready_to_run())
-        self.sphinx.input.basis.kPoint = backup
+        self.sphinx.input.sphinx.basis.kPoint = backup
 
-        backup = self.sphinx.input.hamilton.ekt
-        self.sphinx.input.hamilton.ekt = 0.0001
+        backup = self.sphinx.input.sphinx.PAWHamiltonian.ekt
+        self.sphinx.input.sphinx.PAWHamiltonian.ekt = 0.0001
         self.assertFalse(self.sphinx.validate_ready_to_run())
-        self.sphinx.input.hamilton.ekt = backup
+        self.sphinx.input.sphinx.PAWHamiltonian.ekt = backup
 
-        backup = self.sphinx.input.hamilton.xc
-        self.sphinx.input.hamilton.xc = "Wrong"
+        backup = self.sphinx.input.sphinx.PAWHamiltonian.xc
+        self.sphinx.input.sphinx.PAWHamiltonian.xc = "Wrong"
         self.assertFalse(self.sphinx.validate_ready_to_run())
-        self.sphinx.input.hamilton.xc = backup
+        self.sphinx.input.sphinx.PAWHamiltonian.xc = backup
 
-        backup = self.sphinx.input.hamilton.xc
-        self.sphinx.input.hamilton.xc = "Wrong"
+        backup = self.sphinx.input.sphinx.PAWHamiltonian.xc
+        self.sphinx.input.sphinx.PAWHamiltonian.xc = "Wrong"
         self.assertFalse(self.sphinx.validate_ready_to_run())
-        self.sphinx.input.hamilton.xc = backup
+        self.sphinx.input.sphinx.PAWHamiltonian.xc = backup
 
-        backup = self.sphinx.input.hamilton.nEmptyStates
-        self.sphinx.input.hamilton.nEmptyStates = 100
+        backup = self.sphinx.input.sphinx.PAWHamiltonian.nEmptyStates
+        self.sphinx.input.sphinx.PAWHamiltonian.nEmptyStates = 100
         self.assertFalse(self.sphinx.validate_ready_to_run())
-        self.sphinx.input.hamilton.nEmptyStates = backup
+        self.sphinx.input.sphinx.PAWHamiltonian.nEmptyStates = backup
 
-        backup = self.sphinx.input.structure.copy()
-        self.sphinx.input.structure.cell = [[0,0,0],[0,0,0],[0,0,0]]
+        backup = self.sphinx.input.sphinx.structure.copy()
+        self.sphinx.input.sphinx.structure.cell = [[0,0,0],[0,0,0],[0,0,0]]
         self.assertFalse(self.sphinx.validate_ready_to_run())
-        self.sphinx.input.structure = backup
+        self.sphinx.input.sphinx.structure = backup
 
         self.assertTrue(self.sphinx.validate_ready_to_run())
 
