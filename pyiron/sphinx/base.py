@@ -427,9 +427,6 @@ class SphinxBase(GenericDFTJob):
                         )
             else:
                 warnings.warn("executable version could not be identified")
-        #self.input.sphinx.main.setdefault(
-        #    "noWavesStorage", not self.input["WriteWaves"]
-        #    )
 
     def load_basis_group(self):
         """
@@ -1185,13 +1182,6 @@ class SphinxBase(GenericDFTJob):
                           == str(self.get_structure_group()))
         if not structure_sync and not self.input.sphinx.structure.locked:
             self.load_structure_group()
-        # self.input.sphinx.structure.cell = str(self.input.sphinx.structure.cell)
-
-        # self.input.sphinx.structure --> structure.sx
-        # with open(
-        #     posixpath.join(self.working_directory, "structure.sx"), "w"
-        # ) as f:
-        #     f.write(self.input.sphinx.structure.to_sphinx())
 
         # If the species group was not modified directly by the user,
         # via job.input.pawPot (which is likely True),
