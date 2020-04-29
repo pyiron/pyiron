@@ -1,5 +1,4 @@
 channels:
-  - anaconda
   - conda-forge
 dependencies:
   - ase =3.19
