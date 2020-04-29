@@ -3550,8 +3550,8 @@ class Atoms(object):
     @property
     def scaled_positions(self):
         warnings.warn(
-            "scaled_positions is deprecated as of April 1, 2020"
-            + " - not guaranteed to work from October 1, 2020. "
+            "scaled_positions is deprecated as of vers. 0.2"
+            + " - not guaranteed to work from vers. 0.3 "
             + "Use get_scaled_positions instead",
             DeprecationWarning,
         )
@@ -3560,8 +3560,8 @@ class Atoms(object):
     @scaled_positions.setter
     def scaled_positions(self, positions):
         warnings.warn(
-            "scaled_positions is deprecated as of April 1, 2020"
-            + " - not guaranteed to work from October 1, 2020. "
+            "scaled_positions is deprecated as of vers. 0.2"
+            + " - not guaranteed to work from vers. 0.3 "
             + "Use set_scaled_positions instead",
             DeprecationWarning,
         )
