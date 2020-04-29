@@ -421,6 +421,8 @@ class SphinxOutput(GenericInteractiveOutput):
             xticks = np.arange(1, n_bands+1)
             plt.xlabel('Electron number')
             plt.ylabel('Occupancy')
+            if n_bands<20:
+                plt.xticks(xticks)
             plt.axvline(n_elec, label='#electrons: {}'.format(n_elec))
             plt.axvline(max_occ, color='red',
                 label='Max occupancy: {}'.format(max_occ))
