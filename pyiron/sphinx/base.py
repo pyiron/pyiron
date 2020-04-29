@@ -26,7 +26,6 @@ from pyiron.sphinx.potential import find_potential_file \
     as find_potential_file_jth
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
-from pyiron.atomistics.job.atomistic import GenericOutput
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = (
@@ -65,15 +64,15 @@ class SphinxBase(GenericDFTJob):
 
     ```python
     # Modify/add a new parameter via
-    job.input.hamilton.nEmptyStates = 15
-    job.input.hamilton.dipoleCorrection = True
+    job.input.PAWHamiltonian.nEmptyStates = 15
+    job.input.PAWHamiltonian.dipoleCorrection = True
     # or
-    job.input.hamilton.set("nEmptyStates", 15)
-    job.input.hamilton.set("dipoleCorrection", True)
+    job.input.PAWHamiltonian.set("nEmptyStates", 15)
+    job.input.PAWHamiltonian.set("dipoleCorrection", True)
     # Modify/add a sub-group via
-    job.input.guess.rho.charged = {"charge": 2, "z": 25}
+    job.input.initialGuess.rho.charged = {"charge": 2, "z": 25}
     # or
-    job.input.guess.rho.set("charged", {"charge": 2, "z": 25})
+    job.input.initialGuess.rho.set("charged", {"charge": 2, "z": 25})
     ```
 
     Args:
@@ -85,7 +84,6 @@ class SphinxBase(GenericDFTJob):
 
     def __init__(self, project, job_name):
         super(SphinxBase, self).__init__(project, job_name)
-        self.output = SphinxOutput(job=self)
         self.input = Input()
         self.input.load_default()
         self._save_memory = False
@@ -124,10 +122,10 @@ class SphinxBase(GenericDFTJob):
 
     @property
     def plane_wave_cutoff(self):
-        if "eCut" in self.input.basis.keys():
-            return self.input.basis["eCut"] * RYDBERG_TO_EV
+        if "eCut" in self.input.sphinx.basis.keys():
+            return self.input.sphinx.basis["eCut"] * RYDBERG_TO_EV
         else:
-            return self.input["EnCut"]
+            return self.input.sphinx["EnCut"]
 
     @property
     def fix_spin_constraint(self):
@@ -157,7 +155,7 @@ class SphinxBase(GenericDFTJob):
                 + "Please make sure it is in eV (1eV = 13.606 Ry)."
             )
         self.input["EnCut"] = val
-        self.input.basis.eCut = self.input["EnCut"] / RYDBERG_TO_EV
+        self.input.sphinx.basis.eCut = self.input["EnCut"] / RYDBERG_TO_EV
 
     @property
     def exchange_correlation_functional(self):
@@ -180,8 +178,8 @@ class SphinxBase(GenericDFTJob):
                 SyntaxWarning,
             )
             self.input["Xcorr"] = val
-        if "xc" in self.input.hamilton.keys():
-            self.input.hamilton.xc = self.input["Xcorr"]
+        if "xc" in self.input.sphinx.PAWHamiltonian.keys():
+            self.input.sphinx.PAWHamiltonian.xc = self.input["Xcorr"]
 
     def set_input_to_read_only(self):
         """
@@ -250,7 +248,7 @@ class SphinxBase(GenericDFTJob):
         """
         if keep_angstrom:
             structure_group = Group(
-                [("cell", np.array(self.structure.cell).tolist())]
+                [("cell", np.array(self.structure.cell))]
             )
         else:
             structure_group = Group(
@@ -259,7 +257,7 @@ class SphinxBase(GenericDFTJob):
                         "cell",
                         np.array(
                             self.structure.cell * 1 / BOHR_TO_ANGSTROM
-                        ).tolist(),
+                        ),
                     )
                 ]
             )
@@ -296,12 +294,12 @@ class SphinxBase(GenericDFTJob):
                 if keep_angstrom:
                     structure_group[
                         "species"][-1]["atom"][-1]["coords"] = (
-                        np.array(elm_pos).tolist()
+                        np.array(elm_pos)
                     )
                 else:
                     structure_group[
                         "species"][-1]["atom"][-1]["coords"] = (
-                        np.array(elm_pos * 1 / BOHR_TO_ANGSTROM).tolist()
+                        np.array(elm_pos * 1 / BOHR_TO_ANGSTROM)
                     )
                 if all(selective):
                     structure_group[
@@ -327,11 +325,11 @@ class SphinxBase(GenericDFTJob):
         Args:
             keep_angstrom (bool): Store distances in Angstroms or Bohr
         """
-        self.input.structure = self.get_structure_group(
+        self.input.sphinx.structure = self.get_structure_group(
             keep_angstrom=keep_angstrom
             )
 
-    def load_species_group(self, check_overlap=True, potformat='JTH'):
+    def load_species_group(self, check_overlap=True, potformat='VASP'):
         """
         Build the species Group object based on self.structure
 
@@ -342,15 +340,15 @@ class SphinxBase(GenericDFTJob):
                 read. Options are JTH or VASP.
         """
 
-        self.input.species = Group()
+        self.input.sphinx.pawPot = Group()
         for species_obj in self.structure.get_species_objects():
             if species_obj.Parent is not None:
                 elem = species_obj.Parent
             else:
                 elem = species_obj.Abbreviation
-            self.input.species.setdefault("species", [])
+            self.input.sphinx.pawPot.setdefault("species", [])
             if potformat == "JTH":
-                self.input.species["species"].append(
+                self.input.sphinx.pawPot["species"].append(
                     odict(
                         [
                             ("name", '"' + elem + '"'),
@@ -361,7 +359,7 @@ class SphinxBase(GenericDFTJob):
                     )
                 )
             elif potformat == "VASP":
-                self.input.species["species"].append(
+                self.input.sphinx.pawPot["species"].append(
                     odict(
                         [
                             ("name", '"' + elem + '"'),
@@ -374,9 +372,9 @@ class SphinxBase(GenericDFTJob):
             else:
                 raise ValueError()
         if not check_overlap:
-            self.input.species["species"][-1]["checkOverlap"] = "false"
+            self.input.sphinx.pawPot["species"][-1]["checkOverlap"] = "false"
         if self.input["KJxc"]:
-            self.input.species["kjxc"] = True
+            self.input.sphinx.pawPot["kjxc"] = True
 
     def load_main_group(self):
         """
@@ -387,51 +385,48 @@ class SphinxBase(GenericDFTJob):
         GenericParameters (self.input).
         """
 
-        self.input.main.setdefault("scfDiag", [])
+        self.input.sphinx.main.setdefault("scfDiag", [])
         if len(self.restart_file_list) != 0 \
         and not self._generic_input["restart_for_band_structure"]:
-            self.input.main.scfDiag.append(
+            self.input.sphinx.main.scfDiag.append(
                 self.get_scf_group(
                     maxSteps=10, keepRhoFixed=True, dEnergy=1.0e-4
                 )
             )
         if self.input["Istep"] is not None:
-            self.input.main["linQN"] = Group()
-            self.input.main["linQN"]["maxSteps"] = str(self.input["Istep"])
+            self.input.sphinx.main["linQN"] = Group()
+            self.input.sphinx.main["linQN"]["maxSteps"] = str(self.input["Istep"])
             if self.input["dE"] is None and self.input["dF"] is None:
                 self.input["dE"] = 1e-3
             if self.input["dE"] is not None:
-                self.input.main["linQN"]["dEnergy"] = str(
+                self.input.sphinx.main["linQN"]["dEnergy"] = str(
                     self.input["dE"] / HARTREE_TO_EV
                     )
             if self.input["dF"] is not None:
-                self.input.main["linQN"]["dF"] = str(
+                self.input.sphinx.main["linQN"]["dF"] = str(
                     self.input["dF"] / HARTREE_OVER_BOHR_TO_EV_OVER_ANGSTROM
                 )
-            self.input.main["linQN"]["bornOppenheimer"] = Group()
-            self.input.main.linQN.bornOppenheimer["scfDiag"] = \
+            self.input.sphinx.main["linQN"]["bornOppenheimer"] = Group()
+            self.input.sphinx.main.linQN.bornOppenheimer["scfDiag"] = \
                 self.get_scf_group()
         else:
             if self._generic_input["restart_for_band_structure"]:
-                self.input.main["scfDiag"].append(
+                self.input.sphinx.main["scfDiag"].append(
                     self.get_scf_group(keepRhoFixed=True)
                     )
             else:
-                self.input.main["scfDiag"].append(self.get_scf_group())
+                self.input.sphinx.main["scfDiag"].append(self.get_scf_group())
             if self.executable.version is not None:
                 vers_num = [
                     int(vv)
                     for vv in self.executable.version.split("_")[0].split(".")
                 ]
                 if self.get_version_float() > 2.5:
-                    self.input.main["evalForces"] = odict(
+                    self.input.sphinx.main["evalForces"] = odict(
                         [("file", '"relaxHist.sx"')]
                         )
             else:
                 warnings.warn("executable version could not be identified")
-        self.input.main.setdefault(
-            "noWavesStorage", not self.input["WriteWaves"]
-            )
 
     def load_basis_group(self):
         """
@@ -441,17 +436,17 @@ class SphinxBase(GenericDFTJob):
         overwriting values that were previously (intentionally)
         modified.
         """
-        self.input.basis.setdefault("eCut", self.input["EnCut"]/RYDBERG_TO_EV)
-        self.input.basis.setdefault("kPoint", Group())
-        self.input.basis.kPoint.setdefault(
-            "coords", self.input["KpointCoords"]
+        self.input.sphinx.basis.setdefault("eCut", self.input["EnCut"]/RYDBERG_TO_EV)
+        self.input.sphinx.basis.setdefault("kPoint", Group())
+        self.input.sphinx.basis.kPoint.setdefault(
+            "coords", np.array(self.input["KpointCoords"])
             )
-        self.input.basis.kPoint.setdefault("weight", 1)
-        self.input.basis.kPoint.setdefault("relative", True)
-        self.input.basis.setdefault(
-            "folding", self.input["KpointFolding"]
+        self.input.sphinx.basis.kPoint.setdefault("weight", 1)
+        self.input.sphinx.basis.kPoint.setdefault("relative", True)
+        self.input.sphinx.basis.setdefault(
+            "folding", np.array(self.input["KpointFolding"])
             )
-        self.input.basis.setdefault("saveMemory", self.input["SaveMemory"])
+        self.input.sphinx.basis.setdefault("saveMemory", self.input["SaveMemory"])
 
     def load_hamilton_group(self):
         """
@@ -461,14 +456,14 @@ class SphinxBase(GenericDFTJob):
         overwriting values that were previously (intentionally)
         modified.
         """
-        self.input.hamilton.setdefault(
+        self.input.sphinx.PAWHamiltonian.setdefault(
             "nEmptyStates", self.input["EmptyStates"]
             )
-        self.input.hamilton.setdefault(
+        self.input.sphinx.PAWHamiltonian.setdefault(
             "ekt", self.input["Sigma"]/HARTREE_TO_EV
             )
-        self.input.hamilton.setdefault("xc", self.input["Xcorr"])
-        self.input.hamilton.setdefault("spinPolarized", self._spin_enabled)
+        self.input.sphinx.PAWHamiltonian.setdefault("xc", self.input["Xcorr"])
+        self.input.sphinx.PAWHamiltonian.setdefault("spinPolarized", self._spin_enabled)
 
     def load_guess_group(self, update_spins=True):
         """
@@ -493,18 +488,18 @@ class SphinxBase(GenericDFTJob):
             if "waves.sxb" in ff.split("/")[-1]:
                 wave_function_file = ff
 
-        self.input.guess.setdefault("waves", Group())
-        self.input.guess.waves.setdefault("lcao", Group())
-        self.input.guess.waves.setdefault("pawBasis", True)
+        self.input.sphinx.initialGuess.setdefault("waves", Group())
+        self.input.sphinx.initialGuess.waves.setdefault("lcao", Group())
+        self.input.sphinx.initialGuess.waves.setdefault("pawBasis", True)
         if wave_function_file is not None:
-            self.input.guess.setdefault("exchange", Group())
-            self.input.guess.exchange.setdefault(
+            self.input.sphinx.initialGuess.setdefault("exchange", Group())
+            self.input.sphinx.initialGuess.exchange.setdefault(
                 "file", '"' + wave_function_file + '"'
             )
         if charge_density_file is None:
-            self.input.guess.setdefault("rho", Group({"atomicOrbitals": True}))
+            self.input.sphinx.initialGuess.setdefault("rho", Group({"atomicOrbitals": True}))
         else:
-            self.input.guess.setdefault(
+            self.input.sphinx.initialGuess.setdefault(
                 "rho", Group({"file": '"' + charge_density_file + '"'})
                 )
         if self._spin_enabled:
@@ -518,17 +513,17 @@ class SphinxBase(GenericDFTJob):
             ):
                 raise ValueError("Sphinx only supports collinear spins.")
             else:
-                self.input.guess.rho.setdefault("atomicSpin", [])
+                self.input.sphinx.initialGuess.rho.setdefault("atomicSpin", [])
                 if update_spins:
-                    self.input.guess.rho.atomicSpin = []
-                if len(self.input.guess.rho.atomicSpin) == 0:
+                    self.input.sphinx.initialGuess.rho.atomicSpin = []
+                if len(self.input.sphinx.initialGuess.rho.atomicSpin) == 0:
                     for spin in self.structure.get_initial_magnetic_moments()[
                         self.id_pyi_to_spx
                     ]:
-                        self.input.guess.rho["atomicSpin"].append(
+                        self.input.sphinx.initialGuess.rho["atomicSpin"].append(
                             {"label": '"spin_' + str(spin) + '"', "spin": str(spin)}
                         )
-        self.input.guess.setdefault(
+        self.input.sphinx.initialGuess.setdefault(
             "noWavesStorage", not self.input["WriteWaves"]
             )
 
@@ -745,13 +740,12 @@ class SphinxBase(GenericDFTJob):
         )
 
         new_job.input = self.input
+        new_job.load_default_groups()
 
         if from_charge_density and os.path.isfile(
             posixpath.join(self.working_directory, "rho.sxb")
         ):
-            new_job.input.guess.remove_flag("atomicOrbitals")
-            new_job.input.guess["rho"]["file"] = posixpath.join(
-                self.working_directory, "rho.sxb")
+            new_job.restart_file_list.append(posixpath.join(self.working_directory, "rho.sxb"))
 
         elif from_charge_density:
             self._logger.warning(
@@ -761,14 +755,13 @@ class SphinxBase(GenericDFTJob):
         if from_wave_functions and os.path.isfile(
             posixpath.join(self.working_directory, "waves.sxb")
         ):
-            new_job.input.guess.remove_flag("atomicOrbitals")
-            new_job.input.guess["rho"]["fromWaves"] = posixpath.join(
-                self.working_directory, "waves.sxb")
+            new_job.restart_file_list.append(posixpath.join(self.working_directory, "waves.sxb"))
         elif from_wave_functions:
             self._logger.warning(
                 msg="No wavefunction file (waves.sxb) was found for "
                 + f"job {self.job_name} in {self.working_directory}."
             )
+        new_job.load_default_groups()
         return new_job
 
     def to_hdf(self, hdf=None, group_name=None):
@@ -980,7 +973,7 @@ class SphinxBase(GenericDFTJob):
                     "Number of empty states must be greater than 0"
                     )
             self.input["EmptyStates"] = n_empty_states
-        self.input.hamilton.nEmptyStates = self.input["EmptyStates"]
+        self.input.sphinx.PAWHamiltonian.nEmptyStates = self.input["EmptyStates"]
 
     def _set_kpoints(
         self,
@@ -1037,24 +1030,24 @@ class SphinxBase(GenericDFTJob):
                 mesh = self.get_k_mesh_by_cell(
                     kpoints_per_angstrom=kpoints_per_angstrom
                     )
-            if "kPoints" in self.input.basis:
-                del self.input.basis["kPoints"]
-            self.input.basis.setdefault("kPoint", {})
+            if "kPoints" in self.input.sphinx.basis:
+                del self.input.sphinx.basis["kPoints"]
+            self.input.sphinx.basis.setdefault("kPoint", {})
             if mesh is not None:
                 self.input["KpointFolding"] = list(mesh)
-                self.input.basis["folding"] = self.input["KpointFolding"]
+                self.input.sphinx.basis["folding"] = np.array(self.input["KpointFolding"])
             if center_shift is not None:
                 self.input["KpointCoords"] = list(center_shift)
-                self.input.basis["kPoint"]["coords"] = \
-                    self.input["KpointCoords"]
-                self.input.basis.kPoint["weight"] = 1
-                self.input.basis.kPoint["relative"] = True
+                self.input.sphinx.basis["kPoint"]["coords"] = \
+                    np.array(self.input["KpointCoords"])
+                self.input.sphinx.basis.kPoint["weight"] = 1
+                self.input.sphinx.basis.kPoint["relative"] = True
 
         elif scheme == "Line":
             # Remove Kpoint and set Kpoints
 
-            if "kPoint" in self.input.basis:
-                del self.input.basis["kPoint"]
+            if "kPoint" in self.input.sphinx.basis:
+                del self.input.sphinx.basis["kPoint"]
                 del self.input["KpointFolding"]
                 del self.input["KpointCoords"]
             if n_path is None and self._generic_input["n_path"] is None:
@@ -1116,7 +1109,7 @@ class SphinxBase(GenericDFTJob):
                     ("nPoints", n_path),
                     ("label", '"' + path[1][1].replace("'", "p") + '"'),
                 ])
-            self.input.basis["kPoints"] = Group(kpoints)
+            self.input.sphinx.basis["kPoints"] = Group(kpoints)
         else:
             raise ValueError("only Monkhorst-Pack mesh and Line mode\
                 are currently implemented in Pyiron for SPHInX")
@@ -1129,7 +1122,7 @@ class SphinxBase(GenericDFTJob):
         Nearly every default simply points to a variable stored in
         self.input.
 
-        Does not load job.input.structure or job.input.species.
+        Does not load job.input.structure or job.input.pawPot.
         These groups should usually be modified via job.structure,
         in which case they will be set at the last minute when
         the job is run. These groups can be synced to job.structure
@@ -1155,17 +1148,17 @@ class SphinxBase(GenericDFTJob):
             else:
                 self.input["EmptyStates"] = int(len(self.structure) + 3)
 
-        if not self.input.basis.locked:
+        if not self.input.sphinx.basis.locked:
             self.load_basis_group()
-        if not self.input.structure.locked:
+        if not self.input.sphinx.structure.locked:
             self.load_structure_group()
-        if not self.input.species.locked:
+        if not self.input.sphinx.pawPot.locked:
             self.load_species_group()
-        if not self.input.guess.locked:
+        if not self.input.sphinx.initialGuess.locked:
             self.load_guess_group()
-        if not self.input.hamilton.locked:
+        if not self.input.sphinx.PAWHamiltonian.locked:
             self.load_hamilton_group()
-        if not self.input.main.locked:
+        if not self.input.sphinx.main.locked:
             self.load_main_group()
 
 
@@ -1182,29 +1175,18 @@ class SphinxBase(GenericDFTJob):
         Automatically called by job.run()
         """
 
-        # self.input --> userparameters.sx (general variables)
-        # self.input.write_file(
-        #     file_name="userparameters.sx",
-        #     cwd=self.working_directory
-        # )
-
         # If the structure group was not modified directly by the
         # user, via job.input.structure (which is likely True),
         # load it based on job.structure.
-        structure_sync = self.input.structure == self.get_structure_group()
-        if not structure_sync and not self.input.structure.locked:
+        structure_sync = (str(self.input.sphinx.structure)
+                          == str(self.get_structure_group()))
+        if not structure_sync and not self.input.sphinx.structure.locked:
             self.load_structure_group()
 
-        # self.input.structure --> structure.sx
-        with open(
-            posixpath.join(self.working_directory, "structure.sx"), "w"
-        ) as f:
-            f.write(self.input.structure.to_sphinx())
-
         # If the species group was not modified directly by the user,
-        # via job.input.species (which is likely True),
+        # via job.input.pawPot (which is likely True),
         # load it based on job.structure.
-        if not structure_sync and not self.input.species.locked:
+        if not structure_sync and not self.input.sphinx.pawPot.locked:
             self.load_species_group()
 
         # copy potential files to working directory
@@ -1221,20 +1203,21 @@ class SphinxBase(GenericDFTJob):
 
         # Write spin constraints, if set via _generic_input.
         all_groups = [
-            self.input.species,
-            self.input.structure,
-            self.input.basis,
-            self.input.hamilton,
-            self.input.guess,
-            self.input.main
+            self.input.sphinx.pawPot,
+            self.input.sphinx.structure,
+            self.input.sphinx.basis,
+            self.input.sphinx.PAWHamiltonian,
+            self.input.sphinx.initialGuess,
+            self.input.sphinx.main
         ]
 
         if self._generic_input["fix_spin_constraint"]:
-            all_groups.append(self.input.spin)
+            self.input.sphinx.spinConstraint = Group()
+            all_groups.append(self.input.sphinx.spinConstraint)
             self.input_writer.write_spin_constraints(
                 cwd=self.working_directory
                 )
-            self.input.spin.setdefault("file", '"spins.in"')
+            self.input.sphinx.spinConstraint.setdefault("file", '"spins.in"')
 
         # In case the entire group was
         # set/overwritten as a normal dict.
@@ -1248,26 +1231,7 @@ class SphinxBase(GenericDFTJob):
             f.write("//SPHInX input file generated by pyiron\n\n")
             f.write("format paw;\n")
             f.write("include <parameters.sx>;\n\n")
-            f.write("pawPot {\n")
-            f.write(self.input.species.to_sphinx(indent=1))
-            f.write("}\n\n")
-            f.write("structure { include <structure.sx>; }\n\n")
-            f.write("basis {\n")
-            f.write(self.input.basis.to_sphinx(indent=1))
-            f.write("}\n\n")
-            f.write("PAWHamiltonian {\n")
-            f.write(self.input.hamilton.to_sphinx(indent=1))
-            f.write("}\n\n")
-            f.write("initialGuess {\n")
-            f.write(self.input.guess.to_sphinx(indent=1))
-            f.write("}\n\n")
-            if self._generic_input["fix_spin_constraint"]:
-                f.write("spinConstraint {\n")
-                f.write(self.input.spin.to_sphinx(indent=1))
-                f.write("}\n\n")
-            f.write("main {\n")
-            f.write(self.input.main.to_sphinx(indent=1))
-            f.write("}\n")
+            f.write(self.input.sphinx.to_sphinx(indent=0))
 
     def collect_output(self, force_update=False):
         """
@@ -1351,35 +1315,35 @@ class SphinxBase(GenericDFTJob):
 
             if (
                 not (
-                    isinstance(self.input.basis["eCut"], int)
-                    or isinstance(self.input.basis["eCut"], float)
+                    isinstance(self.input.sphinx.basis["eCut"], int)
+                    or isinstance(self.input.sphinx.basis["eCut"], float)
                 )
-                or round(self.input.basis["eCut"]*RYDBERG_TO_EV, 0) == 340
+                or round(self.input.sphinx.basis["eCut"]*RYDBERG_TO_EV, 0) == 340
             ):
                 warnings.warn(
                     "Energy cut-off value wrong or not modified from default "+
                     "340 eV; change it via job.set_encut()"
                 )
             if not (
-                isinstance(self.input.basis["kPoint"]["coords"], list)
-                or len(self.input.basis["kPoint"]["coords"]) != 3
+                isinstance(self.input.sphinx.basis["kPoint"]["coords"], np.ndarray)
+                or len(self.input.sphinx.basis["kPoint"]["coords"]) != 3
             ):
                 warnings.warn("K point coordinates seem to be inappropriate")
             if (
                 not (
-                    isinstance(self.input.hamilton["ekt"], int)
-                    or isinstance(self.input.hamilton["ekt"], float)
+                    isinstance(self.input.sphinx.PAWHamiltonian["ekt"], int)
+                    or isinstance(self.input.sphinx.PAWHamiltonian["ekt"], float)
                 )
-                or round(self.input.hamilton["ekt"]*HARTREE_TO_EV, 1) == 0.2
+                or round(self.input.sphinx.PAWHamiltonian["ekt"]*HARTREE_TO_EV, 1) == 0.2
             ):
                 warnings.warn(
                     "Fermi smearing value wrong or not modified from default "+
                     "0.2 eV; change it via job.set_occupancy_smearing()"
                 )
             if not (
-                isinstance(self.input.basis["folding"], list)
-                or len(self.input.basis["folding"]) != 3
-            ) or self.input.basis["folding"] == [4,4,4]:
+                isinstance(self.input.sphinx.basis["folding"], np.ndarray)
+                or len(self.input.sphinx.basis["folding"]) != 3
+            ) or self.input.sphinx.basis["folding"].tolist() == [4,4,4]:
                 warnings.warn(
                     "K point folding wrong or not modified from default "+
                     "[4,4,4]; change it via job.set_kpoints()"
@@ -1417,31 +1381,23 @@ class SphinxBase(GenericDFTJob):
         """
 
         all_groups = {
-            "job.input.species": self.input.species,
-            "job.input.structure": self.input.structure,
-            "job.input.basis": self.input.basis,
-            "job.input.hamilton": self.input.hamilton,
-            "job.input.guess": self.input.guess,
-            "job.input.main": self.input.main
+            "job.input.pawPot": self.input.sphinx.pawPot,
+            "job.input.structure": self.input.sphinx.structure,
+            "job.input.basis": self.input.sphinx.basis,
+            "job.input.PAWHamiltonian": self.input.sphinx.PAWHamiltonian,
+            "job.input.initialGuess": self.input.sphinx.initialGuess,
+            "job.input.main": self.input.sphinx.main
         }
 
-        if self._generic_input["fix_spin_constraint"]:
-            all_groups["job.input.spin"] = self.input.spin
-
         if np.any([len(all_groups[group]) == 0 for group in all_groups]):
-
-            if self._generic_input["fix_spin_constraint"]:
-                group_names.append("job.input.spin")
-
-            raise AssertionError(
-                "The following input groups have not been loaded: "
-                + "\n"
+            warnings.warn("The following input groups have not been loaded:\n"
                 + ", ".join([
                     g for g in all_groups if len(all_groups[g]) == 0
                     ])
                 + "\n"
-                + "Please set them manually or via job.calc_static() etc."
+                + "They are set to default values."
             )
+            self.load_default_groups()
         if self.structure is None:
             raise AssertionError(
                 "Structure not set; set it via job.structure = "
@@ -1458,43 +1414,44 @@ class SphinxBase(GenericDFTJob):
             # self.input and individual groups, in case
             # a user modified them directly
             if round(self.input["EnCut"], 0)\
-                != round(self.input.basis.eCut * RYDBERG_TO_EV, 0):
+                != round(self.input.sphinx.basis.eCut * RYDBERG_TO_EV, 0):
                 warnings.warn("job.input.basis.eCut was modified directly. "
                 + "It is recommended to set it via job.set_encut()")
 
             if round(self.input["Sigma"], 1)\
-                != round(self.input.hamilton.ekt * HARTREE_TO_EV, 1):
-                warnings.warn("job.input.hamilton.ekt was modified directly. "
+                != round(self.input.sphinx.PAWHamiltonian.ekt * HARTREE_TO_EV, 1):
+                warnings.warn("job.input.PAWHamiltonian.ekt was modified directly. "
                 + "It is recommended to set it via "
                 + "job.set_occupancy_smearing()")
 
-            if self.input["Xcorr"] != self.input.hamilton.xc:
-                warnings.warn("job.input.hamilton.xc was modified directly. "
+            if self.input["Xcorr"] != self.input.sphinx.PAWHamiltonian.xc:
+                warnings.warn("job.input.PAWHamiltonian.xc was modified directly. "
                 + "It is recommended to set it via "
                 + "job.exchange_correlation_functional()")
 
-            if self.input["EmptyStates"] != self.input.hamilton.nEmptyStates:
-                warnings.warn("job.input.hamilton.nEmptyStates was modified "
+            if self.input["EmptyStates"] != self.input.sphinx.PAWHamiltonian.nEmptyStates:
+                warnings.warn("job.input.PAWHamiltonian.nEmptyStates was modified "
                 + "directly. It is recommended to set it via "
                 + "job.set_empty_states()")
 
             if (
                 "KpointCoords" in self.input.keys() \
-                and self.input["KpointCoords"]\
-                    != self.input.basis.kPoint.coords
+                and np.array(self.input["KpointCoords"]).tolist()\
+                    != np.array(self.input.sphinx.basis.kPoint['coords']).tolist()
                 ) \
             or (
                 "KpointFolding" in self.input.keys() \
-                and self.input["KpointFolding"]\
-                    != self.input.basis.folding
+                and np.array(self.input["KpointFolding"]).tolist()\
+                    != np.array(self.input.sphinx.basis['folding']).tolist()
                 ):
 
                 warnings.warn("job.input.basis.kPoint was modified directly. "
                 + "It is recommended to set all k-point settings via "
                 + "job.set_kpoints()")
 
-            structure_sync = self.input.structure == self.get_structure_group()
-            if not structure_sync and not self.input.structure.locked:
+            structure_sync = (str(self.input.sphinx.structure)
+                              == str(self.get_structure_group()))
+            if not structure_sync and not self.input.sphinx.structure.locked:
                 warnings.warn(
                     "job.input.structure != job.structure. "
                     + "The current job.structure will overwrite "
@@ -1759,7 +1716,8 @@ class Group(dict):
         self.set(parameter, val)
 
     def remove(self, name):
-        del self[name]
+        if name in self.keys():
+            del self[name]
 
     def to_sphinx(self, content="__self__", indent=0):
         line = ""
@@ -1770,48 +1728,31 @@ class Group(dict):
         for k, v in content.items():
             k = k.split("___")[0]
 
-            if isinstance(v, list):
-                if k in ["folding", "coords"]:
-                    line += indent * "\t" + f"{k} = {str(v)};\n"
-                elif k == "cell":
-                    line += indent * "\t" + k + "[\n"
-                    for vector in content[k]:
-                        line += (indent+1) * "\t" + f"{str(vector)},\n"
-                    line += indent * "\t" + "];\n"
-                else:
-                    for step in content[k]:
+            if not isinstance(v, list):
+                v = [v]
+            for vv in v:
+                if isinstance(vv, bool):
+                    if vv is True:
+                        line += indent * "\t" + k + ";\n"
+                    elif vv is False:
+                        line += indent * "\t" + k + ' = false;\n'
+
+                elif isinstance(vv, dict):
+                    if len(vv) == 0:
+                        line += indent * "\t" + k + " {}\n"
+                    else:
                         line += (
                             indent * "\t"
                             + k
                             + " {\n"
-                            + content.to_sphinx(step, indent+1)
+                            + self.to_sphinx(vv, indent+1)
                             + indent * "\t"
                             + "}\n"
                         )
-
-            else:
-                v = [v]
-                for vv in v:
-                    if isinstance(vv, bool):
-                        if vv is True:
-                            line += indent * "\t" + k + ";\n"
-                        elif vv is False:
-                            line += indent * "\t" + k + ' = false;\n'
-
-                    elif isinstance(vv, dict):
-                        if len(vv) == 0:
-                            line += indent * "\t" + k + " {}\n"
-                        else:
-                            line += (
-                                indent * "\t"
-                                + k
-                                + " {\n"
-                                + self.to_sphinx(vv, indent+1)
-                                + indent * "\t"
-                                + "}\n"
-                            )
-                    else:
-                        line += indent * "\t" + k + " = " + str(vv) + ";\n"
+                else:
+                    if isinstance(vv, np.ndarray):
+                        vv = vv.tolist()
+                    line += indent * "\t" + k + " = " + str(vv) + ";\n"
         return line
 
 
@@ -1833,13 +1774,13 @@ class Input(GenericParameters):
             end_value_char=";",
         )
         self._bool_dict = {True: "true", False: "false"}
-        self.species = Group()
-        self.structure = Group()
-        self.basis = Group()
-        self.hamilton = Group()
-        self.guess = Group()
-        self.spin = Group()
-        self.main = Group()
+        self.sphinx = Group()
+        self.sphinx.pawPot = Group()
+        self.sphinx.structure = Group()
+        self.sphinx.basis = Group()
+        self.sphinx.PAWHamiltonian = Group()
+        self.sphinx.initialGuess = Group()
+        self.sphinx.main = Group()
 
     def load_default(self):
         """
@@ -2418,45 +2359,3 @@ class Output(object):
         """
         Load output from an HDF5 file
         """
-
-
-class SphinxOutput(GenericOutput):
-    def __init__(self, job):
-        super(SphinxOutput, self).__init__(job)
-
-    def check_band_occupancy(self, plot=True):
-        """
-            Check whether there are still empty bands available.
-
-            args:
-                plot (bool): plots occupancy of the last step
-
-            returns:
-                True if there are still empty bands
-        """
-        import matplotlib.pylab as plt
-        elec_dict = self._job['output/generic/dft']['n_valence']
-        if elec_dict is None:
-            raise AssertionError('Number of electrons not parsed')
-        n_elec = np.sum([elec_dict[k]
-                         for k in self._job.structure.get_chemical_symbols()])
-        n_elec = int(np.ceil(n_elec/2))
-        bands = self._job['output/generic/dft/bands_occ'][-1]
-        bands = bands.reshape(-1, bands.shape[-1])
-        max_occ = np.sum(bands>0, axis=-1).max()
-        n_bands = bands.shape[-1]
-        if plot:
-            xticks = np.arange(1, n_bands+1)
-            plt.xlabel('Electron number')
-            plt.ylabel('Occupancy')
-            plt.axvline(n_elec, label='#electrons: {}'.format(n_elec))
-            plt.axvline(max_occ, color='red',
-                label='Max occupancy: {}'.format(max_occ))
-            plt.axvline(n_bands, color='green',
-                label='Number of bands: {}'.format(n_bands))
-            plt.plot(xticks, bands.T, 'x', color='black')
-            plt.legend()
-        if max_occ < n_bands:
-            return True
-        else:
-            return False
