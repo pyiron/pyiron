@@ -15,6 +15,7 @@ import warnings
 import json
 from collections import OrderedDict as odict
 from collections import defaultdict
+from netCDF4 import Dataset
 
 from pyiron.dft.job.generic import GenericDFTJob
 from pyiron.vasp.potential import VaspPotentialFile
@@ -2232,6 +2233,89 @@ class Output(object):
                 * BOHR_TO_ANGSTROM
             )
 
+    def get_1D_profile(self, file_name=None, axis=None):
+        
+        """
+        Extract electronic potential or charge density from a SPHInX calculation.
+        
+        SPHInX stores volumetric data as meshes in netCDF objects,
+        with z-axis values running fastest (innermost).
+
+        Args:
+            file_name: file to parse (should be netCDF-format). Typically
+                rho.sxb (charge density) or vElStat-eV.sxb (cell potential)
+            axis (int or str): axis along which to average the volumetric
+                data. Default (None) is interpreted as z-axis
+                
+        Returns:
+            mesh, values (numpy.ndarrays): 1D grid points (mesh) and the respective
+                data (values) as parallel arrays
+        """
+        
+        # Convert relevant netCDF objects to numpy arrays
+        d = Dataset(file_name)
+        dim = (
+            int(d.variables["dim"][0]),
+            int(d.variables["dim"][1]),
+            int(d.variables["dim"][2])
+        )
+        data = np.array(d.variables["mesh"])
+        axis_length = np.linalg.norm(d.variables["cell"][axis].data)
+        d.close()
+
+        # Allow user to specify axis as str or int
+        axis = {
+            0: 0, "x": 0,
+            1: 1, "y": 1,
+            2: 2, "z": 2, None: 2
+        }[axis]
+
+        mesh = np.linspace(0, axis_length, dim[axis])
+        n_2D = np.product([dim[k] for k in range(3) if k != axis])
+        data = data.reshape(dim)
+        values = np.array([
+            np.sum(data.take(indices=i, axis=axis).reshape(n_2D)) / n_2D
+            for i in range(dim[axis])
+        ])
+        
+        return mesh, values
+
+    def collect_density_profiles(self, file_name=None, cwd=None):
+        f = posixpath.join(cwd, file_name)
+        try:
+            Dataset(f)
+        
+            self._parse_dict["charge_density"] = []
+            for axis in range(3):
+                self._parse_dict["charge_density"].append({})
+                mesh, density = self.get_1D_profile(
+                    file_name=f, axis=axis
+                )
+                self._parse_dict["charge_density"][axis]["mesh"] = mesh
+                self._parse_dict["charge_density"][axis]["density"] = density
+        except FileNotFoundError as e:
+            print(f"No binary density (rho.sxb) file found in {cwd}")
+
+    def collect_potential_profiles(self, file_name=None, cwd=None):
+        """
+        Save electronic potentials to SPHInX output.
+
+        """
+        f = posixpath.join(cwd, file_name)
+        try:
+            Dataset(f)
+            self._parse_dict["charge_density"] = []
+            for axis in range(3):
+                self._parse_dict["electronic_potential"].append({})
+                mesh, potential = self.get_1D_profile(
+                    file_name=f, axis=axis
+                )
+                self._parse_dict["electronic_potential"][axis]["mesh"] = mesh
+                self._parse_dict["electronic_potential"][axis]["potential"] = \
+                    potential
+        except FileNotFoundError as e:
+            print(f"No binary potential (vElStat-eV.sxb) file found in {cwd}")
+
     def collect(self, directory=os.getcwd()):
         """
         The collect function, collects all the output from a Sphinx simulation.
@@ -2247,6 +2331,9 @@ class Output(object):
                                    cwd=directory)
         self.collect_sphinx_log(file_name="sphinx.log", cwd=directory)
         self.collect_relaxed_hist(file_name="relaxHist.sx", cwd=directory)
+        self.collect_density_profiles(file_name="rho.sxb", cwd=directory)
+        self.collect_potential_profiles(file_name="vElStat-eV.sxb",
+                                        cwd=directory)
         self._job.compress()
 
     def to_hdf(self, hdf, force_update=False):
@@ -2354,6 +2441,31 @@ class Output(object):
                     elif len(self._parse_dict["scf_convergence"]) == 1:
                         hdf5_generic["cells"] = np.array(
                             [self._job.structure.cell])
+                # 1D charge density profiles
+                if "charge_density" in self._parse_dict and np.all([
+                    len(ax["mesh"]) > 0
+                    for ax in self._parse_dict["charge_density"]
+                ]) and np.all([
+                    len(ax["density"]) > 0
+                    for ax in self._parse_dict["charge_density"]
+                ]):
+                    hdf5_generic["charge_density"] = (
+                        self._parse_dict["charge_density"]
+                    )
+                # 1D potential profiles
+                if "electronic_potential" in self._parse_dict and np.all([
+                    len(ax["mesh"]) > 0 for ax in self._parse_dict[
+                        "electronic_potential"
+                    ]
+                ]) and np.all([
+                    len(ax["potential"]) > 0 for ax in self._parse_dict[
+                        "electronic_potential"
+                    ]
+                ]):
+                    hdf5_generic["electronic_potential"] = (
+                        self._parse_dict["electronic_potential"]
+                    )
+
 
     def from_hdf(self, hdf):
         """

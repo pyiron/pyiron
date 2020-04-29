@@ -40,6 +40,7 @@ setup(
         'matplotlib>=3.2.0',
         'mendeleev>=0.5.2',
         'molmod>=1.4.5',
+        'netcdf4>=1.4.2',
         'numpy>=1.18.1',
         'pandas>=1.0.1',
         'pathlib2>=2.3.5',

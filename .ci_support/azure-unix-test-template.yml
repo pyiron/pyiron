@@ -7,7 +7,7 @@ steps:
 - bash: |
     conda info -a
     conda config --set always_yes yes --set changeps1 no
-    conda install -c anaconda setuptools
+    conda install -c anaconda setuptools netcdf4
     conda update -q conda
   displayName: conda setup
 
