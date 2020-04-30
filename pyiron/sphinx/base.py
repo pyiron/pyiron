@@ -2431,7 +2431,7 @@ class Output(object):
                 if (
                     "charge_density" not in hdf5_generic.list_nodes()
                     or force_update
-                ):
+                ) and len(self._parse_dict["charge_density"]) > 0:
                     hdf5_generic["charge_density"] = (
                         self._parse_dict["charge_density"]
                     )
@@ -2439,7 +2439,7 @@ class Output(object):
                 if (
                     "electronic_potential" not in hdf5_generic.list_nodes()
                     or force_update
-                ):
+                ) and len(self._parse_dict["electronic_potential"]) > 0:
                     hdf5_generic["electronic_potential"] = (
                         self._parse_dict["electronic_potential"]
                     )
