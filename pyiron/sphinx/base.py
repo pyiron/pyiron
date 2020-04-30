@@ -10,12 +10,12 @@ import posixpath
 import re
 import stat
 from shutil import copyfile
+from scipy.io.netcdf import netcdf_file
 import scipy.constants
 import warnings
 import json
 from collections import OrderedDict as odict
 from collections import defaultdict
-from netCDF4 import Dataset
 
 from pyiron.dft.job.generic import GenericDFTJob
 from pyiron.vasp.potential import VaspPotentialFile
@@ -2233,7 +2233,7 @@ class Output(object):
                 * BOHR_TO_ANGSTROM
             )
 
-    def get_1D_profile(self, file_name=None, axis=None):
+    def get_1D_profile(self, file_name=None, axis=2):
 
         """
         Extract electronic potential or charge density from a SPHInX calculation.
@@ -2244,35 +2244,20 @@ class Output(object):
         Args:
             file_name: file to parse (should be netCDF-format). Typically
                 rho.sxb (charge density) or vElStat-eV.sxb (cell potential)
-            axis (int or str): axis along which to average the volumetric
-                data. Default (None) is interpreted as z-axis
+            axis (int): axis along which to average the volumetric
+                data. Defaults to 2 (z-axis).
 
         Returns:
             mesh, values (numpy.ndarrays): 1D grid points (mesh) and the respective
                 data (values) as parallel arrays
         """
 
-        # Convert relevant netCDF objects to numpy arrays
-        d = Dataset(file_name)
-        dim = (
-            int(d.variables["dim"][0]),
-            int(d.variables["dim"][1]),
-            int(d.variables["dim"][2])
-        )
-        data = np.array(d.variables["mesh"])
-        axis_length = np.linalg.norm(d.variables["cell"][axis].data)
-        d.close()
-
-        # Allow user to specify axis as str or int
-        axis = {
-            0: 0, "x": 0,
-            1: 1, "y": 1,
-            2: 2, "z": 2, None: 2
-        }[axis]
-
+        with netcdf_file(file_name, mmap=False) as f:
+            dim = [int(d) for d in f.variables["dim"]]
+            data = np.array(f.variables["mesh"][:]).reshape(dim)
+            axis_length = np.linalg.norm(f.variables["cell"][axis].data)
         mesh = np.linspace(0, axis_length, dim[axis])
         n_2D = np.product([dim[k] for k in range(3) if k != axis])
-        data = data.reshape(dim)
         values = np.array([
             np.sum(data.take(indices=i, axis=axis).reshape(n_2D)) / n_2D
             for i in range(dim[axis])
@@ -2283,8 +2268,7 @@ class Output(object):
     def collect_density_profiles(self, file_name=None, cwd=None):
         f = posixpath.join(cwd, file_name)
         try:
-            Dataset(f)
-
+            netcdf_file(f)
             self._parse_dict["charge_density"] = []
             for axis in range(3):
                 self._parse_dict["charge_density"].append({})
@@ -2303,7 +2287,7 @@ class Output(object):
         """
         f = posixpath.join(cwd, file_name)
         try:
-            Dataset(f)
+            netcdf_file(f)
             self._parse_dict["charge_density"] = []
             for axis in range(3):
                 self._parse_dict["electronic_potential"].append({})
