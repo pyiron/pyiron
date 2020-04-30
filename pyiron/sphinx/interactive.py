@@ -11,6 +11,7 @@ import time
 from pyiron.sphinx.base import SphinxBase, Group
 from pyiron.atomistics.job.interactive import GenericInteractive, GenericInteractiveOutput
 from collections import OrderedDict as odict
+import matplotlib.pylab as plt
 
 BOHR_TO_ANGSTROM = (
     scipy.constants.physical_constants["Bohr radius"][0] / scipy.constants.angstrom
@@ -406,7 +407,6 @@ class SphinxOutput(GenericInteractiveOutput):
             returns:
                 True if there are still empty bands
         """
-        import matplotlib.pylab as plt
         elec_dict = self._job['output/generic/dft']['n_valence']
         if elec_dict is None:
             raise AssertionError('Number of electrons not parsed')
@@ -436,7 +436,6 @@ class SphinxOutput(GenericInteractiveOutput):
             return False
 
     def plot_density_profile(self, axis=2):
-        import matplotlib.pylab as plt
         density = self._job['output/generic']['charge_density']
         if density is None:
             raise AssertionError('Charge density (rho.sxb) not parsed')
@@ -446,7 +445,6 @@ class SphinxOutput(GenericInteractiveOutput):
         plt.ylabel('Density')
 
     def plot_potential_profile(self, axis=2):
-        import matplotlib.pylab as plt
         potential = self._job['output/generic']['electronic_potential']
         if potential is None:
             raise AssertionError(

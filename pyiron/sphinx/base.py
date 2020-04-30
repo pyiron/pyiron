@@ -2288,7 +2288,7 @@ class Output(object):
         f = posixpath.join(cwd, file_name)
         try:
             netcdf_file(f)
-            self._parse_dict["charge_density"] = []
+            self._parse_dict["electronic_potential"] = []
             for axis in range(3):
                 self._parse_dict["electronic_potential"].append({})
                 mesh, potential = self.get_1D_profile(
@@ -2426,26 +2426,18 @@ class Output(object):
                         hdf5_generic["cells"] = np.array(
                             [self._job.structure.cell])
                 # 1D charge density profiles
-                if "charge_density" in self._parse_dict and np.all([
-                    len(ax["mesh"]) > 0
-                    for ax in self._parse_dict["charge_density"]
-                ]) and np.all([
-                    len(ax["density"]) > 0
-                    for ax in self._parse_dict["charge_density"]
-                ]):
+                if (
+                    "charge_density" not in hdf5_generic.list_nodes()
+                    or force_update
+                ):
                     hdf5_generic["charge_density"] = (
                         self._parse_dict["charge_density"]
                     )
                 # 1D potential profiles
-                if "electronic_potential" in self._parse_dict and np.all([
-                    len(ax["mesh"]) > 0 for ax in self._parse_dict[
-                        "electronic_potential"
-                    ]
-                ]) and np.all([
-                    len(ax["potential"]) > 0 for ax in self._parse_dict[
-                        "electronic_potential"
-                    ]
-                ]):
+                if (
+                    "electronic_potential" not in hdf5_generic.list_nodes()
+                    or force_update
+                ):
                     hdf5_generic["electronic_potential"] = (
                         self._parse_dict["electronic_potential"]
                     )
