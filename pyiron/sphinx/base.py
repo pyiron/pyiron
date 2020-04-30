@@ -2268,7 +2268,8 @@ class Output(object):
     def collect_density_profiles(self, file_name=None, cwd=None):
         f = posixpath.join(cwd, file_name)
         try:
-            netcdf_file(f)
+            test = netcdf_file(f)
+            test.close()
             self._parse_dict["charge_density"] = []
             for axis in range(3):
                 self._parse_dict["charge_density"].append({})
@@ -2287,7 +2288,8 @@ class Output(object):
         """
         f = posixpath.join(cwd, file_name)
         try:
-            netcdf_file(f)
+            test = netcdf_file(f)
+            test.close()
             self._parse_dict["electronic_potential"] = []
             for axis in range(3):
                 self._parse_dict["electronic_potential"].append({})
