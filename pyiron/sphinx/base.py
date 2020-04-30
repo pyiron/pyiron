@@ -2239,13 +2239,13 @@ class Output(object):
         Args:
             directory (str): the directory to collect the output from.
         """
+        self.collect_sphinx_log(file_name="sphinx.log", cwd=directory)
         self.collect_energy_dat(file_name="energy.dat", cwd=directory)
         self.collect_residue_dat(file_name="residue.dat", cwd=directory)
         self.collect_eps_dat(file_name="eps.dat", cwd=directory)
         self.collect_spins_dat(file_name="spins.dat", cwd=directory)
         self.collect_energy_struct(file_name="energy-structOpt.dat",
                                    cwd=directory)
-        self.collect_sphinx_log(file_name="sphinx.log", cwd=directory)
         self.collect_relaxed_hist(file_name="relaxHist.sx", cwd=directory)
         self._job.compress()
 
