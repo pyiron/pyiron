@@ -2233,7 +2233,8 @@ class Output(object):
                 * BOHR_TO_ANGSTROM
             )
 
-    def get_1D_profile(self, file_name=None, axis=2):
+    @staticmethod
+    def get_1D_profile(file_name=None, axis=2):
 
         """
         Extract electronic potential or charge density from a SPHInX calculation.
@@ -2262,7 +2263,6 @@ class Output(object):
             np.sum(data.take(indices=i, axis=axis).reshape(n_2D)) / n_2D
             for i in range(dim[axis])
         ])
-
         return mesh, values
 
     def collect_density_profiles(self, file_name=None, cwd=None):
@@ -2278,7 +2278,7 @@ class Output(object):
                 )
                 self._parse_dict["charge_density"][axis]["mesh"] = mesh
                 self._parse_dict["charge_density"][axis]["density"] = density
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             print(f"No binary density (rho.sxb) file found in {cwd}")
 
     def collect_potential_profiles(self, file_name=None, cwd=None):
@@ -2299,7 +2299,7 @@ class Output(object):
                 self._parse_dict["electronic_potential"][axis]["mesh"] = mesh
                 self._parse_dict["electronic_potential"][axis]["potential"] = \
                     potential
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             print(f"No binary potential (vElStat-eV.sxb) file found in {cwd}")
 
     def collect(self, directory=os.getcwd()):
