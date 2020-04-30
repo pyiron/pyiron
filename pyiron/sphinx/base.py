@@ -2234,10 +2234,10 @@ class Output(object):
             )
 
     def get_1D_profile(self, file_name=None, axis=None):
-        
+
         """
         Extract electronic potential or charge density from a SPHInX calculation.
-        
+
         SPHInX stores volumetric data as meshes in netCDF objects,
         with z-axis values running fastest (innermost).
 
@@ -2246,12 +2246,12 @@ class Output(object):
                 rho.sxb (charge density) or vElStat-eV.sxb (cell potential)
             axis (int or str): axis along which to average the volumetric
                 data. Default (None) is interpreted as z-axis
-                
+
         Returns:
             mesh, values (numpy.ndarrays): 1D grid points (mesh) and the respective
                 data (values) as parallel arrays
         """
-        
+
         # Convert relevant netCDF objects to numpy arrays
         d = Dataset(file_name)
         dim = (
@@ -2277,14 +2277,14 @@ class Output(object):
             np.sum(data.take(indices=i, axis=axis).reshape(n_2D)) / n_2D
             for i in range(dim[axis])
         ])
-        
+
         return mesh, values
 
     def collect_density_profiles(self, file_name=None, cwd=None):
         f = posixpath.join(cwd, file_name)
         try:
             Dataset(f)
-        
+
             self._parse_dict["charge_density"] = []
             for axis in range(3):
                 self._parse_dict["charge_density"].append({})
