@@ -2248,15 +2248,15 @@ class Output(object):
                 data. Defaults to 2 (z-axis).
 
         Returns:
-            mesh, values (numpy.ndarrays): 1D grid points (mesh) and the respective
-                data (values) as parallel arrays
+            mesh, values (numpy.ndarrays): 1D grid points in Angstroms
+                (mesh) and the respective data (values) as parallel arrays
         """
 
         with netcdf_file(file_name, mmap=False) as f:
             dim = [int(d) for d in f.variables["dim"]]
             data = np.array(f.variables["mesh"][:]).reshape(dim)
             axis_length = np.linalg.norm(f.variables["cell"][axis].data)
-        mesh = np.linspace(0, axis_length, dim[axis])
+        mesh = np.linspace(0, BOHR_TO_ANGSTROM * axis_length, dim[axis])
         n_2D = np.product([dim[k] for k in range(3) if k != axis])
         values = np.array([
             np.sum(data.take(indices=i, axis=axis).reshape(n_2D)) / n_2D

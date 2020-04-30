@@ -435,6 +435,27 @@ class SphinxOutput(GenericInteractiveOutput):
         else:
             return False
 
+    def plot_density_profile(self, axis=2):
+        import matplotlib.pylab as plt
+        density = self._job['output/generic']['charge_density']
+        if density is None:
+            raise AssertionError('Charge density (rho.sxb) not parsed')
+        plt.plot(density[axis]["mesh"], density[axis]["density"])
+        axes = "xyz"
+        plt.xlabel(f"{axes[axis]} (Angstrom)")
+        plt.ylabel('Density')
+
+    def plot_potential_profile(self, axis=2):
+        import matplotlib.pylab as plt
+        potential = self._job['output/generic']['electronic_potential']
+        if potential is None:
+            raise AssertionError(
+                'Electronic potential (vElStat-eV.sxb) not parsed'
+            )
+        plt.plot(potential[axis]["mesh"], potential[axis]["potential"])
+        axes = "xyz"
+        plt.xlabel(f"{axes[axis]} (Angstrom)")
+        plt.ylabel('Potential (eV)')
 
 class SphinxInt2(SphinxInteractive):
     def __init__(self, project, job_name):
