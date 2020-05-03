@@ -96,6 +96,7 @@ class Atoms(object):
         species=None,
         **qwargs
     ):
+        warnings.simplefilter("default")
         if symbols is not None:
             if elements is None:
                 elements = symbols
@@ -3549,7 +3550,9 @@ class Atoms(object):
     @property
     def scaled_positions(self):
         warnings.warn(
-            "scaled_positions is deprecated. Use get_scaled_positions instead",
+            "scaled_positions is deprecated as of vers. 0.2"
+            + " - not guaranteed to work from vers. 0.3 "
+            + "Use get_scaled_positions instead",
             DeprecationWarning,
         )
         return self.get_scaled_positions(wrap=False)
@@ -3557,7 +3560,9 @@ class Atoms(object):
     @scaled_positions.setter
     def scaled_positions(self, positions):
         warnings.warn(
-            "scaled_positions is deprecated. Use set_scaled_positions instead",
+            "scaled_positions is deprecated as of vers. 0.2"
+            + " - not guaranteed to work from vers. 0.3 "
+            + "Use set_scaled_positions instead",
             DeprecationWarning,
         )
         self.set_scaled_positions(positions)
