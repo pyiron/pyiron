@@ -703,7 +703,7 @@ def validate_convergence(pr, temperature_left, temperature_next, temperature_rig
                          timestep_iter, timestep_lst, timestep, fit_range_iter, fit_range_lst, fit_range,
                          nve_run_time_steps_iter, nve_run_time_steps_lst, nve_run_time_steps,
                          strain_result_lst, pressure_result_lst, step_count, step_dict, boundary_value, ratio_boundary,
-                         convergence_goal):
+                         convergence_goal, output_file='melting.json'):
     if temperature_left < temperature_next < temperature_right and enable_iteration:
         timestep = next(timestep_iter)
         fit_range = next(fit_range_iter)
@@ -723,7 +723,7 @@ def validate_convergence(pr, temperature_left, temperature_next, temperature_rig
                                  'ratio_boundary': ratio_boundary,
                                  'temperature_next': temperature_next,
                                  'center': center}
-        with open(os.path.join(pr.path, 'melting.json'), 'w') as f:
+        with open(os.path.join(pr.path, output_file), 'w') as f:
             json.dump(step_dict, f)
     else:
         timestep = step_dict[step_count]['timestep']
