@@ -723,7 +723,7 @@ def validate_convergence(pr, temperature_left, temperature_next, temperature_rig
                                  'ratio_boundary': ratio_boundary,
                                  'temperature_next': temperature_next,
                                  'center': center}
-        with open(os.path.join(pr.path, output_file), 'w') as f:
+        with open(output_file, 'w') as f:
             json.dump(step_dict, f)
     else:
         timestep = step_dict[step_count]['timestep']
