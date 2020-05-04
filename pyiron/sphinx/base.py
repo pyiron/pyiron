@@ -394,20 +394,20 @@ class SphinxBase(GenericDFTJob):
                 )
             )
         if self.input["Istep"] is not None:
-            self.input.sphinx.main["linQN"] = Group()
-            self.input.sphinx.main["linQN"]["maxSteps"] = str(self.input["Istep"])
+            self.input.sphinx.main["ricQN"] = Group()
+            self.input.sphinx.main["ricQN"]["maxSteps"] = str(self.input["Istep"])
             if self.input["dE"] is None and self.input["dF"] is None:
                 self.input["dE"] = 1e-3
             if self.input["dE"] is not None:
-                self.input.sphinx.main["linQN"]["dEnergy"] = str(
+                self.input.sphinx.main["ricQN"]["dEnergy"] = str(
                     self.input["dE"] / HARTREE_TO_EV
                     )
             if self.input["dF"] is not None:
-                self.input.sphinx.main["linQN"]["dF"] = str(
+                self.input.sphinx.main["ricQN"]["dF"] = str(
                     self.input["dF"] / HARTREE_OVER_BOHR_TO_EV_OVER_ANGSTROM
                 )
-            self.input.sphinx.main["linQN"]["bornOppenheimer"] = Group()
-            self.input.sphinx.main.linQN.bornOppenheimer["scfDiag"] = \
+            self.input.sphinx.main["ricQN"]["bornOppenheimer"] = Group()
+            self.input.sphinx.main.ricQN.bornOppenheimer["scfDiag"] = \
                 self.get_scf_group()
         else:
             if self._generic_input["restart_for_band_structure"]:
@@ -583,7 +583,7 @@ class SphinxBase(GenericDFTJob):
         ionic_forces.
 
         Loads defaults for all Sphinx input groups, including a
-        linQN-based main Group.
+        ricQN-based main Group.
 
         Args:
             retain_electrostatic_potential:
