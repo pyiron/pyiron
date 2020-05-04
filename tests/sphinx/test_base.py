@@ -308,7 +308,7 @@ class TestSphinx(unittest.TestCase):
         self.sphinx.calc_minimize(electronic_steps=100, ionic_steps=50)
         self.assertEqual(self.sphinx.input["Estep"], 100)
         self.assertEqual(self.sphinx.input["Istep"], 50)
-        self.assertEqual(self.sphinx.input.sphinx.main['linQN']['maxSteps'], '50')
+        self.assertEqual(self.sphinx.input.sphinx.main['ricQN']['maxSteps'], '50')
 
     def test_get_scf_group(self):
         with warnings.catch_warnings(record=True) as w:
