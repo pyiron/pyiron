@@ -1152,8 +1152,12 @@ class SphinxBase(GenericDFTJob):
             self.load_basis_group()
         if not self.input.sphinx.structure.locked:
             self.load_structure_group()
+        if self.input["VaspPot"]:
+            potformat = "VASP"
+        else:
+            potformat = "JTH"
         if not self.input.sphinx.pawPot.locked:
-            self.load_species_group()
+            self.load_species_group(potformat=potformat)
         if not self.input.sphinx.initialGuess.locked:
             self.load_guess_group()
         if not self.input.sphinx.PAWHamiltonian.locked:
@@ -1183,17 +1187,18 @@ class SphinxBase(GenericDFTJob):
         if not structure_sync and not self.input.sphinx.structure.locked:
             self.load_structure_group()
 
-        # If the species group was not modified directly by the user,
-        # via job.input.pawPot (which is likely True),
-        # load it based on job.structure.
-        if not structure_sync and not self.input.sphinx.pawPot.locked:
-            self.load_species_group()
-
         # copy potential files to working directory
         if self.input["VaspPot"]:
             potformat = "VASP"
         else:
             potformat = "JTH"
+
+        # If the species group was not modified directly by the user,
+        # via job.input.pawPot (which is likely True),
+        # load it based on job.structure.
+        if not structure_sync and not self.input.sphinx.pawPot.locked:
+            self.load_species_group(potformat=potformat)
+
         self.input_writer.structure = self.structure
         self.input_writer.copy_potentials(
             potformat=potformat,
