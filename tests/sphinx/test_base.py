@@ -228,21 +228,20 @@ class TestSphinx(unittest.TestCase):
         kpoints_group = {
             'relative': True,
             'from': odict([
-                ('coords',  [0.0, 0.0, 0.0]), ('label', '"GAMMA"')
+                ('coords',  np.array([0.0, 0.0, 0.0])), ('label', '"GAMMA"')
             ]),
             'to___0': odict([
-                ('coords', [0.5, -0.5, 0.5]), ('nPoints', 20), ('label', '"H"')
+                ('coords', np.array([0.5, -0.5, 0.5])), ('nPoints', 20), ('label', '"H"')
             ]),
             'to___1': odict([
-                ('coords', [0.0, 0.0, 0.5]), ('nPoints', 20), ('label', '"N"')
+                ('coords', np.array([0.0, 0.0, 0.5])), ('nPoints', 20), ('label', '"N"')
             ]),
             'to___1___1': odict([
-                ('coords', [0.25, 0.25, 0.25]), ('nPoints', 0), ('label', '"P"')
+                ('coords', np.array([0.25, 0.25, 0.25])), ('nPoints', 0), ('label', '"P"')
             ]),
             'to___2': odict([
-                ('coords', [0.5, -0.5, 0.5]), ('nPoints', 20), ('label', '"H"')
+                ('coords', np.array([0.5, -0.5, 0.5])), ('nPoints', 20), ('label', '"H"')
             ]),
-            'locked': False
         }
 
         with self.assertRaises(ValueError):
@@ -260,7 +259,8 @@ class TestSphinx(unittest.TestCase):
 
         self.sphinx_band_structure.set_kpoints(scheme="Line", path_name="my_path", n_path=20)
         self.assertTrue("kPoint" not in self.sphinx_band_structure.input.sphinx.basis)
-        self.assertEqual(kpoints_group, self.sphinx_band_structure.input.sphinx.basis.kPoints)
+        self.assertEqual(self.sphinx_band_structure.input.sphinx.to_sphinx(kpoints_group),
+                         self.sphinx_band_structure.input.sphinx.basis.kPoints.to_sphinx())
 
         self.sphinx_band_structure.set_kpoints(scheme="MP", mesh=mesh, center_shift=center_shift)
         self.assertTrue("kPoints" not in self.sphinx_band_structure.input.sphinx.basis)
