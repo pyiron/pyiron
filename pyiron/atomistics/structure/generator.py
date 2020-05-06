@@ -114,7 +114,7 @@ def create_surface(
 
 def create_hkl_surface(lattice, hkl, layers, vacuum=1.0, center=False):
     """
-    Create a surface with an arbitrary surface normal (hkl). 
+    Create a surface with an arbitrary surface normal (hkl).
 
     Args:
         lattice: Atoms bulk instance or str, e.g. "Fe", from
