@@ -19,7 +19,7 @@ except ImportError:
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Yury Lysogorskiy, Jan Janssen, Markus Tautschnig"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -406,7 +406,7 @@ class LammpsStructure(GenericParameters):
             q_dict[el] = float(self.potential.get("set group {} charge".format(el)))
         species_translate_list = [self.potential.get("group {} type".format(el.Abbreviation))
                                   for el in self.structure.species]
-
+        sorted_species_list = np.array(self._potential.get_element_lst())
         molecule_lst, bonds_lst, angles_lst = [], [], []
         bond_type_lst, angle_type_lst = [], []
         # Using a cutoff distance to draw the bonds instead of the number of neighbors
@@ -415,7 +415,7 @@ class LammpsStructure(GenericParameters):
             cutoff_list.append(np.max(val["cutoff_list"]))
         max_cutoff = np.max(cutoff_list)
         # Calculate neighbors only once
-        neighbors = self._structure.get_neighbors(cutoff=max_cutoff)
+        neighbors = self._structure.get_neighbors(cutoff_radius=max_cutoff)
         id_mol = 0
         indices = self._structure.indices
         for id_el, id_species in enumerate(indices):
@@ -456,11 +456,11 @@ class LammpsStructure(GenericParameters):
         molecule_lst = m_lst[m_lst[:, 0].argsort()]
 
         if len(bond_type_lst) == 0:
-            num_bond_types = 0
+            num_bond_types = 1
         else:
             num_bond_types = int(np.max(bond_type_lst))
         if len(angle_type_lst) == 0:
-            num_angle_types = 0
+            num_angle_types = 1
         else:
             num_angle_types = int(np.max(angle_type_lst))
 
@@ -472,7 +472,7 @@ class LammpsStructure(GenericParameters):
             + " \n"
             + "{0:d} angles".format(len(angles_lst))
             + " \n"
-            + "{0} atom types".format(self._structure.get_number_of_species())
+            + "{0} atom types".format(len(sorted_species_list))
             + " \n"
             + "{0} bond types".format(num_bond_types)
             + " \n"
@@ -481,10 +481,11 @@ class LammpsStructure(GenericParameters):
         )
 
         cell_dimensions = self.simulation_cell()
+
         masses = "Masses" + "\n\n"
-        el_obj_list = self._structure.species
-        for object_id, el in enumerate(el_obj_list):
-            masses += "{0:3d} {1:f}".format(species_translate_list[object_id], el.AtomicMass) + "\n"
+        for ic, el_p in enumerate(sorted_species_list):
+            mass = self.structure._pse[el_p].AtomicMass
+            masses += "{0:3d} {1:f}  # ({2}) \n".format(ic + 1, mass, el_p)
 
         atoms = "Atoms \n\n"
 

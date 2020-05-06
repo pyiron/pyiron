@@ -29,7 +29,7 @@ DatabaseAccess class deals with accessing the database
 
 __author__ = "Murat Han Celik"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH"
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH"
     " - Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -185,7 +185,7 @@ class DatabaseAccess(object):
         expr = expr.replace("%", "(.)*")
         expr = expr.replace("_", ".")
         expr = "^" + expr
-        if expr[-1] is not "%":
+        if expr[-1] != "%":
             expr += "$"
         reg = re.compile(expr)
         if item is not None:
@@ -325,7 +325,7 @@ class DatabaseAccess(object):
         if where_condition:
             where_condition = (
                 where_condition.replace("like", "similar to")
-                if self._engine.dialect.name is "postgresql"
+                if self._engine.dialect.name == "postgresql"
                 else where_condition
             )
             try:
@@ -338,7 +338,7 @@ class DatabaseAccess(object):
         elif sql_statement:
             sql_statement = (
                 sql_statement.replace("like", "similar to")
-                if self._engine.dialect.name is "postgresql"
+                if self._engine.dialect.name == "postgresql"
                 else sql_statement
             )
             # TODO: make it save against SQL injection

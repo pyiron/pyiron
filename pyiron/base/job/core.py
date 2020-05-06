@@ -21,7 +21,7 @@ The JobCore the most fundamental pyiron job class.
 
 __author__ = "Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -834,6 +834,18 @@ class JobCore(PyironObject):
             with open(file_name) as f:
                 return f.readlines()
         return None
+
+    def __setitem__(self, key, value):
+        """
+        Stores data
+
+        Args:
+            key (str): key to store in hdf (full path)
+            value (anything): value to store
+        """
+        if not key.startswith('user/'):
+            raise ValueError("user defined paths+values must begin with user/, e.g. job['user/key'] = value")
+        self._hdf5[key] = value
 
     def __delitem__(self, key):
         """
