@@ -114,11 +114,11 @@ def create_surface(
 
 def create_hkl_surface(lattice, hkl, layers, vacuum=1.0, center=False):
     """
-    Create a surface with an arbitrary surface normal (hkl).
+    Use ase.build.surface to build a surface with surface normal (hkl).
 
     Args:
-        lattice: Atoms bulk instance or str, e.g. "Fe", from
-            which to build the surface
+        lattice (pyiron.atomistics.structure.atoms.Atoms/str): bulk Atoms
+            instance or str, e.g. "Fe", from which to build the surface
         hkl (list): miller indices of surface to be created
         layers (int): # of atomic layers in the surface
         vacuum (float): vacuum spacing
@@ -128,6 +128,8 @@ def create_hkl_surface(lattice, hkl, layers, vacuum=1.0, center=False):
     Returns:
         pyiron.atomistics.structure.atoms.Atoms instance: Required surface
     """
+    # https://gitlab.com/ase/ase/blob/master/ase/lattice/surface.py
+    s.publication_add(publication_ase())
 
     surface = ase_surf(lattice, hkl, layers)
     z_max = np.max(surface.positions[:, 2])
@@ -135,6 +137,7 @@ def create_hkl_surface(lattice, hkl, layers, vacuum=1.0, center=False):
     if center:
         surface.positions += 0.5 * surface.cell[2] - [0, 0, z_max/2]
     return surface
+
 
 def create_structure(element, bravais_basis, lattice_constant):
     """
