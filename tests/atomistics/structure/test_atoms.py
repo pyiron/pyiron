@@ -8,7 +8,7 @@ import os
 import warnings
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
-from pyiron.atomistics.structure.generator import create_ase_bulk, create_surface
+from pyiron.atomistics.structure.generator import create_ase_bulk, create_surface, create_hkl_surface
 from pyiron.atomistics.structure.sparse_list import SparseList
 from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement
 from pyiron.base.generic.hdfio import FileHDFio, ProjectHDFio
@@ -1336,10 +1336,13 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(struct.get_chemical_formula(), 'Mg4')
 
     def test_static_functions(self):
-        self.assertIsInstance(create_ase_bulk("Al"), Atoms)
+        Al_bulk = create_ase_bulk("Al")
+        self.assertIsInstance(Al_bulk, Atoms)
         surface = create_surface("Al", "fcc111", size=(4, 4, 4), vacuum=10)
         self.assertTrue(all(surface.pbc))
         self.assertIsInstance(surface, Atoms)
+        hkl_surface = create_hkl_surface(Al_bulk, [10,8,7], layers=20, vacuum=10)
+        self.assertIsInstance(hkl_surface, Atoms)
 
     def test_non_periodic(self):
         structure = CrystalStructure("Fe", bravais_basis="bcc", lattice_constant=4.2)

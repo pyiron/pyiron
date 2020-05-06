@@ -112,6 +112,30 @@ def create_surface(
         return None
 
 
+def create_hkl_surface(lattice, hkl, layers, vacuum=1.0, center=False):
+    """
+    Create a surface with an arbitrary surface normal (hkl). 
+
+    Args:
+        lattice: Atoms bulk instance or str, e.g. "Fe", from
+            which to build the surface
+        hkl (list): miller indices of surface to be created
+        layers (int): # of atomic layers in the surface
+        vacuum (float): vacuum spacing
+        center (bool): shift all positions to center the surface
+            in the cell
+
+    Returns:
+        pyiron.atomistics.structure.atoms.Atoms instance: Required surface
+    """
+
+    surface = ase_surf(lattice, hkl, layers)
+    z_max = np.max(surface.positions[:, 2])
+    surface.cell[2, 2] = z_max + vacuum
+    if center:
+        surface.positions += 0.5 * surface.cell[2] - [0, 0, z_max/2]
+    return surface
+
 def create_structure(element, bravais_basis, lattice_constant):
     """
     Create a crystal structure using pyiron's native crystal structure generator
