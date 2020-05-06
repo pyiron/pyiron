@@ -17,6 +17,12 @@ from pyiron.lammps.structure import UnfoldingPrism
 from pyiron.lammps.control import LammpsControl
 from pyiron.atomistics.job.interactive import GenericInteractive
 
+
+try:  # mpi4py is only supported on Linux and Mac Os X
+    from pylammpsmpi import LammpsLibrary
+except ImportError:
+    pass
+
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = (
     "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
@@ -75,7 +81,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                 "x", 1, 3, (len(positions) * c_double)(*positions)
             )
         else:
-            self._interactive_library.scatter_atoms("x", 1, 3, positions)
+            self._interactive_library.scatter_atoms("x", positions)
         self._interactive_lib_command("change_box all remap")
 
     def interactive_cells_getter(self):
@@ -214,7 +220,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         else:
             self._create_working_directory()
             self._interactive_library = LammpsLibrary(
-                cores=self.server.cores, working_directory=self.working_directory
+                cores=self.server.cores,
+                working_directory=self.working_directory
             )
         if not all(self.structure.pbc):
             self.input.control["boundary"] = " ".join(
@@ -417,8 +424,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                 "type", 0, 1, (len(elem_all) * c_int)(*elem_all)
             )
         else:
-            self._interactive_library.scatter_atoms("x", 1, 3, positions)
-            self._interactive_library.scatter_atoms("type", 0, 1, elem_all)
+            self._interactive_library.scatter_atoms("x", positions)
+            self._interactive_library.scatter_atoms("type", elem_all)
         self._interactive_lib_command("change_box all remap")
         # if self.input.control['atom_style'] == "full":
         # Do not scatter or manipulate when you have water/ use atom_style full in your system
@@ -529,7 +536,7 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                 "type", 0, 1, (len(elem_all) * c_int)(*elem_all)
             )
         else:
-            self._interactive_library.scatter_atoms("type", 0, 1, elem_all)
+            self._interactive_library.scatter_atoms("type", elem_all)
 
     def interactive_energy_pot_getter(self):
         return self._interactive_library.get_thermo("pe")
@@ -601,107 +608,3 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                     for key in h5["interactive"].list_nodes():
                         h5["generic/" + key] = h5["interactive/" + key]
             super(LammpsInteractive, self).interactive_close()
-
-
-class LammpsLibrary(object):
-    def __init__(self, cores=1, working_directory="."):
-        executable = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "sub", "lmpmpi.py"
-        )
-        # print(executable)
-        self._process = subprocess.Popen(
-            ["mpiexec", "-n", str(cores), "python", executable],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            stdin=subprocess.PIPE,
-            cwd=working_directory,
-        )
-
-    def _send(self, command, data=None):
-        """
-        Send a command to the Lammps Library executable
-
-        Args:
-            command (str): command to be send to the
-            data:
-        """
-        # print('send: ', {'c': command, 'd': data})
-        pickle.dump({"c": command, "d": data}, self._process.stdin)
-        self._process.stdin.flush()
-
-    def _receive(self):
-        """
-        Receive data from the Lammps library
-
-        Returns:
-            data
-        """
-        output = pickle.load(self._process.stdout)
-        # print(output)
-        return output
-
-    def command(self, command):
-        """
-        Send a command to the lammps library
-
-        Args:
-            command (str):
-        """
-        self._send(command="command", data=command)
-
-    def gather_atoms(self, *args):
-        """
-        Gather atoms from the lammps library
-
-        Args:
-            *args:
-
-        Returns:
-            np.array
-        """
-        self._send(command="gather_atoms", data=list(args))
-        return self._receive()
-
-    def scatter_atoms(self, *args):
-        """
-        Scatter atoms for the lammps library
-
-        Args:
-            *args:
-        """
-        self._send(command="scatter_atoms", data=list(args))
-
-    def get_thermo(self, *args):
-        """
-        Get thermo from the lammps library
-
-        Args:
-            *args:
-
-        Returns:
-
-        """
-        self._send(command="get_thermo", data=list(args))
-        return self._receive()
-
-    def extract_compute(self, *args):
-        """
-        Extract compute from the lammps library
-
-        Args:
-            *args:
-
-        Returns:
-
-        """
-        self._send(command="extract_compute", data=list(args))
-        return self._receive()
-
-    def close(self):
-        self._send(command="close")
-        self._process.kill()
-        self._process = None
-
-    def __del__(self):
-        if self._process is not None:
-            self.close()

@@ -338,7 +338,7 @@ class AseAdapter(object):
             self._ham.interactive_store_in_cache(
                 "energy_tot",
                 (
-                    np.array(self._ham.output.energy_pot)
+                    np.array(self._ham.output.energy_pot)[::2]
                     + np.array(self.interactive_cache["energy_kin"])
                 ).tolist(),
             )

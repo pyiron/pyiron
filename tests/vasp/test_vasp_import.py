@@ -23,18 +23,17 @@ class TestVaspImport(unittest.TestCase):
         project.remove(enable=True)
 
     def test_import(self):
-        self.project.import_from_path(
-            path=os.path.join(
+        folder_path = os.path.join(
                 self.file_location, "../static/vasp_test_files/full_job_sample"
-            ),
-            recursive=False,
-        )
+            )
+        self.project.import_from_path(path=folder_path, recursive=False)
         ham = self.project.load("full_job_sample")
         self.assertTrue(isinstance(ham, Vasp))
         self.assertEqual(ham.get_nelect(), 16)
         self.assertTrue(
             np.array_equal(ham.structure.get_initial_magnetic_moments(), [-1, -1])
         )
+        self.assertRaises(IOError, ham.get_final_structure_from_file)
 
 
 if __name__ == "__main__":
