@@ -438,14 +438,16 @@ class SphinxBase(GenericDFTJob):
         """
         self.input.sphinx.basis.setdefault("eCut", self.input["EnCut"]/RYDBERG_TO_EV)
         self.input.sphinx.basis.setdefault("kPoint", Group())
-        self.input.sphinx.basis.kPoint.setdefault(
-            "coords", np.array(self.input["KpointCoords"])
-            )
+        if "KpointCoords" is not None:
+            self.input.sphinx.basis.kPoint.setdefault(
+                "coords", np.array(self.input["KpointCoords"])
+                )
         self.input.sphinx.basis.kPoint.setdefault("weight", 1)
         self.input.sphinx.basis.kPoint.setdefault("relative", True)
-        self.input.sphinx.basis.setdefault(
-            "folding", np.array(self.input["KpointFolding"])
-            )
+        if self.input["KpointFolding"] is not None:
+            self.input.sphinx.basis.setdefault(
+                "folding", np.array(self.input["KpointFolding"])
+                )
         self.input.sphinx.basis.setdefault("saveMemory", self.input["SaveMemory"])
 
     def load_hamilton_group(self):
@@ -1050,6 +1052,8 @@ class SphinxBase(GenericDFTJob):
                 del self.input.sphinx.basis["kPoint"]
                 del self.input["KpointFolding"]
                 del self.input["KpointCoords"]
+                if "folding" in self.input.sphinx.basis.keys():
+                    del self.input.sphinx.basis['folding']
             if n_path is None and self._generic_input["n_path"] is None:
                 raise ValueError("'n_path' has to be defined")
             if n_path is None:
