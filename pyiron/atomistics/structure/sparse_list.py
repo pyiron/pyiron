@@ -12,7 +12,7 @@ from collections import OrderedDict, Sequence
 
 __author__ = "Joerg Neugebauer"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -108,7 +108,7 @@ class SparseList(object):
             data_type = self._val_data_type()
             my_dict = OrderedDict()
             my_dict["index"] = self.keys()
-            if data_type is "list_bool":
+            if data_type == "list_bool":
                 my_dict["values"] = [
                     sum([2 ** i * int(v) for i, v in enumerate(val)])
                     for val in self.values()

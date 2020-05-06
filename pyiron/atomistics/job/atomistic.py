@@ -20,7 +20,7 @@ except (ImportError, TypeError, AttributeError):
 
 __author__ = "Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -382,12 +382,11 @@ class AtomisticGenericJob(GenericJobCore):
             db_dict["ChemicalFormula"] = parent_structure.get_chemical_formula()
         return db_dict
 
-    def restart(self, snapshot=-1, job_name=None, job_type=None):
+    def restart(self, job_name=None, job_type=None):
         """
         Restart a new job created from an existing calculation.
         Args:
             project (pyiron.project.Project instance): Project instance at which the new job should be created
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type
 
@@ -395,12 +394,12 @@ class AtomisticGenericJob(GenericJobCore):
             new_ham: New job
         """
         new_ham = super(AtomisticGenericJob, self).restart(
-            snapshot=snapshot, job_name=job_name, job_type=job_type
+            job_name=job_name, job_type=job_type
         )
         if isinstance(new_ham, GenericMaster) and not isinstance(self, GenericMaster):
-            new_child = self.restart(snapshot=snapshot, job_name=None, job_type=None)
+            new_child = self.restart(job_name=None, job_type=None)
             new_ham.append(new_child)
-        new_ham.structure = self.get_structure(iteration_step=snapshot)
+        new_ham.structure = self.get_structure(iteration_step=-1)
         if new_ham.structure is None:
             new_ham.structure = self.structure.copy()
         new_ham._generic_input['structure'] = 'atoms'
@@ -856,7 +855,11 @@ class GenericOutput(object):
 
     @property
     def unwrapped_positions(self):
-        return self._job["output/generic/unwrapped_positions"]
+        unwrapped_positions = self._job["output/generic/unwrapped_positions"]
+        if unwrapped_positions is not None:
+            return unwrapped_positions
+        else:
+            return self._job.structure.positions+self.total_displacements
 
     @property
     def volume(self):

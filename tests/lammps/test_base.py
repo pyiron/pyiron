@@ -50,6 +50,10 @@ class TestLammps(unittest.TestCase):
             project=ProjectHDFio(project=cls.project, file_name="lammps"),
             job_name="read_restart",
         )
+        cls.job_average = Lammps(
+            project=ProjectHDFio(project=cls.project, file_name="lammps"),
+            job_name="average",
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -196,7 +200,14 @@ class TestLammps(unittest.TestCase):
         )
         water.set_repeat([n, n, n])
         self.job_water.structure = water
-        self.job_water.potential = "H2O_tip3p"
+        with self.assertWarns(UserWarning):
+            self.job_water.potential = "H2O_tip3p"
+        with self.assertRaises(ValueError):
+            self.job_water.calc_md(temperature=[0, 100])
+        with self.assertRaises(ValueError):
+            self.job_water.calc_md(pressure=0)
+        with self.assertRaises(ValueError):
+            self.job_water.calc_md(temperature=[0, 100, 200])
         self.job_water.calc_md(
             temperature=350,
             initial_temperature=350,
@@ -264,7 +275,8 @@ class TestLammps(unittest.TestCase):
         )
         water.set_repeat([n, n, n])
         self.job_water_dump.structure = water
-        self.job_water_dump.potential = "H2O_tip3p"
+        with self.assertWarns(UserWarning):
+            self.job_water_dump.potential = "H2O_tip3p"
         self.job_water_dump.calc_md(
             temperature=350,
             initial_temperature=350,
@@ -533,6 +545,17 @@ class TestLammps(unittest.TestCase):
     def test_write_restart(self):
         self.job_read_restart.write_restart_file()
         self.assertEqual(self.job_read_restart.input.control['write_restart'], 'restart.out')
+
+    def test_average(self):
+        a_0 = 2.855312531
+        atoms = Atoms("Fe2", positions=[3*[0], 3*[0.5*a_0]], cell=a_0*np.eye(3))
+        self.job_average.structure = atoms
+        self.job_average.potential = 'Fe_C_Becquart_eam'
+        file_directory = os.path.join(
+            self.execution_path, "..", "static", "lammps_test_files"
+        )
+        self.job_average.collect_dump_file(cwd=file_directory, file_name="dump_average.out")
+        self.job_average.collect_output_log(cwd=file_directory, file_name="log_average.lammps")
 
 
 if __name__ == "__main__":

@@ -30,7 +30,7 @@ Generic Job class extends the JobCore class with all the functionality to run th
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -170,10 +170,6 @@ class GenericJob(JobCore):
 
         for sig in intercepted_signals:
             signal.signal(sig, self.signal_intercept)
-
-    @property
-    def python_execution_process(self):
-        return self._process
 
     @property
     def version(self):
@@ -1186,14 +1182,13 @@ class GenericJob(JobCore):
         }
         return db_dict
 
-    def restart(self, snapshot=-1, job_name=None, job_type=None):
+    def restart(self, job_name=None, job_type=None):
         """
         Create an restart calculation from the current calculation - in the GenericJob this is the same as create_job().
         A restart is only possible after the current job has finished. If you want to run the same job again with
         different input parameters use job.run(run_again=True) instead.
 
         Args:
-            snapshot (int): time step from which to restart the calculation - default=-1 - the last time step
             job_name (str): job name of the new calculation - default=<job_name>_restart
             job_type (str): job type of the new calculation - default is the same type as the exeisting calculation
 
@@ -1439,6 +1434,8 @@ class GenericJob(JobCore):
             self.parent_id = parent_id
             self.run()
         else:
+            self.logger.warning("The job {} is being loaded instead of running. To re-run use the argument "
+                                "'run_again=True'".format(self.job_name))
             self.from_hdf()
 
     def _executable_activate(self, enforce=False):

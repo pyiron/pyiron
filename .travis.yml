@@ -112,6 +112,7 @@ matrix:
           - COMMIT=${TRAVIS_COMMIT::8}
       script:
         - mv binder/docker/* .
+        - mv notebooks/* .
         - docker build -t pyiron -f ./Dockerfile .
       deploy:
         - provider: script
@@ -119,4 +120,4 @@ matrix:
           script: ./deploy.sh
           on:
              all_branches: true
-             repo: pyiron/examples
+             repo: pyiron/pyiron

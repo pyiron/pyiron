@@ -4,7 +4,7 @@
 ====
 Team
 ====
-pyiron was initially developed in the `Computational Materials Design department <https://www.mpie.de/CM>`_ of `Joerg Neugebauer <https://www.mpie.de/person/43010/2763386>`_ at the `Max Planck Insitut für Eisenforschung/ Max Planck Insitute for iron research (MPIE) <https://www.mpie.de/2281/en>`_ as a framework for ab initio thermo dynamics. In collaboration with the `Interdisciplinary Centre for Advanced Materials Simulation (ICAMS) <http://www.icams.de>`_ the framework was recently extended for high throughput applications resulting in the opensource release of the pyiron.
+pyiron was initially developed in the `Computational Materials Design department <https://www.mpie.de/CM>`_ of `Joerg Neugebauer <https://www.mpie.de/person/43010/2763386>`_ at the `Max Planck Institut für Eisenforschung/ Max Planck Institute for iron research (MPIE) <https://www.mpie.de/2281/en>`_ as a framework for ab initio thermo dynamics. In collaboration with the `Interdisciplinary Centre for Advanced Materials Simulation (ICAMS) <http://www.icams.de>`_ the framework was recently extended for high throughput applications resulting in the opensource release of the pyiron.
 
 
 *****************************
