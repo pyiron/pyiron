@@ -5,7 +5,7 @@ dependencies:
 - pyiron
 - lammps
 - gpaw
-- sphinxdft
+- sphinxdft=2.6.1=h6ced99e_5
 - nglview
 - seaborn
 - ovito
