@@ -108,17 +108,20 @@ modindex_common_prefix = ['vasp.', 'base.', 'lammps.',
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 
+# try:
+#    import sphinx_bootstrap_theme
+#    html_theme = 'bootstrap'
+#    html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+#    html_theme_options = {'bootswatch_theme': "spacelab"}
+# except ImportError:
+#    raise ImportError("You need to install bootstrap: pip install sphinx_bootstrap_theme")
+#    html_theme = 'default'
+
 try:
    import sphinx_rtd_theme
    html_theme = 'sphinx_rtd_theme'
 except ImportError:
    html_theme = 'default'
-
-#try:
-#    import sphinx_rtd_theme
-#    html_theme = 'sphinx_rtd_theme'
-# except ImportError:
-#    html_theme = 'default'
 
 
 # Theme options are theme-specific and customize the look and feel of a theme
