@@ -49,7 +49,7 @@ Code of conduct
 
 This project and everyone participating in it is governed by
 the pyiron `Code of conduct`_. By participating, you are expected
-to uphold this code. Please `email us`_ to report violations.
+to uphold this code. Please email us to report violations.
 
 .. _What should I know before I get started?:
 What should I know before I get started?
@@ -116,6 +116,17 @@ through these good-first-issue and help-wanted issues:
 pyiron can be developed and tested locally. If you are using pyiron to run an
 external software package, e.g. VASP or LAMMPS, you might also need to install
 those packages locally to run certain integration tests in pyiron.
+
+To get the developmental (git) version of pyiron,
+
+```
+git clone https://github.com/pyiron/pyiron.git
+```
+If you don't already have the dependencies installed in your environment,
+```
+cd pyiron
+pip install .
+```
 
 Pull requests
 -------------
@@ -272,10 +283,8 @@ On the other hand the tagged releases are available through conda-forge, as soon
 
 So for both conda and pip both the prereleases as well as the official releases are available.
 
-
 .. _Max Planck Institut für Eisenforschung: https://mpie.de
 .. _github page: https://github.com/pyiron
-.. _email us: mailto:pyiron@github.com
 .. _issues page: https://github.com/pyiron/pyiron/issues
 .. _FAQ page: https://github.com/pyiron/pyiron/docs/source/faq.html
 .. _bugs: https://github.com/pyiron/pyiron/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug%22
