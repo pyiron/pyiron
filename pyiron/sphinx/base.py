@@ -438,14 +438,16 @@ class SphinxBase(GenericDFTJob):
         """
         self.input.sphinx.basis.setdefault("eCut", self.input["EnCut"]/RYDBERG_TO_EV)
         self.input.sphinx.basis.setdefault("kPoint", Group())
-        self.input.sphinx.basis.kPoint.setdefault(
-            "coords", np.array(self.input["KpointCoords"])
-            )
+        if "KpointCoords" is not None:
+            self.input.sphinx.basis.kPoint.setdefault(
+                "coords", np.array(self.input["KpointCoords"])
+                )
         self.input.sphinx.basis.kPoint.setdefault("weight", 1)
         self.input.sphinx.basis.kPoint.setdefault("relative", True)
-        self.input.sphinx.basis.setdefault(
-            "folding", np.array(self.input["KpointFolding"])
-            )
+        if self.input["KpointFolding"] is not None:
+            self.input.sphinx.basis.setdefault(
+                "folding", np.array(self.input["KpointFolding"])
+                )
         self.input.sphinx.basis.setdefault("saveMemory", self.input["SaveMemory"])
 
     def load_hamilton_group(self):
@@ -1050,6 +1052,8 @@ class SphinxBase(GenericDFTJob):
                 del self.input.sphinx.basis["kPoint"]
                 del self.input["KpointFolding"]
                 del self.input["KpointCoords"]
+                if "folding" in self.input.sphinx.basis.keys():
+                    del self.input.sphinx.basis['folding']
             if n_path is None and self._generic_input["n_path"] is None:
                 raise ValueError("'n_path' has to be defined")
             if n_path is None:
@@ -1080,12 +1084,12 @@ class SphinxBase(GenericDFTJob):
 
             kpoints["from"] = odict([
                 ("coords",
-                self.structure.get_high_symmetry_points()[path[0][0]]),
+                np.array(self.structure.get_high_symmetry_points()[path[0][0]])),
                 ("label", '"' + path[0][0].replace("'", "p") + '"'),
             ])
             kpoints["to___0"] = odict([
                 ("coords",
-                self.structure.get_high_symmetry_points()[path[0][1]]),
+                np.array(self.structure.get_high_symmetry_points()[path[0][1]])),
                 ("nPoints", n_path),
                 ("label", '"' + path[0][1].replace("'", "p") + '"'),
             ])
@@ -1095,9 +1099,9 @@ class SphinxBase(GenericDFTJob):
                     name = "to___{}___1".format(i)
                     kpoints[name] = odict([
                         ("coords",
-                        self.structure.get_high_symmetry_points()[
+                        np.array(self.structure.get_high_symmetry_points()[
                             path[1][0]]
-                        ),
+                        )),
                         ("nPoints", 0),
                         ("label", '"' + path[1][0].replace("'", "p") + '"'),
                     ])
@@ -1105,7 +1109,7 @@ class SphinxBase(GenericDFTJob):
                 name = "to___{}".format(i + 1)
                 kpoints[name] = odict([(
                     "coords",
-                    self.structure.get_high_symmetry_points()[path[1][1]]),
+                    np.array(self.structure.get_high_symmetry_points()[path[1][1]])),
                     ("nPoints", n_path),
                     ("label", '"' + path[1][1].replace("'", "p") + '"'),
                 ])
