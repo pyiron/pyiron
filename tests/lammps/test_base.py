@@ -9,7 +9,7 @@ from pyiron.base.project.generic import Project
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.lammps.lammps import Lammps
-from pyiron.lammps.base import LammpsStructure
+from pyiron.lammps.base import LammpsStructure, UnfoldingPrism
 import ase.units as units
 
 
@@ -521,6 +521,7 @@ class TestLammps(unittest.TestCase):
         self.minimize_control_job.input.control.calc_minimize()
 
         self.minimize_job.sturcture = atoms
+        self.minimize_job._prism = UnfoldingPrism(atoms.cell)
         self.minimize_job.calc_minimize()
         for k in self.job.input.control.keys():
             self.assertEqual(self.minimize_job.input.control[k], self.minimize_control_job.input.control[k])

@@ -289,16 +289,21 @@ class LammpsControl(GenericParameters):
             raise NotImplementedError
         energy_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["energy"]
         force_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["force"]
+        pressure_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
 
         e_tol *= energy_units
         f_tol *= force_units
 
         if pressure is not None:
-            pressure = self.pressure_to_lammps(pressure, rotation_matrix)
+            if None in np.array([pressure]).flatten():
+                if not np.isclose(np.linalg.det(rotation_matrix), 1):
+                    raise AssertionError('Pressure cannot contain None if upper triangle in cell is defined')
+            else:
+                pressure = self.pressure_to_lammps(pressure, rotation_matrix)
             str_press = ""
             for press, str_axis in zip(pressure, [" x ", " y ", " z ", " xy ", " xz ", " yz "]):
                 if press is not None:
-                    str_press += str_axis + str(press)
+                    str_press += str_axis + str(press*pressure_units )
             if len(str_press) == 0:
                 raise ValueError("Pressure values cannot all be None")
             elif len(str_press) > 1:
