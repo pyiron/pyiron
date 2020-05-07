@@ -228,16 +228,32 @@ Build status
 
 The build status for pyiron and all sub packages are given below
 
-.. image:: https://anaconda.org/pyiron/pyiron/badges/latest_release_date.svg
+.. image:: https://coveralls.io/repos/github/pyiron/pyiron/badge.svg?branch=master
+    :target: https://coveralls.io/github/pyiron/pyiron?branch=master
+    :alt: Coverage Status
+
+.. image:: https://api.codacy.com/project/badge/Grade/c513254f10004df5a1f5c76425c6584b
+    :target: https://app.codacy.com/app/pyiron-runner/pyiron?utm_source=github.com&utm_medium=referral&utm_content=pyiron/pyiron&utm_campaign=Badge_Grade_Settings
+    :alt: Codacy Badge
+
+.. image:: https://anaconda.org/conda-forge/pyiron/badges/latest_release_date.svg
+    :target: https://anaconda.org/conda-forge/pyiron/
+    :alt: Release_Date
 
 .. image:: https://travis-ci.org/pyiron/pyiron.svg?branch=master
-
-.. image:: https://anaconda.org/pyiron/pyiron/badges/downloads.svg
+    :target: https://travis-ci.org/pyiron/pyiron
+    :alt: Build Status
 
 .. image:: https://ci.appveyor.com/api/projects/status/wfdgqkxca1i19xcq/branch/master?svg=true
+    :target: https://ci.appveyor.com/project/pyiron-runner/pyiron/branch/master
+    :alt: Build status
 
 pyiron releases
 ---------------
+
+.. image:: https://anaconda.org/conda-forge/pyiron/badges/downloads.svg
+    :target: https://anaconda.org/conda-forge/pyiron/
+    :alt: Downloads
 
 For the pyiron release management we use git tags::
 
