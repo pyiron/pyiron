@@ -537,6 +537,12 @@ class LammpsBase(AtomisticGenericJob):
             axis=-1,
         ).reshape(-1, 3, 3).astype('float64')
         pressures *= 0.0001  # bar -> GPa
+
+        # Rotate pressures from Lammps frame to pyiron frame if necessary
+        rotation_matrix = self._prism.R.T
+        if np.matrix.trace(rotation_matrix) != 3:
+            pressures = rotation_matrix.T @ pressures @ rotation_matrix
+
         df = df.drop(
             columns=df.columns[
                 ((df.columns.str.len() == 3) & df.columns.str.startswith("P"))
@@ -551,6 +557,8 @@ class LammpsBase(AtomisticGenericJob):
                 axis=-1,
             ).reshape(-1, 3, 3).astype('float64')
             pressures *= 0.0001  # bar -> GPa
+            if np.matrix.trace(rotation_matrix) != 3:
+                pressures = rotation_matrix.T @ pressures @ rotation_matrix
             df = df.drop(
                 columns=df.columns[
                     (df.columns.str.startswith("mean_pressure") & df.columns.str.endswith(']'))
@@ -588,6 +596,7 @@ class LammpsBase(AtomisticGenericJob):
             pressure=pressure,
             n_print=n_print,
             style=style,
+            rotation_matrix=self._prism.R
         )
     calc_minimize.__doc__ = LammpsControl.calc_minimize.__doc__
 
@@ -650,6 +659,7 @@ class LammpsBase(AtomisticGenericJob):
             delta_temp=delta_temp,
             delta_press=delta_press,
             job_name=self.job_name,
+            rotation_matrix=self._prism.R
         )
     calc_md.__doc__ = LammpsControl.calc_md.__doc__
 
