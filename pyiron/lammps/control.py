@@ -491,16 +491,11 @@ class LammpsControl(GenericParameters):
 
         # Set thermodynamic ensemble
         if pressure is not None:  # NPT
-            if not hasattr(pressure, "__len__"):
-                pressure = pressure * np.ones(3)
-            else:
-                pressure = np.array(pressure, dtype=float)
 
-            not_none_mask = [p is not None for p in pressure]
-            if not np.any(not_none_mask):
-                raise ValueError("Pressure cannot be three times None")
+            if np.sum(np.array([pressure]).flatten()!=None)==0:
+                raise ValueError("At least one component of pressure must be other than None")
 
-            if len(pressure) > 6:
+            if hasattr(pressure, "__len__") and len(pressure) > 6:
                 raise ValueError("Pressure must be a float or a vector with length <= 6")
 
             if temperature is None or temperature.min() <= 0:
