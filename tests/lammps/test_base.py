@@ -285,6 +285,7 @@ class TestLammps(unittest.TestCase):
             n_print=200,
             pressure=0,
         )
+        self.assertFalse('nan' in self.job_water_dump.input.control['fix___ensemble'])
         file_directory = os.path.join(
             self.execution_path, "..", "static", "lammps_test_files"
         )
