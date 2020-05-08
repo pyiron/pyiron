@@ -33,6 +33,26 @@ matrix:
           on:
             tags: true
 
+    - stage: test
+      name: notebook_linux_3_7
+      os: linux
+      language: python
+      env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.7"
+      install:
+        - export PATH="$HOME/miniconda/bin:$PATH"
+        - ./.ci_support/setup_miniconda.sh ${MINICONDA}
+        - python .ci_support/pyironconfig.py
+        - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
+        - git clone https://github.com/pyiron/pyiron-resources.git resources
+        - mkdir -p ./resources/gpaw
+        - wget https://wiki.fysik.dtu.dk/gpaw-files/gpaw-setups-0.9.20000.tar.gz
+        - tar -xf gpaw-setups-0.9.20000.tar.gz
+        - mv gpaw-setups-0.9.20000 ./resources/gpaw/potentials
+        - for f in $(cat exclude); do rm $f; done;  # Remove VASP based notebooks 
+      script:
+        - chmod +x .ci_support/build_notebooks_on_master.sh 
+        - ./.ci_support/build_notebooks_on_master.sh 
+
     - name: test_osx_3_7
       os: osx
       language: generic
