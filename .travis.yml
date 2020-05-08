@@ -53,7 +53,7 @@ matrix:
       script:
         - jupyter kernelspec list
         - chmod +x .ci_support/build_notebooks_on_master.sh 
-        - ./.ci_support/build_notebooks_on_master.sh 
+        - ./.ci_support/build_notebooks_on_master.sh || travis_terminate 1;
 
     - name: test_osx_3_7
       os: osx
