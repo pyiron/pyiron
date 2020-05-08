@@ -51,6 +51,7 @@ matrix:
         - mv gpaw-setups-0.9.20000 ./resources/gpaw/potentials
         - for f in $(cat .ci_support/exclude); do rm notebooks/$f; done;  # Remove VASP based notebooks 
       script:
+        - jupyter kernelspec list
         - chmod +x .ci_support/build_notebooks_on_master.sh 
         - ./.ci_support/build_notebooks_on_master.sh 
 
