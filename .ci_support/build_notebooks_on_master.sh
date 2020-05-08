@@ -8,6 +8,6 @@ else
 fi;
 
 # execute notebooks
-for notebook in $(ls *.ipynb); do 
+for notebook in $(ls notebooks/*.ipynb); do 
     papermill ${notebook} ${notebook%.*}-out.${notebook##*.} -k $kernel;
 done;
