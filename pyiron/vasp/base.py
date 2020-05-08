@@ -1935,8 +1935,8 @@ class Output:
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
             log_dict["forces"] = self.outcar.parse_dict["forces"]
             log_dict["positions"] = self.outcar.parse_dict["positions"]
-            # log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
-            # log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
+            log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
+            log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
             if len(log_dict["positions"].shape) != 3:
                 raise VaspCollectError("Improper OUTCAR parsing")
             elif log_dict["positions"].shape[1] != len(sorted_indices):
