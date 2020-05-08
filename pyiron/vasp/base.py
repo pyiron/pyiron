@@ -941,6 +941,8 @@ class VaspBase(GenericDFTJob):
         )
         self.input.incar["IBRION"] = -1
         self.input.incar["NELM"] = electronic_steps
+        # Make sure vasp runs only 1 ionic step
+        self.input.incar["NSW"] = 0
         if algorithm is not None:
             if algorithm is not None:
                 self.set_algorithm(algorithm=algorithm)
