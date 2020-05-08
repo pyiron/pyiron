@@ -24,7 +24,7 @@ from pyiron.dft.waves.electronic import ElectronicStructure
 from pyiron.dft.waves.bandstructure import Bandstructure
 import warnings
 
-__author__ = "Sudarsan Surendralal"
+__author__ = "Sudarsan Surendralal, Felix Lochner"
 __copyright__ = (
     "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
@@ -1865,8 +1865,9 @@ class Output:
             try:
                 self.vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
             except VasprunError:
-                pass
+                s.logger.warning("Unable to parse the vasprun.xml file. Will attempt to get data from OUTCAR")
             else:
+                # If parsing the vasprun file does not throw an error, then set to True
                 vasprun_working = True
 
         if outcar_working:
@@ -1936,8 +1937,8 @@ class Output:
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
             log_dict["forces"] = self.outcar.parse_dict["forces"]
             log_dict["positions"] = self.outcar.parse_dict["positions"]
-            # log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
-            # log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
+            log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
+            log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
             if len(log_dict["positions"].shape) != 3:
                 raise VaspCollectError("Improper OUTCAR parsing")
             elif log_dict["positions"].shape[1] != len(sorted_indices):
