@@ -240,17 +240,17 @@ class PhonopyJob(AtomisticParallelMaster):
             ]
         self.phonopy.set_forces(forces_lst)
         self.phonopy.produce_force_constants()
-        self.phonopy.set_mesh(mesh=[self.input["dos_mesh"]] * 3)
-        qpoints, weights, frequencies, eigvecs = self.phonopy.get_mesh()
-        self.phonopy.set_total_DOS()
-        erg, dos = self.phonopy.get_total_DOS()
+        self.phonopy.run_mesh(mesh=[self.input["dos_mesh"]] * 3)
+        mesh_dict = self.phonopy.get_mesh_dict()
+        self.phonopy.run_total_dos()
+        dos_dict = self.phonopy.get_total_dos_dict()
 
         self.to_hdf()
 
         with self.project_hdf5.open("output") as hdf5_out:
-            hdf5_out["dos_total"] = dos
-            hdf5_out["dos_energies"] = erg
-            hdf5_out["qpoints"] = qpoints
+            hdf5_out["dos_total"] = dos_dict['total_dos']
+            hdf5_out["dos_energies"] = dos_dict['frequency_points']
+            hdf5_out["qpoints"] = mesh_dict['qpoints']
             hdf5_out["supercell_matrix"] = self._phonopy_supercell_matrix()
             hdf5_out["displacement_dataset"] = self.phonopy.get_displacement_dataset()
             hdf5_out[
@@ -306,10 +306,14 @@ class PhonopyJob(AtomisticParallelMaster):
         Returns:
 
         """
-        self.phonopy.set_thermal_properties(
+        self.phonopy.run_thermal_properties(
             t_step=t_step, t_max=t_max, t_min=t_min, temperatures=temperatures
         )
-        return thermal(*self.phonopy.get_thermal_properties())
+        tp_dict = self.phonopy.get_thermal_properties_dict()
+        return thermal(tp_dict['temperatures'],
+                       tp_dict['free_energy'],
+                       tp_dict['entropy'],
+                       tp_dict['heat_capacity'])
 
     @property
     def dos_total(self):
