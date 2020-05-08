@@ -9,6 +9,7 @@ from pyiron.project import Project
 from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
+import warnings
 
 
 class TestAtomisticGenericJob(unittest.TestCase):
@@ -47,7 +48,12 @@ class TestAtomisticGenericJob(unittest.TestCase):
         self.assertTrue(np.allclose(disp, disp_ref))
         # varying cell
         cells = np.array([self.job.structure.cell * ((i+1) / 10) for i in range(n_steps)])
-        disp = self.job.output.get_displacements(self.job.structure, positions=positions, cells=cells)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            disp = self.job.output.get_displacements(self.job.structure,
+                                                     positions=positions, cells=cells, varying_cell=True)
+            self.assertEqual(len(w), 1)
+            self.assertIsInstance(w[-1].message, UserWarning)
         self.assertFalse(np.allclose(disp, disp_ref))
         dummy_struct = self.job.structure.copy()
         disp_ref = list()
