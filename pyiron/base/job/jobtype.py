@@ -26,6 +26,7 @@ __date__ = "Sep 1, 2017"
 
 
 JOB_CLASS_DICT = {
+    "Atoms": "pyiron.atomistics.structure.atoms",
     "ScriptJob": "pyiron.base.job.script",
     "SerialMasterBase": "pyiron.base.master.serial",
     "FlexibleMaster": "pyiron.base.master.flexible",

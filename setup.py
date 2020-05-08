@@ -51,6 +51,7 @@ setup(
         'scipy>=1.4.1',
         'seekpath>=1.9.4',
         'six>=1.14.0',
+        'scikit-learn>=0.22',
         'spglib>=1.14.1',
         'sqlalchemy>=1.3.14',
         'tables>=3.6.1',

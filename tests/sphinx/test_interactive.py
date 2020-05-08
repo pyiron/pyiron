@@ -33,8 +33,12 @@ class TestSphinx(unittest.TestCase):
         cls.current_dir = os.path.abspath(os.getcwd())
         cls.sphinx._create_working_directory()
         cls.sphinx.input["VaspPot"] = False
+        cls.sphinx.load_default_groups()
         cls.sphinx.write_input()
-        cls.sphinx.version = "2.6"
+        try:
+            cls.sphinx.version = "2.6"
+        except ValueError:
+            cls.sphinx.version = "2.6.2_default"
         cls.sphinx.server.run_mode.interactive = True
 
     def setUp(self):
@@ -46,49 +50,7 @@ class TestSphinx(unittest.TestCase):
         os.remove(
             os.path.join(
                 cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/basis.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/control.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/guess.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/hamilton.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
                 "../static/sphinx/job_sphinx_hdf5/job_sphinx/input.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/potentials.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/structure.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/userparameters.sx",
             )
         )
         os.remove(

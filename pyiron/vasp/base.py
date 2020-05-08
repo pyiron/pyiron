@@ -700,7 +700,7 @@ class VaspBase(GenericDFTJob):
             try:
                 output_structure = read_atoms(
                     filename=filename,
-                    species_list=input_structure.get_parent_elements(),
+                    species_list=input_structure.get_parent_symbols(),
                 )
                 input_structure.cell = output_structure.cell.copy()
                 input_structure.positions[

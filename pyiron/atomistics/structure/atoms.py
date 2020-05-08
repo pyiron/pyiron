@@ -14,7 +14,6 @@ from ase.geometry import cellpar_to_cell, complete_cell, get_distances
 from matplotlib.colors import rgb2hex
 from scipy.interpolate import interp1d
 import seekpath
-
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
 from pyiron.atomistics.structure.periodic_table import (
@@ -97,6 +96,7 @@ class Atoms(object):
         species=None,
         **qwargs
     ):
+        warnings.simplefilter("default")
         if symbols is not None:
             if elements is None:
                 elements = symbols
@@ -1117,13 +1117,25 @@ class Atoms(object):
 
         """
         pbc = np.array(self.pbc)
-        if any(pbc):
-            positions = self.positions.copy()
-            positions[:, pbc] = np.einsum("jk,ij->ik", np.linalg.inv(self.cell[pbc][:, pbc]), self.positions[:, pbc])
+        # check if each side is non-zero even if None values exist in cell
+        if self.cell is None:
+            non_zero_sides = np.array([False, False, False])
         else:
-            positions = self.positions.copy()
-        if wrap:
-            positions[:, pbc] = np.mod(positions[:, pbc], 1.0)
+            non_zero_sides = np.linalg.norm(np.array(self.cell, dtype=float), axis=1) > 1e-7
+        positions = self.positions.copy()
+        # Only perform the dot product over non zero side (regardless of PBC)
+        if any(non_zero_sides):
+            positions[:, non_zero_sides] = np.einsum(
+                "jk,ij->ik",
+                np.linalg.inv(self.cell[non_zero_sides][:, non_zero_sides]),
+                self.positions[:, non_zero_sides]
+            )
+            # perform the wrapping along the periodic directions only
+            if wrap:
+                positions[:, pbc] = np.mod(positions[:, pbc], 1.0)
+        else:
+            warnings.warn("Scaled positions do not exist for structures without non-zero cell parameters. \n"
+                          "Returning cartesian coordinates")
         return positions
 
     def get_number_of_atoms(self):
@@ -3107,6 +3119,15 @@ class Atoms(object):
         return el_list
 
     # ASE compatibility
+    def write(self, filename, format=None, **kwargs):
+        """
+        Write atoms object to a recognized file format using ase parsers.
+
+        see ase.io.write for formats.
+        kwargs are passed to ase.io.write.
+        """
+        pyiron_to_ase(self).write(filename=filename, format=format, **kwargs)
+    
     @staticmethod
     def get_calculator():
         return None
@@ -3529,7 +3550,9 @@ class Atoms(object):
     @property
     def scaled_positions(self):
         warnings.warn(
-            "scaled_positions is deprecated. Use get_scaled_positions instead",
+            "scaled_positions is deprecated as of vers. 0.2"
+            + " - not guaranteed to work from vers. 0.3 "
+            + "Use get_scaled_positions instead",
             DeprecationWarning,
         )
         return self.get_scaled_positions(wrap=False)
@@ -3537,7 +3560,9 @@ class Atoms(object):
     @scaled_positions.setter
     def scaled_positions(self, positions):
         warnings.warn(
-            "scaled_positions is deprecated. Use set_scaled_positions instead",
+            "scaled_positions is deprecated as of vers. 0.2"
+            + " - not guaranteed to work from vers. 0.3 "
+            + "Use set_scaled_positions instead",
             DeprecationWarning,
         )
         self.set_scaled_positions(positions)
