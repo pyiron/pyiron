@@ -1863,8 +1863,9 @@ class Output:
             try:
                 self.vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
             except VasprunError:
-                pass
+                s.logger.warning("Unable to parse the vasprun.xml file. Will attempt to get data from OUTCAR")
             else:
+                # If parsing the vasprun file does not throw an error, then set to True
                 vasprun_working = True
 
         if outcar_working:
