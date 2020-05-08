@@ -9,5 +9,5 @@ fi;
 
 # execute notebooks
 for notebook in $(ls notebooks/*.ipynb); do 
-    papermill ${notebook} ${notebook%.*}-out.${notebook##*.} -k $kernel;
+    papermill ${notebook} ${notebook%.*}-out.${notebook##*.} -k $kernel || travis_terminate 1;
 done;
