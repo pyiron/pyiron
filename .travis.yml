@@ -43,7 +43,8 @@ matrix:
         - ./.ci_support/setup_miniconda.sh ${MINICONDA}
         - python .ci_support/pyironconfig.py
         - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
-        - conda install -c conda-forge jupyter papermill nglview sphinxdft gpaw lammps
+        - conda install -c conda-forge jupyter papermill nglview sphinxdft=2.6.1=h6ced99e_5 gpaw lammps seaborn
+        - printf "[DEFAULT]\nTOP_LEVEL_DIRS = ${HOME}\nRESOURCE_PATHS =${HOME}/resources" > ${HOME}/.pyiron
         - git clone https://github.com/pyiron/pyiron-resources.git resources
         - mkdir -p ./resources/gpaw
         - wget https://wiki.fysik.dtu.dk/gpaw-files/gpaw-setups-0.9.20000.tar.gz
