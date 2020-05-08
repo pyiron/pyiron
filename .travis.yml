@@ -48,7 +48,7 @@ matrix:
         - wget https://wiki.fysik.dtu.dk/gpaw-files/gpaw-setups-0.9.20000.tar.gz
         - tar -xf gpaw-setups-0.9.20000.tar.gz
         - mv gpaw-setups-0.9.20000 ./resources/gpaw/potentials
-        - for f in $(cat exclude); do rm $f; done;  # Remove VASP based notebooks 
+        - for f in $(cat .ci_support/exclude); do rm notebooks/$f; done;  # Remove VASP based notebooks 
       script:
         - chmod +x .ci_support/build_notebooks_on_master.sh 
         - ./.ci_support/build_notebooks_on_master.sh 
