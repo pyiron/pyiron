@@ -57,6 +57,7 @@ JOB_CLASS_DICT = {
     "Gaussian": "pyiron.gaussian.gaussian",
     "Yaff": "pyiron.yaff.yaff",
     "QuickFF": "pyiron.quickff.quickff",
+    "HessianJob": "pyiron.thermodynamics.hessian",
 }
 
 
