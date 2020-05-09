@@ -7,6 +7,7 @@ import numpy as np
 import os
 from pyiron.atomistics.volumetric.generic import VolumetricData
 from pyiron.atomistics.structure.atoms import Atoms
+from pyiron.atomistics.structure.generator import create_ase_bulk
 from pyiron.vasp.volumetric_data import VaspVolumetricData
 
 
@@ -59,6 +60,18 @@ class TestVolumetricData(unittest.TestCase):
                     self.assertTrue(
                         all(np.equal(answer, vd.get_average_along_axis(ind=i)))
                     )
+
+    def test_cyl_and_spherical_avg(self):
+        vd = VolumetricData()
+        n_x, n_y, n_z = (10, 15, 20)
+        vd.total_data = np.random.rand(n_x, n_y, n_z)
+        struct = create_ase_bulk("Al")
+        cyl_avg = vd.cylindrical_average_potential(struct, spherical_center=[0, 0, 0],
+                                                   axis_of_cyl=2, rad=2, fwhm=0.529177)
+        self.assertIsInstance(cyl_avg, float)
+        sph_avg = vd.spherical_average_potential(struct, spherical_center=[0, 0, 0],
+                                                 rad=2, fwhm=0.529177)
+        self.assertIsInstance(sph_avg, float)
 
     def test_write_cube(self):
         cd_obj = VaspVolumetricData()
