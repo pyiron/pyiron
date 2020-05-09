@@ -235,10 +235,13 @@ class PhonopyJob(AtomisticParallelMaster):
             ]
         else:
             pr_job = self.project_hdf5.project[self.job_name]
-            forces_lst = [
-                pr_job.inspect(job_name)["output/generic/forces"][-1]
-                for job_name in self._get_jobs_sorted()
-            ]
+            try:
+                forces_lst = [
+                    pr_job.inspect(job_name)["output/generic/forces"][-1]
+                    for job_name in self._get_jobs_sorted()
+                ]
+            except ValueError:
+                raise ValueError("wrong path: ", pr_job.path)
         self.phonopy.set_forces(forces_lst)
         self.phonopy.produce_force_constants()
         self.phonopy.run_mesh(mesh=[self.input["dos_mesh"]] * 3)
