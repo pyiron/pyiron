@@ -234,7 +234,7 @@ class PhonopyJob(AtomisticParallelMaster):
                 "output/generic/forces"
             ]
         else:
-            pr_job = self.project_hdf5.project.open(self.job_name)
+            pr_job = self.project_hdf5.project[self.job_name]
             forces_lst = [
                 pr_job.inspect(job_name)["output/generic/forces"][-1]
                 for job_name in self._get_jobs_sorted()
