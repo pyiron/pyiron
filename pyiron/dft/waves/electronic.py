@@ -11,7 +11,7 @@ from pyiron.dft.waves.dos import Dos
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH "
     "- Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"

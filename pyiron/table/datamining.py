@@ -40,6 +40,7 @@ from pyiron.table.funct import (
     get_energy_tot_per_atom,
     get_energy_free_per_atom,
     get_energy_int_per_atom,
+    get_e_conv_level,
     get_f_states,
     get_e_band,
     get_majority_crystal_structure,
@@ -48,6 +49,7 @@ from pyiron.table.funct import (
     get_forces,
     get_magnetic_structure,
     get_average_waves,
+    get_plane_waves,
     get_ekin_error,
     get_volume,
     get_volume_per_atom,
@@ -56,7 +58,7 @@ from pyiron.table.funct import (
 
 __author__ = "Uday Gajera, Jan Janssen, Joerg Neugebauer"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "0.0.1"
@@ -67,6 +69,10 @@ __date__ = "Sep 1, 2018"
 
 
 class FunctionContainer(object):
+    """
+    Class which is able to append, store and retreive a set of functions.
+
+    """
     def __init__(self):
         self._user_function_dict = {}
         self._system_function_lst = [
@@ -91,6 +97,7 @@ class FunctionContainer(object):
             get_energy_tot_per_atom,
             get_energy_free_per_atom,
             get_energy_int_per_atom,
+            get_e_conv_level,
             get_f_states,
             get_e_band,
             get_majority_crystal_structure,
@@ -99,6 +106,7 @@ class FunctionContainer(object):
             get_forces,
             get_magnetic_structure,
             get_average_waves,
+            get_plane_waves,
             get_ekin_error,
             get_volume,
             get_volume_per_atom,
@@ -164,29 +172,40 @@ class FunctionContainer(object):
 
 
 class JobFilters(object):
+    """
+    Certain predefined job filters
+
+    """
     @staticmethod
     def job_type(job_type):
         def filter_job_type(job):
             return job.__name__ == job_type
-
         return filter_job_type
 
     @staticmethod
     def job_name_contains(job_name_segment):
         def filter_job_name_segment(job):
             return job_name_segment in job.job_name
-
         return filter_job_name_segment
 
 
 class PyironTable(object):
+    """
+    Class for easy, efficient, and pythonic analysis of data from pyiron projects
+
+    Args:
+        project (pyiron.project.Project/None): The project to analyze
+        name (str): Name of the pyiron table
+    """
     def __init__(self, project, name=None):
         self._project = project
         self._df = pandas.DataFrame({})
         self.convert_to_object = False
         self._name = name
-        self._filter_function = None
-        self._filter_function_str = None
+        self._db_filter_function = always_true_pandas
+        self._db_filter_function_str = inspect.getsource(always_true_pandas)
+        self._filter_function = always_true
+        self._filter_function_str = inspect.getsource(always_true)
         self._filter = JobFilters()
         self.add = FunctionContainer()
         self._csv_file = None
@@ -197,6 +216,13 @@ class PyironTable(object):
 
     @property
     def filter(self):
+        """
+        Object containing pre-defined filter functions
+
+        Returns:
+            pyiron.table.datamining.JobFilters: The object containing the filters
+
+        """
         return self._filter
 
     @property
@@ -212,20 +238,47 @@ class PyironTable(object):
 
     @property
     def name(self):
+        """
+        Name of the table. Takes the project name if not specified
+
+        Returns:
+            str: Name of the table
+
+        """
         if self._name is None:
             return self._project.name
         return self._name
 
     @property
+    def db_filter_function(self):
+        """
+        Function to filter the a project database table before job specific functions are applied.
+
+        The function must take a pyiron project table in the pandas.DataFrame format (project.job_table()) and return a
+        boolean pandas.DataSeries with the same number of rows as the project table
+
+        Example:
+
+            def function(df):
+                return (df["chemicalformula"=="H2"]) & (df["hamilton"=="Vasp"])
+
+        """
+        return self._db_filter_function
+
+    @db_filter_function.setter
+    def db_filter_function(self, funct):
+        self._db_filter_function = funct
+        try:
+            self._db_filter_function_str = inspect.getsource(funct)
+        except (OSError, IOError):
+            pass
+
+    @property
     def filter_function(self):
-        if self._filter_function is None:
-
-            def always_true(job):
-                return True
-
-            return always_true
-        else:
-            return self._filter_function
+        """
+        Function to filter each job before more expensive functions are applied
+        """
+        return self._filter_function
 
     @filter_function.setter
     def filter_function(self, funct):
@@ -269,7 +322,7 @@ class PyironTable(object):
             job_stored_ids = self._get_job_ids()
             job_update_lst = [
                 self._project.inspect(job_id)
-                for job_id in self._project.get_job_ids()
+                for job_id in self._get_filtered_job_ids_from_project()
                 if job_id not in job_stored_ids
             ]
             job_update_lst = [
@@ -296,7 +349,8 @@ class PyironTable(object):
                 skip_table_update = True
         else:
             job_update_lst = [
-                self._project.inspect(job_id) for job_id in self._project.get_job_ids()
+                self._project.inspect(job_id) 
+                for job_id in self._get_filtered_job_ids_from_project()
             ]
             job_update_lst = [
                 job
@@ -469,6 +523,11 @@ class PyironTable(object):
         else:
             return np.array([])
 
+    def _get_filtered_job_ids_from_project(self, recursive=True):
+        project_table = self._project.job_table(recursive=recursive)
+        filter_funct = self.db_filter_function
+        return project_table[filter_funct(project_table)]["id"].tolist()
+
     def _apply_list_of_functions_on_job(self, job, fucntion_lst):
         diff_dict = {}
         for funct in fucntion_lst:
@@ -527,6 +586,14 @@ class TableJob(GenericJob):
     @project_level.setter
     def project_level(self, level):
         self._project_level = level
+
+    @property
+    def db_filter_function(self):
+        return self._pyiron_table.db_filter_function
+
+    @db_filter_function.setter
+    def db_filter_function(self, funct):
+        self._pyiron_table.db_filter_function = funct
 
     @property
     def filter_function(self):
@@ -617,6 +684,14 @@ class TableJob(GenericJob):
                 except (OSError, IOError):
                     if self.pyiron_table._filter_function_str is not None:
                         hdf5_input["filter"] = self.pyiron_table._filter_function_str
+            if self.pyiron_table._db_filter_function is not None:
+                try:
+                    hdf5_input["db_filter"] = inspect.getsource(
+                        self.pyiron_table._db_filter_function
+                    )
+                except (OSError, IOError):
+                    if self.pyiron_table._db_filter_function_str is not None:
+                        hdf5_input["db_filter"] = self.pyiron_table._db_filter_function_str
         if len(self.pyiron_table._df) != 0:
             with self.project_hdf5.open("output") as hdf5_output:
                 hdf5_output["table"] = json.dumps(self.pyiron_table._df.to_dict())
@@ -642,9 +717,14 @@ class TableJob(GenericJob):
                 project._inspect_mode = project_dict["inspect_mode"]
                 self.analysis_project = project
             if "filter" in hdf5_input.list_nodes():
-                self._filter_function_str = hdf5_input["filter"]
+                self.pyiron_table._filter_function_str = hdf5_input["filter"]
                 self.pyiron_table.filter_function = get_function_from_string(
                     hdf5_input["filter"]
+                )
+            if "db_filter" in hdf5_input.list_nodes():
+                self.pyiron_table._db_filter_function_str = hdf5_input["db_filter"]
+                self.pyiron_table.db_filter_function = get_function_from_string(
+                    hdf5_input["db_filter"]
                 )
             bool_dict = hdf5_input["bool_dict"]
             self._enforce_update = bool_dict["enforce_update"]
@@ -710,3 +790,27 @@ class TableJob(GenericJob):
             pandas.Dataframe
         """
         return self.pyiron_table._df
+
+
+def always_true_pandas(job_table):
+    """
+    A function which returns a pandas Series with all True values based on the size of the input pandas dataframe
+    Args:
+        job_table (pandas.DataFrame): Input dataframe
+
+    Returns:
+        pandas.Series: A series of True values
+
+    """
+    return pandas.Series([True] * len(job_table), index=job_table.index)
+
+
+def always_true(_):
+    """
+    A function that always returns True no matter what!
+
+    Returns:
+        bool: True
+
+    """
+    return True

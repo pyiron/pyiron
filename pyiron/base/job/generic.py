@@ -30,7 +30,7 @@ Generic Job class extends the JobCore class with all the functionality to run th
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -170,10 +170,6 @@ class GenericJob(JobCore):
 
         for sig in intercepted_signals:
             signal.signal(sig, self.signal_intercept)
-
-    @property
-    def python_execution_process(self):
-        return self._process
 
     @property
     def version(self):
@@ -482,58 +478,66 @@ class GenericJob(JobCore):
         copied_self._job_id = None
         return copied_self
 
-    def copy_to(
-        self, project=None, new_job_name=None, input_only=False, new_database_entry=True
-    ):
+    def copy_to(self, project=None, new_job_name=None, input_only=False, new_database_entry=True):
         """
-        Copy the content of the job including the HDF5 file to a new location
+        Copy the content of the job including the HDF5 file to a new location.
 
         Args:
-            project (ProjectHDFio): project to copy the job to
-            new_job_name (str): to duplicate the job within the same porject it is necessary to modify the job name
-                                - optional
-            input_only (bool): [True/False] to copy only the input - default False
-            new_database_entry (bool): [True/False] to create a new database entry - default True
+            project (ProjectHDFio): The project to copy the job to. (Default is None, use the same project.)
+            new_job_name (str): The new name to assign the duplicate job. Required if the project is `None` or the same
+                project as the copied job. (Default is None, try to keep the same name.)
+            input_only (bool): [True/False] Whether to copy only the input. (Default is False.)
+            new_database_entry (bool): [True/False] Whether to create a new database entry. (Default is True.)
 
         Returns:
             GenericJob: GenericJob object pointing to the new location.
         """
         if project is None and new_job_name is None:
             raise ValueError("copy_to requires either a new project or a new_job_name.")
+
+        in_same_project = project is None or project.path == self.project.path
+        has_new_name = new_job_name is not None
+        if in_same_project and not has_new_name:
+            raise ValueError("When copying to the same project, new_job_name must be provided.")
+
         if not self.project_hdf5.file_exists:
             self.to_hdf()
             delete_file_after_copy = True
         else:
             delete_file_after_copy = False
-        if project is None and new_job_name is not None:
+
+        # Get new hdf location
+        project = project or self.project
+        new_job_name = new_job_name or self.job_name
+        if in_same_project and len(self.project_hdf5.h5_path.split("/")) > 2:
+            new_location = self.project_hdf5.open("../" + new_job_name)
+        else:
+            new_location = self.project_hdf5.__class__(project, new_job_name, h5_path="/" + new_job_name)
+
+        # Copy job
+        if in_same_project:
             new_generic_job = self.copy()
             new_generic_job.reset_job_id()
-            if len(self.project_hdf5.h5_path.split("/")) > 2:
-                new_location = self.project_hdf5.open("../" + new_job_name)
-            else:
-                new_location = self.project_hdf5.__class__(
-                    self.project, new_job_name, h5_path="/" + new_job_name
-                )
             new_generic_job._name = new_job_name
             new_generic_job.project_hdf5.copy_to(new_location, maintain_name=False)
             new_generic_job.project_hdf5 = new_location
-            if new_database_entry:
-                new_generic_job.save()
         else:
-            new_generic_job = super(GenericJob, self).copy_to(
-                project, new_database_entry=new_database_entry
-            )
+            new_generic_job = super(GenericJob, self).copy_to(project, new_database_entry=new_database_entry)
             new_generic_job.reset_job_id(job_id=new_generic_job.job_id)
             new_generic_job.from_hdf()
+
+        if new_database_entry:
+            new_generic_job.save()
+
         if input_only:
             if "output" in new_generic_job.project_hdf5.list_groups():
                 del new_generic_job.project_hdf5[
                     posixpath.join(new_generic_job.project_hdf5.h5_path, "output")
                 ]
+
         if delete_file_after_copy:
             self.project_hdf5.remove_file()
-        if project is not None and new_job_name:
-            new_generic_job.job_name = new_job_name
+
         return new_generic_job
 
     def copy_file_to_working_directory(self, file):
@@ -1178,14 +1182,13 @@ class GenericJob(JobCore):
         }
         return db_dict
 
-    def restart(self, snapshot=-1, job_name=None, job_type=None):
+    def restart(self, job_name=None, job_type=None):
         """
         Create an restart calculation from the current calculation - in the GenericJob this is the same as create_job().
         A restart is only possible after the current job has finished. If you want to run the same job again with
         different input parameters use job.run(run_again=True) instead.
 
         Args:
-            snapshot (int): time step from which to restart the calculation - default=-1 - the last time step
             job_name (str): job name of the new calculation - default=<job_name>_restart
             job_type (str): job type of the new calculation - default is the same type as the exeisting calculation
 
@@ -1431,6 +1434,8 @@ class GenericJob(JobCore):
             self.parent_id = parent_id
             self.run()
         else:
+            self.logger.warning("The job {} is being loaded instead of running. To re-run use the argument "
+                                "'run_again=True'".format(self.job_name))
             self.from_hdf()
 
     def _executable_activate(self, enforce=False):

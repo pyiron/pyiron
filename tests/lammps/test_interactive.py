@@ -25,21 +25,36 @@ class InteractiveLibrary(object):
 class TestLammpsInteractive(unittest.TestCase):
     def setUp(self):
         self.job._interactive_library = InteractiveLibrary()
+        self.minimize_job._interactive_library = InteractiveLibrary()
+        self.minimize_control_job._interactive_library = InteractiveLibrary()
 
     @classmethod
     def setUpClass(cls):
         cls.execution_path = os.path.dirname(os.path.abspath(__file__))
         cls.project = Project(os.path.join(cls.execution_path, "lammps"))
+
+        structure = Atoms(
+            symbols="Fe2",
+            positions=np.outer(np.arange(2), np.ones(3)),
+            cell=2 * np.eye(3),
+        )
+
         cls.job = Lammps(
             project=ProjectHDFio(project=cls.project, file_name="lammps"),
             job_name="lammps",
         )
         cls.job.server.run_mode.interactive = True
-        cls.job.structure = Atoms(
-            symbols="Fe2",
-            positions=np.outer(np.arange(2), np.ones(3)),
-            cell=2 * np.eye(3),
+        cls.job.structure = structure
+
+        cls.minimize_job = Lammps(
+            project=ProjectHDFio(project=cls.project, file_name="lammps"),
+            job_name="minimize_lammps",
         )
+        cls.minimize_control_job = Lammps(
+            project=ProjectHDFio(project=cls.project, file_name="lammps"),
+            job_name="minimize_control_lammps",
+        )
+        # cls.control_job.server.run_mode.interactive = True  # Fails if we then call, e.g. `calc_minimize`
 
     @classmethod
     def tearDownClass(cls):
@@ -69,11 +84,38 @@ class TestLammpsInteractive(unittest.TestCase):
             [
                 "fix ensemble all nve",
                 "variable dumptime equal 100",
+                "variable thermotime equal 100",
                 "thermo_style custom step temp pe etotal pxx pxy pxz pyy pyz pzz vol",
                 "thermo_modify format float %20.15g",
-                "thermo 100",
+                "thermo ${thermotime}",
             ],
         )
+
+    def test_calc_minimize_input(self):
+        # Ensure defaults match control
+        atoms = Atoms("Fe8", positions=np.zeros((8, 3)), cell=np.eye(3))
+        self.minimize_control_job.structure = atoms
+        self.minimize_control_job.input.control.calc_minimize()
+        self.minimize_control_job._interactive_lammps_input()
+        self.minimize_job.structure = atoms
+        self.minimize_job.calc_minimize()
+        self.minimize_job._interactive_lammps_input()
+
+        self.assertEqual(
+            self.minimize_control_job._interactive_library._command,
+            self.minimize_job._interactive_library._command
+        )
+
+        # Ensure that pressure inputs are being parsed OK
+        self.minimize_job.calc_minimize(pressure=0)
+        self.minimize_job._interactive_lammps_input()
+        self.assertTrue(("fix ensemble all box/relax x 0.0 y 0.0 z 0.0 couple none" in
+                         self.minimize_job._interactive_library._command))
+
+        self.minimize_job.calc_minimize(pressure=[1, 2, None, 0., 0., None])
+        self.minimize_job._interactive_lammps_input()
+        self.assertTrue(("fix ensemble all box/relax x 10000.0 y 20000.0 xy 0.0 xz 0.0 couple none" in
+                         self.minimize_job._interactive_library._command))
 
 
 if __name__ == "__main__":

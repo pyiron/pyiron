@@ -7,6 +7,7 @@ import os
 import importlib
 from six import with_metaclass
 import sys
+from configparser import ConfigParser
 from pathlib2 import Path
 from pyiron.base.settings.logger import setup_logger
 from pyiron.base.database.generic import DatabaseAccess
@@ -18,7 +19,7 @@ The settings file provides the attributes of the configuration as properties.
 
 __author__ = "Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -26,12 +27,6 @@ __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
-
-# Depending on the Python Version - a specific version of the config parser is required.
-if sys.version_info.major == 2:
-    from ConfigParser import ConfigParser
-else:
-    from configparser import ConfigParser
 
 
 class Singleton(type):
@@ -342,10 +337,7 @@ class Settings(with_metaclass(Singleton)):
             dict: dictionary with the environment configuration
         """
         # load config parser - depending on Python version
-        if sys.version_info.major == 2:
-            parser = ConfigParser()
-        else:
-            parser = ConfigParser(inline_comment_prefixes=(";",))
+        parser = ConfigParser(inline_comment_prefixes=(";",))
 
         # read config
         parser.read(config_file)

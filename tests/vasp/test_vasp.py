@@ -52,7 +52,7 @@ class TestVasp(unittest.TestCase):
         self.assertIsInstance(self.job._output_parser, Output)
         self.assertIsInstance(self.job._potential, VaspPotentialSetter)
         self.assertTrue(self.job._compress_by_default)
-        self.assertEqual(self.job.get_eddrmm_handling(), "not_converged")
+        self.assertEqual(self.job.get_eddrmm_handling(), "warn")
 
     def test_eddrmm(self):
         self.job.set_eddrmm_handling("ignore")
@@ -60,7 +60,7 @@ class TestVasp(unittest.TestCase):
         self.job.set_eddrmm_handling("restart")
         self.assertEqual(self.job.get_eddrmm_handling(), "restart")
         self.job.set_eddrmm_handling()
-        self.assertEqual(self.job.get_eddrmm_handling(), "not_converged")
+        self.assertEqual(self.job.get_eddrmm_handling(), "warn")
         self.assertRaises(ValueError, self.job.set_eddrmm_handling, status="blah")
 
     def test_potential(self):

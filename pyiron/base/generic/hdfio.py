@@ -20,7 +20,7 @@ Classes to map the Python objects to HDF5 data structures
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -1285,7 +1285,13 @@ class ProjectHDFio(FileHDFio):
         new_obj = self.create_object(obj_type, **qwargs)
         if obj_type != str(type(new_obj)):  # Backwards compatibility
             self["TYPE"] = str(type(new_obj))
-        new_obj.from_hdf()
+        if obj_type != "<class 'pyiron.atomistics.structure.atoms.Atoms'>":
+            new_obj.from_hdf()
+        else:
+            new_obj.from_hdf(
+                hdf=self.open(".."),
+                group_name=self.h5_path.split('/')[-1]
+            )
         return new_obj
 
     def get_job_id(self, job_specifier):

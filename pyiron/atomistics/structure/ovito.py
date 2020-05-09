@@ -15,7 +15,7 @@ from ovito.modifiers import (
 
 __author__ = "Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -29,13 +29,15 @@ s = Settings()
 
 def analyse_ovito_cna_adaptive(atoms, mode="total"):
     """
+    Use Ovito's common neighbor analysis binding.
 
     Args:
-        atoms:
-        mode:
+        atoms (pyrion.structure.atoms.Atoms): The structure to analyze.
+        mode ("total"/"numeric"/"str"): Controls the style and level of detail of the output. (Default is "total", only
+            return a summary of the values in the structure.)
 
     Returns:
-
+        (depends on `mode`)
     """
     s.publication_add(publication())
     if not mode in ["total", "numeric", "str"]:

@@ -6,9 +6,18 @@ import os
 import numpy as np
 import unittest
 import warnings
+import scipy
+import scipy.constants
 from pyiron.project import Project
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.atomistics.structure.atoms import Atoms
+from collections import OrderedDict as odict
+
+BOHR_TO_ANGSTROM = (
+        scipy.constants.physical_constants["Bohr radius"][0] / scipy.constants.angstrom
+)
+HARTREE_TO_EV = scipy.constants.physical_constants["Hartree energy in eV"][0]
+HARTREE_OVER_BOHR_TO_EV_OVER_ANGSTROM = HARTREE_TO_EV / BOHR_TO_ANGSTROM
 
 
 class TestSphinx(unittest.TestCase):
@@ -25,9 +34,14 @@ class TestSphinx(unittest.TestCase):
             cell=2.6 * np.eye(3),
         )
         cls.sphinx = cls.project.create_job("Sphinx", "job_sphinx")
+        cls.sphinx_band_structure = cls.project.create_job("Sphinx", "sphinx_test_bs")
         cls.sphinx_2_3 = cls.project.create_job("Sphinx", "sphinx_test_2_3")
         cls.sphinx_2_5 = cls.project.create_job("Sphinx", "sphinx_test_2_5")
+        cls.sphinx_aborted = cls.project.create_job("Sphinx", "sphinx_test_aborted")
         cls.sphinx.structure = cls.basis
+        cls.sphinx.fix_spin_constraint = True
+        cls.sphinx_band_structure.structure = cls.project.create_structure("Fe", "bcc", 2.81)
+        cls.sphinx_band_structure.structure = cls.sphinx_band_structure.structure.create_line_mode_structure()
         cls.sphinx_2_3.structure = Atoms(
             elements=["Fe", "Fe"],
             scaled_positions=[[0.0, 0.0, 0.0], [0.5, 0.5, 0.5]],
@@ -38,11 +52,25 @@ class TestSphinx(unittest.TestCase):
             scaled_positions=[[0.0, 0.0, 0.0], [0.5, 0.5, 0.5]],
             cell=2.83 * np.eye(3),
         )
+        cls.sphinx_aborted.structure = Atoms(
+            elements=32 * ["Fe"],
+            scaled_positions=np.arange(32 * 3).reshape(-1, 3) / (32 * 3),
+            cell=3.5 * np.eye(3),
+        )
+        cls.sphinx_aborted.status.aborted = True
         cls.current_dir = os.path.abspath(os.getcwd())
         cls.sphinx._create_working_directory()
         cls.sphinx_2_3._create_working_directory()
+        cls.sphinx.input["VaspPot"] = False
+        cls.sphinx.structure.add_tag(selective_dynamics=(True, True, True))
+        cls.sphinx.structure.selective_dynamics[1] = (False, False, False)
+        cls.sphinx.load_default_groups()
+        cls.sphinx.fix_symmetry = False
         cls.sphinx.write_input()
-        cls.sphinx.version = "2.6"
+        try:
+            cls.sphinx.version = "2.6"
+        except ValueError:
+            cls.sphinx.version = "2.6.2_default"
         cls.sphinx_2_3.to_hdf()
         cls.sphinx_2_3.decompress()
         cls.sphinx_2_5.decompress()
@@ -55,55 +83,19 @@ class TestSphinx(unittest.TestCase):
         os.remove(
             os.path.join(
                 cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/basis.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/control.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/guess.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/hamilton.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
                 "../static/sphinx/job_sphinx_hdf5/job_sphinx/input.sx",
             )
         )
         os.remove(
             os.path.join(
                 cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/potentials.sx",
+                "../static/sphinx/job_sphinx_hdf5/job_sphinx/spins.in",
             )
         )
         os.remove(
             os.path.join(
                 cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/structure.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/userparameters.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/Fe_POTCAR",
+                "../static/sphinx/job_sphinx_hdf5/job_sphinx/Fe_GGA.atomicdata",
             )
         )
         os.rmdir(
@@ -115,77 +107,98 @@ class TestSphinx(unittest.TestCase):
         os.remove(
             os.path.join(cls.file_location, "../static/sphinx/sphinx_test_2_3.h5")
         )
-        # os.remove(os.path.join(cls.file_location, 'static/sphinx/job_sphinx_hdf5/job_sphinx/spins.in'))
-
-    def test_write_basis(self):
-        file_content = [
-            "eCut = EnCut/13.606;\n",
-            "kPoint {\n",
-            "\tcoords = KpointCoords;\n",
-            "\tweight = 1;\n",
-            "\trelative;\n",
-            "}\n",
-            "folding = KpointFolding;\n",
-        ]
-        with open(
-            os.path.join(
-                self.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/basis.sx",
-            )
-        ) as basis_sx:
-            lines = basis_sx.readlines()
-        self.assertEqual(file_content, lines)
 
     def test_id_pyi_to_spx(self):
         self.assertEqual(len(self.sphinx.id_pyi_to_spx), len(self.sphinx.structure))
         self.assertEqual(len(self.sphinx.id_spx_to_pyi), len(self.sphinx.structure))
 
-    def test_write_control(self):
-        file_content = [
-            "scfDiag {\n",
-            "\trhoMixing = 1.0;\n",
-            "\tspinMixing = 1.0;\n",
-            "\tdEnergy = Ediff/27.21138602;\n",
-            "\tmaxSteps = 400;\n",
-            "\tblockCCG {}\n",
-            "}\n",
-            "evalForces {\n",
-            '\tfile = "relaxHist.sx";\n',
-            "}\n",
-        ]
-        file_name = os.path.join(
-            self.file_location, "../static/sphinx/job_sphinx_hdf5/job_sphinx/control.sx"
-        )
-        with open(file_name) as control_sx:
-            lines = control_sx.readlines()
-        self.assertEqual(file_content, lines)
-
     def test_write_input(self):
+
         file_content = [
-            "//job_sphinx;\n",
-            "//SPHinX input file generated by pyiron;\n",
-            "format paw;\n",
-            "include <parameters.sx>;\n",
-            "include <userparameters.sx>;\n",
-            "pawPot {\n",
-            "\tinclude <potentials.sx>;\n",
-            "}\n",
-            "structure {\n",
-            "\tinclude <structure.sx>;\n",
-            "}\n",
-            "basis {\n",
-            "\tinclude <basis.sx>;\n",
-            "}\n",
-            "PAWHamiltonian {\n",
-            "\tinclude <hamilton.sx>;\n",
-            "}\n",
-            "initialGuess {\n",
-            "\tinclude <guess.sx>;\n",
-            "}\n",
-            "main {\n",
-            "\tinclude <control.sx>;\n",
-            "}\n",
-        ]
+            '//job_sphinx\n',
+            '//SPHInX input file generated by pyiron\n',
+            '\n',
+            'format paw;\n',
+            'include <parameters.sx>;\n',
+            '\n',
+            'pawPot {\n',
+            '\tspecies {\n',
+            '\t\tname = "Fe";\n',
+            '\t\tpotType = "AtomPAW";\n',
+            '\t\telement = "Fe";\n',
+            '\t\tpotential = "Fe_GGA.atomicdata";\n',
+            '\t}\n',
+            '}\n',
+            'structure {\n',
+            '\tcell = [[4.913287924027003, 0.0, 0.0], [0.0, 4.913287924027003, 0.0], [0.0, 0.0, 4.913287924027003]];\n',
+            '\tspecies {\n',
+            '\t\telement = "Fe";\n',
+            '\t\tatom {\n',
+            '\t\t\tlabel = "spin_0.5";\n',
+            '\t\t\tcoords = [0.0, 0.0, 0.0];\n',
+            '\t\t\tmovable;\n',
+            '\t\t}\n',
+            '\t\tatom {\n',
+            '\t\t\tlabel = "spin_0.5";\n',
+            '\t\t\tcoords = [2.4566439620135014, 2.4566439620135014, 2.4566439620135014];\n',
+            '\t\t}\n',
+            '\t}\n',
+            '\tsymmetry {\n',
+            '\t\toperator {\n',
+            '\t\t\tS = [[1,0,0],[0,1,0],[0,0,1]];\n',
+            '\t\t}\n',
+            '\t}\n',
+            '}\n',
+            'basis {\n',
+            '\teCut = 24.989539079445393;\n',
+            '\tkPoint {\n',
+            '\t\tcoords = [0.5, 0.5, 0.5];\n',
+            '\t\tweight = 1;\n',
+            '\t\trelative;\n',
+            '\t}\n',
+            '\tfolding = [4, 4, 4];\n',
+            '\tsaveMemory;\n',
+            '}\n',
+            'PAWHamiltonian {\n',
+            '\tnEmptyStates = 6;\n',
+            '\tekt = 0.007349864435130998;\n',
+            '\txc = PBE;\n',
+            '\tspinPolarized;\n',
+            '}\n',
+            'initialGuess {\n',
+            '\twaves {\n',
+            '\t\tlcao {}\n',
+            '\t\tpawBasis;\n',
+            '\t}\n',
+            '\trho {\n',
+            '\t\tatomicOrbitals;\n',
+            '\t\tatomicSpin {\n',
+            '\t\t\tlabel = "spin_0.5";\n',
+            '\t\t\tspin = 0.5;\n',
+            '\t\t}\n',
+            '\t\tatomicSpin {\n',
+            '\t\t\tlabel = "spin_0.5";\n',
+            '\t\t\tspin = 0.5;\n',
+            '\t\t}\n',
+            '\t}\n',
+            '\tnoWavesStorage = false;\n',
+            '}\n',
+            'main {\n',
+            '\tscfDiag {\n',
+            '\t\trhoMixing = 1.0;\n',
+            '\t\tspinMixing = 1.0;\n',
+            '\t\tdEnergy = 3.674932217565499e-06;\n',
+            '\t\tmaxSteps = 400;\n',
+            '\t\tblockCCG {}\n',
+            '\t}\n',
+            '\tevalForces {\n',
+            '\t\tfile = "relaxHist.sx";\n',
+            '\t}\n',
+            '}\n',
+            'spinConstraint {\n',
+            '\tfile = "spins.in";\n',
+            '}\n'
+            ]
         file_name = os.path.join(
             self.file_location, "../static/sphinx/job_sphinx_hdf5/job_sphinx/input.sx"
         )
@@ -193,83 +206,77 @@ class TestSphinx(unittest.TestCase):
             lines = input_sx.readlines()
         self.assertEqual(file_content, lines)
 
-    def test_write_userparameters(self):
-        file_content = [
-            "EnCut=340;\n",
-            "KpointCoords=[0.5, 0.5, 0.5];\n",
-            "KpointFolding=[4, 4, 4];\n",
-            "EmptyStates=6;\n",
-            "Sigma=0.2;\n",
-            "Xcorr=PBE;\n",
-            "Estep=400;\n",
-            "Ediff=1e-07;\n",
-            "WriteWaves=true;\n",
-            "KJxc=false;\n",
-            "SaveMemory=false;\n",
-            "CoarseRun=false;\n",
-            "rhoMixing=1.0;\n",
-            "spinMixing=1.0;\n",
-            "CheckOverlap=true;\n",
-            "THREADS=1;\n",
-        ]
-        file_name = os.path.join(
-            self.file_location,
-            "../static/sphinx/job_sphinx_hdf5/job_sphinx/userparameters.sx",
-        )
-        with open(file_name) as userparameters_sx:
-            lines = userparameters_sx.readlines()
-        self.assertEqual(file_content, lines)
 
     def test_plane_wave_cutoff(self):
         with self.assertRaises(ValueError):
             self.sphinx.plane_wave_cutoff = -1
+
+        with warnings.catch_warnings(record=True) as w:
+            self.sphinx.plane_wave_cutoff = 25
+            self.assertEqual(len(w), 1)
+
         self.sphinx.plane_wave_cutoff = 340
         self.assertEqual(self.sphinx.plane_wave_cutoff, 340)
 
-    def test_write_guess(self):
-        file_content = [
-            "waves {\n",
-            "\tlcao {}\n",
-            "\tpawBasis;\n",
-            "}\n",
-            "rho {\n",
-            "\tatomicOrbitals;\n",
-            "\tatomicSpin {\n",
-            '\t\tlabel = "spin_0.5";\n',
-            "\t\tspin = 0.5;\n",
-            "\t}\n",
-            "\tatomicSpin {\n",
-            '\t\tlabel = "spin_0.5";\n',
-            "\t\tspin = 0.5;\n",
-            "\t}\n",
-            "}\n",
-        ]
-        file_name = os.path.join(
-            self.file_location, "../static/sphinx/job_sphinx_hdf5/job_sphinx/guess.sx"
-        )
-        with open(file_name) as guess_sx:
-            lines = guess_sx.readlines()
-        self.assertEqual(file_content, lines)
+    def test_set_kpoints(self):
 
-    def test_write_potentials(self):
-        file_content = [
-            "species {\n",
-            '\tname = "Fe";\n',
-            '\tpotType = "VASP";\n',
-            '\telement = "Fe";\n',
-            '\tpotential = "Fe_POTCAR";\n',
-            "}\n",
-        ]
-        file_name = os.path.join(
-            self.file_location,
-            "../static/sphinx/job_sphinx_hdf5/job_sphinx/potentials.sx",
-        )
-        with open(file_name) as potentials_sx:
-            lines = potentials_sx.readlines()
-        self.assertEqual(file_content, lines)
+        mesh = [2, 3, 4]
+        center_shift = [0.1, 0.1, 0.1]
+
+        trace = {"my_path": [("GAMMA", "H"), ("H", "N"), ("P", "H")]}
+
+        kpoints_group = {
+            'relative': True,
+            'from': odict([
+                ('coords',  np.array([0.0, 0.0, 0.0])), ('label', '"GAMMA"')
+            ]),
+            'to___0': odict([
+                ('coords', np.array([0.5, -0.5, 0.5])), ('nPoints', 20), ('label', '"H"')
+            ]),
+            'to___1': odict([
+                ('coords', np.array([0.0, 0.0, 0.5])), ('nPoints', 20), ('label', '"N"')
+            ]),
+            'to___1___1': odict([
+                ('coords', np.array([0.25, 0.25, 0.25])), ('nPoints', 0), ('label', '"P"')
+            ]),
+            'to___2': odict([
+                ('coords', np.array([0.5, -0.5, 0.5])), ('nPoints', 20), ('label', '"H"')
+            ]),
+        }
+
+        with self.assertRaises(ValueError):
+            self.sphinx_band_structure.set_kpoints(symmetry_reduction="pyiron rules!")
+        with self.assertRaises(ValueError):
+            self.sphinx_band_structure.set_kpoints(scheme="no valid scheme")
+        with self.assertRaises(ValueError):
+            self.sphinx_band_structure.set_kpoints(scheme="Line", path_name="my_path")
+
+        self.sphinx_band_structure.structure.add_high_symmetry_path(trace)
+        with self.assertRaises(ValueError):
+            self.sphinx_band_structure.set_kpoints(scheme="Line", n_path=20)
+        with self.assertRaises(AssertionError):
+            self.sphinx_band_structure.set_kpoints(scheme="Line", path_name="wrong name", n_path=20)
+
+        self.sphinx_band_structure.set_kpoints(scheme="Line", path_name="my_path", n_path=20)
+        self.assertTrue("kPoint" not in self.sphinx_band_structure.input.sphinx.basis)
+        self.assertEqual(self.sphinx_band_structure.input.sphinx.to_sphinx(kpoints_group),
+                         self.sphinx_band_structure.input.sphinx.basis.kPoints.to_sphinx())
+
+        self.sphinx_band_structure.set_kpoints(scheme="MP", mesh=mesh, center_shift=center_shift)
+        self.assertTrue("kPoints" not in self.sphinx_band_structure.input.sphinx.basis)
+        self.assertEqual(self.sphinx_band_structure.input["KpointFolding"], mesh)
+        self.assertEqual(self.sphinx_band_structure.input["KpointCoords"], center_shift)
+
+    def test_set_empty_states(self):
+        with self.assertRaises(ValueError):
+            self.sphinx.set_empty_states(-1)
+        self.sphinx.set_empty_states(666)
+        self.assertEqual(self.sphinx.input["EmptyStates"], 666)
+        self.sphinx.set_empty_states()
+        self.assertEqual(self.sphinx.input["EmptyStates"], "auto")
 
     def test_fix_spin_constraint(self):
-        self.assertIsNone(self.sphinx.fix_spin_constraint)
+        self.assertTrue(self.sphinx.fix_spin_constraint)
         with self.assertRaises(ValueError):
             self.sphinx.fix_spin_constraint = 3
         self.sphinx.fix_spin_constraint = False
@@ -279,34 +286,158 @@ class TestSphinx(unittest.TestCase):
         self.sphinx.calc_static(algorithm="wrong_algorithm")
         self.assertFalse(
             "keepRho"
-            in self.sphinx.input_writer._odict_to_spx_input(self.sphinx._control_str)
+            in self.sphinx.input.sphinx.main.to_sphinx()
         )
         self.assertTrue(
             "blockCCG"
-            in self.sphinx.input_writer._odict_to_spx_input(self.sphinx._control_str)
+            in self.sphinx.input.sphinx.main.to_sphinx()
         )
         self.sphinx.restart_file_list.append("randomfile")
         self.sphinx.calc_static(algorithm="ccg")
         self.assertTrue(
             "keepRho"
-            in self.sphinx.input_writer._odict_to_spx_input(self.sphinx._control_str)
+            in self.sphinx.input.sphinx.main.to_sphinx()
         )
         self.assertEqual(self.sphinx.input["Estep"], 400)
         self.assertTrue(
             "CCG"
-            in self.sphinx.input_writer._odict_to_spx_input(self.sphinx._control_str)
+            in self.sphinx.input.sphinx.main.to_sphinx()
         )
 
     def test_calc_minimize(self):
         self.sphinx.calc_minimize(electronic_steps=100, ionic_steps=50)
         self.assertEqual(self.sphinx.input["Estep"], 100)
         self.assertEqual(self.sphinx.input["Istep"], 50)
+        self.assertEqual(self.sphinx.input.sphinx.main['ricQN']['maxSteps'], '50')
+
+    def test_get_scf_group(self):
+        with warnings.catch_warnings(record=True) as w:
+            test_scf = self.sphinx_band_structure.get_scf_group(algorithm="wrong")
+            self.assertEqual(len(w), 1)
+            ref_scf = {
+                'rhoMixing': '1.0',
+                'spinMixing': '1.0',
+                'dEnergy': 3.674932217565499e-06,
+                'maxSteps': '400',
+                'blockCCG': {}}
+            self.assertEqual(test_scf, ref_scf)
+
+        ref_scf = {
+            'rhoMixing': '1.0',
+            'spinMixing': '1.0',
+            'nPulaySteps': '0',
+            'dEnergy': 3.674932217565499e-06,
+            'maxSteps': '400',
+            'preconditioner': {
+                'type': 0
+                },
+            'blockCCG': {
+            'maxStepsCCG': 0,
+            'blockSize': 0,
+            'nSloppy': 0},
+            'noWavesStorage': True
+            }
+
+        self.sphinx_band_structure.input["nPulaySteps"] = 0
+        self.sphinx_band_structure.input["preconditioner"] = 0
+        self.sphinx_band_structure.input["maxStepsCCG"] = 0
+        self.sphinx_band_structure.input["blockSize"] = 0
+        self.sphinx_band_structure.input["nSloppy"] = 0
+        self.sphinx_band_structure.input["WriteWaves"] = False
+        test_scf = self.sphinx_band_structure.get_scf_group()
+        self.assertEqual(test_scf, ref_scf)
 
     def test_check_setup(self):
         self.assertFalse(self.sphinx.check_setup())
 
+        self.sphinx_band_structure.load_default_groups()
+        self.sphinx_band_structure.input.sphinx.basis.kPoint = {"coords": "0.5, 0.5, 0.5"}
+        self.assertFalse(self.sphinx_band_structure.check_setup())
+
+        self.sphinx_band_structure.load_default_groups()
+        self.sphinx_band_structure.server.cores = 2000
+        self.assertFalse(self.sphinx_band_structure.check_setup())
+
+        self.sphinx_band_structure.input["EmptyStates"] = "auto"
+        self.assertFalse(self.sphinx_band_structure.check_setup())
+        self.sphinx_band_structure.structure.add_tag(spin=None)
+        for i in range(len(self.sphinx_band_structure.structure)):
+            self.sphinx_band_structure.structure.spin[i] = 4
+        self.assertFalse(self.sphinx_band_structure.check_setup())
+
+    def test_set_check_overlap(self):
+        self.assertRaises(ValueError, self.sphinx_band_structure.set_check_overlap, 0)
+
+    def test_set_occupancy_smearing(self):
+        self.assertRaises(
+            ValueError, self.sphinx_band_structure.set_occupancy_smearing, 0.1, 0.1
+        )
+        self.assertRaises(
+            ValueError, self.sphinx_band_structure.set_occupancy_smearing, "fermi", -0.1
+        )
+        self.sphinx_band_structure.set_occupancy_smearing("fermi", 0.1)
+
+    def test_load_default_groups(self):
+        backup  = self.sphinx_band_structure.structure.copy()
+        self.sphinx_band_structure.structure = None
+        self.assertRaises(
+            ValueError, self.sphinx_band_structure.load_default_groups
+        )
+        self.sphinx_band_structure.structure = backup
+
     def test_validate_ready_to_run(self):
-        self.sphinx.validate_ready_to_run()
+
+        backup = self.sphinx_band_structure.structure.copy()
+        self.sphinx_band_structure.structure = None
+        self.assertRaises(AssertionError, self.sphinx_band_structure.validate_ready_to_run)
+        self.sphinx_band_structure.structure = backup
+
+        self.sphinx_band_structure.input["THREADS"] = 20
+        self.sphinx_band_structure.server.cores = 10
+        self.assertRaises(AssertionError, self.sphinx_band_structure.validate_ready_to_run)
+
+        self.sphinx_band_structure.input.sphinx.main = {}
+        self.assertRaises(AssertionError, self.sphinx_band_structure.validate_ready_to_run)
+
+        backup = self.sphinx.input.sphinx.basis.eCut
+        self.sphinx.input.sphinx.basis.eCut = 400
+        self.assertFalse(self.sphinx.validate_ready_to_run())
+        self.sphinx.input.sphinx.basis.eCut = backup
+
+        backup = self.sphinx.input.sphinx.basis.kPoint.copy()
+        self.sphinx.input.sphinx.basis.kPoint = {
+            "coords": [0.5, 0.5, 0.25],
+            "weight": 1
+        }
+        self.assertFalse(self.sphinx.validate_ready_to_run())
+        self.sphinx.input.sphinx.basis.kPoint = backup
+
+        backup = self.sphinx.input.sphinx.PAWHamiltonian.ekt
+        self.sphinx.input.sphinx.PAWHamiltonian.ekt = 0.0001
+        self.assertFalse(self.sphinx.validate_ready_to_run())
+        self.sphinx.input.sphinx.PAWHamiltonian.ekt = backup
+
+        backup = self.sphinx.input.sphinx.PAWHamiltonian.xc
+        self.sphinx.input.sphinx.PAWHamiltonian.xc = "Wrong"
+        self.assertFalse(self.sphinx.validate_ready_to_run())
+        self.sphinx.input.sphinx.PAWHamiltonian.xc = backup
+
+        backup = self.sphinx.input.sphinx.PAWHamiltonian.xc
+        self.sphinx.input.sphinx.PAWHamiltonian.xc = "Wrong"
+        self.assertFalse(self.sphinx.validate_ready_to_run())
+        self.sphinx.input.sphinx.PAWHamiltonian.xc = backup
+
+        backup = self.sphinx.input.sphinx.PAWHamiltonian.nEmptyStates
+        self.sphinx.input.sphinx.PAWHamiltonian.nEmptyStates = 100
+        self.assertFalse(self.sphinx.validate_ready_to_run())
+        self.sphinx.input.sphinx.PAWHamiltonian.nEmptyStates = backup
+
+        backup = self.sphinx.input.sphinx.structure.copy()
+        self.sphinx.input.sphinx.structure.cell = [[0,0,0],[0,0,0],[0,0,0]]
+        self.assertFalse(self.sphinx.validate_ready_to_run())
+        self.sphinx.input.sphinx.structure = backup
+
+        self.assertTrue(self.sphinx.validate_ready_to_run())
 
     def test_set_mixing_parameters(self):
         self.assertRaises(
@@ -335,27 +466,29 @@ class TestSphinx(unittest.TestCase):
         self.assertEqual(self.sphinx.exchange_correlation_functional, "PBE")
 
     def test_write_structure(self):
+        cell = (self.sphinx.structure.cell / BOHR_TO_ANGSTROM).tolist()
+        pos_2 = (self.sphinx.structure.positions[1] / BOHR_TO_ANGSTROM).tolist()
+
         file_content = [
-            "cell = [[4.913287926190353, 0.0, 0.0], [0.0, 4.913287926190353, 0.0], [0.0, 0.0, 4.913287926190353]];\n",
-            "species {\n",
+            f'cell = {cell};\n',
+            'species {\n',
             '\telement = "Fe";\n',
-            "\tatom {\n",
+            '\tatom {\n',
             '\t\tlabel = "spin_0.5";\n',
-            "\t\tcoords = [0.0, 0.0, 0.0];\n",
-            "\t}\n",
-            "\tatom {\n",
+            '\t\tcoords = [0.0, 0.0, 0.0];\n',
+            '\t\tmovable;\n',
+            '\t}\n',
+            '\tatom {\n',
             '\t\tlabel = "spin_0.5";\n',
-            "\t\tcoords = [2.4566439630951766, 2.4566439630951766, 2.4566439630951766];\n",
-            "\t}\n",
-            "}\n",
+            '\t\tcoords = [2.4566439620135014, 2.4566439620135014, 2.4566439620135014];\n',
+            '\t}\n',
+            '}\n',
         ]
-        file_name = os.path.join(
-            self.file_location,
-            "../static/sphinx/job_sphinx_hdf5/job_sphinx/structure.sx",
-        )
-        with open(file_name) as structure_sx:
-            lines = structure_sx.readlines()
-        self.assertEqual(file_content, lines)
+        self.assertEqual(''.join(file_content), self.sphinx.input.sphinx.structure.to_sphinx())
+
+    def test_collect_aborted(self):
+        with self.assertRaises(AssertionError):
+            self.sphinx_aborted.collect_output()
 
     def test_collect_2_5(self):
         output = self.sphinx_2_5._output_parser
@@ -363,8 +496,8 @@ class TestSphinx(unittest.TestCase):
         self.assertTrue(
             all(
                 (
-                    output._parse_dict["scf_computation_time"][0]
-                    - np.roll(output._parse_dict["scf_computation_time"][0], 1)
+                        output._parse_dict["scf_computation_time"][0]
+                        - np.roll(output._parse_dict["scf_computation_time"][0], 1)
                 )[1:]
                 > 0
             )
@@ -397,122 +530,44 @@ class TestSphinx(unittest.TestCase):
                     len(output._parse_dict[list_one]), len(output._parse_dict[list_two])
                 )
 
+    def test_check_band_occupancy(self):
+        self.sphinx_2_5.collect_output()
+        self.assertTrue(self.sphinx_2_5.output.check_band_occupancy())
+
     def test_collect_2_3(self):
+        file_location = os.path.join(
+            self.file_location, "../static/sphinx/sphinx_test_2_3_hdf5/sphinx_test_2_3/"
+        )
+        residue_lst = np.loadtxt(file_location + "residue.dat")[:, 1].reshape(1, -1)
+        residue_lst = (residue_lst * HARTREE_TO_EV).tolist()
+        energy_int_lst = np.loadtxt(file_location + "energy.dat")[:, 2].reshape(1, -1)
+        energy_int_lst = (energy_int_lst * HARTREE_TO_EV).tolist()
+        with open(file_location + "sphinx.log") as ffile:
+            energy_free_lst = [[float(line.split('=')[-1]) * HARTREE_TO_EV for line in ffile if line.startswith('F(')]]
+        energy_zero_lst = [(0.5 * (np.array(ff) + np.array(uu))).tolist() for ff, uu in
+                           zip(energy_free_lst, energy_int_lst)]
+        eig_lst = [np.loadtxt(file_location + "eps.dat")[:, 1:].tolist()]
         self.sphinx_2_3.collect_output()
-        residue_lst = [
-            [
-                12.42284127109662,
-                1.5821842710240839,
-                0.07949316620794639,
-                0.0204451388291969,
-                0.0029593198638330595,
-            ]
-        ]
-        energy_lst = [
-            [
-                -136602.11251515875,
-                -1013.569263492385,
-                -1013.1549335953392,
-                -1013.1571089876621,
-                -1013.1570690784093,
-            ]
-        ]
-        energy_total_lst = [
-            -136617.29256368463,
-            -1030.8299933279204,
-            -1030.3610252581832,
-            -1030.3670225448573,
-            -1030.3670195193185,
-        ]
-        eig_lst = [
-            [
-                [
-                    21.5221,
-                    21.5221,
-                    41.9680,
-                    41.9680,
-                    46.0988,
-                    46.3639,
-                    50.7003,
-                    50.7003,
-                    56.3383,
-                    56.3383,
-                    85.2211,
-                    86.7490,
-                ],
-                [
-                    25.0401,
-                    30.8064,
-                    35.7829,
-                    36.4624,
-                    40.5134,
-                    43.8819,
-                    45.1040,
-                    49.5834,
-                    53.3100,
-                    56.2536,
-                    80.0862,
-                    80.8520,
-                ],
-                [
-                    23.0987,
-                    23.1866,
-                    33.8188,
-                    34.3492,
-                    48.2745,
-                    49.0786,
-                    51.6559,
-                    53.4798,
-                    54.5464,
-                    59.0257,
-                    76.1849,
-                    82.8878,
-                ],
-                [
-                    25.8051,
-                    26.2584,
-                    26.2584,
-                    37.4709,
-                    37.4709,
-                    47.7302,
-                    54.2662,
-                    54.2662,
-                    55.0636,
-                    55.0636,
-                    86.8241,
-                    100.1274,
-                ],
-            ]
-        ]
-        energy_structure_lst = [
-            [
-                -136632.47261221052,
-                -1048.090723163456,
-                -1047.5671169210273,
-                -1047.5769361020525,
-                -1047.5769699602279,
-            ]
-        ]
         self.assertEqual(
             residue_lst, self.sphinx_2_3._output_parser._parse_dict["scf_residue"]
         )
         self.assertEqual(
-            energy_lst, self.sphinx_2_3._output_parser._parse_dict["scf_energy_int"]
+            energy_int_lst, self.sphinx_2_3._output_parser._parse_dict["scf_energy_int"]
         )
         self.assertEqual(
-            energy_total_lst,
-            self.sphinx_2_3._output_parser._parse_dict["scf_energy_zero"][0].tolist(),
+            energy_zero_lst,
+            self.sphinx_2_3._output_parser._parse_dict["scf_energy_zero"],
         )
         self.assertEqual(
             eig_lst,
             self.sphinx_2_3._output_parser._parse_dict["bands_eigen_values"].tolist(),
         )
         self.assertEqual(
-            energy_structure_lst,
+            energy_free_lst,
             self.sphinx_2_3._output_parser._parse_dict["scf_energy_free"],
         )
         self.assertEqual(
-            3.252950781940035, self.sphinx_2_3._output_parser._parse_dict["volume"]
+            21.952 * BOHR_TO_ANGSTROM ** 3, self.sphinx_2_3._output_parser._parse_dict["volume"]
         )
 
     def test_structure_parsing(self):

@@ -9,7 +9,7 @@ from pyiron.base.project.generic import Project
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.lammps.lammps import Lammps
-from pyiron.lammps.base import LammpsStructure
+from pyiron.lammps.base import LammpsStructure, UnfoldingPrism
 import ase.units as units
 
 
@@ -37,6 +37,22 @@ class TestLammps(unittest.TestCase):
         cls.job_vcsgc_input = Lammps(
             project=ProjectHDFio(project=cls.project, file_name="lammps_vcsgc_input"),
             job_name="lammps_vcsgc_input",
+        )
+        cls.minimize_job = Lammps(
+            project=ProjectHDFio(project=cls.project, file_name="lammps"),
+            job_name="minimize_lammps",
+        )
+        cls.minimize_control_job = Lammps(
+            project=ProjectHDFio(project=cls.project, file_name="lammps"),
+            job_name="minimize_control_lammps",
+        )
+        cls.job_read_restart = Lammps(
+            project=ProjectHDFio(project=cls.project, file_name="lammps"),
+            job_name="read_restart",
+        )
+        cls.job_average = Lammps(
+            project=ProjectHDFio(project=cls.project, file_name="lammps"),
+            job_name="average",
         )
 
     @classmethod
@@ -184,7 +200,14 @@ class TestLammps(unittest.TestCase):
         )
         water.set_repeat([n, n, n])
         self.job_water.structure = water
-        self.job_water.potential = "H2O_tip3p"
+        with self.assertWarns(UserWarning):
+            self.job_water.potential = "H2O_tip3p"
+        with self.assertRaises(ValueError):
+            self.job_water.calc_md(temperature=[0, 100])
+        with self.assertRaises(ValueError):
+            self.job_water.calc_md(pressure=0)
+        with self.assertRaises(ValueError):
+            self.job_water.calc_md(temperature=[0, 100, 200])
         self.job_water.calc_md(
             temperature=350,
             initial_temperature=350,
@@ -252,7 +275,8 @@ class TestLammps(unittest.TestCase):
         )
         water.set_repeat([n, n, n])
         self.job_water_dump.structure = water
-        self.job_water_dump.potential = "H2O_tip3p"
+        with self.assertWarns(UserWarning):
+            self.job_water_dump.potential = "H2O_tip3p"
         self.job_water_dump.calc_md(
             temperature=350,
             initial_temperature=350,
@@ -261,6 +285,7 @@ class TestLammps(unittest.TestCase):
             n_print=200,
             pressure=0,
         )
+        self.assertFalse('nan' in self.job_water_dump.input.control['fix___ensemble'])
         file_directory = os.path.join(
             self.execution_path, "..", "static", "lammps_test_files"
         )
@@ -405,32 +430,37 @@ class TestLammps(unittest.TestCase):
         bad_element = {s: 0. for s in symbols}
         bad_element.update({'X': 1.})  # Non-existant chemical symbol
         self.assertRaises(
-            ValueError, self.job_vcsgc_input.calc_vcsgc, mu=bad_element
+            ValueError, self.job_vcsgc_input.calc_vcsgc, mu=bad_element, temperature_mc=300.
         )
 
         self.assertRaises(
-            ValueError, self.job_vcsgc_input.calc_vcsgc, target_concentration=bad_element
+            ValueError, self.job_vcsgc_input.calc_vcsgc, target_concentration=bad_element, temperature_mc=300.
         )
 
         bad_conc = {s: 0. for s in symbols}
         bad_conc['Al'] = 0.99
         self.assertRaises(
-            ValueError, self.job_vcsgc_input.calc_vcsgc, target_concentration=bad_conc
+            ValueError, self.job_vcsgc_input.calc_vcsgc, target_concentration=bad_conc, temperature_mc=300.
         )
 
         self.assertRaises(
-            ValueError, self.job_vcsgc_input.calc_vcsgc, window_moves=-1
+            ValueError, self.job_vcsgc_input.calc_vcsgc, window_moves=-1, temperature_mc=300.
         )
         self.assertRaises(
-            ValueError, self.job_vcsgc_input.calc_vcsgc, window_moves=1.1
+            ValueError, self.job_vcsgc_input.calc_vcsgc, window_moves=1.1, temperature_mc=300.
         )
 
         self.assertRaises(
-            ValueError, self.job_vcsgc_input.calc_vcsgc, window_size=0.3
+            ValueError, self.job_vcsgc_input.calc_vcsgc, window_size=0.3, temperature_mc=300.
         )
 
         mu = {s: 0. for s in symbols}
         mu[symbols[0]] = 1.
+        self.assertRaises(
+            ValueError, self.job_vcsgc_input.calc_vcsgc, mu=mu, temperature_mc=None, temperature=None
+        )
+
+
         args = dict(
             mu=mu,
             target_concentration=None,
@@ -441,7 +471,7 @@ class TestLammps(unittest.TestCase):
             window_size=None,
             window_moves=None,
             seed=1,
-            temperature=300,
+            temperature=300.0,
         )
         input_string = 'all sgcmc {0} {1} {2} {3} randseed {4}'.format(
             args['mc_step_interval'],
@@ -484,6 +514,50 @@ class TestLammps(unittest.TestCase):
         input_string += ' window_size {0}'.format(args['window_size'])
         self.job_vcsgc_input.calc_vcsgc(**args)
         self.assertEqual(self.job_vcsgc_input.input.control['fix___vcsgc'], input_string)
+
+    def test_calc_minimize_input(self):
+        # Ensure that defaults match control defaults
+        atoms = Atoms("Fe", positions=np.zeros((8, 3)), cell=np.eye(3))
+        self.minimize_control_job.structure = atoms
+        self.minimize_control_job.input.control.calc_minimize()
+
+        self.minimize_job.sturcture = atoms
+        self.minimize_job._prism = UnfoldingPrism(atoms.cell)
+        self.minimize_job.calc_minimize()
+        for k in self.job.input.control.keys():
+            self.assertEqual(self.minimize_job.input.control[k], self.minimize_control_job.input.control[k])
+
+        # Ensure that pressure inputs are being parsed OK
+        self.minimize_control_job.calc_minimize(pressure=0)
+        self.assertEqual(
+            self.minimize_control_job.input.control['fix___ensemble'],
+            "all box/relax x 0.0 y 0.0 z 0.0 couple none"
+        )
+
+        self.minimize_control_job.calc_minimize(pressure=[1, 2, None, 0., 0., None])
+        self.assertEqual(
+            self.minimize_control_job.input.control['fix___ensemble'],
+            "all box/relax x 10000.0 y 20000.0 xy 0.0 xz 0.0 couple none"
+        )
+
+    def test_read_restart_file(self):
+        self.job_read_restart.read_restart_file()
+        self.assertIsNone(self.job_read_restart['dimension'])
+
+    def test_write_restart(self):
+        self.job_read_restart.write_restart_file()
+        self.assertEqual(self.job_read_restart.input.control['write_restart'], 'restart.out')
+
+    def test_average(self):
+        a_0 = 2.855312531
+        atoms = Atoms("Fe2", positions=[3*[0], 3*[0.5*a_0]], cell=a_0*np.eye(3))
+        self.job_average.structure = atoms
+        self.job_average.potential = 'Fe_C_Becquart_eam'
+        file_directory = os.path.join(
+            self.execution_path, "..", "static", "lammps_test_files"
+        )
+        self.job_average.collect_dump_file(cwd=file_directory, file_name="dump_average.out")
+        self.job_average.collect_output_log(cwd=file_directory, file_name="log_average.lammps")
 
 
 if __name__ == "__main__":

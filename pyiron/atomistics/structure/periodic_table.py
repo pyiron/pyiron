@@ -12,7 +12,7 @@ import pandas
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Martin Boeckmann"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -38,10 +38,7 @@ class ChemicalElement(object):
         self.sub = sub
         self._mendeleev_element = None
         self._mendeleev_property_lst = None
-        if sys.version_info.major == 2:
-            stringtypes = (str, unicode)
-        else:
-            stringtypes = str
+        stringtypes = str
         if isinstance(self.sub, stringtypes):
             self._init_mendeleev(self.sub)
         elif "Parent" in self.sub.index and isinstance(self.sub.Parent, stringtypes):
@@ -265,10 +262,7 @@ class PeriodicTable(object):
 
         """
 
-        if sys.version_info.major == 2:
-            stringtypes = (str, unicode)
-        else:
-            stringtypes = str
+        stringtypes = str
         if isinstance(arg, stringtypes):
             if arg in self.dataframe.index.values:
                 self.el = arg
@@ -524,10 +518,6 @@ class ElementColorDictionary(object):
 
         """
         rv = np.zeros((256, 4), dtype=int)
-        if sys.version_info.major > 2:
-            for k, el in self.elementColors.items():
-                rv[el[0], :] = np.array(el[1:5])
-        else:
-            for k, el in self.elementColors.iteritems():
-                rv[el[0], :] = np.array(el[1:5])
+        for k, el in self.elementColors.items():
+            rv[el[0], :] = np.array(el[1:5])
         return rv

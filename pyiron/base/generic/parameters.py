@@ -18,7 +18,7 @@ GenericParameters class defines the typical input file with a key value structur
 
 __author__ = "Joerg Neugebauer"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -366,13 +366,9 @@ class GenericParameters(PyironObject):
         Returns:
             str: value of the parameter
         """
-        i_line, multi_word_lst = self._find_line(parameter_name)
+        i_line = self._find_line(parameter_name)
         if i_line > -1:
             val = self._dataset["Value"][i_line]
-            if multi_word_lst is not None:
-                num_words = len(multi_word_lst)
-                val = val.split(" ")
-                val = " ".join(val[(num_words - 1) :])
             try:
                 val_v = literal_eval(val)
             except (ValueError, SyntaxError):
@@ -419,16 +415,13 @@ class GenericParameters(PyironObject):
             modify_dict = {k + separator: v for k, v in modify_dict.items()}
 
         for key, val in modify_dict.items():
-            i_key, multi_word_lst = self._find_line(key)
-
+            i_key = self._find_line(key)
             if i_key == -1:
                 if append_if_not_present:
                     self._append(**{key: val})
                     continue
                 else:
                     raise ValueError("key for modify not found " + key)
-            if multi_word_lst is not None:
-                val = " ".join(multi_word_lst[1:]) + " " + str(val)
             if isinstance(val, tuple):
                 val, comment = val
                 if self.read_only and self._dataset["Comment"][i_key] != comment:
@@ -799,7 +792,7 @@ class GenericParameters(PyironObject):
             if par.strip() == "":
                 continue
             for key, val in self._block_dict.items():
-                par_single = par.split()[0]
+                par_single = par.split()[0].split(self.multi_word_separator)[0]
                 if par_single in val:
                     if key in self._block_line_dict:
                         self._block_line_dict[key].append(i_line)
@@ -827,7 +820,6 @@ class GenericParameters(PyironObject):
         for key, val in self._block_dict.items():
             par_first = parameter_name.split()[0].split(self.multi_word_separator)[0]
             if par_first in val:
-                parameter_found_in_block = True
                 i_last_block_line = max(self._block_line_dict[key])
                 self._insert(
                     line_number=i_last_block_line + 1,
@@ -837,13 +829,14 @@ class GenericParameters(PyironObject):
                         "Comment": [""],
                     },
                 )
-                return parameter_found_in_block
+                return True
         else:
             s.logger.warning(
                 "Unknown parameter (does not exist in block_dict): {}".format(
                     parameter_name
                 )
             )
+        return False
 
     def _append(self, **qwargs):
         """
@@ -970,36 +963,14 @@ class GenericParameters(PyironObject):
             list: [line index, line]
         """
         params = self._dataset["Parameter"]
-        multiple_key = key_name.split()
-        multi_word_lst = [None]
-        if len(multiple_key) > 1:
-            key_length = len(multiple_key)
-            first = multiple_key[0]
-            i_line_first_lst = np.where(np.array(params) == first)[0]
-            i_line_lst, multi_word_lst = [], []
-            for i_sel in i_line_first_lst:
-                values = self._dataset["Value"][i_sel].split()
-                if len(values) < key_length:
-                    continue
-                sel_value = values[: key_length - 1]
-                is_different = False
-                for i, sel in enumerate(sel_value):
-                    if not (sel.strip() == multiple_key[i + 1].strip()):
-                        is_different = True
-                        continue
-                if is_different:
-                    continue
-                multi_word_lst.append([params[i_sel]] + sel_value)
-                i_line_lst.append(i_sel)
+        if len(params) > 0:
+            i_line_lst = np.where(np.array(params) == key_name)[0]
         else:
-            if len(params) > 0:
-                i_line_lst = np.where(np.array(params) == key_name)[0]
-            else:
-                i_line_lst = []
+            i_line_lst = []
         if len(i_line_lst) == 0:
-            return -1, None
+            return -1
         elif len(i_line_lst) == 1:
-            return i_line_lst[0], multi_word_lst[0]
+            return i_line_lst[0]
         else:
             error_msg = list()
             error_msg.append("Multiple occurrences of key_name: " + key_name + ". They are as follows")

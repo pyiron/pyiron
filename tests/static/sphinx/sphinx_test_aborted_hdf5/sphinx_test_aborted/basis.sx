@@ -1,0 +1,8 @@
+eCut = EnCut/13.606;
+kPoint {
+	coords = KpointCoords;
+	weight = 1;
+	relative;
+}
+folding = KpointFolding;
+saveMemory;

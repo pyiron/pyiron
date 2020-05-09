@@ -48,7 +48,7 @@ The project object is the central import point of pyiron - all other objects can
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -1032,7 +1032,7 @@ class Project(ProjectPath):
             enforce (bool): [True/False] delete jobs even though they are used in other projects - default=False
             enable (bool): [True/False] enable this command.
         """
-        if not enable:
+        if enable is not True:
             raise ValueError(
                 "To prevent users from accidentally deleting files - enable has to be set to True."
             )

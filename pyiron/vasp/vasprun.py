@@ -17,7 +17,7 @@ from defusedxml.ElementTree import ParseError
 
 __author__ = "Sudarsan Surendralal"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -661,7 +661,7 @@ class Vasprun(object):
         """
         try:
             basis = self.get_initial_structure()
-            basis.cell = self.vasprun_dict["final_structure"]["cell"]
+            basis.set_cell(self.vasprun_dict["final_structure"]["cell"])
             positions = self.vasprun_dict["final_structure"]["positions"]
             if len(positions[positions > 1.01]) > 0:
                 basis.positions = positions

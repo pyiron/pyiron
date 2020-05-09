@@ -14,7 +14,7 @@ The Jobtable module provides a set of top level functions to interact with the d
 
 __author__ = "Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -326,12 +326,8 @@ def get_job_id(database, sql_query, user, project_path, job_specifier):
     Returns:
         int: job ID of the job
     """
-    if sys.version_info.major == 2:
-        if isinstance(job_specifier, (int, long, np.integer)):
-            return int(job_specifier)  # is id
-    else:
-        if isinstance(job_specifier, (int, np.integer)):
-            return job_specifier  # is id
+    if isinstance(job_specifier, (int, np.integer)):
+        return job_specifier  # is id
 
     job_specifier.replace(".", "_")
     # if job_specifier[0] is not '/':
@@ -356,7 +352,7 @@ def get_job_id(database, sql_query, user, project_path, job_specifier):
         return job_dict[0]["id"]
     else:
         raise ValueError(
-            "job name '{0}' in this project is not unique".format(job_dict)
+            "job name '{0}' in this project '{1}' is not unique '{2}".format(job_specifier, project_path, job_dict)
         )
 
 

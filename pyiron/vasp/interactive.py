@@ -18,7 +18,7 @@ from pyiron.atomistics.job.interactive import GenericInteractive
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = (
-    "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
@@ -33,17 +33,6 @@ class VaspInteractive(VaspBase, GenericInteractive):
         super(VaspInteractive, self).__init__(project, job_name)
         self._interactive_write_input_files = True
         self._interactive_vasprun = None
-        self.interactive_cache = {
-            "cells": [],
-            "energy_pot": [],
-            "energy_tot": [],
-            "forces": [],
-            "positions": [],
-            "indices": [],
-            "steps": [],
-            "computation_time": [],
-            "volume": [],
-        }
 
     @property
     def structure(self):

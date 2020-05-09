@@ -216,12 +216,8 @@ class FileTable(with_metaclass(Singleton)):
     def get_job_id(self, job_specifier, project=None):
         if project is None:
             project = self._project
-        if sys.version_info.major == 2:
-            if isinstance(job_specifier, (int, long, np.integer, float)):
-                return int(job_specifier)  # is id
-        else:
-            if isinstance(job_specifier, (int, np.integer)):
-                return job_specifier  # is id
+        if isinstance(job_specifier, (int, np.integer)):
+            return job_specifier  # is id
 
         job_specifier.replace(".", "_")
         # if job_specifier[0] is not '/':
