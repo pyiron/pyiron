@@ -8,7 +8,7 @@ else
 fi;
 
 # execute notebooks
-i = 0;
+i=0;
 for notebook in $(ls notebooks/*.ipynb); do 
     papermill ${notebook} ${notebook%.*}-out.${notebook##*.} -k $kernel || i=$((i+1));
 done;
