@@ -79,6 +79,7 @@ class VolumetricData(object):
 
         Returns:
             float: Gaussian reduction constant
+
         """
         sigma = fwhm / (2 * np.sqrt(2 * np.log(2)))
         d2 = d * d
@@ -88,12 +89,15 @@ class VolumetricData(object):
     def dist_between_two_grid_points(target_grid_point, n_grid_at_center, lattice, grid_shape):
         """
         Args:
-            nx, ny, nz: coordinate in grid
-            n_grid_at_center: coordinate of center of sphere
-            lattice: lattice vector
-            grid_shape: size of grid
+            target_grid_point (numpy.ndarray/list): Target grid point
+            n_grid_at_center (numpy.ndarray/list): coordinate of center of sphere
+            lattice (numpy.ndarray/list): lattice vector
+            grid_shape (tuple/list/numpy.ndarray): size of grid
+
         Returns:
-            Distance between target grid and center of sphere in angstrom
+
+            float: Distance between target grid and center of sphere in angstrom
+
         """
         unit_dist_in_grid = [np.sqrt(np.dot(lattice[0], lattice[0])) / grid_shape[0],
                              np.sqrt(np.dot(lattice[1], lattice[1])) / grid_shape[1],
@@ -105,12 +109,14 @@ class VolumetricData(object):
     def spherical_average_potential(self, structure, spherical_center, rad=2, fwhm=0.529177):
         """
         Args:
-            structure: crystal structure
-            spherical_center: position of spherical_center in direct coordinate
-            rad: radius of sphere to be considered in Angstrom (recommended value: 2)
-            fwhm: Full width half maximum of gaussian function in Angstrom (recommended value: 0.529177)
+            structure (pyiron.atomistics.structure.Atoms): Input structure
+            spherical_center (list/numpy.ndarray): position of spherical_center in direct coordinate
+            rad (float): radius of sphere to be considered in Angstrom (recommended value: 2)
+            fwhm (float): Full width half maximum of gaussian function in Angstrom (recommended value: 0.529177)
+
         Returns:
-            Spherical average at the target center
+            float: Spherical average at the target center
+
         """
         grid_shape = self._total_data.shape
 
@@ -152,13 +158,15 @@ class VolumetricData(object):
     def dist_between_two_grid_points_cyl(target_grid_point, n_grid_at_center, lattice, grid_shape, direction_of_cyl):
         """
         Args:
-            nx, ny, nz: coordinate in grid
-            n_grid_at_center: coordinate of center of sphere
-            lattice: lattice vector
-            grid_shape: size of grid
-            direction_of_cyl: Axis of cylinder (0 (x) or 1 (y) or 2 (z))
+            target_grid_point (numpy.ndarray/list): Target grid point
+            n_grid_at_center (numpy.ndarray/list): coordinate of center of sphere
+            lattice (numpy.ndarray/list): lattice vector
+            grid_shape (tuple/list/numpy.ndarray): size of grid
+            direction_of_cyl (int): Axis of cylinder (0 (x) or 1 (y) or 2 (z))
+
         Returns:
-            Distance between target grid and in-plane center of cylinder
+            float: Distance between target grid and in-plane center of cylinder
+
         """
         unit_dist_in_grid = [np.sqrt(np.dot(lattice[0], lattice[0])) / grid_shape[0],
                              np.sqrt(np.dot(lattice[1], lattice[1])) / grid_shape[1],
@@ -178,13 +186,15 @@ class VolumetricData(object):
     def cylindrical_average_potential(self, structure, spherical_center, axis_of_cyl, rad=2, fwhm=0.529177):
         """
         Args:
-            structure: crystal structure
-            spherical_center: position of spherical_center in direct coordinate
-            rad: radius of sphere to be considered in Angstrom (recommended value: 2)
-            fwhm: Full width half maximum of gaussian function in Angstrom (recommended value: 0.529177)
-            axis_of_cyl: Axis of cylinder (0 (x) or 1 (y) or 2 (z))
+            structure (pyiron.atomistics.structure.Atoms): Input structure
+            spherical_center (list/numpy.ndarray): position of spherical_center in direct coordinate
+            rad (float): radius of sphere to be considered in Angstrom (recommended value: 2)
+            fwhm (float): Full width half maximum of gaussian function in Angstrom (recommended value: 0.529177)
+            axis_of_cyl (int): Axis of cylinder (0 (x) or 1 (y) or 2 (z))
+
         Returns:
-            Cylindrical average at the target center
+            float: Cylindrical average at the target center
+
         """
         grid_shape = self._total_data.shape
 
@@ -232,7 +242,7 @@ class VolumetricData(object):
     def get_average_along_axis(self, ind=2):
         """
         Get the lateral average along a certain axis direction. This function is adapted from the pymatgen vasp
-        VolumtricData class
+        VolumetricData class
 
         http://pymatgen.org/_modules/pymatgen/io/vasp/outputs.html#VolumetricData.get_average_along_axis
 
