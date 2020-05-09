@@ -73,6 +73,8 @@ class VolumetricData(object):
     @staticmethod
     def gauss_f(d, fwhm=0.529177):
         """
+        Generates a Gaussian distribution for a given distance and full width half maximum value
+
         Args:
             d (float): distance between target point and reference point
             fwhm (float): Full width half maximum in angstrom
@@ -88,6 +90,8 @@ class VolumetricData(object):
     @staticmethod
     def dist_between_two_grid_points(target_grid_point, n_grid_at_center, lattice, grid_shape):
         """
+        Calculates the distance between a target grid point and another grid point
+
         Args:
             target_grid_point (numpy.ndarray/list): Target grid point
             n_grid_at_center (numpy.ndarray/list): coordinate of center of sphere
@@ -108,6 +112,8 @@ class VolumetricData(object):
 
     def spherical_average_potential(self, structure, spherical_center, rad=2, fwhm=0.529177):
         """
+        Calculates the spherical average about a given point in space
+
         Args:
             structure (pyiron.atomistics.structure.Atoms): Input structure
             spherical_center (list/numpy.ndarray): position of spherical_center in direct coordinate
@@ -142,12 +148,13 @@ class VolumetricData(object):
             for l in range(num_grid_in_sph[0][1], num_grid_in_sph[1][1]):
                 for m in range(num_grid_in_sph[0][2], num_grid_in_sph[1][2]):
                     target_grid_point = [k, l, m]
-                    Dist = self.dist_between_two_grid_points(target_grid_point, n_grid_at_center, structure.cell, grid_shape)
-                    if Dist <= rad:
+                    dist = self.dist_between_two_grid_points(target_grid_point,
+                                                             n_grid_at_center, structure.cell, grid_shape)
+                    if dist <= rad:
                         sph_avg_tmp.append(
-                            self._total_data[k % grid_shape[0], l % grid_shape[1], m % grid_shape[2]] * self.gauss_f(Dist,
-                                                                                                                     fwhm))
-                        weight += self.gauss_f(Dist, fwhm)
+                            self._total_data[k % grid_shape[0], l % grid_shape[1], m % grid_shape[2]]
+                            * self.gauss_f(dist, fwhm))
+                        weight += self.gauss_f(dist, fwhm)
                     else:
                         pass
         sum_list = np.sum(sph_avg_tmp)
@@ -157,6 +164,8 @@ class VolumetricData(object):
     @staticmethod
     def dist_between_two_grid_points_cyl(target_grid_point, n_grid_at_center, lattice, grid_shape, direction_of_cyl):
         """
+        Distance between a target grid point and the center of a cylinder
+
         Args:
             target_grid_point (numpy.ndarray/list): Target grid point
             n_grid_at_center (numpy.ndarray/list): coordinate of center of sphere
@@ -185,6 +194,8 @@ class VolumetricData(object):
 
     def cylindrical_average_potential(self, structure, spherical_center, axis_of_cyl, rad=2, fwhm=0.529177):
         """
+        Calculates the cylindrical average about a given point in space
+
         Args:
             structure (pyiron.atomistics.structure.Atoms): Input structure
             spherical_center (list/numpy.ndarray): position of spherical_center in direct coordinate
