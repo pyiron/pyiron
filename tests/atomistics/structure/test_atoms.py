@@ -1370,6 +1370,11 @@ class TestAtoms(unittest.TestCase):
             c3.get_scaled_positions()
             self.assertEqual(len(w), 0)
 
+    def test_write(self):
+        struct = create_ase_bulk("Al")
+        struct.write("POSCAR_test")
+        os.remove("POSCAR_test")
+
 
 def generate_fcc_lattice(a=4.2):
     positions = [[0, 0, 0]]
