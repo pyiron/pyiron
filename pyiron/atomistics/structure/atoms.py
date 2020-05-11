@@ -3703,27 +3703,6 @@ class Atoms(object):
             eps=eps
         )
 
-    def write(self, filename, format=None, **kwargs):
-        """
-        Write atoms object to a file.
-
-        see ase.io.write for formats.
-        kwargs are passed to ase.io.write.
-
-        Args:
-            filename:
-            format:
-            **kwargs:
-
-        Returns:
-
-        """
-        from ase.io import write
-
-        atoms = self.copy()
-        atoms.arrays["positions"] = atoms.positions
-        write(filename, atoms, format, **kwargs)
-
 
 class _CrystalStructure(Atoms):
     """
