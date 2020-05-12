@@ -466,26 +466,36 @@ class VaspBase(GenericDFTJob):
         """
         Collects errors from the VASP run
         """
-        num_eddrmm, snap = self._get_eddrmm_info()
+        num_eddrmm, snap_eddrmm = self._get_eddrmm_info()
 
-        warning_string = "EDDRMM warnings occured {} times, first in ionic step {}."
+        eddrmm_warning_string = "EDDRMM warnings occured {} times, first in ionic step {}."
+        zbrent_warning_string = "'ZBRENT: fatal error in bracketing' occured. Please check VASP manual for details."
         status_string = "Status is switched to 'warning'."
 
-        if snap is not None:
+        if snap_eddrmm is not None:
             if self.get_eddrmm_handling() == "ignore":
-                self._logger.warning(warning_string.format(num_eddrmm, snap))
+                self._logger.warning(eddrmm_warning_string.format(num_eddrmm, snap_eddrmm))
             elif self.get_eddrmm_handling() == "warn":
                 self.status.warning = True
-                self._logger.warning(warning_string.format(num_eddrmm, snap) + status_string)
+                self._logger.warning(eddrmm_warning_string.format(num_eddrmm, snap_eddrmm) + status_string)
             elif self.get_eddrmm_handling() == "restart":
                 self.status.warning = True
-                self._logger.warning(warning_string.format(num_eddrmm, snap) + status_string)
+                self._logger.warning(eddrmm_warning_string.format(num_eddrmm, snap_eddrmm) + status_string)
                 if not self.input.incar["ALGO"].lower() == "normal":
                     ham_new = self.copy_hamiltonian(self.name + "_normal")
                     ham_new.input.incar["ALGO"] = "Normal"
                     ham_new.set_eddrmm_handling()
                     ham_new.run()
                     self._logger.info("Job was restarted with 'ALGO' = 'Normal' to avoid EDDRMM warning.")
+
+        file_name = os.path.join(self.working_directory, "error.out")
+        if os.path.exists(file_name):
+            with open(file_name, "r") as f:
+                lines = f.readlines()
+                for l in lines:
+                    if "ZBRENT: fatal error in bracketing" in l:
+                        self.status.warning = True
+                        self._logger.warning(zbrent_warning_string + status_string)
 
     def copy_hamiltonian(self, job_name):
         """
