@@ -1,3 +1,7 @@
+# coding: utf-8
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
+
 import os
 from pyiron.atomistics.structure.atoms import CrystalStructure
 from pyiron.base.project.generic import Project
@@ -6,6 +10,7 @@ import unittest
 
 def convergence_goal(self, **qwargs):
     import numpy as np
+
     eps = 0.2
     if "eps" in qwargs:
         eps = qwargs["eps"]
@@ -24,8 +29,12 @@ class TestMurnaghan(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
-        cls.project = Project(os.path.join(cls.file_location, 'testing_murnaghan_non_modal'))
-        cls.basis = CrystalStructure(element="Fe", bravais_basis='bcc', lattice_constant=2.8)
+        cls.project = Project(
+            os.path.join(cls.file_location, "testing_murnaghan_non_modal")
+        )
+        cls.basis = CrystalStructure(
+            element="Fe", bravais_basis="bcc", lattice_constant=2.8
+        )
         cls.project.remove_jobs(recursive=True)
         # cls.project.remove_jobs(recursive=True)
         # self.project.set_logging_level('INFO')
@@ -33,16 +42,20 @@ class TestMurnaghan(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         file_location = os.path.dirname(os.path.abspath(__file__))
-        project = Project(os.path.join(file_location, 'testing_murnaghan_non_modal'))
+        project = Project(os.path.join(file_location, "testing_murnaghan_non_modal"))
         project.remove_jobs(recursive=True)
         project.remove(enable=True, enforce=True)
 
     def test_run(self):
         # Even though the test is completed successful
-        ham = self.project.create_job(self.project.job_type.AtomisticExampleJob, "job_test")
+        ham = self.project.create_job(
+            self.project.job_type.AtomisticExampleJob, "job_test"
+        )
         ham.structure = self.basis
         ham.server.run_mode.non_modal = True
-        job_ser = self.project.create_job(self.project.job_type.SerialMaster, "murn_iter")
+        job_ser = self.project.create_job(
+            self.project.job_type.SerialMaster, "murn_iter"
+        )
         job_ser.append(ham)
         job_ser.server.run_mode.non_modal = True
         job_ser.set_goal(convergence_goal, eps=0.4)
@@ -59,5 +72,5 @@ class TestMurnaghan(unittest.TestCase):
         self.project.remove(enable=True, enforce=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

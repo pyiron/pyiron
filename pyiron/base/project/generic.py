@@ -8,23 +8,49 @@ import posixpath
 import shutil
 import pandas
 import importlib
+import numpy as np
+import pkgutil
+
+try:
+    from git import Repo, InvalidGitRepositoryError
+except ImportError:
+    pass
+
 from pyiron.base.project.path import ProjectPath
+from pyiron.base.database.filetable import FileTable
 from pyiron.base.settings.generic import Settings
-from pyiron.base.database.jobtable import get_db_columns, get_job_ids, get_job_id, get_jobs, job_table, \
-    get_job_status, set_job_status, get_job_working_directory, get_child_ids
+from pyiron.base.database.jobtable import (
+    get_db_columns,
+    get_job_ids,
+    get_job_id,
+    get_jobs,
+    job_table,
+    get_job_status,
+    set_job_status,
+    get_job_working_directory,
+    get_child_ids,
+)
 from pyiron.base.settings.logger import set_logging_level
 from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.base.job.jobtype import JobType, JobTypeChoice
-from pyiron.base.server.queuestatus import queue_delete_job, queue_is_empty, queue_table, wait_for_job, \
-    queue_enable_reservation, queue_check_job_is_waiting_or_running
+from pyiron.base.server.queuestatus import (
+    queue_delete_job,
+    queue_is_empty,
+    queue_table,
+    wait_for_job,
+    queue_enable_reservation,
+    queue_check_job_is_waiting_or_running,
+)
 
 """
-The project object is the central import point of pyiron - all other objects can be created from this one 
+The project object is the central import point of pyiron - all other objects can be created from this one
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -93,6 +119,7 @@ class Project(ProjectPath):
             If viewer_mode is enable pyiron has read only access to the database.
 
     """
+
     def __init__(self, path="", user=None, sql_query=None):
         super(Project, self).__init__(path=path)
 
@@ -102,8 +129,11 @@ class Project(ProjectPath):
         self._inspect_mode = False
         self._store = None
 
-        s.open_connection()
-        self.db = s.database
+        if not s.database_is_disabled:
+            s.open_connection()
+            self.db = s.database
+        else:
+            self.db = FileTable(project=path)
         self.job_type = JobTypeChoice()
 
     @property
@@ -124,7 +154,10 @@ class Project(ProjectPath):
         Returns:
             bool: returns TRUE when viewer_mode is enabled
         """
-        return self.db.viewer_mode
+        if not isinstance(self.db, FileTable):
+            return self.db.viewer_mode
+        else:
+            return None
 
     @property
     def name(self):
@@ -151,7 +184,7 @@ class Project(ProjectPath):
     def copy_to(self, destination):
         """
         Copy the project object to a different pyiron path - including the content of the project (all jobs).
-        
+
         Args:
             destination (Project): project path to copy the project content to
 
@@ -160,7 +193,7 @@ class Project(ProjectPath):
         """
         if not self.view_mode:
             if not isinstance(destination, Project):
-                raise TypeError('A project can only be copied to another project.')
+                raise TypeError("A project can only be copied to another project.")
             for sub_project_name in self.list_groups():
                 if "_hdf5" not in sub_project_name:
                     sub_project = self.open(sub_project_name)
@@ -170,11 +203,11 @@ class Project(ProjectPath):
                 ham = self.load(job_id)
                 ham.copy_to(destination)
             for file in self.list_files():
-                if '.h5' not in file:
+                if ".h5" not in file:
                     shutil.copy(os.path.join(self.path, file), destination.path)
             return destination
         else:
-            raise EnvironmentError('copy_to: is not available in Viewermode !')
+            raise EnvironmentError("copy_to: is not available in Viewermode !")
 
     def create_from_job(self, job_old, new_job_name):
         """
@@ -189,12 +222,16 @@ class Project(ProjectPath):
         """
         job_id = self.get_job_id(new_job_name)
         if job_id is not None:
-            s.logger.info('create_from_job has already job_id {}!'.format(job_id))
+            s.logger.info("create_from_job has already job_id {}!".format(job_id))
             return None
 
-        print('job_old: ', job_old.status)
+        print("job_old: ", job_old.status)
         job_new = job_old.copy_to(self, new_job_name=new_job_name)
-        s.logger.debug("create_job:: {} {} from id {}".format(self.path, new_job_name, job_old.job_id))
+        s.logger.debug(
+            "create_job:: {} {} from id {}".format(
+                self.path, new_job_name, job_old.job_id
+            )
+        )
         return job_new
 
     def create_group(self, group):
@@ -226,9 +263,13 @@ class Project(ProjectPath):
         Returns:
             GenericJob: job object depending on the job_type selected
         """
-        job_name = job_name.replace('.', '_')
-        job = JobType(job_type, project=ProjectHDFio(project=self.copy(), file_name=job_name),
-                      job_name=job_name, job_class_dict=self.job_type.job_class_dict)
+        job_name = job_name.replace(".", "_")
+        job = JobType(
+            job_type,
+            project=ProjectHDFio(project=self.copy(), file_name=job_name),
+            job_name=job_name,
+            job_class_dict=self.job_type.job_class_dict,
+        )
         if self.user is not None:
             job.user = self.user
         return job
@@ -246,8 +287,16 @@ class Project(ProjectPath):
         """
         if not project:
             project = self.project_path
-        return get_child_ids(database=self.db, sql_query=self.sql_query, user=self.user, project_path=project,
-                             job_specifier=job_specifier)
+        if not isinstance(self.db, FileTable):
+            return get_child_ids(
+                database=self.db,
+                sql_query=self.sql_query,
+                user=self.user,
+                project_path=project,
+                job_specifier=job_specifier,
+            )
+        else:
+            return self.db.get_child_ids(job_specifier=job_specifier, project=project)
 
     def get_db_columns(self):
         """
@@ -288,8 +337,17 @@ class Project(ProjectPath):
         Returns:
             dict: columns are used as keys and point to a list of the corresponding values
         """
-        return get_jobs(database=self.db, sql_query=self.sql_query, user=self.user, project_path=self.project_path,
-                        recursive=recursive, columns=columns)
+        if not isinstance(self.db, FileTable):
+            return get_jobs(
+                database=self.db,
+                sql_query=self.sql_query,
+                user=self.user,
+                project_path=self.project_path,
+                recursive=recursive,
+                columns=columns,
+            )
+        else:
+            return self.db.get_jobs(project=self.project_path, recursive=recursive, columns=columns)
 
     def get_job_ids(self, recursive=True):
         """
@@ -301,8 +359,16 @@ class Project(ProjectPath):
         Returns:
             list: a list of job IDs
         """
-        return get_job_ids(database=self.db, sql_query=self.sql_query, user=self.user, project_path=self.project_path,
-                           recursive=recursive)
+        if not isinstance(self.db, FileTable):
+            return get_job_ids(
+                database=self.db,
+                sql_query=self.sql_query,
+                user=self.user,
+                project_path=self.project_path,
+                recursive=recursive,
+            )
+        else:
+            return self.db.get_job_ids(project=self.project_path, recursive=recursive)
 
     def get_job_id(self, job_specifier):
         """
@@ -314,8 +380,16 @@ class Project(ProjectPath):
         Returns:
             int: job ID of the job
         """
-        return get_job_id(database=self.db, sql_query=self.sql_query, user=self.user, project_path=self.project_path,
-                          job_specifier=job_specifier)
+        if not isinstance(self.db, FileTable):
+            return get_job_id(
+                database=self.db,
+                sql_query=self.sql_query,
+                user=self.user,
+                project_path=self.project_path,
+                job_specifier=job_specifier,
+            )
+        else:
+            return self.db.get_job_id(job_specifier=job_specifier, project=self.project_path)
 
     def get_job_status(self, job_specifier, project=None):
         """
@@ -331,8 +405,16 @@ class Project(ProjectPath):
         """
         if not project:
             project = self.project_path
-        return get_job_status(database=self.db, sql_query=self.sql_query, user=self.user, project_path=project,
-                              job_specifier=job_specifier)
+        if not isinstance(self.db, FileTable):
+            return get_job_status(
+                database=self.db,
+                sql_query=self.sql_query,
+                user=self.user,
+                project_path=project,
+                job_specifier=job_specifier,
+            )
+        else:
+            return self.db.get_job_status(job_specifier=job_specifier, project=project)
 
     def get_job_working_directory(self, job_specifier, project=None):
         """
@@ -347,8 +429,16 @@ class Project(ProjectPath):
         """
         if not project:
             project = self.project_path
-        return get_job_working_directory(database=self.db, sql_query=self.sql_query, user=self.user,
-                                         project_path=project, job_specifier=job_specifier)
+        if not isinstance(self.db, FileTable):
+            return get_job_working_directory(
+                database=self.db,
+                sql_query=self.sql_query,
+                user=self.user,
+                project_path=project,
+                job_specifier=job_specifier,
+            )
+        else:
+            return self.db.get_job_working_directory(job_specifier=job_specifier, project=project)
 
     def get_project_size(self):
         """
@@ -357,9 +447,35 @@ class Project(ProjectPath):
         Returns:
             float: project size
         """
-        folder_size = sum([sum([os.path.getsize(os.path.join(path, file)) for file in files]) for (path, dirs, files) in
-                           os.walk(self.path)])
+        folder_size = sum(
+            [
+                sum([os.path.getsize(os.path.join(path, file)) for file in files])
+                for (path, dirs, files) in os.walk(self.path)
+            ]
+        )
         return folder_size / (1024 * 1024.0)
+
+    @staticmethod
+    def get_repository_status():
+        """
+        Finds the hashes for every `pyiron` module available.
+
+        Returns:
+            pandas.DataFrame: The name of each module and the hash for its current git head.
+        """
+        module_names = [name for _, name, _ in pkgutil.iter_modules() if name.startswith("pyiron")]
+
+        report = pandas.DataFrame(columns=['Module', 'Git head'], index=range(len(module_names)))
+        for i, name in enumerate(module_names):
+            try:
+                module = importlib.import_module(name)
+                repo = Repo(os.path.dirname(os.path.dirname(module.__file__)))
+                hash_ = repo.head.reference.commit.hexsha
+                report.loc[i] = [name, hash_]
+            except InvalidGitRepositoryError:
+                report.loc[i] = [name, 'Not a repo']
+
+        return report
 
     def groups(self):
         """
@@ -401,7 +517,7 @@ class Project(ProjectPath):
             job_id_lst = self.get_jobs(recursive)["id"]
         else:
             df = self.job_table(recursive=True)
-            job_id_lst = list(df[df['status'] == status]['id'])
+            job_id_lst = list(df[df["status"] == status]["id"])
         for job_id in job_id_lst:
             if path is not None:
                 yield self.load(job_id, convert_to_object=False)[path]
@@ -418,7 +534,7 @@ class Project(ProjectPath):
         Returns:
             yield: Yield of GenericJob or JobCore
         """
-        return self.iter_jobs(path='output', recursive=recursive)
+        return self.iter_jobs(path="output", recursive=recursive)
 
     def iter_groups(self):
         """
@@ -439,7 +555,16 @@ class Project(ProjectPath):
         """
         return [(key, self[key]) for key in self.keys()]
 
-    def job_table(self, recursive=True, columns=None, all_columns=True, sort_by="id", element_lst=None):
+    def job_table(
+        self,
+        recursive=True,
+        columns=None,
+        all_columns=True,
+        sort_by="id",
+        full_table=False,
+        element_lst=None,
+        job_name_contains='',
+    ):
         """
         Access the job_table
 
@@ -451,14 +576,37 @@ class Project(ProjectPath):
                             'hamversion', 'parentid', 'masterid']
             all_columns (bool): Select all columns - this overwrites the columns option.
             sort_by (str): Sort by a specific column
+            full_table (bool): Whether to show the entire pandas table
             element_lst (list): list of elements required in the chemical formular - by default None
+            job_name_contains (str): a string which should be contained in every job_name
 
         Returns:
             pandas.Dataframe: Return the result as a pandas.Dataframe object
         """
-        return job_table(database=self.db, sql_query=self.sql_query, user=self.user, project_path=self.project_path,
-                         recursive=recursive, columns=columns, all_columns=all_columns, sort_by=sort_by,
-                         element_lst=element_lst)
+        if not isinstance(self.db, FileTable):
+            return job_table(
+                database=self.db,
+                sql_query=self.sql_query,
+                user=self.user,
+                project_path=self.project_path,
+                recursive=recursive,
+                columns=columns,
+                all_columns=all_columns,
+                sort_by=sort_by,
+                full_table=full_table,
+                element_lst=element_lst,
+                job_name_contains=job_name_contains,
+            )
+        else:
+            return self.db.job_table(
+                project=self.project_path,
+                recursive=recursive,
+                columns=columns,
+                all_columns=all_columns,
+                sort_by=sort_by,
+                max_colwidth=200,
+                full_table=full_table,
+                job_name_contains=job_name_contains)
 
     def get_jobs_status(self, recursive=True, element_lst=None):
         """
@@ -469,11 +617,14 @@ class Project(ProjectPath):
             element_lst (list): list of elements required in the chemical formular - by default None
 
         Returns:
-            prints an overview of the job status.
+            pandas.Series: prints an overview of the job status.
         """
-        df = job_table(database=self.db, sql_query=self.sql_query, user=self.user, project_path=self.project_path,
-                       recursive=recursive, all_columns=True, element_lst=element_lst)
-        return df['status'].value_counts()
+        df = self.job_table(
+            recursive=recursive,
+            all_columns=True,
+            element_lst=element_lst,
+        )
+        return df["status"].value_counts()
 
     def keys(self):
         """
@@ -494,7 +645,11 @@ class Project(ProjectPath):
         Returns:
             dict: dictionary with all items in the project
         """
-        return {'groups': self.list_groups(), 'nodes': self.list_nodes(), 'files': self.list_files()}
+        return {
+            "groups": self.list_groups(),
+            "nodes": self.list_nodes(),
+            "files": self.list_files(),
+        }
 
     def list_dirs(self, skip_hdf5=True):
         """
@@ -531,7 +686,11 @@ class Project(ProjectPath):
             files = next(os.walk(self.path))[2]
             if extension is None:
                 return files
-            return [".".join(f.split(".")[:-1]) for f in files if f.split(".")[-1] in extension]
+            return [
+                ".".join(f.split(".")[:-1])
+                for f in files
+                if f.split(".")[-1] in extension
+            ]
         except StopIteration:
             return []
 
@@ -572,19 +731,23 @@ class Project(ProjectPath):
             GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
         """
         if self.sql_query is not None:
-            s.logger.warn('SQL filter \'%s\' is active (may exclude job) ', self.sql_query)
+            s.logger.warning(
+                "SQL filter '%s' is active (may exclude job) ", self.sql_query
+            )
         job_id = self.get_job_id(job_specifier=job_specifier)
         if job_id is None:
-            s.logger.warn('Job \'%s\' does not exist and cannot be loaded', job_specifier)
+            s.logger.warning("Job '%s' does not exist and cannot be loaded", job_specifier)
             return None
-        return self.load_from_jobpath(job_id=job_id, convert_to_object=convert_to_object)
+        return self.load_from_jobpath(
+            job_id=job_id, convert_to_object=convert_to_object
+        )
 
     def load_from_jobpath(self, job_id=None, db_entry=None, convert_to_object=True):
         """
         Internal function to load an existing job either based on the job ID or based on the database entry dictionary.
-        
+
         Args:
-            job_id (int): Job ID - optional, but either the job_id or the db_entry is required.
+            job_id (int/ None): Job ID - optional, but either the job_id or the db_entry is required.
             db_entry (dict): database entry dictionary - optional, but either the job_id or the db_entry is required.
             convert_to_object (bool): convert the object to an pyiron object or only access the HDF5 file - default=True
                                       accessing only the HDF5 file is about an order of magnitude faster, but only
@@ -593,10 +756,12 @@ class Project(ProjectPath):
         Returns:
             GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
         """
-        jobpath = getattr(importlib.import_module('pyiron.base.job.path'), 'JobPath')
+        jobpath = getattr(importlib.import_module("pyiron.base.job.path"), "JobPath")
         if job_id:
             job = jobpath(db=self.db, job_id=job_id, user=self.user)
-            job = job.load_object(convert_to_object=convert_to_object, project=job.project_hdf5.copy())
+            job = job.load_object(
+                convert_to_object=convert_to_object, project=job.project_hdf5.copy()
+            )
             job._job_id = job_id
             if convert_to_object:
                 job.reset_job_id(job_id=job_id)
@@ -604,12 +769,14 @@ class Project(ProjectPath):
             return job
         elif db_entry:
             job = jobpath(db=self.db, db_entry=db_entry)
-            job = job.load_object(convert_to_object=convert_to_object, project=job.project_hdf5.copy())
+            job = job.load_object(
+                convert_to_object=convert_to_object, project=job.project_hdf5.copy()
+            )
             if convert_to_object:
                 job.set_input_to_read_only()
             return job
         else:
-            raise ValueError('Either a job ID or an database entry has to be provided.')
+            raise ValueError("Either a job ID or an database entry has to be provided.")
 
     @staticmethod
     def load_from_jobpath_string(job_path, convert_to_object=True):
@@ -625,8 +792,12 @@ class Project(ProjectPath):
         Returns:
             GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
         """
-        job = getattr(importlib.import_module('pyiron.base.job.path'), 'JobPathBase')(job_path=job_path)
-        job = job.load_object(convert_to_object=convert_to_object, project=job.project_hdf5.copy())
+        job = getattr(importlib.import_module("pyiron.base.job.path"), "JobPathBase")(
+            job_path=job_path
+        )
+        job = job.load_object(
+            convert_to_object=convert_to_object, project=job.project_hdf5.copy()
+        )
         job.set_input_to_read_only()
         return job
 
@@ -643,7 +814,7 @@ class Project(ProjectPath):
         """
         if not self.view_mode:
             if not isinstance(destination, Project):
-                raise TypeError('A project can only be copied to another project.')
+                raise TypeError("A project can only be copied to another project.")
             for sub_project_name in self.list_groups():
                 if "_hdf5" not in sub_project_name:
                     sub_project = self.open(sub_project_name)
@@ -655,7 +826,7 @@ class Project(ProjectPath):
             for file in self.list_files():
                 shutil.move(os.path.join(self.path, file), destination.path)
         else:
-            raise EnvironmentError('move_to: is not available in Viewermode !')
+            raise EnvironmentError("move_to: is not available in Viewermode !")
 
     def nodes(self):
         """
@@ -668,35 +839,48 @@ class Project(ProjectPath):
         new._filter = ["nodes"]
         return new
 
-    def queue_table(self, project_only=True, recursive=True):
+    def queue_table(self, project_only=True, recursive=True, full_table=False):
         """
         Display the queuing system table as pandas.Dataframe
 
         Args:
             project_only (bool): Query only for jobs within the current project - True by default
             recursive (bool): Include jobs from sub projects
+            full_table (bool): Whether to show the entire pandas table
 
         Returns:
             pandas.DataFrame: Output from the queuing system - optimized for the Sun grid engine
         """
-        return queue_table(job_ids=self.get_job_ids(recursive=recursive), project_only=project_only)
+        return queue_table(
+            job_ids=self.get_job_ids(recursive=recursive), project_only=project_only,
+            full_table=full_table
+        )
 
-    def queue_table_global(self):
+    def queue_table_global(self, full_table=False):
         """
         Display the queuing system table as pandas.Dataframe
 
+        Args:
+            full_table (bool): Whether to show the entire pandas table
+
         Returns:
             pandas.DataFrame: Output from the queuing system - optimized for the Sun grid engine
         """
-        df = queue_table(job_ids=[], project_only=False)
-        if len(df) != 0:
-            return pandas.DataFrame([self.db.get_item_by_id(int(str(queue_ID).replace('pi_', '').replace('.sh', '')))
-                                     for queue_ID in df['jobname']
-                                     if str(queue_ID).startswith('pi_')])
+        df = queue_table(job_ids=[], project_only=False, full_table=full_table)
+        if len(df) != 0 and self.db is not None:
+            return pandas.DataFrame(
+                [
+                    self.db.get_item_by_id(
+                        int(str(queue_ID).replace("pi_", "").replace(".sh", ""))
+                    )
+                    for queue_ID in df["jobname"]
+                    if str(queue_ID).startswith("pi_")
+                ]
+            )
         else:
             return None
 
-    def refresh_job_status_based_on_queue_status(self, job_specifier, status='running'):
+    def refresh_job_status_based_on_queue_status(self, job_specifier, status="running"):
         """
         Check if the job is still listed as running, while it is no longer listed in the queue.
 
@@ -704,11 +888,17 @@ class Project(ProjectPath):
             job_specifier (str, int): name of the job or job ID
             status (str): Currently only the jobstatus of 'running' jobs can be refreshed - default='running'
         """
-        if status != 'running':
+        if status != "running":
             raise NotImplementedError()
-        job_id = get_job_id(database=self.db, sql_query=self.sql_query, user=self.user,
-                            project_path=self.project_path, job_specifier=job_specifier)
-        self.refresh_job_status_based_on_job_id(job_id)
+        if self.db is not None:
+            job_id = get_job_id(
+                database=self.db,
+                sql_query=self.sql_query,
+                user=self.user,
+                project_path=self.project_path,
+                job_specifier=job_specifier,
+            )
+            self.refresh_job_status_based_on_job_id(job_id)
 
     def refresh_job_status_based_on_job_id(self, job_id, que_mode=True):
         """
@@ -719,11 +909,16 @@ class Project(ProjectPath):
             job_id (int): job ID
             que_mode (bool): [True/False] - default=True
         """
-        if job_id:
-            if (not que_mode and self.db.get_item_by_id(job_id)['status'] not in ['finished']) or (
-                        que_mode and self.db.get_item_by_id(job_id)['status'] in ['running', 'submitted']):
+        if job_id and self.db is not None:
+            if (
+                not que_mode
+                and self.db.get_item_by_id(job_id)["status"] not in ["finished"]
+            ) or (
+                que_mode
+                and self.db.get_item_by_id(job_id)["status"] in ["running", "submitted"]
+            ):
                 if not self.queue_check_job_is_waiting_or_running(job_id):
-                    self.db.item_update({'status': 'aborted'}, job_id)
+                    self.db.item_update({"status": "aborted"}, job_id)
 
     def remove_file(self, file_name):
         """
@@ -740,32 +935,41 @@ class Project(ProjectPath):
         if not self.view_mode:
             os.remove(posixpath.join(self.path, file_name))
         else:
-            raise EnvironmentError('copy_to: is not available in Viewermode !')
+            raise EnvironmentError("copy_to: is not available in Viewermode !")
 
     def remove_job(self, job_specifier, _unprotect=False):
         """
         Remove a single job from the project based on its job_specifier - see also remove_jobs()
-        
+
         Args:
             job_specifier (str, int): name of the job or job ID
             _unprotect (bool): [True/False] delete the job without validating the dependencies to other jobs
                                - default=False
         """
-        if not self.view_mode:
-            try:
-                job = self.load(job_specifier=job_specifier, convert_to_object=False)
-                if job is None:
-                    s.logger.warn('Job \'%s\' does not exist and could not be removed', str(job_specifier))
-                elif _unprotect:
-                    job.remove_child()
-                else:
-                    job.remove()
-            except IOError as _:
-                s.logger.debug('hdf file does not exist. Removal from database will be attempted.')
-                job_id = self.get_job_id(job_specifier)
-                self.db.delete_item(job_id)
+        if isinstance(job_specifier, (list, np.ndarray)):
+            for job_id in job_specifier:
+                self.remove_job(job_specifier=job_id, _unprotect=_unprotect)
         else:
-            raise EnvironmentError('copy_to: is not available in Viewermode !')
+            if not self.view_mode:
+                try:
+                    job = self.load(job_specifier=job_specifier, convert_to_object=False)
+                    if job is None:
+                        s.logger.warning(
+                            "Job '%s' does not exist and could not be removed",
+                            str(job_specifier),
+                        )
+                    elif _unprotect:
+                        job.remove_child()
+                    else:
+                        job.remove()
+                except IOError as _:
+                    s.logger.debug(
+                        "hdf file does not exist. Removal from database will be attempted."
+                    )
+                    job_id = self.get_job_id(job_specifier)
+                    self.db.delete_item(job_id)
+            else:
+                raise EnvironmentError("copy_to: is not available in Viewermode !")
 
     def remove_jobs(self, recursive=False):
         """
@@ -784,9 +988,11 @@ class Project(ProjectPath):
                         self.remove_job(job_specifier=job_id)
                         s.logger.debug("Remove job with ID {0} ".format(job_id))
                     except (IndexError, Exception):
-                        s.logger.debug("Could not remove job with ID {0} ".format(job_id))
+                        s.logger.debug(
+                            "Could not remove job with ID {0} ".format(job_id)
+                        )
         else:
-            raise EnvironmentError('copy_to: is not available in Viewermode !')
+            raise EnvironmentError("copy_to: is not available in Viewermode !")
 
     def compress_jobs(self, recursive=False):
         """
@@ -797,7 +1003,7 @@ class Project(ProjectPath):
         """
         for job_id in self.get_job_ids(recursive=recursive):
             job = self.inspect(job_id)
-            if job.status == 'finished':
+            if job.status == "finished":
                 job.compress()
 
     def delete_output_files_jobs(self, recursive=False):
@@ -810,10 +1016,10 @@ class Project(ProjectPath):
         """
         for job_id in self.get_job_ids(recursive=recursive):
             job = self.inspect(job_id)
-            if job.status == 'finished':
+            if job.status == "finished":
                 for file in job.list_files():
                     fullname = os.path.join(job.working_directory, file)
-                    if os.path.isfile(fullname) and '.h5' not in fullname:
+                    if os.path.isfile(fullname) and ".h5" not in fullname:
                         os.remove(fullname)
                     elif os.path.isdir(fullname):
                         os.removedirs(fullname)
@@ -826,8 +1032,10 @@ class Project(ProjectPath):
             enforce (bool): [True/False] delete jobs even though they are used in other projects - default=False
             enable (bool): [True/False] enable this command.
         """
-        if not enable:
-            raise ValueError('To prevent users from accidentally deleting files - enable has to be set to True.')
+        if enable is not True:
+            raise ValueError(
+                "To prevent users from accidentally deleting files - enable has to be set to True."
+            )
         if not self.view_mode:
             for sub_project_name in self.list_groups():
                 if "_hdf5" not in sub_project_name:
@@ -837,12 +1045,12 @@ class Project(ProjectPath):
             for file in self.list_files():
                 os.remove(os.path.join(self.path, file))
             if enforce:
-                print('remove directory: {}'.format(self.path))
+                print("remove directory: {}".format(self.path))
                 shutil.rmtree(self.path, ignore_errors=True)
             else:
                 self.parent_group.removedirs(self.base_name)
         else:
-            raise EnvironmentError('copy_to: is not available in Viewermode !')
+            raise EnvironmentError("copy_to: is not available in Viewermode !")
 
     def set_job_status(self, job_specifier, status, project=None):
         """
@@ -856,8 +1064,21 @@ class Project(ProjectPath):
         """
         if not project:
             project = self.project_path
-        set_job_status(database=self.db, sql_query=self.sql_query, user=self.user, project_path=project,
-                       job_specifier=job_specifier, status=status)
+        if not isinstance(self.db, FileTable):
+            set_job_status(
+                database=self.db,
+                sql_query=self.sql_query,
+                user=self.user,
+                project_path=project,
+                job_specifier=job_specifier,
+                status=status,
+            )
+        else:
+            self.db.set_job_status(
+                job_specifier=job_specifier,
+                status=status,
+                project=project
+            )
 
     def values(self):
         """
@@ -872,19 +1093,21 @@ class Project(ProjectPath):
         """
         Switch from user mode to viewer mode - if viewer_mode is enable pyiron has read only access to the database.
         """
-        s.switch_to_viewer_mode()
-        s.open_connection()
-        self.db = s.database
+        if not isinstance(self.db, FileTable):
+            s.switch_to_viewer_mode()
+            s.open_connection()
+            self.db = s.database
 
     def switch_to_user_mode(self):
         """
         Switch from viewer mode to user mode - if viewer_mode is enable pyiron has read only access to the database.
         """
-        s.switch_to_user_mode()
-        s.open_connection()
-        self.db = s.database
+        if not isinstance(self.db, FileTable):
+            s.switch_to_user_mode()
+            s.open_connection()
+            self.db = s.database
 
-    def switch_to_local_database(self, file_name='pyiron.db', cwd=None):
+    def switch_to_local_database(self, file_name="pyiron.db", cwd=None):
         """
         Switch from central mode to local mode - if local_mode is enable pyiron is using a local database.
 
@@ -892,20 +1115,22 @@ class Project(ProjectPath):
             file_name (str): file name or file path for the local database
             cwd (str): directory where the local database is located
         """
-        if cwd is None: 
-            cwd = self.path
-        s.switch_to_local_database(file_name=file_name, cwd=cwd)
-        s.open_connection()
-        self.db = s.database
+        if not isinstance(self.db, FileTable):
+            if cwd is None:
+                cwd = self.path
+            s.switch_to_local_database(file_name=file_name, cwd=cwd)
+            s.open_connection()
+            self.db = s.database
 
     def switch_to_central_database(self):
         """
         Switch from local mode to central mode - if local_mode is enable pyiron is using a local database.
         """
-        s.switch_to_central_database()
-        s.open_connection()
-        self.db = s.database
-        
+        if not isinstance(self.db, FileTable):
+            s.switch_to_central_database()
+            s.open_connection()
+            self.db = s.database
+
     def queue_delete_job(self, item):
         """
         Delete a job from the queuing system
@@ -933,7 +1158,9 @@ class Project(ProjectPath):
         Returns:
             ProjectHDFio: HDF5 object
         """
-        return ProjectHDFio(project=Project(path), file_name=job_name, h5_path='/' + job_name)
+        return ProjectHDFio(
+            project=Project(path), file_name=job_name, h5_path="/" + job_name
+        )
 
     @staticmethod
     def queue_is_empty():
@@ -981,7 +1208,9 @@ class Project(ProjectPath):
             interval_in_s (int): interval when the job status is queried from the database - default 5 sec.
             max_iterations (int): maximum number of iterations - default 100
         """
-        wait_for_job(job=job, interval_in_s=interval_in_s, max_iterations=max_iterations)
+        wait_for_job(
+            job=job, interval_in_s=interval_in_s, max_iterations=max_iterations
+        )
 
     @staticmethod
     def set_logging_level(level, channel=None):
@@ -1010,14 +1239,16 @@ class Project(ProjectPath):
             print("slice: ", item)
             raise NotImplementedError("Implement if needed, e.g. for [:]")
         else:
-            item_lst = [sub_item.replace(' ', '') for sub_item in item.split("/")]
+            item_lst = [sub_item.replace(" ", "") for sub_item in item.split("/")]
             if len(item_lst) > 1:
                 try:
-                    return self._get_item_helper(item=item_lst[0],
-                                                 convert_to_object=False).__getitem__("/".join(item_lst[1:]))
+                    return self._get_item_helper(
+                        item=item_lst[0], convert_to_object=False
+                    ).__getitem__("/".join(item_lst[1:]))
                 except ValueError:
-                    return self._get_item_helper(item=item_lst[0],
-                                                 convert_to_object=True).__getitem__("/".join(item_lst[1:]))
+                    return self._get_item_helper(
+                        item=item_lst[0], convert_to_object=True
+                    ).__getitem__("/".join(item_lst[1:]))
         return self._get_item_helper(item=item, convert_to_object=True)
 
     def _get_item_helper(self, item, convert_to_object=True):
@@ -1058,7 +1289,9 @@ class Project(ProjectPath):
         Returns:
             str: string representation
         """
-        return str({'groups': self.list_dirs(skip_hdf5=True), 'nodes': self.list_nodes()})
+        return str(
+            {"groups": self.list_dirs(skip_hdf5=True), "nodes": self.list_nodes()}
+        )
 
     def __setitem__(self, key, value):
         """
@@ -1068,14 +1301,19 @@ class Project(ProjectPath):
             key (str): key within the container
             value (dict, list, float, int): data to store
         """
-        if self._store is None:
-            where_dict = {'job': 'ProjectStore', 'project': str(self.project_path), 'subjob': '/ProjectStore'}
-            store_job_id = self.db.get_items_dict(where_dict)['id']
-            if store_job_id:
-                self._store = self.load(store_job_id)
-            else:
-                self._store = self.create_job('ProjectStore', 'ProjectStore')
-        self._store[key] = value
+        if self.db is not None:
+            if self._store is None:
+                where_dict = {
+                    "job": "ProjectStore",
+                    "project": str(self.project_path),
+                    "subjob": "/ProjectStore",
+                }
+                store_job_id = self.db.get_items_dict(where_dict)["id"]
+                if store_job_id:
+                    self._store = self.load(store_job_id)
+                else:
+                    self._store = self.create_job("ProjectStore", "ProjectStore")
+            self._store[key] = value
 
     @staticmethod
     def _is_hdf5_dir(item):
@@ -1088,13 +1326,13 @@ class Project(ProjectPath):
         Returns:
             bool: [True/False]
         """
-        it = item.split('_')
+        it = item.split("_")
         if len(it) > 1:
-            if 'hdf5' in it[-1]:
+            if "hdf5" in it[-1]:
                 return True
         return False
 
-    def _remove_files(self, pattern='*'):
+    def _remove_files(self, pattern="*"):
         """
         Remove files within the current project
 
@@ -1103,12 +1341,13 @@ class Project(ProjectPath):
         """
         if not self.view_mode:
             import glob
+
             pattern = posixpath.join(self.path, pattern)
             for f in glob.glob(pattern):
-                s.logger.info('remove file {}'.format(posixpath.basename(f)))
+                s.logger.info("remove file {}".format(posixpath.basename(f)))
                 os.remove(f)
         else:
-            raise EnvironmentError('copy_to: is not available in Viewermode !')
+            raise EnvironmentError("copy_to: is not available in Viewermode !")
 
     def _queue_delete_job(self, item):
         """
@@ -1123,7 +1362,7 @@ class Project(ProjectPath):
         if not self.view_mode:
             return queue_delete_job(item)
         else:
-            raise EnvironmentError('copy_to: is not available in Viewermode !')
+            raise EnvironmentError("copy_to: is not available in Viewermode !")
 
     def _update_jobs_in_old_database_format(self, job_name):
         """
@@ -1131,9 +1370,14 @@ class Project(ProjectPath):
         Args:
             job_name (str):
         """
-        db_entry_in_old_format = self.db.get_items_dict({'job': job_name, 'project': self.project_path[:-1]})
-        if db_entry_in_old_format and len(db_entry_in_old_format) == 1:
-            self.db.item_update({'project': self.project_path}, db_entry_in_old_format[0]['id'])
-        elif db_entry_in_old_format:
-            for entry in db_entry_in_old_format:
-                self.db.item_update({'project': self.project_path}, entry['id'])
+        if self.db is not None:
+            db_entry_in_old_format = self.db.get_items_dict(
+                {"job": job_name, "project": self.project_path[:-1]}
+            )
+            if db_entry_in_old_format and len(db_entry_in_old_format) == 1:
+                self.db.item_update(
+                    {"project": self.project_path}, db_entry_in_old_format[0]["id"]
+                )
+            elif db_entry_in_old_format:
+                for entry in db_entry_in_old_format:
+                    self.db.item_update({"project": self.project_path}, entry["id"])

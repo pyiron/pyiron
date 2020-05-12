@@ -8,7 +8,7 @@ from pyiron.base.settings.generic import Settings
 from ase import Atoms
 
 s = Settings()
-os.environ['GPAW_SETUP_PATH'] = os.path.join(s.resource_paths[0], 'gpaw', 'potentials')
+os.environ["GPAW_SETUP_PATH"] = os.path.join(s.resource_paths[0], "gpaw", "potentials")
 
 try:
     from gpaw import GPAW, PW, MethfesselPaxton
@@ -42,23 +42,34 @@ class GpawJob(AseJob):
 
     @property
     def plane_wave_cutoff(self):
-        return self.input['encut']
+        return self.input["encut"]
 
     @plane_wave_cutoff.setter
     def plane_wave_cutoff(self, val):
-        self.input['encut'] = val
+        self.input["encut"] = val
 
     def get_k_mesh_by_cell(self, cell=None, kpoints_per_angstrom=1):
         if cell is None:
             cell = self.structure.cell
         latlens = [np.linalg.norm(lat) for lat in cell]
-        kmesh = np.rint(np.array([2 * np.pi / ll for ll in latlens]) * kpoints_per_angstrom)
+        kmesh = np.rint(
+            np.array([2 * np.pi / ll for ll in latlens]) * kpoints_per_angstrom
+        )
         if kmesh.min() <= 0:
-            warnings.warn('kpoint per angstrom too low')
+            warnings.warn("kpoint per angstrom too low")
         return [int(k) for k in kmesh]
 
-    def set_kpoints(self, mesh=None, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
-                    weights=None, reciprocal=True, kpoints_per_angstrom=None):
+    def set_kpoints(
+        self,
+        mesh=None,
+        scheme="MP",
+        center_shift=None,
+        symmetry_reduction=True,
+        manual_kpoints=None,
+        weights=None,
+        reciprocal=True,
+        kpoints_per_angstrom=None,
+    ):
         """
         Function to setup the k-points
 
@@ -76,16 +87,23 @@ class GpawJob(AseJob):
         """
         if kpoints_per_angstrom is not None:
             if mesh is not None:
-                warnings.warn('mesh value is overwritten by kpoints_per_angstrom')
+                warnings.warn("mesh value is overwritten by kpoints_per_angstrom")
             mesh = self.get_k_mesh_by_cell(kpoints_per_angstrom=kpoints_per_angstrom)
         if mesh is not None:
             if np.min(mesh) <= 0:
-                raise ValueError('mesh values must be larger than 0')
+                raise ValueError("mesh values must be larger than 0")
         if center_shift is not None:
-            if np.min(center_shift)<0 or np.max(center_shift)>1:
-                warnings.warn('center_shift is given in relative coordinates')
-        self._set_kpoints(mesh=mesh, scheme=scheme, center_shift=center_shift, symmetry_reduction=symmetry_reduction,
-                          manual_kpoints=manual_kpoints, weights=weights, reciprocal=reciprocal)
+            if np.min(center_shift) < 0 or np.max(center_shift) > 1:
+                warnings.warn("center_shift is given in relative coordinates")
+        self._set_kpoints(
+            mesh=mesh,
+            scheme=scheme,
+            center_shift=center_shift,
+            symmetry_reduction=symmetry_reduction,
+            manual_kpoints=manual_kpoints,
+            weights=weights,
+            reciprocal=reciprocal,
+        )
 
     # Backward compatibility
     def get_encut(self):
@@ -99,21 +117,33 @@ class GpawJob(AseJob):
         """
         self.plane_wave_cutoff = encut
 
-    def _set_kpoints(self, mesh=None, scheme='MP', center_shift=None, symmetry_reduction=True, manual_kpoints=None,
-                     weights=None, reciprocal=True):
-        if scheme != 'MP':
-            raise ValueError('Currently only MP is supported in the pyiron wrapper.')
+    def _set_kpoints(
+        self,
+        mesh=None,
+        scheme="MP",
+        center_shift=None,
+        symmetry_reduction=True,
+        manual_kpoints=None,
+        weights=None,
+        reciprocal=True,
+    ):
+        if scheme != "MP":
+            raise ValueError("Currently only MP is supported in the pyiron wrapper.")
         if center_shift is not None:
-            raise ValueError('centershift is not implemented in the pyiron wrapper.')
+            raise ValueError("centershift is not implemented in the pyiron wrapper.")
         if not symmetry_reduction:
-            raise ValueError('symmetry_reduction is not implemented in the pyiron wrapper.')
+            raise ValueError(
+                "symmetry_reduction is not implemented in the pyiron wrapper."
+            )
         if manual_kpoints is not None:
-            raise ValueError('manual_kpoints are not implemented in the pyiron wrapper.')
+            raise ValueError(
+                "manual_kpoints are not implemented in the pyiron wrapper."
+            )
         if weights is not None:
-            raise ValueError('weights are not implemented in the pyiron wrapper.')
+            raise ValueError("weights are not implemented in the pyiron wrapper.")
         if not reciprocal:
-            raise ValueError('reciprocal is not implemented in the pyiron wrapper.')
-        self.input['kpoints'] = mesh
+            raise ValueError("reciprocal is not implemented in the pyiron wrapper.")
+        self.input["kpoints"] = mesh
 
     def write_input(self):
         pass
@@ -134,13 +164,19 @@ class GpawJob(AseJob):
 
     def run_if_interactive(self):
         if self.structure.calc is None:
-            kpoints = self.input['kpoints']
+            kpoints = self.input["kpoints"]
             if isinstance(kpoints, str):
-                kpoints = self.input['kpoints'].replace('[', '').replace(']', '').split()
+                kpoints = (
+                    self.input["kpoints"].replace("[", "").replace("]", "").split()
+                )
             self._create_working_directory()
-            calc = GPAW(mode=PW(float(self.input['encut'])), xc=self.input['potential'],
-                        occupations=MethfesselPaxton(width=float(self.input['sigma'])), kpts=kpoints,
-                        txt=self.working_directory + '/' + self.job_name + '.txt')
+            calc = GPAW(
+                mode=PW(float(self.input["encut"])),
+                xc=self.input["potential"],
+                occupations=MethfesselPaxton(width=float(self.input["sigma"])),
+                kpts=kpoints,
+                txt=self.working_directory + "/" + self.job_name + ".txt",
+            )
             self.structure.set_calculator(calc)
         self.status.running = True
         self.structure.calc.calculate(self.structure)
@@ -180,18 +216,18 @@ class GpawInput(GenericParameters):
     """
 
     def __init__(self, input_file_name=None):
-        super(GpawInput, self).__init__(input_file_name=input_file_name,
-                                        table_name="input",
-                                        comment_char="#")
+        super(GpawInput, self).__init__(
+            input_file_name=input_file_name, table_name="input", comment_char="#"
+        )
 
     def load_default(self):
         """
         Loading the default settings for the input file.
         """
-        input_str = '''\
+        input_str = """\
 kpoints [6,6,6]
 sigma 0.1
 encut 350
 potential PBE
-'''
+"""
         self.load_string(input_str)

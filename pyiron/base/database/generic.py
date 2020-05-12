@@ -6,7 +6,19 @@ import numpy as np
 import re
 import time
 from datetime import datetime
-from sqlalchemy import Column, create_engine, DateTime, Float, Integer, MetaData, String, Table, text, and_, or_
+from sqlalchemy import (
+    Column,
+    create_engine,
+    DateTime,
+    Float,
+    Integer,
+    MetaData,
+    String,
+    Table,
+    text,
+    and_,
+    or_,
+)
 from sqlalchemy.pool import NullPool
 from sqlalchemy.sql import select
 from sqlalchemy.exc import OperationalError, DatabaseError
@@ -16,8 +28,10 @@ DatabaseAccess class deals with accessing the database
 """
 
 __author__ = "Murat Han Celik"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH" \
-                " - Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH"
+    " - Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -58,6 +72,7 @@ class DatabaseAccess(object):
 
     Murat Han Celik
     """
+
     def __init__(self, connection_string, table_name):
         """
         Initialize the Database connection
@@ -70,12 +85,14 @@ class DatabaseAccess(object):
         """
         self.table_name = table_name
         self._keep_connection = False
-        self._sql_lite = 'sqlite' in connection_string
+        self._sql_lite = "sqlite" in connection_string
         try:
             if not self._sql_lite:
-                self._engine = create_engine(connection_string,
-                                             connect_args={'connect_timeout': 15},
-                                             poolclass=NullPool)
+                self._engine = create_engine(
+                    connection_string,
+                    connect_args={"connect_timeout": 15},
+                    poolclass=NullPool,
+                )
                 self.conn = AutorestoredConnection(self._engine)
             else:
                 self._engine = create_engine(connection_string)
@@ -86,24 +103,27 @@ class DatabaseAccess(object):
             raise ValueError("Connection to database failed: " + str(except_msg))
 
         self.__reload_db()
-        self.simulation_table = Table(str(table_name), self.metadata,
-                                      Column('id', Integer, primary_key=True, autoincrement=True),
-                                      Column('parentid', Integer),
-                                      Column('masterid', Integer),
-                                      Column('projectpath', String(50)),
-                                      Column('project', String(255)),
-                                      Column('job', String(50)),
-                                      Column('subjob', String(255)),
-                                      Column('chemicalformula', String(30)),
-                                      Column('status', String(20)),
-                                      Column('hamilton', String(20)),
-                                      Column('hamversion', String(50)),
-                                      Column('username', String(20)),
-                                      Column('computer', String(100)),
-                                      Column('timestart', DateTime),
-                                      Column('timestop', DateTime),
-                                      Column('totalcputime', Float),
-                                      extend_existing=True)
+        self.simulation_table = Table(
+            str(table_name),
+            self.metadata,
+            Column("id", Integer, primary_key=True, autoincrement=True),
+            Column("parentid", Integer),
+            Column("masterid", Integer),
+            Column("projectpath", String(50)),
+            Column("project", String(255)),
+            Column("job", String(50)),
+            Column("subjob", String(255)),
+            Column("chemicalformula", String(30)),
+            Column("status", String(20)),
+            Column("hamilton", String(20)),
+            Column("hamversion", String(50)),
+            Column("username", String(20)),
+            Column("computer", String(100)),
+            Column("timestart", DateTime),
+            Column("timestop", DateTime),
+            Column("totalcputime", Float),
+            extend_existing=True,
+        )
         self.metadata.create_all()
         self._viewer_mode = False
 
@@ -128,7 +148,7 @@ class DatabaseAccess(object):
         if isinstance(value, bool):
             self._viewer_mode = value
         else:
-            raise TypeError('Viewmode can only be TRUE or FALSE.')
+            raise TypeError("Viewmode can only be TRUE or FALSE.")
 
     # Internal functions
     def __del__(self):
@@ -162,11 +182,11 @@ class DatabaseAccess(object):
         Returns:
 
         """
-        expr = expr.replace('%', '(.)*')
-        expr = expr.replace('_', '.')
-        expr = '^' + expr
-        if expr[-1] is not '%':
-            expr += '$'
+        expr = expr.replace("%", "(.)*")
+        expr = expr.replace("_", ".")
+        expr = "^" + expr
+        if expr[-1] != "%":
+            expr += "$"
         reg = re.compile(expr)
         if item is not None:
             return reg.search(item) is not None
@@ -202,7 +222,12 @@ class DatabaseAccess(object):
             table_name = self.table_name
         self.__reload_db()
         try:
-            simulation_list = Table(str(table_name), self.metadata, autoload=True, autoload_with=self._engine)
+            simulation_list = Table(
+                str(table_name),
+                self.metadata,
+                autoload=True,
+                autoload_with=self._engine,
+            )
         except Exception:
             raise ValueError(str(table_name) + " does not exist")
         return [column.name for column in iter(simulation_list.columns)]
@@ -223,9 +248,12 @@ class DatabaseAccess(object):
                 col_name = col_name[-1]
             if isinstance(col_type, list):
                 col_type = col_type[-1]
-            self._engine.execute('ALTER TABLE %s ADD COLUMN %s %s' % (self.simulation_table.name, col_name, col_type))
+            self._engine.execute(
+                "ALTER TABLE %s ADD COLUMN %s %s"
+                % (self.simulation_table.name, col_name, col_type)
+            )
         else:
-            raise PermissionError('Not avilable in viewer mode.')
+            raise PermissionError("Not avilable in viewer mode.")
 
     def change_column_type(self, col_name, col_type):
         """
@@ -243,11 +271,12 @@ class DatabaseAccess(object):
                 col_name = col_name[-1]
             if isinstance(col_type, list):
                 col_type = col_type[-1]
-            self._engine.execute('ALTER TABLE %s ALTER COLUMN %s TYPE %s' % (self.simulation_table.name,
-                                                                             col_name,
-                                                                             col_type))
+            self._engine.execute(
+                "ALTER TABLE %s ALTER COLUMN %s TYPE %s"
+                % (self.simulation_table.name, col_name, col_type)
+            )
         else:
-            raise PermissionError('Not avilable in viewer mode.')
+            raise PermissionError("Not avilable in viewer mode.")
 
     def get_items_sql(self, where_condition=None, sql_statement=None):
         """
@@ -294,18 +323,24 @@ class DatabaseAccess(object):
         """
 
         if where_condition:
-            where_condition = where_condition.replace(
-                'like', 'similar to') if self._engine.dialect.name is "postgresql" else where_condition
+            where_condition = (
+                where_condition.replace("like", "similar to")
+                if self._engine.dialect.name == "postgresql"
+                else where_condition
+            )
             try:
                 query = "select * from " + self.table_name + " where " + where_condition
-                query.replace('%', '%%')
+                query.replace("%", "%%")
                 result = self.conn.execute(text(query))
             except Exception as except_msg:
                 print("EXCEPTION in get_items_sql: ", except_msg)
                 raise ValueError("EXCEPTION in get_items_sql: ", except_msg)
         elif sql_statement:
-            sql_statement = sql_statement.replace(
-                'like', 'similar to') if self._engine.dialect.name is "postgresql" else sql_statement
+            sql_statement = (
+                sql_statement.replace("like", "similar to")
+                if self._engine.dialect.name == "postgresql"
+                else sql_statement
+            )
             # TODO: make it save against SQL injection
             result = self.conn.execute(text(sql_statement))
         else:
@@ -318,16 +353,20 @@ class DatabaseAccess(object):
         output_list = []
         for col in row:
             # ensures working with db entries, which are camel case
-            timestop_index = [item.lower() for item in col.keys()].index('timestop')
-            timestart_index = [item.lower() for item in col.keys()].index('timestart')
+            timestop_index = [item.lower() for item in col.keys()].index("timestop")
+            timestart_index = [item.lower() for item in col.keys()].index("timestart")
             tmp_values = col.values()
-            if (col.values()[timestop_index] and col.values()[timestart_index]) is not None:
+            if (
+                col.values()[timestop_index] and col.values()[timestart_index]
+            ) is not None:
                 # changes values
                 try:
                     tmp_values[timestop_index] = datetime.strptime(
-                        str(tmp_values[timestop_index]), '%Y-%m-%d %H:%M:%S.%f')
+                        str(tmp_values[timestop_index]), "%Y-%m-%d %H:%M:%S.%f"
+                    )
                     tmp_values[timestart_index] = datetime.strptime(
-                        str(tmp_values[timestart_index]), '%Y-%m-%d %H:%M:%S.%f')
+                        str(tmp_values[timestart_index]), "%Y-%m-%d %H:%M:%S.%f"
+                    )
                 except ValueError:
                     print("error in: ", str(col))
             output_list += [dict(zip(col.keys(), tmp_values))]
@@ -361,15 +400,19 @@ class DatabaseAccess(object):
         """
         if not self._viewer_mode:
             try:
-                par_dict = dict((key.lower(), value) for key, value in par_dict.items())           # make keys lowercase
-                result = self.conn.execute(self.simulation_table.insert(par_dict)).inserted_primary_key[-1]
+                par_dict = dict(
+                    (key.lower(), value) for key, value in par_dict.items()
+                )  # make keys lowercase
+                result = self.conn.execute(
+                    self.simulation_table.insert(par_dict)
+                ).inserted_primary_key[-1]
                 if not self._keep_connection:
                     self.conn.close()
                 return result
             except Exception as except_msg:
                 raise ValueError("Error occurred: " + str(except_msg))
         else:
-            raise PermissionError('Not avilable in viewer mode.')
+            raise PermissionError("Not avilable in viewer mode.")
 
     def __get_items(self, col_name, var):
         """
@@ -402,7 +445,9 @@ class DatabaseAccess(object):
         try:
             if type(var) is list:
                 var = var[-1]
-            query = select([self.simulation_table], self.simulation_table.c[str(col_name)] == var)
+            query = select(
+                [self.simulation_table], self.simulation_table.c[str(col_name)] == var
+            )
         except Exception:
             raise ValueError("There is no Column named: " + col_name)
         try:
@@ -435,12 +480,14 @@ class DatabaseAccess(object):
         """
         if not self._viewer_mode:
             if type(item_id) is list:
-                item_id = item_id[-1]                                           # sometimes a list is given, make it int
+                item_id = item_id[-1]  # sometimes a list is given, make it int
             if np.issubdtype(type(item_id), np.integer):
                 item_id = int(item_id)
             # all items must be lower case, ensured here
             par_dict = dict((key.lower(), value) for key, value in par_dict.items())
-            query = self.simulation_table.update(self.simulation_table.c['id'] == item_id).values()
+            query = self.simulation_table.update(
+                self.simulation_table.c["id"] == item_id
+            ).values()
             try:
                 self.conn.execute(query, par_dict)
             except (OperationalError, DatabaseError):
@@ -454,7 +501,7 @@ class DatabaseAccess(object):
             if not self._keep_connection:
                 self.conn.close()
         else:
-            raise PermissionError('Not avilable in viewer mode.')
+            raise PermissionError("Not avilable in viewer mode.")
 
     def delete_item(self, item_id):
         """
@@ -467,11 +514,15 @@ class DatabaseAccess(object):
 
         """
         if not self._viewer_mode:
-            self.conn.execute(self.simulation_table.delete(self.simulation_table.c['id'] == int(item_id)))
+            self.conn.execute(
+                self.simulation_table.delete(
+                    self.simulation_table.c["id"] == int(item_id)
+                )
+            )
             if not self._keep_connection:
                 self.conn.close()
         else:
-            raise PermissionError('Not avilable in viewer mode.')
+            raise PermissionError("Not avilable in viewer mode.")
 
     # Shortcut
     def get_item_by_id(self, item_id):
@@ -508,19 +559,28 @@ class DatabaseAccess(object):
             item_id = int(item_id)
         if np.issubdtype(type(item_id), np.integer):
             try:
-                return self.__get_items('id', int(item_id))[-1]
+                return self.__get_items("id", int(item_id))[-1]
             except TypeError as except_msg:
-                raise TypeError("Wrong data type given as parameter. item_id has to be Integer or String: ", except_msg)
+                raise TypeError(
+                    "Wrong data type given as parameter. item_id has to be Integer or String: ",
+                    except_msg,
+                )
             except IndexError as except_msg:
-                raise IndexError("Error when trying to find elements by given Job ID: ", except_msg)
+                raise IndexError(
+                    "Error when trying to find elements by given Job ID: ", except_msg
+                )
         else:
-            raise TypeError('THE SQL database ID has to be an integer.')
+            raise TypeError("THE SQL database ID has to be an integer.")
 
     def query_for_element(self, element):
         return or_(
-            *[self.simulation_table.c['chemicalformula'].like('%' + element +
-                                                              '[ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]%'),
-              self.simulation_table.c['chemicalformula'].like('%' + element)])
+            *[
+                self.simulation_table.c["chemicalformula"].like(
+                    "%" + element + "[ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789]%"
+                ),
+                self.simulation_table.c["chemicalformula"].like("%" + element),
+            ]
+        )
 
     def get_items_dict(self, item_dict, return_all_columns=True):
         """
@@ -582,21 +642,25 @@ class DatabaseAccess(object):
         """
         if not isinstance(item_dict, dict):
             raise TypeError("Wrong DataType! Only Dicts are usable!")
-        and_statement = []      # list for the whole sqlalchemy statement
+        and_statement = []  # list for the whole sqlalchemy statement
         # here we go through all keys and values of item_dict
         for key, value in item_dict.items():
             # if a value of item_dict is a list, we have to make an or statement of it
-            if key == 'element_lst':
-                part_of_statement = [self.query_for_element(element=element) for element in value]
+            if key == "element_lst":
+                part_of_statement = [
+                    self.query_for_element(element=element) for element in value
+                ]
             elif isinstance(value, list):
-                or_statement = [self.simulation_table.c[str(key)] == element
-                                if '%' not in element
-                                else self.simulation_table.c[str(key)].like(element)
-                                for element in value]
+                or_statement = [
+                    self.simulation_table.c[str(key)] == element
+                    if "%" not in element
+                    else self.simulation_table.c[str(key)].like(element)
+                    for element in value
+                ]
                 # here we wrap the given values in an sqlalchemy-type or_statement
                 part_of_statement = [or_(*or_statement)]
             else:
-                if '%' not in str(value):
+                if "%" not in str(value):
                     part_of_statement = [self.simulation_table.c[str(key)] == value]
                 else:
                     part_of_statement = [self.simulation_table.c[str(key)].like(value)]
@@ -605,7 +669,7 @@ class DatabaseAccess(object):
         if return_all_columns:
             query = select([self.simulation_table], and_(*and_statement))
         else:
-            query = select([self.simulation_table.columns['id']], and_(*and_statement))
+            query = select([self.simulation_table.columns["id"]], and_(*and_statement))
         try:
             result = self.conn.execute(query)
         except (OperationalError, DatabaseError):
@@ -620,4 +684,3 @@ class DatabaseAccess(object):
         if not self._keep_connection:
             self.conn.close()
         return [dict(zip(col.keys(), col.values())) for col in row]
-

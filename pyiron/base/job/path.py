@@ -9,12 +9,14 @@ from pyiron.base.job.core import JobCore
 from pyiron.base.project.generic import Project
 
 """
-The JobPath class enables quick access to the HDF5 data file without loading the full object 
+The JobPath class enables quick access to the HDF5 data file without loading the full object
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -107,8 +109,9 @@ class JobPathBase(JobCore):
 
             path inside the HDF5 file - also stored as absolute path
     """
+
     def __init__(self, job_path):
-        job_path_lst = job_path.replace('\\', '/').split('.h5')
+        job_path_lst = job_path.replace("\\", "/").split(".h5")
         if len(job_path_lst) != 2:
             raise ValueError
 
@@ -116,13 +119,17 @@ class JobPathBase(JobCore):
         h5_path = None
         if sub_job is not None:
             if len(sub_job.strip()) > 0:
-                h5_path = '/'.join(sub_job.split('/')[:-1])
+                h5_path = "/".join(sub_job.split("/")[:-1])
 
-        hdf_project = ProjectHDFio(project=Project(os.path.dirname(job_path_lst[0])),
-                                   file_name=job_path_lst[0].split('/')[-1] + '.h5',
-                                   h5_path=h5_path,
-                                   mode="r")
-        super(JobPathBase, self).__init__(project=hdf_project, job_name=job_path_lst[1].split('/')[-1])
+        hdf_project = ProjectHDFio(
+            project=Project(os.path.dirname(job_path_lst[0])),
+            file_name=job_path_lst[0].split("/")[-1] + ".h5",
+            h5_path=h5_path,
+            mode="r",
+        )
+        super(JobPathBase, self).__init__(
+            project=hdf_project, job_name=job_path_lst[1].split("/")[-1]
+        )
 
     @property
     def is_root(self):
@@ -456,20 +463,26 @@ class JobPath(JobPathBase):
 
             path inside the HDF5 file - also stored as absolute path
     """
+
     def __init__(self, db, job_id=None, db_entry=None, user=None):
-        if not db_entry:
+        if db_entry is None and db is not None:
             db_entry = db.get_item_by_id(job_id)
         if db_entry is None:
             raise ValueError("job ID {0} does not exist!".format(job_id))
-        hdf5_file = db_entry["subjob"].split('/')[1] + '.h5'
-        super(JobPath, self).__init__(job_path=db_entry["projectpath"]+db_entry["project"]+hdf5_file+db_entry["subjob"])
+        hdf5_file = db_entry["subjob"].split("/")[1] + ".h5"
+        if db_entry["projectpath"] is not None:
+            job_path = db_entry["projectpath"]
+        else:
+            job_path = ''
+        job_path += db_entry["project"] + hdf5_file + db_entry["subjob"]
+        super(JobPath, self).__init__(job_path=job_path)
 
         if "hamilton" in db_entry.keys():
             self.__name__ = db_entry["hamilton"]
         if "hamversion" in db_entry.keys():
             self.__version__ = db_entry["hamversion"]
 
-        if 'id' in db_entry.keys():
+        if "id" in db_entry.keys():
             self._job_id = db_entry["id"]
         if "status" in db_entry.keys():
             self._status = db_entry["status"]

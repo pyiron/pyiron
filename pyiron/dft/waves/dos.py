@@ -6,8 +6,10 @@ from __future__ import print_function
 import numpy as np
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -37,10 +39,16 @@ class Dos(object):
         if bin_density is not None:
             n_bins = int((dos_max - dos_min) * bin_density)
         if es_obj is not None:
-            self.t_dos, self.energies = np.histogram(self.es_obj.eigenvalues, bins=int(n_bins), density=True)
+            self.t_dos, self.energies = np.histogram(
+                self.es_obj.eigenvalues, bins=int(n_bins), density=True
+            )
         else:
-            self.t_dos, self.energies = np.histogram(eigenvalues, bins=int(n_bins), density=True)
-        self.energies = self.energies[1:] - ((self.energies[1] - self.energies[0]) / 2.)
+            self.t_dos, self.energies = np.histogram(
+                eigenvalues, bins=int(n_bins), density=True
+            )
+        self.energies = self.energies[1:] - (
+            (self.energies[1] - self.energies[0]) / 2.0
+        )
 
     def plot_total_dos(self, **kwargs):
         """
@@ -58,8 +66,8 @@ class Dos(object):
             import matplotlib.pyplot as plt
         fig = plt.figure(1, figsize=(6, 4))
         ax1 = fig.add_subplot(111)
-        ax1.set_xlabel('E (eV)', fontsize=14)
-        ax1.set_ylabel('DOS', fontsize=14)
+        ax1.set_xlabel("E (eV)", fontsize=14)
+        ax1.set_ylabel("DOS", fontsize=14)
         plt.fill_between(self.energies, self.t_dos, **kwargs)
         return plt
 
@@ -78,8 +86,10 @@ class Dos(object):
         except ImportError:
             import matplotlib.pyplot as plt
         if not (self.es_obj.grand_dos_matrix is not None):
-            raise NoResolvedDosError("Can not plot the orbital resolved dos since resolved dos values are not"
-                                     " available")
+            raise NoResolvedDosError(
+                "Can not plot the orbital resolved dos since resolved dos values are not"
+                " available"
+            )
         plot = self.plot_total_dos()
         for key, val in self.orbital_dict.items():
             r_dos = self.get_orbital_resolved_dos(val)
@@ -100,8 +110,10 @@ class Dos(object):
 
         """
         if not (self.es_obj.grand_dos_matrix is not None):
-            raise NoResolvedDosError("Can not get the spin resolved dos since resolved dos values are not"
-                                     " available")
+            raise NoResolvedDosError(
+                "Can not get the spin resolved dos since resolved dos values are not"
+                " available"
+            )
 
         grand_sum = np.sum(self.es_obj.grand_dos_matrix)
         tot_val = self.es_obj.grand_dos_matrix.copy() / grand_sum
@@ -145,8 +157,10 @@ class Dos(object):
 
         """
         if not (self.es_obj.grand_dos_matrix is not None):
-            raise NoResolvedDosError("Can not get the spatially resolved dos since resolved dos values are not"
-                                     " available")
+            raise NoResolvedDosError(
+                "Can not get the spatially resolved dos since resolved dos values are not"
+                " available"
+            )
         grand_sum = np.sum(self.es_obj.grand_dos_matrix)
         tot_val = self.es_obj.grand_dos_matrix.copy() / grand_sum
         _, n_kpts, n_bands, _, _ = np.shape(tot_val)
@@ -189,8 +203,10 @@ class Dos(object):
 
         """
         if not (self.es_obj.grand_dos_matrix is not None):
-            raise NoResolvedDosError("Can not get the orbital resolved dos since resolved dos values are not"
-                                     " available")
+            raise NoResolvedDosError(
+                "Can not get the orbital resolved dos since resolved dos values are not"
+                " available"
+            )
         grand_sum = np.sum(self.es_obj.grand_dos_matrix)
         tot_val = self.es_obj.grand_dos_matrix.copy() / grand_sum
         _, n_kpts, n_bands, _, _ = np.shape(tot_val)
@@ -219,7 +235,9 @@ class Dos(object):
         r_dos[ind_0] = 0.0
         return r_dos * self.t_dos
 
-    def get_spatial_orbital_resolved_dos(self, atom_indices, orbital_indices, spin_indices=0):
+    def get_spatial_orbital_resolved_dos(
+        self, atom_indices, orbital_indices, spin_indices=0
+    ):
         """
         Gives the dos contribution of a given indices of atoms as well as orbitals as arranged in the
         pyiron.objects.waves.ElectronicStructure instance.
@@ -233,8 +251,10 @@ class Dos(object):
             numpy.ndaray: The required dos
         """
         if not (self.es_obj.grand_dos_matrix is not None):
-            raise NoResolvedDosError("Can not get the resolved dos since resolved dos values are not"
-                                     " available")
+            raise NoResolvedDosError(
+                "Can not get the resolved dos since resolved dos values are not"
+                " available"
+            )
         grand_sum = np.sum(self.es_obj.grand_dos_matrix)
         tot_val = self.es_obj.grand_dos_matrix.copy() / grand_sum
         _, n_kpts, n_bands, _, _ = np.shape(tot_val)
@@ -243,7 +263,12 @@ class Dos(object):
         r_dos = np.zeros_like(self.t_dos)
         w_dos = np.zeros_like(self.t_dos)
         for i, e in enumerate(self.es_obj.eigenvalues):
-            weight = np.sum([np.sum(tot_val[spin_indices, k, b, atom_indices, o]) for o in orbital_indices])
+            weight = np.sum(
+                [
+                    np.sum(tot_val[spin_indices, k, b, atom_indices, o])
+                    for o in orbital_indices
+                ]
+            )
             weight_sum = np.sum(tot_val[spin_indices, k, b, :, :])
             if b < n_bands - 1:
                 b += 1
@@ -268,4 +293,5 @@ class NoResolvedDosError(Exception):
     """
     Raised when information on the resolved dos in unavailable
     """
+
     pass

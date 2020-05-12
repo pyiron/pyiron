@@ -7,8 +7,10 @@ from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 
 __author__ = "Yury Lysogorskiy"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -34,11 +36,13 @@ class StructureContainer(AtomisticGenericJob):
                 self._structure = structure.get_structure(iteration_step=-1)
                 self.parent_id = structure.job_id
             else:
-                raise ValueError('The job does not contain any structure to import.')
+                raise ValueError("The job does not contain any structure to import.")
         elif isinstance(structure, Atoms):
             self._structure = structure
         else:
-            raise TypeError('You can only append a structure object or an GenericJob object.')
+            raise TypeError(
+                "You can only append a structure object or an GenericJob object."
+            )
         if self.status.initialized:
             self.run()
 

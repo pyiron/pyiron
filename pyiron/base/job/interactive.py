@@ -11,8 +11,10 @@ InteractiveBase class extends the Generic Job class with all the functionality t
 """
 
 __author__ = "Osamu Waseda, Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -111,6 +113,7 @@ class InteractiveBase(GenericJob):
             Job type object with all the available job types: ['ExampleJob', 'SerialMaster', 'ParallelMaster', 'ScriptJob',
                                                                'ListMaster']
     """
+
     def __init__(self, project, job_name):
         super(InteractiveBase, self).__init__(project, job_name)
         self._interactive_library = None
@@ -125,10 +128,12 @@ class InteractiveBase(GenericJob):
 
     @interactive_flush_frequency.setter
     def interactive_flush_frequency(self, frequency):
-        if not isinstance(frequency, int) or frequency<1:
-            raise AssertionError('interactive_flush_frequency must be an integer>0')
-        if frequency<self._interactive_write_frequency:
-            raise ValueError('interactive_flush_frequency must be larger or equal to interactive_write_frequency')
+        if not isinstance(frequency, int) or frequency < 1:
+            raise AssertionError("interactive_flush_frequency must be an integer>0")
+        if frequency < self._interactive_write_frequency:
+            raise ValueError(
+                "interactive_flush_frequency must be larger or equal to interactive_write_frequency"
+            )
         self._interactive_flush_frequency = frequency
 
     @property
@@ -137,9 +142,9 @@ class InteractiveBase(GenericJob):
 
     @interactive_write_frequency.setter
     def interactive_write_frequency(self, frequency):
-        if not isinstance(frequency, int) or frequency<1:
-            raise AssertionError('interactive_write_frequency must be an integer>0')
-        if self._interactive_flush_frequency<frequency:
+        if not isinstance(frequency, int) or frequency < 1:
+            raise AssertionError("interactive_write_frequency must be an integer>0")
+        if self._interactive_flush_frequency < frequency:
             self.interactive_flush_frequency = frequency
         self._interactive_write_frequency = frequency
 
@@ -147,8 +152,10 @@ class InteractiveBase(GenericJob):
         """
         This should work but doesn't...
         """
-        if self._interactive_flush_frequency<self._interactive_write_frequency:
-            raise ValueError('interactive_write_frequency must be smaller or equal to interactive_flush_frequency')
+        if self._interactive_flush_frequency < self._interactive_write_frequency:
+            raise ValueError(
+                "interactive_write_frequency must be smaller or equal to interactive_flush_frequency"
+            )
 
     def _run_if_running(self):
         """
@@ -164,7 +171,10 @@ class InteractiveBase(GenericJob):
             super(InteractiveBase, self)._run_if_running()
 
     def _check_if_input_should_be_written(self):
-        return super(InteractiveBase, self)._check_if_input_should_be_written() or self._interactive_write_input_files
+        return (
+            super(InteractiveBase, self)._check_if_input_should_be_written()
+            or self._interactive_write_input_files
+        )
 
     def interactive_is_activated(self):
         """
@@ -239,16 +249,20 @@ class InteractiveBase(GenericJob):
         """
         with self.project_hdf5.open("output") as h5:
             for key in self.interactive_cache.keys():
-                if len(self.interactive_cache[key])==0:
+                if len(self.interactive_cache[key]) == 0:
                     continue
-                data = self._include_last_step(array=self.interactive_cache[key],
-                                               step=self.interactive_write_frequency,
-                                               include_last=include_last_step)
-                if len(data) > 0 and \
-                        isinstance(data[0], list) and \
-                        len(np.shape(data)) == 1:
+                data = self._include_last_step(
+                    array=self.interactive_cache[key],
+                    step=self.interactive_write_frequency,
+                    include_last=include_last_step,
+                )
+                if (
+                    len(data) > 0
+                    and isinstance(data[0], list)
+                    and len(np.shape(data)) == 1
+                ):
                     self._extend_hdf(h5=h5, path=path, key=key, data=data)
-                elif np.array(data).dtype == np.dtype('O'):
+                elif np.array(data).dtype == np.dtype("O"):
                     self._extend_hdf(h5=h5, path=path, key=key, data=data)
                 else:
                     self._extend_hdf(h5=h5, path=path, key=key, data=np.array(data))
@@ -268,8 +282,10 @@ class InteractiveBase(GenericJob):
         Returns:
 
         """
-        if len(list(self.interactive_cache.keys())) > 0 and \
-                len(self.interactive_cache[list(self.interactive_cache.keys())[0]]) != 0:
+        if (
+            len(list(self.interactive_cache.keys())) > 0
+            and len(self.interactive_cache[list(self.interactive_cache.keys())[0]]) != 0
+        ):
             self.interactive_flush(path="interactive", include_last_step=True)
         self.project_hdf5.rewrite_hdf5(job_name=self.job_name, exclude_groups=[])
         self.project.db.item_update(self._runtime(), self._job_id)
@@ -294,10 +310,10 @@ class InteractiveBase(GenericJob):
     #     self.interactive_close()
 
     def run_if_interactive(self):
-        raise NotImplementedError('run_if_interactive() is not implemented!')
+        raise NotImplementedError("run_if_interactive() is not implemented!")
 
     def run_if_interactive_non_modal(self):
-        raise NotImplementedError('run_if_interactive_non_modal() is not implemented!')
+        raise NotImplementedError("run_if_interactive_non_modal() is not implemented!")
 
     def to_hdf(self, hdf=None, group_name=None):
         """
@@ -309,8 +325,10 @@ class InteractiveBase(GenericJob):
         """
         super(InteractiveBase, self).to_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input") as hdf5_input:
-            hdf5_input["interactive"] = {"interactive_flush_frequency": self._interactive_flush_frequency,
-                                         "interactive_write_frequency": self._interactive_write_frequency}
+            hdf5_input["interactive"] = {
+                "interactive_flush_frequency": self._interactive_flush_frequency,
+                "interactive_write_frequency": self._interactive_write_frequency,
+            }
 
     def from_hdf(self, hdf=None, group_name=None):
         """
@@ -324,8 +342,12 @@ class InteractiveBase(GenericJob):
         with self.project_hdf5.open("input") as hdf5_input:
             if "interactive" in hdf5_input.list_nodes():
                 interactive_dict = hdf5_input["interactive"]
-                self._interactive_flush_frequency = interactive_dict["interactive_flush_frequency"]
+                self._interactive_flush_frequency = interactive_dict[
+                    "interactive_flush_frequency"
+                ]
                 if "interactive_write_frequency" in interactive_dict.keys():
-                    self._interactive_write_frequency = interactive_dict["interactive_write_frequency"]
+                    self._interactive_write_frequency = interactive_dict[
+                        "interactive_write_frequency"
+                    ]
                 else:
                     self._interactive_write_frequency = 1

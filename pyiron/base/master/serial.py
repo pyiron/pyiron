@@ -11,12 +11,14 @@ from pyiron.base.master.generic import GenericMaster, get_function_from_string
 from pyiron.base.generic.parameters import GenericParameters
 
 """
-The serial master class is a metajob consisting of a dynamic list of jobs which are executed in serial mode. 
+The serial master class is a metajob consisting of a dynamic list of jobs which are executed in serial mode.
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -128,6 +130,7 @@ class SerialMasterBase(GenericMaster):
 
             The input of the start job - the first job of the series.
     """
+
     def __init__(self, project, job_name):
         self._input = GenericParameters("parameters")  # e.g. convergence goal
 
@@ -202,7 +205,9 @@ class SerialMasterBase(GenericMaster):
         if self.start_job:
             self._start_job.input = value
         else:
-            raise ValueError('Input can only be set after a start job has been assinged.')
+            raise ValueError(
+                "Input can only be set after a start job has been assinged."
+            )
 
     def set_input_to_read_only(self):
         """
@@ -231,7 +236,7 @@ class SerialMasterBase(GenericMaster):
             GenericJob: next job
         """
         if len(self) == 0:
-            raise ValueError('No job available in job list, please append a job first.')
+            raise ValueError("No job available in job list, please append a job first.")
         if len(self._job_name_lst) > len(self.child_ids):
             return self.pop(-1)
         ham_old = self.project.load(self.child_ids[-1], convert_to_object=True)
@@ -242,7 +247,9 @@ class SerialMasterBase(GenericMaster):
         elif not ham_old.status.finished:
             return None
         if job_name is None:
-            job_name = '_'.join(ham_old.job_name.split('_')[:-1] + [str(len(self.child_ids))])
+            job_name = "_".join(
+                ham_old.job_name.split("_")[:-1] + [str(len(self.child_ids))]
+            )
         new_job = ham_old.restart(job_name=job_name)
         new_job.server.cores = self.server.cores
         return new_job
@@ -253,11 +260,17 @@ class SerialMasterBase(GenericMaster):
         SerialMaster - so the SerialMaster contains the same output as its last child.
         """
         ham_lst = [self.project_hdf5.inspect(child_id) for child_id in self.child_ids]
-        if 'output' in ham_lst[0].list_groups() and 'generic' in ham_lst[0]['output'].list_groups():
+        if (
+            "output" in ham_lst[0].list_groups()
+            and "generic" in ham_lst[0]["output"].list_groups()
+        ):
             nodes = ham_lst[0]["output/generic"].list_nodes()
             with self.project_hdf5.open("output/generic") as hh:
                 for node in nodes:
-                    hh[node] = np.concatenate([ham["output/generic/{}".format(node)] for ham in ham_lst], axis=0)
+                    hh[node] = np.concatenate(
+                        [ham["output/generic/{}".format(node)] for ham in ham_lst],
+                        axis=0,
+                    )
 
     def collect_logfiles(self):
         """
@@ -333,11 +346,13 @@ class SerialMasterBase(GenericMaster):
         job = self.pop(-1)
         job._master_id = self.job_id
         if self.server.new_hdf:
-            job._hdf5 = self.project_hdf5.create_hdf(path=self.project.open(self.job_name + '_hdf5').path,
-                                                     job_name=job.job_name)
+            job._hdf5 = self.project_hdf5.create_hdf(
+                path=self.project.open(self.job_name + "_hdf5").path,
+                job_name=job.job_name,
+            )
         else:
             job._hdf5 = self.project_hdf5.open(job.job_name)
-        self._logger.info('SerialMaster: run job {}'.format(job.job_name))
+        self._logger.info("SerialMaster: run job {}".format(job.job_name))
         return job
 
     @staticmethod
@@ -345,9 +360,8 @@ class SerialMasterBase(GenericMaster):
         job.run()
 
     def _run_if_master_queue(self, job):
+        job.server.run_mode.modal = True
         job.run()
-        if job.python_execution_process:
-            job.python_execution_process.communicate()
         self.run_if_refresh()
 
     def _run_if_master_non_modal_child_non_modal(self, job):
@@ -422,7 +436,9 @@ class SerialMasterBase(GenericMaster):
             self._input.to_hdf(hdf5_input)
             if self._convergence_goal is not None:
                 try:
-                    hdf5_input["convergence_goal"] = inspect.getsource(self._convergence_goal)
+                    hdf5_input["convergence_goal"] = inspect.getsource(
+                        self._convergence_goal
+                    )
                 except IOError:
                     hdf5_input["convergence_goal"] = self._convergence_goal_str
 
@@ -456,11 +472,16 @@ class SerialMasterBase(GenericMaster):
             dict, list, float, int: data or data object
         """
         child_id_lst = self.child_ids
-        child_name_lst = [self.project.db.get_item_by_id(child_id)["job"] for child_id in self.child_ids]
+        child_name_lst = [
+            self.project.db.get_item_by_id(child_id)["job"]
+            for child_id in self.child_ids
+        ]
         if isinstance(item, int):
             total_lst = child_name_lst + self._job_name_lst
             item = total_lst[item]
-        return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
+        return self._get_item_when_str(
+            item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst
+        )
 
     def run_if_refresh(self):
         """
@@ -473,8 +494,13 @@ class SerialMasterBase(GenericMaster):
             self.status.collect = True
             self.run()
         else:
-            subjobs_statuses = set([self.project.db.get_item_by_id(child_id)['status'] for child_id in self.child_ids])
-            if len(subjobs_statuses) == 0 or subjobs_statuses == {'finished'}:
+            subjobs_statuses = set(
+                [
+                    self.project.db.get_item_by_id(child_id)["status"]
+                    for child_id in self.child_ids
+                ]
+            )
+            if len(subjobs_statuses) == 0 or subjobs_statuses == {"finished"}:
                 ham = self._convergence_goal(self, **self._convergence_goal_qwargs)
                 if ham is not True:
                     self.append(ham)
@@ -489,5 +515,6 @@ class GenericOutput(OrderedDict):
     """
     Generic Output just a place holder to store the output of the last child directly in the SerialMaster.
     """
+
     def __init__(self):
         super(GenericOutput, self).__init__()

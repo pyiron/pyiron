@@ -4,6 +4,7 @@ future
 h5io
 h5py
 matplotlib
+mendeleev
 numpy
 pandas
 pathlib2
@@ -15,5 +16,7 @@ scipy
 six
 sqlalchemy
 tables
+tqdm
 spglib
 nbsphinx
+pyfileindex

@@ -247,8 +247,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 
-     'pyiron', 
+    ('index',
+     'pyiron',
      u'pyiron Documentation',
      [u'Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department'], 1)
 ]
@@ -263,11 +263,11 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 
-   'pyiron', 
+  ('index',
+   'pyiron',
    u'pyiron Documentation',
-   u'Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department', 
-   'pyiron', 
+   u'Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department',
+   'pyiron',
    'One line description of project.',
    'Miscellaneous'),
 ]

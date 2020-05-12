@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
+
 # import os
 import sys
 import copy
@@ -10,8 +11,10 @@ import numpy as np
 from collections import OrderedDict, Sequence
 
 __author__ = "Joerg Neugebauer"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -26,12 +29,13 @@ class SparseListElement(object):
         ind: index
         val: value
     """
+
     def __init__(self, ind, val):
         self.index = ind
         self.value = val
 
     def __str__(self):
-        return '({}: {})'.format(self.index, self.value)
+        return "({}: {})".format(self.index, self.value)
 
 
 class SparseList(object):
@@ -44,6 +48,7 @@ class SparseList(object):
         default: default value for all elements not given by index in sparse_list
         length: length of the list
     """
+
     def __init__(self, sparse_list, default=None, length=None):
         if isinstance(sparse_list, dict):
             self._dict = sparse_list.copy()
@@ -52,7 +57,7 @@ class SparseList(object):
                 del self._dict["_"]
 
             if length is None:
-                raise ValueError('Length must be provided in dict input mode')
+                raise ValueError("Length must be provided in dict input mode")
             self._length = length
         elif isinstance(sparse_list, (list, np.ndarray)):
             # self._dict = {el: [] for el in set(sparse_list)}
@@ -62,7 +67,7 @@ class SparseList(object):
             self._length = len(sparse_list)
             if length is not None:
                 if length != self._length:
-                    raise ValueError('Incompatible length of new list')
+                    raise ValueError("Incompatible length of new list")
         self._default = default
 
     def _val_data_type(self):
@@ -79,7 +84,9 @@ class SparseList(object):
             if isinstance(data_0[0], bool):
                 return "list_bool"
             else:
-                raise ValueError('tags which have as elements lists or tensors are not implemented')
+                raise ValueError(
+                    "tags which have as elements lists or tensors are not implemented"
+                )
         else:
             return "scalar"
 
@@ -97,12 +104,15 @@ class SparseList(object):
             # Convert to array and store
             hdf[key] = np.array(self.list())
         elif len(self.values()) > 0:
-            print('sparse array: ', key, len(self.values()))
+            print("sparse array: ", key, len(self.values()))
             data_type = self._val_data_type()
             my_dict = OrderedDict()
             my_dict["index"] = self.keys()
-            if data_type is "list_bool":
-                my_dict["values"] = [sum([2 ** i * int(v) for i, v in enumerate(val)]) for val in self.values()]
+            if data_type == "list_bool":
+                my_dict["values"] = [
+                    sum([2 ** i * int(v) for i, v in enumerate(val)])
+                    for val in self.values()
+                ]
             else:
                 my_dict["values"] = self.values()
             print("values: ", self.values())
@@ -112,11 +122,13 @@ class SparseList(object):
         return self._length
 
     def __copy__(self):
-        return SparseList(sparse_list=self._dict, default=self._default, length=self._length)
+        return SparseList(
+            sparse_list=self._dict, default=self._default, length=self._length
+        )
 
     def keys(self):
         """
-        
+
         Returns:
             indices of non-sparse elements
         """
@@ -178,8 +190,10 @@ class SparseList(object):
                         if bo:
                             ind_list.append(i)
         else:
-            raise ValueError('Unknown item type: ' + str(type(item)))
-        sliced_dict = {j: self._dict[ind] for j, ind in enumerate(ind_list) if ind in self._dict}
+            raise ValueError("Unknown item type: " + str(type(item)))
+        sliced_dict = {
+            j: self._dict[ind] for j, ind in enumerate(ind_list) if ind in self._dict
+        }
 
         return self.__class__(sliced_dict, default=self._default, length=len(ind_list))
 
@@ -224,7 +238,7 @@ class SparseList(object):
 
     def __mul__(self, other):
         if not isinstance(other, (int, np.integer)):
-            raise ValueError('Multiplication defined only for SparseArray*integers')
+            raise ValueError("Multiplication defined only for SparseArray*integers")
         overall_list = other * np.arange(len(self)).tolist()
         new_dic = dict()
         for k in self.keys():
@@ -264,10 +278,11 @@ def sparse_index(index_list, length, default_val=True):
 
 class SparseArrayElement(object):
     """
-    Single element of a SparseArray 
+    Single element of a SparseArray
     Args:
         **qwargs:
     """
+
     def __init__(self, **qwargs):
         self._lists = dict()
         if qwargs:
@@ -276,12 +291,14 @@ class SparseArrayElement(object):
     def __getattr__(self, item):
         if item in self._lists.keys():
             return self._lists[item]
-        raise AttributeError('Object has no attribute {} {}'.format(self.__class__, item))
+        raise AttributeError(
+            "Object has no attribute {} {}".format(self.__class__, item)
+        )
 
     def __str__(self):
         out_str = ""
         for key, val in self._lists.items():
-            out_str += '{}: {}'.format(key, val)
+            out_str += "{}: {}".format(key, val)
         return out_str
 
     def __eq__(self, other):
@@ -307,6 +324,7 @@ class SparseArray(object):
     Args:
         **qwargs: dictionary containing lists and SparseLists (tags) (must have identical length)
     """
+
     def __init__(self, length=None, **qwargs):
         self._lists = dict()
         self._length = length
@@ -316,7 +334,11 @@ class SparseArray(object):
                 self._length = len(value)
             else:
                 if not len(self) == len(value):
-                    raise ValueError('Inconsistent vector lengths {} {} {}'.format(key, len(self), len(value)))
+                    raise ValueError(
+                        "Inconsistent vector lengths {} {} {}".format(
+                            key, len(self), len(value)
+                        )
+                    )
             self._lists[key] = value
 
     def __setitem__(self, key, value):
@@ -335,20 +357,18 @@ class SparseArray(object):
                 return
             else:
                 raise ValueError(
-                    'Length of array object and new list are inconsistent: {} {} {}'.format(key, len(value), len(self)))
-        raise ValueError('Unsupported argument: ' + str(type(value)))
+                    "Length of array object and new list are inconsistent: {} {} {}".format(
+                        key, len(value), len(self)
+                    )
+                )
+        raise ValueError("Unsupported argument: " + str(type(value)))
 
     def __getattr__(self, item):
         # if not (item in ["_lists"]):
         #     print "item: ", item, hasattr(self, item)
-        if sys.version_info.major > 2:
-            if '_lists' in dir(self):  # Python 3
-                if item in self._lists.keys():
-                    return self._lists[item]
-        else:
-            if hasattr(self, '_lists'):
-                if item in self._lists.keys():
-                    return self._lists[item]
+        if "_lists" in dir(self):  # Python 3
+            if item in self._lists.keys():
+                return self._lists[item]
 
         return object.__getattribute__(self, item)
         # raise AttributeError("%r object has no attribute %r" %(self.__class__, item))
@@ -357,7 +377,7 @@ class SparseArray(object):
         for k in self.keys():
             if len(self._lists[k]) == 0:
                 # ensure ASE compatibility
-                print('Empty key in SparseList: ', k, key)
+                print("Empty key in SparseList: ", k, key)
                 continue
             # print "del: ", k, key
             if isinstance(self._lists[k], np.ndarray):
@@ -393,7 +413,7 @@ class SparseArray(object):
         return out_str
 
     def __len__(self):
-        if hasattr(self, '_length'):
+        if hasattr(self, "_length"):
             return self._length
         else:
             return 0
@@ -425,7 +445,7 @@ class SparseArray(object):
                         try:
                             new_dict[key] = value[item]
                         except IndexError:
-                            print('Index error:: ', key, item, value)
+                            print("Index error:: ", key, item, value)
                     # else:
                     #     new_dict[key] = []
         # print ("new_dict: ", new_dict, self.__class__)
@@ -457,7 +477,7 @@ class SparseArray(object):
         result = cls.__new__(cls)
         result.__init__()
         for k, v in self.__dict__.items():
-            if k == '_lists':
+            if k == "_lists":
                 result.__dict__[k] = {}
                 for key, val in self._lists.items():
                     if isinstance(val, SparseList):
@@ -477,31 +497,48 @@ class SparseArray(object):
         for key, val in other.items():
             if key not in self.keys():
                 if isinstance(val, SparseList):
-                    new_array._lists[key] = SparseList({}, default=other._lists[key]._default, length=len(self))
+                    new_array._lists[key] = SparseList(
+                        {}, default=other._lists[key]._default, length=len(self)
+                    )
                 else:
-                    raise ValueError('Incompatible lists (for non-sparse lists keys must be identical (1)' + str(key))
+                    raise ValueError(
+                        "Incompatible lists (for non-sparse lists keys must be identical (1)"
+                        + str(key)
+                    )
 
         new_length = len(self) + len(other)
         for key, val in new_array.items():
             # print "key: ", key, val.__class__, isinstance(new_array, SparseList)
             if key in other.keys():
                 if isinstance(new_array._lists[key], np.ndarray):
-                    new_array._lists[key] = np.append(new_array._lists[key], other._lists[key], axis=0)
+                    new_array._lists[key] = np.append(
+                        new_array._lists[key], other._lists[key], axis=0
+                    )
                 elif isinstance(new_array._lists[key], (list, SparseList)):
                     new_array._lists[key] += other._lists[key]
                 else:
-                    raise ValueError("Type not implemented " + str(type(new_array._lists[key])))
+                    raise ValueError(
+                        "Type not implemented " + str(type(new_array._lists[key]))
+                    )
             elif isinstance(val, SparseList):
-                new_array._lists[key]._length = new_length  # TODO: default extends to all elements (may be undesired)
+                new_array._lists[
+                    key
+                ]._length = (
+                    new_length
+                )  # TODO: default extends to all elements (may be undesired)
             else:
                 print("non-matching key: ", key)
-                raise ValueError('Incompatible lists (for non-sparse lists keys must be identical (2)')
+                raise ValueError(
+                    "Incompatible lists (for non-sparse lists keys must be identical (2)"
+                )
         new_array._length += len(other)
         return new_array
 
     def __mul__(self, other):
         if not isinstance(other, int):
-            raise ValueError('Multiplication with SparseMatrix only implemented for integers')
+            raise ValueError(
+                "Multiplication with SparseMatrix only implemented for integers"
+            )
         new_array = self.__copy__()
         for key, value in self.items():
             new_array._lists[key] *= other

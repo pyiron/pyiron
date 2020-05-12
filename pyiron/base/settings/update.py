@@ -10,8 +10,10 @@ Functions to update existing pyiron installations - mainly modify the database c
 """
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -56,5 +58,5 @@ def database():
     print("database update done")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     database()

@@ -7,14 +7,11 @@ environment:
     PROJECT_NAME: pyiron
 
   matrix:
-    - PYTHON_VERSION: 2.7
-      CONDA: C:\Miniconda
-
     - PYTHON_VERSION: 3.7
       CONDA: C:\Miniconda37
 
 version: '{build}'
-image: Visual Studio 2015
+image: Visual Studio 2019
 
 # For testing only...
 #skip_non_tags: true
@@ -38,8 +35,8 @@ install:
 # Load the conda root environment, configure and install some packages
 - '"%CONDA%\Scripts\activate.bat"'
 - "conda config --set always_yes yes --set changeps1 no"
-- "conda update -q conda"
-- "conda install -c conda-forge python=%PYTHON_VERSION% dill future psutil pytables numpy lxml scipy cycler pyparsing kiwisolver matplotlib Werkzeug itsdangerous flask sqlalchemy pathlib2 pandas h5py coveralls coverage \"ase>=3.16\" spglib h5io phonopy defusedxml pysqa tqdm"
+- "conda install -q python=%PYTHON_VERSION%"
+- "conda env update --file .ci_support/environment.yml"
 - "conda info -a"
 - "pip install --pre ."
 

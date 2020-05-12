@@ -1,3 +1,7 @@
+# coding: utf-8
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
+
 import unittest
 from pyiron.base.server.runmode import Runmode
 
@@ -7,13 +11,13 @@ class TestRunmode(unittest.TestCase):
     def setUpClass(cls):
         cls.run_mode_default = Runmode()
         cls.run_mode_modal = Runmode()
-        cls.run_mode_modal.mode = 'modal'
+        cls.run_mode_modal.mode = "modal"
         cls.run_mode_non_modal = Runmode()
-        cls.run_mode_non_modal.mode = 'non_modal'
+        cls.run_mode_non_modal.mode = "non_modal"
         cls.run_mode_queue = Runmode()
-        cls.run_mode_queue.mode = 'queue'
+        cls.run_mode_queue.mode = "queue"
         cls.run_mode_manual = Runmode()
-        cls.run_mode_manual.mode = 'manual'
+        cls.run_mode_manual.mode = "manual"
 
     def test_modal(self):
         self.assertTrue(self.run_mode_default.modal)
@@ -44,22 +48,22 @@ class TestRunmode(unittest.TestCase):
         self.assertTrue(self.run_mode_manual.manual)
 
     def test_mode(self):
-        self.run_mode_default.mode = 'non_modal'
+        self.run_mode_default.mode = "non_modal"
         self.assertFalse(self.run_mode_default.modal)
         self.assertTrue(self.run_mode_default.non_modal)
         self.assertFalse(self.run_mode_default.queue)
         self.assertFalse(self.run_mode_default.manual)
-        self.run_mode_default.mode = 'queue'
+        self.run_mode_default.mode = "queue"
         self.assertFalse(self.run_mode_default.modal)
         self.assertFalse(self.run_mode_default.non_modal)
         self.assertTrue(self.run_mode_default.queue)
         self.assertFalse(self.run_mode_default.manual)
-        self.run_mode_default.mode = 'manual'
+        self.run_mode_default.mode = "manual"
         self.assertFalse(self.run_mode_default.modal)
         self.assertFalse(self.run_mode_default.non_modal)
         self.assertFalse(self.run_mode_default.queue)
         self.assertTrue(self.run_mode_default.manual)
-        self.run_mode_default.mode = 'modal'
+        self.run_mode_default.mode = "modal"
         self.assertTrue(self.run_mode_default.modal)
         self.assertFalse(self.run_mode_default.non_modal)
         self.assertFalse(self.run_mode_default.queue)
@@ -88,5 +92,5 @@ class TestRunmode(unittest.TestCase):
         self.assertFalse(self.run_mode_default.manual)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

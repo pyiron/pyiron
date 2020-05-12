@@ -1,0 +1,398 @@
+
+________________/\\\_________/\\\\\\\\\\\\\\\__/\\\\\\\\\\\\\\\_________________
+______________/\\\\/\\\\_____\/\\\///////////__\/\\\///////////_________________
+_____________/\\\//\////\\\___\/\\\_____________\/\\\___________________________
+_____________/\\\______\//\\\__\/\\\\\\\\\\\_____\/\\\\\\\\\\\__________________
+_____________\//\\\______/\\\___\/\\\///////______\/\\\///////__________________
+_______________\///\\\\/\\\\/____\/\\\_____________\/\\\________________________
+__________________\////\\\//______\/\\\_____________\/\\\_______________________
+______________________\///\\\\\\___\/\\\_____________\/\\\______________________
+_________________________\//////____\///______________\///______________________
+
+                            Welcom to QuickFF
+   a Python package to quickly derive force fields from ab initio input data
+
+                                 Written by
+     Louis Vanduyfhuys(1)*, Steven Vandenbrande(1) and Toon Verstraelen(1)
+
+         (1) Center for Molecular Modeling, Ghent University Belgium.
+                   * mailto: Louis.Vanduyfhuys@UGent.be
+
+
+ USER               vsc41947
+ MACHINE            Linux gligar05.gastly.os 3.10.0-1062.9.1.el7.ug.x86_64 #1 
+ MACHINE            SMP Wed Jan 22 12:35:53 CET 2020 x86_64
+ TIME               2020-03-10 11:24:31.742507
+ QUICKFF VERSION    2.2.1
+ PYTHON VERSION     3.7.2 (default, Apr  9 2019, 14:23:44) [GCC 8.2.0]
+ NUMPY VERSION      1.16.2
+ SCIPY VERSION      1.2.1
+ MATPLOTLIB VERSION 3.0.3
+ CURRENT DIR        /kyukon/scratch/gent/vo/000/gvo00003/vsc41947/pyiron/
+ CURRENT DIR        projects/nanoscale/week11/benzene/ei_hdf5/ei
+ COMMAND LINE       /data/gent/vo/000/gvo00003/vsc40312_apps/victini/software/
+ COMMAND LINE       QuickFF/2.2.3-intel-2019a-Python-3.7.2/bin/qff.py -c 
+ COMMAND LINE       config.txt input.chk
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ SETT   bend_term                       BendAHarm
+ SETT   bond_term                       BondHarm
+ SETT   consistent_cross_rvs            True
+ SETT   covres                          None
+ SETT   cross_svd_rcond                 1e-08
+ SETT   do_bendclin                     True
+ SETT   do_bends                        True
+ SETT   do_bonds                        True
+ SETT   do_cross_ASA                    True
+ SETT   do_cross_ASS                    True
+ SETT   do_cross_DAA                    False
+ SETT   do_cross_DAD                    False
+ SETT   do_cross_DSD                    False
+ SETT   do_cross_DSS                    False
+ SETT   do_cross_svd                    True
+ SETT   do_dihedrals                    True
+ SETT   do_hess_mass_weighting          True
+ SETT   do_hess_negfreq_proj            False
+ SETT   do_oops                         True
+ SETT   do_sqoopdist_to_oopdist         True
+ SETT   do_squarebend                   True
+ SETT   ei                              pars_mbisgauss.txt
+ SETT   ei_rcut                         None
+ SETT   excl_bends                      None
+ SETT   excl_bonds                      None
+ SETT   excl_dihs                       None
+ SETT   excl_oopds                      None
+ SETT   ffatypes                        None
+ SETT   fn_charmm22_prm                 None
+ SETT   fn_charmm22_psf                 None
+ SETT   fn_sys                          system.chk
+ SETT   fn_traj                         None
+ SETT   fn_yaff                         pars_cov.txt
+ SETT   log_file                        quickff.log
+ SETT   log_level                       high
+ SETT   only_traj                       PT_ALL
+ SETT   pert_traj_energy_noise          None
+ SETT   pert_traj_tol                   0.001
+ SETT   plot_traj                       None
+ SETT   program_mode                    DeriveFF
+ SETT   remove_dysfunctional_cross      True
+ SETT   vdw                             None
+ SETT   vdw_rcut                        37.79452267842504
+ SETT   xyz_traj                        False
+
+ INIT   Initializing system
+ INIT   Initializing Second order taylor reference for ai
+ INIT   Initializing Yaff force field reference for EI
+
+ INIT   Initializing program
+
+ VAL    Initializing valence force field
+ VAL    Added 12 bond terms
+ VAL    Added 18 bend terms (an)harmonic in the angle, 0 bend terms with 
+ VAL    1+cos(angle) potential and 0 bend terms with 1-cos(4*theta) potential.
+ VAL    Added 24 Cosine dihedral terms (of which 24 are described using 
+ VAL    Chebychev terms)
+ VAL    Added 6 Harmonic and 0 SquareHarmonic out-of-plane distance terms
+
+ SYS    Atomic configuration of the system:
+
+ SYS      index  |  x [A]  |  y [A]  |  z [A]  | ffatype |    q    |  R [A]  
+ SYS    ---------------------------------------------------------------------
+ SYS         0   |   0.000 |   1.398 |  -0.000 |       C |  -0.132 |   1.170 
+ SYS         1   |   0.000 |   0.699 |   1.211 |       C |  -0.132 |   1.170 
+ SYS         2   |  -0.000 |  -0.699 |   1.211 |       C |  -0.132 |   1.170 
+ SYS         3   |  -0.000 |  -1.398 |  -0.000 |       C |  -0.132 |   1.170 
+ SYS         4   |   0.000 |  -0.699 |  -1.211 |       C |  -0.132 |   1.170 
+ SYS         5   |   0.000 |   0.699 |  -1.211 |       C |  -0.132 |   1.170 
+ SYS         6   |   0.000 |   2.486 |   0.000 |       H |   0.131 |   0.731 
+ SYS         7   |  -0.000 |   1.243 |   2.153 |       H |   0.131 |   0.731 
+ SYS         8   |  -0.000 |  -1.243 |   2.153 |       H |   0.131 |   0.731 
+ SYS         9   |  -0.000 |  -2.486 |   0.000 |       H |   0.131 |   0.731 
+ SYS        10   |   0.000 |  -1.243 |  -2.153 |       H |   0.131 |   0.731 
+ SYS        11   |   0.000 |   1.243 |  -2.153 |       H |   0.131 |   0.731 
+
+ EQSET  Resetting system coordinates to ab initio ref
+ EQSET  Setting rest values to AI equilibrium values for tasks EQ_RV
+
+
+        BondHarm/C.C (kjmol/A^2  A)                                             
+            fc =       +-         rv =       +-     
+
+        BondHarm/C.H (kjmol/A^2  A)                                             
+            fc =       +-         rv =       +-     
+
+        BendAHarm/C.C.C (kjmol/rad^2  deg)                                      
+            fc =       +-         rv =       +-     
+
+        BendAHarm/C.C.H (kjmol/rad^2  deg)                                      
+            fc =       +-         rv =       +-     
+
+        TorsCheby2/C.C.C.C (kjmol  au)                                          
+            fc  =      +-        sgn =  -1
+
+        TorsCheby2/C.C.C.H (kjmol  au)                                          
+            fc  =      +-        sgn =  -1
+
+        TorsCheby2/H.C.C.H (kjmol  au)                                          
+            fc  =      +-        sgn =  -1
+
+        Oopdist/C.C.H.C (kjmol/A^2  A)                                          
+            fc =       +-         rv = .0000 +- .000
+
+
+ EQSET  Averaging force field parameters over master and slaves
+
+ PTGEN  Resetting system coordinates to ab initio ref
+ PTGEN  Constructing trajectories
+
+ PTEST  Resetting system coordinates to ab initio ref
+ PTEST  Estimating FF parameters from perturbation trajectories
+ PTEST  rest value of Oopdist/C.C.H.C was negative: set to zero
+ PTEST  rest value of Oopdist/C.C.H.C was negative: set to zero
+ PTEST  rest value of Oopdist/C.C.H.C was negative: set to zero
+ PTEST  rest value of Oopdist/C.C.H.C was negative: set to zero
+ PTEST  rest value of Oopdist/C.C.H.C was negative: set to zero
+ PTEST  rest value of Oopdist/C.C.H.C was negative: set to zero
+
+
+        BondHarm/C.C (kjmol/A^2  A)                                             
+            fc =  4775 +- .038    rv = 1.397 +- .000
+
+        BondHarm/C.H (kjmol/A^2  A)                                             
+            fc =  3365 +- .078    rv = 1.090 +- .000
+
+        BendAHarm/C.C.C (kjmol/rad^2  deg)                                      
+            fc =  3011 +- .036    rv = 120.0 +- .000
+
+        BendAHarm/C.C.H (kjmol/rad^2  deg)                                      
+            fc = 641.4 +- .023    rv = 120.0 +- .000
+
+        TorsCheby2/C.C.C.C (kjmol  au)                                          
+            fc  =      +-        sgn =  -1
+
+        TorsCheby2/C.C.C.H (kjmol  au)                                          
+            fc  =      +-        sgn =  -1
+
+        TorsCheby2/H.C.C.H (kjmol  au)                                          
+            fc  =      +-        sgn =  -1
+
+        Oopdist/C.C.H.C (kjmol/A^2  A)                                          
+            fc =  1519 +- .384    rv = .0000 +- .000
+
+
+ PTPOST Averaging force field parameters over master and slaves
+
+ VAL    Resetting system coordinates to ab initio ref
+ VAL    Added 18 stretch-stretch and 36 stretch-angle cross terms from angle 
+ VAL    patterns
+
+ HCEST  Resetting system coordinates to ab initio ref
+ HCEST  Estimating force constants from Hessian cost for tasks HC_FC_DIAG HC_FC_
+ HCEST  CROSS_ASS HC_FC_CROSS_ASA
+
+
+        BondHarm/C.C (kjmol/A^2  A)                                             
+            fc =  4015 +- .000    rv = 1.397 +- .000
+
+        BondHarm/C.H (kjmol/A^2  A)                                             
+            fc =  3367 +- .000    rv = 1.090 +- .000
+
+        BendAHarm/C.C.C (kjmol/rad^2  deg)                                      
+            fc = 597.8 +- .000    rv = 120.0 +- .000
+
+        BendAHarm/C.C.H (kjmol/rad^2  deg)                                      
+            fc = 327.2 +- .000    rv = 120.0 +- .000
+
+        TorsCheby2/C.C.C.C (kjmol  au)                                          
+            fc  = 34.9 +- 0.0    sgn =  -1
+
+        TorsCheby2/C.C.C.H (kjmol  au)                                          
+            fc  = 31.8 +- 0.0    sgn =  -1
+
+        TorsCheby2/H.C.C.H (kjmol  au)                                          
+            fc  = 16.7 +- 0.0    sgn =  -1
+
+        Oopdist/C.C.H.C (kjmol/A^2  A)                                          
+            fc = 162.9 +- .000    rv = .0000 +- .000
+
+        Cross/C.C.C/b0a (kjmol/A  A  deg)                                       
+            fc = 43.5 +- .0    rv0 = 1.39 +- 0.0    rv1 =  120 +- .00
+
+        Cross/C.C.C/b1a (kjmol/A  A  deg)                                       
+            fc = 43.5 +- .0    rv0 = 1.39 +- 0.0    rv1 =  120 +- .00
+
+        Cross/C.C.C/bb (kjmol/A^2  A  A)                                        
+            fc =  513 +- .0    rv0 = 1.39 +- 0.0    rv1 = 1.39 +- 0.0
+
+        Cross/C.C.H/b0a (kjmol/A  A  deg)                                       
+            fc =  113 +- .0    rv0 = 1.39 +- .00    rv1 =  120 +- .00
+
+        Cross/C.C.H/b1a (kjmol/A  A  deg)                                       
+            fc =  139 +- .0    rv0 = 1.09 +- 0.0    rv1 =  120 +- .00
+
+        Cross/C.C.H/bb (kjmol/A^2  A  A)                                        
+            fc = 43.6 +- .0    rv0 = 1.39 +- .00    rv1 = 1.09 +- 0.0
+
+
+ PTEST  Resetting system coordinates to ab initio ref
+ PTEST  Estimating FF parameters from perturbation trajectories with valence 
+ PTEST  reference
+
+
+        BondHarm/C.C (kjmol/A^2  A)                                             
+            fc =  4020 +- .036    rv = 1.397 +- .000
+
+        BondHarm/C.H (kjmol/A^2  A)                                             
+            fc =  3365 +- .078    rv = 1.090 +- .000
+
+        BendAHarm/C.C.C (kjmol/rad^2  deg)                                      
+            fc = 602.9 +- .035    rv = 119.9 +- .000
+
+        BendAHarm/C.C.H (kjmol/rad^2  deg)                                      
+            fc = 327.6 +- .023    rv = 120.1 +- .000
+
+        TorsCheby2/C.C.C.C (kjmol  au)                                          
+            fc  = 34.9 +- 0.0    sgn =  -1
+
+        TorsCheby2/C.C.C.H (kjmol  au)                                          
+            fc  = 31.8 +- 0.0    sgn =  -1
+
+        TorsCheby2/H.C.C.H (kjmol  au)                                          
+            fc  = 16.7 +- 0.0    sgn =  -1
+
+        Oopdist/C.C.H.C (kjmol/A^2  A)                                          
+            fc = 147.2 +- .319    rv = .0000 +- .000
+
+        Cross/C.C.C/b0a (kjmol/A  A  deg)                                       
+            fc = 43.5 +- .0    rv0 = 1.39 +- 0.0    rv1 =  120 +- .00
+
+        Cross/C.C.C/b1a (kjmol/A  A  deg)                                       
+            fc = 43.5 +- .0    rv0 = 1.39 +- 0.0    rv1 =  120 +- .00
+
+        Cross/C.C.C/bb (kjmol/A^2  A  A)                                        
+            fc =  513 +- .0    rv0 = 1.39 +- 0.0    rv1 = 1.39 +- 0.0
+
+        Cross/C.C.H/b0a (kjmol/A  A  deg)                                       
+            fc =  113 +- .0    rv0 = 1.39 +- .00    rv1 =  120 +- .00
+
+        Cross/C.C.H/b1a (kjmol/A  A  deg)                                       
+            fc =  139 +- .0    rv0 = 1.09 +- 0.0    rv1 =  120 +- .00
+
+        Cross/C.C.H/bb (kjmol/A^2  A  A)                                        
+            fc = 43.6 +- .0    rv0 = 1.39 +- .00    rv1 = 1.09 +- 0.0
+
+
+ PTPOST Averaging force field parameters over master and slaves
+
+ HCEST  Resetting system coordinates to ab initio ref
+ HCEST  Estimating force constants from Hessian cost for tasks HC_FC_DIAG HC_FC_
+ HCEST  CROSS_ASS HC_FC_CROSS_ASA
+
+
+        BondHarm/C.C (kjmol/A^2  A)                                             
+            fc =  4015 +- .000    rv = 1.397 +- .000
+
+        BondHarm/C.H (kjmol/A^2  A)                                             
+            fc =  3367 +- .000    rv = 1.090 +- .000
+
+        BendAHarm/C.C.C (kjmol/rad^2  deg)                                      
+            fc = 598.9 +- .000    rv = 119.9 +- .000
+
+        BendAHarm/C.C.H (kjmol/rad^2  deg)                                      
+            fc = 327.5 +- .000    rv = 120.1 +- .000
+
+        TorsCheby2/C.C.C.C (kjmol  au)                                          
+            fc  = 35.4 +- 0.0    sgn =  -1
+
+        TorsCheby2/C.C.C.H (kjmol  au)                                          
+            fc  = 31.9 +- .00    sgn =  -1
+
+        TorsCheby2/H.C.C.H (kjmol  au)                                          
+            fc  = 16.7 +- 0.0    sgn =  -1
+
+        Oopdist/C.C.H.C (kjmol/A^2  A)                                          
+            fc = 158.3 +- .000    rv = .0000 +- .000
+
+        Cross/C.C.C/b0a (kjmol/A  A  deg)                                       
+            fc = 43.4 +- .0    rv0 = 1.39 +- 0.0    rv1 =  119 +- .00
+
+        Cross/C.C.C/b1a (kjmol/A  A  deg)                                       
+            fc = 43.4 +- .0    rv0 = 1.39 +- 0.0    rv1 =  119 +- .00
+
+        Cross/C.C.C/bb (kjmol/A^2  A  A)                                        
+            fc =  513 +- .0    rv0 = 1.39 +- 0.0    rv1 = 1.39 +- 0.0
+
+        Cross/C.C.H/b0a (kjmol/A  A  deg)                                       
+            fc =  113 +- .0    rv0 = 1.39 +- 0.0    rv1 =  120 +- 0.0
+
+        Cross/C.C.H/b1a (kjmol/A  A  deg)                                       
+            fc =  139 +- .0    rv0 = 1.09 +- .00    rv1 =  120 +- 0.0
+
+        Cross/C.C.H/bb (kjmol/A^2  A  A)                                        
+            fc = 43.6 +- .0    rv0 = 1.39 +- 0.0    rv1 = 1.09 +- .00
+
+
+ HCEST  Resetting system coordinates to ab initio ref
+ HCEST  Estimating force constants from Hessian cost for tasks HC_FC_CROSS_ASS 
+ HCEST  HC_FC_CROSS_ASA HC_FC_CROSS_DSS HC_FC_CROSS_DSD HC_FC_CROSS_DAA HC_FC_
+ HCEST  CROSS_DAD
+
+
+        BondHarm/C.C (kjmol/A^2  A)                                             
+            fc =  4015 +- .000    rv = 1.397 +- .000
+
+        BondHarm/C.H (kjmol/A^2  A)                                             
+            fc =  3367 +- .000    rv = 1.090 +- .000
+
+        BendAHarm/C.C.C (kjmol/rad^2  deg)                                      
+            fc = 598.9 +- .000    rv = 119.9 +- .000
+
+        BendAHarm/C.C.H (kjmol/rad^2  deg)                                      
+            fc = 327.5 +- .000    rv = 120.1 +- .000
+
+        TorsCheby2/C.C.C.C (kjmol  au)                                          
+            fc  = 35.4 +- 0.0    sgn =  -1
+
+        TorsCheby2/C.C.C.H (kjmol  au)                                          
+            fc  = 31.9 +- .00    sgn =  -1
+
+        TorsCheby2/H.C.C.H (kjmol  au)                                          
+            fc  = 16.7 +- 0.0    sgn =  -1
+
+        Oopdist/C.C.H.C (kjmol/A^2  A)                                          
+            fc = 158.3 +- .000    rv = .0000 +- .000
+
+        Cross/C.C.C/b0a (kjmol/A  A  deg)                                       
+            fc = 43.4 +- .0    rv0 = 1.39 +- 0.0    rv1 =  119 +- .00
+
+        Cross/C.C.C/b1a (kjmol/A  A  deg)                                       
+            fc = 43.4 +- .0    rv0 = 1.39 +- 0.0    rv1 =  119 +- .00
+
+        Cross/C.C.C/bb (kjmol/A^2  A  A)                                        
+            fc =  513 +- .0    rv0 = 1.39 +- 0.0    rv1 = 1.39 +- 0.0
+
+        Cross/C.C.H/b0a (kjmol/A  A  deg)                                       
+            fc =  113 +- .0    rv0 = 1.39 +- 0.0    rv1 =  120 +- 0.0
+
+        Cross/C.C.H/b1a (kjmol/A  A  deg)                                       
+            fc =  139 +- .0    rv0 = 1.09 +- .00    rv1 =  120 +- 0.0
+
+        Cross/C.C.H/bb (kjmol/A^2  A  A)                                        
+            fc = 43.6 +- .0    rv0 = 1.39 +- 0.0    rv1 = 1.09 +- .00
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+ TIMING Initializing                    0:00:00.267873
+ TIMING Equil Set RV                    0:00:00.003699
+ TIMING PT Generate                     0:00:08.043499
+ TIMING PT Estimate                     0:00:00.315404
+ TIMING PT Post process                 0:00:00.003995
+ TIMING HC Estimate FC                  0:00:00.490931
+
+__/\\\__________________________________________________________________/\\\____
+  \ \\\                                                                 \ \\\
+   \ \\\     End of file. Thanks for using QuickFF! Come back soon!!     \ \\\
+____\///__________________________________________________________________\///__
+

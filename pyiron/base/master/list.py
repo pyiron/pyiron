@@ -10,12 +10,14 @@ from pyiron.base.master.generic import GenericMaster
 from pyiron.base.master.submissionstatus import SubmissionStatus
 
 """
-The ListMaster behaves like a list, just for job objects. 
+The ListMaster behaves like a list, just for job objects.
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -125,12 +127,13 @@ class ListMaster(GenericMaster):
 
             Monitors how many jobs have been submitted and how many have to be submitted in future.
     """
+
     def __init__(self, project, job_name):
         self._input = GenericParameters("parameters")
         super(ListMaster, self).__init__(project, job_name=job_name)
         self.__name__ = "ListMaster"
         self.__version__ = "0.1"
-        self._input['mode'] = 'parallel'
+        self._input["mode"] = "parallel"
         self.submission_status = SubmissionStatus(db=project.db, job_id=self.job_id)
         self.refresh_submission_status()
 
@@ -154,7 +157,9 @@ class ListMaster(GenericMaster):
         database.
         """
         if self.job_id:
-            self.submission_status = SubmissionStatus(db=self._hdf5.db, job_id=self.job_id)
+            self.submission_status = SubmissionStatus(
+                db=self._hdf5.db, job_id=self.job_id
+            )
             self.submission_status.refresh()
 
     def save(self):
@@ -191,18 +196,28 @@ class ListMaster(GenericMaster):
                     job._job_id = None
                     job.master_id = self._job_id
                     job.save()
-                    del child_db_entry['id']
-                    del child_db_entry['masterid']
+                    del child_db_entry["id"]
+                    del child_db_entry["masterid"]
                     self.project.db.item_update(child_db_entry, job.job_id)
                     self.submission_status.submit_next()
                     if len(self._job_name_lst) == 0:
                         self.status.finished = True
                         self.project.db.item_update(self._runtime(), self.job_id)
                 else:
-                    raise ValueError('This job ', job.job_name, ' is already connected to a master ', job.master_id,
-                                     ' and can not be appended here.')
+                    raise ValueError(
+                        "This job ",
+                        job.job_name,
+                        " is already connected to a master ",
+                        job.master_id,
+                        " and can not be appended here.",
+                    )
         else:
-            raise TypeError('job has to be either GenericJob, JobCore or int, but it - ', job, ' is ', type(job))
+            raise TypeError(
+                "job has to be either GenericJob, JobCore or int, but it - ",
+                job,
+                " is ",
+                type(job),
+            )
 
     def is_finished(self):
         """
@@ -218,7 +233,12 @@ class ListMaster(GenericMaster):
         if not self.submission_status.finished:
             return False
         else:
-            status_set = set([self._hdf5.db.get_item_by_id(child_id)['status'] for child_id in self.child_ids])
+            status_set = set(
+                [
+                    self._hdf5.db.get_item_by_id(child_id)["status"]
+                    for child_id in self.child_ids
+                ]
+            )
             # status_set = set([job.get_status() for job in self.iter_jobs(convert_to_object=False)])
             if "finished" in status_set:
                 return len(status_set) == 1
@@ -230,27 +250,32 @@ class ListMaster(GenericMaster):
         The run static function is called by run to execute the simulation. For the
         ListMaster this means executing all the childs appened in parallel.
         """
-        self._input['num_points'] = len(self)
-        self._logger.info('{} run parallel master (modal)'.format(self.job_info_str))
+        self._input["num_points"] = len(self)
+        self._logger.info("{} run parallel master (modal)".format(self.job_info_str))
         self.status.running = True
         if len(self._job_name_lst) > 0:
             job_lst = []
             for i in range(len(self._job_name_lst)):
                 ham = self.pop(i=0)
-                if ham.server.run_mode.non_modal and self.get_child_cores() + ham.server.cores > self.server.cores:
+                if (
+                    ham.server.run_mode.non_modal
+                    and self.get_child_cores() + ham.server.cores > self.server.cores
+                ):
                     break
                 self.submission_status.submit_next()
                 if not ham.status.finished:
                     ham.run()
-                self._logger.info('ListMaster: finished job {}'.format(ham.job_name))
+                self._logger.info("ListMaster: finished job {}".format(ham.job_name))
                 if ham.server.run_mode.thread:
                     job_lst.append(ham._process)
                 else:
                     self.refresh_job_status()
             _ = [process.communicate() for process in job_lst if process]
             self.status.suspended = True
-        if self.server.run_mode.modal or ((self.server.run_mode.non_modal or self.server.run_mode.queue)
-                                          and self.is_finished()):
+        if self.server.run_mode.modal or (
+            (self.server.run_mode.non_modal or self.server.run_mode.queue)
+            and self.is_finished()
+        ):
             self.status.finished = True
 
     def write_input(self):
@@ -289,11 +314,15 @@ class ListMaster(GenericMaster):
         Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
         suspended previously, the job is going to be started again, to be continued.
         """
-        self._logger.info("{}, status: {}, finished: {} parallel master "
-                          "refresh".format(self.job_info_str, self.status, self.is_finished()))
+        self._logger.info(
+            "{}, status: {}, finished: {} parallel master "
+            "refresh".format(self.job_info_str, self.status, self.is_finished())
+        )
         if self.is_finished() and not self.server.run_mode.modal:
             self.status.finished = True
-        elif (self.server.run_mode.non_modal or self.server.run_mode.queue) and not self.submission_status.finished:
+        elif (
+            self.server.run_mode.non_modal or self.server.run_mode.queue
+        ) and not self.submission_status.finished:
             self.run_static()
         else:
             self.refresh_job_status()
@@ -323,11 +352,16 @@ class ListMaster(GenericMaster):
             dict, list, float, int: data or data object
         """
         child_id_lst = self.child_ids
-        child_name_lst = [self.project.db.get_item_by_id(child_id)["job"] for child_id in self.child_ids]
+        child_name_lst = [
+            self.project.db.get_item_by_id(child_id)["job"]
+            for child_id in self.child_ids
+        ]
         if isinstance(item, int):
             total_lst = child_name_lst + self._job_name_lst
             item = total_lst[item]
-        return self._get_item_when_str(item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst)
+        return self._get_item_when_str(
+            item=item, child_id_lst=child_id_lst, child_name_lst=child_name_lst
+        )
 
     def __len__(self):
         """

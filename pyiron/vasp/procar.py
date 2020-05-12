@@ -9,8 +9,10 @@ import numpy as np
 from pyiron.dft.waves.electronic import ElectronicStructure
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -48,10 +50,13 @@ class Procar(object):
 
                     if band_trigger in line.split():
                         eigenvalue, occupancy = self._get_band_details(line)
-                        es_obj.kpoints[-1].add_band(eigenvalue=eigenvalue, occupancy=occupancy)
+                        es_obj.kpoints[-1].add_band(
+                            eigenvalue=eigenvalue, occupancy=occupancy
+                        )
                         band_obj = es_obj.kpoints[-1].bands[-1]
-                        band_obj.resolved_dos_matrix, band_obj.orbital_resolved_dos, band_obj.atom_resolved_dos = \
-                            self._get_dos_matrix(lines[i + 2: i + num_atoms + 4])
+                        band_obj.resolved_dos_matrix, band_obj.orbital_resolved_dos, band_obj.atom_resolved_dos = self._get_dos_matrix(
+                            lines[i + 2 : i + num_atoms + 4]
+                        )
         return es_obj
 
     @staticmethod
@@ -94,11 +99,13 @@ class Procar(object):
             lst = line.split()
 
             if i not in [0, len(lines) - 1]:
-                dos_matrix[count, :] = np.array([float(val) for val in lst[1: len(lst) - 1]])
+                dos_matrix[count, :] = np.array(
+                    [float(val) for val in lst[1 : len(lst) - 1]]
+                )
                 count += 1
                 atom_resolved_dos.append(float(lst[-1]))
             if i == len(lines) - 1:
-                orbital_resolved_dos = [float(val) for val in lst[1: len(lst) - 1]]
+                orbital_resolved_dos = [float(val) for val in lst[1 : len(lst) - 1]]
 
         atom_resolved_dos = np.array(atom_resolved_dos)
         orbital_resolved_dos = np.array(orbital_resolved_dos)

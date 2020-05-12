@@ -7,8 +7,10 @@ Template class to list the required properties and functions for every pyiron ob
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -49,7 +51,9 @@ class PyironObject(object):
         Returns:
             int: master id
         """
-        raise NotImplementedError("master_id should be implemented in the derived class")
+        raise NotImplementedError(
+            "master_id should be implemented in the derived class"
+        )
 
     @master_id.setter
     def master_id(self, master_id):
@@ -59,7 +63,9 @@ class PyironObject(object):
         Args:
             master_id (int): master id
         """
-        raise NotImplementedError("master_id should be implemented in the derived class")
+        raise NotImplementedError(
+            "master_id should be implemented in the derived class"
+        )
 
     @property
     def parent_id(self):
@@ -69,7 +75,9 @@ class PyironObject(object):
         Returns:
             int: parent id
         """
-        raise NotImplementedError("master_id should be implemented in the derived class")
+        raise NotImplementedError(
+            "master_id should be implemented in the derived class"
+        )
 
     @parent_id.setter
     def parent_id(self, parent_id):
@@ -79,7 +87,9 @@ class PyironObject(object):
         Args:
             parent_id (int): parent id
         """
-        raise NotImplementedError("master_id should be implemented in the derived class")
+        raise NotImplementedError(
+            "master_id should be implemented in the derived class"
+        )
 
     @property
     def child_ids(self):
@@ -89,7 +99,9 @@ class PyironObject(object):
         Returns:
             list: list of child ids
         """
-        raise NotImplementedError("child_ids should be implemented in the derived class")
+        raise NotImplementedError(
+            "child_ids should be implemented in the derived class"
+        )
 
     def save(self):
         """
@@ -179,4 +191,6 @@ class PyironObject(object):
             hdf (ProjectHDFio): HDF5 group object
             group_name (str): HDF5 subgroup name - optional
         """
-        raise NotImplementedError("from_hdf() should be implemented in the derived class")
+        raise NotImplementedError(
+            "from_hdf() should be implemented in the derived class"
+        )

@@ -5,8 +5,10 @@
 import logging
 
 __author__ = "Joerg Neugebauer"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -28,6 +30,7 @@ def set_logging_level(level, channel=None):
         channel (int): 0: file_log, 1: stream, None: both
     """
     from pyiron.base.settings.generic import Settings
+
     s = Settings()
     if channel:
         s.logger.handlers[channel].setLevel(level)
@@ -43,10 +46,12 @@ def setup_logger():
     Returns:
         logging.getLogger: Logger
     """
-    logger = logging.getLogger('pyiron_log')
+    logger = logging.getLogger("pyiron_log")
     logger.setLevel(logging.DEBUG)
 
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
 
     ch = logging.StreamHandler()
     ch.setLevel(logging.WARN)
@@ -54,7 +59,7 @@ def setup_logger():
     logger.addHandler(ch)
 
     try:
-        fh = logging.FileHandler('pyiron.log')
+        fh = logging.FileHandler("pyiron.log")
     except PermissionError:
         pass
     else:

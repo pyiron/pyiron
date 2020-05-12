@@ -7,10 +7,19 @@ steps:
 - bash: |
     conda info -a
     conda config --set always_yes yes --set changeps1 no
+    conda install -c anaconda setuptools
     conda update -q conda
   displayName: conda setup
 
-- bash: conda create -n pyiron -q --yes -c conda-forge python=$(python.version) dill future psutil pytables numpy matplotlib scipy sqlalchemy pathlib2 pandas h5py coveralls coverage "ase>=3.16" spglib h5io phonopy defusedxml pysqa tqdm
+- bash: sed 's/=/>=/g' .ci_support/environment.yml > environment.yml
+  displayName: update environment
+
+- bash: conda create -n pyiron -q --yes -c conda-forge python=$(python.version)
+  displayName: Init environment
+
+- bash: |
+    source activate pyiron
+    conda env update --file environment.yml
   displayName: pyiron environment
 
 - bash: |
