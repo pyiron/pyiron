@@ -296,9 +296,9 @@ class LammpsControl(GenericParameters):
 
         if pressure is not None:
             if None in np.array([pressure]).flatten():
-                if not np.isclose(np.linalg.det(rotation_matrix), 1):
+                if rotation_matrix is not None and not np.isclose(np.linalg.det(rotation_matrix), 1):
                     raise AssertionError('Pressure cannot contain None if upper triangle in cell is defined')
-            else:
+            elif rotation_matrix is not None:
                 pressure = self.pressure_to_lammps(pressure, rotation_matrix)
             str_press = ""
             for press, str_axis in zip(pressure, [" x ", " y ", " z ", " xy ", " xz ", " yz "]):
@@ -501,7 +501,8 @@ class LammpsControl(GenericParameters):
             if temperature is None or temperature.min() <= 0:
                 raise ValueError("Target temperature for fix nvt/npt/nph cannot be 0 or negative")
 
-            pressure = self.pressure_to_lammps(pressure, rotation_matrix)
+            if rotation_matrix is not None:
+                pressure = self.pressure_to_lammps(pressure, rotation_matrix)
 
             pressure_string = ""
             for coord, value in zip(["x", "y", "z", "xy", "xz", "yz"], pressure):
