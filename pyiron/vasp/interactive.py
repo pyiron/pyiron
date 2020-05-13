@@ -58,7 +58,8 @@ class VaspInteractive(VaspBase, GenericInteractive):
 
     def get_structure(self, iteration_step=-1, wrap_atoms=True):
         structure = GenericInteractive.get_structure(self, iteration_step=iteration_step, wrap_atoms=wrap_atoms)
-        structure.set_initial_magnetic_moments(self.get_magnetic_moments()[iteration_step])
+        if len(self.get_magnetic_moments()) > 0:
+            structure.set_initial_magnetic_moments(self.get_magnetic_moments()[iteration_step])
         return structure
 
     def interactive_close(self):
