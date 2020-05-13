@@ -1341,17 +1341,14 @@ class VaspBase(GenericDFTJob):
         else:
             return self["output/generic/dft/n_elect"]
 
-    def get_magnetic_moments(self, iteration_step=-1):
+    def get_magnetic_moments(self):
         """
-        Gives the magnetic moments of a specific iteration step.
-        Args:
-            iteration_step (int): calculations step to get the magnetic moments for.
+        Gives the magnetic moments of a calculation
 
         Returns:
             numpy.ndarray: array of final magmetic moments
-
         """
-        return self['output/generic/dft/final_magmoms'][iteration_step]
+        return self['output/generic/dft/final_magmoms']
 
     def get_electronic_structure(self):
         """

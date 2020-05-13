@@ -158,6 +158,17 @@ class GenericDFTJob(AtomisticGenericJob):
             "restart_for_band_structure_calculations is not implemented for this code."
         )
 
+    def get_magnetic_moments(self):
+        """
+        Gives the magnetic moments of a calculation
+
+        Returns:
+            numpy.ndarray: array of final magmetic moments
+        """
+        raise NotImplementedError(
+            "'get_magnetic_moments' is not implemented for this code."
+        )
+
     def _set_kpoints(
         self,
         mesh=None,
