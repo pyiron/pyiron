@@ -160,7 +160,7 @@ class GenericDFTJob(AtomisticGenericJob):
 
     def get_magnetic_moments(self):
         """
-        Gives the magnetic moments of a calculation
+        Gives the magnetic moments of a calculation for each iteration step.
 
         Returns:
             numpy.ndarray: array of final magmetic moments
