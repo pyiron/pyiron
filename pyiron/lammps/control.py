@@ -193,6 +193,61 @@ class LammpsControl(GenericParameters):
             )
         self.load_string(file_content)
 
+    def pressure_to_lammps(self, pressure, rotation_matrix):
+        """
+        Convert a singular value, list of values, or combination of values to the appropriate six elements for Lammps
+        pxx, pyy, pzz, pxy, pxz, and pyz pressure tensor representation.
+
+        Lammps handles complex cells in a particular way, namely by using an upper triangular cell. This means we may
+        need to convert our pressure tensor to a new coordinate frame. We also handle that transformation here.
+
+        Finally, we also ensure that the units are converted from pyiron's GPa to whatever Lammps needs.
+
+        Args:
+            pressure (float/list/tuple/numpy.ndarray): The pressure(s) to convert.
+            rotation_matrix (numpy.ndarray): The 3x3 matrix rotating from the pyiron to Lammps coordinate frame.
+
+        Returns:
+            (numpy.ndarray): pxx, pyy, pzz, pxy, pxz, and pyz to be passed to Lammps.
+        """
+
+        # Get something with six elements
+        if not hasattr(pressure, "__len__"):
+            pressure = np.append(pressure * np.ones(3), 3 * [None])
+        else:
+            if len(pressure) > 6:
+                raise ValueError("Pressure can have a maximum of 6 values, (x, y, z, xy, xz, and yz), but got " +
+                                 "{}".format(len(pressure)))
+            all_pressures = 6 * [None]
+            all_pressures[:len(pressure)] = pressure
+            pressure = np.array(all_pressures, dtype=float)
+
+        # Cell degrees of freedom can be kept fixed using None for the pressure, check where that's done.
+        not_none_mask = (pressure!=None)
+        if not np.any(not_none_mask):
+            raise ValueError("Pressure cannot have a length but all be None")
+
+        # If necessary, rotate the pressure tensor to the Lammps coordinate frame
+        if not np.isclose(np.matrix.trace(rotation_matrix), 3):
+            if not np.all(not_none_mask):
+                raise ValueError("Cells which are not orthorhombic or rectangular are incompatible with Lammps "
+                                 "constant pressure calculations unless the entire pressure tensor is defined."
+                                 "The reason is that Lammps demands such cells be represented with an "
+                                 "upper-triangular unit cell, thus a rotation between Lammps and pyiron coordinate"
+                                 "frames is required; it is not possible to rotate the pressure tensor if any of "
+                                 "its components is None.")
+            pxx, pyy, pzz, pxy, pxz, pyz = pressure
+            pressure_tensor = np.array(
+                [[pxx, pxy, pxz],
+                 [pxy, pyy, pyz],
+                 [pxz, pyz, pzz]]
+            )
+            lammps_pressure_tensor = rotation_matrix.T @ pressure_tensor @ rotation_matrix
+            pressure = lammps_pressure_tensor[[0, 1, 2, 0, 0, 1], [0, 1, 2, 1, 2, 2]]
+
+        pressure[not_none_mask] *= LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
+        return pressure
+
     def calc_minimize(
         self,
         e_tol=0.0,
@@ -200,7 +255,8 @@ class LammpsControl(GenericParameters):
         max_iter=100000,
         pressure=None,
         n_print=100,
-        style='cg'
+        style='cg',
+        rotation_matrix=None
     ):
         """
         Sets parameters required for minimization.
@@ -213,17 +269,15 @@ class LammpsControl(GenericParameters):
             max_iter (int): Maximum number of minimisation steps to carry out. If the minimisation converges before
                 `max_iter` steps, terminate at the converged step. If the minimisation does not converge up to
                 `max_iter` steps, terminate at the `max_iter` step. (Default is 100000.)
-            pressure (float/list/tuple/numpy.ndarray): Pressure in GPa at which minimisation is to be carried out. If
-                None, isochoric (constant volume) condition will be used. If a float, cell shape changes are allowed.
-                in each of the three primary axes, but no shearing occurs. If array-like, (up to) the first six
-                elements will be interpreted as the x, y, z, xy, xz, and yz components of the pressure tensor,
-                respectively. If this component-wise mode is used, cell changes corresponding to any one element of the
-                stress tensor can be selectively disabled by setting this element to None. (Default is None, run
-                isochorically.)
+            pressure (None/float/numpy.ndarray/list): Target pressure. If set to None, an NVE or an NVT calculation is
+                performed. A list of up to length 6 can be given to specify xx, yy, zz, xy, xz, and yz components of
+                the pressure tensor, respectively. These values can mix floats and `None` to allow only certain degrees
+                of cell freedom to change. (Default is None, run isochorically.)
             n_print (int): Write (dump or print) to the output file every n steps (Default: 100)
             style ('cg'/'sd'/other values from Lammps docs): The style of the numeric minimization, either conjugate
                 gradient, steepest descent, or other keys permissible from the Lammps docs on 'min_style'. (Default
                 is 'cg' -- conjugate gradient.)
+            rotation_matrix (numpy.ndarray): The rotation matrix from the pyiron to Lammps coordinate frame.
         """
         # This docstring is a source for the calc_minimize method in pyiron.lammps.base.LammpsBase.calc_minimize and
         # pyiron.lammps.interactive.LammpsInteractive.calc_minimize -- Please ensure that changes to signature or
@@ -241,12 +295,15 @@ class LammpsControl(GenericParameters):
         f_tol *= force_units
 
         if pressure is not None:
-            if type(pressure) == float or type(pressure) == int:
-                pressure = pressure * np.ones(3)
+            if None in np.array([pressure]).flatten():
+                if not np.isclose(np.linalg.det(rotation_matrix), 1):
+                    raise AssertionError('Pressure cannot contain None if upper triangle in cell is defined')
+            else:
+                pressure = self.pressure_to_lammps(pressure, rotation_matrix)
             str_press = ""
-            for press, str_axis in zip(pressure, [" x ", " y ", " z ", " xy ", " xz ", " yz "][:len(pressure)]):
+            for press, str_axis in zip(pressure, [" x ", " y ", " z ", " xy ", " xz ", " yz "]):
                 if press is not None:
-                    str_press += str_axis + str(press * pressure_units)
+                    str_press += str_axis + str(press*pressure_units )
             if len(str_press) == 0:
                 raise ValueError("Pressure values cannot all be None")
             elif len(str_press) > 1:
@@ -345,6 +402,7 @@ class LammpsControl(GenericParameters):
         delta_temp=None,
         delta_press=None,
         job_name="",
+        rotation_matrix=None
     ):
         """
         Set an MD calculation within LAMMPS. Nosé Hoover is used by default.
@@ -356,8 +414,9 @@ class LammpsControl(GenericParameters):
                                            temperature and the final target temperature (in between the target value
                                            is varied linearly).
             pressure (None/float/numpy.ndarray/list): Target pressure. If set to None, an NVE or an NVT calculation is
-                performed. A length-3 list or array may be given to specify x-, y- and z-components individually. In
-                this case, floats and `None` may be mixed to allow relaxation only in particular directions.
+                performed. A list of up to length 6 can be given to specify xx, yy, zz, xy, xz, and yz components of
+                the pressure tensor, respectively. These values can mix floats and `None` to allow only certain degrees
+                of cell freedom to change. (Default is None, run isochorically.)
             n_ionic_steps (int): Number of ionic steps
             time_step (float): Step size in fs between two steps.
             n_print (int):  Print frequency
@@ -380,12 +439,12 @@ class LammpsControl(GenericParameters):
             delta_temp (float): Thermostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
             delta_press (float): Barostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
             job_name (str): Job name of the job to generate a unique random seed.
+            rotation_matrix (numpy.ndarray): The rotation matrix from the pyiron to Lammps coordinate frame.
         """
         if self["units"] not in LAMMPS_UNIT_CONVERSIONS.keys():
             raise NotImplementedError
         time_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["time"]
         temperature_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["temperature"]
-        pressure_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
 
         # Transform time
         if time_step is not None:
@@ -432,25 +491,20 @@ class LammpsControl(GenericParameters):
 
         # Set thermodynamic ensemble
         if pressure is not None:  # NPT
-            if not hasattr(pressure, "__len__"):
-                pressure = pressure * np.ones(3)
-            else:
-                pressure = np.array(pressure, dtype=float)
 
-            not_none_mask = [p is not None for p in pressure]
-            if not np.any(not_none_mask):
-                raise ValueError("Pressure cannot be three times None")
+            if np.sum(np.array([pressure]).flatten()!=None)==0:
+                raise ValueError("At least one component of pressure must be other than None")
 
-            if len(pressure) > 6:
+            if hasattr(pressure, "__len__") and len(pressure) > 6:
                 raise ValueError("Pressure must be a float or a vector with length <= 6")
 
             if temperature is None or temperature.min() <= 0:
                 raise ValueError("Target temperature for fix nvt/npt/nph cannot be 0 or negative")
 
-            pressure[not_none_mask] *= pressure_units
+            pressure = self.pressure_to_lammps(pressure, rotation_matrix)
 
             pressure_string = ""
-            for coord, value in zip(["x", "y", "z", "xy", "xz", "yz"][:len(pressure)], pressure):
+            for coord, value in zip(["x", "y", "z", "xy", "xz", "yz"], pressure):
                 if value is not None:
                     pressure_string += " {0} {1} {1} {2}".format(
                         coord, str(value), str(pressure_damping_timescale)

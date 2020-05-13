@@ -537,6 +537,12 @@ class LammpsBase(AtomisticGenericJob):
             axis=-1,
         ).reshape(-1, 3, 3).astype('float64')
         pressures *= 0.0001  # bar -> GPa
+
+        # Rotate pressures from Lammps frame to pyiron frame if necessary
+        rotation_matrix = self._prism.R.T
+        if np.matrix.trace(rotation_matrix) != 3:
+            pressures = rotation_matrix.T @ pressures @ rotation_matrix
+
         df = df.drop(
             columns=df.columns[
                 ((df.columns.str.len() == 3) & df.columns.str.startswith("P"))
@@ -551,6 +557,8 @@ class LammpsBase(AtomisticGenericJob):
                 axis=-1,
             ).reshape(-1, 3, 3).astype('float64')
             pressures *= 0.0001  # bar -> GPa
+            if np.matrix.trace(rotation_matrix) != 3:
+                pressures = rotation_matrix.T @ pressures @ rotation_matrix
             df = df.drop(
                 columns=df.columns[
                     (df.columns.str.startswith("mean_pressure") & df.columns.str.endswith(']'))
@@ -588,6 +596,7 @@ class LammpsBase(AtomisticGenericJob):
             pressure=pressure,
             n_print=n_print,
             style=style,
+            rotation_matrix=self._prism.R
         )
     calc_minimize.__doc__ = LammpsControl.calc_minimize.__doc__
 
@@ -650,6 +659,7 @@ class LammpsBase(AtomisticGenericJob):
             delta_temp=delta_temp,
             delta_press=delta_press,
             job_name=self.job_name,
+            rotation_matrix=self._prism.R
         )
     calc_md.__doc__ = LammpsControl.calc_md.__doc__
 
@@ -952,12 +962,11 @@ class LammpsBase(AtomisticGenericJob):
         print("This function is outdated use the potential setter instead!")
         self.potential = file_name
 
-    def next(self, snapshot=-1, job_name=None, job_type=None):
+    def next(self, job_name=None, job_type=None):
         """
         Restart a new job created from an existing Lammps calculation.
         Args:
             project (pyiron.project.Project instance): Project instance at which the new job should be created
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Lammps job type is assumed
 
@@ -965,15 +974,14 @@ class LammpsBase(AtomisticGenericJob):
             new_ham (lammps.lammps.Lammps instance): New job
         """
         return super(LammpsBase, self).restart(
-            snapshot=snapshot, job_name=job_name, job_type=job_type
+            job_name=job_name, job_type=job_type
         )
 
-    def restart(self, snapshot=-1, job_name=None, job_type=None):
+    def restart(self, job_name=None, job_type=None):
         """
         Restart a new job created from an existing Lammps calculation.
         Args:
             project (pyiron.project.Project instance): Project instance at which the new job should be created
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Lammps job type is assumed
 
@@ -981,7 +989,7 @@ class LammpsBase(AtomisticGenericJob):
             new_ham (lammps.lammps.Lammps instance): New job
         """
         new_ham = super(LammpsBase, self).restart(
-            snapshot=snapshot, job_name=job_name, job_type=job_type
+            job_name=job_name, job_type=job_type
         )
         if new_ham.__name__ == self.__name__:
             new_ham.potential = self.potential
@@ -1014,7 +1022,7 @@ class LammpsBase(AtomisticGenericJob):
             """
             prism = UnfoldingPrism(structure.cell)
             lammps_structure = structure.copy()
-            lammps_structure.cell = prism.A
+            lammps_structure.set_cell(prism.A)
             lammps_structure.positions = np.matmul(structure.positions, prism.R)
             return lammps_structure
 

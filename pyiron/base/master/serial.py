@@ -360,9 +360,8 @@ class SerialMasterBase(GenericMaster):
         job.run()
 
     def _run_if_master_queue(self, job):
+        job.server.run_mode.modal = True
         job.run()
-        if job.python_execution_process:
-            job.python_execution_process.communicate()
         self.run_if_refresh()
 
     def _run_if_master_non_modal_child_non_modal(self, job):

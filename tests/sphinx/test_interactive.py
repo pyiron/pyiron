@@ -32,8 +32,13 @@ class TestSphinx(unittest.TestCase):
         cls.sphinx.structure.set_initial_magnetic_moments(np.ones(2))
         cls.current_dir = os.path.abspath(os.getcwd())
         cls.sphinx._create_working_directory()
+        cls.sphinx.input["VaspPot"] = False
+        cls.sphinx.load_default_groups()
         cls.sphinx.write_input()
-        cls.sphinx.version = "2.6"
+        try:
+            cls.sphinx.version = "2.6"
+        except ValueError:
+            cls.sphinx.version = "2.6.2_default"
         cls.sphinx.server.run_mode.interactive = True
 
     def setUp(self):
@@ -45,55 +50,13 @@ class TestSphinx(unittest.TestCase):
         os.remove(
             os.path.join(
                 cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/basis.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/control.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/guess.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/hamilton.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
                 "../static/sphinx/job_sphinx_hdf5/job_sphinx/input.sx",
             )
         )
         os.remove(
             os.path.join(
                 cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/potentials.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/structure.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/userparameters.sx",
-            )
-        )
-        os.remove(
-            os.path.join(
-                cls.file_location,
-                "../static/sphinx/job_sphinx_hdf5/job_sphinx/Fe_POTCAR",
+                "../static/sphinx/job_sphinx_hdf5/job_sphinx/Fe_GGA.atomicdata",
             )
         )
         os.rmdir(
@@ -132,6 +95,7 @@ class TestSphinx(unittest.TestCase):
         self.sphinx.fix_spin_constraint = True
         self.sphinx.interactive_spin_constraints_setter(np.zeros(2))
         self.assertEqual(self.sphinx._interactive_library.command, ['set spinconstraint\n', '0.0\n', '0.0\n'])
+
 
 if __name__ == "__main__":
     unittest.main()

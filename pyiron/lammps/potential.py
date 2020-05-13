@@ -3,6 +3,8 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
+from ast import literal_eval
+import numpy as np
 import pandas as pd
 import shutil
 import os
@@ -95,6 +97,87 @@ class LammpsPotential(GenericParameters):
 
     def get_element_lst(self):
         return list(self._df["Species"])[0]
+
+    def _find_line_by_prefix(self, prefix):
+        """
+        Find a line that starts with the given prefix.  Differences in white
+        space are ignored.  Raises a ValueError if not line matches the prefix.
+
+        Args:
+            prefix (str): line prefix to search for
+
+        Returns:
+            list: words of the matching line
+
+        Raises:
+            ValueError: if not matching line was found
+        """
+
+        def isprefix(prefix, lst):
+            if len(prefix) > len(lst): return False
+            return all(n == l for n, l in zip(prefix, lst))
+
+        # compare the line word by word to also match lines that differ only in
+        # whitespace
+        prefix = prefix.split()
+        for parameter, value in zip(self._dataset["Parameter"],
+                                    self._dataset["Value"]):
+            words = (parameter + " " + value).strip().split()
+            if isprefix(prefix, words):
+                return words
+
+        raise ValueError("No line with prefix \"{}\" found.".format(
+                            " ".join(prefix)))
+
+    def get_element_id(self, element_symbol):
+        """
+        Return numeric element id for element. If potential does not contain
+        the element raise a :class:NameError.  Only makes sense for potentials
+        with pair_style "full".
+
+        Args:
+            element_symbol (str): short symbol for element
+
+        Returns:
+            int: id matching the given symbol
+
+        Raise:
+            NameError: if potential does not contain this element
+        """
+
+        try:
+            line = "group {} type".format(element_symbol)
+            return int(self._find_line_by_prefix(line)[3])
+
+        except ValueError:
+            msg = "potential does not contain element {}".format(
+                    element_symbol)
+            raise NameError(msg) from None
+
+    def get_charge(self, element_symbol):
+        """
+        Return charge for element. If potential does not specify a charge,
+        raise a :class:NameError.  Only makes sense for potentials
+        with pair_style "full".
+
+        Args:
+            element_symbol (str): short symbol for element
+
+        Returns:
+            float: charge speicified for the given element
+
+        Raises:
+            NameError: if potential does not specify charge for this element
+        """
+
+        try:
+            line = "set group {} charge".format(element_symbol)
+            return float(self._find_line_by_prefix(line)[4])
+
+        except ValueError:
+            msg = "potential does not specify charge for element {}".format(
+                    element_symbol)
+            raise NameError(msg) from None
 
     def to_hdf(self, hdf, group_name=None):
         if self._df is not None:

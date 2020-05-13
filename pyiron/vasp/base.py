@@ -24,7 +24,7 @@ from pyiron.dft.waves.electronic import ElectronicStructure
 from pyiron.dft.waves.bandstructure import Bandstructure
 import warnings
 
-__author__ = "Sudarsan Surendralal"
+__author__ = "Sudarsan Surendralal, Felix Lochner"
 __copyright__ = (
     "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
@@ -59,7 +59,7 @@ class VaspBase(GenericDFTJob):
         >>> ham = VaspBase(job_name="trial_job")
         >>> ham.input.incar[IBRION] = -1
         >>> ham.input.incar[ISMEAR] = 0
-        >>> ham.input.kpoints.set(size_of_mesh=[6, 6, 6])
+        >>> ham.input.kpoints.set_kpoints_file(size_of_mesh=[6, 6, 6])
 
         However, the according to pyiron's philosophy, it is recommended to avoid using code specific tags like IBRION,
         ISMEAR etc. Therefore the recommended way to set this calculation is as follows:
@@ -468,24 +468,18 @@ class VaspBase(GenericDFTJob):
         """
         num_eddrmm, snap = self._get_eddrmm_info()
 
-        if not snap is None:
+        warning_string = "EDDRMM warnings occured {} times, first in ionic step {}."
+        status_string = "Status is switched to 'warning'."
+
+        if snap is not None:
             if self.get_eddrmm_handling() == "ignore":
-                self._logger.warning(
-                    "EDDRMM warnings are ignored. EDDRMM occures {} times, first in ionic step {}"
-                        .format(num_eddrmm, snap)
-                )
-            elif self.get_eddrmm_handling() == "not_converged":
-                self.status.not_converged = True
-                self._logger.warning(
-                    "EDDRMM warning occurred {} times first in ionic step {}. Status is switched to 'not_converged'."
-                    .format(num_eddrmm, snap)
-                )
+                self._logger.warning(warning_string.format(num_eddrmm, snap))
+            elif self.get_eddrmm_handling() == "warn":
+                self.status.warning = True
+                self._logger.warning(warning_string.format(num_eddrmm, snap) + status_string)
             elif self.get_eddrmm_handling() == "restart":
-                self.status.not_converged = True
-                self._logger.warning(
-                    "EDDRMM warning occurred {} times first in ionic step {}. Status is switched to 'not_converged'."
-                        .format(num_eddrmm, snap)
-                )
+                self.status.warning = True
+                self._logger.warning(warning_string.format(num_eddrmm, snap) + status_string)
                 if not self.input.incar["ALGO"].lower() == "normal":
                     ham_new = self.copy_hamiltonian(self.name + "_normal")
                     ham_new.input.incar["ALGO"] = "Normal"
@@ -503,7 +497,7 @@ class VaspBase(GenericDFTJob):
         Returns:
             pyiron.vasp.vasp.Vasp: New job
         """
-        ham_new = self.restart(snapshot=0, job_name=job_name)
+        ham_new = self.restart(job_name=job_name)
         ham_new.structure = self.structure
         return ham_new
 
@@ -706,7 +700,7 @@ class VaspBase(GenericDFTJob):
             try:
                 output_structure = read_atoms(
                     filename=filename,
-                    species_list=input_structure.get_parent_elements(),
+                    species_list=input_structure.get_parent_symbols(),
                 )
                 input_structure.cell = output_structure.cell.copy()
                 input_structure.positions[
@@ -777,14 +771,14 @@ class VaspBase(GenericDFTJob):
         else:
             s.logger.debug("No magnetic moments")
 
-    def set_eddrmm_handling(self, status="not_converged"):
+    def set_eddrmm_handling(self, status="warn"):
         """
         Sets the way, how EDDRMM warning is handled.
 
         Args:
-            status (str): new status of EDDRMM handling (can be 'not_converged', 'ignore', or 'restart')
+            status (str): new status of EDDRMM handling (can be 'warn', 'ignore', or 'restart')
         """
-        if status == "not_converged" or status == "ignore" or status == "restart":
+        if status == "warn" or status == "ignore" or status == "restart":
             self.input._eddrmm = status
         else:
             raise ValueError
@@ -947,6 +941,8 @@ class VaspBase(GenericDFTJob):
         )
         self.input.incar["IBRION"] = -1
         self.input.incar["NELM"] = electronic_steps
+        # Make sure vasp runs only 1 ionic step
+        self.input.incar["NSW"] = 0
         if algorithm is not None:
             if algorithm is not None:
                 self.set_algorithm(algorithm=algorithm)
@@ -1018,8 +1014,8 @@ class VaspBase(GenericDFTJob):
         weights=None,
         reciprocal=True,
         kpoints_per_angstrom=None,
-        n_trace=None,
-        trace=None,
+        n_path=None,
+        path_name=None,
     ):
         """
         Function to setup the k-points
@@ -1034,8 +1030,8 @@ class VaspBase(GenericDFTJob):
             reciprocal (bool): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
             reciprocal space)
             kpoints_per_angstrom (float): Number of kpoint per angstrom in each direction
-            n_trace (int): Number of points per trace part for line mode
-            trace (list): ordered list of high symmetry points for line mode
+            n_path (int): Number of points per trace part for line mode
+            path_name (str): Name of high symmetry path used for band structure calculations.
         """
         if kpoints_per_angstrom is not None:
             if mesh is not None:
@@ -1055,8 +1051,8 @@ class VaspBase(GenericDFTJob):
             manual_kpoints=manual_kpoints,
             weights=weights,
             reciprocal=reciprocal,
-            n_trace=n_trace,
-            trace=trace,
+            n_path=n_path,
+            path_name=path_name,
         )
 
     def _set_kpoints(
@@ -1068,8 +1064,8 @@ class VaspBase(GenericDFTJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
-        n_trace=None,
-        trace=None,
+        n_path=None,
+        path_name=None,
     ):
         """
         Function to setup the k-points for the VASP job
@@ -1084,8 +1080,8 @@ class VaspBase(GenericDFTJob):
             reciprocal (bool): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
             reciprocal space)
             kmesh_density (float): Value of the required density
-            n_trace (int): Number of points per trace part for line mode
-            trace (list): ordered list of high symmetry points for line mode
+            n_path (int): Number of points per trace part for line mode
+            path_name (str): Name of high symmetry path used for band structure calculations.
         """
         if not symmetry_reduction:
             self.input.incar["ISYM"] = -1
@@ -1095,26 +1091,34 @@ class VaspBase(GenericDFTJob):
         if scheme == "MP":
             if mesh is None:
                 mesh = [int(val) for val in self.input.kpoints[3].split()]
-            self.input.kpoints.set(size_of_mesh=mesh, shift=center_shift)
+            self.input.kpoints.set_kpoints_file(size_of_mesh=mesh, shift=center_shift)
         if scheme == "GC":
             if mesh is None:
                 mesh = [int(val) for val in self.input.kpoints[3].split()]
-            self.input.kpoints.set(size_of_mesh=mesh, shift=center_shift, method="Gamma centered")
+            self.input.kpoints.set_kpoints_file(size_of_mesh=mesh, shift=center_shift, method="Gamma centered")
         if scheme == "GP":
-            self.input.kpoints.set(size_of_mesh=[1, 1, 1], method="Gamma Point")
+            self.input.kpoints.set_kpoints_file(size_of_mesh=[1, 1, 1], method="Gamma Point")
         if scheme == "Line":
-            if n_trace is None:
-                raise ValueError("n_trace has to be defined")
+            if n_path is None and self.input.kpoints._n_path is None:
+                raise ValueError("n_path has to be defined")
             high_symmetry_points = self.structure.get_high_symmetry_points()
             if high_symmetry_points is None:
                 raise ValueError("high_symmetry_points has to be defined")
-            if trace is None:
-                raise ValueError("trace_points has to be defined")
-            self.input.kpoints._set_trace(trace)
-            self.input.kpoints.set(
+
+            if path_name is None and self.input.kpoints._path_name is None:
+                raise ValueError("path_name has to be defined")
+            if path_name not in self.structure.get_high_symmetry_path().keys():
+                raise ValueError("path_name is not a valid key of high_symmetry_path")
+
+            if path_name is not None:
+                self.input.kpoints._path_name = path_name
+            if n_path is not None:
+                self.input.kpoints._n_path = n_path
+
+            self.input.kpoints.set_kpoints_file(
                 method="Line",
-                n_trace=n_trace,
-                trace_coord=self._get_trace_for_kpoints(trace)
+                n_path=self.input.kpoints._n_path,
+                path=self._get_path_for_kpoints(self.input.kpoints._path_name)
             )
         if scheme == "Manual":
             if manual_kpoints is None:
@@ -1140,27 +1144,24 @@ class VaspBase(GenericDFTJob):
                         val=" ".join([str(kpt[0]), str(kpt[1]), str(kpt[2]), str(wt)]),
                     )
 
-    def _get_trace_for_kpoints(self, trace):
+    def _get_path_for_kpoints(self, path_name):
         """
         gets the trace for k-points line mode in a VASP readable form.
 
         Args:
-            trace (list): ordered list of names for k-points trace
+            path_name (str): Name of the path used for band structure calculation from structure instance.
 
         Returns:
-            list: trace points coordinates for VASP
+            list: list of tuples of position and path name
         """
-        for t in trace:
-            if t not in self.structure.get_high_symmetry_points().keys():
-                raise ValueError("trace point '{}' is not in high symmetry points".format(t))
+        path = self.structure.get_high_symmetry_path()[path_name]
 
-        trace_roll = np.roll(trace, -1)
         k_trace = []
-        for i, t in enumerate(trace):
-            k_trace.append(self.structure.get_high_symmetry_points()[t])
-            k_trace.append(self.structure.get_high_symmetry_points()[trace_roll[i]])
+        for t in path:
+            k_trace.append((self.structure.get_high_symmetry_points()[t[0]], t[0]))
+            k_trace.append((self.structure.get_high_symmetry_points()[t[1]], t[1]))
 
-        return k_trace[:-2]
+        return k_trace
 
     def set_for_band_structure_calc(
         self, num_points, structure=None, read_charge_density=True
@@ -1385,12 +1386,11 @@ class VaspBase(GenericDFTJob):
                 es_obj.from_hdf(ho, "electrostatic_potential")
             return es_obj
 
-    def restart(self, snapshot=-1, job_name=None, job_type=None):
+    def restart(self, job_name=None, job_type=None):
         """
         Restart a new job created from an existing Vasp calculation.
 
         Args:
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
             job_name (str): Job name
             job_type (str): Job type. If not specified a Vasp job type is assumed
 
@@ -1398,15 +1398,59 @@ class VaspBase(GenericDFTJob):
             new_ham (vasp.vasp.Vasp instance): New job
         """
         new_ham = super(VaspBase, self).restart(
-            snapshot=snapshot, job_name=job_name, job_type=job_type
+            job_name=job_name, job_type=job_type
         )
         if new_ham.__name__ == self.__name__:
             new_ham.input.potcar["xc"] = self.input.potcar["xc"]
         return new_ham
 
+    def restart_for_band_structure_calculations(self, job_name=None):
+        """
+        Restart a new job created from an existing Vasp calculation by reading the charge density
+        for band structure calculations.
+
+        Args:
+            job_name (str/None): Job name
+
+        Returns:
+            new_ham (vasp.vasp.Vasp instance): New job
+        """
+        return self.restart_from_charge_density(
+            job_name=job_name,
+            job_type=None,
+            icharg=11,
+            self_consistent_calc=None
+        )
+
+    def get_icharg_value(self, icharg=None, self_consistent_calc=None):
+        """
+        Gives the correct ICHARG value for the restart calculation.
+
+        Args:
+            icharg (int/None): If given, this value will be checked for validity and returned.
+            self_consistent_calc (bool/None): If 'True' returns 1, if 'False' returns 11,
+                if 'None' returns based on the job either 1 or 11.
+
+        Returns:
+            int: the icharg tag
+
+        """
+        if icharg is None:
+            if self_consistent_calc is True:
+                return 1
+            if self_consistent_calc is False:
+                return 11
+            if ("ICHARG" in self.input.incar.keys() and int(self.input.incar["ICHARG"]) > 9):
+                return 11
+            return 1
+        if icharg not in [0, 1, 2, 4, 10, 11, 12]:
+            raise ValueError(
+                "The value '{}' is not a proper input for 'icharg'. Look at VASP manual.".format(icharg)
+            )
+        return icharg
+
     def restart_from_charge_density(
         self,
-        snapshot=-1,
         job_name=None,
         job_type=None,
         icharg=None,
@@ -1416,16 +1460,16 @@ class VaspBase(GenericDFTJob):
         Restart a new job created from an existing Vasp calculation by reading the charge density.
 
         Args:
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
-            job_name (str): Job name
-            job_type (str): Job type. If not specified a Vasp job type is assumed
-            icharg (int): Vasp ICHARG tag
-            self_consistent_calc (boolean): Tells if the new calculation is self consistent
+            job_name (str/None): Job name
+            job_type (str/None): Job type. If not specified a Vasp job type is assumed
+            icharg (int/None): If given, this value will be checked for validity and returned.
+            self_consistent_calc (bool/None): If 'True' returns 1, if 'False' returns 11,
+                if 'None' returns based on the job either 1 or 11.
 
         Returns:
             new_ham (vasp.vasp.Vasp instance): New job
         """
-        new_ham = self.restart(snapshot=snapshot, job_name=job_name, job_type=job_type)
+        new_ham = self.restart(job_name=job_name, job_type=job_type)
         if new_ham.__name__ == self.__name__:
             try:
                 new_ham.restart_file_list.append(
@@ -1437,22 +1481,11 @@ class VaspBase(GenericDFTJob):
                         self.job_name
                     )
                 )
-            if self_consistent_calc:
-                icharg = 1
-            elif self_consistent_calc is not None:
-                icharg = 11
-            if icharg is None:
-                if (
-                    "ICHARG" in self.input.incar.keys()
-                    and int(self.input.incar["ICHARG"]) > 9
-                ):
-                    icharg = 11
-                else:
-                    icharg = 1
-            new_ham.input.incar["ICHARG"] = icharg
-            return new_ham
-        else:
-            return new_ham
+            new_ham.input.incar["ICHARG"] = self.get_icharg_value(
+                icharg=icharg,
+                self_consistent_calc=self_consistent_calc,
+            )
+        return new_ham
 
     def append_charge_density(self, job_specifier=None, path=None):
         """
@@ -1473,11 +1506,10 @@ class VaspBase(GenericDFTJob):
 
     def restart_from_wave_and_charge(
         self,
-        snapshot=-1,
         job_name=None,
         job_type=None,
         icharg=None,
-        self_consistent_calc=False,
+        self_consistent_calc=None,
         istart=1,
     ):
         """
@@ -1485,17 +1517,17 @@ class VaspBase(GenericDFTJob):
         function.
 
         Args:
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
-            job_name (str): Job name
-            job_type (str): Job type. If not specified a Vasp job type is assumed
-            icharg (int): Vasp ICHARG tag
-            self_consistent_calc (boolean): Tells if the new calculation is self consistent
+            job_name (str/None): Job name
+            job_type (str/None): Job type. If not specified a Vasp job type is assumed
+            icharg (int/None): If given, this value will be checked for validity and returned.
+            self_consistent_calc (bool/None): If 'True' returns 1, if 'False' returns 11,
+                if 'None' returns based on the job either 1 or 11.
             istart (int): Vasp ISTART tag
 
         Returns:
             new_ham (vasp.vasp.Vasp instance): New job
         """
-        new_ham = self.restart(snapshot=snapshot, job_name=job_name, job_type=job_type)
+        new_ham = self.restart(job_name=job_name, job_type=job_type)
         if new_ham.__name__ == self.__name__:
             try:
                 new_ham.restart_file_list.append(
@@ -1519,12 +1551,10 @@ class VaspBase(GenericDFTJob):
                 )
             new_ham.input.incar["ISTART"] = istart
 
-            if icharg is None:
-                new_ham.input.incar["ICHARG"] = 1
-                if not self_consistent_calc:
-                    new_ham.input.incar["ICHARG"] = 11
-            else:
-                new_ham.input.incar["ICHARG"] = icharg
+            new_ham.input.incar["ICHARG"] = self.get_icharg_value(
+                icharg=icharg,
+                self_consistent_calc=self_consistent_calc,
+            )
         return new_ham
 
     def compress(self, files_to_compress=None):
@@ -1552,22 +1582,21 @@ class VaspBase(GenericDFTJob):
         super(VaspBase, self).compress(files_to_compress=files_to_compress)
 
     def restart_from_wave_functions(
-        self, snapshot=-1, job_name=None, job_type=None, istart=1
+        self, job_name=None, job_type=None, istart=1
     ):
 
         """
         Restart a new job created from an existing Vasp calculation by reading the wave functions.
 
         Args:
-            snapshot (int): Snapshot of the calculations which would be the initial structure of the new job
-            job_name (str): Job name
-            job_type (str): Job type. If not specified a Vasp job type is assumed
+            job_name (str/None): Job name
+            job_type (str/None): Job type. If not specified a Vasp job type is assumed
             istart (int): Vasp ISTART tag
 
         Returns:
             new_ham (vasp.vasp.Vasp instance): New job
         """
-        new_ham = self.restart(snapshot=snapshot, job_name=job_name, job_type=job_type)
+        new_ham = self.restart(job_name=job_name, job_type=job_type)
         if new_ham.__name__ == self.__name__:
             try:
                 new_ham.restart_file_list.append(
@@ -1703,7 +1732,7 @@ class Input:
         self.kpoints = Kpoints(table_name="kpoints")
         self.potcar = Potcar(table_name="potcar")
 
-        self._eddrmm = "not_converged"
+        self._eddrmm = "warn"
 
     def write(self, structure, modified_elements, directory=None):
         """
@@ -1766,7 +1795,15 @@ class Input:
             if "vasp_dict" in hdf5_input.list_nodes():
                 vasp_dict = hdf5_input["vasp_dict"]
                 if "eddrmm_handling" in vasp_dict.keys():
-                    self._eddrmm = vasp_dict["eddrmm_handling"]
+                    self._eddrmm = self._eddrmm_backwards_compatibility(vasp_dict["eddrmm_handling"])
+
+    @staticmethod
+    def _eddrmm_backwards_compatibility(eddrmm_value):
+        """On 9-03-2020, the EDDRMM flag 'not_converged' was switched to 'warn'."""
+        if eddrmm_value == 'not_converged':
+            return 'warn'
+        else:
+            return eddrmm_value
 
 
 class Output:
@@ -1828,8 +1865,9 @@ class Output:
             try:
                 self.vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
             except VasprunError:
-                pass
+                s.logger.warning("Unable to parse the vasprun.xml file. Will attempt to get data from OUTCAR")
             else:
+                # If parsing the vasprun file does not throw an error, then set to True
                 vasprun_working = True
 
         if outcar_working:
@@ -1888,7 +1926,7 @@ class Output:
                     :, sorted_indices, :, :
                 ] = self.electronic_structure.resolved_densities[:, :, :, :].copy()
             self.structure.positions = log_dict["positions"][-1]
-            self.structure.cell = log_dict["cells"][-1]
+            self.structure.set_cell(log_dict["cells"][-1])
 
         elif outcar_working:
             # log_dict = self.outcar.parse_dict.copy()
@@ -1899,8 +1937,8 @@ class Output:
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
             log_dict["forces"] = self.outcar.parse_dict["forces"]
             log_dict["positions"] = self.outcar.parse_dict["positions"]
-            # log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
-            # log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
+            log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
+            log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
             if len(log_dict["positions"].shape) != 3:
                 raise VaspCollectError("Improper OUTCAR parsing")
             elif log_dict["positions"].shape[1] != len(sorted_indices):
@@ -2229,51 +2267,29 @@ class Kpoints(GenericParameters):
             val_only=True,
             comment_char="!",
         )
-        self._trace = None
+        self._path_name = None
+        self._n_path = None
 
-    def _set_trace(self, trace):
-        """
-        Sets high symmetry points names of k-points trace (line mode only)
-
-        Args:
-            trace (list): new trace
-        """
-        self._trace = trace
-
-    def _get_trace(self):
-        """
-        Returns high symmetry points name of k-points trace (Line mode only)
-
-        Returns:
-            list: trace values
-        """
-        return self._trace
-
-    def set(self, method=None, size_of_mesh=None, shift=None, n_trace=None, trace_coord=None):
+    def set_kpoints_file(self, method=None, size_of_mesh=None, shift=None, n_path=None, path=None):
         """
         Sets appropriate tags and values in the KPOINTS file
         Args:
             method (str): Type of meshing scheme (Gamma, MP, Manual or Line)
             size_of_mesh (list/numpy.ndarray): List of size 1x3 specifying the required mesh size
             shift (list): List of size 1x3 specifying the user defined shift from the Gamma point
-            n_trace (int): Number of points per trace for line mode
-            trace_coord (list): coordinates of k-points trace in VASP KPOINTS format
+            n_path (int): Number of points per trace for line mode
+            path (list): List of tuples including path coorinate and name.
         """
-        if n_trace is not None:
-            if self._trace is None or trace_coord is None:
+        if n_path is not None:
+            if path is None:
                 raise ValueError("trace have to be defined")
 
-            self.set_value(line=1, val=n_trace)
+            self.set_value(line=1, val=n_path)
             self.set_value(line=3, val="rec")
 
-            trace_names = []
-            for i in range(len(self._trace) - 1):
-                trace_names.append(self._trace[i])
-                trace_names.append(self._trace[i + 1])
-
-            for i, t in enumerate(trace_coord):
-                val = " ".join([str(ii) for ii in t])
-                val = val + " !" + trace_names[i]
+            for i, t in enumerate(path):
+                val = " ".join([str(ii) for ii in t[0]])
+                val = val + " !" + t[1]
                 self.set_value(line=i + 4, val=val)
         if method is not None:
             self.set_value(line=2, val=method)
@@ -2307,7 +2323,7 @@ Monkhorst_Pack
                     structure.get_cell(),
                     kspace_per_in_ang=self._dataset["density_of_mesh"],
                 )
-                self.set(size_of_mesh=k_mesh)
+                self.set_kpoints_file(size_of_mesh=k_mesh)
 
     def to_hdf(self, hdf, group_name=None):
         """
@@ -2321,14 +2337,11 @@ Monkhorst_Pack
             hdf=hdf,
             group_name=group_name
         )
-        if self._trace is not None:
-            if "vasp_dict" in hdf.list_nodes():
-                vasp_dict = hdf["vasp_dict"]
-                vasp_dict.update({"trace": self._trace})
-                hdf["vasp_dict"] = vasp_dict
-            else:
-                vasp_dict = {"trace": self._trace}
-                hdf["vasp_dict"] = vasp_dict
+        if self._path_name is not None:
+            line_dict = {"path_name": self._path_name,
+                         "n_path": self._n_path}
+            with hdf.open("kpoints") as hdf_kpoints:
+                hdf_kpoints["line_dict"] = line_dict
 
     def from_hdf(self, hdf, group_name=None):
         """
@@ -2342,11 +2355,12 @@ Monkhorst_Pack
             hdf=hdf,
             group_name=group_name
         )
-        self._trace = None
-        if "vasp_dict" in hdf.list_nodes():
-            vasp_dict = hdf["vasp_dict"]
-            if "trace" in vasp_dict.keys():
-                self._trace = vasp_dict["trace"]
+        self._path_name = None
+        self._n_path = None
+        with hdf.open("kpoints") as hdf_kpoints:
+            if "line_dict" in hdf_kpoints.list_nodes():
+                self._path_name = hdf_kpoints["line_dict"]["path_name"]
+                self._n_path = hdf_kpoints["line_dict"]["n_path"]
 
 
 def get_k_mesh_by_cell(cell, kspace_per_in_ang=0.10):
