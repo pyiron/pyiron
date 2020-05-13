@@ -466,13 +466,45 @@ class VaspBase(GenericDFTJob):
         """
         Collects errors from the VASP run
         """
-        num_eddrmm, snap_eddrmm = self._get_eddrmm_info()
 
+        # error messages by VASP
+        eddrmm_error_str = "WARNING in EDDRMM: call to ZHEGV failed, returncode ="
+        zbrent_error_str = "ZBRENT: fatal error in bracketing"
+
+        # warning messages for pyiron
         eddrmm_warning_string = "EDDRMM warnings occured {} times, first in ionic step {}."
         zbrent_warning_string = "'ZBRENT: fatal error in bracketing' occured. Please check VASP manual for details."
         status_string = "Status is switched to 'warning'."
 
-        if snap_eddrmm is not None:
+        # collecting errors
+        num_eddrmm = 0
+        snap_eddrmm = None
+
+        zbrent_status = False
+
+        file_name = os.path.join(self.working_directory, "error.out")
+        if os.path.exists(file_name):
+            with open(file_name, "r") as f:
+                lines = f.readlines()
+
+            # EDDRMM
+            # If the wrong convergence algorithm is chosen, we get the following error.
+            # https://cms.mpi.univie.ac.at/vasp-forum/viewtopic.php?f=4&t=17071
+            lines_where_eddrmm = np.argwhere([eddrmm_error_str in l for l in lines]).flatten()
+            num_eddrmm = len(lines_where_eddrmm)
+            if num_eddrmm > 0:
+                snap_eddrmm = len(np.argwhere(["E0=" in l for l in lines[:lines_where_eddrmm[0]]]).flatten())
+
+            # ZBRENT
+            for l in lines:
+                if zbrent_error_str in l:
+                    zbrent_status = True
+
+        # handling and logging
+        if zbrent_status is True:
+            self.status.aborted = True
+            self._logger.warning(zbrent_warning_string + status_string)
+        elif snap_eddrmm is not None:
             if self.get_eddrmm_handling() == "ignore":
                 self._logger.warning(eddrmm_warning_string.format(num_eddrmm, snap_eddrmm))
             elif self.get_eddrmm_handling() == "warn":
@@ -487,15 +519,6 @@ class VaspBase(GenericDFTJob):
                     ham_new.set_eddrmm_handling()
                     ham_new.run()
                     self._logger.info("Job was restarted with 'ALGO' = 'Normal' to avoid EDDRMM warning.")
-
-        file_name = os.path.join(self.working_directory, "error.out")
-        if os.path.exists(file_name):
-            with open(file_name, "r") as f:
-                lines = f.readlines()
-                for l in lines:
-                    if "ZBRENT: fatal error in bracketing" in l:
-                        self.status.warning = True
-                        self._logger.warning(zbrent_warning_string + status_string)
 
     def copy_hamiltonian(self, job_name):
         """
