@@ -500,6 +500,7 @@ class VaspBase(GenericDFTJob):
             for l in lines:
                 if zbrent_error_str in l:
                     zbrent_status = True
+                    break
 
         # handling and logging
         if zbrent_status is True:
