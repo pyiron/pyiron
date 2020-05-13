@@ -552,29 +552,6 @@ class VaspBase(GenericDFTJob):
                 files = os.listdir(directory)
         return files
 
-    def _get_eddrmm_info(self):
-        """
-        Counts the number of EDDRMM warnings and first ionic step of occurrence.
-
-        Returns:
-            int: number of EDDRMM warning
-            int/None: number of ionic step where it occurs
-        """
-        num_eddrmm = 0
-        snap = None
-        file_name = os.path.join(self.working_directory, "error.out")
-        if os.path.exists(file_name):
-            with open(file_name, "r") as f:
-                lines = f.readlines()
-            # If the wrong convergence algorithm is chosen, we get the following error.
-            # https://cms.mpi.univie.ac.at/vasp-forum/viewtopic.php?f=4&t=17071
-            warn_str = "WARNING in EDDRMM: call to ZHEGV failed, returncode ="
-            lines_where = np.argwhere([warn_str in l for l in lines]).flatten()
-            num_eddrmm = len(lines_where)
-            if num_eddrmm > 0:
-                snap = len(np.argwhere(["E0=" in l for l in lines[:lines_where[0]]]).flatten())
-        return num_eddrmm, snap
-
     def from_directory(self, directory):
         """
         The Vasp instance is created by parsing the input and output from the specified directory
