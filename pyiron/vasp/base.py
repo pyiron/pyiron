@@ -472,9 +472,10 @@ class VaspBase(GenericDFTJob):
         zbrent_error_str = "ZBRENT: fatal error in bracketing"
 
         # warning messages for pyiron
-        eddrmm_warning_string = "EDDRMM warnings occured {} times, first in ionic step {}."
-        zbrent_warning_string = "'ZBRENT: fatal error in bracketing' occured. Please check VASP manual for details."
-        status_string = "Status is switched to 'warning'."
+        eddrmm_warning_str = "EDDRMM warnings occured {} times, first in ionic step {}."
+        zbrent_warning_str = "'ZBRENT: fatal error in bracketing' occured. Please check VASP manual for details."
+        warning_status_str = "Status is switched to 'warning'."
+        aborted_status_str = "Status is switched to 'aborted'."
 
         # collecting errors
         num_eddrmm = 0
@@ -503,16 +504,16 @@ class VaspBase(GenericDFTJob):
         # handling and logging
         if zbrent_status is True:
             self.status.aborted = True
-            self._logger.warning(zbrent_warning_string + status_string)
+            self._logger.warning(zbrent_warning_str + aborted_status_str)
         elif snap_eddrmm is not None:
             if self.get_eddrmm_handling() == "ignore":
-                self._logger.warning(eddrmm_warning_string.format(num_eddrmm, snap_eddrmm))
+                self._logger.warning(eddrmm_warning_str.format(num_eddrmm, snap_eddrmm))
             elif self.get_eddrmm_handling() == "warn":
                 self.status.warning = True
-                self._logger.warning(eddrmm_warning_string.format(num_eddrmm, snap_eddrmm) + status_string)
+                self._logger.warning(eddrmm_warning_str.format(num_eddrmm, snap_eddrmm) + warning_status_str)
             elif self.get_eddrmm_handling() == "restart":
                 self.status.warning = True
-                self._logger.warning(eddrmm_warning_string.format(num_eddrmm, snap_eddrmm) + status_string)
+                self._logger.warning(eddrmm_warning_str.format(num_eddrmm, snap_eddrmm) + warning_status_str)
                 if not self.input.incar["ALGO"].lower() == "normal":
                     ham_new = self.copy_hamiltonian(self.name + "_normal")
                     ham_new.input.incar["ALGO"] = "Normal"
