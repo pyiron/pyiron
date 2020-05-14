@@ -1381,6 +1381,8 @@ class TestAtoms(unittest.TestCase):
 
     def test_write(self):
         struct = create_ase_bulk("Al", cubic=True)
+        self.assertIsInstance(struct, Atoms)
+        self.assertNotIsInstance(struct, ASEAtoms)
         struct.write("POSCAR_test")
         os.remove("POSCAR_test")
         struct = create_ase_bulk("Al")
