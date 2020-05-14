@@ -580,7 +580,7 @@ class LammpsBase(AtomisticGenericJob):
             n_print=100,
             style='cg'
     ):
-        rotation_matrix = self._validate_structure(pressure=pressure)
+        rotation_matrix = self._get_rotation_matrix(pressure=pressure)
         # Docstring set programmatically -- Ensure that changes to signature or defaults stay consistent!
         super(LammpsBase, self).calc_minimize(
             e_tol=e_tol,
@@ -630,7 +630,7 @@ class LammpsBase(AtomisticGenericJob):
             warnings.warn(
                 "calc_md() is not implemented for the non modal interactive mode use calc_static()!"
             )
-        rotation_matrix = self._validate_structure(pressure=pressure)
+        rotation_matrix = self._get_rotation_matrix(pressure=pressure)
         super(LammpsBase, self).calc_md(
             temperature=temperature,
             pressure=pressure,
@@ -1147,7 +1147,7 @@ class LammpsBase(AtomisticGenericJob):
                         ] = "set NULL NULL 0.0"
 
     @staticmethod
-    def _ensure_requested_cell_deformation_allowed(structure, pressure, prism=None):
+    def _modify_structure_to_allow_requested_deformation(structure, pressure, prism=None):
         """
         Lammps will not allow xy/xz/yz cell deformations in minimization or MD for non-triclinic cells. In case the
         requested pressure for a calculation has these non-diagonal entries, we need to make sure it will run. One way
@@ -1178,7 +1178,7 @@ class LammpsBase(AtomisticGenericJob):
                     )
         return structure
 
-    def _validate_structure(self, pressure):
+    def _get_rotation_matrix(self, pressure):
         """
 
         Args:
@@ -1191,7 +1191,7 @@ class LammpsBase(AtomisticGenericJob):
             if self._prism is None:
                 self._prism = UnfoldingPrism(self.structure.cell)
 
-            self.structure = self._ensure_requested_cell_deformation_allowed(
+            self.structure = self._modify_structure_to_allow_requested_deformation(
                 pressure=pressure,
                 structure=self.structure,
                 prism=self._prism
