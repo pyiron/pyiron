@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import division, print_function
+from ase.io import write as ase_write
 import ast
 from copy import copy
 from collections import OrderedDict
@@ -3126,7 +3127,7 @@ class Atoms(object):
         see ase.io.write for formats.
         kwargs are passed to ase.io.write.
         """
-        pyiron_to_ase(self).write(filename=filename, format=format, **kwargs)
+        ase_write(filename=filename, images=pyiron_to_ase(self), format=format, **kwargs)
     
     @staticmethod
     def get_calculator():
