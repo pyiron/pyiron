@@ -2,12 +2,13 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
+from ase.atoms import Atoms as ASEAtoms
 import unittest
 import numpy as np
 import os
 import warnings
 from pyiron.atomistics.structure.atom import Atom
-from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
+from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure, pyiron_to_ase, ase_to_pyiron
 from pyiron.atomistics.structure.generator import create_ase_bulk, create_surface, create_hkl_surface
 from pyiron.atomistics.structure.sparse_list import SparseList
 from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement
@@ -1369,6 +1370,14 @@ class TestAtoms(unittest.TestCase):
             warnings.simplefilter("always")
             c3.get_scaled_positions()
             self.assertEqual(len(w), 0)
+
+    def test_pyiron_ase_conversion(self):
+        ase_struct = pyiron_to_ase(self.CO2)
+        self.assertIsInstance(ase_struct, ASEAtoms)
+        self.assertNotIsInstance(ase_struct, Atoms)
+        pyiron_struct = ase_to_pyiron(ase_struct)
+        self.assertNotIsInstance(pyiron_struct, ASEAtoms)
+        self.assertIsInstance(pyiron_struct, Atoms)
 
     def test_write(self):
         struct = create_ase_bulk("Al")
