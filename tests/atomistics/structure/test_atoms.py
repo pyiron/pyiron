@@ -1380,6 +1380,9 @@ class TestAtoms(unittest.TestCase):
         self.assertIsInstance(pyiron_struct, Atoms)
 
     def test_write(self):
+        struct = create_ase_bulk("Al", cubic=True)
+        struct.write("POSCAR_test")
+        os.remove("POSCAR_test")
         struct = create_ase_bulk("Al")
         struct.write("POSCAR_test")
         os.remove("POSCAR_test")
