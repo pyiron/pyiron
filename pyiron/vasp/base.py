@@ -466,20 +466,55 @@ class VaspBase(GenericDFTJob):
         """
         Collects errors from the VASP run
         """
-        num_eddrmm, snap = self._get_eddrmm_info()
 
-        warning_string = "EDDRMM warnings occured {} times, first in ionic step {}."
-        status_string = "Status is switched to 'warning'."
+        # error messages by VASP
+        eddrmm_error_str = "WARNING in EDDRMM: call to ZHEGV failed, returncode ="
+        zbrent_error_str = "ZBRENT: fatal error in bracketing"
 
-        if snap is not None:
+        # warning messages for pyiron
+        eddrmm_warning_str = "EDDRMM warnings occured {} times, first in ionic step {}."
+        zbrent_warning_str = "'ZBRENT: fatal error in bracketing' occured. Please check VASP manual for details."
+        warning_status_str = "Status is switched to 'warning'."
+        aborted_status_str = "Status is switched to 'aborted'."
+
+        # collecting errors
+        num_eddrmm = 0
+        snap_eddrmm = None
+
+        zbrent_status = False
+
+        file_name = os.path.join(self.working_directory, "error.out")
+        if os.path.exists(file_name):
+            with open(file_name, "r") as f:
+                lines = f.readlines()
+
+            # EDDRMM
+            # If the wrong convergence algorithm is chosen, we get the following error.
+            # https://cms.mpi.univie.ac.at/vasp-forum/viewtopic.php?f=4&t=17071
+            lines_where_eddrmm = np.argwhere([eddrmm_error_str in l for l in lines]).flatten()
+            num_eddrmm = len(lines_where_eddrmm)
+            if num_eddrmm > 0:
+                snap_eddrmm = len(np.argwhere(["E0=" in l for l in lines[:lines_where_eddrmm[0]]]).flatten())
+
+            # ZBRENT
+            for l in lines:
+                if zbrent_error_str in l:
+                    zbrent_status = True
+                    break
+
+        # handling and logging
+        if zbrent_status is True:
+            self.status.aborted = True
+            self._logger.warning(zbrent_warning_str + aborted_status_str)
+        elif snap_eddrmm is not None:
             if self.get_eddrmm_handling() == "ignore":
-                self._logger.warning(warning_string.format(num_eddrmm, snap))
+                self._logger.warning(eddrmm_warning_str.format(num_eddrmm, snap_eddrmm))
             elif self.get_eddrmm_handling() == "warn":
                 self.status.warning = True
-                self._logger.warning(warning_string.format(num_eddrmm, snap) + status_string)
+                self._logger.warning(eddrmm_warning_str.format(num_eddrmm, snap_eddrmm) + warning_status_str)
             elif self.get_eddrmm_handling() == "restart":
                 self.status.warning = True
-                self._logger.warning(warning_string.format(num_eddrmm, snap) + status_string)
+                self._logger.warning(eddrmm_warning_str.format(num_eddrmm, snap_eddrmm) + warning_status_str)
                 if not self.input.incar["ALGO"].lower() == "normal":
                     ham_new = self.copy_hamiltonian(self.name + "_normal")
                     ham_new.input.incar["ALGO"] = "Normal"
@@ -518,29 +553,6 @@ class VaspBase(GenericDFTJob):
                 )
                 files = os.listdir(directory)
         return files
-
-    def _get_eddrmm_info(self):
-        """
-        Counts the number of EDDRMM warnings and first ionic step of occurrence.
-
-        Returns:
-            int: number of EDDRMM warning
-            int/None: number of ionic step where it occurs
-        """
-        num_eddrmm = 0
-        snap = None
-        file_name = os.path.join(self.working_directory, "error.out")
-        if os.path.exists(file_name):
-            with open(file_name, "r") as f:
-                lines = f.readlines()
-            # If the wrong convergence algorithm is chosen, we get the following error.
-            # https://cms.mpi.univie.ac.at/vasp-forum/viewtopic.php?f=4&t=17071
-            warn_str = "WARNING in EDDRMM: call to ZHEGV failed, returncode ="
-            lines_where = np.argwhere([warn_str in l for l in lines]).flatten()
-            num_eddrmm = len(lines_where)
-            if num_eddrmm > 0:
-                snap = len(np.argwhere(["E0=" in l for l in lines[:lines_where[0]]]).flatten())
-        return num_eddrmm, snap
 
     def from_directory(self, directory):
         """
