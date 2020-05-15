@@ -4292,7 +4292,7 @@ def ase_to_pyiron(ase_obj):
 
 def pyiron_to_ase(pyiron_obj):
     try:
-        from pyiron.atomistics.structure.pyironase import ASEAtoms
+        from ase.atoms import Atoms as ASEAtoms
     except ImportError:
         raise ValueError("ASE package not yet installed")
     element_list = pyiron_obj.get_parent_symbols()
