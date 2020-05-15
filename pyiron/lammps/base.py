@@ -580,7 +580,7 @@ class LammpsBase(AtomisticGenericJob):
             n_print=100,
             style='cg'
     ):
-        self._ensure_requested_cell_deformation_allowed(pressure)
+        rotation_matrix = self._get_rotation_matrix(pressure=pressure)
         # Docstring set programmatically -- Ensure that changes to signature or defaults stay consistent!
         super(LammpsBase, self).calc_minimize(
             e_tol=e_tol,
@@ -596,7 +596,7 @@ class LammpsBase(AtomisticGenericJob):
             pressure=pressure,
             n_print=n_print,
             style=style,
-            rotation_matrix=self._prism.R
+            rotation_matrix=rotation_matrix
         )
     calc_minimize.__doc__ = LammpsControl.calc_minimize.__doc__
 
@@ -630,7 +630,7 @@ class LammpsBase(AtomisticGenericJob):
             warnings.warn(
                 "calc_md() is not implemented for the non modal interactive mode use calc_static()!"
             )
-        self._ensure_requested_cell_deformation_allowed(pressure)
+        rotation_matrix = self._get_rotation_matrix(pressure=pressure)
         super(LammpsBase, self).calc_md(
             temperature=temperature,
             pressure=pressure,
@@ -659,7 +659,7 @@ class LammpsBase(AtomisticGenericJob):
             delta_temp=delta_temp,
             delta_press=delta_press,
             job_name=self.job_name,
-            rotation_matrix=self._prism.R
+            rotation_matrix=rotation_matrix
         )
     calc_md.__doc__ = LammpsControl.calc_md.__doc__
 
@@ -1146,7 +1146,8 @@ class LammpsBase(AtomisticGenericJob):
                             "velocity___constraintz"
                         ] = "set NULL NULL 0.0"
 
-    def _ensure_requested_cell_deformation_allowed(self, pressure):
+    @staticmethod
+    def _modify_structure_to_allow_requested_deformation(structure, pressure, prism=None):
         """
         Lammps will not allow xy/xz/yz cell deformations in minimization or MD for non-triclinic cells. In case the
         requested pressure for a calculation has these non-diagonal entries, we need to make sure it will run. One way
@@ -1160,18 +1161,48 @@ class LammpsBase(AtomisticGenericJob):
         if hasattr(pressure, '__len__'):
             non_diagonal_pressures = np.any([p is not None for p in pressure[3:]])
 
+            if prism is None:
+                prism = UnfoldingPrism(structure.cell)
+
             if non_diagonal_pressures:
                 try:
-                    if not self._prism.is_skewed():
-                        skew_structure = self.structure.copy()
-                        skew_structure.cell[0, 1] += 2 * self._prism.acc
-                        self.structure = skew_structure
+                    if not prism.is_skewed():
+                        skew_structure = structure.copy()
+                        skew_structure.cell[0, 1] += 2 * prism.acc
+                        return skew_structure
                 except AttributeError:
                     warnings.warn(
                         "WARNING: Setting a calculation type which uses pressure before setting the structure risks " +
                         "constraining your cell shape evolution if non-diagonal pressures are used but the structure " +
                         "is not triclinic from the start of the calculation."
                     )
+        return structure
+
+    def _get_rotation_matrix(self, pressure):
+        """
+
+        Args:
+            pressure:
+
+        Returns:
+
+        """
+        if self.structure is not None:
+            if self._prism is None:
+                self._prism = UnfoldingPrism(self.structure.cell)
+
+            self.structure = self._modify_structure_to_allow_requested_deformation(
+                pressure=pressure,
+                structure=self.structure,
+                prism=self._prism
+            )
+            rotation_matrix = self._prism.R
+        else:
+            warnings.warn(
+                "No structure set, can not validate the simulation cell!"
+            )
+            rotation_matrix = None
+        return rotation_matrix
 
 
 class Input:
