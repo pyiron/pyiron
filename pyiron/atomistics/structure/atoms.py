@@ -1493,6 +1493,7 @@ class Atoms(object):
         scalar_cmap=None,
         vector_field=None,
         vector_color=None,
+        magnetic_moments=False,
         custom_array=None,
         custom_3darray=None,
     ):
@@ -1528,6 +1529,7 @@ class Atoms(object):
                 vectors.)
             vector_color (numpy.ndarray): Colors for the vectors (only available with vector_field). (Default is None,
                 vectors are colored by their direction.)
+            magnetic_moments (bool): Plot magnetic moments as 'scalar_field' or 'vector_field'.
 
             Possible NGLView color schemes:
               " ", "picking", "random", "uniform", "atomindex", "residueindex",
@@ -1561,6 +1563,12 @@ class Atoms(object):
                 DeprecationWarning,
             )
             vector_field = custom_3darray
+
+        if magnetic_moments is True and hasattr(self, 'spin'):
+            if len(self.get_initial_magnetic_moments().shape) == 1:
+                scalar_field = self.get_initial_magnetic_moments()
+            else:
+                vector_field = self.get_initial_magnetic_moments()
 
         parent_basis = self.get_parent_basis()
         elements = parent_basis.get_chemical_symbols()
