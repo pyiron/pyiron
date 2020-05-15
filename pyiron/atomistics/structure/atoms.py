@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import division, print_function
+from ase.atoms import Atoms as ASEAtoms
 import ast
 from copy import copy
 from collections import OrderedDict
@@ -47,7 +48,7 @@ __date__ = "Sep 1, 2017"
 s = Settings()
 
 
-class Atoms(object):
+class AtomsOld(object):
     """
     The Atoms class represents all the information required to describe a structure at the atomic scale. This class is
     written in such a way that is compatible with the `ASE atoms class`_. Some of the functions in this module is based
@@ -3731,6 +3732,34 @@ class Atoms(object):
         atoms = self.copy()
         atoms.arrays["positions"] = atoms.positions
         write(filename, atoms, format, **kwargs)
+
+
+class Atoms(ASEAtoms):
+
+    def __init__(
+            self,
+            symbols=None,
+            positions=None,
+            numbers=None,
+            tags=None,
+            momenta=None,
+            masses=None,
+            magmoms=None,
+            charges=None,
+            scaled_positions=None,
+            cell=None,
+            pbc=None,
+            celldisp=None,
+            constraint=None,
+            calculator=None,
+            info=None,
+            **qwargs
+    ):
+        super(Atoms, self).__init__(symbols=symbols, positions=positions, numbers=numbers,
+                                    tags=tags, momenta=momenta, masses=masses, magmoms=magmoms,
+                                    charges=charges, scaled_positions=scaled_positions, cell=cell,
+                                    pbc=pbc, celldisp=celldisp, constraint=constraint, calculator=calculator,
+                                    info=info)
 
 
 class _CrystalStructure(Atoms):
