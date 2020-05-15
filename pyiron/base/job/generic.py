@@ -166,6 +166,7 @@ class GenericJob(JobCore):
         self._exclude_groups_hdf = list()
         self._process = None
         self._compress_by_default = False
+        self._python_only_job = False
         self.interactive_cache = None
 
         for sig in intercepted_signals:
@@ -1575,10 +1576,13 @@ class GenericJob(JobCore):
         self._calculate_predecessor()
 
     def _check_if_input_should_be_written(self):
-        return not (
-            self.server.run_mode.interactive
-            or self.server.run_mode.interactive_non_modal
-        )
+        if self._python_only_job:
+            return False
+        else:
+            return not (
+                self.server.run_mode.interactive
+                or self.server.run_mode.interactive_non_modal
+            )
 
     def _before_successor_calc(self, ham):
         """
