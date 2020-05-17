@@ -802,7 +802,8 @@ def always_true_pandas(job_table):
         pandas.Series: A series of True values
 
     """
-    return pandas.Series([True] * len(job_table), index=job_table.index)
+    from pandas import Series
+    return Series([True] * len(job_table), index=job_table.index)
 
 
 def always_true(_):
