@@ -121,8 +121,8 @@ class GenericDFTJob(AtomisticGenericJob):
             iteration_step=iteration_step, wrap_atoms=wrap_atoms
         )
         try:
-            if len(self.get_magnetic_moments().shape) > 0:
-                snapshot.set_initial_magnetic_moments(self.get_magnetic_moments()[iteration_step])
+            if len(self.get_magnetic_moments()) > 0:
+                snapshot.set_initial_magnetic_moments(self.get_magnetic_moments(iteration_step=iteration_step))
         except NotImplementedError:
             pass
         return snapshot
@@ -158,9 +158,12 @@ class GenericDFTJob(AtomisticGenericJob):
             "restart_for_band_structure_calculations is not implemented for this code."
         )
 
-    def get_magnetic_moments(self):
+    def get_magnetic_moments(self, iteration_step=-1):
         """
         Gives the magnetic moments of a calculation for each iteration step.
+
+        Args:
+            iteration_step (int): Step for which the structure is requested
 
         Returns:
             numpy.ndarray: array of final magmetic moments
