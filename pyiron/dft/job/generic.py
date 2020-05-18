@@ -120,11 +120,9 @@ class GenericDFTJob(AtomisticGenericJob):
         snapshot = super(GenericDFTJob, self).get_structure(
             iteration_step=iteration_step, wrap_atoms=wrap_atoms
         )
-        try:
-            if self.get_magnetic_moments() is not None:
-                snapshot.set_initial_magnetic_moments(self.get_magnetic_moments(iteration_step=iteration_step))
-        except NotImplementedError:
-            pass
+        spins = self.get_magnetic_moments(iteration_step=iteration_step)
+        if spins is not None:
+            snapshot.set_initial_magnetic_moments(spins)
         return snapshot
 
     def set_mixing_parameters(
@@ -168,9 +166,11 @@ class GenericDFTJob(AtomisticGenericJob):
         Returns:
             numpy.ndarray/None: array of final magmetic moments or None if no magnetic moment is given
         """
-        raise NotImplementedError(
-            "'get_magnetic_moments' is not implemented for this code."
-        )
+        spins = self.get("output/generic/dft/atom_spins")
+        if spins is not None:
+            return spins[iteration_step]
+        else:
+            return None
 
     def _set_kpoints(
         self,
