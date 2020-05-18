@@ -1352,7 +1352,7 @@ class VaspBase(GenericDFTJob):
             numpy.ndarray/None: array of final magmetic moments or None if no magnetic moment is given
         """
         spins = self["output/generic/dft/final_magmoms"]
-        if len(spins) > 0:
+        if spins is not None and len(spins) > 0:
             return spins[iteration_step]
         else:
             return None
