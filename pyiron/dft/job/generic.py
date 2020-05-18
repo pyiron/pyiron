@@ -121,7 +121,7 @@ class GenericDFTJob(AtomisticGenericJob):
             iteration_step=iteration_step, wrap_atoms=wrap_atoms
         )
         try:
-            if len(self.get_magnetic_moments()) > 0:
+            if self.get_magnetic_moments() is not None:
                 snapshot.set_initial_magnetic_moments(self.get_magnetic_moments(iteration_step=iteration_step))
         except NotImplementedError:
             pass
@@ -166,7 +166,7 @@ class GenericDFTJob(AtomisticGenericJob):
             iteration_step (int): Step for which the structure is requested
 
         Returns:
-            numpy.ndarray: array of final magmetic moments
+            numpy.ndarray/None: array of final magmetic moments or None if no magnetic moment is given
         """
         raise NotImplementedError(
             "'get_magnetic_moments' is not implemented for this code."

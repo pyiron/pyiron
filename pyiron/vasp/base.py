@@ -1349,9 +1349,12 @@ class VaspBase(GenericDFTJob):
             iteration_step (int): Step for which the structure is requested
 
         Returns:
-            numpy.ndarray: array of final magmetic moments
+            numpy.ndarray/None: array of final magmetic moments or None if no magnetic moment is given
         """
-        return self['output/generic/dft/final_magmoms'][iteration_step]
+        if len(self['output/generic/dft/final_magmoms']) > 0:
+            return self['output/generic/dft/final_magmoms'][iteration_step]
+        else:
+            return None
 
     def get_electronic_structure(self):
         """
