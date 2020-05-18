@@ -116,15 +116,13 @@ class GenericDFTJob(AtomisticGenericJob):
 
         Returns:
             pyiron.atomistics.structure.atoms.Atoms: The required structure
-
-
         """
         snapshot = super(GenericDFTJob, self).get_structure(
             iteration_step=iteration_step, wrap_atoms=wrap_atoms
         )
-        spins = self.get("output/generic/dft/atom_spins")
+        spins = self.get_magnetic_moments(iteration_step=iteration_step)
         if spins is not None:
-            snapshot.set_initial_magnetic_moments(spins[iteration_step])
+            snapshot.set_initial_magnetic_moments(spins)
         return snapshot
 
     def set_mixing_parameters(
@@ -157,6 +155,22 @@ class GenericDFTJob(AtomisticGenericJob):
         raise NotImplementedError(
             "restart_for_band_structure_calculations is not implemented for this code."
         )
+
+    def get_magnetic_moments(self, iteration_step=-1):
+        """
+        Gives the magnetic moments of a calculation for each iteration step.
+
+        Args:
+            iteration_step (int): Step for which the structure is requested
+
+        Returns:
+            numpy.ndarray/None: array of final magmetic moments or None if no magnetic moment is given
+        """
+        spins = self.get("output/generic/dft/atom_spins")
+        if spins is not None:
+            return spins[iteration_step]
+        else:
+            return None
 
     def _set_kpoints(
         self,

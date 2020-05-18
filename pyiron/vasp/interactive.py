@@ -56,8 +56,26 @@ class VaspInteractive(VaspBase, GenericInteractive):
             "interactive_enforce_structure_reset() is not implemented!"
         )
 
-    def get_structure(self, iteration_step=-1):
-        return GenericInteractive.get_structure(self, iteration_step=iteration_step)
+    def get_structure(self, iteration_step=-1, wrap_atoms=True):
+        """
+        Gets the structure from a given iteration step of the simulation (MD/ionic relaxation). For static calculations
+        there is only one ionic iteration step
+        Args:
+            iteration_step (int): Step for which the structure is requested
+            wrap_atoms (bool): True if the atoms are to be wrapped back into the unit cell
+
+        Returns:
+            pyiron.atomistics.structure.atoms.Atoms: The required structure
+        """
+        if (
+            self.server.run_mode.interactive
+            or self.server.run_mode.interactive_non_modal
+        ):
+            structure = GenericInteractive.get_structure(self, iteration_step=iteration_step, wrap_atoms=wrap_atoms)
+        else:
+            structure = VaspBase.get_structure(self, iteration_step=iteration_step, wrap_atoms=wrap_atoms)
+
+        return structure
 
     def interactive_close(self):
         if self.interactive_is_activated():
