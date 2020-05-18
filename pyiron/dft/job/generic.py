@@ -116,15 +116,15 @@ class GenericDFTJob(AtomisticGenericJob):
 
         Returns:
             pyiron.atomistics.structure.atoms.Atoms: The required structure
-
-
         """
         snapshot = super(GenericDFTJob, self).get_structure(
             iteration_step=iteration_step, wrap_atoms=wrap_atoms
         )
-        spins = self.get("output/generic/dft/atom_spins")
-        if spins is not None:
-            snapshot.set_initial_magnetic_moments(spins[iteration_step])
+        try:
+            if len(self.get_magnetic_moments().shape) > 0:
+                snapshot.set_initial_magnetic_moments(self.get_magnetic_moments()[iteration_step])
+        except NotImplementedError:
+            pass
         return snapshot
 
     def set_mixing_parameters(

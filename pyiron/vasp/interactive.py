@@ -57,9 +57,24 @@ class VaspInteractive(VaspBase, GenericInteractive):
         )
 
     def get_structure(self, iteration_step=-1, wrap_atoms=True):
-        structure = GenericInteractive.get_structure(self, iteration_step=iteration_step, wrap_atoms=wrap_atoms)
-        if len(self.get_magnetic_moments()) > 0:
-            structure.set_initial_magnetic_moments(self.get_magnetic_moments()[iteration_step])
+        """
+        Gets the structure from a given iteration step of the simulation (MD/ionic relaxation). For static calculations
+        there is only one ionic iteration step
+        Args:
+            iteration_step (int): Step for which the structure is requested
+            wrap_atoms (bool): True if the atoms are to be wrapped back into the unit cell
+
+        Returns:
+            pyiron.atomistics.structure.atoms.Atoms: The required structure
+        """
+        if (
+            self.server.run_mode.interactive
+            or self.server.run_mode.interactive_non_modal
+        ):
+            structure = GenericInteractive.get_structure(self, iteration_step=iteration_step, wrap_atoms=wrap_atoms)
+        else:
+            structure = VaspBase.get_structure(self, iteration_step=iteration_step, wrap_atoms=wrap_atoms)
+
         return structure
 
     def interactive_close(self):
