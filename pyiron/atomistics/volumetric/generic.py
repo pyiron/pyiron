@@ -6,7 +6,7 @@ import numpy as np
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.vasp.structure import write_poscar
 
-__author__ = "Sudarsan Surendralal"
+__author__ = "Sudarsan Surendralal, Su-Hyun Yoo"
 __copyright__ = (
     "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH "
     "- Computational Materials Design (CM) Department"
@@ -70,10 +70,190 @@ class VolumetricData(object):
             raise ValueError("Attribute total_data should be a 3D array")
         self._total_data = val
 
+    @staticmethod
+    def gauss_f(d, fwhm=0.529177):
+        """
+        Generates a Gaussian distribution for a given distance and full width half maximum value
+
+        Args:
+            d (float): distance between target point and reference point
+            fwhm (float): Full width half maximum in angstrom
+
+        Returns:
+            float: Gaussian reduction constant
+
+        """
+        sigma = fwhm / (2 * np.sqrt(2 * np.log(2)))
+        d2 = d * d
+        return np.exp(-1 / (2 * sigma ** 2) * d2)
+
+    @staticmethod
+    def dist_between_two_grid_points(target_grid_point, n_grid_at_center, lattice, grid_shape):
+        """
+        Calculates the distance between a target grid point and another grid point
+
+        Args:
+            target_grid_point (numpy.ndarray/list): Target grid point
+            n_grid_at_center (numpy.ndarray/list): coordinate of center of sphere
+            lattice (numpy.ndarray/list): lattice vector
+            grid_shape (tuple/list/numpy.ndarray): size of grid
+
+        Returns:
+
+            float: Distance between target grid and center of sphere in angstrom
+
+        """
+        unit_dist_in_grid = [np.sqrt(np.dot(lattice[0], lattice[0])) / grid_shape[0],
+                             np.sqrt(np.dot(lattice[1], lattice[1])) / grid_shape[1],
+                             np.sqrt(np.dot(lattice[2], lattice[2])) / grid_shape[2]]
+        dn = np.multiply(np.subtract(target_grid_point, n_grid_at_center), unit_dist_in_grid)
+        dist = np.linalg.norm(dn)
+        return dist
+
+    def spherical_average_potential(self, structure, spherical_center, rad=2, fwhm=0.529177):
+        """
+        Calculates the spherical average about a given point in space
+
+        Args:
+            structure (pyiron.atomistics.structure.Atoms): Input structure
+            spherical_center (list/numpy.ndarray): position of spherical_center in direct coordinate
+            rad (float): radius of sphere to be considered in Angstrom (recommended value: 2)
+            fwhm (float): Full width half maximum of gaussian function in Angstrom (recommended value: 0.529177)
+
+        Returns:
+            float: Spherical average at the target center
+
+        """
+        grid_shape = self._total_data.shape
+
+        # Position of center of sphere at grid coordinates
+        n_grid_at_center = [int(np.ceil(spherical_center[0] * grid_shape[0])),
+                            int(np.ceil(spherical_center[1] * grid_shape[1])),
+                            int(np.ceil(spherical_center[2] * grid_shape[2]))]
+
+        # Unit distance between grids
+        dist_in_grid = [np.linalg.norm(structure.cell[0]) / grid_shape[0],
+                        np.linalg.norm(structure.cell[1]) / grid_shape[1],
+                        np.linalg.norm(structure.cell[2]) / grid_shape[2]]
+
+        # Range of grids to be considered within the provided radius w.r.t. center of sphere
+        num_grid_in_sph = [[], []]
+        for i, dist in enumerate(dist_in_grid):
+            num_grid_in_sph[0].append(n_grid_at_center[i] - int(np.ceil(rad / dist)))
+            num_grid_in_sph[1].append(n_grid_at_center[i] + int(np.ceil(rad / dist)))
+
+        sph_avg_tmp = []
+        weight = 0
+        for k in range(num_grid_in_sph[0][0], num_grid_in_sph[1][0]):
+            for l in range(num_grid_in_sph[0][1], num_grid_in_sph[1][1]):
+                for m in range(num_grid_in_sph[0][2], num_grid_in_sph[1][2]):
+                    target_grid_point = [k, l, m]
+                    dist = self.dist_between_two_grid_points(target_grid_point,
+                                                             n_grid_at_center, structure.cell, grid_shape)
+                    if dist <= rad:
+                        sph_avg_tmp.append(
+                            self._total_data[k % grid_shape[0], l % grid_shape[1], m % grid_shape[2]]
+                            * self.gauss_f(dist, fwhm))
+                        weight += self.gauss_f(dist, fwhm)
+                    else:
+                        pass
+        sum_list = np.sum(sph_avg_tmp)
+        sph_avg = sum_list / weight
+        return sph_avg
+
+    @staticmethod
+    def dist_between_two_grid_points_cyl(target_grid_point, n_grid_at_center, lattice, grid_shape, direction_of_cyl):
+        """
+        Distance between a target grid point and the center of a cylinder
+
+        Args:
+            target_grid_point (numpy.ndarray/list): Target grid point
+            n_grid_at_center (numpy.ndarray/list): coordinate of center of sphere
+            lattice (numpy.ndarray/list): lattice vector
+            grid_shape (tuple/list/numpy.ndarray): size of grid
+            direction_of_cyl (int): Axis of cylinder (0 (x) or 1 (y) or 2 (z))
+
+        Returns:
+            float: Distance between target grid and in-plane center of cylinder
+
+        """
+        unit_dist_in_grid = [np.sqrt(np.dot(lattice[0], lattice[0])) / grid_shape[0],
+                             np.sqrt(np.dot(lattice[1], lattice[1])) / grid_shape[1],
+                             np.sqrt(np.dot(lattice[2], lattice[2])) / grid_shape[2]]
+        dn = np.multiply(np.subtract(target_grid_point, n_grid_at_center), unit_dist_in_grid)
+        if direction_of_cyl == 0:
+            dn[0] = 0
+        elif direction_of_cyl == 1:
+            dn[1] = 0
+        elif direction_of_cyl == 2:
+            dn[2] = 0
+        else:
+            print("check the direction of cylindrical axis")
+        dist = np.linalg.norm(dn)
+        return dist
+
+    def cylindrical_average_potential(self, structure, spherical_center, axis_of_cyl, rad=2, fwhm=0.529177):
+        """
+        Calculates the cylindrical average about a given point in space
+
+        Args:
+            structure (pyiron.atomistics.structure.Atoms): Input structure
+            spherical_center (list/numpy.ndarray): position of spherical_center in direct coordinate
+            rad (float): radius of sphere to be considered in Angstrom (recommended value: 2)
+            fwhm (float): Full width half maximum of gaussian function in Angstrom (recommended value: 0.529177)
+            axis_of_cyl (int): Axis of cylinder (0 (x) or 1 (y) or 2 (z))
+
+        Returns:
+            float: Cylindrical average at the target center
+
+        """
+        grid_shape = self._total_data.shape
+
+        # Position of center of sphere at grid coordinates
+        n_grid_at_center = [int(np.ceil(spherical_center[0] * grid_shape[0])),
+                            int(np.ceil(spherical_center[1] * grid_shape[1])),
+                            int(np.ceil(spherical_center[2] * grid_shape[2]))]
+
+        # Unit distance between grids
+        dist_in_grid = [np.linalg.norm(structure.cell[0]) / grid_shape[0],
+                        np.linalg.norm(structure.cell[1]) / grid_shape[1],
+                        np.linalg.norm(structure.cell[2]) / grid_shape[2]]
+
+        # Range of grids to be considered within the provided radius w.r.t. center of sphere
+        num_grid_in_cyl = [[], []]
+
+        for i, dist in enumerate(dist_in_grid):
+            if i == axis_of_cyl:
+                num_grid_in_cyl[0].append(0)
+                num_grid_in_cyl[1].append(grid_shape[i])
+            else:
+                num_grid_in_cyl[0].append(n_grid_at_center[i] - int(np.ceil(rad / dist)))
+                num_grid_in_cyl[1].append(n_grid_at_center[i] + int(np.ceil(rad / dist)))
+
+        cyl_avg_tmp = []
+        weight = 0
+        for k in range(num_grid_in_cyl[0][0], num_grid_in_cyl[1][0]):
+            for l in range(num_grid_in_cyl[0][1], num_grid_in_cyl[1][1]):
+                for m in range(num_grid_in_cyl[0][2], num_grid_in_cyl[1][2]):
+                    target_grid_point = [k, l, m]
+                    dist = self.dist_between_two_grid_points_cyl(target_grid_point, n_grid_at_center, structure.cell,
+                                                                 grid_shape, axis_of_cyl)
+                    if dist <= rad:
+                        cyl_avg_tmp.append(
+                            self._total_data[k % grid_shape[0], l % grid_shape[1], m % grid_shape[2]]
+                            * self.gauss_f(dist, fwhm))
+                        weight += self.gauss_f(dist, fwhm)
+                    else:
+                        pass
+        sum_list = np.sum(cyl_avg_tmp)
+        cyl_avg = sum_list / weight
+
+        return cyl_avg
+
     def get_average_along_axis(self, ind=2):
         """
         Get the lateral average along a certain axis direction. This function is adapted from the pymatgen vasp
-        VolumtricData class
+        VolumetricData class
 
         http://pymatgen.org/_modules/pymatgen/io/vasp/outputs.html#VolumetricData.get_average_along_axis
 
@@ -173,14 +353,14 @@ class VolumetricData(object):
             grid_shape = np.array(cell_data[:, 0], dtype=int)
             # total_data = np.zeros(grid_shape)
             cell = np.array([val * grid_shape[i] for i, val in enumerate(cell_grid)])
-            pos_data = np.genfromtxt(lines[6 : n_atoms + 6])
+            pos_data = np.genfromtxt(lines[6: n_atoms + 6])
             if n_atoms == 1:
                 pos_data = np.array([pos_data])
             atomic_numbers = np.array(pos_data[:, 0], dtype=int)
             positions = pos_data[:, 2:]
             self._atoms = Atoms(numbers=atomic_numbers, positions=positions, cell=cell)
             end_int = n_atoms + 6 + int(np.prod(grid_shape) / 6)
-            data = np.genfromtxt(lines[n_atoms + 6 : end_int])
+            data = np.genfromtxt(lines[n_atoms+6: end_int])
             data_flatten = np.hstack(data)
             if np.prod(grid_shape) % 6 > 0:
                 data_flatten = np.append(

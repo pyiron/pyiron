@@ -5,7 +5,7 @@
 import unittest
 import os
 from pyiron.project import Project
-from pyiron.table.funct import _get_majority
+from pyiron.table.funct import get_majority
 
 
 class TestDatamining(unittest.TestCase):
@@ -23,9 +23,9 @@ class TestDatamining(unittest.TestCase):
 
     def test_get_majority(self):
         lst = [1, 1, 2]
-        majority = _get_majority(lst=lst, minority=False)
+        majority = get_majority(lst=lst, minority=False)
         self.assertTrue(majority == 1)
-        majority, minority = _get_majority(lst=lst, minority=True)
+        majority, minority = get_majority(lst=lst, minority=True)
         self.assertTrue(majority == 1)
         self.assertTrue(minority == [2])
 
@@ -33,8 +33,8 @@ class TestDatamining(unittest.TestCase):
         def filter_job_type(job):
             return job.__name__ == "Vasp"
 
-        def get_alat(job):
-            return 2 * job["input/structure/cell/cell"][0, 1]
+        def filter_job_type_db(job_table):
+            return job_table.hamilton == "Vasp"
 
         self.project.import_from_path(
             path=os.path.join(
@@ -44,30 +44,17 @@ class TestDatamining(unittest.TestCase):
         )
         table = self.project.create_table()
         table.filter_function = filter_job_type
-        _ = table.add.get_sigma
-        _ = table.add.get_total_number_of_atoms
-        _ = table.add.get_elements
-        _ = table.add.get_convergence_check
-        _ = table.add.get_number_of_species
-        _ = table.add.get_number_of_ionic_steps
-        _ = table.add.get_ismear
-        _ = table.add.get_encut
-        _ = table.add.get_n_kpts
-        _ = table.add.get_number_of_final_electronic_steps
-        _ = table.add.get_majority_species
-        _ = table.add.get_job_name
-        _ = table.add.get_job_id
-        _ = table.add.get_energy_tot
-        _ = table.add.get_energy_free
-        _ = table.add.get_energy_int
-        _ = table.add.get_equilibrium_parameters
-        _ = table.add.get_magnetic_structure
-        _ = table.add.get_average_waves
-        _ = table.add.get_ekin_error
-        _ = table.add.get_volume
-        table.add["alat"] = get_alat
+        add_funtions(table)
         table.run()
         df = table.get_dataframe()
+
+        table_new = self.project.create_table("table_new")
+        # only use database filtering not job based filtering
+        table_new.db_filter_function = filter_job_type_db
+        add_funtions(table_new)
+        table_new.run()
+        df_new = table_new.get_dataframe()
+        self.assertTrue(df.equals(df_new))
         self.assertEqual(df["Number_of_atoms"].values[0], 2)
         self.assertEqual(df["Fe"].values[0], 2)
         self.assertTrue(df["Convergence"].values[0])
@@ -86,6 +73,39 @@ class TestDatamining(unittest.TestCase):
         self.assertEqual(df["avg. plane waves"].values[0], 196.375)
         self.assertEqual(df["energy_tot_wo_kin_corr"].values[0], -17.6003698)
         self.assertEqual(df["volume"].values[0], 21.95199999999999)
+        # print(self.project.job_table())
+        table_loaded = self.project["table_new"]
+        df_loaded = table_loaded.get_dataframe()
+        self.assertTrue(df.equals(df_loaded))
+
+
+def get_alat(job):
+    return 2 * job["input/structure/cell/cell"][0, 1]
+
+
+def add_funtions(table):
+    _ = table.add.get_sigma
+    _ = table.add.get_total_number_of_atoms
+    _ = table.add.get_elements
+    _ = table.add.get_convergence_check
+    _ = table.add.get_number_of_species
+    _ = table.add.get_number_of_ionic_steps
+    _ = table.add.get_ismear
+    _ = table.add.get_encut
+    _ = table.add.get_n_kpts
+    _ = table.add.get_number_of_final_electronic_steps
+    _ = table.add.get_majority_species
+    _ = table.add.get_job_name
+    _ = table.add.get_job_id
+    _ = table.add.get_energy_tot
+    _ = table.add.get_energy_free
+    _ = table.add.get_energy_int
+    _ = table.add.get_equilibrium_parameters
+    _ = table.add.get_magnetic_structure
+    _ = table.add.get_average_waves
+    _ = table.add.get_ekin_error
+    _ = table.add.get_volume
+    table.add["alat"] = get_alat
 
 
 if __name__ == "__main__":

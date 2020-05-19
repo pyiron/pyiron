@@ -27,37 +27,39 @@ __date__ = "Sep 1, 2017"
 
 JOB_CLASS_DICT = {
     "Atoms": "pyiron.atomistics.structure.atoms",
-    "ScriptJob": "pyiron.base.job.script",
-    "SerialMasterBase": "pyiron.base.master.serial",
-    "FlexibleMaster": "pyiron.base.master.flexible",
-    "SerialMaster": "pyiron.atomistics.master.serial",
-    "Murnaghan": "pyiron.atomistics.master.murnaghan",
-    "MapMaster": "pyiron.atomistics.master.parallel",
-    "PhonopyJob": "pyiron.atomistics.master.phonopy",
-    "ConvergenceVolume": "pyiron.atomistics.master.convergence_volume",
-    "StructureListMaster": "pyiron.atomistics.master.structure",
-    "StructureContainer": "pyiron.atomistics.job.structurecontainer",
+    "AtomisticExampleJob": "pyiron.testing.randomatomistic",
     "ConvEncutParallel": "pyiron.dft.master.convergence_encut_parallel",
     "ConvEncutSerial": "pyiron.dft.master.convergence_encut_serial",
+    "ConvergenceVolume": "pyiron.atomistics.master.convergence_volume",
     "ConvKpointParallel": "pyiron.dft.master.convergence_kpoint_parallel",
-    "MurnaghanDFT": "pyiron.dft.master.murnaghan_dft",
-    "Lammps": "pyiron.lammps.lammps",
-    "AtomisticExampleJob": "pyiron.testing.randomatomistic",
     "ExampleJob": "pyiron.testing.randomatomistic",
+    "FlexibleMaster": "pyiron.base.master.flexible",
+    "Gaussian": "pyiron.gaussian.gaussian",
     "GpawJob": "pyiron.gpaw.gpaw",
+    "HessianJob": "pyiron.thermodynamics.hessian",
+    "Lammps": "pyiron.lammps.lammps",
+    "MapMaster": "pyiron.atomistics.master.parallel",
+    "Murnaghan": "pyiron.atomistics.master.murnaghan",
+    "MurnaghanDFT": "pyiron.dft.master.murnaghan_dft",
+    "PhonopyJob": "pyiron.atomistics.master.phonopy",
+    "QuickFF": "pyiron.quickff.quickff",
+    "ScipyMinimizer": "pyiron.interactive.scipy_minimizer",
+    "ScriptJob": "pyiron.base.job.script",
+    "SerialMaster": "pyiron.atomistics.master.serial",
+    "SerialMasterBase": "pyiron.base.master.serial",
+    "Sphinx": "pyiron.sphinx.sphinx",
+    "StructureContainer": "pyiron.atomistics.job.structurecontainer",
+    "StructureListMaster": "pyiron.atomistics.master.structure",
+    "SxDynMat": "pyiron.thermodynamics.sxphonons",
+    "SxExtOptInteractive": "pyiron.interactive.sxextoptint",
+    "SxHarmPotTst": "pyiron.thermodynamics.sxphonons",
+    "SxPhonons": "pyiron.thermodynamics.sxphonons",
+    "SxUniqDispl": "pyiron.thermodynamics.sxphonons",
+    "TableJob": "pyiron.table.datamining",
     "Vasp": "pyiron.vasp.vasp",
     "VaspMetadyn": "pyiron.vasp.metadyn",
-    "TableJob": "pyiron.table.datamining",
-    "ScipyMinimizer": "pyiron.interactive.scipy_minimizer",
-    "SxExtOptInteractive": "pyiron.interactive.sxextoptint",
-    "Sphinx": "pyiron.sphinx.sphinx",
-    "SxUniqDispl": "pyiron.thermodynamics.sxphonons",
-    "SxDynMat": "pyiron.thermodynamics.sxphonons",
-    "SxPhonons": "pyiron.thermodynamics.sxphonons",
-    "SxHarmPotTst": "pyiron.thermodynamics.sxphonons",
-    "Gaussian": "pyiron.gaussian.gaussian",
+    "VaspSol": "pyiron.vasp.vaspsol",
     "Yaff": "pyiron.yaff.yaff",
-    "QuickFF": "pyiron.quickff.quickff",
 }
 
 
@@ -85,7 +87,7 @@ class JobTypeChoice(with_metaclass(Singleton)):
 
     def __init__(self):
         self._job_class_dict = None
-        self.job_class_dict = self._extend_job_dict(JOB_CLASS_DICT)
+        self.job_class_dict = JOB_CLASS_DICT
 
     @property
     def job_class_dict(self):
@@ -96,21 +98,6 @@ class JobTypeChoice(with_metaclass(Singleton)):
         self._job_class_dict = job_class_dict
         for item in list(self._job_class_dict.keys()):
             self.__setattr__(item, item)
-
-    @staticmethod
-    def _extend_job_dict(job_dict):
-        for d in [
-            {
-                name: obj.__module__
-                for name, obj in inspect.getmembers(importlib.import_module(name))
-                if inspect.isclass(obj)
-                and static_isinstance(obj, "pyiron.base.job.generic.GenericJob")
-            }
-            for finder, name, ispkg in pkgutil.iter_modules()
-            if name.startswith("pyiron_")
-        ]:
-            job_dict.update(d)
-        return job_dict
 
     def __dir__(self):
         """

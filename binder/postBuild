@@ -1,3 +1,6 @@
+# pip install master
+pip install .
+
 # ngl view for jupyter
 jupyter nbextension install nglview --py --sys-prefix
 jupyter nbextension enable nglview --py --sys-prefix
@@ -23,14 +26,8 @@ if [ -d "notebooks" ]; then
     mv notebooks/* .
 fi
 if [ -d "${HOME}/pyiron" ]; then
-    rm -r ${HOME}/binder ${HOME}/.ci_support ${HOME}/conda ${HOME}/docs ${HOME}/pyiron ${HOME}/tests ${HOME}/notebooks
+    rm -r ${HOME}/binder ${HOME}/.ci_support ${HOME}/docs ${HOME}/pyiron ${HOME}/tests ${HOME}/notebooks
     rm ${HOME}/.travis.yml ${HOME}/azure-pipelines.yml ${HOME}/appveyor.yml ${HOME}/LICENSE ${HOME}/MANIFEST.in ${HOME}/setup.cfg ${HOME}/setup.py ${HOME}/versioneer.py
-fi
-if [ -d "${HOME}/conda-bld" ]; then
-    rm -r ${HOME}/conda-bld
-fi
-if [ -f "${HOME}/README.md" ]; then
-    rm ${HOME}/README.md
 fi
 if [ -f "${HOME}/README.rst" ]; then
     rm ${HOME}/README.rst

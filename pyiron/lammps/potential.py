@@ -98,6 +98,87 @@ class LammpsPotential(GenericParameters):
     def get_element_lst(self):
         return list(self._df["Species"])[0]
 
+    def _find_line_by_prefix(self, prefix):
+        """
+        Find a line that starts with the given prefix.  Differences in white
+        space are ignored.  Raises a ValueError if not line matches the prefix.
+
+        Args:
+            prefix (str): line prefix to search for
+
+        Returns:
+            list: words of the matching line
+
+        Raises:
+            ValueError: if not matching line was found
+        """
+
+        def isprefix(prefix, lst):
+            if len(prefix) > len(lst): return False
+            return all(n == l for n, l in zip(prefix, lst))
+
+        # compare the line word by word to also match lines that differ only in
+        # whitespace
+        prefix = prefix.split()
+        for parameter, value in zip(self._dataset["Parameter"],
+                                    self._dataset["Value"]):
+            words = (parameter + " " + value).strip().split()
+            if isprefix(prefix, words):
+                return words
+
+        raise ValueError("No line with prefix \"{}\" found.".format(
+                            " ".join(prefix)))
+
+    def get_element_id(self, element_symbol):
+        """
+        Return numeric element id for element. If potential does not contain
+        the element raise a :class:NameError.  Only makes sense for potentials
+        with pair_style "full".
+
+        Args:
+            element_symbol (str): short symbol for element
+
+        Returns:
+            int: id matching the given symbol
+
+        Raise:
+            NameError: if potential does not contain this element
+        """
+
+        try:
+            line = "group {} type".format(element_symbol)
+            return int(self._find_line_by_prefix(line)[3])
+
+        except ValueError:
+            msg = "potential does not contain element {}".format(
+                    element_symbol)
+            raise NameError(msg) from None
+
+    def get_charge(self, element_symbol):
+        """
+        Return charge for element. If potential does not specify a charge,
+        raise a :class:NameError.  Only makes sense for potentials
+        with pair_style "full".
+
+        Args:
+            element_symbol (str): short symbol for element
+
+        Returns:
+            float: charge speicified for the given element
+
+        Raises:
+            NameError: if potential does not specify charge for this element
+        """
+
+        try:
+            line = "set group {} charge".format(element_symbol)
+            return float(self._find_line_by_prefix(line)[4])
+
+        except ValueError:
+            msg = "potential does not specify charge for element {}".format(
+                    element_symbol)
+            raise NameError(msg) from None
+
     def to_hdf(self, hdf, group_name=None):
         if self._df is not None:
             with hdf.open("potential") as hdf_pot:
@@ -123,88 +204,6 @@ class LammpsPotential(GenericParameters):
             except ValueError:
                 pass
         super(LammpsPotential, self).from_hdf(hdf, group_name=group_name)
-
-    def get(self, parameter_name, default_value=None):
-        """
-        Get the value of a specific parameter from LammpsPotential - if the parameter is not available return
-        default_value if that is set.
-
-        Args:
-            parameter_name (str): parameter key
-            default_value (str): default value to return is the parameter is not set
-
-        Returns:
-            str: value of the parameter
-        """
-        i_line, multi_word_lst = self._find_line(parameter_name)
-        if i_line > -1:
-            val = self._dataset["Value"][i_line]
-            if multi_word_lst is not None:
-                num_words = len(multi_word_lst)
-                val = val.split(" ")
-                val = " ".join(val[(num_words - 1) :])
-            try:
-                val_v = literal_eval(val)
-            except (ValueError, SyntaxError):
-                val_v = val
-            if callable(val_v):
-                val_v = val
-            return val_v
-        elif default_value is not None:
-            return default_value
-        else:
-            raise NameError("parameter not found: " + parameter_name)
-
-    def _find_line(self, key_name):
-        """
-        Internal helper function to find a line by key name
-
-        Args:
-            key_name (str): key name
-
-        Returns:
-            list: [line index, line]
-        """
-        params = self._dataset["Parameter"]
-        multiple_key = key_name.split()
-        multi_word_lst = [None]
-        if len(multiple_key) > 1:
-            key_length = len(multiple_key)
-            first = multiple_key[0]
-            i_line_first_lst = np.where(np.array(params) == first)[0]
-            i_line_lst, multi_word_lst = [], []
-            for i_sel in i_line_first_lst:
-                values = self._dataset["Value"][i_sel].split()
-                if len(values) < key_length:
-                    continue
-                sel_value = values[: key_length - 1]
-                is_different = False
-                for i, sel in enumerate(sel_value):
-                    if not (sel.strip() == multiple_key[i + 1].strip()):
-                        is_different = True
-                        continue
-                if is_different:
-                    continue
-                multi_word_lst.append([params[i_sel]] + sel_value)
-                i_line_lst.append(i_sel)
-        else:
-            if len(params) > 0:
-                i_line_lst = np.where(np.array(params) == key_name)[0]
-            else:
-                i_line_lst = []
-        if len(i_line_lst) == 0:
-            return -1, None
-        elif len(i_line_lst) == 1:
-            return i_line_lst[0], multi_word_lst[0]
-        else:
-            error_msg = list()
-            error_msg.append("Multiple occurrences of key_name: " + key_name + ". They are as follows")
-            for i in i_line_lst:
-                error_msg.append("dataset: {}, {}, {}".format(i,
-                                                              self._dataset["Parameter"][i],
-                                                              self._dataset["Value"][i]))
-            error_msg = "\n".join(error_msg)
-            raise ValueError(error_msg)
 
 
 class LammpsPotentialFile(PotentialAbstract):

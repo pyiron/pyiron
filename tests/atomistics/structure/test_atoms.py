@@ -8,7 +8,7 @@ import os
 import warnings
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
-from pyiron.atomistics.structure.generator import create_ase_bulk, create_surface
+from pyiron.atomistics.structure.generator import create_ase_bulk, create_surface, create_hkl_surface
 from pyiron.atomistics.structure.sparse_list import SparseList
 from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement
 from pyiron.base.generic.hdfio import FileHDFio, ProjectHDFio
@@ -1336,10 +1336,39 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(struct.get_chemical_formula(), 'Mg4')
 
     def test_static_functions(self):
-        self.assertIsInstance(create_ase_bulk("Al"), Atoms)
+        Al_bulk = create_ase_bulk("Al")
+        self.assertIsInstance(Al_bulk, Atoms)
         surface = create_surface("Al", "fcc111", size=(4, 4, 4), vacuum=10)
         self.assertTrue(all(surface.pbc))
         self.assertIsInstance(surface, Atoms)
+        hkl_surface = create_hkl_surface(Al_bulk, [10,8,7], layers=20, vacuum=10)
+        self.assertIsInstance(hkl_surface, Atoms)
+        hkl_surface_center = create_hkl_surface(
+            Al_bulk, [10,8,7], layers=20, vacuum=10, center=True
+        )
+        mean_z = np.mean([p[2] for p in hkl_surface_center.positions])
+        self.assertAlmostEqual(mean_z, hkl_surface_center.cell[2][2]/2)
+
+    def test_non_periodic(self):
+        structure = CrystalStructure("Fe", bravais_basis="bcc", lattice_constant=4.2)
+        pos = structure.repeat([1, 1, 2]).positions.copy()
+        structure = CrystalStructure("Fe", bravais_basis="bcc", lattice_constant=4.2)
+        structure.pbc = [False, False, True]
+        pos_new = structure.repeat([1, 1, 2]).positions.copy()
+        self.assertTrue(np.allclose(pos, pos_new))
+        c3 = Atoms("C3", positions=[[0, 0, 0], [0, 0, 2], [0, 2, 0]])
+        c3.get_scaled_positions()
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            c3.get_scaled_positions()
+            self.assertEqual(len(w), 1)
+            self.assertTrue(np.allclose(c3.get_scaled_positions(), c3.positions))
+        c3 = Atoms("C3", positions=[[0, 0, 0], [0, 0, 2], [0, 2, 0]], cell=np.eye(3)*10)
+        c3.get_scaled_positions()
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            c3.get_scaled_positions()
+            self.assertEqual(len(w), 0)
 
 
 def generate_fcc_lattice(a=4.2):

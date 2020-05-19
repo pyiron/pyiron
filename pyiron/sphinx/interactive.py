@@ -8,8 +8,8 @@ import scipy.constants
 import subprocess
 import warnings
 import time
-from pyiron.sphinx.base import SphinxBase
-from pyiron.atomistics.job.interactive import GenericInteractive
+from pyiron.sphinx.base import SphinxBase, Group
+from pyiron.atomistics.job.interactive import GenericInteractive, GenericInteractiveOutput
 from collections import OrderedDict as odict
 
 BOHR_TO_ANGSTROM = (
@@ -33,6 +33,7 @@ __date__ = "Sep 1, 2017"
 class SphinxInteractive(SphinxBase, GenericInteractive):
     def __init__(self, project, job_name):
         super(SphinxInteractive, self).__init__(project, job_name)
+        self.output = SphinxOutput(job=self)
         self._interactive_write_input_files = True
         self._interactive_library_read = None
         self._interactive_fetch_completed = True
@@ -344,9 +345,8 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
             retain_electrostatic_potential=retain_electrostatic_potential,
         )
 
-    @property
-    def _control_str(self):
-        control_str = odict()
+    def load_main_group(self):
+        main_group = Group()
         if (
             self.server.run_mode.interactive
             or self.server.run_mode.interactive_non_modal
@@ -357,7 +357,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
                         ("id", '"restart"'),
                         (
                             "scfDiag",
-                            self._input_control_scf_string(
+                            self.get_scf_group(
                                 maxSteps=10, keepRhoFixed=True, dEnergy=1.0e-4
                             ),
                         ),
@@ -370,8 +370,8 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
                         ("id", '"coarseelectronicminimization"'),
                         (
                             "scfDiag",
-                            self._input_control_scf_string(
-                                dEnergy="1000*Ediff/" + str(HARTREE_TO_EV)
+                            self.get_scf_group(
+                                dEnergy=1000*self.input["Ediff"] / HARTREE_TO_EV
                             ),
                         ),
                     ]
@@ -381,15 +381,59 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
                 odict(
                     [
                         ("id", '"electronicminimization"'),
-                        ("scfDiag", self._input_control_scf_string()),
+                        ("scfDiag", self.get_scf_group()),
                     ]
                 )
             )
-            control_str["extControl"] = odict()
-            control_str["extControl"]["bornOppenheimer"] = commands
-            return control_str
+            self.input.sphinx.main.extControl = Group()
+            self.input.sphinx.main.extControl.set_group('bornOppenheimer')
+            self.input.sphinx.main.extControl.bornOppenheimer = commands
         else:
-            return super(SphinxInteractive, self)._control_str
+            super(SphinxInteractive, self).load_main_group()
+
+
+class SphinxOutput(GenericInteractiveOutput):
+    def __init__(self, job):
+        super(SphinxOutput, self).__init__(job)
+
+    def check_band_occupancy(self, plot=True):
+        """
+            Check whether there are still empty bands available.
+
+            args:
+                plot (bool): plots occupancy of the last step
+
+            returns:
+                True if there are still empty bands
+        """
+        import matplotlib.pylab as plt
+        elec_dict = self._job['output/generic/dft']['n_valence']
+        if elec_dict is None:
+            raise AssertionError('Number of electrons not parsed')
+        n_elec = np.sum([elec_dict[k]
+                         for k in self._job.structure.get_chemical_symbols()])
+        n_elec = int(np.ceil(n_elec/2))
+        bands = self._job['output/generic/dft/bands_occ'][-1]
+        bands = bands.reshape(-1, bands.shape[-1])
+        max_occ = np.sum(bands>0, axis=-1).max()
+        n_bands = bands.shape[-1]
+        if plot:
+            xticks = np.arange(1, n_bands+1)
+            plt.xlabel('Electron number')
+            plt.ylabel('Occupancy')
+            if n_bands<20:
+                plt.xticks(xticks)
+            plt.axvline(n_elec, label='#electrons: {}'.format(n_elec))
+            plt.axvline(max_occ, color='red',
+                label='Max occupancy: {}'.format(max_occ))
+            plt.axvline(n_bands, color='green',
+                label='Number of bands: {}'.format(n_bands))
+            plt.plot(xticks, bands.T, 'x', color='black')
+            plt.legend()
+        if max_occ < n_bands:
+            return True
+        else:
+            return False
 
 
 class SphinxInt2(SphinxInteractive):

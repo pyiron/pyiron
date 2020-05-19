@@ -352,7 +352,7 @@ def get_job_id(database, sql_query, user, project_path, job_specifier):
         return job_dict[0]["id"]
     else:
         raise ValueError(
-            "job name '{0}' in this project is not unique".format(job_dict)
+            "job name '{0}' in this project '{1}' is not unique '{2}".format(job_specifier, project_path, job_dict)
         )
 
 

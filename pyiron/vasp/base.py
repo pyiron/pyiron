@@ -24,7 +24,7 @@ from pyiron.dft.waves.electronic import ElectronicStructure
 from pyiron.dft.waves.bandstructure import Bandstructure
 import warnings
 
-__author__ = "Sudarsan Surendralal"
+__author__ = "Sudarsan Surendralal, Felix Lochner"
 __copyright__ = (
     "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
@@ -466,20 +466,55 @@ class VaspBase(GenericDFTJob):
         """
         Collects errors from the VASP run
         """
-        num_eddrmm, snap = self._get_eddrmm_info()
 
-        warning_string = "EDDRMM warnings occured {} times, first in ionic step {}."
-        status_string = "Status is switched to 'warning'."
+        # error messages by VASP
+        eddrmm_error_str = "WARNING in EDDRMM: call to ZHEGV failed, returncode ="
+        zbrent_error_str = "ZBRENT: fatal error in bracketing"
 
-        if snap is not None:
+        # warning messages for pyiron
+        eddrmm_warning_str = "EDDRMM warnings occured {} times, first in ionic step {}."
+        zbrent_warning_str = "'ZBRENT: fatal error in bracketing' occured. Please check VASP manual for details."
+        warning_status_str = "Status is switched to 'warning'."
+        aborted_status_str = "Status is switched to 'aborted'."
+
+        # collecting errors
+        num_eddrmm = 0
+        snap_eddrmm = None
+
+        zbrent_status = False
+
+        file_name = os.path.join(self.working_directory, "error.out")
+        if os.path.exists(file_name):
+            with open(file_name, "r") as f:
+                lines = f.readlines()
+
+            # EDDRMM
+            # If the wrong convergence algorithm is chosen, we get the following error.
+            # https://cms.mpi.univie.ac.at/vasp-forum/viewtopic.php?f=4&t=17071
+            lines_where_eddrmm = np.argwhere([eddrmm_error_str in l for l in lines]).flatten()
+            num_eddrmm = len(lines_where_eddrmm)
+            if num_eddrmm > 0:
+                snap_eddrmm = len(np.argwhere(["E0=" in l for l in lines[:lines_where_eddrmm[0]]]).flatten())
+
+            # ZBRENT
+            for l in lines:
+                if zbrent_error_str in l:
+                    zbrent_status = True
+                    break
+
+        # handling and logging
+        if zbrent_status is True:
+            self.status.aborted = True
+            self._logger.warning(zbrent_warning_str + aborted_status_str)
+        elif snap_eddrmm is not None:
             if self.get_eddrmm_handling() == "ignore":
-                self._logger.warning(warning_string.format(num_eddrmm, snap))
+                self._logger.warning(eddrmm_warning_str.format(num_eddrmm, snap_eddrmm))
             elif self.get_eddrmm_handling() == "warn":
                 self.status.warning = True
-                self._logger.warning(warning_string.format(num_eddrmm, snap) + status_string)
+                self._logger.warning(eddrmm_warning_str.format(num_eddrmm, snap_eddrmm) + warning_status_str)
             elif self.get_eddrmm_handling() == "restart":
                 self.status.warning = True
-                self._logger.warning(warning_string.format(num_eddrmm, snap) + status_string)
+                self._logger.warning(eddrmm_warning_str.format(num_eddrmm, snap_eddrmm) + warning_status_str)
                 if not self.input.incar["ALGO"].lower() == "normal":
                     ham_new = self.copy_hamiltonian(self.name + "_normal")
                     ham_new.input.incar["ALGO"] = "Normal"
@@ -518,29 +553,6 @@ class VaspBase(GenericDFTJob):
                 )
                 files = os.listdir(directory)
         return files
-
-    def _get_eddrmm_info(self):
-        """
-        Counts the number of EDDRMM warnings and first ionic step of occurrence.
-
-        Returns:
-            int: number of EDDRMM warning
-            int/None: number of ionic step where it occurs
-        """
-        num_eddrmm = 0
-        snap = None
-        file_name = os.path.join(self.working_directory, "error.out")
-        if os.path.exists(file_name):
-            with open(file_name, "r") as f:
-                lines = f.readlines()
-            # If the wrong convergence algorithm is chosen, we get the following error.
-            # https://cms.mpi.univie.ac.at/vasp-forum/viewtopic.php?f=4&t=17071
-            warn_str = "WARNING in EDDRMM: call to ZHEGV failed, returncode ="
-            lines_where = np.argwhere([warn_str in l for l in lines]).flatten()
-            num_eddrmm = len(lines_where)
-            if num_eddrmm > 0:
-                snap = len(np.argwhere(["E0=" in l for l in lines[:lines_where[0]]]).flatten())
-        return num_eddrmm, snap
 
     def from_directory(self, directory):
         """
@@ -700,7 +712,7 @@ class VaspBase(GenericDFTJob):
             try:
                 output_structure = read_atoms(
                     filename=filename,
-                    species_list=input_structure.get_parent_elements(),
+                    species_list=input_structure.get_parent_symbols(),
                 )
                 input_structure.cell = output_structure.cell.copy()
                 input_structure.positions[
@@ -941,6 +953,8 @@ class VaspBase(GenericDFTJob):
         )
         self.input.incar["IBRION"] = -1
         self.input.incar["NELM"] = electronic_steps
+        # Make sure vasp runs only 1 ionic step
+        self.input.incar["NSW"] = 0
         if algorithm is not None:
             if algorithm is not None:
                 self.set_algorithm(algorithm=algorithm)
@@ -1338,6 +1352,22 @@ class VaspBase(GenericDFTJob):
             )
         else:
             return self["output/generic/dft/n_elect"]
+
+    def get_magnetic_moments(self, iteration_step=-1):
+        """
+        Gives the magnetic moments of a calculation for each iteration step.
+
+        Args:
+            iteration_step (int): Step for which the structure is requested
+
+        Returns:
+            numpy.ndarray/None: array of final magmetic moments or None if no magnetic moment is given
+        """
+        spins = self["output/generic/dft/final_magmoms"]
+        if spins is not None and len(spins) > 0:
+            return spins[iteration_step]
+        else:
+            return None
 
     def get_electronic_structure(self):
         """
@@ -1863,8 +1893,9 @@ class Output:
             try:
                 self.vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
             except VasprunError:
-                pass
+                s.logger.warning("Unable to parse the vasprun.xml file. Will attempt to get data from OUTCAR")
             else:
+                # If parsing the vasprun file does not throw an error, then set to True
                 vasprun_working = True
 
         if outcar_working:
@@ -1934,8 +1965,8 @@ class Output:
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
             log_dict["forces"] = self.outcar.parse_dict["forces"]
             log_dict["positions"] = self.outcar.parse_dict["positions"]
-            # log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
-            # log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
+            log_dict["forces"][:, sorted_indices] = log_dict["forces"].copy()
+            log_dict["positions"][:, sorted_indices] = log_dict["positions"].copy()
             if len(log_dict["positions"].shape) != 3:
                 raise VaspCollectError("Improper OUTCAR parsing")
             elif log_dict["positions"].shape[1] != len(sorted_indices):

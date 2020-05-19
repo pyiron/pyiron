@@ -1242,14 +1242,17 @@ class ProjectHDFio(FileHDFio):
         Returns:
             pyiron object: defined by the pyiron class in class_name with the input from **qwargs
         """
-        class_name = class_name.split(".")[-1][:-2]
-        if class_name in self._project.job_type.job_class_dict.keys():
-            return getattr(
-                importlib.import_module(
-                    self._project.job_type.job_class_dict[class_name]
-                ),
-                class_name,
-            )(**qwargs)
+        internal_class_name = class_name.split(".")[-1][:-2]
+        if internal_class_name in self._project.job_type.job_class_dict.keys():
+            module_path = self._project.job_type.job_class_dict[internal_class_name]
+        else:
+            class_path = class_name.split()[-1].split(".")[:-1]
+            class_path[0] = class_path[0][1:]
+            module_path = '.'.join(class_path)
+        return getattr(
+            importlib.import_module(module_path),
+            internal_class_name,
+        )(**qwargs)
 
     def to_object(self, object_type=None, **qwargs):
         """

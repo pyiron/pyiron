@@ -280,10 +280,10 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             or self.server.run_mode.interactive_non_modal
         ):
             # Warning: We only copy symbols, positions and cell information - no tags.
-            if len(self.output.indices) != 0:
+            if self.output.indices is not None and len(self.output.indices) != 0:
                 indices = self.output.indices[iteration_step]
             else:
-                indices = self.get("output/generic/indices")
+                return None
             if len(self._interactive_species_lst) == 0:
                 el_lst = [el.Abbreviation for el in self.structure.species]
             else:
