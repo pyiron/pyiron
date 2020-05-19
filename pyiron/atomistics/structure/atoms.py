@@ -96,7 +96,6 @@ class Atoms(object):
         species=None,
         **qwargs
     ):
-        warnings.simplefilter("default")
         if symbols is not None:
             if elements is None:
                 elements = symbols
