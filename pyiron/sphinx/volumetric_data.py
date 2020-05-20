@@ -56,10 +56,13 @@ class SphinxVolumetricData(VolumetricData):
             )
         except (ValueError, IndexError, TypeError):
             raise ValueError("Unable to parse file: {}".format(filename))
-        self._total_data = vol_data_list[0]
-        if len(vol_data_list) > 1:
-            self._diff_data = vol_data_list[1]
-
+        if len(vol_data_list) == 2:
+            self._total_data = {
+                "spin_up": vol_data_list[0],
+                "spin_down": vol_data_list[1]
+            }
+        else:
+            self._total_data = vol_data_list[0]
 
     def _read_vol_data(self, filename, normalize=True):
         """
