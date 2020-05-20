@@ -206,7 +206,7 @@ class SphinxVolumetricData(VolumetricData):
         if self.is_spin_polarized:
             if ind == 0:
                 return (
-                    np.average(np.average(self._total_data[0], axis=1), 1)
+                    np.average(np.average(self._total_data[0], axis=1), 1),
                     np.average(np.average(self._total_data[1], axis=1), 1)
                 )
             elif ind == 1:
@@ -216,7 +216,7 @@ class SphinxVolumetricData(VolumetricData):
                 )
             else:
                 return (
-                    np.average(np.average(self._total_data[0], axis=0), 0)
+                    np.average(np.average(self._total_data[0], axis=0), 0),
                     np.average(np.average(self._total_data[1], axis=0), 0)
                 )
         else:
