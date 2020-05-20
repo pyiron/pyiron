@@ -57,6 +57,7 @@ JOB_CLASS_DICT = {
     "SxUniqDispl": "pyiron.thermodynamics.sxphonons",
     "TableJob": "pyiron.table.datamining",
     "Vasp": "pyiron.vasp.vasp",
+    "VaspMetadyn": "pyiron.vasp.metadyn",
     "VaspSol": "pyiron.vasp.vaspsol",
     "Yaff": "pyiron.yaff.yaff",
 }

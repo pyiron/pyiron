@@ -11,6 +11,7 @@ from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.base.project.generic import Project
 from pyiron.vasp.potential import VaspPotentialSetter
 from pyiron.vasp.vasp import Vasp
+from pyiron.vasp.metadyn import VaspMetadyn
 from pyiron.vasp.structure import read_atoms
 
 __author__ = "Sudarsan Surendralal"
@@ -26,6 +27,7 @@ class TestVasp(unittest.TestCase):
         cls.execution_path = os.path.dirname(os.path.abspath(__file__))
         cls.project = Project(os.path.join(cls.execution_path, "test_vasp"))
         cls.job = cls.project.create_job("Vasp", "trial")
+        cls.job_metadyn = cls.project.create_job("VaspMetadyn", "trial_metadyn")
         cls.job_complete = Vasp(
             project=ProjectHDFio(project=cls.project, file_name="vasp_complete"),
             job_name="vasp_complete",
@@ -34,6 +36,10 @@ class TestVasp(unittest.TestCase):
             cls.execution_path, "../static/vasp_test_files/full_job_sample/POSCAR"
         )
         cls.job_complete.structure = read_atoms(poscar_file, species_from_potcar=True)
+        poscar_file = posixpath.join(
+            cls.execution_path, "../static/vasp_test_files/poscar_samples/POSCAR_metadyn"
+        )
+        cls.job_metadyn.structure = read_atoms(poscar_file)
 
     @classmethod
     def tearDownClass(cls):
@@ -53,6 +59,9 @@ class TestVasp(unittest.TestCase):
         self.assertIsInstance(self.job._potential, VaspPotentialSetter)
         self.assertTrue(self.job._compress_by_default)
         self.assertEqual(self.job.get_eddrmm_handling(), "warn")
+        self.assertIsInstance(self.job_metadyn, Vasp)
+        self.assertIsInstance(self.job_metadyn, VaspMetadyn)
+        self.assertTrue(self.job_metadyn.input.incar["LBLUEOUT"])
 
     def test_eddrmm(self):
         self.job.set_eddrmm_handling("ignore")
@@ -228,6 +237,16 @@ class TestVasp(unittest.TestCase):
         with job_chg_wave.project_hdf5.open("input") as h_in:
             self.assertFalse(h_in.list_nodes() == [])
             self.assertFalse(h_in.list_groups() == [])
+
+    def test_vasp_metadyn(self):
+        self.job_metadyn.set_primitive_constraint("bond_1", "bond", atom_indices=[0, 2], increment=1e-4)
+        self.job_metadyn.set_primitive_constraint("bond_2", "bond", atom_indices=[0, 3], increment=1e-4)
+        self.job_metadyn.set_complex_constraint("combine", "linear_combination", {"bond_1": 1, "bond_2": -1},
+                                                increment=1e-4)
+        self.job_metadyn.write_constraints()
+        constraints = self.job_metadyn.input.iconst._dataset["Value"]
+        for val in ['R 1 6 0', 'R 1 2 0', 'S 1 -1 0']:
+            self.assertTrue(val in constraints)
 
 
 if __name__ == "__main__":
