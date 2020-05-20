@@ -243,7 +243,7 @@ class TestVasp(unittest.TestCase):
         self.job_metadyn.set_primitive_constraint("bond_2", "bond", atom_indices=[0, 3], increment=1e-4)
         self.job_metadyn.set_complex_constraint("combine", "linear_combination", {"bond_1": 1, "bond_2": -1},
                                                 increment=1e-4)
-        self.job_metadyn.run(run_mode="manual")
+        self.job_metadyn.write_constraints()
         constraints = self.job_metadyn.input.iconst._dataset["Value"]
         for val in ['R 1 6 0', 'R 1 2 0', 'S 1 -1 0']:
             self.assertTrue(val in constraints)
