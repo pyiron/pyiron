@@ -39,6 +39,7 @@ class SphinxVolumetricData(VolumetricData):
 
     def __init__(self):
         super(SphinxVolumetricData, self).__init__()
+        self.atoms = None
         self._diff_data = None
         self._total_data = None
         self.is_spin_polarized = False
@@ -180,6 +181,8 @@ class SphinxVolumetricData(VolumetricData):
         """
         with hdf5.open(group_name) as hdf_vd:
             self._total_data = hdf_vd["total"]
+            if len(self._total_data) == 2:
+                self.is_spin_polarized = True
             if "diff" in hdf_vd.list_nodes():
                 self._diff_data = hdf_vd["diff"]
 
