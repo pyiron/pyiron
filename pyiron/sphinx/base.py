@@ -27,6 +27,7 @@ from pyiron.sphinx.potential import find_potential_file \
 from pyiron.sphinx.volumetric_data import SphinxVolumetricData
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
+from pyiron.base.generic.inputlist import InputList
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = (
@@ -311,11 +312,10 @@ class SphinxBase(GenericDFTJob):
                             structure_group["species"][-1]["atom"][
                                 -1]["movable" + xx] = True
         if not self.fix_symmetry:
-            structure_group.set_group("symmetry", {
+            structure_group.symmetry = {
                 "operator": {
                     "S": "[[1,0,0],[0,1,0],[0,0,1]]"
-                }
-            })
+            } }
         return structure_group
 
 
@@ -1692,7 +1692,7 @@ class InputWriter(object):
         else:
             s.logger.debug("No magnetic moments")
 
-class Group(dict):
+class Group(InputList):
 
     """
     Dictionary-like object to store SPHInX inputs.
@@ -1709,45 +1709,14 @@ class Group(dict):
         super(Group, self).__init__(*args, **kw)
         self.locked = False
 
-    def items(self):
-        return [
-            kv for kv in zip(self.keys(), self.values()) if kv[0] != "locked"
-            ]
-
-    def __len__(self):
-        return len(self.items())
-
-    def __setitem__(self, key, value):
-        if isinstance(value, dict):
-            value = Group(value)
-        super(Group, self).__setitem__(key, value)
-
-    def __setattr__(self, key, value):
-        if isinstance(value, dict):
-            value = Group(value)
-        super(Group, self).__setitem__(key, value)
-
-    __getattr__ = dict.get
-    __delattr__ = dict.__delitem__
-
-    # I suggest leaving these functions
-    # until we inherit from Box, because
-    # they make comparisons very strange
-    # in the unit tests.
-
-    # def __str__(self):
-    #     return self.to_sphinx()
-
-    # def __repr__(self):
-    #     return self.to_sphinx
-
     def set(self, name, content):
         self[name] = content
 
     def set_group(self, name, content=None):
         if content is None:
-            content = Group()
-        self.set(name, content)
+            self.add_group(name)
+        else:
+            self.set(name, content)
 
     def set_flag(self, flag, val=True):
         self.set(flag, val)
