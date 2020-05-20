@@ -15,7 +15,7 @@
 import sys
 import os
 import shutil
-import subprocess
+import pyiron
 from sphinx.ext.apidoc import main
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -58,12 +58,8 @@ copyright = u'2019, Max-Planck-Institut für Eisenforschung GmbH - Computational
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-# The short X.Y version.
-version_full = subprocess.check_output(
-    ["python", "-c", "'import versioneer; print(versioneer.get_version())'"],
-    cwd="..",
-    encoding="utf8"
-)
+# The short X.Y version
+version_full = pyiron.__version__
 version = '.'.join(version_full.split('.')[0:2])
 # The full version, including alpha/beta/rc tags.
 release = '.'.join(version_full)
