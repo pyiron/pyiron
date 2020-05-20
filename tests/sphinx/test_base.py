@@ -529,9 +529,9 @@ class TestSphinx(unittest.TestCase):
 
         rho = self.sphinx_2_5._output_parser.charge_density
         vel = self.sphinx_2_5._output_parser.electrostatic_potential
-        self.assertIsNotNone(rho.atoms)
+        self.assertIsNone(rho.atoms)
         self.assertIsNotNone(rho.total_data)
-        self.assertIsNotNone(vel.atoms)
+        self.assertIsNone(vel.atoms)
         self.assertIsNotNone(vel.total_data)
 
     def test_check_band_occupancy(self):

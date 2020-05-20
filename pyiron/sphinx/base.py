@@ -1254,7 +1254,7 @@ class SphinxBase(GenericDFTJob):
         if not self.status.finished:
             return
         else:
-            with self.project_hdf5.open("output") as ho:
+            with self.project_hdf5.open("generic") as ho:
                 cd_obj = SphinxVolumetricData()
                 cd_obj.from_hdf(ho, "charge_density")
             return cd_obj
@@ -1269,7 +1269,7 @@ class SphinxBase(GenericDFTJob):
         if not self.status.finished:
             return
         else:
-            with self.project_hdf5.open("output") as ho:
+            with self.project_hdf5.open("generic") as ho:
                 es_obj = SphinxVolumetricData()
                 es_obj.from_hdf(ho, "electrostatic_potential")
             return es_obj
@@ -2275,25 +2275,25 @@ class Output(object):
                 * BOHR_TO_ANGSTROM
             )
 
-    def collect_charge_density(self, file_name, atoms_file_name, cwd):
+    def collect_charge_density(self, file_name, cwd):
         if (
             file_name in os.listdir(cwd)
             and os.stat(posixpath.join(cwd, file_name)).st_size != 0
         ):
             self.charge_density.from_file(
                 filename=posixpath.join(cwd, file_name),
-                atoms_filename=posixpath.join(cwd, atoms_file_name),
+                atoms=self._job.get_structure(-1),
                 normalize=True
             )
 
-    def collect_electrostatic_potential(self, file_name, atoms_file_name, cwd):
+    def collect_electrostatic_potential(self, file_name, cwd):
         if (
             file_name in os.listdir(cwd) and
             os.stat(posixpath.join(cwd, file_name)).st_size != 0
         ):
             self.electrostatic_potential.from_file(
                 filename=posixpath.join(cwd, file_name),
-                atoms_filename=posixpath.join(cwd, atoms_file_name),
+                atoms=self._job.get_structure(-1),
                 normalize=False
             )
 
@@ -2313,10 +2313,8 @@ class Output(object):
                                    cwd=directory)
         self.collect_relaxed_hist(file_name="relaxHist.sx", cwd=directory)
         self.collect_electrostatic_potential(file_name="vElStat-eV.sxb",
-                                             atoms_file_name="relaxedStr.sx",
                                              cwd=directory)
         self.collect_charge_density(file_name="vElStat-eV.sxb",
-                                    atoms_file_name="relaxedStr.sx",
                                     cwd=directory)
         self._job.compress()
 

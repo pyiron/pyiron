@@ -38,17 +38,20 @@ class SphinxVolumetricData(VolumetricData):
         self._diff_data = None
         self._total_data = None
 
-    def from_file(self, filename, atoms_filename, normalize=True):
+    def from_file(self, filename, atoms, normalize=True):
         """
         Parsing the contents of from a file
 
         Args:
             filename (str): Path of file to parse
+            atoms (pyiron.atomistics.structure.Atoms): structure associated
+                with volumetric data
             normalize (boolean): Flag to normalize by the volume of the cell
         """
         try:
-            self.atoms, vol_data_list = self._read_vol_data(
-                filename=filename, atoms_filename=atoms_filename,
+            self.atoms = atoms
+            vol_data_list = self._read_vol_data(
+                filename=filename,
                 normalize=normalize
             )
         except (ValueError, IndexError, TypeError):
@@ -58,20 +61,16 @@ class SphinxVolumetricData(VolumetricData):
             self._diff_data = vol_data_list[1]
 
 
-    def _read_vol_data(self, filename, atoms_filename, normalize=True):
+    def _read_vol_data(self, filename, normalize=True):
         """
         Parses the Sphinx volumetric data files (rho.sxb and vElStat-eV.sxb).
 
         Args:
             filename (str): File to be parsed
-            atoms_filename (str): structure file associated with volumetric
-                data
             normalize (bool): Normalize the data with respect to the volume
                 (probably sensible for rho)
 
         Returns:
-            pyiron.atomistics.structure.atoms.Atoms: The structure of the
-                volumetric snapshot
             list: A list of the volumetric data (length >1 for density
                 files with spin)
 
@@ -81,13 +80,10 @@ class SphinxVolumetricData(VolumetricData):
             s.logger.warning("File:" + filename + "seems to be empty! ")
             return None, None
 
-        atoms = None
-        if os.path.isfile(atoms_filename):
-            atoms = read_atoms(atoms_filename)
 
         norm = 1.0
-        if normalize and atoms is not None:
-            norm = atoms.get_volume()
+        if normalize and self.atoms is not None:
+            norm = self.atoms.get_volume()
 
         with netcdf_file(filename, mmap=False) as f:
             dim = [int(d) for d in f.variables["dim"]]
@@ -115,9 +111,9 @@ class SphinxVolumetricData(VolumetricData):
                 + filename
                 + "seems to be corrupted/empty even after parsing!"
             )
-            return None, None
+            return None
 
-        return atoms, total_data_list
+        return total_data_list
 
 
     @property
