@@ -126,7 +126,7 @@ class SphinxBase(GenericDFTJob):
         if "eCut" in self.input.sphinx.basis.keys():
             return self.input.sphinx.basis["eCut"] * RYDBERG_TO_EV
         else:
-            return self.input.sphinx["EnCut"]
+            return self.input["EnCut"]
 
     @property
     def fix_spin_constraint(self):
