@@ -5,10 +5,10 @@
 import math
 
 import numpy as np
+import scipy
 from scipy.io.netcdf import netcdf_file
 import os
 from pyiron.base.settings.generic import Settings
-from pyiron.sphinx.structure import read_atoms
 from pyiron.atomistics.volumetric.generic import VolumetricData
 
 __author__ = "Sudarsan Surendralal"
@@ -23,6 +23,11 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 
+BOHR_TO_ANGSTROM = (
+    scipy.constants.physical_constants["Bohr radius"][0] /
+    scipy.constants.angstrom
+)
+
 class SphinxVolumetricData(VolumetricData):
     """
     General class for parsing and manipulating volumetric static within Sphinx. The basic idea of the Base class is
@@ -34,22 +39,18 @@ class SphinxVolumetricData(VolumetricData):
 
     def __init__(self):
         super(SphinxVolumetricData, self).__init__()
-        self.atoms = None
         self._diff_data = None
         self._total_data = None
 
-    def from_file(self, filename, atoms, normalize=True):
+    def from_file(self, filename, normalize=True):
         """
         Parsing the contents of from a file
 
         Args:
             filename (str): Path of file to parse
-            atoms (pyiron.atomistics.structure.Atoms): structure associated
-                with volumetric data
             normalize (boolean): Flag to normalize by the volume of the cell
         """
         try:
-            self.atoms = atoms
             vol_data_list = self._read_vol_data(
                 filename=filename,
                 normalize=normalize
@@ -83,23 +84,22 @@ class SphinxVolumetricData(VolumetricData):
             s.logger.warning("File:" + filename + "seems to be empty! ")
             return None, None
 
-
-        norm = 1.0
-        if normalize and self.atoms is not None:
-            norm = self.atoms.get_volume()
-
         with netcdf_file(filename, mmap=False) as f:
             dim = [int(d) for d in f.variables["dim"]]
+            volume = 1.0
+            if normalize:
+                cell = f.variables["cell"].data * BOHR_TO_ANGSTROM
+                volume = np.abs(np.linalg.det(cell))
             if "mesh" in f.variables:
                 # non-spin polarized
                 total_data_list = [
-                    np.array(f.variables["mesh"][:]).reshape(dim) / norm
+                    np.array(f.variables["mesh"][:]).reshape(dim) / volume
                 ]
             elif "mesh-0" in f.variables and "mesh-1" in f.variables:
                 # spin-polarized
                 total_data_list = [
-                    np.array(f.variables["mesh-0"][:]).reshape(dim) / norm,
-                    np.array(f.variables["mesh-1"][:]).reshape(dim) / norm
+                    np.array(f.variables["mesh-0"][:]).reshape(dim) / volume,
+                    np.array(f.variables["mesh-1"][:]).reshape(dim) / volume
                 ]
             else:
                 raise ValueError(

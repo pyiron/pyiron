@@ -1257,7 +1257,6 @@ class SphinxBase(GenericDFTJob):
             with self.project_hdf5.open("output/generic") as ho:
                 cd_obj = SphinxVolumetricData()
                 cd_obj.from_hdf(ho, "charge_density")
-            cd_obj.atoms = self.get_structure(-1)
             return cd_obj
 
     def get_electrostatic_potential(self):
@@ -1273,7 +1272,6 @@ class SphinxBase(GenericDFTJob):
             with self.project_hdf5.open("output/generic") as ho:
                 es_obj = SphinxVolumetricData()
                 es_obj.from_hdf(ho, "electrostatic_potential")
-            es_obj.atoms = self.get_structure(-1)
             return es_obj
 
     def collect_output(self, force_update=False):
@@ -2284,7 +2282,6 @@ class Output(object):
         ):
             self.charge_density.from_file(
                 filename=posixpath.join(cwd, file_name),
-                atoms=self._job.get_structure(-1),
                 normalize=True
             )
 
@@ -2295,7 +2292,6 @@ class Output(object):
         ):
             self.electrostatic_potential.from_file(
                 filename=posixpath.join(cwd, file_name),
-                atoms=self._job.get_structure(-1),
                 normalize=False
             )
 
