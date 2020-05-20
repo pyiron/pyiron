@@ -2,8 +2,6 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-import math
-
 import numpy as np
 import scipy
 from scipy.io.netcdf import netcdf_file
@@ -65,8 +63,8 @@ class SphinxVolumetricData(VolumetricData):
         else:
             self._total_data = vol_data_list[0]
 
-
-    def _read_vol_data(self, filename, normalize=True):
+    @staticmethod
+    def _read_vol_data(filename, normalize=True):
         """
         Parses the Sphinx volumetric data files (rho.sxb and vElStat-eV.sxb).
 

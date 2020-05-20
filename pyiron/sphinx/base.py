@@ -10,7 +10,6 @@ import posixpath
 import re
 import stat
 from shutil import copyfile
-from scipy.io.netcdf import netcdf_file
 import scipy.constants
 import warnings
 import json
