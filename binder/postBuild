@@ -11,7 +11,7 @@ jupyter labextension install nglview-js-widgets
 
 # pyiron setup
 printf "[DEFAULT]\nTOP_LEVEL_DIRS = ${HOME}\nRESOURCE_PATHS = ${HOME}/resources" > ${HOME}/.pyiron
-git clone https://github.com/pyiron/pyiron-resources.git ${HOME}/resources
+git clone --recurse-submodules https://github.com/pyiron/pyiron-resources.git ${HOME}/resources
 rm -rf ${HOME}/resources/vasp
 
 # gpaw setup
