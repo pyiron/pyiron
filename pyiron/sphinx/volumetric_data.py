@@ -156,7 +156,6 @@ class SphinxVolumetricData(VolumetricData):
         with hdf5.open(group_name) as hdf_vd:
             hdf_vd["TYPE"] = str(type(self))
             hdf_vd["total"] = self.total_data
-            hdf_vd["atoms"] = self.atoms
             if self.diff_data is not None:
                 hdf_vd["diff"] = self.diff_data
 
@@ -178,6 +177,5 @@ class SphinxVolumetricData(VolumetricData):
         """
         with hdf5.open(group_name) as hdf_vd:
             self._total_data = hdf_vd["total"]
-            self.atoms = hdf_vd["atoms"]
             if "diff" in hdf_vd.list_nodes():
                 self._diff_data = hdf_vd["diff"]
