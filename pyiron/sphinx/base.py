@@ -1254,7 +1254,7 @@ class SphinxBase(GenericDFTJob):
         if not self.status.finished:
             return
         else:
-            with self.project_hdf5.open("generic") as ho:
+            with self.project_hdf5.open("output/generic") as ho:
                 cd_obj = SphinxVolumetricData()
                 cd_obj.from_hdf(ho, "charge_density")
             return cd_obj
@@ -1269,7 +1269,7 @@ class SphinxBase(GenericDFTJob):
         if not self.status.finished:
             return
         else:
-            with self.project_hdf5.open("generic") as ho:
+            with self.project_hdf5.open("output/generic") as ho:
                 es_obj = SphinxVolumetricData()
                 es_obj.from_hdf(ho, "electrostatic_potential")
             return es_obj
