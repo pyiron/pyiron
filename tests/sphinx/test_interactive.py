@@ -35,10 +35,7 @@ class TestSphinx(unittest.TestCase):
         cls.sphinx.input["VaspPot"] = False
         cls.sphinx.load_default_groups()
         cls.sphinx.write_input()
-        try:
-            cls.sphinx.version = "2.6"
-        except ValueError:
-            cls.sphinx.version = "2.6.2_default"
+        cls.sphinx.version = "2.6.1"
         cls.sphinx.server.run_mode.interactive = True
 
     def setUp(self):

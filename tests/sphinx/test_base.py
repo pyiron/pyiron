@@ -67,10 +67,7 @@ class TestSphinx(unittest.TestCase):
         cls.sphinx.load_default_groups()
         cls.sphinx.fix_symmetry = False
         cls.sphinx.write_input()
-        try:
-            cls.sphinx.version = "2.6"
-        except ValueError:
-            cls.sphinx.version = "2.6.2_default"
+        cls.sphinx.version = "2.6_1"
         cls.sphinx_2_3.to_hdf()
         cls.sphinx_2_3.decompress()
         cls.sphinx_2_5.decompress()
