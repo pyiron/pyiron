@@ -2312,7 +2312,7 @@ class Output(object):
         self.collect_relaxed_hist(file_name="relaxHist.sx", cwd=directory)
         self.collect_electrostatic_potential(file_name="vElStat-eV.sxb",
                                              cwd=directory)
-        self.collect_charge_density(file_name="vElStat-eV.sxb",
+        self.collect_charge_density(file_name="rho.sxb",
                                     cwd=directory)
         self._job.compress()
 
