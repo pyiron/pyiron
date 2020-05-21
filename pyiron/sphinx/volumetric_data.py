@@ -30,7 +30,7 @@ BOHR_TO_ANGSTROM = (
 class SphinxVolumetricData(VolumetricData):
     """
     General class for parsing and manipulating volumetric static within Sphinx.
-    
+
     The basic idea of the Base class is adapted from the pymatgen vasp
     VolumetricData class:
 
