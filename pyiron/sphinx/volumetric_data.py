@@ -26,21 +26,25 @@ BOHR_TO_ANGSTROM = (
     scipy.constants.angstrom
 )
 
+
 class SphinxVolumetricData(VolumetricData):
     """
-    General class for parsing and manipulating volumetric static within Sphinx. The basic idea of the Base class is
-    adapted from the pymatgen vasp VolumetricData class
+    General class for parsing and manipulating volumetric static within Sphinx.
+    
+    The basic idea of the Base class is adapted from the pymatgen vasp
+    VolumetricData class:
 
     http://pymatgen.org/_modules/pymatgen/io/vasp/outputs.html#VolumetricData
 
     """
+
 
     def __init__(self):
         super(SphinxVolumetricData, self).__init__()
         self.atoms = None
         self._diff_data = None
         self._total_data = None
-        self.is_spin_polarized = False
+
 
     def from_file(self, filename, normalize=True):
         """
@@ -57,11 +61,11 @@ class SphinxVolumetricData(VolumetricData):
             )
         except (ValueError, IndexError, TypeError):
             raise ValueError("Unable to parse file: {}".format(filename))
+        self._total_data = vol_data_list[0]
         if len(vol_data_list) == 2:
-            self.is_spin_polarized = True
-            self._total_data = vol_data_list
-        else:
-            self._total_data = vol_data_list[0]
+            self._total_data = vol_data_list[0] + vol_data_list[1]
+            self._diff_data = vol_data_list[0] - vol_data_list[1]
+
 
     @staticmethod
     def _read_vol_data(filename, normalize=True):
@@ -183,47 +187,3 @@ class SphinxVolumetricData(VolumetricData):
                 self.is_spin_polarized = True
             if "diff" in hdf_vd.list_nodes():
                 self._diff_data = hdf_vd["diff"]
-
-    def get_average_along_axis(self, ind=2):
-        """
-        Take a planar average of the volumetric data along the specified axis.
-
-        http://pymatgen.org/_modules/pymatgen/io/vasp/outputs.html#VolumetricData.get_average_along_axis
-
-        *Overrides generic class method to handle spin-polarization
-
-        Args:
-            ind (int): Index of axis (0, 1 and 2 for the x, y, and z axis respectively)
-
-        Returns:
-            if self.is_spin_polarized:
-                (numpy.ndarray, numpy.ndarray): 1D vectors with the laterally
-                averaged values of the volumetric data for spin up & down
-                channels
-            if not self.is_spin_polarized:
-                numpy.ndarray: 1D vector with the laterally averaged values of
-                the volumetric data
-        """
-        if self.is_spin_polarized:
-            if ind == 0:
-                return (
-                    np.average(np.average(self._total_data[0], axis=1), 1),
-                    np.average(np.average(self._total_data[1], axis=1), 1)
-                )
-            elif ind == 1:
-                return (
-                    np.average(np.average(self._total_data[0], axis=0), 1),
-                    np.average(np.average(self._total_data[1], axis=0), 1)
-                )
-            else:
-                return (
-                    np.average(np.average(self._total_data[0], axis=0), 0),
-                    np.average(np.average(self._total_data[1], axis=0), 0)
-                )
-        else:
-            if ind == 0:
-                return np.average(np.average(self._total_data, axis=1), 1)
-            elif ind == 1:
-                return np.average(np.average(self._total_data, axis=0), 1)
-            else:
-                return np.average(np.average(self._total_data, axis=0), 0)

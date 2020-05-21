@@ -1248,9 +1248,11 @@ class SphinxBase(GenericDFTJob):
         Gets the charge density from the hdf5 file. This value is normalized by the volume
 
         Returns:
-            atomistics.volumetric.generic.VolumetricData instance
+            pyiron.atomistics.volumetric.generic.VolumetricData
         """
-        if not self.status.finished:
+        if self.status.finished not in [
+            "finished", "warning", "not_converged"
+        ]:
             return
         else:
             with self.project_hdf5.open("output/generic") as ho:
@@ -1264,9 +1266,11 @@ class SphinxBase(GenericDFTJob):
         Gets the electrostatic potential from the hdf5 file.
 
         Returns:
-            atomistics.volumetric.generic.VolumetricData instance
+            pyiron.atomistics.volumetric.generic.VolumetricData
         """
-        if not self.status.finished:
+        if self.status.finished not in [
+            "finished", "warning", "not_converged"
+        ]:
             return
         else:
             with self.project_hdf5.open("output/generic") as ho:
