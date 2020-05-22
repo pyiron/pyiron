@@ -24,6 +24,7 @@ from pyiron.sphinx.structure import read_atoms
 from pyiron.sphinx.potential import SphinxJTHPotentialFile
 from pyiron.sphinx.potential import find_potential_file \
     as find_potential_file_jth
+from pyiron.sphinx.volumetric_data import SphinxVolumetricData
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
 
@@ -438,7 +439,7 @@ class SphinxBase(GenericDFTJob):
         """
         self.input.sphinx.basis.setdefault("eCut", self.input["EnCut"]/RYDBERG_TO_EV)
         self.input.sphinx.basis.setdefault("kPoint", Group())
-        if "KpointCoords" is not None:
+        if self.input["KpointCoords"] is not None:
             self.input.sphinx.basis.kPoint.setdefault(
                 "coords", np.array(self.input["KpointCoords"])
                 )
@@ -1242,6 +1243,42 @@ class SphinxBase(GenericDFTJob):
             f.write("include <parameters.sx>;\n\n")
             f.write(self.input.sphinx.to_sphinx(indent=0))
 
+    def get_charge_density(self):
+        """
+        Gets the charge density from the hdf5 file. This value is normalized by the volume
+
+        Returns:
+            pyiron.atomistics.volumetric.generic.VolumetricData
+        """
+        if self.status not in [
+            "finished", "warning", "not_converged"
+        ]:
+            return
+        else:
+            with self.project_hdf5.open("output") as ho:
+                cd_obj = SphinxVolumetricData()
+                cd_obj.from_hdf(ho, "charge_density")
+            cd_obj.atoms = self.get_structure(-1)
+            return cd_obj
+
+    def get_electrostatic_potential(self):
+        """
+        Gets the electrostatic potential from the hdf5 file.
+
+        Returns:
+            pyiron.atomistics.volumetric.generic.VolumetricData
+        """
+        if self.status not in [
+            "finished", "warning", "not_converged"
+        ]:
+            return
+        else:
+            with self.project_hdf5.open("output") as ho:
+                es_obj = SphinxVolumetricData()
+                es_obj.from_hdf(ho, "electrostatic_potential")
+            es_obj.atoms = self.get_structure(-1)
+            return es_obj
+
     def collect_output(self, force_update=False):
         """
         Collects the outputs and stores them to the hdf file
@@ -1399,14 +1436,8 @@ class SphinxBase(GenericDFTJob):
         }
 
         if np.any([len(all_groups[group]) == 0 for group in all_groups]):
-            # warnings.warn("The following input groups have not been loaded:\n"
-            #     + ", ".join([
-            #         g for g in all_groups if len(all_groups[g]) == 0
-            #         ])
-            #     + "\n"
-            #     + "They are set to default values."
-            # )
             self.load_default_groups()
+
         if self.structure is None:
             raise AssertionError(
                 "Structure not set; set it via job.structure = "
@@ -1825,6 +1856,8 @@ class Output(object):
     def __init__(self, job):
         self._job = job
         self._parse_dict = defaultdict(list)
+        self.charge_density = SphinxVolumetricData()
+        self.electrostatic_potential = SphinxVolumetricData()
 
     @staticmethod
     def splitter(arr, counter):
@@ -2241,6 +2274,26 @@ class Output(object):
                 * BOHR_TO_ANGSTROM
             )
 
+    def collect_charge_density(self, file_name, cwd):
+        if (
+            file_name in os.listdir(cwd)
+            and os.stat(posixpath.join(cwd, file_name)).st_size != 0
+        ):
+            self.charge_density.from_file(
+                filename=posixpath.join(cwd, file_name),
+                normalize=True
+            )
+
+    def collect_electrostatic_potential(self, file_name, cwd):
+        if (
+            file_name in os.listdir(cwd) and
+            os.stat(posixpath.join(cwd, file_name)).st_size != 0
+        ):
+            self.electrostatic_potential.from_file(
+                filename=posixpath.join(cwd, file_name),
+                normalize=False
+            )
+
     def collect(self, directory=os.getcwd()):
         """
         The collect function, collects all the output from a Sphinx simulation.
@@ -2256,6 +2309,10 @@ class Output(object):
         self.collect_energy_struct(file_name="energy-structOpt.dat",
                                    cwd=directory)
         self.collect_relaxed_hist(file_name="relaxHist.sx", cwd=directory)
+        self.collect_electrostatic_potential(file_name="vElStat-eV.sxb",
+                                             cwd=directory)
+        self.collect_charge_density(file_name="rho.sxb",
+                                    cwd=directory)
         self._job.compress()
 
     def to_hdf(self, hdf, force_update=False):
@@ -2298,6 +2355,14 @@ class Output(object):
                 hdf5_sphinx["bands_eigen_values_initial"] = self._parse_dict[
                     "bands_eigen_values_initial"
                 ]
+            if self.electrostatic_potential.total_data is not None:
+                self.electrostatic_potential.to_hdf(
+                    hdf5_output, group_name="electrostatic_potential"
+                )
+            if self.charge_density.total_data is not None:
+                self.charge_density.to_hdf(
+                    hdf5_output, group_name="charge_density"
+                )
             with hdf5_output.open("generic") as hdf5_generic:
                 if "dft" not in hdf5_generic.list_groups():
                     hdf5_generic.create_group("dft")
@@ -2363,6 +2428,7 @@ class Output(object):
                     elif len(self._parse_dict["scf_convergence"]) == 1:
                         hdf5_generic["cells"] = np.array(
                             [self._job.structure.cell])
+
 
     def from_hdf(self, hdf):
         """
