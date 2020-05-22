@@ -439,7 +439,7 @@ class SphinxBase(GenericDFTJob):
         """
         self.input.sphinx.basis.setdefault("eCut", self.input["EnCut"]/RYDBERG_TO_EV)
         self.input.sphinx.basis.setdefault("kPoint", Group())
-        if "KpointCoords" is not None:
+        if self.input["KpointCoords"] is not None:
             self.input.sphinx.basis.kPoint.setdefault(
                 "coords", np.array(self.input["KpointCoords"])
                 )
@@ -1255,7 +1255,7 @@ class SphinxBase(GenericDFTJob):
         ]:
             return
         else:
-            with self.project_hdf5.open("output/generic") as ho:
+            with self.project_hdf5.open("output") as ho:
                 cd_obj = SphinxVolumetricData()
                 cd_obj.from_hdf(ho, "charge_density")
             cd_obj.atoms = self.get_structure(-1)
@@ -1273,7 +1273,7 @@ class SphinxBase(GenericDFTJob):
         ]:
             return
         else:
-            with self.project_hdf5.open("output/generic") as ho:
+            with self.project_hdf5.open("output") as ho:
                 es_obj = SphinxVolumetricData()
                 es_obj.from_hdf(ho, "electrostatic_potential")
             es_obj.atoms = self.get_structure(-1)
@@ -2355,6 +2355,14 @@ class Output(object):
                 hdf5_sphinx["bands_eigen_values_initial"] = self._parse_dict[
                     "bands_eigen_values_initial"
                 ]
+            if self.electrostatic_potential.total_data is not None:
+                self.electrostatic_potential.to_hdf(
+                    hdf5_output, group_name="electrostatic_potential"
+                )
+            if self.charge_density.total_data is not None:
+                self.charge_density.to_hdf(
+                    hdf5_output, group_name="charge_density"
+                )
             with hdf5_output.open("generic") as hdf5_generic:
                 if "dft" not in hdf5_generic.list_groups():
                     hdf5_generic.create_group("dft")
@@ -2420,14 +2428,7 @@ class Output(object):
                     elif len(self._parse_dict["scf_convergence"]) == 1:
                         hdf5_generic["cells"] = np.array(
                             [self._job.structure.cell])
-                if self.electrostatic_potential.total_data is not None:
-                    self.electrostatic_potential.to_hdf(
-                        hdf5_generic, group_name="electrostatic_potential"
-                    )
-                if self.charge_density.total_data is not None:
-                    self.charge_density.to_hdf(
-                        hdf5_generic, group_name="charge_density"
-                    )
+
 
     def from_hdf(self, hdf):
         """
