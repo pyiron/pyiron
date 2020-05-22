@@ -1250,7 +1250,7 @@ class SphinxBase(GenericDFTJob):
         Returns:
             pyiron.atomistics.volumetric.generic.VolumetricData
         """
-        if self.status.finished not in [
+        if self.status not in [
             "finished", "warning", "not_converged"
         ]:
             return
@@ -1268,7 +1268,7 @@ class SphinxBase(GenericDFTJob):
         Returns:
             pyiron.atomistics.volumetric.generic.VolumetricData
         """
-        if self.status.finished not in [
+        if self.status not in [
             "finished", "warning", "not_converged"
         ]:
             return
