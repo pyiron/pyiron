@@ -13,7 +13,6 @@ matrix:
       script:
         - coverage run -m unittest discover tests
         - coverage combine
-        # - ./.ci_support/build_notebooks_on_master.sh
       after_success:
         - coveralls
         - coverage xml
@@ -43,11 +42,7 @@ matrix:
         - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
         - conda install -c conda-forge jupyter papermill nglview sphinxdft=2.6.1=h6ced99e_5 gpaw lammps seaborn
         - printf "[DEFAULT]\nTOP_LEVEL_DIRS = ${HOME}\nRESOURCE_PATHS =${HOME}/resources" > ${HOME}/.pyiron
-        - git clone https://github.com/pyiron/pyiron-resources.git ${HOME}/resources
-        - mkdir -p ${HOME}/resources/gpaw
-        - wget https://wiki.fysik.dtu.dk/gpaw-files/gpaw-setups-0.9.20000.tar.gz
-        - tar -xf gpaw-setups-0.9.20000.tar.gz
-        - mv gpaw-setups-0.9.20000 ${HOME}/resources/gpaw/potentials
+        - git clone --recurse-submodules https://github.com/pyiron/pyiron-resources.git ${HOME}/resources
         - for f in $(cat .ci_support/exclude); do rm notebooks/$f; done;  # Remove VASP based notebooks 
       script:
         - jupyter kernelspec list
@@ -66,7 +61,6 @@ matrix:
       script:
         - coverage run -m unittest discover tests
         - coverage combine
-        # - ./.ci_support/build_notebooks_on_master.sh
 
     - stage: documentation
       if: branch = master
@@ -99,27 +93,6 @@ matrix:
       script:
         - echo -e "from urllib.request import urlopen\nurlopen('https://pyiron.github.io')" > test.py
         - python test.py
-
-    # - stage: anaconda
-    #   if: branch = master
-    #   name: anaconda
-    #   os: linux
-    #   language: python
-    #   env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.7"
-    #   install:
-    #     - export PATH="$HOME/miniconda/bin:$PATH"
-    #     - ./.ci_support/setup_miniconda.sh ${MINICONDA} ${PYTHONVER}
-    #   script:
-    #     - ./.ci_support/setup_upload.sh
-    #   deploy:
-    #     - provider: script
-    #       script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
-    #       on:
-    #         branch: master
-    #     - provider: script
-    #       script: conda build --python ${PYTHONVER} --user pyiron --token ${CONDA_UPLOAD_TOKEN} conda/pyiron
-    #       on:
-    #         tags: true
 
     - stage: docker
       if: branch = master

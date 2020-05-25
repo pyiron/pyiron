@@ -11,15 +11,8 @@ jupyter labextension install nglview-js-widgets
 
 # pyiron setup
 printf "[DEFAULT]\nTOP_LEVEL_DIRS = ${HOME}\nRESOURCE_PATHS = ${HOME}/resources" > ${HOME}/.pyiron
-git clone https://github.com/pyiron/pyiron-resources.git ${HOME}/resources
+git clone --recurse-submodules https://github.com/pyiron/pyiron-resources.git ${HOME}/resources
 rm -rf ${HOME}/resources/vasp
-
-# gpaw setup
-mkdir -p ${HOME}/resources/gpaw
-wget https://wiki.fysik.dtu.dk/gpaw-files/gpaw-setups-0.9.20000.tar.gz
-tar -xf gpaw-setups-0.9.20000.tar.gz
-mv gpaw-setups-0.9.20000 ${HOME}/resources/gpaw/potentials
-rm gpaw-setups-0.9.20000.tar.gz
 
 # clean up
 if [ -d "notebooks" ]; then
