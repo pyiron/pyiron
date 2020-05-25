@@ -3,6 +3,3 @@ channels:
 dependencies:
 - pyiron
 - nbsphinx
-- pip 
-- pip:
-    - git+https://github.com/pyiron/pyiron.git
