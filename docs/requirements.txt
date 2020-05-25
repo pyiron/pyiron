@@ -1,4 +1,5 @@
 ase
+cython
 defusedxml
 future
 h5io
