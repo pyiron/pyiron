@@ -5,4 +5,4 @@ dependencies:
   - nbsphinx
   - pip 
   - pip:
-   - git+https://github.com/pyiron/pyiron.git
+      - git+https://github.com/pyiron/pyiron.git
