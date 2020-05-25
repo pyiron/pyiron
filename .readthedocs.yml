@@ -18,7 +18,7 @@ formats: all
 
 # Install from conda repository
 conda:
-  environment: binder/environment.yml
+  environment: .ci_support/environment.yml
 
 # Optionally set the version of Python and requirements required to build your docs
 python:
