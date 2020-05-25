@@ -67,7 +67,10 @@ Please contact us if you are interested in using pyiron:
 
 ****
 News
-****
+**** 
+* **22nd May 2020:** pyiron 0.2.15 released. By now pyiron was downloaded over 20000 times on `conda-forge <https://anaconda.org/conda-forge/pyiron/>`_ and gained attention with close to 100 stars on `github <https://github.com/pyiron/pyiron/stargazers/>`_.
+* **8th May 2020:** The tutorials of the 1st virtual pyiron workshop are now available `online <https://pyiron.github.io/pyiron-virtual-workshop-2020/>`_. 
+* **23rd March 2020:** Cancellation of the `1st pyiron workshop <http://potentials.rub.de>`_ due to COVID-19.
 * **20th December 2019:** Announcement of the `1st pyiron workshop <http://potentials.rub.de>`_ in Bochum (Germany) from the 31st of March to the 2nd of April 2020. 
 * **09th November 2019:** pyiron was downloaded over 10000 times on `conda-forge <https://anaconda.org/conda-forge/pyiron/>`_ and gained attention with over 50 stars on `github <https://github.com/pyiron/pyiron/stargazers/>`_.
 * **10th October 2019:** pyiron 0.2.9 released.
