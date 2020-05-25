@@ -1,2 +1,0 @@
-pyiron
-nbsphinx
