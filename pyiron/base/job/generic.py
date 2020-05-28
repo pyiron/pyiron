@@ -488,11 +488,14 @@ class GenericJob(JobCore):
             new_job_name (str): The new name to assign the duplicate job. Required if the project is `None` or the same
                 project as the copied job. (Default is None, try to keep the same name.)
             input_only (bool): [True/False] Whether to copy only the input. (Default is False.)
-            new_database_entry (bool): [True/False] Whether to create a new database entry. (Default is True.)
+            new_database_entry (bool): [True/False] Whether to create a new database entry. If input_only is True then
+                new_database_entry is False. (Default is True.)
 
         Returns:
             GenericJob: GenericJob object pointing to the new location.
         """
+        if input_only and new_database_entry:
+            new_database_entry = False
         if project is None and new_job_name is None:
             raise ValueError("copy_to requires either a new project or a new_job_name.")
 
