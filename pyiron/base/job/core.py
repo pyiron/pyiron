@@ -165,7 +165,10 @@ class JobCore(PyironObject):
                 {"job": new_job_name, "subjob": new_location.h5_path}, self.job_id
             )
         self._name = new_job_name
-        self.project_hdf5.copy_to(new_location, maintain_name=False)
+        self.project_hdf5.copy_to(
+            destination=new_location,
+            maintain_name=False
+        )
         self.project_hdf5.remove_file()
         self.project_hdf5 = new_location
         if os.path.exists(old_working_directory):
@@ -681,7 +684,7 @@ class JobCore(PyironObject):
         new_job_core._parent_id = self._parent_id
         new_job_core._master_id = self._master_id
         new_job_core._status = self._status
-        self.project_hdf5.copy_to(project)
+        self.project_hdf5.copy_to(destination=project)
         if self.job_id:
             if new_database_entry:
                 db_entry = self.project.db.get_item_by_id(self.job_id)
@@ -714,7 +717,10 @@ class JobCore(PyironObject):
         old_working_directory = self.working_directory
         if not self.project_hdf5.file_exists:
             delete_hdf5_after_copy = True
-        new_job = self.copy_to(project, new_database_entry=False)
+        new_job = self.copy_to(
+            project=project,
+            new_database_entry=False
+        )
         if self.project_hdf5.file_exists:
             if len(self.project_hdf5.h5_path.split("/")) == 2:
                 self.project_hdf5.remove_file()

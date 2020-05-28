@@ -488,11 +488,14 @@ class GenericJob(JobCore):
             new_job_name (str): The new name to assign the duplicate job. Required if the project is `None` or the same
                 project as the copied job. (Default is None, try to keep the same name.)
             input_only (bool): [True/False] Whether to copy only the input. (Default is False.)
-            new_database_entry (bool): [True/False] Whether to create a new database entry. (Default is True.)
+            new_database_entry (bool): [True/False] Whether to create a new database entry. If input_only is True then
+                new_database_entry is False. (Default is True.)
 
         Returns:
             GenericJob: GenericJob object pointing to the new location.
         """
+        if input_only and new_database_entry:
+            new_database_entry = False
         if project is None and new_job_name is None:
             raise ValueError("copy_to requires either a new project or a new_job_name.")
 
@@ -520,10 +523,16 @@ class GenericJob(JobCore):
             new_generic_job = self.copy()
             new_generic_job.reset_job_id()
             new_generic_job._name = new_job_name
-            new_generic_job.project_hdf5.copy_to(new_location, maintain_name=False)
+            new_generic_job.project_hdf5.copy_to(
+                destination=new_location,
+                maintain_name=False
+            )
             new_generic_job.project_hdf5 = new_location
         else:
-            new_generic_job = super(GenericJob, self).copy_to(project, new_database_entry=new_database_entry)
+            new_generic_job = super(GenericJob, self).copy_to(
+                project=project,
+                new_database_entry=new_database_entry
+            )
             new_generic_job.reset_job_id(job_id=new_generic_job.job_id)
             new_generic_job.from_hdf()
 
@@ -1204,7 +1213,9 @@ class GenericJob(JobCore):
             job_type = self.__name__
         if job_type == self.__name__ and job_name not in self.project.list_nodes():
             new_ham = self.copy_to(
-                new_job_name=job_name, new_database_entry=False, input_only=True
+                new_job_name=job_name,
+                new_database_entry=False,
+                input_only=True
             )
         else:
             new_ham = self.create_job(job_type, job_name)
