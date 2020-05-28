@@ -8,7 +8,7 @@ from pyiron.base.settings.generic import Settings
 from ase import Atoms
 
 s = Settings()
-os.environ["GPAW_SETUP_PATH"] = os.path.join(s.resource_paths[0], "gpaw", "potentials")
+# os.environ["GPAW_SETUP_PATH"] = os.path.join(s.resource_paths[0], "gpaw", "potentials")
 
 try:
     from gpaw import GPAW, PW, MethfesselPaxton
