@@ -44,6 +44,7 @@ matrix:
         - printf "[DEFAULT]\nTOP_LEVEL_DIRS = ${HOME}\nRESOURCE_PATHS =${HOME}/resources" > ${HOME}/.pyiron
         - git clone --recurse-submodules https://github.com/pyiron/pyiron-resources.git ${HOME}/resources
         - for f in $(cat .ci_support/exclude); do rm notebooks/$f; done;  # Remove VASP based notebooks 
+        - source activate
       script:
         - jupyter kernelspec list
         - chmod +x .ci_support/build_notebooks_on_master.sh 
