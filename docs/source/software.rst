@@ -1,8 +1,8 @@
-.. _software:
+.. _collaborators:
 
-========
-Software
-========
+=============
+Collaborators
+=============
 List of software projects pyiron collaborates with in alphabetical order:
 
 ASE
@@ -25,6 +25,10 @@ OpenKIM is a cyberinfrastructure for improving the reliability of molecular and 
 OVITO
 =====
 OVITO is a scientific visualization and analysis software for atomistic and particle simulation data. It helps scientists gain better insights into materials phenomena and physical processes. The program is freely available for all major platforms under an open source license. It has served in a growing number of computational simulation studies as a powerful tool to analyze, understand and illustrate simulation results. https://www.ovito.org
+
+S/PHI/nX
+========
+S/PHI/nX is a C++ library for materials simulation, mostly electronic-structure theory. It also is a program (sphinx) to perform such simulations using density-functional theory, and k.p theory. In addition, the package offers dozens of specialized programs (add-ons) for smaller tasks related to setup, analysis, post-processing, and other types of simulations. https://sxrepo.mpie.de
 
 VASP
 ====
