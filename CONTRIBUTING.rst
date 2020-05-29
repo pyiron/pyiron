@@ -25,13 +25,13 @@ Table of Contents
 `License`_
 
 `What should I know before I get started?`_
+  * `pyiron developer meetings`_
 
 ..
  * `The structure of pyiron`_
 ..
  * `The principles of pyiron`_
 
-* `pyiron developer meetings`_
 
 `How can I contribute?`_
   * `Reporting bugs`_
@@ -184,6 +184,8 @@ Git commit messages
 \:green_heart: ``:green_heart:`` fixes the CI build
 
 \:white_check_mark: ``:white_check_mark:`` adds tests
+
+Managing git commits is much easier using an IDE (we recommend PyCharm).
 
 Python styleguide
 -----------------
