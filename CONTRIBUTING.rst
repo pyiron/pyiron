@@ -135,6 +135,29 @@ To get the developmental (git) version of pyiron,
   conda install conda-build
   conda develop pyiron
 
+**Local Testing**
+
+The full test suite is always run automatically when you open a new pull request.  Still it 
+sometimes nice to run all or only specific tests on your machine.  To do that run from the repo root, e.g.
+
+.. code-block::
+
+  python -m unittest discover tests
+  python -m unittest discover tests/sphinx
+  python -m unittest tests/sphinx/test_base.py
+
+Where the first line runs all tests, the second all the sphinx tests and the final line only the tests in that file.
+Keep in mind that to run the tests your repository needs to be inside your pyiron project folder and you need to have 
+at least the basic resources installed from ``tests/static``.  A neat trick when testing/debugging is to combine the 
+pdb and unittest modules like this
+
+.. code-block::
+
+  python -m pdb -m unittest ...
+  
+This allows you to re-use the sometimes complicated setups for your interactive debugging that might be otherwise
+difficult to replicate in a REPL.
+
 Pull requests
 -------------
 
