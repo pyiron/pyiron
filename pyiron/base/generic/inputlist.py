@@ -216,12 +216,14 @@ class InputList(MutableMapping):
 
         if isinstance(key, tuple):
             del self[key[0]][key[1:]]
-        elif isinstance(key, int):
-            del self._store[key]
-        elif isinstance(key, str):
-            idx = self._indices[key]
+        elif isinstance(key, (str, int)):
+            if isinstance(key, str):
+                idx = self._indices[key]
+                del self._indices[key]
+            else:
+                idx = key
+
             del self._store[idx]
-            del self._indices[key]
 
             for k, i in self._indices.items():
                 if i > idx:
