@@ -86,8 +86,10 @@ class SphinxBase(GenericDFTJob):
 
     def __init__(self, project, job_name):
         super(SphinxBase, self).__init__(project, job_name)
-        self.input = Input()
-        self.input.load_default()
+
+        # keeps both the generic parameters as well as the 
+        self.input = Group(table_name = "input")
+        self.load_default_input()
         self._save_memory = False
         self._spin_enabled = False
         self._output_parser = Output(self)
@@ -216,7 +218,7 @@ class SphinxBase(GenericDFTJob):
         else:
             scf_group["rhoMixing"] = str(self.input["rhoMixing"])
             scf_group["spinMixing"] = str(self.input["spinMixing"])
-            if self.input["nPulaySteps"] is not None:
+            if "nPulaySteps" in self.input:
                 scf_group["nPulaySteps"] = str(self.input["nPulaySteps"])
         if dEnergy is None:
             scf_group["dEnergy"] = self.input["Ediff"] / HARTREE_TO_EV
@@ -226,16 +228,16 @@ class SphinxBase(GenericDFTJob):
             scf_group["maxSteps"] = str(self.input["Estep"])
         else:
             scf_group["maxSteps"] = str(maxSteps)
-        if self.input["preconditioner"] is not None:
+        if "preconditioner" in self.input:
             scf_group["preconditioner"] = odict(
                 [("type", self.input["preconditioner"])]
             )
         scf_group[algorithm] = odict()
-        if self.input["maxStepsCCG"] is not None:
+        if "maxStepsCCG" in self.input:
             scf_group[algorithm]["maxStepsCCG"] = self.input["maxStepsCCG"]
-        if self.input["blockSize"] is not None and algorithm == "blockCCG":
+        if "blockSize" in self.input and algorithm == "blockCCG":
             scf_group[algorithm]["blockSize"] = self.input["blockSize"]
-        if self.input["nSloppy"] is not None and algorithm == "blockCCG":
+        if "nSloppy" in self.input and algorithm == "blockCCG":
             scf_group[algorithm]["nSloppy"] = self.input["nSloppy"]
         if self.input["WriteWaves"] is False:
             scf_group["noWavesStorage"] = True
@@ -318,6 +320,36 @@ class SphinxBase(GenericDFTJob):
             } }
         return structure_group
 
+    def load_default_input(self):
+        """
+        Set defaults for generic parameters and create sphinx input groups.
+        """
+
+        sph = self.input.create_group('sphinx')
+        sph.create_group('pawPot')
+        sph.create_group('structure')
+        sph.create_group('basis')
+        sph.create_group('PAWHamiltonian')
+        sph.create_group('initialGuess')
+        sph.create_group('main')
+
+        self.input.EnCut = 340
+        self.input.KpointCoords = [0.5, 0.5, 0.5]
+        self.input.KpointFolding = [4,4,4]
+        self.input.EmptyStates = "auto"
+        self.input.Sigma = 0.2
+        self.input.Xcorr = "PBE"
+        self.input.VaspPot = False
+        self.input.Estep = 400
+        self.input.Ediff = 1.0e-4
+        self.input.WriteWaves = True
+        self.input.KJxc = False
+        self.input.SaveMemory = True
+        self.input.CoarseRun = False
+        self.input.rhoMixing = 1.0
+        self.input.spinMixing = 1.0
+        self.input.CheckOverlap = True
+        self.input.THREADS = 1
 
     def load_structure_group(self, keep_angstrom=False):
         """
@@ -381,9 +413,8 @@ class SphinxBase(GenericDFTJob):
         """
         Load the main Group.
 
-        The group is populated based on the
-        type of calculation and settings in the
-        GenericParameters (self.input).
+        The group is populated based on the type of calculation and settings in
+        the self.input.
         """
 
         self.input.sphinx.main.setdefault("scfDiag", [])
@@ -394,16 +425,16 @@ class SphinxBase(GenericDFTJob):
                     maxSteps=10, keepRhoFixed=True, dEnergy=1.0e-4
                 )
             )
-        if self.input["Istep"] is not None:
-            self.input.sphinx.main["ricQN"] = Group()
+        if "Istep" in self.input:
+            self.input.sphinx.main["ricQN"] = Group(table_name = "input")
             self.input.sphinx.main["ricQN"]["maxSteps"] = str(self.input["Istep"])
-            if self.input["dE"] is None and self.input["dF"] is None:
+            if "dE" in self.input and "dF" in self.input:
                 self.input["dE"] = 1e-3
-            if self.input["dE"] is not None:
+            if "dE" in self.input:
                 self.input.sphinx.main["ricQN"]["dEnergy"] = str(
                     self.input["dE"] / HARTREE_TO_EV
                     )
-            if self.input["dF"] is not None:
+            if "dF" in self.input:
                 self.input.sphinx.main["ricQN"]["dF"] = str(
                     self.input["dF"] / HARTREE_OVER_BOHR_TO_EV_OVER_ANGSTROM
                 )
@@ -439,13 +470,13 @@ class SphinxBase(GenericDFTJob):
         """
         self.input.sphinx.basis.setdefault("eCut", self.input["EnCut"]/RYDBERG_TO_EV)
         self.input.sphinx.basis.setdefault("kPoint", Group())
-        if self.input["KpointCoords"] is not None:
+        if "KpointCoords" in self.input:
             self.input.sphinx.basis.kPoint.setdefault(
                 "coords", np.array(self.input["KpointCoords"])
                 )
         self.input.sphinx.basis.kPoint.setdefault("weight", 1)
         self.input.sphinx.basis.kPoint.setdefault("relative", True)
-        if self.input["KpointFolding"] is not None:
+        if "KpointFolding" in self.input:
             self.input.sphinx.basis.setdefault(
                 "folding", np.array(self.input["KpointFolding"])
                 )
@@ -1693,7 +1724,6 @@ class InputWriter(object):
             s.logger.debug("No magnetic moments")
 
 class Group(InputList):
-
     """
     Dictionary-like object to store SPHInX inputs.
 
@@ -1706,8 +1736,8 @@ class Group(InputList):
     """
 
     def __init__(self, *args, **kw):
-        super(Group, self).__init__(*args, **kw)
-        self.locked = False
+        super().__init__(*args, **kw)
+        object.__setattr__(self,'locked', False)
 
     def set(self, name, content):
         self[name] = content
@@ -1763,59 +1793,6 @@ class Group(InputList):
                         vv = vv.tolist()
                     line += indent * "\t" + k + " = " + str(vv) + ";\n"
         return line
-
-
-class Input(GenericParameters):
-    """
-    class to control the generic input for a Sphinx calculation.
-
-    Args:
-        input_file_name (str): name of the input file
-        table_name (str): name of the GenericParameters table
-    """
-
-    def __init__(self, input_file_name=None, table_name="input"):
-        super(Input, self).__init__(
-            input_file_name=input_file_name,
-            table_name=table_name,
-            comment_char="//",
-            separator_char="=",
-            end_value_char=";",
-        )
-        self._bool_dict = {True: "true", False: "false"}
-        self.sphinx = Group()
-        self.sphinx.pawPot = Group()
-        self.sphinx.structure = Group()
-        self.sphinx.basis = Group()
-        self.sphinx.PAWHamiltonian = Group()
-        self.sphinx.initialGuess = Group()
-        self.sphinx.main = Group()
-
-    def load_default(self):
-        """
-        Loads the default file content
-        """
-        file_content = (
-            "EnCut = 340\n"
-            "KpointCoords = [0.5, 0.5, 0.5]\n"
-            "KpointFolding = [4,4,4]\n"
-            "EmptyStates = auto\n"
-            "Sigma = 0.2\n"
-            "Xcorr = PBE\n"
-            "VaspPot = False\n"
-            "Estep = 400\n"
-            "Ediff = 1.0e-4\n"
-            "WriteWaves = True\n"
-            "KJxc = False\n"
-            "SaveMemory = True\n"
-            "CoarseRun = False\n"
-            "rhoMixing = 1.0\n"
-            "spinMixing = 1.0\n"
-            "CheckOverlap = True\n"
-            "THREADS = 1\n"
-        )
-        self.load_string(file_content)
-
 
 class Output(object):
     """

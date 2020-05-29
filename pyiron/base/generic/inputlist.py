@@ -16,12 +16,6 @@ def _normalize(key):
 
     return key
 
-def _wrap_val(val):
-    if isinstance(val, (Sequence, Set, Mapping)) and \
-            not isinstance(val, (str, bytes, bytearray)):
-        return InputList(val)
-    else:
-        return val
 
 
 class InputList(MutableMapping):
@@ -125,9 +119,9 @@ class InputList(MutableMapping):
 
     def __init__(self, init = None, table_name = None):
 
-        super().__setattr__('_store', [])
-        super().__setattr__('_indices', {})
-        super().__setattr__('table_name', table_name)
+        object.__setattr__(self, '_store', [])
+        object.__setattr__(self, '_indices', {})
+        object.__setattr__(self, 'table_name', table_name)
 
         if init == None: return
 
@@ -188,7 +182,7 @@ class InputList(MutableMapping):
     def __setitem__(self, key, val):
 
         key = _normalize(key)
-        val = _wrap_val(val)
+        val = self._wrap_val(val)
 
         if isinstance(key, tuple):
             self[key[0]][key[1:]] = val
@@ -249,14 +243,23 @@ class InputList(MutableMapping):
         return set(super().__dir__() + list(self._indices.keys()))
 
     def __repr__(self):
+        name = self.__class__.__name__
         if self._indices:
-            return 'InputList({' + \
+            return name + '({' + \
                     ', '.join('{!r}: {!r}'.format(k, v) for k, v in self.items()) + \
             '})'
         else:
-            return 'InputList([' + \
+            return name + '([' + \
                     ', '.join('{!r}'.format(v) for v in self._store) + \
             '])'
+
+    @classmethod
+    def _wrap_val(cls, val):
+        if isinstance(val, (Sequence, Set, Mapping)) and \
+                not isinstance(val, (str, bytes, bytearray, InputList)):
+            return cls(val)
+        else:
+            return val
 
     def to_builtin(self):
         '''
@@ -281,7 +284,15 @@ class InputList(MutableMapping):
         '''
         Add new value to the list without a key.
         '''
-        self._store.append(_wrap_val(val))
+        self._store.append(self._wrap_val(val))
+
+    def extend(self, vals):
+        '''
+        Append all items of vals to this InputList.
+        '''
+
+        for v in vals:
+            self.append(v)
 
     def insert(self, index, val, key = None):
         '''
@@ -326,6 +337,9 @@ class InputList(MutableMapping):
         '''
         Add a new sublist under the given key.  This is the same as assigning
         an empty container to the new key.
+
+        Returns:
+            the newly created sublist
         >>> pl = InputList({})
         >>> pl.create_group('group_name')
         >>> list(pl.group_name)
@@ -335,7 +349,8 @@ class InputList(MutableMapping):
         >>> list(pl.group_name)
         []
         '''
-        self[name] = []
+        self[name] = self.__class__(table_name = name)
+        return self[name]
 
     def to_hdf(self, hdf, group_name=None):
         """
@@ -345,13 +360,7 @@ class InputList(MutableMapping):
             hdf (ProjectHDFio): HDF5 group object
             group_name (str): HDF5 subgroup name - optional
         """
-        if group_name:
-            with hdf.open(group_name) as hdf_group:
-                hdf_child = hdf_group.create_group(self.table_name)
-        else:
-            hdf_child = hdf.create_group(self.table_name)
-
-        hdf_child["data"] = pickle.dumps(self)
+        pass
 
     def from_hdf(self, hdf, group_name=None):
         """
@@ -361,10 +370,4 @@ class InputList(MutableMapping):
             hdf (ProjectHDFio): HDF5 group object
             group_name (str): HDF5 subgroup name - optional
         """
-        self.clear()
-        if group_name:
-            with hdf.open(group_name) as hdf_group:
-                data = hdf_group[self.table_name]
-        else:
-            data = hdf[self.table_name]
-        self.update(pi.loads(data))
+        pass
