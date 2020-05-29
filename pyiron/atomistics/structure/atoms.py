@@ -2012,7 +2012,7 @@ class Atoms(object):
         return neighbor_obj
 
     def get_neighborhood(
-        box,
+        self,
         position,
         num_neighbors=12,
         t_vec=True,
@@ -2046,7 +2046,7 @@ class Atoms(object):
         class NeighTemp(object):
             pass
 
-        box = box.copy()
+        box = self.copy()
         box += box[-1]
         pos = box.positions
         pos[-1] = np.array(position)
