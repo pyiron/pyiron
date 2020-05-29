@@ -22,11 +22,16 @@ Wait I don't want to read this; I just have a quick question/bugfix!
 Table of Contents
 =================
 
-`Code of conduct`_
+`License`_
 
 `What should I know before I get started?`_
-  * `The structure of pyiron`_
-  * `The principles of pyiron`_
+
+..
+ * `The structure of pyiron`_
+..
+ * `The principles of pyiron`_
+
+* `pyiron developer meetings`_
 
 `How can I contribute?`_
   * `Reporting bugs`_
@@ -44,22 +49,25 @@ Table of Contents
   * `Build status`_
   * `pyiron releases`_
 
-Code of conduct
-===============
+License
+=======
+pyiron is released as an open-source project under the BSD 3-Clause License.
+Code contributions should also be considered open-source.
 
-This project and everyone participating in it is governed by
-the pyiron `Code of conduct`_. By participating, you are expected
-to uphold this code. Please email us to report violations.
-
-.. _What should I know before I get started?:
 What should I know before I get started?
 ========================================
 
-The structure of pyiron
------------------------
+.. The structure of pyiron
+.. -----------------------
 
-The principles of pyiron
-------------------------
+.. The principles of pyiron
+.. ------------------------
+
+pyiron developer meetings
+-------------------------
+If you are interested in discussing pyiron's development, we encourage you to virtually
+participate in the weekly pyiron developer meeting at 14:00 german time (GMT+2).
+Check the discussion page for details.
 
 How can I contribute?
 =====================
@@ -121,11 +129,10 @@ To get the developmental (git) version of pyiron,
 
 ```
 git clone https://github.com/pyiron/pyiron.git
-```
-If you don't already have the dependencies installed in your environment,
-```
-cd pyiron
-pip install .
+conda env update --name pyiron_dev --file pyiron/.ci_support/environment.yml
+conda activate pyiron_dev
+conda install conda-build
+conda develop pyiron
 ```
 
 Pull requests
@@ -164,19 +171,19 @@ Git commit messages
 * Reference issues and pull requests liberally after the first line
 * When only changing documentation, include [ci skip] in the commit title
 * Consider starting the commit message with an applicable emoji:
-🎨 :art: when improving the format/structure of the code
+\:art\: \:art\: improves the format/structure of the code
 
-🐎 :racehorse: when improving performance
+\:zap: ``:zap:`` improves performance
 
-📝 :memo: when writing docs
+\:memo: ``:memo:`` adds documentation
 
-🐛 :bug: when fixing a bug
+\:bug: ``:bug:`` fixes a bug
 
-🔥 :fire: when removing code or files
+\:fire: ``:fire:`` removes code or files
 
-💚 :green_heart: when fixing the CI build
+\:green_heart: ``:green_heart:`` fixes the CI build
 
-✅ :white_check_mark: when adding tests
+\:white_check_mark: ``:white_check_mark:`` adds tests
 
 Python styleguide
 -----------------
@@ -217,11 +224,12 @@ and pull requests:
 * bug: something isn't working
 * duplicate: this issue/pull request already existed
 * enhancement: new feature or request
-* good first issue: good for newcomers
+* good first issue: easy fix for beginners
 * help wanted: extra attention is needed
 * invalid: this doesn't seem right
 * question: further information is requested
 * wontfix: this will not be worked on
+* stale: inactive after 2 weeks
 
 Build status
 ------------
