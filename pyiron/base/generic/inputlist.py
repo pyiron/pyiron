@@ -49,6 +49,15 @@ class InputList(MutableMapping):
     >>> pl2
     InputList({0: 1, 1: 2, 'end': 3})
 
+    It is also allowed to set an item one past the length of the InputList,
+    this is then equivalent to appending that element.  This allows to use the
+    update method also with other InputLists
+    >>> pl[len(pl)] = -1
+    >>> pl
+    InputList([3, 2, 1, 0, -1])
+    >>> pl.pop(-1)
+    -1
+
     Where strings are used they may also be used as attributes.  Getting keys
     which clash with methods of InputList must be done with item access, but
     setting them works without overwriting the instance methods, but is not
@@ -114,10 +123,11 @@ class InputList(MutableMapping):
     [0, 1, 2, 3]
     '''
 
-    def __init__(self, init = None):
+    def __init__(self, init = None, table_name = None):
 
         super().__setattr__('_store', [])
         super().__setattr__('_indices', {})
+        super().__setattr__('table_name', table_name)
 
         if init == None: return
 
@@ -183,7 +193,12 @@ class InputList(MutableMapping):
         if isinstance(key, tuple):
             self[key[0]][key[1:]] = val
         elif isinstance(key, int):
-            self._store[key] = val
+            if key < len(self):
+                self._store[key] = val
+            elif key == len(self):
+                self.append(val)
+            else:
+                raise IndexError("index out of range")
         elif isinstance(key, str):
             if key not in self._indices:
                 self._indices[key] = len(self._store)
@@ -298,12 +313,19 @@ class InputList(MutableMapping):
 
         self._indices[key] = index
 
-    def add_group(self, name):
+    def clear(self):
+        """
+        Remove all items from InputList.
+        """
+        self._store.clear()
+        self._indices.clear()
+
+    def create_group(self, name):
         '''
         Add a new sublist under the given key.  This is the same as assigning
-        and empty container to the new key.
+        an empty container to the new key.
         >>> pl = InputList({})
-        >>> pl.add_group('group_name')
+        >>> pl.create_group('group_name')
         >>> list(pl.group_name)
         []
         >>> pl = InputList({})
@@ -312,3 +334,35 @@ class InputList(MutableMapping):
         []
         '''
         self[name] = []
+
+    def to_hdf(self, hdf, group_name=None):
+        """
+        Store the InputList in an HDF5 file
+
+        Args:
+            hdf (ProjectHDFio): HDF5 group object
+            group_name (str): HDF5 subgroup name - optional
+        """
+        if group_name:
+            with hdf.open(group_name) as hdf_group:
+                hdf_child = hdf_group.create_group(self.table_name)
+        else:
+            hdf_child = hdf.create_group(self.table_name)
+
+        hdf_child["data"] = pickle.dumps(self)
+
+    def from_hdf(self, hdf, group_name=None):
+        """
+        Restore the InputList from an HDF5 file
+
+        Args:
+            hdf (ProjectHDFio): HDF5 group object
+            group_name (str): HDF5 subgroup name - optional
+        """
+        self.clear()
+        if group_name:
+            with hdf.open(group_name) as hdf_group:
+                data = hdf_group[self.table_name]
+        else:
+            data = hdf[self.table_name]
+        self.update(pi.loads(data))
