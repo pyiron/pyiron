@@ -127,13 +127,13 @@ those packages locally to run certain integration tests in pyiron.
 
 To get the developmental (git) version of pyiron,
 
-```
-git clone https://github.com/pyiron/pyiron.git
-conda env update --name pyiron_dev --file pyiron/.ci_support/environment.yml
-conda activate pyiron_dev
-conda install conda-build
-conda develop pyiron
-```
+.. code-block::
+
+  git clone https://github.com/pyiron/pyiron.git
+  conda env update --name pyiron_dev --file pyiron/.ci_support/environment.yml
+  conda activate pyiron_dev
+  conda install conda-build
+  conda develop pyiron
 
 Pull requests
 -------------
@@ -171,19 +171,20 @@ Git commit messages
 * Reference issues and pull requests liberally after the first line
 * When only changing documentation, include [ci skip] in the commit title
 * Consider starting the commit message with an applicable emoji:
-\:art\: \:art\: improves the format/structure of the code
 
-\:zap: ``:zap:`` improves performance
+\:art: (``:art:``) improves the format/structure of the code
 
-\:memo: ``:memo:`` adds documentation
+\:zap: (``:zap:``) improves performance
 
-\:bug: ``:bug:`` fixes a bug
+\:memo: (``:memo:``) adds documentation
 
-\:fire: ``:fire:`` removes code or files
+\:bug: (``:bug:``) fixes a bug
 
-\:green_heart: ``:green_heart:`` fixes the CI build
+\:fire: (``:fire:``) removes code or files
 
-\:white_check_mark: ``:white_check_mark:`` adds tests
+\:green_heart: (``:green_heart:``) fixes the CI build
+
+\:white_check_mark: (``:white_check_mark:``) adds tests
 
 Managing git commits is much easier using an IDE (we recommend PyCharm).
 
