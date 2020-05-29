@@ -121,6 +121,7 @@ Read more about `citing individual modules/ plugins of pyiron and the implemente
    source/installation.rst
    source/examples.rst
    source/team.rst
+   source/software.rst
    source/citation.rst
    source/faq.rst
    License (BSD) <https://github.com/pyiron/pyiron/blob/master/LICENSE>
