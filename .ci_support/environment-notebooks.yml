@@ -7,4 +7,4 @@ dependencies:
   - nglview
   - papermill
   - seaborn
-  - sphinxdft
+  - sphinxdft >=2.6.1=h22b626b_13
