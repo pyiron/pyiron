@@ -2,7 +2,7 @@
 
 # Install additional requirements 
 conda env update --name root --file .ci_support/environment-notebooks.yml
-source activate
+conda activate root
 
 # Create .pyiron config
 printf "[DEFAULT]\nTOP_LEVEL_DIRS = ${HOME}\nRESOURCE_PATHS =${HOME}/resources" > ${HOME}/.pyiron

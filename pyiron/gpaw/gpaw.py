@@ -1,6 +1,5 @@
 import numpy as np
 import warnings
-import os
 from pyiron.gpaw.pyiron_ase import AseJob
 from pyiron.atomistics.structure.atoms import pyiron_to_ase
 from pyiron.base.generic.parameters import GenericParameters
