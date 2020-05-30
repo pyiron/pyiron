@@ -40,7 +40,8 @@ matrix:
         - export PATH="$HOME/miniconda/bin:$PATH"
         - ./.ci_support/setup_miniconda.sh ${MINICONDA}
         - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
-        - conda install -c conda-forge jupyter papermill nglview sphinxdft gpaw lammps seaborn
+        - conda env update --name root --file .ci_support/environment-notebooks.yml
+        - source activate
         - printf "[DEFAULT]\nTOP_LEVEL_DIRS = ${HOME}\nRESOURCE_PATHS =${HOME}/resources" > ${HOME}/.pyiron
         - git clone --recurse-submodules https://github.com/pyiron/pyiron-resources.git ${HOME}/resources
         - for f in $(cat .ci_support/exclude); do rm notebooks/$f; done;  # Remove VASP based notebooks 
