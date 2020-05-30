@@ -7,6 +7,9 @@ else
     kernel="python3"
 fi;
 
+# check GPAW potentials
+ls ${GPAW_SETUP_PATH}
+
 # execute notebooks
 i=0;
 for notebook in $(ls notebooks/*.ipynb); do 
