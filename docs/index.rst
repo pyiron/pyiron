@@ -65,6 +65,8 @@ Please contact us if you are interested in using pyiron:
 
 * to learn more about method development and Big Data in material science.
 
+Please also check out the `pyiron contributing guidelines <source/developers.html>`_
+
 ****
 News
 **** 
@@ -112,7 +114,7 @@ If you use pyiron in your research, please consider citing the following work:
     keywords = {Modelling workflow, Integrated development environment, Complex simulation protocols},
   }
 
-Read more about `citing individual modules/ plugins of pyiron and the implemented simulation codes <citation>`_.
+Read more about `citing individual modules/ plugins of pyiron and the implemented simulation codes <source/citation.html>`_.
 
 .. toctree::
    :hidden:
