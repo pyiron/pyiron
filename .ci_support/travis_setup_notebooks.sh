@@ -2,6 +2,7 @@
 
 # Install additional requirements 
 conda env update --name root --file .ci_support/environment-notebooks.yml
+source ${HOME}/miniconda/etc/profile.d/conda.sh
 conda activate root
 
 # Create .pyiron config
