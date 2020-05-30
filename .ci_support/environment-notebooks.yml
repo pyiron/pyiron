@@ -1,0 +1,10 @@
+channels:
+  - conda-forge
+dependencies:
+  - gpaw
+  - jupyter
+  - lammps
+  - nglview
+  - papermill
+  - seaborn
+  - sphinxdft
