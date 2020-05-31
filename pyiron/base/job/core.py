@@ -129,7 +129,7 @@ class JobCore(PyironObject, with_metaclass(RegisterJobTypeMeta)):
     """
 
     if not PRE_PY36:
-        def __init_subclass__(cls, /, **kwargs):
+        def __init_subclass__(cls, **kwargs):
             super().__init_subclass__(**kwargs)
             JOB_CLASS_DICT[cls.__name__] = cls.__module__
 
