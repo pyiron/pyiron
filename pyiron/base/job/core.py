@@ -6,11 +6,14 @@ from __future__ import print_function
 import copy
 import os
 import posixpath
+import sys
+from six import with_metaclass
 import time
 import math
 import stat
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.template import PyironObject
+from pyiron.base.job.jobtype import JOB_CLASS_DICT
 from tables import NoSuchNodeError
 import tarfile
 import shutil
@@ -33,7 +36,41 @@ __date__ = "Sep 1, 2017"
 s = Settings()
 
 
-class JobCore(PyironObject):
+# `RegisterJobTypeMeta` and `JobCore.__init_subclass__` (depending on python
+# version) contain some magic that runs at *class creation* and registers
+# subtypes of JobCore in the JOB_CLASS_DICT of `pyiron.base.job.jobtype` as
+# they are created without the need to manually maintain it or search all
+# modules for subclasses as we previously did.
+#   `__init_subclass__` is easier to understand, it is a
+# `@classmethod` python calls after creating a subclass of the class it is
+# defined on.  Its `cls` argument is then the newly created class.
+# https://docs.python.org/3.8/reference/datamodel.html#object.__init_subclass__
+#   In case of python3.5 and earlier this mechanism didn't exist, so we have to
+# create a metaclass with the same purpose.  Normally classes are created by
+# python via the `type()` function/metaclass.  The `__init__` method on a
+# metaclass initializes the class object, the same way it initializes the
+# instance object when defined on a normal class.  Deriving our metaclass from
+# type means we just have to add our logic and then fallback on `super()`.
+# https://docs.python.org/3.5/library/functions.html#type
+
+PRE_PY36 = sys.version_info.major < 3 or \
+    (sys.version_info.major >= 3 and sys.version_info.minor < 6)
+
+if PRE_PY36:
+    class RegisterJobTypeMeta(type):
+        def __init__(self, *args, **kwargs):
+            if args[0] != 'JobCore':
+                JOB_CLASS_DICT[args[0]] = args[2]['__module__']
+            # delegate proper class initialization to type()
+            super().__init__(*args, **kwargs)
+else:
+    # for >= python3.6 using the __init_subclass__ hook is much more
+    # convenient, so there's no need to provide a special meta class, but since
+    # the class statement needs to work for all versions, default to type()
+    # which is the default metaclass of all types anyway
+    RegisterJobTypeMeta = type
+
+class JobCore(PyironObject, with_metaclass(RegisterJobTypeMeta)):
     """
     The JobCore the most fundamental pyiron job class. From this class the GenericJob as well as the reduced JobPath
     class are derived. While JobPath only provides access to the HDF5 file it is about one order faster.
@@ -90,6 +127,11 @@ class JobCore(PyironObject):
 
             path to the job as a combination of absolute file system path and path within the HDF5 file.
     """
+
+    if not PRE_PY36:
+        def __init_subclass__(cls, /, **kwargs):
+            super().__init_subclass__(**kwargs)
+            JOB_CLASS_DICT[cls.__name__] = cls.__module__
 
     def __init__(self, project, job_name):
         self._is_valid_job_name(job_name)
