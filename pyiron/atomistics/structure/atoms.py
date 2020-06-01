@@ -48,7 +48,7 @@ __date__ = "Sep 1, 2017"
 s = Settings()
 
 
-class AtomsOld(object):
+class Atoms(ASEAtoms):
     """
     The Atoms class represents all the information required to describe a structure at the atomic scale. This class is
     written in such a way that is compatible with the `ASE atoms class`_. Some of the functions in this module is based
@@ -126,12 +126,29 @@ class AtomsOld(object):
                 cell = np.array(cell)
         self._cell = cell
         self._species = list()
-        self.positions = None
+
         self._pse = PeriodicTable()
         self._tag_list = SparseArray()
+        self.arrays = dict()
+
+        if positions is None:
+            if scaled_positions is None:
+                if symbols is not None:
+                    n_atoms = len(symbols)
+                else:
+                    n_atoms = len(numbers)
+                self.new_array('numbers', np.zeros(n_atoms, int), int)
+                positions = np.zeros((len(self.arrays['numbers']), 3))
+            else:
+                assert self.number_of_lattice_vectors == 3
+                positions = np.dot(scaled_positions, self.cell)
+        else:
+            if scaled_positions is not None:
+                raise RuntimeError('Both scaled and cartesian positions set!')
+        self.new_array('positions', positions, float, (3,))
+        # self.positions = positions
         self.indices = np.array([])
         self._info = dict()
-        self.arrays = dict()
         self.adsorbate_info = {}
         self.bonds = None
         self._pbc = False
@@ -147,6 +164,7 @@ class AtomsOld(object):
             if not (elements is None):
                 raise AssertionError()
             elements = self.numbers_to_elements(numbers)
+            self.new_array('numbers', numbers, int)
         if elements is not None:
             el_object_list = None
             if isinstance(elements, str):
@@ -3732,34 +3750,6 @@ class AtomsOld(object):
         atoms = self.copy()
         atoms.arrays["positions"] = atoms.positions
         write(filename, atoms, format, **kwargs)
-
-
-class Atoms(ASEAtoms):
-
-    def __init__(
-            self,
-            symbols=None,
-            positions=None,
-            numbers=None,
-            tags=None,
-            momenta=None,
-            masses=None,
-            magmoms=None,
-            charges=None,
-            scaled_positions=None,
-            cell=None,
-            pbc=None,
-            celldisp=None,
-            constraint=None,
-            calculator=None,
-            info=None,
-            **qwargs
-    ):
-        super(Atoms, self).__init__(symbols=symbols, positions=positions, numbers=numbers,
-                                    tags=tags, momenta=momenta, masses=masses, magmoms=magmoms,
-                                    charges=charges, scaled_positions=scaled_positions, cell=cell,
-                                    pbc=pbc, celldisp=celldisp, constraint=constraint, calculator=calculator,
-                                    info=info)
 
 
 class _CrystalStructure(Atoms):
