@@ -3,6 +3,7 @@ Lists structure for versatile input handling.
 """
 
 from collections.abc import Sequence, Set, Mapping, MutableMapping
+import json
 
 def _normalize(key):
     if isinstance(key, str):
@@ -116,6 +117,8 @@ class InputList(MutableMapping):
     >>> list(pl.keys())
     [0, 1, 2, 3]
     '''
+
+    __version__ = "0.1.0"
 
     def __init__(self, init = None, table_name = None):
 
@@ -349,25 +352,60 @@ class InputList(MutableMapping):
         >>> list(pl.group_name)
         []
         '''
-        self[name] = self.__class__(table_name = name)
+        self[name] = self.__class__()
         return self[name]
 
     def to_hdf(self, hdf, group_name=None):
         """
-        Store the InputList in an HDF5 file
+        Store the InputList in an HDF5 file.  If ``group_name`` or
+        *self.table_name* are not `None`, create a sub group in hdf prior to
+        writing if not save directly to hdf.  group_name overrides
+        self.table_name if both are not None.
 
         Args:
             hdf (ProjectHDFio): HDF5 group object
-            group_name (str): HDF5 subgroup name - optional
+            group_name (str, optional): HDF5 subgroup name, overrides
+                self.table_name
         """
-        pass
+
+        group_name = group_name or self.table_name
+        if group_name:
+            hdf = hdf.create_group(group_name)
+
+        self._type_to_hdf(hdf)
+        hdf["data"] = json.dumps(self.to_builtin())
+
+    def _type_to_hdf(self, hdf):
+        """
+        Internal helper function to save type and version in hdf root
+
+        Args:
+            hdf (ProjectHDFio): HDF5 group object
+        """
+        hdf["NAME"] = self.__class__.__name__
+        hdf["TYPE"] = str(type(self))
+        hdf["VERSION"] = self.__version__
+        hdf["OBJECT"] = "InputList"
 
     def from_hdf(self, hdf, group_name=None):
         """
-        Restore the InputList from an HDF5 file
+        Restore the InputList from an HDF5 file.  If group_name or
+        self.table_name are not None, open a sub group in hdf prior to reading
+        if not read directly from hdf.  group_name overrides self.table_name if
+        both are not None.
 
         Args:
             hdf (ProjectHDFio): HDF5 group object
-            group_name (str): HDF5 subgroup name - optional
+            group_name (str, optional): HDF5 subgroup name, overrides
+                self.table_name
         """
-        pass
+
+        group_name = group_name or self.table_name
+        if group_name:
+            with hdf.open(group_name) as hdf_group:
+                data = hdf_group["data"]
+        else:
+            data = hdf["data"]
+
+        self.clear()
+        self.update(json.loads(data))
