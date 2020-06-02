@@ -67,10 +67,7 @@ class TestSphinx(unittest.TestCase):
         cls.sphinx.load_default_groups()
         cls.sphinx.fix_symmetry = False
         cls.sphinx.write_input()
-        try:
-            cls.sphinx.version = "2.6"
-        except ValueError:
-            cls.sphinx.version = "2.6.2_default"
+        cls.sphinx.version = "2.6.1"
         cls.sphinx_2_3.to_hdf()
         cls.sphinx_2_3.decompress()
         cls.sphinx_2_5.decompress()
@@ -529,6 +526,11 @@ class TestSphinx(unittest.TestCase):
                 self.assertEqual(
                     len(output._parse_dict[list_one]), len(output._parse_dict[list_two])
                 )
+
+        rho = self.sphinx_2_5._output_parser.charge_density
+        vel = self.sphinx_2_5._output_parser.electrostatic_potential
+        self.assertIsNotNone(rho.total_data)
+        self.assertIsNotNone(vel.total_data)
 
     def test_check_band_occupancy(self):
         self.sphinx_2_5.collect_output()

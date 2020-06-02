@@ -1,6 +1,5 @@
 import numpy as np
 import warnings
-import os
 from pyiron.gpaw.pyiron_ase import AseJob
 from pyiron.atomistics.structure.atoms import pyiron_to_ase
 from pyiron.base.generic.parameters import GenericParameters
@@ -8,7 +7,6 @@ from pyiron.base.settings.generic import Settings
 from ase import Atoms
 
 s = Settings()
-os.environ["GPAW_SETUP_PATH"] = os.path.join(s.resource_paths[0], "gpaw", "potentials")
 
 try:
     from gpaw import GPAW, PW, MethfesselPaxton

@@ -97,7 +97,6 @@ class Atoms(ASEAtoms):
         species=None,
         **qwargs
     ):
-        warnings.simplefilter("default")
         if symbols is not None:
             if elements is None:
                 elements = symbols
@@ -2032,7 +2031,7 @@ class Atoms(ASEAtoms):
         return neighbor_obj
 
     def get_neighborhood(
-        box,
+        self,
         position,
         num_neighbors=12,
         t_vec=True,
@@ -2066,7 +2065,7 @@ class Atoms(ASEAtoms):
         class NeighTemp(object):
             pass
 
-        box = box.copy()
+        box = self.copy()
         box += box[-1]
         pos = box.positions
         pos[-1] = np.array(position)

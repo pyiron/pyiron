@@ -201,7 +201,7 @@ class Project(ProjectPath):
                     sub_project.copy_to(destination_sub_project)
             for job_id in self.get_job_ids(recursive=False):
                 ham = self.load(job_id)
-                ham.copy_to(destination)
+                ham.copy_to(project=destination)
             for file in self.list_files():
                 if ".h5" not in file:
                     shutil.copy(os.path.join(self.path, file), destination.path)
@@ -226,7 +226,12 @@ class Project(ProjectPath):
             return None
 
         print("job_old: ", job_old.status)
-        job_new = job_old.copy_to(self, new_job_name=new_job_name)
+        job_new = job_old.copy_to(
+            project=self,
+            new_job_name=new_job_name,
+            input_only=False,
+            new_database_entry=True
+        )
         s.logger.debug(
             "create_job:: {} {} from id {}".format(
                 self.path, new_job_name, job_old.job_id

@@ -1353,6 +1353,22 @@ class VaspBase(GenericDFTJob):
         else:
             return self["output/generic/dft/n_elect"]
 
+    def get_magnetic_moments(self, iteration_step=-1):
+        """
+        Gives the magnetic moments of a calculation for each iteration step.
+
+        Args:
+            iteration_step (int): Step for which the structure is requested
+
+        Returns:
+            numpy.ndarray/None: array of final magmetic moments or None if no magnetic moment is given
+        """
+        spins = self["output/generic/dft/final_magmoms"]
+        if spins is not None and len(spins) > 0:
+            return spins[iteration_step]
+        else:
+            return None
+
     def get_electronic_structure(self):
         """
         Gets the electronic structure instance from the hdf5 file

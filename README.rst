@@ -25,6 +25,10 @@ pyiron
     :target: https://anaconda.org/conda-forge/pyiron/
     :alt: Downloads
 
+.. image:: https://readthedocs.org/projects/pyiron/badge/?version=latest
+    :target: https://pyiron.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
 
 .. image:: docs/_static/screenshot.png
     :align: center

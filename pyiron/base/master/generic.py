@@ -260,7 +260,7 @@ class GenericMaster(GenericJob):
             for child_id in self.child_ids:
                 child = self.project.load(child_id)
                 new_child = child.copy_to(
-                    project.open(self.job_name + "_hdf5"),
+                    project=project.open(self.job_name + "_hdf5"),
                     new_database_entry=new_database_entry,
                 )
                 if new_database_entry and child.parent_id:

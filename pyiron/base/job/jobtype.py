@@ -57,6 +57,8 @@ JOB_CLASS_DICT = {
     "SxUniqDispl": "pyiron.thermodynamics.sxphonons",
     "TableJob": "pyiron.table.datamining",
     "Vasp": "pyiron.vasp.vasp",
+    "VaspMetadyn": "pyiron.vasp.metadyn",
+    "VaspSol": "pyiron.vasp.vaspsol",
     "Yaff": "pyiron.yaff.yaff",
 }
 
@@ -85,7 +87,7 @@ class JobTypeChoice(with_metaclass(Singleton)):
 
     def __init__(self):
         self._job_class_dict = None
-        self.job_class_dict = self._extend_job_dict(JOB_CLASS_DICT)
+        self.job_class_dict = JOB_CLASS_DICT
 
     @property
     def job_class_dict(self):
@@ -96,21 +98,6 @@ class JobTypeChoice(with_metaclass(Singleton)):
         self._job_class_dict = job_class_dict
         for item in list(self._job_class_dict.keys()):
             self.__setattr__(item, item)
-
-    @staticmethod
-    def _extend_job_dict(job_dict):
-        for d in [
-            {
-                name: obj.__module__
-                for name, obj in inspect.getmembers(importlib.import_module(name))
-                if inspect.isclass(obj)
-                and static_isinstance(obj, "pyiron.base.job.generic.GenericJob")
-            }
-            for finder, name, ispkg in pkgutil.iter_modules()
-            if name.startswith("pyiron_")
-        ]:
-            job_dict.update(d)
-        return job_dict
 
     def __dir__(self):
         """
