@@ -247,7 +247,7 @@ class InputList(MutableMapping):
 
     def __repr__(self):
         name = self.__class__.__name__
-        if self._indices:
+        if self.has_keys():
             return name + '({' + \
                     ', '.join('{!r}: {!r}'.format(k, v) for k, v in self.items()) + \
             '})'
@@ -269,7 +269,7 @@ class InputList(MutableMapping):
         Convert the list back to builtin dict's and list's recursively.
         '''
 
-        if self._indices:
+        if self.has_keys():
             dd = dict(self)
             for k, v in dd.items():
                 if isinstance(v, InputList):
@@ -354,6 +354,9 @@ class InputList(MutableMapping):
         '''
         self[name] = self.__class__()
         return self[name]
+
+    def has_keys(self):
+        return bool(self._indices)
 
     def to_hdf(self, hdf, group_name=None):
         """

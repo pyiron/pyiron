@@ -11,6 +11,7 @@ import scipy.constants
 from pyiron.project import Project
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.atomistics.structure.atoms import Atoms
+from pyiron.sphinx.base import Group
 from collections import OrderedDict as odict
 
 BOHR_TO_ANGSTROM = (
@@ -222,24 +223,23 @@ class TestSphinx(unittest.TestCase):
 
         trace = {"my_path": [("GAMMA", "H"), ("H", "N"), ("P", "H")]}
 
-        kpoints_group = {
+        kpoints_group = Group({
             'relative': True,
-            'from': odict([
-                ('coords',  np.array([0.0, 0.0, 0.0])), ('label', '"GAMMA"')
-            ]),
-            'to___0': odict([
-                ('coords', np.array([0.5, -0.5, 0.5])), ('nPoints', 20), ('label', '"H"')
-            ]),
-            'to___1': odict([
-                ('coords', np.array([0.0, 0.0, 0.5])), ('nPoints', 20), ('label', '"N"')
-            ]),
-            'to___1___1': odict([
-                ('coords', np.array([0.25, 0.25, 0.25])), ('nPoints', 0), ('label', '"P"')
-            ]),
-            'to___2': odict([
-                ('coords', np.array([0.5, -0.5, 0.5])), ('nPoints', 20), ('label', '"H"')
-            ]),
-        }
+            'from': {
+                'coords': np.array([0.0, 0.0, 0.0]),
+                'label': '"GAMMA"'
+            },
+            'to': [
+                {'coords': np.array([0.5, -0.5,  0.5]),
+                 'nPoints': 20, 'label': '"H"'},
+                {'coords': np.array([0.0,  0.0,  0.5]),
+                 'nPoints': 20, 'label': '"N"'},
+                {'coords': np.array([0.25, 0.25, 0.25]),
+                 'nPoints': 0, 'label': '"P"'},
+                {'coords': np.array([0.5, -0.5,  0.5]),
+                 'nPoints': 20, 'label': '"H"'},
+            ]
+        })
 
         with self.assertRaises(ValueError):
             self.sphinx_band_structure.set_kpoints(symmetry_reduction="pyiron rules!")

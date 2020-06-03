@@ -87,7 +87,8 @@ class SphinxBase(GenericDFTJob):
     def __init__(self, project, job_name):
         super(SphinxBase, self).__init__(project, job_name)
 
-        # keeps both the generic parameters as well as the 
+        # keeps both the generic parameters as well as the sphinx specific
+        # input groups
         self.input = Group(table_name = "input")
         self.load_default_input()
         self._save_memory = False
@@ -251,20 +252,11 @@ class SphinxBase(GenericDFTJob):
             keep_angstrom (bool): Store distances in Angstroms or Bohr
         """
         if keep_angstrom:
-            structure_group = Group(
-                [("cell", np.array(self.structure.cell))]
-            )
+            structure_group = Group( {"cell": np.array(self.structure.cell)} )
         else:
-            structure_group = Group(
-                [
-                    (
-                        "cell",
-                        np.array(
-                            self.structure.cell * 1 / BOHR_TO_ANGSTROM
-                        ),
-                    )
-                ]
-            )
+            structure_group = Group( {
+                    "cell": np.array(self.structure.cell * 1 / BOHR_TO_ANGSTROM),
+            })
         if "selective_dynamics" in self.structure._tag_list.keys():
             selective_dynamics_list = \
                 self.structure.selective_dynamics.list()
@@ -379,29 +371,21 @@ class SphinxBase(GenericDFTJob):
                 elem = species_obj.Parent
             else:
                 elem = species_obj.Abbreviation
-            self.input.sphinx.pawPot.setdefault("species", [])
+            self.input.sphinx.pawPot.create_group("species")
             if potformat == "JTH":
-                self.input.sphinx.pawPot["species"].append(
-                    odict(
-                        [
-                            ("name", '"' + elem + '"'),
-                            ("potType", '"AtomPAW"'),
-                            ("element", '"' + elem + '"'),
-                            ("potential", f'"{elem}_GGA.atomicdata"'),
-                        ]
-                    )
-                )
+                self.input.sphinx.pawPot["species"].append({
+                            "name": '"' + elem + '"',
+                            "potType": '"AtomPAW"',
+                            "element": '"' + elem + '"',
+                            "potential": f'"{elem}_GGA.atomicdata"',
+                })
             elif potformat == "VASP":
-                self.input.sphinx.pawPot["species"].append(
-                    odict(
-                        [
-                            ("name", '"' + elem + '"'),
-                            ("potType", '"VASP"'),
-                            ("element", '"' + elem + '"'),
-                            ("potential", '"' + elem + "_POTCAR" + '"'),
-                        ]
-                    )
-                )
+                self.input.sphinx.pawPot["species"].append({
+                            "name": '"' + elem + '"',
+                            "potType": '"VASP"',
+                            "element": '"' + elem + '"',
+                            "potential": '"' + elem + "_POTCAR" + '"',
+                })
             else:
                 raise ValueError()
         if not check_overlap:
@@ -1112,40 +1096,32 @@ class SphinxBase(GenericDFTJob):
                     "'{}' is not a valid path!".format(path_name)
                     )
 
-            kpoints = odict([("relative", True)])
+            def make_point(point, n_path):
+                return {"coords":
+                    np.array(self.structure.get_high_symmetry_points()[point]),
+                    "nPoints": n_path,
+                    "label": "\"{}\"".format(point.replace("'", "p"))}
 
-            kpoints["from"] = odict([
-                ("coords",
-                np.array(self.structure.get_high_symmetry_points()[path[0][0]])),
-                ("label", '"' + path[0][0].replace("'", "p") + '"'),
-            ])
-            kpoints["to___0"] = odict([
-                ("coords",
-                np.array(self.structure.get_high_symmetry_points()[path[0][1]])),
-                ("nPoints", n_path),
-                ("label", '"' + path[0][1].replace("'", "p") + '"'),
-            ])
+            kpoints = Group({"relative": True})
+            kpoints["from"] = make_point(path[0][0], None)
+            # from nodes are not supposed to have a nPoints attribute
+            del kpoints["from/nPoints"]
 
-            for i, path in enumerate(zip(path[:-1],np.roll(path, -1, 0)[:-1])):
-                if not path[0][1] == path[1][0]:
-                    name = "to___{}___1".format(i)
-                    kpoints[name] = odict([
-                        ("coords",
-                        np.array(self.structure.get_high_symmetry_points()[
-                            path[1][0]]
-                        )),
-                        ("nPoints", 0),
-                        ("label", '"' + path[1][0].replace("'", "p") + '"'),
-                    ])
+            kpoints["to"] = [make_point(path[0][1], n_path)]
 
-                name = "to___{}".format(i + 1)
-                kpoints[name] = odict([(
-                    "coords",
-                    np.array(self.structure.get_high_symmetry_points()[path[1][1]])),
-                    ("nPoints", n_path),
-                    ("label", '"' + path[1][1].replace("'", "p") + '"'),
-                ])
-            self.input.sphinx.basis["kPoints"] = Group(kpoints)
+            for segment in path[1:]:
+                # if the last node on the so far is not the same as the first
+                # node of this path segment, then we need to insert another
+                # node into the path to alert sphinx that we want a cut in our
+                # band structure (n_path = 0)
+                if '"{}"'.format(segment[0]) != kpoints.to[-1].label:
+                    kpoints["to"].append(
+                            make_point(segment[0], 0)
+                    )
+
+                kpoints["to"].append(make_point(segment[1], n_path))
+
+            self.input.sphinx.basis["kPoints"] = kpoints
         else:
             raise ValueError("only Monkhorst-Pack mesh and Line mode\
                 are currently implemented in Pyiron for SPHInX")
@@ -1759,39 +1735,39 @@ class Group(InputList):
             del self[name]
 
     def to_sphinx(self, content="__self__", indent=0):
-        line = ""
 
         if content == "__self__":
             content = self
 
-        for k, v in content.items():
-            k = k.split("___")[0]
-
-            if not isinstance(v, list):
-                v = [v]
-            for vv in v:
-                if isinstance(vv, bool):
-                    if vv is True:
-                        line += indent * "\t" + k + ";\n"
-                    elif vv is False:
-                        line += indent * "\t" + k + ' = false;\n'
-
-                elif isinstance(vv, dict):
-                    if len(vv) == 0:
-                        line += indent * "\t" + k + " {}\n"
-                    else:
-                        line += (
-                            indent * "\t"
-                            + k
-                            + " {\n"
-                            + self.to_sphinx(vv, indent+1)
-                            + indent * "\t"
-                            + "}\n"
-                        )
+        def format_value(v):
+            if isinstance(v, bool):
+                if v:
+                    return ";"
                 else:
-                    if isinstance(vv, np.ndarray):
-                        vv = vv.tolist()
-                    line += indent * "\t" + k + " = " + str(vv) + ";\n"
+                    return " = false;"
+            elif isinstance(v, Group):
+                if len(v) == 0:
+                    return " {}"
+                else:
+                    return (
+                        " {\n"
+                        + self.to_sphinx(v, indent+1)
+                        + indent * "\t"
+                        + "}"
+                    )
+            else:
+                if isinstance(v, np.ndarray):
+                    v = v.tolist()
+                return " = {!s};".format(v)
+
+        line = ""
+        for k, v in content.items():
+            if isinstance(v, Group) and not v.has_keys():
+                for vv in v.values():
+                    line += indent * "\t" + str(k) + format_value(vv) + "\n"
+            else:
+                line += indent * "\t" + str(k) + format_value(v) + "\n"
+
         return line
 
 class Output(object):
