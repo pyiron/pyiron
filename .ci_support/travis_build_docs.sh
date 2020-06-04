@@ -15,7 +15,7 @@ if [ "$TRAVIS_BRANCH" = "master" ]; then
     cd ..
 
     cd pyiron/docs
-    sphinx-build -b html ./ ../../pyiron.github.io
+    sphinx-build -b html ./ ../../pyiron.github.io || exit 1;
     cd ..
 
     mkdir uml

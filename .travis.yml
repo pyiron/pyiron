@@ -65,7 +65,7 @@ matrix:
         - ./.ci_support/travis_setup_pyiron.sh ${MINICONDA} ${PYTHONVER}
         - python .ci_support/pyironconfig.py
       script:
-        - ./.ci_support/travis_build_docs.sh
+        - ./.ci_support/travis_build_docs.sh || travis_terminate 1;
       deploy:
         - provider: pages
           repo: pyiron/pyiron.github.io
