@@ -143,7 +143,7 @@ class JobStatus(object):
             raise TypeError("The Job_ID should be an integer.")
         self._job_id = unique_id
         self.refresh_status()
-
+        
     @format_docstring_with_statuses(n_tabs=2)
     @property
     def string(self):
@@ -155,7 +155,7 @@ class JobStatus(object):
                    busy, finished, warning]
         """
         self.refresh_status()
-        return [key for key, val in self._status_dict.items() if val][0]
+        return self._get_status_from_dict()
 
     @format_docstring_with_statuses(n_tabs=2)
     @string.setter
@@ -202,7 +202,7 @@ class JobStatus(object):
         Private function: Write the job status to the internal variable _key and store it in the database.
         """
         if self.database and self.job_id:
-            if self.database.get_item_by_id(self.job_id)["status"] != str(self.string):
+            if self.database.get_item_by_id(self.job_id)["status"] != str(self._get_status_from_dict()):
                 self.database.item_update({"status": str(self.string)}, self.job_id)
 
     def _reset(self):
@@ -225,6 +225,9 @@ class JobStatus(object):
         if boolean is False:
             raise ValueError("The JobStatus can only be set to True.")
 
+    def _get_status_from_dict(self):
+        return [key for key, val in self._status_dict.items() if val][0]
+            
     def __repr__(self):
         """
         Human readable representation of the job status
