@@ -184,17 +184,18 @@ class JobStatus(object):
         Refresh the job status - check if the database and job_id are set and if this is the case load the job status
         from the database.
         """
-        if self.database and self.job_id:
-            try:
-                status = self.database.get_item_by_id(self.job_id)["status"]
-            except IndexError:
-                raise (
-                    "The job with the job ID "
-                    + str(self.job_id)
-                    + " is not listed in the database anymore."
-                )
-            self._reset()
-            self._status_dict[status] = True
+        if self.string in ["running", "collect", "submitted"]:
+            if self.database and self.job_id:
+                try:
+                    status = self.database.get_item_by_id(self.job_id)["status"]
+                except IndexError:
+                    raise (
+                        "The job with the job ID "
+                        + str(self.job_id)
+                        + " is not listed in the database anymore."
+                    )
+                self._reset()
+                self._status_dict[status] = True
 
     def _status_write(self):
         """
