@@ -452,19 +452,17 @@ class SphinxBase(GenericDFTJob):
         overwriting values that were previously (intentionally)
         modified.
         """
-        self.input.sphinx.basis.setdefault("eCut", self.input["EnCut"]/RYDBERG_TO_EV)
-        self.input.sphinx.basis.setdefault("kPoint", Group())
+        self.input.sphinx.basis.eCut = self.input["EnCut"]/RYDBERG_TO_EV
+        self.input.sphinx.basis.create_group("kPoint")
         if "KpointCoords" in self.input:
-            self.input.sphinx.basis.kPoint.setdefault(
-                "coords", np.array(self.input["KpointCoords"])
-                )
-        self.input.sphinx.basis.kPoint.setdefault("weight", 1)
-        self.input.sphinx.basis.kPoint.setdefault("relative", True)
+            self.input.sphinx.basis.kPoint.coords = \
+                    np.array(self.input["KpointCoords"])
+        self.input.sphinx.basis.kPoint.weight = 1
+        self.input.sphinx.basis.kPoint.relative = True
         if "KpointFolding" in self.input:
-            self.input.sphinx.basis.setdefault(
-                "folding", np.array(self.input["KpointFolding"])
-                )
-        self.input.sphinx.basis.setdefault("saveMemory", self.input["SaveMemory"])
+            self.input.sphinx.basis.folding = \
+                    np.array(self.input["KpointFolding"])
+        self.input.sphinx.basis.saveMemory = self.input["SaveMemory"]
 
     def load_hamilton_group(self):
         """
@@ -569,7 +567,7 @@ class SphinxBase(GenericDFTJob):
         if electronic_steps is not None:
             self.input["Estep"] = electronic_steps
         for arg in ["Istep", "dF", "dE"]:
-            if self.input[arg] is not None:
+            if arg in self.input:
                 del self.input[arg]
         super(SphinxBase, self).calc_static(
             electronic_steps=electronic_steps,
@@ -1048,9 +1046,7 @@ class SphinxBase(GenericDFTJob):
                 mesh = self.get_k_mesh_by_cell(
                     kpoints_per_angstrom=kpoints_per_angstrom
                     )
-            if "kPoints" in self.input.sphinx.basis:
-                del self.input.sphinx.basis["kPoints"]
-            self.input.sphinx.basis.setdefault("kPoint", {})
+            self.input.sphinx.basis.kPoint = {}
             if mesh is not None:
                 self.input["KpointFolding"] = list(mesh)
                 self.input.sphinx.basis["folding"] = np.array(self.input["KpointFolding"])
@@ -1143,7 +1139,7 @@ class SphinxBase(GenericDFTJob):
         """
 
         if self.structure is None:
-            raise ValueError(f"{self.job_name} has not been assigned "
+            raise AssertionError(f"{self.job_name} has not been assigned "
                 + "a structure. Please load one first (e.g. "
                 + f"{self.job_name}.structure = ...)")
 
@@ -1482,14 +1478,14 @@ class SphinxBase(GenericDFTJob):
                 + "job.set_empty_states()")
 
             if (
-                "KpointCoords" in self.input.keys() \
-                and np.array(self.input["KpointCoords"]).tolist()\
-                    != np.array(self.input.sphinx.basis.kPoint['coords']).tolist()
+                "KpointCoords" in self.input
+                and self.input.KpointCoords
+                    != self.input.sphinx.basis.kPoint.coords
                 ) \
             or (
-                "KpointFolding" in self.input.keys() \
-                and np.array(self.input["KpointFolding"]).tolist()\
-                    != np.array(self.input.sphinx.basis['folding']).tolist()
+                "KpointFolding" in self.input
+                and self.input.KpointFolding
+                    != self.input.sphinx.basis.folding
                 ):
 
                 warnings.warn("job.input.basis.kPoint was modified directly. "

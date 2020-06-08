@@ -74,7 +74,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
 
     @property
     def coarse_run(self):
-        if "CoarseRun" in list(self.input.get_pandas()["Parameter"]):
+        if "CoarseRun" in self.input:
             self._coarse_run = self.input["CoarseRun"]
         return self._coarse_run
 
