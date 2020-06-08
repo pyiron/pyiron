@@ -185,7 +185,7 @@ class JobStatus(object):
         from the database.
         """
         if self.database and self.job_id \
-                and any([self._status_dict[i] for i in ["initialized", "appended", "created", "submitted", "running", "aborted", "collect", "suspended", "refresh", "busy", "warning"]]):
+                and not any([self._status_dict[i] for i in ["finished", "aborted", "warning", "not_converged"]]):
             try:
                 status = self.database.get_item_by_id(self.job_id)["status"]
             except IndexError:
