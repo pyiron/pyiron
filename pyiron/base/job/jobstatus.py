@@ -143,7 +143,7 @@ class JobStatus(object):
             raise TypeError("The Job_ID should be an integer.")
         self._job_id = unique_id
         self.refresh_status()
-        
+
     @format_docstring_with_statuses(n_tabs=2)
     @property
     def string(self):
