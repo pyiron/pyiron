@@ -244,18 +244,6 @@ class GenericJob(JobCore):
         self._server = server
 
     @property
-    def status(self):
-        """
-        Execution status of the job, can be one of the following [initialized, appended, created, submitted, running,
-                                                                  aborted, collect, suspended, refresh, busy, finished]
-
-        Returns:
-            (str/pyiron.base.job.jobstatus.JobStatus): status
-        """
-        self.refresh_job_status()
-        return self._status
-
-    @property
     def queue_id(self):
         """
         Get the queue ID, the ID returned from the queuing system - it is most likely not the same as the job ID.

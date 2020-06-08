@@ -154,6 +154,7 @@ class JobStatus(object):
             (str): status [initialized, appended, created, submitted, running, aborted, collect, suspended, refresh,
                    busy, finished, warning]
         """
+        self.refresh_status()
         return [key for key, val in self._status_dict.items() if val][0]
 
     @format_docstring_with_statuses(n_tabs=2)
