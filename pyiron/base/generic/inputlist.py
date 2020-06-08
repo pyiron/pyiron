@@ -2,8 +2,10 @@
 Lists structure for versatile input handling.
 """
 
+import copy
 from collections.abc import Sequence, Set, Mapping, MutableMapping
 import json
+import numpy as np
 
 def _normalize(key):
     if isinstance(key, str):
@@ -116,15 +118,33 @@ class InputList(MutableMapping):
     [3, 2, 1, 0]
     >>> list(pl.keys())
     [0, 1, 2, 3]
+
+
+    Setting one of the builtin container types (tuple, list, dict) as an
+    element of an InputList wraps that container as a InputList automatically.
+    >>> pa = InputList()
+    >>> pa.append([1,3,4])
+    >>> isinstance(pa[0], InputList)
+    True
     '''
 
     __version__ = "0.1.0"
 
+    def __new__(cls, *args, **kwargs):
+
+        instance = super().__new__(cls)
+        # setting these immediately after object creation ensures that they are
+        # always defined and attribute access works even before __init__ is
+        # called.  This is relevant on deepcopy & pickling.
+        object.__setattr__(instance, '_store', [])
+        object.__setattr__(instance, '_indices', {})
+        object.__setattr__(instance, 'table_name', None)
+
+        return instance
+
     def __init__(self, init = None, table_name = None):
 
-        object.__setattr__(self, '_store', [])
-        object.__setattr__(self, '_indices', {})
-        object.__setattr__(self, 'table_name', table_name)
+        self.table_name = table_name
 
         if init == None: return
 
@@ -237,10 +257,20 @@ class InputList(MutableMapping):
             raise AttributeError(name) from None
 
     def __setattr__(self, name, val):
-        self[name] = val
+        if name in self.__dict__:
+            object.__setattr__(self, name, val)
+        else:
+            self[name] = val
 
     def __delattr__(self, name):
-        del self[name]
+        if name in self.__dict__:
+            object.__delattr__(self, name)
+        else:
+            del self[name]
+
+    def __array__(self):
+        """Return bare list of values to play nice with numpy."""
+        return np.array(self._store)
 
     def __dir__(self):
         return set(super().__dir__() + list(self._indices.keys()))
@@ -258,8 +288,7 @@ class InputList(MutableMapping):
 
     @classmethod
     def _wrap_val(cls, val):
-        if isinstance(val, (Sequence, Set, Mapping)) and \
-                not isinstance(val, (str, bytes, bytearray, InputList)):
+        if isinstance(val, (tuple, list, dict)):
             return cls(val)
         else:
             return val
@@ -343,8 +372,10 @@ class InputList(MutableMapping):
 
         Returns:
             the newly created sublist
+
         >>> pl = InputList({})
         >>> pl.create_group('group_name')
+        InputList([])
         >>> list(pl.group_name)
         []
         >>> pl = InputList({})
@@ -356,7 +387,35 @@ class InputList(MutableMapping):
         return self[name]
 
     def has_keys(self):
+        """
+        Returns True if there is a key set for at least one item of the list.
+        """
         return bool(self._indices)
+
+    def __copy__(self):
+        # by default copy.copy will use the same objects for _store and
+        # _indices, which would cause the copied and the copiee to have the
+        # same underlying data storage, so instead we have to do a shallow copy
+        # of those manually
+        copiee = type(self)()
+        copiee._store  = copy.copy(self._store)
+        copiee._indices = copy.copy(self._indices)
+        copiee.table_name = self.table_name
+        return copiee
+
+    def copy(self):
+        """
+        Returns deep copy of it self.
+
+        >>> pl = InputList([[1,2,3]])
+        >>> pl.copy() == pl
+        True
+        >>> pl.copy() is pl
+        False
+        >>> all(a is not b for a, b in zip(pl.copy().values(), pl.values()))
+        True
+        """
+        return copy.deepcopy(self)
 
     def to_hdf(self, hdf, group_name=None):
         """
