@@ -184,7 +184,8 @@ class JobStatus(object):
         Refresh the job status - check if the database and job_id are set and if this is the case load the job status
         from the database.
         """
-        if self.database and self.job_id and any([self._status_dict[i] for i in ["running", "collect", "submitted"]]):
+        if self.database and self.job_id \
+                and any([self._status_dict[i] for i in ["running", "collect", "submitted", "created"]]):
             try:
                 status = self.database.get_item_by_id(self.job_id)["status"]
             except IndexError:
