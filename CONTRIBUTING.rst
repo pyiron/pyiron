@@ -48,6 +48,9 @@ Table of Contents
   * `Issue and pull request labels`_
   * `Build status`_
   * `pyiron releases`_
+  
+`Debugging`_
+  * `My job does not run on the queue`_
 
 License
 =======
@@ -345,3 +348,93 @@ So for both conda and pip both the prereleases as well as the official releases 
 .. _Coveralls: https://coveralls.io/
 .. _Google Python Docstring format: http://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
 .. _Sphinx: https://www.sphinx-doc.org/en/master/
+
+Debugging
+================
+My job does not run on the queue
+-----------------------------
+
+In case a job runs properly while executing it locally (or on the head node), but not when you submit it to a queue,
+
+**1. Check if the job class is available in the project:**
+
+In this example, we want a custom job class ``ProtoMD`` from the module ``pyiron_contrib``:
+
+.. code-block::
+
+  from pyiron import Project
+  import pyiron_contrib  # only if importing a custom job class
+
+  pr = Project("debug")
+  dir(pr.job_type)
+
+This should output:
+
+.. code-block::
+
+  >>> ['AtomisticExampleJob',
+   'Atoms',
+   'ConvEncutParallel',
+   ...
+   ...
+   'ProtoMD']
+
+If you see your job class in the list, proceed to step 3. If not, 
+
+
+**2. Check if the job class in initialized in ``__init__.py`` of the module**
+
+Make sure that the ``__init__.py`` of your module (here, ``pyiron_contrib``) initializes the job class in the following format:
+
+.. code-block::
+
+  from pyiron import Project
+  from pyiron.base.job.jobtype import JOB_CLASS_DICT
+
+  # Make classes available for new pyiron version
+  JOB_CLASS_DICT['ProtoMD'] = 'pyiron_contrib.protocol.compound.md'  # the path of your job class
+  
+  
+**3. Confirm that the job class can be instantiatied**
+
+Create a new job, but instead of running it, save it:
+
+.. code-block::
+
+  job = pr.create_job(job_type = pr.job_type.ProtoMD, job_name = 'job')
+  ...  # input parameters that the job requires
+  ...
+  job.save()
+
+  >>> 98  # this is the job id of the saved job
+
+Note down the job id, then run the following line:
+
+.. code-block::
+
+  job["TYPE"]
+
+This should output an instance of the job class:
+
+.. code-block::
+
+  >>> "<class 'pyiron_contrib.protocol.compound.md.ProtoMD'>"
+
+Now we know that the job class is indeed available in the project and can be instantiated.
+
+**4. Debug using a second notebook**
+
+Submitting and running a job on the queue, is essentially the same as saving a job in one notebook, but loading and executing it in another notebook.
+
+In **a new notebook** , load the job that you just saved, using its job id. You may or may not import the module (here, ``pyiron_conntirb``):
+
+.. code-block::
+
+  from pyiron import Project
+  # we do not import pyiron_contrib here, becasue it should not be necessary
+
+  pr = Project("second_notebook")
+  reloaded_job = pr.load(98)  # 98 is the job id of the previously saved job
+  reloaded_job.run(run_again=True)
+
+If the job loads and runs properly, the job should also run properly on the queue. This also means that there may be a bug in your custom job class. Debug the job class, and repeat steps 3 and 4 till you no longer get an error in step 4.
