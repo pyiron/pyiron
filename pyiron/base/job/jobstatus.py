@@ -227,7 +227,7 @@ class JobStatus(object):
 
     def _get_status_from_dict(self):
         return [key for key, val in self._status_dict.items() if val][0]
-            
+
     def __repr__(self):
         """
         Human readable representation of the job status
