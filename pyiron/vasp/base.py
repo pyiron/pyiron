@@ -1025,7 +1025,7 @@ class VaspBase(GenericDFTJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
-        kpoints_per_angstrom=None,
+        kpoints_per_reciprocal_angstrom=None,
         n_path=None,
         path_name=None,
     ):
@@ -1048,7 +1048,7 @@ class VaspBase(GenericDFTJob):
         if kpoints_per_angstrom is not None:
             if mesh is not None:
                 warnings.warn("mesh value is overwritten by kpoints_per_angstrom")
-            mesh = self.get_k_mesh_by_cell(kpoints_per_angstrom=kpoints_per_angstrom)
+            mesh = self.get_k_mesh_by_cell(kpoints_per_reciprocal_angstrom=kpoints_per_reciprocal_angstrom)
         if mesh is not None:
             if np.min(mesh) <= 0:
                 raise ValueError("mesh values must be larger than 0")

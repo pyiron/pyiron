@@ -987,7 +987,7 @@ class SphinxBase(GenericDFTJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
-        kpoints_per_angstrom=None,
+        kpoints_per_reciprocal_angstrom=None,
         n_path=None,
         path_name=None,
     ):
@@ -1031,7 +1031,7 @@ class SphinxBase(GenericDFTJob):
                     warnings.warn("mesh value is overwritten "
                     + "by kpoints_per_angstrom")
                 mesh = self.get_k_mesh_by_cell(
-                    kpoints_per_angstrom=kpoints_per_angstrom
+                    kpoints_per_reciprocal_angstrom=kpoints_per_reciprocal_angstrom
                     )
             if "kPoints" in self.input.sphinx.basis:
                 del self.input.sphinx.basis["kPoints"]

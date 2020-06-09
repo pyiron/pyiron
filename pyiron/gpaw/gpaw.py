@@ -46,15 +46,15 @@ class GpawJob(AseJob):
     def plane_wave_cutoff(self, val):
         self.input["encut"] = val
 
-    def get_k_mesh_by_cell(self, cell=None, kpoints_per_angstrom=1):
+    def get_k_mesh_by_cell(self, kpoints_per_reciprocal_angstrom, cell=None):
         if cell is None:
+            if self.structure is None:
+                raise AssertionError('structure not set')
             cell = self.structure.cell
-        latlens = [np.linalg.norm(lat) for lat in cell]
-        kmesh = np.rint(
-            np.array([2 * np.pi / ll for ll in latlens]) * kpoints_per_angstrom
-        )
+        latlens = np.linalg.norm(cell, axis=-1)
+        kmesh = np.rint( 2 * np.pi / latlens * kpoints_per_reciprocal_angstrom)
         if kmesh.min() <= 0:
-            warnings.warn("kpoint per angstrom too low")
+            raise AssertionError("kpoint per angstrom too low")
         return [int(k) for k in kmesh]
 
     def set_kpoints(
@@ -66,7 +66,7 @@ class GpawJob(AseJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
-        kpoints_per_angstrom=None,
+        kpoints_per_reciprocal_angstrom=None,
     ):
         """
         Function to setup the k-points
@@ -86,7 +86,7 @@ class GpawJob(AseJob):
         if kpoints_per_angstrom is not None:
             if mesh is not None:
                 warnings.warn("mesh value is overwritten by kpoints_per_angstrom")
-            mesh = self.get_k_mesh_by_cell(kpoints_per_angstrom=kpoints_per_angstrom)
+            mesh = self.get_k_mesh_by_cell(kpoints_per_reciprocal_angstrom=kpoints_per_reciprocal_angstrom)
         if mesh is not None:
             if np.min(mesh) <= 0:
                 raise ValueError("mesh values must be larger than 0")
