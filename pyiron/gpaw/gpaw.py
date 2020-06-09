@@ -83,7 +83,7 @@ class GpawJob(AseJob):
             reciprocal space)
             kpoints_per_angstrom (float): Number of kpoint per angstrom in each direction
         """
-        if kpoints_per_angstrom is not None:
+        if kpoints_per_reciprocal_angstrom is not None:
             if mesh is not None:
                 warnings.warn("mesh value is overwritten by kpoints_per_angstrom")
             mesh = self.get_k_mesh_by_cell(kpoints_per_reciprocal_angstrom=kpoints_per_reciprocal_angstrom)

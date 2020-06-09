@@ -1026,7 +1026,7 @@ class SphinxBase(GenericDFTJob):
 
         if scheme == "MP":
             # Remove kPoints and set kPoint
-            if kpoints_per_angstrom is not None:
+            if kpoints_per_reciprocal_angstrom is not None:
                 if mesh is not None:
                     warnings.warn("mesh value is overwritten "
                     + "by kpoints_per_angstrom")
