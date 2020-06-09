@@ -219,7 +219,7 @@ class GenericDFTJob(AtomisticGenericJob):
             n_path (int): Number of points per trace part for line mode
             path_name (str): Name of high symmetry path used for band structure calculations.
         """
-        if kpoints_per_angstrom is not None:
+        if kpoints_per_reciprocal_angstrom is not None:
             if mesh is not None:
                 warnings.warn("mesh value is overwritten by kpoints_per_angstrom")
             mesh = self.get_k_mesh_by_cell(kpoints_per_reciprocal_angstrom=kpoints_per_reciprocal_angstrom)
