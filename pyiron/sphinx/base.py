@@ -13,7 +13,6 @@ from shutil import copyfile
 import scipy.constants
 import warnings
 import json
-from collections import OrderedDict as odict
 from collections import defaultdict
 
 from pyiron.dft.job.generic import GenericDFTJob
@@ -202,7 +201,7 @@ class SphinxBase(GenericDFTJob):
         for all args refer to calc_static or calc_minimize
         """
 
-        scf_group = {}
+        scf_group = Group()
         if algorithm.upper() == "CCG":
             algorithm = "CCG"
         elif algorithm.upper() != "BLOCKCCG":
@@ -229,10 +228,9 @@ class SphinxBase(GenericDFTJob):
         else:
             scf_group["maxSteps"] = str(maxSteps)
         if "preconditioner" in self.input:
-            scf_group["preconditioner"] = odict(
-                [("type", self.input["preconditioner"])]
-            )
-        scf_group[algorithm] = odict()
+            scf_group.create_group("preconditioner")["type"] = \
+                    self.input["preconditioner"]
+        scf_group.create_group(algorithm)
         if "maxStepsCCG" in self.input:
             scf_group[algorithm]["maxStepsCCG"] = self.input["maxStepsCCG"]
         if "blockSize" in self.input and algorithm == "blockCCG":
@@ -267,7 +265,7 @@ class SphinxBase(GenericDFTJob):
                 element = elm_species.Parent
             else:
                 element = elm_species.Abbreviation
-            structure_group.setdefault("species", [])
+            structure_group.create_group('species')
             structure_group["species"].append(
                 Group({"element": '"' + str(element) + '"'})
             )
@@ -275,35 +273,28 @@ class SphinxBase(GenericDFTJob):
                 self.structure.get_chemical_symbols() == \
                     elm_species.Abbreviation
             )
+            atom_group = structure_group["species"][-1].create_group('atom')
             for elm_pos, elm_magmon, selective in zip(
                 self.structure.positions[elm_list],
                 np.array(self.structure.get_initial_magnetic_moments())[
                     elm_list],
                 np.array(selective_dynamics_list)[elm_list],
             ):
-                structure_group["species"][-1].setdefault("atom", [])
-                structure_group["species"][-1]["atom"].append(Group())
+                atom_group.append(Group())
                 if self._spin_enabled:
-                    structure_group["species"][-1]["atom"][-1]["label"] \
+                    atom_group[-1]["label"] \
                         = '"spin_' + str(elm_magmon) + '"'
                 if keep_angstrom:
-                    structure_group[
-                        "species"][-1]["atom"][-1]["coords"] = (
-                        np.array(elm_pos)
-                    )
+                    atom_group[-1]["coords"] = np.array(elm_pos)
                 else:
-                    structure_group[
-                        "species"][-1]["atom"][-1]["coords"] = (
+                    atom_group[-1]["coords"] = \
                         np.array(elm_pos * 1 / BOHR_TO_ANGSTROM)
-                    )
                 if all(selective):
-                    structure_group[
-                        "species"][-1]["atom"][-1]["movable"] = True
+                    atom_group[-1]["movable"] = True
                 elif any(selective):
                     for ss, xx in zip(selective, ["X", "Y", "Z"]):
                         if ss:
-                            structure_group["species"][-1]["atom"][
-                                -1]["movable" + xx] = True
+                            atom_group[-1]["movable" + xx] = True
         if not self.fix_symmetry:
             structure_group.symmetry = {
                 "operator": {
@@ -437,9 +428,8 @@ class SphinxBase(GenericDFTJob):
                     for vv in self.executable.version.split("_")[0].split(".")
                 ]
                 if self.get_version_float() > 2.5:
-                    self.input.sphinx.main["evalForces"] = odict(
-                        [("file", '"relaxHist.sx"')]
-                        )
+                    self.input.sphinx.main.create_group("evalForces")["file"] = \
+                            '"relaxHist.sx"'
             else:
                 warnings.warn("executable version could not be identified")
 
@@ -1038,6 +1028,8 @@ class SphinxBase(GenericDFTJob):
 
         if scheme == "MP":
             # Remove kPoints and set kPoint
+            if "kPoints" in self.input.sphinx.basis:
+                del self.input.sphinx.basis.kPoints
             if kpoints_per_angstrom is not None:
                 if mesh is not None:
                     warnings.warn("mesh value is overwritten "
@@ -1063,7 +1055,7 @@ class SphinxBase(GenericDFTJob):
                 del self.input.sphinx.basis["kPoint"]
                 del self.input["KpointFolding"]
                 del self.input["KpointCoords"]
-                if "folding" in self.input.sphinx.basis.keys():
+                if "folding" in self.input.sphinx.basis:
                     del self.input.sphinx.basis['folding']
             if n_path is None and self._generic_input["n_path"] is None:
                 raise ValueError("'n_path' has to be defined")
@@ -1478,13 +1470,13 @@ class SphinxBase(GenericDFTJob):
 
             if (
                 "KpointCoords" in self.input
-                and self.input.KpointCoords
-                    != self.input.sphinx.basis.kPoint.coords
+                and np.array(self.input.KpointCoords).tolist()
+                    != np.array(self.input.sphinx.basis.kPoint.coords).tolist()
                 ) \
             or (
                 "KpointFolding" in self.input
-                and self.input.KpointFolding
-                    != self.input.sphinx.basis.folding
+                and np.array(self.input.KpointFolding).tolist()
+                    != np.array(self.input.sphinx.basis.folding).tolist()
                 ):
 
                 warnings.warn("job.input.basis.kPoint was modified directly. "
@@ -1757,7 +1749,7 @@ class Group(InputList):
 
         line = ""
         for k, v in content.items():
-            if isinstance(v, Group) and not v.has_keys():
+            if isinstance(v, Group) and len(v) > 0 and not v.has_keys():
                 for vv in v.values():
                     line += indent * "\t" + str(k) + format_value(vv) + "\n"
             else:
