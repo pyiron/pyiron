@@ -118,14 +118,6 @@ class InputList(MutableMapping):
     [3, 2, 1, 0]
     >>> list(pl.keys())
     [0, 1, 2, 3]
-
-
-    Setting one of the builtin container types (tuple, list, dict) as an
-    element of an InputList wraps that container as a InputList automatically.
-    >>> pa = InputList()
-    >>> pa.append([1,3,4])
-    >>> isinstance(pa[0], InputList)
-    True
     '''
 
     __version__ = "0.1.0"
@@ -150,11 +142,12 @@ class InputList(MutableMapping):
 
         if isinstance(init, (Sequence, Set)):
             for v in init:
-                self.append(v)
+                self.append(self._wrap_val(v))
 
         elif isinstance(init, Mapping):
             for i, (k, v) in enumerate(init.items()):
                 k = _normalize(k)
+                v = self._wrap_val(v)
                 if isinstance(k, int):
                     if k == i:
                         self.append(v)
@@ -205,7 +198,6 @@ class InputList(MutableMapping):
     def __setitem__(self, key, val):
 
         key = _normalize(key)
-        val = self._wrap_val(val)
 
         if isinstance(key, tuple):
             self[key[0]][key[1:]] = val
@@ -367,8 +359,7 @@ class InputList(MutableMapping):
 
     def create_group(self, name):
         '''
-        Add a new sublist under the given key.  This is the same as assigning
-        an empty container to the new key.
+        Add a new empty sublist under the given key.
 
         Returns:
             the newly created sublist
@@ -376,10 +367,6 @@ class InputList(MutableMapping):
         >>> pl = InputList({})
         >>> pl.create_group('group_name')
         InputList([])
-        >>> list(pl.group_name)
-        []
-        >>> pl = InputList({})
-        >>> pl['group_name'] = []
         >>> list(pl.group_name)
         []
         '''
