@@ -277,6 +277,11 @@ class TestGenericJob(unittest.TestCase):
     def test__check_ham_state(self):
         pass
 
+    def test_error(self):
+        ham = self.project.create_job("ScriptJob", "job_single_debug")
+        self.assertFalse(ham.error.print_queue())
+        self.assertFalse(ham.error.print_message())
+
 
 if __name__ == "__main__":
     unittest.main()
