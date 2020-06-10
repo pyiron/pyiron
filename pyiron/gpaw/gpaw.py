@@ -72,7 +72,7 @@ class GpawJob(AseJob):
         Function to setup the k-points
 
         Args:
-            mesh (list): Size of the mesh (ignored if scheme is not set to 'MP' or kpoints_per_angstrom is set)
+            mesh (list): Size of the mesh (ignored if scheme is not set to 'MP' or kpoints_per_reciprocal_angstrom is set)
             scheme (str): Type of k-point generation scheme (MP/GP(gamma point)/Manual/Line)
             center_shift (list): Shifts the center of the mesh from the gamma point by the given vector in relative
                                  coordinates
@@ -81,11 +81,11 @@ class GpawJob(AseJob):
             weights(list/numpy.ndarray): Manually supplied weights to each k-point in case of the manual mode
             reciprocal (bool): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
             reciprocal space)
-            kpoints_per_angstrom (float): Number of kpoint per angstrom in each direction
+            kpoints_per_reciprocal_angstrom (float): Number of kpoint per angstrom in each direction
         """
         if kpoints_per_reciprocal_angstrom is not None:
             if mesh is not None:
-                warnings.warn("mesh value is overwritten by kpoints_per_angstrom")
+                warnings.warn("mesh value is overwritten by kpoints_per_reciprocal_angstrom")
             mesh = self.get_k_mesh_by_cell(kpoints_per_reciprocal_angstrom=kpoints_per_reciprocal_angstrom)
         if mesh is not None:
             if np.min(mesh) <= 0:
