@@ -1430,6 +1430,10 @@ class VaspBase(GenericDFTJob):
         )
         if new_ham.__name__ == self.__name__:
             new_ham.input.potcar["xc"] = self.input.potcar["xc"]
+        if new_ham.input.incar["MAGMOM"] is not None:
+            del new_ham.input.incar["MAGMOM"]
+        if new_ham.input.incar["M_CONSTR"] is not None:
+            del new_ham.input.incar["M_CONSTR"]
         return new_ham
 
     def restart_for_band_structure_calculations(self, job_name=None):
