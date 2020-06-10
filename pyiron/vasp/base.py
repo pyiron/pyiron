@@ -727,59 +727,60 @@ class VaspBase(GenericDFTJob):
         Write the magnetic moments in INCAR from that assigned to the species
         """
         if any(self.structure.get_initial_magnetic_moments().flatten()):
-            final_cmd = "   ".join(
-                [
-                    " ".join([str(spinmom) for spinmom in spin])
-                    if isinstance(spin, list) or isinstance(spin, np.ndarray)
-                    else str(spin)
-                    for spin in self.structure.get_initial_magnetic_moments()[
-                        self.sorted_indices
-                    ]
-                ]
-            )
-            s.logger.debug("Magnetic Moments are: {0}".format(final_cmd))
-            if "MAGMOM" not in self.input.incar._dataset["Parameter"]:
-                self.input.incar["MAGMOM"] = final_cmd
             if "ISPIN" not in self.input.incar._dataset["Parameter"]:
                 self.input.incar["ISPIN"] = 2
-            if any(
-                [
-                    True
-                    if isinstance(spin, list) or isinstance(spin, np.ndarray)
-                    else False
-                    for spin in self.structure.get_initial_magnetic_moments()
-                ]
-            ):
-                self.input.incar["LNONCOLLINEAR"] = True
-                if (
-                    self.spin_constraints
-                    and "M_CONSTR" not in self.input.incar._dataset["Parameter"]
-                ):
-                    self.input.incar["M_CONSTR"] = final_cmd
-                if (
-                    self.spin_constraints
-                    or "M_CONSTR" in self.input.incar._dataset["Parameter"]
-                ):
-                    if "ISYM" not in self.input.incar._dataset["Parameter"]:
-                        self.input.incar["ISYM"] = 0
-                if (
-                    self.spin_constraints
-                    and "LAMBDA" not in self.input.incar._dataset["Parameter"]
-                ):
-                    raise ValueError(
-                        "LAMBDA is not specified but it is necessary for non collinear calculations."
-                    )
-                if (
-                    self.spin_constraints
-                    and "RWIGS" not in self.input.incar._dataset["Parameter"]
-                ):
-                    raise ValueError(
-                        "Parameter RWIGS has to be set for spin constraint calculations"
-                    )
-            if self.spin_constraints and not self.input.incar["LNONCOLLINEAR"]:
-                raise ValueError(
-                    "Spin constraints are only avilable for non collinear calculations."
+            if self.input.incar["ISPIN"] == 2:
+                final_cmd = "   ".join(
+                    [
+                        " ".join([str(spinmom) for spinmom in spin])
+                        if isinstance(spin, list) or isinstance(spin, np.ndarray)
+                        else str(spin)
+                        for spin in self.structure.get_initial_magnetic_moments()[
+                            self.sorted_indices
+                        ]
+                    ]
                 )
+                s.logger.debug("Magnetic Moments are: {0}".format(final_cmd))
+                if "MAGMOM" not in self.input.incar._dataset["Parameter"]:
+                    self.input.incar["MAGMOM"] = final_cmd
+                if any(
+                    [
+                        True
+                        if isinstance(spin, list) or isinstance(spin, np.ndarray)
+                        else False
+                        for spin in self.structure.get_initial_magnetic_moments()
+                    ]
+                ):
+                    self.input.incar["LNONCOLLINEAR"] = True
+                    if (
+                        self.spin_constraints
+                        and "M_CONSTR" not in self.input.incar._dataset["Parameter"]
+                    ):
+                        self.input.incar["M_CONSTR"] = final_cmd
+                    if (
+                        self.spin_constraints
+                        or "M_CONSTR" in self.input.incar._dataset["Parameter"]
+                    ):
+                        if "ISYM" not in self.input.incar._dataset["Parameter"]:
+                            self.input.incar["ISYM"] = 0
+                    if (
+                        self.spin_constraints
+                        and "LAMBDA" not in self.input.incar._dataset["Parameter"]
+                    ):
+                        raise ValueError(
+                            "LAMBDA is not specified but it is necessary for non collinear calculations."
+                        )
+                    if (
+                        self.spin_constraints
+                        and "RWIGS" not in self.input.incar._dataset["Parameter"]
+                    ):
+                        raise ValueError(
+                            "Parameter RWIGS has to be set for spin constraint calculations"
+                        )
+                if self.spin_constraints and not self.input.incar["LNONCOLLINEAR"]:
+                    raise ValueError(
+                        "Spin constraints are only avilable for non collinear calculations."
+                    )
         else:
             s.logger.debug("No magnetic moments")
 
