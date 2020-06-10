@@ -729,7 +729,7 @@ class VaspBase(GenericDFTJob):
         if any(self.structure.get_initial_magnetic_moments().flatten()):
             if "ISPIN" not in self.input.incar._dataset["Parameter"]:
                 self.input.incar["ISPIN"] = 2
-            if self.input.incar["ISPIN"] == 2:
+            if self.input.incar["ISPIN"] != 1:
                 final_cmd = "   ".join(
                     [
                         " ".join([str(spinmom) for spinmom in spin])
@@ -781,6 +781,10 @@ class VaspBase(GenericDFTJob):
                     raise ValueError(
                         "Spin constraints are only avilable for non collinear calculations."
                     )
+            else:
+                s.logger.debug(
+                    "Spin polarized calculation is switched off by the user. No magnetic moments are written."
+                )
         else:
             s.logger.debug("No magnetic moments")
 
