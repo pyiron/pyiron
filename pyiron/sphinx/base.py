@@ -296,10 +296,10 @@ class SphinxBase(GenericDFTJob):
                         if ss:
                             atom_group[-1]["movable" + xx] = True
         if not self.fix_symmetry:
-            structure_group.symmetry = {
+            structure_group.symmetry = Group({
                 "operator": {
                     "S": "[[1,0,0],[0,1,0],[0,0,1]]"
-            } }
+            } })
         return structure_group
 
     def load_default_input(self):
@@ -391,7 +391,7 @@ class SphinxBase(GenericDFTJob):
         the self.input.
         """
 
-        self.input.sphinx.main.setdefault("scfDiag", [])
+        self.input.sphinx.main.get("scfDiag", create = True)
         if len(self.restart_file_list) != 0 \
         and not self._generic_input["restart_for_band_structure"]:
             self.input.sphinx.main.scfDiag.append(
@@ -412,7 +412,7 @@ class SphinxBase(GenericDFTJob):
                 self.input.sphinx.main["ricQN"]["dF"] = str(
                     self.input["dF"] / HARTREE_OVER_BOHR_TO_EV_OVER_ANGSTROM
                 )
-            self.input.sphinx.main["ricQN"]["bornOppenheimer"] = Group()
+            self.input.sphinx.main.ricQN.create_group("bornOppenheimer")
             self.input.sphinx.main.ricQN.bornOppenheimer["scfDiag"] = \
                 self.get_scf_group()
         else:
@@ -518,20 +518,24 @@ class SphinxBase(GenericDFTJob):
             ):
                 raise ValueError("Sphinx only supports collinear spins.")
             else:
-                self.input.sphinx.initialGuess.rho.setdefault("atomicSpin", [])
+                rho = self.input.sphinx.initialGuess.rho
+                rho.get("atomicSpin", create = True)
                 if update_spins:
-                    self.input.sphinx.initialGuess.rho.atomicSpin = []
-                if len(self.input.sphinx.initialGuess.rho.atomicSpin) == 0:
+                    rho.atomicSpin.clear()
+                if len(rho.atomicSpin) == 0:
                     for spin in self.structure.get_initial_magnetic_moments()[
                         self.id_pyi_to_spx
                     ]:
-                        self.input.sphinx.initialGuess.rho["atomicSpin"].append(
-                            {"label": '"spin_' + str(spin) + '"', "spin": str(spin)}
+                        rho["atomicSpin"].append(
+                            Group({
+                                "label": '"spin_' + str(spin) + '"',
+                                "spin": str(spin)
+                            })
                         )
-        self.input.sphinx.initialGuess.setdefault(
-            "noWavesStorage", not self.input["WriteWaves"]
-            )
 
+        if "noWavesStorage" not in self.input.sphinx.initialGuess:
+            self.input.sphinx.initialGuess["noWavesStorage"] = \
+                    not self.input["WriteWaves"]
     def calc_static(
         self,
         electronic_steps=None,
@@ -1037,7 +1041,7 @@ class SphinxBase(GenericDFTJob):
                 mesh = self.get_k_mesh_by_cell(
                     kpoints_per_angstrom=kpoints_per_angstrom
                     )
-            self.input.sphinx.basis.kPoint = {}
+            self.input.sphinx.basis.create_group("kPoint")
             if mesh is not None:
                 self.input["KpointFolding"] = list(mesh)
                 self.input.sphinx.basis["folding"] = np.array(self.input["KpointFolding"])
@@ -1084,17 +1088,17 @@ class SphinxBase(GenericDFTJob):
                     )
 
             def make_point(point, n_path):
-                return {"coords":
+                return Group({"coords":
                     np.array(self.structure.get_high_symmetry_points()[point]),
                     "nPoints": n_path,
-                    "label": "\"{}\"".format(point.replace("'", "p"))}
+                    "label": "\"{}\"".format(point.replace("'", "p"))})
 
             kpoints = Group({"relative": True})
             kpoints["from"] = make_point(path[0][0], None)
             # from nodes are not supposed to have a nPoints attribute
             del kpoints["from/nPoints"]
 
-            kpoints["to"] = [make_point(path[0][1], n_path)]
+            kpoints.create_group("to").append(make_point(path[0][1], n_path))
 
             for segment in path[1:]:
                 # if the last node on the so far is not the same as the first

@@ -261,12 +261,8 @@ class TestSphinx(unittest.TestCase):
 
         self.sphinx_band_structure.set_kpoints(scheme="MP", mesh=mesh, center_shift=center_shift)
         self.assertTrue("kPoints" not in self.sphinx_band_structure.input.sphinx.basis)
-        self.assertEqual(
-                self.sphinx_band_structure.input.KpointFolding.to_builtin(),
-                mesh)
-        self.assertEqual(
-                self.sphinx_band_structure.input.KpointCoords.to_builtin(),
-                center_shift)
+        self.assertEqual( self.sphinx_band_structure.input.KpointFolding, mesh)
+        self.assertEqual( self.sphinx_band_structure.input.KpointCoords, center_shift)
 
     def test_set_empty_states(self):
         with self.assertRaises(ValueError):
@@ -397,7 +393,7 @@ class TestSphinx(unittest.TestCase):
         self.sphinx_band_structure.server.cores = 10
         self.assertRaises(AssertionError, self.sphinx_band_structure.validate_ready_to_run)
 
-        self.sphinx_band_structure.input.sphinx.main = {}
+        self.sphinx_band_structure.input.sphinx.main.clear()
         self.assertRaises(AssertionError, self.sphinx_band_structure.validate_ready_to_run)
 
         backup = self.sphinx.input.sphinx.basis.eCut
@@ -406,10 +402,9 @@ class TestSphinx(unittest.TestCase):
         self.sphinx.input.sphinx.basis.eCut = backup
 
         backup = self.sphinx.input.sphinx.basis.kPoint.copy()
-        self.sphinx.input.sphinx.basis.kPoint = {
-            "coords": [0.5, 0.5, 0.25],
-            "weight": 1
-        }
+        self.sphinx.input.sphinx.basis.kPoint.clear()
+        self.sphinx.input.sphinx.basis.kPoint.coords = [0.5, 0.5, 0.25]
+        self.sphinx.input.sphinx.basis.kPoint.weight = 1
         self.assertFalse(self.sphinx.validate_ready_to_run())
         self.sphinx.input.sphinx.basis.kPoint = backup
 

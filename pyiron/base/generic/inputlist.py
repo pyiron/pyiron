@@ -304,6 +304,15 @@ class InputList(MutableMapping):
     # allows 'nice' displays in jupyter notebooks
     _repr_json_ = to_builtin
 
+    def get(self, key, default = None, create = False):
+        """
+        If key exists, same as in base class, if not call create_group.
+        """
+        if create and key not in self:
+            return self.create_group(key)
+        else:
+            super().get(key, default = default)
+
     def append(self, val):
         '''
         Add new value to the list without a key.
