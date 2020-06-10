@@ -125,16 +125,14 @@ class TestInputList(unittest.TestCase):
         self.assertEqual(pl, InputList({0: 1, 1: 2, 'end': 3}))
 
     def test_set_sequence(self):
-        pl = InputList()
-        pl.append([])
-        pl['key'] = {}
-        pl.group = ()
-        self.assertTrue(isinstance(pl[0], InputList),
-                        'append does not set correct value')
-        self.assertTrue(isinstance(pl.key, InputList),
-                        'setitem does not set correct value')
-        self.assertTrue(isinstance(pl.group, InputList),
-                        'setattr does not set correct value')
+         pl = InputList()
+         pl.update({ 0: [], 'key': {}, 'group': () }, wrap = True)
+         self.assertTrue(isinstance(pl[0], InputList),
+                         'append does not wrap sequence')
+         self.assertTrue(isinstance(pl.key, InputList),
+                         'setitem does not wrap sequence')
+         self.assertTrue(isinstance(pl.group, InputList),
+                         'setattr does not wrap sequence')
 
     def test_set_append(self):
         pl = InputList()
@@ -149,7 +147,7 @@ class TestInputList(unittest.TestCase):
     def test_update(self):
         pl = InputList()
         d = self.pl.to_builtin()
-        pl.update(d)
+        pl.update(d, wrap = True)
         self.assertEqual(pl, self.pl,
                          'update from to_builtin does not restore list')
 
@@ -163,8 +161,7 @@ class TestInputList(unittest.TestCase):
                          "InputList")
         self.assertEqual(self.hdf["input/TYPE"],
                          "<class 'pyiron.base.generic.inputlist.InputList'>")
-        l = InputList()
-        l.update(json.loads(self.hdf["input/data"]))
+        l = InputList(json.loads(self.hdf["input/data"]))
         self.assertEqual(self.pl, l)
 
     def test_to_hdf_group(self):
@@ -175,8 +172,7 @@ class TestInputList(unittest.TestCase):
                          "<class 'pyiron.base.generic.inputlist.InputList'>")
         self.assertEqual(self.hdf["test_group/OBJECT"],
                          "InputList")
-        l = InputList()
-        l.update(json.loads(self.hdf["test_group/data"]))
+        l = InputList(json.loads(self.hdf["test_group/data"]))
         self.assertEqual(self.pl, l)
 
     def test_from_hdf(self):

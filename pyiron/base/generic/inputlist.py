@@ -140,26 +140,7 @@ class InputList(MutableMapping):
 
         if init == None: return
 
-        if isinstance(init, (Sequence, Set)):
-            for v in init:
-                self.append(self._wrap_val(v))
-
-        elif isinstance(init, Mapping):
-            for i, (k, v) in enumerate(init.items()):
-                k = _normalize(k)
-                v = self._wrap_val(v)
-                if isinstance(k, int):
-                    if k == i:
-                        self.append(v)
-                    else:
-                        raise ValueError(
-                            'keys in initializer must not be int or str of '
-                            'decimal digits or in correct order, '
-                            'is {!r}'.format(k))
-                else:
-                    self[k] = v
-        else:
-            ValueError('init must be Sequence, Set or Mapping')
+        self.update(init, wrap = True)
 
     def __len__(self):
         return len(self._store)
@@ -312,6 +293,31 @@ class InputList(MutableMapping):
             return self.create_group(key)
         else:
             super().get(key, default = default)
+
+    def update(self, init, wrap = False, **kwargs):
+        if wrap:
+            if isinstance(init, (Sequence, Set)):
+                for v in init:
+                    self.append(self._wrap_val(v))
+
+            elif isinstance(init, Mapping):
+                for i, (k, v) in enumerate(init.items()):
+                    k = _normalize(k)
+                    v = self._wrap_val(v)
+                    if isinstance(k, int):
+                        if k == i:
+                            self.append(v)
+                        else:
+                            raise ValueError(
+                                'keys in initializer must not be int or str of '
+                                'decimal digits or in correct order, '
+                                'is {!r}'.format(k))
+                    else:
+                        self[k] = v
+            else:
+                ValueError('init must be Sequence, Set or Mapping')
+        else:
+            super().update(init, **kwargs)
 
     def append(self, val):
         '''
@@ -466,4 +472,4 @@ class InputList(MutableMapping):
             data = hdf["data"]
 
         self.clear()
-        self.update(json.loads(data))
+        self.update(json.loads(data), wrap = True)
