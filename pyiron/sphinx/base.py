@@ -97,7 +97,6 @@ class SphinxBase(GenericDFTJob):
         self.input_writer = InputWriter()
         if self.check_vasp_potentials():
             self.input["VaspPot"] = True  # use VASP potentials if available
-        self._kpoints_odict = None
         self._generic_input["restart_for_band_structure"] = False
         self._generic_input["path_name"] = None
         self._generic_input["n_path"] = None
