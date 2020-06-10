@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import print_function
+import json
 import os
 import shutil
 from pathlib2 import Path
@@ -292,6 +293,9 @@ class Notebook(object):
             ):
                 custom_dict[k] = v
             return custom_dict
+        elif Path("input.json").exists():
+            with open("input.json") as f:
+                return json.load(f)
         else:
             print(hdf_file, "not found")
             return None
