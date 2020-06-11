@@ -259,24 +259,13 @@ class VaspPotentialSetter(object):
         return self._potential_dict.__repr__()
 
 
-def find_potential_file(file_name=None, xc=None, path=None, pot_path_dict=None):
+def find_potential_file(path):
     if path is not None:
         for resource_path in s.resource_paths:
             if os.path.exists(os.path.join(resource_path, "vasp", "potentials", path)):
                 return os.path.join(resource_path, "vasp", "potentials", path)
-    elif xc is not None and file_name is not None:
-        for resource_path in s.resource_paths:
-            if os.path.exists(
-                os.path.join(resource_path, "vasp", "potentials", pot_path_dict[xc])
-            ):
-                resource_path = os.path.join(
-                    resource_path, "vasp", "potentials", pot_path_dict[xc]
-                )
-            if "potentials" in resource_path:
-                for path, folder_lst, file_lst in os.walk(resource_path):
-                    if file_name in file_lst:
-                        return os.path.join(path, file_name)
-    raise ValueError("Either the filename or the functional has to be defined.")
+    raise ValueError("Either the filename or the functional has to be defined.",
+                     path, s.resource_paths)
 
 
 def get_enmax_among_species(symbol_lst, return_list=False, xc="PBE"):
@@ -300,8 +289,7 @@ def get_enmax_among_species(symbol_lst, return_list=False, xc="PBE"):
 
     for symbol in symbol_lst:
         potcar_file = find_potential_file(
-            path=vpf.find_default(symbol)['Filename'].values[0][0],
-            pot_path_dict=pot_path_dict
+            path=vpf.find_default(symbol)['Filename'].values[0][0]
         )
         with open(potcar_file) as pf:
             for i, line in enumerate(pf):
@@ -398,15 +386,13 @@ class Potcar(GenericParameters):
                 el_path = find_potential_file(
                     path=vasp_potentials.find_default(new_element)["Filename"].values[
                         0
-                    ][0],
-                    pot_path_dict=self.pot_path_dict,
+                    ][0]
                 )
                 if not (os.path.isfile(el_path)):
                     raise ValueError("such a file does not exist in the pp directory")
             else:
                 el_path = find_potential_file(
-                    path=vasp_potentials.find_default(el)["Filename"].values[0][0],
-                    pot_path_dict=self.pot_path_dict,
+                    path=vasp_potentials.find_default(el)["Filename"].values[0][0]
                 )
 
             if not (os.path.isfile(el_path)):

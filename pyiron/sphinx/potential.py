@@ -76,23 +76,13 @@ class SphinxJTHPotentialFile(VaspPotentialAbstract):
         self._default_df = self._default_df.append(ds)
 
 
-def find_potential_file(file_name=None, xc=None, path=None, pot_path_dict=None):
+def find_potential_file(path):
     if path is not None:
         for resource_path in s.resource_paths:
             if os.path.exists(os.path.join(resource_path, "sphinx", "potentials", path)):
                 return os.path.join(resource_path, "sphinx", "potentials", path)
-    elif xc is not None and file_name is not None:
-        for resource_path in s.resource_paths:
-            if os.path.exists(
-                os.path.join(resource_path, "sphinx", "potentials", pot_path_dict[xc])
-            ):
-                resource_path = os.path.join(
-                    resource_path, "sphinx", "potentials", pot_path_dict[xc]
-                )
-            if "potentials" in resource_path:
-                for path, folder_lst, file_lst in os.walk(resource_path):
-                    if file_name in file_lst:
-                        return os.path.join(path, file_name)
+        if os.path.exists(os.path.join(os.environ["CONDA_PREFIX"], "share", "sphinxdft", path)):
+            return os.path.join(resource_path, "sphinx", "potentials", path)
     raise ValueError("Either the filename or the functional has to be defined.",
-                     file_name, xc, path, pot_path_dict, s.resource_paths)
+                     path, s.resource_paths)
 

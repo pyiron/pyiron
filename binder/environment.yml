@@ -6,6 +6,7 @@ dependencies:
 - lammps
 - gpaw
 - sphinxdft
+- sphinxdft-data
 - nglview
 - seaborn
 - ovito
