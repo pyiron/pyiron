@@ -1610,18 +1610,17 @@ class GenericError(object):
         self._job = job
 
     def print_message(self, string=''):
-        return self._print_error('error.msg', string=string)
+        return self._print_error(file_name='error.msg', string=string)
 
     def print_queue(self, string=''):
-        return self._print_error('error.out', string=string)
+        return self._print_error(file_name='error.out', string=string)
 
     def _print_error(self, file_name, string='', print_yes=True):
         if self._job[file_name] is None:
             return False
-        else:
-            if print_yes:
-                print(string.join(self._job[file_name]))
-            return True
+        elif print_yes:
+            print(string.join(self._job[file_name]))
+        return True
 
 
 def multiprocess_wrapper(job_id, working_dir, debug=False):
