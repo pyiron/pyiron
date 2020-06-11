@@ -10,7 +10,7 @@ import shutil
 import os
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
-from pyiron.atomistics.job.potentials import PotentialAbstract
+from pyiron.atomistics.job.potentials import PotentialAbstract, find_potential_file_base
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"
 __copyright__ = (
@@ -80,15 +80,11 @@ class LammpsPotential(GenericParameters):
             if "CONDA_PREFIX" in env.keys():  # support iprpy-data package
                 resource_path_lst += [os.path.join(env["CONDA_PREFIX"], "share", "iprpy")]
             for path in relative_file_paths:
-                for resource_path in resource_path_lst:
-                    path_direct = os.path.join(resource_path, path)
-                    path_indirect = os.path.join(resource_path, "lammps", "potentials", path)
-                    if os.path.exists(path_direct):
-                        absolute_file_paths.append(path_direct)
-                        break
-                    elif os.path.exists(path_indirect):
-                        absolute_file_paths.append(path_indirect)
-                        break
+                absolute_file_paths.append(find_potential_file_base(
+                    path=path,
+                    resource_path_lst=resource_path_lst,
+                    rel_path=os.path.join("lammps", "potentials")
+                ))
             if len(absolute_file_paths) != len(list(self._df["Filename"])[0]):
                 raise ValueError("Was not able to locate the potentials.")
             else:

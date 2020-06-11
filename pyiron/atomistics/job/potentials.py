@@ -161,8 +161,9 @@ class PotentialAbstract(object):
             pandas.DataFrame:
         """
         for resource_path in s.resource_paths:
-            if os.path.exists(os.path.join(resource_path, plugin_name, "potentials")):
-                resource_path = os.path.join(resource_path, plugin_name, "potentials")
+            pot_path = os.path.join(resource_path, plugin_name, "potentials")
+            if os.path.exists(pot_path):
+                resource_path = pot_path
             if "potentials" in resource_path:
                 for path, folder_lst, file_lst in os.walk(resource_path):
                     for periodic_table_file_name in file_name_lst:
@@ -182,3 +183,16 @@ class PotentialAbstract(object):
                                 os.path.join(path, periodic_table_file_name), mode="r"
                             )
         raise ValueError("Was not able to locate the potential files.")
+
+
+def find_potential_file_base(path, resource_path_lst, rel_path):
+    if path is not None:
+        for resource_path in resource_path_lst:
+            path_direct = os.path.join(resource_path, path)
+            path_indirect = os.path.join(resource_path, rel_path, path)
+            if os.path.exists(path_direct):
+                return path_direct
+            elif os.path.exists(path_indirect):
+                return path_indirect
+    raise ValueError("Either the filename or the functional has to be defined.",
+                     path, resource_path_lst)

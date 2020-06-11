@@ -10,7 +10,7 @@ import pandas
 import tables
 from pyiron.base.generic.parameters import GenericParameters
 from pyiron.base.settings.generic import Settings
-from pyiron.atomistics.job.potentials import PotentialAbstract
+from pyiron.atomistics.job.potentials import PotentialAbstract, find_potential_file_base
 
 __author__ = "Jan Janssen"
 __copyright__ = (
@@ -260,13 +260,11 @@ class VaspPotentialSetter(object):
 
 
 def find_potential_file(path):
-    if path is not None:
-        for resource_path in s.resource_paths:
-            pot_path = os.path.join(resource_path, "vasp", "potentials", path)
-            if os.path.exists(pot_path):
-                return pot_path
-    raise ValueError("Either the filename or the functional has to be defined.",
-                     path, s.resource_paths)
+    return find_potential_file_base(
+        path=path,
+        resource_path_lst=s.resource_paths,
+        rel_path=os.path.join("vasp", "potentials")
+    )
 
 
 def get_enmax_among_species(symbol_lst, return_list=False, xc="PBE"):
