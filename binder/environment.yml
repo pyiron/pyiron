@@ -4,6 +4,7 @@ dependencies:
 - python
 - pyiron
 - lammps
+- iprpy-data
 - gpaw
 - sphinxdft
 - sphinxdft-data
