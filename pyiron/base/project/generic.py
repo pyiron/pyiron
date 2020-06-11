@@ -41,6 +41,7 @@ from pyiron.base.server.queuestatus import (
     queue_enable_reservation,
     queue_check_job_is_waiting_or_running,
 )
+from pyiron.base.job.script import Notebook
 
 """
 The project object is the central import point of pyiron - all other objects can be created from this one
@@ -630,6 +631,10 @@ class Project(ProjectPath):
             element_lst=element_lst,
         )
         return df["status"].value_counts()
+
+    @staticmethod
+    def get_external_input():
+        return Notebook.get_custom_dict()
 
     def keys(self):
         """
