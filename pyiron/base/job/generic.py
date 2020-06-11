@@ -168,6 +168,7 @@ class GenericJob(JobCore):
         self._compress_by_default = False
         self._python_only_job = False
         self.interactive_cache = None
+        self.error = GenericError(job=self)
 
         for sig in intercepted_signals:
             signal.signal(sig, self.signal_intercept)
@@ -1602,6 +1603,24 @@ class GenericJob(JobCore):
         Mainly used by the ListMaster job type.
         """
         pass
+
+
+class GenericError(object):
+    def __init__(self, job):
+        self._job = job
+
+    def print_message(self, string=''):
+        return self._print_error(file_name='error.msg', string=string)
+
+    def print_queue(self, string=''):
+        return self._print_error(file_name='error.out', string=string)
+
+    def _print_error(self, file_name, string='', print_yes=True):
+        if self._job[file_name] is None:
+            return False
+        elif print_yes:
+            print(string.join(self._job[file_name]))
+        return True
 
 
 def multiprocess_wrapper(job_id, working_dir, debug=False):
