@@ -75,16 +75,19 @@ class LammpsPotential(GenericParameters):
                 for files in list(self._df["Filename"])[0]
                 if not os.path.isabs(files)
             ]
+            env = os.environ
+            resource_path_lst = s.resource_paths
+            if "CONDA_PREFIX" in env.keys():  # support iprpy-data package
+                resource_path_lst += [os.path.join(env["CONDA_PREFIX"], "share", "iprpy")]
             for path in relative_file_paths:
-                for resource_path in s.resource_paths:
-                    if os.path.exists(
-                        os.path.join(resource_path, "lammps", "potentials")
-                    ):
-                        resource_path = os.path.join(
-                            resource_path, "lammps", "potentials"
-                        )
-                    if os.path.exists(os.path.join(resource_path, path)):
-                        absolute_file_paths.append(os.path.join(resource_path, path))
+                for resource_path in resource_path_lst:
+                    path_direct = os.path.join(resource_path, path)
+                    path_indirect = os.path.join(resource_path, "lammps", "potentials", path)
+                    if os.path.exists(path_direct):
+                        absolute_file_paths.append(path_direct)
+                        break
+                    elif os.path.exists(path_indirect):
+                        absolute_file_paths.append(path_indirect)
                         break
             if len(absolute_file_paths) != len(list(self._df["Filename"])[0]):
                 raise ValueError("Was not able to locate the potentials.")

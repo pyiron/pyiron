@@ -262,8 +262,9 @@ class VaspPotentialSetter(object):
 def find_potential_file(path):
     if path is not None:
         for resource_path in s.resource_paths:
-            if os.path.exists(os.path.join(resource_path, "vasp", "potentials", path)):
-                return os.path.join(resource_path, "vasp", "potentials", path)
+            pot_path = os.path.join(resource_path, "vasp", "potentials", path)
+            if os.path.exists(pot_path):
+                return pot_path
     raise ValueError("Either the filename or the functional has to be defined.",
                      path, s.resource_paths)
 
