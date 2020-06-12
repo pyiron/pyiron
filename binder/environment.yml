@@ -13,3 +13,4 @@ dependencies:
 - ovito
 - pyscal
 - jupyterlab
+- pyiron-data
