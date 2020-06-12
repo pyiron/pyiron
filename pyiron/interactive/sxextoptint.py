@@ -47,6 +47,7 @@ class SxExtOpt(InteractiveInterface):
         executable=None,
         ssa=False,
     ):
+        super().__init__()
         self.__name__ = "SxExtOpt"
         if working_directory is None:
             warnings.warn("WARNING: working_directory not set; current folder is used")
