@@ -634,7 +634,19 @@ class Project(ProjectPath):
 
     @staticmethod
     def get_external_input():
-        return Notebook.get_custom_dict()
+        """
+        Get external input either from the HDF5 file of the ScriptJob object which executes the Jupyter notebook
+        or from an input.json file located in the same directory as the Jupyter notebook. 
+        
+        Returns:
+            dict: Dictionary with external input
+        """
+        inputdict = Notebook.get_custom_dict()
+        if inputdict is None:
+            raise ValueError("No input found, either there is an issue with your ScriptJob, " + 
+                             "or your input.json file is not located in the same directory " +
+                             "as your Jupyter Notebook.")
+        return inputdict
 
     def keys(self):
         """
