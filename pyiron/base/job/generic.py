@@ -1015,7 +1015,6 @@ class GenericJob(JobCore):
             obj_type=[
                 "pyiron.base.master.parallel.ParallelMaster",
                 "pyiron.base.master.serial.SerialMasterBase",
-                "pyiron.atomistic.job.interactivewrapper.InteractiveWrapper",
             ],
         ):
             job.ref_job = self
@@ -1026,6 +1025,13 @@ class GenericJob(JobCore):
                 or self.server.run_mode.interactive_non_modal
             ):
                 job.server.run_mode.interactive = True
+        elif static_isinstance(
+            obj=job.__class__,
+            obj_type=[
+                "pyiron.atomistics.job.interactivewrapper.InteractiveWrapper",
+            ],
+        ):
+            job.ref_job = self
         return job
 
     def update_master(self):
