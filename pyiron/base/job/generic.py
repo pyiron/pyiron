@@ -1015,7 +1015,7 @@ class GenericJob(JobCore):
             obj_type=[
                 "pyiron.base.master.parallel.ParallelMaster",
                 "pyiron.base.master.serial.SerialMasterBase",
-                "pyiron.atomistic.job.interactivewrapper.InteractiveWrapper",
+                "pyiron.atomistics.job.interactivewrapper.InteractiveWrapper",
             ],
         ):
             job.ref_job = self
