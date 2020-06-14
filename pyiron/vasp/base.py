@@ -1016,57 +1016,6 @@ class VaspBase(GenericDFTJob):
         for key in kwargs.keys():
             self.logger.warning("Tag {} not relevant for vasp".format(key))
 
-    def set_kpoints(
-        self,
-        mesh=None,
-        scheme="MP",
-        center_shift=None,
-        symmetry_reduction=True,
-        manual_kpoints=None,
-        weights=None,
-        reciprocal=True,
-        kpoints_per_reciprocal_angstrom=None,
-        n_path=None,
-        path_name=None,
-    ):
-        """
-        Function to setup the k-points
-
-        Args:
-            mesh (list): Size of the mesh (ignored if scheme is not set to 'MP' or kpoints_per_reciprocal_angstrom is set)
-            scheme (str): Type of k-point generation scheme (MP/GC(gamma centered)/GP(gamma point)/Manual/Line)
-            center_shift (list): Shifts the center of the mesh from the gamma point by the given vector in relative coordinates
-            symmetry_reduction (boolean): Tells if the symmetry reduction is to be applied to the k-points
-            manual_kpoints (list/numpy.ndarray): Manual list of k-points
-            weights(list/numpy.ndarray): Manually supplied weights to each k-point in case of the manual mode
-            reciprocal (bool): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
-            reciprocal space)
-            kpoints_per_reciprocal_angstrom (float): Number of kpoint per angstrom in each direction
-            n_path (int): Number of points per trace part for line mode
-            path_name (str): Name of high symmetry path used for band structure calculations.
-        """
-        if kpoints_per_reciprocal_angstrom is not None:
-            if mesh is not None:
-                warnings.warn("mesh value is overwritten by kpoints_per_reciprocal_angstrom")
-            mesh = self.get_k_mesh_by_cell(kpoints_per_reciprocal_angstrom=kpoints_per_reciprocal_angstrom)
-        if mesh is not None:
-            if np.min(mesh) <= 0:
-                raise ValueError("mesh values must be larger than 0")
-        if center_shift is not None:
-            if np.min(center_shift) < 0 or np.max(center_shift) > 1:
-                warnings.warn("center_shift is given in relative coordinates")
-        self._set_kpoints(
-            mesh=mesh,
-            scheme=scheme,
-            center_shift=center_shift,
-            symmetry_reduction=symmetry_reduction,
-            manual_kpoints=manual_kpoints,
-            weights=weights,
-            reciprocal=reciprocal,
-            n_path=n_path,
-            path_name=path_name,
-        )
-
     def _set_kpoints(
         self,
         mesh=None,
