@@ -196,12 +196,10 @@ class SxExtOpt(InteractiveInterface):
             self._delete_named_pipes()
 
     def _delete_named_pipes(self):
-        control_path = posixpath.join(self.working_directory, "control")
-        if os.path.exists(control_path):
-            os.remove(control_path)
-        response_path = posixpath.join(self.working_directory, "response")
-        if os.path.exists(response_path):
-            os.remove(response_path)
+        for file in ["control", "response"]:
+            file_path = posixpath.join(self.working_directory, "control")
+            if os.path.exists(file_path):
+                os.remove(file_path)
 
     def interactive_is_activated(self):
         if self._interactive_library is None:
