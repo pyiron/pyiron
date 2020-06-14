@@ -56,7 +56,10 @@ class AutorestoredConnection:
 
     def close(self):
         if self._conn is not None:
-            self._conn.close()
+            try:
+                self._conn.close()
+            except ProgrammingError:
+                pass
 
 
 class DatabaseAccess(object):
@@ -158,11 +161,8 @@ class DatabaseAccess(object):
         Returns:
 
         """
-        try:
-            if not self._keep_connection:
-                self.conn.close()
-        except ProgrammingError:
-            pass
+        if not self._keep_connection:
+            self.conn.close()
 
     def __reload_db(self):
         """
