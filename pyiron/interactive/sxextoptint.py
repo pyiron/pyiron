@@ -193,11 +193,12 @@ class SxExtOpt(InteractiveInterface):
         if self.interactive_is_activated():
             self._interactive_library.close()
             self._interactive_library_read.close()
-            self._delete_named_pipes()
+            self._delete_named_pipes(working_directory=self.working_directory)
 
-    def _delete_named_pipes(self):
+    @staticmethod 
+    def _delete_named_pipes(working_directory):
         for file in ["control", "response"]:
-            file_path = posixpath.join(self.working_directory, "control")
+            file_path = posixpath.join(working_directory, file)
             if os.path.exists(file_path):
                 os.remove(file_path)
 
@@ -280,7 +281,7 @@ class SxExtOpt(InteractiveInterface):
         if self.interactive_is_activated():
             self.interactive_close()
         else:
-            self._delete_named_pipes()
+            self._delete_named_pipes(working_directory=self.working_directory)
 
 
 class SxExtOptInteractive(InteractiveWrapper):
