@@ -56,10 +56,7 @@ class AutorestoredConnection:
 
     def close(self):
         if self._conn is not None:
-            try:
-                self._conn.close()
-            except ProgrammingError:
-                pass
+            self._conn.close()
 
 
 class DatabaseAccess(object):
