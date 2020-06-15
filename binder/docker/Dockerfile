@@ -63,6 +63,7 @@ RUN cd /tmp \
     && ${SHELL} miniconda.sh -f -b -p ${CONDA_DIR} \
     && rm miniconda.sh \
     && ${CONDA_DIR}/bin/conda install --yes conda==${MINICONDA_VER} \
+    && source ${CONDA_DIR}/bin/activate \
     && conda env update -n root -f "${HOME}/binder/environment.yml" \
     && conda install --yes -c conda-forge nodejs \
     && ${SHELL} ${HOME}/binder/postBuild \
