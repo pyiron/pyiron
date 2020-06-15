@@ -299,7 +299,7 @@ class InputList(MutableMapping):
         if create and key not in self:
             return self.create_group(key)
         else:
-            super().get(key, default = default)
+            return super().get(key, default = default)
 
     def update(self, init, wrap = False, **kwargs):
         if wrap:
