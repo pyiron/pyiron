@@ -39,6 +39,11 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US.UTF-8
 ENV HOME /home/${PYIRON_USER}
 
+# Openmpi fixes
+ENV OMPI_MCA_plm isolated
+ENV OMPI_MCA_rmaps_base_oversubscribe yes
+ENV OMPI_MCA_btl_vader_single_copy_mechanism none
+
 # Configure Miniconda
 ENV MINICONDA_VER 4.8.2
 ENV MINICONDA Miniconda3-py37_${MINICONDA_VER}-Linux-x86_64.sh
