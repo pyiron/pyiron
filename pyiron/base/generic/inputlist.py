@@ -4,7 +4,6 @@ Lists structure for versatile input handling.
 
 import copy
 from collections.abc import Sequence, Set, Mapping, MutableMapping
-import json
 import numpy as np
 
 def _normalize(key):
@@ -299,7 +298,6 @@ class InputList(MutableMapping):
                                 for v in self.values())
 
     # allows 'nice' displays in jupyter notebooks
-    _repr_json_ = to_builtin
     def _repr_json_(self):
         return self.to_builtin(stringify = True)
 

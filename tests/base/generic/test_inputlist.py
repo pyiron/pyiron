@@ -3,7 +3,6 @@ from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.base.project.generic import Project
 import os
 import unittest
-import json
 
 class TestInputList(unittest.TestCase):
 
