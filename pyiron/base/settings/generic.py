@@ -186,11 +186,11 @@ class Settings(with_metaclass(Singleton)):
         """
         return self._configuration["resource_paths"]
 
-    def __del__(self):
-        """
-        Close database connection
-        """
-        self.close_connection()
+    # def __del__(self):
+    #     """
+    #     Close database connection
+    #     """
+    #     self.close_connection()
 
     def open_connection(self):
         """
