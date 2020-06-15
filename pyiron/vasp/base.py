@@ -733,7 +733,7 @@ class VaspBase(GenericDFTJob):
                 final_cmd = "   ".join(
                     [
                         " ".join([str(spinmom) for spinmom in spin])
-                        if isinstance(spin, list) or isinstance(spin, np.ndarray)
+                        if isinstance(spin, (list, np.ndarray))
                         else str(spin)
                         for spin in self.structure.get_initial_magnetic_moments()[
                             self.sorted_indices
@@ -745,10 +745,7 @@ class VaspBase(GenericDFTJob):
                     self.input.incar["MAGMOM"] = final_cmd
                 if any(
                     [
-                        True
-                        if isinstance(spin, list) or isinstance(spin, np.ndarray)
-                        else False
-                        for spin in self.structure.get_initial_magnetic_moments()
+                        isinstance(spin, (list, np.ndarray)) for spin in self.structure.get_initial_magnetic_moments()
                     ]
                 ):
                     self.input.incar["LNONCOLLINEAR"] = True
