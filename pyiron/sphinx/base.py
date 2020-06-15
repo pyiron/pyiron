@@ -391,9 +391,9 @@ class SphinxBase(GenericDFTJob):
         the self.input.
         """
 
-        self.input.sphinx.main.get("scfDiag", create = True)
         if len(self.restart_file_list) != 0 \
         and not self._generic_input["restart_for_band_structure"]:
+            self.input.sphinx.main.get("scfDiag", create = True)
             self.input.sphinx.main.scfDiag.append(
                 self.get_scf_group(
                     maxSteps=10, keepRhoFixed=True, dEnergy=1.0e-4
