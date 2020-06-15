@@ -124,16 +124,6 @@ class TestInputList(unittest.TestCase):
         pl['end'] = 3
         self.assertEqual(pl, InputList({0: 1, 1: 2, 'end': 3}))
 
-    def test_set_sequence(self):
-         pl = InputList()
-         pl.update({ 0: [], 'key': {}, 'group': () }, wrap = True)
-         self.assertTrue(isinstance(pl[0], InputList),
-                         'append does not wrap sequence')
-         self.assertTrue(isinstance(pl.key, InputList),
-                         'setitem does not wrap sequence')
-         self.assertTrue(isinstance(pl.group, InputList),
-                         'setattr does not wrap sequence')
-
     def test_set_append(self):
         pl = InputList()
         # should not raise and exception
