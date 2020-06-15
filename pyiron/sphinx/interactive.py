@@ -76,7 +76,11 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
     def coarse_run(self):
         if "CoarseRun" in list(self.input.get_pandas()["Parameter"]):
             self._coarse_run = self.input["CoarseRun"]
-        return self._coarse_run
+        try:
+            return self._coarse_run
+        except AttributeError:
+            self._coarse_run = False
+            return self._coarse_run
 
     @coarse_run.setter
     def coarse_run(self, value):
@@ -273,7 +277,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
     def run_if_interactive(self):
         super(SphinxInteractive, self).run_if_interactive()
         self._logger.debug("interactive run - start ...")
-        if self._coarse_run:
+        if self.coarse_run:
             self._interactive_pipe_write("run coarseelectronicminimization")
         else:
             self._interactive_pipe_write("run electronicminimization")
@@ -285,7 +289,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
             self.interactive_fetch()
         super(SphinxInteractive, self).run_if_interactive()
         self._logger.debug("interactive run - start ...")
-        if self._coarse_run:
+        if self.coarse_run:
             self._interactive_pipe_write("run coarseelectronicminimization")
         else:
             self._interactive_pipe_write("run electronicminimization")
