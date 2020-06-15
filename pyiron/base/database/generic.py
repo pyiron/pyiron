@@ -161,7 +161,8 @@ class DatabaseAccess(object):
         Returns:
 
         """
-        self.conn.close()
+        if not self._keep_connection:
+            self.conn.close()
 
     def __reload_db(self):
         """
