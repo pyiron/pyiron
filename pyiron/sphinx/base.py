@@ -616,7 +616,7 @@ class SphinxBase(GenericDFTJob):
             self.input["Estep"] = electronic_steps
         if ionic_steps is not None:
             self.input["Istep"] = ionic_steps
-        elif self.input["Istep"] is None:
+        elif "Istep" not in self.input:
             self.input["Istep"] = 100
         if ionic_forces is not None:
             if ionic_forces < 0:
