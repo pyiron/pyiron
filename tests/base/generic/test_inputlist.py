@@ -151,7 +151,7 @@ class TestInputList(unittest.TestCase):
                          "InputList")
         self.assertEqual(self.hdf["input/TYPE"],
                          "<class 'pyiron.base.generic.inputlist.InputList'>")
-        l = InputList(json.loads(self.hdf["input/data"]))
+        l = InputList(self.hdf["input/data"])
         self.assertEqual(self.pl, l)
 
     def test_to_hdf_group(self):
@@ -162,7 +162,7 @@ class TestInputList(unittest.TestCase):
                          "<class 'pyiron.base.generic.inputlist.InputList'>")
         self.assertEqual(self.hdf["test_group/OBJECT"],
                          "InputList")
-        l = InputList(json.loads(self.hdf["test_group/data"]))
+        l = InputList(self.hdf["test_group/data"])
         self.assertEqual(self.pl, l)
 
     def test_from_hdf(self):

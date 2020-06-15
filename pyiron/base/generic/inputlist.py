@@ -272,10 +272,17 @@ class InputList(MutableMapping):
         '''
 
         if self.has_keys():
-            dd = dict(self)
-            for k, v in dd.items():
+            dd = {}
+            for k, v in self.items():
+                # force all string keys in output to work with h5io (it
+                # requires all string keys when storing as json), since
+                # _normalize calls int() on all digit string keys this is
+                # transparent for the rest of the module
+                k = str(k)
                 if isinstance(v, InputList):
                     dd[k] = v.to_builtin()
+                else:
+                    dd[k] = v
 
             return dd
         else:
@@ -437,7 +444,7 @@ class InputList(MutableMapping):
             hdf = hdf.create_group(group_name)
 
         self._type_to_hdf(hdf)
-        hdf["data"] = json.dumps(self.to_builtin())
+        hdf["data"] = self.to_builtin()
 
     def _type_to_hdf(self, hdf):
         """
@@ -472,4 +479,4 @@ class InputList(MutableMapping):
             data = hdf["data"]
 
         self.clear()
-        self.update(json.loads(data), wrap = True)
+        self.update(data, wrap = True)
