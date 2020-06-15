@@ -147,7 +147,6 @@ class TestVasp(unittest.TestCase):
 
         self.assertRaises(ValueError, self.job.write_magmoms)
 
-
     def test_set_empty_states(self):
         atoms = CrystalStructure("Pt", BravaisBasis="fcc", a=3.98)
         self.job.structure = atoms
