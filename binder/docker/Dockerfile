@@ -29,7 +29,7 @@ RUN echo "@testing http://nl.alpinelinux.org/alpine/edge/testing" >> /etc/apk/re
     && rm -rf glibc*apk /var/cache/apk/*
 
 # Configure environment
-ENV CONDA_DIR /opt/conda
+ENV CONDA_DIR /srv/conda/envs/notebook/
 ENV PATH ${CONDA_DIR}/bin:${PATH}
 ENV SHELL /bin/bash
 ENV PYIRON_USER pyiron

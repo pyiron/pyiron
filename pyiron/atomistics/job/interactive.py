@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import numpy as np
+from pyiron.base.settings.generic import Settings
 from pyiron.base.job.interactive import InteractiveBase
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
@@ -19,6 +20,8 @@ __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
 __status__ = "development"
 __date__ = "Sep 1, 2017"
+
+s = Settings()
 
 
 class GenericInteractive(AtomisticGenericJob, InteractiveBase):
@@ -570,6 +573,9 @@ class GenericInteractiveOutput(GenericOutput):
 
 
 class InteractiveInterface(object):
+    def __init__(self):
+        self._logger = s.logger
+
     def get_cell(self):
         raise NotImplementedError
 

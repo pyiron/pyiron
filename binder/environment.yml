@@ -4,10 +4,13 @@ dependencies:
 - python
 - pyiron
 - lammps
+- iprpy-data
 - gpaw
 - sphinxdft
+- sphinxdft-data
 - nglview
 - seaborn
 - ovito
 - pyscal
 - jupyterlab
+- pyiron-data

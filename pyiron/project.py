@@ -22,6 +22,7 @@ from pyiron.vasp.potential import VaspPotential
 import pyiron.atomistics.structure.pyironase as ase
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.structure.generator import create_surface, create_ase_bulk, create_structure
+from pyiron.atomistics.master.parallel import pipe
 
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
@@ -672,3 +673,16 @@ class Project(ProjectCore):
 
         """
         ProjectGUI(self)
+
+    def create_pipeline(self, job, step_lst):
+        """
+        Create a job pipeline
+
+        Args:
+            job (AtomisticGenericJob): Template for the calculation
+            step_lst (list): List of functions which create calculations
+
+        Returns:
+            FlexibleMaster:
+        """
+        return pipe(project=self, job=job, step_lst=step_lst)
