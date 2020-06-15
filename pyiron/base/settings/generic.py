@@ -186,12 +186,6 @@ class Settings(with_metaclass(Singleton)):
         """
         return self._configuration["resource_paths"]
 
-    def __del__(self):
-        """
-        Close database connection
-        """
-        self.close_connection()
-
     def open_connection(self):
         """
         Internal function to open the connection to the database. Only after this function is called the database is
