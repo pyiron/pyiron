@@ -1711,7 +1711,7 @@ class Group(InputList):
 
     def set_group(self, name, content=None):
         if content is None:
-            self.add_group(name)
+            self.create_group(name)
         else:
             self.set(name, content)
 
