@@ -37,6 +37,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
         self._interactive_write_input_files = True
         self._interactive_library_read = None
         self._interactive_fetch_completed = True
+        self._coarse_run = False
 
     @property
     def structure(self):
@@ -273,7 +274,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
     def run_if_interactive(self):
         super(SphinxInteractive, self).run_if_interactive()
         self._logger.debug("interactive run - start ...")
-        if self._coarse_run:
+        if self.coarse_run:
             self._interactive_pipe_write("run coarseelectronicminimization")
         else:
             self._interactive_pipe_write("run electronicminimization")
@@ -285,7 +286,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
             self.interactive_fetch()
         super(SphinxInteractive, self).run_if_interactive()
         self._logger.debug("interactive run - start ...")
-        if self._coarse_run:
+        if self.coarse_run:
             self._interactive_pipe_write("run coarseelectronicminimization")
         else:
             self._interactive_pipe_write("run electronicminimization")
