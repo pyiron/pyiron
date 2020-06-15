@@ -37,6 +37,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
         self._interactive_write_input_files = True
         self._interactive_library_read = None
         self._interactive_fetch_completed = True
+        self._coarse_run = False
 
     @property
     def structure(self):
@@ -76,11 +77,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
     def coarse_run(self):
         if "CoarseRun" in list(self.input.get_pandas()["Parameter"]):
             self._coarse_run = self.input["CoarseRun"]
-        try:
-            return self._coarse_run
-        except AttributeError:
-            self._coarse_run = False
-            return self._coarse_run
+        return self._coarse_run
 
     @coarse_run.setter
     def coarse_run(self, value):
