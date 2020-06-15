@@ -67,6 +67,7 @@ RUN cd /tmp \
     && conda env update -n root -f "${HOME}/binder/environment.yml" \
     && conda install --yes -c conda-forge nodejs \
     && ${SHELL} ${HOME}/binder/postBuild \
+    && ${CONDA_DIR}/bin/pip install --pre pyiron \
     && conda clean --all -y \
     && rm ${HOME}/Dockerfile ${HOME}/deploy.sh
 
