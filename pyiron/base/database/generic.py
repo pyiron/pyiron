@@ -21,7 +21,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.pool import NullPool
 from sqlalchemy.sql import select
-from sqlalchemy.exc import OperationalError, DatabaseError, ProgrammingError
+from sqlalchemy.exc import OperationalError, DatabaseError
 
 """
 DatabaseAccess class deals with accessing the database
@@ -161,8 +161,7 @@ class DatabaseAccess(object):
         Returns:
 
         """
-        if not self._keep_connection:
-            self.conn.close()
+        self.conn.close()
 
     def __reload_db(self):
         """
