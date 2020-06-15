@@ -266,9 +266,13 @@ class InputList(MutableMapping):
         else:
             return val
 
-    def to_builtin(self):
+    def to_builtin(self, stringify = False):
         '''
         Convert the list back to builtin dict's and list's recursively.
+
+        Args:
+            stringify (bool, optinal): convert all non-recursive elements to
+            str
         '''
 
         if self.has_keys():
@@ -280,17 +284,24 @@ class InputList(MutableMapping):
                 # transparent for the rest of the module
                 k = str(k)
                 if isinstance(v, InputList):
-                    dd[k] = v.to_builtin()
+                    dd[k] = v.to_builtin(stringify = stringify)
                 else:
-                    dd[k] = v
+                    dd[k] = repr(v) if stringify else v
 
             return dd
+        elif stringify:
+            return list(v.to_builtin(stringify = stringify)
+                            if isinstance(v, InputList) else repr(v)
+                                for v in self.values())
         else:
-            return list(v.to_builtin() if isinstance(v, InputList) else v
-                            for v in self.values())
+            return list(v.to_builtin(stringify = stringify)
+                            if isinstance(v, InputList) else v
+                                for v in self.values())
 
     # allows 'nice' displays in jupyter notebooks
     _repr_json_ = to_builtin
+    def _repr_json_(self):
+        return self.to_builtin(stringify = True)
 
     def get(self, key, default = None, create = False):
         """
