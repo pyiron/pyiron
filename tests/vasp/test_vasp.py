@@ -13,6 +13,7 @@ from pyiron.vasp.potential import VaspPotentialSetter
 from pyiron.vasp.vasp import Vasp
 from pyiron.vasp.metadyn import VaspMetadyn
 from pyiron.vasp.structure import read_atoms
+import numpy as np
 
 __author__ = "Sudarsan Surendralal"
 
@@ -98,6 +99,53 @@ class TestVasp(unittest.TestCase):
         atoms = CrystalStructure("Pt", BravaisBasis="fcc", a=3.98)
         self.job.structure = atoms
         self.assertEqual(self.job.get_nelect(), 10)
+
+    def test_write_magmoms(self):
+        magmom = np.arange(8.)
+        magmom_ncl = np.zeros([8, 3])
+        magmom_ncl[:, 0] = magmom / 2
+        magmom_ncl[:, 1] = magmom
+        magmom_ncl[:, 2] = magmom ** 2
+
+        magmom_str = "0.0   1.0   2.0   3.0   4.0   5.0   6.0   7.0"
+        magmom_ncl_str =\
+            "0.0 0.0 0.0   0.5 1.0 1.0   1.0 2.0 4.0   1.5 3.0 9.0   " \
+            "2.0 4.0 16.0   2.5 5.0 25.0   3.0 6.0 36.0   3.5 7.0 49.0"
+
+        self.job.structure = CrystalStructure("Fe", BravaisBasis="bcc", a=2.83)
+        self.job.structure = self.job.structure.repeat(2)
+
+        self.job.structure.set_initial_magnetic_moments(magmom)
+
+        self.job.input.incar["ISPIN"] = 1
+        self.job.write_magmoms()
+        self.assertIsNone(self.job.input.incar["MAGMOM"])
+        self.assertEqual(self.job.input.incar["ISPIN"], 1)
+
+        del self.job.input.incar["ISPIN"]
+        self.job.write_magmoms()
+        self.assertEqual(self.job.input.incar["ISPIN"], 2)
+        self.assertEqual(self.job.input.incar["MAGMOM"], magmom_str)
+
+        del self.job.input.incar["MAGMOM"]
+        self.job.structure.set_initial_magnetic_moments(magmom_ncl)
+        self.job.set_spin_constraint(lamb=1.0, rwigs_dict={"Fe": 2.5}, direction=True, norm=True)
+        self.job.write_magmoms()
+        self.assertEqual(self.job.input.incar["LNONCOLLINEAR"], True)
+        self.assertEqual(self.job.input.incar["MAGMOM"], magmom_ncl_str)
+        self.assertEqual(self.job.input.incar["M_CONSTR"], magmom_ncl_str)
+
+        del self.job.input.incar["MAGMOM"]
+        del self.job.input.incar["M_CONSTR"]
+        del self.job.input.incar["LNONCOLLINEAR"]
+        del self.job.input.incar["RWIGS"]
+
+        self.assertRaises(ValueError, self.job.write_magmoms)
+
+        self.job.input.incar["RWIGS"] = "2.5"
+        del self.job.input.incar["LAMBDA"]
+
+        self.assertRaises(ValueError, self.job.write_magmoms)
 
     def test_set_empty_states(self):
         atoms = CrystalStructure("Pt", BravaisBasis="fcc", a=3.98)
