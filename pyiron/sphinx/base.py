@@ -1591,8 +1591,7 @@ class InputWriter(object):
                 )
                 potential_path = find_potential_file(
                     path=potentials.find_default(new_element)[
-                        "Filename"].values[0][0],
-                    pot_path_dict=pot_path_dict,
+                        "Filename"].values[0][0]
                 )
                 assert os.path.isfile(
                     potential_path
@@ -1600,8 +1599,7 @@ class InputWriter(object):
             else:
                 potential_path = find_potential_file(
                     path=potentials.find_default(elem)[
-                        "Filename"].values[0][0],
-                    pot_path_dict=pot_path_dict,
+                        "Filename"].values[0][0]
                 )
             if potformat == "JTH":
                 copyfile(potential_path, posixpath.join(
