@@ -40,10 +40,10 @@ ENV LANGUAGE en_US.UTF-8
 ENV HOME /home/${PYIRON_USER}
 
 # Configure Miniconda
-ENV MINICONDA_VER 4.7.12
-ENV MINICONDA Miniconda3-${MINICONDA_VER}-Linux-x86_64.sh
+ENV MINICONDA_VER 4.8.2
+ENV MINICONDA Miniconda3-py37_${MINICONDA_VER}-Linux-x86_64.sh
 ENV MINICONDA_URL https://repo.continuum.io/miniconda/${MINICONDA}
-ENV MINICONDA_MD5_SUM 0dba759b8ecfc8948f626fa18785e3d8
+ENV MINICONDA_MD5_SUM 87e77f097f6ebb5127c77662dfc3165e
 
 COPY . ${HOME}
 
@@ -63,6 +63,7 @@ RUN cd /tmp \
     && ${SHELL} miniconda.sh -f -b -p ${CONDA_DIR} \
     && rm miniconda.sh \
     && ${CONDA_DIR}/bin/conda install --yes conda==${MINICONDA_VER} \
+    && source ${CONDA_DIR}/bin/activate \
     && conda env update -n root -f "${HOME}/binder/environment.yml" \
     && conda install --yes -c conda-forge nodejs \
     && ${SHELL} ${HOME}/binder/postBuild \
