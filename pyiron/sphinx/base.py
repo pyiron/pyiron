@@ -441,17 +441,18 @@ class SphinxBase(GenericDFTJob):
         overwriting values that were previously (intentionally)
         modified.
         """
-        self.input.sphinx.basis.eCut = self.input["EnCut"]/RYDBERG_TO_EV
-        self.input.sphinx.basis.create_group("kPoint")
+        self.input.sphinx.basis.setdefault("eCut", self.input["EnCut"]/RYDBERG_TO_EV)
+        self.input.sphinx.basis.get("kPoint", create = True)
         if "KpointCoords" in self.input:
-            self.input.sphinx.basis.kPoint.coords = \
-                    np.array(self.input["KpointCoords"])
-        self.input.sphinx.basis.kPoint.weight = 1
-        self.input.sphinx.basis.kPoint.relative = True
+            self.input.sphinx.basis.kPoint.setdefault("coords",
+                    np.array(self.input["KpointCoords"]))
+        self.input.sphinx.basis.kPoint.setdefault("weight", 1)
+        self.input.sphinx.basis.kPoint.setdefault("relative", True)
         if "KpointFolding" in self.input:
-            self.input.sphinx.basis.folding = \
-                    np.array(self.input["KpointFolding"])
-        self.input.sphinx.basis.saveMemory = self.input["SaveMemory"]
+            self.input.sphinx.basis.setdefault("folding",
+                    np.array(self.input["KpointFolding"]))
+        self.input.sphinx.basis.setdefault("saveMemory",
+                self.input["SaveMemory"])
 
     def load_hamilton_group(self):
         """
@@ -1041,7 +1042,7 @@ class SphinxBase(GenericDFTJob):
                 mesh = self.get_k_mesh_by_cell(
                     kpoints_per_angstrom=kpoints_per_angstrom
                     )
-            self.input.sphinx.basis.create_group("kPoint")
+            self.input.sphinx.basis.get("kPoint", create = True)
             if mesh is not None:
                 self.input["KpointFolding"] = list(mesh)
                 self.input.sphinx.basis["folding"] = np.array(self.input["KpointFolding"])
