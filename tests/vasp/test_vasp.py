@@ -73,6 +73,26 @@ class TestVasp(unittest.TestCase):
         self.assertEqual(self.job.get_eddrmm_handling(), "warn")
         self.assertRaises(ValueError, self.job.set_eddrmm_handling, status="blah")
 
+    def test_rwigs(self):
+        rwigs_dict = {"Fe": 1.1, "Se": 2.2, "O": 3.3, "N": 4.4}
+        rwigs_dict_wrong_1 = {"Fe": "not a float", "Se": 2.2, "O": 3.3, "N": 4.4}
+        rwigs_dict_wrong_2 = {"Fe": 1.1}
+
+        self.job.structure = self.job.structure = CrystalStructure("Fe", BravaisBasis="bcc", a=2.83)
+        self.job.structure = self.job.structure.repeat(2)
+        self.job.structure[2] = "Se"
+        self.job.structure[3] = "O"
+
+        self.assertIsNone(self.job.get_rwigs())
+        self.assertRaises(AssertionError, self.job.set_rwigs, rwigs_dict="not a dict")
+        self.assertRaises(ValueError, self.job.set_rwigs, rwigs_dict=rwigs_dict_wrong_1)
+        self.assertRaises(ValueError, self.job.set_rwigs, rwigs_dict=rwigs_dict_wrong_2)
+
+        self.job.set_rwigs(rwigs_dict)
+        rwigs_dict_out = self.job.get_rwigs()
+        for key in rwigs_dict_out.keys():
+            self.assertEqual(rwigs_dict_out[key], rwigs_dict[key])
+
     def test_potential(self):
         self.assertEqual(self.job.potential, self.job._potential)
 
