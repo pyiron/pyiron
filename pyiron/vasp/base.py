@@ -1623,6 +1623,8 @@ class VaspBase(GenericDFTJob):
         """
         if not isinstance(rwigs_dict, dict):
             raise AssertionError("'rwigs_dict' has to be a dict!")
+        if not all([isinstance(val, (int, float)) for val in rwigs_dict.values()]):
+            raise ValueError("The values of 'rwigs_dict' has to be floats!")
         species_keys = self.structure.get_number_species_atoms().keys()
         rwigs_keys = rwigs_dict.keys()
         for i in species_keys:
