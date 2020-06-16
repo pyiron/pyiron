@@ -1627,9 +1627,9 @@ class VaspBase(GenericDFTJob):
             raise ValueError("The values of 'rwigs_dict' has to be floats!")
         species_keys = self.structure.get_number_species_atoms().keys()
         rwigs_keys = rwigs_dict.keys()
-        for i in species_keys:
-            if i not in list(rwigs_keys):
-                raise ValueError("'{}' is not in rwigs_dict!".format(i))
+        for k in species_keys:
+            if k not in list(rwigs_keys):
+                raise ValueError("'{}' is not in rwigs_dict!".format(k))
 
         rwigs = [rwigs_dict[i] for i in species_keys]
         self.input.incar["RWIGS"] = " ".join(map(str, rwigs))
