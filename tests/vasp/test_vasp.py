@@ -93,6 +93,72 @@ class TestVasp(unittest.TestCase):
         for key in rwigs_dict_out.keys():
             self.assertEqual(rwigs_dict_out[key], rwigs_dict[key])
 
+    def test_spin_constraints(self):
+        self.assertFalse(self.job.spin_constraints)
+        self.job.spin_constraints = 1
+        self.assertTrue(self.job.spin_constraints)
+        self.job.spin_constraints = 2
+        self.assertTrue(self.job.spin_constraints)
+
+    def test_spin_constraint(self):
+        rwigs_dict = {"Fe": 1.1, "Se": 2.2, "O": 3.3, "N": 4.4}
+
+        self.job.structure = self.job.structure = CrystalStructure("Fe", BravaisBasis="bcc", a=2.83)
+        self.job.structure = self.job.structure.repeat(2)
+        self.job.structure[2] = "Se"
+        self.job.structure[3] = "O"
+
+        self.assertRaises(
+            AssertionError,
+            self.job.set_spin_constraint,
+            lamb=0.5,
+            rwigs_dict=rwigs_dict,
+            direction="not a bool",
+            norm=False
+        )
+        self.assertRaises(
+            AssertionError,
+            self.job.set_spin_constraint,
+            lamb=0.5,
+            rwigs_dict=rwigs_dict,
+            direction=True,
+            norm="not a bool"
+        )
+        self.assertRaises(
+            AssertionError,
+            self.job.set_spin_constraint,
+            lamb="not a float",
+            rwigs_dict=rwigs_dict,
+            direction=True,
+            norm=False
+        )
+        self.assertRaises(
+            ValueError,
+            self.job.set_spin_constraint,
+            lamb=0.5,
+            rwigs_dict=rwigs_dict,
+            direction=False,
+            norm=False
+        )
+        self.assertRaises(
+            ValueError,
+            self.job.set_spin_constraint,
+            lamb=0.5,
+            rwigs_dict=rwigs_dict,
+            direction=False,
+            norm=True
+        )
+
+        self.job.set_spin_constraint(lamb=0.5, rwigs_dict=rwigs_dict, direction=True, norm=False)
+        self.assertEqual(self.job.input.incar["LAMBDA"], 0.5)
+        self.assertEqual(self.job.input.incar["I_CONSTRAINED_M"], 1)
+        rwigs_dict_out = self.job.get_rwigs()
+        for key in rwigs_dict_out.keys():
+            self.assertEqual(rwigs_dict_out[key], rwigs_dict[key])
+
+        self.job.set_spin_constraint(lamb=0.5, rwigs_dict=rwigs_dict, direction=True, norm=True)
+        self.assertEqual(self.job.input.incar["I_CONSTRAINED_M"], 2)
+
     def test_potential(self):
         self.assertEqual(self.job.potential, self.job._potential)
 
