@@ -28,6 +28,11 @@ class TestVasp(unittest.TestCase):
         cls.execution_path = os.path.dirname(os.path.abspath(__file__))
         cls.project = Project(os.path.join(cls.execution_path, "test_vasp"))
         cls.job = cls.project.create_job("Vasp", "trial")
+        cls.job_spin = cls.project.create_job("Vasp", "spin")
+        cls.job_spin.structure = CrystalStructure("Fe", BravaisBasis="bcc", a=2.83)
+        cls.job_spin.structure = cls.job_spin.structure.repeat(2)
+        cls.job_spin.structure[2] = "Se"
+        cls.job_spin.structure[3] = "O"
         cls.job_metadyn = cls.project.create_job("VaspMetadyn", "trial_metadyn")
         cls.job_complete = Vasp(
             project=ProjectHDFio(project=cls.project, file_name="vasp_complete"),
@@ -72,6 +77,85 @@ class TestVasp(unittest.TestCase):
         self.job.set_eddrmm_handling()
         self.assertEqual(self.job.get_eddrmm_handling(), "warn")
         self.assertRaises(ValueError, self.job.set_eddrmm_handling, status="blah")
+
+    def test_rwigs(self):
+        rwigs_dict = {"Fe": 1.1, "Se": 2.2, "O": 3.3, "N": 4.4}
+        rwigs_dict_wrong_1 = {"Fe": "not a float", "Se": 2.2, "O": 3.3, "N": 4.4}
+        rwigs_dict_wrong_2 = {"Fe": 1.1}
+
+        self.assertIsNone(self.job_spin.get_rwigs())
+        self.assertRaises(AssertionError, self.job_spin.set_rwigs, rwigs_dict="not a dict")
+        self.assertRaises(ValueError, self.job_spin.set_rwigs, rwigs_dict=rwigs_dict_wrong_1)
+        self.assertRaises(ValueError, self.job_spin.set_rwigs, rwigs_dict=rwigs_dict_wrong_2)
+
+        self.job_spin.set_rwigs(rwigs_dict)
+        rwigs_dict_out = self.job_spin.get_rwigs()
+        for key in rwigs_dict_out.keys():
+            self.assertEqual(rwigs_dict_out[key], rwigs_dict[key])
+
+    def test_spin_constraints(self):
+        self.job_spin.spin_constraints = 1
+        self.assertTrue(self.job_spin.spin_constraints)
+
+        self.job_spin.spin_constraints = 2
+        self.assertTrue(self.job_spin.spin_constraints)
+
+        del self.job_spin.input.incar["I_CONSTRAINED_M"]
+        self.assertFalse(self.job_spin.spin_constraints)
+
+    def test_spin_constraint(self):
+        rwigs_dict = {"Fe": 1.1, "Se": 2.2, "O": 3.3, "N": 4.4}
+
+        self.assertRaises(
+            AssertionError,
+            self.job_spin.set_spin_constraint,
+            lamb=0.5,
+            rwigs_dict=rwigs_dict,
+            direction="not a bool",
+            norm=False
+        )
+        self.assertRaises(
+            AssertionError,
+            self.job_spin.set_spin_constraint,
+            lamb=0.5,
+            rwigs_dict=rwigs_dict,
+            direction=True,
+            norm="not a bool"
+        )
+        self.assertRaises(
+            AssertionError,
+            self.job_spin.set_spin_constraint,
+            lamb="not a float",
+            rwigs_dict=rwigs_dict,
+            direction=True,
+            norm=False
+        )
+        self.assertRaises(
+            ValueError,
+            self.job_spin.set_spin_constraint,
+            lamb=0.5,
+            rwigs_dict=rwigs_dict,
+            direction=False,
+            norm=False
+        )
+        self.assertRaises(
+            ValueError,
+            self.job_spin.set_spin_constraint,
+            lamb=0.5,
+            rwigs_dict=rwigs_dict,
+            direction=False,
+            norm=True
+        )
+
+        self.job_spin.set_spin_constraint(lamb=0.5, rwigs_dict=rwigs_dict, direction=True, norm=False)
+        self.assertEqual(self.job_spin.input.incar["LAMBDA"], 0.5)
+        self.assertEqual(self.job_spin.input.incar["I_CONSTRAINED_M"], 1)
+        rwigs_dict_out = self.job_spin.get_rwigs()
+        for key in rwigs_dict_out.keys():
+            self.assertEqual(rwigs_dict_out[key], rwigs_dict[key])
+
+        self.job_spin.set_spin_constraint(lamb=0.5, rwigs_dict=rwigs_dict, direction=True, norm=True)
+        self.assertEqual(self.job_spin.input.incar["I_CONSTRAINED_M"], 2)
 
     def test_potential(self):
         self.assertEqual(self.job.potential, self.job._potential)

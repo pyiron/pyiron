@@ -1619,12 +1619,17 @@ class VaspBase(GenericDFTJob):
 
         Args:
             rwigs_dict (dict): Dictionary of species and corresponding radii.
+                (structure has to be defined before)
         """
+        if not isinstance(rwigs_dict, dict):
+            raise AssertionError("'rwigs_dict' has to be a dict!")
+        if not all([isinstance(val, (int, float)) for val in rwigs_dict.values()]):
+            raise ValueError("The values of 'rwigs_dict' has to be floats!")
         species_keys = self.structure.get_number_species_atoms().keys()
         rwigs_keys = rwigs_dict.keys()
-        for i in species_keys:
-            if i not in list(rwigs_keys):
-                raise ValueError("'" + i + "' is not in rwigs_dict!")
+        for k in species_keys:
+            if k not in list(rwigs_keys):
+                raise ValueError("'{}' is not in rwigs_dict!".format(k))
 
         rwigs = [rwigs_dict[i] for i in species_keys]
         self.input.incar["RWIGS"] = " ".join(map(str, rwigs))
@@ -1653,19 +1658,24 @@ class VaspBase(GenericDFTJob):
         Args:
             lamb (float): LAMBDA tag
             rwigs_dict (dict): Dictionary of species and corresponding radii.
+                (structure has to be defined before)
             direction (bool): (True/False) constrain spin direction.
             norm (bool): (True/False) constrain spin norm (magnitude).
         """
         if not isinstance(direction, bool):
-            raise AssertionError()
+            raise AssertionError("'direction' has to be a bool!")
         if not isinstance(norm, bool):
-            raise AssertionError()
+            raise AssertionError("'lamb' has to be a bool!")
+        if not isinstance(lamb, float):
+            raise AssertionError("'lamb' has to be a float!")
         if direction and norm:
             self.input.incar["I_CONSTRAINED_M"] = 2
         elif direction:
             self.input.incar["I_CONSTRAINED_M"] = 1
         elif norm:
             raise ValueError("Constraining norm only is not possible.")
+        else:
+            raise ValueError("You have to constrain either direction or norm and direction.")
 
         self.input.incar["LAMBDA"] = lamb
         self.set_rwigs(rwigs_dict)
