@@ -303,7 +303,19 @@ class InputList(MutableMapping):
 
     def get(self, key, default = None, create = False):
         """
-        If key exists, same as in base class, if not call create_group.
+        If ``key`` exists, behave as generic, if not call create_group.
+
+        Args:
+            key (str):               key to search
+            default (optional):      return this instead if nothing found
+            create (bool, optional): create empty list at key if nothing found
+
+        Raise:
+            IndexError: if key is not in the list and neither ``default`` not
+            ``create`` are given
+
+        Returns:
+            object: element at ``key`` or new empty sublist
         """
         if create and key not in self:
             return self.create_group(key)
@@ -311,6 +323,16 @@ class InputList(MutableMapping):
             return super().get(key, default = default)
 
     def update(self, init, wrap = False, **kwargs):
+        '''
+        Add all elements or key-value pairs from init to this list.  If wrap is
+        not given, behaves as the generic method.
+
+        Args:
+            init (Sequence, Set, Mapping): container to draw new elements from
+            wrap (bool): if True wrap all encountered Sequences and Mappings in
+                        InputLists recursively
+            **kwargs: update from this mapping as well
+        '''
         if wrap:
             if isinstance(init, (Sequence, Set)):
                 for v in init:
@@ -332,18 +354,27 @@ class InputList(MutableMapping):
                         self[k] = v
             else:
                 ValueError('init must be Sequence, Set or Mapping')
+
+            for k in kwargs:
+                self[k] = kwargs[k]
         else:
             super().update(init, **kwargs)
 
     def append(self, val):
         '''
         Add new value to the list without a key.
+
+        Args:
+            val: new element
         '''
         self._store.append(self._wrap_val(val))
 
     def extend(self, vals):
         '''
-        Append all items of vals to this InputList.
+        Append vals to the end of this InputList.
+
+        Args:
+            vals (Sequence): any python sequence to draw new elements from
         '''
 
         for v in vals:
@@ -351,9 +382,15 @@ class InputList(MutableMapping):
 
     def insert(self, index, val, key = None):
         '''
-        Add a new value to the list at the specified position, with an optional
+        Add a new element to the list at the specified position, with an optional
         key.  If the key is already in the list it will be updated to point to
-        the new value at the new index.
+        the new element at the new index.  If index is larger than list, append
+        instead.
+
+        Args:
+            index (int):            place val after this element
+            val:                    new element to add
+            key (str, optional):    optional key to mark the new element
         '''
         if key != None:
             for k, i in self._indices.items():
@@ -365,8 +402,16 @@ class InputList(MutableMapping):
 
     def mark(self, index, key):
         '''
-        Add a key to an existing item at index.  If a key already exists, it is
+        Add a key to an existing item at index.  If key already exists, it is
         overwritten.
+
+        Args:
+            index (int):    index of the existing element to mark
+            key (str):      key for the existing element
+
+        Raises:
+            IndexError: if index > len(self)
+
         >>> pl = InputList([42])
         >>> pl.mark(0, 'head')
         >>> pl.head == 42
@@ -392,8 +437,11 @@ class InputList(MutableMapping):
         '''
         Add a new empty sublist under the given key.
 
+        Args:
+            name (str): key under which to store the new sublist in this list
+
         Returns:
-            the newly created sublist
+            InputList: the newly created sublist
 
         >>> pl = InputList({})
         >>> pl.create_group('group_name')
@@ -406,7 +454,10 @@ class InputList(MutableMapping):
 
     def has_keys(self):
         """
-        Returns True if there is a key set for at least one item of the list.
+        Check if the list has keys set or not.
+
+        Returns:
+            bool: True if there is at least one key set
         """
         return bool(self._indices)
 
@@ -423,7 +474,11 @@ class InputList(MutableMapping):
 
     def copy(self):
         """
-        Returns deep copy of it self.
+        Returns deep copy of it self.  A shallow copy can be obtained via the
+        copy module.
+
+        Returns:
+            InputList: deep copy of itself
 
         >>> pl = InputList([[1,2,3]])
         >>> pl.copy() == pl
