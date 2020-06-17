@@ -12,7 +12,6 @@ from pyiron.project import Project
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.sphinx.base import Group
-from collections import OrderedDict as odict
 
 BOHR_TO_ANGSTROM = (
         scipy.constants.physical_constants["Bohr radius"][0] / scipy.constants.angstrom

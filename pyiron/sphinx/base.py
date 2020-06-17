@@ -25,7 +25,6 @@ from pyiron.sphinx.potential import find_potential_file \
     as find_potential_file_jth
 from pyiron.sphinx.volumetric_data import SphinxVolumetricData
 from pyiron.base.settings.generic import Settings
-from pyiron.base.generic.parameters import GenericParameters
 from pyiron.base.generic.inputlist import InputList
 
 __author__ = "Osamu Waseda, Jan Janssen"
