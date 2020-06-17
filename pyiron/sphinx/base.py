@@ -260,20 +260,20 @@ class SphinxBase(GenericDFTJob):
         else:
             selective_dynamics_list = [3 * [False]] * len(
                 self.structure.positions)
+        species = structure_group.create_group("species")
         for elm_species in self.structure.get_species_objects():
             if elm_species.Parent:
                 element = elm_species.Parent
             else:
                 element = elm_species.Abbreviation
-            structure_group.create_group('species')
-            structure_group["species"].append(
+            species.append(
                 Group({"element": '"' + str(element) + '"'})
             )
             elm_list = np.array(
                 self.structure.get_chemical_symbols() == \
                     elm_species.Abbreviation
             )
-            atom_group = structure_group["species"][-1].create_group('atom')
+            atom_group = species[-1].create_group("atom")
             for elm_pos, elm_magmon, selective in zip(
                 self.structure.positions[elm_list],
                 np.array(self.structure.get_initial_magnetic_moments())[
