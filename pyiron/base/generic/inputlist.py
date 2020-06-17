@@ -134,12 +134,9 @@ class InputList(MutableMapping):
         return instance
 
     def __init__(self, init = None, table_name = None):
-
         self.table_name = table_name
-
-        if init == None: return
-
-        self.update(init, wrap = True)
+        if init != None:
+            self.update(init, wrap = True)
 
     def __len__(self):
         return len(self._store)
