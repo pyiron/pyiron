@@ -355,13 +355,12 @@ class SphinxBase(GenericDFTJob):
                 read. Options are JTH or VASP.
         """
 
-        self.input.sphinx.pawPot = Group()
+        self.input.sphinx.pawPot = Group({"species": []})
         for species_obj in self.structure.get_species_objects():
             if species_obj.Parent is not None:
                 elem = species_obj.Parent
             else:
                 elem = species_obj.Abbreviation
-            self.input.sphinx.pawPot.create_group("species")
             if potformat == "JTH":
                 self.input.sphinx.pawPot["species"].append({
                             "name": '"' + elem + '"',
