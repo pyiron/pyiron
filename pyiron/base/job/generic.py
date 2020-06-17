@@ -168,6 +168,7 @@ class GenericJob(JobCore):
         self._compress_by_default = False
         self._python_only_job = False
         self.interactive_cache = None
+        self.error = GenericError(job=self)
 
         for sig in intercepted_signals:
             signal.signal(sig, self.signal_intercept)
@@ -1014,7 +1015,6 @@ class GenericJob(JobCore):
             obj_type=[
                 "pyiron.base.master.parallel.ParallelMaster",
                 "pyiron.base.master.serial.SerialMasterBase",
-                "pyiron.atomistic.job.interactivewrapper.InteractiveWrapper",
             ],
         ):
             job.ref_job = self
@@ -1025,7 +1025,26 @@ class GenericJob(JobCore):
                 or self.server.run_mode.interactive_non_modal
             ):
                 job.server.run_mode.interactive = True
+        elif static_isinstance(
+            obj=job.__class__,
+            obj_type=[
+                "pyiron.atomistics.job.interactivewrapper.InteractiveWrapper",
+            ],
+        ):
+            job.ref_job = self
         return job
+
+    def create_pipeline(self, step_lst):
+        """
+        Create a job pipeline
+
+        Args:
+            step_lst (list): List of functions which create calculations
+
+        Returns:
+            FlexibleMaster:
+        """
+        return self.project.create_pipeline(job=self, step_lst=step_lst)
 
     def update_master(self):
         """
@@ -1602,6 +1621,24 @@ class GenericJob(JobCore):
         Mainly used by the ListMaster job type.
         """
         pass
+
+
+class GenericError(object):
+    def __init__(self, job):
+        self._job = job
+
+    def print_message(self, string=''):
+        return self._print_error(file_name='error.msg', string=string)
+
+    def print_queue(self, string=''):
+        return self._print_error(file_name='error.out', string=string)
+
+    def _print_error(self, file_name, string='', print_yes=True):
+        if self._job[file_name] is None:
+            return False
+        elif print_yes:
+            print(string.join(self._job[file_name]))
+        return True
 
 
 def multiprocess_wrapper(job_id, working_dir, debug=False):

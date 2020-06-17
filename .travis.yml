@@ -7,9 +7,8 @@ matrix:
       env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.7"
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
-        - ./.ci_support/setup_miniconda.sh ${MINICONDA}
-        - python .ci_support/pyironconfig.py
-        - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
+        - ./.ci_support/travis_setup_pyiron.sh ${MINICONDA} ${PYTHONVER}
+        - - python .ci_support/pyironconfig.py
       script:
         - coverage run -m unittest discover tests
         - coverage combine
@@ -38,16 +37,10 @@ matrix:
       env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.7"
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
-        - ./.ci_support/setup_miniconda.sh ${MINICONDA}
-        - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
-        - conda install -c conda-forge jupyter papermill nglview sphinxdft=2.6.1=h6ced99e_5 gpaw lammps seaborn
-        - printf "[DEFAULT]\nTOP_LEVEL_DIRS = ${HOME}\nRESOURCE_PATHS =${HOME}/resources" > ${HOME}/.pyiron
-        - git clone --recurse-submodules https://github.com/pyiron/pyiron-resources.git ${HOME}/resources
-        - for f in $(cat .ci_support/exclude); do rm notebooks/$f; done;  # Remove VASP based notebooks 
+        - ./.ci_support/travis_setup_pyiron.sh ${MINICONDA} ${PYTHONVER}
+        - ./.ci_support/travis_setup_notebooks.sh
       script:
-        - jupyter kernelspec list
-        - chmod +x .ci_support/build_notebooks_on_master.sh 
-        - ./.ci_support/build_notebooks_on_master.sh || travis_terminate 1;
+        - ./.ci_support/travis_build_notebooks.sh || travis_terminate 1;
 
     - name: test_osx_3_7
       os: osx
@@ -55,9 +48,8 @@ matrix:
       env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh" PYTHONVER="3.7"
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
-        - ./.ci_support/setup_miniconda.sh ${MINICONDA}
+        - ./.ci_support/travis_setup_pyiron.sh ${MINICONDA} ${PYTHONVER}
         - python .ci_support/pyironconfig.py
-        - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
       script:
         - coverage run -m unittest discover tests
         - coverage combine
@@ -70,11 +62,10 @@ matrix:
       env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.7"
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
-        - ./.ci_support/setup_miniconda.sh ${MINICONDA}
+        - ./.ci_support/travis_setup_pyiron.sh ${MINICONDA} ${PYTHONVER}
         - python .ci_support/pyironconfig.py
-        - ./.ci_support/setup_pyiron.sh ${PYTHONVER}
       script:
-        - ./.ci_support/build_docs_on_master.sh
+        - ./.ci_support/travis_build_docs.sh || travis_terminate 1;
       deploy:
         - provider: pages
           repo: pyiron/pyiron.github.io

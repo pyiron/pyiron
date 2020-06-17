@@ -994,7 +994,7 @@ class SphinxBase(GenericDFTJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
-        kpoints_per_angstrom=None,
+        kpoints_per_reciprocal_angstrom=None,
         n_path=None,
         path_name=None,
     ):
@@ -1014,7 +1014,7 @@ class SphinxBase(GenericDFTJob):
             mesh (list): Size of the mesh (in the MP scheme)
             center_shift (list): Shifts the center of the mesh from the
                                  gamma point by the given vector
-            kpoints_per_angstrom (float): Number of kpoint per angstrom
+            kpoints_per_reciprocal_angstrom (float): Number of kpoint per angstrom
                                           in each direction
             n_path (int): Number of points per trace part for line mode
             path_name (str): Name of high symmetry path used for band
@@ -1035,12 +1035,12 @@ class SphinxBase(GenericDFTJob):
             # Remove kPoints and set kPoint
             if "kPoints" in self.input.sphinx.basis:
                 del self.input.sphinx.basis.kPoints
-            if kpoints_per_angstrom is not None:
+            if kpoints_per_reciprocal_angstrom is not None:
                 if mesh is not None:
                     warnings.warn("mesh value is overwritten "
-                    + "by kpoints_per_angstrom")
+                    + "by kpoints_per_reciprocal_angstrom")
                 mesh = self.get_k_mesh_by_cell(
-                    kpoints_per_angstrom=kpoints_per_angstrom
+                    kpoints_per_reciprocal_angstrom=kpoints_per_reciprocal_angstrom
                     )
             self.input.sphinx.basis.get("kPoint", create = True)
             if mesh is not None:
@@ -1590,8 +1590,7 @@ class InputWriter(object):
                 )
                 potential_path = find_potential_file(
                     path=potentials.find_default(new_element)[
-                        "Filename"].values[0][0],
-                    pot_path_dict=pot_path_dict,
+                        "Filename"].values[0][0]
                 )
                 assert os.path.isfile(
                     potential_path
@@ -1599,8 +1598,7 @@ class InputWriter(object):
             else:
                 potential_path = find_potential_file(
                     path=potentials.find_default(elem)[
-                        "Filename"].values[0][0],
-                    pot_path_dict=pot_path_dict,
+                        "Filename"].values[0][0]
                 )
             if potformat == "JTH":
                 copyfile(potential_path, posixpath.join(

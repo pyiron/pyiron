@@ -5,7 +5,7 @@
 import os
 import pandas
 from pyiron.base.settings.generic import Settings
-from pyiron.vasp.potential import VaspPotentialAbstract
+from pyiron.vasp.potential import VaspPotentialAbstract, find_potential_file_base
 
 __author__ = "Osamu Waseda"
 __copyright__ = (
@@ -76,23 +76,13 @@ class SphinxJTHPotentialFile(VaspPotentialAbstract):
         self._default_df = self._default_df.append(ds)
 
 
-def find_potential_file(file_name=None, xc=None, path=None, pot_path_dict=None):
-    if path is not None:
-        for resource_path in s.resource_paths:
-            if os.path.exists(os.path.join(resource_path, "sphinx", "potentials", path)):
-                return os.path.join(resource_path, "sphinx", "potentials", path)
-    elif xc is not None and file_name is not None:
-        for resource_path in s.resource_paths:
-            if os.path.exists(
-                os.path.join(resource_path, "sphinx", "potentials", pot_path_dict[xc])
-            ):
-                resource_path = os.path.join(
-                    resource_path, "sphinx", "potentials", pot_path_dict[xc]
-                )
-            if "potentials" in resource_path:
-                for path, folder_lst, file_lst in os.walk(resource_path):
-                    if file_name in file_lst:
-                        return os.path.join(path, file_name)
-    raise ValueError("Either the filename or the functional has to be defined.",
-                     file_name, xc, path, pot_path_dict, s.resource_paths)
-
+def find_potential_file(path):
+    env = os.environ
+    resource_path_lst = s.resource_paths
+    if "CONDA_PREFIX" in env.keys():  # support sphinx-data package
+        resource_path_lst += [os.path.join(os.environ["CONDA_PREFIX"], "share", "sphinxdft")]
+    return find_potential_file_base(
+        path=path,
+        resource_path_lst=resource_path_lst,
+        rel_path=os.path.join("sphinx", "potentials")
+    )
