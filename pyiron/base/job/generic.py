@@ -758,6 +758,8 @@ class GenericJob(JobCore):
                 self._logger.warning("Job aborted")
                 self._logger.warning(e.output)
                 self.status.aborted = True
+                if self.job_id is not None:
+                    self.project.db.item_update(self._runtime(), self.job_id)
                 error_file = posixpath.join(
                     self.project_hdf5.working_directory, "error.msg"
                 )
