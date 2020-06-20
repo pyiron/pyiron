@@ -795,7 +795,7 @@ class SphinxBase(GenericDFTJob):
         """
         super(SphinxBase, self).from_hdf(hdf=hdf, group_name=group_name)
         self._structure_from_hdf()
-        self.input.from_hdf(self._hdf5)
+        self.input.from_hdf(self._hdf5, group_name = "input")
         if self.status.finished:
             self._output_parser.from_hdf(self._hdf5)
 
