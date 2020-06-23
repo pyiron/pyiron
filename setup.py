@@ -60,4 +60,11 @@ setup(
         'yaff>=1.4.2'
     ],
     cmdclass=versioneer.get_cmdclass(),
+
+    entry_points = {
+            "console_scripts": [
+                'pyiron-ls=pyiron.cli.ls:main',
+                'pyiron-rm=pyiron.cli.rm:main'
+            ]
+    }
     )
