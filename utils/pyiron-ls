@@ -1,6 +1,6 @@
 #!/usr/bin/env python3.7
 """
-Prints jobs from pyiron project.
+Filter and prints jobs from pyiron project.
 """
 
 import argparse
@@ -12,8 +12,27 @@ import pandas as pd
 import pyiron
 import pyiron.base.job.jobstatus
 
+examples = """
+examples:
+    Print the run time of all finished jobs:
+        pyiron-ls -c job totalcputime -s finished
 
-parser = argparse.ArgumentParser(description = __doc__)
+    Print all jobs with iron:
+        pyiron-ls -e Fe
+
+    Print all jobs that successfully finished yesterday and a bit:
+        pyiron-ls -s finished -i 1d5h
+
+    Print all jobs that were aborted less than 5 hours ago and match
+    "spx.*restart":
+        pyiron-ls -n "spx.*restart" -i 5h -s aborted
+
+"""
+
+parser = argparse.ArgumentParser(
+        description = __doc__, epilog = examples,
+        formatter_class = argparse.RawDescriptionHelpFormatter
+)
 parser.add_argument(
         "project", default = ".", nargs = "?",
         help = "path to pyiron project"
@@ -39,23 +58,30 @@ filter.add_argument(
 filter.add_argument(
         "-s", "--status", nargs = "+",
         choices = pyiron.base.job.jobstatus.job_status_lst,
-        help = "job status must be one of the given"
+        metavar = "status",
+        help = "job status must be one of the given, one of {}".format(
+                ", ".join(pyiron.base.job.jobstatus.job_status_lst))
 )
 filter.add_argument(
         "-i", "--since",
-        help = "timestop must be less then the given duration before now "
+        help = "timestop must be less then the given duration before now, "
+               "must be an integer and a time unit, i.e. one of d (days), "
+               "h (hours), m (minutes) and s (seconds).  Combinations are "
+               "possible, see examples."
 )
 
 output = parser.add_argument_group(
         title = "output", description = "control output style"
 )
+columns_choices = ('id', 'status', 'chemicalformula', 'job', 'subjob',
+            'project', 'projectpath', 'timestart', 'timestop', 'totalcputime',
+            'computer', 'hamilton', 'hamversion', 'parentid', 'masterid')
 output.add_argument(
         "-c", "--columns", nargs = "+",
-        choices = ('id', 'status', 'chemicalformula', 'job', 'subjob',
-            'project', 'projectpath', 'timestart', 'timestop', 'totalcputime',
-            'computer', 'hamilton', 'hamversion', 'parentid', 'masterid'),
+        choices = columns_choices, metavar = "column",
         default = ["id", "status", "job", "timestart", "timestop", "totalcputime"],
-        help = "table columns to print, pass 'all' to print whole table"
+        help = "table columns to print, pass 'all' to print whole table, "
+               "one of {}".format(", ".join(columns_choices))
 )
 output.add_argument(
         "-a", "--all", action = "store_true",
