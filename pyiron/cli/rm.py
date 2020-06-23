@@ -8,6 +8,17 @@ import os
 import pandas as pd
 import pyiron
 
+__author__ = "Marvin Poul"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
+__version__ = "1.0"
+__maintainer__ = "Marvin Poul"
+__email__ = "poul@mpie.de"
+__status__ = "production"
+__date__ = "23 Jun, 2020"
+
 def main():
     parser = argparse.ArgumentParser(description = __doc__)
     parser.add_argument(
