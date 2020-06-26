@@ -6,6 +6,7 @@ import argparse
 
 from . import ls
 from . import rm
+from . import install
 
 __author__ = "Marvin Poul"
 __copyright__ = (
@@ -23,15 +24,17 @@ subs = parser.add_subparsers()
 
 parser.set_defaults(cli = lambda _: parser.error("no sub command given"))
 
-parser_ls = subs.add_parser(
-        "ls", help = ls.__doc__, description = ls.__doc__
-)
-ls.register(parser_ls)
+ls.register(subs.add_parser("ls",
+        help = ls.__doc__, description = ls.__doc__
+))
 
-parser_rm = subs.add_parser(
-        "rm", help = rm.__doc__, description = rm.__doc__
-)
-rm.register(parser_rm)
+rm.register(subs.add_parser("rm",
+        help = rm.__doc__, description = rm.__doc__
+))
+
+install.register(subs.add_parser("install",
+        help = install.__doc__, description = install.__doc__
+))
 
 args = parser.parse_args()
 args.cli(args)
