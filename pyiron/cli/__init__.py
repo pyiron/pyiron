@@ -19,23 +19,22 @@ __email__ = "poul@mpie.de"
 __status__ = "development"
 __date__ = "26 Jun, 2020"
 
+cli_modules = {
+        "ls":       ls,
+        "rm":       rm,
+        "install":  install
+}
+
 def main():
     parser = argparse.ArgumentParser(prog = "pyiron", description = __doc__)
     subs = parser.add_subparsers()
 
     parser.set_defaults(cli = lambda _: parser.error("no sub command given"))
 
-    ls.register(subs.add_parser("ls",
-            help = ls.__doc__, description = ls.__doc__
-    ))
-
-    rm.register(subs.add_parser("rm",
-            help = rm.__doc__, description = rm.__doc__
-    ))
-
-    install.register(subs.add_parser("install",
-            help = install.__doc__, description = install.__doc__
-    ))
+    for name, mod in cli_modules.items():
+        mod.register(subs.add_parser(name,
+            help = mod.__doc__, description = mod.__doc__
+        ))
 
     args = parser.parse_args()
     args.cli(args)
