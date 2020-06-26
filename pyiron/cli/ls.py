@@ -22,28 +22,25 @@ __email__ = "poul@mpie.de"
 __status__ = "production"
 __date__ = "23 Jun, 2020"
 
+formatter = argparse.RawDescriptionHelpFormatter
+epilog =  """
+examples:
+    Print the run time of all finished jobs:
+        pyiron-ls -c job totalcputime -s finished
+
+    Print all jobs with iron:
+        pyiron-ls -e Fe
+
+    Print all jobs that successfully finished yesterday and a bit:
+        pyiron-ls -s finished -i 1d5h
+
+    Print all jobs that were aborted less than 5 hours ago and match
+    "spx.*restart":
+        pyiron-ls -n "spx.*restart" -i 5h -s aborted
+"""
+
 def register(parser):
-    examples = """
-    examples:
-        Print the run time of all finished jobs:
-            pyiron-ls -c job totalcputime -s finished
 
-        Print all jobs with iron:
-            pyiron-ls -e Fe
-
-        Print all jobs that successfully finished yesterday and a bit:
-            pyiron-ls -s finished -i 1d5h
-
-        Print all jobs that were aborted less than 5 hours ago and match
-        "spx.*restart":
-            pyiron-ls -n "spx.*restart" -i 5h -s aborted
-
-    """
-
-    # parser = argparse.ArgumentParser(
-    #         description = __doc__, epilog = examples,
-    #         formatter_class = argparse.RawDescriptionHelpFormatter
-    # )
     parser.add_argument(
             "project", default = ".", nargs = "?",
             help = "path to pyiron project"
@@ -92,7 +89,7 @@ def register(parser):
             "-c", "--columns", nargs = "+",
             choices = columns_choices, metavar = "column",
             default = ["id", "status", "job", "timestart", "timestop",
-                       "totalcputime"],
+                        "totalcputime"],
             help = "table columns to print, pass 'all' to print whole table, "
                 "one of {}".format(", ".join(columns_choices))
     )

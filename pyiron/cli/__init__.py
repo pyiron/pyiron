@@ -3,6 +3,7 @@ CLI for various pyiron utilities.
 """
 
 import argparse
+import warnings
 
 from . import ls
 from . import rm
@@ -36,9 +37,16 @@ def main():
     parser.set_defaults(cli = lambda _: parser.error("no sub command given"))
 
     for name, mod in cli_modules.items():
-        mod.register(subs.add_parser(name,
-            help = mod.__doc__, description = mod.__doc__
-        ))
+        try:
+            mod.register(subs.add_parser(name,
+                help = mod.__doc__, description = mod.__doc__,
+                epilog = getattr(mod, "epilog", None),
+                formatter_class = getattr(mod, "formatter",
+                    argparse.HelpFormatter)
+            ))
+        except AttributeError:
+            warnings.warn("module '{}' does not define register method, "
+                          "ignoring")
 
     args = parser.parse_args()
     args.cli(args)
