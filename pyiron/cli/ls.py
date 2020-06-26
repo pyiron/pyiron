@@ -1,4 +1,3 @@
-#!/usr/bin/env python3.7
 """
 Filter and prints jobs from pyiron project.
 """
@@ -23,7 +22,7 @@ __email__ = "poul@mpie.de"
 __status__ = "production"
 __date__ = "23 Jun, 2020"
 
-def main():
+def register(parser):
     examples = """
     examples:
         Print the run time of all finished jobs:
@@ -41,10 +40,10 @@ def main():
 
     """
 
-    parser = argparse.ArgumentParser(
-            description = __doc__, epilog = examples,
-            formatter_class = argparse.RawDescriptionHelpFormatter
-    )
+    # parser = argparse.ArgumentParser(
+    #         description = __doc__, epilog = examples,
+    #         formatter_class = argparse.RawDescriptionHelpFormatter
+    # )
     parser.add_argument(
             "project", default = ".", nargs = "?",
             help = "path to pyiron project"
@@ -102,7 +101,9 @@ def main():
             help = "show all job attributes"
     )
 
-    args = parser.parse_args()
+    parser.set_defaults(cli = main)
+
+def main(args):
 
     if args.status:
         if "status" not in args.columns:

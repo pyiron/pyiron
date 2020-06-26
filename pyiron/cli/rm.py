@@ -1,4 +1,3 @@
-#!/usr/bin/env python3.7
 """
 Remove jobs from pyiron project or whole project.
 """
@@ -19,8 +18,7 @@ __email__ = "poul@mpie.de"
 __status__ = "production"
 __date__ = "23 Jun, 2020"
 
-def main():
-    parser = argparse.ArgumentParser(description = __doc__)
+def register(parser):
     parser.add_argument(
             "project", default = ".", nargs = "?",
             help = "path to pyiron project"
@@ -33,8 +31,9 @@ def main():
             "-r", "--recursive", action = "store_true",
             help = "recurse into subprojects"
     )
+    parser.set_defaults(cli = main)
 
-    args = parser.parse_args()
+def main(args):
 
     pr = pyiron.Project(args.project)
     if args.jobs_only:
