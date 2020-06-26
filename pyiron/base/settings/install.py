@@ -3,7 +3,6 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import os
-import getopt
 from zipfile import ZipFile
 from shutil import copytree, rmtree
 import tempfile

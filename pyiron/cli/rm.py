@@ -4,9 +4,7 @@
 Remove jobs from pyiron project or whole project.
 """
 
-import argparse
 import os
-import pandas as pd
 import pyiron
 
 __author__ = "Marvin Poul"

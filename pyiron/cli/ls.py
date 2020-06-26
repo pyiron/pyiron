@@ -8,7 +8,6 @@ import argparse
 import datetime
 import re
 import sys
-import numpy as np
 import pandas as pd
 import pyiron
 import pyiron.base.job.jobstatus

@@ -5,15 +5,6 @@
 Install pyiron config and resources for the first time.
 """
 
-import os
-import getopt
-from zipfile import ZipFile
-from shutil import copytree, rmtree
-import tempfile
-import stat
-import sys
-import urllib.request as urllib2
-
 from pyiron.base.settings.install import install_pyiron
 
 __author__ = "Marvin Poul"

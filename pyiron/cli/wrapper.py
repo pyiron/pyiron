@@ -4,8 +4,6 @@
 Run a job from hdf5.
 """
 
-import sys
-import getopt
 from pyiron.base.job.wrapper import job_wrapper_function
 
 def register(parser):
