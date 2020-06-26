@@ -7,6 +7,7 @@ import argparse
 from . import ls
 from . import rm
 from . import install
+from . import reloadfile
 
 __author__ = "Marvin Poul"
 __copyright__ = (
@@ -20,9 +21,10 @@ __status__ = "development"
 __date__ = "26 Jun, 2020"
 
 cli_modules = {
-        "ls":       ls,
-        "rm":       rm,
-        "install":  install
+        "ls":           ls,
+        "rm":           rm,
+        "install":      install,
+        "reloadfile":   reloadfile
 }
 
 def main():
