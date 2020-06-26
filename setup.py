@@ -63,8 +63,7 @@ setup(
 
     entry_points = {
             "console_scripts": [
-                'pyiron-ls=pyiron.cli.ls:main',
-                'pyiron-rm=pyiron.cli.rm:main'
+                'pyiron=pyiron.cli:main'
             ]
     }
     )
