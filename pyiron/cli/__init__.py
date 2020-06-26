@@ -8,6 +8,7 @@ from . import ls
 from . import rm
 from . import install
 from . import reloadfile
+from . import wrapper
 
 __author__ = "Marvin Poul"
 __copyright__ = (
@@ -24,7 +25,8 @@ cli_modules = {
         "ls":           ls,
         "rm":           rm,
         "install":      install,
-        "reloadfile":   reloadfile
+        "reloadfile":   reloadfile,
+        "wrapper":      wrapper
 }
 
 def main():
