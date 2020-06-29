@@ -139,4 +139,5 @@ def main(args):
         mask &= table.loc[:, "timestop"] > since
 
     if any(mask):
-        print(table[mask])
+        with pd.option_context("display.expand_frame_repr", False):
+            print(table[mask])
