@@ -40,16 +40,17 @@ def main():
 
     for name, mod in cli_modules.items():
         try:
-            mod.register(subs.add_parser(name,
+            sub_parser = subs.add_parser(name,
                 help = mod.__doc__, description = mod.__doc__,
                 epilog = getattr(mod, "epilog", None),
                 formatter_class = getattr(mod, "formatter",
                     argparse.HelpFormatter)
-            ))
+            )
+            sub_parser.set_defaults(cli = mod.main)
+            mod.register(sub_parser)
         except AttributeError:
-            warnings.warn("module '{}' does not define register method, "
-                          "ignoring")
+            warnings.warn("module '{}' does not define main or register "
+                          "function, ignoring")
 
     args = parser.parse_args()
     args.cli(args)
-

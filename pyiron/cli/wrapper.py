@@ -27,7 +27,6 @@ def register(parser):
             "-s", "--submit", action = "store_true",
             help = "submit to queuing system on remote host"
     )
-    parser.set_defaults(cli=main)
 
 def main(args):
     job_wrapper_function(

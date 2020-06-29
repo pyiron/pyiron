@@ -31,7 +31,6 @@ def register(parser):
             "-r", "--recursive", action = "store_true",
             help = "recurse into subprojects"
     )
-    parser.set_defaults(cli=main)
 
 def main(args):
 

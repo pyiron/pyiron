@@ -16,7 +16,6 @@ def register(parser):
     parser.add_argument(
             "-o", "--output-path", type = os.path.abspath,
     )
-    parser.set_defaults(cli=main)
 
 def main(args):
     with h5py.File(args.input_path, mode="r") as f:

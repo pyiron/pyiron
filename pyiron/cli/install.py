@@ -36,7 +36,6 @@ def register(parser):
             "-p", "--project", default = "~/pyiron/projects",
             help = "path where pyiron should expect projects to run"
     )
-    parser.set_defaults(cli=main)
 
 def main(args):
     install_pyiron(

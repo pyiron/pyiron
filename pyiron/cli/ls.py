@@ -99,8 +99,6 @@ def register(parser):
             help = "show all job attributes"
     )
 
-    parser.set_defaults(cli=main)
-
 def main(args):
 
     if args.status:
