@@ -5,6 +5,7 @@ CLI for various pyiron utilities.
 """
 
 import argparse
+import os
 import warnings
 
 from . import ls
@@ -34,6 +35,10 @@ cli_modules = {
 
 def main():
     parser = argparse.ArgumentParser(prog = "pyiron", description = __doc__)
+    parser.add_argument(
+            "-d", "--dirty", action = "store_true",
+            help = "do not remove pyiron log files"
+    )
     subs = parser.add_subparsers()
 
     parser.set_defaults(cli = lambda _: parser.error("no sub command given"))
@@ -54,3 +59,6 @@ def main():
 
     args = parser.parse_args()
     args.cli(args)
+
+    if not args.dirty:
+        os.remove("pyiron.log")
