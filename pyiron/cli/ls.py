@@ -27,17 +27,17 @@ formatter = argparse.RawDescriptionHelpFormatter
 epilog =  """
 examples:
     Print the run time of all finished jobs:
-        pyiron-ls -c job totalcputime -s finished
+        pyiron ls -c job totalcputime -s finished
 
     Print all jobs with iron:
-        pyiron-ls -e Fe
+        pyiron ls -e Fe
 
     Print all jobs that successfully finished yesterday and a bit:
-        pyiron-ls -s finished -i 1d5h
+        pyiron ls -s finished -i 1d5h
 
     Print all jobs that were aborted less than 5 hours ago and match
     "spx.*restart":
-        pyiron-ls -n "spx.*restart" -i 5h -s aborted
+        pyiron ls -n "spx.*restart" -i 5h -s aborted
 """
 
 def register(parser):
