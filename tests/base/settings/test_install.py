@@ -5,7 +5,7 @@
 import os
 import shutil
 import subprocess
-from pyiron.base.settings.install import command_line
+from pyiron.base.settings.install import install_pyiron
 import unittest
 
 
@@ -13,9 +13,6 @@ class TestInstall(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.execution_path = os.path.dirname(os.path.abspath(__file__))
-        cls.install_script = os.path.join(
-            cls.execution_path, "../../../pyiron/base/settings/install.py"
-        )
 
     @classmethod
     def tearDownClass(cls):
@@ -25,15 +22,10 @@ class TestInstall(unittest.TestCase):
         os.remove(os.path.join(execution_path, "config"))
 
     def test_install(self):
-        command_line(
-            [
-                "-c",
-                os.path.join(self.execution_path, "config"),
-                "-r",
-                os.path.join(self.execution_path, "resources"),
-                "-p",
-                os.path.join(self.execution_path, "project"),
-            ]
+        install_pyiron(
+                config_file_name = os.path.join(self.execution_path, "config"),
+                resource_directory = os.path.join(self.execution_path, "resources"),
+                project_path = os.path.join(self.execution_path, "project"),
         )
 
         with open(os.path.join(self.execution_path, "config"), "r") as f:
@@ -43,29 +35,6 @@ class TestInstall(unittest.TestCase):
         self.assertIn("RESOURCE_PATHS", content[2])
         self.assertTrue(os.path.exists(os.path.join(self.execution_path, "project")))
         self.assertTrue(os.path.exists(os.path.join(self.execution_path, "resources")))
-
-    def test_install_help(self):
-        out = subprocess.check_output(
-            ["python", self.install_script, "--error"],
-            cwd=self.execution_path,
-            shell=False,
-            universal_newlines=True,
-        )
-        self.assertEqual(
-            out,
-            "install.py -c <config_file> -p <project_path> -r <resource_dir> -u <url>\n",
-        )
-        out = subprocess.check_output(
-            ["python", self.install_script, "-h"],
-            cwd=self.execution_path,
-            shell=False,
-            universal_newlines=True,
-        )
-        self.assertEqual(
-            out,
-            "install.py -c <config_file> -p <project_path> -r <resource_dir> -u <url>\n",
-        )
-
 
 if __name__ == "__main__":
     unittest.main()
