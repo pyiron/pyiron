@@ -7,7 +7,7 @@ Command Line Interface
 Usage Summary
 =============
 
-There's a few command line tools shipped with pyiron that to help
+There's a few command line tools shipped with pyiron to help
 administrating and keeping up with your pyiron project as well as some that are
 used internally.  All of them are installed by default in the *pyiron* script
 that has a few sub commands.
@@ -50,8 +50,8 @@ that has a few sub commands.
 Developer Guide
 ===============
 
-Adding a new sub command is done by adding a new module to ``pyiron/cli``.
-This module needs to define a ``register`` method and a ``main`` function.  The
+Adding a new sub command is done by adding a new module to ``pyiron.cli``.
+This module needs to define a ``register`` and a ``main`` function.  The
 former is called with an ``argparse.ArgumentParser`` instance as sole argument
 and should define the command line interface in the `usual way
 <https://docs.python.org/3/library/argparse.html>`_.  The latter will be called
