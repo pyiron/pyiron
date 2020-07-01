@@ -836,7 +836,7 @@ class GenericOutput(object):
     @property
     def f_max(self):
         """
-            returns maximum force magnitude of each step which is used for
+            maximum force magnitude of each step which is used for
             convergence criterion of structure optimizations
         """
         return np.linalg.norm(self.forces, axis=-1).max(axis=-1)
