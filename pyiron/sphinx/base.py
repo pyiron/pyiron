@@ -467,7 +467,7 @@ class SphinxBase(GenericDFTJob):
             "ekt", self.input["Sigma"]/HARTREE_TO_EV
             )
         self.input.sphinx.PAWHamiltonian.setdefault("xc", self.input["Xcorr"])
-        self.input.sphinx.PAWHamiltonian.setdefault("spinPolarized", self._spin_enabled)
+        self.input.sphinx.PAWHamiltonian["spinPolarized"] = self._spin_enabled
 
     def load_guess_group(self, update_spins=True):
         """
