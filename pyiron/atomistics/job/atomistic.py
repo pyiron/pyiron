@@ -834,7 +834,7 @@ class GenericOutput(object):
         return self._job["output/generic/forces"]
 
     @property
-    def f_max(self):
+    def force_max(self):
         """
             maximum force magnitude of each step which is used for
             convergence criterion of structure optimizations
