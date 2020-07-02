@@ -743,7 +743,6 @@ class SphinxBase(GenericDFTJob):
         )
 
         new_job.input = self.input
-        new_job.load_default_groups()
 
         if from_charge_density and os.path.isfile(
             posixpath.join(self.working_directory, "rho.sxb")
@@ -764,7 +763,6 @@ class SphinxBase(GenericDFTJob):
                 msg="No wavefunction file (waves.sxb) was found for "
                 + f"job {self.job_name} in {self.working_directory}."
             )
-        new_job.load_default_groups()
         return new_job
 
     def to_hdf(self, hdf=None, group_name=None):
