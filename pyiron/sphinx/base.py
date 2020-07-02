@@ -82,6 +82,9 @@ class SphinxBase(GenericDFTJob):
                         this project path)
     """
 
+    """Version of the data format in hdf5"""
+    __hdf_version__ = "0.1.0"
+
     def __init__(self, project, job_name):
         super(SphinxBase, self).__init__(project, job_name)
 
@@ -792,12 +795,26 @@ class SphinxBase(GenericDFTJob):
             hdf (str): Path to the hdf5 file
             group_name (str): Name of the group which contains the object
         """
-        super(SphinxBase, self).from_hdf(hdf=hdf, group_name=group_name)
-        self._structure_from_hdf()
-        with self._hdf5.open("input") as hdf:
-            self.input.from_hdf(hdf, group_name = "parameters")
-        if self.status.finished:
-            self._output_parser.from_hdf(self._hdf5)
+
+
+        if "HDF_VERSION" not in self._hdf5.keys():
+            from pyiron.base.generic.parameters import GenericParameters
+            super(SphinxBase, self).from_hdf(hdf=hdf, group_name=group_name)
+            self._structure_from_hdf()
+            gp = GenericParameters(table_name = "input")
+            gp.from_hdf(self._hdf5)
+            for k in gp.keys():
+                self.input[k] = gp[k]
+            if self.status.finished:
+                self._output_parser.from_hdf(self._hdf5)
+        elif self._hdf5["HDF_VERSION"] == "0.1.0":
+            super(SphinxBase, self).from_hdf(hdf=hdf, group_name=group_name)
+            self._structure_from_hdf()
+            with self._hdf5.open("input") as hdf:
+                self.input.from_hdf(hdf, group_name = "parameters")
+            if self.status.finished:
+                self._output_parser.from_hdf(self._hdf5)
+
 
     def from_directory(self, directory, file_name="structure.sx"):
         try:
