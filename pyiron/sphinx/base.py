@@ -87,7 +87,7 @@ class SphinxBase(GenericDFTJob):
 
         # keeps both the generic parameters as well as the sphinx specific
         # input groups
-        self.input = Group(table_name = "input")
+        self.input = Group(table_name = "parameters")
         self.load_default_input()
         self._save_memory = False
         self._spin_enabled = False
@@ -780,7 +780,8 @@ class SphinxBase(GenericDFTJob):
         """
         super(SphinxBase, self).to_hdf(hdf=hdf, group_name=group_name)
         self._structure_to_hdf()
-        self.input.to_hdf(self._hdf5)
+        with self._hdf5.open("input") as hdf:
+            self.input.to_hdf(hdf)
         self._output_parser.to_hdf(self._hdf5)
 
     def from_hdf(self, hdf=None, group_name=None):
@@ -793,7 +794,8 @@ class SphinxBase(GenericDFTJob):
         """
         super(SphinxBase, self).from_hdf(hdf=hdf, group_name=group_name)
         self._structure_from_hdf()
-        self.input.from_hdf(self._hdf5, group_name = "input")
+        with self._hdf5.open("input") as hdf:
+            self.input.from_hdf(hdf, group_name = "parameters")
         if self.status.finished:
             self._output_parser.from_hdf(self._hdf5)
 
