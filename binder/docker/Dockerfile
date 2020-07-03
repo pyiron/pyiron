@@ -29,7 +29,7 @@ RUN echo "@testing http://nl.alpinelinux.org/alpine/edge/testing" >> /etc/apk/re
     && rm -rf glibc*apk /var/cache/apk/*
 
 # Configure environment
-ENV CONDA_DIR /opt/conda
+ENV CONDA_DIR /srv/conda/envs/notebook/
 ENV PATH ${CONDA_DIR}/bin:${PATH}
 ENV SHELL /bin/bash
 ENV PYIRON_USER pyiron
@@ -39,11 +39,16 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US.UTF-8
 ENV HOME /home/${PYIRON_USER}
 
+# Openmpi fixes
+ENV OMPI_MCA_plm isolated
+ENV OMPI_MCA_rmaps_base_oversubscribe yes
+ENV OMPI_MCA_btl_vader_single_copy_mechanism none
+
 # Configure Miniconda
-ENV MINICONDA_VER 4.7.12
-ENV MINICONDA Miniconda3-${MINICONDA_VER}-Linux-x86_64.sh
+ENV MINICONDA_VER 4.8.2
+ENV MINICONDA Miniconda3-py37_${MINICONDA_VER}-Linux-x86_64.sh
 ENV MINICONDA_URL https://repo.continuum.io/miniconda/${MINICONDA}
-ENV MINICONDA_MD5_SUM 0dba759b8ecfc8948f626fa18785e3d8
+ENV MINICONDA_MD5_SUM 87e77f097f6ebb5127c77662dfc3165e
 
 COPY . ${HOME}
 
@@ -63,9 +68,11 @@ RUN cd /tmp \
     && ${SHELL} miniconda.sh -f -b -p ${CONDA_DIR} \
     && rm miniconda.sh \
     && ${CONDA_DIR}/bin/conda install --yes conda==${MINICONDA_VER} \
+    && source ${CONDA_DIR}/bin/activate \
     && conda env update -n root -f "${HOME}/binder/environment.yml" \
     && conda install --yes -c conda-forge nodejs \
     && ${SHELL} ${HOME}/binder/postBuild \
+    && ${CONDA_DIR}/bin/pip install --force-reinstall --no-deps --pre pyiron \
     && conda clean --all -y \
     && rm ${HOME}/Dockerfile ${HOME}/deploy.sh
 

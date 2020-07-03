@@ -10,9 +10,7 @@ jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build
 jupyter labextension install nglview-js-widgets
 
 # pyiron setup
-printf "[DEFAULT]\nTOP_LEVEL_DIRS = ${HOME}\nRESOURCE_PATHS = ${HOME}/resources" > ${HOME}/.pyiron
-git clone --recurse-submodules https://github.com/pyiron/pyiron-resources.git ${HOME}/resources
-rm -rf ${HOME}/resources/vasp
+printf "[DEFAULT]\nTOP_LEVEL_DIRS = ${HOME}\nRESOURCE_PATHS = /srv/conda/envs/notebook/share/pyiron" > ${HOME}/.pyiron
 
 # clean up
 if [ -d "notebooks" ]; then
@@ -20,8 +18,5 @@ if [ -d "notebooks" ]; then
 fi
 if [ -d "${HOME}/pyiron" ]; then
     rm -r ${HOME}/binder ${HOME}/.ci_support ${HOME}/docs ${HOME}/pyiron ${HOME}/tests ${HOME}/notebooks
-    rm ${HOME}/.travis.yml ${HOME}/azure-pipelines.yml ${HOME}/appveyor.yml ${HOME}/LICENSE ${HOME}/MANIFEST.in ${HOME}/setup.cfg ${HOME}/setup.py ${HOME}/versioneer.py
-fi
-if [ -f "${HOME}/README.rst" ]; then
-    rm ${HOME}/README.rst
+    rm ${HOME}/.travis.yml ${HOME}/azure-pipelines.yml ${HOME}/appveyor.yml ${HOME}/LICENSE ${HOME}/MANIFEST.in ${HOME}/setup.cfg ${HOME}/setup.py ${HOME}/versioneer.py ${HOME}/CONTRIBUTING.rst ${HOME}/README.rst
 fi

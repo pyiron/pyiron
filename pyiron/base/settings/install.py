@@ -3,7 +3,6 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import os
-import getopt
 from zipfile import ZipFile
 from shutil import copytree, rmtree
 import tempfile
@@ -151,57 +150,3 @@ def install_pyiron(
         giturl_for_zip_file=giturl_for_zip_file,
         git_folder_name=git_folder_name,
     )
-
-
-def command_line(argv):
-    """
-    Parse the command line arguments.
-
-    Args:
-        argv: Command line arguments
-
-    """
-    config_file_name = "~/.pyiron"
-    zip_file = "resources.zip"
-    resource_path = "~/pyiron/resources"
-    project_path = "~/pyiron/projects"
-    giturl_for_zip_file = (
-        "https://github.com/pyiron/pyiron-resources/archive/master.zip"
-    )
-    git_folder_name = "pyiron-resources-master"
-    try:
-        opts, args = getopt.getopt(
-            argv, "c:r:u:p:h", ["config=", "resource_path=", "project_path=", "url="]
-        )
-    except getopt.GetoptError:
-        print(
-            "install.py -c <config_file> -p <project_path> -r <resource_dir> -u <url>"
-        )
-        sys.exit()
-    else:
-        for opt, arg in opts:
-            if opt in ("-h", "--help"):
-                print(
-                    "install.py -c <config_file> -p <project_path> -r <resource_dir> -u <url>"
-                )
-                sys.exit()
-            elif opt in ("-c", "--config"):
-                config_file_name = arg
-            elif opt in ("-r", "--resource_path"):
-                resource_path = arg
-            elif opt in ("-p", "--project_path"):
-                project_path = arg
-            elif opt in ("-u", "--url"):
-                giturl_for_zip_file = arg
-        install_pyiron(
-            config_file_name=config_file_name,
-            zip_file=zip_file,
-            project_path=project_path,
-            resource_directory=resource_path,
-            giturl_for_zip_file=giturl_for_zip_file,
-            git_folder_name=git_folder_name,
-        )
-
-
-if __name__ == "__main__":
-    command_line(sys.argv[1:])

@@ -214,9 +214,6 @@ def job_table(
     if full_table:
         pandas.set_option('display.max_rows', None)
         pandas.set_option('display.max_columns', None)
-    else:
-        pandas.reset_option('display.max_rows')
-        pandas.reset_option('display.max_columns')
     pandas.set_option("display.max_colwidth", max_colwidth)
     df = pandas.DataFrame(job_dict)
     if len(job_dict) == 0:

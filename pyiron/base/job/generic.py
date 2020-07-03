@@ -168,6 +168,7 @@ class GenericJob(JobCore):
         self._compress_by_default = False
         self._python_only_job = False
         self.interactive_cache = None
+        self.error = GenericError(job=self)
 
         for sig in intercepted_signals:
             signal.signal(sig, self.signal_intercept)
@@ -757,6 +758,8 @@ class GenericJob(JobCore):
                 self._logger.warning("Job aborted")
                 self._logger.warning(e.output)
                 self.status.aborted = True
+                if self.job_id is not None:
+                    self.project.db.item_update(self._runtime(), self.job_id)
                 error_file = posixpath.join(
                     self.project_hdf5.working_directory, "error.msg"
                 )
@@ -850,7 +853,7 @@ class GenericJob(JobCore):
     #         self._logger.info("{}, status: {}, script: {}".format(self.job_info_str, self.status, file_name))
     #         with open(posixpath.join(self.project_hdf5.working_directory, 'out.txt'), mode='w') as f_out:
     #             with open(posixpath.join(self.project_hdf5.working_directory, 'error.txt'), mode='w') as f_err:
-    #                 self._process = subprocess.Popen(['python', '-m', 'pyiron.base.job.wrappercmd', '-p',
+    #                 self._process = subprocess.Popen(['python', '-m', 'pyiron.cli', 'wrapper', '-p',
     #                                                   self.working_directory, '-j', str(self.job_id)],
     #                                                  cwd=self.project_hdf5.working_directory, shell=shell, stdout=f_out,
     #                                                  stderr=f_err, universal_newlines=True)
@@ -895,7 +898,7 @@ class GenericJob(JobCore):
             print(
                 "You have selected to start the job manually. "
                 + "To run it, go into the working directory {} and ".format(abs_working)
-                + "call 'python -m pyiron.base.job.wrappercmd -p {}".format(abs_working)
+                + "call 'python -m pyiron.cli wrapper -p {}".format(abs_working)
                 + " -j {} ' ".format(self.job_id)
             )
 
@@ -912,7 +915,7 @@ class GenericJob(JobCore):
         if s.queue_adapter.remote_flag:
             filename = s.queue_adapter.convert_path_to_remote(path=self.project_hdf5.file_name)
             working_directory = s.queue_adapter.convert_path_to_remote(path=self.working_directory)
-            command = "python -m pyiron.base.job.wrappercmd -p " \
+            command = "python -m pyiron.cli wrapper -p " \
                       + working_directory \
                       + " -f " + filename + self.project_hdf5.h5_path \
                       + " --submit"
@@ -921,11 +924,11 @@ class GenericJob(JobCore):
                 transfer_back=False
             )
         elif s.database_is_disabled:
-            command = "python -m pyiron.base.job.wrappercmd -p " \
+            command = "python -m pyiron.cli wrapper -p " \
                       + self.working_directory \
                       + " -f " + self.project_hdf5.file_name + self.project_hdf5.h5_path
         else:
-            command = "python -m pyiron.base.job.wrappercmd -p " \
+            command = "python -m pyiron.cli wrapper -p " \
                       + self.working_directory \
                       + " -j " + str(self.job_id)
         try:
@@ -1014,7 +1017,6 @@ class GenericJob(JobCore):
             obj_type=[
                 "pyiron.base.master.parallel.ParallelMaster",
                 "pyiron.base.master.serial.SerialMasterBase",
-                "pyiron.atomistic.job.interactivewrapper.InteractiveWrapper",
             ],
         ):
             job.ref_job = self
@@ -1025,7 +1027,26 @@ class GenericJob(JobCore):
                 or self.server.run_mode.interactive_non_modal
             ):
                 job.server.run_mode.interactive = True
+        elif static_isinstance(
+            obj=job.__class__,
+            obj_type=[
+                "pyiron.atomistics.job.interactivewrapper.InteractiveWrapper",
+            ],
+        ):
+            job.ref_job = self
         return job
+
+    def create_pipeline(self, step_lst):
+        """
+        Create a job pipeline
+
+        Args:
+            step_lst (list): List of functions which create calculations
+
+        Returns:
+            FlexibleMaster:
+        """
+        return self.project.create_pipeline(job=self, step_lst=step_lst)
 
     def update_master(self):
         """
@@ -1602,6 +1623,24 @@ class GenericJob(JobCore):
         Mainly used by the ListMaster job type.
         """
         pass
+
+
+class GenericError(object):
+    def __init__(self, job):
+        self._job = job
+
+    def print_message(self, string=''):
+        return self._print_error(file_name='error.msg', string=string)
+
+    def print_queue(self, string=''):
+        return self._print_error(file_name='error.out', string=string)
+
+    def _print_error(self, file_name, string='', print_yes=True):
+        if self._job[file_name] is None:
+            return False
+        elif print_yes:
+            print(string.join(self._job[file_name]))
+        return True
 
 
 def multiprocess_wrapper(job_id, working_dir, debug=False):
