@@ -595,8 +595,12 @@ class VaspBase(GenericDFTJob):
                                            species_from_potcar=True)
                 else:
                     structure = read_atoms(posixpath.join(directory, "POSCAR"))
-            else:
+            elif "CONTCAR" in files:
+                structure = read_atoms(posixpath.join(directory, "CONTCAR"))
+            elif "vasprun.xml" in files:
                 structure = vp_new.get_initial_structure()
+            else:
+                raise ValueError("Unable to import job because structure not present")
             self.structure = structure
             # Always set the sorted_indices to the original order when importing from jobs
             self.sorted_indices = np.arange(len(self.structure), dtype=int)
