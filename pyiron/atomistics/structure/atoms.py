@@ -4,6 +4,7 @@
 
 from __future__ import division, print_function
 from ase.atoms import Atoms as ASEAtoms
+from ase.cell import Cell
 import ast
 from copy import copy
 from collections import OrderedDict
@@ -113,6 +114,7 @@ class Atoms(ASEAtoms):
             or info is not None
         ):
             s.logger.debug("Not supported parameter used!")
+        self._cellobj = Cell.new(pbc=False)
         self._store_elements = dict()
         self._species_to_index_dict = None
         self.colorLut = ElementColorDictionary().to_lut()
@@ -3152,12 +3154,12 @@ class Atoms(ASEAtoms):
     def get_calculator():
         return None
 
-    def get_cell(self, complete=False):
-        """Get the three unit cell vectors as a 3x3 ndarray."""
-        if complete:
-            return complete_cell(self._cell)
-        else:
-            return self._cell.copy()
+    # def get_cell(self, complete=False):
+    #     """Get the three unit cell vectors as a 3x3 ndarray."""
+    #     if complete:
+    #         return complete_cell(self._cell)
+    #     else:
+    #         return self._cell.copy()
 
     def get_distance(self, a0, a1, mic=True, vector=False):
         """
