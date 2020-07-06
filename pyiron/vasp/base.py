@@ -589,10 +589,12 @@ class VaspBase(GenericDFTJob):
                     )
                 except (IndexError, TypeError, ValueError):
                     pass
-            if "POSCAR" in files and "POTCAR" in files:
-                structure = read_atoms(
-                    posixpath.join(directory, "POSCAR"), species_from_potcar=True
-                )
+            if "POSCAR" in files:
+                if "POTCAR" in files:
+                    structure = read_atoms(posixpath.join(directory, "POSCAR"),
+                                           species_from_potcar=True)
+                else:
+                    structure = read_atoms(posixpath.join(directory, "POSCAR"))
             else:
                 structure = vp_new.get_initial_structure()
             self.structure = structure
