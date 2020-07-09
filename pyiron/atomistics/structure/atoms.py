@@ -2372,17 +2372,17 @@ class Atoms(object):
         self, vector, force_update=False, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0
     ):
         """
-        symmetrization of natom x 3 vector according to box symmetries
+        Symmetrization of natom x 3 vector according to box symmetries
 
-        args:
+        Args:
             vector (ndarray/list): natom x 3 array to symmetrize
             force_update (bool): whether to update the symmetry info
-            use_magmoms: cf. get_symmetry
-            use_elements: cf. get_symmetry
-            symprec: cf. get_symmetry
-            angle_tolerance: cf. get_symmetry
+            use_magmoms (bool): cf. get_symmetry
+            use_elements (bool): cf. get_symmetry
+            symprec (float): cf. get_symmetry
+            angle_tolerance (float): cf. get_symmetry
 
-        returns:
+        Returns:
             (ndarray) symmetrized vector
         """
         vector = np.array(vector).reshape(-1, 3)
