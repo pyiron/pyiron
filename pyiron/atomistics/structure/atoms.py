@@ -229,6 +229,7 @@ class Atoms(object):
         self.set_initial_magnetic_moments(magmoms)
         self._high_symmetry_points = None
         self._high_symmetry_path = None
+        self._symmetry_dataset = None
 
 
     @property
@@ -2366,6 +2367,27 @@ class Atoms(object):
                 symprec=symprec,
                 angle_tolerance=angle_tolerance,
             )
+
+    def symmetrize_vectors(
+        self, vectors, force_update=False, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0
+    ):
+        vectors = np.array(vectors).reshape(-1, 3)
+        if vectors.shape != self.positions.shape:
+            raise AssertionError('Vector must be a natom x 3 array')
+        if self._symmetry_dataset is None or force_update:
+            symmetry = self.get_symmetry(use_magmoms=use_magmoms, use_elements=use_elements,
+                                         symprec=symprec, angle_tolerance=angle_tolerance)
+            scaled_positions = self.get_scaled_positions(wrap=False)
+            symmetry['indices'] = []
+            for rot,tra in zip(symmetry['rotations'], symmetry['translations']):
+                positions = np.einsum('ij,nj->ni', rot, scaled_positions)+tra
+                positions -= np.floor(positions+1.0e-2)
+                vec = np.where(np.linalg.norm(positions[np.newaxis, :, :]-scaled_positions[:, np.newaxis, :], axis=-1)<=1.0e-4)
+                symmetry['indices'].append(vec[1])
+            symmetry['indices'] = np.array(symmetry['indices'])
+            self._symmetry_dataset = symmetry
+        return np.einsum('ijk,ink->nj', self._symmetry_dataset['rotations'],
+                         vectors[self._symmetry_dataset['indices']])/len(self._symmetry_dataset['rotations'])
 
     def group_points_by_symmetry(self, points):
         """
