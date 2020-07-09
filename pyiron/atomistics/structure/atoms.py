@@ -1238,6 +1238,18 @@ class Atoms(object):
         self *= vec
 
     def repeat_points(self, points, rep):
+        """
+        Return points with repetition given according to periodic boundary conditions
+
+        Args:
+            points (np.ndarray/list): xyz vector or list/array of xyz vectors
+            rep (int/list/np.ndarray): repetition in each direction.
+                                       If int is given, the same value is used for
+                                       every direction
+
+        Returns:
+            (np.ndarray) repeated points
+        """
         n = np.array([rep]).flatten()
         if len(n)==1:
             n = np.tile(n, 3)
