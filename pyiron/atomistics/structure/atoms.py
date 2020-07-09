@@ -2372,7 +2372,7 @@ class Atoms(object):
         self, vector, force_update=False, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0
     ):
         """
-        natom x 3 vector are symmetrized according to the box symmetries
+        symmetrization of natom x 3 vector according to box symmetries
 
         args:
             vector (ndarray/list): natom x 3 array to symmetrize
