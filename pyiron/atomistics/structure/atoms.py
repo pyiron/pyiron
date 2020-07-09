@@ -1237,6 +1237,21 @@ class Atoms(object):
     def set_repeat(self, vec):
         self *= vec
 
+    def repeat_points(self, points, rep):
+        n = np.array([rep]).flatten()
+        if len(n)==1:
+            n = np.tile(n, 3)
+        if len(n)!=3:
+            raise ValueError('rep must be an integer or a list of 3 integers')
+        vector = np.array(points)
+        if vector.shape[-1]!=3:
+            raise ValueError('points must be an xyz vector or a list/array of xyz vectors')
+        v = vector.reshape(-1, 3)
+        meshgrid = np.meshgrid(np.arange(n[0]), np.arange(n[1]), np.arange(n[2]))
+        v_repeated = np.einsum('ni,ij->nj', np.stack(meshgrid, axis=-1).reshape(-1, 3), self.cell)
+        v_repeated = v_repeated[:, np.newaxis, :]+v[np.newaxis, :, :]
+        return v_repeated.reshape((-1,)+vector.shape)
+
     def reset_absolute(self, is_absolute):
         raise NotImplementedError("This function was removed!")
 
