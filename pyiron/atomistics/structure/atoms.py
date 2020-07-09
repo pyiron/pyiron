@@ -1237,15 +1237,17 @@ class Atoms(object):
     def set_repeat(self, vec):
         self *= vec
 
-    def repeat_points(self, points, rep):
+    def repeat_points(self, points, rep, centered=False):
         """
         Return points with repetition given according to periodic boundary conditions
 
         Args:
             points (np.ndarray/list): xyz vector or list/array of xyz vectors
-            rep (int/list/np.ndarray): repetition in each direction.
+            rep (int/list/np.ndarray): Repetition in each direction.
                                        If int is given, the same value is used for
                                        every direction
+            centered (bool): Whether the original points should be in the center of
+                             repeated points.
 
         Returns:
             (np.ndarray) repeated points
@@ -1258,8 +1260,16 @@ class Atoms(object):
         vector = np.array(points)
         if vector.shape[-1]!=3:
             raise ValueError('points must be an xyz vector or a list/array of xyz vectors')
+        if centered and np.mod(n, 2).sum()!=3:
+            warnings.warn('When centered, only odd number of repetition should be used')
         v = vector.reshape(-1, 3)
-        meshgrid = np.meshgrid(np.arange(n[0]), np.arange(n[1]), np.arange(n[2]))
+        n_lst = []
+        for nn in n:
+            if centered:
+                n_lst.append(np.arange(nn)-int(nn/2))
+            else:
+                n_lst.append(np.arange(nn))
+        meshgrid = np.meshgrid(n_lst[0], n_lst[1], n_lst[2])
         v_repeated = np.einsum('ni,ij->nj', np.stack(meshgrid, axis=-1).reshape(-1, 3), self.cell)
         v_repeated = v_repeated[:, np.newaxis, :]+v[np.newaxis, :, :]
         return v_repeated.reshape((-1,)+vector.shape)
