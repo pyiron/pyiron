@@ -2371,6 +2371,20 @@ class Atoms(object):
     def symmetrize_vectors(
         self, vectors, force_update=False, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0
     ):
+        """
+        natom x 3 vectors are symmetrized according to the box symmetries
+
+        args:
+            vectors (ndarray/list): natom x 3 array to symmetrize
+            force_update (bool): whether to update the symmetry info
+            use_magmoms: cf. get_symmetry
+            use_elements: cf. get_symmetry
+            symprec: cf. get_symmetry
+            angle_tolerance: cf. get_symmetry
+
+        returns:
+            (ndarray) symmetrized vector
+        """
         vectors = np.array(vectors).reshape(-1, 3)
         if vectors.shape != self.positions.shape:
             raise AssertionError('Vector must be a natom x 3 array')
