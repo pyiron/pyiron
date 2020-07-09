@@ -2389,6 +2389,10 @@ class Atoms(object):
         if vectors.shape != self.positions.shape:
             print(vectors.shape, self.positions.shape)
             raise ValueError('Vector must be a natom x 3 array: {} != {}'.format(vectors.shape, self.positions.shape))
+        try:
+            self._symmetry_dataset
+        except AttributeError:
+            self._symmetry_dataset = None
         if self._symmetry_dataset is None or force_update:
             symmetry = self.get_symmetry(use_magmoms=use_magmoms, use_elements=use_elements,
                                          symprec=symprec, angle_tolerance=angle_tolerance)
