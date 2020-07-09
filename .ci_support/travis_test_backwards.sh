@@ -5,12 +5,12 @@
 # conda activate root
 # env
 
-pip install --force pyiron==0.2.16
+pip install --force --ignore-installed --no-deps pyiron==0.2.16
 for t in tests/backwards/*save.py; do
     python $t
 done
 
-pip install --no-deps --force .
+pip install --force --ignore-installed --no-deps .
 i=0;
 for t in tests/backwards/*load.py; do
     python $t || i=$((i+1));
