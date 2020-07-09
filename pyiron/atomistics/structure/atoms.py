@@ -2368,14 +2368,14 @@ class Atoms(object):
                 angle_tolerance=angle_tolerance,
             )
 
-    def symmetrize_vectors(
-        self, vectors, force_update=False, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0
+    def symmetrize_vector(
+        self, vector, force_update=False, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0
     ):
         """
-        natom x 3 vectors are symmetrized according to the box symmetries
+        natom x 3 vector are symmetrized according to the box symmetries
 
         args:
-            vectors (ndarray/list): natom x 3 array to symmetrize
+            vector (ndarray/list): natom x 3 array to symmetrize
             force_update (bool): whether to update the symmetry info
             use_magmoms: cf. get_symmetry
             use_elements: cf. get_symmetry
@@ -2385,9 +2385,10 @@ class Atoms(object):
         returns:
             (ndarray) symmetrized vector
         """
-        vectors = np.array(vectors).reshape(-1, 3)
-        if vectors.shape != self.positions.shape:
-            raise AssertionError('Vector must be a natom x 3 array')
+        vector = np.array(vector).reshape(-1, 3)
+        if vector.shape != self.positions.shape:
+            print(vector.shape, self.positions.shape)
+            raise ValueError('Vector must be a natom x 3 array: {} != {}'.format(vector.shape, self.positions.shape))
         if self._symmetry_dataset is None or force_update:
             symmetry = self.get_symmetry(use_magmoms=use_magmoms, use_elements=use_elements,
                                          symprec=symprec, angle_tolerance=angle_tolerance)
@@ -2401,7 +2402,7 @@ class Atoms(object):
             symmetry['indices'] = np.array(symmetry['indices'])
             self._symmetry_dataset = symmetry
         return np.einsum('ijk,ink->nj', self._symmetry_dataset['rotations'],
-                         vectors[self._symmetry_dataset['indices']])/len(self._symmetry_dataset['rotations'])
+                         vector[self._symmetry_dataset['indices']])/len(self._symmetry_dataset['rotations'])
 
     def group_points_by_symmetry(self, points):
         """
