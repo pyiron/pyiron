@@ -810,6 +810,20 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(np.allclose(basis.get_distances(a0=0.5*np.ones(3)), basis.get_distances(a1=0.5*np.ones(3))))
         self.assertTrue(np.allclose(basis.get_distances(vector=True)[0,1], -0.1*np.ones(3)))
 
+    def test_repeat_points(self):
+        basis = Atoms("Fe", positions=np.random.rand(3).reshape(-1, 3), cell=np.identity(3))
+        basis.cell[0, 1] = 0.01
+        with self.assertRaises(ValueError):
+            basis.repeat_points([0, 0, 0], [2 ,2])
+        with self.assertRaises(ValueError):
+            basis.repeat_points([0, 0], 2)
+        v = np.random.rand(3)
+        w = basis.repeat_points(v, 3)
+        v += np.array([1, 0.01, 0])
+        self.assertAlmostEqual(np.linalg.norm(w-v, axis=-1).min(), 0)
+        v = np.random.rand(6).reshape(-1, 3)
+        self.assertEqual(basis.repeat_points(v, 2).shape, (8, 2, 3))
+
     def test_cluster_analysis(self):
         import random
 
