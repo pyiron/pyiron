@@ -2383,7 +2383,7 @@ class Atoms(object):
             angle_tolerance (float): cf. get_symmetry
 
         Returns:
-            (ndarray) symmetrized vectors
+            (np.ndarray) symmetrized vectors
         """
         vectors = np.array(vectors).reshape(-1, 3)
         if vectors.shape != self.positions.shape:
