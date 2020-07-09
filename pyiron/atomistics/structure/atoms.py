@@ -135,6 +135,7 @@ class Atoms(object):
         self._pbc = False
         self.dimension = 3  # Default
         self.units = {"length": "A", "mass": "u"}
+        self._symmetry_dataset = None
 
         el_index_lst = list()
         element_list = None
@@ -2366,6 +2367,42 @@ class Atoms(object):
                 symprec=symprec,
                 angle_tolerance=angle_tolerance,
             )
+
+    def symmetrize_vectors(
+        self, vectors, force_update=False, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0
+    ):
+        """
+        Symmetrization of natom x 3 vectors according to box symmetries
+
+        Args:
+            vectors (ndarray/list): natom x 3 array to symmetrize
+            force_update (bool): whether to update the symmetry info
+            use_magmoms (bool): cf. get_symmetry
+            use_elements (bool): cf. get_symmetry
+            symprec (float): cf. get_symmetry
+            angle_tolerance (float): cf. get_symmetry
+
+        Returns:
+            (np.ndarray) symmetrized vectors
+        """
+        vectors = np.array(vectors).reshape(-1, 3)
+        if vectors.shape != self.positions.shape:
+            print(vectors.shape, self.positions.shape)
+            raise ValueError('Vector must be a natom x 3 array: {} != {}'.format(vectors.shape, self.positions.shape))
+        if self._symmetry_dataset is None or force_update:
+            symmetry = self.get_symmetry(use_magmoms=use_magmoms, use_elements=use_elements,
+                                         symprec=symprec, angle_tolerance=angle_tolerance)
+            scaled_positions = self.get_scaled_positions(wrap=False)
+            symmetry['indices'] = []
+            for rot,tra in zip(symmetry['rotations'], symmetry['translations']):
+                positions = np.einsum('ij,nj->ni', rot, scaled_positions)+tra
+                positions -= np.floor(positions+1.0e-2)
+                vec = np.where(np.linalg.norm(positions[np.newaxis, :, :]-scaled_positions[:, np.newaxis, :], axis=-1)<=1.0e-4)
+                symmetry['indices'].append(vec[1])
+            symmetry['indices'] = np.array(symmetry['indices'])
+            self._symmetry_dataset = symmetry
+        return np.einsum('ijk,ink->nj', self._symmetry_dataset['rotations'],
+                         vectors[self._symmetry_dataset['indices']])/len(self._symmetry_dataset['rotations'])
 
     def group_points_by_symmetry(self, points):
         """
