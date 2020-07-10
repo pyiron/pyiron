@@ -100,10 +100,10 @@ class TestInputList(unittest.TestCase):
                 "index with string does not give correct element")
         with self.assertRaises(IndexError,
                                msg = "no IndexError on out of bounds index"):
-            self.pl[15]
+            print(self.pl[15])
         with self.assertRaises(ValueError,
                                msg = "no ValueError on invalid index type"):
-            self.pl[{}]
+            print(self.pl[{}])
 
     def test_get_attr(self):
         self.assertEqual(self.pl.tail, InputList([2, 4, 8]),
@@ -280,16 +280,16 @@ class TestInputList(unittest.TestCase):
                     if isinstance(v, (list, dict)):
                         if not rec(v):
                             return False
-                    elif type(v) != str:
+                    elif not isinstance(v, str):
                         return False
             elif isinstance(m, dict):
                 for k, v in m.items():
-                    if type(k) != str:
+                    if not isinstance(k, str):
                         return False
                     if isinstance(v, (list, dict)):
                         if not rec(v):
                             return False
-                    elif type(v) != str:
+                    elif not isinstance(v, str):
                         return False
             return True
         self.assertTrue(rec(self.pl._repr_json_()),
