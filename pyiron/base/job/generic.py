@@ -154,6 +154,7 @@ class GenericJob(JobCore):
         super(GenericJob, self).__init__(project, job_name)
         self.__name__ = "GenericJob"
         self.__version__ = "0.4"
+        self.__hdf_version__ = "0.1.0"
         self._server = Server()
         self._logger = s.logger
         self._executable = None
@@ -1497,6 +1498,8 @@ class GenericJob(JobCore):
             self._hdf5["VERSION"] = self.executable.version
         else:
             self._hdf5["VERSION"] = self.__version__
+        if hasattr(self, "__hdf_version__"):
+            self._hdf5["HDF_VERSION"] = self.__hdf_version__
 
     def _type_from_hdf(self):
         """

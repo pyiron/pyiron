@@ -155,6 +155,7 @@ class Atoms(ASEAtoms):
         self._pbc = False
         self.dimension = 3  # Default
         self.units = {"length": "A", "mass": "u"}
+        self._symmetry_dataset = None
 
         el_index_lst = list()
         element_list = None
@@ -1256,6 +1257,43 @@ class Atoms(ASEAtoms):
 
     def set_repeat(self, vec):
         self *= vec
+
+    def repeat_points(self, points, rep, centered=False):
+        """
+        Return points with repetition given according to periodic boundary conditions
+
+        Args:
+            points (np.ndarray/list): xyz vector or list/array of xyz vectors
+            rep (int/list/np.ndarray): Repetition in each direction.
+                                       If int is given, the same value is used for
+                                       every direction
+            centered (bool): Whether the original points should be in the center of
+                             repeated points.
+
+        Returns:
+            (np.ndarray) repeated points
+        """
+        n = np.array([rep]).flatten()
+        if len(n)==1:
+            n = np.tile(n, 3)
+        if len(n)!=3:
+            raise ValueError('rep must be an integer or a list of 3 integers')
+        vector = np.array(points)
+        if vector.shape[-1]!=3:
+            raise ValueError('points must be an xyz vector or a list/array of xyz vectors')
+        if centered and np.mod(n, 2).sum()!=3:
+            warnings.warn('When centered, only odd number of repetition should be used')
+        v = vector.reshape(-1, 3)
+        n_lst = []
+        for nn in n:
+            if centered:
+                n_lst.append(np.arange(nn)-int(nn/2))
+            else:
+                n_lst.append(np.arange(nn))
+        meshgrid = np.meshgrid(n_lst[0], n_lst[1], n_lst[2])
+        v_repeated = np.einsum('ni,ij->nj', np.stack(meshgrid, axis=-1).reshape(-1, 3), self.cell)
+        v_repeated = v_repeated[:, np.newaxis, :]+v[np.newaxis, :, :]
+        return v_repeated.reshape((-1,)+vector.shape)
 
     def reset_absolute(self, is_absolute):
         raise NotImplementedError("This function was removed!")
@@ -2387,6 +2425,42 @@ class Atoms(ASEAtoms):
                 symprec=symprec,
                 angle_tolerance=angle_tolerance,
             )
+
+    def symmetrize_vectors(
+        self, vectors, force_update=False, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0
+    ):
+        """
+        Symmetrization of natom x 3 vectors according to box symmetries
+
+        Args:
+            vectors (ndarray/list): natom x 3 array to symmetrize
+            force_update (bool): whether to update the symmetry info
+            use_magmoms (bool): cf. get_symmetry
+            use_elements (bool): cf. get_symmetry
+            symprec (float): cf. get_symmetry
+            angle_tolerance (float): cf. get_symmetry
+
+        Returns:
+            (np.ndarray) symmetrized vectors
+        """
+        vectors = np.array(vectors).reshape(-1, 3)
+        if vectors.shape != self.positions.shape:
+            print(vectors.shape, self.positions.shape)
+            raise ValueError('Vector must be a natom x 3 array: {} != {}'.format(vectors.shape, self.positions.shape))
+        if self._symmetry_dataset is None or force_update:
+            symmetry = self.get_symmetry(use_magmoms=use_magmoms, use_elements=use_elements,
+                                         symprec=symprec, angle_tolerance=angle_tolerance)
+            scaled_positions = self.get_scaled_positions(wrap=False)
+            symmetry['indices'] = []
+            for rot,tra in zip(symmetry['rotations'], symmetry['translations']):
+                positions = np.einsum('ij,nj->ni', rot, scaled_positions)+tra
+                positions -= np.floor(positions+1.0e-2)
+                vec = np.where(np.linalg.norm(positions[np.newaxis, :, :]-scaled_positions[:, np.newaxis, :], axis=-1)<=1.0e-4)
+                symmetry['indices'].append(vec[1])
+            symmetry['indices'] = np.array(symmetry['indices'])
+            self._symmetry_dataset = symmetry
+        return np.einsum('ijk,ink->nj', self._symmetry_dataset['rotations'],
+                         vectors[self._symmetry_dataset['indices']])/len(self._symmetry_dataset['rotations'])
 
     def group_points_by_symmetry(self, points):
         """
