@@ -2695,53 +2695,6 @@ class Atoms(object):
         )
         return mapping, mesh_points
 
-    def get_equivalent_atoms(self, eps=1e-5):
-        """
-
-        Args:
-            eps:
-
-        Returns:
-
-        """
-        sym = self.get_symmetry()
-        coords = np.mod(self.get_scaled_positions(wrap=False) + eps, 1) - eps
-
-        trans_vec = []
-        rot_vec = []
-        id_vec = []
-
-        ind_ref = 0  # TODO: extend as loop over all inequivalent atoms
-        id_mat = np.identity(3, dtype="intc")
-        ref_id_list = []
-        for trans, rot in zip(sym["translations"], sym["rotations"]):
-            if np.linalg.norm(rot - id_mat) < eps:  # TODO: remove this limitation
-                id_list = []
-                for i_c, coord_new in enumerate(np.mod(coords - trans + eps, 1) - eps):
-                    no_match = True
-                    hash_id = None
-                    for hash_id, c in enumerate(coords):
-                        if np.linalg.norm(coord_new - c) < eps:
-                            id_list.append(hash_id)
-                            no_match = False
-                            break
-                    if hash_id == ind_ref:
-                        # print "ref_id: ", i_c
-                        ref_id_list.append(i_c)
-
-                    # if len(id_vec)==1:
-                    #     print "c: ", i_c, coord_new, c
-                    if no_match:
-                        raise ValueError("No equivalent atom found!")
-
-                trans_vec.append(trans)
-                rot_vec.append(rot)
-                id_vec.append(id_list)
-
-        eq_atoms = [0]
-        # print "ref_id: ", ref_id_list
-        return eq_atoms, trans_vec, rot_vec, id_vec, ref_id_list
-
     def get_majority_species(self, return_count=False):
         """
         This function returns the majority species and their number in the box
