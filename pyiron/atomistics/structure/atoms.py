@@ -2554,6 +2554,34 @@ class Atoms(object):
         else:
             return list_positions
 
+    def get_equivalent_points(self, points, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0):
+        """
+
+        Args:
+            points (list/ndarray): 3d vector
+            use_magmoms (bool): cf. get_symmetry()
+            use_elements (bool): cf. get_symmetry()
+            symprec (float): cf. get_symmetry()
+            angle_tolerance (float): cf. get_symmetry()
+
+        Returns:
+            (ndarray): array of equivalent points with respect to box symmetries
+        """
+        symmetry_operations = self.get_symmetry(use_magmoms=use_magmoms,
+                                                use_elements=use_elements,
+                                                symprec=symprec,
+                                                angle_tolerance=angle_tolerance)
+        R = symmetry_operations['rotations']
+        t = symmetry_operations['translations']
+        x = np.einsum('jk,j->k', np.linalg.inv(self.cell), points)
+        x = np.einsum('nxy,y->nx', R, x)+t
+        x -= np.floor(x)
+        dist = x[:,np.newaxis]-x[np.newaxis,:]
+        w, v = np.where(np.linalg.norm(dist-np.rint(dist), axis=-1)<symprec)
+        x = np.delete(x, w[v<w], axis=0)
+        x = np.einsum('ji,mj->mi', self.cell, x)
+        return x
+
     def get_symmetry_dataset(self, symprec=1e-5, angle_tolerance=-1.0):
         """
 
