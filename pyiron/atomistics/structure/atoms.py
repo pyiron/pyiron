@@ -137,7 +137,10 @@ class Atoms(ASEAtoms):
                 if symbols is not None:
                     n_atoms = len(symbols)
                 else:
-                    n_atoms = len(numbers)
+                    if numbers is not None:
+                        n_atoms = len(numbers)
+                    else:
+                        n_atoms = 0
                 self.new_array('numbers', np.zeros(n_atoms, int), int)
                 positions = np.zeros((len(self.arrays['numbers']), 3))
             else:
