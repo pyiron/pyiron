@@ -119,13 +119,9 @@ class Atoms(ASEAtoms):
         self._species_to_index_dict = None
         self.colorLut = ElementColorDictionary().to_lut()
         self._is_scaled = False
-        if cell is not None:
-            # make it ASE compatible
-            if np.linalg.matrix_rank(cell) == 1:
-                cell = np.eye(len(cell)) * cell
-            else:
-                cell = np.array(cell)
-        self._cell = cell
+        if cell is None:
+            cell = np.zeros((3, 3))
+        self.set_cell(cell)
         self._species = list()
 
         self._pse = PeriodicTable()
@@ -256,23 +252,23 @@ class Atoms(ASEAtoms):
         self._high_symmetry_path = None
 
 
-    @property
-    def cell(self):
-        """
-        numpy.ndarray: A size 3x3 array which gives the lattice vectors of the cell as [a1, a2, a3]
-
-        """
-        return self._cell
-
-    @cell.setter
-    def cell(self, value):
-        if value is None:
-            self._cell = None
-        else:
-            if self._is_scaled:
-                self.set_cell(value, scale_atoms=True)
-            else:
-                self.set_cell(value)
+    # @property
+    # def cell(self):
+    #     """
+    #     numpy.ndarray: A size 3x3 array which gives the lattice vectors of the cell as [a1, a2, a3]
+    #
+    #     """
+    #     return self.get_cell()
+    #
+    # @cell.setter
+    # def cell(self, value):
+    #     if value is None:
+    #         self._cell = None
+    #     else:
+    #         if self._is_scaled:
+    #             self.set_cell(value, scale_atoms=True)
+    #         else:
+    #             self.set_cell(value)
 
     @property
     def species(self):
@@ -3678,66 +3674,66 @@ class Atoms(ASEAtoms):
             raise ValueError("cell has not been set yet")
         self.positions = np.einsum("jk,ij->ik", self.cell, scaled)
 
-    def set_cell(self, cell, scale_atoms=False):
-        """
-        Set unit cell vectors.
-
-        Parameters:
-
-        cell: 3x3 matrix or length 3 or 6 vector
-            Unit cell.  A 3x3 matrix (the three unit cell vectors) or
-            just three numbers for an orthorhombic cell. Another option is
-            6 numbers, which describes unit cell with lengths of unit cell
-            vectors and with angles between them (in degrees), in following
-            order: [len(a), len(b), len(c), angle(b,c), angle(a,c),
-            angle(a,b)].  First vector will lie in x-direction, second in
-            xy-plane, and the third one in z-positive subspace.
-        scale_atoms: bool
-            Fix atomic positions or move atoms with the unit cell?
-            Default behavior is to *not* move the atoms (scale_atoms=False).
-
-        Examples:
-
-        Two equivalent ways to define an orthorhombic cell:
-
-        >>> atoms = Atoms('He')
-        >>> a, b, c = 7, 7.5, 8
-        >>> atoms.set_cell([a, b, c])
-        >>> atoms.set_cell([(a, 0, 0), (0, b, 0), (0, 0, c)])
-
-        FCC unit cell:
-
-        >>> atoms.set_cell([(0, b, b), (b, 0, b), (b, b, 0)])
-
-        Hexagonal unit cell:
-
-        >>> atoms.set_cell([a, a, c, 90, 90, 120])
-
-        Rhombohedral unit cell:
-
-        >>> alpha = 77
-        >>> atoms.set_cell([a, a, a, alpha, alpha, alpha])
-        """
-
-        cell = np.array(cell, float)
-
-        if cell.shape == (3,):
-            cell = np.diag(cell)
-        elif cell.shape == (6,):
-            cell = cellpar_to_cell(cell)
-        elif cell.shape != (3, 3):
-            raise ValueError(
-                "Cell must be length 3 sequence, length 6 " "sequence or 3x3 matrix!"
-            )
-        if any(self.pbc):
-            cell_pbc = cell[self.pbc][:, self.pbc]
-            if np.linalg.det(cell_pbc) <= 0:
-                raise ValueError("Can't set a singular matrix/non-right hand orientation "
-                                 "as the cell value for a periodic crystal")
-            if scale_atoms:
-                M = np.linalg.solve(self.get_cell(complete=True), complete_cell(cell))
-                self.positions[:] = np.dot(self.positions, M)
-        self._cell = cell
+    # def set_cell(self, cell, scale_atoms=False):
+    #     """
+    #     Set unit cell vectors.
+    #
+    #     Parameters:
+    #
+    #     cell: 3x3 matrix or length 3 or 6 vector
+    #         Unit cell.  A 3x3 matrix (the three unit cell vectors) or
+    #         just three numbers for an orthorhombic cell. Another option is
+    #         6 numbers, which describes unit cell with lengths of unit cell
+    #         vectors and with angles between them (in degrees), in following
+    #         order: [len(a), len(b), len(c), angle(b,c), angle(a,c),
+    #         angle(a,b)].  First vector will lie in x-direction, second in
+    #         xy-plane, and the third one in z-positive subspace.
+    #     scale_atoms: bool
+    #         Fix atomic positions or move atoms with the unit cell?
+    #         Default behavior is to *not* move the atoms (scale_atoms=False).
+    #
+    #     Examples:
+    #
+    #     Two equivalent ways to define an orthorhombic cell:
+    #
+    #     >>> atoms = Atoms('He')
+    #     >>> a, b, c = 7, 7.5, 8
+    #     >>> atoms.set_cell([a, b, c])
+    #     >>> atoms.set_cell([(a, 0, 0), (0, b, 0), (0, 0, c)])
+    #
+    #     FCC unit cell:
+    #
+    #     >>> atoms.set_cell([(0, b, b), (b, 0, b), (b, b, 0)])
+    #
+    #     Hexagonal unit cell:
+    #
+    #     >>> atoms.set_cell([a, a, c, 90, 90, 120])
+    #
+    #     Rhombohedral unit cell:
+    #
+    #     >>> alpha = 77
+    #     >>> atoms.set_cell([a, a, a, alpha, alpha, alpha])
+    #     """
+    #
+    #     cell = np.array(cell, float)
+    #
+    #     if cell.shape == (3,):
+    #         cell = np.diag(cell)
+    #     elif cell.shape == (6,):
+    #         cell = cellpar_to_cell(cell)
+    #     elif cell.shape != (3, 3):
+    #         raise ValueError(
+    #             "Cell must be length 3 sequence, length 6 " "sequence or 3x3 matrix!"
+    #         )
+    #     if any(self.pbc):
+    #         cell_pbc = cell[self.pbc][:, self.pbc]
+    #         if np.linalg.det(cell_pbc) <= 0:
+    #             raise ValueError("Can't set a singular matrix/non-right hand orientation "
+    #                              "as the cell value for a periodic crystal")
+    #         if scale_atoms:
+    #             M = np.linalg.solve(self.get_cell(complete=True), complete_cell(cell))
+    #             self.positions[:] = np.dot(self.positions, M)
+    #     self._cell = cell
 
     def set_calculator(self, calc=None):
         """Attach calculator object."""
