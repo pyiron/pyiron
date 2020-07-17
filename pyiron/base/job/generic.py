@@ -1611,7 +1611,7 @@ class GenericJob(JobCore):
         Args:
             debug (bool): Debug Mode
         """
-        raise DeprecationWarning("Use job.save() instead of job._create_job_structure().")
+        warnings.warn("Use job.save() instead of job._create_job_structure().", warnings.DeprecationWarning)
         self.save()
 
     def _check_if_input_should_be_written(self):
