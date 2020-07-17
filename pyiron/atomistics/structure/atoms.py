@@ -216,20 +216,7 @@ class Atoms(ASEAtoms):
             el_index_lst = indices
             self.set_species(species)
 
-        if scaled_positions is not None:
-            if positions is not None:
-                raise ValueError("either position or scaled_positions can be given")
-            if cell is None:
-                raise ValueError("scaled_positions can only be used with a given cell")
-            positions = np.dot(np.array(cell).T, np.array(scaled_positions).T).T
-
-        if positions is None:
-            self.dimension = 3
-            if cell is not None:
-                positions = np.zeros((len(el_index_lst), self.dimension))
-
         self.indices = np.array(el_index_lst)
-        self.positions = np.array(positions).astype(np.float)
         self._tag_list._length = len(positions)
 
         for key, val in qwargs.items():
