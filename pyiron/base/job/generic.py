@@ -1614,13 +1614,8 @@ class GenericJob(JobCore):
         Args:
             debug (bool): Debug Mode
         """
-        self._job_id = self.save()
-        print(
-            "The job "
-            + self.job_name
-            + " was saved and received the ID: "
-            + str(self._job_id)
-        )
+        raise DeprecationWarning("Use job.save() instead of job._create_job_structure().")
+        self.save()
 
     def _check_if_input_should_be_written(self):
         if self._python_only_job:
