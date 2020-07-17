@@ -220,7 +220,6 @@ class Atoms(ASEAtoms):
         self._tag_list._length = len(positions)
 
         for key, val in qwargs.items():
-            print("set qwargs (ASE): ", key, val)
             setattr(self, key, val)
 
         if len(positions) > 0:
@@ -237,25 +236,6 @@ class Atoms(ASEAtoms):
         self.set_initial_magnetic_moments(magmoms)
         self._high_symmetry_points = None
         self._high_symmetry_path = None
-
-
-    # @property
-    # def cell(self):
-    #     """
-    #     numpy.ndarray: A size 3x3 array which gives the lattice vectors of the cell as [a1, a2, a3]
-    #
-    #     """
-    #     return self.get_cell()
-    #
-    # @cell.setter
-    # def cell(self, value):
-    #     if value is None:
-    #         self._cell = None
-    #     else:
-    #         if self._is_scaled:
-    #             self.set_cell(value, scale_atoms=True)
-    #         else:
-    #             self.set_cell(value)
 
     @property
     def species(self):
