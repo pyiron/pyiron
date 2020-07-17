@@ -93,7 +93,6 @@ class SphinxBase(GenericDFTJob):
         self.input = Group(table_name = "parameters")
         self.load_default_input()
         self._save_memory = False
-        self._spin_enabled = False
         self._output_parser = Output(self)
         self.input_writer = InputWriter()
         if self.check_vasp_potentials():
@@ -1156,10 +1155,6 @@ class SphinxBase(GenericDFTJob):
 
         self._coarse_run = self.input["CoarseRun"]
 
-        if np.any(
-            self.structure.get_initial_magnetic_moments().flatten() != None):
-            self._spin_enabled = True
-
         if self.input["EmptyStates"] == "auto":
             if self._spin_enabled:
                 self.input["EmptyStates"] = int(
@@ -1256,6 +1251,13 @@ class SphinxBase(GenericDFTJob):
             f.write("format paw;\n")
             f.write("include <parameters.sx>;\n\n")
             f.write(self.input.sphinx.to_sphinx(indent=0))
+
+    @property
+    def _spin_enabled(self):
+        if np.any(self.structure.get_initial_magnetic_moments().flatten() != None):
+            return True
+        return False
+
 
     def get_charge_density(self):
         """
