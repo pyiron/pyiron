@@ -1240,12 +1240,6 @@ class GenericJob(JobCore):
         """
         if not self.job_id:
             self.save()
-            print(
-                "The job "
-                + self.job_name
-                + " was saved and received the ID: "
-                + str(self._job_id)
-            )
         if job_name is None:
             job_name = "{}_restart".format(self.job_name)
         if job_type is None:
@@ -1611,7 +1605,7 @@ class GenericJob(JobCore):
         Args:
             debug (bool): Debug Mode
         """
-        warnings.warn("Use job.save() instead of job._create_job_structure().", warnings.DeprecationWarning)
+        warnings.warn("Use job.save() instead of job._create_job_structure().", self.s.DeprecationWarning)
         self.save()
 
     def _check_if_input_should_be_written(self):
