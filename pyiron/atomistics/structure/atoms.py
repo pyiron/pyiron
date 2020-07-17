@@ -114,47 +114,17 @@ class Atoms(ASEAtoms):
             or info is not None
         ):
             s.logger.debug("Not supported parameter used!")
-        self._cellobj = Cell.new(pbc=False)
+
         self._store_elements = dict()
         self._species_to_index_dict = None
         self.colorLut = ElementColorDictionary().to_lut()
         self._is_scaled = False
-        if cell is None:
-            cell = np.zeros((3, 3))
-        self.set_cell(cell)
+
         self._species = list()
+        self.indices = np.array([])
 
         self._pse = PeriodicTable()
         self._tag_list = SparseArray()
-        self.arrays = dict()
-
-        if positions is None:
-            if scaled_positions is None:
-                if symbols is not None:
-                    n_atoms = len(symbols)
-                else:
-                    if numbers is not None:
-                        n_atoms = len(numbers)
-                    else:
-                        n_atoms = 0
-                self.new_array('numbers', np.zeros(n_atoms, int), int)
-                positions = np.zeros((len(self.arrays['numbers']), 3))
-            else:
-                assert self.number_of_lattice_vectors == 3
-                positions = np.dot(scaled_positions, self.cell)
-        else:
-            if scaled_positions is not None:
-                raise RuntimeError('Both scaled and cartesian positions set!')
-        self.new_array('positions', positions, float, (3,))
-        # self.positions = positions
-        self.indices = np.array([])
-        self._info = dict()
-        self.adsorbate_info = {}
-        self.bonds = None
-        self._pbc = False
-        self.dimension = 3  # Default
-        self.units = {"length": "A", "mass": "u"}
-        self._symmetry_dataset = None
 
         el_index_lst = list()
         element_list = None
@@ -165,7 +135,6 @@ class Atoms(ASEAtoms):
             if not (elements is None):
                 raise AssertionError()
             elements = self.numbers_to_elements(numbers)
-            self.new_array('numbers', numbers, int)
         if elements is not None:
             el_object_list = None
             if isinstance(elements, str):
@@ -217,25 +186,26 @@ class Atoms(ASEAtoms):
             self.set_species(species)
 
         self.indices = np.array(el_index_lst)
-        self._tag_list._length = len(positions)
 
-        for key, val in qwargs.items():
-            setattr(self, key, val)
-
-        if len(positions) > 0:
-            self.dimension = len(positions[0])
-        else:
-            self.dimension = 3
-        if dimension is not None:
-            self.dimension = dimension
-        if cell is not None:
-            if pbc is None:
-                self.pbc = True  # default setting
-            else:
-                self.pbc = pbc
+        el_lst = [el.Abbreviation if el.Parent is None else el.Parent for el in self.species]
+        symbols = np.array([el_lst[el] for el in self.indices])
+        super(Atoms, self).__init__(symbols=symbols, positions=positions, numbers=None,
+                                    tags=tags, momenta=momenta, masses=masses,
+                                    magmoms=magmoms, charges=charges,
+                                    scaled_positions=scaled_positions, cell=cell,
+                                    pbc=pbc, celldisp=celldisp, constraint=constraint,
+                                    calculator=calculator, info=info)
+        self._tag_list._length = len(self.positions)
+        self.bonds = None
+        self.units = {"length": "A", "mass": "u"}
+        self._symmetry_dataset = None
         self.set_initial_magnetic_moments(magmoms)
         self._high_symmetry_points = None
         self._high_symmetry_path = None
+        if len(self.positions) > 0:
+            self.dimension = len(self.positions[0])
+        else:
+            self.dimension = 0
 
     @property
     def species(self):
@@ -260,33 +230,6 @@ class Atoms(ASEAtoms):
         self._species_to_index_dict = {el: i for i, el in enumerate(value)}
         self._species = value[:]
         self._store_elements = {el.Abbreviation: el for el in value}
-
-    @property
-    def info(self):
-        """
-        dict: This dictionary is merely used to be compatible with the ASE Atoms class.
-
-        """
-        return self._info
-
-    @info.setter
-    def info(self, val):
-        self._info = val
-
-    @property
-    def pbc(self):
-        """
-        list: A list of boolean values which gives the periodic boundary consitions along the three axes.
-              The default value is [True, True, True]
-
-        """
-        if not isinstance(self._pbc, np.ndarray):
-            self.set_pbc(self._pbc)
-        return self._pbc
-
-    @pbc.setter
-    def pbc(self, val):
-        self._pbc = val
 
     @property
     def elements(self):
@@ -749,27 +692,6 @@ class Atoms(ASEAtoms):
         if self.pbc is None:
             self.pbc = self.dimension * [True]
 
-    def set_positions(self, positions):
-        """
-        Set positions. This function is for compatability with ASE
-
-        Args:
-            positions (numpy.ndarray/list): Positions in absolute coordinates
-
-        """
-        self.positions = np.array(positions)
-        self._tag_list._length = len(self)
-
-    def get_positions(self):
-        """
-        Get positions. This function is for compatability with ASE
-
-        Returns:
-            numpy.ndarray: Positions in absolute coordinates
-
-        """
-        return self.positions
-
     def select_index(self, el):
         """
         Returns the indices of a given element in the structure
@@ -826,25 +748,6 @@ class Atoms(ASEAtoms):
         if not isinstance(self._pbc, np.ndarray):
             self.set_pbc(self._pbc)
         return np.array(self._pbc, bool)
-
-    def set_pbc(self, value):
-        """
-        Sets the perioic boundary conditions on all three axis
-
-        Args:
-            value (numpy.ndarray/list): An array of bool type with length 3
-
-        """
-        if value is None:
-            self._pbc = None
-        else:
-            if isinstance(value, np.ndarray):
-                self._pbc = value
-            elif value in (True, False):
-                value = self.dimension * [value]
-            if not (np.shape(np.array(value)) == (self.dimension,)):
-                raise AssertionError()
-            self._pbc = np.array(value, bool)
 
     def convert_element(self, el, pse=None):
         """
@@ -1094,36 +997,6 @@ class Atoms(ASEAtoms):
         # with Ang3_to_cm3 = 1e24
         conv_factor = 1.660539040427164
         return conv_factor * np.sum(self.get_masses()) / self.get_volume()
-
-    def get_scaled_positions(self, wrap=True):
-        """
-        Returns the scaled/relative positions
-
-        Returns:
-            numpy.ndarray: The relative positions of the atoms in the supercell
-
-        """
-        pbc = np.array(self.pbc)
-        # check if each side is non-zero even if None values exist in cell
-        if self.cell is None:
-            non_zero_sides = np.array([False, False, False])
-        else:
-            non_zero_sides = np.linalg.norm(np.array(self.cell, dtype=float), axis=1) > 1e-7
-        positions = self.positions.copy()
-        # Only perform the dot product over non zero side (regardless of PBC)
-        if any(non_zero_sides):
-            positions[:, non_zero_sides] = np.einsum(
-                "jk,ij->ik",
-                np.linalg.inv(self.cell[non_zero_sides][:, non_zero_sides]),
-                self.positions[:, non_zero_sides]
-            )
-            # perform the wrapping along the periodic directions only
-            if wrap:
-                positions[:, pbc] = np.mod(positions[:, pbc], 1.0)
-        else:
-            warnings.warn("Scaled positions do not exist for structures without non-zero cell parameters. \n"
-                          "Returning cartesian coordinates")
-        return positions
 
     def get_number_of_atoms(self):
         """
@@ -2824,12 +2697,10 @@ class Atoms(ASEAtoms):
             sum_atoms = copy(self)
             sum_atoms._tag_list = sum_atoms._tag_list + other._tag_list
             sum_atoms.indices = np.append(sum_atoms.indices, other.indices)
-            sum_atoms.positions = np.append(
-                sum_atoms.positions, other.positions, axis=0
-            )
-
             new_species_lst = copy(sum_atoms.species)
             ind_conv = {}
+
+            print(len(self), len(sum_atoms))
             # self_species_lst = [el.Abbreviation for el in self.species]
             for ind_old, el in enumerate(other.species):
                 if el.Abbreviation in sum_atoms._store_elements.keys():
@@ -2846,9 +2717,11 @@ class Atoms(ASEAtoms):
             for key, val in ind_conv.items():
                 new_indices[new_indices == key] = val + 1000
             new_indices = np.mod(new_indices, 1000)
-            sum_atoms.indices[len(self.indices) :] = new_indices
+            sum_atoms.indices[len(self.indices):] = new_indices
             sum_atoms.set_species(new_species_lst)
-
+            sum_atoms.arrays['positions'] = super(Atoms, self).__add__(other).positions
+            print(len(self.indices), len(sum_atoms.indices), len(sum_atoms.species))
+            print(self.get_chemical_formula(), sum_atoms.get_chemical_formula())
             if not len(set(sum_atoms.indices)) == len(sum_atoms.species):
                 raise ValueError("Adding the atom instances went wrong!")
             return sum_atoms
@@ -2874,11 +2747,12 @@ class Atoms(ASEAtoms):
         return atoms_new
 
     def __delitem__(self, key):
+        super(Atoms, self).__delitem__(key)
         if isinstance(key, (int, np.integer)):
             key = [key]
         new_length = len(self) - len(key)
         key = np.array(key).flatten()
-        self.positions = np.delete(self.positions, key, axis=0)
+        # self.positions = np.delete(self.positions, key, axis=0)
         self.indices = np.delete(self.indices, key, axis=0)
         del self._tag_list[key]
         self._tag_list._length = new_length
@@ -2951,8 +2825,8 @@ class Atoms(ASEAtoms):
             return self._tag_list._lists[item]
         return object.__getattribute__(self, item)
 
-    def __len__(self):
-        return len(self.indices)
+    # def __len__(self):
+    #     return len(self.indices)
 
     def __repr__(self):
         return self.__str__()
@@ -2970,7 +2844,7 @@ class Atoms(ASEAtoms):
                 out_str += (
                     "    " + str(tag) + ": " + self._tag_list[tag].__str__() + "\n"
                 )
-        if self._cell is not None:
+        if self.cell is not None:
             out_str += "pbc: " + str(self.pbc) + "\n"
             out_str += "cell: \n"
             out_str += str(self.cell) + "\n"
@@ -3306,16 +3180,18 @@ class Atoms(ASEAtoms):
         else:
             return None
 
-    def set_constraint(self, constrain):
-        if constrain.todict()["name"] != "FixAtoms":
-            raise ValueError("Only FixAtoms is supported as ASE compatible constraint.")
-        if "selective_dynamics" not in self._tag_list._lists.keys():
-            self.add_tag(selective_dynamics=None)
-        for atom_ind in range(len(self)):
-            if atom_ind in constrain.index:
-                self.selective_dynamics[atom_ind] = [True, True, True]
-            else:
-                self.selective_dynamics[atom_ind] = [False, False, False]
+    def set_constraint(self, constraint=None):
+        super(Atoms, self).set_constraint(constraint)
+        if constraint is not None:
+            if constraint.todict()["name"] != "FixAtoms":
+                raise ValueError("Only FixAtoms is supported as ASE compatible constraint.")
+            if "selective_dynamics" not in self._tag_list._lists.keys():
+                self.add_tag(selective_dynamics=None)
+            for atom_ind in range(len(self)):
+                if atom_ind in constraint.index:
+                    self.selective_dynamics[atom_ind] = [True, True, True]
+                else:
+                    self.selective_dynamics[atom_ind] = [False, False, False]
 
     def apply_strain(self, epsilon, return_box=False):
         """
@@ -3608,99 +3484,6 @@ class Atoms(ASEAtoms):
             self.set_scaled_positions(np.transpose(rcoords) + center)
         else:
             self.positions = np.transpose(rcoords) + center
-
-    @property
-    def scaled_positions(self):
-        warnings.warn(
-            "scaled_positions is deprecated as of vers. 0.2"
-            + " - not guaranteed to work from vers. 0.3 "
-            + "Use get_scaled_positions instead",
-            DeprecationWarning,
-        )
-        return self.get_scaled_positions(wrap=False)
-
-    @scaled_positions.setter
-    def scaled_positions(self, positions):
-        warnings.warn(
-            "scaled_positions is deprecated as of vers. 0.2"
-            + " - not guaranteed to work from vers. 0.3 "
-            + "Use set_scaled_positions instead",
-            DeprecationWarning,
-        )
-        self.set_scaled_positions(positions)
-
-    def set_scaled_positions(self, scaled):
-        """
-        Set positions relative to unit cell.
-
-        Args:
-            scaled (numpy.ndarray/list): The relative coordinates
-
-        """
-        if self.cell is None:
-            raise ValueError("cell has not been set yet")
-        self.positions = np.einsum("jk,ij->ik", self.cell, scaled)
-
-    # def set_cell(self, cell, scale_atoms=False):
-    #     """
-    #     Set unit cell vectors.
-    #
-    #     Parameters:
-    #
-    #     cell: 3x3 matrix or length 3 or 6 vector
-    #         Unit cell.  A 3x3 matrix (the three unit cell vectors) or
-    #         just three numbers for an orthorhombic cell. Another option is
-    #         6 numbers, which describes unit cell with lengths of unit cell
-    #         vectors and with angles between them (in degrees), in following
-    #         order: [len(a), len(b), len(c), angle(b,c), angle(a,c),
-    #         angle(a,b)].  First vector will lie in x-direction, second in
-    #         xy-plane, and the third one in z-positive subspace.
-    #     scale_atoms: bool
-    #         Fix atomic positions or move atoms with the unit cell?
-    #         Default behavior is to *not* move the atoms (scale_atoms=False).
-    #
-    #     Examples:
-    #
-    #     Two equivalent ways to define an orthorhombic cell:
-    #
-    #     >>> atoms = Atoms('He')
-    #     >>> a, b, c = 7, 7.5, 8
-    #     >>> atoms.set_cell([a, b, c])
-    #     >>> atoms.set_cell([(a, 0, 0), (0, b, 0), (0, 0, c)])
-    #
-    #     FCC unit cell:
-    #
-    #     >>> atoms.set_cell([(0, b, b), (b, 0, b), (b, b, 0)])
-    #
-    #     Hexagonal unit cell:
-    #
-    #     >>> atoms.set_cell([a, a, c, 90, 90, 120])
-    #
-    #     Rhombohedral unit cell:
-    #
-    #     >>> alpha = 77
-    #     >>> atoms.set_cell([a, a, a, alpha, alpha, alpha])
-    #     """
-    #
-    #     cell = np.array(cell, float)
-    #
-    #     if cell.shape == (3,):
-    #         cell = np.diag(cell)
-    #     elif cell.shape == (6,):
-    #         cell = cellpar_to_cell(cell)
-    #     elif cell.shape != (3, 3):
-    #         raise ValueError(
-    #             "Cell must be length 3 sequence, length 6 " "sequence or 3x3 matrix!"
-    #         )
-    #     if any(self.pbc):
-    #         cell_pbc = cell[self.pbc][:, self.pbc]
-    #         if np.linalg.det(cell_pbc) <= 0:
-    #             raise ValueError("Can't set a singular matrix/non-right hand orientation "
-    #                              "as the cell value for a periodic crystal")
-    #         if scale_atoms:
-    #             M = np.linalg.solve(self.get_cell(complete=True), complete_cell(cell))
-    #             self.positions[:] = np.dot(self.positions, M)
-    #     self._cell = cell
 
     def set_calculator(self, calc=None):
         """Attach calculator object."""
