@@ -737,18 +737,6 @@ class Atoms(ASEAtoms):
         """
         return self._tag_list.keys()
 
-    def get_pbc(self):
-        """
-        Returns a boolean array of the periodic boundary conditions along the x, y and z axis respectively
-
-        Returns:
-            numpy.ndarray: Boolean array of length 3
-
-        """
-        if not isinstance(self._pbc, np.ndarray):
-            self.set_pbc(self._pbc)
-        return np.array(self._pbc, bool)
-
     def convert_element(self, el, pse=None):
         """
         Convert a string or an atom instance into a ChemicalElement instance
