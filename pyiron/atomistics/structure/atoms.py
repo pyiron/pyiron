@@ -2692,12 +2692,11 @@ class Atoms(ASEAtoms):
         return atoms_new
 
     def __delitem__(self, key):
-        super(Atoms, self).__delitem__(key)
         if isinstance(key, (int, np.integer)):
             key = [key]
-        new_length = len(self) - len(key)
         key = np.array(key).flatten()
-        # self.positions = np.delete(self.positions, key, axis=0)
+        new_length = len(self) - len(key)
+        super(Atoms, self).__delitem__(key)
         self.indices = np.delete(self.indices, key, axis=0)
         del self._tag_list[key]
         self._tag_list._length = new_length
