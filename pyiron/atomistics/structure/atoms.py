@@ -2625,56 +2625,6 @@ class Atoms(ASEAtoms):
             "index": symbol_to_index[el_name[max_index]],
         }
 
-    def extend(self, other):
-        """
-        Extend atoms object by appending atoms from *other*. Copied from ase
-
-        Args:
-            other:
-
-        Returns:
-
-        """
-        if isinstance(other, Atom):
-            other = self.__class__([other])
-        n1 = len(self)
-        n2 = len(other)
-        for name, a1 in self._tag_list.items():
-            a1 = np.array(a1)
-            a = np.zeros((n1 + n2,) + a1.shape[1:], a1.dtype)
-            a[:n1] = a1
-            if name == "masses":
-                a2 = other.get_masses()
-            else:
-                a2 = other.lists.get(name)
-            if a2 is not None:
-                a[n1:] = a2
-            self._lists[name] = a
-        for name, a2 in other.lists.items():
-            if name in self._tag_list.keys():
-                continue
-            a = np.empty((n1 + n2,) + a2.shape[1:], a2.dtype)
-            a[:n1] = a2
-            if name == "masses":
-                a[:n1] = self.get_masses()[:n1]
-            else:
-                a[:n1] = 0
-            self._length = n1 + n2
-        # Take care of the species and index
-        return self
-
-    def append(self, atom):
-        """
-        Append atom to end. Copied from ase
-
-        Args:
-            atom:
-
-        Returns:
-
-        """
-        self.extend(self.__class__([atom]))
-
     def close(self):
         # TODO: implement
         pass
@@ -2692,19 +2642,30 @@ class Atoms(ASEAtoms):
         )
         return self.analyse_ovito_voronoi_volume()
 
-    def __add__(self, other):
+    def extend(self, other):
+        """
+        Extend atoms object by appending atoms from *other*. (Extending the ASE function)
+
+        Args:
+            other (pyiron.atomistics.structure.atoms.Atoms): Structure to append
+
+        Returns:
+            pyiron.atomistics.structure.atoms.Atoms: The extended structure
+
+        """
+        old_indices = self.indices
+        if isinstance(other, Atom):
+            other = self.__class__([other])
+        super(Atoms, self).extend(other=other)
         if isinstance(other, Atoms):
-            sum_atoms = copy(self)
+            sum_atoms = self
+            # sum_atoms = copy(self)
             sum_atoms._tag_list = sum_atoms._tag_list + other._tag_list
             sum_atoms.indices = np.append(sum_atoms.indices, other.indices)
             new_species_lst = copy(sum_atoms.species)
             ind_conv = {}
-
-            print(len(self), len(sum_atoms))
-            # self_species_lst = [el.Abbreviation for el in self.species]
             for ind_old, el in enumerate(other.species):
                 if el.Abbreviation in sum_atoms._store_elements.keys():
-                    # print ('add:: ', el.Abbreviation, self._store_elements)
                     ind_new = sum_atoms._species_to_index_dict[
                         sum_atoms._store_elements[el.Abbreviation]
                     ]
@@ -2717,18 +2678,13 @@ class Atoms(ASEAtoms):
             for key, val in ind_conv.items():
                 new_indices[new_indices == key] = val + 1000
             new_indices = np.mod(new_indices, 1000)
-            sum_atoms.indices[len(self.indices):] = new_indices
+            sum_atoms.indices[len(old_indices):] = new_indices
             sum_atoms.set_species(new_species_lst)
-            sum_atoms.arrays['positions'] = super(Atoms, self).__add__(other).positions
-            print(len(self.indices), len(sum_atoms.indices), len(sum_atoms.species))
-            print(self.get_chemical_formula(), sum_atoms.get_chemical_formula())
             if not len(set(sum_atoms.indices)) == len(sum_atoms.species):
                 raise ValueError("Adding the atom instances went wrong!")
-            return sum_atoms
+        return self
 
-        elif isinstance(other, Atom):
-            other = self.__class__([other])
-            return self + other
+    __iadd__ = extend
 
     def __copy__(self):
         """
