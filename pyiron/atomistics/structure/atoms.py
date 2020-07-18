@@ -4,7 +4,6 @@
 
 from __future__ import division, print_function
 from ase.atoms import Atoms as ASEAtoms
-from ase.cell import Cell
 import ast
 from copy import copy
 from collections import OrderedDict
@@ -202,6 +201,7 @@ class Atoms(ASEAtoms):
         self.set_initial_magnetic_moments(magmoms)
         self._high_symmetry_points = None
         self._high_symmetry_path = None
+        self.dimension = dimension
         if len(self.positions) > 0:
             self.dimension = len(self.positions[0])
         else:
@@ -2744,9 +2744,7 @@ class Atoms(ASEAtoms):
                 **new_dict
             )
 
-        new_array = copy(self)
-        new_array.positions = self.positions[item]
-
+        new_array = super(Atoms, self).__getitem__(item)
         new_indices = self.indices[item].copy()
         new_species_indices, new_proper_indices = np.unique(
             new_indices, return_inverse=True
