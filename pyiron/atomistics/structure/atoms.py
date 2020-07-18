@@ -2656,6 +2656,7 @@ class Atoms(ASEAtoms):
         old_indices = self.indices
         if isinstance(other, Atom):
             other = self.__class__([other])
+        new_indices = other.indices
         super(Atoms, self).extend(other=other)
         if isinstance(other, Atoms):
             sum_atoms = self
@@ -2674,7 +2675,7 @@ class Atoms(ASEAtoms):
                     new_species_lst.append(el)
                     sum_atoms._store_elements[el.Abbreviation] = el
                     ind_conv[ind_old] = len(new_species_lst) - 1
-            new_indices = copy(other.indices)
+
             for key, val in ind_conv.items():
                 new_indices[new_indices == key] = val + 1000
             new_indices = np.mod(new_indices, 1000)
@@ -2925,20 +2926,12 @@ class Atoms(ASEAtoms):
     __mul__ = repeat
 
     def __imul__(self, vec):
-        """
-
-        Args:
-            vec:
-
-        Returns:
-
-        """
         if isinstance(vec, int):
             vec = [vec] * self.dimension
 
         if not (len(vec) == self.dimension):
-            raise AssertionError()
-
+            raise ValueError("The repeat vector and the dimensions don't match")
+        initial_length = len(self)
         i_vec = np.array([vec[0], 1, 1])
         if self.dimension > 1:
             i_vec[1] = vec[1]
@@ -2948,28 +2941,27 @@ class Atoms(ASEAtoms):
         if not self.dimension == 3:
             raise NotImplementedError()
         mx, my, mz = i_vec
+        # Our position repeat algorithm is faster than ASE (no nested loops)
         nx_lst, ny_lst, nz_lst = np.arange(mx), np.arange(my), np.arange(mz)
-
         positions = self.get_scaled_positions(wrap=False)
-
         lat = np.array(np.meshgrid(nx_lst, ny_lst, nz_lst)).T.reshape(-1, 3)
         lat_new = np.repeat(lat, len(positions), axis=0)
-
         new_positions = np.tile(positions, (len(lat), 1)) + lat_new
-
-        self._length = len(new_positions)
-        self.set_scaled_positions(new_positions / np.array(i_vec))
+        new_positions /= np.array(i_vec)
+        self.set_cell((self.cell.T * np.array(vec)).T, scale_atoms=True)
+        # ASE compatibility
+        for name, a in self.arrays.items():
+            self.arrays[name] = np.tile(a, (np.product(vec),) + (1, ) * (len(a.shape) - 1))
+        self.arrays["positions"] = np.dot(new_positions, self.cell)
         self.indices = np.tile(self.indices, len(lat))
         self._tag_list._length = len(self)
-        # print ('basis_len: ', len(self.positions), len(new_elements))
-
-        # self.cell = (self.cell.T * np.array(vec)).T
-        self.set_cell((self.cell.T * np.array(vec)).T, scale_atoms=True)
         scale = i_vec[0] * i_vec[1] * i_vec[2]
         for tag in self._tag_list.keys():
             self._tag_list[tag] *= scale
-
-        return self  # to make it compatible with ASE
+        # Repeating ASE constraints
+        if self.constraints is not None:
+            self.constraints = [c.repeat(vec, initial_length) for c in self.constraints]
+        return self
 
     @staticmethod
     def convert_formula(elements):
