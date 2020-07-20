@@ -1980,7 +1980,7 @@ class Output(object):
             self._parse_dict["n_valence"] = {
                 log_file[ii-1].split()[1]:int(ll.split('=')[-1])
                 for ii, ll in enumerate(log_file)
-                if ll.startswith('| Z')
+                if ll.startswith('| Z=')
             }
 
             def get_partial_log(file_content, start_line, end_line):
