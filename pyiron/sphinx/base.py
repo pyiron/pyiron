@@ -737,7 +737,6 @@ class SphinxBase(GenericDFTJob):
         if self.status!='finished' and not self.is_compressed():
             # self.decompress()
             with warnings.catch_warnings(record=True) as w:
-                warnings.simplefilter("always")
                 try:
                     self.collect_output()
                 except AssertionError:
@@ -1369,7 +1368,6 @@ class SphinxBase(GenericDFTJob):
     def check_setup(self):
 
         with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
 
             # Check for parameters that were not modified but
             # possibly should have (encut, kpoints, smearing, etc.),
@@ -1465,7 +1463,6 @@ class SphinxBase(GenericDFTJob):
                 + "of OpenMP threads"
             )
         with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
             # Warn about discrepancies between values in
             # self.input and individual groups, in case
             # a user modified them directly
