@@ -230,8 +230,10 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
 
     def calc_minimize(
             self,
-            e_tol=0.0,
-            f_tol=1e-4,
+            ionic_energy=0.0,
+            ionic_forces=1e-4,
+            e_tol=None,
+            f_tol=None,
             max_iter=100000,
             pressure=None,
             n_print=100,
