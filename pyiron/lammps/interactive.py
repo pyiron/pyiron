@@ -245,6 +245,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
                 "calc_minimize() is not implemented for the non modal interactive mode use calc_static()!"
             )
         super(LammpsInteractive, self).calc_minimize(
+            ionic_energy=ionic_energy,
+            ionic_forces=ionic_forces,
             e_tol=e_tol,
             f_tol=f_tol,
             max_iter=max_iter,
