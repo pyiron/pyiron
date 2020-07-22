@@ -1499,26 +1499,53 @@ class Atoms(object):
             rgb2hex(cmap(scalar)[:3]) for scalar in remapped_field
         ]  # The slice gets RGB but leaves alpha
 
+    @staticmethod
+    def _get_rotation_matrix(axis, theta):
+        """
+        Find the rotation matrix associated with counterclockwise rotation
+        about the given axis by theta radians.
+        Credit: http://stackoverflow.com/users/190597/unutbu
+        Args:
+            axis (list): rotation axis of the form [x, y, z]
+            theta (float): rotational angle in radians
+        Returns:
+            array. 4x4 affine Rotation matrix (no translation).
+        """
+
+        axis = np.array(list(axis))
+        axis = axis / np.linalg.norm(axis)
+        axis *= -np.sin(theta / 2.0)
+        a = np.cos(theta / 2.0)
+        b, c, d = tuple(axis.tolist())
+        aa, bb, cc, dd = a * a, b * b, c * c, d * d
+        bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
+        return np.array([[aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac), 0],
+                         [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab), 0],
+                         [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc, 0],
+                         [0, 0, 0, 1]])
+
     def plot3d(
-        self,
-        show_cell=True,
-        show_axes=True,
-        camera="orthographic",
-        spacefill=True,
-        particle_size=1.0,
-        select_atoms=None,
-        background="white",
-        color_scheme=None,
-        colors=None,
-        scalar_field=None,
-        scalar_start=None,
-        scalar_end=None,
-        scalar_cmap=None,
-        vector_field=None,
-        vector_color=None,
-        magnetic_moments=False,
-        custom_array=None,
-        custom_3darray=None,
+            self,
+            show_cell=True,
+            show_axes=True,
+            camera="orthographic",
+            spacefill=True,
+            particle_size=1.0,
+            select_atoms=None,
+            background="white",
+            color_scheme=None,
+            colors=None,
+            scalar_field=None,
+            scalar_start=None,
+            scalar_end=None,
+            scalar_cmap=None,
+            vector_field=None,
+            vector_color=None,
+            magnetic_moments=False,
+            custom_array=None,
+            custom_3darray=None,
+            camera_axis='z',
+            rotation_matrix=None
     ):
         """
         Plot3d relies on NGLView to visualize atomic structures. Here, we construct a string in the "protein database"
@@ -1529,7 +1556,8 @@ class Atoms(object):
         variable is evaluated, and in the meantime more NGL operations can be applied to it to modify the visualization.
 
         Args:
-            show_cell (bool): Whether or not to show the frame. (Default is True.)
+            show_cell (bool): Whether or not to show the frame. (
+            Default is True.)
             show_axes (bool): Whether or not to show xyz axes. (Default is True.)
             camera (str): 'perspective' or 'orthographic'. (Default is 'perspective'.)
             spacefill (bool): Whether to use a space-filling or ball-and-stick representation. (Default is True, use
@@ -1553,6 +1581,10 @@ class Atoms(object):
             vector_color (numpy.ndarray): Colors for the vectors (only available with vector_field). (Default is None,
                 vectors are colored by their direction.)
             magnetic_moments (bool): Plot magnetic moments as 'scalar_field' or 'vector_field'.
+            camera_axis (str): View the structure along 'x', 'y' or 'z' axis. (Default is 'z'.)
+            rotation_matrix (numpy.ndarray): A 4x4 matrix that combines translation, rotation, scaling and shears
+                into a single affine transformation matrix. Can be generated using the helper function
+                _get_rotation_matrix(). If specified, overrides camera_axis. (Default is None)
 
             Possible NGLView color schemes:
               " ", "picking", "random", "uniform", "atomindex", "residueindex",
@@ -1666,13 +1698,13 @@ class Atoms(object):
 
         if vector_color is None and vector_field is not None:
             vector_color = (
-                0.5
-                * vector_field
-                / np.linalg.norm(vector_field, axis=-1)[:, np.newaxis]
-                + 0.5
+                    0.5
+                    * vector_field
+                    / np.linalg.norm(vector_field, axis=-1)[:, np.newaxis]
+                    + 0.5
             )
         elif (
-            vector_field is not None and vector_field is not None
+                vector_field is not None and vector_field is not None
         ):  # WARNING: There must be a bug here...
             try:
                 if vector_color.shape != np.ones((len(self), 3)).shape:
@@ -1710,6 +1742,33 @@ class Atoms(object):
 
         view.camera = camera
         view.background = background
+
+        if camera_axis != "x" and camera_axis != "y" and camera_axis != "z":
+            warnings.warn(
+                "Choose between x, y, or z"
+            )
+
+        zoom_out = 14  # higher = farther away
+        scale = np.eye(4) * zoom_out
+
+        if camera_axis == 'x' and rotation_matrix is None:
+            rotation_matrix = self._get_rotation_matrix([0, 1, 0], np.pi / 2)
+            orientation = np.dot(scale, rotation_matrix).ravel().tolist()
+        elif camera_axis == 'y' and rotation_matrix is None:
+            rotation_matrix = self._get_rotation_matrix([1, 0, 0], -np.pi / 2)
+            orientation = np.dot(scale, rotation_matrix).ravel().tolist()
+        elif camera_axis == 'z' and rotation_matrix is None:
+            orientation = None
+        elif rotation_matrix is not None:
+            warnings.warn('Setting camera axis along input orientation')
+            if np.array(rotation_matrix).shape != (4, 4):
+                raise ValueError('The shape of the rotation matrix should be (4, 4)')
+            orientation = np.dot(scale, rotation_matrix).ravel().tolist()
+        else:
+            orientation = None
+
+        view.control.orient(orientation)
+
         return view
 
     def plot3d_ase(
