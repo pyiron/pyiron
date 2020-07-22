@@ -5,6 +5,7 @@
 from __future__ import print_function
 import json
 from pathlib2 import Path
+import warnings
 from pyiron.base.generic.hdfio import FileHDFio
 from pyiron.base.generic.parameters import GenericParameters
 
@@ -50,7 +51,7 @@ class Notebook(object):
             with open("input.json") as f:
                 return json.load(f)
         else:
-            print(hdf_file, "not found")
+            warnings.warn(hdf_file, "not found")
             return None
 
     @staticmethod
