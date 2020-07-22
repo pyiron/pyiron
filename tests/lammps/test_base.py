@@ -233,7 +233,6 @@ class TestLammps(unittest.TestCase):
             "energy_tot",
             "energy_pot",
             "steps",
-            "time",
             "positions",
             "forces",
             "cells",
