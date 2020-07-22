@@ -25,7 +25,7 @@ __date__ = "Nov 6, 2019"
 
 def get_steinhardt_parameter_job(job, cutoff=0, n_clusters=2, q=[4, 6]):
     return get_steinhardt_parameter_structure(
-        structure=job.get_stucture(), 
+        structure=job.structure, 
         cutoff=cutoff, 
         n_clusters=n_clusters, 
         q=q
@@ -56,3 +56,6 @@ def get_steinhardt_parameter_structure(structure, cutoff=0, n_clusters=2, q=[4, 
     )
     ind = cl.fit(list(zip(*sysq))).labels_ == 0
     return sysq, ind
+
+def analyse_pyscal_centro_symmetry(atoms, num):
+    pass

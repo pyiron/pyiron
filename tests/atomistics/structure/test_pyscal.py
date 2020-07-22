@@ -9,6 +9,7 @@ from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 import warnings
 import numpy as np
 import os
+import pyiron.atomistics.structure.pyscal as pas
 
 class Testpyscal(unittest.TestCase):
 
@@ -41,6 +42,21 @@ class Testpyscal(unittest.TestCase):
         sysp = pc.System()
         sysp.read_inputfile(self.job.structure, format="ase")
         assert len(sysp.atoms) == 256
+
+    def test_steinhardt_parameters(self):
+        """
+        Test the calculation of Steinhardts parameters
+        """
+        perfect_vals = [0.00, 0.00, 0.190, 0.00, 0.575, 0.00, 0.404, 0.00,
+                        0.013, 0.00, 0.600]
+
+        qtest = np.random.randint(2, 13, size=2)
+
+        qs, ind = pas.get_steinhardt_parameter_job(self.job, cutoff=0, n_clusters=2, q=qtest)
+        for c, q in enumerate(qs):
+            assert np.abs(np.mean(q) - perfect_vals[qtest[c]-2]) < 1E-3    
+
+
 
 
 if __name__ == "__main__":
