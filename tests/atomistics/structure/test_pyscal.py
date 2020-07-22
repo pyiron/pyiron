@@ -61,6 +61,18 @@ class Testpyscal(unittest.TestCase):
         csm = pas.analyse_centro_symmetry(self.job.structure, num_neighbors=12)
         assert np.mean(csm) < 1E-5
 
+    def test_cna(self):
+        
+        cna = pas.analyse_cna_adaptive(self.job.structure)
+        assert cna[1] == len(self.job.structure)
+
+        rand = np.random.randint(0, len(self.job.structure))
+
+        cna = pas.analyse_cna_adaptive(self.job.structure, mode="numeric")
+        assert cna[rand] == 1
+
+        cna = pas.analyse_cna_adaptive(self.job.structure, mode="str")
+        assert cna[rand] == "fcc"
 
 if __name__ == "__main__":
     unittest.main()

@@ -119,3 +119,38 @@ def analyse_centro_symmetry(atoms, num_neighbors=12):
     sys.calculate_centrosymmetry(nmax=num_neighbors)
     atoms = sys.atoms
     return np.array([atom.centrosymmetry for atom in atoms])
+
+def analyse_cna_adaptive(atoms, mode="total"):
+    """
+    Use common neighbor analysis
+
+    Args:
+        atoms (pyiron.structure.atoms.Atoms): The structure to analyze.
+        mode ("total"/"numeric"/"str"): Controls the style and level 
+        of detail of the output.
+        total : return number of atoms belonging to each structure
+        numeric : return a per atom list of numbers- 0 for unknown,
+            1 fcc, 2 hcp, 3 bcc and 4 icosa
+        str : return a per atom string of sructures    
+    
+    Returns:
+        (depends on `mode`)
+    """
+    if not mode in ["total", "numeric", "str"]:
+        raise ValueError("Unsupported mode")
+
+    sys = pc.System()
+    sys.read_inputfile(atoms, format="ase")
+    cna = sys.calculate_cna(cutoff=None)
+
+    if mode == "total":
+        return cna
+    else:
+        atoms = sys.atoms
+        cnalist = ([atom.structure for atom in atoms])
+        if mode == "numeric":
+            return cnalist
+        else:
+            dd = ["unknown", "fcc", "hcp", "bcc", "ico"]
+            cnalist = [dd[int(x)] for x in cnalist]
+            return cnalist
