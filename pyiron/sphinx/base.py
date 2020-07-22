@@ -14,6 +14,7 @@ import scipy.constants
 import warnings
 import json
 from collections import defaultdict
+import spglib
 
 from pyiron.dft.job.generic import GenericDFTJob
 from pyiron.vasp.potential import VaspPotentialFile
@@ -1342,8 +1343,6 @@ class SphinxBase(GenericDFTJob):
     def get_n_ir_reciprocal_points(
         self, is_time_reversal=True, symprec=1e-5, ignore_magmoms=False
     ):
-        from phonopy.structure import spglib
-
         lattice = self.structure.cell
         positions = self.structure.get_scaled_positions()
         numbers = self.structure.get_atomic_numbers()

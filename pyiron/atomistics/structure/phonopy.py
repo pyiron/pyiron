@@ -4,7 +4,7 @@
 
 import numpy as np
 from phonopy.structure.atoms import PhonopyAtoms
-import phonopy.structure.spglib as spg
+import spglib as spg
 from pyiron.base.settings.generic import Settings
 
 __author__ = "Osamu Waseda"

@@ -23,15 +23,7 @@ from pyiron.atomistics.structure.periodic_table import (
 )
 from pyiron.base.settings.generic import Settings
 from scipy.spatial import cKDTree, Voronoi
-
-try:
-    import spglib
-except ImportError:
-    try:
-        import pyspglib as spglib
-    except ImportError:
-        raise ImportError("The spglib package needs to be installed")
-
+import spglib
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal"
 __copyright__ = (
