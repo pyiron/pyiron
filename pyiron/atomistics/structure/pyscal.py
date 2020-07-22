@@ -154,3 +154,17 @@ def analyse_cna_adaptive(atoms, mode="total"):
             dd = ["unknown", "fcc", "hcp", "bcc", "ico"]
             cnalist = [dd[int(x)] for x in cnalist]
             return cnalist
+
+def analyse_voronoi_volume(atoms):
+    """
+    Calculate the Voronoi volume of atoms
+
+    Args:
+        atoms : (pyiron.structure.atoms.Atoms): The structure to analyze.
+    """
+    sys = pc.System()
+    sys.read_inputfile(atoms, format="ase")
+    sys.find_neighbors(method="voronoi")
+    atoms = sys.atoms
+    vols = np.array([atom.volume for atom in atoms])
+    return vols

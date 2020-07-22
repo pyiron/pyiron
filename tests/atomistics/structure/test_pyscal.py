@@ -74,6 +74,10 @@ class Testpyscal(unittest.TestCase):
         cna = pas.analyse_cna_adaptive(self.job.structure, mode="str")
         assert cna[rand] == "fcc"
 
+    def test_volume(self):
+        vols = pas.analyse_voronoi_volume(self.job.structure)
+        assert np.abs(np.mean(vols) - 16.0) < 1E-3
+
 if __name__ == "__main__":
     unittest.main()
 
