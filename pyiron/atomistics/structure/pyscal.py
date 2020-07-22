@@ -23,39 +23,84 @@ __status__ = "development"
 __date__ = "Nov 6, 2019"
 
 
-def get_steinhardt_parameter_job(job, cutoff=0, n_clusters=2, q=[4, 6]):
+def get_steinhardt_parameter_job(job, neighbor_method="cutoff", cutoff=0, n_clusters=2, 
+                                 q=[4, 6], averaged=False, clustering=True):
+    """
+    Calculate Steinhardts parameters
+
+    Args:
+        job (job): pyiron job
+        neighbor_method (str) : can be ['cutoff', 'voronoi']
+        cutoff (float) : can be 0 for adaptive cutoff or any other value
+        n_clusters (int) : number of clusters for K means clustering
+        q (list) : can be from 2-12, the required q values to be calculated
+        averaged (bool) : If True, calculates the averaged versions of the parameter
+        clustering (bool) : If True, cluster based on the q values
+
+    Returns:
+        q (list) : calculated q parameters
+    
+    """
     return get_steinhardt_parameter_structure(
         structure=job.structure, 
+        neighbor_method=neighbor_method,
         cutoff=cutoff, 
         n_clusters=n_clusters, 
-        q=q
+        q=q,
+        averaged=averaged,
+        clustering=cluster
     )
 
 
-def get_steinhardt_parameter_structure(structure, cutoff=0, n_clusters=2, q=[4, 6]):
+def get_steinhardt_parameter_structure(structure, neighbor_method="cutoff", cutoff=0, n_clusters=2, 
+                                       q=[4, 6], averaged=False, clustering=True):
+    """
+    Calculate Steinhardts parameters
+
+    Args:
+        job (job): pyiron job
+        neighbor_method (str) : can be ['cutoff', 'voronoi']
+        cutoff (float) : can be 0 for adaptive cutoff or any other value
+        n_clusters (int) : number of clusters for K means clustering
+        q (list) : can be from 2-12, the required q values to be calculated
+        averaged (bool) : If True, calculates the averaged versions of the parameter
+        clustering (bool) : If True, cluster based on the q values
+
+    Returns:
+        q (list) : calculated q parameters
+    
+    """
     sys = pc.System()
     sys.read_inputfile(
         pyiron_to_ase(structure), 
         format='ase', 
         is_triclinic=not UnfoldingPrism(structure.cell, digits=15).is_skewed()
     )
+
     sys.find_neighbors(
-        method='cutoff', 
-        cutoff=cutoff
+        method=neighbor_method,
+        cutoff=cutoff 
     )
+
     sys.calculate_q(
         q, 
-        averaged=True
+        averaged=averaged
     )
+
     sysq = sys.get_qvals(
         q, 
-        averaged=True
+        averaged=averaged
     )
-    cl = cluster.KMeans(
-        n_clusters=n_clusters
-    )
-    ind = cl.fit(list(zip(*sysq))).labels_ == 0
-    return sysq, ind
+
+    if clustering:
+        cl = cluster.KMeans(
+            n_clusters=n_clusters
+        )
+
+        ind = cl.fit(list(zip(*sysq))).labels_ == 0
+        return sysq, ind
+    else:
+        return sysq
 
 def analyse_pyscal_centro_symmetry(atoms, num):
     pass
