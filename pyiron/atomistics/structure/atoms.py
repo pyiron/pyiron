@@ -1525,27 +1525,27 @@ class Atoms(object):
                          [0, 0, 0, 1]])
 
     def plot3d(
-            self,
-            show_cell=True,
-            show_axes=True,
-            camera="orthographic",
-            spacefill=True,
-            particle_size=1.0,
-            select_atoms=None,
-            background="white",
-            color_scheme=None,
-            colors=None,
-            scalar_field=None,
-            scalar_start=None,
-            scalar_end=None,
-            scalar_cmap=None,
-            vector_field=None,
-            vector_color=None,
-            magnetic_moments=False,
-            custom_array=None,
-            custom_3darray=None,
-            camera_axis='z',
-            rotation_matrix=None
+        self,
+        show_cell=True,
+        show_axes=True,
+        camera="orthographic",
+        spacefill=True,
+        particle_size=1.0,
+        select_atoms=None,
+        background="white",
+        color_scheme=None,
+        colors=None,
+        scalar_field=None,
+        scalar_start=None,
+        scalar_end=None,
+        scalar_cmap=None,
+        vector_field=None,
+        vector_color=None,
+        magnetic_moments=False,
+        custom_array=None,
+        custom_3darray=None,
+        camera_axis='z',
+        rotation_matrix=None
     ):
         """
         Plot3d relies on NGLView to visualize atomic structures. Here, we construct a string in the "protein database"
@@ -1556,8 +1556,7 @@ class Atoms(object):
         variable is evaluated, and in the meantime more NGL operations can be applied to it to modify the visualization.
 
         Args:
-            show_cell (bool): Whether or not to show the frame. (
-            Default is True.)
+            show_cell (bool): Whether or not to show the frame. (Default is True.)
             show_axes (bool): Whether or not to show xyz axes. (Default is True.)
             camera (str): 'perspective' or 'orthographic'. (Default is 'perspective'.)
             spacefill (bool): Whether to use a space-filling or ball-and-stick representation. (Default is True, use
@@ -1698,13 +1697,13 @@ class Atoms(object):
 
         if vector_color is None and vector_field is not None:
             vector_color = (
-                    0.5
-                    * vector_field
-                    / np.linalg.norm(vector_field, axis=-1)[:, np.newaxis]
-                    + 0.5
+                0.5
+                * vector_field
+                / np.linalg.norm(vector_field, axis=-1)[:, np.newaxis]
+                + 0.5
             )
         elif (
-                vector_field is not None and vector_field is not None
+            vector_field is not None and vector_field is not None
         ):  # WARNING: There must be a bug here...
             try:
                 if vector_color.shape != np.ones((len(self), 3)).shape:
