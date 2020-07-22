@@ -425,7 +425,7 @@ class LammpsBase(AtomisticGenericJob):
             positions = [
                 pos_i.tolist() for pos_i in h5md["/particles/all/position/value"]
             ]
-            time = [time_i.tolist() for time_i in h5md["/particles/all/position/step"]]
+            steps = [steps_i.tolist() for steps_i in h5md["/particles/all/position/step"]]
             forces = [for_i.tolist() for for_i in h5md["/particles/all/force/value"]]
             # following the explanation at: http://nongnu.org/h5md/h5md.html
             cell = [
@@ -436,7 +436,7 @@ class LammpsBase(AtomisticGenericJob):
         with self.project_hdf5.open("output/generic") as h5_file:
             h5_file["forces"] = np.array(forces)
             h5_file["positions"] = np.array(positions)
-            h5_file["time"] = np.array(time)
+            h5_file["steps"] = np.array(steps)
             h5_file["cells"] = cell
             h5_file["indices"] = self.remap_indices(indices)
 
@@ -838,7 +838,7 @@ class LammpsBase(AtomisticGenericJob):
         with open(file_name, "r") as ff:
             dump = ff.readlines()
 
-        time = np.genfromtxt(
+        steps = np.genfromtxt(
             [
                 dump[nn]
                 for nn in np.where([ll.startswith("ITEM: TIMESTEP") for ll in dump])[0]
@@ -846,8 +846,8 @@ class LammpsBase(AtomisticGenericJob):
             ],
             dtype=int,
         )
-        time = np.array([time]).flatten()
-        output["time"] = time
+        steps = np.array([steps]).flatten()
+        output["steps"] = steps
 
         natoms = np.genfromtxt(
             [
