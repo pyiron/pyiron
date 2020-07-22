@@ -70,6 +70,9 @@ class Project(ProjectPath):
                                      current working directory) path
         user (str): current pyiron user
         sql_query (str): SQL query to only select a subset of the existing jobs within the current project
+        default_working_directory (bool): Access default working directory, for ScriptJobs this equals the project
+                                    directory of the ScriptJob for regular projects it falls back to the current
+                                    directory.
 
     Attributes:
 
@@ -121,7 +124,14 @@ class Project(ProjectPath):
 
     """
 
-    def __init__(self, path="", user=None, sql_query=None):
+    def __init__(self, path="", user=None, sql_query=None, default_working_directory=False):
+        if default_working_directory:
+            inputdict = Notebook.get_custom_dict()
+            if "project_dir" in inputdict.keys():
+                path = inputdict["project_dir"]
+            else:
+                path = "."
+
         super(Project, self).__init__(path=path)
 
         self.user = user

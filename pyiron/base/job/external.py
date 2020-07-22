@@ -33,7 +33,8 @@ class Notebook(object):
     @staticmethod
     def get_custom_dict():
         folder = Path(".").cwd().parts[-1]
-        hdf_file = Path(".").cwd().parents[1] / folder
+        project_folder = Path(".").cwd().parents[1]
+        hdf_file = project_folder / folder
         hdf_file = str(hdf_file) + ".h5"
         if Path(hdf_file).exists():
             hdf = FileHDFio(hdf_file)
@@ -43,6 +44,7 @@ class Notebook(object):
                 hdf[folder + "/input/custom_dict/data_dict"]["Value"],
             ):
                 custom_dict[k] = v
+            custom_dict["project_dir"] = str(project_folder)
             return custom_dict
         elif Path("input.json").exists():
             with open("input.json") as f:
