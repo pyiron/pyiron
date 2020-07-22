@@ -5,20 +5,21 @@
 from sklearn import cluster
 from pyiron.lammps.structure import UnfoldingPrism
 from pyiron.atomistics.structure.atoms import pyiron_to_ase
+import numpy as np
 
 try:
     import pyscal.core as pc
 except ImportError:
     pass  # pyscal is currently not available on windows
 
-__author__ = "Jan Janssen"
+__author__ = "Sarath Menon, Jan Janssen"
 __copyright__ = (
     "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
-__maintainer__ = "Jan Janssen"
-__email__ = "janssen@mpie.de"
+__maintainer__ = "Sarath Menon"
+__email__ = "sarath.menon@rub.de"
 __status__ = "development"
 __date__ = "Nov 6, 2019"
 
@@ -102,5 +103,19 @@ def get_steinhardt_parameter_structure(structure, neighbor_method="cutoff", cuto
     else:
         return sysq
 
-def analyse_pyscal_centro_symmetry(atoms, num):
-    pass
+def analyse_centro_symmetry(atoms, num_neighbors=12):
+    """
+    Analyse centrosymmetry parameter
+
+    Args:
+        atoms: Atoms object
+        num_neighbors (int) : number of neighbors
+
+    Returns:
+        csm (list) : list of centrosymmetry parameter 
+    """
+    sys = pc.System()
+    sys.read_inputfile(atoms, format="ase")
+    sys.calculate_centrosymmetry(nmax=num_neighbors)
+    atoms = sys.atoms
+    return np.array([atom.centrosymmetry for atom in atoms])

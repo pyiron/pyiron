@@ -57,6 +57,9 @@ class Testpyscal(unittest.TestCase):
             assert np.abs(np.mean(q) - perfect_vals[qtest[c]-2]) < 1E-3    
 
 
+    def test_centrosymmetry(self):
+        csm = pas.analyse_centro_symmetry(self.job.structure, num_neighbors=12)
+        assert np.mean(csm) < 1E-5
 
 
 if __name__ == "__main__":
