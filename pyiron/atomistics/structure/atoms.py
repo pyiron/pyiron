@@ -23,15 +23,7 @@ from pyiron.atomistics.structure.periodic_table import (
 )
 from pyiron.base.settings.generic import Settings
 from scipy.spatial import cKDTree, Voronoi
-
-try:
-    import spglib
-except ImportError:
-    try:
-        import pyspglib as spglib
-    except ImportError:
-        raise ImportError("The spglib package needs to be installed")
-
+import spglib
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal"
 __copyright__ = (
@@ -135,6 +127,7 @@ class Atoms(object):
         self._pbc = False
         self.dimension = 3  # Default
         self.units = {"length": "A", "mass": "u"}
+        self._symmetry_dataset = None
 
         el_index_lst = list()
         element_list = None
@@ -1236,6 +1229,43 @@ class Atoms(object):
     def set_repeat(self, vec):
         self *= vec
 
+    def repeat_points(self, points, rep, centered=False):
+        """
+        Return points with repetition given according to periodic boundary conditions
+
+        Args:
+            points (np.ndarray/list): xyz vector or list/array of xyz vectors
+            rep (int/list/np.ndarray): Repetition in each direction.
+                                       If int is given, the same value is used for
+                                       every direction
+            centered (bool): Whether the original points should be in the center of
+                             repeated points.
+
+        Returns:
+            (np.ndarray) repeated points
+        """
+        n = np.array([rep]).flatten()
+        if len(n)==1:
+            n = np.tile(n, 3)
+        if len(n)!=3:
+            raise ValueError('rep must be an integer or a list of 3 integers')
+        vector = np.array(points)
+        if vector.shape[-1]!=3:
+            raise ValueError('points must be an xyz vector or a list/array of xyz vectors')
+        if centered and np.mod(n, 2).sum()!=3:
+            warnings.warn('When centered, only odd number of repetition should be used')
+        v = vector.reshape(-1, 3)
+        n_lst = []
+        for nn in n:
+            if centered:
+                n_lst.append(np.arange(nn)-int(nn/2))
+            else:
+                n_lst.append(np.arange(nn))
+        meshgrid = np.meshgrid(n_lst[0], n_lst[1], n_lst[2])
+        v_repeated = np.einsum('ni,ij->nj', np.stack(meshgrid, axis=-1).reshape(-1, 3), self.cell)
+        v_repeated = v_repeated[:, np.newaxis, :]+v[np.newaxis, :, :]
+        return v_repeated.reshape((-1,)+vector.shape)
+
     def reset_absolute(self, is_absolute):
         raise NotImplementedError("This function was removed!")
 
@@ -1251,20 +1281,14 @@ class Atoms(object):
             (depends on `mode`)
         """
         from pyiron.atomistics.structure.ovito import analyse_ovito_cna_adaptive
-
-        warnings.filterwarnings("ignore")
         return analyse_ovito_cna_adaptive(atoms=self, mode=mode)
 
     def analyse_ovito_centro_symmetry(atoms, num_neighbors=12):
         from pyiron.atomistics.structure.ovito import analyse_ovito_centro_symmetry
-
-        warnings.filterwarnings("ignore")
         return analyse_ovito_centro_symmetry(atoms, num_neighbors=num_neighbors)
 
     def analyse_ovito_voronoi_volume(atoms):
         from pyiron.atomistics.structure.ovito import analyse_ovito_voronoi_volume
-
-        warnings.filterwarnings("module")
         return analyse_ovito_voronoi_volume(atoms)
 
     def analyse_pyscal_steinhardt_parameter(atoms, cutoff=3.5, n_clusters=2, q=[4, 6]):
@@ -2373,6 +2397,42 @@ class Atoms(object):
                 angle_tolerance=angle_tolerance,
             )
 
+    def symmetrize_vectors(
+        self, vectors, force_update=False, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0
+    ):
+        """
+        Symmetrization of natom x 3 vectors according to box symmetries
+
+        Args:
+            vectors (ndarray/list): natom x 3 array to symmetrize
+            force_update (bool): whether to update the symmetry info
+            use_magmoms (bool): cf. get_symmetry
+            use_elements (bool): cf. get_symmetry
+            symprec (float): cf. get_symmetry
+            angle_tolerance (float): cf. get_symmetry
+
+        Returns:
+            (np.ndarray) symmetrized vectors
+        """
+        vectors = np.array(vectors).reshape(-1, 3)
+        if vectors.shape != self.positions.shape:
+            print(vectors.shape, self.positions.shape)
+            raise ValueError('Vector must be a natom x 3 array: {} != {}'.format(vectors.shape, self.positions.shape))
+        if self._symmetry_dataset is None or force_update:
+            symmetry = self.get_symmetry(use_magmoms=use_magmoms, use_elements=use_elements,
+                                         symprec=symprec, angle_tolerance=angle_tolerance)
+            scaled_positions = self.get_scaled_positions(wrap=False)
+            symmetry['indices'] = []
+            for rot,tra in zip(symmetry['rotations'], symmetry['translations']):
+                positions = np.einsum('ij,nj->ni', rot, scaled_positions)+tra
+                positions -= np.floor(positions+1.0e-2)
+                vec = np.where(np.linalg.norm(positions[np.newaxis, :, :]-scaled_positions[:, np.newaxis, :], axis=-1)<=1.0e-4)
+                symmetry['indices'].append(vec[1])
+            symmetry['indices'] = np.array(symmetry['indices'])
+            self._symmetry_dataset = symmetry
+        return np.einsum('ijk,ink->nj', self._symmetry_dataset['rotations'],
+                         vectors[self._symmetry_dataset['indices']])/len(self._symmetry_dataset['rotations'])
+
     def group_points_by_symmetry(self, points):
         """
             This function classifies the points into groups according to the box symmetry given by spglib.
@@ -2485,6 +2545,34 @@ class Atoms(object):
             return list_positions, box_copy
         else:
             return list_positions
+
+    def get_equivalent_points(self, points, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0):
+        """
+
+        Args:
+            points (list/ndarray): 3d vector
+            use_magmoms (bool): cf. get_symmetry()
+            use_elements (bool): cf. get_symmetry()
+            symprec (float): cf. get_symmetry()
+            angle_tolerance (float): cf. get_symmetry()
+
+        Returns:
+            (ndarray): array of equivalent points with respect to box symmetries
+        """
+        symmetry_operations = self.get_symmetry(use_magmoms=use_magmoms,
+                                                use_elements=use_elements,
+                                                symprec=symprec,
+                                                angle_tolerance=angle_tolerance)
+        R = symmetry_operations['rotations']
+        t = symmetry_operations['translations']
+        x = np.einsum('jk,j->k', np.linalg.inv(self.cell), points)
+        x = np.einsum('nxy,y->nx', R, x)+t
+        x -= np.floor(x)
+        dist = x[:,np.newaxis]-x[np.newaxis,:]
+        w, v = np.where(np.linalg.norm(dist-np.rint(dist), axis=-1)<symprec)
+        x = np.delete(x, w[v<w], axis=0)
+        x = np.einsum('ji,mj->mi', self.cell, x)
+        return x
 
     def get_symmetry_dataset(self, symprec=1e-5, angle_tolerance=-1.0):
         """
@@ -2626,53 +2714,6 @@ class Atoms(object):
             symprec=symprec,
         )
         return mapping, mesh_points
-
-    def get_equivalent_atoms(self, eps=1e-5):
-        """
-
-        Args:
-            eps:
-
-        Returns:
-
-        """
-        sym = self.get_symmetry()
-        coords = np.mod(self.get_scaled_positions(wrap=False) + eps, 1) - eps
-
-        trans_vec = []
-        rot_vec = []
-        id_vec = []
-
-        ind_ref = 0  # TODO: extend as loop over all inequivalent atoms
-        id_mat = np.identity(3, dtype="intc")
-        ref_id_list = []
-        for trans, rot in zip(sym["translations"], sym["rotations"]):
-            if np.linalg.norm(rot - id_mat) < eps:  # TODO: remove this limitation
-                id_list = []
-                for i_c, coord_new in enumerate(np.mod(coords - trans + eps, 1) - eps):
-                    no_match = True
-                    hash_id = None
-                    for hash_id, c in enumerate(coords):
-                        if np.linalg.norm(coord_new - c) < eps:
-                            id_list.append(hash_id)
-                            no_match = False
-                            break
-                    if hash_id == ind_ref:
-                        # print "ref_id: ", i_c
-                        ref_id_list.append(i_c)
-
-                    # if len(id_vec)==1:
-                    #     print "c: ", i_c, coord_new, c
-                    if no_match:
-                        raise ValueError("No equivalent atom found!")
-
-                trans_vec.append(trans)
-                rot_vec.append(rot)
-                id_vec.append(id_list)
-
-        eq_atoms = [0]
-        # print "ref_id: ", ref_id_list
-        return eq_atoms, trans_vec, rot_vec, id_vec, ref_id_list
 
     def get_majority_species(self, return_count=False):
         """

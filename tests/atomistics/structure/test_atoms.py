@@ -810,6 +810,25 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(np.allclose(basis.get_distances(a0=0.5*np.ones(3)), basis.get_distances(a1=0.5*np.ones(3))))
         self.assertTrue(np.allclose(basis.get_distances(vector=True)[0,1], -0.1*np.ones(3)))
 
+    def test_repeat_points(self):
+        basis = Atoms("Fe", positions=np.random.rand(3).reshape(-1, 3), cell=np.identity(3))
+        basis.cell[0, 1] = 0.01
+        with self.assertRaises(ValueError):
+            basis.repeat_points([0, 0, 0], [2 ,2])
+        with self.assertRaises(ValueError):
+            basis.repeat_points([0, 0], 2)
+        v = np.random.rand(3)
+        w = basis.repeat_points(v, 3)
+        v += np.array([1, 0.01, 0])
+        self.assertAlmostEqual(np.linalg.norm(w-v, axis=-1).min(), 0)
+        v = np.random.rand(6).reshape(-1, 3)
+        self.assertEqual(basis.repeat_points(v, 2).shape, (8, 2, 3))
+
+    def test_get_equivalent_points(self):
+        basis = Atoms("FeFe", positions=[[0.01, 0, 0], [0.5, 0.5, 0.5]], cell=np.identity(3))
+        arr = basis.get_equivalent_points([0, 0, 0.5])
+        self.assertAlmostEqual(np.linalg.norm(arr-np.array([0.51, 0.5, 0]), axis=-1).min(), 0)
+
     def test_cluster_analysis(self):
         import random
 
@@ -853,6 +872,17 @@ class TestAtoms(unittest.TestCase):
         # H2O.plot3d(show_bonds=True) #, bond_stretch=2)
         # print H2O.get_bonds(radius=2.)[0]
         # print np.sum(H2O.get_masses())/H2O.get_volume()
+
+    def test_get_symmetr(self):
+        cell = 2.2 * np.identity(3)
+        Al = Atoms("AlAl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
+        with self.assertRaises(ValueError):
+            Al.symmetrize_vectors(1)
+        v = np.random.rand(6).reshape(-1, 3)
+        self.assertAlmostEqual(np.linalg.norm(Al.symmetrize_vectors(v)), 0)
+        Al.positions[0,0] += 0.01
+        w = Al.symmetrize_vectors(v, force_update=True)
+        self.assertAlmostEqual(np.absolute(w[:,0]).sum(), np.linalg.norm(w, axis=-1).sum())
 
     def test_get_symmetry(self):
         cell = 2.2 * np.identity(3)

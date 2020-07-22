@@ -206,7 +206,7 @@ Docker image with jupyter notebook (stable)
 
 .. code-block:: bash
 
-    docker run -i -t -p 8888:8888 pyiron/pyiron /bin/bash -c "/opt/conda/bin/jupyter notebook --notebook-dir=/home/pyiron/ --ip='*' --port=8888"
+    docker run -i -t -p 8888:8888 pyiron/pyiron /bin/bash -c "source /srv/conda/envs/notebook/bin/activate; jupyter notebook --notebook-dir=/home/pyiron/ --ip='*' --port=8888"
 
 
 Docker image with jupyter lab (beta)
@@ -218,7 +218,7 @@ Docker image with jupyter lab (beta)
 
 .. code-block:: bash
 
-    docker run -i -t -p 8888:8888 pyiron/pyiron /bin/bash -c "/opt/conda/bin/jupyter lab --notebook-dir=/home/pyiron/ --ip='*' --port=8888"
+    docker run -i -t -p 8888:8888 pyiron/pyiron /bin/bash -c "source /srv/conda/envs/notebook/bin/activate; jupyter lab --notebook-dir=/home/pyiron/ --ip='*' --port=8888"
 
 Connect
 =======

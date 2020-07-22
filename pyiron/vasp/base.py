@@ -589,12 +589,18 @@ class VaspBase(GenericDFTJob):
                     )
                 except (IndexError, TypeError, ValueError):
                     pass
-            if "POSCAR" in files and "POTCAR" in files:
-                structure = read_atoms(
-                    posixpath.join(directory, "POSCAR"), species_from_potcar=True
-                )
-            else:
+            if "POSCAR" in files:
+                if "POTCAR" in files:
+                    structure = read_atoms(posixpath.join(directory, "POSCAR"),
+                                           species_from_potcar=True)
+                else:
+                    structure = read_atoms(posixpath.join(directory, "POSCAR"))
+            elif "CONTCAR" in files:
+                structure = read_atoms(posixpath.join(directory, "CONTCAR"))
+            elif "vasprun.xml" in files:
                 structure = vp_new.get_initial_structure()
+            else:
+                raise ValueError("Unable to import job because structure not present")
             self.structure = structure
             # Always set the sorted_indices to the original order when importing from jobs
             self.sorted_indices = np.arange(len(self.structure), dtype=int)
@@ -727,58 +733,60 @@ class VaspBase(GenericDFTJob):
         Write the magnetic moments in INCAR from that assigned to the species
         """
         if any(self.structure.get_initial_magnetic_moments().flatten()):
-            final_cmd = "   ".join(
-                [
-                    " ".join([str(spinmom) for spinmom in spin])
-                    if isinstance(spin, list) or isinstance(spin, np.ndarray)
-                    else str(spin)
-                    for spin in self.structure.get_initial_magnetic_moments()[
-                        self.sorted_indices
-                    ]
-                ]
-            )
-            s.logger.debug("Magnetic Moments are: {0}".format(final_cmd))
-            if "MAGMOM" not in self.input.incar._dataset["Parameter"]:
-                self.input.incar["MAGMOM"] = final_cmd
             if "ISPIN" not in self.input.incar._dataset["Parameter"]:
                 self.input.incar["ISPIN"] = 2
-            if any(
-                [
-                    True
-                    if isinstance(spin, list) or isinstance(spin, np.ndarray)
-                    else False
-                    for spin in self.structure.get_initial_magnetic_moments()
-                ]
-            ):
-                self.input.incar["LNONCOLLINEAR"] = True
-                if (
-                    self.spin_constraints
-                    and "M_CONSTR" not in self.input.incar._dataset["Parameter"]
+            if self.input.incar["ISPIN"] != 1:
+                final_cmd = "   ".join(
+                    [
+                        " ".join([str(spinmom) for spinmom in spin])
+                        if isinstance(spin, (list, np.ndarray))
+                        else str(spin)
+                        for spin in self.structure.get_initial_magnetic_moments()[
+                            self.sorted_indices
+                        ]
+                    ]
+                )
+                s.logger.debug("Magnetic Moments are: {0}".format(final_cmd))
+                if "MAGMOM" not in self.input.incar._dataset["Parameter"]:
+                    self.input.incar["MAGMOM"] = final_cmd
+                if any(
+                    [
+                        isinstance(spin, (list, np.ndarray)) for spin in self.structure.get_initial_magnetic_moments()
+                    ]
                 ):
-                    self.input.incar["M_CONSTR"] = final_cmd
-                if (
-                    self.spin_constraints
-                    or "M_CONSTR" in self.input.incar._dataset["Parameter"]
-                ):
-                    if "ISYM" not in self.input.incar._dataset["Parameter"]:
-                        self.input.incar["ISYM"] = 0
-                if (
-                    self.spin_constraints
-                    and "LAMBDA" not in self.input.incar._dataset["Parameter"]
-                ):
+                    self.input.incar["LNONCOLLINEAR"] = True
+                    if (
+                        self.spin_constraints
+                        and "M_CONSTR" not in self.input.incar._dataset["Parameter"]
+                    ):
+                        self.input.incar["M_CONSTR"] = final_cmd
+                    if (
+                        self.spin_constraints
+                        or "M_CONSTR" in self.input.incar._dataset["Parameter"]
+                    ):
+                        if "ISYM" not in self.input.incar._dataset["Parameter"]:
+                            self.input.incar["ISYM"] = 0
+                    if (
+                        self.spin_constraints
+                        and "LAMBDA" not in self.input.incar._dataset["Parameter"]
+                    ):
+                        raise ValueError(
+                            "LAMBDA is not specified but it is necessary for non collinear calculations."
+                        )
+                    if (
+                        self.spin_constraints
+                        and "RWIGS" not in self.input.incar._dataset["Parameter"]
+                    ):
+                        raise ValueError(
+                            "Parameter RWIGS has to be set for spin constraint calculations"
+                        )
+                if self.spin_constraints and not self.input.incar["LNONCOLLINEAR"]:
                     raise ValueError(
-                        "LAMBDA is not specified but it is necessary for non collinear calculations."
+                        "Spin constraints are only avilable for non collinear calculations."
                     )
-                if (
-                    self.spin_constraints
-                    and "RWIGS" not in self.input.incar._dataset["Parameter"]
-                ):
-                    raise ValueError(
-                        "Parameter RWIGS has to be set for spin constraint calculations"
-                    )
-            if self.spin_constraints and not self.input.incar["LNONCOLLINEAR"]:
-                raise ValueError(
-                    "Spin constraints are only avilable for non collinear calculations."
+            else:
+                s.logger.debug(
+                    "Spin polarized calculation is switched off by the user. No magnetic moments are written."
                 )
         else:
             s.logger.debug("No magnetic moments")
@@ -1015,57 +1023,6 @@ class VaspBase(GenericDFTJob):
             self.write_electrostatic_potential = retain_electrostatic_potential
         for key in kwargs.keys():
             self.logger.warning("Tag {} not relevant for vasp".format(key))
-
-    def set_kpoints(
-        self,
-        mesh=None,
-        scheme="MP",
-        center_shift=None,
-        symmetry_reduction=True,
-        manual_kpoints=None,
-        weights=None,
-        reciprocal=True,
-        kpoints_per_angstrom=None,
-        n_path=None,
-        path_name=None,
-    ):
-        """
-        Function to setup the k-points
-
-        Args:
-            mesh (list): Size of the mesh (ignored if scheme is not set to 'MP' or kpoints_per_angstrom is set)
-            scheme (str): Type of k-point generation scheme (MP/GC(gamma centered)/GP(gamma point)/Manual/Line)
-            center_shift (list): Shifts the center of the mesh from the gamma point by the given vector in relative coordinates
-            symmetry_reduction (boolean): Tells if the symmetry reduction is to be applied to the k-points
-            manual_kpoints (list/numpy.ndarray): Manual list of k-points
-            weights(list/numpy.ndarray): Manually supplied weights to each k-point in case of the manual mode
-            reciprocal (bool): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
-            reciprocal space)
-            kpoints_per_angstrom (float): Number of kpoint per angstrom in each direction
-            n_path (int): Number of points per trace part for line mode
-            path_name (str): Name of high symmetry path used for band structure calculations.
-        """
-        if kpoints_per_angstrom is not None:
-            if mesh is not None:
-                warnings.warn("mesh value is overwritten by kpoints_per_angstrom")
-            mesh = self.get_k_mesh_by_cell(kpoints_per_angstrom=kpoints_per_angstrom)
-        if mesh is not None:
-            if np.min(mesh) <= 0:
-                raise ValueError("mesh values must be larger than 0")
-        if center_shift is not None:
-            if np.min(center_shift) < 0 or np.max(center_shift) > 1:
-                warnings.warn("center_shift is given in relative coordinates")
-        self._set_kpoints(
-            mesh=mesh,
-            scheme=scheme,
-            center_shift=center_shift,
-            symmetry_reduction=symmetry_reduction,
-            manual_kpoints=manual_kpoints,
-            weights=weights,
-            reciprocal=reciprocal,
-            n_path=n_path,
-            path_name=path_name,
-        )
 
     def _set_kpoints(
         self,
@@ -1430,6 +1387,12 @@ class VaspBase(GenericDFTJob):
         )
         if new_ham.__name__ == self.__name__:
             new_ham.input.potcar["xc"] = self.input.potcar["xc"]
+        if new_ham.input.incar["MAGMOM"] is not None:
+            del new_ham.input.incar["MAGMOM"]
+        if new_ham.input.incar["M_CONSTR"] is not None:
+            del new_ham.input.incar["M_CONSTR"]
+        if new_ham.input.incar["LNONCOLLINEAR"] is not None:
+            del new_ham.input.incar["LNONCOLLINEAR"]
         return new_ham
 
     def restart_for_band_structure_calculations(self, job_name=None):
@@ -1662,12 +1625,17 @@ class VaspBase(GenericDFTJob):
 
         Args:
             rwigs_dict (dict): Dictionary of species and corresponding radii.
+                (structure has to be defined before)
         """
+        if not isinstance(rwigs_dict, dict):
+            raise AssertionError("'rwigs_dict' has to be a dict!")
+        if not all([isinstance(val, (int, float)) for val in rwigs_dict.values()]):
+            raise ValueError("The values of 'rwigs_dict' has to be floats!")
         species_keys = self.structure.get_number_species_atoms().keys()
         rwigs_keys = rwigs_dict.keys()
-        for i in species_keys:
-            if i not in list(rwigs_keys):
-                raise ValueError("'" + i + "' is not in rwigs_dict!")
+        for k in species_keys:
+            if k not in list(rwigs_keys):
+                raise ValueError("'{}' is not in rwigs_dict!".format(k))
 
         rwigs = [rwigs_dict[i] for i in species_keys]
         self.input.incar["RWIGS"] = " ".join(map(str, rwigs))
@@ -1696,19 +1664,24 @@ class VaspBase(GenericDFTJob):
         Args:
             lamb (float): LAMBDA tag
             rwigs_dict (dict): Dictionary of species and corresponding radii.
+                (structure has to be defined before)
             direction (bool): (True/False) constrain spin direction.
             norm (bool): (True/False) constrain spin norm (magnitude).
         """
         if not isinstance(direction, bool):
-            raise AssertionError()
+            raise AssertionError("'direction' has to be a bool!")
         if not isinstance(norm, bool):
-            raise AssertionError()
+            raise AssertionError("'lamb' has to be a bool!")
+        if not isinstance(lamb, float):
+            raise AssertionError("'lamb' has to be a float!")
         if direction and norm:
             self.input.incar["I_CONSTRAINED_M"] = 2
         elif direction:
             self.input.incar["I_CONSTRAINED_M"] = 1
         elif norm:
             raise ValueError("Constraining norm only is not possible.")
+        else:
+            raise ValueError("You have to constrain either direction or norm and direction.")
 
         self.input.incar["LAMBDA"] = lamb
         self.set_rwigs(rwigs_dict)

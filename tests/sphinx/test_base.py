@@ -11,7 +11,7 @@ import scipy.constants
 from pyiron.project import Project
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.atomistics.structure.atoms import Atoms
-from collections import OrderedDict as odict
+from pyiron.sphinx.base import Group
 
 BOHR_TO_ANGSTROM = (
         scipy.constants.physical_constants["Bohr radius"][0] / scipy.constants.angstrom
@@ -67,7 +67,6 @@ class TestSphinx(unittest.TestCase):
         cls.sphinx.load_default_groups()
         cls.sphinx.fix_symmetry = False
         cls.sphinx.write_input()
-        cls.sphinx.version = "2.6.1"
         cls.sphinx_2_3.to_hdf()
         cls.sphinx_2_3.decompress()
         cls.sphinx_2_5.decompress()
@@ -222,24 +221,23 @@ class TestSphinx(unittest.TestCase):
 
         trace = {"my_path": [("GAMMA", "H"), ("H", "N"), ("P", "H")]}
 
-        kpoints_group = {
+        kpoints_group = Group({
             'relative': True,
-            'from': odict([
-                ('coords',  np.array([0.0, 0.0, 0.0])), ('label', '"GAMMA"')
-            ]),
-            'to___0': odict([
-                ('coords', np.array([0.5, -0.5, 0.5])), ('nPoints', 20), ('label', '"H"')
-            ]),
-            'to___1': odict([
-                ('coords', np.array([0.0, 0.0, 0.5])), ('nPoints', 20), ('label', '"N"')
-            ]),
-            'to___1___1': odict([
-                ('coords', np.array([0.25, 0.25, 0.25])), ('nPoints', 0), ('label', '"P"')
-            ]),
-            'to___2': odict([
-                ('coords', np.array([0.5, -0.5, 0.5])), ('nPoints', 20), ('label', '"H"')
-            ]),
-        }
+            'from': {
+                'coords': np.array([0.0, 0.0, 0.0]),
+                'label': '"GAMMA"'
+            },
+            'to': [
+                {'coords': np.array([0.5, -0.5,  0.5]),
+                 'nPoints': 20, 'label': '"H"'},
+                {'coords': np.array([0.0,  0.0,  0.5]),
+                 'nPoints': 20, 'label': '"N"'},
+                {'coords': np.array([0.25, 0.25, 0.25]),
+                 'nPoints': 0, 'label': '"P"'},
+                {'coords': np.array([0.5, -0.5,  0.5]),
+                 'nPoints': 20, 'label': '"H"'},
+            ]
+        })
 
         with self.assertRaises(ValueError):
             self.sphinx_band_structure.set_kpoints(symmetry_reduction="pyiron rules!")
@@ -261,8 +259,9 @@ class TestSphinx(unittest.TestCase):
 
         self.sphinx_band_structure.set_kpoints(scheme="MP", mesh=mesh, center_shift=center_shift)
         self.assertTrue("kPoints" not in self.sphinx_band_structure.input.sphinx.basis)
-        self.assertEqual(self.sphinx_band_structure.input["KpointFolding"], mesh)
-        self.assertEqual(self.sphinx_band_structure.input["KpointCoords"], center_shift)
+        self.assertEqual(self.sphinx_band_structure.input.KpointFolding, mesh)
+        self.assertEqual(self.sphinx_band_structure.input.KpointCoords, center_shift)
+        self.assertEqual(self.sphinx_band_structure.get_k_mesh_by_cell(2.81/2/np.pi), [1,1,1])
 
     def test_set_empty_states(self):
         with self.assertRaises(ValueError):
@@ -378,7 +377,7 @@ class TestSphinx(unittest.TestCase):
         backup  = self.sphinx_band_structure.structure.copy()
         self.sphinx_band_structure.structure = None
         self.assertRaises(
-            ValueError, self.sphinx_band_structure.load_default_groups
+            AssertionError, self.sphinx_band_structure.load_default_groups
         )
         self.sphinx_band_structure.structure = backup
 
@@ -393,7 +392,7 @@ class TestSphinx(unittest.TestCase):
         self.sphinx_band_structure.server.cores = 10
         self.assertRaises(AssertionError, self.sphinx_band_structure.validate_ready_to_run)
 
-        self.sphinx_band_structure.input.sphinx.main = {}
+        self.sphinx_band_structure.input.sphinx.main.clear()
         self.assertRaises(AssertionError, self.sphinx_band_structure.validate_ready_to_run)
 
         backup = self.sphinx.input.sphinx.basis.eCut
@@ -402,10 +401,9 @@ class TestSphinx(unittest.TestCase):
         self.sphinx.input.sphinx.basis.eCut = backup
 
         backup = self.sphinx.input.sphinx.basis.kPoint.copy()
-        self.sphinx.input.sphinx.basis.kPoint = {
-            "coords": [0.5, 0.5, 0.25],
-            "weight": 1
-        }
+        self.sphinx.input.sphinx.basis.kPoint.clear()
+        self.sphinx.input.sphinx.basis.kPoint.coords = [0.5, 0.5, 0.25]
+        self.sphinx.input.sphinx.basis.kPoint.weight = 1
         self.assertFalse(self.sphinx.validate_ready_to_run())
         self.sphinx.input.sphinx.basis.kPoint = backup
 

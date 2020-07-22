@@ -41,6 +41,7 @@ from pyiron.base.server.queuestatus import (
     queue_enable_reservation,
     queue_check_job_is_waiting_or_running,
 )
+from pyiron.base.job.external import Notebook
 
 """
 The project object is the central import point of pyiron - all other objects can be created from this one
@@ -69,6 +70,9 @@ class Project(ProjectPath):
                                      current working directory) path
         user (str): current pyiron user
         sql_query (str): SQL query to only select a subset of the existing jobs within the current project
+        default_working_directory (bool): Access default working directory, for ScriptJobs this equals the project
+                                    directory of the ScriptJob for regular projects it falls back to the current
+                                    directory.
 
     Attributes:
 
@@ -120,7 +124,14 @@ class Project(ProjectPath):
 
     """
 
-    def __init__(self, path="", user=None, sql_query=None):
+    def __init__(self, path="", user=None, sql_query=None, default_working_directory=False):
+        if default_working_directory and path=="":
+            inputdict = Notebook.get_custom_dict()
+            if inputdict is not None and "project_dir" in inputdict.keys():
+                path = inputdict["project_dir"]
+            else:
+                path = "."
+
         super(Project, self).__init__(path=path)
 
         self.user = user
@@ -630,6 +641,22 @@ class Project(ProjectPath):
             element_lst=element_lst,
         )
         return df["status"].value_counts()
+
+    @staticmethod
+    def get_external_input():
+        """
+        Get external input either from the HDF5 file of the ScriptJob object which executes the Jupyter notebook
+        or from an input.json file located in the same directory as the Jupyter notebook. 
+        
+        Returns:
+            dict: Dictionary with external input
+        """
+        inputdict = Notebook.get_custom_dict()
+        if inputdict is None:
+            raise ValueError("No input found, either there is an issue with your ScriptJob, " + 
+                             "or your input.json file is not located in the same directory " +
+                             "as your Jupyter Notebook.")
+        return inputdict
 
     def keys(self):
         """

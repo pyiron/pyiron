@@ -124,8 +124,10 @@ Read more about `citing individual modules/ plugins of pyiron and the implemente
    source/examples.rst
    source/team.rst
    source/software.rst
+   source/commandline.rst
    source/citation.rst
    source/faq.rst
+   source/developers.rst
    License (BSD) <https://github.com/pyiron/pyiron/blob/master/LICENSE>
    Module index <https://pyiron.readthedocs.io/en/latest/py-modindex.html>
    Imprint <https://www.mpie.de/impressum>

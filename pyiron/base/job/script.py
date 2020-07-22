@@ -5,9 +5,7 @@
 from __future__ import print_function
 import os
 import shutil
-from pathlib2 import Path
 from pyiron.base.job.generic import GenericJob
-from pyiron.base.generic.hdfio import FileHDFio
 from pyiron.base.generic.parameters import GenericParameters
 
 
@@ -196,10 +194,11 @@ class ScriptJob(GenericJob):
         """
         Copy the script to the working directory - only python scripts and jupyter notebooks are supported
         """
-        file_name = os.path.basename(self._script_path)
-        shutil.copyfile(
-            src=self._script_path, dst=os.path.join(self.working_directory, file_name)
-        )
+        if self._script_path is not None:
+            file_name = os.path.basename(self._script_path)
+            shutil.copyfile(
+                src=self._script_path, dst=os.path.join(self.working_directory, file_name)
+            )
 
     def collect_output(self):
         """
@@ -271,37 +270,3 @@ class ScriptJob(GenericJob):
             str: absolute path
         """
         return os.path.normpath(os.path.join(os.path.abspath(os.path.curdir), path))
-
-
-class Notebook(object):
-    """
-    class for pyiron notebook objects
-    """
-
-    @staticmethod
-    def get_custom_dict():
-        folder = Path(".").cwd().parts[-1]
-        hdf_file = Path(".").cwd().parents[1] / folder
-        hdf_file = str(hdf_file) + ".h5"
-        if Path(hdf_file).exists():
-            hdf = FileHDFio(hdf_file)
-            custom_dict = GenericParameters()
-            for k, v in zip(
-                hdf[folder + "/input/custom_dict/data_dict"]["Parameter"],
-                hdf[folder + "/input/custom_dict/data_dict"]["Value"],
-            ):
-                custom_dict[k] = v
-            return custom_dict
-        else:
-            print(hdf_file, "not found")
-            return None
-
-    @staticmethod
-    def store_custom_output_dict(output_dict):
-        folder = Path(".").cwd().parts[-1]
-        hdf_file = Path(".").cwd().parents[1] / folder
-        hdf_file = str(hdf_file) + ".h5"
-        hdf = FileHDFio(hdf_file)
-        hdf[folder].create_group("output")
-        for k, v in output_dict.items():
-            hdf[folder + "/output"][k] = v

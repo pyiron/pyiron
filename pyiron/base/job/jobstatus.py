@@ -154,7 +154,8 @@ class JobStatus(object):
             (str): status [initialized, appended, created, submitted, running, aborted, collect, suspended, refresh,
                    busy, finished, warning]
         """
-        return [key for key, val in self._status_dict.items() if val][0]
+        self.refresh_status()
+        return self._get_status_from_dict()
 
     @format_docstring_with_statuses(n_tabs=2)
     @string.setter
@@ -183,7 +184,7 @@ class JobStatus(object):
         Refresh the job status - check if the database and job_id are set and if this is the case load the job status
         from the database.
         """
-        if self.database and self.job_id:
+        if self.database and self.job_id and not any([self._status_dict[i] for i in ["finished", "aborted", "warning", "not_converged"]]):
             try:
                 status = self.database.get_item_by_id(self.job_id)["status"]
             except IndexError:
@@ -200,8 +201,9 @@ class JobStatus(object):
         Private function: Write the job status to the internal variable _key and store it in the database.
         """
         if self.database and self.job_id:
-            if self.database.get_item_by_id(self.job_id)["status"] != str(self.string):
-                self.database.item_update({"status": str(self.string)}, self.job_id)
+            current_status = str(self._get_status_from_dict())
+            if self.database.get_item_by_id(self.job_id)["status"] != current_status:
+                self.database.item_update({"status": current_status}, self.job_id)
 
     def _reset(self):
         """
@@ -222,6 +224,9 @@ class JobStatus(object):
             )
         if boolean is False:
             raise ValueError("The JobStatus can only be set to True.")
+
+    def _get_status_from_dict(self):
+        return [key for key, val in self._status_dict.items() if val][0]
 
     def __repr__(self):
         """

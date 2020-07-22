@@ -10,7 +10,6 @@ import warnings
 import time
 from pyiron.sphinx.base import SphinxBase, Group
 from pyiron.atomistics.job.interactive import GenericInteractive, GenericInteractiveOutput
-from collections import OrderedDict as odict
 
 BOHR_TO_ANGSTROM = (
     scipy.constants.physical_constants["Bohr radius"][0] / scipy.constants.angstrom
@@ -37,6 +36,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
         self._interactive_write_input_files = True
         self._interactive_library_read = None
         self._interactive_fetch_completed = True
+        self._coarse_run = False
 
     @property
     def structure(self):
@@ -74,7 +74,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
 
     @property
     def coarse_run(self):
-        if "CoarseRun" in list(self.input.get_pandas()["Parameter"]):
+        if "CoarseRun" in self.input:
             self._coarse_run = self.input["CoarseRun"]
         return self._coarse_run
 
@@ -273,7 +273,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
     def run_if_interactive(self):
         super(SphinxInteractive, self).run_if_interactive()
         self._logger.debug("interactive run - start ...")
-        if self._coarse_run:
+        if self.coarse_run:
             self._interactive_pipe_write("run coarseelectronicminimization")
         else:
             self._interactive_pipe_write("run electronicminimization")
@@ -285,7 +285,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
             self.interactive_fetch()
         super(SphinxInteractive, self).run_if_interactive()
         self._logger.debug("interactive run - start ...")
-        if self._coarse_run:
+        if self.coarse_run:
             self._interactive_pipe_write("run coarseelectronicminimization")
         else:
             self._interactive_pipe_write("run electronicminimization")
@@ -351,40 +351,24 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
             self.server.run_mode.interactive
             or self.server.run_mode.interactive_non_modal
         ):
-            commands = [
-                odict(
-                    [
-                        ("id", '"restart"'),
-                        (
-                            "scfDiag",
-                            self.get_scf_group(
-                                maxSteps=10, keepRhoFixed=True, dEnergy=1.0e-4
-                            ),
+            commands = Group([
+                {
+                    "id": '"restart"',
+                    "scfDiag":
+                        self.get_scf_group(
+                            maxSteps=10, keepRhoFixed=True, dEnergy=1.0e-4
+                        )
+                }, {
+                    "id": '"coarseelectronicminimization"',
+                    "scfDiag":
+                        self.get_scf_group(
+                            dEnergy=1000*self.input["Ediff"] / HARTREE_TO_EV
                         ),
-                    ]
-                )
-            ]
-            commands.append(
-                odict(
-                    [
-                        ("id", '"coarseelectronicminimization"'),
-                        (
-                            "scfDiag",
-                            self.get_scf_group(
-                                dEnergy=1000*self.input["Ediff"] / HARTREE_TO_EV
-                            ),
-                        ),
-                    ]
-                )
-            )
-            commands.append(
-                odict(
-                    [
-                        ("id", '"electronicminimization"'),
-                        ("scfDiag", self.get_scf_group()),
-                    ]
-                )
-            )
+                }, {
+                    "id": '"electronicminimization"',
+                    "scfDiag": self.get_scf_group(),
+                }
+            ])
             self.input.sphinx.main.extControl = Group()
             self.input.sphinx.main.extControl.set_group('bornOppenheimer')
             self.input.sphinx.main.extControl.bornOppenheimer = commands

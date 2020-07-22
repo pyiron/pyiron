@@ -13,6 +13,7 @@ from pyiron.vasp.potential import VaspPotentialSetter
 from pyiron.vasp.vasp import Vasp
 from pyiron.vasp.metadyn import VaspMetadyn
 from pyiron.vasp.structure import read_atoms
+import numpy as np
 
 __author__ = "Sudarsan Surendralal"
 
@@ -27,6 +28,11 @@ class TestVasp(unittest.TestCase):
         cls.execution_path = os.path.dirname(os.path.abspath(__file__))
         cls.project = Project(os.path.join(cls.execution_path, "test_vasp"))
         cls.job = cls.project.create_job("Vasp", "trial")
+        cls.job_spin = cls.project.create_job("Vasp", "spin")
+        cls.job_spin.structure = CrystalStructure("Fe", BravaisBasis="bcc", a=2.83)
+        cls.job_spin.structure = cls.job_spin.structure.repeat(2)
+        cls.job_spin.structure[2] = "Se"
+        cls.job_spin.structure[3] = "O"
         cls.job_metadyn = cls.project.create_job("VaspMetadyn", "trial_metadyn")
         cls.job_complete = Vasp(
             project=ProjectHDFio(project=cls.project, file_name="vasp_complete"),
@@ -72,6 +78,85 @@ class TestVasp(unittest.TestCase):
         self.assertEqual(self.job.get_eddrmm_handling(), "warn")
         self.assertRaises(ValueError, self.job.set_eddrmm_handling, status="blah")
 
+    def test_rwigs(self):
+        rwigs_dict = {"Fe": 1.1, "Se": 2.2, "O": 3.3, "N": 4.4}
+        rwigs_dict_wrong_1 = {"Fe": "not a float", "Se": 2.2, "O": 3.3, "N": 4.4}
+        rwigs_dict_wrong_2 = {"Fe": 1.1}
+
+        self.assertIsNone(self.job_spin.get_rwigs())
+        self.assertRaises(AssertionError, self.job_spin.set_rwigs, rwigs_dict="not a dict")
+        self.assertRaises(ValueError, self.job_spin.set_rwigs, rwigs_dict=rwigs_dict_wrong_1)
+        self.assertRaises(ValueError, self.job_spin.set_rwigs, rwigs_dict=rwigs_dict_wrong_2)
+
+        self.job_spin.set_rwigs(rwigs_dict)
+        rwigs_dict_out = self.job_spin.get_rwigs()
+        for key in rwigs_dict_out.keys():
+            self.assertEqual(rwigs_dict_out[key], rwigs_dict[key])
+
+    def test_spin_constraints(self):
+        self.job_spin.spin_constraints = 1
+        self.assertTrue(self.job_spin.spin_constraints)
+
+        self.job_spin.spin_constraints = 2
+        self.assertTrue(self.job_spin.spin_constraints)
+
+        del self.job_spin.input.incar["I_CONSTRAINED_M"]
+        self.assertFalse(self.job_spin.spin_constraints)
+
+    def test_spin_constraint(self):
+        rwigs_dict = {"Fe": 1.1, "Se": 2.2, "O": 3.3, "N": 4.4}
+
+        self.assertRaises(
+            AssertionError,
+            self.job_spin.set_spin_constraint,
+            lamb=0.5,
+            rwigs_dict=rwigs_dict,
+            direction="not a bool",
+            norm=False
+        )
+        self.assertRaises(
+            AssertionError,
+            self.job_spin.set_spin_constraint,
+            lamb=0.5,
+            rwigs_dict=rwigs_dict,
+            direction=True,
+            norm="not a bool"
+        )
+        self.assertRaises(
+            AssertionError,
+            self.job_spin.set_spin_constraint,
+            lamb="not a float",
+            rwigs_dict=rwigs_dict,
+            direction=True,
+            norm=False
+        )
+        self.assertRaises(
+            ValueError,
+            self.job_spin.set_spin_constraint,
+            lamb=0.5,
+            rwigs_dict=rwigs_dict,
+            direction=False,
+            norm=False
+        )
+        self.assertRaises(
+            ValueError,
+            self.job_spin.set_spin_constraint,
+            lamb=0.5,
+            rwigs_dict=rwigs_dict,
+            direction=False,
+            norm=True
+        )
+
+        self.job_spin.set_spin_constraint(lamb=0.5, rwigs_dict=rwigs_dict, direction=True, norm=False)
+        self.assertEqual(self.job_spin.input.incar["LAMBDA"], 0.5)
+        self.assertEqual(self.job_spin.input.incar["I_CONSTRAINED_M"], 1)
+        rwigs_dict_out = self.job_spin.get_rwigs()
+        for key in rwigs_dict_out.keys():
+            self.assertEqual(rwigs_dict_out[key], rwigs_dict[key])
+
+        self.job_spin.set_spin_constraint(lamb=0.5, rwigs_dict=rwigs_dict, direction=True, norm=True)
+        self.assertEqual(self.job_spin.input.incar["I_CONSTRAINED_M"], 2)
+
     def test_potential(self):
         self.assertEqual(self.job.potential, self.job._potential)
 
@@ -98,6 +183,53 @@ class TestVasp(unittest.TestCase):
         atoms = CrystalStructure("Pt", BravaisBasis="fcc", a=3.98)
         self.job.structure = atoms
         self.assertEqual(self.job.get_nelect(), 10)
+
+    def test_write_magmoms(self):
+        magmom = np.arange(8.)
+        magmom_ncl = np.zeros([8, 3])
+        magmom_ncl[:, 0] = magmom / 2
+        magmom_ncl[:, 1] = magmom
+        magmom_ncl[:, 2] = magmom ** 2
+
+        magmom_str = "0.0   1.0   2.0   3.0   4.0   5.0   6.0   7.0"
+        magmom_ncl_str =\
+            "0.0 0.0 0.0   0.5 1.0 1.0   1.0 2.0 4.0   1.5 3.0 9.0   " \
+            "2.0 4.0 16.0   2.5 5.0 25.0   3.0 6.0 36.0   3.5 7.0 49.0"
+
+        self.job.structure = CrystalStructure("Fe", BravaisBasis="bcc", a=2.83)
+        self.job.structure = self.job.structure.repeat(2)
+
+        self.job.structure.set_initial_magnetic_moments(magmom)
+
+        self.job.input.incar["ISPIN"] = 1
+        self.job.write_magmoms()
+        self.assertIsNone(self.job.input.incar["MAGMOM"])
+        self.assertEqual(self.job.input.incar["ISPIN"], 1)
+
+        del self.job.input.incar["ISPIN"]
+        self.job.write_magmoms()
+        self.assertEqual(self.job.input.incar["ISPIN"], 2)
+        self.assertEqual(self.job.input.incar["MAGMOM"], magmom_str)
+
+        del self.job.input.incar["MAGMOM"]
+        self.job.structure.set_initial_magnetic_moments(magmom_ncl)
+        self.job.set_spin_constraint(lamb=1.0, rwigs_dict={"Fe": 2.5}, direction=True, norm=True)
+        self.job.write_magmoms()
+        self.assertEqual(self.job.input.incar["LNONCOLLINEAR"], True)
+        self.assertEqual(self.job.input.incar["MAGMOM"], magmom_ncl_str)
+        self.assertEqual(self.job.input.incar["M_CONSTR"], magmom_ncl_str)
+
+        del self.job.input.incar["MAGMOM"]
+        del self.job.input.incar["M_CONSTR"]
+        del self.job.input.incar["LNONCOLLINEAR"]
+        del self.job.input.incar["RWIGS"]
+
+        self.assertRaises(ValueError, self.job.write_magmoms)
+
+        self.job.input.incar["RWIGS"] = "2.5"
+        del self.job.input.incar["LAMBDA"]
+
+        self.assertRaises(ValueError, self.job.write_magmoms)
 
     def test_set_empty_states(self):
         atoms = CrystalStructure("Pt", BravaisBasis="fcc", a=3.98)

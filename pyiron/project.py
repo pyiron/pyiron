@@ -22,6 +22,7 @@ from pyiron.vasp.potential import VaspPotential
 import pyiron.atomistics.structure.pyironase as ase
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.structure.generator import create_surface, create_ase_bulk, create_structure
+from pyiron.atomistics.master.parallel import pipe
 
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
@@ -50,6 +51,9 @@ class Project(ProjectCore):
                                      current working directory) path
         user (str): current pyiron user
         sql_query (str): SQL query to only select a subset of the existing jobs within the current project
+        default_working_directory (bool): Access default working directory, for ScriptJobs this equals the project
+                                     directory of the ScriptJob for regular projects it falls back to the current
+                                     directory.
 
     Attributes:
 
@@ -103,8 +107,13 @@ class Project(ProjectCore):
                                              ‘ListMaster']
     """
 
-    def __init__(self, path="", user=None, sql_query=None):
-        super(Project, self).__init__(path=path, user=user, sql_query=sql_query)
+    def __init__(self, path="", user=None, sql_query=None, default_working_directory=False):
+        super(Project, self).__init__(
+            path=path, 
+            user=user, 
+            sql_query=sql_query, 
+            default_working_directory=default_working_directory
+        )
         self.job_type = JobTypeChoice()
         self.object_type = ObjectTypeChoice()
 
@@ -672,3 +681,16 @@ class Project(ProjectCore):
 
         """
         ProjectGUI(self)
+
+    def create_pipeline(self, job, step_lst):
+        """
+        Create a job pipeline
+
+        Args:
+            job (AtomisticGenericJob): Template for the calculation
+            step_lst (list): List of functions which create calculations
+
+        Returns:
+            FlexibleMaster:
+        """
+        return pipe(project=self, job=job, step_lst=step_lst)

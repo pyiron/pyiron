@@ -226,6 +226,10 @@ Any new features should include coverage with a unit test, such that
 your pull request does not decrease pyiron's overall coverage. This
 will be automatically tested within the ci test suite and `Coveralls`_.
 
+Deprecation warning template
+----------------------------
+*XXX is deprecated as of vers. A.B.C. It is not guaranteed to be in service in vers. D.E.F*
+
 Documentation styleguide
 ------------------------
 
