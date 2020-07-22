@@ -125,7 +125,7 @@ class Project(ProjectPath):
     """
 
     def __init__(self, path="", user=None, sql_query=None, default_working_directory=False):
-        if default_working_directory and path="":
+        if default_working_directory and path=="":
             inputdict = Notebook.get_custom_dict()
             if "project_dir" in inputdict.keys():
                 path = inputdict["project_dir"]
