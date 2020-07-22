@@ -1749,22 +1749,21 @@ class Atoms(object):
 
         zoom_out = 14  # higher = farther away
         scale = np.eye(4) * zoom_out
+        orientation = None
 
-        if camera_axis == 'x' and rotation_matrix is None:
-            rotation_matrix = self._get_rotation_matrix([0, 1, 0], np.pi / 2)
-            orientation = np.dot(scale, rotation_matrix).ravel().tolist()
-        elif camera_axis == 'y' and rotation_matrix is None:
-            rotation_matrix = self._get_rotation_matrix([1, 0, 0], -np.pi / 2)
-            orientation = np.dot(scale, rotation_matrix).ravel().tolist()
-        elif camera_axis == 'z' and rotation_matrix is None:
-            orientation = None
-        elif rotation_matrix is not None:
-            warnings.warn('Setting camera axis along input orientation')
+        if rotation_matrix is not None:
             if np.array(rotation_matrix).shape != (4, 4):
                 raise ValueError('The shape of the rotation matrix should be (4, 4)')
             orientation = np.dot(scale, rotation_matrix).ravel().tolist()
         else:
-            orientation = None
+            if camera_axis == 'x':
+                rotation_matrix = self._get_rotation_matrix([0, 1, 0], np.pi / 2)
+                orientation = np.dot(scale, rotation_matrix).ravel().tolist()
+            elif camera_axis == 'y':
+                rotation_matrix = self._get_rotation_matrix([1, 0, 0], -np.pi / 2)
+                orientation = np.dot(scale, rotation_matrix).ravel().tolist()
+            elif camera_axis == 'z':
+                orientation = None
 
         view.control.orient(orientation)
 
