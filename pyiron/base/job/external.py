@@ -51,7 +51,7 @@ class Notebook(object):
             with open("input.json") as f:
                 return json.load(f)
         else:
-            warnings.warn(hdf_file, "not found")
+            warnings.warn("{} not found".format(hdf_file))
             return None
 
     @staticmethod
