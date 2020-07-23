@@ -2957,7 +2957,7 @@ class Atoms(ASEAtoms):
         return atom
 
     def rotate(
-        self, vector, angle=None, center=(0, 0, 0), rotate_cell=False, index_list=None
+        self, a=0.0, v=None, center=(0, 0, 0), rotate_cell=False, index_list=None
     ):
         """
         Rotate atoms based on a vector and an angle, or two vectors. This function is completely adopted from ASE code
@@ -2965,17 +2965,15 @@ class Atoms(ASEAtoms):
 
         Args:
 
-            rotate_cell:
-            center:
-            vector (list/numpy.ndarray/string):
-                Vector to rotate the atoms around. Vectors can be given as
-                strings: 'x', '-x', 'y', ... .
-
-            angle (float/list) in radians = None:
+            a (float/list) in radians = None:
                 Angle that the atoms is rotated around the vecor 'v'. If an angle
                 is not specified, the length of 'v' is used as the angle
                 (default). The angle can also be a vector and then 'v' is rotated
                 into 'a'.
+
+            v (list/numpy.ndarray/string):
+                Vector to rotate the atoms around. Vectors can be given as
+                strings: 'x', '-x', 'y', ... .
 
             center = [0, 0, 0]:
                 The center is kept fixed under the rotation. Use 'COM' to fix
@@ -3001,69 +2999,12 @@ class Atoms(ASEAtoms):
         >>> atoms.rotate((0, 0, a))
         >>> atoms.rotate('x', 'y')
         """
-
-        norm = np.linalg.norm
-        vector = string2vector(vector)
-        if angle is None:
-            angle = norm(vector)
-        if isinstance(angle, (float, int)):
-            vector /= norm(vector)
-            c = cos(angle)
-            s = sin(angle)
+        if index_list is None:
+            super(Atoms, self).rotate(a=a, v=v, center=center, rotate_cell=rotate_cell)
         else:
-            v2 = string2vector(angle)
-            vector /= norm(vector)
-            v2 /= norm(v2)
-            c = np.dot(vector, v2)
-            vector = np.cross(vector, v2)
-            s = norm(vector)
-            # In case *v* and *a* are parallel, np.cross(v, v2) vanish
-            # and can't be used as a rotation axis. However, in this
-            # case any rotation axis perpendicular to v2 will do.
-            eps = 1e-7
-            if s < eps:
-                vector = np.cross((0, 0, 1), v2)
-                if norm(vector) < eps:
-                    vector = np.cross((1, 0, 0), v2)
-                if not (norm(vector) >= eps):
-                    raise AssertionError()
-            elif s > 0:
-                vector /= s
-
-        if isinstance(center, str):
-            if center.lower() == "com":
-                center = self.get_center_of_mass()
-            elif center.lower() == "cop":
-                center = np.mean(self.get_positions(), axis=0)
-            elif center.lower() == "cou":
-                center = self.cell.sum(axis=0) / 2
-            else:
-                raise ValueError("Cannot interpret center")
-        else:
-            center = np.array(center)
-
-        if index_list is not None:
-            if not (len(index_list) > 0):
-                raise AssertionError()
-            rotate_list = np.array(index_list)
-        else:
-            rotate_list = np.array(len(self) * [True])
-
-        p = self.positions[rotate_list] - center
-        self.positions[rotate_list] = (
-            c * p
-            - np.cross(p, s * vector)
-            + np.outer(np.dot(p, vector), (1.0 - c) * vector)
-            + center
-        )
-        if rotate_cell:
-            rotcell = self.cell
-            rotcell[:] = (
-                c * rotcell
-                - np.cross(rotcell, s * vector)
-                + np.outer(np.dot(rotcell, vector), (1.0 - c) * vector)
-            )
-            self.set_cell(rotcell)
+            dummy_basis = copy(self)
+            dummy_basis.rotate(a=a, v=v, center=center, rotate_cell=rotate_cell)
+            self.positions[index_list] = dummy_basis.positions[index_list]
 
     def rotate_euler(self, center=(0, 0, 0), phi=0.0, theta=0.0, psi=0.0):
         """Rotate atoms via Euler angles.
