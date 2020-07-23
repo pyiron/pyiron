@@ -46,6 +46,7 @@ class AseJob(InteractiveBase):
             "volume": [],
         }
         self.output = GenericInteractiveOutput(job=self)
+        self._python_only_job = True
 
     @staticmethod
     def _cellfromdict(celldict):
@@ -105,23 +106,6 @@ class AseJob(InteractiveBase):
         if atoms.calc is not None:
             atoms.calc.read(atoms.calc.label)
         return atoms
-
-    def _create_job_structure(self, debug=False):
-        """
-        Internal helper function to create the input directories, save the job in the database and write the wrapper.
-
-        Args:
-            debug (bool): Debug Mode
-        """
-        self._job_id = self.save()
-        print(
-            "The job "
-            + self.job_name
-            + " was saved and received the ID: "
-            + str(self._job_id)
-        )
-        self.status.created = True
-        self._calculate_predecessor()
 
     @staticmethod
     def _dict2calculator(class_path, class_dict):

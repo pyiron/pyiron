@@ -14,6 +14,7 @@ import scipy.constants
 import warnings
 import json
 from collections import defaultdict
+import spglib
 
 from pyiron.dft.job.generic import GenericDFTJob
 from pyiron.vasp.potential import VaspPotentialFile
@@ -93,7 +94,6 @@ class SphinxBase(GenericDFTJob):
         self.input = Group(table_name = "parameters")
         self.load_default_input()
         self._save_memory = False
-        self._spin_enabled = False
         self._output_parser = Output(self)
         self.input_writer = InputWriter()
         if self.check_vasp_potentials():
@@ -738,7 +738,6 @@ class SphinxBase(GenericDFTJob):
         if self.status!='finished' and not self.is_compressed():
             # self.decompress()
             with warnings.catch_warnings(record=True) as w:
-                warnings.simplefilter("always")
                 try:
                     self.collect_output()
                 except AssertionError:
@@ -1156,10 +1155,6 @@ class SphinxBase(GenericDFTJob):
 
         self._coarse_run = self.input["CoarseRun"]
 
-        if np.any(
-            self.structure.get_initial_magnetic_moments().flatten() != None):
-            self._spin_enabled = True
-
         if self.input["EmptyStates"] == "auto":
             if self._spin_enabled:
                 self.input["EmptyStates"] = int(
@@ -1257,6 +1252,13 @@ class SphinxBase(GenericDFTJob):
             f.write("include <parameters.sx>;\n\n")
             f.write(self.input.sphinx.to_sphinx(indent=0))
 
+    @property
+    def _spin_enabled(self):
+        if np.any(self.structure.get_initial_magnetic_moments().flatten() != None):
+            return True
+        return False
+
+
     def get_charge_density(self):
         """
         Gets the charge density from the hdf5 file. This value is normalized by the volume
@@ -1341,8 +1343,6 @@ class SphinxBase(GenericDFTJob):
     def get_n_ir_reciprocal_points(
         self, is_time_reversal=True, symprec=1e-5, ignore_magmoms=False
     ):
-        from phonopy.structure import spglib
-
         lattice = self.structure.cell
         positions = self.structure.get_scaled_positions()
         numbers = self.structure.get_atomic_numbers()
@@ -1367,7 +1367,6 @@ class SphinxBase(GenericDFTJob):
     def check_setup(self):
 
         with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
 
             # Check for parameters that were not modified but
             # possibly should have (encut, kpoints, smearing, etc.),
@@ -1463,7 +1462,6 @@ class SphinxBase(GenericDFTJob):
                 + "of OpenMP threads"
             )
         with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
             # Warn about discrepancies between values in
             # self.input and individual groups, in case
             # a user modified them directly
@@ -1978,7 +1976,7 @@ class Output(object):
             self._parse_dict["n_valence"] = {
                 log_file[ii-1].split()[1]:int(ll.split('=')[-1])
                 for ii, ll in enumerate(log_file)
-                if ll.startswith('| Z')
+                if ll.startswith('| Z=')
             }
 
             def get_partial_log(file_content, start_line, end_line):

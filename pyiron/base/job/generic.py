@@ -1179,6 +1179,18 @@ class GenericJob(JobCore):
         job_id = self.project.db.add_item_dict(self.db_entry())
         self._job_id = job_id
         self.refresh_job_status()
+        if self._check_if_input_should_be_written():
+            self.project_hdf5.create_working_directory()
+            self.write_input()
+            self._copy_restart_files()
+        self.status.created = True
+        self._calculate_predecessor()
+        print(
+            "The job "
+            + self.job_name
+            + " was saved and received the ID: "
+            + str(job_id)
+        )
         return job_id
 
     def convergence_check(self):
@@ -1228,7 +1240,7 @@ class GenericJob(JobCore):
 
         """
         if not self.job_id:
-            self._create_job_structure(debug=False)
+            self.save()
         if job_name is None:
             job_name = "{}_restart".format(self.job_name)
         if job_type is None:
@@ -1337,7 +1349,7 @@ class GenericJob(JobCore):
         if self.check_if_job_exists():
             print("job exists already and therefore was not created!")
         else:
-            self._create_job_structure(debug=debug)
+            self.save()
             self.run()
 
     def _run_if_created(self):
@@ -1596,19 +1608,8 @@ class GenericJob(JobCore):
         Args:
             debug (bool): Debug Mode
         """
-        self._job_id = self.save()
-        print(
-            "The job "
-            + self.job_name
-            + " was saved and received the ID: "
-            + str(self._job_id)
-        )
-        if self._check_if_input_should_be_written():
-            self.project_hdf5.create_working_directory()
-            self.write_input()
-            self._copy_restart_files()
-        self.status.created = True
-        self._calculate_predecessor()
+        warnings.warn("Use job.save() instead of job._create_job_structure().", self.s.DeprecationWarning)
+        self.save()
 
     def _check_if_input_should_be_written(self):
         if self._python_only_job:

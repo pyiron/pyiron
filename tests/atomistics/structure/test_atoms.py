@@ -819,6 +819,11 @@ class TestAtoms(unittest.TestCase):
         v = np.random.rand(6).reshape(-1, 3)
         self.assertEqual(basis.repeat_points(v, 2).shape, (8, 2, 3))
 
+    def test_get_equivalent_points(self):
+        basis = Atoms("FeFe", positions=[[0.01, 0, 0], [0.5, 0.5, 0.5]], cell=np.identity(3))
+        arr = basis.get_equivalent_points([0, 0, 0.5])
+        self.assertAlmostEqual(np.linalg.norm(arr-np.array([0.51, 0.5, 0]), axis=-1).min(), 0)
+
     def test_cluster_analysis(self):
         import random
 
