@@ -1519,9 +1519,8 @@ class Atoms(object):
         magnetic_moments=False,
         custom_array=None,
         custom_3darray=None,
-        camera_zoom_out=None,
-        camera_axis='z',
-        rotation_matrix=None
+        camera_zoom_out=14.0,
+        camera_orientation='z'
     ):
         """
         Plot3d relies on NGLView to visualize atomic structures. Here, we construct a string in the "protein database"
@@ -1557,11 +1556,10 @@ class Atoms(object):
                 vectors are colored by their direction.)
             magnetic_moments (bool): Plot magnetic moments as 'scalar_field' or 'vector_field'.
             camera_zoom_out (float): Distance of the camera from the structure. Higher = farther away.
-                (Default is None, use the NGLView default value (seems to be 14).)
-            camera_axis (str): View the structure along 'x', 'y' or 'z' axis. (Default is 'z', view along the 'z' axis)
-            rotation_matrix (numpy.ndarray): The 3x3 rotation matrix generated using
-                scipy.spatial.transform.Rotation.from_euler().as_matrix(). If specified, overrides camera_axis.
-                (Default is None, fallback to camera_axis.)
+                (Default is 14, which also seems to be the NGLView default value.)
+            camera_orientation (str or numpy.ndarray): View the structure along 'x', 'y' or 'z' axis, or along an
+                orientation that results from the 3x3 rotation matrix generated using
+                scipy.spatial.transform.Rotation.from_euler().as_matrix(). (Default is 'z', view along the 'z' axis)
 
             Possible NGLView color schemes:
               " ", "picking", "random", "uniform", "atomindex", "residueindex",
@@ -1720,24 +1718,27 @@ class Atoms(object):
         view.camera = camera
         view.background = background
 
-        if camera_axis not in ['x', 'y', 'z']:
-            raise ValueError(
-                "Choose between x, y, or z"
-            )
-
-        if camera_zoom_out is None:
-            camera_zoom_out = 14
-
-        if rotation_matrix is not None:
-            if np.array(rotation_matrix).shape != (3, 3):
-                raise ValueError('The shape of the rotation matrix should be (3, 3)')
-        else:
-            if camera_axis == 'x':
-                rotation_matrix = transform.Rotation.from_euler('y', 90, degrees=True).as_matrix()
-            elif camera_axis == 'y':
-                rotation_matrix = transform.Rotation.from_euler('x', -90, degrees=True).as_matrix()
-            elif camera_axis == 'z':
+        rotation_matrix = None
+        if type(camera_orientation) is np.ndarray:
+            if np.array(camera_orientation).shape != (3, 3):
+                raise ValueError("The shape of the rotation matrix should be (3, 3)")
+            else:
+                rotation_matrix = camera_orientation
+        elif type(camera_orientation) is str:
+            if camera_orientation not in ["x", "y", "z"]:
+                raise ValueError(
+                    "`camera_orientation` should either be \"x\", \"y\", \"z\", or the 3x3 rotation matrix"
+                )
+            if camera_orientation == "x":
+                rotation_matrix = transform.Rotation.from_euler("y", 90, degrees=True).as_matrix()
+            elif camera_orientation == "y":
+                rotation_matrix = transform.Rotation.from_euler("x", -90, degrees=True).as_matrix()
+            elif camera_orientation == "z":
                 rotation_matrix = np.eye(3)
+        else:
+            raise TypeError(
+                "`camera_orientation` should either be \"x\", \"y\", \"z\", or the 3x3 rotation matrix"
+            )
 
         R = np.eye(4)
         R[:3, :3] = rotation_matrix
