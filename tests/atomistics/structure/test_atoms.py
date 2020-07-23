@@ -1378,11 +1378,6 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(np.allclose(pos, pos_new))
         c3 = Atoms("C3", positions=[[0, 0, 0], [0, 0, 2], [0, 2, 0]])
         c3.get_scaled_positions()
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            c3.get_scaled_positions()
-            self.assertEqual(len(w), 1)
-            self.assertTrue(np.allclose(c3.get_scaled_positions(), c3.positions))
         c3 = Atoms("C3", positions=[[0, 0, 0], [0, 0, 2], [0, 2, 0]], cell=np.eye(3)*10)
         c3.get_scaled_positions()
         with warnings.catch_warnings(record=True) as w:
