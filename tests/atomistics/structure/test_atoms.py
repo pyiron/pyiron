@@ -14,6 +14,7 @@ from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalEl
 from pyiron.base.generic.hdfio import FileHDFio, ProjectHDFio
 from pyiron.base.project.generic import Project
 from ase.cell import Cell as ASECell
+from ase.atoms import Atoms as ASEAtoms
 
 
 class TestAtoms(unittest.TestCase):
@@ -48,17 +49,21 @@ class TestAtoms(unittest.TestCase):
         pse = PeriodicTable()
         el = pse.element("Al")
         basis = Atoms()
+        ase_basis = ASEAtoms()
+        self.assertIsInstance(ase_basis, ASEAtoms)
+        self.assertIsInstance(ase_basis.info, dict)
+        self.assertIsInstance(ase_basis.arrays, dict)
+        self.assertIsInstance(ase_basis.pbc, (bool, list, np.ndarray))
+        self.assertIsInstance(ase_basis._cellobj, ASECell)
         self.assertIsInstance(basis, Atoms)
-        # self.assertIsInstance(basis.info, dict)
-        # self.assertIsInstance(basis.arrays, dict)
-        # self.assertIsInstance(basis.adsorbate_info, dict)
-        # self.assertIsInstance(basis.units, dict)
-        # self.assertIsInstance(basis.pbc, (bool, list, np.ndarray))
-        # self.assertIsInstance(basis.indices, np.ndarray)
-        # self.assertIsNone(basis.positions)
-        # self.assertIsInstance(basis.species, list)
-        # self.assertIsInstance(basis.elements, np.ndarray)
-        # self.assertIsNone(basis.cell)
+        self.assertIsInstance(basis.info, dict)
+        self.assertIsInstance(basis.arrays, dict)
+        self.assertIsInstance(basis.units, dict)
+        self.assertIsInstance(basis.pbc, (bool, list, np.ndarray))
+        self.assertIsInstance(basis.indices, np.ndarray)
+        self.assertEqual(len(basis.positions), 0)
+        self.assertIsInstance(basis.species, list)
+        self.assertIsInstance(basis.elements, np.ndarray)
         basis = Atoms(symbols="Al", positions=pos, cell=cell)
         self.assertIsInstance(basis, Atoms)
         self.assertEqual(basis.get_spacegroup()["Number"], 225)
@@ -332,8 +337,7 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(CO.cell[2, 2], 10.0)
         self.assertAlmostEqual(CO.get_volume(), 10)
         self.assertAlmostEqual(CO.get_volume(per_atom=True), 0.5 * 10)
-        with self.assertRaises(ValueError):
-            CO.set_cell(-np.eye(3))
+        CO.set_cell(-np.eye(3))
         with self.assertRaises(ValueError):
             CO.set_cell([2, 1])
         dx = 1.0
@@ -346,15 +350,6 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(np.array_equal(water.cell, np.zeros((3, 3))))
         self.assertTrue(np.array_equal(water.get_scaled_positions(), water.positions))
         self.assertEqual(water.center_coordinates_in_unit_cell(), water)
-        positions_2d = np.random.random((4, 3))
-        positions_2d[:, 2] = 0.0
-        cell_2d = np.eye(3)
-        cell_2d[2, 2] = 0.0
-        struct_2d = Atoms("C4", scaled_positions=positions_2d, cell=cell_2d, pbc=[True, True, False])
-        struct_2d.set_cell(cell_2d)
-        self.assertTrue(np.array_equal(struct_2d.get_scaled_positions(), positions_2d))
-        struct_2d.set_cell(cell_2d, scale_atoms=True)
-        self.assertEqual(struct_2d.center_coordinates_in_unit_cell(), struct_2d)
 
     def test_add(self):
         COX = self.C2 + Atom("O", position=[0, 0, -2])
@@ -467,7 +462,7 @@ class TestAtoms(unittest.TestCase):
             scaled_positions=[[0.5, 0.5, 0.5], [0, 0, 0]],
         )
         O_simple = Atoms(
-            ["O", "O"], cell=10.0 * np.eye(3), scaled_positions=[[0.5, 0.5, 0.5]]
+            ["O", "O"], cell=10.0 * np.eye(3), scaled_positions=[[0., 0., 0.], [0.5, 0.5, 0.5]]
         )
         O_parent = O_basis.get_parent_basis()
         self.assertNotEqual(O_basis, O_parent)
