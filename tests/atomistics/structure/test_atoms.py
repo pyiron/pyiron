@@ -163,7 +163,7 @@ class TestAtoms(unittest.TestCase):
         self.assertIsInstance(conv, ChemicalElement)
         self.assertIsInstance(self.CO2.convert_element(conv), ChemicalElement)
         self.assertIsInstance(self.CO2.convert_element(self.CO2[0]), ChemicalElement)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             self.assertIsInstance(self.CO2.convert_element(self.CO2), ChemicalElement)
         self.assertEqual(len(self.CO2.species), 2)
 
@@ -297,7 +297,7 @@ class TestAtoms(unittest.TestCase):
             len(basis_new._tag_list), len(basis[mg_indices]) + len(basis[o_indices])
         )
         self.assertEqual(basis_new.get_spacegroup()["Number"], 225)
-        self.assertEqual(basis[:-3], basis[0:len(basis)-4])
+        self.assertEqual(basis[:-3], basis[0:len(basis)-3])
 
     def test_positions(self):
         self.assertEqual(self.CO2[1:].positions[1:].tolist(), [[0.0, 1.5, 0.0]])
@@ -393,28 +393,28 @@ class TestAtoms(unittest.TestCase):
             elements="AlFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3)
         )
         basis = unitcell.copy()
-        basis.rotate(vector=[0, 0, 0.1 * np.pi])
+        basis.rotate(v=[0, 0, 0.1 * np.pi])
         self.assertAlmostEqual(np.arccos(basis.positions[1, :2].sum() / 2) / np.pi, 0.1)
         basis = unitcell.copy()
-        basis.rotate(vector=[0, 0, 1], angle=0.1 * np.pi)
+        basis.rotate(v=[0, 0, 1], a=0.1 * np.pi)
         self.assertAlmostEqual(np.arccos(basis.positions[1, :2].sum() / 2) / np.pi, 0.1)
         basis = unitcell.copy()
         center_of_mass = basis.get_center_of_mass()
-        basis.rotate(vector=[0, 0, 0.1 * np.pi], center="com")
+        basis.rotate(v=[0, 0, 0.1 * np.pi], center="com")
         self.assertTrue(np.allclose(basis.get_center_of_mass(), center_of_mass))
         basis = unitcell.copy()
         center_of_positions = basis.positions.mean(axis=0)
-        basis.rotate(vector=[0, 0, 1], center="cop")
+        basis.rotate(v=[0, 0, 1], center="cop")
         self.assertTrue(np.allclose(center_of_positions, basis.positions.mean(axis=0)))
         basis = unitcell.copy()
         position = basis.positions[1]
-        basis.rotate(vector=[0, 0, 1], center="cou")
+        basis.rotate(v=[0, 0, 1], center="cou")
         self.assertTrue(np.allclose(position, basis.positions[1]))
         basis = unitcell.copy()
-        basis.rotate(vector=np.random.random(3), rotate_cell=True)
+        basis.rotate(v=np.random.random(3), rotate_cell=True)
         self.assertAlmostEqual(basis.get_scaled_positions()[1, 0], 0.5)
         basis = unitcell.copy()
-        basis.rotate(vector=np.random.random(3), index_list=[0])
+        basis.rotate(v=np.random.random(3), index_list=[0])
         self.assertTrue(
             np.allclose(unitcell.positions.flatten(), basis.positions.flatten())
         )
@@ -459,7 +459,7 @@ class TestAtoms(unittest.TestCase):
         O_basis = Atoms(
             [O_up, O_down],
             cell=10.0 * np.eye(3),
-            scaled_positions=[[0.5, 0.5, 0.5], [0, 0, 0]],
+            scaled_positions=[[0, 0, 0], [0.5, 0.5, 0.5]],
         )
         O_simple = Atoms(
             ["O", "O"], cell=10.0 * np.eye(3), scaled_positions=[[0., 0., 0.], [0.5, 0.5, 0.5]]
@@ -786,18 +786,6 @@ class TestAtoms(unittest.TestCase):
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(np.sum(output), 16)
         self.assertTrue(np.all(np.dot(output, output) == np.identity(2) * 64))
-
-    def test_get_distance_matrix(self):
-        basis = Atoms(
-            "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
-        )
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            output = basis.get_distance_matrix()
-            self.assertIsInstance(output, np.ndarray)
-            output = np.rint(output * 2 / np.sqrt(3))
-            self.assertTrue(np.all(np.dot(output, output) == np.identity(2)))
-            self.assertEqual(len(w), 1)
 
     def test_get_distances(self):
         basis = Atoms("FeFe", positions=[3*[0], 3*[0.9]], cell=np.identity(3))
