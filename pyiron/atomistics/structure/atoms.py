@@ -11,7 +11,7 @@ from math import cos, sin
 import numpy as np
 from six import string_types
 import warnings
-from ase.geometry import cellpar_to_cell, complete_cell, get_distances
+from ase.geometry import get_distances
 from matplotlib.colors import rgb2hex
 from scipy.interpolate import interp1d
 import seekpath
@@ -127,9 +127,6 @@ class Atoms(ASEAtoms):
 
         el_index_lst = list()
         element_list = None
-
-        if (elements is None) and (numbers is None) and (indices is None):
-            return
         if numbers is not None:  # for ASE compatibility
             if not (elements is None):
                 raise AssertionError()
@@ -314,82 +311,6 @@ class Atoms(ASEAtoms):
                         raise ValueError("'{}' is not a valid high symmetry point".format(v))
 
         self._high_symmetry_path.update(path)
-
-    def new_array(self, name, a, dtype=None, shape=None):
-        """
-        Adding a new array to the instance. This function is for the purpose of compatibility with the ASE package
-
-        Args:
-            name (str): Name of the array
-            a (list/numpy.ndarray): The array to be added
-            dtype (type): Data type of the array
-            shape (list/turple): Shape of the array
-
-        """
-
-        if dtype is not None:
-            a = np.array(a, dtype, order="C")
-            if len(a) == 0 and shape is not None:
-                a.shape = (-1,) + shape
-        else:
-            if not a.flags["C_CONTIGUOUS"]:
-                a = np.ascontiguousarray(a)
-            else:
-                a = a.copy()
-        if name in self.arrays:
-            raise RuntimeError
-        for b in self.arrays.values():
-            if len(a) != len(b):
-                raise ValueError("Array has wrong length: %d != %d." % (len(a), len(b)))
-            break
-        if shape is not None and a.shape[1:] != shape:
-            raise ValueError(
-                "Array has wrong shape %s != %s." % (a.shape, (a.shape[0:1] + shape))
-            )
-        self.arrays[name] = a
-
-    def get_array(self, name, copy=True):
-        """
-        Get an array. This function is for the purpose of compatibility with the ASE package
-
-        Args:
-            name (str): Name of the required array
-            copy (bool): True if a copy of the array is to be returned
-
-        Returns:
-             An array of a copy of the array
-        """
-        if copy:
-            return self.arrays[name].copy()
-        else:
-            return self.arrays[name]
-
-    def set_array(self, name, a, dtype=None, shape=None):
-        """
-        Update array. This function is for the purpose of compatibility with the ASE package
-
-        Args:
-            name (str): Name of the array
-            a (list/numpy.ndarray): The array to be added
-            dtype (type): Data type of the array
-            shape (list/turple): Shape of the array
-
-        """
-
-        b = self.arrays.get(name)
-        if b is None:
-            if a is not None:
-                self.new_array(name, a, dtype, shape)
-        else:
-            if a is None:
-                del self.arrays[name]
-            else:
-                a = np.asarray(a)
-                if a.shape != b.shape:
-                    raise ValueError(
-                        "Array has wrong shape %s != %s." % (a.shape, b.shape)
-                    )
-                b[:] = a
 
     def add_tag(self, *args, **qwargs):
         """
