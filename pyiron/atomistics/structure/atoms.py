@@ -2548,13 +2548,8 @@ class Atoms(ASEAtoms):
         self.indices = new_indices
 
     def __eq__(self, other):
-        if not (isinstance(other, Atoms)):
-            raise AssertionError()
-        conditions = []
-        for a_1, a_2 in zip(self, other):
-            conditions.append(a_1 == a_2)
-        conditions.append(np.alltrue(self.pbc == other.pbc))
-        return all(conditions)
+        return super(Atoms, self).__eq__(other) and \
+               np.array_equal(self.get_chemical_symbols(), other.get_chemical_symbols())
 
     def __ne__(self, other):
         return not self == other
@@ -2825,8 +2820,8 @@ class Atoms(ASEAtoms):
         if "selective_dynamics" in self._tag_list._lists.keys():
             from ase.constraints import FixAtoms
 
-            return FixAtoms(indices=np.array([atom_ind for atom_ind in
-                                              range(len(self)) if any(self.selective_dynamics[atom_ind])]))
+            return FixAtoms(indices=[atom_ind for atom_ind in
+                                     range(len(self)) if any(self.selective_dynamics[atom_ind])])
         else:
             return None
 
