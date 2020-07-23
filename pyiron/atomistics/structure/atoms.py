@@ -22,7 +22,7 @@ from pyiron.atomistics.structure.periodic_table import (
     ElementColorDictionary,
 )
 from pyiron.base.settings.generic import Settings
-from scipy.spatial import cKDTree, Voronoi
+from scipy.spatial import cKDTree, Voronoi, transform
 import spglib
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal"
@@ -1499,31 +1499,6 @@ class Atoms(object):
             rgb2hex(cmap(scalar)[:3]) for scalar in remapped_field
         ]  # The slice gets RGB but leaves alpha
 
-    @staticmethod
-    def _get_rotation_matrix(axis, theta):
-        """
-        Find the rotation matrix associated with counterclockwise rotation
-        about the given axis by theta radians.
-        Credit: http://stackoverflow.com/users/190597/unutbu
-        Args:
-            axis (list): rotation axis of the form [x, y, z]
-            theta (float): rotational angle in radians
-        Returns:
-            array. 4x4 affine Rotation matrix (no translation).
-        """
-
-        axis = np.array(list(axis))
-        axis = axis / np.linalg.norm(axis)
-        axis *= -np.sin(theta / 2.0)
-        a = np.cos(theta / 2.0)
-        b, c, d = tuple(axis.tolist())
-        aa, bb, cc, dd = a * a, b * b, c * c, d * d
-        bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
-        return np.array([[aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac), 0],
-                         [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab), 0],
-                         [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc, 0],
-                         [0, 0, 0, 1]])
-
     def plot3d(
         self,
         show_cell=True,
@@ -1544,6 +1519,7 @@ class Atoms(object):
         magnetic_moments=False,
         custom_array=None,
         custom_3darray=None,
+        camera_zoom_out=None,
         camera_axis='z',
         rotation_matrix=None
     ):
@@ -1580,10 +1556,12 @@ class Atoms(object):
             vector_color (numpy.ndarray): Colors for the vectors (only available with vector_field). (Default is None,
                 vectors are colored by their direction.)
             magnetic_moments (bool): Plot magnetic moments as 'scalar_field' or 'vector_field'.
-            camera_axis (str): View the structure along 'x', 'y' or 'z' axis. (Default is 'z'.)
-            rotation_matrix (numpy.ndarray): A 4x4 matrix that combines translation, rotation, scaling and shears
-                into a single affine transformation matrix. Can be generated using the helper function
-                _get_rotation_matrix(). If specified, overrides camera_axis. (Default is None)
+            camera_zoom_out (float): Distance of the camera from the structure. Higher = farther away.
+                (Default is None, use the NGLView default value (seems to be 14).)
+            camera_axis (str): View the structure along 'x', 'y' or 'z' axis. (Default is 'z', view along the 'z' axis)
+            rotation_matrix (numpy.ndarray): The 3x3 rotation matrix generated using
+                scipy.spatial.transform.Rotation.from_euler().as_matrix(). If specified, overrides camera_axis.
+                (Default is None, fallback to camera_axis.)
 
             Possible NGLView color schemes:
               " ", "picking", "random", "uniform", "atomindex", "residueindex",
@@ -1742,29 +1720,28 @@ class Atoms(object):
         view.camera = camera
         view.background = background
 
-        if camera_axis != "x" and camera_axis != "y" and camera_axis != "z":
-            warnings.warn(
+        if camera_axis not in ['x', 'y', 'z']:
+            raise ValueError(
                 "Choose between x, y, or z"
             )
 
-        zoom_out = 14  # higher = farther away
-        scale = np.eye(4) * zoom_out
-        orientation = None
+        if camera_zoom_out is None:
+            camera_zoom_out = 14
 
         if rotation_matrix is not None:
-            if np.array(rotation_matrix).shape != (4, 4):
-                raise ValueError('The shape of the rotation matrix should be (4, 4)')
-            orientation = np.dot(scale, rotation_matrix).ravel().tolist()
+            if np.array(rotation_matrix).shape != (3, 3):
+                raise ValueError('The shape of the rotation matrix should be (3, 3)')
         else:
             if camera_axis == 'x':
-                rotation_matrix = self._get_rotation_matrix([0, 1, 0], np.pi / 2)
-                orientation = np.dot(scale, rotation_matrix).ravel().tolist()
+                rotation_matrix = transform.Rotation.from_euler('y', 90, degrees=True).as_matrix()
             elif camera_axis == 'y':
-                rotation_matrix = self._get_rotation_matrix([1, 0, 0], -np.pi / 2)
-                orientation = np.dot(scale, rotation_matrix).ravel().tolist()
+                rotation_matrix = transform.Rotation.from_euler('x', -90, degrees=True).as_matrix()
             elif camera_axis == 'z':
-                orientation = None
+                rotation_matrix = np.eye(3)
 
+        R = np.eye(4)
+        R[:3, :3] = rotation_matrix
+        orientation = (camera_zoom_out * R).ravel().tolist()
         view.control.orient(orientation)
 
         return view
