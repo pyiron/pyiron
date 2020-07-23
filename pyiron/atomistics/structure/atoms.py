@@ -545,66 +545,6 @@ class Atoms(ASEAtoms):
                 self._high_symmetry_points = hdf_atoms["high_symmetry_points"]
             return self
 
-    def center(self, vacuum=None, axis=(0, 1, 2)):
-        """
-        Center atoms in unit cell.
-
-        Adopted from ASE code (https://wiki.fysik.dtu.dk/ase/_modules/ase/atoms.html#Atoms.center)
-
-        Args:
-            vacuum (float): If specified adjust the amount of vacuum when centering. If vacuum=10.0 there will thus be
-                            10 Angstrom of vacuum on each side.
-            axis (tuple/list): List or turple of integers specifying the axis along which the atoms should be centered
-
-        """
-
-        # Find the orientations of the faces of the unit cell
-        c = self.cell
-        if c is None:
-            c = np.identity(self.dimension)
-            self.set_cell(c)
-
-        dirs = np.zeros_like(c)
-        for i in range(3):
-            dirs[i] = np.cross(c[i - 1], c[i - 2])
-            dirs[i] /= np.linalg.norm(dirs[i])  # normalize
-            if np.dot(dirs[i], c[i]) < 0.0:
-                dirs[i] *= -1
-
-        # Now, decide how much each basis vector should be made longer
-        if isinstance(axis, int):
-            axes = (axis,)
-        else:
-            axes = axis
-        p = self.positions
-        longer = np.zeros(3)
-        shift = np.zeros(3)
-        for i in axes:
-            p0 = np.dot(p, dirs[i]).min()
-            p1 = np.dot(p, dirs[i]).max()
-            height = np.dot(c[i], dirs[i])
-            if vacuum is not None:
-                lng = (p1 - p0 + 2 * vacuum) - height
-            else:
-                lng = 0.0  # Do not change unit cell size!
-            top = lng + height - p1
-            shf = 0.5 * (top - p0)
-            cosphi = np.dot(c[i], dirs[i]) / np.linalg.norm(c[i])
-            longer[i] = lng / cosphi
-            shift[i] = shf / cosphi
-
-        # Now, do it!
-        translation = np.zeros(3)
-        for i in axes:
-            nowlen = np.sqrt(np.dot(c[i], c[i]))
-            cell = self.cell.copy()
-            cell[i] *= 1 + longer[i] / nowlen
-            self.set_cell(cell)
-            translation += shift[i] * c[i] / nowlen
-        self.positions += translation
-        if self.pbc is None:
-            self.pbc = self.dimension * [True]
-
     def select_index(self, el):
         """
         Returns the indices of a given element in the structure
