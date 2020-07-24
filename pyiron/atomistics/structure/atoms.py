@@ -2927,13 +2927,14 @@ class Atoms(ASEAtoms):
             else:
                 return np.array([None] * len(self))
 
-    def set_initial_magnetic_moments(self, magmoms):
+    def set_initial_magnetic_moments(self, magmoms=None):
         """
         Set array of initial magnetic moments.
 
         Args:
-            magmoms (numpy.array()):
+            magmoms (numpy.ndarray/list): List of magneric moments
         """
+        super(Atoms, self).set_initial_magnetic_moments(magmoms=magmoms)
         if magmoms is not None:
             if len(magmoms) != len(self):
                 raise ValueError("magmons can be collinear or non-collinear.")
