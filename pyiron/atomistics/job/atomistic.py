@@ -668,7 +668,8 @@ class AtomisticGenericJob(GenericJobCore):
                 conditions.append(True)
             else:
                 conditions.append(self.output.cells[0] is None)
-        conditions.append(self.output.cells is None)
+        if self.output.positions is not None and self.output.cells is None:
+            conditions.append(self.output.cells is None)
         if any(conditions):
             snapshot.cell = None
         else:
