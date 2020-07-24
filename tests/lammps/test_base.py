@@ -200,8 +200,7 @@ class TestLammps(unittest.TestCase):
         r_H2 = [-dx, dx, 0]
         unit_cell = (a / n) * np.eye(3)
         water = Atoms(
-            elements=["H", "H", "O"], positions=[r_H1, r_H2, r_O], cell=unit_cell
-        )
+            elements=["H", "H", "O"], positions=[r_H1, r_H2, r_O], cell=unit_cell, pbc=True)
         water.set_repeat([n, n, n])
         self.job_water.structure = water
         with self.assertWarns(UserWarning):
@@ -275,8 +274,7 @@ class TestLammps(unittest.TestCase):
         unit_cell = (a / n) * np.eye(3)
         unit_cell[0][1] += 0.01
         water = Atoms(
-            elements=["H", "H", "O"], positions=[r_H1, r_H2, r_O], cell=unit_cell
-        )
+            elements=["H", "H", "O"], positions=[r_H1, r_H2, r_O], cell=unit_cell, pbc=True)
         water.set_repeat([n, n, n])
         self.job_water_dump.structure = water
         with self.assertWarns(UserWarning):
