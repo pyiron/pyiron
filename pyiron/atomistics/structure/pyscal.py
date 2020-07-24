@@ -45,7 +45,7 @@ def get_steinhardt_parameter_job(job, neighbor_method="cutoff", cutoff=0, n_clus
     return get_steinhardt_parameter_structure(
         structure=job.get_structure(iteration_step=iteration_step),
         neighbor_method=neighbor_method,
-        cutoff=cutoff, 
+        cutoff=cutoff,
         n_clusters=n_clusters,
         q=q,
         averaged=averaged,
@@ -89,7 +89,7 @@ def get_steinhardt_parameter_structure(structure, neighbor_method="cutoff", cuto
     )
 
     sysq = sys.get_qvals(
-        q, 
+        q,
         averaged=averaged
     )
 
