@@ -25,7 +25,7 @@ __date__ = "Nov 6, 2019"
 
 
 def get_steinhardt_parameter_job(job, neighbor_method="cutoff", cutoff=0, n_clusters=2, 
-                                 q=[4, 6], averaged=False, clustering=True):
+                                 q=[4, 6], averaged=False, clustering=True, iteration_step=-1):
     """
     Calculate Steinhardts parameters
 
@@ -37,13 +37,14 @@ def get_steinhardt_parameter_job(job, neighbor_method="cutoff", cutoff=0, n_clus
         q (list) : can be from 2-12, the required q values to be calculated
         averaged (bool) : If True, calculates the averaged versions of the parameter
         clustering (bool) : If True, cluster based on the q values
+        iteration_step (int) : The step at which the configuration is to be used
 
     Returns:
         q (list) : calculated q parameters
     
     """
     return get_steinhardt_parameter_structure(
-        structure=job.structure, 
+        structure=job.get_structure(iteration_step=iteration_step), 
         neighbor_method=neighbor_method,
         cutoff=cutoff, 
         n_clusters=n_clusters, 
