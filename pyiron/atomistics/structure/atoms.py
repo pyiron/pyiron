@@ -7,11 +7,9 @@ from ase.atoms import Atoms as ASEAtoms
 import ast
 from copy import copy
 from collections import OrderedDict
-from math import cos, sin
 import numpy as np
 from six import string_types
 import warnings
-from ase.geometry import get_distances
 from matplotlib.colors import rgb2hex
 from scipy.interpolate import interp1d
 import seekpath
