@@ -377,7 +377,8 @@ class Atoms(ASEAtoms):
 
             if self.cell is not None:
                 with hdf_structure.open("cell") as hdf_cell:
-                    hdf_cell["cell"] = self.cell
+                    # Convert ASE cell object to numpy array before storing
+                    hdf_cell["cell"] = np.array(self.cell)
                     hdf_cell["pbc"] = self.pbc
 
             # hdf_structure["coordinates"] = self.positions  # "Atomic coordinates"
@@ -466,10 +467,11 @@ class Atoms(ASEAtoms):
                     if not tr_dict[hdf_atoms["is_absolute"]]:
                         self.set_scaled_positions(hdf_atoms[position_tag])
                     else:
-                        self.positions = hdf_atoms[position_tag]
+                        self.arrays['positions'] = hdf_atoms[position_tag]
                 else:
-                    self.positions = hdf_atoms[position_tag]
+                    self.arrays['positions'] = hdf_atoms[position_tag]
 
+                self.arrays['numbers'] = self.get_atomic_numbers()
                 if "bonds" in hdf_atoms.list_nodes():
                     self.bonds = hdf_atoms["explicit_bonds"]
 
