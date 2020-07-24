@@ -24,8 +24,8 @@ __status__ = "development"
 __date__ = "Nov 6, 2019"
 
 
-def get_steinhardt_parameter_job(job, neighbor_method="cutoff", cutoff=0, n_clusters=2, 
-                                 q=[4, 6], averaged=False, clustering=True, iteration_step=-1):
+def get_steinhardt_parameter_job(job, neighbor_method="cutoff", cutoff=0, n_clusters=2,
+                                 q=(4, 6), averaged=False, clustering=True, iteration_step=-1):
     """
     Calculate Steinhardts parameters
 
@@ -41,21 +41,20 @@ def get_steinhardt_parameter_job(job, neighbor_method="cutoff", cutoff=0, n_clus
 
     Returns:
         q (list) : calculated q parameters
-    
     """
     return get_steinhardt_parameter_structure(
         structure=job.get_structure(iteration_step=iteration_step), 
         neighbor_method=neighbor_method,
         cutoff=cutoff, 
-        n_clusters=n_clusters, 
+        n_clusters=n_clusters,
         q=q,
         averaged=averaged,
         clustering=cluster
     )
 
 
-def get_steinhardt_parameter_structure(structure, neighbor_method="cutoff", cutoff=0, n_clusters=2, 
-                                       q=[4, 6], averaged=False, clustering=True):
+def get_steinhardt_parameter_structure(structure, neighbor_method="cutoff", cutoff=0, n_clusters=2,
+                                       q=(4, 6), averaged=False, clustering=True):
     """
     Calculate Steinhardts parameters
 
@@ -74,18 +73,18 @@ def get_steinhardt_parameter_structure(structure, neighbor_method="cutoff", cuto
     """
     sys = pc.System()
     sys.read_inputfile(
-        pyiron_to_ase(structure), 
-        format='ase', 
+        pyiron_to_ase(structure),
+        format='ase',
         is_triclinic=not UnfoldingPrism(structure.cell, digits=15).is_skewed()
     )
 
     sys.find_neighbors(
         method=neighbor_method,
-        cutoff=cutoff 
+        cutoff=cutoff
     )
 
     sys.calculate_q(
-        q, 
+        q,
         averaged=averaged
     )
 
@@ -113,7 +112,7 @@ def analyse_centro_symmetry(atoms, num_neighbors=12):
         num_neighbors (int) : number of neighbors
 
     Returns:
-        csm (list) : list of centrosymmetry parameter 
+        csm (list) : list of centrosymmetry parameter
     """
     sys = pc.System()
     sys.read_inputfile(atoms, format="ase")
@@ -127,12 +126,12 @@ def analyse_cna_adaptive(atoms, mode="total"):
 
     Args:
         atoms (pyiron.structure.atoms.Atoms): The structure to analyze.
-        mode ("total"/"numeric"/"str"): Controls the style and level 
+        mode ("total"/"numeric"/"str"): Controls the style and level
         of detail of the output.
         total : return number of atoms belonging to each structure
         numeric : return a per atom list of numbers- 0 for unknown,
             1 fcc, 2 hcp, 3 bcc and 4 icosa
-        str : return a per atom string of sructures    
+        str : return a per atom string of sructures
     
     Returns:
         (depends on `mode`)
