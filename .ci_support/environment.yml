@@ -19,7 +19,7 @@ dependencies:
   - phonopy =2.4.2
   - psutil =5.7.0
   - pyfileindex =0.0.4
-  - pyscal =2.7.2
+  - pyscal =2.7.4
   - pysqa =0.0.7
   - pytables =3.6.1
   - quickff =2.2.4
