@@ -230,8 +230,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
 
     def calc_minimize(
             self,
-            ionic_energy=0.0,
-            ionic_forces=1e-4,
+            ionic_energy_tolerance=0.0,
+            ionic_force_tolerance=1.0e-4,
             e_tol=None,
             f_tol=None,
             max_iter=100000,
@@ -240,15 +240,25 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             style='cg'
     ):
         # Docstring set programmatically -- Please ensure that changes to signature or defaults stay consistent!
+        if ionic_energy is not None:
+            warnings.warn(
+                "e_tol is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. Use ionic_energy_tolerance instead."
+            )
+            ionic_energy_tolerance = ionic_energy
+            e_tol = None
+        if f_tol is not None:
+            warnings.warn(
+                "f_tol is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. Use ionic_force_tolerance instead."
+            )
+            ionic_force_tolerance = f_tol
+            f_tol = None
         if self.server.run_mode.interactive_non_modal:
             warnings.warn(
                 "calc_minimize() is not implemented for the non modal interactive mode use calc_static()!"
             )
         super(LammpsInteractive, self).calc_minimize(
-            ionic_energy=ionic_energy,
-            ionic_forces=ionic_forces,
-            e_tol=e_tol,
-            f_tol=f_tol,
+            ionic_energy_tolerance=ionic_energy_tolerance,
+            ionic_force_tolerance=ionic_force_tolerance,
             max_iter=max_iter,
             pressure=pressure,
             n_print=n_print,

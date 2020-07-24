@@ -583,14 +583,16 @@ class SphinxBase(GenericDFTJob):
         retain_electrostatic_potential=False,
         ionic_energy=None,
         ionic_forces=None,
+        ionic_energy_tolerance=0.0,
+        ionic_force_tolerance=1.0e-2,
         volume_only=False,
     ):
         """
         Setup the hamiltonian to perform ionic relaxations.
 
         The convergence goal can be set using either the
-        ionic_energy as a limit for fluctuations in energy or the
-        ionic_forces.
+        ionic_energy_tolerance as a limit for fluctuations in energy or the
+        ionic_force_tolerance.
 
         Loads defaults for all Sphinx input groups, including a
         ricQN-based main Group.
@@ -604,9 +606,9 @@ class SphinxBase(GenericDFTJob):
             electronic_steps (int): maximum number of electronic steps
                                     per electronic convergence
             ionic_steps (int): maximum number of ionic steps
-            ionic_energy (float): convergence goal in terms of
+            ionic_energy_tolerance (float): convergence goal in terms of
                                   energy (optional)
-            ionic_forces (float): convergence goal in terms of
+            ionic_force_tolerance (float): convergence goal in terms of
                                   forces (optional)
         """
         if pressure is not None:
@@ -619,14 +621,14 @@ class SphinxBase(GenericDFTJob):
             self.input["Istep"] = ionic_steps
         elif "Istep" not in self.input:
             self.input["Istep"] = 100
-        if ionic_forces is not None:
-            if ionic_forces < 0:
-                raise ValueError("ionic_forces must be a positive integer")
-            self.input["dF"] = float(ionic_forces)
-        if ionic_energy is not None:
-            if ionic_energy < 0:
-                raise ValueError("ionic_forces must be a positive integer")
-            self.input["dE"] = float(ionic_energy)
+        if ionic_force_tolerance is not None:
+            if ionic_force_tolerance < 0:
+                raise ValueError("ionic_force_tolerance must be a positive integer")
+            self.input["dF"] = float(ionic_force_tolerance)
+        if ionic_energy_tolerance is not None:
+            if ionic_energy_tolerance < 0:
+                raise ValueError("ionic_force_tolerance must be a positive integer")
+            self.input["dE"] = float(ionic_energy_tolerance)
         super(SphinxBase, self).calc_minimize(
             electronic_steps=electronic_steps,
             ionic_steps=ionic_steps,
@@ -635,8 +637,8 @@ class SphinxBase(GenericDFTJob):
             algorithm=algorithm,
             retain_charge_density=retain_charge_density,
             retain_electrostatic_potential=retain_electrostatic_potential,
-            ionic_energy=ionic_energy,
-            ionic_forces=ionic_forces,
+            ionic_energy_tolerance=ionic_energy_tolerance,
+            ionic_force_tolerance=ionic_force_tolerance,
             volume_only=volume_only,
         )
         self.load_default_groups()
@@ -936,7 +938,7 @@ class SphinxBase(GenericDFTJob):
             self.input["Sigma"] = width
 
     def set_convergence_precision(
-        self, ionic_energy=None, electronic_energy=None, ionic_forces=None
+        self, ionic_energy_tolerance=None, ionic_force_tolerance=None, ionic_energy=None, electronic_energy=None, ionic_forces=None
     ):
         """
         Sets the electronic and ionic convergence precision.
@@ -945,24 +947,36 @@ class SphinxBase(GenericDFTJob):
         precision is required.
 
         Args:
-            ionic_energy (float): Ionic energy convergence precision (eV)
+            ionic_energy_tolerance (float): Ionic energy convergence precision
             electronic_energy (float): Electronic energy convergence
-                                       precision (eV)
-            ionic_forces (float): Ionic force convergence precision (eV/A)
+                                       precision
+            ionic_force_tolerance (float): Ionic force convergence precision
         """
+        if ionic_forces is not None:
+            warnings.warn(
+                "ionic_forces is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. Use ionic_force_tolerance instead.",
+                DeprecationWarning
+            )
+            ionic_force_tolerance = ionic_forces
+        if ionic_energy is not None:
+            warnings.warn(
+                "ionic_energy is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. Use ionic_energy_tolerance instead.",
+                DeprecationWarning
+            )
+            ionic_energy_tolerance =ionic_energy
         assert (
-            ionic_energy is None or ionic_energy > 0
-        ), "ionic_energy must be a positive float"
+            ionic_energy_tolerance is None or ionic_energy_tolerance > 0
+        ), "ionic_energy_tolerance must be a positive float"
         assert (
-            ionic_forces is None or ionic_forces > 0
-        ), "ionic_forces must be a positive float"
+            ionic_force_tolerance is None or ionic_force_tolerance > 0
+        ), "ionic_force_tolerance must be a positive float"
         assert (
             electronic_energy is None or electronic_energy > 0
         ), "electronic_energy must be a positive float"
-        if ionic_energy is not None or ionic_forces is not None:
+        if ionic_energy_tolerance is not None or ionic_force_tolerance is not None:
             print("Setting calc_minimize")
-            self.calc_minimize(ionic_energy=ionic_energy,
-                               ionic_forces=ionic_forces)
+            self.calc_minimize(ionic_energy_tolerance=ionic_energy_tolerance,
+                               ionic_force_tolerance=ionic_force_tolerance)
         if electronic_energy is not None:
             self.input["Ediff"] = electronic_energy
 

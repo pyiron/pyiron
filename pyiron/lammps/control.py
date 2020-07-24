@@ -250,8 +250,8 @@ class LammpsControl(GenericParameters):
 
     def calc_minimize(
         self,
-        ionic_energy=0.0,
-        ionic_forces=1e-4,
+        ionic_energy_tolerance=0.0,
+        ionic_force_tolerance=1e-4,
         e_tol=None,
         f_tol=None,
         max_iter=100000,
@@ -264,12 +264,12 @@ class LammpsControl(GenericParameters):
         Sets parameters required for minimization.
 
         Args:
-            ionic_energy (float): If the magnitude of difference between energies of two consecutive steps is lower than or
-                equal to `ionic_energy`, the minimisation terminates. (Default is 0.0 eV.)
-            ionic_forces (float): If the magnitude of the global force vector at a step is lower than or equal to `ionic_forces`, the
+            ionic_energy_tolerance (float): If the magnitude of difference between energies of two consecutive steps is lower than or
+                equal to `ionic_energy_tolerance`, the minimisation terminates. (Default is 0.0 eV.)
+            ionic_force_tolerance (float): If the magnitude of the global force vector at a step is lower than or equal to `ionic_force_tolerance`, the
                 minimisation terminates. (Default is 1e-4 eV/angstrom.)
-            e_tol (float): Same as ionic_energy (Deprecated)
-            f_tol (float): Same as ionic_forces (Deprecated)
+            e_tol (float): Same as ionic_energy_tolerance (Deprecated)
+            f_tol (float): Same as ionic_force_tolerance (Deprecated)
             max_iter (int): Maximum number of minimisation steps to carry out. If the minimisation converges before
                 `max_iter` steps, terminate at the converged step. If the minimisation does not converge up to
                 `max_iter` steps, terminate at the `max_iter` step. (Default is 100000.)
@@ -289,15 +289,15 @@ class LammpsControl(GenericParameters):
 
         if e_tol is not None:
             warnings.warn(
-                "e_tol is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0"
+                "e_tol is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. Use ionic_energy_tolerance instead."
             )
-            ionic_energy = e_tol
+            ionic_energy_tolerance = e_tol
             e_tol = None
         if f_tol is not None:
             warnings.warn(
-                "f_tol is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0"
+                "f_tol is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. Use ionic_force_tolerance instead."
             )
-            ionic_forces = f_tol
+            ionic_force_tolerance = f_tol
             f_tol = None
 
         max_evaluations = 100 * max_iter
@@ -308,8 +308,8 @@ class LammpsControl(GenericParameters):
         force_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["force"]
         pressure_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
 
-        ionic_energy *= energy_units
-        ionic_forces *= force_units
+        ionic_energy_tolerance *= energy_units
+        ionic_force_tolerance *= force_units
 
         if pressure is not None:
             if None in np.array([pressure]).flatten():
@@ -329,9 +329,9 @@ class LammpsControl(GenericParameters):
         self.remove_keys(["fix___nve"])
         self.set(min_style=style)
         self.set(
-            minimize=str(ionic_energy)
+            minimize=str(ionic_energy_tolerance)
             + " "
-            + str(ionic_forces)
+            + str(ionic_force_tolerance)
             + " "
             + str(int(max_iter))
             + " "

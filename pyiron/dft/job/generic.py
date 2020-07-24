@@ -260,6 +260,8 @@ class GenericDFTJob(AtomisticGenericJob):
         algorithm=None,
         retain_charge_density=False,
         retain_electrostatic_potential=False,
+        ionic_energy_tolerance=None,
+        ionic_force_tolerance=None,
         ionic_energy=None,
         ionic_forces=None,
         volume_only=False,

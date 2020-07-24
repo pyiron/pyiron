@@ -245,6 +245,8 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
         algorithm=None,
         retain_charge_density=False,
         retain_electrostatic_potential=False,
+        ionic_energy_tolerance=0.0,
+        ionic_force_tolerance=1.0e-2,
         ionic_energy=None,
         ionic_forces=None,
         volume_only=False,
@@ -265,8 +267,8 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
                 algorithm=algorithm,
                 retain_charge_density=retain_charge_density,
                 retain_electrostatic_potential=retain_electrostatic_potential,
-                ionic_energy=ionic_energy,
-                ionic_forces=ionic_forces,
+                ionic_energy_tolerance=ionic_energy_tolerance,
+                ionic_force_tolerance=ionic_force_tolerance,
                 volume_only=volume_only,
             )
 

@@ -124,7 +124,7 @@ class Gaussian(GenericDFTJob):
             electronic_steps=electronic_steps,
             ionic_steps=ionic_steps,
             algorithm=algorithm,
-            ionic_forces=ionic_forces
+            ionic_force_tolerance=ionic_forces
         )
 
 
