@@ -49,7 +49,7 @@ class Testpyscal(unittest.TestCase):
 
         qtest = np.random.randint(2, 13, size=2)
 
-        qs, ind = pas.get_steinhardt_parameter_job(self.job, cutoff=0, n_clusters=2, q=qtest)
+        qs, _ = pas.get_steinhardt_parameter_job(self.job, cutoff=0, n_clusters=2, q=qtest)
         for c, q in enumerate(qs):
             self.assertLess(np.abs(np.mean(q) - perfect_vals[qtest[c]-2]), 1E-3)
 
