@@ -422,6 +422,31 @@ class Atoms(ASEAtoms):
 
                 self.set_species(el_object_list)
                 self.bonds = None
+
+                tr_dict = {1: True, 0: False}
+                self.dimension = hdf_atoms["dimension"]
+                self.units = hdf_atoms["units"]
+
+                self.cell = None
+                if "cell" in hdf_atoms.list_groups():
+                    with hdf_atoms.open("cell") as hdf_cell:
+                        self.cell = hdf_cell["cell"]
+                        self.pbc = hdf_cell["pbc"]
+
+                # Backward compatibility
+                position_tag = "positions"
+                if position_tag not in hdf_atoms.list_nodes():
+                    position_tag = "coordinates"
+                if "is_absolute" in hdf_atoms.list_nodes():
+                    if not tr_dict[hdf_atoms["is_absolute"]]:
+                        self.set_scaled_positions(hdf_atoms[position_tag])
+                    else:
+                        self.arrays['positions'] = hdf_atoms[position_tag]
+                else:
+                    self.arrays['positions'] = hdf_atoms[position_tag]
+
+                self.arrays['numbers'] = self.get_atomic_numbers()
+
                 if "explicit_bonds" in hdf_atoms.list_nodes():
                     # print "bonds: "
                     self.bonds = hdf_atoms["explicit_bonds"]
@@ -449,29 +474,6 @@ class Atoms(ASEAtoms):
                                     my_dict, length=len(self)
                                 )
 
-                tr_dict = {1: True, 0: False}
-                self.dimension = hdf_atoms["dimension"]
-                self.units = hdf_atoms["units"]
-
-                self.cell = None
-                if "cell" in hdf_atoms.list_groups():
-                    with hdf_atoms.open("cell") as hdf_cell:
-                        self.cell = hdf_cell["cell"]
-                        self.pbc = hdf_cell["pbc"]
-
-                # Backward compatibility
-                position_tag = "positions"
-                if position_tag not in hdf_atoms.list_nodes():
-                    position_tag = "coordinates"
-                if "is_absolute" in hdf_atoms.list_nodes():
-                    if not tr_dict[hdf_atoms["is_absolute"]]:
-                        self.set_scaled_positions(hdf_atoms[position_tag])
-                    else:
-                        self.arrays['positions'] = hdf_atoms[position_tag]
-                else:
-                    self.arrays['positions'] = hdf_atoms[position_tag]
-
-                self.arrays['numbers'] = self.get_atomic_numbers()
                 if "bonds" in hdf_atoms.list_nodes():
                     self.bonds = hdf_atoms["explicit_bonds"]
 
