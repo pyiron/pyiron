@@ -1354,10 +1354,10 @@ class TestAtoms(unittest.TestCase):
         surface = create_surface("Al", "fcc111", size=(4, 4, 4), vacuum=10)
         self.assertTrue(all(surface.pbc))
         self.assertIsInstance(surface, Atoms)
-        hkl_surface = create_hkl_surface(Al_bulk, [10,8,7], layers=20, vacuum=10)
+        hkl_surface = create_hkl_surface(Al_bulk, [10, 8, 7], layers=20, vacuum=10)
         self.assertIsInstance(hkl_surface, Atoms)
         hkl_surface_center = create_hkl_surface(
-            Al_bulk, [10,8,7], layers=20, vacuum=10, center=True
+            Al_bulk, [10, 8, 7], layers=20, vacuum=10, center=True
         )
         mean_z = np.mean([p[2] for p in hkl_surface_center.positions])
         self.assertAlmostEqual(mean_z, hkl_surface_center.cell[2][2]/2)
