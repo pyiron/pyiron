@@ -27,7 +27,7 @@ from ase.build import (
     )
 import numpy as np
 from pyiron.atomistics.structure.pyironase import publication as publication_ase
-from pyiron.atomistics.structure.atoms import CrystalStructure
+from pyiron.atomistics.structure.atoms import CrystalStructure, ase_to_pyiron
 from pyiron.base.settings.generic import Settings
 import types
 
@@ -107,7 +107,7 @@ def create_surface(
             z_max = np.max(surface.positions[:, 2])
             surface.cell[2, 2] = z_max + vacuum
         surface.pbc = pbc
-        return surface
+        return ase_to_pyiron(surface)
     else:
         return None
 
@@ -136,7 +136,7 @@ def create_hkl_surface(lattice, hkl, layers, vacuum=1.0, center=False):
     surface.cell[2, 2] = z_max + vacuum
     if center:
         surface.positions += 0.5 * surface.cell[2] - [0, 0, z_max/2]
-    return surface
+    return ase_to_pyiron(surface)
 
 
 def create_structure(element, bravais_basis, lattice_constant):
@@ -188,7 +188,7 @@ def create_ase_bulk(
         pyiron.atomistics.structure.atoms.Atoms: Required bulk structure
     """
     s.publication_add(publication_ase())
-    return bulk(
+    return ase_to_pyiron(bulk(
         name=name,
         crystalstructure=crystalstructure,
         a=a,
@@ -197,4 +197,4 @@ def create_ase_bulk(
         u=u,
         orthorhombic=orthorhombic,
         cubic=cubic,
-    )
+    ))
