@@ -1,18 +1,15 @@
 import unittest
 import numpy as np
 import pyscal.core as pc
-import pyscal.crystal_structures as pcs
 from pyiron.project import Project
 from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
-import warnings
-import numpy as np
 import os
 import pyiron.atomistics.structure.pyscal as pas
 
-class Testpyscal(unittest.TestCase):
 
+class Testpyscal(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.execution_path = os.path.dirname(os.path.abspath(__file__))
@@ -56,13 +53,11 @@ class Testpyscal(unittest.TestCase):
         for c, q in enumerate(qs):
             self.assertLess(np.abs(np.mean(q) - perfect_vals[qtest[c]-2]), 1E-3)
 
-
     def test_centrosymmetry(self):
         csm = pas.analyse_centro_symmetry(self.job.structure, num_neighbors=12)
         self.assertLess(np.mean(csm), 1E-5)
 
     def test_cna(self):
-        
         cna = pas.analyse_cna_adaptive(self.job.structure)
         self.assertEqual(cna[1], len(self.job.structure))
 
@@ -76,8 +71,7 @@ class Testpyscal(unittest.TestCase):
 
     def test_volume(self):
         vols = pas.analyse_voronoi_volume(self.job.structure)
-        assert np.abs(np.mean(vols) - 16.0) < 1E-3
+        self.assertLess(np.abs(np.mean(vols) - 16.0), 1E-3)
 
 if __name__ == "__main__":
     unittest.main()
-
