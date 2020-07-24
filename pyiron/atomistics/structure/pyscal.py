@@ -132,7 +132,7 @@ def analyse_cna_adaptive(atoms, mode="total"):
         numeric : return a per atom list of numbers- 0 for unknown,
             1 fcc, 2 hcp, 3 bcc and 4 icosa
         str : return a per atom string of sructures
-    
+
     Returns:
         (depends on `mode`)
     """
