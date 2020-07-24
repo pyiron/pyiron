@@ -177,13 +177,14 @@ class Atoms(ASEAtoms):
 
         el_lst = [el.Abbreviation if el.Parent is None else el.Parent for el in self.species]
         symbols = np.array([el_lst[el] for el in self.indices])
+        self._tag_list._length = len(symbols)
         super(Atoms, self).__init__(symbols=symbols, positions=positions, numbers=None,
                                     tags=tags, momenta=momenta, masses=masses,
                                     magmoms=magmoms, charges=charges,
                                     scaled_positions=scaled_positions, cell=cell,
                                     pbc=pbc, celldisp=celldisp, constraint=constraint,
                                     calculator=calculator, info=info)
-        self._tag_list._length = len(self.positions)
+
         self.bonds = None
         self.units = {"length": "A", "mass": "u"}
         self._symmetry_dataset = None
