@@ -43,7 +43,7 @@ def get_steinhardt_parameter_job(job, neighbor_method="cutoff", cutoff=0, n_clus
         q (list) : calculated q parameters
     """
     return get_steinhardt_parameter_structure(
-        structure=job.get_structure(iteration_step=iteration_step), 
+        structure=job.get_structure(iteration_step=iteration_step),
         neighbor_method=neighbor_method,
         cutoff=cutoff, 
         n_clusters=n_clusters,
@@ -69,7 +69,7 @@ def get_steinhardt_parameter_structure(structure, neighbor_method="cutoff", cuto
 
     Returns:
         q (list) : calculated q parameters
-    
+
     """
     sys = pc.System()
     sys.read_inputfile(
