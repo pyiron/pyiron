@@ -41,7 +41,7 @@ class Testpyscal(unittest.TestCase):
         """
         sysp = pc.System()
         sysp.read_inputfile(self.job.structure, format="ase")
-        assert len(sysp.atoms) == 256
+        self.assertEqual(len(sysp.atoms), 256)
 
     def test_steinhardt_parameters(self):
         """
@@ -54,25 +54,25 @@ class Testpyscal(unittest.TestCase):
 
         qs, ind = pas.get_steinhardt_parameter_job(self.job, cutoff=0, n_clusters=2, q=qtest)
         for c, q in enumerate(qs):
-            assert np.abs(np.mean(q) - perfect_vals[qtest[c]-2]) < 1E-3    
+            self.assertLess(np.abs(np.mean(q) - perfect_vals[qtest[c]-2]), 1E-3)
 
 
     def test_centrosymmetry(self):
         csm = pas.analyse_centro_symmetry(self.job.structure, num_neighbors=12)
-        assert np.mean(csm) < 1E-5
+        self.assertLess(np.mean(csm), 1E-5)
 
     def test_cna(self):
         
         cna = pas.analyse_cna_adaptive(self.job.structure)
-        assert cna[1] == len(self.job.structure)
+        self.assertEqual(cna[1], len(self.job.structure))
 
         rand = np.random.randint(0, len(self.job.structure))
 
         cna = pas.analyse_cna_adaptive(self.job.structure, mode="numeric")
-        assert cna[rand] == 1
+        self.assertEqual(cna[rand], 1)
 
         cna = pas.analyse_cna_adaptive(self.job.structure, mode="str")
-        assert cna[rand] == "fcc"
+        self.assertEqual(cna[rand], "fcc")
 
     def test_volume(self):
         vols = pas.analyse_voronoi_volume(self.job.structure)
