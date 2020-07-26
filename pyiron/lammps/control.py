@@ -266,8 +266,8 @@ class LammpsControl(GenericParameters):
                 equal to `ionic_energy_tolerance`, the minimisation terminates. (Default is 0.0 eV.)
             ionic_force_tolerance (float): If the magnitude of the global force vector at a step is lower than or equal to `ionic_force_tolerance`, the
                 minimisation terminates. (Default is 1e-4 eV/angstrom.)
-            e_tol (float): Same as ionic_energy_tolerance (Deprecated)
-            f_tol (float): Same as ionic_force_tolerance (Deprecated)
+            e_tol (float): Sam as ionic_energy_tolerance (deprecated)
+            f_tol (float): Sam as ionic_force_tolerance (deprecated)
             max_iter (int): Maximum number of minimisation steps to carry out. If the minimisation converges before
                 `max_iter` steps, terminate at the converged step. If the minimisation does not converge up to
                 `max_iter` steps, terminate at the `max_iter` step. (Default is 100000.)

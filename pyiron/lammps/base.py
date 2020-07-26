@@ -585,22 +585,14 @@ class LammpsBase(AtomisticGenericJob):
         rotation_matrix = self._get_rotation_matrix(pressure=pressure)
         # Docstring set programmatically -- Ensure that changes to signature or defaults stay consistent!
         if e_tol is not None:
-            warnings.warn(
-                "e_tol is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. Use ionic_energy_tolerance instead.",
-                DeprecationWarning
-            )
             ionic_energy_tolerance = e_tol
-            e_tol = None
         if f_tol is not None:
-            warnings.warn(
-                "f_tol is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. Use ionic_force_tolerance instead.",
-                DeprecationWarning
-            )
             ionic_force_tolerance = f_tol
-            f_tol = None
         super(LammpsBase, self).calc_minimize(
             ionic_energy_tolerance=ionic_energy_tolerance,
             ionic_force_tolerance=ionic_force_tolerance,
+            e_tol=e_tol,
+            f_tol=f_tol
             max_iter=max_iter,
             pressure=pressure,
             n_print=n_print,
