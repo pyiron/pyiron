@@ -252,8 +252,6 @@ class LammpsControl(GenericParameters):
         self,
         ionic_energy_tolerance=0.0,
         ionic_force_tolerance=1e-4,
-        e_tol=None,
-        f_tol=None,
         max_iter=100000,
         pressure=None,
         n_print=100,
@@ -286,19 +284,6 @@ class LammpsControl(GenericParameters):
         # This docstring is a source for the calc_minimize method in pyiron.lammps.base.LammpsBase.calc_minimize and
         # pyiron.lammps.interactive.LammpsInteractive.calc_minimize -- Please ensure that changes to signature or
         # defaults stay consistent!
-
-        if e_tol is not None:
-            warnings.warn(
-                "e_tol is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. Use ionic_energy_tolerance instead."
-            )
-            ionic_energy_tolerance = e_tol
-            e_tol = None
-        if f_tol is not None:
-            warnings.warn(
-                "f_tol is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. Use ionic_force_tolerance instead."
-            )
-            ionic_force_tolerance = f_tol
-            f_tol = None
 
         max_evaluations = 100 * max_iter
 
