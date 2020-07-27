@@ -552,6 +552,10 @@ class TestAtoms(unittest.TestCase):
         basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
         basis_O = CrystalStructure("O", bravais_basis="fcc", lattice_constant=4.2)
         basis_O.set_scaled_positions(basis_O.get_scaled_positions() + [0.0, 0.0, 0.5])
+        with self.assertRaises(ValueError):
+            basis_O.set_repeat(5.0)
+        with self.assertRaises(AssertionError):
+            basis_O.set_repeat([2, 2])
         basis = basis_Mg + basis_O
         basis.center_coordinates_in_unit_cell()
         basis.add_tag(selective_dynamics=[True, True, True])
