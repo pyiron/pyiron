@@ -3092,8 +3092,11 @@ class Atoms(object):
         if isinstance(vec, int):
             vec = [vec] * self.dimension
 
-        if not (len(vec) == self.dimension):
-            raise AssertionError()
+        if not hasattr(vec, '__len__'):
+            raise ValueError('Box repetition must be an integer or a list/ndarray of integers and not', type(vec))
+
+        if len(vec) != self.dimension:
+            raise AssertionError('Dimension of box repetition not consistent: ', len(vec), '!=', self.dimension)
 
         i_vec = np.array([vec[0], 1, 1])
         if self.dimension > 1:
