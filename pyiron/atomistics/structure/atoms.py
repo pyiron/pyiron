@@ -2789,11 +2789,13 @@ class Atoms(ASEAtoms):
     @staticmethod
     def convert_formula(elements):
         """
+        Convert a given chemical formula into a list of elements
 
         Args:
-            elements:
+            elements (str): A string of the required chamical formula (eg. H2O)
 
         Returns:
+            list: A list of elements corresponding to the formula
 
         """
         el_list = []
