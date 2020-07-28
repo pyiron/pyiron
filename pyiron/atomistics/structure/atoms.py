@@ -2752,9 +2752,6 @@ class Atoms(ASEAtoms):
         if len(vec) != self.dimension:
             raise AssertionError('Dimension of box repetition not consistent: ', len(vec), '!=', self.dimension)
 
-        if not (len(vec) == self.dimension):
-            raise ValueError("The repeat vector and the dimensions don't match")
-
         i_vec = np.array([vec[0], 1, 1])
         if self.dimension > 1:
             i_vec[1] = vec[1]
