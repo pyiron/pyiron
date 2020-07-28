@@ -875,7 +875,7 @@ class VaspBase(GenericDFTJob):
 
     def calc_minimize(
         self,
-        electronic_steps=400,
+        electronic_steps=60,
         ionic_steps=100,
         max_iter=None,
         pressure=None,
@@ -939,7 +939,7 @@ class VaspBase(GenericDFTJob):
 
     def calc_static(
         self,
-        electronic_steps=400,
+        electronic_steps=100,
         algorithm=None,
         retain_charge_density=False,
         retain_electrostatic_potential=False,

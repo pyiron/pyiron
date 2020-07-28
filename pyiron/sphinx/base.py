@@ -324,7 +324,7 @@ class SphinxBase(GenericDFTJob):
         self.input.Sigma = 0.2
         self.input.Xcorr = "PBE"
         self.input.VaspPot = False
-        self.input.Estep = 400
+        self.input.Estep = 100
         self.input.Ediff = 1.0e-4
         self.input.WriteWaves = True
         self.input.KJxc = False
@@ -540,7 +540,7 @@ class SphinxBase(GenericDFTJob):
                     not self.input["WriteWaves"]
     def calc_static(
         self,
-        electronic_steps=None,
+        electronic_steps=100,
         algorithm=None,
         retain_charge_density=False,
         retain_electrostatic_potential=False,
@@ -575,7 +575,7 @@ class SphinxBase(GenericDFTJob):
 
     def calc_minimize(
         self,
-        electronic_steps=None,
+        electronic_steps=60,
         ionic_steps=None,
         max_iter=None,
         pressure=None,
