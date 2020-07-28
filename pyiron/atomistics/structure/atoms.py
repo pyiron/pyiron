@@ -2749,6 +2749,12 @@ class Atoms(ASEAtoms):
         if not (len(vec) == self.dimension):
             raise ValueError("The repeat vector and the dimensions don't match")
         initial_length = len(self)
+        if not hasattr(vec, '__len__'):
+            raise ValueError('Box repetition must be an integer or a list/ndarray of integers and not', type(vec))
+
+        if len(vec) != self.dimension:
+            raise AssertionError('Dimension of box repetition not consistent: ', len(vec), '!=', self.dimension)
+
         i_vec = np.array([vec[0], 1, 1])
         if self.dimension > 1:
             i_vec[1] = vec[1]

@@ -228,7 +228,7 @@ will be automatically tested within the ci test suite and `Coveralls`_.
 
 Deprecation warning template
 ----------------------------
-*XXX is deprecated as of vers. A.B.C. It is not guaranteed to be in service in vers. D.E.F*
+*XXX is deprecated as of vers. A.B.C. It is not guaranteed to be in service in vers. D.E.F. Use YYY instead.*
 
 Documentation styleguide
 ------------------------
