@@ -27,6 +27,13 @@ class TestExampleJob(unittest.TestCase):
         job.remove()
         project.remove(enable=True)
 
+    def test_delete_existing_job(self):
+        self.job = self.project.create_job("ExampleJob", "job_test_delete_existing_job")
+        self.job.run()
+        self.assertTrue(self.job.status.finished)
+        self.job = self.project.create_job("ExampleJob", "job_test_delete_existing_job", delete_existing_job=True)
+        self.assertTrue(self.job.status.initialized)
+
     def test_input(self):
         with open(
             os.path.join(
