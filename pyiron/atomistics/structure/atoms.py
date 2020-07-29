@@ -3017,7 +3017,7 @@ class Atoms(ASEAtoms):
         Args:
             magmoms (numpy.ndarray/list): List of magneric moments
         """
-        super(Atoms, self).set_initial_magnetic_moments(magmoms=magmoms)
+        # pyiron part
         if magmoms is not None:
             if len(magmoms) != len(self):
                 raise ValueError("magmons can be collinear or non-collinear.")
@@ -3028,9 +3028,14 @@ class Atoms(ASEAtoms):
                 self.add_tag(spin=None)
             for ind, spin in enumerate(magmoms):
                 self.spin[ind] = spin
+        # ASE part
+        if magmoms is None:
+            self.set_array('initial_magmoms', None)
+        else:
+            magmoms = np.asarray(magmoms)
+            self.arrays['initial_magmoms'] = magmoms
 
-    def rotate(
-        self, a=0.0, v=None, center=(0, 0, 0), rotate_cell=False, index_list=None
+    def rotate(self, a=0.0, v=None, center=(0, 0, 0), rotate_cell=False, index_list=None
     ):
         """
         Rotate atoms based on a vector and an angle, or two vectors. This function is completely adopted from ASE code
