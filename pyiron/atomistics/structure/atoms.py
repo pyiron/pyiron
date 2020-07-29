@@ -3038,7 +3038,7 @@ class Atoms(ASEAtoms):
 
         Args:
 
-            a (float/list) in radians = None:
+            a (float/list) in degrees = None:
                 Angle that the atoms is rotated around the vecor 'v'. If an angle
                 is not specified, the length of 'v' is used as the angle
                 (default). The angle can also be a vector and then 'v' is rotated
@@ -3048,10 +3048,9 @@ class Atoms(ASEAtoms):
                 Vector to rotate the atoms around. Vectors can be given as
                 strings: 'x', '-x', 'y', ... .
 
-            center = [0, 0, 0]:
-                The center is kept fixed under the rotation. Use 'COM' to fix
-                the center of mass, 'COP' to fix the center of positions or
-                'COU' to fix the center of cell.
+            center (tuple/list/numpy.ndarray/str): The center is kept fixed under the rotation. Use 'COM' to fix
+                                                the center of mass, 'COP' to fix the center of positions or
+                                                'COU' to fix the center of cell.
 
             rotate_cell = False:
                 If true the cell is also rotated.
@@ -3064,13 +3063,12 @@ class Atoms(ASEAtoms):
         Rotate 90 degrees around the z-axis, so that the x-axis is
         rotated into the y-axis:
 
-        >>> atoms = Atoms('H', [[-0.1, 1.01, -0.5]], cell=[[1, 0, 0], [0, 1, 0], [0, 0, 4]], pbc=[1, 1, 0])
-        >>> a = (22./ 7.) / 2. # pi/2
-        >>> atoms.rotate('z', a)
-        >>> atoms.rotate((0, 0, 1), a)
-        >>> atoms.rotate('-z', -a)
-        >>> atoms.rotate((0, 0, a))
+        >>> atoms = Atoms()
+        >>> atoms.rotate(90, 'z')
+        >>> atoms.rotate(90, (0, 0, 1))
+        >>> atoms.rotate(-90, '-z')
         >>> atoms.rotate('x', 'y')
+        >>> atoms.rotate((1, 0, 0), (0, 1, 0))
         """
         if index_list is None:
             super(Atoms, self).rotate(a=a, v=v, center=center, rotate_cell=rotate_cell)
