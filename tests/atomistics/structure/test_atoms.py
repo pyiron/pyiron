@@ -171,6 +171,11 @@ class TestAtoms(unittest.TestCase):
         pos, cell = generate_fcc_lattice()
         basis = Atoms(symbols="Al", positions=pos, cell=cell)
         basis_copy = basis.copy()
+        basis_copy.positions[0, 0] += 5
+        self.assertNotEqual(basis_copy.positions[0, 0], basis.positions[0, 0])
+        basis_copy.cell[0, 0] += 5
+        self.assertNotEqual(basis_copy.cell[0, 0], basis.cell[0, 0])
+        basis_copy = basis.copy()
         self.assertEqual(basis, basis_copy)
         basis_copy[:] = "Pt"
         self.assertNotEqual(basis, basis_copy)
@@ -791,11 +796,12 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(np.sum(output), 16)
         self.assertTrue(np.all(np.dot(output, output) == np.identity(2) * 64))
 
-    def test_get_distances(self):
-        basis = Atoms("FeFe", positions=[3*[0], 3*[0.9]], cell=np.identity(3))
-        self.assertAlmostEqual(basis.get_distances(mic=False)[0, 1], 0.9*np.sqrt(3))
-        self.assertTrue(np.allclose(basis.get_distances(a0=0.5*np.ones(3)), basis.get_distances(a1=0.5*np.ones(3))))
-        self.assertTrue(np.allclose(basis.get_distances(vector=True)[0,1], -0.1*np.ones(3)))
+    def test_get_distances_array(self):
+        basis = Atoms("FeFe", positions=[3*[0], 3*[0.9]], cell=np.identity(3), pbc=True)
+        self.assertAlmostEqual(basis.get_distances_array(mic=False)[0, 1], 0.9*np.sqrt(3))
+        self.assertTrue(np.allclose(basis.get_distances_array(a0=0.5*np.ones(3)),
+                                    basis.get_distances_array(a1=0.5*np.ones(3))))
+        self.assertTrue(np.allclose(basis.get_distances_array(vector=True)[0, 1], -0.1*np.ones(3)))
 
     def test_repeat_points(self):
         basis = Atoms("Fe", positions=np.random.rand(3).reshape(-1, 3), cell=np.identity(3))
@@ -1005,7 +1011,7 @@ class TestAtoms(unittest.TestCase):
         basis_new = basis_Fe.apply_strain(0.01, return_box=True)
         self.assertAlmostEqual(basis_new.cell[0,0], 2.85*1.01)
         self.assertAlmostEqual(basis_new.positions[1,0], 0.5*2.85*1.01)
-        self.assertAlmostEqual(basis_Fe.cell[0,0], 2.85)
+        self.assertAlmostEqual(basis_Fe.cell[0, 0], 2.85)
         basis_Fe.apply_strain(0.01)
         self.assertAlmostEqual(basis_Fe.cell[0,0], 2.85*1.01)
 
