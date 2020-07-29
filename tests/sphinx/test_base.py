@@ -184,7 +184,7 @@ class TestSphinx(unittest.TestCase):
             '\t\trhoMixing = 1.0;\n',
             '\t\tspinMixing = 1.0;\n',
             '\t\tdEnergy = 3.674932217565499e-06;\n',
-            '\t\tmaxSteps = 400;\n',
+            '\t\tmaxSteps = 100;\n',
             '\t\tblockCCG {}\n',
             '\t}\n',
             '\tevalForces {\n',
@@ -294,7 +294,7 @@ class TestSphinx(unittest.TestCase):
             "keepRho"
             in self.sphinx.input.sphinx.main.to_sphinx()
         )
-        self.assertEqual(self.sphinx.input["Estep"], 400)
+        self.assertEqual(self.sphinx.input["Estep"], 100)
         self.assertTrue(
             "CCG"
             in self.sphinx.input.sphinx.main.to_sphinx()
@@ -314,7 +314,7 @@ class TestSphinx(unittest.TestCase):
                 'rhoMixing': '1.0',
                 'spinMixing': '1.0',
                 'dEnergy': 3.674932217565499e-06,
-                'maxSteps': '400',
+                'maxSteps': '100',
                 'blockCCG': {}}
             self.assertEqual(test_scf, ref_scf)
 
@@ -323,7 +323,7 @@ class TestSphinx(unittest.TestCase):
             'spinMixing': '1.0',
             'nPulaySteps': '0',
             'dEnergy': 3.674932217565499e-06,
-            'maxSteps': '400',
+            'maxSteps': '100',
             'preconditioner': {
                 'type': 0
                 },

@@ -322,7 +322,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
 
     def calc_static(
         self,
-        electronic_steps=400,
+        electronic_steps=100,
         blockSize=8,
         dSpinMoment=1e-8,
         algorithm=None,
