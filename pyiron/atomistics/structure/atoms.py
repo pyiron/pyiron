@@ -2520,12 +2520,13 @@ class Atoms(ASEAtoms):
             atoms_new: A copy of the object
 
         """
-        atoms_new = Atoms()
+        # Using ASE copy
+        atoms_new = super(Atoms, self).copy()
+        ase_keys = ASEAtoms().__dict__.keys()
+        # Only copy the non ASE keys
         for key, val in self.__dict__.items():
-            if key not in ["_pse"]:
-                # print ('copy: ', key)
-                atoms_new.__dict__[key] = copy(val)
-
+            if key not in ase_keys:
+                atoms_new.__dict__[key] = val
         return atoms_new
 
     def __delitem__(self, key):
@@ -2848,17 +2849,19 @@ class Atoms(ASEAtoms):
 
     def apply_strain(self, epsilon, return_box=False):
         """
-            Args:
-                epsilon (float/list/ndarray): epsilon matrix. If a single number is set, the same strain
-                                              is applied in each direction. If a 3-dim vector is set, it
-                                              will be multiplied by a unit matrix.
-                return_box (bool): whether to return a box. If set to True, only the returned box will 
-                                   have the desired strain and the original box will stay unchanged.
+        Apply a given strain on the structure
+
+        Args:
+            epsilon (float/list/ndarray): epsilon matrix. If a single number is set, the same strain
+                                          is applied in each direction. If a 3-dim vector is set, it
+                                          will be multiplied by a unit matrix.
+            return_box (bool): whether to return a box. If set to True, only the returned box will
+                               have the desired strain and the original box will stay unchanged.
         """
         epsilon = np.array([epsilon]).flatten()
         if len(epsilon) == 3 or len(epsilon) == 1:
             epsilon = epsilon*np.eye(3)
-        epsilon.reshape(3,3)
+        epsilon.reshape(3, 3)
         if epsilon.min() < -1.0:
             raise ValueError("Strain value too negative")
         if return_box:
@@ -2866,7 +2869,7 @@ class Atoms(ASEAtoms):
         else:
             structure_copy = self
         cell = structure_copy.cell.copy()
-        cell = np.matmul(epsilon+np.eye(3), cell)
+        cell = np.matmul(epsilon + np.eye(3), cell)
         structure_copy.set_cell(cell, scale_atoms=True)
         if return_box:
             return structure_copy
