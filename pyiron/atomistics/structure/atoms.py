@@ -1522,7 +1522,8 @@ class Atoms(object):
         view_plane = np.array(view_plane).reshape(-1, 3)
         rotation_matrix = np.roll(np.eye(3), -1, axis=0)
         rotation_matrix[:len(view_plane)] = view_plane
-        rotation_matrix = rotation_matrix / np.linalg.norm(rotation_matrix, axis=-1)[:, np.newaxis]
+        rotation_matrix /= np.linalg.norm(rotation_matrix, axis=-1)[:, np.newaxis]
+``
         rotation_matrix[1] -= np.dot(rotation_matrix[0], rotation_matrix[1]) * rotation_matrix[0]  # Gran-Schmidt
         rotation_matrix[2] = np.cross(rotation_matrix[0], rotation_matrix[1])  # Specify third axis
         if np.isclose(np.linalg.det(rotation_matrix), 0):
