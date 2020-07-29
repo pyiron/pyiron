@@ -443,6 +443,23 @@ class TestAtoms(unittest.TestCase):
         basis.rotate_euler(phi=0.1 * np.pi, center="cou")
         self.assertTrue(np.allclose(position, basis.positions[1]))
 
+    def test_set_initial_magnetic_moments(self):
+        pos, cell = generate_fcc_lattice()
+        basis = Atoms(symbols="Al", positions=pos, cell=cell, a=4.2, pbc=True)
+        basis *= 2
+        basis.set_initial_magnetic_moments(magmoms=np.ones(len(basis)))
+        basis = Atoms(symbols="Al", positions=pos, cell=cell, a=4.2, pbc=True)
+        basis.set_initial_magnetic_moments(magmoms=np.ones((len(basis), 3)))
+        basis = Atoms(symbols="Al", positions=pos, cell=cell, a=4.2, pbc=True)
+        basis *= 2
+        basis.set_initial_magnetic_moments(magmoms=np.ones(len(basis)))
+        self.assertTrue(np.allclose(basis.arrays["initial_magmoms"], np.ones(len(basis))))
+        # set new magnetic moments with different shape
+        basis.set_initial_magnetic_moments(magmoms=np.ones((len(basis), 3)))
+        self.assertTrue(np.allclose(basis.arrays["initial_magmoms"], np.ones((len(basis), 3))))
+        with self.assertRaises(ValueError):
+            basis.set_initial_magnetic_moments(magmoms=np.ones(4))
+
     def test_get_parent_basis(self):
         periodic_table = PeriodicTable()
         periodic_table.add_element(parent_element="O", new_element="O_up")
