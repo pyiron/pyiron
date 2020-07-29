@@ -395,14 +395,13 @@ class TestAtoms(unittest.TestCase):
 
     def test_rotate(self):
         unitcell = Atoms(
-            elements="AlFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3)
-        )
+            elements="AlFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3), pbc=True)
         basis = unitcell.copy()
-        basis.rotate(v=[0, 0, 0.1 * np.pi])
-        self.assertAlmostEqual(np.arccos(basis.positions[1, :2].sum() / 2) / np.pi, 0.1)
+        basis.rotate(a=10.0, v=[0, 0, 0.1 * np.pi])
+        self.assertAlmostEqual(np.arccos(basis.positions[1, :2].sum() / 2) * 180 / np.pi, 10.0)
         basis = unitcell.copy()
-        basis.rotate(v=[0, 0, 1], a=0.1 * np.pi)
-        self.assertAlmostEqual(np.arccos(basis.positions[1, :2].sum() / 2) / np.pi, 0.1)
+        basis.rotate(v=[0, 0, 1], a=0.1)
+        self.assertAlmostEqual(np.arccos(basis.positions[1, :2].sum() / 2) * 180 / np.pi, 0.1)
         basis = unitcell.copy()
         center_of_mass = basis.get_center_of_mass()
         basis.rotate(v=[0, 0, 0.1 * np.pi], center="com")
