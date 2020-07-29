@@ -2472,12 +2472,15 @@ class Atoms(ASEAtoms):
         Return distance between two atoms.
         Use mic=True to use the Minimum Image Convention.
         vector=True gives the distance vector (from a0 to a1).
+
         Args:
-            a0: position or atom ID
-            a1: position or atom ID
-            mic: minimum image convention (True if periodic boundary conditions should be considered)
-            vector: True, if instead of distnce the vector connecting the two positions should be returned
-        Returns: distance or vectors in length unit
+            a0 (int/numpy.ndarray/list): position or atom ID
+            a1 (int/numpy.ndarray/list): position or atom ID
+            mic (bool): minimum image convention (True if periodic boundary conditions should be considered)
+            vector (bool): True, if instead of distnce the vector connecting the two positions should be returned
+
+        Returns:
+            float: distance or vectors in length unit
         """
         from ase.geometry import find_mic
 
@@ -2504,7 +2507,7 @@ class Atoms(ASEAtoms):
 
         return d_len[0]
 
-    def get_distances(self, a0=None, a1=None, mic=True, vector=False):
+    def get_distances_array(self, a0=None, a1=None, mic=True, vector=False):
         """
         Return distance matrix of every position in p1 with every position in p2. If a1 is not set, it is assumed that
         distances between all positions in a0 are desired. a1 will be set to a0 in this case.
