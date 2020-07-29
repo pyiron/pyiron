@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import division, print_function
-from ase.atoms import Atoms as ASEAtoms
+from ase.atoms import Atoms as ASEAtoms, get_distances as ase_get_distances
 import ast
 from copy import copy
 from collections import OrderedDict
@@ -2467,6 +2467,78 @@ class Atoms(ASEAtoms):
         )
         return self.analyse_ovito_voronoi_volume()
 
+    def get_distance(self, a0, a1, mic=True, vector=False):
+        """
+        Return distance between two atoms.
+        Use mic=True to use the Minimum Image Convention.
+        vector=True gives the distance vector (from a0 to a1).
+        Args:
+            a0: position or atom ID
+            a1: position or atom ID
+            mic: minimum image convention (True if periodic boundary conditions should be considered)
+            vector: True, if instead of distnce the vector connecting the two positions should be returned
+        Returns: distance or vectors in length unit
+        """
+        from ase.geometry import find_mic
+
+        positions = self.positions
+        if isinstance(a0, list) or isinstance(a0, np.ndarray):
+            if not (len(a0) == 3):
+                raise AssertionError()
+            a0 = np.array(a0)
+        else:
+            a0 = positions[a0]
+        if isinstance(a1, list) or isinstance(a1, np.ndarray):
+            if not (len(a1) == 3):
+                raise AssertionError()
+            a1 = np.array(a1)
+        else:
+            a1 = positions[a1]
+        distance = np.array([a1 - a0])
+        if mic:
+            distance, d_len = find_mic(distance, self.cell, self.pbc)
+        else:
+            d_len = np.array([np.sqrt((distance ** 2).sum())])
+        if vector:
+            return distance[0]
+
+        return d_len[0]
+
+    def get_distances(self, a0=None, a1=None, mic=True, vector=False):
+        """
+        Return distance matrix of every position in p1 with every position in p2. If a1 is not set, it is assumed that
+        distances between all positions in a0 are desired. a1 will be set to a0 in this case.
+        if both a0 and a1 are not set, the distances between all atoms in the box are returned
+        Use mic to use the minimum image convention.
+        Learn more about get_distances from the ase website:
+        https://wiki.fysik.dtu.dk/ase/ase/geometry.html#ase.geometry.get_distances
+
+        Args:
+            a0 (numpy.ndarray/list): Nx3 array of positions
+            a1 (numpy.ndarray/list): Nx3 array of positions
+            mic (bool): minimum image convention
+            vector (bool): return vectors instead of distances
+        Returns:
+            numpy.ndarray: NxN if vector=False and NxNx3 if vector=True
+
+        """
+        if a0 is None and a1 is not None:
+            a0 = a1
+            a1 = None
+        if a0 is None:
+            a0 = self.positions
+        a0 = np.array(a0).reshape(-1, 3)
+        if a1 is not None:
+            a1 = np.array(a1).reshape(-1, 3)
+        if mic:
+            vec, dist = ase_get_distances(a0, a1, cell=self.cell, pbc=self.pbc)
+        else:
+            vec, dist = ase_get_distances(a0, a1)
+        if vector:
+            return vec
+        else:
+            return dist
+
     def extend(self, other):
         """
         Extend atoms object by appending atoms from *other*. (Extending the ASE function)
@@ -2522,11 +2594,12 @@ class Atoms(ASEAtoms):
         """
         # Using ASE copy
         atoms_new = super(Atoms, self).copy()
-        ase_keys = ASEAtoms().__dict__.keys()
+        ase_keys = list(ASEAtoms().__dict__.keys())
+        ase_keys.append("_pse")
         # Only copy the non ASE keys
         for key, val in self.__dict__.items():
             if key not in ase_keys:
-                atoms_new.__dict__[key] = val
+                atoms_new.__dict__[key] = copy(val)
         return atoms_new
 
     def __delitem__(self, key):
