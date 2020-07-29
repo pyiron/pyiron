@@ -1528,8 +1528,7 @@ class Atoms(object):
         if np.isclose(np.linalg.det(rotation_matrix), 0):
             rotation_matrix = np.eye(3)  # view_plane = [0,0,1] is the default view of NGLview, so we do not modify it
         else:
-            rotation_matrix = np.roll(rotation_matrix / np.linalg.norm(rotation_matrix, axis=-1)[:, np.newaxis],
-                                      2, axis=0).T
+            rotation_matrix = np.roll(rotation_matrix / np.linalg.norm(rotation_matrix, axis=-1)[:, np.newaxis], 2, axis=0).T
         flattened_orientation = np.eye(4)
         flattened_orientation[:3, :3] = rotation_matrix
 
