@@ -1196,9 +1196,9 @@ class VaspBase(GenericDFTJob):
             ionic_energy_tolerance = ionic_tolerance
         self.input.incar["EDIFF"] = electronic_energy
         if ionic_forces is not None:
-            self.input.incar["EDIFFG"] = -1.0 * abs(ionic_forces)
+            self.input.incar["EDIFFG"] = -1.0 * abs(ionic_force_tolerance)
         else:
-            self.input.incar["EDIFFG"] = abs(ionic_energy)
+            self.input.incar["EDIFFG"] = abs(ionic_energy_tolerance)
 
     def set_dipole_correction(self, direction=2, dipole_center=None):
         """
