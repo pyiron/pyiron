@@ -123,13 +123,13 @@ class AseJob(InteractiveBase):
 
     def to_hdf(self, hdf=None, group_name=None):
         super(AseJob, self).to_hdf(hdf=hdf, group_name=group_name)
-        with self.project_hdf5.open("input") as hdf5_input:
-            self.structure.to_hdf(hdf5_input)
+        with self.project_hdf5.open("input") as hdf_input:
+             hdf_input["structure"] = self._todict()
 
     def from_hdf(self, hdf=None, group_name=None):
         super(AseJob, self).from_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input") as hdf_input:
-            self._structure = hdf_input["structure"].to_object()
+            self.structure = self._fromdict(hdf_input["structure"])
 
     def run_static(self):
         raise ValueError("ASEJob requires interactive mode.")
