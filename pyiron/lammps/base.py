@@ -592,7 +592,7 @@ class LammpsBase(AtomisticGenericJob):
             ionic_energy_tolerance=ionic_energy_tolerance,
             ionic_force_tolerance=ionic_force_tolerance,
             e_tol=e_tol,
-            f_tol=f_tol
+            f_tol=f_tol,
             max_iter=max_iter,
             pressure=pressure,
             n_print=n_print,
