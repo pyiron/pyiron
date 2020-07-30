@@ -786,15 +786,15 @@ class GenericJob(JobCore):
         if job_crashed:
             self.status.aborted = True
 
-    def transfer_from_remote(self, delete_remote=True):
+    def transfer_from_remote(self):
         s.queue_adapter.get_job_from_remote(
             working_directory='/'.join(self.working_directory.split('/')[:-1]),
-            delete_remote=delete_remote
+            delete_remote=s.queue_adapter.ssh_delete_file_on_remote
         )
         s.queue_adapter.transfer_file_to_remote(
             file=self.project_hdf5.file_name,
             transfer_back=True,
-            delete_remote=True,
+            delete_remote=s.queue_adapter.ssh_delete_file_on_remote
         )
         if s.database_is_disabled:
             self.project.db.update()

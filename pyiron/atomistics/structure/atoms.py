@@ -1499,6 +1499,43 @@ class Atoms(object):
             rgb2hex(cmap(scalar)[:3]) for scalar in remapped_field
         ]  # The slice gets RGB but leaves alpha
 
+    @staticmethod
+    def _get_flattened_orientation(view_plane, distance_from_camera):
+        """
+        A helper method to plot3d, which generates a rotation matrix from the input `view_plane`, and returns a
+        flattened list of len = 16. This flattened list becomes the input argument to `view.contol.orient`.
+
+        Args:
+            view_plane (numpy.ndarray/list): A Nx3-array/list (N = 1,2,3); the first 3d-component of the array
+                specifies which plane of the system to view (for example, [1, 0, 0], [1, 1, 0] or the [1, 1, 1] planes),
+                the second 3d-component (if specified, otherwise [1, 0, 0]) gives the horizontal direction, and the
+                third component (if specified) is the vertical component, which is ignored and calculated internally.
+                The orthonormality of the orientation is internally ensured, and therefore is not required in the
+                function call.
+            distance_from_camera (float): Distance of the camera from the structure. Higher = farther away.
+
+        Returns:
+            (list): Flattened list of len = 16, which is the input argument to `view.contol.orient`
+        """
+        if len(np.array(view_plane).flatten()) % 3 != 0:
+            raise ValueError("The shape of view plane should be (N, 3), where N = 1, 2 or 3. Refer docs for more info.")
+        if distance_from_camera <= 0:
+            raise ValueError("´distance_from_camera´ must be a positive float!")
+        view_plane = np.array(view_plane).reshape(-1, 3)
+        rotation_matrix = np.roll(np.eye(3), -1, axis=0)
+        rotation_matrix[:len(view_plane)] = view_plane
+        rotation_matrix /= np.linalg.norm(rotation_matrix, axis=-1)[:, np.newaxis]
+        rotation_matrix[1] -= np.dot(rotation_matrix[0], rotation_matrix[1]) * rotation_matrix[0]  # Gran-Schmidt
+        rotation_matrix[2] = np.cross(rotation_matrix[0], rotation_matrix[1])  # Specify third axis
+        if np.isclose(np.linalg.det(rotation_matrix), 0):
+            rotation_matrix = np.eye(3)  # view_plane = [0,0,1] is the default view of NGLview, so we do not modify it
+        else:
+            rotation_matrix = np.roll(rotation_matrix / np.linalg.norm(rotation_matrix, axis=-1)[:, np.newaxis], 2, axis=0).T
+        flattened_orientation = np.eye(4)
+        flattened_orientation[:3, :3] = rotation_matrix
+
+        return (distance_from_camera * flattened_orientation).ravel().tolist()
+
     def plot3d(
         self,
         show_cell=True,
@@ -1519,6 +1556,8 @@ class Atoms(object):
         magnetic_moments=False,
         custom_array=None,
         custom_3darray=None,
+        view_plane=np.array([0, 0, 1]),
+        distance_from_camera=14.0
     ):
         """
         Plot3d relies on NGLView to visualize atomic structures. Here, we construct a string in the "protein database"
@@ -1553,6 +1592,14 @@ class Atoms(object):
             vector_color (numpy.ndarray): Colors for the vectors (only available with vector_field). (Default is None,
                 vectors are colored by their direction.)
             magnetic_moments (bool): Plot magnetic moments as 'scalar_field' or 'vector_field'.
+            view_plane (numpy.ndarray): A Nx3-array (N = 1,2,3); the first 3d-component of the array specifies
+                which plane of the system to view (for example, [1, 0, 0], [1, 1, 0] or the [1, 1, 1] planes), the
+                second 3d-component (if specified, otherwise [1, 0, 0]) gives the horizontal direction, and the third
+                component (if specified) is the vertical component, which is ignored and calculated internally. The
+                orthonormality of the orientation is internally ensured, and therefore is not required in the function
+                call. (Default is np.array([0, 0, 1]), which is view normal to the x-y plane.)
+            distance_from_camera (float): Distance of the camera from the structure. Higher = farther away.
+                (Default is 14, which also seems to be the NGLView default value.)
 
             Possible NGLView color schemes:
               " ", "picking", "random", "uniform", "atomindex", "residueindex",
@@ -1710,6 +1757,11 @@ class Atoms(object):
 
         view.camera = camera
         view.background = background
+
+        orientation = self._get_flattened_orientation(view_plane=view_plane,
+                                                      distance_from_camera=distance_from_camera)
+        view.control.orient(orientation)
+
         return view
 
     def plot3d_ase(
