@@ -6,11 +6,7 @@ from sklearn import cluster
 from pyiron.lammps.structure import UnfoldingPrism
 from pyiron.atomistics.structure.atoms import pyiron_to_ase
 import numpy as np
-
-try:
-    import pyscal.core as pc
-except ImportError:
-    pass  # pyscal is currently not available on windows
+import pyscal.core as pc
 
 __author__ = "Sarath Menon, Jan Janssen"
 __copyright__ = (
