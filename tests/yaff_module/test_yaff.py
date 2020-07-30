@@ -58,24 +58,23 @@ class TestYaff(unittest.TestCase):
         self.assertEqual(self.job.ffatype_ids, None)
         self.assertEqual(self.job.enhanced, None)
 
-
     def test_input(self):
-        self.assertIsInstance(self.job.input['rcut'], (float))
-        self.assertIsInstance(self.job.input['alpha_scale'], (float))
-        self.assertIsInstance(self.job.input['gcut_scale'], (float))
-        self.assertIsInstance(self.job.input['smooth_ei'], (bool))
-        self.assertIsInstance(self.job.input['gpos_rms'], (float))
-        self.assertIsInstance(self.job.input['dpos_rms'], (float))
-        self.assertIsInstance(self.job.input['grvecs_rms'], (float))
-        self.assertIsInstance(self.job.input['drvecs_rms'], (float))
-        self.assertIsInstance(self.job.input['hessian_eps'], (float))
-        self.assertIsInstance(self.job.input['timestep'], (float))
+        self.assertIsInstance(self.job.input['rcut'], float)
+        self.assertIsInstance(self.job.input['alpha_scale'], float)
+        self.assertIsInstance(self.job.input['gcut_scale'], float)
+        self.assertIsInstance(self.job.input['smooth_ei'], bool)
+        self.assertIsInstance(self.job.input['gpos_rms'], float)
+        self.assertIsInstance(self.job.input['dpos_rms'], float)
+        self.assertIsInstance(self.job.input['grvecs_rms'], float)
+        self.assertIsInstance(self.job.input['drvecs_rms'], float)
+        self.assertIsInstance(self.job.input['hessian_eps'], float)
+        self.assertIsInstance(self.job.input['timestep'], float)
         self.assertIsInstance(self.job.input['temp'], (type(None)))
         self.assertIsInstance(self.job.input['press'], (type(None)))
-        self.assertIsInstance(self.job.input['timecon_thermo'], (float))
-        self.assertIsInstance(self.job.input['timecon_baro'], (float))
-        self.assertIsInstance(self.job.input['nsteps'], (int))
-        self.assertIsInstance(self.job.input['h5step'], (int))
+        self.assertIsInstance(self.job.input['timecon_thermo'], float)
+        self.assertIsInstance(self.job.input['timecon_baro'], float)
+        self.assertIsInstance(self.job.input['nsteps'], int)
+        self.assertIsInstance(self.job.input['h5step'], int)
         self.job.input['temp'] = 300*kelvin
         self.assertEqual(self.job.input['temp'], 300*kelvin)
         self.job.input['press'] = 1e5*pascal
@@ -87,11 +86,10 @@ class TestYaff(unittest.TestCase):
         self.job.enhanced = {}
         self.assertEqual(self.job.enhanced, {})
 
-
     def test_set_mtd(self):
-        self.job.set_mtd([('torsion',[0,1,2,3])],1*kjmol,5.*deg, 40, stride=20, temp=300.)
-        np.testing.assert_array_equal(self.job.enhanced['ickinds'], np.array(['torsion'],dtype='S22'))
-        np.testing.assert_array_equal(self.job.enhanced['icindices'], np.array([[1,2,3,4]])) # plumed starts counting from 1
+        self.job.set_mtd([('torsion', [0, 1, 2, 3])], 1*kjmol, 5.*deg, 40, stride=20, temp=300.)
+        np.testing.assert_array_equal(self.job.enhanced['ickinds'], np.array(['torsion'], dtype='S22'))
+        np.testing.assert_array_equal(self.job.enhanced['icindices'], np.array([[1, 2, 3, 4]]))  #  plumed starts counting from 1
         np.testing.assert_array_equal(self.job.enhanced['height'], np.array([1*kjmol]))
         np.testing.assert_array_equal(self.job.enhanced['sigma'], np.array([5*deg]))
         self.assertEqual(self.job.enhanced['pace'], 40)
@@ -101,9 +99,9 @@ class TestYaff(unittest.TestCase):
         self.assertEqual(self.job.enhanced['temp'], 300.)
 
     def test_set_us(self):
-        self.job.set_us([('torsion',[0,1,2,3])],10*kjmol,5.*deg, fn_colvar='COLVAR', temp=300.)
-        np.testing.assert_array_equal(self.job.enhanced['ickinds'], np.array(['torsion'],dtype='S22'))
-        np.testing.assert_array_equal(self.job.enhanced['icindices'], np.array([[1,2,3,4]])) # plumed starts counting from 1
+        self.job.set_us([('torsion', [0, 1, 2, 3])], 10*kjmol, 5.*deg, fn_colvar='COLVAR', temp=300.)
+        np.testing.assert_array_equal(self.job.enhanced['ickinds'], np.array(['torsion'], dtype='S22'))
+        np.testing.assert_array_equal(self.job.enhanced['icindices'], np.array([[1, 2, 3, 4]]))  #  plumed starts counting from 1
         np.testing.assert_array_equal(self.job.enhanced['kappa'], np.array([10*kjmol]))
         np.testing.assert_array_equal(self.job.enhanced['loc'], np.array([5*deg]))
         self.assertEqual(self.job.enhanced['file_colvar'], 'COLVAR')
@@ -115,7 +113,14 @@ class TestYaff(unittest.TestCase):
         self.assertEqual(self.job.input['jobtype'], 'sp')
 
     def test_calc_minimize(self):
-        self.job.calc_minimize(gpos_tol=1e-8, dpos_tol=1e-6, grvecs_tol=1e-8, drvecs_tol=1e-6, max_iter=2000, n_print=10)
+        self.job.calc_minimize(
+            gpos_tol=1e-8,
+            dpos_tol=1e-6,
+            grvecs_tol=1e-8,
+            drvecs_tol=1e-6,
+            max_iter=2000,
+            n_print=10
+        )
         self.assertEqual(self.job.input['jobtype'], 'opt')
         self.assertEqual(self.job.input['gpos_rms'], 1e-8)
         self.assertEqual(self.job.input['dpos_rms'], 1e-6)
@@ -134,7 +139,10 @@ class TestYaff(unittest.TestCase):
         self.assertEqual(self.job.input['timestep'], 1.0*femtosecond)
 
     def test_calc_md_nvt(self):
-        self.job.calc_md(temperature=300*kelvin, time_step=1.0*femtosecond,timecon_thermo=100.0*femtosecond
+        self.job.calc_md(
+            temperature=300*kelvin,
+            time_step=1.0*femtosecond,
+            timecon_thermo=100.0*femtosecond
         )
         self.assertEqual(self.job.input['jobtype'], 'nvt')
         self.assertEqual(self.job.input['temp'], 300*kelvin)
@@ -142,8 +150,12 @@ class TestYaff(unittest.TestCase):
         self.assertEqual(self.job.input['timecon_thermo'], 100.0*femtosecond)
 
     def test_calc_md_npt(self):
-        self.job.calc_md(temperature=300*kelvin, pressure=1*bar, time_step=1.0*femtosecond,
-                    timecon_thermo=100.0*femtosecond,timecon_baro=1000.0*femtosecond
+        self.job.calc_md(
+            temperature=300*kelvin,
+            pressure=1*bar,
+            time_step=1.0*femtosecond,
+            timecon_thermo=100.0*femtosecond,
+            timecon_baro=1000.0*femtosecond
         )
         self.assertEqual(self.job.input['jobtype'], 'npt')
         self.assertEqual(self.job.input['temp'], 300*kelvin)
@@ -155,7 +167,7 @@ class TestYaff(unittest.TestCase):
     def test_set_structure(self):
         self.assertEqual(self.job.structure, None)
         self.job.load_chk(posixpath.join(self.execution_path, "../static/yaff_test_files/sp/input.chk"))
-        self.assertIsInstance(self.job.structure, (Atoms))
+        self.assertIsInstance(self.job.structure, Atoms)
 
         ffatypes = self.job.ffatypes
         ffatype_ids = self.job.ffatype_ids
@@ -178,7 +190,6 @@ class TestYaff(unittest.TestCase):
         self.assertCountEqual(self.job.ffatype_ids, ffatype_ids)
 
         self.assertRaises(IOError, self.job.detect_ffatypes, ffatype_rules=rules, ffatype_level='high')
-
 
     def test_run_sp_complete(self):
         self.job_complete.load_chk(
@@ -236,7 +247,6 @@ class TestYaff(unittest.TestCase):
         with self.job_complete.project_hdf5.open("output/structure") as h_gen:
             hdf_nodes = h_gen.list_nodes()
             self.assertTrue(all([node in hdf_nodes for node in nodes]))
-
 
     def test_run_minimize_complete(self):
         self.job_complete.load_chk(
@@ -296,7 +306,6 @@ class TestYaff(unittest.TestCase):
         with self.job_complete.project_hdf5.open("output/structure") as h_gen:
             hdf_nodes = h_gen.list_nodes()
             self.assertTrue(all([node in hdf_nodes for node in nodes]))
-
 
     def test_run_md_complete(self):
         self.job_complete.load_chk(
@@ -421,7 +430,7 @@ class TestYaff(unittest.TestCase):
 
         self.job_complete.input['ffpars'] = ffpars
         self.job_complete.calc_md(temperature=300*kelvin, nsteps=1000, time_step=0.5*femtosecond, n_print=1)
-        self.job_complete.set_mtd([('torsion',[0,1,2,3])],1*kjmol,5.*deg,40)
+        self.job_complete.set_mtd([('torsion', [0, 1, 2, 3])], 1*kjmol, 5.*deg, 40)
         file_directory = posixpath.join(
             self.execution_path, '../static/yaff_test_files/metadynamics'
         )
@@ -471,6 +480,7 @@ class TestYaff(unittest.TestCase):
         with self.job_complete.project_hdf5.open("output/structure") as h_gen:
             hdf_nodes = h_gen.list_nodes()
             self.assertTrue(all([node in hdf_nodes for node in nodes]))
+
 
 if __name__ == "__main__":
     unittest.main()
