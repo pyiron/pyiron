@@ -477,6 +477,7 @@ class Yaff(AtomisticGenericJob):
                 numbers=system.numbers,
                 masses=system.masses,
                 cell=system.cell.rvecs/angstrom,
+                pbc=True,
             )
         else:
             self.structure = Atoms(
