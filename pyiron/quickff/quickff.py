@@ -153,7 +153,7 @@ class QuickFF(AtomisticGenericJob):
         coords /= angstrom
         if rvecs is not None:
             rvecs /= angstrom
-        self.structure = Atoms(numbers=numbers, positions=coords, cell=rvecs)
+        self.structure = Atoms(numbers=numbers, positions=coords, cell=rvecs, pbc=True)
         self.aiener = energy
         self.aigrad = grad
         self.aihess = hess
