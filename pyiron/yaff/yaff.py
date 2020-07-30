@@ -664,7 +664,7 @@ class Yaff(AtomisticGenericJob):
         }
         input_dict['cell'] = None
         if self.structure.cell is not None:
-             input_dict['cell'] = self.structure.get_cell()
+             input_dict['cell'] = np.array(self.structure.get_cell())
         write_chk(input_dict,working_directory=self.working_directory)
         write_pars(input_dict=input_dict,working_directory=self.working_directory)
         if self.input['jobtype'] == 'sp':
