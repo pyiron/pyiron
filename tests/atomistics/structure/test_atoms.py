@@ -1400,6 +1400,10 @@ class TestAtoms(unittest.TestCase):
             c3.get_scaled_positions()
             self.assertEqual(len(w), 0)
 
+    def test_get_flattened_orientation(self):
+        R = np.random.random(9).reshape(-1, 3)
+        R = np.array(_get_flattened_orientation(R, 1)).reshape(4, 4)
+        self.assertAlmostEqual(np.linalg.det(R), 1)
 
 def generate_fcc_lattice(a=4.2):
     positions = [[0, 0, 0]]
