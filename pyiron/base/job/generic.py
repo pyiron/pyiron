@@ -645,22 +645,24 @@ class GenericJob(JobCore):
         self._job_id = job_id
         self._status = JobStatus(db=self.project.db, job_id=self._job_id)
 
-    def run(self, run_again=False, repair=False, debug=False, run_mode=None):
+    def run(self, delete_existing_job=False, repair=False, debug=False, run_mode=None, run_again=False):
         """
         This is the main run function, depending on the job status ['initialized', 'created', 'submitted', 'running',
         'collect','finished', 'refresh', 'suspended'] the corresponding run mode is chosen.
 
         Args:
-            run_again (bool): Delete the existing job and run the simulation again.
+            delete_existing_job (bool): Delete the existing job and run the simulation again.
             repair (bool): Set the job status to created and run the simulation again.
             debug (bool): Debug Mode - defines the log level of the subprocess the job is executed in.
             run_mode (str): ['modal', 'non_modal', 'queue', 'manual'] overwrites self.server.run_mode
+            run_again (bool): Same as delete_existing_job (deprecated)
         """
         if run_again:
             warnings.warn('run_again is deprecated as of vers. 0.3.0.'
                           + 'It is not guaranteed to be in service in vers. 0.4.0.'
                           + 'Either delete the job via job.remove() or via pr.create_job(delete_existing_job=True).',
                           DeprecationWarning)
+            delete_existing_job=True
         try:
             self._logger.info(
                 "run {}, status: {}".format(self.job_info_str, self.status)
@@ -668,7 +670,7 @@ class GenericJob(JobCore):
             status = self.status.string
             if run_mode is not None:
                 self.server.run_mode = run_mode
-            if run_again and self.job_id:
+            if delete_existing_job and self.job_id:
                 self._logger.info("run repair " + str(self.job_id))
                 status = "initialized"
                 master_id, parent_id = self.master_id, self.parent_id
@@ -701,7 +703,7 @@ class GenericJob(JobCore):
             elif status == "busy":
                 self._run_if_busy()
             elif status == "finished":
-                self._run_if_finished(run_again=run_again)
+                self._run_if_finished(delete_existing_job=delete_existing_job)
         except Exception:
             self.drop_status_to_aborted()
             raise
@@ -1235,7 +1237,7 @@ class GenericJob(JobCore):
         """
         Create an restart calculation from the current calculation - in the GenericJob this is the same as create_job().
         A restart is only possible after the current job has finished. If you want to run the same job again with
-        different input parameters use job.run(run_again=True) instead.
+        different input parameters use job.run(delete_existing_job=True) instead.
 
         Args:
             job_name (str): job name of the new calculation - default=<job_name>_restart
@@ -1392,7 +1394,7 @@ class GenericJob(JobCore):
             self.server.run_mode.queue
             and not self.project.queue_check_job_is_waiting_or_running(self.job_id)
         ):
-            self.run(run_again=True)
+            self.run(delete_existing_job=True)
         else:
             print("Job " + str(self.job_id) + " is waiting in the que!")
 
@@ -1405,7 +1407,7 @@ class GenericJob(JobCore):
             self.server.run_mode.queue
             and not self.project.queue_check_job_is_waiting_or_running(self.job_id)
         ):
-            self.run(run_again=True)
+            self.run(delete_existing_job=True)
         elif self.server.run_mode.interactive:
             self.run_if_interactive()
         elif self.server.run_mode.interactive_non_modal:
@@ -1468,15 +1470,21 @@ class GenericJob(JobCore):
         self.status.refresh = True
         self.run()
 
-    def _run_if_finished(self, run_again=False):
+    def _run_if_finished(self, delete_existing_job=False, run_again=False):
         """
         Internal helper function the run if finished function is called when the job status is 'finished'. It loads
         the existing job.
 
         Args:
-            run_again (bool): Delete the existing job and run the simulation again.
+            delete_existing_job (bool): Delete the existing job and run the simulation again.
+            run_again (bool): Same as delete_existing_job (deprecated)
         """
         if run_again:
+            warnings.warn('run_again is deprecated as of vers. 0.3.0.'
+                          + 'It is not guaranteed to be in service in vers. 0.4.0.'
+                          + 'Use delete_existing_job instead',
+                          DeprecationWarning)
+        if delete_existing_job:
             parent_id = self.parent_id
             self.parent_id = None
             self.remove()
