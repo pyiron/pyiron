@@ -65,7 +65,7 @@ class TestMurnaghan(unittest.TestCase):
         murn.server.run_mode.non_modal = True
         murn.run()
         self.assertFalse(job_ser.status.finished)
-        self.project.wait_for_job(murn, interval_in_s=5, max_iterations=50)
+        self.project.wait_for_job(murn, interval_in_s=5, max_iterations=60)
         self.assertTrue(murn.status.finished)
         murn.remove()
         job_ser.remove()
