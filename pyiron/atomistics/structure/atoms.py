@@ -1519,6 +1519,8 @@ class Atoms(object):
         """
         if len(np.array(view_plane).flatten()) % 3 != 0:
             raise ValueError("The shape of view plane should be (N, 3), where N = 1, 2 or 3. Refer docs for more info.")
+        if distance_from_camera <= 0:
+            raise ValueError("Distance_from_camera must be a positive float!")
         view_plane = np.array(view_plane).reshape(-1, 3)
         rotation_matrix = np.roll(np.eye(3), -1, axis=0)
         rotation_matrix[:len(view_plane)] = view_plane
