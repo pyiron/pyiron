@@ -18,7 +18,8 @@ import os, posixpath, numpy as np, h5py, matplotlib.pyplot as pp
 def write_chk(input_dict,working_directory='.'):
     # collect data and initialize Yaff system
     if 'cell' in input_dict.keys() and input_dict['cell'] is not None:
-        system = System(input_dict['numbers'], input_dict['pos']*angstrom, ffatypes=input_dict['ffatypes'], ffatype_ids=input_dict['ffatype_ids'], rvecs=input_dict['cell']*angstrom)
+        print(input_dict['cell'])
+        system = System(input_dict['numbers'], input_dict['pos']*angstrom, ffatypes=input_dict['ffatypes'], ffatype_ids=input_dict['ffatype_ids'], rvecs=np.array(input_dict['cell'])*angstrom)
     else:
         system = System(input_dict['numbers'], input_dict['pos']*angstrom, ffatypes=input_dict['ffatypes'], ffatype_ids=input_dict['ffatype_ids'])
     # determine masses, bonds and ffaypes from ffatype_rules
