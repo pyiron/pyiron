@@ -21,8 +21,8 @@ import os, posixpath, numpy as np, h5py, matplotlib.pyplot as pp
 
 def write_chk(input_dict, working_directory='.'):
     # collect data and initialize Yaff system
-    if 'cell' in input_dict.keys() and input_dict['cell'] is not None:
-        system = System(input_dict['numbers'], input_dict['pos']*angstrom, rvecs=input_dict['cell']*angstrom, ffatypes=input_dict['ffatypes_man'], ffatype_ids=input_dict['ffatype_ids_man'])
+    if 'cell' in input_dict.keys() and input_dict['cell'] is not None and np.all(np.array(input_dict['cell']) != np.zeros([3,3])):
+        system = System(input_dict['numbers'], input_dict['pos']*angstrom, rvecs=np.array(input_dict['cell'])*angstrom, ffatypes=input_dict['ffatypes_man'], ffatype_ids=input_dict['ffatype_ids_man'])
     else:
         system = System(input_dict['numbers'], input_dict['pos']*angstrom, ffatypes=input_dict['ffatypes_man'], ffatype_ids=input_dict['ffatype_ids_man'])
     # determine masses, bonds and ffaypes from ffatype_rules
@@ -170,7 +170,7 @@ class QuickFF(AtomisticGenericJob):
         if self.structure.cell is None:
             system = System(numbers, self.structure.positions.copy()*angstrom)
         else:
-            system = System(numbers, self.structure.positions.copy()*angstrom, rvecs=self.structure.cell*angstrom)
+            system = System(numbers, self.structure.positions.copy()*angstrom, rvecs=np.array(self.structure.cell)*angstrom)
         system.detect_bonds()
 
         if not sum([ffatypes is None, ffatype_rules is None, ffatype_level is None]) == 2:
