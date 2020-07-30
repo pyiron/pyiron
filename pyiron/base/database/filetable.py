@@ -167,8 +167,17 @@ class FileTable(with_metaclass(Singleton)):
     def get_table_headings(self):
         return self._job_table.columns.values
 
-    def job_table(self, project=None, recursive=True, columns=None, all_columns=False, sort_by="id", max_colwidth=200,
-                  job_name_contains=''):
+    def job_table(
+        self, 
+        project=None, 
+        recursive=True, 
+        columns=None, 
+        all_columns=False, 
+        sort_by="id", 
+        max_colwidth=200, 
+        full_table=False, 
+        job_name_contains=''
+    ):
         if project is None:
             project = self._project
         if columns is None:
@@ -182,6 +191,9 @@ class FileTable(with_metaclass(Singleton)):
                 df = self._job_table[self._job_table.project == project]
         else:
             df = self._job_table
+        if full_table:
+            pandas.set_option('display.max_rows', None)
+            pandas.set_option('display.max_columns', None)
         pandas.set_option("display.max_colwidth", max_colwidth)
         if len(df) == 0:
             return df
