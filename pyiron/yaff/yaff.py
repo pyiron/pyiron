@@ -17,7 +17,7 @@ import os, posixpath, numpy as np, h5py, matplotlib.pyplot as pp
 
 def write_chk(input_dict,working_directory='.'):
     # collect data and initialize Yaff system
-    if 'cell' in input_dict.keys() and input_dict['cell'] is not None and np.array(input_dict['cell']) != np.zeros([3,3]):
+    if 'cell' in input_dict.keys() and input_dict['cell'] is not None and np.all(np.array(input_dict['cell']) != np.zeros([3,3])):
         system = System(input_dict['numbers'], input_dict['pos']*angstrom, ffatypes=input_dict['ffatypes'], ffatype_ids=input_dict['ffatype_ids'], rvecs=np.array(input_dict['cell'])*angstrom)
     else:
         system = System(input_dict['numbers'], input_dict['pos']*angstrom, ffatypes=input_dict['ffatypes'], ffatype_ids=input_dict['ffatype_ids'])
