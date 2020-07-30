@@ -656,6 +656,11 @@ class GenericJob(JobCore):
             debug (bool): Debug Mode - defines the log level of the subprocess the job is executed in.
             run_mode (str): ['modal', 'non_modal', 'queue', 'manual'] overwrites self.server.run_mode
         """
+        if run_again:
+            warnings.warn('run_again is deprecated as of vers. 0.3.0.'
+                          + 'It is not guaranteed to be in service in vers. 0.4.0.'
+                          + 'Either delete the job via job.remove() or via pr.create_job(delete_existing_job=True).',
+                          DeprecationWarning)
         try:
             self._logger.info(
                 "run {}, status: {}".format(self.job_info_str, self.status)

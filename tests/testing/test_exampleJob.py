@@ -6,6 +6,7 @@ import os
 import unittest
 import numpy as np
 from pyiron.base.project.generic import Project
+import warnings
 
 
 class TestExampleJob(unittest.TestCase):
@@ -29,7 +30,9 @@ class TestExampleJob(unittest.TestCase):
 
     def test_delete_existing_job(self):
         self.job = self.project.create_job("ExampleJob", "job_test_delete_existing_job")
-        self.job.run()
+        with warnings.catch_warnings(record=True) as w:
+            self.job.run(run_again=True)
+            self.assertEqual(len(w), 1)
         self.assertTrue(self.job.status.finished)
         self.job = self.project.create_job("ExampleJob", "job_test_delete_existing_job", delete_existing_job=True)
         self.assertTrue(self.job.status.initialized)
