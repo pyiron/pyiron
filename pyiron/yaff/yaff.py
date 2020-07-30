@@ -1,21 +1,20 @@
 from pyiron.base.generic.parameters import GenericParameters
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.atomistics.job.atomistic import AtomisticGenericJob, GenericOutput
-from pyiron.base.settings.generic import Settings
-
-
+from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 from yaff import System, log, ForceField
 from quickff.tools import set_ffatypes
 log.set_level(log.silent)
 from molmod.units import *
-from molmod.constants import *
 from molmod.periodic import periodic as pt
 import subprocess
+import os
+import posixpath
+import numpy as np
+import h5py
+import matplotlib.pyplot as pp
 
-import os, posixpath, numpy as np, h5py, matplotlib.pyplot as pp
 
-
-def write_chk(input_dict,working_directory='.'):
+def write_chk(input_dict, working_directory='.'):
     # collect data and initialize Yaff system
     if 'cell' in input_dict.keys() and input_dict['cell'] is not None:
         system = System(
@@ -103,7 +102,7 @@ opt = CGOptimizer(dof, hooks=[hdf5])
 opt.run({nsteps})
 system.to_file('opt.chk')
 """.format(nsteps=input_dict['nsteps'])
-    body+= tail
+    body += tail
     with open(posixpath.join(working_directory,'yscript.py'), 'w') as f:
         f.write(body)
 
@@ -225,7 +224,7 @@ md.run({nsteps})
         press=input_dict['press']/bar,timecon_thermo=input_dict['timecon_thermo']/femtosecond,
         timecon_baro=input_dict['timecon_baro']/femtosecond, nsteps=input_dict['nsteps']
     )
-    body+= tail
+    body += tail
     with open(posixpath.join(working_directory,'yscript.py'), 'w') as f:
         f.write(body)
 
@@ -234,9 +233,9 @@ def write_plumed_enhanced(input_dict, working_directory='.'):
     # make copy of input_dict['enhanced'] that includes lower case definitions
     # (allowing for case insenstive definition of input_dict['enhanced'])
     enhanced = {}
-    for key, value in input_dict['enhanced'].items():
-        enhanced[key] = value
-        enhanced[key.lower()] = value
+    for k, v in input_dict['enhanced'].items():
+        enhanced[k] = v
+        enhanced[k.lower()] = v
     # write plumed.dat file
     with open(posixpath.join(working_directory, 'plumed.dat'), 'w') as f:
         # set units to atomic units
@@ -297,11 +296,12 @@ def write_plumed_enhanced(input_dict, working_directory='.'):
 
 
 def hdf2dict(h5):
-    hdict = {}
-    hdict['structure/numbers'] = h5['system/numbers'][:]
-    hdict['structure/masses'] = h5['system/masses'][:]
-    hdict['structure/ffatypes'] = h5['system/ffatypes'][:]
-    hdict['structure/ffatype_ids'] = h5['system/ffatype_ids'][:]
+    hdict = {
+        'structure/numbers': h5['system/numbers'][:],
+        'structure/masses': h5['system/masses'][:],
+        'structure/ffatypes': h5['system/ffatypes'][:],
+        'structure/ffatype_ids': h5['system/ffatype_ids'][:]
+    }
     if 'energy' in h5['system'].keys():
         hdict['generic/energy_pot'] = h5['system/energy'][()]/electronvolt
     if 'trajectory' in h5.keys() and 'pos' in h5['trajectory'].keys():
@@ -562,7 +562,7 @@ class Yaff(AtomisticGenericJob):
             assert isinstance(l[0], str)
             assert isinstance(l[1], list) or isinstance(l[1], tuple)
         ickinds = np.array([ic[0] for ic in ics], dtype='S22')
-        icindices = np.array([np.array(ic[1])+1 for ic in ics]) # plumed starts counting from 1
+        icindices = np.array([np.array(ic[1])+1 for ic in ics])  # plumed starts counting from 1
         if not isinstance(height,list) and not isinstance(height, np.ndarray):
             height = np.array([height])
         if not isinstance(sigma,list) and not isinstance(sigma, np.ndarray):
