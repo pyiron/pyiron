@@ -111,7 +111,7 @@ class Atoms(ASEAtoms):
 
         self._species = list()
         self.indices = np.array([])
-
+        self.constraints = None
         self._pse = PeriodicTable()
         self._tag_list = SparseArray()
 
