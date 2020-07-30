@@ -55,7 +55,7 @@ class TestMurnaghan(unittest.TestCase):
         ham.server.run_mode.non_modal = True
         murn = self.project.create_job("Murnaghan", "murnaghan")
         murn.ref_job = ham
-        murn.input["num_points"] = 2
+        murn.input["num_points"] = 3
         murn.server.run_mode.non_modal = True
         murn.run()
         self.assertFalse(ham.status.finished)
