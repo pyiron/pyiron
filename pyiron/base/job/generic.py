@@ -789,7 +789,7 @@ class GenericJob(JobCore):
         s.queue_adapter.transfer_file_to_remote(
             file=self.project_hdf5.file_name,
             transfer_back=True,
-            delete_remote=True,
+            delete_remote=s.queue_adapter.ssh_delete_file_on_remote
         )
         if s.database_is_disabled:
             self.project.db.update()
