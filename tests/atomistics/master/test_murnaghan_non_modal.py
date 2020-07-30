@@ -61,11 +61,11 @@ class TestMurnaghan(unittest.TestCase):
         job_ser.set_goal(convergence_goal, eps=0.4)
         murn = self.project.create_job("Murnaghan", "murnaghan")
         murn.ref_job = job_ser
-        murn.input["num_points"] = 3
+        murn.input["num_points"] = 2
         murn.server.run_mode.non_modal = True
         murn.run()
         self.assertFalse(job_ser.status.finished)
-        self.project.wait_for_job(murn, interval_in_s=5, max_iterations=60)
+        self.project.wait_for_job(murn, interval_in_s=5, max_iterations=50)
         self.assertTrue(murn.status.finished)
         murn.remove()
         job_ser.remove()
