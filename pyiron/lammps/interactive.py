@@ -240,11 +240,11 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             style='cg'
     ):
         # Docstring set programmatically -- Please ensure that changes to signature or defaults stay consistent!
-        if ionic_energy is not None:
+        if e_tol is not None:
             warnings.warn(
                 "e_tol is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. Use ionic_energy_tolerance instead."
             )
-            ionic_energy_tolerance = ionic_energy
+            ionic_energy_tolerance = e_tol
             e_tol = None
         if f_tol is not None:
             warnings.warn(
