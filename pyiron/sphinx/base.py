@@ -2074,18 +2074,10 @@ class Output(object):
                 for line in log_main
                 if line.startswith("| final focc:")
             ]
-            self._parse_dict["bands_occ_initial"] = [
-                line.split()[3:] for line in log_main
-                if line.startswith("| focc:")
-            ]
             self._parse_dict["bands_eigen_values"] = [
                 line.split()[4:]
                 for line in log_main
                 if line.startswith("| final eig [eV]:")
-            ]
-            self._parse_dict["bands_eigen_values_initial"] = [
-                line.split()[4:] for line in log_main
-                if line.startswith("| eig [eV]:")
             ]
 
             def eig_converter(
@@ -2112,14 +2104,8 @@ class Output(object):
 
             self._parse_dict["bands_occ"] = eig_converter(
                 self._parse_dict["bands_occ"])
-            self._parse_dict["bands_occ_initial"] = eig_converter(
-                self._parse_dict["bands_occ_initial"]
-            )
             self._parse_dict["bands_eigen_values"] = eig_converter(
                 self._parse_dict["bands_eigen_values"]
-            )
-            self._parse_dict["bands_eigen_values_initial"] = eig_converter(
-                self._parse_dict["bands_eigen_values_initial"]
             )
             energy_free_lst = self.splitter(energy_free, counter)
             energy_int_lst = self.splitter(energy_int, counter)
@@ -2286,14 +2272,6 @@ class Output(object):
                         ]
 
         with hdf.open("output") as hdf5_output:
-            if "sphinx" not in hdf5_output.list_groups():
-                hdf5_output.create_group("sphinx")
-            with hdf5_output.open("sphinx") as hdf5_sphinx:
-                hdf5_sphinx["bands_occ_initial"] = \
-                    self._parse_dict["bands_occ_initial"]
-                hdf5_sphinx["bands_eigen_values_initial"] = self._parse_dict[
-                    "bands_eigen_values_initial"
-                ]
             if self.electrostatic_potential.total_data is not None:
                 self.electrostatic_potential.to_hdf(
                     hdf5_output, group_name="electrostatic_potential"
