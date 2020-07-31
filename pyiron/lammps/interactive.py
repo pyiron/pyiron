@@ -614,8 +614,8 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
     def interactive_close(self):
         if self.interactive_is_activated():
             self._interactive_library.close()
+            super(LammpsInteractive, self).interactive_close()
             with self.project_hdf5.open("output") as h5:
                 if "interactive" in h5.list_groups():
                     for key in h5["interactive"].list_nodes():
                         h5["generic/" + key] = h5["interactive/" + key]
-            super(LammpsInteractive, self).interactive_close()
