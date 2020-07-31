@@ -111,7 +111,7 @@ class JobType(object):
     The JobTypeBase class creates a new object of a given class type.
     """
 
-    def __new__(cls, class_name, project, job_name, job_class_dict):
+    def __new__(cls, class_name, project, job_name, job_class_dict, delete_existing_job=False):
         """
         The __new__() method allows to create objects from other classes - the class selected by class_name
 
@@ -134,6 +134,9 @@ class JobType(object):
         else:
             raise TypeError()
         job = job_class(project, job_name)
+        if delete_existing_job:
+            job.remove()
+            job = job_class(project, job_name)
         if job.status.aborted:
             job.logger.warning(
                 "Job aborted - please remove it and run again! {}".format(job.job_name)

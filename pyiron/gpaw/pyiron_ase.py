@@ -294,7 +294,7 @@ class AseAdapter(object):
             if self._ham.server.run_mode.interactive:
                 self._ham.run()
             else:
-                self._ham.run(run_again=True)
+                self._ham.run(delete_existing_job=True)
             return self._ham.output.forces[-1]
 
     def interactive_close(self):

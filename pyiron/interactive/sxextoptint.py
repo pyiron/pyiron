@@ -356,7 +356,7 @@ class SxExtOptInteractive(InteractiveWrapper):
                     self.ref_job.run()
                 self._logger.debug("SxExtOpt: step finished!")
             else:
-                self.ref_job.run(run_again=True)
+                self.ref_job.run(delete_existing_job=True)
                 if (
                     self._coarse_run
                     and np.max(np.linalg.norm(self.get_forces(), axis=-1), axis=-1)
@@ -364,7 +364,7 @@ class SxExtOptInteractive(InteractiveWrapper):
                 ):
                     self._coarse_run = False
                     self.ref_job.coarse_run = False
-                    self.ref_job.run(run_again=True)
+                    self.ref_job.run(delete_existing_job=True)
             self._interactive_interface.set_forces(forces=self.get_forces())
             new_positions = self._interactive_interface.get_positions()
             self._interactive_number_of_steps += 1
