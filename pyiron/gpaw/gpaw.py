@@ -1,7 +1,7 @@
 import numpy as np
 import warnings
 from pyiron.gpaw.pyiron_ase import AseJob
-from pyiron.atomistics.structure.atoms import pyiron_to_ase
+from pyiron.atomistics.structure.atoms import pyiron_to_ase, Atoms as PAtoms
 from pyiron.base.generic.parameters import GenericParameters
 from pyiron.base.settings.generic import Settings
 from ase import Atoms
@@ -26,7 +26,7 @@ class GpawJob(AseJob):
 
     @structure.setter
     def structure(self, basis):
-        if not isinstance(basis, Atoms):
+        if isinstance(basis, PAtoms):
             basis = pyiron_to_ase(basis)
         self._structure = basis
 
