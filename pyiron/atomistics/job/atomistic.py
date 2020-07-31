@@ -185,20 +185,30 @@ class AtomisticGenericJob(GenericJobCore):
         return new_generic_job
 
     def calc_minimize(
-        self, e_tol=0, f_tol=1e-4, max_iter=1000, pressure=None, n_print=1
+        self, ionic_energy_tolerance=0, ionic_force_tolerance=1e-4, e_tol=None, f_tol=None, max_iter=1000, pressure=None, n_print=1
     ):
         """
 
         Args:
-            e_tol:
-            f_tol:
-            max_iter:
-            pressure:
-            n_print:
+            ionic_energy_tolerance (float): Maximum energy difference between 2 steps
+            ionic_force_tolerance (float): Maximum force magnitude that each of atoms is allowed to have
+            e_tol (float): same as ionic_energy_tolerance (deprecated)
+            f_tol (float): same as ionic_force_tolerance (deprecated)
+            max_iter (int): Maximum number of force evluations
+            pressure (float/list): Targetpressure values
+            n_print (int): Print period
 
         Returns:
 
         """
+        if e_tol is not None:
+            warnings.warn(
+                "e_tol is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0"
+            )
+        if f_tol is not None:
+            warnings.warn(
+                "f_tol is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0"
+            )
         self._generic_input["calc_mode"] = "minimize"
         self._generic_input["max_iter"] = max_iter
         self._generic_input["pressure"] = pressure

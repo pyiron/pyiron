@@ -73,7 +73,7 @@ class ScipyMinimizer(InteractiveWrapper):
                 x0=self.ref_job.structure.positions.flatten(),
                 fprime=self._update_forces,
                 maxiter=self.input["ionic_steps"],
-                gtol=self.input["ionic_forces"],
+                gtol=self.input["ionic_force_tolerance"],
                 disp=False,
                 full_output=True,
             )
@@ -84,7 +84,7 @@ class ScipyMinimizer(InteractiveWrapper):
                 x0=self.ref_job.structure.positions.flatten(),
                 fprime=self._update_forces,
                 maxiter=self.input["ionic_steps"],
-                gtol=self.input["ionic_forces"],
+                gtol=self.input["ionic_force_tolerance"],
                 disp=False,
                 full_output=True,
             )
@@ -95,7 +95,7 @@ class ScipyMinimizer(InteractiveWrapper):
                 f=self._update_energy,
                 x0=self.ref_job.structure.positions.flatten(),
                 maxiter=self.input["ionic_steps"],
-                gtol=self.input["ionic_forces"],
+                gtol=self.input["ionic_force_tolerance"],
                 disp=False,
                 full_output=True,
             )
@@ -156,7 +156,7 @@ class Input(GenericParameters):
         Loads the default file content
         """
         file_content = (
-            "minimizer = CG\n" "ionic_steps = 1000\n" "ionic_forces = 1.0e-8\n"
+            "minimizer = CG\n" "ionic_steps = 1000\n" "ionic_force_tolerance = 1.0e-8\n"
         )
         self.load_string(file_content)
 

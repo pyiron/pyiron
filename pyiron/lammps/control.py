@@ -250,8 +250,8 @@ class LammpsControl(GenericParameters):
 
     def calc_minimize(
         self,
-        e_tol=0.0,
-        f_tol=1e-4,
+        ionic_energy_tolerance=0.0,
+        ionic_force_tolerance=1e-4,
         max_iter=100000,
         pressure=None,
         n_print=100,
@@ -262,10 +262,12 @@ class LammpsControl(GenericParameters):
         Sets parameters required for minimization.
 
         Args:
-            e_tol (float): If the magnitude of difference between energies of two consecutive steps is lower than or
-                equal to `e_tol`, the minimisation terminates. (Default is 0.0 eV.)
-            f_tol (float): If the magnitude of the global force vector at a step is lower than or equal to `f_tol`, the
+            ionic_energy_tolerance (float): If the magnitude of difference between energies of two consecutive steps is lower than or
+                equal to `ionic_energy_tolerance`, the minimisation terminates. (Default is 0.0 eV.)
+            ionic_force_tolerance (float): If the magnitude of the global force vector at a step is lower than or equal to `ionic_force_tolerance`, the
                 minimisation terminates. (Default is 1e-4 eV/angstrom.)
+            e_tol (float): Sam as ionic_energy_tolerance (deprecated)
+            f_tol (float): Sam as ionic_force_tolerance (deprecated)
             max_iter (int): Maximum number of minimisation steps to carry out. If the minimisation converges before
                 `max_iter` steps, terminate at the converged step. If the minimisation does not converge up to
                 `max_iter` steps, terminate at the `max_iter` step. (Default is 100000.)
@@ -291,8 +293,8 @@ class LammpsControl(GenericParameters):
         force_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["force"]
         pressure_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
 
-        e_tol *= energy_units
-        f_tol *= force_units
+        ionic_energy_tolerance *= energy_units
+        ionic_force_tolerance *= force_units
 
         if pressure is not None:
             if None in np.array([pressure]).flatten():
@@ -312,9 +314,9 @@ class LammpsControl(GenericParameters):
         self.remove_keys(["fix___nve"])
         self.set(min_style=style)
         self.set(
-            minimize=str(e_tol)
+            minimize=str(ionic_energy_tolerance)
             + " "
-            + str(f_tol)
+            + str(ionic_force_tolerance)
             + " "
             + str(int(max_iter))
             + " "

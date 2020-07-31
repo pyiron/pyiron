@@ -40,13 +40,27 @@ class SxExtOpt(InteractiveInterface):
         working_directory=None,
         maxDist=5,
         ionic_steps=1000,
-        ionic_energy=1.0e-3,
-        ionic_forces=1.0e-2,
+        ionic_energy=None,
+        ionic_forces=None,
+        ionic_energy_tolerance=1.0e-3,
+        ionic_force_tolerance=1.0e-2,
         max_step_length=1.0e-1,
         soft_mode_damping=1,
         executable=None,
         ssa=False,
     ):
+        if ionic_forces is not None:
+            warnings.warn(('ionic_forces is deprecated as of vers. 0.3.0.'
+                           +'It is not guaranteed to be in service in vers. 0.4.0.'
+                           +'Use ionic_force_tolerance instead'),
+                           DeprecationWarning)
+            ionic_force_tolerance = ionic_forces
+        if ionic_energy is not None:
+            warnings.warn(('ionic_energy is deprecated as of vers. 0.3.0.'
+                           +'It is not guaranteed to be in service in vers. 0.4.0.'
+                           +'Use ionic_energy_tolerance instead'),
+                           DeprecationWarning)
+            ionic_energy_tolerance = ionic_energy
         super().__init__()
         self.__name__ = "SxExtOpt"
         if working_directory is None:
@@ -67,8 +81,8 @@ class SxExtOpt(InteractiveInterface):
             executable=executable,
             maxDist=maxDist,
             ionic_steps=ionic_steps,
-            ionic_energy=ionic_energy,
-            ionic_forces=ionic_forces,
+            ionic_energy_tolerance=ionic_energy_tolerance,
+            ionic_force_tolerance=ionic_force_tolerance,
             max_step_length=max_step_length,
             soft_mode_damping=soft_mode_damping,
             selective_dynamics="selective_dynamics" in structure._tag_list.keys(),
@@ -93,8 +107,8 @@ class SxExtOpt(InteractiveInterface):
         executable,
         maxDist=5,
         ionic_steps=1000,
-        ionic_energy=1.0e-3,
-        ionic_forces=1.0e-2,
+        ionic_energy_tolerance=1.0e-3,
+        ionic_force_tolerance=1.0e-2,
         max_step_length=1.0e-1,
         soft_mode_damping=1,
         selective_dynamics=False,
@@ -116,8 +130,8 @@ class SxExtOpt(InteractiveInterface):
             working_directory=self.working_directory,
             maxDist=maxDist,
             ionic_steps=ionic_steps,
-            ionic_energy=ionic_energy,
-            ionic_forces=ionic_forces,
+            ionic_energy_tolerance=ionic_energy_tolerance,
+            ionic_force_tolerance=ionic_force_tolerance,
             max_step_length=max_step_length,
             soft_mode_damping=soft_mode_damping,
             selective_dynamics=selective_dynamics,
@@ -150,8 +164,8 @@ class SxExtOpt(InteractiveInterface):
         working_directory,
         maxDist=5,
         ionic_steps=1000,
-        ionic_energy=1.0e-3,
-        ionic_forces=1.0e-2,
+        ionic_energy_tolerance=1.0e-3,
+        ionic_force_tolerance=1.0e-2,
         max_step_length=1.0e-1,
         soft_mode_damping=1,
         selective_dynamics=False,
@@ -162,8 +176,8 @@ class SxExtOpt(InteractiveInterface):
                 % (
                     maxDist,
                     ionic_steps,
-                    ionic_energy,
-                    ionic_forces,
+                    ionic_energy_tolerance,
+                    ionic_force_tolerance,
                     max_step_length,
                     soft_mode_damping,
                 )
@@ -321,8 +335,8 @@ class SxExtOptInteractive(InteractiveWrapper):
             working_directory=self.working_directory,
             maxDist=int(self.input["maxDist"]),
             ionic_steps=int(self.input["ionic_steps"]),
-            ionic_energy=float(self.input["ionic_energy"]),
-            ionic_forces=float(self.input["ionic_forces"]),
+            ionic_energy_tolerance=float(self.input["ionic_energy_tolerance"]),
+            ionic_force_tolerance=float(self.input["ionic_force_tolerance"]),
             max_step_length=float(self.input["max_step_length"]),
             soft_mode_damping=float(self.input["soft_mode_damping"]),
             executable=self.executable.executable_path,
@@ -349,7 +363,7 @@ class SxExtOptInteractive(InteractiveWrapper):
                 if (
                     self._coarse_run
                     and np.max(np.linalg.norm(self.get_forces(), axis=-1), axis=-1)
-                    < self.input["ionic_forces"]
+                    < self.input["ionic_force_tolerance"]
                 ):
                     self._coarse_run = False
                     self.ref_job.coarse_run = False
@@ -360,7 +374,7 @@ class SxExtOptInteractive(InteractiveWrapper):
                 if (
                     self._coarse_run
                     and np.max(np.linalg.norm(self.get_forces(), axis=-1), axis=-1)
-                    < self.input["ionic_forces"]
+                    < self.input["ionic_force_tolerance"]
                 ):
                     self._coarse_run = False
                     self.ref_job.coarse_run = False
@@ -418,8 +432,8 @@ class Input(GenericParameters):
         """
         file_content = (
             "ionic_steps = 1000 // maximum number of ionic steps\n"
-            "ionic_energy = 1.0e-3\n"
-            "ionic_forces = 1.0e-2\n"
+            "ionic_energy_tolerance = 1.0e-3\n"
+            "ionic_force_tolerance = 1.0e-2\n"
             "maxDist = 5 // maximum possible distance for considering neighbors\n"
             "max_step_length = 1.0e-1 // maximum displacement at each step\n"
             "ssa = False // ignore different magnetic moment values when internal symmetries are considered\n"

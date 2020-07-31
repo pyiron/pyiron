@@ -578,8 +578,10 @@ class LammpsBase(AtomisticGenericJob):
 
     def calc_minimize(
             self,
-            e_tol=0.0,
-            f_tol=1e-4,
+            ionic_energy_tolerance=0.0,
+            ionic_force_tolerance=1e-4,
+            e_tol=None,
+            f_tol=None,
             max_iter=1000000,
             pressure=None,
             n_print=100,
@@ -587,7 +589,13 @@ class LammpsBase(AtomisticGenericJob):
     ):
         rotation_matrix = self._get_rotation_matrix(pressure=pressure)
         # Docstring set programmatically -- Ensure that changes to signature or defaults stay consistent!
+        if e_tol is not None:
+            ionic_energy_tolerance = e_tol
+        if f_tol is not None:
+            ionic_force_tolerance = f_tol
         super(LammpsBase, self).calc_minimize(
+            ionic_energy_tolerance=ionic_energy_tolerance,
+            ionic_force_tolerance=ionic_force_tolerance,
             e_tol=e_tol,
             f_tol=f_tol,
             max_iter=max_iter,
@@ -595,8 +603,8 @@ class LammpsBase(AtomisticGenericJob):
             n_print=n_print,
         )
         self.input.control.calc_minimize(
-            e_tol=e_tol,
-            f_tol=f_tol,
+            ionic_energy_tolerance=ionic_energy_tolerance,
+            ionic_force_tolerance=ionic_force_tolerance,
             max_iter=max_iter,
             pressure=pressure,
             n_print=n_print,
