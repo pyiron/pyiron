@@ -1377,11 +1377,16 @@ class TestAtoms(unittest.TestCase):
     def test_static_functions(self):
         Al_bulk = create_ase_bulk("Al")
         self.assertIsInstance(Al_bulk, Atoms)
+        self.assertTrue(all(Al_bulk.pbc))
         surface = create_surface("Al", "fcc111", size=(4, 4, 4), vacuum=10)
         self.assertTrue(all(surface.pbc))
+        surface = create_surface("Al", "fcc111", size=(4, 4, 4), vacuum=10, pbc=[True, True, False])
+        self.assertTrue(all(surface.pbc[0:2]))
+        self.assertFalse(surface.pbc[2])
         self.assertIsInstance(surface, Atoms)
         hkl_surface = create_hkl_surface(Al_bulk, [10, 8, 7], layers=20, vacuum=10)
         self.assertIsInstance(hkl_surface, Atoms)
+        self.assertTrue(all(hkl_surface.pbc))
         hkl_surface_center = create_hkl_surface(
             Al_bulk, [10, 8, 7], layers=20, vacuum=10, center=True
         )
