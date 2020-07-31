@@ -68,6 +68,8 @@ def create_surface(
 
     """
     # https://gitlab.com/ase/ase/blob/master/ase/lattice/surface.py
+    if pbc is None:
+        pbc = True
     s.publication_add(publication_ase())
     for surface_class in [
         add_adsorbate,
