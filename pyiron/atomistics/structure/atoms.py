@@ -426,7 +426,6 @@ class Atoms(ASEAtoms):
                 self.dimension = hdf_atoms["dimension"]
                 self.units = hdf_atoms["units"]
 
-                self.cell = None
                 if "cell" in hdf_atoms.list_groups():
                     with hdf_atoms.open("cell") as hdf_cell:
                         self.cell = hdf_cell["cell"]
