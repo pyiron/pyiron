@@ -1626,7 +1626,7 @@ class Atoms(ASEAtoms):
             cell=self.cell,
             dimension=len(cell),
             species=self.species,
-            pbc=True,
+            pbc=self.pbc,
         )
 
     def get_neighbors(
