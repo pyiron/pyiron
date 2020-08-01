@@ -1619,12 +1619,14 @@ class Atoms(ASEAtoms):
         element_list = [self.indices[ia] for ia in ia_list[1:]]
         self._ia_bounds = ia_list[1:]
         # self._pbcVec = pbcVec[1:]
+        print(len(new_coordinates[1:]))
         return Atoms(
             indices=element_list,
             scaled_positions=new_coordinates[1:],
             cell=self.cell,
             dimension=len(cell),
             species=self.species,
+            pbc=True,
         )
 
     def get_neighbors(
