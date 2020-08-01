@@ -426,7 +426,6 @@ class Atoms(ASEAtoms):
                 self.dimension = hdf_atoms["dimension"]
                 self.units = hdf_atoms["units"]
 
-                self.cell = None
                 if "cell" in hdf_atoms.list_groups():
                     with hdf_atoms.open("cell") as hdf_cell:
                         self.cell = hdf_cell["cell"]
@@ -1626,7 +1625,8 @@ class Atoms(ASEAtoms):
             scaled_positions=new_coordinates[1:],
             cell=self.cell,
             dimension=len(cell),
-            species=self.species, pbc=True
+            species=self.species,
+            pbc=True,
         )
 
     def get_neighbors(
