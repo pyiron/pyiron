@@ -303,6 +303,8 @@ class TestAtoms(unittest.TestCase):
         )
         self.assertEqual(basis_new.get_spacegroup()["Number"], 225)
         self.assertEqual(basis[:-3], basis[0:len(basis)-3])
+        self.assertEqual(basis.dimension, basis[mg_indices].dimension)
+        self.assertTrue(np.array_equal(basis.pbc, basis[mg_indices].pbc))
 
     def test_positions(self):
         self.assertEqual(self.CO2[1:].positions[1:].tolist(), [[0.0, 1.5, 0.0]])
