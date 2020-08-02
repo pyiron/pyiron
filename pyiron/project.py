@@ -117,6 +117,10 @@ class Project(ProjectCore):
         self.job_type = JobTypeChoice()
         self.object_type = ObjectTypeChoice()
 
+    @property
+    def user_settings(self):
+        return s.user_settings
+        
     def create_job(self, job_type, job_name, delete_existing_job=False):
         """
         Create one of the following jobs:
