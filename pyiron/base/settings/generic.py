@@ -121,12 +121,17 @@ class Settings(with_metaclass(Singleton)):
         )
         self.logger = setup_logger()
         self._publication_lst = {}
+        self._user_settings = {}
         self.publication_add(self.publication)
 
     @property
     def database(self):
         return self._database
 
+    @property
+    def user_settings(self):
+        return self._user_settings
+    
     @property
     def queue_adapter(self):
         return self._queue_adapter
