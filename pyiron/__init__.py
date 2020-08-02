@@ -7,6 +7,7 @@ from pyiron.atomistics.structure.generator import create_surface, create_ase_bul
 from pyiron.base.job.external import Notebook
 from pyiron.base.settings.install import install_dialog
 from pyiron.base.generic.jedi import fix_ipython_autocomplete
+from pyiron.base.generic.decorator import pyironfunction
 
 from ._version import get_versions
 
