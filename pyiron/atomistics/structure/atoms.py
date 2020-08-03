@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import division, print_function
-from ase.atoms import Atoms as ASEAtoms, get_distances as ase_get_distances
+from ase.atoms import Atoms as ASEAtoms, get_distances as ase_get_distances, Atom as ASEAtom
 import ast
 from copy import copy
 from collections import OrderedDict
@@ -13,7 +13,7 @@ import warnings
 from matplotlib.colors import rgb2hex
 from scipy.interpolate import interp1d
 import seekpath
-from pyiron.atomistics.structure.atom import Atom
+from pyiron.atomistics.structure.atom import Atom, ase_to_pyiron as ase_to_pyiron_atom
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
 from pyiron.atomistics.structure.periodic_table import (
     PeriodicTable,
@@ -2600,15 +2600,18 @@ class Atoms(ASEAtoms):
         Extend atoms object by appending atoms from *other*. (Extending the ASE function)
 
         Args:
-            other (pyiron.atomistics.structure.atoms.Atoms): Structure to append
+            other (pyiron.atomistics.structure.atoms.Atoms/ase.atoms.Atoms): Structure to append
 
         Returns:
             pyiron.atomistics.structure.atoms.Atoms: The extended structure
 
         """
         old_indices = self.indices
-        if isinstance(other, Atom):
-            other = self.__class__([other])
+        if isinstance(other, (Atom, ASEAtom)):
+            other = self.__class__([ase_to_pyiron_atom(other)])
+        if not isinstance(other, Atoms) and isinstance(other, ASEAtoms):
+            warnings.warn("Converting ase structure to pyiron before appending the structure")
+            other = ase_to_pyiron(other)
         new_indices = other.indices
         super(Atoms, self).extend(other=other)
         if isinstance(other, Atoms):
@@ -3672,11 +3675,13 @@ class CrystalStructure(object):
 
 def ase_to_pyiron(ase_obj):
     """
+    Convert an ase.atoms.Atoms structure object to its equivalent pyiron structure
 
     Args:
-        ase_obj:
+        ase_obj(ase.atoms.Atoms): The ase atoms instance to convert
 
     Returns:
+        pyiron.atomistics.structure.atoms.Atoms: The equivalent pyiron structure
 
     """
     try:
