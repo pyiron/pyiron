@@ -668,12 +668,14 @@ class AtomisticGenericJob(GenericJobCore):
                 conditions.append(True)
             else:
                 conditions.append(self.output.cells[0] is None)
-        conditions.append(self.output.cells is None)
+        if self.output.positions is not None and self.output.cells is None:
+            conditions.append(self.output.cells is None)
         if any(conditions):
             snapshot.cell = None
-        else:
+        elif self.output.cells is not None:
             snapshot.cell = self.output.cells[iteration_step]
-        snapshot.positions = self.output.positions[iteration_step]
+        if self.output.positions is not None:
+            snapshot.positions = self.output.positions[iteration_step]
         indices = self.output.indices
         if indices is not None and len(indices) > max([iteration_step, 0]):
             snapshot.indices = indices[iteration_step]
