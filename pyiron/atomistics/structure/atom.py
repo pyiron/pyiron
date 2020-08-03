@@ -65,17 +65,32 @@ class Atom(ASEAtom, SparseArrayElement):
             else:
                 raise ValueError("Unknown element type")
 
-        ASEAtom.__init__(
-            self,
-            symbol=symbol,
-            position=position,
-            tag=tag,
-            momentum=momentum,
-            mass=mass,
-            magmom=magmom,
-            charge=charge,
-            atoms=atoms,
-            index=index)
+        # KeyError handling required for user defined elements
+        try:
+            ASEAtom.__init__(
+                self,
+                symbol=symbol,
+                position=position,
+                tag=tag,
+                momentum=momentum,
+                mass=mass,
+                magmom=magmom,
+                charge=charge,
+                atoms=atoms,
+                index=index)
+        except KeyError:
+            symbol = pse.Parent[symbol]
+            ASEAtom.__init__(
+                self,
+                symbol=symbol,
+                position=position,
+                tag=tag,
+                momentum=momentum,
+                mass=mass,
+                magmom=magmom,
+                charge=charge,
+                atoms=atoms,
+                index=index)
 
         # ASE compatibility for tags
         for key, val in qwargs.items():
