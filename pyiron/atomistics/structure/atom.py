@@ -98,14 +98,35 @@ class Atom(ASEAtom, SparseArrayElement):
 
     @property
     def mass(self):
+        """
+        Gives the atomic mass of the atom
+
+        Returns:
+            float: The atomic mass in a.u.
+
+        """
         return float(self.element.AtomicMass)
 
     @property
     def symbol(self):
+        """
+        The chemical symbol of the atom
+
+        Returns:
+            str: The chemical symbol of the atom
+
+        """
         return self.element.Abbreviation
 
     @property
     def number(self):
+        """
+        The atomic number of the atom
+
+        Returns:
+            int: The atomic number according to the periodic table
+
+        """
         return self.element.AtomicNumber
 
     def __eq__(self, other):
