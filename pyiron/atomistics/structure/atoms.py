@@ -2607,7 +2607,9 @@ class Atoms(ASEAtoms):
 
         """
         old_indices = self.indices
-        if isinstance(other, (Atom, ASEAtom)):
+        if isinstance(other, Atom):
+            other = self.__class__([other])
+        elif isinstance(other, ASEAtom):
             other = self.__class__([ase_to_pyiron_atom(other)])
         if not isinstance(other, Atoms) and isinstance(other, ASEAtoms):
             warnings.warn("Converting ase structure to pyiron before appending the structure")
