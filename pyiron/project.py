@@ -117,7 +117,7 @@ class Project(ProjectCore):
         self.job_type = JobTypeChoice()
         self.object_type = ObjectTypeChoice()
 
-    def create_job(self, job_type, job_name):
+    def create_job(self, job_type, job_name, delete_existing_job=False):
         """
         Create one of the following jobs:
         - 'StructureContainer’:
@@ -172,6 +172,7 @@ class Project(ProjectCore):
             project=ProjectHDFio(project=self.copy(), file_name=job_name),
             job_name=job_name,
             job_class_dict=self.job_type.job_class_dict,
+            delete_existing_job=delete_existing_job,
         )
         if self.user is not None:
             job.user = self.user

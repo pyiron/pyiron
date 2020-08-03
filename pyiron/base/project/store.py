@@ -147,12 +147,13 @@ class ProjectStore(GenericJob):
         self.__setattr__(key, value)
         self.run()
 
-    def _run_if_finished(self, run_again=False):
+    def _run_if_finished(self, delete_existing_job=False, run_again=True):
         """
         Internal function overwriting the default behaviour when the job is finished,
         to update the database entry when the job was modified
 
         Args:
+            delete_existing_job (bool): not used for this job type
             run_again (bool): not used for this job type
 
         """

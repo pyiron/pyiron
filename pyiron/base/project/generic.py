@@ -263,7 +263,7 @@ class Project(ProjectPath):
         new = self.copy()
         return new.open(group, history=False)
 
-    def create_job(self, job_type, job_name):
+    def create_job(self, job_type, job_name, delete_existing_job=False):
         """
         Create one of the following jobs:
         - 'ExampleJob': example job just generating random number
@@ -285,6 +285,7 @@ class Project(ProjectPath):
             project=ProjectHDFio(project=self.copy(), file_name=job_name),
             job_name=job_name,
             job_class_dict=self.job_type.job_class_dict,
+            delete_existing_job=delete_existing_job,
         )
         if self.user is not None:
             job.user = self.user
