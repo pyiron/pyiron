@@ -426,7 +426,6 @@ class Atoms(ASEAtoms):
                 self.dimension = hdf_atoms["dimension"]
                 self.units = hdf_atoms["units"]
 
-                self.cell = None
                 if "cell" in hdf_atoms.list_groups():
                     with hdf_atoms.open("cell") as hdf_cell:
                         self.cell = hdf_cell["cell"]
@@ -1567,13 +1566,14 @@ class Atoms(ASEAtoms):
 
     def get_boundary_region(self, dist):
         """
-        get all atoms in the boundary around the supercell which have a distance
+        Get all atoms in the boundary around the supercell which have a distance
         to the supercell boundary of less than dist
 
         Args:
-            dist:
+            dist (float): Distance in relative units
 
         Returns:
+            pyiron.atomistics.structure.atoms.Atoms: The required boundary region
 
         """
         rel_coordinates = self.get_scaled_positions(wrap=False)
@@ -1626,6 +1626,7 @@ class Atoms(ASEAtoms):
             cell=self.cell,
             dimension=len(cell),
             species=self.species,
+            pbc=self.pbc,
         )
 
     def get_neighbors(
@@ -2706,6 +2707,7 @@ class Atoms(ASEAtoms):
             )
 
         new_array = super(Atoms, self).__getitem__(item)
+        new_array.dimension = self.dimension
         new_indices = self.indices[item].copy()
         new_species_indices, new_proper_indices = np.unique(
             new_indices, return_inverse=True

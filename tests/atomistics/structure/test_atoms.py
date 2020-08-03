@@ -303,6 +303,8 @@ class TestAtoms(unittest.TestCase):
         )
         self.assertEqual(basis_new.get_spacegroup()["Number"], 225)
         self.assertEqual(basis[:-3], basis[0:len(basis)-3])
+        self.assertEqual(basis.dimension, basis[mg_indices].dimension)
+        self.assertTrue(np.array_equal(basis.pbc, basis[mg_indices].pbc))
 
     def test_positions(self):
         self.assertEqual(self.CO2[1:].positions[1:].tolist(), [[0.0, 1.5, 0.0]])
@@ -1377,11 +1379,16 @@ class TestAtoms(unittest.TestCase):
     def test_static_functions(self):
         Al_bulk = create_ase_bulk("Al")
         self.assertIsInstance(Al_bulk, Atoms)
+        self.assertTrue(all(Al_bulk.pbc))
         surface = create_surface("Al", "fcc111", size=(4, 4, 4), vacuum=10)
         self.assertTrue(all(surface.pbc))
+        surface = create_surface("Al", "fcc111", size=(4, 4, 4), vacuum=10, pbc=[True, True, False])
+        self.assertTrue(all(surface.pbc[0:2]))
+        self.assertFalse(surface.pbc[2])
         self.assertIsInstance(surface, Atoms)
         hkl_surface = create_hkl_surface(Al_bulk, [10, 8, 7], layers=20, vacuum=10)
         self.assertIsInstance(hkl_surface, Atoms)
+        self.assertTrue(all(hkl_surface.pbc))
         hkl_surface_center = create_hkl_surface(
             Al_bulk, [10, 8, 7], layers=20, vacuum=10, center=True
         )
