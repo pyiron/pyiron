@@ -2614,9 +2614,14 @@ class Atoms(ASEAtoms):
         if not isinstance(other, Atoms) and isinstance(other, ASEAtoms):
             warnings.warn("Converting ase structure to pyiron before appending the structure")
             other = ase_to_pyiron(other)
+
         new_indices = other.indices
         super(Atoms, self).extend(other=other)
         if isinstance(other, Atoms):
+            if not np.allclose(self.cell, other.cell):
+                warnings.warn("You are adding structures with different cell shapes.")
+            if not np.array_equal(self.pbc, other.pbc):
+                warnings.warn("You are adding structures with different periodic boundary conditions.")
             sum_atoms = self
             # sum_atoms = copy(self)
             sum_atoms._tag_list = sum_atoms._tag_list + other._tag_list
