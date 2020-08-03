@@ -114,11 +114,6 @@ def ase_to_pyiron(ase_obj):
         pyiron.atomistics.structure.atom.Atom: The equivalent pyiron Atom
 
     """
-    try:
-        import ase
-    except ImportError:
-        raise ValueError("ASE package not yet installed")
-
     return Atom(symbol=ase_obj.symbol,
                 position=ase_obj.position,
                 tag=ase_obj.tag,
