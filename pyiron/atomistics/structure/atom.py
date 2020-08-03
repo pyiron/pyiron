@@ -65,7 +65,6 @@ class Atom(ASEAtom, SparseArrayElement):
             else:
                 raise ValueError("Unknown element type")
 
-        self._position = np.array(position)
         ASEAtom.__init__(
             self,
             symbol=symbol,
@@ -102,3 +101,30 @@ class Atom(ASEAtom, SparseArrayElement):
             self.symbol == other.symbol,
         ]
         return all(conditions)
+
+
+def ase_to_pyiron(ase_obj):
+    """
+    Convert an ase.atom.Atom object to its equivalent pyiron structure
+
+    Args:
+        ase_obj(ase.atom.Atom): The ase atoms instance to convert
+
+    Returns:
+        pyiron.atomistics.structure.atom.Atom: The equivalent pyiron Atom
+
+    """
+    try:
+        import ase
+    except ImportError:
+        raise ValueError("ASE package not yet installed")
+
+    return Atom(symbol=ase_obj.symbol,
+                position=ase_obj.position,
+                tag=ase_obj.tag,
+                momentum=ase_obj.momentum,
+                mass=ase_obj.mass,
+                magmom=ase_obj.magmom,
+                charge=ase_obj.charge,
+                atoms=ase_obj.atoms,
+                index=ase_obj.index)
