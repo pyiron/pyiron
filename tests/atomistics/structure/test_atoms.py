@@ -1199,6 +1199,35 @@ class TestAtoms(unittest.TestCase):
         )
         basis.center_coordinates_in_unit_cell()
         self.assertEqual(basis.get_spacegroup()["Number"], 225)
+        # Adding an ASE instance to a pyiron instance
+        ase_basis = ASEAtoms("O", scaled_positions=[[0, 0, 0]], cell=np.eye(3) * 10)
+        pyiron_basis = Atoms("O", scaled_positions=[[0.5, 0.5, 0.5]], cell=np.eye(3) * 10)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            pyiron_basis += ase_basis
+            self.assertEqual(len(pyiron_basis), 2)
+            self.assertEqual(len(ase_basis), 1)
+            self.assertIsInstance(pyiron_basis, Atoms)
+        ase_basis += pyiron_basis
+        self.assertEqual(len(ase_basis), 3)
+        self.assertIsInstance(ase_basis, ASEAtoms)
+        self.assertNotIsInstance(ase_basis, Atoms)
+        self.assertEqual(len(w), 1)
+        pyiron_basis += ase_basis[0]
+        self.assertEqual(len(pyiron_basis), 3)
+        pyiron_basis = Atoms("O", scaled_positions=[[0.5, 0.5, 0.5]], cell=np.eye(3) * 10, pbc=True)
+        larger_cell = pyiron_basis.repeat(2)
+        larger_cell.positions += 2.5
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            larger_cell += pyiron_basis
+            self.assertEqual(len(w), 1)
+        basis_1 = Atoms("O", scaled_positions=[[0.5, 0.5, 0.5]], cell=np.eye(3) * 10)
+        basis_2 = Atoms("O", scaled_positions=[[0., 0.5, 0.5]], cell=np.eye(3) * 10, pbc=True)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            basis_1 += basis_2
+            self.assertEqual(len(w), 1)
 
     def test__delitem__(self):
         cell = np.eye(3) * 10.0
@@ -1417,6 +1446,7 @@ class TestAtoms(unittest.TestCase):
         R = np.random.random(9).reshape(-1, 3)
         R = np.array(basis._get_flattened_orientation(R, 1)).reshape(4, 4)
         self.assertAlmostEqual(np.linalg.det(R), 1)
+
 
 def generate_fcc_lattice(a=4.2):
     positions = [[0, 0, 0]]
