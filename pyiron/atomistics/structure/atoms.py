@@ -41,8 +41,7 @@ s = Settings()
 class Atoms(ASEAtoms):
     """
     The Atoms class represents all the information required to describe a structure at the atomic scale. This class is
-    written in such a way that is compatible with the `ASE atoms class`_. Some of the functions in this module is based
-    on the corresponding implementation in the ASE package
+    derived from the `ASE atoms class`_.
 
     Args:
         elements (list/numpy.ndarray): List of strings containing the elements or a list of

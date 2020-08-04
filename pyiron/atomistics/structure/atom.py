@@ -21,6 +21,23 @@ __date__ = "Aug 1, 2020"
 
 
 class Atom(ASEAtom, SparseArrayElement):
+    """
+    Class for representing a single atom derived from the `ASE atom class`_.
+
+    Args:
+        symbol (str/pyiron.atomistics.structure.periodic_table.ChemcicalElement): Symbol or elecment object
+        position (list/numpy.ndarray): Position of atom in cartesian coordinates
+        tag (str): Tag assigned to structure
+        momentum (float): Momentum
+        mass (float): Atomic mass in a.u.
+        magmom (float): Magnetic moment in Bohn Magneton
+        charge (float): Charge in e
+        atoms (ase.atoms.Atoms): Assigned atoms
+        index (int): Assigned index
+
+    .. _ASE atom class: https://wiki.fysik.dtu.dk/ase/ase/atom.html
+
+    """
     def __init__(
         self,
         symbol="X",
