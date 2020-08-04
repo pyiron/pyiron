@@ -1012,6 +1012,8 @@ class Project(ProjectPath):
         Args:
             recursive (bool): [True/False] delete all jobs in all subprojects - default=False
         """
+        if not isinstance(recursive, bool):
+            raise ValueError('recursive must be a boolean')
         if not self.view_mode:
             for job_id in self.get_job_ids(recursive=recursive):
                 if job_id not in self.get_job_ids(recursive=recursive):
