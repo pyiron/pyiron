@@ -1,4 +1,8 @@
 import inspect 
+from pyiron.base.settings.generic import Settings
+
+
+s = Settings()
 
 
 def get_default_args(func):
