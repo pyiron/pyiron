@@ -2717,6 +2717,8 @@ class Atoms(ASEAtoms):
 
         new_array = super(Atoms, self).__getitem__(item)
         new_array.dimension = self.dimension
+        if isinstance(item, tuple):
+            item = list(item)
         new_indices = self.indices[item].copy()
         new_species_indices, new_proper_indices = np.unique(
             new_indices, return_inverse=True
