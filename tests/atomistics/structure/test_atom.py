@@ -24,7 +24,6 @@ class TestAtom(unittest.TestCase):
         self.assertEqual(self.Fe_atom.rel, True)
 
         self.assertEqual(Atom(Z=13).element.Abbreviation, "Al")
-        self.assertRaises(ValueError, Atom)
         self.assertRaises(ValueError, Atom, 13)
         self.assertEqual(Atom("Si", (0, 0, 0)).position.tolist(), [0, 0, 0])
 
