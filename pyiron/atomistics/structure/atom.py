@@ -66,10 +66,6 @@ class Atom(ASEAtom, SparseArrayElement):
             if "Z" in qwargs:
                 el_symbol = pse.atomic_number_to_abbreviation(qwargs["Z"])
                 self._lists["element"] = pse.element(el_symbol)
-            else:
-                raise ValueError(
-                    "Need at least element name, Chemical element object or nucleus number"
-                )
         else:
             if isinstance(element, string_types):
                 el_symbol = element
