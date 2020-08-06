@@ -796,12 +796,14 @@ class Atoms(ASEAtoms):
 
     def get_masses(self):
         """
+        Gets the atomic masses of all atoms in the structure
 
         Returns:
+            numpy.ndarray: Array of masses
 
         """
         el_lst = [el.AtomicMass for el in self.species]
-        return [el_lst[el] for el in self.indices]
+        return np.array([el_lst[el] for el in self.indices])
 
     def get_masses_dof(self):
         """
