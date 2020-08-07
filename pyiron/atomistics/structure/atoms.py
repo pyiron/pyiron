@@ -2620,9 +2620,11 @@ class Atoms(ASEAtoms):
         super(Atoms, self).extend(other=other)
         if isinstance(other, Atoms):
             if not np.allclose(self.cell, other.cell):
-                warnings.warn("You are adding structures with different cell shapes.")
+                warnings.warn("You are adding structures with different cell shapes. "
+                              "Taking the cell and pbc of the first structure:{}".format(self.cell))
             if not np.array_equal(self.pbc, other.pbc):
-                warnings.warn("You are adding structures with different periodic boundary conditions.")
+                warnings.warn("You are adding structures with different periodic boundary conditions. "
+                              "Taking the cell and pbc of the first structure:{}".format(self.cell))
             sum_atoms = self
             # sum_atoms = copy(self)
             sum_atoms._tag_list = sum_atoms._tag_list + other._tag_list
