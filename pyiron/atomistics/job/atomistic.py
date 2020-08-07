@@ -612,52 +612,6 @@ class AtomisticGenericJob(GenericJobCore):
         )
         return self.get_structure(iteration_step=-1)
 
-    def set_kpoints(
-        self,
-        mesh=None,
-        scheme="MP",
-        center_shift=None,
-        symmetry_reduction=True,
-        manual_kpoints=None,
-        weights=None,
-        reciprocal=True,
-    ):
-        """
-
-        Args:
-            mesh:
-            scheme:
-            center_shift:
-            symmetry_reduction:
-            manual_kpoints:
-            weights:
-            reciprocal:
-
-        Returns:
-
-        """
-        raise NotImplementedError(
-            "The set_kpoints function is not implemented for this code."
-        )
-
-    def set_encut(self, encut):
-        """
-
-        Args:
-            encut:
-
-        Returns:
-
-        """
-        raise NotImplementedError(
-            "The set_encut function is not implemented for this code."
-        )
-
-    def get_encut(self):
-        raise NotImplementedError(
-            "The set_encut function is not implemented for this code."
-        )
-
     def get_structure(self, iteration_step=-1, wrap_atoms=True):
         """
         Gets the structure from a given iteration step of the simulation (MD/ionic relaxation). For static calculations
@@ -739,28 +693,6 @@ class AtomisticGenericJob(GenericJobCore):
         if ham._generic_input["structure"] == "continue_final":
             ham.structure = self.get_structure(iteration_step=-1)
             ham.to_hdf()
-
-
-def set_encut(job, parameter):
-    job.set_encut(parameter)
-    return job
-
-
-def set_kpoints(job, parameter):
-    job.set_kpoints(parameter)
-    return job
-
-
-def set_structure(job, parameter):
-    job.structure = parameter
-    return job
-
-
-class MapFunctions(object):
-    def __init__(self):
-        self.set_structure = set_structure
-        self.set_encut = set_encut
-        self.set_kpoints = set_kpoints
 
 
 class Trajectory(object):
