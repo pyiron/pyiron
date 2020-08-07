@@ -77,24 +77,6 @@ matrix:
         - python .ci_support/pyironconfig.py
       script:
         - ./.ci_support/travis_build_docs.sh || travis_terminate 1;
-      deploy:
-        - provider: pages
-          repo: pyiron/pyiron.github.io
-          target_branch: master
-          skip_cleanup: true
-          github_token: $GH_TOKEN
-          local_dir: ../pyiron.github.io
-          on:
-            branch: master
-
-    - stage: websitevalidation
-      if: branch = master
-      name: websitevalidation
-      os: linux
-      language: python
-      script:
-        - echo -e "from urllib.request import urlopen\nurlopen('https://pyiron.github.io')" > test.py
-        - python test.py
 
     - stage: docker
       if: branch = master
