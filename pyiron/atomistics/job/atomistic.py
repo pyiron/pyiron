@@ -695,6 +695,16 @@ class AtomisticGenericJob(GenericJobCore):
             ham.to_hdf()
 
 
+def set_structure(job, parameter):
+    job.structure = parameter
+    return job
+
+
+class MapFunctions(object):
+    def __init__(self):
+        self.set_structure = set_structure
+
+
 class Trajectory(object):
     """
     A trajectory instance compatible with the ase.io class
