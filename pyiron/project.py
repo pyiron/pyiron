@@ -564,6 +564,8 @@ class Project(ProjectCore):
             pyiron.atomistics.structure.atoms.Atoms: The required structure instance
 
         """
+        if pbc is None:
+            pbc = True
         return Atoms(
             symbols=symbols,
             positions=positions,

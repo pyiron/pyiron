@@ -518,7 +518,7 @@ class TestLammps(unittest.TestCase):
 
     def test_calc_minimize_input(self):
         # Ensure that defaults match control defaults
-        atoms = Atoms("Fe", positions=np.zeros((8, 3)), cell=np.eye(3))
+        atoms = Atoms("Fe8", positions=np.zeros((8, 3)), cell=np.eye(3))
         self.minimize_control_job.structure = atoms
         self.minimize_control_job.input.control.calc_minimize()
 

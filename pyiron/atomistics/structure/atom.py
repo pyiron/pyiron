@@ -6,8 +6,9 @@ import numpy as np
 from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement
 from pyiron.atomistics.structure.sparse_list import SparseArrayElement
 from six import string_types
+from ase.atom import Atom as ASEAtom
 
-__author__ = "Joerg Neugebauer, Sudarsan Surendralal"
+__author__ = "Sudarsan Surendralal"
 __copyright__ = (
     "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
@@ -16,57 +17,27 @@ __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
 __status__ = "production"
-__date__ = "Sep 1, 2017"
+__date__ = "Aug 1, 2020"
 
 
-def atomproperty(name, doc):
-    """Helper function to easily create Atom attribute property."""
+class Atom(ASEAtom, SparseArrayElement):
+    """
+    Class for representing a single atom derived from the `ASE atom class`_.
 
-    def getter(self):
-        return self.get(name)
+    Args:
+        symbol (str/pyiron.atomistics.structure.periodic_table.ChemcicalElement): Symbol or elecment object
+        position (list/numpy.ndarray): Position of atom in cartesian coordinates
+        tag (str): Tag assigned to structure
+        momentum (float): Momentum
+        mass (float): Atomic mass in a.u.
+        magmom (float): Magnetic moment in Bohn Magneton
+        charge (float): Charge in e
+        atoms (ase.atoms.Atoms): Assigned atoms
+        index (int): Assigned index
 
-    def setter(self, value):
-        self.set(name, value)
+    .. _ASE atom class: https://wiki.fysik.dtu.dk/ase/ase/atom.html
 
-    def deleter(self):
-        self.delete(name)
-
-    return property(getter, setter, deleter, doc)
-
-
-# needed for ASE compatibility
-# begin ASE
-def abcproperty(index):
-    """Helper function to easily create Atom ABC-property."""
-
-    def getter(self):
-        spos = self.atoms.get_scaled_positions()
-        return spos[self.index][index]
-
-    def setter(self, value):
-        spos = self.atoms.get_scaled_positions()
-        spos[self.index][index] = value
-        self.atoms.set_scaled_positions(spos)
-
-    return property(getter, setter, doc="ABC"[index] + "-coordinate")
-
-
-def xyzproperty(index):
-    """Helper function to easily create Atom XYZ-property."""
-
-    def getter(self):
-        return self.position[index]
-
-    def setter(self, value):
-        self.position[index] = value
-
-    return property(getter, setter, doc="XYZ"[index] + "-coordinate")
-
-
-# end ASE
-
-
-class Atom(SparseArrayElement):
+    """
     def __init__(
         self,
         symbol="X",
@@ -82,10 +53,9 @@ class Atom(SparseArrayElement):
         element=None,
         **qwargs
     ):
-        if element is None and symbol:
+        if element is None:
             element = symbol
-        if tag or momentum or mass or magmom or charge:
-            raise ValueError("Not supported parameter used!")
+
         SparseArrayElement.__init__(self, **qwargs)
         # super(SparseArrayElement, self).__init__(**qwargs)
         # verify that element is given (as string, ChemicalElement object or nucleus number
@@ -96,10 +66,6 @@ class Atom(SparseArrayElement):
             if "Z" in qwargs:
                 el_symbol = pse.atomic_number_to_abbreviation(qwargs["Z"])
                 self._lists["element"] = pse.element(el_symbol)
-            else:
-                raise ValueError(
-                    "Need at least element name, Chemical element object or nucleus number"
-                )
         else:
             if isinstance(element, string_types):
                 el_symbol = element
@@ -112,55 +78,69 @@ class Atom(SparseArrayElement):
             else:
                 raise ValueError("Unknown element type")
 
-        self._position = np.array(position)
+        # KeyError handling required for user defined elements
+        try:
+            ASEAtom.__init__(
+                self,
+                symbol=symbol,
+                position=position,
+                tag=tag,
+                momentum=momentum,
+                mass=mass,
+                magmom=magmom,
+                charge=charge,
+                atoms=atoms,
+                index=index)
+        except KeyError:
+            symbol = pse.Parent[symbol]
+            ASEAtom.__init__(
+                self,
+                symbol=symbol,
+                position=position,
+                tag=tag,
+                momentum=momentum,
+                mass=mass,
+                magmom=magmom,
+                charge=charge,
+                atoms=atoms,
+                index=index)
 
-        # ASE compatibility
-        self.index = index
-        self._atoms = atoms
-
-    #####  ASE compatibility
-
-    def get(self, name):
-        """Get name attribute, return None if not explicitely set."""
-        if self._atoms is None:
-            return self._position
-        return self._atoms.positions[self.index]
-
-    def set(self, name, value):
-        """Set name attribute to value."""
-        if self._atoms is None:
-            self._position = value
-        else:
-            array = self._atoms.positions
-            array[self.index] = value
-
-    def cut_reference_to_atoms(self):
-        """Cut reference to atoms object."""
-        self._position = self.position
-        self.index = None
-        self._atoms = None
+        # ASE compatibility for tags
+        for key, val in qwargs.items():
+            self.data[key] = val
 
     @property
     def mass(self):
+        """
+        Gives the atomic mass of the atom
+
+        Returns:
+            float: The atomic mass in a.u.
+
+        """
         return float(self.element.AtomicMass)
 
     @property
     def symbol(self):
+        """
+        The chemical symbol of the atom
+
+        Returns:
+            str: The chemical symbol of the atom
+
+        """
         return self.element.Abbreviation
 
     @property
     def number(self):
+        """
+        The atomic number of the atom
+
+        Returns:
+            int: The atomic number according to the periodic table
+
+        """
         return self.element.AtomicNumber
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __str__(self):
-        out_str = "Element: " + self.element.Abbreviation
-        for key, val in self._lists.items():
-            if key not in ["element"]:
-                out_str += ", " + str(key) + ": " + str(val)
-        return out_str
 
     def __eq__(self, other):
         if not (isinstance(other, Atom)):
@@ -171,8 +151,24 @@ class Atom(SparseArrayElement):
         ]
         return all(conditions)
 
-    position = atomproperty("position", "XYZ-coordinates")
 
-    x = xyzproperty(0)
-    y = xyzproperty(1)
-    z = xyzproperty(2)
+def ase_to_pyiron(ase_obj):
+    """
+    Convert an ase.atom.Atom object to its equivalent pyiron structure
+
+    Args:
+        ase_obj(ase.atom.Atom): The ase atoms instance to convert
+
+    Returns:
+        pyiron.atomistics.structure.atom.Atom: The equivalent pyiron Atom
+
+    """
+    return Atom(symbol=ase_obj.symbol,
+                position=ase_obj.position,
+                tag=ase_obj.tag,
+                momentum=ase_obj.momentum,
+                mass=ase_obj.mass,
+                magmom=ase_obj.magmom,
+                charge=ase_obj.charge,
+                atoms=ase_obj.atoms,
+                index=ase_obj.index)

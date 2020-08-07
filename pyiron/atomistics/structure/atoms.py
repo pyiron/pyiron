@@ -3,18 +3,17 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import division, print_function
+from ase.atoms import Atoms as ASEAtoms, get_distances as ase_get_distances, Atom as ASEAtom
 import ast
 from copy import copy
 from collections import OrderedDict
-from math import cos, sin
 import numpy as np
 from six import string_types
 import warnings
-from ase.geometry import cellpar_to_cell, complete_cell, get_distances
 from matplotlib.colors import rgb2hex
 from scipy.interpolate import interp1d
 import seekpath
-from pyiron.atomistics.structure.atom import Atom
+from pyiron.atomistics.structure.atom import Atom, ase_to_pyiron as ase_to_pyiron_atom
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
 from pyiron.atomistics.structure.periodic_table import (
     PeriodicTable,
@@ -39,11 +38,10 @@ __date__ = "Sep 1, 2017"
 s = Settings()
 
 
-class Atoms(object):
+class Atoms(ASEAtoms):
     """
     The Atoms class represents all the information required to describe a structure at the atomic scale. This class is
-    written in such a way that is compatible with the `ASE atoms class`_. Some of the functions in this module is based
-    on the corresponding implementation in the ASE package
+    derived from the `ASE atoms class`_.
 
     Args:
         elements (list/numpy.ndarray): List of strings containing the elements or a list of
@@ -104,36 +102,20 @@ class Atoms(object):
             or info is not None
         ):
             s.logger.debug("Not supported parameter used!")
+
         self._store_elements = dict()
         self._species_to_index_dict = None
         self.colorLut = ElementColorDictionary().to_lut()
         self._is_scaled = False
-        if cell is not None:
-            # make it ASE compatible
-            if np.linalg.matrix_rank(cell) == 1:
-                cell = np.eye(len(cell)) * cell
-            else:
-                cell = np.array(cell)
-        self._cell = cell
+
         self._species = list()
-        self.positions = None
+        self.indices = np.array([])
+        self.constraints = None
         self._pse = PeriodicTable()
         self._tag_list = SparseArray()
-        self.indices = np.array([])
-        self._info = dict()
-        self.arrays = dict()
-        self.adsorbate_info = {}
-        self.bonds = None
-        self._pbc = False
-        self.dimension = 3  # Default
-        self.units = {"length": "A", "mass": "u"}
-        self._symmetry_dataset = None
 
         el_index_lst = list()
         element_list = None
-
-        if (elements is None) and (numbers is None) and (indices is None):
-            return
         if numbers is not None:  # for ASE compatibility
             if not (elements is None):
                 raise AssertionError()
@@ -188,59 +170,29 @@ class Atoms(object):
             el_index_lst = indices
             self.set_species(species)
 
-        if scaled_positions is not None:
-            if positions is not None:
-                raise ValueError("either position or scaled_positions can be given")
-            if cell is None:
-                raise ValueError("scaled_positions can only be used with a given cell")
-            positions = np.dot(np.array(cell).T, np.array(scaled_positions).T).T
-
-        if positions is None:
-            self.dimension = 3
-            if cell is not None:
-                positions = np.zeros((len(el_index_lst), self.dimension))
-
         self.indices = np.array(el_index_lst)
-        self.positions = np.array(positions).astype(np.float)
-        self._tag_list._length = len(positions)
 
-        for key, val in qwargs.items():
-            print("set qwargs (ASE): ", key, val)
-            setattr(self, key, val)
+        el_lst = [el.Abbreviation if el.Parent is None else el.Parent for el in self.species]
+        symbols = np.array([el_lst[el] for el in self.indices])
+        self._tag_list._length = len(symbols)
+        super(Atoms, self).__init__(symbols=symbols, positions=positions, numbers=None,
+                                    tags=tags, momenta=momenta, masses=masses,
+                                    magmoms=magmoms, charges=charges,
+                                    scaled_positions=scaled_positions, cell=cell,
+                                    pbc=pbc, celldisp=celldisp, constraint=constraint,
+                                    calculator=calculator, info=info)
 
-        if len(positions) > 0:
-            self.dimension = len(positions[0])
-        else:
-            self.dimension = 3
-        if dimension is not None:
-            self.dimension = dimension
-        if cell is not None:
-            if pbc is None:
-                self.pbc = True  # default setting
-            else:
-                self.pbc = pbc
+        self.bonds = None
+        self.units = {"length": "A", "mass": "u"}
+        self._symmetry_dataset = None
         self.set_initial_magnetic_moments(magmoms)
         self._high_symmetry_points = None
         self._high_symmetry_path = None
-
-
-    @property
-    def cell(self):
-        """
-        numpy.ndarray: A size 3x3 array which gives the lattice vectors of the cell as [a1, a2, a3]
-
-        """
-        return self._cell
-
-    @cell.setter
-    def cell(self, value):
-        if value is None:
-            self._cell = None
+        self.dimension = dimension
+        if len(self.positions) > 0:
+            self.dimension = len(self.positions[0])
         else:
-            if self._is_scaled:
-                self.set_cell(value, scale_atoms=True)
-            else:
-                self.set_cell(value)
+            self.dimension = 0
 
     @property
     def species(self):
@@ -265,33 +217,6 @@ class Atoms(object):
         self._species_to_index_dict = {el: i for i, el in enumerate(value)}
         self._species = value[:]
         self._store_elements = {el.Abbreviation: el for el in value}
-
-    @property
-    def info(self):
-        """
-        dict: This dictionary is merely used to be compatible with the ASE Atoms class.
-
-        """
-        return self._info
-
-    @info.setter
-    def info(self, val):
-        self._info = val
-
-    @property
-    def pbc(self):
-        """
-        list: A list of boolean values which gives the periodic boundary consitions along the three axes.
-              The default value is [True, True, True]
-
-        """
-        if not isinstance(self._pbc, np.ndarray):
-            self.set_pbc(self._pbc)
-        return self._pbc
-
-    @pbc.setter
-    def pbc(self, val):
-        self._pbc = val
 
     @property
     def elements(self):
@@ -377,82 +302,6 @@ class Atoms(object):
 
         self._high_symmetry_path.update(path)
 
-    def new_array(self, name, a, dtype=None, shape=None):
-        """
-        Adding a new array to the instance. This function is for the purpose of compatibility with the ASE package
-
-        Args:
-            name (str): Name of the array
-            a (list/numpy.ndarray): The array to be added
-            dtype (type): Data type of the array
-            shape (list/turple): Shape of the array
-
-        """
-
-        if dtype is not None:
-            a = np.array(a, dtype, order="C")
-            if len(a) == 0 and shape is not None:
-                a.shape = (-1,) + shape
-        else:
-            if not a.flags["C_CONTIGUOUS"]:
-                a = np.ascontiguousarray(a)
-            else:
-                a = a.copy()
-        if name in self.arrays:
-            raise RuntimeError
-        for b in self.arrays.values():
-            if len(a) != len(b):
-                raise ValueError("Array has wrong length: %d != %d." % (len(a), len(b)))
-            break
-        if shape is not None and a.shape[1:] != shape:
-            raise ValueError(
-                "Array has wrong shape %s != %s." % (a.shape, (a.shape[0:1] + shape))
-            )
-        self.arrays[name] = a
-
-    def get_array(self, name, copy=True):
-        """
-        Get an array. This function is for the purpose of compatibility with the ASE package
-
-        Args:
-            name (str): Name of the required array
-            copy (bool): True if a copy of the array is to be returned
-
-        Returns:
-             An array of a copy of the array
-        """
-        if copy:
-            return self.arrays[name].copy()
-        else:
-            return self.arrays[name]
-
-    def set_array(self, name, a, dtype=None, shape=None):
-        """
-        Update array. This function is for the purpose of compatibility with the ASE package
-
-        Args:
-            name (str): Name of the array
-            a (list/numpy.ndarray): The array to be added
-            dtype (type): Data type of the array
-            shape (list/turple): Shape of the array
-
-        """
-
-        b = self.arrays.get(name)
-        if b is None:
-            if a is not None:
-                self.new_array(name, a, dtype, shape)
-        else:
-            if a is None:
-                del self.arrays[name]
-            else:
-                a = np.asarray(a)
-                if a.shape != b.shape:
-                    raise ValueError(
-                        "Array has wrong shape %s != %s." % (a.shape, b.shape)
-                    )
-                b[:] = a
-
     def add_tag(self, *args, **qwargs):
         """
         Add tags to the atoms object.
@@ -526,7 +375,8 @@ class Atoms(object):
 
             if self.cell is not None:
                 with hdf_structure.open("cell") as hdf_cell:
-                    hdf_cell["cell"] = self.cell
+                    # Convert ASE cell object to numpy array before storing
+                    hdf_cell["cell"] = np.array(self.cell)
                     hdf_cell["pbc"] = self.pbc
 
             # hdf_structure["coordinates"] = self.positions  # "Atomic coordinates"
@@ -570,6 +420,30 @@ class Atoms(object):
 
                 self.set_species(el_object_list)
                 self.bonds = None
+
+                tr_dict = {1: True, 0: False}
+                self.dimension = hdf_atoms["dimension"]
+                self.units = hdf_atoms["units"]
+
+                if "cell" in hdf_atoms.list_groups():
+                    with hdf_atoms.open("cell") as hdf_cell:
+                        self.cell = hdf_cell["cell"]
+                        self.pbc = hdf_cell["pbc"]
+
+                # Backward compatibility
+                position_tag = "positions"
+                if position_tag not in hdf_atoms.list_nodes():
+                    position_tag = "coordinates"
+                if "is_absolute" in hdf_atoms.list_nodes():
+                    if not tr_dict[hdf_atoms["is_absolute"]]:
+                        self.set_scaled_positions(hdf_atoms[position_tag])
+                    else:
+                        self.arrays['positions'] = hdf_atoms[position_tag]
+                else:
+                    self.arrays['positions'] = hdf_atoms[position_tag]
+
+                self.arrays['numbers'] = self.get_atomic_numbers()
+
                 if "explicit_bonds" in hdf_atoms.list_nodes():
                     # print "bonds: "
                     self.bonds = hdf_atoms["explicit_bonds"]
@@ -596,28 +470,6 @@ class Atoms(object):
                                 self._tag_list[tag] = SparseList(
                                     my_dict, length=len(self)
                                 )
-
-                tr_dict = {1: True, 0: False}
-                self.dimension = hdf_atoms["dimension"]
-                self.units = hdf_atoms["units"]
-
-                self.cell = None
-                if "cell" in hdf_atoms.list_groups():
-                    with hdf_atoms.open("cell") as hdf_cell:
-                        self.cell = hdf_cell["cell"]
-                        self.pbc = hdf_cell["pbc"]
-
-                # Backward compatibility
-                position_tag = "positions"
-                if position_tag not in hdf_atoms.list_nodes():
-                    position_tag = "coordinates"
-                if "is_absolute" in hdf_atoms.list_nodes():
-                    if not tr_dict[hdf_atoms["is_absolute"]]:
-                        self.set_scaled_positions(hdf_atoms[position_tag])
-                    else:
-                        self.positions = hdf_atoms[position_tag]
-                else:
-                    self.positions = hdf_atoms[position_tag]
 
                 if "bonds" in hdf_atoms.list_nodes():
                     self.bonds = hdf_atoms["explicit_bonds"]
@@ -694,87 +546,6 @@ class Atoms(object):
                 self._high_symmetry_points = hdf_atoms["high_symmetry_points"]
             return self
 
-    def center(self, vacuum=None, axis=(0, 1, 2)):
-        """
-        Center atoms in unit cell.
-
-        Adopted from ASE code (https://wiki.fysik.dtu.dk/ase/_modules/ase/atoms.html#Atoms.center)
-
-        Args:
-            vacuum (float): If specified adjust the amount of vacuum when centering. If vacuum=10.0 there will thus be
-                            10 Angstrom of vacuum on each side.
-            axis (tuple/list): List or turple of integers specifying the axis along which the atoms should be centered
-
-        """
-
-        # Find the orientations of the faces of the unit cell
-        c = self.cell
-        if c is None:
-            c = np.identity(self.dimension)
-            self.set_cell(c)
-
-        dirs = np.zeros_like(c)
-        for i in range(3):
-            dirs[i] = np.cross(c[i - 1], c[i - 2])
-            dirs[i] /= np.linalg.norm(dirs[i])  # normalize
-            if np.dot(dirs[i], c[i]) < 0.0:
-                dirs[i] *= -1
-
-        # Now, decide how much each basis vector should be made longer
-        if isinstance(axis, int):
-            axes = (axis,)
-        else:
-            axes = axis
-        p = self.positions
-        longer = np.zeros(3)
-        shift = np.zeros(3)
-        for i in axes:
-            p0 = np.dot(p, dirs[i]).min()
-            p1 = np.dot(p, dirs[i]).max()
-            height = np.dot(c[i], dirs[i])
-            if vacuum is not None:
-                lng = (p1 - p0 + 2 * vacuum) - height
-            else:
-                lng = 0.0  # Do not change unit cell size!
-            top = lng + height - p1
-            shf = 0.5 * (top - p0)
-            cosphi = np.dot(c[i], dirs[i]) / np.linalg.norm(c[i])
-            longer[i] = lng / cosphi
-            shift[i] = shf / cosphi
-
-        # Now, do it!
-        translation = np.zeros(3)
-        for i in axes:
-            nowlen = np.sqrt(np.dot(c[i], c[i]))
-            cell = self.cell.copy()
-            cell[i] *= 1 + longer[i] / nowlen
-            self.set_cell(cell)
-            translation += shift[i] * c[i] / nowlen
-        self.positions += translation
-        if self.pbc is None:
-            self.pbc = self.dimension * [True]
-
-    def set_positions(self, positions):
-        """
-        Set positions. This function is for compatability with ASE
-
-        Args:
-            positions (numpy.ndarray/list): Positions in absolute coordinates
-
-        """
-        self.positions = np.array(positions)
-        self._tag_list._length = len(self)
-
-    def get_positions(self):
-        """
-        Get positions. This function is for compatability with ASE
-
-        Returns:
-            numpy.ndarray: Positions in absolute coordinates
-
-        """
-        return self.positions
-
     def select_index(self, el):
         """
         Returns the indices of a given element in the structure
@@ -819,37 +590,6 @@ class Atoms(object):
 
         """
         return self._tag_list.keys()
-
-    def get_pbc(self):
-        """
-        Returns a boolean array of the periodic boundary conditions along the x, y and z axis respectively
-
-        Returns:
-            numpy.ndarray: Boolean array of length 3
-
-        """
-        if not isinstance(self._pbc, np.ndarray):
-            self.set_pbc(self._pbc)
-        return np.array(self._pbc, bool)
-
-    def set_pbc(self, value):
-        """
-        Sets the perioic boundary conditions on all three axis
-
-        Args:
-            value (numpy.ndarray/list): An array of bool type with length 3
-
-        """
-        if value is None:
-            self._pbc = None
-        else:
-            if isinstance(value, np.ndarray):
-                self._pbc = value
-            elif value in (True, False):
-                value = self.dimension * [value]
-            if not (np.shape(np.array(value)) == (self.dimension,)):
-                raise AssertionError()
-            self._pbc = np.array(value, bool)
 
     def convert_element(self, el, pse=None):
         """
@@ -1056,12 +796,14 @@ class Atoms(object):
 
     def get_masses(self):
         """
+        Gets the atomic masses of all atoms in the structure
 
         Returns:
+            numpy.ndarray: Array of masses
 
         """
         el_lst = [el.AtomicMass for el in self.species]
-        return [el_lst[el] for el in self.indices]
+        return np.array([el_lst[el] for el in self.indices])
 
     def get_masses_dof(self):
         """
@@ -1099,36 +841,6 @@ class Atoms(object):
         # with Ang3_to_cm3 = 1e24
         conv_factor = 1.660539040427164
         return conv_factor * np.sum(self.get_masses()) / self.get_volume()
-
-    def get_scaled_positions(self, wrap=True):
-        """
-        Returns the scaled/relative positions
-
-        Returns:
-            numpy.ndarray: The relative positions of the atoms in the supercell
-
-        """
-        pbc = np.array(self.pbc)
-        # check if each side is non-zero even if None values exist in cell
-        if self.cell is None:
-            non_zero_sides = np.array([False, False, False])
-        else:
-            non_zero_sides = np.linalg.norm(np.array(self.cell, dtype=float), axis=1) > 1e-7
-        positions = self.positions.copy()
-        # Only perform the dot product over non zero side (regardless of PBC)
-        if any(non_zero_sides):
-            positions[:, non_zero_sides] = np.einsum(
-                "jk,ij->ik",
-                np.linalg.inv(self.cell[non_zero_sides][:, non_zero_sides]),
-                self.positions[:, non_zero_sides]
-            )
-            # perform the wrapping along the periodic directions only
-            if wrap:
-                positions[:, pbc] = np.mod(positions[:, pbc], 1.0)
-        else:
-            warnings.warn("Scaled positions do not exist for structures without non-zero cell parameters. \n"
-                          "Returning cartesian coordinates")
-        return positions
 
     def get_number_of_atoms(self):
         """
@@ -1855,13 +1567,14 @@ class Atoms(object):
 
     def get_boundary_region(self, dist):
         """
-        get all atoms in the boundary around the supercell which have a distance
+        Get all atoms in the boundary around the supercell which have a distance
         to the supercell boundary of less than dist
 
         Args:
-            dist:
+            dist (float): Distance in relative units
 
         Returns:
+            pyiron.atomistics.structure.atoms.Atoms: The required boundary region
 
         """
         rel_coordinates = self.get_scaled_positions(wrap=False)
@@ -1914,6 +1627,7 @@ class Atoms(object):
             cell=self.cell,
             dimension=len(cell),
             species=self.species,
+            pbc=self.pbc,
         )
 
     def get_neighbors(
@@ -2790,56 +2504,6 @@ class Atoms(object):
             "index": symbol_to_index[el_name[max_index]],
         }
 
-    def extend(self, other):
-        """
-        Extend atoms object by appending atoms from *other*. Copied from ase
-
-        Args:
-            other:
-
-        Returns:
-
-        """
-        if isinstance(other, Atom):
-            other = self.__class__([other])
-        n1 = len(self)
-        n2 = len(other)
-        for name, a1 in self._tag_list.items():
-            a1 = np.array(a1)
-            a = np.zeros((n1 + n2,) + a1.shape[1:], a1.dtype)
-            a[:n1] = a1
-            if name == "masses":
-                a2 = other.get_masses()
-            else:
-                a2 = other.lists.get(name)
-            if a2 is not None:
-                a[n1:] = a2
-            self._lists[name] = a
-        for name, a2 in other.lists.items():
-            if name in self._tag_list.keys():
-                continue
-            a = np.empty((n1 + n2,) + a2.shape[1:], a2.dtype)
-            a[:n1] = a2
-            if name == "masses":
-                a[:n1] = self.get_masses()[:n1]
-            else:
-                a[:n1] = 0
-            self._length = n1 + n2
-        # Take care of the species and index
-        return self
-
-    def append(self, atom):
-        """
-        Append atom to end. Copied from ase
-
-        Args:
-            atom:
-
-        Returns:
-
-        """
-        self.extend(self.__class__([atom]))
-
     def close(self):
         # TODO: implement
         pass
@@ -2857,21 +2521,118 @@ class Atoms(object):
         )
         return self.analyse_ovito_voronoi_volume()
 
-    def __add__(self, other):
+    def get_distance(self, a0, a1, mic=True, vector=False):
+        """
+        Return distance between two atoms.
+        Use mic=True to use the Minimum Image Convention.
+        vector=True gives the distance vector (from a0 to a1).
+
+        Args:
+            a0 (int/numpy.ndarray/list): position or atom ID
+            a1 (int/numpy.ndarray/list): position or atom ID
+            mic (bool): minimum image convention (True if periodic boundary conditions should be considered)
+            vector (bool): True, if instead of distnce the vector connecting the two positions should be returned
+
+        Returns:
+            float: distance or vectors in length unit
+        """
+        from ase.geometry import find_mic
+
+        positions = self.positions
+        if isinstance(a0, list) or isinstance(a0, np.ndarray):
+            if not (len(a0) == 3):
+                raise AssertionError()
+            a0 = np.array(a0)
+        else:
+            a0 = positions[a0]
+        if isinstance(a1, list) or isinstance(a1, np.ndarray):
+            if not (len(a1) == 3):
+                raise AssertionError()
+            a1 = np.array(a1)
+        else:
+            a1 = positions[a1]
+        distance = np.array([a1 - a0])
+        if mic:
+            distance, d_len = find_mic(distance, self.cell, self.pbc)
+        else:
+            d_len = np.array([np.sqrt((distance ** 2).sum())])
+        if vector:
+            return distance[0]
+
+        return d_len[0]
+
+    def get_distances_array(self, a0=None, a1=None, mic=True, vector=False):
+        """
+        Return distance matrix of every position in p1 with every position in p2. If a1 is not set, it is assumed that
+        distances between all positions in a0 are desired. a1 will be set to a0 in this case.
+        if both a0 and a1 are not set, the distances between all atoms in the box are returned
+        Use mic to use the minimum image convention.
+        Learn more about get_distances from the ase website:
+        https://wiki.fysik.dtu.dk/ase/ase/geometry.html#ase.geometry.get_distances
+
+        Args:
+            a0 (numpy.ndarray/list): Nx3 array of positions
+            a1 (numpy.ndarray/list): Nx3 array of positions
+            mic (bool): minimum image convention
+            vector (bool): return vectors instead of distances
+        Returns:
+            numpy.ndarray: NxN if vector=False and NxNx3 if vector=True
+
+        """
+        if a0 is None and a1 is not None:
+            a0 = a1
+            a1 = None
+        if a0 is None:
+            a0 = self.positions
+        a0 = np.array(a0).reshape(-1, 3)
+        if a1 is not None:
+            a1 = np.array(a1).reshape(-1, 3)
+        if mic:
+            vec, dist = ase_get_distances(a0, a1, cell=self.cell, pbc=self.pbc)
+        else:
+            vec, dist = ase_get_distances(a0, a1)
+        if vector:
+            return vec
+        else:
+            return dist
+
+    def extend(self, other):
+        """
+        Extend atoms object by appending atoms from *other*. (Extending the ASE function)
+
+        Args:
+            other (pyiron.atomistics.structure.atoms.Atoms/ase.atoms.Atoms): Structure to append
+
+        Returns:
+            pyiron.atomistics.structure.atoms.Atoms: The extended structure
+
+        """
+        old_indices = self.indices
+        if isinstance(other, Atom):
+            other = self.__class__([other])
+        elif isinstance(other, ASEAtom):
+            other = self.__class__([ase_to_pyiron_atom(other)])
+        if not isinstance(other, Atoms) and isinstance(other, ASEAtoms):
+            warnings.warn("Converting ase structure to pyiron before appending the structure")
+            other = ase_to_pyiron(other)
+
+        new_indices = other.indices
+        super(Atoms, self).extend(other=other)
         if isinstance(other, Atoms):
-            sum_atoms = copy(self)
+            if not np.allclose(self.cell, other.cell):
+                warnings.warn("You are adding structures with different cell shapes. "
+                              "Taking the cell and pbc of the first structure:{}".format(self.cell))
+            if not np.array_equal(self.pbc, other.pbc):
+                warnings.warn("You are adding structures with different periodic boundary conditions. "
+                              "Taking the cell and pbc of the first structure:{}".format(self.cell))
+            sum_atoms = self
+            # sum_atoms = copy(self)
             sum_atoms._tag_list = sum_atoms._tag_list + other._tag_list
             sum_atoms.indices = np.append(sum_atoms.indices, other.indices)
-            sum_atoms.positions = np.append(
-                sum_atoms.positions, other.positions, axis=0
-            )
-
             new_species_lst = copy(sum_atoms.species)
             ind_conv = {}
-            # self_species_lst = [el.Abbreviation for el in self.species]
             for ind_old, el in enumerate(other.species):
                 if el.Abbreviation in sum_atoms._store_elements.keys():
-                    # print ('add:: ', el.Abbreviation, self._store_elements)
                     ind_new = sum_atoms._species_to_index_dict[
                         sum_atoms._store_elements[el.Abbreviation]
                     ]
@@ -2880,20 +2641,17 @@ class Atoms(object):
                     new_species_lst.append(el)
                     sum_atoms._store_elements[el.Abbreviation] = el
                     ind_conv[ind_old] = len(new_species_lst) - 1
-            new_indices = copy(other.indices)
+
             for key, val in ind_conv.items():
                 new_indices[new_indices == key] = val + 1000
             new_indices = np.mod(new_indices, 1000)
-            sum_atoms.indices[len(self.indices) :] = new_indices
+            sum_atoms.indices[len(old_indices):] = new_indices
             sum_atoms.set_species(new_species_lst)
-
             if not len(set(sum_atoms.indices)) == len(sum_atoms.species):
                 raise ValueError("Adding the atom instances went wrong!")
-            return sum_atoms
+        return self
 
-        elif isinstance(other, Atom):
-            other = self.__class__([other])
-            return self + other
+    __iadd__ = extend
 
     def __copy__(self):
         """
@@ -2903,20 +2661,22 @@ class Atoms(object):
             atoms_new: A copy of the object
 
         """
-        atoms_new = Atoms()
+        # Using ASE copy
+        atoms_new = super(Atoms, self).copy()
+        ase_keys = list(ASEAtoms().__dict__.keys())
+        ase_keys.append("_pse")
+        # Only copy the non ASE keys
         for key, val in self.__dict__.items():
-            if key not in ["_pse"]:
-                # print ('copy: ', key)
+            if key not in ase_keys:
                 atoms_new.__dict__[key] = copy(val)
-
         return atoms_new
 
     def __delitem__(self, key):
         if isinstance(key, (int, np.integer)):
             key = [key]
-        new_length = len(self) - len(key)
         key = np.array(key).flatten()
-        self.positions = np.delete(self.positions, key, axis=0)
+        new_length = len(self) - len(key)
+        super(Atoms, self).__delitem__(key)
         self.indices = np.delete(self.indices, key, axis=0)
         del self._tag_list[key]
         self._tag_list._length = new_length
@@ -2934,13 +2694,8 @@ class Atoms(object):
         self.indices = new_indices
 
     def __eq__(self, other):
-        if not (isinstance(other, Atoms)):
-            raise AssertionError()
-        conditions = []
-        for a_1, a_2 in zip(self, other):
-            conditions.append(a_1 == a_2)
-        conditions.append(np.alltrue(self.pbc == other.pbc))
-        return all(conditions)
+        return super(Atoms, self).__eq__(other) and \
+               np.array_equal(self.get_chemical_symbols(), other.get_chemical_symbols())
 
     def __ne__(self, other):
         return not self == other
@@ -2964,9 +2719,10 @@ class Atoms(object):
                 **new_dict
             )
 
-        new_array = copy(self)
-        new_array.positions = self.positions[item]
-
+        new_array = super(Atoms, self).__getitem__(item)
+        new_array.dimension = self.dimension
+        if isinstance(item, tuple):
+            item = list(item)
         new_indices = self.indices[item].copy()
         new_species_indices, new_proper_indices = np.unique(
             new_indices, return_inverse=True
@@ -2989,8 +2745,8 @@ class Atoms(object):
             return self._tag_list._lists[item]
         return object.__getattribute__(self, item)
 
-    def __len__(self):
-        return len(self.indices)
+    # def __len__(self):
+    #     return len(self.indices)
 
     def __repr__(self):
         return self.__str__()
@@ -3008,7 +2764,7 @@ class Atoms(object):
                 out_str += (
                     "    " + str(tag) + ": " + self._tag_list[tag].__str__() + "\n"
                 )
-        if self._cell is not None:
+        if self.cell is not None:
             out_str += "pbc: " + str(self.pbc) + "\n"
             out_str += "cell: \n"
             out_str += str(self.cell) + "\n"
@@ -3133,17 +2889,9 @@ class Atoms(object):
     __mul__ = repeat
 
     def __imul__(self, vec):
-        """
-
-        Args:
-            vec:
-
-        Returns:
-
-        """
         if isinstance(vec, int):
             vec = [vec] * self.dimension
-
+        initial_length = len(self)
         if not hasattr(vec, '__len__'):
             raise ValueError('Box repetition must be an integer or a list/ndarray of integers and not', type(vec))
 
@@ -3159,37 +2907,38 @@ class Atoms(object):
         if not self.dimension == 3:
             raise NotImplementedError()
         mx, my, mz = i_vec
+        # Our position repeat algorithm is faster than ASE (no nested loops)
         nx_lst, ny_lst, nz_lst = np.arange(mx), np.arange(my), np.arange(mz)
-
         positions = self.get_scaled_positions(wrap=False)
-
         lat = np.array(np.meshgrid(nx_lst, ny_lst, nz_lst)).T.reshape(-1, 3)
         lat_new = np.repeat(lat, len(positions), axis=0)
-
         new_positions = np.tile(positions, (len(lat), 1)) + lat_new
-
-        self._length = len(new_positions)
-        self.set_scaled_positions(new_positions / np.array(i_vec))
+        new_positions /= np.array(i_vec)
+        self.set_cell((self.cell.T * np.array(vec)).T, scale_atoms=True)
+        # ASE compatibility
+        for name, a in self.arrays.items():
+            self.arrays[name] = np.tile(a, (np.product(vec),) + (1, ) * (len(a.shape) - 1))
+        self.arrays["positions"] = np.dot(new_positions, self.cell)
         self.indices = np.tile(self.indices, len(lat))
         self._tag_list._length = len(self)
-        # print ('basis_len: ', len(self.positions), len(new_elements))
-
-        # self.cell = (self.cell.T * np.array(vec)).T
-        self.set_cell((self.cell.T * np.array(vec)).T, scale_atoms=True)
         scale = i_vec[0] * i_vec[1] * i_vec[2]
         for tag in self._tag_list.keys():
             self._tag_list[tag] *= scale
-
-        return self  # to make it compatible with ASE
+        # Repeating ASE constraints
+        if self.constraints is not None:
+            self.constraints = [c.repeat(vec, initial_length) for c in self.constraints]
+        return self
 
     @staticmethod
     def convert_formula(elements):
         """
+        Convert a given chemical formula into a list of elements
 
         Args:
-            elements:
+            elements (str): A string of the required chamical formula (eg. H2O)
 
         Returns:
+            list: A list of elements corresponding to the formula
 
         """
         el_list = []
@@ -3221,156 +2970,43 @@ class Atoms(object):
 
         return el_list
 
-    # ASE compatibility
-    def write(self, filename, format=None, **kwargs):
-        """
-        Write atoms object to a recognized file format using ase parsers.
-
-        see ase.io.write for formats.
-        kwargs are passed to ase.io.write.
-        """
-        pyiron_to_ase(self).write(filename=filename, format=format, **kwargs)
-    
-    @staticmethod
-    def get_calculator():
-        return None
-
-    def get_cell(self, complete=False):
-        """Get the three unit cell vectors as a 3x3 ndarray."""
-        if complete:
-            return complete_cell(self._cell)
-        else:
-            return self._cell.copy()
-
-    def get_distance(self, a0, a1, mic=True, vector=False):
-        """
-        Return distance between two atoms.
-
-        Use mic=True to use the Minimum Image Convention.
-        vector=True gives the distance vector (from a0 to a1).
-
-        Args:
-            a0: position or atom ID
-            a1: position or atom ID
-            mic: minimum image convention (True if periodic boundary conditions should be considered)
-            vector: True, if instead of distnce the vector connecting the two positions should be returned
-
-        Returns: distance or vectors in length unit
-
-        """
-        from ase.geometry import find_mic
-
-        positions = self.positions
-        if isinstance(a0, list) or isinstance(a0, np.ndarray):
-            if not (len(a0) == 3):
-                raise AssertionError()
-            a0 = np.array(a0)
-        else:
-            a0 = positions[a0]
-        if isinstance(a1, list) or isinstance(a1, np.ndarray):
-            if not (len(a1) == 3):
-                raise AssertionError()
-            a1 = np.array(a1)
-        else:
-            a1 = positions[a1]
-        distance = np.array([a1 - a0])
-        if mic:
-            distance, d_len = find_mic(distance, self.cell, self.pbc)
-        else:
-            d_len = np.array([np.sqrt((distance ** 2).sum())])
-        if vector:
-            return distance[0]
-
-        return d_len[0]
-
-    def get_distances(self, a0=None, a1=None, mic=True, vector=False):
-        """
-        Return distance matrix of every position in p1 with every position in p2
-
-        Args:
-            a0 (numpy.ndarray/list): Nx3 array of positions
-            a1 (numpy.ndarray/list): Nx3 array of positions
-            mic (bool): minimum image convention
-            vector (bool): return vectors instead of distances
-
-        Returns:
-            numpy.ndarray NxN if vector=False and NxNx3 if vector=True
-
-        if a1 is not set, it is assumed that distances between all positions in a0 are desired. a1 will be set to a0 in this case.
-        if both a0 and a1 are not set, the distances between all atoms in the box are returned
-
-        Use mic to use the minimum image convention.
-
-        Learn more about get_distances from the ase website:
-        https://wiki.fysik.dtu.dk/ase/ase/geometry.html#ase.geometry.get_distances
-        """
-        if a0 is None and a1 is not None:
-            a0 = a1
-            a1 = None
-        if a0 is None:
-            a0 = self.positions
-        a0 = np.array(a0).reshape(-1, 3)
-        if a1 is not None:
-            a1 = np.array(a1).reshape(-1, 3)
-        if mic:
-            vec, dist = get_distances(a0, a1, cell=self.cell, pbc=self.pbc)
-        else:
-            vec, dist = get_distances(a0, a1)
-        if vector:
-            return vec
-        else:
-            return dist
-
-    def get_distance_matrix(self, mic=True, vector=False):
-        """
-        Return distances between all atoms in a matrix. cf. get_distance
-        """
-        warnings.warn(
-            "get_distance_matrix is deprecated. Use get_distances instead",
-            DeprecationWarning,
-        )
-        return self.get_distances(mic=mic, vector=vector)
-
     def get_constraint(self):
         if "selective_dynamics" in self._tag_list._lists.keys():
             from ase.constraints import FixAtoms
 
-            return FixAtoms(
-                indices=np.array(
-                    [
-                        atom_ind
-                        for atom_ind in range(len(self))
-                        if any(self.selective_dynamics[atom_ind])
-                    ]
-                )
-            )
+            return FixAtoms(indices=[atom_ind for atom_ind in
+                                     range(len(self)) if any(self.selective_dynamics[atom_ind])])
         else:
             return None
 
-    def set_constraint(self, constrain):
-        if constrain.todict()["name"] != "FixAtoms":
-            raise ValueError("Only FixAtoms is supported as ASE compatible constraint.")
-        if "selective_dynamics" not in self._tag_list._lists.keys():
-            self.add_tag(selective_dynamics=None)
-        for atom_ind in range(len(self)):
-            if atom_ind in constrain.index:
-                self.selective_dynamics[atom_ind] = [True, True, True]
-            else:
-                self.selective_dynamics[atom_ind] = [False, False, False]
+    def set_constraint(self, constraint=None):
+        super(Atoms, self).set_constraint(constraint)
+        if constraint is not None:
+            if constraint.todict()["name"] != "FixAtoms":
+                raise ValueError("Only FixAtoms is supported as ASE compatible constraint.")
+            if "selective_dynamics" not in self._tag_list._lists.keys():
+                self.add_tag(selective_dynamics=None)
+            for atom_ind in range(len(self)):
+                if atom_ind in constraint.index:
+                    self.selective_dynamics[atom_ind] = [True, True, True]
+                else:
+                    self.selective_dynamics[atom_ind] = [False, False, False]
 
     def apply_strain(self, epsilon, return_box=False):
         """
-            Args:
-                epsilon (float/list/ndarray): epsilon matrix. If a single number is set, the same strain
-                                              is applied in each direction. If a 3-dim vector is set, it
-                                              will be multiplied by a unit matrix.
-                return_box (bool): whether to return a box. If set to True, only the returned box will 
-                                   have the desired strain and the original box will stay unchanged.
+        Apply a given strain on the structure
+
+        Args:
+            epsilon (float/list/ndarray): epsilon matrix. If a single number is set, the same strain
+                                          is applied in each direction. If a 3-dim vector is set, it
+                                          will be multiplied by a unit matrix.
+            return_box (bool): whether to return a box. If set to True, only the returned box will
+                               have the desired strain and the original box will stay unchanged.
         """
         epsilon = np.array([epsilon]).flatten()
         if len(epsilon) == 3 or len(epsilon) == 1:
             epsilon = epsilon*np.eye(3)
-        epsilon.reshape(3,3)
+        epsilon.reshape(3, 3)
         if epsilon.min() < -1.0:
             raise ValueError("Strain value too negative")
         if return_box:
@@ -3378,7 +3014,7 @@ class Atoms(object):
         else:
             structure_copy = self
         cell = structure_copy.cell.copy()
-        cell = np.matmul(epsilon+np.eye(3), cell)
+        cell = np.matmul(epsilon + np.eye(3), cell)
         structure_copy.set_cell(cell, scale_atoms=True)
         if return_box:
             return structure_copy
@@ -3443,13 +3079,14 @@ class Atoms(object):
             else:
                 return np.array([None] * len(self))
 
-    def set_initial_magnetic_moments(self, magmoms):
+    def set_initial_magnetic_moments(self, magmoms=None):
         """
         Set array of initial magnetic moments.
 
         Args:
-            magmoms (numpy.array()):
+            magmoms (numpy.ndarray/list): List of magneric moments
         """
+        # pyiron part
         if magmoms is not None:
             if len(magmoms) != len(self):
                 raise ValueError("magmons can be collinear or non-collinear.")
@@ -3460,24 +3097,14 @@ class Atoms(object):
                 self.add_tag(spin=None)
             for ind, spin in enumerate(magmoms):
                 self.spin[ind] = spin
+        # ASE part
+        if magmoms is None:
+            self.set_array('initial_magmoms', None)
+        else:
+            magmoms = np.asarray(magmoms)
+            self.arrays['initial_magmoms'] = magmoms
 
-    def pop(self, i=-1):
-        """
-        Remove and return atom at index *i* (default last).
-
-        Args:
-            i:
-
-        Returns:
-
-        """
-        atom = self[i]
-        atom.cut_reference_to_atoms()
-        del self[i]
-        return atom
-
-    def rotate(
-        self, vector, angle=None, center=(0, 0, 0), rotate_cell=False, index_list=None
+    def rotate(self, a=0.0, v=None, center=(0, 0, 0), rotate_cell=False, index_list=None
     ):
         """
         Rotate atoms based on a vector and an angle, or two vectors. This function is completely adopted from ASE code
@@ -3485,22 +3112,19 @@ class Atoms(object):
 
         Args:
 
-            rotate_cell:
-            center:
-            vector (list/numpy.ndarray/string):
-                Vector to rotate the atoms around. Vectors can be given as
-                strings: 'x', '-x', 'y', ... .
-
-            angle (float/list) in radians = None:
+            a (float/list) in degrees = None:
                 Angle that the atoms is rotated around the vecor 'v'. If an angle
                 is not specified, the length of 'v' is used as the angle
                 (default). The angle can also be a vector and then 'v' is rotated
                 into 'a'.
 
-            center = [0, 0, 0]:
-                The center is kept fixed under the rotation. Use 'COM' to fix
-                the center of mass, 'COP' to fix the center of positions or
-                'COU' to fix the center of cell.
+            v (list/numpy.ndarray/string):
+                Vector to rotate the atoms around. Vectors can be given as
+                strings: 'x', '-x', 'y', ... .
+
+            center (tuple/list/numpy.ndarray/str): The center is kept fixed under the rotation. Use 'COM' to fix
+                                                the center of mass, 'COP' to fix the center of positions or
+                                                'COU' to fix the center of cell.
 
             rotate_cell = False:
                 If true the cell is also rotated.
@@ -3513,319 +3137,19 @@ class Atoms(object):
         Rotate 90 degrees around the z-axis, so that the x-axis is
         rotated into the y-axis:
 
-        >>> atoms = Atoms('H', [[-0.1, 1.01, -0.5]], cell=[[1, 0, 0], [0, 1, 0], [0, 0, 4]], pbc=[1, 1, 0])
-        >>> a = (22./ 7.) / 2. # pi/2
-        >>> atoms.rotate('z', a)
-        >>> atoms.rotate((0, 0, 1), a)
-        >>> atoms.rotate('-z', -a)
-        >>> atoms.rotate((0, 0, a))
+        >>> atoms = Atoms()
+        >>> atoms.rotate(90, 'z')
+        >>> atoms.rotate(90, (0, 0, 1))
+        >>> atoms.rotate(-90, '-z')
         >>> atoms.rotate('x', 'y')
+        >>> atoms.rotate((1, 0, 0), (0, 1, 0))
         """
-
-        norm = np.linalg.norm
-        vector = string2vector(vector)
-        if angle is None:
-            angle = norm(vector)
-        if isinstance(angle, (float, int)):
-            vector /= norm(vector)
-            c = cos(angle)
-            s = sin(angle)
+        if index_list is None:
+            super(Atoms, self).rotate(a=a, v=v, center=center, rotate_cell=rotate_cell)
         else:
-            v2 = string2vector(angle)
-            vector /= norm(vector)
-            v2 /= norm(v2)
-            c = np.dot(vector, v2)
-            vector = np.cross(vector, v2)
-            s = norm(vector)
-            # In case *v* and *a* are parallel, np.cross(v, v2) vanish
-            # and can't be used as a rotation axis. However, in this
-            # case any rotation axis perpendicular to v2 will do.
-            eps = 1e-7
-            if s < eps:
-                vector = np.cross((0, 0, 1), v2)
-                if norm(vector) < eps:
-                    vector = np.cross((1, 0, 0), v2)
-                if not (norm(vector) >= eps):
-                    raise AssertionError()
-            elif s > 0:
-                vector /= s
-
-        if isinstance(center, str):
-            if center.lower() == "com":
-                center = self.get_center_of_mass()
-            elif center.lower() == "cop":
-                center = np.mean(self.get_positions(), axis=0)
-            elif center.lower() == "cou":
-                center = self.cell.sum(axis=0) / 2
-            else:
-                raise ValueError("Cannot interpret center")
-        else:
-            center = np.array(center)
-
-        if index_list is not None:
-            if not (len(index_list) > 0):
-                raise AssertionError()
-            rotate_list = np.array(index_list)
-        else:
-            rotate_list = np.array(len(self) * [True])
-
-        p = self.positions[rotate_list] - center
-        self.positions[rotate_list] = (
-            c * p
-            - np.cross(p, s * vector)
-            + np.outer(np.dot(p, vector), (1.0 - c) * vector)
-            + center
-        )
-        if rotate_cell:
-            rotcell = self.cell
-            rotcell[:] = (
-                c * rotcell
-                - np.cross(rotcell, s * vector)
-                + np.outer(np.dot(rotcell, vector), (1.0 - c) * vector)
-            )
-            self.set_cell(rotcell)
-
-    def rotate_euler(self, center=(0, 0, 0), phi=0.0, theta=0.0, psi=0.0):
-        """Rotate atoms via Euler angles.
-
-        See e.g http://mathworld.wolfram.com/EulerAngles.html for explanation.
-
-        Parameters:
-
-        center :
-            The point to rotate about. a sequence of length 3 with the
-            coordinates, or 'COM' to select the center of mass, 'COP' to
-            select center of positions or 'COU' to select center of cell.
-        phi :
-            The 1st rotation angle around the z axis (in radian)
-        theta :
-            Rotation around the x axis (in radian)
-        psi :
-            2nd rotation around the z axis (in radian)
-
-        """
-        if isinstance(center, str):
-            if center.lower() == "com":
-                center = self.get_center_of_mass()
-            elif center.lower() == "cop":
-                center = self.get_positions().mean(axis=0)
-            elif center.lower() == "cou":
-                center = self.cell.sum(axis=0) / 2
-            else:
-                raise ValueError("Cannot interpret center")
-        else:
-            center = np.array(center)
-
-        # First move the molecule to the origin In contrast to MATLAB,
-        # numpy broadcasts the smaller array to the larger row-wise,
-        # so there is no need to play with the Kronecker product.
-        if self._is_scaled:
-            rcoords = self.get_scaled_positions(wrap=False) - center
-        else:
-            rcoords = self.positions - center
-
-        # First Euler rotation about z in matrix form
-        d = np.array(
-            ((cos(phi), sin(phi), 0.0), (-sin(phi), cos(phi), 0.0), (0.0, 0.0, 1.0))
-        )
-        # Second Euler rotation about x:
-        c = np.array(
-            (
-                (1.0, 0.0, 0.0),
-                (0.0, cos(theta), sin(theta)),
-                (0.0, -sin(theta), cos(theta)),
-            )
-        )
-        # Third Euler rotation, 2nd rotation about z:
-        b = np.array(
-            ((cos(psi), sin(psi), 0.0), (-sin(psi), cos(psi), 0.0), (0.0, 0.0, 1.0))
-        )
-        # Total Euler rotation
-        a = np.dot(b, np.dot(c, d))
-        # Do the rotation
-        rcoords = np.dot(a, np.transpose(rcoords))
-        # Move back to the rotation point
-        if self._is_scaled:
-            self.set_scaled_positions(np.transpose(rcoords) + center)
-        else:
-            self.positions = np.transpose(rcoords) + center
-
-    @property
-    def scaled_positions(self):
-        warnings.warn(
-            "scaled_positions is deprecated as of vers. 0.2"
-            + " - not guaranteed to work from vers. 0.3 "
-            + "Use get_scaled_positions instead",
-            DeprecationWarning,
-        )
-        return self.get_scaled_positions(wrap=False)
-
-    @scaled_positions.setter
-    def scaled_positions(self, positions):
-        warnings.warn(
-            "scaled_positions is deprecated as of vers. 0.2"
-            + " - not guaranteed to work from vers. 0.3 "
-            + "Use set_scaled_positions instead",
-            DeprecationWarning,
-        )
-        self.set_scaled_positions(positions)
-
-    def set_scaled_positions(self, scaled):
-        """
-        Set positions relative to unit cell.
-
-        Args:
-            scaled (numpy.ndarray/list): The relative coordinates
-
-        """
-        if self.cell is None:
-            raise ValueError("cell has not been set yet")
-        self.positions = np.einsum("jk,ij->ik", self.cell, scaled)
-
-    def set_cell(self, cell, scale_atoms=False):
-        """
-        Set unit cell vectors.
-
-        Parameters:
-
-        cell: 3x3 matrix or length 3 or 6 vector
-            Unit cell.  A 3x3 matrix (the three unit cell vectors) or
-            just three numbers for an orthorhombic cell. Another option is
-            6 numbers, which describes unit cell with lengths of unit cell
-            vectors and with angles between them (in degrees), in following
-            order: [len(a), len(b), len(c), angle(b,c), angle(a,c),
-            angle(a,b)].  First vector will lie in x-direction, second in
-            xy-plane, and the third one in z-positive subspace.
-        scale_atoms: bool
-            Fix atomic positions or move atoms with the unit cell?
-            Default behavior is to *not* move the atoms (scale_atoms=False).
-
-        Examples:
-
-        Two equivalent ways to define an orthorhombic cell:
-
-        >>> atoms = Atoms('He')
-        >>> a, b, c = 7, 7.5, 8
-        >>> atoms.set_cell([a, b, c])
-        >>> atoms.set_cell([(a, 0, 0), (0, b, 0), (0, 0, c)])
-
-        FCC unit cell:
-
-        >>> atoms.set_cell([(0, b, b), (b, 0, b), (b, b, 0)])
-
-        Hexagonal unit cell:
-
-        >>> atoms.set_cell([a, a, c, 90, 90, 120])
-
-        Rhombohedral unit cell:
-
-        >>> alpha = 77
-        >>> atoms.set_cell([a, a, a, alpha, alpha, alpha])
-        """
-
-        cell = np.array(cell, float)
-
-        if cell.shape == (3,):
-            cell = np.diag(cell)
-        elif cell.shape == (6,):
-            cell = cellpar_to_cell(cell)
-        elif cell.shape != (3, 3):
-            raise ValueError(
-                "Cell must be length 3 sequence, length 6 " "sequence or 3x3 matrix!"
-            )
-        if any(self.pbc):
-            cell_pbc = cell[self.pbc][:, self.pbc]
-            if np.linalg.det(cell_pbc) <= 0:
-                raise ValueError("Can't set a singular matrix/non-right hand orientation "
-                                 "as the cell value for a periodic crystal")
-            if scale_atoms:
-                M = np.linalg.solve(self.get_cell(complete=True), complete_cell(cell))
-                self.positions[:] = np.dot(self.positions, M)
-        self._cell = cell
-
-    def set_calculator(self, calc=None):
-        """Attach calculator object."""
-        pass
-     
-    def get_calculator(self):
-        """Get currently attached calculator object."""
-        return None
-        
-    def translate(self, displacement):
-        """
-        Translate atomic positions.
-
-        The displacement argument can be a float, an xyz vector, or an
-        nx3 array (where n is the number of atoms).
-
-        Args:
-            displacement:
-
-        Returns:
-
-        """
-        self.positions += np.array(displacement)
-
-    def wrap(self, center=(0.5, 0.5, 0.5), pbc=None, eps=1e-7):
-        """Wrap positions to unit cell.
-
-        Parameters:
-
-        center: three float
-            The positons in fractional coordinates that the new positions
-            will be nearest possible to.
-        pbc: one or 3 bool
-            For each axis in the unit cell decides whether the positions
-            will be moved along this axis.  By default, the boundary
-            conditions of the Atoms object will be used.
-        eps: float
-            Small number to prevent slightly negative coordinates from beeing
-            wrapped.
-
-        See also the :func:`ase.utils.geometry.wrap_positions` function.
-        Example:
-
-        >>> a = Atoms('H',
-        ...           [[-0.1, 1.01, -0.5]],
-        ...           cell=[[1, 0, 0], [0, 1, 0], [0, 0, 4]],
-        ...           pbc=[1, 1, 0])
-        >>> a.wrap()
-        >>> a.positions
-        array([[ 0.9 ,  0.01, -0.5 ]])
-        """
-
-        from ase.utils.geometry import wrap_positions
-
-        if pbc is None:
-            pbc = self.pbc
-        self.positions = wrap_positions(
-            positions=self.positions,
-            cell=self.cell,
-            pbc=pbc,
-            center=center,
-            eps=eps
-        )
-
-    def write(self, filename, format=None, **kwargs):
-        """
-        Write atoms object to a file.
-
-        see ase.io.write for formats.
-        kwargs are passed to ase.io.write.
-
-        Args:
-            filename:
-            format:
-            **kwargs:
-
-        Returns:
-
-        """
-        from ase.io import write
-
-        atoms = self.copy()
-        atoms.arrays["positions"] = atoms.positions
-        write(filename, atoms, format, **kwargs)
+            dummy_basis = copy(self)
+            dummy_basis.rotate(a=a, v=v, center=center, rotate_cell=rotate_cell)
+            self.positions[index_list] = dummy_basis.positions[index_list]
 
 
 class _CrystalStructure(Atoms):
@@ -4363,11 +3687,13 @@ class CrystalStructure(object):
 
 def ase_to_pyiron(ase_obj):
     """
+    Convert an ase.atoms.Atoms structure object to its equivalent pyiron structure
 
     Args:
-        ase_obj:
+        ase_obj(ase.atoms.Atoms): The ase atoms instance to convert
 
     Returns:
+        pyiron.atomistics.structure.atoms.Atoms: The equivalent pyiron structure
 
     """
     try:

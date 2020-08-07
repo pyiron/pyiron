@@ -17,13 +17,13 @@ import numpy as np
 
 def write_chk(input_dict, working_directory='.'):
     # collect data and initialize Yaff system
-    if 'cell' in input_dict.keys() and input_dict['cell'] is not None:
+    if 'cell' in input_dict.keys() and input_dict['cell'] is not None and np.all(np.array(input_dict['cell']) != np.zeros([3,3])):
         system = System(
-            input_dict['numbers'],
-            input_dict['pos']*angstrom,
-            rvecs=input_dict['cell']*angstrom,
-            ffatypes=input_dict['ffatypes_man'],
-            ffatype_ids=input_dict['ffatype_ids_man']
+          input_dict['numbers'], 
+          input_dict['pos']*angstrom, 
+          rvecs=np.array(input_dict['cell'])*angstrom, 
+          ffatypes=input_dict['ffatypes_man'], 
+          ffatype_ids=input_dict['ffatype_ids_man']
         )
     else:
         system = System(
@@ -166,7 +166,7 @@ class QuickFF(AtomisticGenericJob):
         coords /= angstrom
         if rvecs is not None:
             rvecs /= angstrom
-        self.structure = Atoms(numbers=numbers, positions=coords, cell=rvecs)
+        self.structure = Atoms(numbers=numbers, positions=coords, cell=rvecs, pbc=True)
         self.aiener = energy
         self.aigrad = grad
         self.aihess = hess
@@ -180,10 +180,10 @@ class QuickFF(AtomisticGenericJob):
         the ffatype_level employing the built-in routine in QuickFF.
         """
         numbers = np.array([pt[symbol].number for symbol in self.structure.get_chemical_symbols()])
-        if self.structure.cell is None:
-            system = System(numbers, self.structure.positions.copy()*angstrom)
+        if self.structure.cell is not None and np.all(np.array(self.structure.cell) != np.zeros([3,3])):
+            system = System(numbers, self.structure.positions.copy()*angstrom, rvecs=np.array(self.structure.cell)*angstrom)
         else:
-            system = System(numbers, self.structure.positions.copy()*angstrom, rvecs=self.structure.cell*angstrom)
+            system = System(numbers, self.structure.positions.copy()*angstrom)
         system.detect_bonds()
 
         if not sum([ffatypes is None, ffatype_rules is None, ffatype_level is None]) == 2:

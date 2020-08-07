@@ -27,7 +27,7 @@ from ase.build import (
     )
 import numpy as np
 from pyiron.atomistics.structure.pyironase import publication as publication_ase
-from pyiron.atomistics.structure.atoms import CrystalStructure
+from pyiron.atomistics.structure.atoms import CrystalStructure, ase_to_pyiron
 from pyiron.base.settings.generic import Settings
 import types
 
@@ -46,7 +46,7 @@ s = Settings()
 
 
 def create_surface(
-    element, surface_type, size=(1, 1, 1), vacuum=1.0, center=False, pbc=None, **kwargs
+    element, surface_type, size=(1, 1, 1), vacuum=1.0, center=False, pbc=True, **kwargs
 ):
     """
     Generate a surface based on the ase.build.surface module.
@@ -59,7 +59,7 @@ def create_surface(
         vacuum (float): Length of vacuum layer added to the surface along the z direction
         center (bool): Tells if the surface layers have to be at the center or at one end along the z-direction
         pbc (list/numpy.ndarray): List of booleans specifying the periodic boundary conditions along all three
-                                  directions. If None, it is set to [True, True, True]
+                                  directions.
         **kwargs: Additional, arguments you would normally pass to the structure generator like 'a', 'b',
         'orthogonal' etc.
 
@@ -68,10 +68,9 @@ def create_surface(
 
     """
     # https://gitlab.com/ase/ase/blob/master/ase/lattice/surface.py
-    s.publication_add(publication_ase())
     if pbc is None:
-        pbc = np.array([True, True, True])
-
+        pbc = True
+    s.publication_add(publication_ase())
     for surface_class in [
         add_adsorbate,
         add_vacuum,
@@ -107,12 +106,12 @@ def create_surface(
             z_max = np.max(surface.positions[:, 2])
             surface.cell[2, 2] = z_max + vacuum
         surface.pbc = pbc
-        return surface
+        return ase_to_pyiron(surface)
     else:
         return None
 
 
-def create_hkl_surface(lattice, hkl, layers, vacuum=1.0, center=False):
+def create_hkl_surface(lattice, hkl, layers, vacuum=1.0, center=False, pbc=True):
     """
     Use ase.build.surface to build a surface with surface normal (hkl).
 
@@ -136,7 +135,8 @@ def create_hkl_surface(lattice, hkl, layers, vacuum=1.0, center=False):
     surface.cell[2, 2] = z_max + vacuum
     if center:
         surface.positions += 0.5 * surface.cell[2] - [0, 0, z_max/2]
-    return surface
+    surface.pbc = pbc
+    return ase_to_pyiron(surface)
 
 
 def create_structure(element, bravais_basis, lattice_constant):
@@ -188,7 +188,7 @@ def create_ase_bulk(
         pyiron.atomistics.structure.atoms.Atoms: Required bulk structure
     """
     s.publication_add(publication_ase())
-    return bulk(
+    return ase_to_pyiron(bulk(
         name=name,
         crystalstructure=crystalstructure,
         a=a,
@@ -197,4 +197,4 @@ def create_ase_bulk(
         u=u,
         orthorhombic=orthorhombic,
         cubic=cubic,
-    )
+    ))

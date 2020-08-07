@@ -16,13 +16,13 @@ import matplotlib.pyplot as pp
 
 def write_chk(input_dict, working_directory='.'):
     # collect data and initialize Yaff system
-    if 'cell' in input_dict.keys() and input_dict['cell'] is not None:
+    if 'cell' in input_dict.keys() and input_dict['cell'] is not None and np.all(np.array(input_dict['cell']) != np.zeros([3,3])):
         system = System(
-            input_dict['numbers'],
-            input_dict['pos']*angstrom,
-            ffatypes=input_dict['ffatypes'],
-            ffatype_ids=input_dict['ffatype_ids'],
-            rvecs=input_dict['cell']*angstrom
+          input_dict['numbers'], 
+          input_dict['pos']*angstrom, 
+          ffatypes=input_dict['ffatypes'], 
+          ffatype_ids=input_dict['ffatype_ids'], 
+          rvecs=np.array(input_dict['cell'])*angstrom
         )
     else:
         system = System(
@@ -500,6 +500,7 @@ class Yaff(AtomisticGenericJob):
                 numbers=system.numbers,
                 masses=system.masses,
                 cell=system.cell.rvecs/angstrom,
+                pbc=True,
             )
         else:
             self.structure = Atoms(
@@ -636,10 +637,10 @@ class Yaff(AtomisticGenericJob):
         the ffatype_level employing the built-in routine in QuickFF.
         """
         numbers = np.array([pt[symbol].number for symbol in self.structure.get_chemical_symbols()])
-        if self.structure.cell is None:
-            system = System(numbers, self.structure.positions.copy()*angstrom)
+        if self.structure.cell is not None and np.all(np.array(self.structure.cell) != np.zeros([3,3])):
+            system = System(numbers, self.structure.positions.copy()*angstrom, rvecs=np.array(self.structure.cell)*angstrom)
         else:
-            system = System(numbers, self.structure.positions.copy()*angstrom, rvecs=self.structure.cell*angstrom)
+            system = System(numbers, self.structure.positions.copy()*angstrom)
         system.detect_bonds()
 
         if not sum([ffatypes is None, ffatype_rules is None, ffatype_level is None]) == 2:
@@ -671,7 +672,7 @@ class Yaff(AtomisticGenericJob):
                       'timecon_thermo': self.input['timecon_thermo'], 'timecon_baro': self.input['timecon_baro'],
                       'enhanced': self.enhanced, 'cell': None}
         if self.structure.cell is not None:
-            input_dict['cell'] = self.structure.get_cell()
+             input_dict['cell'] = np.array(self.structure.get_cell())
         write_chk(input_dict, working_directory=self.working_directory)
         write_pars(input_dict=input_dict, working_directory=self.working_directory)
         if self.input['jobtype'] == 'sp':
