@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import numpy as np
-from pyiron.atomistics.job.atomistic import AtomisticGenericJob
+from pyiron.atomistics.job.atomistic import AtomisticGenericJob, MapFunctions as AtomisticMapFunctions
 import warnings
 
 __author__ = "Jan Janssen"
@@ -22,6 +22,7 @@ class GenericDFTJob(AtomisticGenericJob):
     def __init__(self, project, job_name):
         super(GenericDFTJob, self).__init__(project, job_name)
         self._generic_input["fix_symmetry"] = True
+        self.map_functions = MapFunctions()
 
     @property
     def encut(self):
@@ -306,3 +307,20 @@ class GenericDFTJob(AtomisticGenericJob):
         raise NotImplementedError(
             "The set_empty_states function is not implemented for this code."
         )
+
+
+def set_encut(job, parameter):
+    job.set_encut(parameter)
+    return job
+
+
+def set_kpoints(job, parameter):
+    job.set_kpoints(parameter)
+    return job
+
+
+class MapFunctions(AtomisticMapFunctions):
+    def __init__(self):
+        super().__init__()
+        self.set_encut = set_encut
+        self.set_kpoints = set_kpoints
