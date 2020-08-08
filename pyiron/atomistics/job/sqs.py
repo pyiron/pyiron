@@ -23,7 +23,7 @@ def get_sqs_structures(structure, mole_fractions, weights=None, objective=0.0, i
         num_threads = cpu_count()
     iterator = ParallelSqsIterator(structure, mole_fractions, weights, num_threads=num_threads)
     structures, decmp, iter_, cycle_time = iterator.iteration(iterations=iterations, output_structures=output_structures, objective=objective)
-    return [pymatgen_to_pyiron(s) for s in structures]
+    return [pymatgen_to_pyiron(s) for s in structures], decmp, iter_, cycle_time
 
 
 class SQSJob(AtomisticGenericJob):
@@ -50,7 +50,7 @@ class SQSJob(AtomisticGenericJob):
     
     # This function is executed 
     def run_static(self):
-        self._lst_of_struct = get_sqs_structures(
+        self._lst_of_struct, decmp, iterations, cycle_time = get_sqs_structures(
             structure=self.structure, 
             mole_fractions=self.input['mole_fractions'], 
             weights=self.input['weights'], 
@@ -62,6 +62,10 @@ class SQSJob(AtomisticGenericJob):
         for i, structure in enumerate(self._lst_of_struct):
             with self.project_hdf5.open("output/structures/structure_" + str(i)) as h5:
                 structure.to_hdf(h5)
+        with self.project_hdf5.open("output") as h5:
+            h5["decmp"] = decmp
+            h5["cycle_time"] = cycle_time
+            h5["iterations"] = iterations
         self.status.finished = True
         self.project.db.item_update(self._runtime(), self.job_id)
         
