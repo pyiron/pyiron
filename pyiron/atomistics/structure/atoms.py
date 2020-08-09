@@ -17,8 +17,7 @@ from pyiron.atomistics.structure.atom import Atom, ase_to_pyiron as ase_to_pyiro
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
 from pyiron.atomistics.structure.periodic_table import (
     PeriodicTable,
-    ChemicalElement,
-    ElementColorDictionary,
+    ChemicalElement
 )
 from pyiron.base.settings.generic import Settings
 from scipy.spatial import cKDTree, Voronoi
