@@ -4,10 +4,7 @@
 
 from __future__ import print_function, unicode_literals
 import numpy as np
-import os
-from pyiron.base.settings.generic import Settings
 from mendeleev import element, get_table
-import sys
 import pandas
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Martin Boeckmann"
@@ -21,7 +18,6 @@ __email__ = "surendralal@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
 
-s = Settings()
 pandas.options.mode.chained_assignment = None
 
 
