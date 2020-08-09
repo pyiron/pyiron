@@ -56,7 +56,7 @@ class ChemicalElement(object):
             'Density': 'density',
             'DiscoveryYear': 'discovery_year',
             'ElectronAffinity': 'electron_affinity',
-            'Electronegativity': 'electronegativity'
+            'Electronegativity': 'electronegativity',
             'Group': 'group_id',
             'Name': 'name',
             'Period': 'period',
