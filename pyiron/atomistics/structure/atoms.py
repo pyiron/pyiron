@@ -105,7 +105,6 @@ class Atoms(ASEAtoms):
 
         self._store_elements = dict()
         self._species_to_index_dict = None
-        self.colorLut = ElementColorDictionary().to_lut()
         self._is_scaled = False
 
         self._species = list()
