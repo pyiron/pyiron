@@ -6,7 +6,7 @@ from __future__ import print_function, unicode_literals
 import numpy as np
 import os
 from pyiron.base.settings.generic import Settings
-from mendeleev import element
+from mendeleev import element, get_table
 import sys
 import pandas
 
@@ -46,19 +46,24 @@ class ChemicalElement(object):
         elif len(self.sub) > 0:
             self._init_mendeleev(self.sub.Abbreviation)
 
-        self._mendeleev_translation_dict = {'AtomicNumber': 'atomic_number',
-                                            'AtomicRadius': 'covalent_radius_cordero',
-                                            'AtomicMass': 'mass',
-                                            'CovalentRadius': 'covalent_radius',
-                                            'DiscoveryYear': 'discovery_year',
-                                            'Group': 'group_id',
-                                            'Name': 'name',
-                                            'Period': 'period',
-                                            'StandardName': 'name',
-                                            'VanDerWaalsRadius': 'vdw_radius',
-                                            'MeltingPoint': 'melting_point',
-                                            'ElectronAffinity': 'electron_affinity'
-                                            }
+        self._mendeleev_translation_dict = {
+            'AtomicNumber': 'atomic_number',
+            'AtomicRadius': 'covalent_radius_cordero',
+            'AtomicMass': 'mass',
+            'Color':, 'cpk_color',
+            'CovalentRadius': 'covalent_radius',
+            'CrystalStructure': 'lattice_structure',
+            'Density': 'density',
+            'DiscoveryYear': 'discovery_year',
+            'ElectronAffinity': 'electron_affinity',
+            'Electronegativity': 'electronegativity'
+            'Group': 'group_id',
+            'Name': 'name',
+            'Period': 'period',
+            'StandardName': 'name',
+            'VanDerWaalsRadius': 'vdw_radius',
+            'MeltingPoint': 'melting_point'
+        }
         self.el = None
 
     def _init_mendeleev(self, element_str):
@@ -189,13 +194,25 @@ class PeriodicTable(object):
         Args:
             file_name (str): Possibility to choose an source hdf5 file
         """
-        self.dataframe = self._get_periodic_table_df(file_name)
-        if "Abbreviation" not in self.dataframe.columns.values:
-            self.dataframe["Abbreviation"] = None
-        if not all(self.dataframe["Abbreviation"].values):
-            for item in self.dataframe.index.values:
-                if self.dataframe["Abbreviation"][item] is None:
-                    self.dataframe["Abbreviation"][item] = item
+        ptable = get_table('elements')
+        df = pandas.DataFrame({
+            "AtomicNumber": ptable.atomic_number.values,
+            "AtomicRadius": ptable.atomic_radius.values,
+            "AtomicMass": ptable.atomic_weight.values, 
+            "Color": ptable.cpk_color.values,
+            "CovalentRadius": ptable.covalent_radius_bragg.values, 
+            "CrystalStructure": ptable.lattice_structure.values, 
+            "Density": ptable.density.values, 
+            "DiscoveryYear": ptable.discovery_year.values, 
+            "ElectronAffinity": ptable.electron_affinity.values, 
+            "Group": ptable.group_id.values, 
+            "Name": ptable.name.str.lower().values, 
+            "Period": ptable.period.values,
+            "StandardName": ptable.name.values, 
+            "VanDerWaalsRadius": ptable.vdw_radius.values, 
+            "MeltingPoint": ptable.melting_point.values,
+        })
+        self.dataframe = df.set_index(ptable.symbol.values)
         self._parent_element = None
         self.el = None
 
@@ -349,49 +366,6 @@ class PeriodicTable(object):
         if use_parent_potential:
             self._parent_element = parent_element
         return self.element(new_element)
-
-    @staticmethod
-    def _get_periodic_table_df(file_name):
-        """
-
-        Args:
-            file_name:
-
-        Returns:
-
-        """
-        if not file_name:
-            for resource_path in s.resource_paths:
-                if os.path.exists(os.path.join(resource_path, "atomistics")):
-                    resource_path = os.path.join(resource_path, "atomistics")
-                for path, folder_lst, file_lst in os.walk(resource_path):
-                    for periodic_table_file_name in {"periodic_table.csv"}:
-                        if (
-                            periodic_table_file_name in file_lst
-                            and periodic_table_file_name.endswith(".csv")
-                        ):
-                            return pandas.read_csv(
-                                os.path.join(path, periodic_table_file_name),
-                                index_col=0,
-                            )
-                        elif (
-                            periodic_table_file_name in file_lst
-                            and periodic_table_file_name.endswith(".h5")
-                        ):
-                            return pandas.read_hdf(
-                                os.path.join(path, periodic_table_file_name), mode="r"
-                            )
-            raise ValueError("Was not able to locate a periodic table. ")
-        else:
-            if file_name.endswith(".h5"):
-                return pandas.read_hdf(file_name, mode="r")
-            elif file_name.endswith(".csv"):
-                return pandas.read_csv(file_name, index_col=0)
-            raise TypeError(
-                "PeriodicTable file format not recognised: "
-                + file_name
-                + " supported file formats are csv, h5."
-            )
 
 
 class ElementColorDictionary(object):
