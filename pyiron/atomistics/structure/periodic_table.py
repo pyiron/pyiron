@@ -43,6 +43,7 @@ class ChemicalElement(object):
             self._init_mendeleev(self.sub.Abbreviation)
 
         self._mendeleev_translation_dict = {
+            'Abbreviation': 'symbol',
             'AtomicNumber': 'atomic_number',
             'AtomicRadius': 'covalent_radius_cordero',
             'AtomicMass': 'mass',
@@ -192,6 +193,7 @@ class PeriodicTable(object):
         """
         ptable = get_table('elements')
         df = pandas.DataFrame({
+            "Abbreviation": ptable.symbol.values,
             "AtomicNumber": ptable.atomic_number.values,
             "AtomicRadius": ptable.atomic_radius.values,
             "AtomicMass": ptable.atomic_weight.values, 
