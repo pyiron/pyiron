@@ -50,7 +50,7 @@ class ChemicalElement(object):
             'AtomicNumber': 'atomic_number',
             'AtomicRadius': 'covalent_radius_cordero',
             'AtomicMass': 'mass',
-            'Color':, 'cpk_color',
+            'Color': 'cpk_color',
             'CovalentRadius': 'covalent_radius',
             'CrystalStructure': 'lattice_structure',
             'Density': 'density',
