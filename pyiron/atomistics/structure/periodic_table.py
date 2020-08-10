@@ -6,6 +6,8 @@ from __future__ import print_function, unicode_literals
 import numpy as np
 from mendeleev import element, get_table
 import pandas
+from six import with_metaclass
+from pyiron.base.job.jobtype import Singleton
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Martin Boeckmann"
 __copyright__ = (
@@ -179,7 +181,7 @@ class ChemicalElement(object):
                         self.sub["tags"] = tag_dic
 
 
-class PeriodicTable(object):
+class PeriodicTable(with_metaclass(Singleton)):
     """
     An Object which stores an elementary table which can be modified for the current session
     """
