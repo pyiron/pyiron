@@ -86,7 +86,7 @@ class ChemicalElement(object):
             return all(compare_dict(dict1=self.sub.to_dict(), dict2=other.sub.to_dict()))
         elif isinstance(other, (np.ndarray, list)):
             conditions = [
-                compare_dict(dict1=self.sub.to_dict(), dict2=sp.sub.to_dict()) 
+                compare_dict(dict1=self.sub.to_dict(), dict2=sp.sub.to_dict())
                 for sp in other
             ]
             return any(conditions)
@@ -198,18 +198,18 @@ class PeriodicTable(object):
             "Abbreviation": ptable.symbol.values,
             "AtomicNumber": ptable.atomic_number.values,
             "AtomicRadius": ptable.atomic_radius.values,
-            "AtomicMass": ptable.atomic_weight.values, 
+            "AtomicMass": ptable.atomic_weight.values,
             "Color": ptable.cpk_color.values,
-            "CovalentRadius": ptable.covalent_radius_bragg.values, 
-            "CrystalStructure": ptable.lattice_structure.values, 
-            "Density": ptable.density.values, 
-            "DiscoveryYear": ptable.discovery_year.values, 
-            "ElectronAffinity": ptable.electron_affinity.values, 
-            "Group": ptable.group_id.values, 
-            "Name": ptable.name.str.lower().values, 
+            "CovalentRadius": ptable.covalent_radius_bragg.values,
+            "CrystalStructure": ptable.lattice_structure.values,
+            "Density": ptable.density.values,
+            "DiscoveryYear": ptable.discovery_year.values,
+            "ElectronAffinity": ptable.electron_affinity.values,
+            "Group": ptable.group_id.values,
+            "Name": ptable.name.str.lower().values,
             "Period": ptable.period.values,
-            "StandardName": ptable.name.values, 
-            "VanDerWaalsRadius": ptable.vdw_radius.values, 
+            "StandardName": ptable.name.values,
+            "VanDerWaalsRadius": ptable.vdw_radius.values,
             "MeltingPoint": ptable.melting_point.values,
         })
         self.dataframe = df.set_index(ptable.symbol.values)
