@@ -181,17 +181,8 @@ class ChemicalElement(object):
                         self.sub["tags"] = tag_dic
 
 
-class PeriodicTable(with_metaclass(Singleton)):
-    """
-    An Object which stores an elementary table which can be modified for the current session
-    """
-
-    def __init__(self, file_name=None):  # PSE_dat_file = None):
-        """
-
-        Args:
-            file_name (str): Possibility to choose an source hdf5 file
-        """
+class MendeleevTable(with_metaclass(Singleton)):
+    def __init__(self):
         ptable = get_table('elements')
         df = pandas.DataFrame({
             "Abbreviation": ptable.symbol.values,
@@ -212,6 +203,20 @@ class PeriodicTable(with_metaclass(Singleton)):
             "MeltingPoint": ptable.melting_point.values,
         })
         self.dataframe = df.set_index(ptable.symbol.values)
+
+
+class PeriodicTable(object):
+    """
+    An Object which stores an elementary table which can be modified for the current session
+    """
+
+    def __init__(self, file_name=None):  # PSE_dat_file = None):
+        """
+
+        Args:
+            file_name (str): Possibility to choose an source hdf5 file
+        """
+        self.dataframe = MendeleevTable().dataframe
         self._parent_element = None
         self.el = None
 
