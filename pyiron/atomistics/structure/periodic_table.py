@@ -6,8 +6,6 @@ from __future__ import print_function, unicode_literals
 import numpy as np
 from mendeleev import element, get_table
 import pandas
-from six import with_metaclass
-from pyiron.base.job.jobtype import Singleton
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Martin Boeckmann"
 __copyright__ = (
@@ -181,8 +179,17 @@ class ChemicalElement(object):
                         self.sub["tags"] = tag_dic
 
 
-class MendeleevTable(with_metaclass(Singleton)):
-    def __init__(self):
+class PeriodicTable(object):
+    """
+    An Object which stores an elementary table which can be modified for the current session
+    """
+
+    def __init__(self, file_name=None):  # PSE_dat_file = None):
+        """
+
+        Args:
+            file_name (str): Possibility to choose an source hdf5 file
+        """
         ptable = get_table('elements')
         df = pandas.DataFrame({
             "Abbreviation": ptable.symbol.values,
@@ -203,20 +210,6 @@ class MendeleevTable(with_metaclass(Singleton)):
             "MeltingPoint": ptable.melting_point.values,
         })
         self.dataframe = df.set_index(ptable.symbol.values)
-
-
-class PeriodicTable(object):
-    """
-    An Object which stores an elementary table which can be modified for the current session
-    """
-
-    def __init__(self, file_name=None):  # PSE_dat_file = None):
-        """
-
-        Args:
-            file_name (str): Possibility to choose an source hdf5 file
-        """
-        self.dataframe = MendeleevTable().dataframe
         self._parent_element = None
         self.el = None
 
