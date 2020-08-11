@@ -40,8 +40,8 @@ matrix:
         - ./.ci_support/travis_setup_pyiron.sh ${MINICONDA} ${PYTHONVER}
         - conda install -y -c conda-forge pytest
         - git clone https://gitlab.com/ase/ase.git
-        - export PYTHONPATH="$HOME/ase:$PYTHONPATH"
       script:
+        - export PYTHONPATH="$HOME/ase:$PYTHONPATH"
         - python ./.ci_support/ase_test.py || travis_terminate 1;
 
 #    - name: notebook_linux_3_7
