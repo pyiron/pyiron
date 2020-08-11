@@ -9,4 +9,4 @@ test_directory = "/".join(ase.__file__.split("/")[0:-1]) + "/test/cell"
 
 sys.modules["ase.atom"] = atom
 sys.modules["ase.atoms"] = atoms
-pytest.main(test_directory)
+pytest.main([test_directory])
