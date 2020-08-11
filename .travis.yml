@@ -36,6 +36,7 @@ matrix:
       language: python
       env: MINICONDA="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" PYTHONVER="3.7"
       install:
+        - conda install -y -c conda-forge pytest
         - export PATH="$HOME/miniconda/bin:$PATH"
         - ./.ci_support/travis_setup_pyiron.sh ${MINICONDA} ${PYTHONVER}
         - git clone https://gitlab.com/ase/ase.git
