@@ -1,3 +1,7 @@
+# coding: utf-8
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
+
 from multiprocessing import cpu_count
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 from pyiron.base.generic.parameters import GenericParameters
@@ -8,6 +12,17 @@ try:
     from sqsgenerator.core.sqs import ParallelSqsIterator
 except ImportError:
     pass
+
+__author__ = "Jan Janssen"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
+__version__ = "0.1"
+__maintainer__ = "Jan Janssen"
+__email__ = "janssen@mpie.de"
+__status__ = "development"
+__date__ = "Aug 14, 2020"
 
 
 def pyiron_to_pymatgen(structure):
