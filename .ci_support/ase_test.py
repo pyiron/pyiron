@@ -9,4 +9,6 @@ test_directory = "/".join(ase.__file__.split("/")[0:-1]) + "/test/"
 
 sys.modules["ase.atom"] = atom
 sys.modules["ase.atoms"] = atoms
-pytest.main([test_directory])
+out = pytest.main([test_directory])
+
+sys.exit(out.value)
