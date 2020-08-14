@@ -38,11 +38,8 @@ matrix:
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
         - ./.ci_support/travis_setup_pyiron.sh ${MINICONDA} ${PYTHONVER}
-        - conda install -y -c conda-forge pytest
-        - git clone https://gitlab.com/ase/ase.git
-        - printf "[DEFAULT]\nTOP_LEVEL_DIRS = ${HOME}\nRESOURCE_PATHS =$HOME/miniconda/share/pyiron" > ${HOME}/.pyiron
+        - ./.ci_support/travis_setup_ase_tests.sh
       script:
-        - export PYTHONPATH="/home/travis/build/pyiron/pyiron/ase:$PYTHONPATH"
         - python ./.ci_support/ase_test.py || travis_terminate 1;
 
 #    - name: notebook_linux_3_7
