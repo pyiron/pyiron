@@ -149,10 +149,9 @@ class Atoms(ASEAtoms):
                     elif isinstance(elements[0], Atom):
                         el_object_list = [el.element for el in elements]
                         positions = [el.position for el in elements]
-                    elif isinstance(elements, np.ndarray): 
+                    elif isinstance(elements, np.ndarray):
                         if elements.dtype in [int, np.integer]:
                             el_object_list = self.numbers_to_elements(elements)
-
                     else:
                         raise ValueError(
                             "Unknown static type for element in list: "
