@@ -79,7 +79,7 @@ class ChemicalElement(object):
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
-            return all(self.sub.to_dict()==other.sub.to_dict())
+            return self.sub.to_dict()==other.sub.to_dict()
         elif isinstance(other, (np.ndarray, list)):
             conditions = [self.sub.to_dict()==sp.sub.to_dict()
                 for sp in other
