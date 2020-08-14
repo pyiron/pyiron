@@ -46,19 +46,24 @@ class ChemicalElement(object):
         elif len(self.sub) > 0:
             self._init_mendeleev(self.sub.Abbreviation)
 
-        self._mendeleev_translation_dict = {'AtomicNumber': 'atomic_number',
-                                            'AtomicRadius': 'covalent_radius_cordero',
-                                            'AtomicMass': 'mass',
-                                            'CovalentRadius': 'covalent_radius',
-                                            'DiscoveryYear': 'discovery_year',
-                                            'Group': 'group_id',
-                                            'Name': 'name',
-                                            'Period': 'period',
-                                            'StandardName': 'name',
-                                            'VanDerWaalsRadius': 'vdw_radius',
-                                            'MeltingPoint': 'melting_point',
-                                            'ElectronAffinity': 'electron_affinity'
-                                            }
+        self._mendeleev_translation_dict = {
+            'AtomicNumber': 'atomic_number',
+            'AtomicRadius': 'covalent_radius_cordero',
+            'AtomicMass': 'mass',
+            'Color': 'cpk_color',
+            'CovalentRadius': 'covalent_radius',
+            'CrystalStructure': 'lattice_structure',
+            'Density': 'density',
+            'DiscoveryYear': 'discovery_year',
+            'ElectronAffinity': 'electron_affinity',
+            'Electronegativity': 'electronegativity',
+            'Group': 'group_id',
+            'Name': 'name',
+            'Period': 'period',
+            'StandardName': 'name',
+            'VanDerWaalsRadius': 'vdw_radius',
+            'MeltingPoint': 'melting_point'
+        }
         self.el = None
 
     def _init_mendeleev(self, element_str):
