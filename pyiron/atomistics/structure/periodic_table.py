@@ -4,10 +4,7 @@
 
 from __future__ import print_function, unicode_literals
 import numpy as np
-import os
-from pyiron.base.settings.generic import Settings
-from mendeleev import element
-import sys
+from mendeleev import element, get_table
 import pandas
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Martin Boeckmann"
@@ -21,7 +18,6 @@ __email__ = "surendralal@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
 
-s = Settings()
 pandas.options.mode.chained_assignment = None
 
 
@@ -83,13 +79,11 @@ class ChemicalElement(object):
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
-            conditions = list()
-            conditions.append(self.sub.to_dict() == other.sub.to_dict())
-            return all(conditions)
+            return self.sub.to_dict()==other.sub.to_dict()
         elif isinstance(other, (np.ndarray, list)):
-            conditions = list()
-            for sp in other:
-                conditions.append(self.sub.to_dict() == sp.sub.to_dict())
+            conditions = [self.sub.to_dict()==sp.sub.to_dict()
+                for sp in other
+            ]
             return any(conditions)
 
     def __ne__(self, other):
@@ -194,13 +188,26 @@ class PeriodicTable(object):
         Args:
             file_name (str): Possibility to choose an source hdf5 file
         """
-        self.dataframe = self._get_periodic_table_df(file_name)
-        if "Abbreviation" not in self.dataframe.columns.values:
-            self.dataframe["Abbreviation"] = None
-        if not all(self.dataframe["Abbreviation"].values):
-            for item in self.dataframe.index.values:
-                if self.dataframe["Abbreviation"][item] is None:
-                    self.dataframe["Abbreviation"][item] = item
+        ptable = get_table('elements')
+        df = pandas.DataFrame({
+            "Abbreviation": ptable.symbol.values,
+            "AtomicNumber": ptable.atomic_number.values,
+            "AtomicRadius": ptable.atomic_radius.values,
+            "AtomicMass": ptable.atomic_weight.values,
+            "Color": ptable.cpk_color.values,
+            "CovalentRadius": ptable.covalent_radius_bragg.values,
+            "CrystalStructure": ptable.lattice_structure.values,
+            "Density": ptable.density.values,
+            "DiscoveryYear": ptable.discovery_year.values,
+            "ElectronAffinity": ptable.electron_affinity.values,
+            "Group": ptable.group_id.values,
+            "Name": ptable.name.str.lower().values,
+            "Period": ptable.period.values,
+            "StandardName": ptable.name.values,
+            "VanDerWaalsRadius": ptable.vdw_radius.values,
+            "MeltingPoint": ptable.melting_point.values,
+        })
+        self.dataframe = df.set_index(ptable.symbol.values)
         self._parent_element = None
         self.el = None
 
