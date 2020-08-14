@@ -349,7 +349,7 @@ class PyironTable(object):
                 skip_table_update = True
         else:
             job_update_lst = [
-                self._project.inspect(job_id) 
+                self._project.inspect(job_id)
                 for job_id in self._get_filtered_job_ids_from_project()
             ]
             job_update_lst = [
@@ -652,6 +652,15 @@ class TableJob(GenericJob):
         else:
             raise TypeError()
 
+    @staticmethod
+    def convert_numpy_to_list(table_dict):
+        for k,v in table_dict.items():
+            for k1,v1 in v.items():
+                if isinstance(v1,np.ndarray):
+                    v[k1] = v1.tolist()
+        return table_dict
+
+
     def to_hdf(self, hdf=None, group_name=None):
         """
         Store pyiron table job in HDF5
@@ -694,7 +703,8 @@ class TableJob(GenericJob):
                         hdf5_input["db_filter"] = self.pyiron_table._db_filter_function_str
         if len(self.pyiron_table._df) != 0:
             with self.project_hdf5.open("output") as hdf5_output:
-                hdf5_output["table"] = json.dumps(self.pyiron_table._df.to_dict())
+                table_dict = self.convert_numpy_to_list(self.pyiron_table._df.to_dict())
+                hdf5_output["table"] = json.dumps(table_dict)
 
     def from_hdf(self, hdf=None, group_name=None):
         """
@@ -777,7 +787,8 @@ class TableJob(GenericJob):
             os.path.join(self.working_directory, "pyirontable.csv"), index=False
         )
         with self.project_hdf5.open("output") as hdf5_output:
-            hdf5_output["table"] = json.dumps(self.pyiron_table._df.to_dict())
+            table_dict = self.convert_numpy_to_list(self.pyiron_table._df.to_dict())
+            hdf5_output["table"] = json.dumps(table_dict)
         self.project.db.item_update(self._runtime(), self.job_id)
 
     def write_input(self):
