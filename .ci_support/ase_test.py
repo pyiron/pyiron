@@ -5,7 +5,7 @@ import pytest
 
 import ase
 
-test_directory = "/".join(ase.__file__.split("/")[0:-1]) + "/test/cell"
+test_directory = "/".join(ase.__file__.split("/")[0:-1]) + "/test/"
 
 sys.modules["ase.atom"] = atom
 sys.modules["ase.atoms"] = atoms
