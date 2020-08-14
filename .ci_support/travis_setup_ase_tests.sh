@@ -9,3 +9,4 @@ printf "[DEFAULT]\nTOP_LEVEL_DIRS = ${HOME}\nRESOURCE_PATHS =$HOME/miniconda/sha
 # Downloading ase and overwriting PYTHONPATH
 git clone https://gitlab.com/ase/ase.git
 export PYTHONPATH="/home/travis/build/pyiron/pyiron/ase:$PYTHONPATH"
+
