@@ -142,7 +142,7 @@ class Atoms(ASEAtoms):
                 else:
                     if isinstance(elements[0], (list, tuple, np.ndarray)):
                         elements = np.array(elements).flatten()
-                    if isinstance(elements[0], string_types):
+                    elif isinstance(elements[0], string_types):
                         element_list = elements
                     elif isinstance(elements[0], ChemicalElement):
                         el_object_list = elements
