@@ -84,7 +84,7 @@ class ChemicalElement(object):
             conditions = [self.sub.to_dict()==sp.sub.to_dict()
                 for sp in other
             ]
-            return all(conditions)
+            return any(conditions)
 
     def __ne__(self, other):
         return not self.__eq__(other)
