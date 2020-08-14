@@ -142,15 +142,17 @@ class Atoms(ASEAtoms):
                 else:
                     if isinstance(elements[0], (list, tuple, np.ndarray)):
                         elements = np.array(elements).flatten()
-                    elif isinstance(elements[0], string_types):
+                    if isinstance(elements[0], string_types):
                         element_list = elements
                     elif isinstance(elements[0], ChemicalElement):
                         el_object_list = elements
                     elif isinstance(elements[0], Atom):
                         el_object_list = [el.element for el in elements]
                         positions = [el.position for el in elements]
-                    elif elements.dtype in [int, np.integer]:
-                        el_object_list = self.numbers_to_elements(elements)
+                    elif ininstance(elements, np.ndarray): 
+                        if elements.dtype in [int, np.integer]:
+                            el_object_list = self.numbers_to_elements(elements)
+
                     else:
                         raise ValueError(
                             "Unknown static type for element in list: "
