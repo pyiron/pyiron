@@ -21,10 +21,6 @@ __date__ = "Sep 1, 2017"
 pandas.options.mode.chained_assignment = None
 
 
-def compare_dict(dict1, dict2):
-    return [True if k in dict2.keys() and dict1[k] == dict2[k] else False for k in dict1.keys()]
-
-
 class ChemicalElement(object):
     """
     An Object which contains the element specific parameters
@@ -83,13 +79,12 @@ class ChemicalElement(object):
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
-            return all(compare_dict(dict1=self.sub.to_dict(), dict2=other.sub.to_dict()))
+            return all(self.sub.to_dict()==other.sub.to_dict())
         elif isinstance(other, (np.ndarray, list)):
-            conditions = [
-                compare_dict(dict1=self.sub.to_dict(), dict2=sp.sub.to_dict())
+            conditions = [self.sub.to_dict()==sp.sub.to_dict()
                 for sp in other
             ]
-            return any(conditions)
+            return all(conditions)
 
     def __ne__(self, other):
         return not self.__eq__(other)
