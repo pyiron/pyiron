@@ -11,3 +11,5 @@ dependencies:
   - sphinxdft-data
   - iprpy-data
   - pyiron-data
+  - pymatgen
+  - sqsgenerator
