@@ -2,8 +2,12 @@ from multiprocessing import cpu_count
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 from pyiron.base.generic.parameters import GenericParameters
 from pyiron.atomistics.structure.atoms import Atoms, ase_to_pyiron, pyiron_to_ase
-from pymatgen.io.ase import AseAtomsAdaptor
-from sqsgenerator.core.sqs import ParallelSqsIterator
+
+try:
+    from pymatgen.io.ase import AseAtomsAdaptor
+    from sqsgenerator.core.sqs import ParallelSqsIterator
+except ImportError:
+    pass
 
 
 def pyiron_to_pymatgen(structure):
