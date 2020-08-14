@@ -50,6 +50,7 @@ JOB_CLASS_DICT = {
     "Sphinx": "pyiron.sphinx.sphinx",
     "StructureContainer": "pyiron.atomistics.job.structurecontainer",
     "StructureListMaster": "pyiron.atomistics.master.structure",
+    "SQSJob": "pyiron.atomistics.job.sqs",
     "SxDynMat": "pyiron.thermodynamics.sxphonons",
     "SxExtOptInteractive": "pyiron.interactive.sxextoptint",
     "SxHarmPotTst": "pyiron.thermodynamics.sxphonons",
