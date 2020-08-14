@@ -683,6 +683,8 @@ class ParallelMaster(GenericMaster):
                 self.server.run_mode.interactive and job.server.run_mode.interactive
             ):
                 self._run_if_master_modal_child_modal(job)
+            elif self.server.run_mode.non_modal and job.server.run_mode.interactive:
+                self.run_if_interactive()
             elif self.server.run_mode.modal and job.server.run_mode.non_modal:
                 self._run_if_master_modal_child_non_modal(job)
             else:
