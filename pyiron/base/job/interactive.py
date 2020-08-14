@@ -118,7 +118,7 @@ class InteractiveBase(GenericJob):
         super(InteractiveBase, self).__init__(project, job_name)
         self._interactive_library = None
         self._interactive_write_input_files = False
-        self._interactive_flush_frequency = 1
+        self._interactive_flush_frequency = 10000
         self._interactive_write_frequency = 1
         self.interactive_cache = {}
 
