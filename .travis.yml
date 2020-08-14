@@ -42,7 +42,7 @@ matrix:
         - git clone https://gitlab.com/ase/ase.git
       script:
         - export PYTHONPATH="/home/travis/build/pyiron/pyiron/ase:$PYTHONPATH"
-        - python ./.ci_support/ase_test.py
+        - python ./.ci_support/ase_test.py || travis_terminate 1;
 
 #    - name: notebook_linux_3_7
 #      os: linux
