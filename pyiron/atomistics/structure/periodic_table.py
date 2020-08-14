@@ -361,3 +361,46 @@ class PeriodicTable(object):
         if use_parent_potential:
             self._parent_element = parent_element
         return self.element(new_element)
+
+    @staticmethod
+    def _get_periodic_table_df(file_name):
+        """
+
+        Args:
+            file_name:
+
+        Returns:
+
+        """
+        if not file_name:
+            for resource_path in s.resource_paths:
+                if os.path.exists(os.path.join(resource_path, "atomistics")):
+                    resource_path = os.path.join(resource_path, "atomistics")
+                for path, folder_lst, file_lst in os.walk(resource_path):
+                    for periodic_table_file_name in {"periodic_table.csv"}:
+                        if (
+                            periodic_table_file_name in file_lst
+                            and periodic_table_file_name.endswith(".csv")
+                        ):
+                            return pandas.read_csv(
+                                os.path.join(path, periodic_table_file_name),
+                                index_col=0,
+                            )
+                        elif (
+                            periodic_table_file_name in file_lst
+                            and periodic_table_file_name.endswith(".h5")
+                        ):
+                            return pandas.read_hdf(
+                                os.path.join(path, periodic_table_file_name), mode="r"
+                            )
+            raise ValueError("Was not able to locate a periodic table. ")
+        else:
+            if file_name.endswith(".h5"):
+                return pandas.read_hdf(file_name, mode="r")
+            elif file_name.endswith(".csv"):
+                return pandas.read_csv(file_name, index_col=0)
+            raise TypeError(
+                "PeriodicTable file format not recognised: "
+                + file_name
+                + " supported file formats are csv, h5."
+            )
