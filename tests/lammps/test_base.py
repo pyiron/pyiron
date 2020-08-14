@@ -4,6 +4,7 @@
 
 import unittest
 import numpy as np
+import pandas as pd
 import os
 from pyiron.base.project.generic import Project
 from pyiron.atomistics.structure.atoms import Atoms
@@ -580,6 +581,31 @@ class TestLammps(unittest.TestCase):
         self.job_fail.structure.pbc = [False, True, True]
         with self.assertRaises(ValueError):
             self.job_fail.validate_ready_to_run()
+
+    def test_potential_check(self):
+        """
+        Verifies that job.potential accepts only potentials that contain the
+        species in the set structure.
+        """
+
+        self.job.structure = Atoms("Al1", positions=[3*[0]], cell=np.eye(3))
+        with self.assertRaises(ValueError):
+            self.job.potential = "Fe_C_Becquart_eam"
+
+        potential = pd.DataFrame({
+            'Name': ['Fe Morse'],
+            'Filename': [[]],
+            'Model': ['Morse'],
+            'Species': [['Fe']],
+            'Config': [['atom_style full\n',
+                        'pair_coeff 1 2 morse 0.019623 1.8860 3.32833\n']]
+        })
+
+        with self.assertRaises(ValueError):
+            self.job.potential = potential
+
+        potential['Species'][0][0] = 'Al'
+        self.job.potential = potential # shouldn't raise ValueError
 
 
 if __name__ == "__main__":
