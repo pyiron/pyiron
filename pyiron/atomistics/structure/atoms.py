@@ -152,11 +152,11 @@ class Atoms(ASEAtoms):
                     elif isinstance(elements, np.ndarray):
                         if elements.dtype in [int, np.integer]:
                             el_object_list = self.numbers_to_elements(elements)
-                    else:
-                        raise ValueError(
-                            "Unknown static type for element in list: "
-                            + str(type(elements[0]))
-                        )
+                        else:
+                            raise ValueError(
+                                "Unknown static type for element in list: "
+                                + str(type(elements[0]))
+                            )
 
             if el_object_list is None:
                 el_object_list = [self.convert_element(el) for el in element_list]
