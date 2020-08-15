@@ -123,7 +123,9 @@ class Atoms(ASEAtoms):
             if isinstance(elements, str):
                 element_list = self.convert_formula(elements)
             elif isinstance(elements, (list, tuple, np.ndarray)):
-                if not all([isinstance(el, elements[0].__class__) for el in elements]):
+
+                # Check if all elements are not equal
+                if np.array(elements).dtype == object:
                     object_list = list()
                     for el in elements:
                         if isinstance(el, (str, np.str, np.str_)):
@@ -135,29 +137,19 @@ class Atoms(ASEAtoms):
                         if isinstance(el, (int, np.integer)):
                             # pse = PeriodicTable()
                             object_list.append(self._pse.element(el))
-                        el_object_list = object_list
+                    el_object_list = object_list
+                else:
+                    if isinstance(elements[0], (str, np.str, np.str_)):
+                        el_object_list = [self.convert_element(el) for el in elements]
+                    if isinstance(elements[0], ChemicalElement):
+                        el_object_list = elements
+                    if isinstance(elements[0], Atom):
+                        el_object_list = [atom.element for atom in elements]
+                    if isinstance(elements[0], (int, np.integer)):
+                        el_object_list = [self._pse.element(el) for el in elements]
 
                 if len(elements) == 0:
                     element_list = elements
-                else:
-                    if isinstance(elements[0], (list, tuple, np.ndarray)):
-                        elements = np.array(elements).flatten()
-                    if isinstance(elements[0], string_types):
-                        element_list = elements
-                    elif isinstance(elements[0], ChemicalElement):
-                        el_object_list = elements
-                    elif isinstance(elements[0], Atom):
-                        el_object_list = [el.element for el in elements]
-                        positions = [el.position for el in elements]
-                    elif isinstance(elements, np.ndarray):
-                        if elements.dtype in [int, np.integer]:
-                            el_object_list = self.numbers_to_elements(elements)
-                        else:
-                            raise ValueError(
-                                "Unknown static type for element in list: "
-                                + str(type(elements[0]))
-                            )
-
             if el_object_list is None:
                 el_object_list = [self.convert_element(el) for el in element_list]
 
