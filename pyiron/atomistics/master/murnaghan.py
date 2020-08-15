@@ -714,7 +714,7 @@ class Murnaghan(AtomisticParallelMaster):
             return []
 
     def collect_output(self):
-        if self.server.run_mode.interactive:
+        if self.ref_job.server.run_mode.interactive:
             ham = self.project_hdf5.inspect(self.child_ids[0])
             erg_lst = ham["output/generic/energy_tot"]
             vol_lst = ham["output/generic/volume"]
