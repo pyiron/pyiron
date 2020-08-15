@@ -164,13 +164,16 @@ def pipe(project, job, step_lst):
         FlexibleMaster:
     """
     job_lst_master = project.create_job(project.job_type.FlexibleMaster, 'lstmaster')
-    for i, step_funct in enumerate(step_lst):
-        job_lst_master.append(step_funct(job))
-        if i > 0 and 'for_each_structure' in step_funct.__name__:
-            job_lst_master.function_lst.append(_structure_many_to_many)
-        elif i > 0:
-            job_lst_master.function_lst.append(_structure_one_to_one)
-    return job_lst_master
+    if job_lst_master.status.finished:
+        return job_lst_master
+    else:
+        for i, step_funct in enumerate(step_lst):
+            job_lst_master.append(step_funct(job))
+            if i > 0 and 'for_each_structure' in step_funct.__name__:
+                job_lst_master.function_lst.append(_structure_many_to_many)
+            elif i > 0:
+                job_lst_master.function_lst.append(_structure_one_to_one)
+        return job_lst_master
 
 
 def _structure_one_to_one(job_prev, job_next):
