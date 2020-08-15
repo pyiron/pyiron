@@ -142,6 +142,17 @@ class Atom(ASEAtom, SparseArrayElement):
         """
         return self.element.AtomicNumber
 
+    @property
+    def element(self):
+        """
+        Returns the atom as a chemical element object
+
+        Returns:
+            pyiron.atomistics.structure.periodic_table.ChemicalElement: Atom as chemical element
+
+        """
+        return self._lists["element"]
+
     def __eq__(self, other):
         if not (isinstance(other, Atom)):
             return False
