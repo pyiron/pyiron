@@ -202,7 +202,7 @@ class JobStatus(object):
         """
         if self.database and self.job_id:
             current_status = str(self._get_status_from_dict())
-            if self.database.get_item_by_id(self.job_id)["status"] != current_status:
+            if self.database.get_job_status(job_id=self.job_id) != current_status:
                 self.database.set_job_status(job_id=self.job_id, status=current_status)
 
     def _reset(self):
