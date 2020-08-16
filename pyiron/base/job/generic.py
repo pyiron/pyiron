@@ -20,6 +20,7 @@ from pyiron.base.job.jobstatus import JobStatus
 from pyiron.base.job.core import JobCore
 from pyiron.base.generic.util import static_isinstance
 from pyiron.base.server.generic import Server
+from pyiron.base.database.filetable import FileTable
 import subprocess
 import shutil
 import warnings
@@ -800,7 +801,41 @@ class GenericJob(JobCore):
         )
         if s.database_is_disabled:
             self.project.db.update()
-        self.status.finished = True
+        else:
+            ft = FileTable(project=self.project_hdf5.path + "_hdf5/")
+            df = ft.job_table(all_columns=True)
+            db_dict_lst = []
+            for j, st, sj, p, h, hv, c, ts, tp, tc in zip(
+                    df.job.values,
+                    df.status.values,
+                    df.subjob.values,
+                    df.project.values,
+                    df.hamilton.values,
+                    df.hamversion.values,
+                    df.computer.values,
+                    df.timestart.values,
+                    df.timestop.values,
+                    df.totalcputime.values
+            ):
+                gp = self.project._convert_str_to_generic_path(p)
+                db_dict_lst.append({
+                    "username": s.login_user,
+                    "projectpath": gp.root_path,
+                    "project": gp.project_path,
+                    "job": j,
+                    "subjob": sj,
+                    "hamversion": hv,
+                    "hamilton": h,
+                    "status": st,
+                    "computer": c,
+                    "timestart": datetime.utcfromtimestamp(ts.tolist() / 1e9),
+                    "timestop": datetime.utcfromtimestamp(tp.tolist() / 1e9),
+                    "totalcputime": tc,
+                    "masterid": None,
+                    "parentid": None,
+                })
+            _ = [self.project.db.add_item_dict(d) for d in db_dict_lst]
+        self.status.string = self.project_hdf5["status"]
 
     def run_if_interactive(self):
         """
@@ -1400,7 +1435,10 @@ class GenericJob(JobCore):
             self.server.run_mode.queue
             and not self.project.queue_check_job_is_waiting_or_running(self.job_id)
         ):
-            self.run(delete_existing_job=True)
+            if not s.queue_adapter.remote_flag:
+                self.run(delete_existing_job=True)
+            else:
+                self.transfer_from_remote()
         else:
             print("Job " + str(self.job_id) + " is waiting in the que!")
 

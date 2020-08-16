@@ -111,6 +111,7 @@ class JobWrapper(object):
         """
         if self._remote_flag and self.job.server.queue is not None:
             self.job.run_if_scheduler()
+            self.job.status.submitted = True
         else:
             self.job.run_static()
 

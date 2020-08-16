@@ -163,7 +163,14 @@ def wait_for_job(job, interval_in_s=5, max_iterations=100):
     if s.queue_adapter is not None and s.queue_adapter.remote_flag and job.server.queue is not None:
         finished = False
         for _ in range(max_iterations):
-            if not job.project.queue_check_job_is_waiting_or_running(job):
+            if not queue_check_job_is_waiting_or_running(item=job):
+                s.queue_adapter.transfer_file_to_remote(
+                    file=job.project_hdf5.file_name,
+                    transfer_back=True,
+                    delete_remote=False
+                )
+                job.status.string = job.project_hdf5["status"]
+            if job.status.finished or job.status.aborted or job.status.not_converged:
                 job.transfer_from_remote()
                 finished = True
                 break
@@ -173,6 +180,8 @@ def wait_for_job(job, interval_in_s=5, max_iterations=100):
     else:
         finished = False
         for _ in range(max_iterations):
+            if s.database_is_disabled:
+                job.project.db.update()
             job.refresh_job_status()
             if job.status.finished or job.status.aborted or job.status.not_converged:
                 finished = True
