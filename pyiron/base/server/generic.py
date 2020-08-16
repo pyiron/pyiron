@@ -172,17 +172,17 @@ class Server(
             if cores != self.cores:
                 self._cores = cores
                 s.logger.debug(
-                    "Updated the number of cores to: ", cores
+                    "Updated the number of cores to: {}".format(cores)
                 )
             if run_time_max != self.run_time:
                 self._run_time = run_time_max
                 s.logger.debug(
-                    "Updated the run time limit to: ", run_time_max
+                    "Updated the run time limit to: {}".format(run_time_max)
                 )
             if memory_max != self.memory_limit:
                 self._memory_limit = memory_max
                 s.logger.debug(
-                    "Updated the memory limit to: ", memory_max
+                    "Updated the memory limit to: {}".format(memory_max)
                 )
             self._active_queue = new_scheduler
             self.run_mode = "queue"
