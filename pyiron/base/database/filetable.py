@@ -41,6 +41,7 @@ class FileTable(with_metaclass(Singleton)):
         self._fileindex = PyFileIndex(path=self._project, filter_function=filter_function)
         df = pandas.DataFrame(self.init_table(fileindex=self._fileindex.dataframe))
         if len(df) != 0:
+            df.id = df.id.astype(int)
             self._job_table = df[np.array(self._columns)]
         else:
             self._job_table = pandas.DataFrame({k: [] for k in self._columns})
