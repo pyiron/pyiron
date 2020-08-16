@@ -496,7 +496,7 @@ class SerialMasterBase(GenericMaster):
         else:
             subjobs_statuses = set(
                 [
-                    self.project.db.get_item_by_id(child_id)["status"]
+                    self.project.db.get_job_status(job_id=child_id)
                     for child_id in self.child_ids
                 ]
             )

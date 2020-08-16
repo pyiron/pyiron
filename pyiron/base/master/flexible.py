@@ -149,7 +149,7 @@ class FlexibleMaster(GenericMaster):
             return False
         return set(
             [
-                self.project.db.get_item_by_id(child_id)["status"]
+                self.project.db.get_job_status(job_id=child_id)
                 for child_id in self.child_ids
             ]
         ) < {"finished", "busy", "refresh", "aborted"}

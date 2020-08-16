@@ -3,7 +3,6 @@ import os
 import pandas
 import datetime
 import h5io
-import sys
 from six import with_metaclass
 from pyfileindex import PyFileIndex
 
@@ -232,15 +231,6 @@ class FileTable(with_metaclass(Singleton)):
             return job_specifier  # is id
 
         job_specifier.replace(".", "_")
-        # if job_specifier[0] is not '/':
-        #     sub_job_name = '/' + job_specifier
-        # else:
-        #     sub_job_name = job_specifier
-        # job_dict = _job_dict(database, sql_query, user, project_path, recursive=False,  # job=job_specifier,
-        #                      sub_job_name=sub_job_name)
-        # if len(job_dict) == 0:
-        #     job_dict = _job_dict(database, sql_query, user, project_path, recursive=True,  # job=job_specifier,
-        #                          sub_job_name=sub_job_name)
         job_id_lst = self._job_table[
             (self._job_table.project == project) & (self._job_table.job == job_specifier)].id.values
         if len(job_id_lst) == 0:
@@ -283,71 +273,18 @@ class FileTable(with_metaclass(Singleton)):
                 id_lst = self._job_table[(self._job_table.masterid == id_master)].id.values
             return sorted(id_lst)
 
-    def set_job_status(self, job_specifier, status, project=None):
-        """
-        Set the status of a particular job
-
-        Args:
-            database (DatabaseAccess): Database object
-            sql_query (str): SQL query to enter a more specific request
-            user (str): username of the user whoes user space should be searched
-            project_path (str): root_path - this is in contrast to the project_path in GenericPath
-            job_specifier (str): name of the job or job ID
-            status (str): job status can be one of the following ['initialized', 'appended', 'created', 'submitted',
-                         'running', 'aborted', 'collect', 'suspended', 'refresh', 'busy', 'finished']
-
-        """
-        if project is None:
-            project = self._project
-        job_id = self.get_job_id(project=project, job_specifier=job_specifier)
-        self._job_table.loc[self._job_table.id == job_id, 'status'] = status
-        db_entry = self.get_item_by_id(item_id=job_id)
-        h5io.write_hdf5(db_entry["project"] + db_entry["subjob"] + '.h5',
-                        status,
-                        title=db_entry["subjob"][1:] + '/status',
-                        overwrite="update")
-
-    def get_job_status(self, job_specifier, project=None):
-        """
-        Get the status of a particular job
-
-        Args:
-            database (DatabaseAccess): Database object
-            sql_query (str): SQL query to enter a more specific request
-            user (str): username of the user whoes user space should be searched
-            project_path (str): root_path - this is in contrast to the project_path in GenericPath
-            job_specifier (str): name of the job or job ID
-
-        Returns:
-            str: job status can be one of the following ['initialized', 'appended', 'created', 'submitted', 'running',
-                 'aborted', 'collect', 'suspended', 'refresh', 'busy', 'finished']
-        """
-        if project is None:
-            project = self._project
-        try:
-            return self._job_table[
-                self._job_table.id == self.get_job_id(project=project, job_specifier=job_specifier)].status.values[0]
-        except KeyError:
-            return None
-
-    def get_job_working_directory(self, job_specifier, project=None):
+    def get_job_working_directory(self, job_id):
         """
         Get the working directory of a particular job
 
         Args:
-            database (DatabaseAccess): Database object
-            sql_query (str): SQL query to enter a more specific request
-            user (str): username of the user whoes user space should be searched
-            project_path (str): root_path - this is in contrast to the project_path in GenericPath
-            job_specifier (str): name of the job or job ID
+            job_id (int):
 
         Returns:
             str: working directory as absolute path
         """
-        if project is None:
-            project = self._project
         try:
-            db_entry = self.get_item_by_id(item_id=self.get_job_id(project=project, job_specifier=job_specifier))
+            db_entry = self.get_item_by_id(job_id)
             if db_entry and len(db_entry) > 0:
                 job_name = db_entry["subjob"][1:]
                 return os.path.join(
@@ -359,6 +296,16 @@ class FileTable(with_metaclass(Singleton)):
                 return None
         except KeyError:
             return None
+
+    def get_job_status(self, job_id):
+        return self.get_item_by_id(job_id)["status"]
+
+    def set_job_status(self, job_id, status):
+        db_entry = self.get_item_by_id(item_id=job_id)
+        h5io.write_hdf5(db_entry["project"] + db_entry["subjob"] + '.h5',
+                        status,
+                        title=db_entry["subjob"][1:] + '/status',
+                        overwrite="update")
 
 
 def get_hamilton_from_file(hdf5_file, job_name):

@@ -3,7 +3,6 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import pandas
-import sys
 import os
 import numpy as np
 from pyiron.base.settings.generic import Settings
@@ -327,15 +326,6 @@ def get_job_id(database, sql_query, user, project_path, job_specifier):
         return job_specifier  # is id
 
     job_specifier.replace(".", "_")
-    # if job_specifier[0] is not '/':
-    #     sub_job_name = '/' + job_specifier
-    # else:
-    #     sub_job_name = job_specifier
-    # job_dict = _job_dict(database, sql_query, user, project_path, recursive=False,  # job=job_specifier,
-    #                      sub_job_name=sub_job_name)
-    # if len(job_dict) == 0:
-    #     job_dict = _job_dict(database, sql_query, user, project_path, recursive=True,  # job=job_specifier,
-    #                          sub_job_name=sub_job_name)
     job_dict = _job_dict(
         database, sql_query, user, project_path, recursive=False, job=job_specifier
     )
@@ -367,9 +357,9 @@ def set_job_status(database, sql_query, user, project_path, job_specifier, statu
                      'running', 'aborted', 'collect', 'suspended', 'refresh', 'busy', 'finished']
 
     """
-    database.item_update(
-        {"status": str(status)},
-        get_job_id(database, sql_query, user, project_path, job_specifier),
+    database.set_job_status(
+        job_id=get_job_id(database, sql_query, user, project_path, job_specifier),
+        status=status
     )
 
 
@@ -388,12 +378,9 @@ def get_job_status(database, sql_query, user, project_path, job_specifier):
         str: job status can be one of the following ['initialized', 'appended', 'created', 'submitted', 'running',
              'aborted', 'collect', 'suspended', 'refresh', 'busy', 'finished']
     """
-    try:
-        return database.get_item_by_id(
-            get_job_id(database, sql_query, user, project_path, job_specifier)
-        )["status"]
-    except KeyError:
-        return None
+    database.get_job_status(
+        job_id=get_job_id(database, sql_query, user, project_path, job_specifier)
+    )
 
 
 def get_job_working_directory(database, sql_query, user, project_path, job_specifier):
