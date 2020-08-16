@@ -41,9 +41,11 @@ class JobWrapper(object):
     """
 
     def __init__(self, working_directory, job_id=None, hdf5_file=None, h5_path=None, submit_on_remote=False,
-                 debug=False):
+                 debug=False, connection_string=None):
         self.working_directory = working_directory
         self._remote_flag = submit_on_remote
+        if connection_string is not None:
+            s.open_local_sqlite_connection(connection_string=connection_string)
         pr = Project(path=os.path.join(working_directory, '..', '..'))
         if job_id is not None:
             self.job = pr.load(int(job_id))
