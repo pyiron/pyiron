@@ -302,6 +302,7 @@ class FileTable(with_metaclass(Singleton)):
 
     def set_job_status(self, job_id, status):
         db_entry = self.get_item_by_id(item_id=job_id)
+        self._job_table.loc[self._job_table.id == job_id, 'status'] = status
         h5io.write_hdf5(db_entry["project"] + db_entry["subjob"] + '.h5',
                         status,
                         title=db_entry["subjob"][1:] + '/status',
