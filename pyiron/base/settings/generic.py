@@ -109,6 +109,7 @@ class Settings(with_metaclass(Singleton)):
         ]
 
         # Build the SQLalchemy connection strings
+        self._database_is_disabled = self._configuration["disable_database"]
         if not self.database_is_disabled:
             self._configuration = self.convert_database_config(
                 config=self._configuration
@@ -133,11 +134,14 @@ class Settings(with_metaclass(Singleton)):
 
     @property
     def project_check_enabled(self):
-        return self._configuration["project_check_enabled"]
+        if self.database_is_disabled:
+            return False
+        else:
+            return self._configuration["project_check_enabled"]
 
     @property
     def database_is_disabled(self):
-        return self._configuration["disable_database"]
+        return self._database_is_disabled
 
     @property
     def publication_lst(self):
@@ -205,7 +209,7 @@ class Settings(with_metaclass(Singleton)):
             file_name (str): SQLite database file name
             cwd (str/None): directory where the SQLite database file is located in
         """
-        if not self._use_local_database and not self.database_is_disabled:
+        if not self._use_local_database:
             if cwd is None and not os.path.isabs(file_name):
                 file_name = os.path.join(os.path.abspath(os.path.curdir), file_name)
             elif cwd is not None:
@@ -215,6 +219,8 @@ class Settings(with_metaclass(Singleton)):
                 "sqlite:///" + file_name, self._configuration["sql_table_name"]
             )
             self._use_local_database = True
+            if not self.database_is_disabled:
+                self._database_is_disabled = False
         else:
             print("Database is already in local mode or disabled!")
 
@@ -222,13 +228,15 @@ class Settings(with_metaclass(Singleton)):
         """
         Switch to central database
         """
-        if self._use_local_database and not self.database_is_disabled:
+        if self._use_local_database:
             self.close_connection()
-            self._database = DatabaseAccess(
-                self._configuration["sql_connection_string"],
-                self._configuration["sql_table_name"],
-            )
-            self._use_local_database = False
+            self._database_is_disabled = self._configuration["disable_database"]
+            if not self.database_is_disabled:
+                self._database = DatabaseAccess(
+                    self._configuration["sql_connection_string"],
+                    self._configuration["sql_table_name"],
+                )
+                self._use_local_database = False
         else:
             print("Database is already in central mode or disabled!")
 
