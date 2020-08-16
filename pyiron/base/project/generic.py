@@ -1152,7 +1152,11 @@ class Project(ProjectPath):
         """
         if cwd is None:
             cwd = self.path
-        s.switch_to_local_database(file_name=file_name, cwd=cwd)
+        if not s.project_check_enabled:
+            s.switch_to_local_database(file_name=file_name, cwd=cwd)
+            super(Project, self).__init__(path=self.path)
+        else:
+            s.switch_to_local_database(file_name=file_name, cwd=cwd)
         s.open_connection()
         self.db = s.database
 
@@ -1166,6 +1170,7 @@ class Project(ProjectPath):
             self.db = s.database
         else:
             self.db = FileTable(project=self.path)
+            super(Project, self).__init__(path=self.path)
 
     def queue_delete_job(self, item):
         """
