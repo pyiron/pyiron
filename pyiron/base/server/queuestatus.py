@@ -5,7 +5,7 @@
 import pandas
 import time
 from pyiron.base.settings.generic import Settings
-from pyiron.base.job.jobtype import static_isinstance
+from pyiron.base.generic.util import static_isinstance
 
 """
 Set of functions to interact with the queuing system directly from within pyiron - optimized for the Sun grid engine.
