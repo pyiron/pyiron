@@ -1150,21 +1150,22 @@ class Project(ProjectPath):
             file_name (str): file name or file path for the local database
             cwd (str): directory where the local database is located
         """
-        if not isinstance(self.db, FileTable):
-            if cwd is None:
-                cwd = self.path
-            s.switch_to_local_database(file_name=file_name, cwd=cwd)
-            s.open_connection()
-            self.db = s.database
+        if cwd is None:
+            cwd = self.path
+        s.switch_to_local_database(file_name=file_name, cwd=cwd)
+        s.open_connection()
+        self.db = s.database
 
     def switch_to_central_database(self):
         """
         Switch from local mode to central mode - if local_mode is enable pyiron is using a local database.
         """
-        if not isinstance(self.db, FileTable):
-            s.switch_to_central_database()
+        s.switch_to_central_database()
+        if not s.database_is_disabled:
             s.open_connection()
             self.db = s.database
+        else:
+            self.db = FileTable(project=self.path)
 
     def queue_delete_job(self, item):
         """

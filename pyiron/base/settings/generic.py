@@ -125,6 +125,10 @@ class Settings(with_metaclass(Singleton)):
         self.publication_add(self.publication)
 
     @property
+    def using_local_database(self):
+        return self._use_local_database
+
+    @property
     def database(self):
         return self._database
 
@@ -214,15 +218,16 @@ class Settings(with_metaclass(Singleton)):
                 file_name = os.path.join(os.path.abspath(os.path.curdir), file_name)
             elif cwd is not None:
                 file_name = os.path.join(cwd, file_name)
-            self.close_connection()
-            self._database = DatabaseAccess(
-                "sqlite:///" + file_name, self._configuration["sql_table_name"]
-            )
-            self._use_local_database = True
-            if not self.database_is_disabled:
-                self._database_is_disabled = False
+            self.open_local_sqlite_connection(connection_string="sqlite:///" + file_name)
         else:
             print("Database is already in local mode or disabled!")
+
+    def open_local_sqlite_connection(self, connection_string):
+        self.close_connection()
+        self._database = DatabaseAccess(connection_string, self._configuration["sql_table_name"])
+        self._use_local_database = True
+        if self.database_is_disabled:
+            self._database_is_disabled = False
 
     def switch_to_central_database(self):
         """
@@ -236,7 +241,9 @@ class Settings(with_metaclass(Singleton)):
                     self._configuration["sql_connection_string"],
                     self._configuration["sql_table_name"],
                 )
-                self._use_local_database = False
+            else:
+                self._database = None
+            self._use_local_database = False
         else:
             print("Database is already in central mode or disabled!")
 
