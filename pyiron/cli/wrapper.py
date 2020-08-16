@@ -6,27 +6,29 @@ Run a job from hdf5.
 
 from pyiron.base.job.wrapper import job_wrapper_function
 
+
 def register(parser):
     parser.add_argument(
-            "-d", "--debug", action = "store_true",
-            help = "enable debug mode" # TODO: what's that mean?
+            "-d", "--debug", action="store_true",
+            help="enable debug mode"  # TODO: what's that mean?
     )
     parser.add_argument(
             "-j", "--job-id",
-            help = "job id to run"
+            help="job id to run"
     )
     parser.add_argument(
             "-p", "--project",
-            help = "directory where the HDF5 file of the job is located"
+            help="directory where the HDF5 file of the job is located"
     )
     parser.add_argument(
             "-f", "--file-path",
-            help = "path to the HDF5 file"
+            help="path to the HDF5 file"
     )
     parser.add_argument(
-            "-s", "--submit", action = "store_true",
-            help = "submit to queuing system on remote host"
+            "-s", "--submit", action="store_true",
+            help="submit to queuing system on remote host"
     )
+
 
 def main(args):
     job_wrapper_function(
