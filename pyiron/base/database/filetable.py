@@ -142,6 +142,10 @@ class FileTable(with_metaclass(Singleton)):
             return [{'id': i} for i in df_dict['id'].values()]
 
     def update(self):
+        self._job_table.status = [
+            self._get_job_status_from_hdf5(job_id)
+            for job_id in self._job_table.id.values
+        ]
         self._fileindex.update()
         if len(self._job_table) != 0:
             files_lst, working_dir_lst = zip(*[[project + subjob[1:] + '.h5', project + subjob[1:] + '_hdf5']
@@ -296,6 +300,14 @@ class FileTable(with_metaclass(Singleton)):
                 return None
         except KeyError:
             return None
+
+    def _get_job_status_from_hdf5(self, job_id):
+        db_entry = self.get_item_by_id(job_id)
+        job_name = db_entry["subjob"][1:]
+        return get_job_status_from_file(
+            hdf5_file=os.path.join(db_entry["project"], job_name + ".h5"),
+            job_name=job_name
+        )
 
     def get_job_status(self, job_id):
         return self._job_table[self._job_table.id == job_id].status.values[0]

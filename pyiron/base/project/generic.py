@@ -617,6 +617,7 @@ class Project(ProjectPath):
                 job_name_contains=job_name_contains,
             )
         else:
+            self.db.update()
             return self.db.job_table(
                 project=self.project_path,
                 recursive=recursive,
