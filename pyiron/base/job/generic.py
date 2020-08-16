@@ -879,10 +879,16 @@ class GenericJob(JobCore):
         The run if non modal function is called by run to execute the simulation in the background. For this we use
         multiprocessing.Process()
         """
-        p = multiprocessing.Process(
-            target=multiprocess_wrapper,
-            args=(self.job_id, self.project_hdf5.working_directory, False),
-        )
+        if not s.using_local_database:
+            p = multiprocessing.Process(
+                target=multiprocess_wrapper,
+                args=(self.job_id, self.project_hdf5.working_directory, False, None),
+            )
+        else:
+            p = multiprocessing.Process(
+                target=multiprocess_wrapper,
+                args=(self.job_id, self.project_hdf5.working_directory, False, str(self.project.db.conn.engine.url)),
+            )
         if self.master_id and self.server.run_mode.non_modal:
             del self
             p.start()
@@ -1660,9 +1666,9 @@ class GenericError(object):
         return True
 
 
-def multiprocess_wrapper(job_id, working_dir, debug=False):
+def multiprocess_wrapper(job_id, working_dir, debug=False, connection_string=None):
     job_wrap = JobWrapper(
-        working_directory=str(working_dir), job_id=int(job_id), debug=debug
+        working_directory=str(working_dir), job_id=int(job_id), debug=debug, connection_string=connection_string
     )
     job_wrap.job.run_static()
 
