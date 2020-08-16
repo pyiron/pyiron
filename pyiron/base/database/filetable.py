@@ -298,7 +298,7 @@ class FileTable(with_metaclass(Singleton)):
             return None
 
     def get_job_status(self, job_id):
-        return self.get_item_by_id(job_id)["status"]
+        return self._job_table[self._job_table.id == job_id].status.values[0]
 
     def set_job_status(self, job_id, status):
         db_entry = self.get_item_by_id(item_id=job_id)
