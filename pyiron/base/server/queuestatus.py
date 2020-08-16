@@ -173,6 +173,8 @@ def wait_for_job(job, interval_in_s=5, max_iterations=100):
     else:
         finished = False
         for _ in range(max_iterations):
+            if s.database_is_disabled:
+                job.project.db.update()
             job.refresh_job_status()
             if job.status.finished or job.status.aborted or job.status.not_converged:
                 finished = True
