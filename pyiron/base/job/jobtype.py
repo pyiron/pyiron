@@ -134,7 +134,7 @@ class JobType(object):
         else:
             raise TypeError()
         job = job_class(project, job_name)
-        if job.job_id is not None and not os.path.exists(job.project_hdf5.path):
+        if job.job_id is not None and not os.path.exists(job.project_hdf5.file_name):
             job.logger.warning(
                 "No HDF5 file found - remove database entry and create new job! {}".format(job.job_name)
             )
