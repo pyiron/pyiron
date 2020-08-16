@@ -423,15 +423,16 @@ class Project(ProjectPath):
         if not project:
             project = self.project_path
         if not isinstance(self.db, FileTable):
-            return get_job_status(
+            job_id = get_job_id(
                 database=self.db,
                 sql_query=self.sql_query,
                 user=self.user,
                 project_path=project,
-                job_specifier=job_specifier,
+                job_specifier=job_specifier
             )
         else:
-            return self.db.get_job_status(job_specifier=job_specifier, project=project)
+            job_id = self.db.get_job_id(job_specifier=job_specifier, project=project)
+        return self.db.get_job_status(job_id=job_id)
 
     def get_job_working_directory(self, job_specifier, project=None):
         """
@@ -447,15 +448,16 @@ class Project(ProjectPath):
         if not project:
             project = self.project_path
         if not isinstance(self.db, FileTable):
-            return get_job_working_directory(
+            job_id = get_job_id(
                 database=self.db,
                 sql_query=self.sql_query,
                 user=self.user,
                 project_path=project,
-                job_specifier=job_specifier,
+                job_specifier=job_specifier
             )
         else:
-            return self.db.get_job_working_directory(job_specifier=job_specifier, project=project)
+            job_id = self.db.get_job_id(job_specifier=job_specifier, project=project)
+        return self.db.get_job_working_directory(job_id=job_id)
 
     def get_project_size(self):
         """
@@ -951,7 +953,7 @@ class Project(ProjectPath):
                 and self.db.get_item_by_id(job_id)["status"] in ["running", "submitted"]
             ):
                 if not self.queue_check_job_is_waiting_or_running(job_id):
-                    self.db.item_update({"status": "aborted"}, job_id)
+                    self.db.set_job_status(job_id=job_id, status="aborted")
 
     def remove_file(self, file_name):
         """

@@ -186,7 +186,7 @@ class JobStatus(object):
         """
         if self.database and self.job_id and not any([self._status_dict[i] for i in ["finished", "aborted", "warning", "not_converged"]]):
             try:
-                status = self.database.get_item_by_id(self.job_id)["status"]
+                status = self.database.get_job_status(job_id=self.job_id)
             except IndexError:
                 raise (
                     "The job with the job ID "
@@ -202,8 +202,8 @@ class JobStatus(object):
         """
         if self.database and self.job_id:
             current_status = str(self._get_status_from_dict())
-            if self.database.get_item_by_id(self.job_id)["status"] != current_status:
-                self.database.item_update({"status": current_status}, self.job_id)
+            if self.database.get_job_status(job_id=self.job_id) != current_status:
+                self.database.set_job_status(job_id=self.job_id, status=current_status)
 
     def _reset(self):
         """

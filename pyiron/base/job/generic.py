@@ -432,7 +432,7 @@ class GenericJob(JobCore):
         """
         if self.job_id:
             self._status = JobStatus(
-                initial_status=self.project.db.get_item_by_id(self.job_id)["status"],
+                initial_status=self.project.db.get_job_status(self.job_id),
                 db=self.project.db,
                 job_id=self.job_id,
             )
@@ -1077,7 +1077,7 @@ class GenericJob(JobCore):
             queue_flag = self.server.run_mode.queue
             master_db_entry = project.db.get_item_by_id(master_id)
             if master_db_entry["status"] == "suspended":
-                project.db.item_update({"status": "refresh"}, master_id)
+                project.db.set_job_status(job_id=master_id, status="refresh")
                 self._logger.info("run_if_refresh() called")
                 # p = multiprocessing.Process(target=multiprocess_master, args=(master_id,
                 #                                                               self.project.path,
@@ -1098,7 +1098,7 @@ class GenericJob(JobCore):
                 #     if master.server.run_mode.queue and master._process:
                 #         master._process.communicate()
             elif master_db_entry["status"] == "refresh":
-                project.db.item_update({"status": "busy"}, master_id)
+                project.db.set_job_status(job_id=master_id, status="busy")
                 self._logger.info(
                     "busy master: {} {}".format(master_id, self.get_job_id())
                 )

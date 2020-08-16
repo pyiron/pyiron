@@ -5,6 +5,7 @@
 import numpy as np
 import re
 import time
+import os
 from datetime import datetime
 from sqlalchemy import (
     Column,
@@ -684,3 +685,31 @@ class DatabaseAccess(object):
         if not self._keep_connection:
             self.conn.close()
         return [dict(zip(col.keys(), col.values())) for col in row]
+
+    def get_job_status(self, job_id):
+        try:
+            return self.get_item_by_id(item_id=job_id)["status"]
+        except KeyError:
+            return None
+
+    def set_job_status(self, job_id, status):
+        self.item_update(
+            {"status": str(status)},
+            job_id,
+        )
+
+    def get_job_working_directory(self, job_id):
+        try:
+            db_entry = self.get_item_by_id(job_id)
+            if db_entry:
+                job_name = db_entry["subjob"][1:]
+                return os.path.join(
+                    db_entry["projectpath"],
+                    db_entry["project"],
+                    job_name + "_hdf5",
+                    job_name,
+                )
+            else:
+                return None
+        except KeyError:
+            return None

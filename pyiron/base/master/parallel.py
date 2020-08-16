@@ -406,7 +406,7 @@ class ParallelMaster(GenericMaster):
             return False
         return set(
             [
-                self.project.db.get_item_by_id(child_id)["status"]
+                self.project.db.get_job_status(child_id)
                 for child_id in self.child_ids
             ]
         ) < {"finished", "busy", "refresh", "aborted", "not_converged"}
@@ -580,7 +580,7 @@ class ParallelMaster(GenericMaster):
             job (GenericJob): child job to be started
         """
         job_to_be_run_lst = self._next_job_series(job)
-        if self.project.db.get_item_by_id(self.job_id)["status"] != "busy":
+        if self.project.db.get_job_status(job_id=self.job_id) != "busy":
             self.status.suspended = True
             for job in job_to_be_run_lst:
                 job.run()
