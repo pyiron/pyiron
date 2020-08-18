@@ -160,6 +160,15 @@ class LammpsBase(AtomisticGenericJob):
             potential = potential_filename
         else:
             raise TypeError("Potentials have to be strings or pandas dataframes.")
+        if self.structure:
+            structure_elements = self.structure.get_species_symbols()
+            potential_elements = list(potential["Species"])[0]
+            if not set(structure_elements).issubset(potential_elements):
+                raise ValueError("Potential {} does not support elements "
+                                 "in structure {}.".format(
+                                     potential_elements,
+                                     structure_elements
+                                ))
         self.input.potential.df = potential
         for val in ["units", "atom_style", "dimension"]:
             v = self.input.potential[val]
