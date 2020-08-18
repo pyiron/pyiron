@@ -198,6 +198,9 @@ class FileTable(with_metaclass(Singleton)):
         if full_table:
             pandas.set_option('display.max_rows', None)
             pandas.set_option('display.max_columns', None)
+        else:
+            pandas.reset_option('display.max_rows')
+            pandas.reset_option('display.max_columns')
         pandas.set_option("display.max_colwidth", max_colwidth)
         if len(df) == 0:
             return df
