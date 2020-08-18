@@ -306,6 +306,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
                     symbols=np.array([el_lst[el] for el in indices]),
                     positions=positions,
                     cell=self.output.cells[iteration_step],
+                    pbc=self.structure.pbc,
                 )
                 # Update indicies to match the indicies in the cache.
                 atoms.set_species([self._periodic_table.element(el) for el in el_lst])
