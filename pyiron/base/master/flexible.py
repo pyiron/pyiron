@@ -175,6 +175,8 @@ class FlexibleMaster(GenericMaster):
                 job.interactive_close()
             if self.server.run_mode.non_modal and job.server.run_mode.non_modal:
                 break
+            if job.server.run_mode.queue:
+                break
         if ind == max_steps - 1 and self.is_finished():
             self.status.finished = True
             self.project.db.item_update(self._runtime(), self.job_id)
