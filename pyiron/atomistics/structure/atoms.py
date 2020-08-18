@@ -2412,7 +2412,7 @@ class Atoms(ASEAtoms):
         )
 
         return Atoms(
-            symbols=list(self.get_chemical_symbols()), positions=coords, cell=cell
+            symbols=list(self.get_chemical_symbols()), positions=coords, cell=cell, pbc=self.pbc
         )
 
     def get_primitive_cell(self, symprec=1e-5, angle_tolerance=-1.0):
@@ -2442,7 +2442,7 @@ class Atoms(ASEAtoms):
         el_lst = [el_dict[i_a] for i_a in atomic_numbers]
 
         # convert lattice vectors to standard (experimental feature!) TODO:
-        red_structure = Atoms(elements=el_lst, scaled_positions=coords, cell=cell)
+        red_structure = Atoms(elements=el_lst, scaled_positions=coords, cell=cell, pbc=self.pbc)
         space_group = red_structure.get_spacegroup(symprec)["Number"]
         # print "space group: ", space_group
         if space_group == 225:  # fcc
