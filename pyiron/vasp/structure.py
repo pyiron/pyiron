@@ -309,9 +309,9 @@ def _dict_to_atoms(atoms_dict, species_list=None, read_from_first_line=False):
             elements_new.append(e)
     elements = elements_new
     if is_absolute:
-        atoms = Atoms(elements, positions=positions, cell=cell)
+        atoms = Atoms(elements, positions=positions, cell=cell, pbc=True)
     else:
-        atoms = Atoms(elements, scaled_positions=positions, cell=cell)
+        atoms = Atoms(elements, scaled_positions=positions, cell=cell, pbc=True)
     return atoms
 
 
