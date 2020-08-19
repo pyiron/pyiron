@@ -1433,7 +1433,7 @@ class GenericJob(JobCore):
         """
         if (
             self.server.run_mode.queue
-            and not self.project.queue_check_job_is_waiting_or_running(self.job_id)
+            and not self.project.queue_check_job_is_waiting_or_running(self)
         ):
             if not s.queue_adapter.remote_flag:
                 self.run(delete_existing_job=True)
@@ -1449,7 +1449,7 @@ class GenericJob(JobCore):
         """
         if (
             self.server.run_mode.queue
-            and not self.project.queue_check_job_is_waiting_or_running(self.job_id)
+            and not self.project.queue_check_job_is_waiting_or_running(self)
         ):
             self.run(delete_existing_job=True)
         elif self.server.run_mode.interactive:

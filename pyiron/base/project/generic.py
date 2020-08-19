@@ -953,7 +953,7 @@ class Project(ProjectPath):
                 que_mode
                 and self.db.get_item_by_id(job_id)["status"] in ["running", "submitted"]
             ):
-                if not self.queue_check_job_is_waiting_or_running(job_id):
+                if not self.queue_check_job_is_waiting_or_running(self.inspect(job_id)):
                     self.db.set_job_status(job_id=job_id, status="aborted")
 
     def remove_file(self, file_name):
