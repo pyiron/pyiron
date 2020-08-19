@@ -186,7 +186,18 @@ class FlexibleMaster(GenericMaster):
         Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
         suspended previously, the job is going to be started again, to be continued.
         """
-        self.run_static()
+        if self.is_finished():
+            self.status.collect = True
+            self.run()  # self.run_if_collect()
+        elif self.server.run_mode.non_modal or self.server.run_mode.queue:
+            self.run_static()
+        else:
+            self.refresh_job_status()
+            if self.status.refresh:
+                self.status.suspended = True
+            if self.status.busy:
+                self.status.refresh = True
+                self.run_if_refresh()
 
     def write_input(self):
         """
