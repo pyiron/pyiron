@@ -1196,7 +1196,7 @@ class GenericJob(JobCore):
         if hdf is not None:
             self._hdf5 = hdf
         if group_name is not None:
-            self._hdf5.open(group_name)
+            self._hdf5 = self._hdf5.open(group_name)
         self._type_from_hdf()
         self._server.from_hdf(self._hdf5)
         with self._hdf5.open("input") as hdf_input:
