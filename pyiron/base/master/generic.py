@@ -185,6 +185,11 @@ class GenericMaster(GenericJob):
         Args:
             job (GenericJob): job to append
         """
+        if self.status.initialized and not job.status.initialized:
+            raise ValueError(
+                "GenericMaster requires reference jobs to have status initialized, rather than ",
+                job.status.string
+            )
         if job.server.cores >= self.server.cores:
             self.server.cores = job.server.cores
         if job.job_name not in self._job_name_lst:
