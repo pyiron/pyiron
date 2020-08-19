@@ -191,7 +191,7 @@ class FlexibleMaster(GenericMaster):
         if self.is_finished():
             self.status.collect = True
             self.run()  # self.run_if_collect()
-        elif self.server.run_mode.non_modal or self.server.run_mode.queue:
+        elif self.server.run_mode.non_modal or self.server.run_mode.queue or self.server.run_mode.modal:
             self.run_static()
         else:
             self.refresh_job_status()
