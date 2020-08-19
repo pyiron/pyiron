@@ -7,6 +7,7 @@ from __future__ import print_function
 import h5py
 import os
 import importlib
+import inspect
 import pandas
 import posixpath
 import h5io
@@ -1231,19 +1232,18 @@ class ProjectHDFio(FileHDFio):
         if not os.path.isdir(self.working_directory):
             os.makedirs(self.working_directory)
 
-    def create_object(self, class_name, **qwargs):
+    def import_class(self, class_name):
         """
-        Internal function to create a pyiron object
+        Import given class from fully qualified name and return class object.
 
         Args:
-            class_name (str): name of a pyiron class
-            **qwargs: object parameters
+            class_name (str): fully qualified name of a pyiron class
 
         Returns:
-            pyiron object: defined by the pyiron class in class_name with the input from **qwargs
+            class object: class object of the given name
         """
         internal_class_name = class_name.split(".")[-1][:-2]
-        if internal_class_name in self._project.job_type.job_class_dict.keys():
+        if internal_class_name in self._project.job_type.job_class_dict:
             module_path = self._project.job_type.job_class_dict[internal_class_name]
         else:
             class_path = class_name.split()[-1].split(".")[:-1]
@@ -1252,14 +1252,51 @@ class ProjectHDFio(FileHDFio):
         return getattr(
             importlib.import_module(module_path),
             internal_class_name,
-        )(**qwargs)
+        )
 
-    def to_object(self, object_type=None, **qwargs):
+    @staticmethod
+    def make_from_hdf(cls, **kwargs):
+        """
+        Create new instance of the given class from HDF5 file.
+
+        Uses the given **kwargs and a special classmethod "from_hdf_args" that
+        may be defined on cls to construct a dictionary of arguments and then
+        instatiate cls with them.
+
+        kwargs must contain all necessary arguments for `cls.__init__`, even
+        positional ones.  They will be passed by name, i.e. `cls.__init__` must
+        not have positional-only parameters to be correctly instantiated by
+        this method.
+
+        Args:
+            cls (type): pyiron type to instantiate
+            **kwargs: arguments for instance creation
+        """
+
+        # kwargs might provide more arguments than needed for this class, since
+        # it has to provide init arguments for all possible pyiron types.  Here
+        # we just pick the ones needed for this specific instance based on the
+        # signature for cls.__init__
+        if hasattr(cls, "from_hdf_args"):
+            init_args = cls.from_hdf_args(hdf)
+        else:
+            init_args = {}
+        for name, param in inspect.signature(cls.__init__).parameters.items():
+            # skip parameter if it is a varargs-style parameter *args/**kwargs
+            if param.kind in (param.VAR_POSITIONAL, param.VAR_KEYWORD):
+                continue
+
+            if name in kwargs:
+                init_args[name] = kwargs[name]
+
+        return cls(**init_args)
+
+    def to_object(self, class_name=None, **qwargs):
         """
         Load the full pyiron object from an HDF5 file
 
         Args:
-            object_type: if the 'TYPE' node is not available in the HDF5 file a manual object type can be set - optional
+            class_name: if the 'TYPE' node is not available in the HDF5 file a manual object type can be set - optional
             **qwargs: optional parameters ['job_name', 'project'] - to specify the location of the HDF5 path
 
         Returns:
@@ -1271,31 +1308,27 @@ class ProjectHDFio(FileHDFio):
             qwargs["project"] = self.__class__(
                 project=self._create_project_from_hdf5(), file_name=qwargs["job_name"]
             )
-        if "TYPE" not in self.list_nodes():
-            if object_type is None:
-                raise ValueError(
-                    "Objects can be only recovered from hdf5 if TYPE is given"
-                )
-            else:
-                obj_type = object_type
-        else:
-            obj_type = self.get("TYPE")
-            if object_type is not None:
-                if object_type != obj_type:
-                    raise ValueError(
-                        "Object type in hdf5-file must be identical to input parameter"
-                    )
-        new_obj = self.create_object(obj_type, **qwargs)
-        if obj_type != str(type(new_obj)):  # Backwards compatibility
-            self["TYPE"] = str(type(new_obj))
-        if obj_type != "<class 'pyiron.atomistics.structure.atoms.Atoms'>":
-            new_obj.from_hdf()
-        else:
-            new_obj.from_hdf(
-                hdf=self.open(".."),
-                group_name=self.h5_path.split('/')[-1]
+        if "TYPE" not in self.list_nodes() and class_name is None:
+            raise ValueError(
+                "Objects can be only recovered from hdf5 if TYPE is given"
             )
-        return new_obj
+        elif class_name is not None and class_name != self.get("TYPE"):
+            raise ValueError(
+                "Object type in hdf5-file must be identical to input parameter"
+            )
+        class_name = class_name or self.get("TYPE")
+        class_object = self.import_class(class_name)
+
+        # TODO: what does that mean?
+        if class_name != str(class_object):  # Backwards compatibility
+            self["TYPE"] = str(class_object)
+
+        obj = self.make_from_hdf(class_object, **qwargs)
+        obj.from_hdf(
+                hdf = self.open(".."),
+                group_name = self.h5_path.split('/')[-1]
+        )
+        return obj
 
     def get_job_id(self, job_specifier):
         """
