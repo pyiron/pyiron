@@ -147,6 +147,9 @@ class FlexibleMaster(GenericMaster):
             return True
         if len(self._job_name_lst) > 0:
             return False
+        return self.check_all_childs_finished()
+
+    def check_all_childs_finished(self):
         return set(
             [
                 self.project.db.get_job_status(job_id=child_id)
@@ -159,24 +162,25 @@ class FlexibleMaster(GenericMaster):
         The FlexibleMaster uses functions to connect multiple Jobs.
         """
         self.status.running = True
-        max_steps = len(self.child_ids + self._job_name_lst)
-        ind = max_steps - 1
-        for ind in range(len(self.child_ids), max_steps):
-            job = self.pop(0)
-            job._master_id = self.job_id
-            if ind != 0:
-                prev_job = self[ind - 1]
-                if ind < max_steps:
-                    mod_funct = self._step_function_lst[ind - 1]
-                    mod_funct(prev_job, job)
-                job._parent_id = prev_job.job_id
-            job.run()
-            if job.server.run_mode.interactive and not isinstance(job, GenericMaster):
-                job.interactive_close()
-            if self.server.run_mode.non_modal and job.server.run_mode.non_modal:
-                break
-            if job.server.run_mode.queue:
-                break
+        if self.check_all_childs_finished():
+            max_steps = len(self.child_ids + self._job_name_lst)
+            ind = max_steps - 1
+            for ind in range(len(self.child_ids), max_steps):
+                job = self.pop(0)
+                job._master_id = self.job_id
+                if ind != 0:
+                    prev_job = self[ind - 1]
+                    if ind < max_steps:
+                        mod_funct = self._step_function_lst[ind - 1]
+                        mod_funct(prev_job, job)
+                    job._parent_id = prev_job.job_id
+                job.run()
+                if job.server.run_mode.interactive and not isinstance(job, GenericMaster):
+                    job.interactive_close()
+                if self.server.run_mode.non_modal and job.server.run_mode.non_modal:
+                    break
+                if job.server.run_mode.queue:
+                    break
         if ind == max_steps - 1 and self.is_finished():
             self.status.finished = True
             self.project.db.item_update(self._runtime(), self.job_id)
