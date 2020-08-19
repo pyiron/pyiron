@@ -634,9 +634,9 @@ class Vasprun(object):
             cell = self.vasprun_dict["init_structure"]["cell"]
             positions = self.vasprun_dict["init_structure"]["positions"]
             if len(positions[positions > 1.01]) > 0:
-                basis = Atoms(el_list, positions=positions, cell=cell)
+                basis = Atoms(el_list, positions=positions, cell=cell, pbc=True)
             else:
-                basis = Atoms(el_list, scaled_positions=positions, cell=cell)
+                basis = Atoms(el_list, scaled_positions=positions, cell=cell, pbc=True)
             if "selective_dynamics" in self.vasprun_dict["init_structure"].keys():
                 basis.add_tag(selective_dynamics=[True, True, True])
                 for i, val in enumerate(
