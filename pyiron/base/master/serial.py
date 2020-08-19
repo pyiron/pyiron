@@ -386,13 +386,11 @@ class SerialMasterBase(GenericMaster):
             job = self._get_job_template()
             self.status.suspended = True
             if self.server.run_mode.queue:
-                self._run_if_master_queue(job)
-            elif self.server.run_mode.non_modal and job.server.run_mode.non_modal:
-                self._run_if_master_non_modal_child_non_modal(job)
-            elif self.server.run_mode.modal and job.server.run_mode.modal:
-                self._run_if_master_modal_child_modal(job)
-            elif self.server.run_mode.modal and job.server.run_mode.non_modal:
-                self._run_if_master_modal_child_non_modal(job)
+                self._run_if_master_queue(job=job)
+            elif job.server.run_mode.modal:
+                self._run_if_master_modal_child_modal(job=job)
+            elif job.server.run_mode.non_modal:
+                self._run_if_master_modal_child_non_modal(job=job)
             else:
                 raise TypeError()
         else:

@@ -572,23 +572,6 @@ class ParallelMaster(GenericMaster):
             self.status.collect = True
             self.run()
 
-    def _run_if_master_non_modal_child_non_modal(self, job):
-        """
-        run function which is executed when the Parallelmaster as well as its childs are running in non modal mode.
-
-        Args:
-            job (GenericJob): child job to be started
-        """
-        job_to_be_run_lst = self._next_job_series(job)
-        if self.project.db.get_job_status(job_id=self.job_id) != "busy":
-            self.status.suspended = True
-            for job in job_to_be_run_lst:
-                job.run()
-            if self.master_id:
-                del self
-        else:
-            self.run_static()
-
     def _run_if_master_modal_child_modal(self, job):
         """
         run function which is executed when the Parallelmaster as well as its childs are running in modal mode.
@@ -673,21 +656,14 @@ class ParallelMaster(GenericMaster):
                 "{} child project {}".format(self.job_name, self.project.__str__())
             )
             job = next(self._job_generator, None)
-            if (self.server.run_mode.non_modal or self.server.run_mode.queue) \
-                    and job.server.run_mode.interactive:
+            if job.server.run_mode.interactive:
                 self.run_if_interactive()
-            elif self.server.run_mode.queue:
+            elif job.server.run_mode.modal:
+                self._run_if_master_modal_child_modal(job=job)
+            elif job.server.run_mode.non_modal:
                 self._run_if_master_modal_child_non_modal(job=job)
             elif job.server.run_mode.queue:
-                self._run_if_child_queue(job)
-            elif self.server.run_mode.non_modal and job.server.run_mode.non_modal:
-                self._run_if_master_non_modal_child_non_modal(job)
-            elif (self.server.run_mode.modal and job.server.run_mode.modal) or (
-                self.server.run_mode.interactive and job.server.run_mode.interactive
-            ):
-                self._run_if_master_modal_child_modal(job)
-            elif self.server.run_mode.modal and job.server.run_mode.non_modal:
-                self._run_if_master_modal_child_non_modal(job)
+                self._run_if_child_queue(job=job)
             else:
                 raise TypeError()
         else:
