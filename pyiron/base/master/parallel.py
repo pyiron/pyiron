@@ -608,6 +608,11 @@ class ParallelMaster(GenericMaster):
         if self.is_finished():
             self.status.collect = True
             self.run()
+        elif self.status.busy:
+            self.status.refresh = True
+            self.run_if_refresh()
+        else:
+            self.status.suspended = True
 
     def _run_if_master_modal_child_non_modal(self, job):
         """
