@@ -39,7 +39,7 @@ class StructureList(AtomisticGenericJob):
         :class:`.InputList`: list of structures
         with meta data; each item in this list has an 'atoms' key for the
         atomic structures and then as many additional keys as passed to
-        :meth:`~pyiron.
+        :meth:`~.StructureContainer.append()`
         """
         return self.__structures
 
