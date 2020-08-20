@@ -1160,7 +1160,6 @@ class Project(ProjectPath):
             super(Project, self).__init__(path=self.path)
         else:
             s.switch_to_local_database(file_name=file_name, cwd=cwd)
-        s.open_connection()
         self.db = s.database
 
     def switch_to_central_database(self):

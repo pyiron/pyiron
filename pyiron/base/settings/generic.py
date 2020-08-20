@@ -218,12 +218,12 @@ class Settings(with_metaclass(Singleton)):
                 file_name = os.path.join(os.path.abspath(os.path.curdir), file_name)
             elif cwd is not None:
                 file_name = os.path.join(cwd, file_name)
+            self.close_connection()
             self.open_local_sqlite_connection(connection_string="sqlite:///" + file_name)
         else:
             print("Database is already in local mode or disabled!")
 
     def open_local_sqlite_connection(self, connection_string):
-        self.close_connection()
         self._database = DatabaseAccess(connection_string, self._configuration["sql_table_name"])
         self._use_local_database = True
         if self.database_is_disabled:
