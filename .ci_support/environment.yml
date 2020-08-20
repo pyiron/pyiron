@@ -4,6 +4,7 @@ dependencies:
   - ase =3.19
   - coveralls
   - coverage
+  - codacy-coverage
   - defusedxml =0.6.0
   - dill =0.3.1.1
   - future =0.18.2
