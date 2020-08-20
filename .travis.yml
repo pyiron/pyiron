@@ -15,7 +15,6 @@ matrix:
       after_success:
         - coveralls
         - coverage xml
-        - pip install codacy-coverage
         - python-codacy-coverage -r coverage.xml
       deploy:
         - provider: pypi
