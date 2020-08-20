@@ -41,11 +41,13 @@ class InputList(MutableMapping):
     If no argument is given, the constructor creates a new empty InputList.  If
     specified init maybe a Sequence, Set or Mapping and all recursive
     occurrences of these are also wrapped by InputList.
+
     >>> pl = InputList([3, 2, 1, 0])
     >>> pm = InputList({"foo": 24, "bar": 42})
 
     Access can be like a normal list with integers or optionally with strings
     as keys.
+
     >>> pl[0]
     3
     >>> pl[2]
@@ -54,6 +56,7 @@ class InputList(MutableMapping):
     24
 
     Keys do not have to be present for all elements.
+
     >>> pl2 = InputList([1,2])
     >>> pl2["end"] = 3
     >>> pl2
@@ -62,6 +65,7 @@ class InputList(MutableMapping):
     It is also allowed to set an item one past the length of the InputList,
     this is then equivalent to appending that element.  This allows to use the
     update method also with other InputLists
+
     >>> pl[len(pl)] = -1
     >>> pl
     InputList([3, 2, 1, 0, -1])
@@ -72,6 +76,7 @@ class InputList(MutableMapping):
     which clash with methods of InputList must be done with item access, but
     setting them works without overwriting the instance methods, but is not
     recommended for readability.
+
     >>> pm.foo
     24
     >>> pm.append = 23
@@ -79,6 +84,7 @@ class InputList(MutableMapping):
     InputList({"foo": 24, "bar": 42, "append": 23})
 
     Keys and indices can be tuples to traverse nested InputLists.
+
     >>> pn = InputList({"foo": {"bar": [4, 2]}})
     >>> pn["foo", "bar"]
     InputList([4, 2])
@@ -87,6 +93,7 @@ class InputList(MutableMapping):
 
     Using keys with "/" in them is equivalent to the above after splitting the
     key.
+
     >>> pn["foo/bar"] == pn["foo", "bar"]
     True
     >>> pn["foo/bar/0"] == pn["foo", "bar", 0]
@@ -95,6 +102,7 @@ class InputList(MutableMapping):
     To make that work strings that are only decimal digits are automatically
     converted to integers before accessing the list and keys are restricted to
     not only contain digits on initialization.
+
     >>> pl["0"] == pl[0]
     True
     >>> InputList({1: 42})
@@ -107,6 +115,7 @@ class InputList(MutableMapping):
     When initializing from a dict, it may not have integers or decimal strings
     as keys unless they match their position in the insertion order.  This is
     to avoid ambiguities in the final order of the InputList.
+
     >>> InputList({0: "foo", 1: "bar", 2: 42})
     InputList(["foo", "bar", 42])
     >>> InputList({0: "foo", 2: 42, 1: "bar"})
@@ -121,6 +130,7 @@ class InputList(MutableMapping):
     list, with the exception that `iter()` iterates of the keys and indices.
     This is to correctly implement the MutableMapping protocol, to convert to a
     normal list and discard the keys use `values()`.
+
     >>> pm[0]
     24
     >>> pn["0/0/1"]
