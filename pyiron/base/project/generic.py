@@ -21,9 +21,7 @@ from pyiron.base.database.jobtable import (
     get_job_id,
     get_jobs,
     job_table,
-    get_job_status,
     set_job_status,
-    get_job_working_directory,
     get_child_ids,
 )
 from pyiron.base.settings.logger import set_logging_level
@@ -34,6 +32,8 @@ from pyiron.base.server.queuestatus import (
     queue_is_empty,
     queue_table,
     wait_for_job,
+    wait_for_jobs,
+    update_from_remote,
     queue_enable_reservation,
     queue_check_job_is_waiting_or_running,
 )
@@ -569,6 +569,18 @@ class Project(ProjectPath):
             list: items in the project
         """
         return [(key, self[key]) for key in self.keys()]
+
+    def update_from_remote(self, recursive=True):
+        """
+        Update jobs from the remote server
+
+        Args:
+            recursive (bool): search subprojects [True/False] - default=True
+        """
+        update_from_remote(
+            project=self,
+            recursive=recursive
+        )
 
     def job_table(
         self,
@@ -1249,6 +1261,22 @@ class Project(ProjectPath):
         """
         wait_for_job(
             job=job, interval_in_s=interval_in_s, max_iterations=max_iterations
+        )
+
+    def wait_for_jobs(self, interval_in_s=5, max_iterations=100, recursive=True):
+        """
+        Wait for the calculation in the project to be finished
+
+        Args:
+            interval_in_s (int): interval when the job status is queried from the database - default 5 sec.
+            max_iterations (int): maximum number of iterations - default 100
+            recursive (bool): search subprojects [True/False] - default=True
+        """
+        wait_for_jobs(
+            project=self,
+            interval_in_s=interval_in_s,
+            max_iterations=max_iterations,
+            recursive=recursive
         )
 
     @staticmethod

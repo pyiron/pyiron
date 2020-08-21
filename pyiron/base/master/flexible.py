@@ -4,6 +4,7 @@
 
 import inspect
 from pyiron.base.master.generic import GenericMaster
+from pyiron.base.job.jobstatus import job_status_finished_lst
 
 """
 The Flexible master uses a list of functions to connect multiple jobs in a series.
@@ -155,7 +156,7 @@ class FlexibleMaster(GenericMaster):
                 self.project.db.get_job_status(job_id=child_id)
                 for child_id in self.child_ids
             ]
-        ) < {"finished", "busy", "refresh", "aborted"}
+        ) < set(job_status_finished_lst)
 
     def run_static(self):
         """

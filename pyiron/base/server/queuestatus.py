@@ -6,6 +6,7 @@ import pandas
 import time
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.util import static_isinstance
+from pyiron.base.job.jobstatus import job_status_finished_lst
 
 """
 Set of functions to interact with the queuing system directly from within pyiron - optimized for the Sun grid engine.
@@ -163,7 +164,7 @@ def wait_for_job(job, interval_in_s=5, max_iterations=100):
         interval_in_s (int): interval when the job status is queried from the database - default 5 sec.
         max_iterations (int): maximum number of iterations - default 100
     """
-    if not (job.status.finished or job.status.aborted or job.status.not_converged):
+    if job.status.string not in job_status_finished_lst:
         if s.queue_adapter is not None and s.queue_adapter.remote_flag and job.server.queue is not None:
             finished = False
             for _ in range(max_iterations):
@@ -173,8 +174,9 @@ def wait_for_job(job, interval_in_s=5, max_iterations=100):
                         transfer_back=True,
                         delete_remote=False
                     )
-                    job.status.string = job.project_hdf5["status"]
-                if job.status.finished or job.status.aborted or job.status.not_converged:
+                    status_hdf5 = job.project_hdf5["status"]
+                    job.status.string = status_hdf5
+                if status_hdf5 in job_status_finished_lst:
                     job.transfer_from_remote()
                     finished = True
                     break
@@ -187,12 +189,77 @@ def wait_for_job(job, interval_in_s=5, max_iterations=100):
                 if s.database_is_disabled:
                     job.project.db.update()
                 job.refresh_job_status()
-                if job.status.finished or job.status.aborted or job.status.not_converged:
+                if job.status.string in job_status_finished_lst:
                     finished = True
                     break
                 time.sleep(interval_in_s)
             if not finished:
                 raise ValueError("Maximum iterations reached, but the job was not finished.")
+
+
+def wait_for_jobs(project, interval_in_s=5, max_iterations=100, recursive=True):
+    """
+    Wait for the calculation in the project to be finished
+
+    Args:
+        project: Project instance the jobs is located in
+        interval_in_s (int): interval when the job status is queried from the database - default 5 sec.
+        max_iterations (int): maximum number of iterations - default 100
+        recursive (bool): search subprojects [True/False] - default=True
+    """
+    finished = False
+    for _ in range(max_iterations):
+        project.update_from_remote(recursive=True)
+        df = project.job_table(recursive=recursive)
+        if all(df.status.isin(job_status_finished_lst)):
+            finished = True
+            break
+        time.sleep(interval_in_s)
+    if not finished:
+        raise ValueError("Maximum iterations reached, but the job was not finished.")
+
+
+def update_from_remote(project, recursive=True):
+    """
+    Update jobs from the remote server
+
+    Args:
+        project: Project instance the jobs is located in
+        recursive (bool): search subprojects [True/False] - default=True
+    """
+    if s.queue_adapter is not None and s.queue_adapter.remote_flag:
+        df_project = project.job_table(recursive=recursive)
+        df_submitted = df_project[df_project.status == "submitted"]
+        df_combined = df_project[df_project.status.isin(["running", "submitted"])]
+        df_queue = s.queue_adapter.get_status_of_my_jobs()
+        if len(df_queue) > 0:
+            df_queue["pyiron_id"] = df_queue.apply(
+                lambda x: int(x["jobname"].split("pi_")[1]),
+                axis=1
+            )
+            jobs_now_running_lst = df_queue[df_queue.status == "running"].pyiron_id.values
+            _ = [
+                project.set_job_status(job_specifier=job_id, status="running")
+                for job_id in df_submitted.id.values if job_id in jobs_now_running_lst
+            ]
+        else:
+            jobs_now_running_lst = []
+        for job_id in df_combined.id.values:
+            if job_id not in jobs_now_running_lst:
+                job = project.inspect(job_id)
+                s.queue_adapter.transfer_file_to_remote(
+                    file=job.project_hdf5.file_name,
+                    transfer_back=True,
+                    delete_remote=False
+                )
+                status_hdf5 = job.project_hdf5["status"]
+                project.set_job_status(
+                    job_specifier=job.job_id,
+                    status=status_hdf5
+                )
+                if status_hdf5 in job_status_finished_lst:
+                    job_object = job.to_object()
+                    job_object.transfer_from_remote()
 
 
 def _validate_que_request(item):
