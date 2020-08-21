@@ -50,6 +50,5 @@ class TestProjectPath(unittest.TestCase):
         self.project_path.close()
         self.assertFalse("test_removedirs" in self.project_path.listdir())
 
-
 if __name__ == "__main__":
     unittest.main()

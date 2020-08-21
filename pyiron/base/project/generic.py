@@ -1010,6 +1010,49 @@ class Project(ProjectPath):
     def remove_jobs(self, recursive=False):
         """
         Remove all jobs in the current project and in all subprojects if recursive=True is selected - see also
+        remove_job().
+
+        For safety, the user is asked via input() to confirm the removal. To bypass this
+        interactive interruption, use `remove_jobs_silently()`.
+
+        Args:
+            recursive (bool): [True/False] delete all jobs in all subprojects - default=False
+        """
+        if not isinstance(recursive, bool):
+            raise ValueError('recursive must be a boolean')
+        if not self.view_mode:
+            confirmed = None
+            while confirmed not in ["y", "n"]:
+                if confirmed is None:
+                    confirmed = input(
+                        "Are you sure you want to delete all jobs from "
+                        + f"'{self.base_name}'? y/(n)"
+                        ).lower()
+                else:
+                    confirmed = input(
+                        "Invalid response. Please enter 'y' (yes) or 'n' (no): "
+                        ).lower()
+            if confirmed == "y":
+                # proceed to delete the jobs
+                for job_id in self.get_job_ids(recursive=recursive):
+                    if job_id not in self.get_job_ids(recursive=recursive):
+                        continue
+                    else:
+                        try:
+                            self.remove_job(job_specifier=job_id)
+                            s.logger.debug("Remove job with ID {0} ".format(job_id))
+                        except (IndexError, Exception):
+                            s.logger.debug(
+                                "Could not remove job with ID {0} ".format(job_id)
+                            )
+            else:
+                print(f"No jobs removed from '{self.base_name}'.")
+        else:
+            raise EnvironmentError("copy_to: is not available in Viewermode !")
+
+    def remove_jobs_silently(self, recursive=False):
+        """
+        Remove all jobs in the current project and in all subprojects if recursive=True is selected - see also
         remove_job()
 
         Args:
@@ -1079,7 +1122,7 @@ class Project(ProjectPath):
                 if "_hdf5" not in sub_project_name:
                     sub_project = self.open(sub_project_name)
                     sub_project.remove(enable=enable, enforce=enforce)
-            self.remove_jobs(recursive=True)
+            self.remove_jobs_silently(recursive=True)
             for file in self.list_files():
                 os.remove(os.path.join(self.path, file))
             if enforce:

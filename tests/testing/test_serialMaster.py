@@ -29,7 +29,7 @@ class TestSerialMaster(unittest.TestCase):
     def setUpClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
         cls.project = Project(os.path.join(cls.file_location, "testing_serial"))
-        cls.project.remove_jobs(recursive=True)
+        cls.project.remove_jobs_silently(recursive=True)
 
     @classmethod
     def tearDownClass(cls):
