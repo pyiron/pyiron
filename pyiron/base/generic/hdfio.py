@@ -1254,40 +1254,25 @@ class ProjectHDFio(FileHDFio):
             internal_class_name,
         )
 
-    @staticmethod
-    def make_from_hdf(cls, **kwargs):
+    def create_instance(self, cls, **kwargs):
         """
-        Create new instance of the given class from HDF5 file.
+        Create new instance of the given class from current group.
 
         Uses the given **kwargs and a special classmethod "from_hdf_args" that
         may be defined on cls to construct a dictionary of arguments and then
         instatiate cls with them.
-
-        kwargs must contain all necessary arguments for `cls.__init__`, even
-        positional ones.  They will be passed by name, i.e. `cls.__init__` must
-        not have positional-only parameters to be correctly instantiated by
-        this method.
 
         Args:
             cls (type): pyiron type to instantiate
             **kwargs: arguments for instance creation
         """
 
-        # kwargs might provide more arguments than needed for this class, since
-        # it has to provide init arguments for all possible pyiron types.  Here
-        # we just pick the ones needed for this specific instance based on the
-        # signature for cls.__init__
         if hasattr(cls, "from_hdf_args"):
-            init_args = cls.from_hdf_args(hdf)
+            init_args = cls.from_hdf_args(self)
         else:
             init_args = {}
-        for name, param in inspect.signature(cls.__init__).parameters.items():
-            # skip parameter if it is a varargs-style parameter *args/**kwargs
-            if param.kind in (param.VAR_POSITIONAL, param.VAR_KEYWORD):
-                continue
 
-            if name in kwargs:
-                init_args[name] = kwargs[name]
+        init_args.update(kwargs)
 
         return cls(**init_args)
 
@@ -1296,18 +1281,15 @@ class ProjectHDFio(FileHDFio):
         Load the full pyiron object from an HDF5 file
 
         Args:
-            class_name: if the 'TYPE' node is not available in the HDF5 file a manual object type can be set - optional
-            **qwargs: optional parameters ['job_name', 'project'] - to specify the location of the HDF5 path
+            class_name(str, optional): if the 'TYPE' node is not available in
+                        the HDF5 file a manual object type can be set,
+                        must be as reported by `str(type(obj))`
+            **qwargs: optional parameters optional parameters to override init
+                      parameters
 
         Returns:
             GenericJob: pyiron object
         """
-        if "job_name" not in qwargs:
-            qwargs["job_name"] = self.file_name.split("/")[-1].split(".h5")[0]
-        if "project" not in qwargs:
-            qwargs["project"] = self.__class__(
-                project=self._create_project_from_hdf5(), file_name=qwargs["job_name"]
-            )
         if "TYPE" not in self.list_nodes() and class_name is None:
             raise ValueError(
                 "Objects can be only recovered from hdf5 if TYPE is given"
@@ -1319,11 +1301,11 @@ class ProjectHDFio(FileHDFio):
         class_name = class_name or self.get("TYPE")
         class_object = self.import_class(class_name)
 
-        # TODO: what does that mean?
-        if class_name != str(class_object):  # Backwards compatibility
+        # Backwards compatibility since the format of TYPE changed
+        if class_name != str(class_object):
             self["TYPE"] = str(class_object)
 
-        obj = self.make_from_hdf(class_object, **qwargs)
+        obj = self.create_instance(class_object, **qwargs)
         obj.from_hdf(
                 hdf = self.open(".."),
                 group_name = self.h5_path.split('/')[-1]

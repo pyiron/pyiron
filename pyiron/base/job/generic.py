@@ -18,6 +18,7 @@ from pyiron.base.settings.generic import Settings
 from pyiron.base.job.executable import Executable
 from pyiron.base.job.jobstatus import JobStatus
 from pyiron.base.job.core import JobCore
+from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.base.generic.util import static_isinstance
 from pyiron.base.server.generic import Server
 from pyiron.base.database.filetable import FileTable
@@ -1184,6 +1185,21 @@ class GenericJob(JobCore):
                 "exclude_groups_hdf": self._exclude_groups_hdf,
             }
             hdf_input["generic_dict"] = generic_dict
+
+    @classmethod
+    def from_hdf_args(cls, hdf):
+        """
+        Read arguments for instance creation from HDF5 file
+
+        Args:
+            hdf (ProjectHDFio): HDF5 group object
+        """
+        job_name = posixpath.splitext(posixpath.basename(hdf.file_name))[0]
+        project_hdf5 = ProjectHDFio(
+                project = hdf._create_project_from_hdf5(),
+                file_name = job_name
+        )
+        return {"job_name": job_name, "project": project_hdf5}
 
     def from_hdf(self, hdf=None, group_name=None):
         """
