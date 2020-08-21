@@ -5,6 +5,7 @@
 import inspect
 import textwrap
 from pyiron.base.job.generic import GenericJob
+from pyiron.base.job.jobstatus import job_status_finished_lst
 
 """
 The GenericMaster is the template class for all meta jobs
@@ -346,7 +347,7 @@ class GenericMaster(GenericJob):
                 for db_entry in self.project.db.get_items_dict(
                     {"masterid": self.job_id}
                 )
-                if db_entry["status"] not in ["finished", "aborted"]
+                if db_entry["status"] not in job_status_finished_lst
             ]
         )
 

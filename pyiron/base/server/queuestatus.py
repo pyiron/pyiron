@@ -6,6 +6,7 @@ import pandas
 import time
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.util import static_isinstance
+from pyiron.base.job.jobstatus import job_status_finished_lst
 
 """
 Set of functions to interact with the queuing system directly from within pyiron - optimized for the Sun grid engine.
@@ -160,7 +161,7 @@ def wait_for_job(job, interval_in_s=5, max_iterations=100):
         interval_in_s (int): interval when the job status is queried from the database - default 5 sec.
         max_iterations (int): maximum number of iterations - default 100
     """
-    if not (job.status.finished or job.status.aborted or job.status.not_converged):
+    if job.status.string not in job_status_finished_lst:
         if s.queue_adapter is not None and s.queue_adapter.remote_flag and job.server.queue is not None:
             finished = False
             for _ in range(max_iterations):
@@ -170,8 +171,9 @@ def wait_for_job(job, interval_in_s=5, max_iterations=100):
                         transfer_back=True,
                         delete_remote=False
                     )
-                    job.status.string = job.project_hdf5["status"]
-                if job.status.finished or job.status.aborted or job.status.not_converged:
+                    status_hdf5 = job.project_hdf5["status"]
+                    job.status.string = status_hdf5
+                if status_hdf5 not in job_status_finished_lst:
                     job.transfer_from_remote()
                     finished = True
                     break
@@ -184,7 +186,7 @@ def wait_for_job(job, interval_in_s=5, max_iterations=100):
                 if s.database_is_disabled:
                     job.project.db.update()
                 job.refresh_job_status()
-                if job.status.finished or job.status.aborted or job.status.not_converged:
+                if job.status.string not in job_status_finished_lst:
                     finished = True
                     break
                 time.sleep(interval_in_s)
@@ -206,7 +208,7 @@ def wait_for_jobs(project, interval_in_s=5, max_iterations=100, recursive=True):
     for _ in range(max_iterations):
         project.update_from_remote(recursive=True)
         df = project.job_table(recursive=recursive)
-        if all(df.status.isin(["finished", "aborted", "not_converged"])):
+        if all(df.status.isin(job_status_finished_lst)):
             finished = True
             break
         time.sleep(interval_in_s)
@@ -252,7 +254,7 @@ def update_from_remote(project, recursive=True):
                     job_specifier=job.job_id,
                     status=status_hdf5
                 )
-                if status_hdf5 in ["finished", "aborted", "not_converged"]:
+                if status_hdf5 in job_status_finished_lst:
                     job_object = job.to_object()
                     job_object.transfer_from_remote()
 
