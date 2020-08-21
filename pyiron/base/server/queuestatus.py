@@ -206,7 +206,7 @@ def wait_for_jobs(project, interval_in_s=5, max_iterations=100, recursive=True):
     for _ in range(max_iterations):
         project.update_from_remote(recursive=True)
         df = project.job_table(recursive=recursive)
-        if all(df.status.isin(["finished", "aborted", "not_converged"])):
+        if all(df.status.isin(["finished", "aborted", "warning", "not_converged"])):
             finished = True
             break
         time.sleep(interval_in_s)
@@ -252,7 +252,7 @@ def update_from_remote(project, recursive=True):
                     job_specifier=job.job_id,
                     status=status_hdf5
                 )
-                if status_hdf5 in ["finished", "aborted", "not_converged"]:
+                if status_hdf5 in ["finished", "aborted", "warning", "not_converged"]:
                     job_object = job.to_object()
                     job_object.transfer_from_remote()
 
