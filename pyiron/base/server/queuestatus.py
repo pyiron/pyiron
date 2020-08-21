@@ -173,7 +173,7 @@ def wait_for_job(job, interval_in_s=5, max_iterations=100):
                     )
                     status_hdf5 = job.project_hdf5["status"]
                     job.status.string = status_hdf5
-                if status_hdf5 not in job_status_finished_lst:
+                if status_hdf5 in job_status_finished_lst:
                     job.transfer_from_remote()
                     finished = True
                     break
@@ -186,7 +186,7 @@ def wait_for_job(job, interval_in_s=5, max_iterations=100):
                 if s.database_is_disabled:
                     job.project.db.update()
                 job.refresh_job_status()
-                if job.status.string not in job_status_finished_lst:
+                if job.status.string in job_status_finished_lst:
                     finished = True
                     break
                 time.sleep(interval_in_s)
