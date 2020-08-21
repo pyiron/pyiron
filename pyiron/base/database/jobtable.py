@@ -3,9 +3,9 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import pandas
-import os
 import numpy as np
 from pyiron.base.settings.generic import Settings
+from pyiron.base.database.filetable import FileTable
 
 """
 The Jobtable module provides a set of top level functions to interact with the database.
@@ -180,51 +180,64 @@ def job_table(
     Returns:
         pandas.Dataframe: Return the result as a pandas.Dataframe object
     """
-    if columns is None:
-        columns = ["job", "project", "chemicalformula"]
-    all_db = [
-        "id",
-        "status",
-        "chemicalformula",
-        "job",
-        "subjob",
-        "projectpath",
-        "project",
-        "timestart",
-        "timestop",
-        "totalcputime",
-        "computer",
-        "hamilton",
-        "hamversion",
-        "parentid",
-        "masterid",
-    ]
+    if not isinstance(database, FileTable):
+        if columns is None:
+            columns = ["job", "project", "chemicalformula"]
+        all_db = [
+            "id",
+            "status",
+            "chemicalformula",
+            "job",
+            "subjob",
+            "projectpath",
+            "project",
+            "timestart",
+            "timestop",
+            "totalcputime",
+            "computer",
+            "hamilton",
+            "hamversion",
+            "parentid",
+            "masterid",
+        ]
 
-    if all_columns:
-        columns = all_db
-    job_dict = _job_dict(
-        database=database,
-        sql_query=sql_query,
-        user=user,
-        project_path=project_path,
-        recursive=recursive,
-        element_lst=element_lst,
-    )
-    if full_table:
-        pandas.set_option('display.max_rows', None)
-        pandas.set_option('display.max_columns', None)
+        if all_columns:
+            columns = all_db
+        job_dict = _job_dict(
+            database=database,
+            sql_query=sql_query,
+            user=user,
+            project_path=project_path,
+            recursive=recursive,
+            element_lst=element_lst,
+        )
+        if full_table:
+            pandas.set_option('display.max_rows', None)
+            pandas.set_option('display.max_columns', None)
+        else:
+            pandas.reset_option('display.max_rows')
+            pandas.reset_option('display.max_columns')
+        pandas.set_option("display.max_colwidth", max_colwidth)
+        df = pandas.DataFrame(job_dict)
+        if len(job_dict) == 0:
+            return df
+        if job_name_contains != '':
+            df = df[df.job.str.contains(job_name_contains)]
+        if sort_by in columns:
+            return df[columns].sort_values(by=sort_by)
+        return df[columns]
     else:
-        pandas.reset_option('display.max_rows')
-        pandas.reset_option('display.max_columns')
-    pandas.set_option("display.max_colwidth", max_colwidth)
-    df = pandas.DataFrame(job_dict)
-    if len(job_dict) == 0:
-        return df
-    if job_name_contains != '':
-        df = df[df.job.str.contains(job_name_contains)]
-    if sort_by in columns:
-        return df[columns].sort_values(by=sort_by)
-    return df[columns]
+        database.update()
+        return database.job_table(
+            project=project_path,
+            recursive=recursive,
+            columns=columns,
+            all_columns=all_columns,
+            sort_by=sort_by,
+            max_colwidth=200,
+            full_table=full_table,
+            job_name_contains=job_name_contains
+        )
 
 
 def get_jobs(database, sql_query, user, project_path, recursive=True, columns=None):
@@ -244,22 +257,26 @@ def get_jobs(database, sql_query, user, project_path, recursive=True, columns=No
     Returns:
         dict: columns are used as keys and point to a list of the corresponding values
     """
-    if columns is None:
-        columns = ["id", "project"]
-    df = job_table(database, sql_query, user, project_path, recursive, columns=columns)
-    if len(df) == 0:
-        dictionary = {}
-        for key in columns:
-            dictionary[key] = list()
-        return dictionary
-        # return {key: list() for key in columns}
-    dictionary = {}
-    for key in df.keys():
-        dictionary[key] = df[
-            key
-        ].tolist()  # ToDo: Check difference of tolist and to_list
-    return dictionary
-    # return {key: df[key].tolist() for key in df.keys()}
+    if not isinstance(database, FileTable):
+        if columns is None:
+            columns = ["id", "project"]
+        df = job_table(
+            database=database,
+            sql_query=sql_query,
+            user=user,
+            project_path=project_path,
+            recursive=recursive,
+            columns=columns
+        )
+        if len(df) == 0:
+            return {key: list() for key in columns}
+        return df.to_dict(orient='list')
+    else:
+        return database.get_jobs(
+            project=project_path,
+            recursive=recursive,
+            columns=columns
+        )
 
 
 def get_job_ids(database, sql_query, user, project_path, recursive=True):
@@ -276,7 +293,19 @@ def get_job_ids(database, sql_query, user, project_path, recursive=True):
     Returns:
         list: a list of job IDs
     """
-    return get_jobs(database, sql_query, user, project_path, recursive=recursive)["id"]
+    if not isinstance(database, FileTable):
+        return get_jobs(
+            database=database,
+            sql_query=sql_query,
+            user=user,
+            project_path=project_path,
+            recursive=recursive
+        )["id"]
+    else:
+        return database.get_job_ids(
+            project=project_path,
+            recursive=recursive
+        )
 
 
 def get_child_ids(database, sql_query, user, project_path, job_specifier, status=None):
@@ -294,20 +323,26 @@ def get_child_ids(database, sql_query, user, project_path, job_specifier, status
     Returns:
         list: list of child IDs
     """
-    id_master = get_job_id(database, sql_query, user, project_path, job_specifier)
-    if id_master is None:
-        return []
+    if not isinstance(database, FileTable):
+        id_master = get_job_id(database, sql_query, user, project_path, job_specifier)
+        if id_master is None:
+            return []
+        else:
+            search_dict = {"masterid": str(id_master)}
+            if status is not None:
+                search_dict["status"] = status
+            return sorted(
+                [
+                    job["id"]
+                    for job in database.get_items_dict(
+                        search_dict, return_all_columns=False
+                    )
+                ]
+            )
     else:
-        search_dict = {"masterid": str(id_master)}
-        if status is not None:
-            search_dict["status"] = status
-        return sorted(
-            [
-                job["id"]
-                for job in database.get_items_dict(
-                    search_dict, return_all_columns=False
-                )
-            ]
+        return database.get_child_ids(
+            job_specifier=job_specifier,
+            project=project_path
         )
 
 
@@ -325,24 +360,40 @@ def get_job_id(database, sql_query, user, project_path, job_specifier):
     Returns:
         int: job ID of the job
     """
-    if isinstance(job_specifier, (int, np.integer)):
-        return job_specifier  # is id
+    if not isinstance(database, FileTable):
+        if isinstance(job_specifier, (int, np.integer)):
+            return job_specifier  # is id
 
-    job_specifier.replace(".", "_")
-    job_dict = _job_dict(
-        database, sql_query, user, project_path, recursive=False, job=job_specifier
-    )
-    if len(job_dict) == 0:
+        job_specifier.replace(".", "_")
         job_dict = _job_dict(
-            database, sql_query, user, project_path, recursive=True, job=job_specifier
+            database=database,
+            sql_query=sql_query,
+            user=user,
+            project_path=project_path,
+            recursive=False,
+            job=job_specifier
         )
-    if len(job_dict) == 0:
-        return None
-    elif len(job_dict) == 1:
-        return job_dict[0]["id"]
+        if len(job_dict) == 0:
+            job_dict = _job_dict(
+                database=database,
+                sql_query=sql_query,
+                user=user,
+                project_path=project_path,
+                recursive=True,
+                job=job_specifier
+            )
+        if len(job_dict) == 0:
+            return None
+        elif len(job_dict) == 1:
+            return job_dict[0]["id"]
+        else:
+            raise ValueError(
+                "job name '{0}' in this project '{1}' is not unique '{2}".format(job_specifier, project_path, job_dict)
+            )
     else:
-        raise ValueError(
-            "job name '{0}' in this project '{1}' is not unique '{2}".format(job_specifier, project_path, job_dict)
+        return database.get_job_id(
+            job_specifier=job_specifier,
+            project=project_path
         )
 
 
@@ -351,7 +402,7 @@ def set_job_status(database, sql_query, user, project_path, job_specifier, statu
     Set the status of a particular job
 
     Args:
-        database (DatabaseAccess): Database object
+        database (DatabaseAccess/ FileTable): Database object
         sql_query (str): SQL query to enter a more specific request
         user (str): username of the user whoes user space should be searched
         project_path (str): root_path - this is in contrast to the project_path in GenericPath
@@ -361,7 +412,13 @@ def set_job_status(database, sql_query, user, project_path, job_specifier, statu
 
     """
     database.set_job_status(
-        job_id=get_job_id(database, sql_query, user, project_path, job_specifier),
+        job_id=get_job_id(
+            database=database,
+            sql_query=sql_query,
+            user=user,
+            project_path=project_path,
+            job_specifier=job_specifier
+        ),
         status=status
     )
 
@@ -381,8 +438,15 @@ def get_job_status(database, sql_query, user, project_path, job_specifier):
         str: job status can be one of the following ['initialized', 'appended', 'created', 'submitted', 'running',
              'aborted', 'collect', 'suspended', 'refresh', 'busy', 'finished']
     """
-    database.get_job_status(
-        job_id=get_job_id(database, sql_query, user, project_path, job_specifier)
+
+    return database.get_job_status(
+        job_id=get_job_id(
+            database=database,
+            sql_query=sql_query,
+            user=user,
+            project_path=project_path,
+            job_specifier=job_specifier
+        )
     )
 
 
@@ -401,5 +465,11 @@ def get_job_working_directory(database, sql_query, user, project_path, job_speci
         str: working directory as absolute path
     """
     return database.get_job_working_directory(
-        job_id=get_job_id(database, sql_query, user, project_path, job_specifier)
+        job_id=get_job_id(
+            database=database,
+            sql_query=sql_query,
+            user=user,
+            project_path=project_path,
+            job_specifier=job_specifier
+        )
     )
