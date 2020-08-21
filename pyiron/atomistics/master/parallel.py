@@ -151,7 +151,7 @@ class MapJobGenerator(JobGenerator):
         return self._job._map_function(job, parameter)
 
 
-def pipe(project, job, step_lst):
+def pipe(project, job, step_lst, delete_existing_job=False):
     """
     Create a job pipeline
 
@@ -163,7 +163,7 @@ def pipe(project, job, step_lst):
     Returns:
         FlexibleMaster:
     """
-    job_lst_master = project.create_job(project.job_type.FlexibleMaster, 'lstmaster')
+    job_lst_master = project.create_job(project.job_type.FlexibleMaster, 'lstmaster', delete_existing_job=delete_existing_job)
     if job_lst_master.status.finished:
         return job_lst_master
     else:

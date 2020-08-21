@@ -109,9 +109,9 @@ class Project(ProjectCore):
 
     def __init__(self, path="", user=None, sql_query=None, default_working_directory=False):
         super(Project, self).__init__(
-            path=path, 
-            user=user, 
-            sql_query=sql_query, 
+            path=path,
+            user=user,
+            sql_query=sql_query,
             default_working_directory=default_working_directory
         )
         self.job_type = JobTypeChoice()
@@ -685,7 +685,7 @@ class Project(ProjectCore):
         """
         ProjectGUI(self)
 
-    def create_pipeline(self, job, step_lst):
+    def create_pipeline(self, job, step_lst, delete_existing_job=False):
         """
         Create a job pipeline
 
@@ -696,4 +696,4 @@ class Project(ProjectCore):
         Returns:
             FlexibleMaster:
         """
-        return pipe(project=self, job=job, step_lst=step_lst)
+        return pipe(project=self, job=job, step_lst=step_lst, delete_existing_job=False)
