@@ -392,6 +392,8 @@ class Atoms(ASEAtoms):
             if self._high_symmetry_path is not None:
                 hdf_structure["high_symmetry_path"] = self._high_symmetry_path
 
+            hdf_structure["info"] = self.info
+
     def from_hdf(self, hdf, group_name="structure"):
         """
         Retrieve the object from a HDF5 file
@@ -479,6 +481,7 @@ class Atoms(ASEAtoms):
                 self._high_symmetry_path = None
                 if "high_symmetry_path" in hdf_atoms.list_nodes():
                     self._high_symmetry_path = hdf_atoms["high_symmetry_path"]
+                self.info = hdf_atoms["info"]
                 return self
 
         else:
