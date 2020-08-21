@@ -481,7 +481,8 @@ class Atoms(ASEAtoms):
                 self._high_symmetry_path = None
                 if "high_symmetry_path" in hdf_atoms.list_nodes():
                     self._high_symmetry_path = hdf_atoms["high_symmetry_path"]
-                self.info = hdf_atoms["info"]
+                if "info" in hdf_atoms.list_nodes():
+                    self.info = hdf_atoms["info"]
                 return self
 
         else:
