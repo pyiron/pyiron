@@ -7,6 +7,7 @@ import importlib
 import inspect
 import os
 from six import with_metaclass
+from pyiron.base.job.jobstatus import job_status_finished_lst
 
 """
 Jobtype class to create GenericJob type objects
@@ -148,7 +149,7 @@ class JobType(object):
             )
         if not job.status.initialized:
             job.from_hdf()
-        if job.status.finished or job.status.collect:
+        if job.status.string in job_status_finished_lst:
             job.set_input_to_read_only()
         return job
 

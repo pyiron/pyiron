@@ -21,6 +21,13 @@ __email__ = "janssen@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
 
+job_status_successful_lst = [
+    "finished",
+    "not_converged",
+    "warning"
+]
+
+job_status_finished_lst = ["aborted"] + job_status_successful_lst
 
 job_status_lst = [
     "initialized",
@@ -28,15 +35,11 @@ job_status_lst = [
     "created",
     "submitted",
     "running",
-    "aborted",
     "collect",
     "suspended",
     "refresh",
     "busy",
-    "finished",
-    "not_converged",
-    "warning"
-]
+] + job_status_finished_lst
 
 
 def format_docstring_with_statuses(n_tabs=1):
@@ -184,7 +187,7 @@ class JobStatus(object):
         Refresh the job status - check if the database and job_id are set and if this is the case load the job status
         from the database.
         """
-        if self.database and self.job_id and not any([self._status_dict[i] for i in ["finished", "aborted", "warning", "not_converged"]]):
+        if self.database and self.job_id and not any([self._status_dict[i] for i in job_status_finished_lst]):
             try:
                 status = self.database.get_job_status(job_id=self.job_id)
             except IndexError:

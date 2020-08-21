@@ -109,9 +109,9 @@ class Project(ProjectCore):
 
     def __init__(self, path="", user=None, sql_query=None, default_working_directory=False):
         super(Project, self).__init__(
-            path=path, 
-            user=user, 
-            sql_query=sql_query, 
+            path=path,
+            user=user,
+            sql_query=sql_query,
             default_working_directory=default_working_directory
         )
         self.job_type = JobTypeChoice()
@@ -389,82 +389,6 @@ class Project(ProjectCore):
             self.import_single_calculation(path, rel_path=rel_path, job_type="KMC")
 
     @staticmethod
-    def list_publications(bib_format="dict"):
-        """
-        List the publications used in this project.
-
-        Args:
-            bib_format (str): ['dict', 'bibtex', 'apa']
-
-        Returns:
-            list: list of publications in Bibtex format.
-        """
-
-        def get_bibtex(key, value):
-            total_keys = [
-                "title",
-                "journal",
-                "volume",
-                "issue",
-                "number",
-                "pages",
-                "numpages",
-                "year",
-                "month",
-                "publisher",
-                "url",
-                "doi",
-                "issn",
-            ]
-            bibtex_str = (
-                "@article{"
-                + key
-                + ",\n"
-                + "    author={"
-                + " and ".join(value["author"])
-                + "},\n"
-            )
-            for key in total_keys:
-                if key in value.keys():
-                    bibtex_str += "    " + key + "={" + value[key] + "},\n"
-            bibtex_str += "}\n"
-            return bibtex_str
-
-        def get_apa(value):
-            apa_str = " & ".join(value["author"])
-            if "year" in value.keys():
-                apa_str += " (" + value["year"] + "). "
-            if "title" in value.keys():
-                apa_str += value["title"] + ". "
-            if "journal" in value.keys():
-                apa_str += value["journal"] + ", "
-            if "volume" in value.keys():
-                apa_str += value["volume"] + ", "
-            if "pages" in value.keys():
-                apa_str += value["pages"] + ". "
-            if "doi" in value.keys():
-                apa_str += "doi: " + value["doi"] + "\n"
-            return apa_str
-
-        publication_dict = s.publication_lst
-        if bib_format.lower() == "dict":
-            return publication_dict
-        elif bib_format.lower() == "bibtex":
-            total_str = ""
-            for pub in publication_dict:
-                for key, value in pub.items():
-                    total_str += get_bibtex(key, value)
-            return total_str
-        elif bib_format.lower() == "apa":
-            total_str = ""
-            for pub in publication_dict:
-                for key, value in pub.items():
-                    total_str += get_apa(value)
-            return total_str
-        else:
-            raise ValueError("Supported Bibformats are ['dict', 'bibtex', 'apa']")
-
-    @staticmethod
     def create_structure(element, bravais_basis, lattice_constant):
         """
         Create a crystal structure using pyiron's native crystal structure generator
@@ -685,7 +609,7 @@ class Project(ProjectCore):
         """
         ProjectGUI(self)
 
-    def create_pipeline(self, job, step_lst):
+    def create_pipeline(self, job, step_lst, delete_existing_job=False):
         """
         Create a job pipeline
 
@@ -696,4 +620,4 @@ class Project(ProjectCore):
         Returns:
             FlexibleMaster:
         """
-        return pipe(project=self, job=job, step_lst=step_lst)
+        return pipe(project=self, job=job, step_lst=step_lst, delete_existing_job=False)

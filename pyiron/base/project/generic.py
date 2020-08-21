@@ -10,24 +10,19 @@ import pandas
 import importlib
 import numpy as np
 import pkgutil
-
-try:
-    from git import Repo, InvalidGitRepositoryError
-except ImportError:
-    pass
+from git import Repo, InvalidGitRepositoryError
 
 from pyiron.base.project.path import ProjectPath
 from pyiron.base.database.filetable import FileTable
 from pyiron.base.settings.generic import Settings
+from pyiron.base.settings.publications import list_publications
 from pyiron.base.database.jobtable import (
     get_db_columns,
     get_job_ids,
     get_job_id,
     get_jobs,
     job_table,
-    get_job_status,
     set_job_status,
-    get_job_working_directory,
     get_child_ids,
 )
 from pyiron.base.settings.logger import set_logging_level
@@ -38,6 +33,8 @@ from pyiron.base.server.queuestatus import (
     queue_is_empty,
     queue_table,
     wait_for_job,
+    wait_for_jobs,
+    update_from_remote,
     queue_enable_reservation,
     queue_check_job_is_waiting_or_running,
 )
@@ -554,6 +551,18 @@ class Project(ProjectPath):
         """
         return [(key, self[key]) for key in self.keys()]
 
+    def update_from_remote(self, recursive=True):
+        """
+        Update jobs from the remote server
+
+        Args:
+            recursive (bool): search subprojects [True/False] - default=True
+        """
+        update_from_remote(
+            project=self,
+            recursive=recursive
+        )
+
     def job_table(
         self,
         recursive=True,
@@ -613,22 +622,6 @@ class Project(ProjectPath):
             element_lst=element_lst,
         )
         return df["status"].value_counts()
-
-    @staticmethod
-    def get_external_input():
-        """
-        Get external input either from the HDF5 file of the ScriptJob object which executes the Jupyter notebook
-        or from an input.json file located in the same directory as the Jupyter notebook. 
-        
-        Returns:
-            dict: Dictionary with external input
-        """
-        inputdict = Notebook.get_custom_dict()
-        if inputdict is None:
-            raise ValueError("No input found, either there is an issue with your ScriptJob, " + 
-                             "or your input.json file is not located in the same directory " +
-                             "as your Jupyter Notebook.")
-        return inputdict
 
     def keys(self):
         """
@@ -781,29 +774,6 @@ class Project(ProjectPath):
             return job
         else:
             raise ValueError("Either a job ID or an database entry has to be provided.")
-
-    @staticmethod
-    def load_from_jobpath_string(job_path, convert_to_object=True):
-        """
-        Internal function to load an existing job either based on the job ID or based on the database entry dictionary.
-
-        Args:
-            job_path (str): string to reload the job from an HDF5 file - '/root_path/project_path/filename.h5/h5_path'
-            convert_to_object (bool): convert the object to an pyiron object or only access the HDF5 file - default=True
-                                      accessing only the HDF5 file is about an order of magnitude faster, but only
-                                      provides limited functionality. Compare the GenericJob object to JobCore object.
-
-        Returns:
-            GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
-        """
-        job = getattr(importlib.import_module("pyiron.base.job.path"), "JobPathBase")(
-            job_path=job_path
-        )
-        job = job.load_object(
-            convert_to_object=convert_to_object, project=job.project_hdf5.copy()
-        )
-        job.set_input_to_read_only()
-        return job
 
     def move_to(self, destination):
         """
@@ -1167,6 +1137,58 @@ class Project(ProjectPath):
         )
 
     @staticmethod
+    def load_from_jobpath_string(job_path, convert_to_object=True):
+        """
+        Internal function to load an existing job either based on the job ID or based on the database entry dictionary.
+
+        Args:
+            job_path (str): string to reload the job from an HDF5 file - '/root_path/project_path/filename.h5/h5_path'
+            convert_to_object (bool): convert the object to an pyiron object or only access the HDF5 file - default=True
+                                      accessing only the HDF5 file is about an order of magnitude faster, but only
+                                      provides limited functionality. Compare the GenericJob object to JobCore object.
+
+        Returns:
+            GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
+        """
+        job = getattr(importlib.import_module("pyiron.base.job.path"), "JobPathBase")(
+            job_path=job_path
+        )
+        job = job.load_object(
+            convert_to_object=convert_to_object, project=job.project_hdf5.copy()
+        )
+        job.set_input_to_read_only()
+        return job
+
+    @staticmethod
+    def get_external_input():
+        """
+        Get external input either from the HDF5 file of the ScriptJob object which executes the Jupyter notebook
+        or from an input.json file located in the same directory as the Jupyter notebook.
+
+        Returns:
+            dict: Dictionary with external input
+        """
+        inputdict = Notebook.get_custom_dict()
+        if inputdict is None:
+            raise ValueError("No input found, either there is an issue with your ScriptJob, " +
+                             "or your input.json file is not located in the same directory " +
+                             "as your Jupyter Notebook.")
+        return inputdict
+
+    @staticmethod
+    def list_publications(bib_format="dict"):
+        """
+        List the publications used in this project.
+
+        Args:
+            bib_format (str): ['dict', 'bibtex', 'apa']
+
+        Returns:
+            list: list of publications in Bibtex format.
+        """
+        return list_publications(bib_format=bib_format)
+
+    @staticmethod
     def queue_is_empty():
         """
         Check if the queue table is currently empty - no more jobs to wait for.
@@ -1216,6 +1238,22 @@ class Project(ProjectPath):
             job=job, interval_in_s=interval_in_s, max_iterations=max_iterations
         )
 
+    def wait_for_jobs(self, interval_in_s=5, max_iterations=100, recursive=True):
+        """
+        Wait for the calculation in the project to be finished
+
+        Args:
+            interval_in_s (int): interval when the job status is queried from the database - default 5 sec.
+            max_iterations (int): maximum number of iterations - default 100
+            recursive (bool): search subprojects [True/False] - default=True
+        """
+        wait_for_jobs(
+            project=self,
+            interval_in_s=interval_in_s,
+            max_iterations=max_iterations,
+            recursive=recursive
+        )
+
     @staticmethod
     def set_logging_level(level, channel=None):
         """
@@ -1226,6 +1264,23 @@ class Project(ProjectPath):
             channel (int): 0: file_log, 1: stream, None: both
         """
         set_logging_level(level=level, channel=channel)
+
+    @staticmethod
+    def _is_hdf5_dir(item):
+        """
+        Static internal function to check if the current project directory belongs to an pyiron object
+
+        Args:
+            item (str): folder/ project name
+
+        Returns:
+            bool: [True/False]
+        """
+        it = item.split("_")
+        if len(it) > 1:
+            if "hdf5" in it[-1]:
+                return True
+        return False
 
     def __getitem__(self, item):
         """
@@ -1254,37 +1309,6 @@ class Project(ProjectPath):
                         item=item_lst[0], convert_to_object=True
                     ).__getitem__("/".join(item_lst[1:]))
         return self._get_item_helper(item=item, convert_to_object=True)
-
-    def _get_item_helper(self, item, convert_to_object=True):
-        """
-        Internal helper function to get item from project
-
-        Args:
-            item (str, int): key
-            convert_to_object (bool): convert the object to an pyiron object or only access the HDF5 file - default=True
-                                      accessing only the HDF5 file is about an order of magnitude faster, but only
-                                      provides limited functionality. Compare the GenericJob object to JobCore object.
-
-        Returns:
-            Project, GenericJob, JobCore, dict, list, float: basically any kind of item inside the project.
-        """
-        if item == "..":
-            return self.parent_group
-        if item in self.list_nodes():
-            if self._inspect_mode or not convert_to_object:
-                return self.inspect(item)
-            return self.load(item)
-        if item in self.list_files(extension="h5"):
-            file_name = posixpath.join(self.path, "{}.h5".format(item))
-            return ProjectHDFio(project=self, file_name=file_name)
-        if item in self.list_files():
-            file_name = posixpath.join(self.path, "{}".format(item))
-            with open(file_name) as f:
-                return f.readlines()
-        if item in self.list_dirs():
-            with self.open(item) as new_item:
-                return new_item.copy()
-        raise ValueError("Unknown item: {}".format(item))
 
     def __repr__(self):
         """
@@ -1319,22 +1343,36 @@ class Project(ProjectPath):
                     self._store = self.create_job("ProjectStore", "ProjectStore")
             self._store[key] = value
 
-    @staticmethod
-    def _is_hdf5_dir(item):
+    def _get_item_helper(self, item, convert_to_object=True):
         """
-        Static internal function to check if the current project directory belongs to an pyiron object
+        Internal helper function to get item from project
 
         Args:
-            item (str): folder/ project name
+            item (str, int): key
+            convert_to_object (bool): convert the object to an pyiron object or only access the HDF5 file - default=True
+                                      accessing only the HDF5 file is about an order of magnitude faster, but only
+                                      provides limited functionality. Compare the GenericJob object to JobCore object.
 
         Returns:
-            bool: [True/False]
+            Project, GenericJob, JobCore, dict, list, float: basically any kind of item inside the project.
         """
-        it = item.split("_")
-        if len(it) > 1:
-            if "hdf5" in it[-1]:
-                return True
-        return False
+        if item == "..":
+            return self.parent_group
+        if item in self.list_nodes():
+            if self._inspect_mode or not convert_to_object:
+                return self.inspect(item)
+            return self.load(item)
+        if item in self.list_files(extension="h5"):
+            file_name = posixpath.join(self.path, "{}.h5".format(item))
+            return ProjectHDFio(project=self, file_name=file_name)
+        if item in self.list_files():
+            file_name = posixpath.join(self.path, "{}".format(item))
+            with open(file_name) as f:
+                return f.readlines()
+        if item in self.list_dirs():
+            with self.open(item) as new_item:
+                return new_item.copy()
+        raise ValueError("Unknown item: {}".format(item))
 
     def _remove_files(self, pattern="*"):
         """
