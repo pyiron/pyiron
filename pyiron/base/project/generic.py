@@ -301,16 +301,13 @@ class Project(ProjectPath):
         """
         if not project:
             project = self.project_path
-        if not isinstance(self.db, FileTable):
-            return get_child_ids(
-                database=self.db,
-                sql_query=self.sql_query,
-                user=self.user,
-                project_path=project,
-                job_specifier=job_specifier,
-            )
-        else:
-            return self.db.get_child_ids(job_specifier=job_specifier, project=project)
+        return get_child_ids(
+            database=self.db,
+            sql_query=self.sql_query,
+            user=self.user,
+            project_path=project,
+            job_specifier=job_specifier,
+        )
 
     def get_db_columns(self):
         """
@@ -351,17 +348,14 @@ class Project(ProjectPath):
         Returns:
             dict: columns are used as keys and point to a list of the corresponding values
         """
-        if not isinstance(self.db, FileTable):
-            return get_jobs(
-                database=self.db,
-                sql_query=self.sql_query,
-                user=self.user,
-                project_path=self.project_path,
-                recursive=recursive,
-                columns=columns,
-            )
-        else:
-            return self.db.get_jobs(project=self.project_path, recursive=recursive, columns=columns)
+        return get_jobs(
+            database=self.db,
+            sql_query=self.sql_query,
+            user=self.user,
+            project_path=self.project_path,
+            recursive=recursive,
+            columns=columns,
+        )
 
     def get_job_ids(self, recursive=True):
         """
@@ -373,16 +367,13 @@ class Project(ProjectPath):
         Returns:
             list: a list of job IDs
         """
-        if not isinstance(self.db, FileTable):
-            return get_job_ids(
-                database=self.db,
-                sql_query=self.sql_query,
-                user=self.user,
-                project_path=self.project_path,
-                recursive=recursive,
-            )
-        else:
-            return self.db.get_job_ids(project=self.project_path, recursive=recursive)
+        return get_job_ids(
+            database=self.db,
+            sql_query=self.sql_query,
+            user=self.user,
+            project_path=self.project_path,
+            recursive=recursive,
+        )
 
     def get_job_id(self, job_specifier):
         """
@@ -394,16 +385,13 @@ class Project(ProjectPath):
         Returns:
             int: job ID of the job
         """
-        if not isinstance(self.db, FileTable):
-            return get_job_id(
-                database=self.db,
-                sql_query=self.sql_query,
-                user=self.user,
-                project_path=self.project_path,
-                job_specifier=job_specifier,
-            )
-        else:
-            return self.db.get_job_id(job_specifier=job_specifier, project=self.project_path)
+        return get_job_id(
+            database=self.db,
+            sql_query=self.sql_query,
+            user=self.user,
+            project_path=self.project_path,
+            job_specifier=job_specifier,
+        )
 
     def get_job_status(self, job_specifier, project=None):
         """
@@ -419,17 +407,13 @@ class Project(ProjectPath):
         """
         if not project:
             project = self.project_path
-        if not isinstance(self.db, FileTable):
-            job_id = get_job_id(
-                database=self.db,
-                sql_query=self.sql_query,
-                user=self.user,
-                project_path=project,
-                job_specifier=job_specifier
-            )
-        else:
-            job_id = self.db.get_job_id(job_specifier=job_specifier, project=project)
-        return self.db.get_job_status(job_id=job_id)
+        return get_job_status(
+            database=self.db,
+            sql_query=self.sql_query,
+            user=self.user,
+            project_path=project,
+            job_specifier=job_specifier
+        )
 
     def get_job_working_directory(self, job_specifier, project=None):
         """
@@ -444,17 +428,13 @@ class Project(ProjectPath):
         """
         if not project:
             project = self.project_path
-        if not isinstance(self.db, FileTable):
-            job_id = get_job_id(
-                database=self.db,
-                sql_query=self.sql_query,
-                user=self.user,
-                project_path=project,
-                job_specifier=job_specifier
-            )
-        else:
-            job_id = self.db.get_job_id(job_specifier=job_specifier, project=project)
-        return self.db.get_job_working_directory(job_id=job_id)
+        return get_job_working_directory(
+            sql_query=self.sql_query,
+            user=self.user,
+            project_path=project,
+            database=self.db,
+            job_specifier=job_specifier
+        )
 
     def get_project_size(self):
         """
@@ -611,31 +591,19 @@ class Project(ProjectPath):
         Returns:
             pandas.Dataframe: Return the result as a pandas.Dataframe object
         """
-        if not isinstance(self.db, FileTable):
-            return job_table(
-                database=self.db,
-                sql_query=self.sql_query,
-                user=self.user,
-                project_path=self.project_path,
-                recursive=recursive,
-                columns=columns,
-                all_columns=all_columns,
-                sort_by=sort_by,
-                full_table=full_table,
-                element_lst=element_lst,
-                job_name_contains=job_name_contains,
-            )
-        else:
-            self.db.update()
-            return self.db.job_table(
-                project=self.project_path,
-                recursive=recursive,
-                columns=columns,
-                all_columns=all_columns,
-                sort_by=sort_by,
-                max_colwidth=200,
-                full_table=full_table,
-                job_name_contains=job_name_contains)
+        return job_table(
+            database=self.db,
+            sql_query=self.sql_query,
+            user=self.user,
+            project_path=self.project_path,
+            recursive=recursive,
+            columns=columns,
+            all_columns=all_columns,
+            sort_by=sort_by,
+            full_table=full_table,
+            element_lst=element_lst,
+            job_name_contains=job_name_contains,
+        )
 
     def get_jobs_status(self, recursive=True, element_lst=None):
         """
@@ -1072,23 +1040,14 @@ class Project(ProjectPath):
         """
         if not project:
             project = self.project_path
-        if not isinstance(self.db, FileTable):
-            set_job_status(
-                database=self.db,
-                sql_query=self.sql_query,
-                user=self.user,
-                project_path=project,
-                job_specifier=job_specifier,
-                status=status,
-            )
-        else:
-            self.db.set_job_status(
-                job_id=self.db.get_job_id(
-                    project=project,
-                    job_specifier=job_specifier
-                ),
-                status=status,
-            )
+        set_job_status(
+            database=self.db,
+            sql_query=self.sql_query,
+            user=self.user,
+            project_path=project,
+            job_specifier=job_specifier,
+            status=status,
+        )
 
     def values(self):
         """
