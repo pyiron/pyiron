@@ -52,7 +52,7 @@ class StructureContainer(AtomisticGenericJob):
         """
         if isinstance(structure_or_job, AtomisticGenericJob):
             if structure_or_job.structure:
-                s = structure_or_job.structure.copy()
+                s = structure_or_job.get_structure(-1).copy()
                 s.info["jobid"] = structure_or_job.job_id
                 return s
             else:
