@@ -75,7 +75,7 @@ class StructureContainer(AtomisticGenericJob):
         return self.structure_lst.get(0, None)
 
     @structure.setter
-    def structure(self, structure):
+    def structure(self, structure_or_job):
         item = self.__to_structure(structure_or_job)
         if len(self.structure_lst) >= 1:
             self.structure_lst[0] = item
