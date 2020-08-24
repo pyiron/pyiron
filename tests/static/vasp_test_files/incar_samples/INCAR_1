@@ -10,3 +10,4 @@ POTIM = 0.5
 ! IALGO = 20
 LORBIT=F
 LCORE=T
+LTEST=.False.

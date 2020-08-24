@@ -2280,6 +2280,10 @@ LORBIT = 0
         for key, value in extra_bool.items():
             if val == value:
                 return key
+        extra_bool = {True: ".True.", False: ".False."}
+        for key, value in extra_bool.items():
+            if val == value:
+                return key
         return val
 
 

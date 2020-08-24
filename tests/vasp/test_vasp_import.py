@@ -49,6 +49,7 @@ class TestVaspImport(unittest.TestCase):
         self.assertFalse(ham.input.incar["LVHAR"])
         self.assertFalse(ham.input.incar["LORBIT"])
         self.assertTrue(ham.input.incar["LCORE"])
+        self.assertFalse(ham.input.incar["LTEST"])
         self.assertEqual(ham.input.incar["POTIM"], 0.5)
 
 
