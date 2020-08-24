@@ -988,3 +988,8 @@ class GenericParameters(PyironObject):
         self._dataset["Parameter"] = []
         self._dataset["Value"] = []
         self._dataset["Comment"] = []
+
+    def bool_str_to_bool(self, val):
+        for key, value in self._bool_dict.items():
+            if val == value:
+                return key
