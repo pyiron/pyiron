@@ -20,6 +20,7 @@ class TestStructureContainer(unittest.TestCase):
             cls.project.job_type.StructureContainer, "structure_container"
         )
         cls.structure_container.structure = cls.basis
+        cls.structure_container.run()
 
     @classmethod
     def tearDownClass(cls):
