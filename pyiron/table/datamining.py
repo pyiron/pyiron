@@ -445,10 +445,6 @@ class PyironTable(object):
             try:
                 return eval(input_val)
             except (TypeError, SyntaxError, NameError):
-                if input_val in [".TRUE.", "T", ".True."]:
-                    return True
-                if input_val in [".FALSE.", "F", ".False."]:
-                    return False
                 return input_val
 
     @staticmethod
