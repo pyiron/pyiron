@@ -36,6 +36,21 @@ class TestVaspImport(unittest.TestCase):
         self.assertRaises(IOError, ham.get_final_structure_from_file)
         self.assertIsInstance(ham.output.unwrapped_positions, np.ndarray)
 
+    def test_incar_import(self):
+        file_path = os.path.join(
+            self.file_location, "../static/vasp_test_files/incar_samples/INCAR_1"
+        )
+        ham = self.project.create_job(self.project.job_type.Vasp, "incar_import")
+        ham.input.incar.read_input(file_path, ignore_trigger="!")
+        self.assertTrue(ham.input.incar["LWAVE"])
+        self.assertTrue(ham.input.incar["LCHARG"])
+        self.assertTrue(ham.input.incar["LVTOT"])
+        self.assertFalse(ham.input.incar["LDIPOL"])
+        self.assertFalse(ham.input.incar["LVHAR"])
+        self.assertFalse(ham.input.incar["LORBIT"])
+        self.assertTrue(ham.input.incar["LCORE"])
+        self.assertEqual(ham.input.incar["POTIM"], 0.5)
+
 
 if __name__ == "__main__":
     unittest.main()
