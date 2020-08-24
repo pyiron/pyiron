@@ -2274,6 +2274,14 @@ LORBIT = 0
 """
         self.load_string(file_content)
 
+    def _bool_str_to_bool(self, val):
+        val = super(Incar, self)._bool_str_to_bool(val)
+        extra_bool = {True: "T", False: "F"}
+        for key, value in extra_bool.items():
+            if val == value:
+                return key
+        return val
+
 
 class Kpoints(GenericParameters):
     """
