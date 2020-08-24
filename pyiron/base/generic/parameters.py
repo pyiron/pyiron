@@ -913,7 +913,7 @@ class GenericParameters(PyironObject):
                 line.strip()[0] == self.comment_char
             ):  # comment line
                 lst["Parameter"].append("Comment")
-                lst["Value"].append(self.bool_str_to_bool(line[:-1]))
+                lst["Value"].append(self._bool_str_to_bool(line[:-1]))
                 lst["Comment"].append("")
             elif not sep[0].strip() == "":
                 sep[0] = sep[0].strip()
@@ -929,7 +929,7 @@ class GenericParameters(PyironObject):
                         name = sep[0][0:keypos]
                         val = sep[0][keypos + len(self.separator_char) :]
                 lst["Parameter"].append(name.strip())
-                lst["Value"].append(self.bool_str_to_bool(val.strip()))
+                lst["Value"].append(self._bool_str_to_bool(val.strip()))
                 if len(sep) > 1:  # Handle comments
                     lst["Comment"].append(sep[-1].strip())
                 else:
@@ -989,7 +989,7 @@ class GenericParameters(PyironObject):
         self._dataset["Value"] = []
         self._dataset["Comment"] = []
 
-    def bool_str_to_bool(self, val):
+    def _bool_str_to_bool(self, val):
         for key, value in self._bool_dict.items():
             if val == value:
                 return key
