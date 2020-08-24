@@ -929,7 +929,7 @@ class GenericParameters(PyironObject):
                         name = sep[0][0:keypos]
                         val = sep[0][keypos + len(self.separator_char) :]
                 lst["Parameter"].append(name.strip())
-                lst["Value"].append(val.strip())
+                lst["Value"].append(self.bool_str_to_bool(val.strip()))
                 if len(sep) > 1:  # Handle comments
                     lst["Comment"].append(sep[-1].strip())
                 else:
