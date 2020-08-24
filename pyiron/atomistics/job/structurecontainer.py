@@ -23,7 +23,7 @@ class StructureContainer(AtomisticGenericJob):
     Container to save a list of structures in HDF5 together with tags.
 
     Add new structures with :meth:`.StructureList.append`, they are
-    added to :attr:`.StructureList.structures`.  The HDF5 is written when
+    added to :attr:`.StructureList.structure_lst`.  The HDF5 is written when
     :meth:`.run` is called.
     """
 
