@@ -14,6 +14,7 @@ __status__ = "development"
 __date__ = "Aug 12, 2020"
 
 from pyiron.base.generic.inputlist import InputList
+from pyiron.base.job.generic import GenericJob
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 from pyiron.atomistics.structure.atoms import Atoms
 
@@ -122,7 +123,7 @@ class StructureContainer(AtomisticGenericJob):
         # skip any of the AtomisticGenericJob specific serialization, since we
         # handle the structures on our own and that method might just confuse
         # self.structure and self.structure_lst
-        super(AtomisticGenericJob, self).to_hdf(hdf = hdf, group_name = group_name)
+        GenericJob.to_hdf(self, hdf = hdf, group_name = group_name)
 
         hdf = self.project_hdf5.create_group("structures")
 
@@ -130,7 +131,7 @@ class StructureContainer(AtomisticGenericJob):
             structure.to_hdf(hdf, group_name = "structure_{}".format(i))
 
     def from_hdf(self, hdf = None, group_name = None):
-        super(AtomisticGenericJob, self).from_hdf(hdf = hdf, group_name = group_name)
+        GenericJob.from_hdf(self, hdf = hdf, group_name = group_name)
 
         self.structure_lst.clear()
 
