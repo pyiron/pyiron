@@ -45,7 +45,7 @@ class StructureContainer(AtomisticGenericJob):
         return self._structure_lst
 
     @staticmethod
-    def __to_structure(structure_or_job):
+    def _to_structure(structure_or_job):
         """
         If :class:`~.AtomisticGenericJob` try to get most recent structure,
         copy it and set the job_id in :attr:`~.Atoms.info`, if
@@ -77,7 +77,7 @@ class StructureContainer(AtomisticGenericJob):
 
     @structure.setter
     def structure(self, structure_or_job):
-        item = self.__to_structure(structure_or_job)
+        item = self._to_structure(structure_or_job)
         if len(self.structure_lst) >= 1:
             self.structure_lst[0] = item
         else:
@@ -103,7 +103,7 @@ class StructureContainer(AtomisticGenericJob):
         Returns:
             dict: item added to :attr:`~.structure_lst`
         """
-        self.structure_lst.append(self.__to_structure(structure_or_job))
+        self.structure_lst.append(self._to_structure(structure_or_job))
         return self.structure_lst[0]
 
     def run_static(self):
