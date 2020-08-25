@@ -163,9 +163,9 @@ class FlexibleMaster(GenericMaster):
         The FlexibleMaster uses functions to connect multiple Jobs.
         """
         self.status.running = True
+        max_steps = len(self.child_ids + self._job_name_lst)
+        ind = max_steps - 1
         if self.check_all_childs_finished():
-            max_steps = len(self.child_ids + self._job_name_lst)
-            ind = max_steps - 1
             for ind in range(len(self.child_ids), max_steps):
                 job = self.pop(0)
                 job._master_id = self.job_id
