@@ -1020,35 +1020,21 @@ class Project(ProjectPath):
         """
         if not isinstance(recursive, bool):
             raise ValueError('recursive must be a boolean')
-        if not self.view_mode:
-            confirmed = None
-            while confirmed not in ["y", "n"]:
-                if confirmed is None:
-                    confirmed = input(
-                        "Are you sure you want to delete all jobs from "
-                        + f"'{self.base_name}'? y/(n)"
-                        ).lower()
-                else:
-                    confirmed = input(
-                        "Invalid response. Please enter 'y' (yes) or 'n' (no): "
-                        ).lower()
-            if confirmed == "y":
-                # proceed to delete the jobs
-                for job_id in self.get_job_ids(recursive=recursive):
-                    if job_id not in self.get_job_ids(recursive=recursive):
-                        continue
-                    else:
-                        try:
-                            self.remove_job(job_specifier=job_id)
-                            s.logger.debug("Remove job with ID {0} ".format(job_id))
-                        except (IndexError, Exception):
-                            s.logger.debug(
-                                "Could not remove job with ID {0} ".format(job_id)
-                            )
+        confirmed = None
+        while confirmed not in ["y", "n"]:
+            if confirmed is None:
+                confirmed = input(
+                    "Are you sure you want to delete all jobs from "
+                    + f"'{self.base_name}'? y/(n)"
+                    ).lower()
             else:
-                print(f"No jobs removed from '{self.base_name}'.")
+                confirmed = input(
+                    "Invalid response. Please enter 'y' (yes) or 'n' (no): "
+                    ).lower()
+        if confirmed == "y":
+            self.remove_jobs_silently(recursive=recursive)
         else:
-            raise EnvironmentError("copy_to: is not available in Viewermode !")
+            print(f"No jobs removed from '{self.base_name}'.")
 
     def remove_jobs_silently(self, recursive=False):
         """
