@@ -1366,7 +1366,7 @@ class SphinxBase(GenericDFTJob):
         for nn in np.all(satz == mag_num[:, np.newaxis], axis=-1):
             numbers.append(np.arange(len(satz))[nn][0])
         mapping, _ = spglib.get_ir_reciprocal_mesh(
-            mesh=[int(k) for k in self.input["KpointFolding"]],
+            mesh=[int(self.input["KpointFolding"][k]) for k in range(3)],
             cell=(lattice, positions, numbers),
             is_shift=np.dot(self.structure.cell,
                 np.array(self.input["KpointCoords"])),
