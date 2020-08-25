@@ -490,7 +490,10 @@ class LammpsControl(GenericParameters):
 
         if seed is None:
             seed = self.generate_seed_from_job(job_name=job_name)
-
+        
+        if seed == 0:
+            raise ValueError("Seed must be a positive integer larger than 0")
+            
         # Set thermodynamic ensemble
         if pressure is not None:  # NPT
 
