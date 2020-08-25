@@ -31,7 +31,7 @@ class TestSerialMaster(unittest.TestCase):
         cls.project = Project(
             os.path.join(cls.file_location, "testing_serial_non_modal")
         )
-        cls.project.remove_jobs(recursive=True)
+        cls.project.remove_jobs_silently(recursive=True)
 
     @classmethod
     def tearDownClass(cls):

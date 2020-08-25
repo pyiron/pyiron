@@ -28,7 +28,7 @@ class TestSxExtOptInteractive(unittest.TestCase):
     def tearDownClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
         cls.project = Project(os.path.join(cls.file_location, "../static/sxextopt"))
-        cls.project.remove_jobs(recursive=True)
+        cls.project.remove_jobs_silently(recursive=True)
 
 
 if __name__ == "__main__":

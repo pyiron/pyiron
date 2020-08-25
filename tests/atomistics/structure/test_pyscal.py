@@ -26,7 +26,7 @@ class Testpyscal(unittest.TestCase):
     def tearDownClass(cls):
         cls.execution_path = os.path.dirname(os.path.abspath(__file__))
         project = Project(os.path.join(cls.execution_path, "test_job"))
-        project.remove_jobs(recursive=True)
+        project.remove_jobs_silently(recursive=True)
         project.remove(enable=True)
 
     def test_attributes(self):
