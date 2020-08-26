@@ -43,9 +43,19 @@ class StructureContainer(AtomisticGenericJob):
     @staticmethod
     def _to_structure(structure_or_job):
         """
-        If :class:`~.AtomisticGenericJob` try to get most recent structure,
-        copy it and set the job_id in :attr:`~.Atoms.info`, if
-        :class:`~.Atoms` return as is, throw an error otherwise.
+        Return structure from structure or atomic job.
+        
+        Args:
+            structure_or_job (:class:`~.AtomisticGenericJob`, :class:`~.Atoms`):
+                if :class:`~.AtomisticGenericJob` try to get most recent structure,
+        copy it and set the job_id in :attr:`~.Atoms.info`
+        
+        Returns:
+            :class:`~.Atoms`: structure from the job or given structure
+            
+        Raises:
+            ValueError: if given :class:`~.AtomisticGenericJob` has no structure set
+            TypeError: if structure_or_job is of invalid type
         """
         if isinstance(structure_or_job, AtomisticGenericJob):
             if structure_or_job.structure:
