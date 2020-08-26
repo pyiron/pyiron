@@ -95,7 +95,7 @@ def write_poscar(structure, filename="POSCAR", write_species=True, cartesian=Tru
         f.write("1.0" + endline)
         for a_i in structure.get_cell():
             x, y, z = a_i
-            f.write("{0:f} {1:f} {2:f}".format(x, y, z) + endline)
+            f.write("{0:.15f} {1:.15f} {2:.15f}".format(x, y, z) + endline)
         atom_numbers = structure.get_number_species_atoms()
         if write_species:
             f.write(" ".join(atom_numbers.keys()) + endline)
