@@ -980,20 +980,20 @@ class GenericJob(JobCore):
             command = "python -m pyiron.cli wrapper -p " \
                       + self.working_directory \
                       + " -j " + str(self.job_id)
-        try:
-            que_id = s.queue_adapter.submit_job(
-                queue=self.server.queue,
-                job_name="pi_" + str(self.job_id),
-                working_directory=self.project_hdf5.working_directory,
-                cores=self.server.cores,
-                run_time_max=self.server.run_time,
-                memory_max=self.server.memory_limit,
-                command=command,
-            )
+        que_id = s.queue_adapter.submit_job(
+            queue=self.server.queue,
+            job_name="pi_" + str(self.job_id),
+            working_directory=self.project_hdf5.working_directory,
+            cores=self.server.cores,
+            run_time_max=self.server.run_time,
+            memory_max=self.server.memory_limit,
+            command=command,
+        )
+        if que_id != None:
             self.server.queue_id = que_id
             self._server.to_hdf(self._hdf5)
             print("Queue system id: ", que_id)
-        except subprocess.CalledProcessError as e:
+        else:
             self._logger.warning("Job aborted")
             self._logger.warning(e.output)
             self.status.aborted = True
