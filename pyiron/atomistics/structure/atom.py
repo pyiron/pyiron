@@ -65,7 +65,9 @@ class Atom(ASEAtom, SparseArrayElement):
         if element is None or element == "X":
             if "Z" in qwargs:
                 el_symbol = pse.atomic_number_to_abbreviation(qwargs["Z"])
-                self._lists["element"] = pse.element(el_symbol)
+            else:
+                el_symbol = "X"
+            self._lists["element"] = pse.element(el_symbol)
         else:
             if isinstance(element, string_types):
                 el_symbol = element
