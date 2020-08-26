@@ -207,6 +207,8 @@ class TestLammps(unittest.TestCase):
         with self.assertWarns(UserWarning):
             self.job_water.potential = "H2O_tip3p"
         with self.assertRaises(ValueError):
+            self.job_water.calc_md(temperature=350, seed=0)
+        with self.assertRaises(ValueError):
             self.job_water.calc_md(temperature=[0, 100])
         with self.assertRaises(ValueError):
             self.job_water.calc_md(pressure=0)
