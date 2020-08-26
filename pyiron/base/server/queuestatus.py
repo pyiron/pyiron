@@ -176,6 +176,8 @@ def wait_for_job(job, interval_in_s=5, max_iterations=100):
                     )
                     status_hdf5 = job.project_hdf5["status"]
                     job.status.string = status_hdf5
+                else:
+                    status_hdf5 = job.status.string
                 if status_hdf5 in job_status_finished_lst:
                     job.transfer_from_remote()
                     finished = True
