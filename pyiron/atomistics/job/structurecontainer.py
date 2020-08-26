@@ -44,6 +44,7 @@ class StructureContainer(AtomisticGenericJob):
     def _to_structure(structure_or_job):
         """
         Return structure from structure or atomic job.
+
         Args:
             structure_or_job (:class:`~.AtomisticGenericJob`, :class:`~.Atoms`):
                 if :class:`~.AtomisticGenericJob` try to get most recent structure,
