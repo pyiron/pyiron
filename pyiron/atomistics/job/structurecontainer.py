@@ -22,9 +22,8 @@ class StructureContainer(AtomisticGenericJob):
     """
     Container to save a list of structures in HDF5 together with tags.
 
-    Add new structures with :meth:`.StructureList.append`, they are
-    added to :attr:`.StructureList.structure_lst`.  The HDF5 is written when
-    :meth:`.run` is called.
+    Add new structures with :meth:`.append`, they are added to
+    :attr:`.structure_lst`.  The HDF5 is written when :meth:`.run` is called.
     """
 
     __version__ = "0.1.0"
@@ -37,19 +36,26 @@ class StructureContainer(AtomisticGenericJob):
     @property
     def structure_lst(self):
         """
-        :class:`.InputList`: list of structures
-        with meta data; each item in this list has an 'atoms' key for the
-        atomic structures and then as many additional keys as passed to
-        :meth:`~.StructureContainer.append()`
+        :class:`.InputList`: list of :class:`~.Atoms`
         """
         return self._structure_lst
 
     @staticmethod
     def _to_structure(structure_or_job):
         """
-        If :class:`~.AtomisticGenericJob` try to get most recent structure,
-        copy it and set the job_id in :attr:`~.Atoms.info`, if
-        :class:`~.Atoms` return as is, throw an error otherwise.
+        Return structure from structure or atomic job.
+
+        Args:
+            structure_or_job (:class:`~.AtomisticGenericJob`, :class:`~.Atoms`):
+                if :class:`~.AtomisticGenericJob` try to get most recent structure,
+        copy it and set the job_id in :attr:`~.Atoms.info`
+        
+        Returns:
+            :class:`~.Atoms`: structure from the job or given structure
+            
+        Raises:
+            ValueError: if given :class:`~.AtomisticGenericJob` has no structure set
+            TypeError: if structure_or_job is of invalid type
         """
         if isinstance(structure_or_job, AtomisticGenericJob):
             if structure_or_job.structure:
@@ -72,6 +78,10 @@ class StructureContainer(AtomisticGenericJob):
     def structure(self):
         """
         :class:`~.Atoms`: first (or only) structure set in the container
+
+        :setter:  :class:`~.Atoms`, :class:`~.AtomisticGenericJob`
+            if a job is given take the last structure and add the job id to its
+            :attr:`pyiron.atomistics.structure.Atoms.info`
         """
         return self.structure_lst.get(0, None)
 
@@ -87,15 +97,12 @@ class StructureContainer(AtomisticGenericJob):
         """
         Add new structure to structure list.
 
-        The added structure will available in
-        :attr:`~.StructureList.structure_lst`.  If **kwargs contains a key "atoms"
-        is ignored, since the structure is saved under this key.  If the
-        structure is added via a job, retrieve the latest structure and its id
-        is also saved under the "jobid" key and **kwargs of the same name are
-        ignored.
+        The added structure will available in :attr:`~.structure_lst`.  If the
+        structure is added via a job, retrieve the latest structure and add its
+        id to :attr:`pyiron.atomistics.generic.Atoms.info`.
 
         Args:
-            structure_or_job (AtomisticGenericJob/Atoms):
+            structure_or_job (:class:`~.AtomisticGenericJob`/:class:`~.Atoms`):
                 if :class:`~.AtomisticGenericJob` add from
                 :meth:`~.AtomisticGenericJob.get_structure`,
                 otherwise add just the given :class:`~.Atoms`
