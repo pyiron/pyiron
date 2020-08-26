@@ -269,7 +269,11 @@ class Server(
 
         Args:
             new_run_time (int): run time in seconds
+
+        Raises:
+            ValueError: if new_run_time cannot be converted to int
         """
+        new_run_time = int(new_run_time)
         if s.queue_adapter is not None and self._active_queue is not None:
             run_time_max = s.queue_adapter.check_queue_parameters(
                 queue=self.queue,
