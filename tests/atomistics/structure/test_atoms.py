@@ -1457,6 +1457,15 @@ class TestAtoms(unittest.TestCase):
         R = np.array(basis._get_flattened_orientation(R, 1)).reshape(4, 4)
         self.assertAlmostEqual(np.linalg.det(R), 1)
 
+    def test_create_dummy_basis(self):
+        # For ASE compatibility
+        pos, cell = generate_fcc_lattice()
+        basis = Atoms(symbols="X", positions=pos, cell=cell)
+        self.assertIsInstance(basis, Atoms)
+        x3 = Atoms("X3", positions=[[0, 0, 0], [0, 0, 2], [0, 2, 0]], cell=np.eye(3) * 10)
+        self.assertIsInstance(x3[0:2], Atoms)
+        self.assertIsInstance(x3[0], Atom)
+
 
 def generate_fcc_lattice(a=4.2):
     positions = [[0, 0, 0]]
