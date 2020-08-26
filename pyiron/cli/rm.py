@@ -36,7 +36,7 @@ def main(args):
 
     pr = pyiron.Project(args.project)
     if args.jobs_only:
-        pr.remove_jobs(recursive = args.recursive)
+        pr.remove_jobs_silently(recursive = args.recursive)
     else:
         pr.remove(enable = True)
         if not os.listdir(args.project):

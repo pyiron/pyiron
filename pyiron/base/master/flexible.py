@@ -4,6 +4,7 @@
 
 import inspect
 from pyiron.base.master.generic import GenericMaster
+from pyiron.base.job.jobstatus import job_status_finished_lst
 
 """
 The Flexible master uses a list of functions to connect multiple jobs in a series.
@@ -147,12 +148,15 @@ class FlexibleMaster(GenericMaster):
             return True
         if len(self._job_name_lst) > 0:
             return False
+        return self.check_all_childs_finished()
+
+    def check_all_childs_finished(self):
         return set(
             [
-                self.project.db.get_item_by_id(child_id)["status"]
+                self.project.db.get_job_status(job_id=child_id)
                 for child_id in self.child_ids
             ]
-        ) < {"finished", "busy", "refresh", "aborted"}
+        ) < set(job_status_finished_lst)
 
     def run_static(self):
         """
@@ -161,20 +165,23 @@ class FlexibleMaster(GenericMaster):
         self.status.running = True
         max_steps = len(self.child_ids + self._job_name_lst)
         ind = max_steps - 1
-        for ind in range(len(self.child_ids), max_steps):
-            job = self.pop(0)
-            job._master_id = self.job_id
-            if ind != 0:
-                prev_job = self[ind - 1]
-                if ind < max_steps:
-                    mod_funct = self._step_function_lst[ind - 1]
-                    mod_funct(prev_job, job)
-                job._parent_id = prev_job.job_id
-            job.run()
-            if job.server.run_mode.interactive and not isinstance(job, GenericMaster):
-                job.interactive_close()
-            if self.server.run_mode.non_modal and job.server.run_mode.non_modal:
-                break
+        if self.check_all_childs_finished():
+            for ind in range(len(self.child_ids), max_steps):
+                job = self.pop(0)
+                job._master_id = self.job_id
+                if ind != 0:
+                    prev_job = self[ind - 1]
+                    if ind < max_steps:
+                        mod_funct = self._step_function_lst[ind - 1]
+                        mod_funct(prev_job, job)
+                    job._parent_id = prev_job.job_id
+                job.run()
+                if job.server.run_mode.interactive and not isinstance(job, GenericMaster):
+                    job.interactive_close()
+                if self.server.run_mode.non_modal and job.server.run_mode.non_modal:
+                    break
+                if job.server.run_mode.queue:
+                    break
         if ind == max_steps - 1 and self.is_finished():
             self.status.finished = True
             self.project.db.item_update(self._runtime(), self.job_id)
@@ -186,7 +193,18 @@ class FlexibleMaster(GenericMaster):
         Internal helper function the run if refresh function is called when the job status is 'refresh'. If the job was
         suspended previously, the job is going to be started again, to be continued.
         """
-        self.run_static()
+        if self.is_finished():
+            self.status.collect = True
+            self.run()  # self.run_if_collect()
+        elif self.server.run_mode.non_modal or self.server.run_mode.queue or self.server.run_mode.modal:
+            self.run_static()
+        else:
+            self.refresh_job_status()
+            if self.status.refresh:
+                self.status.suspended = True
+            if self.status.busy:
+                self.status.refresh = True
+                self.run_if_refresh()
 
     def write_input(self):
         """

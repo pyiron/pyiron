@@ -19,7 +19,7 @@ class TestVaspImport(unittest.TestCase):
     def tearDownClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
         project = Project(os.path.join(cls.file_location, "vasp_import_testing"))
-        project.remove_jobs(recursive=True)
+        project.remove_jobs_silently(recursive=True)
         project.remove(enable=True)
 
     def test_import(self):
@@ -35,6 +35,22 @@ class TestVaspImport(unittest.TestCase):
         )
         self.assertRaises(IOError, ham.get_final_structure_from_file)
         self.assertIsInstance(ham.output.unwrapped_positions, np.ndarray)
+
+    def test_incar_import(self):
+        file_path = os.path.join(
+            self.file_location, "../static/vasp_test_files/incar_samples/INCAR_1"
+        )
+        ham = self.project.create_job(self.project.job_type.Vasp, "incar_import")
+        ham.input.incar.read_input(file_path, ignore_trigger="!")
+        self.assertTrue(ham.input.incar["LWAVE"])
+        self.assertTrue(ham.input.incar["LCHARG"])
+        self.assertTrue(ham.input.incar["LVTOT"])
+        self.assertFalse(ham.input.incar["LDIPOL"])
+        self.assertFalse(ham.input.incar["LVHAR"])
+        self.assertFalse(ham.input.incar["LORBIT"])
+        self.assertTrue(ham.input.incar["LCORE"])
+        self.assertFalse(ham.input.incar["LTEST"])
+        self.assertEqual(ham.input.incar["POTIM"], 0.5)
 
 
 if __name__ == "__main__":

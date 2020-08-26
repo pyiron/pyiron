@@ -17,7 +17,7 @@ class TestChildids(unittest.TestCase):
     def tearDownClass(cls):
         file_location = os.path.dirname(os.path.abspath(__file__))
         project = Project(os.path.join(file_location, "testing_childids"))
-        project.remove_jobs(recursive=True)
+        project.remove_jobs_silently(recursive=True)
         project.remove(enable=True)
 
     def test_childids(self):

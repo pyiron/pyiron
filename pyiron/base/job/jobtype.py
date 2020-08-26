@@ -5,9 +5,9 @@
 from __future__ import print_function
 import importlib
 import inspect
-import pkgutil
+import os
 from six import with_metaclass
-from pyiron.base.generic.util import static_isinstance
+from pyiron.base.job.jobstatus import job_status_finished_lst
 
 """
 Jobtype class to create GenericJob type objects
@@ -135,6 +135,11 @@ class JobType(object):
         else:
             raise TypeError()
         job = job_class(project, job_name)
+        if job.job_id is not None and not os.path.exists(job.project_hdf5.file_name):
+            job.logger.warning(
+                "No HDF5 file found - remove database entry and create new job! {}".format(job.job_name)
+            )
+            delete_existing_job = True
         if delete_existing_job:
             job.remove()
             job = job_class(project, job_name)
@@ -144,7 +149,7 @@ class JobType(object):
             )
         if not job.status.initialized:
             job.from_hdf()
-        if job.status.finished or job.status.collect:
+        if job.status.string in job_status_finished_lst:
             job.set_input_to_read_only()
         return job
 

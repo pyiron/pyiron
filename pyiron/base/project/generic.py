@@ -10,24 +10,19 @@ import pandas
 import importlib
 import numpy as np
 import pkgutil
-
-try:
-    from git import Repo, InvalidGitRepositoryError
-except ImportError:
-    pass
+from git import Repo, InvalidGitRepositoryError
 
 from pyiron.base.project.path import ProjectPath
 from pyiron.base.database.filetable import FileTable
 from pyiron.base.settings.generic import Settings
+from pyiron.base.settings.publications import list_publications
 from pyiron.base.database.jobtable import (
     get_db_columns,
     get_job_ids,
     get_job_id,
     get_jobs,
     job_table,
-    get_job_status,
     set_job_status,
-    get_job_working_directory,
     get_child_ids,
 )
 from pyiron.base.settings.logger import set_logging_level
@@ -38,6 +33,8 @@ from pyiron.base.server.queuestatus import (
     queue_is_empty,
     queue_table,
     wait_for_job,
+    wait_for_jobs,
+    update_from_remote,
     queue_enable_reservation,
     queue_check_job_is_waiting_or_running,
 )
@@ -304,16 +301,13 @@ class Project(ProjectPath):
         """
         if not project:
             project = self.project_path
-        if not isinstance(self.db, FileTable):
-            return get_child_ids(
-                database=self.db,
-                sql_query=self.sql_query,
-                user=self.user,
-                project_path=project,
-                job_specifier=job_specifier,
-            )
-        else:
-            return self.db.get_child_ids(job_specifier=job_specifier, project=project)
+        return get_child_ids(
+            database=self.db,
+            sql_query=self.sql_query,
+            user=self.user,
+            project_path=project,
+            job_specifier=job_specifier,
+        )
 
     def get_db_columns(self):
         """
@@ -354,17 +348,14 @@ class Project(ProjectPath):
         Returns:
             dict: columns are used as keys and point to a list of the corresponding values
         """
-        if not isinstance(self.db, FileTable):
-            return get_jobs(
-                database=self.db,
-                sql_query=self.sql_query,
-                user=self.user,
-                project_path=self.project_path,
-                recursive=recursive,
-                columns=columns,
-            )
-        else:
-            return self.db.get_jobs(project=self.project_path, recursive=recursive, columns=columns)
+        return get_jobs(
+            database=self.db,
+            sql_query=self.sql_query,
+            user=self.user,
+            project_path=self.project_path,
+            recursive=recursive,
+            columns=columns,
+        )
 
     def get_job_ids(self, recursive=True):
         """
@@ -376,16 +367,13 @@ class Project(ProjectPath):
         Returns:
             list: a list of job IDs
         """
-        if not isinstance(self.db, FileTable):
-            return get_job_ids(
-                database=self.db,
-                sql_query=self.sql_query,
-                user=self.user,
-                project_path=self.project_path,
-                recursive=recursive,
-            )
-        else:
-            return self.db.get_job_ids(project=self.project_path, recursive=recursive)
+        return get_job_ids(
+            database=self.db,
+            sql_query=self.sql_query,
+            user=self.user,
+            project_path=self.project_path,
+            recursive=recursive,
+        )
 
     def get_job_id(self, job_specifier):
         """
@@ -397,16 +385,13 @@ class Project(ProjectPath):
         Returns:
             int: job ID of the job
         """
-        if not isinstance(self.db, FileTable):
-            return get_job_id(
-                database=self.db,
-                sql_query=self.sql_query,
-                user=self.user,
-                project_path=self.project_path,
-                job_specifier=job_specifier,
-            )
-        else:
-            return self.db.get_job_id(job_specifier=job_specifier, project=self.project_path)
+        return get_job_id(
+            database=self.db,
+            sql_query=self.sql_query,
+            user=self.user,
+            project_path=self.project_path,
+            job_specifier=job_specifier,
+        )
 
     def get_job_status(self, job_specifier, project=None):
         """
@@ -422,16 +407,13 @@ class Project(ProjectPath):
         """
         if not project:
             project = self.project_path
-        if not isinstance(self.db, FileTable):
-            return get_job_status(
-                database=self.db,
-                sql_query=self.sql_query,
-                user=self.user,
-                project_path=project,
-                job_specifier=job_specifier,
-            )
-        else:
-            return self.db.get_job_status(job_specifier=job_specifier, project=project)
+        return get_job_status(
+            database=self.db,
+            sql_query=self.sql_query,
+            user=self.user,
+            project_path=project,
+            job_specifier=job_specifier
+        )
 
     def get_job_working_directory(self, job_specifier, project=None):
         """
@@ -446,16 +428,13 @@ class Project(ProjectPath):
         """
         if not project:
             project = self.project_path
-        if not isinstance(self.db, FileTable):
-            return get_job_working_directory(
-                database=self.db,
-                sql_query=self.sql_query,
-                user=self.user,
-                project_path=project,
-                job_specifier=job_specifier,
-            )
-        else:
-            return self.db.get_job_working_directory(job_specifier=job_specifier, project=project)
+        return get_job_working_directory(
+            sql_query=self.sql_query,
+            user=self.user,
+            project_path=project,
+            database=self.db,
+            job_specifier=job_specifier
+        )
 
     def get_project_size(self):
         """
@@ -572,6 +551,18 @@ class Project(ProjectPath):
         """
         return [(key, self[key]) for key in self.keys()]
 
+    def update_from_remote(self, recursive=True):
+        """
+        Update jobs from the remote server
+
+        Args:
+            recursive (bool): search subprojects [True/False] - default=True
+        """
+        update_from_remote(
+            project=self,
+            recursive=recursive
+        )
+
     def job_table(
         self,
         recursive=True,
@@ -600,30 +591,19 @@ class Project(ProjectPath):
         Returns:
             pandas.Dataframe: Return the result as a pandas.Dataframe object
         """
-        if not isinstance(self.db, FileTable):
-            return job_table(
-                database=self.db,
-                sql_query=self.sql_query,
-                user=self.user,
-                project_path=self.project_path,
-                recursive=recursive,
-                columns=columns,
-                all_columns=all_columns,
-                sort_by=sort_by,
-                full_table=full_table,
-                element_lst=element_lst,
-                job_name_contains=job_name_contains,
-            )
-        else:
-            return self.db.job_table(
-                project=self.project_path,
-                recursive=recursive,
-                columns=columns,
-                all_columns=all_columns,
-                sort_by=sort_by,
-                max_colwidth=200,
-                full_table=full_table,
-                job_name_contains=job_name_contains)
+        return job_table(
+            database=self.db,
+            sql_query=self.sql_query,
+            user=self.user,
+            project_path=self.project_path,
+            recursive=recursive,
+            columns=columns,
+            all_columns=all_columns,
+            sort_by=sort_by,
+            full_table=full_table,
+            element_lst=element_lst,
+            job_name_contains=job_name_contains,
+        )
 
     def get_jobs_status(self, recursive=True, element_lst=None):
         """
@@ -642,22 +622,6 @@ class Project(ProjectPath):
             element_lst=element_lst,
         )
         return df["status"].value_counts()
-
-    @staticmethod
-    def get_external_input():
-        """
-        Get external input either from the HDF5 file of the ScriptJob object which executes the Jupyter notebook
-        or from an input.json file located in the same directory as the Jupyter notebook. 
-        
-        Returns:
-            dict: Dictionary with external input
-        """
-        inputdict = Notebook.get_custom_dict()
-        if inputdict is None:
-            raise ValueError("No input found, either there is an issue with your ScriptJob, " + 
-                             "or your input.json file is not located in the same directory " +
-                             "as your Jupyter Notebook.")
-        return inputdict
 
     def keys(self):
         """
@@ -811,29 +775,6 @@ class Project(ProjectPath):
         else:
             raise ValueError("Either a job ID or an database entry has to be provided.")
 
-    @staticmethod
-    def load_from_jobpath_string(job_path, convert_to_object=True):
-        """
-        Internal function to load an existing job either based on the job ID or based on the database entry dictionary.
-
-        Args:
-            job_path (str): string to reload the job from an HDF5 file - '/root_path/project_path/filename.h5/h5_path'
-            convert_to_object (bool): convert the object to an pyiron object or only access the HDF5 file - default=True
-                                      accessing only the HDF5 file is about an order of magnitude faster, but only
-                                      provides limited functionality. Compare the GenericJob object to JobCore object.
-
-        Returns:
-            GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
-        """
-        job = getattr(importlib.import_module("pyiron.base.job.path"), "JobPathBase")(
-            job_path=job_path
-        )
-        job = job.load_object(
-            convert_to_object=convert_to_object, project=job.project_hdf5.copy()
-        )
-        job.set_input_to_read_only()
-        return job
-
     def move_to(self, destination):
         """
         Similar to the copy_to() function move the project object to a different pyiron path - including the content of
@@ -950,8 +891,8 @@ class Project(ProjectPath):
                 que_mode
                 and self.db.get_item_by_id(job_id)["status"] in ["running", "submitted"]
             ):
-                if not self.queue_check_job_is_waiting_or_running(job_id):
-                    self.db.item_update({"status": "aborted"}, job_id)
+                if not self.queue_check_job_is_waiting_or_running(self.inspect(job_id)):
+                    self.db.set_job_status(job_id=job_id, status="aborted")
 
     def remove_file(self, file_name):
         """
@@ -1005,6 +946,35 @@ class Project(ProjectPath):
                 raise EnvironmentError("copy_to: is not available in Viewermode !")
 
     def remove_jobs(self, recursive=False):
+        """
+        Remove all jobs in the current project and in all subprojects if recursive=True is selected - see also
+        remove_job().
+
+        For safety, the user is asked via input() to confirm the removal. To bypass this
+        interactive interruption, use `remove_jobs_silently()`.
+
+        Args:
+            recursive (bool): [True/False] delete all jobs in all subprojects - default=False
+        """
+        if not isinstance(recursive, bool):
+            raise ValueError('recursive must be a boolean')
+        confirmed = None
+        while confirmed not in ["y", "n"]:
+            if confirmed is None:
+                confirmed = input(
+                    "Are you sure you want to delete all jobs from "
+                    + f"'{self.base_name}'? y/(n)"
+                    ).lower()
+            else:
+                confirmed = input(
+                    "Invalid response. Please enter 'y' (yes) or 'n' (no): "
+                    ).lower()
+        if confirmed == "y":
+            self.remove_jobs_silently(recursive=recursive)
+        else:
+            print(f"No jobs removed from '{self.base_name}'.")
+
+    def remove_jobs_silently(self, recursive=False):
         """
         Remove all jobs in the current project and in all subprojects if recursive=True is selected - see also
         remove_job()
@@ -1076,7 +1046,7 @@ class Project(ProjectPath):
                 if "_hdf5" not in sub_project_name:
                     sub_project = self.open(sub_project_name)
                     sub_project.remove(enable=enable, enforce=enforce)
-            self.remove_jobs(recursive=True)
+            self.remove_jobs_silently(recursive=True)
             for file in self.list_files():
                 os.remove(os.path.join(self.path, file))
             if enforce:
@@ -1099,21 +1069,14 @@ class Project(ProjectPath):
         """
         if not project:
             project = self.project_path
-        if not isinstance(self.db, FileTable):
-            set_job_status(
-                database=self.db,
-                sql_query=self.sql_query,
-                user=self.user,
-                project_path=project,
-                job_specifier=job_specifier,
-                status=status,
-            )
-        else:
-            self.db.set_job_status(
-                job_specifier=job_specifier,
-                status=status,
-                project=project
-            )
+        set_job_status(
+            database=self.db,
+            sql_query=self.sql_query,
+            user=self.user,
+            project_path=project,
+            job_specifier=job_specifier,
+            status=status,
+        )
 
     def values(self):
         """
@@ -1150,21 +1113,26 @@ class Project(ProjectPath):
             file_name (str): file name or file path for the local database
             cwd (str): directory where the local database is located
         """
-        if not isinstance(self.db, FileTable):
-            if cwd is None:
-                cwd = self.path
+        if cwd is None:
+            cwd = self.path
+        if not s.project_check_enabled:
             s.switch_to_local_database(file_name=file_name, cwd=cwd)
-            s.open_connection()
-            self.db = s.database
+            super(Project, self).__init__(path=self.path)
+        else:
+            s.switch_to_local_database(file_name=file_name, cwd=cwd)
+        self.db = s.database
 
     def switch_to_central_database(self):
         """
         Switch from local mode to central mode - if local_mode is enable pyiron is using a local database.
         """
-        if not isinstance(self.db, FileTable):
-            s.switch_to_central_database()
+        s.switch_to_central_database()
+        if not s.database_is_disabled:
             s.open_connection()
             self.db = s.database
+        else:
+            self.db = FileTable(project=self.path)
+            super(Project, self).__init__(path=self.path)
 
     def queue_delete_job(self, item):
         """
@@ -1196,6 +1164,58 @@ class Project(ProjectPath):
         return ProjectHDFio(
             project=Project(path), file_name=job_name, h5_path="/" + job_name
         )
+
+    @staticmethod
+    def load_from_jobpath_string(job_path, convert_to_object=True):
+        """
+        Internal function to load an existing job either based on the job ID or based on the database entry dictionary.
+
+        Args:
+            job_path (str): string to reload the job from an HDF5 file - '/root_path/project_path/filename.h5/h5_path'
+            convert_to_object (bool): convert the object to an pyiron object or only access the HDF5 file - default=True
+                                      accessing only the HDF5 file is about an order of magnitude faster, but only
+                                      provides limited functionality. Compare the GenericJob object to JobCore object.
+
+        Returns:
+            GenericJob, JobCore: Either the full GenericJob object or just a reduced JobCore object
+        """
+        job = getattr(importlib.import_module("pyiron.base.job.path"), "JobPathBase")(
+            job_path=job_path
+        )
+        job = job.load_object(
+            convert_to_object=convert_to_object, project=job.project_hdf5.copy()
+        )
+        job.set_input_to_read_only()
+        return job
+
+    @staticmethod
+    def get_external_input():
+        """
+        Get external input either from the HDF5 file of the ScriptJob object which executes the Jupyter notebook
+        or from an input.json file located in the same directory as the Jupyter notebook.
+
+        Returns:
+            dict: Dictionary with external input
+        """
+        inputdict = Notebook.get_custom_dict()
+        if inputdict is None:
+            raise ValueError("No input found, either there is an issue with your ScriptJob, " +
+                             "or your input.json file is not located in the same directory " +
+                             "as your Jupyter Notebook.")
+        return inputdict
+
+    @staticmethod
+    def list_publications(bib_format="dict"):
+        """
+        List the publications used in this project.
+
+        Args:
+            bib_format (str): ['dict', 'bibtex', 'apa']
+
+        Returns:
+            list: list of publications in Bibtex format.
+        """
+        return list_publications(bib_format=bib_format)
 
     @staticmethod
     def queue_is_empty():
@@ -1247,6 +1267,22 @@ class Project(ProjectPath):
             job=job, interval_in_s=interval_in_s, max_iterations=max_iterations
         )
 
+    def wait_for_jobs(self, interval_in_s=5, max_iterations=100, recursive=True):
+        """
+        Wait for the calculation in the project to be finished
+
+        Args:
+            interval_in_s (int): interval when the job status is queried from the database - default 5 sec.
+            max_iterations (int): maximum number of iterations - default 100
+            recursive (bool): search subprojects [True/False] - default=True
+        """
+        wait_for_jobs(
+            project=self,
+            interval_in_s=interval_in_s,
+            max_iterations=max_iterations,
+            recursive=recursive
+        )
+
     @staticmethod
     def set_logging_level(level, channel=None):
         """
@@ -1257,6 +1293,23 @@ class Project(ProjectPath):
             channel (int): 0: file_log, 1: stream, None: both
         """
         set_logging_level(level=level, channel=channel)
+
+    @staticmethod
+    def _is_hdf5_dir(item):
+        """
+        Static internal function to check if the current project directory belongs to an pyiron object
+
+        Args:
+            item (str): folder/ project name
+
+        Returns:
+            bool: [True/False]
+        """
+        it = item.split("_")
+        if len(it) > 1:
+            if "hdf5" in it[-1]:
+                return True
+        return False
 
     def __getitem__(self, item):
         """
@@ -1285,37 +1338,6 @@ class Project(ProjectPath):
                         item=item_lst[0], convert_to_object=True
                     ).__getitem__("/".join(item_lst[1:]))
         return self._get_item_helper(item=item, convert_to_object=True)
-
-    def _get_item_helper(self, item, convert_to_object=True):
-        """
-        Internal helper function to get item from project
-
-        Args:
-            item (str, int): key
-            convert_to_object (bool): convert the object to an pyiron object or only access the HDF5 file - default=True
-                                      accessing only the HDF5 file is about an order of magnitude faster, but only
-                                      provides limited functionality. Compare the GenericJob object to JobCore object.
-
-        Returns:
-            Project, GenericJob, JobCore, dict, list, float: basically any kind of item inside the project.
-        """
-        if item == "..":
-            return self.parent_group
-        if item in self.list_nodes():
-            if self._inspect_mode or not convert_to_object:
-                return self.inspect(item)
-            return self.load(item)
-        if item in self.list_files(extension="h5"):
-            file_name = posixpath.join(self.path, "{}.h5".format(item))
-            return ProjectHDFio(project=self, file_name=file_name)
-        if item in self.list_files():
-            file_name = posixpath.join(self.path, "{}".format(item))
-            with open(file_name) as f:
-                return f.readlines()
-        if item in self.list_dirs():
-            with self.open(item) as new_item:
-                return new_item.copy()
-        raise ValueError("Unknown item: {}".format(item))
 
     def __repr__(self):
         """
@@ -1350,22 +1372,36 @@ class Project(ProjectPath):
                     self._store = self.create_job("ProjectStore", "ProjectStore")
             self._store[key] = value
 
-    @staticmethod
-    def _is_hdf5_dir(item):
+    def _get_item_helper(self, item, convert_to_object=True):
         """
-        Static internal function to check if the current project directory belongs to an pyiron object
+        Internal helper function to get item from project
 
         Args:
-            item (str): folder/ project name
+            item (str, int): key
+            convert_to_object (bool): convert the object to an pyiron object or only access the HDF5 file - default=True
+                                      accessing only the HDF5 file is about an order of magnitude faster, but only
+                                      provides limited functionality. Compare the GenericJob object to JobCore object.
 
         Returns:
-            bool: [True/False]
+            Project, GenericJob, JobCore, dict, list, float: basically any kind of item inside the project.
         """
-        it = item.split("_")
-        if len(it) > 1:
-            if "hdf5" in it[-1]:
-                return True
-        return False
+        if item == "..":
+            return self.parent_group
+        if item in self.list_nodes():
+            if self._inspect_mode or not convert_to_object:
+                return self.inspect(item)
+            return self.load(item)
+        if item in self.list_files(extension="h5"):
+            file_name = posixpath.join(self.path, "{}.h5".format(item))
+            return ProjectHDFio(project=self, file_name=file_name)
+        if item in self.list_files():
+            file_name = posixpath.join(self.path, "{}".format(item))
+            with open(file_name) as f:
+                return f.readlines()
+        if item in self.list_dirs():
+            with self.open(item) as new_item:
+                return new_item.copy()
+        raise ValueError("Unknown item: {}".format(item))
 
     def _remove_files(self, pattern="*"):
         """

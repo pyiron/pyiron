@@ -36,7 +36,7 @@ class TestVaspStructure(unittest.TestCase):
         atom_numbers = np.random.randint(low=1, high=99, size=(1, 3)).flatten()
         cell = 10.0 * np.eye(3)
         pos = 0.5 * np.ones((3, 3)) - 0.5 * np.eye(3)
-        cls.structure = Atoms(numbers=atom_numbers, cell=cell, positions=pos)
+        cls.structure = Atoms(numbers=atom_numbers, cell=cell, positions=pos, pbc=True)
         cls.structure.repeat([2, 2, 2])
         cls.element_list = cls.structure.get_chemical_elements()
 

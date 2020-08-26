@@ -27,6 +27,7 @@ from pyiron.sphinx.potential import find_potential_file \
 from pyiron.sphinx.volumetric_data import SphinxVolumetricData
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.inputlist import InputList
+from pyiron.base.job.jobstatus import job_status_successful_lst
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = (
@@ -1280,9 +1281,7 @@ class SphinxBase(GenericDFTJob):
         Returns:
             pyiron.atomistics.volumetric.generic.VolumetricData
         """
-        if self.status not in [
-            "finished", "warning", "not_converged"
-        ]:
+        if self.status not in job_status_successful_lst:
             return
         else:
             with self.project_hdf5.open("output") as ho:
@@ -1298,9 +1297,7 @@ class SphinxBase(GenericDFTJob):
         Returns:
             pyiron.atomistics.volumetric.generic.VolumetricData
         """
-        if self.status not in [
-            "finished", "warning", "not_converged"
-        ]:
+        if self.status not in job_status_successful_lst:
             return
         else:
             with self.project_hdf5.open("output") as ho:
@@ -1369,7 +1366,7 @@ class SphinxBase(GenericDFTJob):
         for nn in np.all(satz == mag_num[:, np.newaxis], axis=-1):
             numbers.append(np.arange(len(satz))[nn][0])
         mapping, _ = spglib.get_ir_reciprocal_mesh(
-            mesh=[int(k) for k in self.input["KpointFolding"]],
+            mesh=[int(self.input["KpointFolding"][k]) for k in range(3)],
             cell=(lattice, positions, numbers),
             is_shift=np.dot(self.structure.cell,
                 np.array(self.input["KpointCoords"])),

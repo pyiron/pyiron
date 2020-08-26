@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import unittest
+import mock
 import os
 from pyiron import Project
 from pyiron.atomistics.structure.atoms import Atoms
@@ -20,6 +21,7 @@ class TestProject(unittest.TestCase):
     def tearDownClass(cls):
         cls.execution_path = os.path.dirname(os.path.abspath(__file__))
         project = Project(os.path.join(cls.execution_path, "test_project"))
+        project.remove_jobs_silently(recursive=True)
         project.remove(enable=True)
 
     def test_structure_creation(self):
@@ -31,6 +33,15 @@ class TestProject(unittest.TestCase):
         self.assertFalse(all(surface.pbc))
         self.assertIsInstance(self.project.create_structure("Al", "fcc", 4.05), Atoms)
 
+    def test_remove_jobs(self):
+        sample_job = self.project.create_job("ScriptJob", "Sample")
+        sample_job.save()
+        with mock.patch('builtins.input', return_value="n"):
+            self.project.remove_jobs(recursive=True)
+        self.assertEqual(len(self.project.list_nodes()), 1)
+        with mock.patch('builtins.input', return_value="y"):
+            self.project.remove_jobs(recursive=True)
+        self.assertEqual(len(self.project.list_nodes()), 0)
 
 if __name__ == "__main__":
     unittest.main()

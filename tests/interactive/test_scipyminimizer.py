@@ -23,7 +23,7 @@ class TestSxExtOptInteractive(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.project.remove_jobs(recursive=True)
+        cls.project.remove_jobs_silently(recursive=True)
 
     def test_minimizer(self):
         self.assertEqual(self.minim.minimizer, 'CG')

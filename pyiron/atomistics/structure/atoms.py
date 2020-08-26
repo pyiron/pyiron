@@ -385,6 +385,8 @@ class Atoms(ASEAtoms):
             if self._high_symmetry_path is not None:
                 hdf_structure["high_symmetry_path"] = self._high_symmetry_path
 
+            hdf_structure["info"] = self.info
+
     def from_hdf(self, hdf, group_name="structure"):
         """
         Retrieve the object from a HDF5 file
@@ -472,6 +474,8 @@ class Atoms(ASEAtoms):
                 self._high_symmetry_path = None
                 if "high_symmetry_path" in hdf_atoms.list_nodes():
                     self._high_symmetry_path = hdf_atoms["high_symmetry_path"]
+                if "info" in hdf_atoms.list_nodes():
+                    self.info = hdf_atoms["info"]
                 return self
 
         else:
@@ -2405,7 +2409,7 @@ class Atoms(ASEAtoms):
         )
 
         return Atoms(
-            symbols=list(self.get_chemical_symbols()), positions=coords, cell=cell
+            symbols=list(self.get_chemical_symbols()), positions=coords, cell=cell, pbc=self.pbc
         )
 
     def get_primitive_cell(self, symprec=1e-5, angle_tolerance=-1.0):
@@ -2435,7 +2439,7 @@ class Atoms(ASEAtoms):
         el_lst = [el_dict[i_a] for i_a in atomic_numbers]
 
         # convert lattice vectors to standard (experimental feature!) TODO:
-        red_structure = Atoms(elements=el_lst, scaled_positions=coords, cell=cell)
+        red_structure = Atoms(elements=el_lst, scaled_positions=coords, cell=cell, pbc=self.pbc)
         space_group = red_structure.get_spacegroup(symprec)["Number"]
         # print "space group: ", space_group
         if space_group == 225:  # fcc

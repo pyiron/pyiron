@@ -137,6 +137,37 @@ To get the developmental (git) version of pyiron,
   conda activate pyiron_dev
   conda install conda-build
   conda develop pyiron
+  
+**Deploy development version to a managed environment**
+
+If you want to use a development version of pyiron in a managed environment where a version of pyiron is
+already installed outside of your control (e.g. on the cmti/cmfe cluster), you can still preload a local
+checkout of the repo, while using the dependencies already installed.  Assuming pyiron and dependencies
+are already installed and setup, clone the repository to a location of your choice
+
+.. code-block::
+  
+  mkdir -p ~/software
+  cd ~/software
+  git clone https://github.com/pyiron/pyiron.git
+  
+add this folder to your python path by adding this line to your `~/.profile`
+
+.. code-block::
+
+  export PYTHONPATH="$HOME/software/pyiron:$PYTHONPATH"
+  
+and finally restart any jupyter or jupyterhub session you might still have running.  Within this folder
+you can then check out any local branchen, push your own dev branches, etc and python will automatically
+use this version over the system-wide installation.  Check that it works by running the following cell
+
+.. code-block::
+
+  import pyiron
+  print(pyiron.__file__)
+  
+If it doesn't print the path of your checkout, check that you restarted all the relevant shell sessions
+and that the environment variables are correctly updated.
 
 **Local Testing**
 
