@@ -559,8 +559,11 @@ class PyironTable(object):
             job_id_lst = self._get_filtered_job_ids_from_project()
 
         job_update_lst = []
-        for job_id in job_id_lst:
-            job = self._project.inspect(job_id)
+        for job_id in tqdm(job_id_lst):
+            try:
+                job = self._project.inspect(job_id)
+            except IndexError:  # In case the job was deleted while the pyiron table is running
+                job = None
             if job is not None and job.status in job_status_list and filter_funct(job):
                 job_update_lst.append(job)
         return job_update_lst
