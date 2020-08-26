@@ -7,8 +7,9 @@ import numpy as np
 import os
 from pyiron.base.settings.generic import Settings
 from mendeleev import element
-import sys
 import pandas
+from sqlalchemy.orm.exc import NoResultFound as SQLNoResultFound
+
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Martin Boeckmann"
 __copyright__ = (
@@ -44,7 +45,10 @@ class ChemicalElement(object):
         elif "Parent" in self.sub.index and isinstance(self.sub.Parent, stringtypes):
             self._init_mendeleev(self.sub.Parent)
         elif len(self.sub) > 0:
-            self._init_mendeleev(self.sub.Abbreviation)
+            try:
+                self._init_mendeleev(self.sub.Abbreviation)
+            except SQLNoResultFound:
+                self._mendeleev_property_lst = list()
 
         self._mendeleev_translation_dict = {'AtomicNumber': 'atomic_number',
                                             'AtomicRadius': 'covalent_radius_cordero',
@@ -63,7 +67,8 @@ class ChemicalElement(object):
 
     def _init_mendeleev(self, element_str):
         self._mendeleev_element = element(str(element_str))
-        self._mendeleev_property_lst = [s for s in dir(self._mendeleev_element) if not s.startswith('_')]
+        self._mendeleev_property_lst = [string for string in dir(self._mendeleev_element)
+                                        if not string.startswith('_')]
 
     def __getattr__(self, item):
         return self[item]
@@ -198,6 +203,26 @@ class PeriodicTable(object):
                     self.dataframe["Abbreviation"][item] = item
         self._parent_element = None
         self.el = None
+
+        dummy_element = {"AtomicNumber": 0,
+                         "AtomicRadius": 0,
+                         "AtomicMass": 0,
+                         "Color": "Black",
+                         "CovalentRadius": 1.0,
+                         "CrystalStructure": None,
+                         "Density": 0,
+                         "DiscoveryYear": 2020,
+                         "ElectronAffinity": 0.0,
+                         "Electronegativity": 0.0,
+                         "Group": None,
+                         "Period": None,
+                         "Phase": None,
+                         "StandardName": "Dummy",
+                         "VanDerWaalsRadius": 1.0,
+                         "MeltingPoint": 0.0,
+                         "Abbreviation": "X"}
+        data_series = pandas.Series(dummy_element, name="X")
+        self.dataframe = self.dataframe.append(data_series)
 
     def __getattr__(self, item):
         return self[item]
