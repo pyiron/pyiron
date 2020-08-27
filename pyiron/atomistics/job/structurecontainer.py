@@ -26,11 +26,10 @@ class StructureContainer(AtomisticGenericJob):
     :attr:`.structure_lst`.  The HDF5 is written when :meth:`.run` is called.
     """
 
-    __version__ = "0.1.0"
-    __hdf_version__ = "0.2.0"
-
     def __init__(self, project, job_name):
         super().__init__(project, job_name)
+        self.__version__ = "0.2.0"
+        self.__hdf_version__ = "0.2.0"
         self._structure_lst = InputList(table_name = "structures")
         self.server.run_mode.interactive = True
 
@@ -139,7 +138,11 @@ class StructureContainer(AtomisticGenericJob):
             structure.to_hdf(hdf, group_name = "structure_{}".format(i))
 
     def from_hdf(self, hdf = None, group_name = None):
-        if self.project_hdf5['HDF_VERSION'] == "0.1.0":
+        if group_name:
+            hdf_version = self.project_hdf5[group_name]['HDF_VERSION']
+        else:
+            hdf_version = self.project_hdf5['HDF_VERSION']
+        if hdf_version == "0.1.0":
             super().from_hdf(hdf=hdf, group_name=group_name)
             with self.project_hdf5.open("input") as hdf5_input:
                 self.structure = Atoms().from_hdf(hdf5_input)

@@ -1566,6 +1566,7 @@ class GenericJob(JobCore):
         Internal helper function to load type and version from HDF5 file root
         """
         self.__obj_type__ = self._hdf5["TYPE"]
+        self.__hdf_version__ = self._hdf5["HDF_VERSION"]
         if self._executable:
             try:
                 self.executable.version = self._hdf5["VERSION"]
