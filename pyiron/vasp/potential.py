@@ -246,6 +246,9 @@ class VaspPotentialSetter(object):
         else:
             raise AttributeError
 
+    def __setitem__(self, key, value):
+        self.__setattr__(key=key, value=value)
+
     def __setattr__(self, key, value):
         if key in self._element_lst:
             self._potential_dict[key] = value
@@ -389,6 +392,19 @@ class Potcar(GenericParameters):
                 )
                 if not (os.path.isfile(el_path)):
                     raise ValueError("such a file does not exist in the pp directory")
+            elif el in self.modified_elements.keys():
+                new_element = self.modified_elements[el]
+                if os.path.isabs(new_element):
+                    el_path = new_element
+                else:
+                    vasp_potentials.add_new_element(
+                        parent_element=el, new_element=new_element
+                    )
+                    el_path = find_potential_file(
+                        path=vasp_potentials.find_default(new_element)["Filename"].values[
+                            0
+                        ][0]
+                    )
             else:
                 el_path = find_potential_file(
                     path=vasp_potentials.find_default(el)["Filename"].values[0][0]
@@ -412,10 +428,7 @@ class Potcar(GenericParameters):
                 self._dataset["Parameter"].append("pot_" + str(i))
                 self._dataset["Value"].append(el_path)
                 self._dataset["Comment"].append("")
-            if el_obj.Abbreviation in self.modified_elements.keys():
-                self.el_path_lst.append(self.modified_elements[el_obj.Abbreviation])
-            else:
-                self.el_path_lst.append(el_path)
+            self.el_path_lst.append(el_path)
 
     def write_file(self, file_name, cwd=None):
         """
