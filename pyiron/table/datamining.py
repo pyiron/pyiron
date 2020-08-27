@@ -319,17 +319,11 @@ class PyironTable(object):
             temp_user_function_dict, temp_system_function_dict = self._get_data_from_hdf5(
                 hdf=file
             )
-            job_stored_ids = self._get_job_ids()
-            job_update_lst = [
-                self._project.inspect(job_id)
-                for job_id in self._get_filtered_job_ids_from_project()
-                if job_id not in job_stored_ids
-            ]
-            job_update_lst = [
-                job
-                for job in job_update_lst
-                if job.status in job_status_list and filter_funct(job)
-            ]
+            job_update_lst = self._collect_job_update_lst(
+                job_status_list=job_status_list,
+                filter_funct=filter_funct,
+                job_stored_ids=self._get_job_ids()
+            )
             keys_update_user_lst = [
                 key
                 for key in self.add._user_function_dict.keys()
@@ -348,15 +342,11 @@ class PyironTable(object):
             ):
                 skip_table_update = True
         else:
-            job_update_lst = [
-                self._project.inspect(job_id)
-                for job_id in self._get_filtered_job_ids_from_project()
-            ]
-            job_update_lst = [
-                job
-                for job in job_update_lst
-                if job.status in job_status_list and filter_funct(job)
-            ]
+            job_update_lst = self._collect_job_update_lst(
+                job_status_list=job_status_list,
+                filter_funct=filter_funct,
+                job_stored_ids=None
+            )
             keys_update_user_lst, keys_update_system_lst = [], []
         if not skip_table_update and len(job_update_lst) != 0:
             df_new_ids = self._iterate_over_job_lst(
@@ -367,14 +357,11 @@ class PyironTable(object):
         if not skip_table_update and (
             len(keys_update_user_lst) != 0 or len(keys_update_system_lst) != 0
         ):
-            job_update_lst = [
-                self._project.inspect(job_id) for job_id in self._get_job_ids()
-            ]
-            job_update_lst = [
-                job
-                for job in job_update_lst
-                if job is not None and job.status in job_status_list and filter_funct(job)
-            ]
+            job_update_lst = self._collect_job_update_lst(
+                job_status_list=job_status_list,
+                filter_funct=filter_funct,
+                job_stored_ids=None
+            )
             function_lst = [
                 v
                 for k, v in self.add._user_function_dict.items()
@@ -549,6 +536,37 @@ class PyironTable(object):
             diff_dict_lst.append(diff_dict)
         self.refill_dict(diff_dict_lst)
         return pandas.DataFrame(diff_dict_lst)
+
+    def _collect_job_update_lst(self, job_status_list, filter_funct, job_stored_ids=None):
+        """
+        Collect jobs to update the pyiron table
+
+        Args:
+            job_status_list (list): List of job status to consider
+            filter_funct (function): Filter function
+            job_stored_ids (list/ None): List of already analysed job ids
+
+        Returns:
+            list: List of JobCore objects
+        """
+        if job_stored_ids is not None:
+            job_id_lst = [
+                job_id
+                for job_id in self._get_filtered_job_ids_from_project()
+                if job_id not in job_stored_ids
+            ]
+        else:
+            job_id_lst = self._get_filtered_job_ids_from_project()
+
+        job_update_lst = []
+        for job_id in tqdm(job_id_lst):
+            try:
+                job = self._project.inspect(job_id)
+            except IndexError:  # In case the job was deleted while the pyiron table is running
+                job = None
+            if job is not None and job.status in job_status_list and filter_funct(job):
+                job_update_lst.append(job)
+        return job_update_lst
 
     def _repr_html_(self):
         """
