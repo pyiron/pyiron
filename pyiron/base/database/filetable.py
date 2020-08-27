@@ -37,8 +37,15 @@ class FileTable(with_metaclass(Singleton)):
                          'username']
         self.force_reset()
 
+    @property
+    def viewer_mode(self):
+        return None
+
     def force_reset(self):
-        self._fileindex = PyFileIndex(path=self._project, filter_function=filter_function)
+        self._fileindex = PyFileIndex(
+            path=self._project,
+            filter_function=filter_function
+        )
         df = pandas.DataFrame(self.init_table(fileindex=self._fileindex.dataframe))
         if len(df) != 0:
             df.id = df.id.astype(int)
@@ -63,47 +70,31 @@ class FileTable(with_metaclass(Singleton)):
             job_lst.append(job_dict)
         return job_lst
 
-    @staticmethod
-    def get_extract(path, mtime):
-        basename = os.path.basename(path)
-        job = os.path.splitext(basename)[0]
-        time = datetime.datetime.fromtimestamp(mtime)
-        return {'status': get_job_status_from_file(hdf5_file=path, job_name=job),
-                'chemicalformula': None,
-                'job': job,
-                'subjob': '/' + job,
-                'projectpath': None,
-                'project': os.path.dirname(path) + '/',
-                'timestart': time,
-                'timestop': time,
-                'totalcputime': 0.0,
-                'computer': None,
-                'username': None,
-                'parentid': None,
-                'hamilton': get_hamilton_from_file(hdf5_file=path, job_name=job),
-                'hamversion': get_hamilton_version_from_file(hdf5_file=path, job_name=job)}
-
     def add_item_dict(self, par_dict):
         par_dict = dict((key.lower(), value) for key, value in par_dict.items())
         if len(self._job_table) != 0:
             job_id = np.max(self._job_table.id.values) + 1
         else:
             job_id = 1
-        default_values = {'id': job_id,
-                          'status': 'initialized',
-                          'chemicalformula': None,
-                          'timestart': datetime.datetime.now(),
-                          'computer': None,
-                          'parentid': None,
-                          'username': None,
-                          'timestop': None,
-                          'totalcputime': None,
-                          'masterid': None}
+        default_values = {
+            'id': job_id,
+            'status': 'initialized',
+            'chemicalformula': None,
+            'timestart': datetime.datetime.now(),
+            'computer': None,
+            'parentid': None,
+            'username': None,
+            'timestop': None,
+            'totalcputime': None,
+            'masterid': None
+        }
         for k, v in default_values.items():
             if k not in par_dict.keys():
                 par_dict[k] = v
-        self._job_table = pandas.concat([self._job_table,
-                                         pandas.DataFrame([par_dict])[self._columns]]).reset_index(drop=True)
+        self._job_table = pandas.concat([
+            self._job_table,
+            pandas.DataFrame([par_dict])[self._columns]
+        ]).reset_index(drop=True)
         return int(par_dict['id'])
 
     def item_update(self, par_dict, item_id):
@@ -323,6 +314,28 @@ class FileTable(with_metaclass(Singleton)):
                         status,
                         title=db_entry["subjob"][1:] + '/status',
                         overwrite="update")
+
+    @staticmethod
+    def get_extract(path, mtime):
+        basename = os.path.basename(path)
+        job = os.path.splitext(basename)[0]
+        time = datetime.datetime.fromtimestamp(mtime)
+        return {
+            'status': get_job_status_from_file(hdf5_file=path, job_name=job),
+            'chemicalformula': None,
+            'job': job,
+            'subjob': '/' + job,
+            'projectpath': None,
+            'project': os.path.dirname(path) + '/',
+            'timestart': time,
+            'timestop': time,
+            'totalcputime': 0.0,
+            'computer': None,
+            'username': None,
+            'parentid': None,
+            'hamilton': get_hamilton_from_file(hdf5_file=path, job_name=job),
+            'hamversion': get_hamilton_version_from_file(hdf5_file=path, job_name=job)
+        }
 
 
 def get_hamilton_from_file(hdf5_file, job_name):
