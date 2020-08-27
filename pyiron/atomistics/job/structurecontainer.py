@@ -27,6 +27,7 @@ class StructureContainer(AtomisticGenericJob):
     """
 
     __version__ = "0.1.0"
+    __hdf_version__ = "0.2.0"
 
     def __init__(self, project, job_name):
         super().__init__(project, job_name)
@@ -138,12 +139,17 @@ class StructureContainer(AtomisticGenericJob):
             structure.to_hdf(hdf, group_name = "structure_{}".format(i))
 
     def from_hdf(self, hdf = None, group_name = None):
-        GenericJob.from_hdf(self, hdf = hdf, group_name = group_name)
+        if self.project_hdf5['HDF_VERSION'] == "0.1.0":
+            super().from_hdf(hdf=hdf, group_name=group_name)
+            with self.project_hdf5.open("input") as hdf5_input:
+                self.structure = Atoms().from_hdf(hdf5_input)
+        else:
+            GenericJob.from_hdf(self, hdf = hdf, group_name = group_name)
 
-        self.structure_lst.clear()
+            self.structure_lst.clear()
 
-        hdf = self.project_hdf5["structures"]
-        for group in sorted(hdf.list_groups()):
-            structure = Atoms()
-            structure.from_hdf(hdf, group_name = group)
-            self.structure_lst.append(structure)
+            hdf = self.project_hdf5["structures"]
+            for group in sorted(hdf.list_groups()):
+                structure = Atoms()
+                structure.from_hdf(hdf, group_name = group)
+                self.structure_lst.append(structure)
