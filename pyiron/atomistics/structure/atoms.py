@@ -2977,7 +2977,7 @@ class Atoms(ASEAtoms):
             from ase.constraints import FixAtoms
 
             return FixAtoms(indices=[atom_ind for atom_ind in
-                                     range(len(self)) if any(self.selective_dynamics[atom_ind])])
+                                     range(len(self)) if not any(self.selective_dynamics[atom_ind])])
         else:
             return None
 
