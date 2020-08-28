@@ -18,7 +18,6 @@ from pyiron.base.settings.generic import Settings
 from pyiron.base.job.executable import Executable
 from pyiron.base.job.jobstatus import JobStatus
 from pyiron.base.job.core import JobCore
-from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.base.generic.util import static_isinstance
 from pyiron.base.server.generic import Server
 from pyiron.base.database.filetable import FileTable
