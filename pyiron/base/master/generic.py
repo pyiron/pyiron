@@ -454,12 +454,10 @@ class GenericMaster(GenericJob):
         if job_name in self._job_object_dict.keys():
             return self._job_object_dict[job_name]
         else:
-            ham_obj = self.project_hdf5.create_object(
-                class_name=self._hdf5[job_name + "/TYPE"],
-                project=self._hdf5,
-                job_name=job_name,
+            ham_obj = self.project_hdf5[job_name].to_object(
+                    project=self.project_hdf5,
+                    job_name=job_name,
             )
-            ham_obj.from_hdf()
             return ham_obj
 
     def _to_hdf_child_function(self, hdf):

@@ -1195,7 +1195,7 @@ class GenericJob(JobCore):
             hdf (ProjectHDFio): HDF5 group object
         """
         job_name = posixpath.splitext(posixpath.basename(hdf.file_name))[0]
-        project_hdf5 = ProjectHDFio(
+        project_hdf5 = type(hdf)(
                 project = hdf._create_project_from_hdf5(),
                 file_name = job_name
         )
