@@ -52,6 +52,10 @@ class TestVaspImport(unittest.TestCase):
         self.assertFalse(ham.input.incar["LTEST"])
         self.assertEqual(ham.input.incar["POTIM"], 0.5)
 
+    def test_output(self):
+        ham = self.project.load("full_job_sample")
+        self.assertEqual(ham["output/generic/dft/energy_free"][-1], -17.7379867884)
+
 
 if __name__ == "__main__":
     unittest.main()
