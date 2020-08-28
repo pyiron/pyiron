@@ -1239,7 +1239,7 @@ class ProjectHDFio(FileHDFio):
             class_name (str): fully qualified name of a pyiron class
 
         Returns:
-            class object: class object of the given name
+            type: class object of the given name
         """
         internal_class_name = class_name.split(".")[-1][:-2]
         if internal_class_name in self._project.job_type.job_class_dict:
@@ -1264,6 +1264,9 @@ class ProjectHDFio(FileHDFio):
         Args:
             cls (type): pyiron type to instantiate
             **kwargs: arguments for instance creation
+
+        Returns:
+            cls: instance of the given type
         """
 
         if hasattr(cls, "from_hdf_args"):
@@ -1287,7 +1290,7 @@ class ProjectHDFio(FileHDFio):
                       parameters
 
         Returns:
-            GenericJob: pyiron object
+            pyiron object of the given class_name
         """
         if "TYPE" not in self.list_nodes() and class_name is None:
             raise ValueError(
