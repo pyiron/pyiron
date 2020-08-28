@@ -329,7 +329,10 @@ class Settings(with_metaclass(Singleton)):
             if (
                 os.path.exists(resource_path)
                 and "queues" in os.listdir(resource_path)
-                and "queue.yaml" in os.listdir(os.path.join(resource_path, "queues"))
+                and (
+                    "queue.yaml" in os.listdir(os.path.join(resource_path, "queues")) or
+                    "clusters.yaml" in os.listdir(os.path.join(resource_path, "queues"))
+                )
             ):
                 queueadapter = getattr(importlib.import_module("pysqa"), "QueueAdapter")
                 return queueadapter(directory=os.path.join(resource_path, "queues"))

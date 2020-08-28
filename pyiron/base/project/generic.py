@@ -24,6 +24,8 @@ from pyiron.base.database.jobtable import (
     job_table,
     set_job_status,
     get_child_ids,
+    get_job_working_directory,
+    get_job_status
 )
 from pyiron.base.settings.logger import set_logging_level
 from pyiron.base.generic.hdfio import ProjectHDFio
@@ -122,7 +124,7 @@ class Project(ProjectPath):
     """
 
     def __init__(self, path="", user=None, sql_query=None, default_working_directory=False):
-        if default_working_directory and path=="":
+        if default_working_directory and path == "":
             inputdict = Notebook.get_custom_dict()
             if inputdict is not None and "project_dir" in inputdict.keys():
                 path = inputdict["project_dir"]
@@ -272,6 +274,7 @@ class Project(ProjectPath):
         Args:
             job_type (str): job type can be ['ExampleJob', 'SerialMaster', 'ParallelMaster', 'ScriptJob', 'ListMaster']
             job_name (str): name of the job
+            delete_existing_job (bool): delete an existing job - default false
 
         Returns:
             GenericJob: job object depending on the job_type selected
@@ -1293,6 +1296,26 @@ class Project(ProjectPath):
             channel (int): 0: file_log, 1: stream, None: both
         """
         set_logging_level(level=level, channel=channel)
+
+    @staticmethod
+    def list_clusters():
+        """
+        List available computing clusters for remote submission
+
+        Returns:
+            list: List of computing clusters
+        """
+        return s.queue_adapter.list_clusters()
+
+    @staticmethod
+    def switch_cluster(cluster_name):
+        """
+        Switch to a different computing cluster
+
+        Args:
+            cluster_name (str): name of the computing cluster
+        """
+        s.queue_adapter.switch_cluster(cluster_name=cluster_name)
 
     @staticmethod
     def _is_hdf5_dir(item):

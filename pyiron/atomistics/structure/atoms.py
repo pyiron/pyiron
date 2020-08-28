@@ -2977,7 +2977,7 @@ class Atoms(ASEAtoms):
             from ase.constraints import FixAtoms
 
             return FixAtoms(indices=[atom_ind for atom_ind in
-                                     range(len(self)) if any(self.selective_dynamics[atom_ind])])
+                                     range(len(self)) if not any(self.selective_dynamics[atom_ind])])
         else:
             return None
 
@@ -2990,9 +2990,9 @@ class Atoms(ASEAtoms):
                 self.add_tag(selective_dynamics=None)
             for atom_ind in range(len(self)):
                 if atom_ind in constraint.index:
-                    self.selective_dynamics[atom_ind] = [True, True, True]
-                else:
                     self.selective_dynamics[atom_ind] = [False, False, False]
+                else:
+                    self.selective_dynamics[atom_ind] = [True, True, True]
 
     def apply_strain(self, epsilon, return_box=False):
         """
