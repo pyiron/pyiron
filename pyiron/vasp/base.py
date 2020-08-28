@@ -2054,9 +2054,10 @@ class Output:
                 ]
             )
             # Overwrite energy_free with much better precision from the OSZICAR file
-            if np.array_equal(self.generic_output.dft_log_dict["energy_free"],
-                              np.round(self.oszicar.parse_dict["energy_pot"], 8)):
-                self.generic_output.dft_log_dict["energy_free"] = self.oszicar.parse_dict["energy_pot"]
+            if "energy_pot" in self.oszicar.parse_dict.keys():
+                if np.array_equal(self.generic_output.dft_log_dict["energy_free"],
+                                  np.round(self.oszicar.parse_dict["energy_pot"], 8)):
+                    self.generic_output.dft_log_dict["energy_free"] = self.oszicar.parse_dict["energy_pot"]
             self.generic_output.dft_log_dict["energy_zero"] = np.array(
                 [
                     e_zero[-1]
