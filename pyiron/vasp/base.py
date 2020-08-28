@@ -1196,7 +1196,7 @@ class VaspBase(GenericDFTJob):
                 "ionic_energy is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. Use ionic_energy_tolerance instead.",
                 DeprecationWarning
             )
-            ionic_energy_tolerance = ionic_tolerance
+            ionic_energy_tolerance = ionic_energy
         self.input.incar["EDIFF"] = electronic_energy
         if ionic_forces is not None:
             self.input.incar["EDIFFG"] = -1.0 * abs(ionic_force_tolerance)
