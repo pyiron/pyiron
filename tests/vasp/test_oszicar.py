@@ -5,7 +5,6 @@
 import unittest
 import os
 import posixpath
-import numpy as np
 from pyiron.vasp.oszicar import Oszicar
 
 
