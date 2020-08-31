@@ -531,6 +531,10 @@ class GenericJob(JobCore):
                 maintain_name=False
             )
             new_generic_job.project_hdf5 = new_location
+            self._copy_database_entry(
+                new_job_core=new_generic_job,
+                new_database_entry=new_database_entry
+            )
         else:
             new_generic_job = super(GenericJob, self).copy_to(
                 project=project,
@@ -538,9 +542,6 @@ class GenericJob(JobCore):
             )
             new_generic_job.reset_job_id(job_id=new_generic_job.job_id)
             new_generic_job.from_hdf()
-
-        if new_database_entry:
-            new_generic_job.save()
 
         if input_only:
             if "output" in new_generic_job.project_hdf5.list_groups():
