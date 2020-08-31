@@ -142,13 +142,10 @@ class VaspBase(GenericDFTJob):
     @property
     def spin_constraints(self):
         """
-        Returns True if the calculation is spin polarized
+        Returns True if the calculation is spin constrained
         """
         if "I_CONSTRAINED_M" in self.input.incar._dataset["Parameter"]:
-            return (
-                self.input.incar["I_CONSTRAINED_M"] == 1
-                or self.input.incar["I_CONSTRAINED_M"] == 2
-            )
+            return (self.input.incar["I_CONSTRAINED_M"] >= 1)
         else:
             return False
 
