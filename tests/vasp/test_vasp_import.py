@@ -54,6 +54,7 @@ class TestVaspImport(unittest.TestCase):
 
     def test_output(self):
         ham = self.project.load("full_job_sample")
+        print("Energy precision value:", ham["output/generic/dft/energy_free"][-1])
         self.assertEqual(ham["output/generic/dft/energy_free"][-1], -17.7379867884)
 
 
