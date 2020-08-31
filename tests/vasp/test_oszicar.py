@@ -35,9 +35,10 @@ class TestOszicar(unittest.TestCase):
         for filename in self.file_list:
             self.oszicar_parser.from_file(filename=filename)
             if "1" in filename:
-                self.assertTrue(np.allclose(self.oszicar_parser.parse_dict["energy_pot"],
-                                            [-17.7379867884], rtol=1.e-10))
+                energies = self.oszicar_parser.parse_dict["energy_pot"]
+                self.assertTrue(all([energies[i] == val for i, val in enumerate([-17.7379867884])]))
             if "2" in filename:
-                self.assertTrue(np.allclose(self.oszicar_parser.parse_dict["energy_pot"],
-                                            [-1166.23382927, -1166.07589814, -1165.76905678,
-                                             -1165.69531250, -1165.85096438], rtol=1.e-10))
+                energies = self.oszicar_parser.parse_dict["energy_pot"]
+                self.assertTrue(all([energies[i] == val for i, val in enumerate([-1166.23382927, -1166.07589814,
+                                                                                 -1165.76905678, -1165.69531250,
+                                                                                 -1165.85096438])]))
