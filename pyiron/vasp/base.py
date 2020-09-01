@@ -1213,19 +1213,24 @@ class VaspBase(GenericDFTJob):
                 "Use ionic_force_tolerance instead.",
                 DeprecationWarning
             )
-            ionic_force_tolerance = ionic_forces
+            if ionic_force_tolerance is None:
+                ionic_force_tolerance = ionic_forces
         if ionic_energy is not None:
             warnings.warn(
                 "ionic_energy is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. "
                 "Use ionic_energy_tolerance instead.",
                 DeprecationWarning
             )
-            ionic_energy_tolerance = ionic_energy
-        self.input.incar["EDIFF"] = electronic_energy
-        if ionic_forces is not None:
+            if ionic_energy_tolerance is None:
+                ionic_energy_tolerance = ionic_energy
+        if ionic_force_tolerance is not None:
             self.input.incar["EDIFFG"] = -1.0 * abs(ionic_force_tolerance)
-        else:
+        elif ionic_energy_tolerance is not None:
             self.input.incar["EDIFFG"] = abs(ionic_energy_tolerance)
+        else:
+            # Using default convergence criterion
+            self.input.incar["EDIFFG"] = -0.01
+        self.input.incar["EDIFF"] = electronic_energy
 
     def set_dipole_correction(self, direction=2, dipole_center=None):
         """
