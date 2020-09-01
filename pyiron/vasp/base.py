@@ -942,8 +942,29 @@ class VaspBase(GenericDFTJob):
             self.write_charge_density = retain_charge_density
         if retain_electrostatic_potential:
             self.write_electrostatic_potential = retain_electrostatic_potential
-        self.set_convergence_precision(ionic_energy_tolerance=ionic_energy_tolerance,
-                                       ionic_force_tolerance=ionic_force_tolerance)
+        if ionic_forces is not None:
+            warnings.warn(
+                "ionic_forces is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. "
+                "Use ionic_force_tolerance instead.",
+                DeprecationWarning
+            )
+            if ionic_force_tolerance is None:
+                ionic_force_tolerance = ionic_forces
+        if ionic_energy is not None:
+            warnings.warn(
+                "ionic_energy is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. "
+                "Use ionic_energy_tolerance instead.",
+                DeprecationWarning
+            )
+            if ionic_energy_tolerance is None:
+                ionic_energy_tolerance = ionic_energy
+        if ionic_force_tolerance is not None:
+            self.input.incar["EDIFFG"] = -1.0 * abs(ionic_force_tolerance)
+        elif ionic_energy_tolerance is not None:
+            self.input.incar["EDIFFG"] = abs(ionic_energy_tolerance)
+        else:
+            # Using default convergence criterion
+            self.input.incar["EDIFFG"] = -0.01
 
     def calc_static(
         self,
