@@ -380,6 +380,18 @@ class TestVasp(unittest.TestCase):
         for val in ['R 1 6 0', 'R 1 2 0', 'S 1 -1 0']:
             self.assertTrue(val in constraints)
 
+    def test_setting_input(self):
+        self.job.set_convergence_precision(electronic_energy=1e-7, ionic_force_tolerance=0.1)
+        self.assertEqual(self.job.input.incar["EDIFF"], 1e-7)
+        self.assertEqual(self.job.input.incar["EDIFFG"], -0.1)
+        self.job.calc_minimize()
+        self.assertEqual(self.job.input.incar["EDIFFG"], -0.01)
+        self.job.calc_minimize(ionic_energy=1e-4)
+        self.assertEqual(self.job.input.incar["EDIFFG"], 0.0001)
+        self.job.calc_minimize(ionic_forces=1e-3)
+        self.assertEqual(self.job.input.incar["EDIFFG"], -0.001)
+        self.assertEqual(self.job.input.incar["EDIFF"], 1e-7)
+
 
 if __name__ == "__main__":
     unittest.main()

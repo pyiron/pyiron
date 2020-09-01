@@ -939,8 +939,10 @@ class VaspBase(GenericDFTJob):
             self.write_charge_density = retain_charge_density
         if retain_electrostatic_potential:
             self.write_electrostatic_potential = retain_electrostatic_potential
-        self.set_convergence_precision(ionic_energy_tolerance=ionic_energy_tolerance,
-                                       ionic_force_tolerance=ionic_force_tolerance)
+        self.set_convergence_precision(ionic_force_tolerance=ionic_force_tolerance,
+                                       ionic_energy_tolerance=ionic_energy_tolerance,
+                                       ionic_energy=ionic_energy, ionic_forces=ionic_forces,
+                                       electronic_energy=None)
 
     def calc_static(
         self,
@@ -1178,10 +1180,10 @@ class VaspBase(GenericDFTJob):
 
         Args:
             ionic_energy_tolerance (float): Ionic energy convergence precision (eV)
-            electronic_energy (float): Electronic energy convergence precision (eV)
+            electronic_energy (float/NoneType): Electronic energy convergence precision (eV)
             ionic_force_tolerance (float): Ionic force convergence precision (eV/A)
-            ionic_energy (float): Same as ionic_energy_tolerance (deprecated)
-            ionic_forces (float): Same as ionic_force_tolerance (deprecated)
+            ionic_energy (float/NoneType): Same as ionic_energy_tolerance (deprecated)
+            ionic_forces (float/NoneType): Same as ionic_force_tolerance (deprecated)
         """
         if ionic_forces is not None:
             warnings.warn(
@@ -1189,19 +1191,25 @@ class VaspBase(GenericDFTJob):
                 "Use ionic_force_tolerance instead.",
                 DeprecationWarning
             )
-            ionic_force_tolerance = ionic_forces
+            if ionic_force_tolerance is None:
+                ionic_force_tolerance = ionic_forces
         if ionic_energy is not None:
             warnings.warn(
                 "ionic_energy is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. "
                 "Use ionic_energy_tolerance instead.",
                 DeprecationWarning
             )
-            ionic_energy_tolerance = ionic_energy
-        self.input.incar["EDIFF"] = electronic_energy
-        if ionic_forces is not None:
+            if ionic_energy_tolerance is None:
+                ionic_energy_tolerance = ionic_energy
+        if ionic_force_tolerance is not None:
             self.input.incar["EDIFFG"] = -1.0 * abs(ionic_force_tolerance)
-        else:
+        elif ionic_energy_tolerance is not None:
             self.input.incar["EDIFFG"] = abs(ionic_energy_tolerance)
+        else:
+            # Using default convergence criterion
+            self.input.incar["EDIFFG"] = -0.01
+        if electronic_energy is not None:
+            self.input.incar["EDIFF"] = electronic_energy
 
     def set_dipole_correction(self, direction=2, dipole_center=None):
         """
