@@ -287,8 +287,8 @@ def get_enmax_among_species(symbol_lst, return_list=False, xc="PBE"):
         (float): The largest ENMAX among the POTCAR files for all the species.
         [optional](list): The ENMAX value corresponding to each species.
     """
-    warnings.warn("get_enmax_among_species is deprecated as of v0.3.0. Please use get_enmax_among_potentials and note "
-                  "the adjustment to the signature (*args instead of list)")
+    warnings.warn(("get_enmax_among_species is deprecated as of v0.3.0. Please use get_enmax_among_potentials and note "
+                   + "the adjustment to the signature (*args instead of list)"), DeprecationWarning)
     return get_enmax_among_potentials(*symbol_lst, return_list=return_list, xc=xc)
 
 
