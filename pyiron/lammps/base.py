@@ -742,6 +742,7 @@ class LammpsBase(AtomisticGenericJob):
             window_moves (int): The number of times the sampling window is moved during one MC cycle. (Default is None,
                 number of moves is determined automatically.)
         """
+        rotation_matrix = self._get_rotation_matrix(pressure=pressure)
         if mu is None:
             mu = {}
             for el in self.input.potential.get_element_lst():
@@ -773,6 +774,7 @@ class LammpsBase(AtomisticGenericJob):
             initial_temperature=initial_temperature,
             langevin=langevin,
             job_name=self.job_name,
+            rotation_matrix=rotation_matrix
         )
 
     # define hdf5 input and output

@@ -609,6 +609,7 @@ class LammpsControl(GenericParameters):
         initial_temperature=None,
         langevin=False,
         job_name="",
+        rotation_matrix=None
     ):
         """
         Run variance-constrained semi-grand-canonical MD/MC for a binary system. In addition to VC-SGC arguments, all
@@ -646,6 +647,7 @@ class LammpsControl(GenericParameters):
                 determined automatically.)
             window_moves (int): The number of times the sampling window is moved during one MC cycle. (Default is None,
                 number of moves is determined automatically.)
+            rotation_matrix (numpy.ndarray): The rotation matrix from the pyiron to Lammps coordinate frame.
         """
         self.calc_md(
             temperature=temperature,
@@ -660,6 +662,7 @@ class LammpsControl(GenericParameters):
             initial_temperature=initial_temperature,
             langevin=langevin,
             job_name=job_name,
+            rotation_matrix=rotation_matrix
         )
 
         if self["units"] not in LAMMPS_UNIT_CONVERSIONS.keys():
