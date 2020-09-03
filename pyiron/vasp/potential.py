@@ -342,6 +342,9 @@ def get_enmax_among_potentials(*names, return_list=False, xc="PBE"):
 
 
 def strip_xc_from_potential_name(name):
+    if len(name.split('-')) > 2:
+        raise ValueError('Expected potential names to have a single dash before the XC flag, e.g. "Al_GW-pbe", but got'
+                         '{}. Please check for a typo or re-evaluate POTCAR name formatting rules.'.format(name))
     return name.split('-')[0]
 
 

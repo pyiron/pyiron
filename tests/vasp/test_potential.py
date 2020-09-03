@@ -4,7 +4,7 @@
 
 import unittest
 import os
-from pyiron.vasp.potential import get_enmax_among_potentials
+from pyiron.vasp.potential import get_enmax_among_potentials, strip_xc_from_potential_name
 
 
 class TestPotential(unittest.TestCase):
@@ -22,6 +22,10 @@ class TestPotential(unittest.TestCase):
 
         self.assertRaises(KeyError, get_enmax_among_potentials, symbol_lst=['X'])
         self.assertRaises(ValueError, get_enmax_among_potentials, symbol_lst=['Fe'], xc='FOO')
+
+    def test_strip_xc_from_potential_name(self):
+        self.assertEqual(strip_xc_from_potential_name('X_pv-pbe'), 'X_pv')
+        self.assertRaises(ValueError, strip_xc_from_potential_name, 'has-multiple-dashes')
 
 
 if __name__ == "__main__":
