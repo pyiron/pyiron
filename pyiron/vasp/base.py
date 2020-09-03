@@ -277,16 +277,7 @@ class VaspBase(GenericDFTJob):
 
     @property
     def potential_list(self):
-        if self.structure is None:
-            raise ValueError("Can't list potentials unless a structure is set")
-        else:
-            df = VaspPotentialFile(xc=self.input.potcar["xc"]).find(
-                self.structure.get_species_symbols().tolist()
-            )
-            if len(df) != 0:
-                return [strip_xc_from_potential_name(n) for n in df["Name"].values]
-            else:
-                return []
+        return list(self.potential_view["Name"].values)
 
     @property
     def publication(self):
