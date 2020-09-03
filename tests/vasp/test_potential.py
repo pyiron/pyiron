@@ -17,11 +17,11 @@ class TestPotential(unittest.TestCase):
         float_out = get_enmax_among_potentials('Fe', return_list=False)
         self.assertTrue(isinstance(float_out, float))
 
-        tuple_out = get_enmax_among_potentials('Fe', 'Fe_pv', return_list=True)
+        tuple_out = get_enmax_among_potentials('Fe', return_list=True)
         self.assertTrue(isinstance(tuple_out, tuple))
 
-        self.assertRaises(KeyError, get_enmax_among_potentials, symbol_lst=['X'])
-        self.assertRaises(ValueError, get_enmax_among_potentials, symbol_lst=['Fe'], xc='FOO')
+        self.assertRaises(KeyError, get_enmax_among_potentials, symbols=['X'])
+        self.assertRaises(ValueError, get_enmax_among_potentials, symbols=['Fe'], xc='FOO')
 
     def test_strip_xc_from_potential_name(self):
         self.assertEqual(strip_xc_from_potential_name('X_pv-gga-pbe'), 'X_pv')
