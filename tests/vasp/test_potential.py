@@ -24,8 +24,7 @@ class TestPotential(unittest.TestCase):
         self.assertRaises(ValueError, get_enmax_among_potentials, symbol_lst=['Fe'], xc='FOO')
 
     def test_strip_xc_from_potential_name(self):
-        self.assertEqual(strip_xc_from_potential_name('X_pv-pbe'), 'X_pv')
-        self.assertRaises(ValueError, strip_xc_from_potential_name, 'has-multiple-dashes')
+        self.assertEqual(strip_xc_from_potential_name('X_pv-gga-pbe'), 'X_pv')
 
 
 if __name__ == "__main__":
