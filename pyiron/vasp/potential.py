@@ -284,15 +284,23 @@ def get_enmax_among_species(symbol_lst, return_list=False, xc="PBE"):
         (float): The largest ENMAX among the POTCAR files for all the species.
         [optional](list): The ENMAX value corresponding to each species.
     """
+    def _get_potcar_filename(sym, xc):
+        # def _get_just_element(sym):
+        #     return sym.split('_')[0]
+        #
+        # def _get_index_of_first_match(pattern, candidate_list):
+        #     return np.argwhere(pattern in candidate for candidate in candidate_list)[0, 0]
+        #
+        # potcar_table = VaspPotentialFile(xc=xc).find(_get_just_element(symbol))
+        # return potcar_table['Filename'].values[
+        #     _get_index_of_first_match(sym, potcar_table['Name'].values)
+        # ][0]
+        return '-'.join([sym, xc.lower()])
 
     enmax_lst = []
-    vpf = VaspPotentialFile(xc=xc)
 
     for symbol in symbol_lst:
-        potcar_file = find_potential_file(
-            path=vpf.find_default(symbol)['Filename'].values[0][0]
-        )
-        with open(potcar_file) as pf:
+        with open(find_potential_file(path=_get_potcar_filename(symbol, xc))) as pf:
             for i, line in enumerate(pf):
                 if i == 14:
                     encut_str = line.split()[2][:-1]
