@@ -9,7 +9,8 @@ import subprocess
 import numpy as np
 
 from pyiron.dft.job.generic import GenericDFTJob
-from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentialSetter, Potcar
+from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentialSetter, Potcar, \
+    strip_xc_from_potential_name
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
@@ -271,7 +272,7 @@ class VaspBase(GenericDFTJob):
                 self.structure.get_species_symbols().tolist()
             )
             if len(df) > 0:
-                df["Name"] = [n.split("-")[0] for n in df["Name"].values]
+                df["Name"] = [strip_xc_from_potential_name(n) for n in df["Name"].values]
             return df
 
     @property
@@ -283,7 +284,7 @@ class VaspBase(GenericDFTJob):
                 self.structure.get_species_symbols().tolist()
             )
             if len(df) != 0:
-                return [n.split("-")[0] for n in df["Name"].values]
+                return [strip_xc_from_potential_name(n) for n in df["Name"].values]
             else:
                 return []
 
