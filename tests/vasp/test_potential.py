@@ -20,7 +20,7 @@ class TestPotential(unittest.TestCase):
         tuple_out = get_enmax_among_potentials('Fe', return_list=True)
         self.assertTrue(isinstance(tuple_out, tuple))
 
-        self.assertRaises(KeyError, get_enmax_among_potentials, 'X')
+        self.assertRaises(ValueError, get_enmax_among_potentials, 'X')
         self.assertRaises(ValueError, get_enmax_among_potentials, 'Fe', xc='FOO')
 
     def test_strip_xc_from_potential_name(self):
