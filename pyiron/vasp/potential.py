@@ -292,9 +292,10 @@ def get_enmax_among_species(symbol_lst, return_list=False, xc="PBE"):
 
     def _get_index_of_exact_match(name, potential_names):
         try:
-            return np.argwhere(name == _strip_xc_from_name(pn) for pn in potential_names)[0, 0]
+            return np.argwhere([name == _strip_xc_from_name(pn) for pn in potential_names])[0, 0]
         except IndexError:
-            raise("Couldn't find {} among potential names for {}".format(name, _get_just_element_from_name(name)))
+            raise ValueError("Couldn't find {} among potential names for {}".format(name,
+                                                                                    _get_just_element_from_name(name)))
 
     def _get_potcar_filename(name, exch_corr):
         potcar_table = VaspPotentialFile(xc=exch_corr).find(_get_just_element_from_name(name))
