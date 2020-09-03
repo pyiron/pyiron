@@ -6,7 +6,7 @@ dependencies:
 - lammps
 - iprpy-data
 - gpaw
-- sphinxdft >=2.6.1=h22b626b_13
+- sphinxdft >=2.7.0
 - sphinxdft-data
 - nglview
 - seaborn
