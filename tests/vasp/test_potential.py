@@ -14,10 +14,10 @@ class TestPotential(unittest.TestCase):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
 
     def test_get_enmax_among_potentials(self):
-        float_out = get_enmax_among_potentials(['Fe'], return_list=False)
+        float_out = get_enmax_among_potentials('Fe', return_list=False)
         self.assertTrue(isinstance(float_out, float))
 
-        tuple_out = get_enmax_among_potentials(['Fe'], return_list=True)
+        tuple_out = get_enmax_among_potentials('Fe', return_list=True)
         self.assertTrue(isinstance(tuple_out, tuple))
 
         self.assertRaises(KeyError, get_enmax_among_potentials, symbol_lst=['X'])
