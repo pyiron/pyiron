@@ -284,21 +284,25 @@ def get_enmax_among_species(symbol_lst, return_list=False, xc="PBE"):
         (float): The largest ENMAX among the POTCAR files for all the species.
         [optional](list): The ENMAX value corresponding to each species.
     """
-    def _get_potcar_filename(sym, xc):
-        # def _get_just_element(sym):
-        #     return sym.split('_')[0]
-        #
-        # def _get_index_of_first_match(pattern, candidate_list):
-        #     return np.argwhere(pattern in candidate for candidate in candidate_list)[0, 0]
-        #
-        # potcar_table = VaspPotentialFile(xc=xc).find(_get_just_element(symbol))
-        # return potcar_table['Filename'].values[
-        #     _get_index_of_first_match(sym, potcar_table['Name'].values)
-        # ][0]
-        return '-'.join([sym, xc.lower()])
+    def _get_just_element_from_name(name):
+        return name.split('_')[0]
+
+    def _strip_xc_from_name(name):
+        return name.split('-')[0]
+
+    def _get_index_of_exact_match(name, potential_names):
+        try:
+            return np.argwhere(name == _strip_xc_from_name(pn) for pn in potential_names)[0, 0]
+        except IndexError:
+            raise("Couldn't find {} among potential names for {}".format(name, _get_just_element_from_name(name)))
+
+    def _get_potcar_filename(name, exch_corr):
+        potcar_table = VaspPotentialFile(xc=exch_corr).find(_get_just_element_from_name(name))
+        return potcar_table['Filename'].values[
+            _get_index_of_exact_match(name, potcar_table['Name'].values)
+        ][0]
 
     enmax_lst = []
-
     for symbol in symbol_lst:
         with open(find_potential_file(path=_get_potcar_filename(symbol, xc))) as pf:
             for i, line in enumerate(pf):
