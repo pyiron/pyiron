@@ -219,6 +219,9 @@ class VaspPotentialFile(VaspPotentialAbstract):
         ds["Name"] = "-".join(name_list)
         self._default_df = self._default_df.append(ds)
 
+    def get_names_without_xc(self):
+        return [n.split('-')[0] for n in self["Name"].values]
+
 
 class VaspPotential(object):
     """
@@ -294,8 +297,10 @@ def get_enmax_among_species(symbol_lst, return_list=False, xc="PBE"):
 
 def get_enmax_among_potentials(*names, return_list=False, xc="PBE"):
     """
-    Given potential names (e.g. 'Al_sv_GW') or elemental symbols, look over all the corresponding POTCAR files and find
-    the largest ENMAX value.
+    Given potential names without XC information or elemental symbols, look over all the corresponding POTCAR files and
+    find the largest ENMAX value.
+
+    e.g. `get_enmax_among_potentials('Mg', 'Al_GW', 'Ca_pv', 'Ca_sv', xc='LDA')`
 
     Args:
         *names (str): Names of potentials or elemental symbols
@@ -311,21 +316,16 @@ def get_enmax_among_potentials(*names, return_list=False, xc="PBE"):
     def _get_just_element_from_name(name):
         return name.split('_')[0]
 
-    def _strip_xc_from_name(name):
-        return name.split('-')[0]
-
-    def _get_index_of_exact_match(name, potential_names):
+    def _get_index_of_exact_match(name, potential_names_without_xc):
         try:
-            return np.argwhere([name == _strip_xc_from_name(pn) for pn in potential_names])[0, 0]
+            return np.argwhere([name == pn for pn in potential_names_without_xc])[0, 0]
         except IndexError:
             raise ValueError("Couldn't find {} among potential names for {}".format(name,
                                                                                     _get_just_element_from_name(name)))
 
     def _get_potcar_filename(name, exch_corr):
         potcar_table = VaspPotentialFile(xc=exch_corr).find(_get_just_element_from_name(name))
-        return potcar_table['Filename'].values[
-            _get_index_of_exact_match(name, potcar_table['Name'].values)
-        ][0]
+        return potcar_table['Filename'].values[_get_index_of_exact_match(name, potcar_table.get_names_without_xc())][0]
 
     enmax_lst = []
     for n in names:
