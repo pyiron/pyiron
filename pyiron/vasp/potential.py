@@ -219,9 +219,6 @@ class VaspPotentialFile(VaspPotentialAbstract):
         ds["Name"] = "-".join(name_list)
         self._default_df = self._default_df.append(ds)
 
-    def get_names_without_xc(self):
-        return [n.split('-')[0] for n in self["Name"].values]
-
 
 class VaspPotential(object):
     """
@@ -316,16 +313,18 @@ def get_enmax_among_potentials(*names, return_list=False, xc="PBE"):
     def _get_just_element_from_name(name):
         return name.split('_')[0]
 
-    def _get_index_of_exact_match(name, potential_names_without_xc):
+    def _get_index_of_exact_match(name, potential_names):
         try:
-            return np.argwhere([name == pn for pn in potential_names_without_xc])[0, 0]
+            return np.argwhere([name == strip_xc_from_potential_name(pn) for pn in potential_names])[0, 0]
         except IndexError:
             raise ValueError("Couldn't find {} among potential names for {}".format(name,
                                                                                     _get_just_element_from_name(name)))
 
     def _get_potcar_filename(name, exch_corr):
         potcar_table = VaspPotentialFile(xc=exch_corr).find(_get_just_element_from_name(name))
-        return potcar_table['Filename'].values[_get_index_of_exact_match(name, potcar_table.get_names_without_xc())][0]
+        return potcar_table['Filename'].values[
+            _get_index_of_exact_match(name, potcar_table['Name'].values)
+        ][0]
 
     enmax_lst = []
     for n in names:
@@ -340,6 +339,10 @@ def get_enmax_among_potentials(*names, return_list=False, xc="PBE"):
         return max(enmax_lst), enmax_lst
     else:
         return max(enmax_lst)
+
+
+def strip_xc_from_potential_name(name):
+    return name.split('-')[0]
 
 
 class Potcar(GenericParameters):
