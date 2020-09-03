@@ -284,7 +284,6 @@ def get_enmax_among_species(symbol_lst, return_list=False, xc="PBE"):
         (float): The largest ENMAX among the POTCAR files for all the species.
         [optional](list): The ENMAX value corresponding to each species.
     """
-    pot_path_dict = Potcar.pot_path_dict
 
     enmax_lst = []
     vpf = VaspPotentialFile(xc=xc)
