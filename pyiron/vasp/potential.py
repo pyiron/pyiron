@@ -328,8 +328,8 @@ def get_enmax_among_potentials(*names, return_list=False, xc="PBE"):
         ][0]
 
     enmax_lst = []
-    for name in names:
-        with open(find_potential_file(path=_get_potcar_filename(name, xc))) as pf:
+    for n in names:
+        with open(find_potential_file(path=_get_potcar_filename(n, xc))) as pf:
             for i, line in enumerate(pf):
                 if i == 14:
                     encut_str = line.split()[2][:-1]
