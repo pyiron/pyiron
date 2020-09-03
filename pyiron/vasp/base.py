@@ -9,7 +9,8 @@ import subprocess
 import numpy as np
 
 from pyiron.dft.job.generic import GenericDFTJob
-from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentialSetter, Potcar
+from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentialSetter, Potcar, \
+    strip_xc_from_potential_name
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
@@ -19,7 +20,7 @@ from pyiron.vasp.structure import read_atoms, write_poscar, vasp_sorter
 from pyiron.vasp.vasprun import Vasprun as Vr
 from pyiron.vasp.vasprun import VasprunError
 from pyiron.vasp.volumetric_data import VaspVolumetricData
-from pyiron.vasp.potential import get_enmax_among_species
+from pyiron.vasp.potential import get_enmax_among_potentials
 from pyiron.dft.waves.electronic import ElectronicStructure
 from pyiron.dft.waves.bandstructure import Bandstructure
 import warnings
@@ -80,7 +81,7 @@ class VaspBase(GenericDFTJob):
         self._output_parser = Output()
         self._potential = VaspPotentialSetter([])
         self._compress_by_default = True
-        self.get_enmax_among_species = get_enmax_among_species
+        self.get_enmax_among_species = get_enmax_among_potentials
         s.publication_add(self.publication)
 
     @property
@@ -271,21 +272,12 @@ class VaspBase(GenericDFTJob):
                 self.structure.get_species_symbols().tolist()
             )
             if len(df) > 0:
-                df["Name"] = [n.split("-")[0] for n in df["Name"].values]
+                df["Name"] = [strip_xc_from_potential_name(n) for n in df["Name"].values]
             return df
 
     @property
     def potential_list(self):
-        if self.structure is None:
-            raise ValueError("Can't list potentials unless a structure is set")
-        else:
-            df = VaspPotentialFile(xc=self.input.potcar["xc"]).find(
-                self.structure.get_species_symbols().tolist()
-            )
-            if len(df) != 0:
-                return [n.split("-")[0] for n in df["Name"].values]
-            else:
-                return []
+        return list(self.potential_view["Name"].values)
 
     @property
     def publication(self):
