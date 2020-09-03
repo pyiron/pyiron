@@ -19,7 +19,7 @@ from pyiron.vasp.structure import read_atoms, write_poscar, vasp_sorter
 from pyiron.vasp.vasprun import Vasprun as Vr
 from pyiron.vasp.vasprun import VasprunError
 from pyiron.vasp.volumetric_data import VaspVolumetricData
-from pyiron.vasp.potential import get_enmax_among_species
+from pyiron.vasp.potential import get_enmax_among_potentials
 from pyiron.dft.waves.electronic import ElectronicStructure
 from pyiron.dft.waves.bandstructure import Bandstructure
 import warnings
@@ -80,7 +80,7 @@ class VaspBase(GenericDFTJob):
         self._output_parser = Output()
         self._potential = VaspPotentialSetter([])
         self._compress_by_default = True
-        self.get_enmax_among_species = get_enmax_among_species
+        self.get_enmax_among_species = get_enmax_among_potentials
         s.publication_add(self.publication)
 
     @property

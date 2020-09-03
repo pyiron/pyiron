@@ -8,6 +8,7 @@ import posixpath
 import numpy as np
 import pandas
 import tables
+import warnings
 from pyiron.base.generic.parameters import GenericParameters
 from pyiron.base.settings.generic import Settings
 from pyiron.atomistics.job.potentials import PotentialAbstract, find_potential_file_base
@@ -272,6 +273,8 @@ def find_potential_file(path):
 
 def get_enmax_among_species(symbol_lst, return_list=False, xc="PBE"):
     """
+    DEPRECATED: Please use `get_enmax_among_potentials`.
+
     Given a list of species symbols, finds the largest applicable encut.
 
     Args:
@@ -282,6 +285,27 @@ def get_enmax_among_species(symbol_lst, return_list=False, xc="PBE"):
 
     Returns:
         (float): The largest ENMAX among the POTCAR files for all the species.
+        [optional](list): The ENMAX value corresponding to each species.
+    """
+    warnings.warn("get_enmax_among_species is deprecated as of v0.3.0. Please use get_enmax_among_potentials and note "
+                  "the adjustment to the signature (*args instead of list)")
+    return get_enmax_among_potentials(*symbol_lst, return_list=return_list, xc=xc)
+
+
+def get_enmax_among_potentials(*names, return_list=False, xc="PBE"):
+    """
+    Given potential names (e.g. 'Al_sv_GW') or elemental symbols, look over all the corresponding POTCAR files and find
+    the largest ENMAX value.
+
+    Args:
+        *names (str): Names of potentials or elemental symbols
+        return_list (bool): Whether to return the list of all ENMAX values (in the same order as `names` as a second
+            return value after providing the largest value). (Default is False.)
+        xc ("GGA"/"PBE"/"LDA"): The exchange correlation functional for which the POTCARs were generated.
+            (Default is "PBE".)
+
+    Returns:
+        (float): The largest ENMAX among the POTCAR files for all the requested names.
         [optional](list): The ENMAX value corresponding to each species.
     """
     def _get_just_element_from_name(name):
@@ -304,8 +328,8 @@ def get_enmax_among_species(symbol_lst, return_list=False, xc="PBE"):
         ][0]
 
     enmax_lst = []
-    for symbol in symbol_lst:
-        with open(find_potential_file(path=_get_potcar_filename(symbol, xc))) as pf:
+    for name in names:
+        with open(find_potential_file(path=_get_potcar_filename(name, xc))) as pf:
             for i, line in enumerate(pf):
                 if i == 14:
                     encut_str = line.split()[2][:-1]
