@@ -11,7 +11,7 @@ steps:
     conda update -q conda
   displayName: conda setup
 
-- bash: .ci_support/environment.yml > environment.yml
+- bash: sed .ci_support/environment.yml > environment.yml
   displayName: update environment
 
 - bash: conda create -n pyiron -q --yes -c conda-forge python=$(python.version)
