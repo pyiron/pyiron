@@ -21,7 +21,7 @@ dependencies:
   - psutil =5.7.0
   - pyfileindex =0.0.4
   - pyscal =2.7.5
-  - pysqa =0.0.7
+  - pysqa =0.0.11
   - pytables =3.6.1
   - quickff =2.2.4
   - scipy =1.4.1
