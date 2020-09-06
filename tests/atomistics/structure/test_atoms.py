@@ -723,12 +723,10 @@ class TestAtoms(unittest.TestCase):
     def test_get_neighbors(self):
         cell = 2.2 * np.identity(3)
         NaCl = Atoms("NaCl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
-        # NaCl.repeat([3, 3, 3])
-        # NaCl.positions = [(1,1,1)]
+
         boundary = NaCl.get_boundary_region(3.5)
-        extended_cell = NaCl + boundary
-        # extended_cell.plot3d()
-        nbr_dict = NaCl.get_neighbors(num_neighbors=12, t_vec=True)
+        _ = NaCl + boundary
+        _ = NaCl.get_neighbors(num_neighbors=12, t_vec=True)
         basis = Atoms(symbols="FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3))
         neigh = basis.get_neighbors(include_boundary=False)
         self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
@@ -736,11 +734,9 @@ class TestAtoms(unittest.TestCase):
         self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            neigh = basis.get_neighbors(cutoff=10)
+            _ = basis.get_neighbors(cutoff=10)
             self.assertEqual(len(w), 1)
             self.assertIsInstance(w[-1].message, DeprecationWarning)
-        # print nbr_dict.distances
-        # print [set(s) for s in nbr_dict.shells]
 
     def test_center_coordinates(self):
         cell = 2.2 * np.identity(3)

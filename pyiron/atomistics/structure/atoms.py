@@ -1677,9 +1677,6 @@ class Atoms(ASEAtoms):
         if exclude_self:
             i_start = 1
 
-        def f_ind(x):
-            return x < len(self)
-
         num_neighbors += 1
         neighbor_obj = Neighbors()
         if not include_boundary:  # periodic boundaries are NOT included
@@ -1700,9 +1697,12 @@ class Atoms(ASEAtoms):
                 d_lst.append(d_i[ff])
                 v_lst.append(self.positions[ind_l] - self.positions[ic])
                 ic += 1
-            neighbor_obj.indices = ind_lst
-            neighbor_obj.distances = d_lst
-            neighbor_obj.vecs = v_lst
+
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always", np.VisibleDeprecationWarning)
+                neighbor_obj.indices = ind_lst
+                neighbor_obj.distances = d_lst
+                neighbor_obj.vecs = v_lst
             return neighbor_obj
 
         # include periodic boundaries
@@ -1797,10 +1797,12 @@ class Atoms(ASEAtoms):
             )
         self.min_nbr_number = min_nbr
         self.max_nbr_number = max_nbr
-        neighbor_obj.distances = self.neighbor_distance
-        neighbor_obj.vecs = self.neighbor_distance_vec
-        neighbor_obj.indices = self.neighbor_index
-        neighbor_obj.shells = self.neighbor_shellOrder
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always", np.VisibleDeprecationWarning)
+            neighbor_obj.distances = self.neighbor_distance
+            neighbor_obj.vecs = self.neighbor_distance_vec
+            neighbor_obj.indices = self.neighbor_index
+            neighbor_obj.shells = self.neighbor_shellOrder
         return neighbor_obj
 
     def get_neighborhood(
@@ -3643,7 +3645,7 @@ class Neighbors:
     @distances.setter
     def distances(self, new_distances):
         if isinstance(new_distances, list) or isinstance(new_distances, np.ndarray):
-            self._distances = np.array(new_distances, dtype=object)
+            self._distances = np.array(new_distances)
         else:
             raise TypeError("Only lists and np.arrays are supported.")
 
@@ -3654,7 +3656,7 @@ class Neighbors:
     @vecs.setter
     def vecs(self, new_vecs):
         if isinstance(new_vecs, list) or isinstance(new_vecs, np.ndarray):
-            self._vecs = np.array(new_vecs, dtype=object)
+            self._vecs = np.array(new_vecs)
         else:
             raise TypeError("Only lists and np.arrays are supported.")
 
@@ -3665,7 +3667,7 @@ class Neighbors:
     @indices.setter
     def indices(self, new_indices):
         if isinstance(new_indices, list) or isinstance(new_indices, np.ndarray):
-            self._indices = np.array(new_indices, dtype=object)
+            self._indices = np.array(new_indices)
         else:
             raise TypeError("Only lists and np.arrays are supported.")
 
@@ -3676,7 +3678,7 @@ class Neighbors:
     @shells.setter
     def shells(self, new_shells):
         if isinstance(new_shells, list) or isinstance(new_shells, np.ndarray):
-            self._shells = np.array(new_shells, dtype=object)
+            self._shells = np.array(new_shells)
         else:
             raise TypeError("Only lists and np.arrays are supported.")
 
