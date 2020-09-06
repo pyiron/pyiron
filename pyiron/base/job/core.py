@@ -686,22 +686,35 @@ class JobCore(PyironObject):
         new_job_core._status = self._status
         self.project_hdf5.copy_to(destination=project)
         if self.job_id:
-            if new_database_entry:
-                db_entry = self.project.db.get_item_by_id(self.job_id)
-                db_entry["project"] = new_job_core.project_hdf5.project_path
-                db_entry["projectpath"] = new_job_core.project_hdf5.root_path
-                db_entry["subjob"] = new_job_core.project_hdf5.h5_path
-                del db_entry["id"]
-                job_id = self.project.db.add_item_dict(db_entry)
-                new_job_core._job_id = job_id
-            else:
-                new_job_core._job_id = None
+            self._copy_database_entry(
+                new_job_core=new_job_core,
+                new_database_entry=new_database_entry
+            )
         if os.path.exists(self.working_directory):
             shutil.copytree(
                 self.working_directory,
                 os.path.join(project.working_directory, self.job_name),
             )
         return new_job_core
+
+    def _copy_database_entry(self, new_job_core, new_database_entry):
+        """
+        Copy database entry from previous job
+
+        Args:
+            new_job_core (GenericJob): Copy of the job object
+            new_database_entry (bool): [True/False] to create a new database entry - default True
+        """
+        if new_database_entry:
+            db_entry = self.project.db.get_item_by_id(self.job_id)
+            db_entry["project"] = new_job_core.project_hdf5.project_path
+            db_entry["projectpath"] = new_job_core.project_hdf5.root_path
+            db_entry["subjob"] = new_job_core.project_hdf5.h5_path
+            del db_entry["id"]
+            job_id = self.project.db.add_item_dict(db_entry)
+            new_job_core._job_id = job_id
+        else:
+            new_job_core._job_id = None
 
     def move_to(self, project):
         """

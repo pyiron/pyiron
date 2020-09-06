@@ -620,4 +620,4 @@ class Project(ProjectCore):
         Returns:
             FlexibleMaster:
         """
-        return pipe(project=self, job=job, step_lst=step_lst, delete_existing_job=False)
+        return pipe(project=self, job=job, step_lst=step_lst, delete_existing_job=delete_existing_job)

@@ -9,7 +9,8 @@ import subprocess
 import numpy as np
 
 from pyiron.dft.job.generic import GenericDFTJob
-from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentialSetter, Potcar
+from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentialSetter, Potcar, \
+    strip_xc_from_potential_name
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron.base.settings.generic import Settings
 from pyiron.base.generic.parameters import GenericParameters
@@ -19,7 +20,7 @@ from pyiron.vasp.structure import read_atoms, write_poscar, vasp_sorter
 from pyiron.vasp.vasprun import Vasprun as Vr
 from pyiron.vasp.vasprun import VasprunError
 from pyiron.vasp.volumetric_data import VaspVolumetricData
-from pyiron.vasp.potential import get_enmax_among_species
+from pyiron.vasp.potential import get_enmax_among_potentials
 from pyiron.dft.waves.electronic import ElectronicStructure
 from pyiron.dft.waves.bandstructure import Bandstructure
 import warnings
@@ -80,7 +81,7 @@ class VaspBase(GenericDFTJob):
         self._output_parser = Output()
         self._potential = VaspPotentialSetter([])
         self._compress_by_default = True
-        self.get_enmax_among_species = get_enmax_among_species
+        self.get_enmax_among_species = get_enmax_among_potentials
         s.publication_add(self.publication)
 
     @property
@@ -142,13 +143,10 @@ class VaspBase(GenericDFTJob):
     @property
     def spin_constraints(self):
         """
-        Returns True if the calculation is spin polarized
+        Returns True if the calculation is spin constrained
         """
         if "I_CONSTRAINED_M" in self.input.incar._dataset["Parameter"]:
-            return (
-                self.input.incar["I_CONSTRAINED_M"] == 1
-                or self.input.incar["I_CONSTRAINED_M"] == 2
-            )
+            return (self.input.incar["I_CONSTRAINED_M"] >= 1)
         else:
             return False
 
@@ -274,21 +272,12 @@ class VaspBase(GenericDFTJob):
                 self.structure.get_species_symbols().tolist()
             )
             if len(df) > 0:
-                df["Name"] = [n.split("-")[0] for n in df["Name"].values]
+                df["Name"] = [strip_xc_from_potential_name(n) for n in df["Name"].values]
             return df
 
     @property
     def potential_list(self):
-        if self.structure is None:
-            raise ValueError("Can't list potentials unless a structure is set")
-        else:
-            df = VaspPotentialFile(xc=self.input.potcar["xc"]).find(
-                self.structure.get_species_symbols().tolist()
-            )
-            if len(df) != 0:
-                return [n.split("-")[0] for n in df["Name"].values]
-            else:
-                return []
+        return list(self.potential_view["Name"].values)
 
     @property
     def publication(self):
@@ -942,7 +931,10 @@ class VaspBase(GenericDFTJob):
             self.write_charge_density = retain_charge_density
         if retain_electrostatic_potential:
             self.write_electrostatic_potential = retain_electrostatic_potential
-        return
+        self.set_convergence_precision(ionic_force_tolerance=ionic_force_tolerance,
+                                       ionic_energy_tolerance=ionic_energy_tolerance,
+                                       ionic_energy=ionic_energy, ionic_forces=ionic_forces,
+                                       electronic_energy=None)
 
     def calc_static(
         self,
@@ -1180,28 +1172,36 @@ class VaspBase(GenericDFTJob):
 
         Args:
             ionic_energy_tolerance (float): Ionic energy convergence precision (eV)
-            electronic_energy (float): Electronic energy convergence precision (eV)
+            electronic_energy (float/NoneType): Electronic energy convergence precision (eV)
             ionic_force_tolerance (float): Ionic force convergence precision (eV/A)
-            ionic_energy (float): Same as ionic_energy_tolerance (deprecated)
-            ionic_forces (float): Same as ionic_force_tolerance (deprecated)
+            ionic_energy (float/NoneType): Same as ionic_energy_tolerance (deprecated)
+            ionic_forces (float/NoneType): Same as ionic_force_tolerance (deprecated)
         """
         if ionic_forces is not None:
             warnings.warn(
-                "ionic_forces is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. Use ionic_force_tolerance instead.",
+                "ionic_forces is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. "
+                "Use ionic_force_tolerance instead.",
                 DeprecationWarning
             )
-            ionic_force_tolerance = ionic_forces
+            if ionic_force_tolerance is None:
+                ionic_force_tolerance = ionic_forces
         if ionic_energy is not None:
             warnings.warn(
-                "ionic_energy is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. Use ionic_energy_tolerance instead.",
+                "ionic_energy is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. "
+                "Use ionic_energy_tolerance instead.",
                 DeprecationWarning
             )
-            ionic_energy_tolerance = ionic_tolerance
-        self.input.incar["EDIFF"] = electronic_energy
-        if ionic_forces is not None:
+            if ionic_energy_tolerance is None:
+                ionic_energy_tolerance = ionic_energy
+        if ionic_force_tolerance is not None:
             self.input.incar["EDIFFG"] = -1.0 * abs(ionic_force_tolerance)
-        else:
+        elif ionic_energy_tolerance is not None:
             self.input.incar["EDIFFG"] = abs(ionic_energy_tolerance)
+        else:
+            # Using default convergence criterion
+            self.input.incar["EDIFFG"] = -0.01
+        if electronic_energy is not None:
+            self.input.incar["EDIFF"] = electronic_energy
 
     def set_dipole_correction(self, direction=2, dipole_center=None):
         """
