@@ -46,7 +46,7 @@ setup(
         'phonopy>=2.4.2',
         'psutil>=5.7.0',
         'pyfileindex>=0.0.4',
-        'pysqa>=0.0.7',
+        'pysqa>=0.0.11',
         'quickff>=2.2.4',
         'scipy>=1.4.1',
         'seekpath>=1.9.4',
