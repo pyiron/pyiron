@@ -3643,7 +3643,7 @@ class Neighbors:
     @distances.setter
     def distances(self, new_distances):
         if isinstance(new_distances, list) or isinstance(new_distances, np.ndarray):
-            self._distances = np.array(new_distances)
+            self._distances = np.array(new_distances, dtype=object)
         else:
             raise TypeError("Only lists and np.arrays are supported.")
 
@@ -3654,7 +3654,7 @@ class Neighbors:
     @vecs.setter
     def vecs(self, new_vecs):
         if isinstance(new_vecs, list) or isinstance(new_vecs, np.ndarray):
-            self._vecs = np.array(new_vecs)
+            self._vecs = np.array(new_vecs, dtype=object)
         else:
             raise TypeError("Only lists and np.arrays are supported.")
 
@@ -3665,7 +3665,7 @@ class Neighbors:
     @indices.setter
     def indices(self, new_indices):
         if isinstance(new_indices, list) or isinstance(new_indices, np.ndarray):
-            self._indices = np.array(new_indices)
+            self._indices = np.array(new_indices, dtype=object)
         else:
             raise TypeError("Only lists and np.arrays are supported.")
 
@@ -3675,8 +3675,8 @@ class Neighbors:
 
     @shells.setter
     def shells(self, new_shells):
-        if isinstance(new_shells, list) or isinstance(new_shells, np.array):
-            self._shells = np.array(new_shells)
+        if isinstance(new_shells, list) or isinstance(new_shells, np.ndarray):
+            self._shells = np.array(new_shells, dtype=object)
         else:
             raise TypeError("Only lists and np.arrays are supported.")
 
