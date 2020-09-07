@@ -17,7 +17,7 @@ from pyiron.vasp.outcar import Outcar
 from pyiron.vasp.procar import Procar
 from pyiron.vasp.structure import read_atoms, write_poscar, vasp_sorter
 from pyiron.vasp.vasprun import Vasprun as Vr
-from pyiron.vasp.vasprun import VasprunError
+from pyiron.vasp.vasprun import VasprunError, VasprunWarning
 from pyiron.vasp.volumetric_data import VaspVolumetricData
 from pyiron.vasp.potential import get_enmax_among_species
 from pyiron.dft.waves.electronic import ElectronicStructure
@@ -1886,7 +1886,14 @@ class Output:
             outcar_working = True
         if "vasprun.xml" in files_present:
             try:
-                self.vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter("always")
+                    self.vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
+                    if any([isinstance(warn.category, VasprunWarning) for warn in w]):
+                        s.logger.warning("vasprun.xml parsed but with some inconsistencies. "
+                                         "Check vasp output to be sure")
+                        warnings.warn("vasprun.xml parsed but with some inconsistencies. "
+                                      "Check vasp output to be sure", VasprunWarning)
             except VasprunError:
                 s.logger.warning("Unable to parse the vasprun.xml file. Will attempt to get data from OUTCAR")
             else:
