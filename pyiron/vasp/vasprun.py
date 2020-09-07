@@ -383,11 +383,11 @@ class Vasprun(object):
             if item.tag == "energy":
                 for i in item:
                     if i.attrib["name"] == "e_wo_entrp":
-                        d["scf_energy"] = float(i.text)
+                        d["scf_energy"] = get_float_with_exception(i.text)
                     if i.attrib["name"] == "e_fr_energy":
-                        d["scf_fr_energy"] = float(i.text)
+                        d["scf_fr_energy"] = get_float_with_exception(i.text)
                     if i.attrib["name"] == "e_0_energy":
-                        d["scf_0_energy"] = float(i.text)
+                        d["scf_0_energy"] = get_float_with_exception(i.text)
             if item.tag == "dipole":
                 for i in item:
                     if i.attrib["name"] == "dipole":
@@ -729,6 +729,24 @@ def clean_key(a, remove_char=" "):
         return a.replace(remove_char, "_")
     else:
         return a
+
+
+def get_float_with_exception(text, exception_value=0.0):
+    """
+    Converts a text into a corresponding float or returns `exception_value` if it can't do this
+
+    Args:
+        text (str/numpy.str_): String to convert to float
+        exception_value (float/None): Value to be returned if you can't text to a float
+
+    Returns:
+        float/None: Exception value
+
+    """
+    try:
+        return float(text)
+    except ValueError:
+        return exception_value
 
 
 class VasprunError(ValueError):
