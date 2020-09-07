@@ -1161,6 +1161,21 @@ class GenericJob(JobCore):
             }
             hdf_input["generic_dict"] = generic_dict
 
+    @classmethod
+    def from_hdf_args(cls, hdf):
+        """
+        Read arguments for instance creation from HDF5 file
+
+        Args:
+            hdf (ProjectHDFio): HDF5 group object
+        """
+        job_name = posixpath.splitext(posixpath.basename(hdf.file_name))[0]
+        project_hdf5 = type(hdf)(
+                project = hdf._create_project_from_hdf5(),
+                file_name = job_name
+        )
+        return {"job_name": job_name, "project": project_hdf5}
+
     def from_hdf(self, hdf=None, group_name=None):
         """
         Restore the GenericJob from an HDF5 file
@@ -1172,7 +1187,7 @@ class GenericJob(JobCore):
         if hdf is not None:
             self._hdf5 = hdf
         if group_name is not None:
-            self._hdf5.open(group_name)
+            self._hdf5 = self._hdf5.open(group_name)
         self._type_from_hdf()
         self._server.from_hdf(self._hdf5)
         with self._hdf5.open("input") as hdf_input:
