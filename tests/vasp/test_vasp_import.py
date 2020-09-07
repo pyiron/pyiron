@@ -47,9 +47,6 @@ class TestVaspImport(unittest.TestCase):
         ham = self.project.load("full_job_minor_glitch")
         self.assertTrue(isinstance(ham, Vasp))
         self.assertEqual(ham.get_nelect(), 16)
-        self.assertTrue(
-            np.array_equal(ham.structure.get_initial_magnetic_moments(), [-1, -1])
-        )
         self.assertRaises(IOError, ham.get_final_structure_from_file)
         self.assertIsInstance(ham.output.unwrapped_positions, np.ndarray)
         self.assertEqual(ham["output/generic/dft/scf_energy_free"][0][1], 0.0)
