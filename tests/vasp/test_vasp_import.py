@@ -7,6 +7,7 @@ import numpy as np
 import os
 from pyiron.project import Project
 from pyiron.vasp.vasp import Vasp
+import warnings
 
 
 class TestVaspImport(unittest.TestCase):
@@ -39,7 +40,10 @@ class TestVaspImport(unittest.TestCase):
         folder_path = os.path.join(
             self.file_location, "../static/vasp_test_files/full_job_minor_glitch"
         )
-        self.project.import_from_path(path=folder_path, recursive=False)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            self.project.import_from_path(path=folder_path, recursive=False)
+            self.assertEqual(len(w), 3)
         ham = self.project.load("full_job_minor_glitch")
         self.assertTrue(isinstance(ham, Vasp))
         self.assertEqual(ham.get_nelect(), 16)
