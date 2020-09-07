@@ -751,3 +751,7 @@ def get_float_with_exception(text, exception_value=0.0):
 
 class VasprunError(ValueError):
     pass
+
+
+class VasprunWarning(UserWarning):
+    pass
