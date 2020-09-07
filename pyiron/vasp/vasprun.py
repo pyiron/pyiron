@@ -13,6 +13,7 @@ from pyiron.base.settings.generic import Settings
 from pyiron.dft.waves.electronic import ElectronicStructure
 import defusedxml.cElementTree as ETree
 from defusedxml.ElementTree import ParseError
+import warnings
 
 
 __author__ = "Sudarsan Surendralal"
@@ -746,6 +747,7 @@ def get_float_with_exception(text, exception_value=0.0):
     try:
         return float(text)
     except ValueError:
+        warnings.warn(message=" ", category=VasprunWarning)
         return exception_value
 
 
