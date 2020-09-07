@@ -138,12 +138,12 @@ class StructureContainer(AtomisticGenericJob):
             structure.to_hdf(hdf, group_name = "structure_{}".format(i))
 
     def from_hdf(self, hdf = None, group_name = None):
-        try:
-            if group_name:
-                hdf_version = self.project_hdf5[group_name]["HDF_VERSION"]
-            else:
-                hdf_version = self.project_hdf5["HDF_VERSION"]
-        except ValueError:
+        hdf = hdf or self.project_hdf5
+        if group_name:
+            hdf = hdf[group_name]
+        if "HDF_VERSION" in hdf.list_nodes():
+            hdf_version = hdf["HDF_VERSION"]
+        else:
             # old versions didn't use to set a HDF version
             hdf_version = "0.1.0"
         if hdf_version == "0.1.0":
