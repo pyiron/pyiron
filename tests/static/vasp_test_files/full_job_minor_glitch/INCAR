@@ -1,6 +1,0 @@
-SYSTEM=ToDo #jobname
-PREC=Accurate
-ALGO=Fast
-ENCUT=250
-LREAL=False
-MAGMOM=2*-1
