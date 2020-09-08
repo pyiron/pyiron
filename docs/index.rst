@@ -126,7 +126,7 @@ Read more about `citing individual modules/ plugins of pyiron and the implemente
    source/software.rst
    source/commandline.rst
    source/citation.rst
-   source/faq.rst
+   source/notebooks/faq.ipynb
    source/developers.rst
    License (BSD) <https://github.com/pyiron/pyiron/blob/master/LICENSE>
    apidoc/modules.rst
