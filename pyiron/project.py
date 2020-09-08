@@ -6,6 +6,7 @@ from __future__ import print_function
 import os
 import posixpath
 from string import punctuation
+from shutil import copyfile
 from pyiron.base.project.generic import Project as ProjectCore
 
 try:
@@ -257,7 +258,7 @@ class Project(ProjectCore):
         return job
 
     def import_single_calculation(
-        self, project_to_import_from, rel_path=None, job_type="Vasp"
+        self, project_to_import_from, rel_path=None, job_type="Vasp", copy_raw_files=False
     ):
         """
 
@@ -265,6 +266,7 @@ class Project(ProjectCore):
             rel_path:
             project_to_import_from:
             job_type (str): Type of the calculation which is going to be imported
+            copy_raw_files (bool): Copy
         """
         if job_type not in ["Vasp", "KMC"]:
             raise ValueError("The job_type is not supported.")
@@ -291,26 +293,30 @@ class Project(ProjectCore):
             ham._job_id = self.db.add_item_dict(ham.db_entry())
             ham.refresh_job_status()
             print("job was stored with the job ID ", str(ham._job_id))
+            if not os.path.abspath(project_to_import_from):
+                project_to_import_from = os.path.join(self.path, project_to_import_from)
             try:
-                if os.path.abspath(project_to_import_from):
-                    ham.from_directory(project_to_import_from.replace("\\", "/"))
-                else:
-                    ham.from_directory(
-                        os.path.join(self.path, project_to_import_from).replace(
-                            "\\", "/"
-                        )
-                    )
+                ham.from_directory(project_to_import_from.replace("\\", "/"))
             except:
                 ham.status.aborted = True
+            else:
+                ham._import_directory = None
+                if copy_raw_files:
+                    os.makedirs(ham.working_directory, exist_ok=True)
+                    for f in os.listdir(project_to_import_from):
+                        copyfile(
+                            src=os.path.join(project_to_import_from, f),
+                            dst=os.path.join(ham.working_directory, f)
+                        )
+                    ham.compress()
 
-    def import_from_path(self, path, recursive=True):
+    def import_from_path(self, path, recursive=True, copy_raw_files=False):
         """
 
         Args:
-            path:
-            recursive:
-
-        Returns:
+            path (str):
+            recursive (bool):
+            copy_raw_files (bool):
 
         """
         if os.path.abspath(path):
@@ -322,13 +328,13 @@ class Project(ProjectCore):
         if recursive:
             for x in os.walk(search_path):
                 self._calculation_validation(
-                    x[0], x[2], rel_path=posixpath.relpath(x[0], search_path)
+                    x[0], x[2], rel_path=posixpath.relpath(x[0], search_path), copy_raw_files=copy_raw_files
                 )
         else:
             abs_path = "/".join(search_path.replace("\\", "/").split("/")[:-1])
             rel_path = posixpath.relpath(abs_path, self.path)
             self._calculation_validation(
-                search_path, os.listdir(search_path), rel_path=rel_path
+                search_path, os.listdir(search_path), rel_path=rel_path, copy_raw_files=copy_raw_files
             )
 
     def get_structure(self, job_specifier, iteration_step=-1, wrap_atoms=True):
@@ -362,16 +368,14 @@ class Project(ProjectCore):
         else:
             return snapshot
 
-    def _calculation_validation(self, path, files_available, rel_path=None):
+    def _calculation_validation(self, path, files_available, rel_path=None, copy_raw_files=False):
         """
 
         Args:
             path:
             files_available:
             rel_path:
-
-        Returns:
-
+            copy_raw_files (bool):
         """
         if (
             "OUTCAR" in files_available
@@ -380,13 +384,13 @@ class Project(ProjectCore):
             or "vasprun.xml.bz2" in files_available
             or "vasprun.xml.gz" in files_available
         ):
-            self.import_single_calculation(path, rel_path=rel_path, job_type="Vasp")
+            self.import_single_calculation(path, rel_path=rel_path, job_type="Vasp", copy_raw_files=copy_raw_files)
         if (
             "incontrol.dat" in files_available
             and "lattice.out" in files_available
             and "lattice.inp" in files_available
         ):
-            self.import_single_calculation(path, rel_path=rel_path, job_type="KMC")
+            self.import_single_calculation(path, rel_path=rel_path, job_type="KMC", copy_raw_files=copy_raw_files)
 
     @staticmethod
     def create_structure(element, bravais_basis, lattice_constant):
