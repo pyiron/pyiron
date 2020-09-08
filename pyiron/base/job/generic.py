@@ -1151,6 +1151,8 @@ class GenericJob(JobCore):
         self._executable_activate_mpi()
         self._type_to_hdf()
         self._hdf5["status"] = self.status.string
+        if self._import_directory is not None:
+            self._hdf5["import_directory"] = self._import_directory
         self._server.to_hdf(self._hdf5)
         with self._hdf5.open("input") as hdf_input:
             generic_dict = {
@@ -1171,8 +1173,8 @@ class GenericJob(JobCore):
         """
         job_name = posixpath.splitext(posixpath.basename(hdf.file_name))[0]
         project_hdf5 = type(hdf)(
-                project = hdf._create_project_from_hdf5(),
-                file_name = job_name
+            project=hdf._create_project_from_hdf5(),
+            file_name=job_name
         )
         return {"job_name": job_name, "project": project_hdf5}
 
@@ -1189,6 +1191,8 @@ class GenericJob(JobCore):
         if group_name is not None:
             self._hdf5 = self._hdf5.open(group_name)
         self._type_from_hdf()
+        if "import_directory" in self._hdf5.list_nodes():
+            self._import_directory = self._hdf5["import_directory"]
         self._server.from_hdf(self._hdf5)
         with self._hdf5.open("input") as hdf_input:
             if "generic_dict" in hdf_input.list_nodes():
