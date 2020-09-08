@@ -33,7 +33,6 @@ class TestVaspImport(unittest.TestCase):
         self.assertTrue(
             np.array_equal(ham.structure.get_initial_magnetic_moments(), [-1, -1])
         )
-        self.assertRaises(IOError, ham.get_final_structure_from_file)
         self.assertIsInstance(ham.output.unwrapped_positions, np.ndarray)
 
     def test_incar_import(self):
