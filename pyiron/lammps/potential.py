@@ -8,8 +8,8 @@ import numpy as np
 import pandas as pd
 import shutil
 import os
-from pyiron.base.settings.generic import Settings
-from pyiron.base.generic.parameters import GenericParameters
+from pyiron_base.settings.generic import Settings
+from pyiron_base.generic.parameters import GenericParameters
 from pyiron.atomistics.job.potentials import PotentialAbstract, find_potential_file_base
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"

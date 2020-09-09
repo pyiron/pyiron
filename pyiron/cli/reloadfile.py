@@ -4,7 +4,7 @@ import os
 import h5py
 import shutil
 from pyiron import Project
-from pyiron.base.settings.generic import Settings
+from pyiron_base.settings.generic import Settings
 
 
 s = Settings()

@@ -10,7 +10,7 @@ import re
 import sys
 import pandas as pd
 import pyiron
-import pyiron.base.job.jobstatus
+import pyiron_base.job.jobstatus
 
 __author__ = "Marvin Poul"
 __copyright__ = (
@@ -66,10 +66,10 @@ def register(parser):
     )
     filter.add_argument(
             "-s", "--status", nargs = "+",
-            choices = pyiron.base.job.jobstatus.job_status_lst,
+            choices = pyiron_base.job.jobstatus.job_status_lst,
             metavar = "status",
             help = "job status must be one of the given, one of {}".format(
-                    ", ".join(pyiron.base.job.jobstatus.job_status_lst))
+                    ", ".join(pyiron_base.job.jobstatus.job_status_lst))
     )
     filter.add_argument(
             "-i", "--since",

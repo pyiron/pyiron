@@ -4,7 +4,7 @@
 
 from __future__ import print_function
 import importlib
-from pyiron.base.settings.generic import Settings
+from pyiron_base.settings.generic import Settings
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = (

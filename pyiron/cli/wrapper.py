@@ -4,7 +4,7 @@
 Run a job from hdf5.
 """
 
-from pyiron.base.job.wrapper import job_wrapper_function
+from pyiron_base.job.wrapper import job_wrapper_function
 
 
 def register(parser):

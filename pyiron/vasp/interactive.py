@@ -342,7 +342,7 @@ class GenericOutput(GenericOutputBase):
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
         with hdf.open("generic") as hdf_go:
@@ -372,7 +372,7 @@ class DFTOutput(DFTOutputBase):
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
         with hdf.open("dft") as hdf_dft:

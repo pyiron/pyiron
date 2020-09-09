@@ -5,7 +5,7 @@
 import os
 import unittest
 import numpy as np
-from pyiron.base.project.generic import Project
+from pyiron_base.project.generic import Project
 from pyiron.atomistics.structure.atoms import Atoms
 
 

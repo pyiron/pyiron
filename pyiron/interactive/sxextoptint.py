@@ -8,14 +8,14 @@ import os
 import time
 import posixpath
 import warnings
-from pyiron.base.settings.generic import Settings
-from pyiron.base.generic.parameters import GenericParameters
+from pyiron_base.settings.generic import Settings
+from pyiron_base.generic.parameters import GenericParameters
 from pyiron.atomistics.job.interactivewrapper import (
     InteractiveWrapper,
     ReferenceJobOutput,
 )
 from pyiron.atomistics.job.interactive import InteractiveInterface
-from pyiron.base.job.executable import Executable
+from pyiron_base.job.executable import Executable
 from pyiron.sphinx.base import InputWriter
 
 __author__ = "Jan Janssen, Osamu Waseda"

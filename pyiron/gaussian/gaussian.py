@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as pt
 
 from pyiron.dft.job.generic import GenericDFTJob
-from pyiron.base.generic.parameters import GenericParameters
+from pyiron_base.generic.parameters import GenericParameters
 from pyiron.atomistics.structure.atoms import Atoms
 
 try:
