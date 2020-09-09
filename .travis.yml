@@ -8,7 +8,7 @@ matrix:
       install:
         - export PATH="$HOME/miniconda/bin:$PATH"
         - ./.ci_support/travis_setup_pyiron.sh ${MINICONDA} ${PYTHONVER}
-        - - python .ci_support/pyironconfig.py
+        - python .ci_support/pyironconfig.py
       script:
         - coverage run -m unittest discover tests
         - coverage combine
