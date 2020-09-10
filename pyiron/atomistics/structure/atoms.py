@@ -2891,7 +2891,7 @@ class Atoms(ASEAtoms):
     __mul__ = repeat
 
     def __imul__(self, vec):
-        if isinstance(vec, int):
+        if isinstance(vec, (int, np.integer)):
             vec = [vec] * self.dimension
         initial_length = len(self)
         if not hasattr(vec, '__len__'):
