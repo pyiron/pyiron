@@ -528,11 +528,7 @@ class GenericParameters(PyironObject):
             hdf (ProjectHDFio): HDF5 group object
             group_name (str): HDF5 subgroup name - optional
         """
-        if group_name:
-            with hdf.open(group_name) as hdf_group:
-                data = hdf_group[self.table_name]
-        else:
-            data = hdf[self.table_name]
+        data = hdf[group_name or self.table_name]
         if isinstance(data, dict):
             self._dataset = data
         else:

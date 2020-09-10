@@ -57,9 +57,10 @@ Writing to HDF5
 
 Each type must define a `to_hdf(self, hdf, group_name = None)` method that
 takes the given `hdf` object, creates a subgroup called `group_name` in it (if
-given) and then serializes itself to this group.  Some objects may keep a
-default `ProjectHDFio` object during their lifetime (e.g. jobs), in this case
-`hdf` maybe an optional parameter.
+given) and then serializes itself to this group.  If no group_name is given the
+object may pick a default one.  Some objects may keep a default `ProjectHDFio`
+object during their lifetime (e.g. jobs), in this case `hdf` maybe an optional
+parameter.
 
 -----------------
 Reading from HDF5
@@ -69,7 +70,18 @@ Each type must define a `from_hdf(self, hdf, group_name = None)` method and may
 define a `from_hdf_args(cls, hdf)`.  `from_hdf()` restores the state of the
 already initialized object from the information stored in the HDF5 file.
 `from_hdf_args()` reads the required parameters to instantiate the object from
-HDF5 and returns them in a `dict`.
+HDF5 and returns them in a `dict`.  An instances `to_hdf()` maybe called in two
+ways
+1. with `hdf` pointing to the root group of the objects' hdf and `group_name`
+   set to `None`, from the example above
+   `Baz().from_hdf(ProjectHDFio("/foo/baz/"))`. Or
+2. with `hdf` pointing to the group above the root group and `group_name` set
+   to the name of the group the object is located in, i.e.
+   `Baz().from_hdf(ProjectHDFio("/foo/"), group_name = "baz"))`.
+In the first case the instance may use the given group straight away, in the
+second it should change the group to the given group_name
+`hdf.open(group_name)` and then behave as in the first case.  `to_object()` as
+described below will always call via the second case.
 
 To read an object from a given `ProjectHDFio` path, call the `to_object()`
 method.  This will first call `import_class` to read the class object, then
