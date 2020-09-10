@@ -687,6 +687,7 @@ class TestAtoms(unittest.TestCase):
                 -1 * np.ones(len(basis.select_index("O"))),
             )
         )
+        self.assertEqual(8 * len(self.CO2), len(self.CO2.repeat(np.int64(2))))
 
     def test_boundary(self):
         cell = 2.2 * np.identity(3)
