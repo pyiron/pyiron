@@ -99,6 +99,8 @@ def _job_dict(
     if job is not None:
         dict_clause["job"] = str(job)
 
+    if project_path == "./":
+        project_path = ""
     if recursive:
         dict_clause["project"] = str(project_path) + "%"
     else:
