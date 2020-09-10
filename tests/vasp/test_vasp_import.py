@@ -36,6 +36,7 @@ class TestVaspImport(unittest.TestCase):
         )
         self.assertIsInstance(ham.output.unwrapped_positions, np.ndarray)
 
+        self.assertEqual(ham["output/structure/positions"][1, 2], 2.7999999999999997 * 0.4999999999999999)
         folder_path = os.path.join(
             self.file_location, "../static/vasp_test_files/full_job_minor_glitch"
         )
@@ -46,7 +47,6 @@ class TestVaspImport(unittest.TestCase):
         ham = self.project.load("full_job_minor_glitch")
         self.assertTrue(isinstance(ham, Vasp))
         self.assertEqual(ham.get_nelect(), 16)
-        self.assertRaises(IOError, ham.get_final_structure_from_file)
         self.assertIsInstance(ham.output.unwrapped_positions, np.ndarray)
         self.assertEqual(ham["output/generic/dft/scf_energy_free"][0][1], 0.0)
 

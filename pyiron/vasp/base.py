@@ -377,7 +377,7 @@ class VaspBase(GenericDFTJob):
                 self.structure = self.get_final_structure_from_file(filename="CONTCAR")
             except IOError:
                 self.structure = self.get_final_structure_from_file(filename="POSCAR")
-            self.sorted_indices = np.array(range(len(self.structure)))
+            self._sorted_indices = np.array(range(len(self.structure)))
         self._output_parser.structure = self.structure.copy()
         try:
             self._output_parser.collect(
@@ -386,6 +386,12 @@ class VaspBase(GenericDFTJob):
         except VaspCollectError:
             self.status.aborted = True
             return
+        # Try getting high precision positions from CONTCAR
+        try:
+            self._output_parser.structure = self.get_final_structure_from_file(filename="CONTCAR")
+        except (IOError, ValueError, FileNotFoundError):
+            pass
+
         self._output_parser.to_hdf(self._hdf5)
         if len(self._exclude_groups_hdf) > 0 or len(self._exclude_nodes_hdf) > 0:
             self.project_hdf5.rewrite_hdf5(
