@@ -262,19 +262,19 @@ class LammpsControl(GenericParameters):
         Sets parameters required for minimization.
 
         Args:
-            ionic_energy_tolerance (float): If the magnitude of difference between energies of two consecutive steps is lower than or
-                equal to `ionic_energy_tolerance`, the minimisation terminates. (Default is 0.0 eV.)
-            ionic_force_tolerance (float): If the magnitude of the global force vector at a step is lower than or equal to `ionic_force_tolerance`, the
-                minimisation terminates. (Default is 1e-4 eV/angstrom.)
+            ionic_energy_tolerance (float): If the magnitude of difference between energies of two consecutive steps is
+                lower than or equal to `ionic_energy_tolerance`, the minimisation terminates. (Default is 0.0 eV.)
+            ionic_force_tolerance (float): If the magnitude of the global force vector at a step is lower than or equal
+                to `ionic_force_tolerance`, the minimisation terminates. (Default is 1e-4 eV/angstrom.)
             e_tol (float): Sam as ionic_energy_tolerance (deprecated)
             f_tol (float): Sam as ionic_force_tolerance (deprecated)
             max_iter (int): Maximum number of minimisation steps to carry out. If the minimisation converges before
                 `max_iter` steps, terminate at the converged step. If the minimisation does not converge up to
                 `max_iter` steps, terminate at the `max_iter` step. (Default is 100000.)
-            pressure (None/float/numpy.ndarray/list): Target pressure. If set to None, an NVE or an NVT calculation is
-                performed. A list of up to length 6 can be given to specify xx, yy, zz, xy, xz, and yz components of
-                the pressure tensor, respectively. These values can mix floats and `None` to allow only certain degrees
-                of cell freedom to change. (Default is None, run isochorically.)
+            pressure (None/float/numpy.ndarray/list): Target pressure. If set to None, an isochoric (constant V)
+                calculation is performed. A list of up to length 6 can be given to specify xx, yy, zz, xy, xz, and yz
+                components of the pressure tensor, respectively. These values can mix floats and `None` to allow only
+                certain degrees of cell freedom to change. (Default is None, run isochorically.)
             n_print (int): Write (dump or print) to the output file every n steps (Default: 100)
             style ('cg'/'sd'/other values from Lammps docs): The style of the numeric minimization, either conjugate
                 gradient, steepest descent, or other keys permissible from the Lammps docs on 'min_style'. (Default
