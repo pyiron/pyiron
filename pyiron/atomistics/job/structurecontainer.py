@@ -26,10 +26,10 @@ class StructureContainer(AtomisticGenericJob):
     :attr:`.structure_lst`.  The HDF5 is written when :meth:`.run` is called.
     """
 
-    __version__ = "0.1.0"
-
     def __init__(self, project, job_name):
         super().__init__(project, job_name)
+        self.__version__ = "0.2.0"
+        self.__hdf_version__ = "0.2.0"
         self._structure_lst = InputList(table_name = "structures")
         self.server.run_mode.interactive = True
 
@@ -138,12 +138,27 @@ class StructureContainer(AtomisticGenericJob):
             structure.to_hdf(hdf, group_name = "structure_{}".format(i))
 
     def from_hdf(self, hdf = None, group_name = None):
-        GenericJob.from_hdf(self, hdf = hdf, group_name = group_name)
+        # keep hdf structure for version peeking in separate variable, so that
+        # the inherited from_hdf() can properly deal with it
+        h5 = hdf or self.project_hdf5
+        if group_name:
+            h5 = h5[group_name]
+        if "HDF_VERSION" in h5.list_nodes():
+            hdf_version = h5["HDF_VERSION"]
+        else:
+            # old versions didn't use to set a HDF version
+            hdf_version = "0.1.0"
+        if hdf_version == "0.1.0":
+            super().from_hdf(hdf=hdf, group_name=group_name)
+            with self.project_hdf5.open("input") as hdf5_input:
+                self.structure = Atoms().from_hdf(hdf5_input)
+        else:
+            GenericJob.from_hdf(self, hdf = hdf, group_name = group_name)
 
-        self.structure_lst.clear()
+            self.structure_lst.clear()
 
-        hdf = self.project_hdf5["structures"]
-        for group in sorted(hdf.list_groups()):
-            structure = Atoms()
-            structure.from_hdf(hdf, group_name = group)
-            self.structure_lst.append(structure)
+            hdf = self.project_hdf5["structures"]
+            for group in sorted(hdf.list_groups()):
+                structure = Atoms()
+                structure.from_hdf(hdf, group_name = group)
+                self.structure_lst.append(structure)
