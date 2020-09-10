@@ -374,7 +374,7 @@ So for both conda and pip both the prereleases as well as the official releases 
 .. _Max Planck Institut für Eisenforschung: https://mpie.de
 .. _github page: https://github.com/pyiron
 .. _issues page: https://github.com/pyiron/pyiron/issues
-.. _FAQ page: https://github.com/pyiron/pyiron/docs/source/faq.html
+.. _FAQ page: https://pyiron.readthedocs.io/en/latest/source/faq.html
 .. _bugs: https://github.com/pyiron/pyiron/issues?q=is%3Aopen+is%3Aissue+label%3A%22bug%22
 .. _Good first issues: https://github.com/pyiron/pyiron/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22
 .. _Help wanted issues: https://github.com/pyiron/pyiron/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22

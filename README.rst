@@ -66,7 +66,7 @@ After the installation of pyiron you need to configure pyiron. The default confi
    > exit()
 
 
-See the `Documentation-Installation <https://pyiron.github.io/source/installation.html>`_ page for more details.
+See the `Documentation-Installation <https://pyiron.readthedocs.io/en/latest/source/installation.html>`_ page for more details.
 
 
 Example

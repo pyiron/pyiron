@@ -51,7 +51,7 @@ GPA_TO_PA = spc.giga
 
 # Conversions for most of the Lammps units to Pyiron units
 # Lammps units source doc: https://lammps.sandia.gov/doc/units.html
-# Pyrion units source doc: https://pyiron.github.io/source/faq.html
+# Pyrion units source doc: https://pyiron.readthedocs.io/en/latest/source/faq.html
 # At time of writing, not all these conversion factors are used, but may be helpful later.
 LAMMPS_UNIT_CONVERSIONS = {
     "metal": {
