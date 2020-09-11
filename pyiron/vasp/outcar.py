@@ -775,6 +775,43 @@ class Outcar(object):
             raise ValueError()
 
     @staticmethod
+    def get_band_properties(filename="OUTCAR", lines=None):
+        fermi_trigger = "E-fermi"
+        fermi_trigger_indices, lines = _get_trigger(
+            lines=lines, filename=filename, trigger=fermi_trigger
+        )
+        fermi_level_list = list()
+        vbm_level_list = list()
+        cbm_level_list = list()
+        for ind in fermi_trigger_indices:
+            fermi_level_list.append(float(lines[ind].strip().split()[2]))
+        band_trigger = "band No.  band energies     occupation"
+        for n, ind in enumerate(fermi_trigger_indices):
+            if n == len(fermi_trigger_indices) - 1:
+                trigger_indices, lines = _get_trigger(
+                    lines=lines[ind:-1], filename=filename, trigger=band_trigger
+                )
+            else:
+                trigger_indices, lines = _get_trigger(
+                    lines=lines[ind:fermi_trigger_indices[n+1]], filename=filename, trigger=band_trigger
+                )
+            band_data = list()
+            for ind in trigger_indices:
+                for line in lines[ind+1:]:
+                    data = line.strip().split()
+                    if len(data) != 3:
+                        break
+                    band_data.append([float(d) for d in data[1:]])
+            if len(band_data) > 0:
+                band_energy, band_occ = [np.array(band_data)[:, i] for i in range(2)]
+                args = np.argsort(band_energy)
+                band_occ = band_occ[args]
+                band_energy = band_energy[args]
+                cbm_level_list.append(band_energy[np.abs(band_occ) < 1e-6][0])
+                vbm_level_list.append(band_energy[np.abs(band_occ) >= 1e-6][-1])
+        return np.array(fermi_level_list), np.array(vbm_level_list), np.array(cbm_level_list)
+
+    @staticmethod
     def _get_positions_and_forces_parser(
         lines, trigger_indices, n_atoms, pos_flag=True, force_flag=True
     ):
