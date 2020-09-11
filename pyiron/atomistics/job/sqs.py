@@ -4,7 +4,7 @@
 
 from multiprocessing import cpu_count
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
-from pyiron.base.generic.parameters import GenericParameters
+from pyiron_base.generic.parameters import GenericParameters
 from pyiron.atomistics.structure.atoms import Atoms, ase_to_pyiron, pyiron_to_ase
 
 try:

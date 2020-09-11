@@ -5,9 +5,9 @@
 import unittest
 import numpy as np
 import os
-from pyiron.base.project.generic import Project
+from pyiron_base.project.generic import Project
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.base.generic.hdfio import ProjectHDFio
+from pyiron_base.generic.hdfio import ProjectHDFio
 from pyiron.lammps.lammps import Lammps
 
 

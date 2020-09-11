@@ -3,6 +3,7 @@ channels:
 dependencies:
 - python
 - pyiron
+- pyiron_base
 - lammps
 - iprpy-data
 - gpaw

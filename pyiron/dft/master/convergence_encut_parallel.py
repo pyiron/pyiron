@@ -4,7 +4,7 @@
 
 from __future__ import print_function
 from pyiron.atomistics.master.parallel import AtomisticParallelMaster
-from pyiron.base.master.parallel import JobGenerator
+from pyiron_base.master.parallel import JobGenerator
 import numpy as np
 
 try:

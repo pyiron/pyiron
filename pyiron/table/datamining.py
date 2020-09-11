@@ -15,9 +15,9 @@ from pandas.errors import EmptyDataError
 from tqdm import tqdm
 import types
 
-from pyiron.base.job.generic import GenericJob
-from pyiron.base.generic.hdfio import FileHDFio
-from pyiron.base.master.generic import get_function_from_string
+from pyiron_base.job.generic import GenericJob
+from pyiron_base.generic.hdfio import FileHDFio
+from pyiron_base.master.generic import get_function_from_string
 from pyiron.table.funct import (
     get_incar,
     get_sigma,

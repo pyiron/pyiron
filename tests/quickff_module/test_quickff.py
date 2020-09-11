@@ -10,8 +10,8 @@ import numpy as np
 from molmod.units import *
 
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.base.generic.hdfio import ProjectHDFio
-from pyiron.base.project.generic import Project
+from pyiron_base.generic.hdfio import ProjectHDFio
+from pyiron_base.project.generic import Project
 
 from pyiron.quickff.quickff import QuickFFInput
 from pyiron.quickff.quickff import QuickFF

@@ -13,10 +13,11 @@ __email__ = "poul@mpie.de"
 __status__ = "development"
 __date__ = "Aug 12, 2020"
 
-from pyiron.base.generic.inputlist import InputList
-from pyiron.base.job.generic import GenericJob
+from pyiron_base.generic.inputlist import InputList
+from pyiron_base.job.generic import GenericJob
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 from pyiron.atomistics.structure.atoms import Atoms
+
 
 class StructureContainer(AtomisticGenericJob):
     """
