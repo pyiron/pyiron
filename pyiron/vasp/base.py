@@ -1905,7 +1905,6 @@ class Output:
             else:
                 # If parsing the vasprun file does not throw an error, then set to True
                 vasprun_working = True
-
         if outcar_working:
             log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
@@ -1927,6 +1926,9 @@ class Output:
                 self.generic_output.dft_log_dict[
                     "final_magmoms"
                 ] = final_magmoms.tolist()
+            self.generic_output.dft_log_dict["e_fermi_list"] = self.outcar.parse_dict["e_fermi_list"]
+            self.generic_output.dft_log_dict["vbm_list"] = self.outcar.parse_dict["vbm_list"]
+            self.generic_output.dft_log_dict["cbm_list"] = self.outcar.parse_dict["cbm_list"]
 
         if vasprun_working:
             log_dict["forces"] = self.vp_new.vasprun_dict["forces"]
@@ -2006,6 +2008,9 @@ class Output:
             ]
             self.generic_output.dft_log_dict["energy_zero"] = self.outcar.parse_dict[
                 "energies_zero"
+            ]
+            self.generic_output.dft_log_dict["energy_int"] = self.outcar.parse_dict[
+                "energies_int"
             ]
             if "PROCAR" in files_present:
                 try:
