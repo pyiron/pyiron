@@ -63,6 +63,7 @@ class Outcar(object):
         kin_energy_error = self.get_kinetic_energy_error(filename=filename, lines=lines)
         stresses = self.get_stresses(filename=filename, si_unit=False, lines=lines)
         n_elect = self.get_nelect(filename=filename, lines=lines)
+        e_fermi_list, vbm_list, cbm_list = self.get_band_properties(filename=filename, lines=lines)
         try:
             irreducible_kpoints = self.get_irreducible_kpoints(
                 filename=filename, lines=lines
@@ -94,6 +95,9 @@ class Outcar(object):
         self.parse_dict["final_magmoms"] = final_magmom_lst
         self.parse_dict["broyden_mixing"] = broyden_mixing
         self.parse_dict["n_elect"] = n_elect
+        self.parse_dict["e_fermi_list"] = e_fermi_list
+        self.parse_dict["vbm_list"] = vbm_list
+        self.parse_dict["cbm_list"] = cbm_list
 
         try:
             self.parse_dict["pressures"] = (
