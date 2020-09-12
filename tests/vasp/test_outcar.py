@@ -23,6 +23,7 @@ class TestOutcar(unittest.TestCase):
                 )
             )
         )
+        file_list = sorted(file_list)
         for f in file_list:
             direc = os.path.abspath(
                 os.path.join(
