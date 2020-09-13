@@ -11,8 +11,7 @@ from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron.atomistics.structure.generator import create_ase_bulk, create_surface, create_hkl_surface
 from pyiron.atomistics.structure.sparse_list import SparseList
 from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement
-from pyiron.base.generic.hdfio import FileHDFio, ProjectHDFio
-from pyiron.base.project.generic import Project
+from pyiron_base import FileHDFio, ProjectHDFio, Project
 from ase.cell import Cell as ASECell
 from ase.atoms import Atoms as ASEAtoms
 

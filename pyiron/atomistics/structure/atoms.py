@@ -19,7 +19,7 @@ from pyiron.atomistics.structure.periodic_table import (
     PeriodicTable,
     ChemicalElement
 )
-from pyiron.base.settings.generic import Settings
+from pyiron_base import Settings
 from scipy.spatial import cKDTree, Voronoi
 import spglib
 
@@ -347,7 +347,7 @@ class Atoms(ASEAtoms):
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
             group_name (str):
                 Group name with which the object should be stored. This same name should be used to retrieve the object
 
@@ -399,7 +399,7 @@ class Atoms(ASEAtoms):
         Retrieve the object from a HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
             group_name (str): Group name from which the Atoms object is retreived.
 
         Returns:

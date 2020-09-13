@@ -9,8 +9,7 @@ import numpy as np
 import pandas
 import tables
 import warnings
-from pyiron.base.generic.parameters import GenericParameters
-from pyiron.base.settings.generic import Settings
+from pyiron_base import GenericParameters, Settings
 from pyiron.atomistics.job.potentials import PotentialAbstract, find_potential_file_base
 
 __author__ = "Jan Janssen"

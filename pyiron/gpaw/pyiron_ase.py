@@ -7,7 +7,7 @@ from ase.constraints import dict2constraint
 import copy
 import importlib
 import numpy as np
-from pyiron.base.job.interactive import InteractiveBase
+from pyiron_base import InteractiveBase
 from pyiron.atomistics.job.interactive import GenericInteractiveOutput
 
 try:

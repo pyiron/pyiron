@@ -4,7 +4,7 @@
 
 import os
 import pandas
-from pyiron.base.settings.generic import Settings
+from pyiron_base import Settings
 from pyiron.vasp.potential import VaspPotentialAbstract, find_potential_file_base
 
 __author__ = "Osamu Waseda"

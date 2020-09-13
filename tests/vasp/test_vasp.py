@@ -7,8 +7,7 @@ import os
 import posixpath
 from pyiron.atomistics.structure.atoms import CrystalStructure
 from pyiron.vasp.base import Input, Output
-from pyiron.base.generic.hdfio import ProjectHDFio
-from pyiron.base.project.generic import Project
+from pyiron_base import ProjectHDFio, Project
 from pyiron.vasp.potential import VaspPotentialSetter
 from pyiron.vasp.vasp import Vasp
 from pyiron.vasp.metadyn import VaspMetadyn

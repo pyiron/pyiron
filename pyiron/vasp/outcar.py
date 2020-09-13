@@ -111,7 +111,7 @@ class Outcar(object):
         Store output in an HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.FileHDFio): HDF5 group or file
+            hdf (pyiron_base.generic.hdfio.FileHDFio): HDF5 group or file
             group_name (str): Name of the HDF5 group
         """
         with hdf.open(group_name) as hdf5_output:
@@ -123,7 +123,7 @@ class Outcar(object):
         Store minimal output in an HDF5 file (output unique to OUTCAR)
 
         Args:
-            hdf (pyiron.base.generic.hdfio.FileHDFio): HDF5 group or file
+            hdf (pyiron_base.generic.hdfio.FileHDFio): HDF5 group or file
             group_name (str): Name of the HDF5 group
         """
         unique_quantities = [
@@ -142,7 +142,7 @@ class Outcar(object):
         Load output from an HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.FileHDFio): HDF5 group or file
+            hdf (pyiron_base.generic.hdfio.FileHDFio): HDF5 group or file
             group_name (str): Name of the HDF5 group
         """
         with hdf.open(group_name) as hdf5_output:

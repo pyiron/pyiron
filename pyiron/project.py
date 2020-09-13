@@ -7,15 +7,11 @@ import os
 import posixpath
 from string import punctuation
 from shutil import copyfile
-from pyiron.base.project.generic import Project as ProjectCore
-
+from pyiron_base import Settings, ProjectHDFio, JobType, JobTypeChoice, Project as ProjectCore
 try:
-    from pyiron.base.project.gui import ProjectGUI
+    from pyiron_base import ProjectGUI
 except (ImportError, TypeError, AttributeError):
     pass
-from pyiron.base.settings.generic import Settings
-from pyiron.base.generic.hdfio import ProjectHDFio
-from pyiron.base.job.jobtype import JobType, JobTypeChoice
 from pyiron.atomistics.generic.object_type import ObjectType, ObjectTypeChoice
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.lammps.potential import LammpsPotentialFile

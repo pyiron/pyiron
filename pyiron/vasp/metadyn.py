@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import numpy as np
-from pyiron.base.generic.parameters import GenericParameters
+from pyiron_base import GenericParameters
 from pyiron.vasp.vasp import Vasp
 from pyiron.vasp.base import Input, Output
 from pyiron.vasp.report import Report
@@ -257,7 +257,7 @@ class MetadynOutput(Output):
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
         super(MetadynOutput, self).to_hdf(hdf)

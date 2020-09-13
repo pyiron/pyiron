@@ -6,7 +6,6 @@ from __future__ import print_function, unicode_literals
 import os
 import posixpath
 
-import sys
 import h5py
 import numpy as np
 import pandas as pd
@@ -15,8 +14,7 @@ from io import StringIO
 
 from pyiron.lammps.potential import LammpsPotentialFile, PotentialAvailable
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
-from pyiron.base.settings.generic import Settings
-from pyiron.base.pyio.parser import Logstatus, extract_data_from_file
+from pyiron_base import Settings, extract_data_from_file
 from pyiron.lammps.control import LammpsControl
 from pyiron.lammps.potential import LammpsPotential
 from pyiron.lammps.structure import LammpsStructure, UnfoldingPrism

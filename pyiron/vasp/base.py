@@ -12,8 +12,7 @@ from pyiron.dft.job.generic import GenericDFTJob
 from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentialSetter, Potcar, \
     strip_xc_from_potential_name
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
-from pyiron.base.settings.generic import Settings
-from pyiron.base.generic.parameters import GenericParameters
+from pyiron_base import Settings, GenericParameters
 from pyiron.vasp.outcar import Outcar
 from pyiron.vasp.procar import Procar
 from pyiron.vasp.structure import read_atoms, write_poscar, vasp_sorter
@@ -661,7 +660,7 @@ class VaspBase(GenericDFTJob):
         Stores the instance attributes into the hdf5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
             group_name (str): The name of the group under which the data must be stored as
 
         """
@@ -675,7 +674,7 @@ class VaspBase(GenericDFTJob):
         Recreates instance from the hdf5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): The HDF file/path to read the data from
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): The HDF file/path to read the data from
             group_name (str): The name of the group under which the data must be stored as
 
         """
@@ -1791,7 +1790,7 @@ class Input:
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
 
@@ -2103,7 +2102,7 @@ class Output:
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
         with hdf.open("output") as hdf5_output:
@@ -2193,7 +2192,7 @@ class GenericOutput:
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
         with hdf.open("generic") as hdf_go:
@@ -2244,7 +2243,7 @@ class DFTOutput:
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
         with hdf.open("dft") as hdf_dft:
