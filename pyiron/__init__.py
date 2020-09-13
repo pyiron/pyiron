@@ -6,7 +6,6 @@ from pyiron.atomistics.structure.atoms import ase_to_pyiron, pyiron_to_ase, Atom
 from pyiron.atomistics.structure.generator import create_surface, create_ase_bulk, create_structure
 from pyiron_base.job.external import Notebook
 from pyiron_base.settings.install import install_dialog
-from pyiron_base.generic.jedi import fix_ipython_autocomplete
 from pyiron_base.job.jobtype import JOB_CLASS_DICT
 
 # Make classes available for new pyiron version
@@ -47,9 +46,6 @@ from ._version import get_versions
 
 __version__ = get_versions()["version"]
 del get_versions
-
-# jedi fix
-fix_ipython_autocomplete()
 
 
 def install():
