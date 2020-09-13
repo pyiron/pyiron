@@ -553,7 +553,7 @@ class TestOutcar(unittest.TestCase):
             output = self.outcar_parser.get_dipole_moments(filename)
             self.assertTrue(output)
             self.assertIsInstance(output, list)
-            if len(output) > 1:
+            if len(output[0]) > 1:
                 self.assertIsInstance(output[-1], np.ndarray)
                 self.assertIsInstance(output[-1][-1], np.ndarray)
                 self.assertEqual(len(output[-1][-1]), 3)
@@ -690,7 +690,7 @@ class TestOutcar(unittest.TestCase):
                 self.assertEqual(output_all.__str__(), output.__str__())
 
     def test_get_nelect(self):
-        n_elect_list = [40.0, 16.0, 16.0, 16.0, 16.0, 16.0, 224.0, 358.0]
+        n_elect_list = [40.0, 16.0, 16.0, 16.0, 16.0, 16.0, 224.0, 358.0, 8]
         for filename in self.file_list:
             i = int(filename.split("_")[-1]) - 1
             self.assertEqual(n_elect_list[i], self.outcar_parser.get_nelect(filename))
