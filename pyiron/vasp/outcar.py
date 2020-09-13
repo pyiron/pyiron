@@ -792,16 +792,16 @@ class Outcar(object):
         band_trigger = "band No.  band energies     occupation"
         for n, ind in enumerate(fermi_trigger_indices):
             if n == len(fermi_trigger_indices) - 1:
-                trigger_indices, lines = _get_trigger(
+                trigger_indices, lines_new = _get_trigger(
                     lines=lines[ind:-1], filename=filename, trigger=band_trigger
                 )
             else:
-                trigger_indices, lines = _get_trigger(
+                trigger_indices, lines_new = _get_trigger(
                     lines=lines[ind:fermi_trigger_indices[n+1]], filename=filename, trigger=band_trigger
                 )
             band_data = list()
             for ind in trigger_indices:
-                for line in lines[ind+1:]:
+                for line in lines_new[ind+1:]:
                     data = line.strip().split()
                     if len(data) != 3:
                         break
