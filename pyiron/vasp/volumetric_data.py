@@ -6,7 +6,7 @@ import math
 
 import numpy as np
 import os
-from pyiron_base.settings.generic import Settings
+from pyiron_base import Settings
 from pyiron.vasp.structure import atoms_from_string, get_species_list_from_potcar
 from pyiron.atomistics.volumetric.generic import VolumetricData
 

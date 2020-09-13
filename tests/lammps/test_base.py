@@ -6,9 +6,8 @@ import unittest
 import numpy as np
 import pandas as pd
 import os
-from pyiron_base.project.generic import Project
+from pyiron_base import Project, ProjectHDFio
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron_base.generic.hdfio import ProjectHDFio
 from pyiron.lammps.lammps import Lammps
 from pyiron.lammps.base import LammpsStructure, UnfoldingPrism
 import ase.units as units

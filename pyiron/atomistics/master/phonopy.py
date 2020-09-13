@@ -16,8 +16,7 @@ from phonopy.file_IO import write_FORCE_CONSTANTS
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.master.parallel import AtomisticParallelMaster
 from pyiron.atomistics.structure.phonopy import publication as phonopy_publication
-from pyiron_base.master.parallel import JobGenerator
-from pyiron_base.settings.generic import Settings
+from pyiron_base import JobGenerator, Settings
 
 __author__ = "Jan Janssen, Yury Lysogorskiy"
 __copyright__ = (

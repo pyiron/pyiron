@@ -5,7 +5,7 @@
 import os
 import unittest
 from pyiron.atomistics.structure.atoms import CrystalStructure
-from pyiron_base.project.generic import Project
+from pyiron_base import Project
 
 
 def convergence_goal(self, **qwargs):

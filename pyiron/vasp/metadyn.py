@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import numpy as np
-from pyiron_base.generic.parameters import GenericParameters
+from pyiron_base import GenericParameters
 from pyiron.vasp.vasp import Vasp
 from pyiron.vasp.base import Input, Output
 from pyiron.vasp.report import Report

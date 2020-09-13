@@ -7,7 +7,7 @@ from collections import OrderedDict
 import hashlib
 import numpy as np
 import warnings
-from pyiron_base.generic.parameters import GenericParameters
+from pyiron_base import GenericParameters
 import scipy.constants as spc
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal, Jan Janssen"

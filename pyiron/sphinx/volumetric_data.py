@@ -6,7 +6,7 @@ import numpy as np
 import scipy
 from scipy.io.netcdf import netcdf_file
 import os
-from pyiron_base.settings.generic import Settings
+from pyiron_base import Settings
 from pyiron.atomistics.volumetric.generic import VolumetricData
 
 __author__ = "Sudarsan Surendralal"

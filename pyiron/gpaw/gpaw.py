@@ -2,8 +2,7 @@ import numpy as np
 import warnings
 from pyiron.gpaw.pyiron_ase import AseJob
 from pyiron.atomistics.structure.atoms import pyiron_to_ase, Atoms as PAtoms
-from pyiron_base.generic.parameters import GenericParameters
-from pyiron_base.settings.generic import Settings
+from pyiron_base import GenericParameters, Settings
 from ase import Atoms
 
 s = Settings()

@@ -6,9 +6,8 @@ from __future__ import print_function
 from collections import OrderedDict
 import inspect
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron_base.master.parallel import ParallelMaster, JobGenerator
+from pyiron_base import ParallelMaster, JobGenerator, get_function_from_string
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
-from pyiron_base.master.generic import get_function_from_string
 
 __author__ = "Jan Janssen"
 __copyright__ = (

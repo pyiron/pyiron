@@ -4,10 +4,8 @@ __all__ = []
 from pyiron.project import Project
 from pyiron.atomistics.structure.atoms import ase_to_pyiron, pyiron_to_ase, Atoms
 from pyiron.atomistics.structure.generator import create_surface, create_ase_bulk, create_structure
-from pyiron_base.job.external import Notebook
-from pyiron_base.settings.install import install_dialog
+from pyiron_base import Notebook, install_dialog, JOB_CLASS_DICT
 from pyiron_base.generic.jedi import fix_ipython_autocomplete
-from pyiron_base.job.jobtype import JOB_CLASS_DICT
 
 # Make classes available for new pyiron version
 JOB_CLASS_DICT["Atoms"] = "pyiron.atomistics.structure.atoms"

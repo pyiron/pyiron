@@ -4,9 +4,7 @@
 
 from datetime import datetime
 import warnings
-from pyiron_base.generic.parameters import GenericParameters
-from pyiron_base.job.generic import GenericJob
-from pyiron_base.master.generic import GenericMaster
+from pyiron_base import GenericParameters, GenericJob, GenericMaster
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = (

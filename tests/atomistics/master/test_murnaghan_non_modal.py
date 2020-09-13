@@ -4,7 +4,7 @@
 
 import os
 from pyiron.atomistics.structure.atoms import CrystalStructure
-from pyiron_base.project.generic import Project
+from pyiron_base import Project
 import unittest
 
 

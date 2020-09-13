@@ -28,7 +28,7 @@ from ase.build import (
 import numpy as np
 from pyiron.atomistics.structure.pyironase import publication as publication_ase
 from pyiron.atomistics.structure.atoms import CrystalStructure, ase_to_pyiron
-from pyiron_base.settings.generic import Settings
+from pyiron_base import Settings
 import types
 
 __author__ = "Sudarsan Surendralal"

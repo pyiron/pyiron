@@ -9,7 +9,7 @@ import numpy as np
 from collections import OrderedDict
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
-from pyiron_base.settings.generic import Settings
+from pyiron_base import Settings
 from pyiron.dft.waves.electronic import ElectronicStructure
 import defusedxml.cElementTree as ETree
 from defusedxml.ElementTree import ParseError

@@ -19,7 +19,7 @@ from pyiron.atomistics.structure.periodic_table import (
     PeriodicTable,
     ChemicalElement
 )
-from pyiron_base.settings.generic import Settings
+from pyiron_base import Settings
 from scipy.spatial import cKDTree, Voronoi
 import spglib
 

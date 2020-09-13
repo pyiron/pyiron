@@ -25,9 +25,7 @@ from pyiron.sphinx.potential import SphinxJTHPotentialFile
 from pyiron.sphinx.potential import find_potential_file \
     as find_potential_file_jth
 from pyiron.sphinx.volumetric_data import SphinxVolumetricData
-from pyiron_base.settings.generic import Settings
-from pyiron_base.generic.inputlist import InputList
-from pyiron_base.job.jobstatus import job_status_successful_lst
+from pyiron_base import Settings, InputList, job_status_successful_lst
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = (
@@ -800,7 +798,7 @@ class SphinxBase(GenericDFTJob):
 
 
         if "HDF_VERSION" not in self._hdf5.keys():
-            from pyiron_base.generic.parameters import GenericParameters
+            from pyiron_base import GenericParameters
             super(SphinxBase, self).from_hdf(hdf=hdf, group_name=group_name)
             self._structure_from_hdf()
             gp = GenericParameters(table_name = "input")

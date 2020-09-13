@@ -14,8 +14,7 @@ from io import StringIO
 
 from pyiron.lammps.potential import LammpsPotentialFile, PotentialAvailable
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
-from pyiron_base.settings.generic import Settings
-from pyiron_base.pyio.parser import extract_data_from_file
+from pyiron_base import Settings, extract_data_from_file
 from pyiron.lammps.control import LammpsControl
 from pyiron.lammps.potential import LammpsPotential
 from pyiron.lammps.structure import LammpsStructure, UnfoldingPrism

@@ -5,9 +5,7 @@
 from __future__ import print_function
 import numpy as np
 import posixpath
-from pyiron_base.generic.parameters import GenericParameters
-from pyiron_base.job.generic import GenericJob
-from pyiron_base.pyio.parser import Logstatus
+from pyiron_base import GenericParameters, GenericJob, Logstatus
 from pyiron.atomistics.job.interactive import GenericInteractive
 
 """
