@@ -12,8 +12,7 @@ from pyiron.dft.job.generic import GenericDFTJob
 from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentialSetter, Potcar, \
     strip_xc_from_potential_name
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
-from pyiron_base.settings.generic import Settings
-from pyiron_base.generic.parameters import GenericParameters
+from pyiron_base import Settings, GenericParameters
 from pyiron.vasp.outcar import Outcar
 from pyiron.vasp.procar import Procar
 from pyiron.vasp.structure import read_atoms, write_poscar, vasp_sorter

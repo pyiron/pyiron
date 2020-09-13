@@ -3,8 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import numpy as np
-from pyiron_base.settings.generic import Settings
-from pyiron_base.job.interactive import InteractiveBase
+from pyiron_base import Settings, InteractiveBase
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob, GenericOutput

@@ -4,7 +4,7 @@
 
 import numpy as np
 from pyiron.atomistics.job.interactivewrapper import InteractiveWrapper
-from pyiron_base.generic.parameters import GenericParameters
+from pyiron_base import GenericParameters
 from pyiron.atomistics.job.interactive import GenericInteractiveOutput
 from scipy import optimize
 

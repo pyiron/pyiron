@@ -5,7 +5,7 @@
 from __future__ import print_function
 from collections import OrderedDict
 import numpy as np
-from pyiron_base.generic.parameters import GenericParameters
+from pyiron_base import GenericParameters
 import decimal as dec
 
 try:

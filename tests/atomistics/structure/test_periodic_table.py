@@ -6,7 +6,7 @@ import unittest
 import os
 from pyiron.atomistics.structure.atoms import CrystalStructure
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
-from pyiron_base.project.generic import Project
+from pyiron_base import Project
 
 
 class TestPeriodicTable(unittest.TestCase):

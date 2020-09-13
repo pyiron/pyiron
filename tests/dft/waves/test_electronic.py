@@ -11,7 +11,7 @@ from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.vasp.vasprun import Vasprun
 from pyiron.dft.waves.dos import Dos
 from pyiron.dft.waves.electronic import ElectronicStructure
-from pyiron_base.generic.hdfio import FileHDFio
+from pyiron_base import FileHDFio
 import sys
 
 """
