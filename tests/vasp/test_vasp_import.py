@@ -37,6 +37,9 @@ class TestVaspImport(unittest.TestCase):
         self.assertIsInstance(ham.output.unwrapped_positions, np.ndarray)
 
         self.assertEqual(ham["output/structure/positions"][1, 2], 2.7999999999999997 * 0.4999999999999999)
+        self.assertEqual(ham["output/generic/dft/e_fermi_list"][-1], 5.9788)
+        self.assertEqual(ham["output/generic/dft/vbm_list"][-1], 6.5823)
+        self.assertEqual(ham["output/generic/dft/cbm_list"][-1], 6.7396)
         folder_path = os.path.join(
             self.file_location, "../static/vasp_test_files/full_job_minor_glitch"
         )
