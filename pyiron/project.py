@@ -300,10 +300,12 @@ class Project(ProjectCore):
                 if copy_raw_files:
                     os.makedirs(ham.working_directory, exist_ok=True)
                     for f in os.listdir(project_to_import_from):
-                        copyfile(
-                            src=os.path.join(project_to_import_from, f),
-                            dst=os.path.join(ham.working_directory, f)
-                        )
+                        src=os.path.join(project_to_import_from, f)
+                        if os.path.isfile(src):
+                            copyfile(
+                                src=src,
+                                dst=os.path.join(ham.working_directory, f)
+                            )
                     ham.compress()
 
     def import_from_path(self, path, recursive=True, copy_raw_files=False):
