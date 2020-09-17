@@ -1244,6 +1244,18 @@ class TestAtoms(unittest.TestCase):
         structure += carbon
         self.assertEqual(carbon.indices[0], 0)
 
+    def test_append(self):
+        a_0 = 2.86
+        structure = create_structure('Fe', 'bcc', a_0)
+        carbon = Atoms(symbols=['C'], positions=[[0, 0, 0.5 * a_0]], pbc=True)
+        with warnings.catch_warnings(record=True) as w:
+            structure.append(carbon)
+            self.assertEqual(len(w), 0)
+            structure = create_structure('Fe', 'bcc', a_0)
+            carbon.cell = np.random.rand(3)
+            structure.append(carbon)
+            self.assertEqual(len(w), 1)
+
     def test__delitem__(self):
         cell = np.eye(3) * 10.0
         basis_0 = Atoms(["O"], scaled_positions=[[0.5, 0.5, 0.5]], cell=cell)

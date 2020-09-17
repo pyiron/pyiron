@@ -2598,6 +2598,16 @@ class Atoms(ASEAtoms):
         else:
             return dist
 
+    def append(self, atom):
+        if isinstance(atom, ASEAtom):
+            super(Atoms, self).append(atom=atom)
+        else:
+            new_atoms = atom.copy()
+            if new_atoms.pbc.all() and np.isclose(new_atoms.get_volume(), 0):
+                new_atoms.cell = self.cell
+                new_atoms.pbc = self.pbc
+            self += new_atoms
+
     def extend(self, other):
         """
         Extend atoms object by appending atoms from *other*. (Extending the ASE function)
