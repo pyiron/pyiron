@@ -2599,7 +2599,7 @@ class Atoms(ASEAtoms):
             return dist
 
     def append(self, atom):
-        if isinstance(atom, Atom) or isinstance(atom, ASEAtom):
+        if isinstance(atom, ASEAtom):
             super(Atoms, self).append(atom=atom)
         else:
             if atom.pbc.all() and np.isclose(atom.get_volume(), 0):
