@@ -1042,6 +1042,9 @@ class TestAtoms(unittest.TestCase):
         self.assertAlmostEqual(basis_Fe.cell[0, 0], 2.85)
         basis_Fe.apply_strain(0.01)
         self.assertAlmostEqual(basis_Fe.cell[0,0], 2.85*1.01)
+        basis_Fe = CrystalStructure("Fe", bravais_basis="bcc", lattice_constants=2.85)
+        basis_Fe.apply_strain(0.01*np.eye(3))
+        self.assertAlmostEqual(basis_Fe.cell[0,0], 2.85*1.01)
 
     def test_get_spherical_coordinates(self):
         basis_Fe = CrystalStructure("Fe", bravais_basis="bcc", lattice_constants=2.85)
