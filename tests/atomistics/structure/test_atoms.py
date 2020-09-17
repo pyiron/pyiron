@@ -1252,7 +1252,7 @@ class TestAtoms(unittest.TestCase):
             structure.append(carbon)
             self.assertEqual(len(w), 0)
             structure = create_structure('Fe', 'bcc', a_0)
-            carbon.cell[0,0] = 0.5
+            carbon.cell = np.random.rand(3)
             structure.append(carbon)
             self.assertEqual(len(w), 1)
 

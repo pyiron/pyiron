@@ -2602,9 +2602,11 @@ class Atoms(ASEAtoms):
         if isinstance(atom, ASEAtom):
             super(Atoms, self).append(atom=atom)
         else:
-            if atom.pbc.all() and np.isclose(atom.get_volume(), 0):
-                atom.cell = self.cell
-            self += atom
+            new_atoms = atom.copy()
+            if new_atoms.pbc.all() and np.isclose(new_atoms.get_volume(), 0):
+                new_atoms.cell = self.cell
+                new_atoms.pbc = self.pbc
+            self += new_atoms
 
     def extend(self, other):
         """
