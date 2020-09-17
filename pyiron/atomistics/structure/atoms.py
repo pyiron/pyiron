@@ -2618,7 +2618,7 @@ class Atoms(ASEAtoms):
             warnings.warn("Converting ase structure to pyiron before appending the structure")
             other = ase_to_pyiron(other)
 
-        new_indices = other.indices
+        new_indices = other.indices.copy()
         super(Atoms, self).extend(other=other)
         if isinstance(other, Atoms):
             if not np.allclose(self.cell, other.cell):

@@ -8,7 +8,7 @@ import os
 import warnings
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
-from pyiron.atomistics.structure.generator import create_ase_bulk, create_surface, create_hkl_surface
+from pyiron.atomistics.structure.generator import create_ase_bulk, create_surface, create_hkl_surface, create_structure
 from pyiron.atomistics.structure.sparse_list import SparseList
 from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement
 from pyiron_base import FileHDFio, ProjectHDFio, Project
@@ -1238,6 +1238,11 @@ class TestAtoms(unittest.TestCase):
             warnings.simplefilter("always")
             basis_1 += basis_2
             self.assertEqual(len(w), 1)
+        a_0 = 2.86
+        structure = create_structure('Fe', 'bcc', a_0)
+        carbon = Atoms(symbols=['C'], positions=[[0, 0, 0.5 * a_0]])
+        structure += carbon
+        self.assertEqual(carbon.indices[0], 0)
 
     def test__delitem__(self):
         cell = np.eye(3) * 10.0
