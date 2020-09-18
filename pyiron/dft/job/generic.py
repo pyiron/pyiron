@@ -91,7 +91,7 @@ class GenericDFTJob(AtomisticGenericJob):
         latlens = np.linalg.norm(cell, axis=-1)
         kmesh = np.rint( 2 * np.pi / latlens * kpoints_per_reciprocal_angstrom)
         if kmesh.min() <= 0:
-            print("Calculated kmesh was 0 for at least one axis, setting it to 1 instead")
+            self._logger.warning("Calculated kmesh was 0 for at least one axis, setting it to 1 instead)
             kmesh[kmesh==0] = 1
         return [int(k) for k in kmesh]
 
