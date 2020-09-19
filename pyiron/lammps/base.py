@@ -223,9 +223,14 @@ class LammpsBase(AtomisticGenericJob):
         """
         super(LammpsBase, self).validate_ready_to_run()
         if self.potential is None:
-            raise ValueError(
-                "This job does not contain a valid potential: {}".format(self.job_name)
-            )
+            lst_of_potentials = self.list_potentials()
+            if len(lst_of_potentials) > 0:
+                self.potential = lst_of_potentials[0]
+                warnings.warn("No potential set via job.potential - use default potential, " + lst_of_potentials[0])
+            else:
+                raise ValueError(
+                    "This job does not contain a valid potential: {}".format(self.job_name)
+                )
         scaled_positions = self.structure.get_scaled_positions(wrap=False)
         # Check if atoms located outside of non periodic box
         conditions = [(np.min(scaled_positions[:, i]) < 0.0 or
