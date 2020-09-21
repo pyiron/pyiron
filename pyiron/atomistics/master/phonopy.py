@@ -106,9 +106,10 @@ class PhonopyJobGenerator(JobGenerator):
         Returns:
             structure (pyiron.atomistics.structure.atoms): output structure with magnetic moments
         """
-        magmoms = self._job.structure.get_initial_magnetic_moments()
-        magmoms = np.tile(magmoms, np.prod(np.diagonal(self._job._phonopy_supercell_matrix())).astype(int))
-        structure.set_initial_magnetic_moments(magmoms)
+        if any(self._job.structure.get_initial_magnetic_moments()!=None):
+            magmoms = self._job.structure.get_initial_magnetic_moments()
+            magmoms = np.tile(magmoms, np.prod(np.diagonal(self._job._phonopy_supercell_matrix())).astype(int))
+            structure.set_initial_magnetic_moments(magmoms)
         return structure
 
     @staticmethod
