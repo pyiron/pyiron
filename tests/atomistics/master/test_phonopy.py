@@ -19,20 +19,21 @@ class TestPhonopy(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
-        project = Project(os.path.join(cls.file_location, "test_phonopy"))
-        project.remove(enable=True, enforce=True)
+        cls.project.remove(enable=True, enforce=True)
 
     def test_run(self):
         job = self.project.create_job(
-            self.project.job_type.AtomisticExampleJob, "job_test"
+            'EinsteinExampleJob', "job_test"
         )
         basis = CrystalStructure(
             element="Fe", bravais_basis="bcc", lattice_constant=2.83
         )
         basis.set_initial_magnetic_moments([2,2])
+        job.input['displacement_mag'] = 0
+        job.input['volume_per_atom'] = basis.get_volume(per_atom=True)
         job.structure = basis
-        job.server.run_mode.interactive = True
         phono = job.create_job("PhonopyJob", "phono")
+        phono.run()
         structure = phono.list_structures()[0]
         magmoms = structure.get_initial_magnetic_moments()
         self.assertAlmostEqual(sum(magmoms-2), 0)
