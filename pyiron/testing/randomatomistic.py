@@ -7,6 +7,7 @@ import numpy as np
 import posixpath
 from pyiron_base import GenericParameters, GenericJob, Logstatus
 from pyiron.atomistics.job.interactive import GenericInteractive
+from pyiron.testing.executable import ExampleExecutable
 
 """
 Example Job class for testing the pyiron classes
@@ -120,7 +121,7 @@ class ExampleJob(GenericJob):
         self.__name__ = "ExampleJob"
         self.input = ExampleInput()
         self.executable = "python -m pyiron.testing.executable"
-        self._interactive_cache = {"alat": [], "count": [], "energy": []}
+        self.interactive_cache = {"alat": [], "count": [], "energy": []}
 
     def set_input_to_read_only(self):
         """
@@ -230,24 +231,19 @@ class ExampleJob(GenericJob):
         Returns:
             int: job ID
         """
-        from pyiron.testing.executable import ExampleExecutable
-
         self._interactive_library = True
         self.status.running = True
         alat, count, energy = ExampleExecutable().run_lib(self.input)
-        self._interactive_cache["alat"].append(alat)
-        self._interactive_cache["count"].append(count)
-        self._interactive_cache["energy"].append(energy)
+        self.interactive_cache["alat"].append(alat)
+        self.interactive_cache["count"].append(count)
+        self.interactive_cache["energy"].append(energy)
 
     def interactive_close(self):
         self._interactive_library = False
         self.to_hdf()
         with self.project_hdf5.open("output") as h5:
-            h5["generic/energy"] = np.array(self._interactive_cache["energy"])
-            h5["generic/volume"] = np.array(self._interactive_cache["alat"])
-            h5["generic/alat"] = np.array(self._interactive_cache["alat"])
-            h5["generic/count"] = np.array(self._interactive_cache["count"])
-            h5["generic/energy_tot"] = np.array(self._interactive_cache["energy"])
+            for k in self.interactive_cache.keys():
+                h5["generic/" + k] = np.array(self.interactive_cache[k])
         self.project.db.item_update(self._runtime(), self._job_id)
         self.status.finished = True
 
@@ -461,16 +457,6 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
         super(AtomisticExampleJob, self).from_hdf(hdf=hdf, group_name=group_name)
         self._structure_from_hdf()
 
-    def interactive_close(self):
-        """
-        Returns:
-        """
-        super(AtomisticExampleJob, self).interactive_close()
-        with self.project_hdf5.open("output") as h5:
-            if "interactive" in h5.list_groups():
-                for key in h5["interactive"].list_nodes():
-                    h5["generic/" + key] = h5["interactive/" + key]
-
     def run_if_interactive(self):
         """
         Run the job as Python library and store the result in the HDF5 File.
@@ -478,13 +464,15 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
         Returns:
             int: job ID
         """
-        super(AtomisticExampleJob, self).run_if_interactive()
+        self._interactive_library = True
+        self.status.running = True
+        alat, count, energy = ExampleExecutable().run_lib(self.input)
         self.interactive_cache["cells"].append(self._structure.cell)
         self.interactive_cache["energy_pot"].append(
-            self._interactive_cache["energy"][-1][-1]
+            energy
         )
         self.interactive_cache["energy_tot"].append(
-            self._interactive_cache["energy"][-1][-1]
+            energy
         )
         self.interactive_cache["forces"].append(
             np.random.random((len(self._structure), 3))
