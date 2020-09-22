@@ -6,7 +6,6 @@ from __future__ import print_function
 import numpy as np
 from pyiron_base import GenericParameters, Logstatus
 from pyiron.atomistics.job.interactive import GenericInteractive
-from pyiron.testing.randomatomistic import ExampleJob
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = (
@@ -71,7 +70,7 @@ class EinsteinCrystal(object):
         self.forces = self.spring_constant*dr
 
 
-class EinsteinExampleJob(ExampleJob, GenericInteractive):
+class EinsteinExampleJob(GenericInteractive):
     """
     ExampleJob generating a list of random numbers to simulate energy fluctuations.
 
@@ -163,9 +162,10 @@ class EinsteinExampleJob(ExampleJob, GenericInteractive):
 
     def __init__(self, project, job_name):
         super(EinsteinExampleJob, self).__init__(project, job_name)
-        self.__version__ = "0.3"
+        self.__version__ = "0.0.1"
         self.__name__ = "EinsteinExampleJob"
         self.input = ExampleInput()
+        self._python_only_job = True
         self.interactive_cache = {
             "cells": [],
             "energy_pot": [],
@@ -261,3 +261,9 @@ class EinsteinExampleJob(ExampleJob, GenericInteractive):
         super(EinsteinExampleJob, self).run_if_interactive()
         self._interactive_library.run()
         self.interactive_collect()
+
+    def write_input(self):
+        """
+        Call routines that generate the codespecifc input files
+        """
+        self.input.write_file(file_name="input.inp", cwd=self.working_directory)
