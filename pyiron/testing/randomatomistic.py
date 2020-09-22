@@ -120,7 +120,7 @@ class ExampleJob(GenericJob):
         self.__name__ = "ExampleJob"
         self.input = ExampleInput()
         self.executable = "python -m pyiron.testing.executable"
-        self._interactive_cache = {"alat": [], "count": [], "energy": []}
+        self._interactive_cache = {"alat": [], "count": [], "energy": [], "forces": []}
 
     def set_input_to_read_only(self):
         """
