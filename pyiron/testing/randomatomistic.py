@@ -461,8 +461,8 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
         super(AtomisticExampleJob, self).from_hdf(hdf=hdf, group_name=group_name)
         self._structure_from_hdf()
 
-    def run_static(self):
-        self.run_if_interactive()
+    # def run_static(self):
+    #     self.run_if_interactive()
 
     def run_if_interactive(self):
         """
