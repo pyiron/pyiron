@@ -9,7 +9,7 @@ from pyiron_base import Project
 
 
 
-class TestMurnaghan(unittest.TestCase):
+class TestPhonopy(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
@@ -31,8 +31,8 @@ class TestMurnaghan(unittest.TestCase):
         )
         basis.set_initial_magnetic_moments([2,2])
         job.structure = basis
-        phono = self.project.create_job("PhonopyJob", "phono")
-        phono.ref_job = job
+        job.server.run_mode.interactive = True
+        phono = job.create_job("PhonopyJob", "phono")
         structure = phono.list_structures()[0]
         magmoms = structure.get_initial_magnetic_moments()
         self.assertAlmostEqual(sum(magmoms-2), 0)
