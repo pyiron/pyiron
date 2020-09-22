@@ -475,7 +475,7 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
             energy
         )
         self.interactive_cache["forces"].append(
-            np.zeros((len(self._structure), 3))
+            np.random.random((len(self._structure), 3))
         )
         self.interactive_cache["positions"].append(self._structure.positions)
         self.interactive_cache["pressures"].append(np.random.random((3, 3)))
