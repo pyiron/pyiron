@@ -94,7 +94,7 @@ class PhonopyJobGenerator(JobGenerator):
         """
         supercells = self._job.phonopy.get_supercells_with_displacements()
         return [
-            ["{}_{}".format(self._job.ref_job.job_name, ind), self._restore_magmoms(phonopy_to_atoms(sc))]
+            ["supercell_phonon_%d" % ind, self._restore_magmoms(phonopy_to_atoms(sc))]
             for ind, sc in enumerate(supercells)
         ]
 
