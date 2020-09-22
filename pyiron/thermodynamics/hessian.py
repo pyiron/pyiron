@@ -31,9 +31,26 @@ class HessianJob(GenericInteractive):
         self._next_positions = None
 
     def set_force_constants(self, force_constants):
+        if self.structure is None:
+            raise ValueError('Set reference structure via set_reference_structure() first')
+        n_atom = len(self.structure.positions)
+        if len(np.array([force_constants]).flatten())==1:
+            self._force_constants = force_constants*np.eye(3*n_atom)
+            return
+        elif len(np.array(force_constants).flatten())==n_atom**2:
+            na = np.newaxis
+            self._force_constants = (np.array(force_constants)[:,na,:,na]*np.eye(3)[na,:,na,:]).flatten()
+            return
         force_shape = np.shape(force_constants)
-        force_reshape = force_shape[0] * force_shape[2]
-        self._force_constants = np.transpose(force_constants, (0, 2, 1, 3)).reshape((force_reshape, force_reshape))
+        if len(force_shape)==4:
+            if force_shape[2]==3 and force_shape[3]==3:
+                force_reshape = force_shape[0] * force_shape[2]
+                self._force_constants = np.transpose(force_constants, (0, 2, 1, 3)).reshape((force_reshape, force_reshape))
+                return
+            elif force_shape[1]==3 and force_shape[3]==3:
+                self._force_constants = np.array(force_constants).reshape(3*n_atom, 3*n_atom)
+                return
+        raise AssertionError('force constant shape not recognized')
 
     def set_reference_structure(self, structure):
         self._reference_structure = structure
