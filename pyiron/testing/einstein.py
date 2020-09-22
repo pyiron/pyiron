@@ -47,15 +47,15 @@ displacement_mag 1       # magnitude of displacements for the ideal structure
         self.load_string(input_str)
 
 class EinsteinCrystal(object):
-    def __init__(self):
+    def __init__(self, structure, spring_constant=0, bulk_modulus=0, volume_per_atom=0):
         self._ideal_structure = None
-        self.structure = None
+        self.structure = structure
+        self.spring_constant = spring_constant
+        self.bulk_modulus = bulk_modulus
+        self.volume_per_atom = volume_per_atom
         self.energy = None
         self.forces = None
         self.pressures = None
-        self.spring_constant = 0
-        self.bulk_modulus = 0
-        self.volume_per_atom = 0
 
     def create_ideal_structure(self, displacement_magnitude):
         self._ideal_structure = self.structure.copy()
@@ -66,13 +66,13 @@ class EinsteinCrystal(object):
         dr = self._ideal_structure.get_scaled_positions()
         dr -= self.structure.get_scaled_positions()
         dr = np.einsum('ij,nj->ni', self.structure.cell, dr)
-        self.energy = 0.5*self.spring_constant*np.sum(dr**2)
-        self.forces = self.spring_constant*dr
         volume = self.structure.get_volume(per_atom=True)
         self.pressures = -np.eye(3)*(volume-self.volume_per_atom)/volume*self.bulk_modulus
+        self.energy = 0.5*self.spring_constant*np.sum(dr**2)-self.pressures[0,0]*(volume-self.volume_per_atom)*len(dr)
+        self.forces = self.spring_constant*dr
 
 
-class AtomisticExampleJob(ExampleJob, GenericInteractive):
+class EinsteinExampleJob(ExampleJob, GenericInteractive):
     """
     ExampleJob generating a list of random numbers to simulate energy fluctuations.
 
@@ -163,7 +163,7 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
     """
 
     def __init__(self, project, job_name):
-        super(AtomisticExampleJob, self).__init__(project, job_name)
+        super(EinsteinExampleJob, self).__init__(project, job_name)
         self.__version__ = "0.3"
         self.__name__ = "EinsteinExampleJob"
         self.input = ExampleInput()
@@ -187,6 +187,13 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
             "volume": [],
         }
 
+    def interactive_initialize_interface(self):
+        self._interactive_library = EinsteinCrystal(self._structure,
+                                                    self.input['spring_constant'],
+                                                    self.input['volume_per_atom'],
+                                                    self.input['bulk_modulus'])
+        self._interactive_library.create_ideal_structure(self.input['displacement_mag'])
+
     @property
     def structure(self):
         """
@@ -197,7 +204,7 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
         return self._structure
 
     def get_structure(self, iteration_step=-1, wrap_atoms=True):
-        structure = super(AtomisticExampleJob, self).get_structure(
+        structure = super(EinsteinExampleJob, self).get_structure(
             iteration_step=iteration_step, wrap_atoms=wrap_atoms
         )
         if structure is None:
@@ -221,7 +228,7 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
         This function enforces read-only mode for the input classes, but it has to be implement in the individual
         classes.
         """
-        super(AtomisticExampleJob, self).set_input_to_read_only()
+        super(EinsteinExampleJob, self).set_input_to_read_only()
         self.input.read_only = True
 
     def to_hdf(self, hdf=None, group_name=None):
@@ -232,7 +239,7 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
             hdf (ProjectHDFio): HDF5 group object - optional
             group_name (str): HDF5 subgroup name - optional
         """
-        super(AtomisticExampleJob, self).to_hdf(hdf=hdf, group_name=group_name)
+        super(EinsteinExampleJob, self).to_hdf(hdf=hdf, group_name=group_name)
         self._structure_to_hdf()
 
     def from_hdf(self, hdf=None, group_name=None):
@@ -243,11 +250,8 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
             hdf (ProjectHDFio): HDF5 group object - optional
             group_name (str): HDF5 subgroup name - optional
         """
-        super(AtomisticExampleJob, self).from_hdf(hdf=hdf, group_name=group_name)
+        super(EinsteinExampleJob, self).from_hdf(hdf=hdf, group_name=group_name)
         self._structure_from_hdf()
-
-    def run_static(self):
-        self.run_if_interactive()
 
     def run_if_interactive(self):
         """
@@ -256,25 +260,6 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
         Returns:
             int: job ID
         """
-        super(AtomisticExampleJob, self).run_if_interactive()
-        self.interactive_cache["cells"].append(self._structure.cell)
-        self.interactive_cache["energy_pot"].append(
-            self._interactive_cache["energy"][-1][-1]
-        )
-        self.interactive_cache["energy_tot"].append(
-            self._interactive_cache["energy"][-1][-1]
-        )
-        self.interactive_cache["forces"].append(
-            np.random.random((len(self._structure), 3))
-        )
-        self.interactive_cache["positions"].append(self._structure.positions)
-        self.interactive_cache["pressures"].append(np.random.random((3, 3)))
-        self.interactive_cache["stress"].append(
-            np.random.random((len(self._structure), 3, 3))
-        )
-        self.interactive_cache["steps"].append(len(self.interactive_cache["steps"]))
-        self.interactive_cache["temperature"].append(np.random.random())
-        self.interactive_cache["indices"].append(self._structure.indices)
-        self.interactive_cache["computation_time"].append(np.random.random())
-        self.interactive_cache["unwrapped_positions"].append(self._structure.positions)
-        self.interactive_cache["volume"].append(self._structure.get_volume())
+        super(EinsteinExampleJob, self).run_if_interactive()
+        self._interactive_library.run()
+        self.interactive_collect()
