@@ -37,7 +37,7 @@ class TestMurnaghan(unittest.TestCase):
         magmoms = structure.get_initial_magnetic_moments()
         self.assertAlmostEqual(sum(magmoms-2), 0)
         phono.run()
-        self.assertEqual(list(phono.child_names.values())[0], 'example_0')
+        self.assertEqual(list(phono.child_names.values())[0], 'job_test_0')
 
 
 if __name__ == "__main__":
