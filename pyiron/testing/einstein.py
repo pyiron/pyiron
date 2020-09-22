@@ -166,7 +166,6 @@ class EinsteinExampleJob(ExampleJob, GenericInteractive):
         self.__version__ = "0.3"
         self.__name__ = "EinsteinExampleJob"
         self.input = ExampleInput()
-        self.executable = "python -m pyiron.testing.executable"
         self.interactive_cache = {
             "cells": [],
             "energy_pot": [],
