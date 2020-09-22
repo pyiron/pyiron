@@ -9,7 +9,7 @@ from pyiron_base import Project
 
 
 
-class TestMurnaghan(unittest.TestCase):
+class TestPhonopy(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
