@@ -4,8 +4,7 @@
 
 from __future__ import print_function
 import numpy as np
-import posixpath
-from pyiron_base import GenericParameters, GenericJob, Logstatus
+from pyiron_base import GenericParameters, Logstatus
 from pyiron.atomistics.job.interactive import GenericInteractive
 from pyiron.testing.randomatomistic import ExampleJob
 
