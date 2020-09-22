@@ -466,7 +466,7 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
         """
         self._interactive_library = True
         self.status.running = True
-        alat, count, energy = ExampleExecutable().run_lib(self.input)
+        _, _, energy = ExampleExecutable().run_lib(self.input)
         self.interactive_cache["cells"].append(self._structure.cell)
         self.interactive_cache["energy_pot"].append(
             energy
