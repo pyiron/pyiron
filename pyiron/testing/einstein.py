@@ -45,7 +45,7 @@ displacement_mag 1       # magnitude of displacements for the ideal structure
         self.load_string(input_str)
 
 class EinsteinCrystal(object):
-    def __init__(self, structure, spring_constant=0, bulk_modulus=0, volume_per_atom=0):
+    def __init__(self, structure, spring_constant=0, volume_per_atom=0, bulk_modulus=0):
         self._ideal_structure = None
         self.structure = structure
         self.spring_constant = spring_constant
@@ -63,9 +63,11 @@ class EinsteinCrystal(object):
     def run(self):
         dr = self._ideal_structure.get_scaled_positions()
         dr -= self.structure.get_scaled_positions()
-        dr = np.einsum('ij,nj->ni', self.structure.cell, dr)
+        dr -= np.rint(dr)
+        dr = np.einsum('ji,nj->ni', self.structure.cell, dr)
         volume = self.structure.get_volume(per_atom=True)
-        self.pressures = -np.eye(3)*(volume-self.volume_per_atom)/volume*self.bulk_modulus
+        self.pressures = (volume-self.volume_per_atom)/volume
+        self.pressures = -np.eye(3)*self.pressures*self.bulk_modulus
         self.energy = 0.5*self.spring_constant*np.sum(dr**2)-self.pressures[0,0]*(volume-self.volume_per_atom)*len(dr)
         self.forces = self.spring_constant*dr
 
@@ -168,7 +170,7 @@ class EinsteinExampleJob(GenericInteractive):
         self.server.run_mode.interactive = True
 
     def interactive_initialize_interface(self):
-        self._interactive_library = EinsteinCrystal(self._structure,
+        self._interactive_library = EinsteinCrystal(self.structure,
                                                     self.input['spring_constant'],
                                                     self.input['volume_per_atom'],
                                                     self.input['bulk_modulus'])
@@ -244,6 +246,9 @@ class EinsteinExampleJob(GenericInteractive):
 
     def interactive_indices_setter(self, indices):
         self._interactive_library.structure.indices = indices
+
+    def interactive_volume_getter(self):
+        return self.structure.get_volume()
 
     def interactive_close(self):
         if self.interactive_is_activated():
