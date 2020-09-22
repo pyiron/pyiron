@@ -165,25 +165,7 @@ class EinsteinExampleJob(GenericInteractive):
         self.__version__ = "0.0.1"
         self.__name__ = "EinsteinExampleJob"
         self.input = ExampleInput()
-        self._python_only_job = True
-        self.interactive_cache = {
-            "cells": [],
-            "energy_pot": [],
-            "energy_tot": [],
-            "forces": [],
-            "positions": [],
-            "pressures": [],
-            "stress": [],
-            "steps": [],
-            "temperature": [],
-            "indices": [],
-            "computation_time": [],
-            "unwrapped_positions": [],
-            "atom_spin_constraints": [],
-            "atom_spins": [],
-            "magnetic_forces": [],
-            "volume": [],
-        }
+        self.server.run_mode.interactive = True
 
     def interactive_initialize_interface(self):
         self._interactive_library = EinsteinCrystal(self._structure,
@@ -191,35 +173,6 @@ class EinsteinExampleJob(GenericInteractive):
                                                     self.input['volume_per_atom'],
                                                     self.input['bulk_modulus'])
         self._interactive_library.create_ideal_structure(self.input['displacement_mag'])
-
-    @property
-    def structure(self):
-        """
-
-        Returns:
-
-        """
-        return self._structure
-
-    def get_structure(self, iteration_step=-1, wrap_atoms=True):
-        structure = super(EinsteinExampleJob, self).get_structure(
-            iteration_step=iteration_step, wrap_atoms=wrap_atoms
-        )
-        if structure is None:
-            return self.structure
-        return structure
-
-    @structure.setter
-    def structure(self, structure):
-        """
-
-        Args:
-            structure:
-
-        Returns:
-
-        """
-        self._structure = structure
 
     def set_input_to_read_only(self):
         """
@@ -267,3 +220,27 @@ class EinsteinExampleJob(GenericInteractive):
         Call routines that generate the codespecifc input files
         """
         self.input.write_file(file_name="input.inp", cwd=self.working_directory)
+
+    def interactive_pressures_getter(self):
+        return self._interactive_library.pressures
+
+    def interactive_cells_setter(self, cell):
+        self._interactive_library.structure.cell = cell
+
+    def interactive_energy_pot_getter(self):
+        return self._interactive_library.energy
+
+    def interactive_energy_tot_getter(self):
+        return self._interactive_library.energy
+
+    def interactive_forces_getter(self):
+        return self._interactive_library.forces
+
+    def interactive_positions_setter(self, positions):
+        self._interactive_library.structure.positions = positions
+
+    def interactive_structure_setter(self, structure):
+        self._interactive_library.structure = structure
+
+    def interactive_indices_setter(self, indices):
+        self._interactive_library.structure.indices = indices
