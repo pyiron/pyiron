@@ -36,9 +36,6 @@ class TestPhonopy(unittest.TestCase):
         structure = phono.list_structures()[0]
         magmoms = structure.get_initial_magnetic_moments()
         self.assertAlmostEqual(sum(magmoms-2), 0)
-        phono.run()
-        self.assertEqual(list(phono.child_names.values())[0], 'phono_job_test')
-
 
 if __name__ == "__main__":
     unittest.main()
