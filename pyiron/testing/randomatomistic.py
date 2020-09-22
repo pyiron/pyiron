@@ -470,7 +470,7 @@ class AtomisticExampleJob(ExampleJob, GenericInteractive):
             if "interactive" in h5.list_groups():
                 for key in h5["interactive"].list_nodes():
                     h5["generic/" + key] = h5["interactive/" + key]
-        
+
     def run_if_interactive(self):
         """
         Run the job as Python library and store the result in the HDF5 File.
