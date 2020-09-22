@@ -4,7 +4,7 @@
 
 from __future__ import print_function
 import numpy as np
-from pyiron_base import GenericParameters, Logstatus
+from pyiron_base import GenericParameters
 from pyiron.atomistics.job.interactive import GenericInteractive
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
@@ -244,3 +244,11 @@ class EinsteinExampleJob(GenericInteractive):
 
     def interactive_indices_setter(self, indices):
         self._interactive_library.structure.indices = indices
+
+    def interactive_close(self):
+        if self.interactive_is_activated():
+            super(EinsteinExampleJob, self).interactive_close()
+            with self.project_hdf5.open("output") as h5:
+                if "interactive" in h5.list_groups():
+                    for key in h5["interactive"].list_nodes():
+                        h5["generic/" + key] = h5["interactive/" + key]
