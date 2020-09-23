@@ -22,11 +22,6 @@ class HessianJob(GenericInteractive):
         self.__version__ = "0.0.1"
         self.__name__ = "HessianJob"
         self.server.run_mode.interactive = True
-        # self.interactive_cache = {
-        #     "forces": [],
-        #     "positions": [],
-        #     "energy_pot": []
-        # }
         self._force_constants = None
         self._reference_structure = None
         self._next_positions = None
