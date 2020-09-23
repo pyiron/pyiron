@@ -33,7 +33,6 @@ class TestPhonopy(unittest.TestCase):
         job.input['volume_per_atom'] = basis.get_volume(per_atom=True)
         job.structure = basis
         phono = job.create_job("PhonopyJob", "phono")
-        phono.run()
         structure = phono.list_structures()[0]
         magmoms = structure.get_initial_magnetic_moments()
         self.assertAlmostEqual(sum(magmoms-2), 0)
