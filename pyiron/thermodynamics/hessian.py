@@ -21,7 +21,6 @@ class HessianJob(GenericInteractive):
         super(HessianJob, self).__init__(project, job_name)
         self.__version__ = "0.0.1"
         self.__name__ = "HessianJob"
-        self.server.run_mode.interactive = True
         self._force_constants = None
         self._reference_structure = None
         self._energy_pot = 0
@@ -51,8 +50,11 @@ class HessianJob(GenericInteractive):
         pass
 
     def run_static(self):
+        run_mode = self.server.run_mode.mode
+        self.interactive_open()
         self.run_if_interactive()
         self.interactive_close()
+        self.server.run_mode = run_mode
 
     def set_elastic_moduli(self, bulk_modulus=0, shear_modulus=0):
         self._stiffness_tensor = np.zeros((6, 6))
