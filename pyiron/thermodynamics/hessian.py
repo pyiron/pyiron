@@ -31,6 +31,19 @@ class HessianJob(GenericInteractive):
         self._pressure_times_volume = 0
         self._displacements = np.zeros(3)
 
+    def write_input(self):
+        pass
+
+    def collect_output(self):
+        pass
+
+    def collect_logfiles(self):
+        pass
+
+    def run_static(self):
+        self.run_if_interactive()
+        self.interactive_close()
+
     def set_elastic_moduli(self, bulk_modulus=0, shear_modulus=0):
         self._stiffness_tensor = np.zeros((6, 6))
         self._stiffness_tensor[:3, :3] = bulk_modulus-2*shear_modulus/3
@@ -144,8 +157,6 @@ class HessianJob(GenericInteractive):
             int: job ID
         """
         super(HessianJob, self).run_if_interactive()
-        # self.status.running = True
-        # self.interactive_position_setter(positions=self.structure.positions)
         self.calculate_forces()
         self.interactive_collect()
 
