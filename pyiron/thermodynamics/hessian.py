@@ -18,7 +18,7 @@ __date__ = "Feb 20, 2020"
 
 class HessianJob(GenericInteractive):
     def __init__(self, project, job_name):
-        super(GenericInteractive, self).__init__(project, job_name)
+        super(HessianJob, self).__init__(project, job_name)
         self.__version__ = "0.0.1"
         self.__name__ = "HessianJob"
         self.server.run_mode.interactive = True
