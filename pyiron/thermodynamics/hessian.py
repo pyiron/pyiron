@@ -21,6 +21,7 @@ class HessianJob(GenericInteractive):
         super(GenericInteractive, self).__init__(project, job_name)
         self.__version__ = "0.0.1"
         self.__name__ = "HessianJob"
+        self.server.run_mode.interactive = True
         self.interactive_cache = {
             "forces": [],
             "positions": [],
@@ -54,7 +55,8 @@ class HessianJob(GenericInteractive):
 
     def set_reference_structure(self, structure):
         self._reference_structure = structure
-        self.structure = structure
+        if self.structure is None:
+            self.structure = structure
 
     def interactive_position_setter(self, positions):
         positions -= self._reference_structure.positions
