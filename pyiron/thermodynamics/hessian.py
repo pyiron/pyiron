@@ -24,9 +24,16 @@ class HessianJob(GenericInteractive):
         self.server.run_mode.interactive = True
         self._force_constants = None
         self._reference_structure = None
-        self._next_positions = None
-        self._energy = None
-        self._forces = None
+        self._energy_pot = 0
+        self._forces = np.zeros(3)
+        self._pressure = np.zeros((3,3))
+        self._stiffness_tensor = np.zeros((6,6))
+
+    def set_elastic_moduli(self, bulk_modulus=0, shear_modulus=0):
+        self._stiffness_tensor = np.zeros((6,6))
+        self._stiffness_tensor[:3,:3] = bulk_modulus-2*shear_modulus/3
+        self._stiffness_tensor[:3,:3] += np.eye(3)*2*shear_modulus
+        self._stiffness_tensor[3:,3:] = np.eye(3)*shear_modulus
 
     def set_force_constants(self, force_constants):
         if self.structure is None:
@@ -56,14 +63,6 @@ class HessianJob(GenericInteractive):
         if self.structure is None:
             self.structure = structure.copy()
 
-    def interactive_position_setter(self, positions):
-        self.structure.positions = positions.copy()
-        self._next_positions = self.structure.get_scaled_positions()
-        self._next_positions -= self._reference_structure.get_scaled_positions()
-        self._next_positions -= np.rint(self._next_positions)
-        self._next_positions = np.einsum('ji,ni->nj', self.structure.cell, self._next_positions)
-        self._next_positions = positions
-
     def validate_ready_to_run(self):
         super(HessianJob, self).validate_ready_to_run()
         if self._force_constants is None:
@@ -75,7 +74,10 @@ class HessianJob(GenericInteractive):
         return self._forces
 
     def interactive_energy_pot_getter(self):
-        return self._energy
+        return self._energy_pot
+
+    def interactive_energy_tot_getter(self):
+        return self.interactive_energy_pot_getter()
 
     def interactive_positions_getter(self):
         return self.structure.positions
@@ -86,14 +88,42 @@ class HessianJob(GenericInteractive):
     def interactive_volume_getter(self):
         return self.structure.get_volume()
 
+    def interactive_pressures_getter(self):
+        return self._pressure
+
+    def get_pV(self):
+        if np.sum(self._stiffness_tensor)==0:
+            return 0
+        epsilon = np.einsum('ij,jk->ik',
+                            self.structure.cell,
+                            np.linalg.inv(self._reference_structure.cell))-np.eye(3)
+        epsilon = (epsilon+epsilon.T)*0.5
+        epsilon = np.append(epsilon.diagonal(),
+                            np.roll(epsilon, -1, axis=0).diagonal())
+        pressure = -np.einsum('ij,j->i', self._stiffness_tensor, epsilon)
+        self._pressure = pressure[3:]*np.roll(np.eye(3), -1, axis=1)
+        self._pressure += self._pressure.T+np.eye(3)*pressure[:3]
+        return -np.sum(epsilon*pressure)*self.structure.get_volume()
+
+    def interactive_position_setter(self, positions):
+        self.structure.positions = positions.copy()
+
+    def get_displacements(self):
+        displacements = self.structure.get_scaled_positions()
+        displacements -= self._reference_structure.get_scaled_positions()
+        displacements -= np.rint(displacements)
+        displacements = np.einsum('ji,ni->nj', self.structure.cell, displacements)
+        return displacements
+
     def calculate_forces(self):
-        self.interactive_cache["displacements"].append(self._next_positions)
-        position_transformed = self._next_positions.reshape(
-            self._next_positions.shape[0] * self._next_positions.shape[1])
+        displacements = self.get_displacements()
+        self.interactive_cache["displacements"].append(displacements)
+        position_transformed = displacements.reshape(
+            displacements.shape[0] * displacements.shape[1])
         forces_transformed = -np.dot(self._force_constants, position_transformed)
-        self._forces = forces_transformed.reshape(self._next_positions.shape)
+        self._forces = forces_transformed.reshape(displacements.shape)
         self._energy_pot = -1 / 2 * np.dot(position_transformed, forces_transformed)
-        self._next_positions = None
+        self._energy_pot += self.get_pV()
 
     def run_if_interactive(self):
         """
