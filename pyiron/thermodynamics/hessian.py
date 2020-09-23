@@ -21,38 +21,59 @@ class HessianJob(GenericInteractive):
         super(HessianJob, self).__init__(project, job_name)
         self.__version__ = "0.0.1"
         self.__name__ = "HessianJob"
-        self.server.run_mode.interactive = True
+        self._python_only_job = True
         self._force_constants = None
         self._reference_structure = None
         self._energy_pot = 0
         self._forces = np.zeros(3)
-        self._pressure = np.zeros((3,3))
-        self._stiffness_tensor = np.zeros((6,6))
+        self._pressure = np.zeros((3, 3))
+        self._stiffness_tensor = np.zeros((6, 6))
         self._pressure_times_volume = 0
+        self._displacements = np.zeros(3)
+
+    @property
+    def structure(self):
+        return GenericInteractive.structure.fget(self)
+
+    @structure.setter
+    def structure(self, structure):
+        if self._reference_structure is None:
+            self.set_reference_structure(structure)
+        GenericInteractive.structure.fset(self, structure)
+
+    def run_static(self):
+        run_mode = self.server.run_mode.mode
+        self.interactive_open()
+        self.run_if_interactive()
+        self.interactive_close()
+        self.server.run_mode = run_mode
 
     def set_elastic_moduli(self, bulk_modulus=0, shear_modulus=0):
-        self._stiffness_tensor = np.zeros((6,6))
-        self._stiffness_tensor[:3,:3] = bulk_modulus-2*shear_modulus/3
-        self._stiffness_tensor[:3,:3] += np.eye(3)*2*shear_modulus
-        self._stiffness_tensor[3:,3:] = np.eye(3)*shear_modulus
+        self._stiffness_tensor = np.zeros((6, 6))
+        self._stiffness_tensor[:3, :3] = bulk_modulus-2*shear_modulus/3
+        self._stiffness_tensor[:3, :3] += np.eye(3)*2*shear_modulus
+        self._stiffness_tensor[3:, 3:] = np.eye(3)*shear_modulus
 
     def set_force_constants(self, force_constants):
         if self.structure is None:
             raise ValueError('Set reference structure via set_reference_structure() first')
         n_atom = len(self.structure.positions)
-        if len(np.array([force_constants]).flatten())==1:
+        if len(np.array([force_constants]).flatten()) == 1:
             self._force_constants = force_constants*np.eye(3*n_atom)
-        elif np.array(force_constants).shape==(3*n_atom, 3*n_atom):
+        elif np.array(force_constants).shape == (3*n_atom, 3*n_atom):
             self._force_constants = force_constants
-        elif np.array(force_constants).shape==(n_atom, n_atom):
+        elif np.array(force_constants).shape == (n_atom, n_atom):
             na = np.newaxis
-            self._force_constants = (np.array(force_constants)[:,na,:,na]*np.eye(3)[na,:,na,:]).flatten()
-        elif len(np.shape(force_constants))==4:
+            self._force_constants = (np.array(force_constants)[:, na, :, na]*np.eye(3)[na, :, na, :]).flatten()
+        elif len(np.shape(force_constants)) == 4:
             force_shape = np.shape(force_constants)
-            if force_shape[2]==3 and force_shape[3]==3:
+            if force_shape[2] == 3 and force_shape[3] == 3:
                 force_reshape = force_shape[0] * force_shape[2]
-                self._force_constants = np.transpose(force_constants, (0, 2, 1, 3)).reshape((force_reshape, force_reshape))
-            elif force_shape[1]==3 and force_shape[3]==3:
+                self._force_constants = np.transpose(
+                    force_constants,
+                    (0, 2, 1, 3)
+                ).reshape((force_reshape, force_reshape))
+            elif force_shape[1] == 3 and force_shape[3] == 3:
                 self._force_constants = np.array(force_constants).reshape(3*n_atom, 3*n_atom)
             else:
                 raise AssertionError('force constant shape not recognized')
@@ -93,13 +114,17 @@ class HessianJob(GenericInteractive):
         return self._pressure
 
     def interactive_cells_setter(self, cell):
-        if np.sum(self._stiffness_tensor)!=0:
-            epsilon = np.einsum('ij,jk->ik',
-                                self.structure.cell,
-                                np.linalg.inv(self._reference_structure.cell))-np.eye(3)
+        if np.sum(self._stiffness_tensor) != 0:
+            epsilon = np.einsum(
+                'ij,jk->ik',
+                self.structure.cell,
+                np.linalg.inv(self._reference_structure.cell)
+            )-np.eye(3)
             epsilon = (epsilon+epsilon.T)*0.5
-            epsilon = np.append(epsilon.diagonal(),
-                                np.roll(epsilon, -1, axis=0).diagonal())
+            epsilon = np.append(
+                epsilon.diagonal(),
+                np.roll(epsilon, -1, axis=0).diagonal()
+            )
             pressure = -np.einsum('ij,j->i', self._stiffness_tensor, epsilon)
             self._pressure = pressure[3:]*np.roll(np.eye(3), -1, axis=1)
             self._pressure += self._pressure.T+np.eye(3)*pressure[:3]
@@ -176,4 +201,3 @@ class HessianJob(GenericInteractive):
                 if "interactive" in h5.list_groups():
                     for key in h5["interactive"].list_nodes():
                         h5["generic/" + key] = h5["interactive/" + key]
-
