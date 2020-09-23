@@ -54,9 +54,9 @@ class HessianJob(GenericInteractive):
         raise AssertionError('force constant shape not recognized')
 
     def set_reference_structure(self, structure):
-        self._reference_structure = structure
+        self._reference_structure = structure.copy()
         if self.structure is None:
-            self.structure = structure
+            self.structure = structure.copy()
 
     def interactive_position_setter(self, positions):
         self.structure.positions = positions.copy()
