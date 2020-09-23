@@ -30,7 +30,7 @@ class TestSxExtOptInteractive(unittest.TestCase):
         self.assertAlmostEqual(np.linalg.norm(self.minim.ref_job['output/generic/forces'][-1], axis=-1).max(), 0)
 
     def test_minimizer(self):
-        self.minimizer = 'CG'
+        self.minim.minimizer = 'CG'
         self.assertEqual(self.minim.minimizer, 'CG')
 
 if __name__ == "__main__":
