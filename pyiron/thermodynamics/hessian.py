@@ -81,10 +81,10 @@ class HessianJob(GenericInteractive):
         return self.interactive_energy_pot_getter()
 
     def interactive_positions_getter(self):
-        return self.structure.positions
+        return self.structure.positions.copy()
 
     def interactive_cells_getter(self):
-        return self.structure.cell
+        return self.structure.cell.copy()
 
     def interactive_volume_getter(self):
         return self.structure.get_volume()
@@ -93,7 +93,6 @@ class HessianJob(GenericInteractive):
         return self._pressure
 
     def interactive_cells_setter(self, cell):
-        self.structure.cell = cell.copy()
         if np.sum(self._stiffness_tensor)!=0:
             epsilon = np.einsum('ij,jk->ik',
                                 self.structure.cell,
@@ -107,7 +106,6 @@ class HessianJob(GenericInteractive):
             self._pressure_times_volume = -np.sum(epsilon*pressure)*self.structure.get_volume()
 
     def interactive_positions_setter(self, positions):
-        self.structure.positions = positions.copy()
         displacements = self.structure.get_scaled_positions()
         displacements -= self._reference_structure.get_scaled_positions()
         displacements -= np.rint(displacements)
