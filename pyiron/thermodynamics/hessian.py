@@ -21,6 +21,7 @@ class HessianJob(GenericInteractive):
         super(HessianJob, self).__init__(project, job_name)
         self.__version__ = "0.0.1"
         self.__name__ = "HessianJob"
+        self._python_only_job = True
         self._force_constants = None
         self._reference_structure = None
         self._energy_pot = 0
@@ -39,15 +40,6 @@ class HessianJob(GenericInteractive):
         if self._reference_structure is None:
             self.set_reference_structure(structure)
         GenericInteractive.structure.fset(self, structure)
-
-    def write_input(self):
-        pass
-
-    def collect_output(self):
-        pass
-
-    def collect_logfiles(self):
-        pass
 
     def run_static(self):
         run_mode = self.server.run_mode.mode
