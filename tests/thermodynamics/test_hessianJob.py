@@ -33,6 +33,8 @@ class TestHessianJob(unittest.TestCase):
         cls.job.run()
         cls.job.structure.positions[0, 1] -= 0.1
         cls.job.run()
+        cls.job.structure.positions[0,1] -= 0.1
+        cls.job.run()
 
     @classmethod
     def tearDownClass(cls):
