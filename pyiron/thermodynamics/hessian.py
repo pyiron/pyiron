@@ -28,6 +28,7 @@ class HessianJob(GenericInteractive):
         self._forces = np.zeros(3)
         self._pressure = np.zeros((3,3))
         self._stiffness_tensor = np.zeros((6,6))
+        self._pressure_times_volume = 0
 
     def set_elastic_moduli(self, bulk_modulus=0, shear_modulus=0):
         self._stiffness_tensor = np.zeros((6,6))
@@ -91,39 +92,43 @@ class HessianJob(GenericInteractive):
     def interactive_pressures_getter(self):
         return self._pressure
 
-    def get_pV(self):
-        if np.sum(self._stiffness_tensor)==0:
-            return 0
-        epsilon = np.einsum('ij,jk->ik',
-                            self.structure.cell,
-                            np.linalg.inv(self._reference_structure.cell))-np.eye(3)
-        epsilon = (epsilon+epsilon.T)*0.5
-        epsilon = np.append(epsilon.diagonal(),
-                            np.roll(epsilon, -1, axis=0).diagonal())
-        pressure = -np.einsum('ij,j->i', self._stiffness_tensor, epsilon)
-        self._pressure = pressure[3:]*np.roll(np.eye(3), -1, axis=1)
-        self._pressure += self._pressure.T+np.eye(3)*pressure[:3]
-        return -np.sum(epsilon*pressure)*self.structure.get_volume()
+    def interactive_cells_setter(self, cell):
+        self.structure.cell = cell.copy()
+        if np.sum(self._stiffness_tensor)!=0:
+            epsilon = np.einsum('ij,jk->ik',
+                                self.structure.cell,
+                                np.linalg.inv(self._reference_structure.cell))-np.eye(3)
+            epsilon = (epsilon+epsilon.T)*0.5
+            epsilon = np.append(epsilon.diagonal(),
+                                np.roll(epsilon, -1, axis=0).diagonal())
+            pressure = -np.einsum('ij,j->i', self._stiffness_tensor, epsilon)
+            self._pressure = pressure[3:]*np.roll(np.eye(3), -1, axis=1)
+            self._pressure += self._pressure.T+np.eye(3)*pressure[:3]
+            self._pressure_times_volume = -np.sum(epsilon*pressure)*self.structure.get_volume()
 
-    def interactive_position_setter(self, positions):
+    def interactive_positions_setter(self, positions):
         self.structure.positions = positions.copy()
-
-    def get_displacements(self):
         displacements = self.structure.get_scaled_positions()
         displacements -= self._reference_structure.get_scaled_positions()
         displacements -= np.rint(displacements)
-        displacements = np.einsum('ji,ni->nj', self.structure.cell, displacements)
-        return displacements
+        self._displacements = np.einsum('ji,ni->nj', self.structure.cell, displacements)
 
     def calculate_forces(self):
-        displacements = self.get_displacements()
-        self.interactive_cache["displacements"].append(displacements)
-        position_transformed = displacements.reshape(
-            displacements.shape[0] * displacements.shape[1])
+        position_transformed = self._displacements.reshape(
+            self._displacements.shape[0] * self._displacements.shape[1])
         forces_transformed = -np.dot(self._force_constants, position_transformed)
-        self._forces = forces_transformed.reshape(displacements.shape)
+        self._forces = forces_transformed.reshape(self._displacements.shape)
         self._energy_pot = -1 / 2 * np.dot(position_transformed, forces_transformed)
-        self._energy_pot += self.get_pV()
+        self._energy_pot += self._pressure_times_volume
+
+    def interactive_collect(self):
+        super(HessianJob, self).interactive_collect()
+        self.interactive_cache["displacements"].append(self._displacements)
+
+    def interactive_initialize_interface(self):
+        self.interactive_positions_setter(self.structure.positions)
+        self.interactive_cells_setter(self.structure.cell)
+        self._interactive_library = True
 
     def run_if_interactive(self):
         """
@@ -132,9 +137,9 @@ class HessianJob(GenericInteractive):
         Returns:
             int: job ID
         """
-        self._interactive_library = True
-        self.status.running = True
-        self.interactive_position_setter(positions=self.structure.positions)
+        super(HessianJob, self).run_if_interactive()
+        # self.status.running = True
+        # self.interactive_position_setter(positions=self.structure.positions)
         self.calculate_forces()
         self.interactive_collect()
 

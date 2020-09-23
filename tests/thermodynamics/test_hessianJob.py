@@ -24,10 +24,12 @@ class TestHessianJob(unittest.TestCase):
             positions=[[0, 0, 0], [1, 1, 1]], elements=["Fe", "Fe"], cell=2 * np.eye(3)
         )
         cls.job.set_reference_structure(structure)
+        cls.job.structure.apply_strain(0.01)
         cls.job.structure.positions[0,0] = 0.1
         cls.job.structure.positions[0,1] -= 0.1
         cls.job.structure.center_coordinates_in_unit_cell()
-        cls.job.set_force_constants(1)
+        cls.job.set_force_constants(force_constants=1)
+        cls.job.set_elastic_moduli(bulk_modulus=1, shear_modulus=1)
         cls.job.run()
 
     @classmethod
@@ -39,6 +41,7 @@ class TestHessianJob(unittest.TestCase):
     def test_forces(self):
         self.assertAlmostEqual(self.job.output.forces[0,0,0], -0.1)
         self.assertAlmostEqual(self.job.output.forces[0,0,1], 0.1)
+        self.assertAlmostEqual(self.job.output.pressures[0,0,0], -0.03)
 
 
 if __name__ == "__main__":
