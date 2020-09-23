@@ -23,19 +23,22 @@ class TestPhonopy(unittest.TestCase):
 
     def test_run(self):
         job = self.project.create_job(
-            'EinsteinExampleJob', "job_test"
+            'HessianJob', "job_test"
         )
         basis = CrystalStructure(
-            element="Fe", bravais_basis="bcc", lattice_constant=2.83
+            element="Fe", bravais_basis="bcc", lattice_constant=2.85
         )
-        basis.set_initial_magnetic_moments([2,2])
-        job.input['displacement_mag'] = 0
-        job.input['volume_per_atom'] = basis.get_volume(per_atom=True)
-        job.structure = basis
+        basis.set_initial_magnetic_moments([2]*len(basis))
+        job.set_reference_structure(basis)
         phono = job.create_job("PhonopyJob", "phono")
         structure = phono.list_structures()[0]
         magmoms = structure.get_initial_magnetic_moments()
         self.assertAlmostEqual(sum(magmoms-2), 0)
+        rep = phono._phonopy_supercell_matrix().diagonal().astype(int)
+        job._reference_structure.set_repeat(rep)
+        job.structure.set_repeat(rep)
+        job.set_force_constants(1)
+        # phono.run() # removed because somehow it's extremely slow
 
 
 if __name__ == "__main__":
