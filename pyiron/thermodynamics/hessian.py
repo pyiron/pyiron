@@ -31,6 +31,16 @@ class HessianJob(GenericInteractive):
         self._pressure_times_volume = 0
         self._displacements = np.zeros(3)
 
+    @property
+    def structure(self):
+        return GenericInteractive.structure.fget(self)
+
+    @structure.setter
+    def structure(self, structure):
+        if self._reference_structure is None:
+            self.set_reference_structure(structure)
+        GenericInteractive.structure.fset(self, structure)
+
     def write_input(self):
         pass
 
