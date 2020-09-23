@@ -22,14 +22,16 @@ class HessianJob(GenericInteractive):
         self.__version__ = "0.0.1"
         self.__name__ = "HessianJob"
         self.server.run_mode.interactive = True
-        self.interactive_cache = {
-            "forces": [],
-            "positions": [],
-            "energy_pot": []
-        }
+        # self.interactive_cache = {
+        #     "forces": [],
+        #     "positions": [],
+        #     "energy_pot": []
+        # }
         self._force_constants = None
         self._reference_structure = None
         self._next_positions = None
+        self._energy = None
+        self._forces = None
 
     def set_force_constants(self, force_constants):
         if self.structure is None:
@@ -59,17 +61,41 @@ class HessianJob(GenericInteractive):
             self.structure = structure
 
     def interactive_position_setter(self, positions):
+        self.structure.positions = positions.copy()
         positions -= self._reference_structure.positions
         positions[positions > self._reference_structure.cell[0, 0] / 2] -= self._reference_structure.cell[0, 0]
+        positions[positions < -self._reference_structure.cell[0, 0] / 2] += self._reference_structure.cell[0, 0]
         self._next_positions = positions
 
+    def validate_ready_to_run(self):
+        super(HessianJob, self).validate_ready_to_run()
+        if self._force_constants is None:
+            raise AssertionError('set force constants by set_force_constants before run')
+        if self._reference_structure is None:
+            raise AssertionError('set reference structure by set_reference_structure before run')
+
+    def interactive_forces_getter(self):
+        return self._forces
+
+    def interactive_energy_pot_getter(self):
+        return self._energy
+
+    def interactive_positions_getter(self):
+        return self.structure.positions
+
+    def interactive_cells_getter(self):
+        return self.structure.cell
+
+    def interactive_volume_getter(self):
+        return self.structure.get_volume()
+
     def calculate_forces(self):
-        self.interactive_cache["positions"].append(self._next_positions)
+        self.interactive_cache["displacements"].append(self._next_positions)
         position_transformed = self._next_positions.reshape(
             self._next_positions.shape[0] * self._next_positions.shape[1])
         forces_transformed = -np.dot(self._force_constants, position_transformed)
-        self.interactive_cache["forces"].append(forces_transformed.reshape(self._next_positions.shape))
-        self.interactive_cache["energy_pot"].append(-1 / 2 * np.dot(position_transformed, forces_transformed))
+        self._forces = forces_transformed.reshape(self._next_positions.shape)
+        self._energy_pot = -1 / 2 * np.dot(position_transformed, forces_transformed)
         self._next_positions = None
 
     def run_if_interactive(self):
@@ -83,6 +109,7 @@ class HessianJob(GenericInteractive):
         self.status.running = True
         self.interactive_position_setter(positions=self.structure.positions)
         self.calculate_forces()
+        self.interactive_collect()
 
     def to_hdf(self, hdf=None, group_name=None):
         """
@@ -115,11 +142,10 @@ class HessianJob(GenericInteractive):
                 self._force_constants = hdf5_input["force_constants"]
 
     def interactive_close(self):
-        self._interactive_library = False
-        self.to_hdf()
-        with self.project_hdf5.open("output") as h5:
-            h5["generic/forces"] = np.array(self.interactive_cache["forces"])
-            h5["generic/energy_pot"] = np.array(self.interactive_cache["energy_pot"])
-            h5["generic/positions"] = np.array(self.interactive_cache["positions"])
-        self.project.db.item_update(self._runtime(), self._job_id)
-        self.status.finished = True
+        if self.interactive_is_activated():
+            super(HessianJob, self).interactive_close()
+            with self.project_hdf5.open("output") as h5:
+                if "interactive" in h5.list_groups():
+                    for key in h5["interactive"].list_nodes():
+                        h5["generic/" + key] = h5["interactive/" + key]
+
