@@ -19,23 +19,26 @@ class TestPhonopy(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
-        project = Project(os.path.join(cls.file_location, "test_phonopy"))
-        project.remove(enable=True, enforce=True)
+        cls.project.remove(enable=True, enforce=True)
 
     def test_run(self):
         job = self.project.create_job(
-            self.project.job_type.AtomisticExampleJob, "job_test"
+            'HessianJob', "job_test"
         )
         basis = CrystalStructure(
-            element="Fe", bravais_basis="bcc", lattice_constant=2.83
+            element="Fe", bravais_basis="bcc", lattice_constant=2.85
         )
-        basis.set_initial_magnetic_moments([2,2])
-        job.structure = basis
-        job.server.run_mode.interactive = True
+        basis.set_initial_magnetic_moments([2]*len(basis))
+        job.set_reference_structure(basis)
         phono = job.create_job("PhonopyJob", "phono")
         structure = phono.list_structures()[0]
         magmoms = structure.get_initial_magnetic_moments()
         self.assertAlmostEqual(sum(magmoms-2), 0)
+        rep = phono._phonopy_supercell_matrix().diagonal().astype(int)
+        job._reference_structure.set_repeat(rep)
+        job.structure.set_repeat(rep)
+        job.set_force_constants(1)
+        # phono.run() # removed because somehow it's extremely slow
 
 
 if __name__ == "__main__":

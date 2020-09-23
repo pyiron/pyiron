@@ -43,7 +43,7 @@ class TestMurnaghan(unittest.TestCase):
 
     def test_run(self):
         job = self.project.create_job(
-            self.project.job_type.AtomisticExampleJob, "job_test"
+            'AtomisticExampleJob', "job_test"
         )
         job.structure = self.basis
         job_ser = self.project.create_job(
@@ -53,7 +53,7 @@ class TestMurnaghan(unittest.TestCase):
         job_ser.set_goal(convergence_goal, eps=0.4)
         murn = self.project.create_job("Murnaghan", "murnaghan")
         murn.ref_job = job_ser
-        murn.input["num_points"] = 3
+        murn.input['num_points'] = 3
         murn.run()
         self.assertTrue(murn.status.finished)
         murn.remove()
