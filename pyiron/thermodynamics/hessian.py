@@ -35,7 +35,10 @@ class HessianJob(GenericInteractive):
         if len(np.array([force_constants]).flatten())==1:
             self._force_constants = force_constants*np.eye(3*n_atom)
             return
-        elif len(np.array(force_constants).flatten())==n_atom**2:
+        elif np.array(force_constants).shape==(3*n_atom, 3*n_atom):
+            self._force_constants = force_constants
+            return
+        elif np.array(force_constants).shape==(n_atom, n_atom):
             na = np.newaxis
             self._force_constants = (np.array(force_constants)[:,na,:,na]*np.eye(3)[na,:,na,:]).flatten()
             return
