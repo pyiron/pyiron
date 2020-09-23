@@ -25,6 +25,8 @@ class TestHessianJob(unittest.TestCase):
         )
         cls.job.set_reference_structure(structure)
         cls.job.structure.positions[0,0] = 0.1
+        cls.job.structure.positions[0,1] -= 0.1
+        cls.job.structure.center_coordinates_in_unit_cell()
         cls.job.set_force_constants(1)
         cls.job.run()
 
@@ -36,6 +38,7 @@ class TestHessianJob(unittest.TestCase):
 
     def test_forces(self):
         self.assertAlmostEqual(self.job.output.forces[0,0,0], -0.1)
+        self.assertAlmostEqual(self.job.output.forces[0,0,1], 0.1)
 
 
 if __name__ == "__main__":
