@@ -58,9 +58,10 @@ class HessianJob(GenericInteractive):
 
     def interactive_position_setter(self, positions):
         self.structure.positions = positions.copy()
-        positions -= self._reference_structure.positions
-        positions[positions > self._reference_structure.cell[0, 0] / 2] -= self._reference_structure.cell[0, 0]
-        positions[positions < -self._reference_structure.cell[0, 0] / 2] += self._reference_structure.cell[0, 0]
+        self._next_positions = self.structure.get_scaled_positions()
+        self._next_positions -= self._reference_structure.get_scaled_positions()
+        self._next_positions -= np.rint(self._next_positions)
+        self._next_positions = np.einsum('ji,ni->nj', self.structure.cell, self._next_positions)
         self._next_positions = positions
 
     def validate_ready_to_run(self):
