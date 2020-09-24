@@ -297,10 +297,11 @@ class Project(ProjectCore):
                 ham.status.aborted = True
             else:
                 ham._import_directory = None
+                del ham['import_directory']
                 if copy_raw_files:
                     os.makedirs(ham.working_directory, exist_ok=True)
                     for f in os.listdir(project_to_import_from):
-                        src=os.path.join(project_to_import_from, f)
+                        src = os.path.join(project_to_import_from, f)
                         if os.path.isfile(src):
                             copyfile(
                                 src=src,
