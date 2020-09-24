@@ -41,6 +41,18 @@ class TestMurnaghan(unittest.TestCase):
         project = Project(os.path.join(cls.file_location, "test_murnaghan"))
         project.remove(enable=True, enforce=True)
 
+    def test_interactive_run(self):
+        job = self.project.create_job('HessianJob', 'hessian')
+        job.set_reference_structure(self.basis)
+        job.set_elastic_moduli(1, 1)
+        job.set_force_constants(1)
+        job.server.run_mode.interactive = True
+        murn = job.create_job('Murnaghan', 'murn_hessian')
+        murn.input['num_points'] = 5
+        murn.input['vol_range'] = 1e-5
+        murn.run()
+        self.assertAlmostEqual(self.basis.get_volume(), murn['output/equilibrium_volume'])
+
     def test_run(self):
         job = self.project.create_job(
             'AtomisticExampleJob', "job_test"
