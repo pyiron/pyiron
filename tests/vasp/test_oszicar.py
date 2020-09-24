@@ -33,14 +33,12 @@ class TestOszicar(unittest.TestCase):
 
     def test_energy_pot(self):
         for filename in self.file_list:
-            print(filename)
             self.oszicar_parser.from_file(filename=filename)
-            if "1" in filename:
+            if "OSZICAR_1" in filename:
                 energies = self.oszicar_parser.parse_dict["energy_pot"]
-                print("Type of parsed array:", (type(energies[0])), energies[0])
                 if isinstance(energies[0], np.float64):
                     self.assertTrue(np.array_equal(energies, [-17.7379867884]))
-            if "2" in filename:
+            if "OSZICAR_2" in filename:
                 energies = self.oszicar_parser.parse_dict["energy_pot"]
                 self.assertTrue(np.array_equal(energies, [-1166.23382927, -1166.07589814, -1165.76905678,
                                                           -1165.69531250, -1165.85096438]))
