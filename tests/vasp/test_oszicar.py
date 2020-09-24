@@ -6,6 +6,7 @@ import unittest
 import os
 import posixpath
 from pyiron.vasp.oszicar import Oszicar
+import numpy as np
 
 
 class TestOszicar(unittest.TestCase):
@@ -35,7 +36,9 @@ class TestOszicar(unittest.TestCase):
             self.oszicar_parser.from_file(filename=filename)
             if "1" in filename:
                 energies = self.oszicar_parser.parse_dict["energy_pot"]
-                self.assertTrue(all([abs(energies[i] - val) < 1e-9 for i, val in enumerate([-17.7379867884])]))
+                print("Type of parsed array:", (type(energies[0])))
+                if isinstance(energies[0], np.float64):
+                    self.assertTrue(all([abs(energies[i] - val) < 1e-9 for i, val in enumerate([-17.7379867884])]))
             if "2" in filename:
                 energies = self.oszicar_parser.parse_dict["energy_pot"]
                 self.assertTrue(all([abs(energies[i] - val) < 1e-9 for i, val
