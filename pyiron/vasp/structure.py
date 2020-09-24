@@ -95,7 +95,7 @@ def write_poscar(structure, filename="POSCAR", write_species=True, cartesian=Tru
         f.write("1.0" + endline)
         for a_i in structure.get_cell():
             x, y, z = a_i
-            f.write("{0:.15f} {1:.15f} {2:.15f}".format(x, y, z) + endline)
+            f.write("{0:.15e} {1:.15e} {2:.15e}".format(x, y, z) + endline)
         atom_numbers = structure.get_number_species_atoms()
         if write_species:
             f.write(" ".join(atom_numbers.keys()) + endline)
@@ -125,7 +125,7 @@ def write_poscar(structure, filename="POSCAR", write_species=True, cartesian=Tru
                 x, y, z = vec
                 sd_string = " ".join(["T" if sd else "F" for sd in selec_dyn_lst[i]])
                 f.write(
-                    "{0:.15f} {1:.15f} {2:.15f}".format(x, y, z)
+                    "{0:.15e} {1:.15e} {2:.15e}".format(x, y, z)
                     + " "
                     + sd_string
                     + endline
@@ -133,7 +133,7 @@ def write_poscar(structure, filename="POSCAR", write_species=True, cartesian=Tru
         else:
             for i, vec in enumerate(sorted_coords):
                 x, y, z = vec
-                f.write("{0:.15f} {1:.15f} {2:.15f}".format(x, y, z) + endline)
+                f.write("{0:.15e} {1:.15e} {2:.15e}".format(x, y, z) + endline)
 
 
 def atoms_from_string(string, read_velocities=False, species_list=None):
