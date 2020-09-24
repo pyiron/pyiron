@@ -3690,6 +3690,13 @@ class Neighbors:
         else:
             raise TypeError("Only lists and np.arrays are supported.")
 
+    def get_global_shells(self, decimals=5):
+        if self.distances is None:
+            raise ValueError('neighbors not set')
+        distances = np.unique(np.round(a=self.distances, decimals=decimals))
+        shells = self.distances[:,:,np.newaxis]-distances[np.newaxis,np.newaxis,:]
+        shells = np.absolute(shells).argmin(axis=-1)
+        return shells
 
 class CrystalStructure(object):
     def __new__(cls, *args, **kwargs):
