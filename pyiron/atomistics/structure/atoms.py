@@ -3700,7 +3700,7 @@ class Neighbors:
             decimals (int): decimals in np.round for rounding up distances
 
         Returns:
-            shells (ndarray): shell indices (cf. shells)
+            shells (numpy.ndarray): shell indices (cf. shells)
         """
         if self.distances is None:
             raise ValueError('neighbors not set')

@@ -741,10 +741,10 @@ class TestAtoms(unittest.TestCase):
             self.assertIsInstance(w[-1].message, DeprecationWarning)
         structure = CrystalStructure(elements='Fe', lattice_constant=2.83, bravais='bcc').repeat(2)
         neigh = structure.get_neighbors()
-        self.assertTrue(np.all(neigh.shells==neigh.get_global_shells()))
+        self.assertTrue(np.array_equal(neigh.shells, neigh.get_global_shells()))
         structure += Atoms(elements='C', positions=[[0, 0, 0.5*2.83]])
         neigh = structure.get_neighbors()
-        self.assertFalse(np.all(neigh.shells==neigh.get_global_shells()))
+        self.assertFalse(np.array_equal(neigh.shells, neigh.get_global_shells()))
 
     def test_center_coordinates(self):
         cell = 2.2 * np.identity(3)
