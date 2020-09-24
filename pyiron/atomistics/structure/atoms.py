@@ -3691,11 +3691,22 @@ class Neighbors:
             raise TypeError("Only lists and np.arrays are supported.")
 
     def get_global_shells(self, decimals=5):
+        """
+        Set shell indices based on all distances available in the system instead of
+        setting them according to the local distances (in contrast to shells defined
+        as an attribute in this class)
+
+        Args:
+            decimals (int): decimals in np.round for rounding up distances
+
+        Returns:
+            shells (ndarray): shell indices (cf. shells)
+        """
         if self.distances is None:
             raise ValueError('neighbors not set')
         distances = np.unique(np.round(a=self.distances, decimals=decimals))
         shells = self.distances[:,:,np.newaxis]-distances[np.newaxis,np.newaxis,:]
-        shells = np.absolute(shells).argmin(axis=-1)
+        shells = np.absolute(shells).argmin(axis=-1)+1
         return shells
 
 class CrystalStructure(object):
