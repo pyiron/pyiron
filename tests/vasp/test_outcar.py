@@ -23,6 +23,7 @@ class TestOutcar(unittest.TestCase):
                 )
             )
         )
+        file_list = sorted(file_list)
         for f in file_list:
             direc = os.path.abspath(
                 os.path.join(
@@ -552,7 +553,7 @@ class TestOutcar(unittest.TestCase):
             output = self.outcar_parser.get_dipole_moments(filename)
             self.assertTrue(output)
             self.assertIsInstance(output, list)
-            if len(output) > 1:
+            if len(output[0]) > 1:
                 self.assertIsInstance(output[-1], np.ndarray)
                 self.assertIsInstance(output[-1][-1], np.ndarray)
                 self.assertEqual(len(output[-1][-1]), 3)
@@ -689,10 +690,26 @@ class TestOutcar(unittest.TestCase):
                 self.assertEqual(output_all.__str__(), output.__str__())
 
     def test_get_nelect(self):
-        n_elect_list = [40.0, 16.0, 16.0, 16.0, 16.0, 16.0, 224.0, 358.0]
+        n_elect_list = [40.0, 16.0, 16.0, 16.0, 16.0, 16.0, 224.0, 358.0, 8]
         for filename in self.file_list:
             i = int(filename.split("_")[-1]) - 1
             self.assertEqual(n_elect_list[i], self.outcar_parser.get_nelect(filename))
+
+    def test_get_band_properties(self):
+        fermi_level_list = [2.9738, 5.9788, 5.9613, 5.9613, 5.9614, 5.9614, 3.9092]
+        vbm_level_list = [3.076, 6.5823, 6.6175, 6.6175, 6.618, 6.618]
+        cbm_level_list = [4.3112, 6.7396, 6.8568, 6.8568, 6.8569, 6.8569]
+        for i, filename in enumerate(self.file_list):
+            fermi_list, vbm_list, cbm_list = \
+                self.outcar_parser.get_band_properties(filename=filename)
+            if i <= 5:
+                self.assertEqual(fermi_list[-1], fermi_level_list[i])
+                self.assertEqual(vbm_list[-1], vbm_level_list[i])
+                self.assertEqual(cbm_list[-1], cbm_level_list[i])
+            elif i == 8:
+                self.assertTrue(np.array_equal(fermi_list, [-7.3532, -5.7586]))
+                self.assertTrue(np.array_equal(vbm_list, [-9.7778, -7.9449]))
+                self.assertTrue(np.array_equal(cbm_list, [-1.8327, -3.5781]))
 
 
 if __name__ == "__main__":

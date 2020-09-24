@@ -7,6 +7,7 @@ import numpy as np
 import os
 from pyiron.project import Project
 from pyiron.vasp.vasp import Vasp
+import warnings
 
 
 class TestVaspImport(unittest.TestCase):
@@ -33,8 +34,24 @@ class TestVaspImport(unittest.TestCase):
         self.assertTrue(
             np.array_equal(ham.structure.get_initial_magnetic_moments(), [-1, -1])
         )
-        self.assertRaises(IOError, ham.get_final_structure_from_file)
         self.assertIsInstance(ham.output.unwrapped_positions, np.ndarray)
+
+        self.assertEqual(ham["output/structure/positions"][1, 2], 2.7999999999999997 * 0.4999999999999999)
+        self.assertEqual(ham["output/generic/dft/e_fermi_list"][-1], 5.9788)
+        self.assertEqual(ham["output/generic/dft/vbm_list"][-1], 6.5823)
+        self.assertEqual(ham["output/generic/dft/cbm_list"][-1], 6.7396)
+        folder_path = os.path.join(
+            self.file_location, "../static/vasp_test_files/full_job_minor_glitch"
+        )
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            self.project.import_from_path(path=folder_path, recursive=False)
+            self.assertEqual(len(w), 3)
+        ham = self.project.load("full_job_minor_glitch")
+        self.assertTrue(isinstance(ham, Vasp))
+        self.assertEqual(ham.get_nelect(), 16)
+        self.assertIsInstance(ham.output.unwrapped_positions, np.ndarray)
+        self.assertEqual(ham["output/generic/dft/scf_energy_free"][0][1], 0.0)
 
     def test_incar_import(self):
         file_path = os.path.join(

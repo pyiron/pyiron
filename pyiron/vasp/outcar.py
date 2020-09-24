@@ -63,6 +63,7 @@ class Outcar(object):
         kin_energy_error = self.get_kinetic_energy_error(filename=filename, lines=lines)
         stresses = self.get_stresses(filename=filename, si_unit=False, lines=lines)
         n_elect = self.get_nelect(filename=filename, lines=lines)
+        e_fermi_list, vbm_list, cbm_list = self.get_band_properties(filename=filename, lines=lines)
         try:
             irreducible_kpoints = self.get_irreducible_kpoints(
                 filename=filename, lines=lines
@@ -94,6 +95,9 @@ class Outcar(object):
         self.parse_dict["final_magmoms"] = final_magmom_lst
         self.parse_dict["broyden_mixing"] = broyden_mixing
         self.parse_dict["n_elect"] = n_elect
+        self.parse_dict["e_fermi_list"] = e_fermi_list
+        self.parse_dict["vbm_list"] = vbm_list
+        self.parse_dict["cbm_list"] = cbm_list
 
         try:
             self.parse_dict["pressures"] = (
@@ -107,7 +111,7 @@ class Outcar(object):
         Store output in an HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.FileHDFio): HDF5 group or file
+            hdf (pyiron_base.generic.hdfio.FileHDFio): HDF5 group or file
             group_name (str): Name of the HDF5 group
         """
         with hdf.open(group_name) as hdf5_output:
@@ -119,7 +123,7 @@ class Outcar(object):
         Store minimal output in an HDF5 file (output unique to OUTCAR)
 
         Args:
-            hdf (pyiron.base.generic.hdfio.FileHDFio): HDF5 group or file
+            hdf (pyiron_base.generic.hdfio.FileHDFio): HDF5 group or file
             group_name (str): Name of the HDF5 group
         """
         unique_quantities = [
@@ -138,7 +142,7 @@ class Outcar(object):
         Load output from an HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.FileHDFio): HDF5 group or file
+            hdf (pyiron_base.generic.hdfio.FileHDFio): HDF5 group or file
             group_name (str): Name of the HDF5 group
         """
         with hdf.open(group_name) as hdf5_output:
@@ -773,6 +777,43 @@ class Outcar(object):
             return int(lines[trigger_indices[0]].split(ions_trigger)[-1])
         else:
             raise ValueError()
+
+    @staticmethod
+    def get_band_properties(filename="OUTCAR", lines=None):
+        fermi_trigger = "E-fermi"
+        fermi_trigger_indices, lines = _get_trigger(
+            lines=lines, filename=filename, trigger=fermi_trigger
+        )
+        fermi_level_list = list()
+        vbm_level_list = list()
+        cbm_level_list = list()
+        for ind in fermi_trigger_indices:
+            fermi_level_list.append(float(lines[ind].strip().split()[2]))
+        band_trigger = "band No.  band energies     occupation"
+        for n, ind in enumerate(fermi_trigger_indices):
+            if n == len(fermi_trigger_indices) - 1:
+                trigger_indices, lines_new = _get_trigger(
+                    lines=lines[ind:-1], filename=filename, trigger=band_trigger
+                )
+            else:
+                trigger_indices, lines_new = _get_trigger(
+                    lines=lines[ind:fermi_trigger_indices[n+1]], filename=filename, trigger=band_trigger
+                )
+            band_data = list()
+            for ind in trigger_indices:
+                for line in lines_new[ind+1:]:
+                    data = line.strip().split()
+                    if len(data) != 3:
+                        break
+                    band_data.append([float(d) for d in data[1:]])
+            if len(band_data) > 0:
+                band_energy, band_occ = [np.array(band_data)[:, i] for i in range(2)]
+                args = np.argsort(band_energy)
+                band_occ = band_occ[args]
+                band_energy = band_energy[args]
+                cbm_level_list.append(band_energy[np.abs(band_occ) < 1e-6][0])
+                vbm_level_list.append(band_energy[np.abs(band_occ) >= 1e-6][-1])
+        return np.array(fermi_level_list), np.array(vbm_level_list), np.array(cbm_level_list)
 
     @staticmethod
     def _get_positions_and_forces_parser(

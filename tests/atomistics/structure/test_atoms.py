@@ -8,11 +8,10 @@ import os
 import warnings
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
-from pyiron.atomistics.structure.generator import create_ase_bulk, create_surface, create_hkl_surface
+from pyiron.atomistics.structure.generator import create_ase_bulk, create_surface, create_hkl_surface, create_structure
 from pyiron.atomistics.structure.sparse_list import SparseList
 from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement
-from pyiron.base.generic.hdfio import FileHDFio, ProjectHDFio
-from pyiron.base.project.generic import Project
+from pyiron_base import FileHDFio, ProjectHDFio, Project
 from ase.cell import Cell as ASECell
 from ase.atoms import Atoms as ASEAtoms
 
@@ -687,6 +686,7 @@ class TestAtoms(unittest.TestCase):
                 -1 * np.ones(len(basis.select_index("O"))),
             )
         )
+        self.assertEqual(8 * len(self.CO2), len(self.CO2.repeat(np.int64(2))))
 
     def test_boundary(self):
         cell = 2.2 * np.identity(3)
@@ -1042,6 +1042,9 @@ class TestAtoms(unittest.TestCase):
         self.assertAlmostEqual(basis_Fe.cell[0, 0], 2.85)
         basis_Fe.apply_strain(0.01)
         self.assertAlmostEqual(basis_Fe.cell[0,0], 2.85*1.01)
+        basis_Fe = CrystalStructure("Fe", bravais_basis="bcc", lattice_constants=2.85)
+        basis_Fe.apply_strain(0.01*np.eye(3))
+        self.assertAlmostEqual(basis_Fe.cell[0,0], 2.85*1.01)
 
     def test_get_spherical_coordinates(self):
         basis_Fe = CrystalStructure("Fe", bravais_basis="bcc", lattice_constants=2.85)
@@ -1237,6 +1240,23 @@ class TestAtoms(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             basis_1 += basis_2
+            self.assertEqual(len(w), 1)
+        a_0 = 2.86
+        structure = create_structure('Fe', 'bcc', a_0)
+        carbon = Atoms(symbols=['C'], positions=[[0, 0, 0.5 * a_0]])
+        structure += carbon
+        self.assertEqual(carbon.indices[0], 0)
+
+    def test_append(self):
+        a_0 = 2.86
+        structure = create_structure('Fe', 'bcc', a_0)
+        carbon = Atoms(symbols=['C'], positions=[[0, 0, 0.5 * a_0]], pbc=True)
+        with warnings.catch_warnings(record=True) as w:
+            structure.append(carbon)
+            self.assertEqual(len(w), 0)
+            structure = create_structure('Fe', 'bcc', a_0)
+            carbon.cell = np.random.rand(3)
+            structure.append(carbon)
             self.assertEqual(len(w), 1)
 
     def test__delitem__(self):

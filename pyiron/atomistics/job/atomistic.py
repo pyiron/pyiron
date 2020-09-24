@@ -9,9 +9,7 @@ import numpy as np
 import warnings
 
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.base.generic.parameters import GenericParameters
-from pyiron.base.job.generic import GenericJob as GenericJobCore
-from pyiron.base.master.generic import GenericMaster
+from pyiron_base import GenericParameters, GenericMaster, GenericJob as GenericJobCore
 
 try:
     from pyiron.base.project import ProjectGUI

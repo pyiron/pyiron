@@ -19,7 +19,7 @@ from pyiron.atomistics.structure.periodic_table import (
     PeriodicTable,
     ChemicalElement
 )
-from pyiron.base.settings.generic import Settings
+from pyiron_base import Settings
 from scipy.spatial import cKDTree, Voronoi
 import spglib
 
@@ -347,7 +347,7 @@ class Atoms(ASEAtoms):
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
             group_name (str):
                 Group name with which the object should be stored. This same name should be used to retrieve the object
 
@@ -399,7 +399,7 @@ class Atoms(ASEAtoms):
         Retrieve the object from a HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.generic.hdfio.FileHDFio): HDF path to which the object is to be saved
             group_name (str): Group name from which the Atoms object is retreived.
 
         Returns:
@@ -2598,6 +2598,16 @@ class Atoms(ASEAtoms):
         else:
             return dist
 
+    def append(self, atom):
+        if isinstance(atom, ASEAtom):
+            super(Atoms, self).append(atom=atom)
+        else:
+            new_atoms = atom.copy()
+            if new_atoms.pbc.all() and np.isclose(new_atoms.get_volume(), 0):
+                new_atoms.cell = self.cell
+                new_atoms.pbc = self.pbc
+            self += new_atoms
+
     def extend(self, other):
         """
         Extend atoms object by appending atoms from *other*. (Extending the ASE function)
@@ -2618,7 +2628,7 @@ class Atoms(ASEAtoms):
             warnings.warn("Converting ase structure to pyiron before appending the structure")
             other = ase_to_pyiron(other)
 
-        new_indices = other.indices
+        new_indices = other.indices.copy()
         super(Atoms, self).extend(other=other)
         if isinstance(other, Atoms):
             if not np.allclose(self.cell, other.cell):
@@ -2891,7 +2901,7 @@ class Atoms(ASEAtoms):
     __mul__ = repeat
 
     def __imul__(self, vec):
-        if isinstance(vec, int):
+        if isinstance(vec, (int, np.integer)):
             vec = [vec] * self.dimension
         initial_length = len(self)
         if not hasattr(vec, '__len__'):
@@ -3008,7 +3018,7 @@ class Atoms(ASEAtoms):
         epsilon = np.array([epsilon]).flatten()
         if len(epsilon) == 3 or len(epsilon) == 1:
             epsilon = epsilon*np.eye(3)
-        epsilon.reshape(3, 3)
+        epsilon = epsilon.reshape(3, 3)
         if epsilon.min() < -1.0:
             raise ValueError("Strain value too negative")
         if return_box:

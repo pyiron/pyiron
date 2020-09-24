@@ -275,7 +275,7 @@ class VolumetricData(object):
         Writes the data as a group to a HDF5 file
 
         Args:
-            hdf5 (pyiron.base.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
+            hdf5 (pyiron_base.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
             group_name (str): The name of the group under which the data must be stored as
 
         """
@@ -288,7 +288,7 @@ class VolumetricData(object):
         Recreating the VolumetricData instance by reading data from the HDF5 files
 
         Args:
-            hdf5 (pyiron.base.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
+            hdf5 (pyiron_base.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
             group_name (str): The name of the group under which the data must be stored as
 
         Returns:

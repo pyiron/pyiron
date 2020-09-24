@@ -81,7 +81,7 @@ class GenericDFTJob(AtomisticGenericJob):
             get k-mesh density according to the box size.
 
             Args:
-                kpoints_per_reciprocal_angstrom: (float) number of k-points per reciprocal angstrom (i.e. per 2*pi*box_length)
+                kpoints_per_reciprocal_angstrom: (float) number of k-points per reciprocal angstrom (i.e. per 2*pi / box_length)
                 cell: (list/ndarray) 3x3 cell. If not set, the current cell is used.
         """
         if cell is None:
@@ -91,7 +91,8 @@ class GenericDFTJob(AtomisticGenericJob):
         latlens = np.linalg.norm(cell, axis=-1)
         kmesh = np.rint( 2 * np.pi / latlens * kpoints_per_reciprocal_angstrom)
         if kmesh.min() <= 0:
-            raise AssertionError("kpoint per angstrom too low")
+            self._logger.warning("Calculated kmesh was 0 for at least one axis, setting it to 1 instead")
+            kmesh[kmesh==0] = 1
         return [int(k) for k in kmesh]
 
     @property

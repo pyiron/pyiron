@@ -6,9 +6,8 @@ from __future__ import print_function
 from collections import OrderedDict
 import inspect
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.base.master.parallel import ParallelMaster, JobGenerator
+from pyiron_base import ParallelMaster, JobGenerator, get_function_from_string
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
-from pyiron.base.master.generic import get_function_from_string
 
 __author__ = "Jan Janssen"
 __copyright__ = (
@@ -163,7 +162,7 @@ def pipe(project, job, step_lst, delete_existing_job=False):
     Returns:
         FlexibleMaster:
     """
-    job_lst_master = project.create_job(project.job_type.FlexibleMaster, 'lstmaster', delete_existing_job=delete_existing_job)
+    job_lst_master = project.create_job(project.job_type.FlexibleMaster, job.job_name + '_lstmaster', delete_existing_job=delete_existing_job)
     if job_lst_master.status.finished:
         return job_lst_master
     else:

@@ -7,8 +7,7 @@ import os
 import posixpath
 from pyiron.atomistics.structure.atoms import CrystalStructure
 from pyiron.vasp.base import Input, Output
-from pyiron.base.generic.hdfio import ProjectHDFio
-from pyiron.base.project.generic import Project
+from pyiron_base import ProjectHDFio, Project
 from pyiron.vasp.potential import VaspPotentialSetter
 from pyiron.vasp.vasp import Vasp
 from pyiron.vasp.metadyn import VaspMetadyn
@@ -379,6 +378,18 @@ class TestVasp(unittest.TestCase):
         constraints = self.job_metadyn.input.iconst._dataset["Value"]
         for val in ['R 1 6 0', 'R 1 2 0', 'S 1 -1 0']:
             self.assertTrue(val in constraints)
+
+    def test_setting_input(self):
+        self.job.set_convergence_precision(electronic_energy=1e-7, ionic_force_tolerance=0.1)
+        self.assertEqual(self.job.input.incar["EDIFF"], 1e-7)
+        self.assertEqual(self.job.input.incar["EDIFFG"], -0.1)
+        self.job.calc_minimize()
+        self.assertEqual(self.job.input.incar["EDIFFG"], -0.01)
+        self.job.calc_minimize(ionic_energy=1e-4)
+        self.assertEqual(self.job.input.incar["EDIFFG"], 0.0001)
+        self.job.calc_minimize(ionic_forces=1e-3)
+        self.assertEqual(self.job.input.incar["EDIFFG"], -0.001)
+        self.assertEqual(self.job.input.incar["EDIFF"], 1e-7)
 
 
 if __name__ == "__main__":

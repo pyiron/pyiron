@@ -11,7 +11,7 @@ import scipy.constants
 import warnings
 from pyiron.atomistics.structure.atoms import Atoms, ase_to_pyiron
 from pyiron.atomistics.master.parallel import AtomisticParallelMaster
-from pyiron.base.master.parallel import JobGenerator
+from pyiron_base import JobGenerator
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = (

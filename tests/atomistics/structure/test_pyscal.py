@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import pyscal.core as pc
 from pyiron.project import Project
-from pyiron.base.generic.hdfio import ProjectHDFio
+from pyiron_base import ProjectHDFio
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 import os

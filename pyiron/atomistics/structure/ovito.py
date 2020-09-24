@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import numpy as np
-from pyiron.base.settings.generic import Settings
+from pyiron_base import Settings
 from ovito import ObjectNode
 from ovito.data import Bonds, DataCollection
 from ovito.modifiers import (
