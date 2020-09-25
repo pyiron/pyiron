@@ -1684,6 +1684,7 @@ class Atoms(ASEAtoms):
         neigh.distances = np.array(neigh.distances)
         neigh.vecs = np.array(neigh.vecs)
         neigh.indices = np.array(neigh.indices)
+        return neigh
 
     def _get_neighbors(
         self,
@@ -3692,54 +3693,14 @@ class Neighbors:
     """
 
     def __init__(self):
-        self._distances = None
-        self._vecs = None
-        self._indices = None
+        self.distances = None
+        self.vecs = None
+        self.indices = None
         self._shells = None
-
-    @property
-    def distances(self):
-        return self._distances
-
-    @distances.setter
-    def distances(self, new_distances):
-        if isinstance(new_distances, list) or isinstance(new_distances, np.ndarray):
-            self._distances = np.array(new_distances)
-        else:
-            raise TypeError("Only lists and np.arrays are supported.")
-
-    @property
-    def vecs(self):
-        return self._vecs
-
-    @vecs.setter
-    def vecs(self, new_vecs):
-        if isinstance(new_vecs, list) or isinstance(new_vecs, np.ndarray):
-            self._vecs = np.array(new_vecs)
-        else:
-            raise TypeError("Only lists and np.arrays are supported.")
-
-    @property
-    def indices(self):
-        return self._indices
-
-    @indices.setter
-    def indices(self, new_indices):
-        if isinstance(new_indices, list) or isinstance(new_indices, np.ndarray):
-            self._indices = np.array(new_indices)
-        else:
-            raise TypeError("Only lists and np.arrays are supported.")
 
     @property
     def shells(self):
         return self._shells
-
-    @shells.setter
-    def shells(self, new_shells):
-        if isinstance(new_shells, list) or isinstance(new_shells, np.array):
-            self._shells = np.array(new_shells)
-        else:
-            raise TypeError("Only lists and np.arrays are supported.")
 
 
 class CrystalStructure(object):
