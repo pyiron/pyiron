@@ -38,6 +38,7 @@ class AseJob(InteractiveBase):
         self.interactive_cache = {
             "cells": [],
             "energy_pot": [],
+            "energy_tot": [],
             "forces": [],
             "positions": [],
             "steps": [],
@@ -158,6 +159,9 @@ class AseJob(InteractiveBase):
 
     def interactive_energy_pot_getter(self):
         return self._structure.get_potential_energy()
+    
+    def interactive_energy_tot_getter(self):
+        return self._structure.get_potential_energy()
 
     def interactive_indices_getter(self):
         element_lst = sorted(list(set(self._structure.get_chemical_symbols())))
@@ -247,6 +251,7 @@ class AseAdapter(object):
                 "energy_kin": [],
                 "momenta": [],
                 "positions": [],
+                "energy_tot": []
                 "energy_pot": []
             }
             self._ham.run()
