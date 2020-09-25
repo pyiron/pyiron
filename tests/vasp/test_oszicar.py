@@ -36,8 +36,7 @@ class TestOszicar(unittest.TestCase):
             self.oszicar_parser.from_file(filename=filename)
             if "OSZICAR_1" in filename:
                 energies = self.oszicar_parser.parse_dict["energy_pot"]
-                if isinstance(energies[0], np.float64):
-                    self.assertTrue(np.array_equal(energies, [-17.7379867884]))
+                self.assertTrue(np.array_equal(energies, [-17.7379867884]))
             if "OSZICAR_2" in filename:
                 energies = self.oszicar_parser.parse_dict["energy_pot"]
                 self.assertTrue(np.array_equal(energies, [-1166.23382927, -1166.07589814, -1165.76905678,
