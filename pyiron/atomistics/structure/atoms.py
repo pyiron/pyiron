@@ -1632,7 +1632,7 @@ class Atoms(ASEAtoms):
             pbc=self.pbc,
         )
 
-    def get_neighborsby_distance(
+    def get_neighbors_by_distance(
         self,
         num_neighbors=100,
         t_vec=True,
@@ -1643,6 +1643,8 @@ class Atoms(ASEAtoms):
         cutoff_radius=None,
         cutoff=None,
     ):
+    # get_neighbors_by_distance.__doc__ = _get_neighbors.__doc__
+    # I don't know how to copy DocString!
         return self._get_neighbors(
             num_neighbors=num_neighbors,
             t_vec=t_vec,
@@ -1653,7 +1655,6 @@ class Atoms(ASEAtoms):
             cutoff_radius=cutoff_radius,
             cutoff=cutoff,
         )
-    get_neighbors.__doc__ = Atoms.calc_minimize.__doc__
 
     def get_neighbors(
         self,
@@ -1666,6 +1667,8 @@ class Atoms(ASEAtoms):
         cutoff_radius=None,
         cutoff=None,
     ):
+    # get_neighbors.__doc__ = _get_neighbors.__doc__
+    # I don't know how to copy DocString!
         if cutoff_radius is not None:
             raise ValueError('cutoff_radius is deprecated in get_neighbors. Use get_neighbors_by_distance instead')
         if cutoff is not None:
@@ -1681,7 +1684,6 @@ class Atoms(ASEAtoms):
         neigh.distances = np.array(neigh.distances)
         neigh.vecs = np.array(neigh.vecs)
         neigh.indices = np.array(neigh.indices)
-    get_neighbors.__doc__ = Atoms.calc_minimize.__doc__
 
     def _get_neighbors(
         self,
