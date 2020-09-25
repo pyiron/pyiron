@@ -2,10 +2,6 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-from __future__ import division, print_function
-from ase.atoms import Atoms as ASEAtoms, get_distances as ase_get_distances, Atom as ASEAtom
-import ast
-from copy import copy
 import numpy as np
 from pyiron_base import Settings
 
@@ -113,7 +109,7 @@ class Neighbors(object):
             shell_lst = np.array([shell]).flatten()
         if restraint_matrix is None:
             restraint_matrix = np.ones((Natom, Natom)) == 1
-        elif type(restraint_matrix) == list and len(restraint_matrix) == 2:
+        elif isinstance(restraint_matrix, list) and len(restraint_matrix) == 2:
             restraint_matrix = np.outer(
                 1 * (self._ref_structure.get_chemical_symbols() == restraint_matrix[0]),
                 1 * (self._ref_structure.get_chemical_symbols() == restraint_matrix[1]),
