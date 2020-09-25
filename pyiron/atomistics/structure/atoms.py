@@ -1936,18 +1936,9 @@ class Atoms(ASEAtoms):
             DeprecationWarning)
         neighbors = self.get_neighbors(num_neighbors=num_neighbors)
         return neighbors.find_neighbors_by_vector(vector=vector, deviation=deviation)
+    find_neighbors_by_vector.__doc__ = Neighbors.find_neighbors_by_vector.__doc__
 
     def get_shells(self, id_list=None, max_shell=2, max_num_neighbors=100):
-        """
-
-        Args:
-            id_list:
-            max_shell:
-            max_num_neighbors:
-
-        Returns:
-
-        """
         warnings.warn('structure.get_shells() is deprecated as of vers. 0.3.'
             + 'It is not guaranteed to be in service in vers. 1.0.'
             + 'Use neigh.get_shell_dict() instead (after calling neigh = structure.get_neighbors()).',
@@ -1956,26 +1947,12 @@ class Atoms(ASEAtoms):
             id_list = [0]
         neighbors = self.get_neighbors(num_neighbors=max_num_neighbors, id_list=id_list)
         return neighbors.get_shell_dict(max_shell=max_shell)
+    get_shells.__doc__ = Neighbors.get_shell_dict.__doc__
+
 
     def get_shell_matrix(
         self, shell=None, id_list=None, restraint_matrix=None, num_neighbors=100, tolerance=2
     ):
-        """
-
-        Args:
-            neigh_list: user defined get_neighbors (recommended if atoms are displaced from the ideal positions)
-            id_list: cf. get_neighbors
-            radius: cf. get_neighbors
-            num_neighbors: cf. get_neighbors
-            tolerance: cf. get_neighbors
-            restraint_matrix: NxN matrix with True or False, where False will remove the entries.
-                              If an integer is given the sum of the chemical indices corresponding to the number will
-                              be set to True and the rest to False
-
-        Returns:
-            NxN matrix with 1 for the pairs of atoms in the given shell
-
-        """
         if shell is not None and shell<=0:
             raise ValueError("Parameter 'shell' must be an integer greater than 0")
         neigh_list = self.get_neighbors(
@@ -1986,6 +1963,7 @@ class Atoms(ASEAtoms):
             + 'Use neigh.get_shell_matrix() instead (after calling neigh = structure.get_neighbors()).',
             DeprecationWarning)
         return neigh_list.get_shell_matrix(shell_numbers=shell, restraint_matrix=restraint_matrix)
+    get_shell_matrix.__doc__ = Neighbors.get_shell_matrix.__doc__
 
     def get_shell_radius(self, shell=1, id_list=None):
         """
