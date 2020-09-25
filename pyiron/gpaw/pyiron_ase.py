@@ -251,7 +251,7 @@ class AseAdapter(object):
                 "energy_kin": [],
                 "momenta": [],
                 "positions": [],
-                "energy_tot": []
+                "energy_tot": [],
                 "energy_pot": []
             }
             self._ham.run()
