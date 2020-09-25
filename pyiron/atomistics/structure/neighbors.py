@@ -86,12 +86,12 @@ class Neighbors(object):
         return shells
 
     def get_shell_matrix(
-        self, shell=None, restraint_matrix=None
+        self, shell_numbers=None, restraint_matrix=None
     ):
         """
 
         Args:
-            shell (int/None): shell number. If None, all shells are returned
+            shell_numbers (int/None): shell number. If None, all shells are returned
             restraint_matrix: NxN matrix with True or False, where False will remove the entries.
                               If an integer is given the sum of the chemical indices corresponding to the number will
                               be set to True and the rest to False
@@ -100,13 +100,13 @@ class Neighbors(object):
             NxN matrix with 1 for the pairs of atoms in the given shell
 
         """
-        if shell is not None and shell<=0:
+        if shell_numbers is not None and shell_numbers<=0:
             raise ValueError("Parameter 'shell' must be an integer greater than 0")
         Natom = len(self._ref_structure)
-        if shell is None:
+        if shell_numbers is None:
             shell_lst = np.unique(self.shells)
         else:
-            shell_lst = np.array([shell]).flatten()
+            shell_lst = np.array([shell_numbers]).flatten()
         if restraint_matrix is None:
             restraint_matrix = np.ones((Natom, Natom)) == 1
         elif isinstance(restraint_matrix, list) and len(restraint_matrix) == 2:
