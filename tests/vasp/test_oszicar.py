@@ -2,11 +2,11 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-import unittest
+import numpy as np
 import os
 import posixpath
 from pyiron.vasp.oszicar import Oszicar
-import numpy as np
+import unittest
 
 
 class TestOszicar(unittest.TestCase):
