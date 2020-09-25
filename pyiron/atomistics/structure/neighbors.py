@@ -106,10 +106,7 @@ class Neighbors(object):
         """
         if shell is not None and shell<=0:
             raise ValueError("Parameter 'shell' must be an integer greater than 0")
-        neigh_list = self.get_neighbors(
-            num_neighbors=num_neighbors, id_list=id_list, tolerance=tolerance
-        )
-        Natom = len(self)
+        Natom = len(self.ref_structure)
         if shell is None:
             shell_lst = np.unique(neigh_list.shells)
         else:
@@ -118,8 +115,8 @@ class Neighbors(object):
             restraint_matrix = np.ones((Natom, Natom)) == 1
         elif type(restraint_matrix) == list and len(restraint_matrix) == 2:
             restraint_matrix = np.outer(
-                1 * (self.get_chemical_symbols() == restraint_matrix[0]),
-                1 * (self.get_chemical_symbols() == restraint_matrix[1]),
+                1 * (self.ref_structure.get_chemical_symbols() == restraint_matrix[0]),
+                1 * (self.ref_structure.get_chemical_symbols() == restraint_matrix[1]),
             )
             restraint_matrix = (restraint_matrix + restraint_matrix.transpose()) > 0
         shell_matrix_lst = []

@@ -1983,33 +1983,10 @@ class Atoms(ASEAtoms):
         neigh_list = self.get_neighbors(
             num_neighbors=num_neighbors, id_list=id_list, tolerance=tolerance
         )
-        Natom = len(self)
-        if shell is None:
-            shell_lst = np.unique(neigh_list.shells)
-        else:
-            shell_lst = np.array([shell]).flatten()
-        if restraint_matrix is None:
-            restraint_matrix = np.ones((Natom, Natom)) == 1
-        elif type(restraint_matrix) == list and len(restraint_matrix) == 2:
-            restraint_matrix = np.outer(
-                1 * (self.get_chemical_symbols() == restraint_matrix[0]),
-                1 * (self.get_chemical_symbols() == restraint_matrix[1]),
-            )
-            restraint_matrix = (restraint_matrix + restraint_matrix.transpose()) > 0
-        shell_matrix_lst = []
-        for shell in shell_lst:
-            shell_matrix = np.zeros((Natom, Natom))
-            for ii, ss in enumerate(neigh_list.shells):
-                unique, counts = np.unique(
-                    neigh_list.indices[ii][ss == np.array(shell)], return_counts=True
-                )
-                shell_matrix[ii][unique] = counts
-            shell_matrix[restraint_matrix == False] = 0
-            shell_matrix_lst.append(shell_matrix)
-        if len(shell_matrix_lst)==1:
-            return shell_matrix_lst[0]
-        else:
-            return shell_matrix_lst
+        warnings.warn('structure.get_shell_matrix() is deprecated as of vers. 0.3.'
+            + 'It is not guaranteed to be in service in vers. 1.0.'
+            + 'Use neigh.get_shell_matrix() instead (after calling neigh = structure.get_neighbors()).',
+            DeprecationWarning)
 
     def get_shell_radius(self, shell=1, id_list=None):
         """
