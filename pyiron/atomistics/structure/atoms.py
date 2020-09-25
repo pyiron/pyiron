@@ -1734,7 +1734,7 @@ class Atoms(ASEAtoms):
             return x < len(self)
 
         num_neighbors += 1
-        neighbor_obj = Neighbors(tolerance=tolerance)
+        neighbor_obj = Neighbors(ref_structure=self, tolerance=tolerance)
         if not include_boundary:  # periodic boundaries are NOT included
             tree = cKDTree(self.positions)
             if cutoff_radius is None:
@@ -1950,22 +1950,14 @@ class Atoms(ASEAtoms):
         Returns:
 
         """
+        warnings.warn('structure.get_shells() is deprecated as of vers. 0.3.'
+            + 'It is not guaranteed to be in service in vers. 1.0.'
+            + 'Use neigh.get_shells() instead (after calling neigh = structure.get_neighbors()).',
+            DeprecationWarning)
         if id_list is None:
             id_list = [0]
         neighbors = self.get_neighbors(num_neighbors=max_num_neighbors, id_list=id_list)
-
-        shells = neighbors.shells[0]
-        dist = neighbors.distances[0]
-
-        shell_dict = {}
-        for i_shell in set(shells):
-            if i_shell > max_shell:
-                break
-            shell_dict[i_shell] = np.mean(dist[shells == i_shell])
-            # print ("shells: ", i_shell, shell_dict[i_shell])
-        if not (max(shell_dict.keys()) == max_shell):
-            raise AssertionError()
-        return shell_dict
+        return neighbors.get_shells(max_shell=max_shell)
 
     def get_shell_matrix(
         self, shell=None, id_list=None, restraint_matrix=None, num_neighbors=100, tolerance=2
