@@ -735,12 +735,8 @@ class TestAtoms(unittest.TestCase):
         basis.set_repeat(2)
         self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
         with self.assertRaises(ValueError):
-            basis.get_neighbors(cutoff=10)
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            basis.get_neighbors_by_distance(cutoff=10)
-            self.assertEqual(len(w), 1)
-            self.assertIsInstance(w[-1].message, DeprecationWarning)
+            basis.get_neighbors(cutoff_radius=10)
+        basis.get_neighbors_by_distance(cutoff_radius=10)
         structure = CrystalStructure(elements='Fe', lattice_constant=2.83, bravais='bcc').repeat(2)
         neigh = structure.get_neighbors()
         self.assertTrue(np.array_equal(neigh.shells, neigh.get_global_shells()))

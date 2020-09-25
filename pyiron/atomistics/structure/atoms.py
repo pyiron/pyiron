@@ -1642,10 +1642,26 @@ class Atoms(ASEAtoms):
         tolerance=2,
         id_list=None,
         cutoff_radius=None,
-        cutoff=None,
     ):
-    # get_neighbors_by_distance.__doc__ = _get_neighbors.__doc__
-    # I don't know how to copy DocString!
+        """
+
+        Args:
+            num_neighbors (int): number of neighbors
+            t_vec (bool): True: compute distance vectors
+                        (pbc are automatically taken into account)
+            include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
+                                     False is needed e.g. in plot routines to avoid showing incorrect bonds
+            exclude_self (bool): include central __atom (i.e. distance = 0)
+            tolerance (int): tolerance (round decimal points) used for computing neighbor shells
+            id_list:
+            cutoff_radius (float/None): Upper bound of the distance to which the search must be done
+
+        Returns:
+
+            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor indices, distances
+            and vectors
+
+        """
         return self._get_neighbors(
             num_neighbors=num_neighbors,
             t_vec=t_vec,
@@ -1654,7 +1670,6 @@ class Atoms(ASEAtoms):
             tolerance=tolerance,
             id_list=id_list,
             cutoff_radius=cutoff_radius,
-            cutoff=cutoff,
         )
 
     def get_neighbors(
@@ -1666,14 +1681,28 @@ class Atoms(ASEAtoms):
         tolerance=2,
         id_list=None,
         cutoff_radius=None,
-        cutoff=None,
     ):
-    # get_neighbors.__doc__ = _get_neighbors.__doc__
-    # I don't know how to copy DocString!
+        """
+
+        Args:
+            num_neighbors (int): number of neighbors
+            t_vec (bool): True: compute distance vectors
+                        (pbc are automatically taken into account)
+            include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
+                                     False is needed e.g. in plot routines to avoid showing incorrect bonds
+            exclude_self (bool): include central __atom (i.e. distance = 0)
+            tolerance (int): tolerance (round decimal points) used for computing neighbor shells
+            id_list:
+            cutoff_radius (float/None): Upper bound of the distance to which the search must be done
+
+        Returns:
+
+            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor indices, distances
+            and vectors
+
+        """
         if cutoff_radius is not None:
             raise ValueError('cutoff_radius is deprecated in get_neighbors. Use get_neighbors_by_distance instead')
-        if cutoff is not None:
-            raise ValueError('cutoff is deprecated in get_neighbors. Use get_neighbors_by_distance instead')
         neigh = self._get_neighbors(
             num_neighbors=num_neighbors,
             t_vec=t_vec,
@@ -1696,7 +1725,6 @@ class Atoms(ASEAtoms):
         tolerance=2,
         id_list=None,
         cutoff_radius=None,
-        cutoff=None,
     ):
         """
 
@@ -1709,10 +1737,6 @@ class Atoms(ASEAtoms):
             exclude_self (bool): include central __atom (i.e. distance = 0)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list:
-            cutoff (float/None): Upper bound of the distance to which the search must be done - by default search for
-                                 upto 100 neighbors unless num_neighbors is defined explicitly.
-            cutoff_radius (float/None): Upper bound of the distance to which the search must be done - by default search
-                                        for upto 100 neighbors unless num_neighbors is defined explicitly.
 
         Returns:
 
@@ -1720,12 +1744,6 @@ class Atoms(ASEAtoms):
             and vectors
 
         """
-        if cutoff is not None and cutoff_radius is None:
-            warnings.warn(
-                "Please use cutoff_radius, rather than cutoff", DeprecationWarning
-            )
-            cutoff_radius = cutoff
-        # eps = 1e-4
         i_start = 0
         if exclude_self:
             i_start = 1
@@ -1855,7 +1873,6 @@ class Atoms(ASEAtoms):
         include_boundary=True,
         tolerance=2,
         id_list=None,
-        cutoff=None,
         cutoff_radius=None,
     ):
         """
@@ -1869,7 +1886,6 @@ class Atoms(ASEAtoms):
                                      False is needed e.g. in plot routines to avoid showing incorrect bonds
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list:
-            cutoff (float/ None): Upper bound of the distance to which the search must be done
             cutoff_radius (float/ None): Upper bound of the distance to which the search must be done
 
         Returns:
@@ -1894,7 +1910,6 @@ class Atoms(ASEAtoms):
             exclude_self=True,
             tolerance=tolerance,
             id_list=id_list,
-            cutoff=cutoff,
             cutoff_radius=cutoff_radius,
         )
         neigh_return = NeighTemp()
