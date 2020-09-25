@@ -739,8 +739,12 @@ class TestAtoms(unittest.TestCase):
             neigh = basis.get_neighbors(cutoff=10)
             self.assertEqual(len(w), 1)
             self.assertIsInstance(w[-1].message, DeprecationWarning)
-        # print nbr_dict.distances
-        # print [set(s) for s in nbr_dict.shells]
+        structure = CrystalStructure(elements='Fe', lattice_constant=2.83, bravais='bcc').repeat(2)
+        neigh = structure.get_neighbors()
+        self.assertTrue(np.array_equal(neigh.shells, neigh.get_global_shells()))
+        structure += Atoms(elements='C', positions=[[0, 0, 0.5*2.83]])
+        neigh = structure.get_neighbors()
+        self.assertFalse(np.array_equal(neigh.shells, neigh.get_global_shells()))
 
     def test_center_coordinates(self):
         cell = 2.2 * np.identity(3)
