@@ -3697,7 +3697,7 @@ class Neighbors(object):
                 return None
             self._shells = []
             for dist in self.distances:
-                self._shells.append(np.unique(np.round(dist, decimals=self._tolerance), return_inverse=True)[1])
+                self._shells.append(np.unique(np.round(dist, decimals=self._tolerance), return_inverse=True)[1]+1)
             if isinstance(self.distances, np.ndarray):
                 self._shells = np.array(self._shells)
             return self._shells
