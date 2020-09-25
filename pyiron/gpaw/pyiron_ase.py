@@ -159,7 +159,7 @@ class AseJob(InteractiveBase):
 
     def interactive_energy_pot_getter(self):
         return self._structure.get_potential_energy()
-    
+
     def interactive_energy_tot_getter(self):
         return self._structure.get_potential_energy()
 
