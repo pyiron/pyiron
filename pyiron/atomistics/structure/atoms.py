@@ -1965,21 +1965,6 @@ class Atoms(ASEAtoms):
         return neigh_list.get_shell_matrix(shell_numbers=shell, restraint_matrix=restraint_matrix)
     get_shell_matrix.__doc__ = Neighbors.get_shell_matrix.__doc__
 
-    def get_shell_radius(self, shell=1, id_list=None):
-        """
-
-        Args:
-            shell:
-            id_list:
-
-        Returns:
-
-        """
-        if id_list is None:
-            id_list = [0]
-        shells = self.get_shells(id_list=id_list, max_shell=shell + 1)
-        return np.mean(list(shells.values())[shell - 1 :])
-
     def occupy_lattice(self, **qwargs):
         """
         Replaces specified indices with a given species

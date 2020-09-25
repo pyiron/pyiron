@@ -788,12 +788,6 @@ class TestAtoms(unittest.TestCase):
         )
         view = basis.plot3d()
 
-    def test_get_shell_radius(self):
-        basis = Atoms("FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3))
-        self.assertAlmostEqual(
-            basis.get_shell_radius(), np.mean(list(basis.get_shells().values()))
-        )
-
     def test_group_points_by_symmetry(self):
         basis = Atoms("FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3))
         self.assertEqual(len(basis.group_points_by_symmetry([3 * [0.5], 3 * [1.5]])), 1)
