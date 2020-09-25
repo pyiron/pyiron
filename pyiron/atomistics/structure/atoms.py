@@ -1632,7 +1632,58 @@ class Atoms(ASEAtoms):
             pbc=self.pbc,
         )
 
+    def get_neighborsby_distance(
+        self,
+        num_neighbors=100,
+        t_vec=True,
+        include_boundary=True,
+        exclude_self=True,
+        tolerance=2,
+        id_list=None,
+        cutoff_radius=None,
+        cutoff=None,
+    ):
+        return self._get_neighbors(
+            num_neighbors=num_neighbors,
+            t_vec=t_vec,
+            include_boundary=include_boundary,
+            exclude_self=exclude_self,
+            tolerance=tolerance,
+            id_list=id_list,
+            cutoff_radius=cutoff_radius,
+            cutoff=cutoff,
+        )
+    get_neighbors.__doc__ = Atoms.calc_minimize.__doc__
+
     def get_neighbors(
+        self,
+        num_neighbors=12,
+        t_vec=True,
+        include_boundary=True,
+        exclude_self=True,
+        tolerance=2,
+        id_list=None,
+        cutoff_radius=None,
+        cutoff=None,
+    ):
+        if cutoff_radius is not None:
+            raise ValueError('cutoff_radius is deprecated in get_neighbors. Use get_neighbors_by_distance instead')
+        if cutoff is not None:
+            raise ValueError('cutoff is deprecated in get_neighbors. Use get_neighbors_by_distance instead')
+        neigh = self._get_neighbors(
+            num_neighbors=num_neighbors,
+            t_vec=t_vec,
+            include_boundary=include_boundary,
+            exclude_self=exclude_self,
+            tolerance=tolerance,
+            id_list=id_list,
+        )
+        neigh.distances = np.array(neigh.distances)
+        neigh.vecs = np.array(neigh.vecs)
+        neigh.indices = np.array(neigh.indices)
+    get_neighbors.__doc__ = Atoms.calc_minimize.__doc__
+
+    def _get_neighbors(
         self,
         num_neighbors=12,
         t_vec=True,
@@ -1670,8 +1721,6 @@ class Atoms(ASEAtoms):
                 "Please use cutoff_radius, rather than cutoff", DeprecationWarning
             )
             cutoff_radius = cutoff
-        if cutoff_radius is not None and num_neighbors == 12:
-            num_neighbors = 100
         # eps = 1e-4
         i_start = 0
         if exclude_self:
@@ -1843,7 +1892,7 @@ class Atoms(ASEAtoms):
         pos = box.positions
         pos[-1] = np.array(position)
         box.positions = pos
-        neigh = box.get_neighbors(
+        neigh = box.get_neighbors_by_distance(
             num_neighbors=num_neighbors,
             t_vec=t_vec,
             include_boundary=include_boundary,
