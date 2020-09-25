@@ -1,3 +1,4 @@
 #!/bin/bash
 sphinx-apidoc -f -o ./apidoc ../PyIron/
-make singlehtml
+cp ../notebooks/*.ipynb source/notebooks
+jupyter-book build .
