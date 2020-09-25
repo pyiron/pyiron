@@ -3702,6 +3702,10 @@ class Neighbors:
     def shells(self):
         return self._shells
 
+    @shells.setter
+    def shells(self, new_shells):
+        self._shells = new_shells
+
 
 class CrystalStructure(object):
     def __new__(cls, *args, **kwargs):
