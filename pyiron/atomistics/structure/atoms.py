@@ -1952,12 +1952,12 @@ class Atoms(ASEAtoms):
         """
         warnings.warn('structure.get_shells() is deprecated as of vers. 0.3.'
             + 'It is not guaranteed to be in service in vers. 1.0.'
-            + 'Use neigh.get_shells() instead (after calling neigh = structure.get_neighbors()).',
+            + 'Use neigh.get_shell_dict() instead (after calling neigh = structure.get_neighbors()).',
             DeprecationWarning)
         if id_list is None:
             id_list = [0]
         neighbors = self.get_neighbors(num_neighbors=max_num_neighbors, id_list=id_list)
-        return neighbors.get_shells(max_shell=max_shell)
+        return neighbors.get_shell_dict(max_shell=max_shell)
 
     def get_shell_matrix(
         self, shell=None, id_list=None, restraint_matrix=None, num_neighbors=100, tolerance=2

@@ -152,6 +152,14 @@ def get_energy_tot(job):
     return {"energy_tot": job["output/generic/energy_tot"][-1]}
 
 
+def get_energy_pot_per_atom(job):
+    return {"energy_pot": job["output/generic/energy_pot"][-1] / get_total_number_of_atoms(job=job)["Number_of_atoms"]}
+
+
+def get_energy_pot(job):
+    return {"energy_pot": job["output/generic/energy_pot"][-1]}
+
+
 def get_energy_free_per_atom(job):
     return {"energy_free": job["output/generic/dft/energy_free"][-1] / get_total_number_of_atoms(job=job)["Number_of_atoms"]}
 
