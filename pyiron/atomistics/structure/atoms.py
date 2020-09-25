@@ -1733,7 +1733,7 @@ class Atoms(ASEAtoms):
             return x < len(self)
 
         num_neighbors += 1
-        neighbor_obj = Neighbors()
+        neighbor_obj = Neighbors(tolerance=tolerance)
         if not include_boundary:  # periodic boundaries are NOT included
             tree = cKDTree(self.positions)
             if cutoff_radius is None:
@@ -1787,11 +1787,9 @@ class Atoms(ASEAtoms):
 
         # print ("neighbors: ", neighbors)
 
-        self.neighbor_distance = []  # neighbors[0]
-        self.neighbor_distance_vec = []
-        self.neighbor_index = []
-
-        self.neighbor_shellOrder = []
+        neighbor_distance = []  # neighbors[0]
+        neighbor_distance_vec = []
+        neighbor_indices = []
 
         # tolerance = 2 # tolerance for round floating point
 
@@ -1811,19 +1809,13 @@ class Atoms(ASEAtoms):
             #             new_index_lst.append(index_red)
             #             new_dist_lst.append(dis_red)
             #     index, nbrs_distances= new_index_lst, new_dist_lst
-            self.neighbor_distance.append(nbrs_distances)
-            self.neighbor_index.append(map_to_cell[index][i_start:])
-            u, indices = np.unique(
-                np.around(nbrs_distances, decimals=tolerance), return_inverse=True
-            )
-            self.neighbor_shellOrder.append(
-                indices + 1
-            )  # this gives the shellOrder of neighboring atoms back
+            neighbor_distance.append(nbrs_distances)
+            neighbor_indices.append(map_to_cell[index][i_start:])
 
             if t_vec:
                 nbr_dist = []
                 if len(index) == 0:
-                    self.neighbor_distance_vec.append(nbr_dist)
+                    neighbor_distance_vec.append(nbr_dist)
                     continue
                 vec0 = self.positions[index[0]]
                 for i_nbr, ind in enumerate(index[i_start:]):
@@ -1838,21 +1830,20 @@ class Atoms(ASEAtoms):
                     #     print "wrong: ", vec_r_ij, dd,dd0,i_nbr,ind,ind0,i
                     #     print self.positions[ind0], extended_cell.positions[ind], vec0
                     nbr_dist.append(vec_r_ij)
-                self.neighbor_distance_vec.append(nbr_dist)
+                neighbor_distance_vec.append(nbr_dist)
             num_neighbors.append(len(index) - i_start)
 
         min_nbr, max_nbr = min(num_neighbors), max(num_neighbors)
         if max_nbr == num_neighbors:
-            # print "neighbor distance: ", self.neighbor_distance
+            # print "neighbor distance: ", neighbor_distance
             raise ValueError(
                 "Increase max_num_neighbors! " + str(max_nbr) + " " + str(num_neighbors)
             )
         self.min_nbr_number = min_nbr
         self.max_nbr_number = max_nbr
-        neighbor_obj.distances = self.neighbor_distance
-        neighbor_obj.vecs = self.neighbor_distance_vec
-        neighbor_obj.indices = self.neighbor_index
-        neighbor_obj.shells = self.neighbor_shellOrder
+        neighbor_obj.distances = neighbor_distance
+        neighbor_obj.vecs = neighbor_distance_vec
+        neighbor_obj.indices = neighbor_indices
         return neighbor_obj
 
     def get_neighborhood(
@@ -3687,24 +3678,29 @@ class _CrystalStructure(Atoms):
         )
 
 
-class Neighbors:
+class Neighbors(object):
     """
     Class for storage of the neighbor information for a given atom based on the KDtree algorithm
     """
 
-    def __init__(self):
+    def __init__(self, tolerance=2):
         self.distances = None
         self.vecs = None
         self.indices = None
         self._shells = None
+        self._tolerance = tolerance
 
     @property
     def shells(self):
-        return self._shells
-
-    @shells.setter
-    def shells(self, new_shells):
-        self._shells = new_shells
+        if self._shells is None:
+            if self.distances is None:
+                return None
+            self._shells = []
+            for dist in self.distances:
+                self._shells.append(np.unique(np.round(dist, decimals=self._tolerance), return_inverse=True)[1])
+            if isinstance(self.distances, np.ndarray):
+                self._shells = np.array(self._shells)
+            return self._shells
 
 
 class CrystalStructure(object):
