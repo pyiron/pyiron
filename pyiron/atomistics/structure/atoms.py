@@ -1992,6 +1992,21 @@ class Atoms(ASEAtoms):
         self.set_species(new_species)
         self.indices = new_indices
 
+    def get_shell_radius(self, shell=1, id_list=None):
+        """
+
+        Args:
+            shell:
+            id_list:
+
+        Returns:
+
+        """
+        if id_list is None:
+            id_list = [0]
+        shells = self.get_shells(id_list=id_list, max_shell=shell + 1)
+        return np.mean(list(shells.values())[shell - 1 :])
+
     def cluster_analysis(
         self, id_list, neighbors=None, radius=None, return_cluster_sizes=False
     ):
