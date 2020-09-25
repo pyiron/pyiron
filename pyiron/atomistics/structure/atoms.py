@@ -1987,6 +1987,7 @@ class Atoms(ASEAtoms):
             + 'It is not guaranteed to be in service in vers. 1.0.'
             + 'Use neigh.get_shell_matrix() instead (after calling neigh = structure.get_neighbors()).',
             DeprecationWarning)
+        return neigh_list.get_shell_matrix(shell=shell, restraint_matrix=restraint_matrix)
 
     def get_shell_radius(self, shell=1, id_list=None):
         """

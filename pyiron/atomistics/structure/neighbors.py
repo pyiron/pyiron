@@ -106,25 +106,25 @@ class Neighbors(object):
         """
         if shell is not None and shell<=0:
             raise ValueError("Parameter 'shell' must be an integer greater than 0")
-        Natom = len(self.ref_structure)
+        Natom = len(self._ref_structure)
         if shell is None:
-            shell_lst = np.unique(neigh_list.shells)
+            shell_lst = np.unique(self.shells)
         else:
             shell_lst = np.array([shell]).flatten()
         if restraint_matrix is None:
             restraint_matrix = np.ones((Natom, Natom)) == 1
         elif type(restraint_matrix) == list and len(restraint_matrix) == 2:
             restraint_matrix = np.outer(
-                1 * (self.ref_structure.get_chemical_symbols() == restraint_matrix[0]),
-                1 * (self.ref_structure.get_chemical_symbols() == restraint_matrix[1]),
+                1 * (self._ref_structure.get_chemical_symbols() == restraint_matrix[0]),
+                1 * (self._ref_structure.get_chemical_symbols() == restraint_matrix[1]),
             )
             restraint_matrix = (restraint_matrix + restraint_matrix.transpose()) > 0
         shell_matrix_lst = []
         for shell in shell_lst:
             shell_matrix = np.zeros((Natom, Natom))
-            for ii, ss in enumerate(neigh_list.shells):
+            for ii, ss in enumerate(self.shells):
                 unique, counts = np.unique(
-                    neigh_list.indices[ii][ss == np.array(shell)], return_counts=True
+                    self.indices[ii][ss == np.array(shell)], return_counts=True
                 )
                 shell_matrix[ii][unique] = counts
             shell_matrix[restraint_matrix == False] = 0
