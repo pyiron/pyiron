@@ -431,12 +431,12 @@ class LammpsStructure(GenericParameters):
                     for i, v in enumerate(val["element_list"]):
                         el_2_list = self._structure.select_index(v)
                         cutoff_dist = val["cutoff_list"][i]
-                        for j, ind in enumerate(neighbors.indices[el_1_list]):
+                        for j, ind in enumerate(np.array(neighbors.indices[el_1_list])):
                             # Only chose those indices within the cutoff distance and which belong
                             # to the species defined in the element_list
                             # i is the index of each bond type, and j is the element index
                             id_el = el_1_list[j]
-                            bool_1 = neighbors.distances[id_el] <= cutoff_dist
+                            bool_1 = np.array(neighbors.distances[id_el]) <= cutoff_dist
                             act_ind = ind[bool_1]
                             bool_2 = np.in1d(act_ind, el_2_list)
                             final_ind = act_ind[bool_2]
