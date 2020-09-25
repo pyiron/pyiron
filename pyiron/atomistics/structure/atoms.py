@@ -1930,29 +1930,12 @@ class Atoms(ASEAtoms):
         return neigh_return
 
     def find_neighbors_by_vector(self, vector, deviation=False, num_neighbors=96):
-        """
-        Args:
-            vector (list/np.ndarray): vector by which positions are translated (and neighbors are searched)
-            deviation (bool): whether to return distance between the expect positions and real positions
-            num_neighbors (int): number of neighbors to take into account in get_neighbors
-
-        Returns:
-            np.ndarray: list of id's for the specified translation
-
-        Example:
-            a_0 = 2.832
-            structure = pr.create_structure('Fe', 'bcc', a_0)
-            id_list = structure.find_neighbors_by_vector([0, 0, a_0])
-            # In this example, you get a list of neighbor atom id's at z+=a_0 for each atom.
-            # This is particularly powerful for SSA when the magnetic structure has to be translated
-            # in each direction.
-        """
-
-        neigh = self.get_neighbors(num_neighbors=num_neighbors)
-        dist = np.linalg.norm(neigh.vecs-np.array(vector), axis=-1)
-        if deviation:
-            return neigh.indices[np.arange(len(dist)), np.argmin(dist, axis=-1)], np.min(dist, axis=-1)
-        return neigh.indices[np.arange(len(dist)), np.argmin(dist, axis=-1)]
+        warnings.warn('structure.find_neighbors_by_vector() is deprecated as of vers. 0.3.'
+            + 'It is not guaranteed to be in service in vers. 1.0.'
+            + 'Use neigh.find_neighbors_by_vector() instead (after calling neigh = structure.get_neighbors()).',
+            DeprecationWarning)
+        neighbors = self.get_neighbors(num_neighbors=num_neighbors)
+        return neighbors.find_neighbors_by_vector(vector=vector, deviation=deviation)
 
     def get_shells(self, id_list=None, max_shell=2, max_num_neighbors=100):
         """

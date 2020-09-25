@@ -130,5 +130,28 @@ class Neighbors(object):
         else:
             return shell_matrix_lst
 
+    def find_neighbors_by_vector(self, vector, deviation=False):
+        """
+        Args:
+            vector (list/np.ndarray): vector by which positions are translated (and neighbors are searched)
+            deviation (bool): whether to return distance between the expect positions and real positions
+
+        Returns:
+            np.ndarray: list of id's for the specified translation
+
+        Example:
+            a_0 = 2.832
+            structure = pr.create_structure('Fe', 'bcc', a_0)
+            id_list = structure.find_neighbors_by_vector([0, 0, a_0])
+            # In this example, you get a list of neighbor atom id's at z+=a_0 for each atom.
+            # This is particularly powerful for SSA when the magnetic structure has to be translated
+            # in each direction.
+        """
+
+        dist = np.linalg.norm(self.vecs-np.array(vector), axis=-1)
+        if deviation:
+            return self.indices[np.arange(len(dist)), np.argmin(dist, axis=-1)], np.min(dist, axis=-1)
+        return self.indices[np.arange(len(dist)), np.argmin(dist, axis=-1)]
+
 
 
