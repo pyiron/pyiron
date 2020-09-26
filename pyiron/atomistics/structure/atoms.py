@@ -14,6 +14,7 @@ from matplotlib.colors import rgb2hex
 from scipy.interpolate import interp1d
 import seekpath
 from pyiron.atomistics.structure.atom import Atom, ase_to_pyiron as ase_to_pyiron_atom
+from pyiron.atomistics.structure.neighbors import Neighbors
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
 from pyiron.atomistics.structure.periodic_table import (
     PeriodicTable,
@@ -1632,16 +1633,15 @@ class Atoms(ASEAtoms):
             pbc=self.pbc,
         )
 
-    def get_neighbors(
+    def get_neighbors_by_distance(
         self,
-        num_neighbors=12,
+        num_neighbors=100,
         t_vec=True,
         include_boundary=True,
         exclude_self=True,
         tolerance=2,
         id_list=None,
         cutoff_radius=None,
-        cutoff=None,
     ):
         """
 
@@ -1654,10 +1654,7 @@ class Atoms(ASEAtoms):
             exclude_self (bool): include central __atom (i.e. distance = 0)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list:
-            cutoff (float/None): Upper bound of the distance to which the search must be done - by default search for
-                                 upto 100 neighbors unless num_neighbors is defined explicitly.
-            cutoff_radius (float/None): Upper bound of the distance to which the search must be done - by default search
-                                        for upto 100 neighbors unless num_neighbors is defined explicitly.
+            cutoff_radius (float/None): Upper bound of the distance to which the search must be done
 
         Returns:
 
@@ -1665,14 +1662,88 @@ class Atoms(ASEAtoms):
             and vectors
 
         """
-        if cutoff is not None and cutoff_radius is None:
-            warnings.warn(
-                "Please use cutoff_radius, rather than cutoff", DeprecationWarning
-            )
-            cutoff_radius = cutoff
-        if cutoff_radius is not None and num_neighbors == 12:
-            num_neighbors = 100
-        # eps = 1e-4
+        return self._get_neighbors(
+            num_neighbors=num_neighbors,
+            t_vec=t_vec,
+            include_boundary=include_boundary,
+            exclude_self=exclude_self,
+            tolerance=tolerance,
+            id_list=id_list,
+            cutoff_radius=cutoff_radius,
+        )
+
+    def get_neighbors(
+        self,
+        num_neighbors=12,
+        t_vec=True,
+        include_boundary=True,
+        exclude_self=True,
+        tolerance=2,
+        id_list=None,
+        cutoff_radius=None,
+    ):
+        """
+
+        Args:
+            num_neighbors (int): number of neighbors
+            t_vec (bool): True: compute distance vectors
+                        (pbc are automatically taken into account)
+            include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
+                                     False is needed e.g. in plot routines to avoid showing incorrect bonds
+            exclude_self (bool): include central __atom (i.e. distance = 0)
+            tolerance (int): tolerance (round decimal points) used for computing neighbor shells
+            id_list:
+            cutoff_radius (float/None): Upper bound of the distance to which the search must be done
+
+        Returns:
+
+            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor indices, distances
+            and vectors
+
+        """
+        if cutoff_radius is not None:
+            raise ValueError('cutoff_radius is deprecated in get_neighbors. Use get_neighbors_by_distance instead')
+        neigh = self._get_neighbors(
+            num_neighbors=num_neighbors,
+            t_vec=t_vec,
+            include_boundary=include_boundary,
+            exclude_self=exclude_self,
+            tolerance=tolerance,
+            id_list=id_list,
+        )
+        neigh.distances = np.array(neigh.distances)
+        neigh.vecs = np.array(neigh.vecs)
+        neigh.indices = np.array(neigh.indices)
+        return neigh
+
+    def _get_neighbors(
+        self,
+        num_neighbors=12,
+        t_vec=True,
+        include_boundary=True,
+        exclude_self=True,
+        tolerance=2,
+        id_list=None,
+        cutoff_radius=None,
+    ):
+        """
+
+        Args:
+            num_neighbors (int): number of neighbors
+            t_vec (bool): True: compute distance vectors
+                        (pbc are automatically taken into account)
+            include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
+                                     False is needed e.g. in plot routines to avoid showing incorrect bonds
+            exclude_self (bool): include central __atom (i.e. distance = 0)
+            tolerance (int): tolerance (round decimal points) used for computing neighbor shells
+            id_list:
+
+        Returns:
+
+            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor indices, distances
+            and vectors
+
+        """
         i_start = 0
         if exclude_self:
             i_start = 1
@@ -1681,7 +1752,7 @@ class Atoms(ASEAtoms):
             return x < len(self)
 
         num_neighbors += 1
-        neighbor_obj = Neighbors()
+        neighbor_obj = Neighbors(ref_structure=self, tolerance=tolerance)
         if not include_boundary:  # periodic boundaries are NOT included
             tree = cKDTree(self.positions)
             if cutoff_radius is None:
@@ -1735,11 +1806,9 @@ class Atoms(ASEAtoms):
 
         # print ("neighbors: ", neighbors)
 
-        self.neighbor_distance = []  # neighbors[0]
-        self.neighbor_distance_vec = []
-        self.neighbor_index = []
-
-        self.neighbor_shellOrder = []
+        neighbor_distance = []  # neighbors[0]
+        neighbor_distance_vec = []
+        neighbor_indices = []
 
         # tolerance = 2 # tolerance for round floating point
 
@@ -1759,19 +1828,13 @@ class Atoms(ASEAtoms):
             #             new_index_lst.append(index_red)
             #             new_dist_lst.append(dis_red)
             #     index, nbrs_distances= new_index_lst, new_dist_lst
-            self.neighbor_distance.append(nbrs_distances)
-            self.neighbor_index.append(map_to_cell[index][i_start:])
-            u, indices = np.unique(
-                np.around(nbrs_distances, decimals=tolerance), return_inverse=True
-            )
-            self.neighbor_shellOrder.append(
-                indices + 1
-            )  # this gives the shellOrder of neighboring atoms back
+            neighbor_distance.append(nbrs_distances)
+            neighbor_indices.append(map_to_cell[index][i_start:])
 
             if t_vec:
                 nbr_dist = []
                 if len(index) == 0:
-                    self.neighbor_distance_vec.append(nbr_dist)
+                    neighbor_distance_vec.append(nbr_dist)
                     continue
                 vec0 = self.positions[index[0]]
                 for i_nbr, ind in enumerate(index[i_start:]):
@@ -1786,21 +1849,20 @@ class Atoms(ASEAtoms):
                     #     print "wrong: ", vec_r_ij, dd,dd0,i_nbr,ind,ind0,i
                     #     print self.positions[ind0], extended_cell.positions[ind], vec0
                     nbr_dist.append(vec_r_ij)
-                self.neighbor_distance_vec.append(nbr_dist)
+                neighbor_distance_vec.append(nbr_dist)
             num_neighbors.append(len(index) - i_start)
 
         min_nbr, max_nbr = min(num_neighbors), max(num_neighbors)
         if max_nbr == num_neighbors:
-            # print "neighbor distance: ", self.neighbor_distance
+            # print "neighbor distance: ", neighbor_distance
             raise ValueError(
                 "Increase max_num_neighbors! " + str(max_nbr) + " " + str(num_neighbors)
             )
         self.min_nbr_number = min_nbr
         self.max_nbr_number = max_nbr
-        neighbor_obj.distances = self.neighbor_distance
-        neighbor_obj.vecs = self.neighbor_distance_vec
-        neighbor_obj.indices = self.neighbor_index
-        neighbor_obj.shells = self.neighbor_shellOrder
+        neighbor_obj.distances = neighbor_distance
+        neighbor_obj.vecs = neighbor_distance_vec
+        neighbor_obj.indices = neighbor_indices
         return neighbor_obj
 
     def get_neighborhood(
@@ -1811,7 +1873,6 @@ class Atoms(ASEAtoms):
         include_boundary=True,
         tolerance=2,
         id_list=None,
-        cutoff=None,
         cutoff_radius=None,
     ):
         """
@@ -1825,7 +1886,6 @@ class Atoms(ASEAtoms):
                                      False is needed e.g. in plot routines to avoid showing incorrect bonds
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list:
-            cutoff (float/ None): Upper bound of the distance to which the search must be done
             cutoff_radius (float/ None): Upper bound of the distance to which the search must be done
 
         Returns:
@@ -1843,14 +1903,13 @@ class Atoms(ASEAtoms):
         pos = box.positions
         pos[-1] = np.array(position)
         box.positions = pos
-        neigh = box.get_neighbors(
+        neigh = box.get_neighbors_by_distance(
             num_neighbors=num_neighbors,
             t_vec=t_vec,
             include_boundary=include_boundary,
             exclude_self=True,
             tolerance=tolerance,
             id_list=id_list,
-            cutoff=cutoff,
             cutoff_radius=cutoff_radius,
         )
         neigh_return = NeighTemp()
@@ -1871,124 +1930,40 @@ class Atoms(ASEAtoms):
         return neigh_return
 
     def find_neighbors_by_vector(self, vector, deviation=False, num_neighbors=96):
-        """
-        Args:
-            vector (list/np.ndarray): vector by which positions are translated (and neighbors are searched)
-            deviation (bool): whether to return distance between the expect positions and real positions
-            num_neighbors (int): number of neighbors to take into account in get_neighbors
-
-        Returns:
-            np.ndarray: list of id's for the specified translation
-
-        Example:
-            a_0 = 2.832
-            structure = pr.create_structure('Fe', 'bcc', a_0)
-            id_list = structure.find_neighbors_by_vector([0, 0, a_0])
-            # In this example, you get a list of neighbor atom id's at z+=a_0 for each atom.
-            # This is particularly powerful for SSA when the magnetic structure has to be translated
-            # in each direction.
-        """
-
-        neigh = self.get_neighbors(num_neighbors=num_neighbors)
-        dist = np.linalg.norm(neigh.vecs-np.array(vector), axis=-1)
-        if deviation:
-            return neigh.indices[np.arange(len(dist)), np.argmin(dist, axis=-1)], np.min(dist, axis=-1)
-        return neigh.indices[np.arange(len(dist)), np.argmin(dist, axis=-1)]
+        warnings.warn('structure.find_neighbors_by_vector() is deprecated as of vers. 0.3.'
+            + 'It is not guaranteed to be in service in vers. 1.0.'
+            + 'Use neigh.find_neighbors_by_vector() instead (after calling neigh = structure.get_neighbors()).',
+            DeprecationWarning)
+        neighbors = self.get_neighbors(num_neighbors=num_neighbors)
+        return neighbors.find_neighbors_by_vector(vector=vector, deviation=deviation)
+    find_neighbors_by_vector.__doc__ = Neighbors.find_neighbors_by_vector.__doc__
 
     def get_shells(self, id_list=None, max_shell=2, max_num_neighbors=100):
-        """
-
-        Args:
-            id_list:
-            max_shell:
-            max_num_neighbors:
-
-        Returns:
-
-        """
+        warnings.warn('structure.get_shells() is deprecated as of vers. 0.3.'
+            + 'It is not guaranteed to be in service in vers. 1.0.'
+            + 'Use neigh.get_shell_dict() instead (after calling neigh = structure.get_neighbors()).',
+            DeprecationWarning)
         if id_list is None:
             id_list = [0]
         neighbors = self.get_neighbors(num_neighbors=max_num_neighbors, id_list=id_list)
+        return neighbors.get_shell_dict(max_shell=max_shell)
+    get_shells.__doc__ = Neighbors.get_shell_dict.__doc__
 
-        shells = neighbors.shells[0]
-        dist = neighbors.distances[0]
-
-        shell_dict = {}
-        for i_shell in set(shells):
-            if i_shell > max_shell:
-                break
-            shell_dict[i_shell] = np.mean(dist[shells == i_shell])
-            # print ("shells: ", i_shell, shell_dict[i_shell])
-        if not (max(shell_dict.keys()) == max_shell):
-            raise AssertionError()
-        return shell_dict
 
     def get_shell_matrix(
         self, shell=None, id_list=None, restraint_matrix=None, num_neighbors=100, tolerance=2
     ):
-        """
-
-        Args:
-            neigh_list: user defined get_neighbors (recommended if atoms are displaced from the ideal positions)
-            id_list: cf. get_neighbors
-            radius: cf. get_neighbors
-            num_neighbors: cf. get_neighbors
-            tolerance: cf. get_neighbors
-            restraint_matrix: NxN matrix with True or False, where False will remove the entries.
-                              If an integer is given the sum of the chemical indices corresponding to the number will
-                              be set to True and the rest to False
-
-        Returns:
-            NxN matrix with 1 for the pairs of atoms in the given shell
-
-        """
         if shell is not None and shell<=0:
             raise ValueError("Parameter 'shell' must be an integer greater than 0")
         neigh_list = self.get_neighbors(
             num_neighbors=num_neighbors, id_list=id_list, tolerance=tolerance
         )
-        Natom = len(self)
-        if shell is None:
-            shell_lst = np.unique(neigh_list.shells)
-        else:
-            shell_lst = np.array([shell]).flatten()
-        if restraint_matrix is None:
-            restraint_matrix = np.ones((Natom, Natom)) == 1
-        elif type(restraint_matrix) == list and len(restraint_matrix) == 2:
-            restraint_matrix = np.outer(
-                1 * (self.get_chemical_symbols() == restraint_matrix[0]),
-                1 * (self.get_chemical_symbols() == restraint_matrix[1]),
-            )
-            restraint_matrix = (restraint_matrix + restraint_matrix.transpose()) > 0
-        shell_matrix_lst = []
-        for shell in shell_lst:
-            shell_matrix = np.zeros((Natom, Natom))
-            for ii, ss in enumerate(neigh_list.shells):
-                unique, counts = np.unique(
-                    neigh_list.indices[ii][ss == np.array(shell)], return_counts=True
-                )
-                shell_matrix[ii][unique] = counts
-            shell_matrix[restraint_matrix == False] = 0
-            shell_matrix_lst.append(shell_matrix)
-        if len(shell_matrix_lst)==1:
-            return shell_matrix_lst[0]
-        else:
-            return shell_matrix_lst
-
-    def get_shell_radius(self, shell=1, id_list=None):
-        """
-
-        Args:
-            shell:
-            id_list:
-
-        Returns:
-
-        """
-        if id_list is None:
-            id_list = [0]
-        shells = self.get_shells(id_list=id_list, max_shell=shell + 1)
-        return np.mean(list(shells.values())[shell - 1 :])
+        warnings.warn('structure.get_shell_matrix() is deprecated as of vers. 0.3.'
+            + 'It is not guaranteed to be in service in vers. 1.0.'
+            + 'Use neigh.get_shell_matrix() instead (after calling neigh = structure.get_neighbors()).',
+            DeprecationWarning)
+        return neigh_list.get_shell_matrix(shell_numbers=shell, restraint_matrix=restraint_matrix)
+    get_shell_matrix.__doc__ = Neighbors.get_shell_matrix.__doc__
 
     def occupy_lattice(self, **qwargs):
         """
@@ -2016,6 +1991,21 @@ class Atoms(ASEAtoms):
         new_species = np.array(new_species)[retain_species_indices]
         self.set_species(new_species)
         self.indices = new_indices
+
+    def get_shell_radius(self, shell=1, id_list=None):
+        """
+
+        Args:
+            shell:
+            id_list:
+
+        Returns:
+
+        """
+        if id_list is None:
+            id_list = [0]
+        shells = self.get_shells(id_list=id_list, max_shell=shell + 1)
+        return np.mean(list(shells.values())[shell - 1 :])
 
     def cluster_analysis(
         self, id_list, neighbors=None, radius=None, return_cluster_sizes=False
@@ -3634,80 +3624,6 @@ class _CrystalStructure(Atoms):
             pbc=[True, True, True][0 : self.dimension],
         )
 
-
-class Neighbors:
-    """
-    Class for storage of the neighbor information for a given atom based on the KDtree algorithm
-    """
-
-    def __init__(self):
-        self._distances = None
-        self._vecs = None
-        self._indices = None
-        self._shells = None
-
-    @property
-    def distances(self):
-        return self._distances
-
-    @distances.setter
-    def distances(self, new_distances):
-        if isinstance(new_distances, list) or isinstance(new_distances, np.ndarray):
-            self._distances = np.array(new_distances)
-        else:
-            raise TypeError("Only lists and np.arrays are supported.")
-
-    @property
-    def vecs(self):
-        return self._vecs
-
-    @vecs.setter
-    def vecs(self, new_vecs):
-        if isinstance(new_vecs, list) or isinstance(new_vecs, np.ndarray):
-            self._vecs = np.array(new_vecs)
-        else:
-            raise TypeError("Only lists and np.arrays are supported.")
-
-    @property
-    def indices(self):
-        return self._indices
-
-    @indices.setter
-    def indices(self, new_indices):
-        if isinstance(new_indices, list) or isinstance(new_indices, np.ndarray):
-            self._indices = np.array(new_indices)
-        else:
-            raise TypeError("Only lists and np.arrays are supported.")
-
-    @property
-    def shells(self):
-        return self._shells
-
-    @shells.setter
-    def shells(self, new_shells):
-        if isinstance(new_shells, list) or isinstance(new_shells, np.array):
-            self._shells = np.array(new_shells)
-        else:
-            raise TypeError("Only lists and np.arrays are supported.")
-
-    def get_global_shells(self, decimals=5):
-        """
-        Set shell indices based on all distances available in the system instead of
-        setting them according to the local distances (in contrast to shells defined
-        as an attribute in this class)
-
-        Args:
-            decimals (int): decimals in np.round for rounding up distances
-
-        Returns:
-            shells (numpy.ndarray): shell indices (cf. shells)
-        """
-        if self.distances is None:
-            raise ValueError('neighbors not set')
-        distances = np.unique(np.round(a=self.distances, decimals=decimals))
-        shells = self.distances[:,:,np.newaxis]-distances[np.newaxis,np.newaxis,:]
-        shells = np.absolute(shells).argmin(axis=-1)+1
-        return shells
 
 class CrystalStructure(object):
     def __new__(cls, *args, **kwargs):
