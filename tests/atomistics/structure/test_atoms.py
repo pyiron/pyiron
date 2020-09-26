@@ -721,6 +721,10 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(neigh.distances[0], 0.1)
 
     def test_get_neighbors_update_vectors(self):
+        structure = CrystalStructure(elements='Fe', lattice_constants=1, bravais_basis='bcc', pbc=True)
+        neigh = structure.get_neighbors(num_neighbors=8)
+        with self.assertRaises(AssertionError):
+            neigh.update_vectors()
         structure = CrystalStructure(elements='Fe', lattice_constants=1, bravais_basis='bcc', pbc=True).repeat(2)
         neigh = structure.get_neighbors(num_neighbors=8)
         self.assertAlmostEqual(np.min(neigh.distances), np.sqrt(3)/2)
