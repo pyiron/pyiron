@@ -34,6 +34,9 @@ class Neighbors(object):
 
     @property
     def shells(self):
+        """
+            Returns the cell numbers of each atom according to the distances
+        """
         if self._shells is None:
             if self.distances is None:
                 return None
@@ -43,6 +46,19 @@ class Neighbors(object):
             if isinstance(self.distances, np.ndarray):
                 self._shells = np.array(self._shells)
             return self._shells
+
+    def update_vectors(self):
+        """
+            Update vecs and distances with the same indices
+        """
+        if np.max(np.absolute(self.vecs)) > 0.49*np.min(np.linalg.norm(self._ref_structure.cell, axis=-1)):
+            raise AssertionError('Largest distance value is larger than half the box -> rerun get_neighbors')
+        myself = np.ones_like(self.indices)*np.arange(len(self.indices))[:, np.newaxis]
+        vecs = self._ref_structure.get_distances(
+            myself.flatten(), self.indices.flatten(), mic=np.all(self._ref_structure.pbc), vector=True
+        )
+        self.vecs = vecs.reshape(self.vecs.shape)
+        self.distances = np.linalg.norm(self.vecs, axis=-1)
 
     def get_shell_dict(self, max_shell=2):
         """
