@@ -750,6 +750,12 @@ class TestAtoms(unittest.TestCase):
             basis.get_neighbors(cutoff_radius=10)
         basis.get_neighbors_by_distance(cutoff_radius=10)
 
+    def test_get_shell_matrix(self):
+        structure = CrystalStructure(elements='Fe', lattice_constants=2.83, bravais_basis='bcc')
+        shell_mat_atoms = structure.get_shell_matrix(num_neighbors=8)
+        neigh = structure.get_neighbors(num_neighbors=8)
+        self.assertEqual(shell_mat_atoms[0].sum(), neigh.get_shell_matrix()[0].sum())
+
     def test_center_coordinates(self):
         cell = 2.2 * np.identity(3)
         NaCl = Atoms("NaCl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
