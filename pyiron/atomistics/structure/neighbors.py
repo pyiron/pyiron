@@ -195,24 +195,56 @@ class Neighbors(object):
         return self.indices[np.arange(len(dist)), np.argmin(dist, axis=-1)]
 
     def cluster_by_vecs(self, bandwidth=None, n_jobs=None, max_iter=300):
+        """
+        Method to group vectors which have similar values. This method should be used as a part of
+        neigh.get_global_shells(cluster_by_vecs=True) or neigh.get_local_shells(cluster_by_vecs=True).
+        However, in order to specify certain arguments (such as n_jobs or max_iter), it might help to
+        have run this function before calling parent functions, as the data obtained with this function
+        will be stored in the variable `_cluster_vecs`
+
+        Args:
+            bandwidth (float): Resolution (cf. sklearn.cluster.MeanShift)
+            n_jobs (int): Number of cores (cf. sklearn.cluster.MeanShift)
+            max_iter (int): Number of maximum iterations (cf. sklearn.cluster.MeanShift)
+        """
         if bandwidth is None:
             bandwidth = 0.1*np.min(self.distances)
         dr = self.vecs.copy().reshape(-1, 3)
         self._cluster_vecs = MeanShift(bandwidth=bandwidth, n_jobs=n_jobs, max_iter=max_iter).fit(dr)
         self._cluster_vecs.labels_ = self._cluster_vecs.labels_.reshape(self.indices.shape)
 
-    def cluster_by_distances(self, bandwidth=None, use_vecs=False, force_rerun=False, n_jobs=None, max_iter=300):
+    def cluster_by_distances(self, bandwidth=None, use_vecs=False, n_jobs=None, max_iter=300):
+        """
+        Method to group vectors which have similar values. This method should be used as a part of
+        neigh.get_global_shells(cluster_by_vecs=True) or neigh.get_local_shells(cluster_by_distances=True).
+        However, in order to specify certain arguments (such as n_jobs or max_iter), it might help to
+        have run this function before calling parent functions, as the data obtained with this function
+        will be stored in the variable `_cluster_distances`
+
+        Args:
+            bandwidth (float): Resolution (cf. sklearn.cluster.MeanShift)
+            use_vecs (bool): Whether to form clusters for vecs beforehand. Otherwise neigh.distances is used
+            n_jobs (int): Number of cores (cf. sklearn.cluster.MeanShift)
+            max_iter (int): Number of maximum iterations (cf. sklearn.cluster.MeanShift)
+        """
         if bandwidth is None:
             bandwidth = 0.05*np.min(self.distances)
         dr = self.distances
         if use_vecs:
-            if self._cluster_vecs is None or force_rerun:
+            if self._cluster_vecs is None:
                 self.cluster_by_vecs()
             dr = np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1)
         self._cluster_dist = MeanShift(bandwidth=bandwidth, n_jobs=n_jobs, max_iter=max_iter).fit(dr.reshape(-1, 1))
         self._cluster_dist.labels_ = self._cluster_dist.labels_.reshape(self.indices.shape)
 
     def reset_clusters(self, vecs=True, distances=True):
+        """
+        Method to reset clusters.
+
+        Args:
+            vecs (bool): Reset `_cluster_vecs` (cf. `cluster_by_vecs`)
+            distances (bool): Reset `_cluster_distances` (cf. `cluster_by_distances`)
+        """
         if vecs:
             self._cluster_vecs = None
         if distances:
