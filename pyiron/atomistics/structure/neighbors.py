@@ -211,13 +211,13 @@ class Neighbors(object):
             return self.indices[np.arange(len(dist)), np.argmin(dist, axis=-1)], np.min(dist, axis=-1)
         return self.indices[np.arange(len(dist)), np.argmin(dist, axis=-1)]
 
-    def cluster_by_vecs(self, bandwidth=None):
+    def cluster_by_vecs(self, bandwidth=None, n_jobs=None, max_iter=300):
         if bandwidth is None:
             bandwidth = 0.1*np.min(self.distances)
         dr = self.vecs.copy().reshape(-1, 3)
-        self._cluster_vecs = MeanShift(bandwidth=bandwidth).fit(dr)
+        self._cluster_vecs = MeanShift(bandwidth=bandwidth, n_jobs=n_jobs, max_iter=max_iter).fit(dr)
 
-    def cluster_by_distances(self, bandwidth=None, use_vecs=False, force_rerun=False):
+    def cluster_by_distances(self, bandwidth=None, use_vecs=False, force_rerun=False, n_jobs=None, max_iter=300):
         if bandwidth is None:
             bandwidth = 0.05*np.min(self.distances)
         dr = self.distances
@@ -225,7 +225,7 @@ class Neighbors(object):
             if self._cluster_vecs is None or force_rerun:
                 self.cluster_by_vecs()
             dr = np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1)
-        self._cluster_dist = MeanShift(bandwidth=bandwidth).fit(dr.reshape(-1, 1))
+        self._cluster_dist = MeanShift(bandwidth=bandwidth, n_jobs=n_jobs, max_iter=max_iter).fit(dr.reshape(-1, 1))
 
     def reset_clusters(self, vecs=True, distances=True):
         if vecs:
