@@ -77,7 +77,7 @@ class Neighbors(object):
             raise AssertionError()
         return shell_dict
 
-    def get_local_shells(self, tolerance=5, sort_by_distances=False, sort_by_vecs=False):
+    def get_local_shells(self, tolerance=5, cluster_by_distances=False, cluster_by_vecs=False):
         """
         Set shell indices based on distances available to each atom
 
@@ -87,16 +87,16 @@ class Neighbors(object):
         Returns:
             shells (numpy.ndarray): shell indices
         """
-        if sort_by_distances:
+        if cluster_by_distances:
             if self._cluster_dist is None:
-                self.sort_shells_by_distances(use_vecs=sort_by_vecs)
+                self.cluster_by_distances(use_vecs=cluster_by_vecs)
             shells = [np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1
                          for dist in self._cluster_dist.cluster_centers_[self._cluster_dist.labels_].flatten()
                      ]
             if isinstance(self.distances, np.ndarray):
                 return np.array(shells)
             return shells
-        if sort_by_vecs:
+        if cluster_by_vecs:
             if self._cluster_vecs is None:
                 self.sort_shells_by_vecs()
             shells = [np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1
@@ -115,7 +115,7 @@ class Neighbors(object):
                 self._shells = np.array(self._shells)
         return self._shells
 
-    def get_global_shells(self, tolerance=5, sort_by_distances=False, sort_by_vecs=False):
+    def get_global_shells(self, tolerance=5, cluster_by_distances=False, cluster_by_vecs=False):
         """
         Set shell indices based on all distances available in the system instead of
         setting them according to the local distances (in contrast to shells defined
@@ -130,11 +130,11 @@ class Neighbors(object):
         if self.distances is None:
             raise ValueError('neighbors not set')
         distances = self.distances
-        if sort_by_distances:
+        if cluster_by_distances:
             if self._cluster_dist is None:
-                self.sort_shells_by_distances(use_vecs=sort_by_vecs)
+                self.cluster_by_distances(use_vecs=cluster_by_vecs)
             distances = self._cluster_dist.cluster_centers_[self._cluster_dist.labels_].reshape(self.distances.shape)
-        elif sort_by_vecs:
+        elif cluster_by_vecs:
             if self._cluster_vecs is None:
                 self.sort_shells_by_vecs()
             distances = np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1).reshape(self.distances.shape)
@@ -211,21 +211,25 @@ class Neighbors(object):
             return self.indices[np.arange(len(dist)), np.argmin(dist, axis=-1)], np.min(dist, axis=-1)
         return self.indices[np.arange(len(dist)), np.argmin(dist, axis=-1)]
 
-    def sort_shells_by_vectors(self, bandwidth=None):
+    def cluster_by_vecs(self, bandwidth=None):
         if bandwidth is None:
             bandwidth = 0.1*np.min(self.distances)
         dr = self.vecs.copy().reshape(-1, 3)
         self._cluster_vecs = MeanShift(bandwidth=bandwidth).fit(dr)
-#         self.cluster_3D = GaussianMixture(covariance_type='tied').fit(dr)
 
-    def sort_shells_by_distances(self, bandwidth=None, use_vecs=False, force_rerun=False):
+    def cluster_by_distances(self, bandwidth=None, use_vecs=False, force_rerun=False):
         if bandwidth is None:
             bandwidth = 0.05*np.min(self.distances)
         dr = self.distances
         if use_vecs:
             if self._cluster_vecs is None or force_rerun:
-                self.sort_shells_by_vectors()
+                self.cluster_by_vecs()
             dr = np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1)
         self._cluster_dist = MeanShift(bandwidth=bandwidth).fit(dr.reshape(-1, 1))
 
+    def reset_clusters(self, vecs=True, distances=True):
+        if vecs:
+            self._cluster_vecs = None
+        if distances:
+            self._cluster_distances = None
 
