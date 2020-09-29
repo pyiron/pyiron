@@ -1,0 +1,31 @@
+title: 'Documentation'
+author: '' 
+copyright : "2020 Max-Planck-Institut für Eisenforschung GmbH- Computational Materials Design (CM) Department All rights reserved." 
+logo: _static/logo_dark.png
+
+repository:
+    url                       : https://github.com/pyiron/pyiron
+    path_to_book              : "docs"
+
+launch_buttons:
+  binderhub_url               : https://mybinder.org
+  thebe                       : true
+
+execute:
+  execute_notebooks         : cache
+
+html:
+  favicon             : "_static/favicon.png"
+  use_repository_button: true
+  use_edit_page_button: true
+  use_issues_button         : true
+
+sphinx:
+  config:
+    html_show_copyright: true
+  extra_extensions:
+  - sphinx.ext.mathjax
+  - sphinx.ext.autodoc 
+  - sphinx.ext.viewcode
+  - sphinx.ext.autosummary
+  - sphinx.ext.napoleon
