@@ -162,11 +162,12 @@ class Neighbors(object):
             self.get_global_shells(cluster_by_distances=cluster_by_distances, cluster_by_vecs=cluster_by_vecs)-1),
             axis=-1
         ).reshape(-1, 3)
+        shell_max = np.max(pairs[:,-1])
         if chemical_symbols is not None:
             c = self._ref_structure.get_chemical_symbols()
-            pairs[np.all(np.sort(c[pairs[:,:2]], axis=-1)==np.sort(chemical_symbols), axis=-1)]
+            pairs = pairs[np.all(np.sort(c[pairs[:,:2]], axis=-1)==np.sort(chemical_symbols), axis=-1)]
         shell_matrix = []
-        for ind in np.arange(np.max(pairs[:,-1])):
+        for ind in np.arange(shell_max):
             indices = pairs[ind==pairs[:,-1]]
             ind_tmp = np.unique(indices[:,:-1], axis=0, return_counts=True)
             shell_matrix.append(coo_matrix((ind_tmp[1], (ind_tmp[0][:,0], ind_tmp[0][:,1])),
