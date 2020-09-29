@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import numpy as np
+from sklearn.cluster import MeanShift
 from pyiron_base import Settings
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal"
@@ -225,6 +226,6 @@ class Neighbors(object):
             if self._cluster_vecs is None or force_rerun:
                 self.sort_shells_by_vectors()
             dr = np.linalg.norm(self._cluster_vecs.cluster_centers_, axis=-1)
-        self._cluster_dist = MeanShift(bandwidth=self.sigma_norm).fit(dr.reshape(-1, 1))
+        self._cluster_dist = MeanShift(bandwidth=bandwidth).fit(dr.reshape(-1, 1))
 
 
