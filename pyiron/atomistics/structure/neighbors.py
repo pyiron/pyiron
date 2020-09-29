@@ -165,10 +165,13 @@ class Neighbors(object):
         shell_matrix = []
         for ind in np.arange(shell_max):
             indices = pairs[ind==pairs[:,-1]]
-            ind_tmp = np.unique(indices[:,:-1], axis=0, return_counts=True)
-            shell_matrix.append(coo_matrix((ind_tmp[1], (ind_tmp[0][:,0], ind_tmp[0][:,1])),
-                shape=(len(self._ref_structure), len(self._ref_structure))
-            ))
+            if len(indices)>0:
+                ind_tmp = np.unique(indices[:,:-1], axis=0, return_counts=True)
+                shell_matrix.append(coo_matrix((ind_tmp[1], (ind_tmp[0][:,0], ind_tmp[0][:,1])),
+                    shape=(len(self._ref_structure), len(self._ref_structure))
+                ))
+            else:
+                shell_matrix.append(coo_matrix((len(self._ref_structure), len(self._ref_structure))))
         return shell_matrix
 
     def find_neighbors_by_vector(self, vector, deviation=False):

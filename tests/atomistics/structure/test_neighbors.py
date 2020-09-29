@@ -52,6 +52,8 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(mat[0].sum(), 8*len(structure))
         mat = neigh.get_shell_matrix(chemical_symbols=['Fe', 'Ni'])
         self.assertEqual(mat[0].sum(), 16)
+        mat = neigh.get_shell_matrix(chemical_symbols=['Ni', 'Ni'])
+        self.assertEqual(mat[0].sum(), 0)
 
 if __name__ == "__main__":
     unittest.main()
