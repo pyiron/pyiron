@@ -164,7 +164,7 @@ class Neighbors(object):
         ).reshape(-1, 3)
         if chemical_symbols is not None:
             c = self._ref_structure.get_chemical_symbols()
-            pairs[np.all(np.sort(chemical_symbols[pairs[:,:2]], axis=-1)==np.sort(chemical_symbols), axis=-1)]
+            pairs[np.all(np.sort(c[pairs[:,:2]], axis=-1)==np.sort(chemical_symbols), axis=-1)]
         shell_matrix = []
         for ind in np.arange(np.max(pairs[:,-1])):
             indices = pairs[ind==pairs[:,-1]]
