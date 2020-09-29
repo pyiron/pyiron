@@ -4,6 +4,7 @@
 
 import numpy as np
 from sklearn.cluster import MeanShift
+from scipy.sparse import coo_matrix
 from pyiron_base import Settings
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal"
@@ -144,49 +145,34 @@ class Neighbors(object):
         return shells
 
     def get_shell_matrix(
-        self, shell_numbers=None, restraint_matrix=None
+        self, chemical_symbols=None, cluster_by_distances=False, cluster_by_vecs=False
     ):
         """
 
         Args:
-            shell_numbers (int/None): shell number. If None, all shells are returned
-            restraint_matrix: NxN matrix with True or False, where False will remove the entries.
-                              If an integer is given the sum of the chemical indices corresponding to the number will
-                              be set to True and the rest to False
+            chemical_symbols (list): pair of chemical symbols
 
         Returns:
-            NxN matrix with 1 for the pairs of atoms in the given shell
+            sparse matrix for different shells
 
         """
-        if shell_numbers is not None and shell_numbers<=0:
-            raise ValueError("Parameter 'shell' must be an integer greater than 0")
-        Natom = len(self._ref_structure)
-        if shell_numbers is None:
-            shell_lst = np.unique(self.shells)
-        else:
-            shell_lst = np.array([shell_numbers]).flatten()
-        if restraint_matrix is None:
-            restraint_matrix = np.ones((Natom, Natom)) == 1
-        elif isinstance(restraint_matrix, list) and len(restraint_matrix) == 2:
-            restraint_matrix = np.outer(
-                1 * (self._ref_structure.get_chemical_symbols() == restraint_matrix[0]),
-                1 * (self._ref_structure.get_chemical_symbols() == restraint_matrix[1]),
-            )
-            restraint_matrix = (restraint_matrix + restraint_matrix.transpose()) > 0
-        shell_matrix_lst = []
-        for shell in shell_lst:
-            shell_matrix = np.zeros((Natom, Natom))
-            for ii, ss in enumerate(self.shells):
-                unique, counts = np.unique(
-                    self.indices[ii][ss == np.array(shell)], return_counts=True
-                )
-                shell_matrix[ii][unique] = counts
-            shell_matrix[restraint_matrix == False] = 0
-            shell_matrix_lst.append(shell_matrix)
-        if len(shell_matrix_lst)==1:
-            return shell_matrix_lst[0]
-        else:
-            return shell_matrix_lst
+
+        pairs = np.stack((self.indices,
+            np.ones_like(self.indices)*np.arange(len(self.indices))[:,np.newaxis],
+            self.get_global_shells(cluster_by_distances=cluster_by_distances, cluster_by_vecs=cluster_by_vecs)),
+            axis=-1
+        ).reshape(-1, 3)
+        if chemical_symbols is not None:
+            c = self._ref_structure.get_chemical_symbols()
+            pairs[np.all(np.sort(chemical_symbols[pairs[:,:2]], axis=-1)==np.sort(chemical_symbols), axis=-1)]
+        shell_matrix = []
+        for ind in np.arange(np.max(pairs[:,-1])):
+            indices = pairs[ind==pairs[:,-1]]
+            ind_tmp = np.unique(indices[:,:-1], axis=0, return_counts=True)
+            shell_matrix.append(coo_matrix((ind_tmp[1], (ind_tmp[0][:,0], ind_tmp[0][:,1])),
+                shape=(len(self._ref_structure), len(self._ref_structure))
+            ))
+        return shell_matrix
 
     def find_neighbors_by_vector(self, vector, deviation=False):
         """

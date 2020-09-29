@@ -829,15 +829,6 @@ class TestAtoms(unittest.TestCase):
         Al_sc.set_repeat([3, 3, 3])
         self.assertEqual(np.round(Al_sc.get_shells()[2], 6), 2.2)
 
-    def test_get_shell_matrix(self):
-        basis = Atoms(
-            "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
-        )
-        output = basis.get_shell_matrix(shell=1, restraint_matrix=["Fe", "Fe"])
-        self.assertIsInstance(output, np.ndarray)
-        self.assertEqual(np.sum(output), 16)
-        self.assertTrue(np.all(np.dot(output, output) == np.identity(2) * 64))
-
     def test_get_distances_array(self):
         basis = Atoms("FeFe", positions=[3*[0], 3*[0.9]], cell=np.identity(3), pbc=True)
         self.assertAlmostEqual(basis.get_distances_array(mic=False)[0, 1], 0.9*np.sqrt(3))
