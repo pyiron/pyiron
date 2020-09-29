@@ -113,7 +113,7 @@ class Neighbors(object):
                 self._shells.append(np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1)
             if isinstance(self.distances, np.ndarray):
                 self._shells = np.array(self._shells)
-            return self._shells
+        return self._shells
 
     def get_global_shells(self, tolerance=5, sort_by_distances=False, sort_by_vecs=False):
         """
