@@ -89,18 +89,18 @@ class Neighbors(object):
         """
         if sort_by_distances:
             if self._cluster_dist is None:
-                self.sort_by_distances()
+                self.sort_shells_by_distances(use_vecs=sort_by_vecs)
             shells = [np.unique(np.round(dist, decimals=self._tolerance), return_inverse=True)[1]+1
-                         for dist in self._cluster_dist.cluster_centers_.flatten()
+                         for dist in self._cluster_dist.cluster_centers_[self._cluster_dist.labels_].flatten()
                      ]
             if isinstance(self.distances, np.ndarray):
                 return np.array(shells)
             return shells
         if sort_by_vecs:
             if self._cluster_vecs is None:
-                self.sort_by_vecs()
+                self.sort_shells_by_vecs()
             shells = [np.unique(np.round(dist, decimals=self._tolerance), return_inverse=True)[1]+1
-                         for dist in np.linalg.norm(self._cluster_vecs.cluster_centers_, axis=-1)
+                         for dist in np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1)
                      ]
             if isinstance(self.distances, np.ndarray):
                 return np.array(shells)
@@ -132,12 +132,12 @@ class Neighbors(object):
         distances = self.distances
         if sort_by_distances:
             if self._cluster_dist is None:
-                self.sort_by_distances()
-            distances = self._cluster_dist.cluster_centers_.reshape(self.distances.shape)
+                self.sort_shells_by_distances(use_vecs=sort_by_vecs)
+            distances = self._cluster_dist.cluster_centers_[self._cluster_dist.labels_].reshape(self.distances.shape)
         elif sort_by_vecs:
             if self._cluster_vecs is None:
-                self.sort_by_vecs()
-            distances = np.linalg.norm(self._cluster_vecs.cluster_centers_, axis=-1).reshape(self.distances.shape)
+                self.sort_shells_by_vecs()
+            distances = np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1).reshape(self.distances.shape)
         dist_lst = np.unique(np.round(a=distances, decimals=decimals))
         shells = distances[:,:,np.newaxis]-dist_lst[np.newaxis,np.newaxis,:]
         shells = np.absolute(shells).argmin(axis=-1)+1
@@ -225,7 +225,7 @@ class Neighbors(object):
         if use_vecs:
             if self._cluster_vecs is None or force_rerun:
                 self.sort_shells_by_vectors()
-            dr = np.linalg.norm(self._cluster_vecs.cluster_centers_, axis=-1)
+            dr = np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1)
         self._cluster_dist = MeanShift(bandwidth=bandwidth).fit(dr.reshape(-1, 1))
 
 
