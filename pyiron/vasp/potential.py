@@ -213,10 +213,13 @@ class VaspPotentialFile(VaspPotentialAbstract):
         ds["Name"].values[0] = "-".join(name_list)
         ds["Filename"].values[0][0] = "/".join(path_list)
         self._potential_df = self._potential_df.append(ds)
-        ds = pandas.Series()
-        ds.name = new_element
-        ds["Name"] = "-".join(name_list)
-        self._default_df = self._default_df.append(ds)
+        if new_element not in self._default_df.index.values:
+            ds = pandas.Series()
+            ds.name = new_element
+            ds["Name"] = "-".join(name_list)
+            self._default_df = self._default_df.append(ds)
+        else:
+            self._default_df.loc[new_element] = "-".join(name_list)
 
 
 class VaspPotential(object):
