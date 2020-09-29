@@ -46,11 +46,12 @@ class TestAtoms(unittest.TestCase):
 
     def test_get_shell_matrix(self):
         structure = CrystalStructure(elements='Fe', lattice_constants=2.83, bravais_basis='bcc').repeat(2)
+        structure[0] = 'Ni'
         neigh = structure.get_neighbors(num_neighbors=8)
         mat = neigh.get_shell_matrix()
         self.assertEqual(mat[0].sum(), 8*len(structure))
-        mat = neigh.get_shell_matrix(chemical_symbols=['Ni', 'Ni'])
-        self.assertEqual(mat[0].sum(), 0)
+        mat = neigh.get_shell_matrix(chemical_symbols=['Fe', 'Ni'])
+        self.assertEqual(mat[0].sum(), 16)
 
 if __name__ == "__main__":
     unittest.main()
