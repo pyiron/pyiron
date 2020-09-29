@@ -12,7 +12,7 @@ from pyiron.atomistics.structure.atoms import Atoms
 from pyiron_base import GenericParameters, GenericMaster, GenericJob as GenericJobCore
 
 try:
-    from pyiron.base.project import ProjectGUI
+    from pyiron_base import ProjectGUI
 except (ImportError, TypeError, AttributeError):
     pass
 
