@@ -94,18 +94,14 @@ class Neighbors(object):
             shells = [np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1
                          for dist in self._cluster_dist.cluster_centers_[self._cluster_dist.labels_].flatten()
                      ]
-            if isinstance(self.distances, np.ndarray):
-                return np.array(shells)
-            return shells
+            return np.array(shells).reshape(self.indices.shape)
         if cluster_by_vecs:
             if self._cluster_vecs is None:
-                self.sort_shells_by_vecs()
+                self.cluster_by_vecs()
             shells = [np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1
                          for dist in np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1)
                      ]
-            if isinstance(self.distances, np.ndarray):
-                return np.array(shells)
-            return shells
+            return np.array(shells).reshape(self.indices.shape)
         if self._shells is None:
             if self.distances is None:
                 return None
@@ -137,7 +133,7 @@ class Neighbors(object):
             distances = self._cluster_dist.cluster_centers_[self._cluster_dist.labels_].reshape(self.distances.shape)
         elif cluster_by_vecs:
             if self._cluster_vecs is None:
-                self.sort_shells_by_vecs()
+                self.cluster_by_vecs()
             distances = np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1).reshape(self.distances.shape)
         dist_lst = np.unique(np.round(a=distances, decimals=tolerance))
         shells = distances[:,:,np.newaxis]-dist_lst[np.newaxis,np.newaxis,:]
@@ -203,6 +199,7 @@ class Neighbors(object):
             bandwidth = 0.1*np.min(self.distances)
         dr = self.vecs.copy().reshape(-1, 3)
         self._cluster_vecs = MeanShift(bandwidth=bandwidth, n_jobs=n_jobs, max_iter=max_iter).fit(dr)
+        self._cluster_vecs.labels_ = self._cluster_vecs.labels_.reshape(self.indices.shape)
 
     def cluster_by_distances(self, bandwidth=None, use_vecs=False, force_rerun=False, n_jobs=None, max_iter=300):
         if bandwidth is None:
@@ -213,6 +210,7 @@ class Neighbors(object):
                 self.cluster_by_vecs()
             dr = np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1)
         self._cluster_dist = MeanShift(bandwidth=bandwidth, n_jobs=n_jobs, max_iter=max_iter).fit(dr.reshape(-1, 1))
+        self._cluster_dist.labels_ = self._cluster_dist.labels_.reshape(self.indices.shape)
 
     def reset_clusters(self, vecs=True, distances=True):
         if vecs:

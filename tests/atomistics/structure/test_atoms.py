@@ -749,12 +749,6 @@ class TestAtoms(unittest.TestCase):
         with self.assertRaises(ValueError):
             basis.get_neighbors(cutoff_radius=10)
         basis.get_neighbors_by_distance(cutoff_radius=10)
-        structure = CrystalStructure(elements='Fe', lattice_constants=2.83, bravais_basis='bcc').repeat(2)
-        neigh = structure.get_neighbors()
-        self.assertTrue(np.array_equal(neigh.shells, neigh.get_global_shells()))
-        structure += Atoms(elements='C', positions=[[0, 0, 0.5*2.83]])
-        neigh = structure.get_neighbors()
-        self.assertFalse(np.array_equal(neigh.shells, neigh.get_global_shells()))
 
     def test_center_coordinates(self):
         cell = 2.2 * np.identity(3)
