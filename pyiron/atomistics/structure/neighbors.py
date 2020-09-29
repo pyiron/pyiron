@@ -159,7 +159,7 @@ class Neighbors(object):
 
         pairs = np.stack((self.indices,
             np.ones_like(self.indices)*np.arange(len(self.indices))[:,np.newaxis],
-            self.get_global_shells(cluster_by_distances=cluster_by_distances, cluster_by_vecs=cluster_by_vecs)),
+            self.get_global_shells(cluster_by_distances=cluster_by_distances, cluster_by_vecs=cluster_by_vecs))-1,
             axis=-1
         ).reshape(-1, 3)
         if chemical_symbols is not None:
