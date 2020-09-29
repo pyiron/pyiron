@@ -162,7 +162,7 @@ class Neighbors(object):
             self.get_global_shells(cluster_by_distances=cluster_by_distances, cluster_by_vecs=cluster_by_vecs)-1),
             axis=-1
         ).reshape(-1, 3)
-        shell_max = np.max(pairs[:,-1])
+        shell_max = np.max(pairs[:,-1])+1
         if chemical_symbols is not None:
             c = self._ref_structure.get_chemical_symbols()
             pairs = pairs[np.all(np.sort(c[pairs[:,:2]], axis=-1)==np.sort(chemical_symbols), axis=-1)]
