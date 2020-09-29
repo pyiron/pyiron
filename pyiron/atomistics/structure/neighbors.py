@@ -90,7 +90,7 @@ class Neighbors(object):
         if sort_by_distances:
             if self._cluster_dist is None:
                 self.sort_shells_by_distances(use_vecs=sort_by_vecs)
-            shells = [np.unique(np.round(dist, decimals=self._tolerance), return_inverse=True)[1]+1
+            shells = [np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1
                          for dist in self._cluster_dist.cluster_centers_[self._cluster_dist.labels_].flatten()
                      ]
             if isinstance(self.distances, np.ndarray):
@@ -99,7 +99,7 @@ class Neighbors(object):
         if sort_by_vecs:
             if self._cluster_vecs is None:
                 self.sort_shells_by_vecs()
-            shells = [np.unique(np.round(dist, decimals=self._tolerance), return_inverse=True)[1]+1
+            shells = [np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1
                          for dist in np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1)
                      ]
             if isinstance(self.distances, np.ndarray):
@@ -110,7 +110,7 @@ class Neighbors(object):
                 return None
             self._shells = []
             for dist in self.distances:
-                self._shells.append(np.unique(np.round(dist, decimals=self._tolerance), return_inverse=True)[1]+1)
+                self._shells.append(np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1)
             if isinstance(self.distances, np.ndarray):
                 self._shells = np.array(self._shells)
             return self._shells
@@ -138,7 +138,7 @@ class Neighbors(object):
             if self._cluster_vecs is None:
                 self.sort_shells_by_vecs()
             distances = np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1).reshape(self.distances.shape)
-        dist_lst = np.unique(np.round(a=distances, decimals=decimals))
+        dist_lst = np.unique(np.round(a=distances, decimals=tolerance))
         shells = distances[:,:,np.newaxis]-dist_lst[np.newaxis,np.newaxis,:]
         shells = np.absolute(shells).argmin(axis=-1)+1
         return shells
