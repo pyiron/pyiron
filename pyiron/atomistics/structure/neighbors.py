@@ -141,12 +141,12 @@ class Neighbors(object):
         return shells
 
     def get_shell_matrix(
-        self, chemical_symbols=None, cluster_by_distances=False, cluster_by_vecs=False
+        self, chemical_pair=None, cluster_by_distances=False, cluster_by_vecs=False
     ):
         """
 
         Args:
-            chemical_symbols (list): pair of chemical symbols
+            chemical_pair (list): pair of chemical symbols
 
         Returns:
             sparse matrix for different shells
@@ -159,9 +159,9 @@ class Neighbors(object):
             axis=-1
         ).reshape(-1, 3)
         shell_max = np.max(pairs[:,-1])+1
-        if chemical_symbols is not None:
+        if chemical_pair is not None:
             c = self._ref_structure.get_chemical_symbols()
-            pairs = pairs[np.all(np.sort(c[pairs[:,:2]], axis=-1)==np.sort(chemical_symbols), axis=-1)]
+            pairs = pairs[np.all(np.sort(c[pairs[:,:2]], axis=-1)==np.sort(chemical_pair), axis=-1)]
         shell_matrix = []
         for ind in np.arange(shell_max):
             indices = pairs[ind==pairs[:,-1]]

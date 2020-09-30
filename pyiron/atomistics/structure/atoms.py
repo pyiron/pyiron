@@ -1951,7 +1951,7 @@ class Atoms(ASEAtoms):
 
 
     def get_shell_matrix(
-        self, id_list=None, chemical_symbols=None, num_neighbors=100, tolerance=2,
+        self, id_list=None, chemical_pair=None, num_neighbors=100, tolerance=2,
         cluster_by_distances=False, cluster_by_vecs=False
     ):
         neigh_list = self.get_neighbors(
@@ -1962,7 +1962,7 @@ class Atoms(ASEAtoms):
             + 'Use neigh.get_shell_matrix() instead (after calling neigh = structure.get_neighbors()).',
             DeprecationWarning)
         return neigh_list.get_shell_matrix(
-            chemical_symbols=chemical_symbols,
+            chemical_pair=chemical_pair,
             cluster_by_distances=cluster_by_distances,
             cluster_by_vecs=cluster_by_vecs
         )

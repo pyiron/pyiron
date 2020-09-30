@@ -50,9 +50,9 @@ class TestAtoms(unittest.TestCase):
         neigh = structure.get_neighbors(num_neighbors=8)
         mat = neigh.get_shell_matrix()
         self.assertEqual(mat[0].sum(), 8*len(structure))
-        mat = neigh.get_shell_matrix(chemical_symbols=['Fe', 'Ni'])
+        mat = neigh.get_shell_matrix(chemical_pair=['Fe', 'Ni'])
         self.assertEqual(mat[0].sum(), 16)
-        mat = neigh.get_shell_matrix(chemical_symbols=['Ni', 'Ni'])
+        mat = neigh.get_shell_matrix(chemical_pair=['Ni', 'Ni'])
         self.assertEqual(mat[0].sum(), 0)
 
 if __name__ == "__main__":
