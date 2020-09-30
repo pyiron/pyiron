@@ -80,10 +80,20 @@ class Neighbors(object):
 
     def get_local_shells(self, tolerance=2, cluster_by_distances=False, cluster_by_vecs=False):
         """
-        Set shell indices based on distances available to each atom
+        Set shell indices based on distances available to each atom. Clustering methods can be used
+        at the same time, which will be useful at finite temperature results, but depending on how
+        dispersed the atoms are, the algorithm could take some time. If the clustering method(-s)
+        have already been launched before this function, it will use the results already available
+        and does not execute the clustering method(-s) again.
 
         Args:
             tolerance (int): decimals in np.round for rounding up distances
+            cluster_by_distances (bool): If True, `cluster_by_distances` is called first and the distances obtained
+                from the clustered distances are used to calculate the shells. If cluster_by_vecs is True at the same
+                time, `cluster_by_distances` will use the clustered vectors for its clustering algorithm. For more,
+                see the DocString of `cluster_by_distances`. (default: False)
+            cluster_by_vecs (bool): If True, `cluster_by_vectors` is called first and the distances obtained from
+                the clustered vectors are used to calculate the shells. (default: False)
 
         Returns:
             shells (numpy.ndarray): shell indices
@@ -116,10 +126,20 @@ class Neighbors(object):
         """
         Set shell indices based on all distances available in the system instead of
         setting them according to the local distances (in contrast to shells defined
-        as an attribute in this class)
+        as an attribute in this class). Clustering methods can be used at the same time,
+        which will be useful at finite temperature results, but depending on how dispersed
+        the atoms are, the algorithm could take some time. If the clustering method(-s)
+        have already been launched before this function, it will use the results already
+        available and does not execute the clustering method(-s) again.
 
         Args:
-            tolerance (int): decimals in np.round for rounding up distances
+            tolerance (int): decimals in np.round for rounding up distances (default: 2)
+            cluster_by_distances (bool): If True, `cluster_by_distances` is called first and the distances obtained
+                from the clustered distances are used to calculate the shells. If cluster_by_vecs is True at the same
+                time, `cluster_by_distances` will use the clustered vectors for its clustering algorithm. For more,
+                see the DocString of `cluster_by_distances`. (default: False)
+            cluster_by_vecs (bool): If True, `cluster_by_vectors` is called first and the distances obtained from
+                the clustered vectors are used to calculate the shells. (default: False)
 
         Returns:
             shells (numpy.ndarray): shell indices (cf. shells)
@@ -144,13 +164,23 @@ class Neighbors(object):
         self, chemical_pair=None, cluster_by_distances=False, cluster_by_vecs=False
     ):
         """
+        Shell matrices for pairwise interaction.
 
         Args:
-            chemical_pair (list): pair of chemical symbols
+            chemical_pair (list): pair of chemical symbols (e.g. ['Fe', 'Ni'])
 
         Returns:
-            sparse matrix for different shells
+            list of sparse matrices for different shells
 
+
+        Example:
+            from pyiron import Project
+            structure = Project('.').create_structure('Fe', 'bcc', 2.83).repeat(2)
+            J = -0.1 # Ising parameter
+            magmoms = 2*np.random.random((len(structure)), 3)-1 # Random magnetic moments between -1 and 1
+            neigh = structure.get_neighbors(num_neighbors=8) # Iron first shell
+            shell_matrices = neigh.get_shell_matrix()
+            print('Energy =', J*magmoms.dot(shell_matrices[0].dot(matmoms)))
         """
 
         pairs = np.stack((self.indices,
@@ -226,7 +256,9 @@ class Neighbors(object):
 
         Args:
             bandwidth (float): Resolution (cf. sklearn.cluster.MeanShift)
-            use_vecs (bool): Whether to form clusters for vecs beforehand. Otherwise neigh.distances is used
+            use_vecs (bool): Whether to form clusters for vecs beforehand. If true, the distances obtained
+                from the clustered vectors is used for the distance clustering.  Otherwise neigh.distances
+                is used.
             n_jobs (int): Number of cores (cf. sklearn.cluster.MeanShift)
             max_iter (int): Number of maximum iterations (cf. sklearn.cluster.MeanShift)
         """
