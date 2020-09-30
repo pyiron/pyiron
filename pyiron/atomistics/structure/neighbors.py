@@ -78,7 +78,7 @@ class Neighbors(object):
             raise AssertionError()
         return shell_dict
 
-    def get_local_shells(self, tolerance=5, cluster_by_distances=False, cluster_by_vecs=False):
+    def get_local_shells(self, tolerance=2, cluster_by_distances=False, cluster_by_vecs=False):
         """
         Set shell indices based on distances available to each atom
 
@@ -112,7 +112,7 @@ class Neighbors(object):
                 self._shells = np.array(self._shells)
         return self._shells
 
-    def get_global_shells(self, tolerance=5, cluster_by_distances=False, cluster_by_vecs=False):
+    def get_global_shells(self, tolerance=2, cluster_by_distances=False, cluster_by_vecs=False):
         """
         Set shell indices based on all distances available in the system instead of
         setting them according to the local distances (in contrast to shells defined
