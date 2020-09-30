@@ -875,14 +875,18 @@ class Outcar(object):
 
         """
         cells = []
-        for j in trigger_indices:
-            cell = []
-            for line in lines[j + 5 : j + 8]:
-                line = line.strip()
-                line = _clean_line(line)
-                cell.append([float(l) for l in line.split()[0:3]])
-            cells.append(cell)
-        return np.array(cells)
+        try:
+            for j in trigger_indices:
+                cell = []
+                for line in lines[j + 5: j + 8]:
+                    line = line.strip()
+                    line = _clean_line(line)
+                    cell.append([float(l) for l in line.split()[0:3]])
+                cells.append(cell)
+            return np.array(cells)
+        except ValueError:
+            warnings.warn("Unable to parse the cells from the OUTCAR file")
+            return
 
 
 def _clean_line(line):
