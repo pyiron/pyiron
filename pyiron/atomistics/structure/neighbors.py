@@ -164,7 +164,8 @@ class Neighbors(object):
         self, chemical_pair=None, cluster_by_distances=False, cluster_by_vecs=False
     ):
         """
-        Shell matrices for pairwise interaction.
+        Shell matrices for pairwise interaction. Note: The matrices are always symmetric, meaning if you
+        use them as bilinear operators, you have to divide the results by 2.
 
         Args:
             chemical_pair (list): pair of chemical symbols (e.g. ['Fe', 'Ni'])
@@ -180,7 +181,7 @@ class Neighbors(object):
             magmoms = 2*np.random.random((len(structure)), 3)-1 # Random magnetic moments between -1 and 1
             neigh = structure.get_neighbors(num_neighbors=8) # Iron first shell
             shell_matrices = neigh.get_shell_matrix()
-            print('Energy =', J*magmoms.dot(shell_matrices[0].dot(matmoms)))
+            print('Energy =', 0.5*J*magmoms.dot(shell_matrices[0].dot(matmoms)))
         """
 
         pairs = np.stack((self.indices,
