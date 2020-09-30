@@ -1858,8 +1858,6 @@ class Atoms(ASEAtoms):
             raise ValueError(
                 "Increase max_num_neighbors! " + str(max_nbr) + " " + str(num_neighbors)
             )
-        self.min_nbr_number = min_nbr
-        self.max_nbr_number = max_nbr
         neighbor_obj.distances = neighbor_distance
         neighbor_obj.vecs = neighbor_distance_vec
         neighbor_obj.indices = neighbor_indices
