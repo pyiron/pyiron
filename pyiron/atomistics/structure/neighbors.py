@@ -211,7 +211,7 @@ class Neighbors(object):
             max_iter (int): Number of maximum iterations (cf. sklearn.cluster.MeanShift)
         """
         if bandwidth is None:
-            bandwidth = 0.1*np.min(self.distances)
+            bandwidth = 0.2*np.min(self.distances)
         dr = self.vecs.copy().reshape(-1, 3)
         self._cluster_vecs = MeanShift(bandwidth=bandwidth, n_jobs=n_jobs, max_iter=max_iter).fit(dr)
         self._cluster_vecs.labels_ = self._cluster_vecs.labels_.reshape(self.indices.shape)
