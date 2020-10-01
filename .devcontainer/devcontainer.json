@@ -15,7 +15,6 @@
 		"python.pythonPath": "/opt/conda/bin/python",
 		"python.linting.enabled": true,
 		"python.linting.pylintEnabled": true,
-		"python.testing.unittestEnabled": true,
 		"python.formatting.autopep8Path": "/opt/conda/bin/autopep8",
 		"python.formatting.yapfPath": "/opt/conda/bin/yapf",
 		"python.linting.flake8Path": "/opt/conda/bin/flake8",
