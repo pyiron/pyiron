@@ -1596,6 +1596,7 @@ class Atoms(ASEAtoms):
         tolerance=2,
         id_list=None,
         cutoff_radius=None,
+        boundary_width_factor=1.2,
     ):
         """
 
@@ -1624,6 +1625,7 @@ class Atoms(ASEAtoms):
             tolerance=tolerance,
             id_list=id_list,
             cutoff_radius=cutoff_radius,
+            boundary_width_factor=boundary_width_factor,
         )
 
     def get_neighbors(
@@ -1635,6 +1637,7 @@ class Atoms(ASEAtoms):
         tolerance=2,
         id_list=None,
         cutoff_radius=None,
+        boundary_width_factor=1.2,
     ):
         """
 
@@ -1664,6 +1667,7 @@ class Atoms(ASEAtoms):
             exclude_self=exclude_self,
             tolerance=tolerance,
             id_list=id_list,
+            boundary_width_factor=boundary_width_factor,
         )
         neigh.distances = np.array(neigh.distances)
         neigh.vecs = np.array(neigh.vecs)
@@ -1734,7 +1738,7 @@ class Atoms(ASEAtoms):
         # include periodic boundaries
         # translate radius in boundary layer with relative coordinates
         # TODO: introduce more rigoros definition
-        width = boundary_width_factor*(3*np.max([num_neighbors, 10])*self.get_volume(per_atom=True)/4/np.pi)**(1/3)
+        width = boundary_width_factor*(3*np.max([num_neighbors, 12])*self.get_volume(per_atom=True)/4/np.pi)**(1/3)
 
         # construct cell with additional atoms bounding original cell
         boundary_atoms = self.get_boundary_region(width)
