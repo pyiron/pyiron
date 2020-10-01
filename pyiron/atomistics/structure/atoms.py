@@ -1566,7 +1566,7 @@ class Atoms(ASEAtoms):
         meshgrid = np.meshgrid(rep[0], rep[1], rep[2])
         meshgrid = np.stack(meshgrid, axis=-1).reshape(-1, 3)
         meshgrid = meshgrid[np.linalg.norm(meshgrid, axis=-1)!=0]
-        v_repeated = np.einsum('ni,ij->nj', meshgrid, struct.cell)
+        v_repeated = np.einsum('ni,ij->nj', meshgrid, self.cell)
         v_repeated = v_repeated[:,np.newaxis,:]+positions[np.newaxis,:,:]
         v_repeated = v_repeated.reshape(-1, 3)
         indices = np.tile(np.arange(len(self)), len(meshgrid))
