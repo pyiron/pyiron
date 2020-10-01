@@ -1548,85 +1548,42 @@ class Atoms(ASEAtoms):
         xyz = self.get_scaled_positions(wrap=False)
         return xyz[:, 0], xyz[:, 1], xyz[:, 2]
 
-    def __select_slice(self, i_dim, i_flag, dist):
-        """
-
-        Args:
-            i_dim:
-            i_flag:
-            dist:
-
-        Returns:
-
-        """
-        if i_dim + 1 > self.dimension:
-            return True
-        if i_flag == 1:
-            return self.get_scaled_positions(wrap=False)[:, i_dim] < dist
-        elif i_flag == 0:
-            return True
-        elif i_flag == -1:
-            return self.get_scaled_positions(wrap=False)[:, i_dim] > 1.0 - dist
-
-    def get_boundary_region(self, dist):
+    def get_boundary_region(self, width):
         """
         Get all atoms in the boundary around the supercell which have a distance
         to the supercell boundary of less than dist
 
         Args:
-            dist (float): Distance in relative units
+            dist (float): Distance in Angstrom
 
         Returns:
             pyiron.atomistics.structure.atoms.Atoms: The required boundary region
 
         """
-        rel_coordinates = self.get_scaled_positions(wrap=False)
+        positions = self.positions.copy()
+        rep = np.rint(width/np.linalg.norm(self.cell, axis=-1)+1).astype(int)+1
+        rep = [np.arange(r)-int(r/2) for r in rep]
+        meshgrid = np.meshgrid(rep[0], rep[1], rep[2])
+        meshgrid = np.stack(meshgrid, axis=-1).reshape(-1, 3)
+        meshgrid = meshgrid[np.linalg.norm(meshgrid, axis=-1)!=0]
+        v_repeated = np.einsum('ni,ij->nj', meshgrid, struct.cell)
+        v_repeated = v_repeated[:,np.newaxis,:]+positions[np.newaxis,:,:]
+        v_repeated = v_repeated.reshape(-1, 3)
+        indices = np.tile(np.arange(len(self)), len(meshgrid))
+        edges = np.stack(np.meshgrid([0, 1], [0, 1], [0, 1]), axis=-1).reshape(-1, 3)
+        edges = np.einsum('ij,jk->ik', edges, self.cell)
+        dist = edge[:, np.newaxis, :]-v_repeated[np.newaxis, :, :]
+        dist = np.linalg.norm(dist, axis=-1).min(axis=0)
+        check_dist = (dist<width)
+        indices = indices[check_dist]
+        v_repeated = v_repeated[check_dist]
 
-        dim = self.dimension
-        cell = self.cell.T  # to use same definition as ASE
-        a1 = cell[0]
-        a2, a3 = 0, 0
-        min_i, max_i = -1, 2
-        iyl, iy, izl, iz = 0, 1, 0, 1
-        if dim > 1:
-            a2 = cell[1]
-            iyl, iy = min_i, max_i
-        if dim > 2:
-            a3 = cell[2]
-            izl, iz = min_i, max_i
-
-        index = np.arange(len(self))
-        new_coordinates = np.zeros((1, dim))
-        # pbcVec = np.zeros((1, dim))
-        ia_list = np.zeros((1, 1), dtype=np.int)
-        for i0 in range(min_i, max_i):
-            for i1 in range(iyl, iy):
-                for i2 in range(izl, iz):
-                    # r_vec_abs = i0 * a1 + i1 * a2 + i2 * a3
-                    r_vec = np.array([i0, i1, i2][:dim])
-                    select = (
-                        self.__select_slice(0, i0, dist)
-                        & self.__select_slice(1, i1, dist)
-                        & self.__select_slice(2, i2, dist)
-                    )
-                    if np.linalg.norm(r_vec) > 0:
-                        if len(select) > 0:
-                            sel_coordinates = rel_coordinates[select] + r_vec
-                            new_coordinates = np.append(
-                                new_coordinates, sel_coordinates, axis=0
-                            )
-                            if len(sel_coordinates) > 0:
-                                # rVecs = np.array(len(sel_coordinates) * [r_vec_abs])
-                                # pbcVec = np.append(pbcVec, rVecs, axis=0)
-                                ia_list = np.append(ia_list, index[select])
-                                # print "rVec: ", i0,i1,i2,rVecs[0],index[select],select
-
-        element_list = [self.indices[ia] for ia in ia_list[1:]]
-        self._ia_bounds = ia_list[1:]
+        element_list = [self.indices[ia] for ia in indices]
+        self._ia_bounds = indices
         # self._pbcVec = pbcVec[1:]
         return Atoms(
             indices=element_list,
-            scaled_positions=new_coordinates[1:],
+            positions=v_repeated,
             cell=self.cell,
             dimension=len(cell),
             species=self.species,
@@ -1725,6 +1682,7 @@ class Atoms(ASEAtoms):
         tolerance=2,
         id_list=None,
         cutoff_radius=None,
+        boundary_width_factor=1.2,
     ):
         """
 
@@ -1779,12 +1737,10 @@ class Atoms(ASEAtoms):
         # include periodic boundaries
         # translate radius in boundary layer with relative coordinates
         # TODO: introduce more rigoros definition
-        radius = 3 * num_neighbors ** (1.0 / 3.0)
-        rel_width = [radius / np.sqrt(np.dot(a_i, a_i)) for a_i in self.cell]
-        rel_width_scalar = np.max(rel_width)
+        width = boundary_width_factor*(3*np.max([num_neighbors, 10])*self.get_volume(per_atom=True)/4/np.pi)**(1/3)
 
         # construct cell with additional atoms bounding original cell
-        boundary_atoms = self.get_boundary_region(rel_width_scalar)
+        boundary_atoms = self.get_boundary_region(width)
         extended_cell = self + boundary_atoms
 
         # build index to map boundary atoms back to original cell
