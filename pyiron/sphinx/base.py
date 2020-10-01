@@ -1175,21 +1175,21 @@ class SphinxBase(GenericDFTJob):
             else:
                 self.input["EmptyStates"] = int(len(self.structure) + 3)
 
-        if not self.input.sphinx.basis.locked:
+        if not self.input.sphinx.basis.read_only:
             self.load_basis_group()
-        if not self.input.sphinx.structure.locked:
+        if not self.input.sphinx.structure.read_only:
             self.load_structure_group()
         if self.input["VaspPot"]:
             potformat = "VASP"
         else:
             potformat = "JTH"
-        if not self.input.sphinx.pawPot.locked:
+        if not self.input.sphinx.pawPot.read_only:
             self.load_species_group(potformat=potformat)
-        if not self.input.sphinx.initialGuess.locked:
+        if not self.input.sphinx.initialGuess.read_only:
             self.load_guess_group()
-        if not self.input.sphinx.PAWHamiltonian.locked:
+        if not self.input.sphinx.PAWHamiltonian.read_only:
             self.load_hamilton_group()
-        if not self.input.sphinx.main.locked:
+        if not self.input.sphinx.main.read_only:
             self.load_main_group()
 
 
@@ -1211,7 +1211,7 @@ class SphinxBase(GenericDFTJob):
         # load it based on job.structure.
         structure_sync = (str(self.input.sphinx.structure)
                           == str(self.get_structure_group()))
-        if not structure_sync and not self.input.sphinx.structure.locked:
+        if not structure_sync and not self.input.sphinx.structure.read_only:
             self.load_structure_group()
 
         # copy potential files to working directory
@@ -1223,7 +1223,7 @@ class SphinxBase(GenericDFTJob):
         # If the species group was not modified directly by the user,
         # via job.input.pawPot (which is likely True),
         # load it based on job.structure.
-        if not structure_sync and not self.input.sphinx.pawPot.locked:
+        if not structure_sync and not self.input.sphinx.pawPot.read_only:
             self.load_species_group(potformat=potformat)
 
         self.input_writer.structure = self.structure
@@ -1512,14 +1512,14 @@ class SphinxBase(GenericDFTJob):
 
             structure_sync = (str(self.input.sphinx.structure)
                               == str(self.get_structure_group()))
-            if not structure_sync and not self.input.sphinx.structure.locked:
+            if not structure_sync and not self.input.sphinx.structure.read_only:
                 warnings.warn(
                     "job.input.structure != job.structure. "
                     + "The current job.structure will overwrite "
                     + "any changes you may might have made to "
                     + "job.input.structure in the meantime. "
                     + "To disable this overwrite, "
-                    + "set job.input.structure.locked = True. "
+                    + "set job.input.structure.read_only = True. "
                     + "To disable this warning, call "
                     + "job.load_structure_group() after making changes "
                     + "to job.structure."
@@ -1722,10 +1722,6 @@ class Group(InputList):
     `to_{job_type}` converts the Group to the format
     expected by the given DFT code in its input files.
     """
-
-    def __init__(self, *args, **kw):
-        super().__init__(*args, **kw)
-        object.__setattr__(self,'locked', False)
 
     def set(self, name, content):
         self[name] = content
