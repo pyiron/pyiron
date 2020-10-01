@@ -1585,7 +1585,7 @@ class Atoms(ASEAtoms):
             indices=element_list,
             positions=v_repeated,
             cell=self.cell,
-            dimension=len(cell),
+            dimension=len(self.cell),
             species=self.species,
             pbc=self.pbc,
         )
