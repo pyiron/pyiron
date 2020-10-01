@@ -1572,7 +1572,7 @@ class Atoms(ASEAtoms):
         indices = np.tile(np.arange(len(self)), len(meshgrid))
         edges = np.stack(np.meshgrid([0, 1], [0, 1], [0, 1]), axis=-1).reshape(-1, 3)
         edges = np.einsum('ij,jk->ik', edges, self.cell)
-        dist = edge[:, np.newaxis, :]-v_repeated[np.newaxis, :, :]
+        dist = edges[:, np.newaxis, :]-v_repeated[np.newaxis, :, :]
         dist = np.linalg.norm(dist, axis=-1).min(axis=0)
         check_dist = (dist<width)
         indices = indices[check_dist]
