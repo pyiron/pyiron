@@ -224,10 +224,12 @@ class LammpsControl(GenericParameters):
             all_pressures = 6 * [None]
             all_pressures[:len(pressure)] = pressure
             pressure = np.array(all_pressures, dtype=float)
+
         # Cell degrees of freedom can be kept fixed using None for the pressure, check where that's done.
         not_none_mask = (pressure!=None)
         if not np.any(not_none_mask):
             raise ValueError("Pressure cannot have a length but all be None")
+
         # If necessary, rotate the pressure tensor to the Lammps coordinate frame
         if not np.isclose(np.matrix.trace(rotation_matrix), 3):
             if not np.all(not_none_mask):
