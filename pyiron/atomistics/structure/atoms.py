@@ -1570,8 +1570,8 @@ class Atoms(ASEAtoms):
         v_repeated = v_repeated[:,np.newaxis,:]+positions[np.newaxis,:,:]
         v_repeated = v_repeated.reshape(-1, 3)
         indices = np.tile(np.arange(len(self)), len(meshgrid))
-        dist = np.absolute(v_repeated-np.sum(self.cell*0.5, axis=0))
-        dist = np.einsum('ni,ij->nj', dist, np.linalg.inv(self.cell))-0.5
+        dist = v_repeated-np.sum(self.cell*0.5, axis=0)
+        dist = np.absolute(np.einsum('ni,ij->nj', dist, np.linalg.inv(self.cell)))-0.5
         check_dist = np.all(dist-width/np.linalg.norm(self.cell, axis=-1)<0, axis=-1)
         indices = indices[check_dist]
         v_repeated = v_repeated[check_dist]
@@ -1596,7 +1596,7 @@ class Atoms(ASEAtoms):
         tolerance=2,
         id_list=None,
         cutoff_radius=None,
-        boundary_width_factor=1.2,
+        boundary_width_factor=1.4,
     ):
         """
 
@@ -1637,7 +1637,7 @@ class Atoms(ASEAtoms):
         tolerance=2,
         id_list=None,
         cutoff_radius=None,
-        boundary_width_factor=1.2,
+        boundary_width_factor=1.4,
     ):
         """
 
@@ -1683,7 +1683,7 @@ class Atoms(ASEAtoms):
         tolerance=2,
         id_list=None,
         cutoff_radius=None,
-        boundary_width_factor=1.2,
+        boundary_width_factor=1.4,
     ):
         """
 
@@ -1738,7 +1738,7 @@ class Atoms(ASEAtoms):
         # include periodic boundaries
         # translate radius in boundary layer with relative coordinates
         # TODO: introduce more rigoros definition
-        width = boundary_width_factor*(3*np.max([num_neighbors, 12])*self.get_volume(per_atom=True)/4/np.pi)**(1/3)
+        width = boundary_width_factor*(3*np.max([num_neighbors, 8])*self.get_volume(per_atom=True)/4/np.pi)**(1/3)
 
         # construct cell with additional atoms bounding original cell
         boundary_atoms = self.get_boundary_region(width)
