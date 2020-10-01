@@ -213,7 +213,7 @@ class LammpsControl(GenericParameters):
 
         # Get something with six elements
         if not hasattr(pressure, "__len__"):
-            if not np.isclose(np.matrix.trace(rotation_matrix), 3):
+            if not np.isclose(np.matrix.trace(rotation_matrix), 3) and pressure == 0.0:
                 pressure = np.append(pressure * np.ones(3), pressure * np.ones(3))
             else:
                 pressure = np.append(pressure * np.ones(3), 3 * [None])
