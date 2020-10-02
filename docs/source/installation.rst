@@ -297,6 +297,7 @@ On the system which should be able to submit calculation to the remote HPC we al
 This queue configuration now includes additional options to handle the SSH connection to the remote cluster: 
 
 .. code-block:: bash
+
     queue_type: REMOTE
     queue_primary: queue_one
     ssh_host: hpc-cluster.university.edu
@@ -333,33 +334,57 @@ So far we discussed the installation of pyiron on an individual workstation via 
 
 install from source 
 ===================
+To develop pyiron it is recommended to first create a conda environment containing all dependencies. The dependencies are available in the conda `environment.yml<https://github.com/pyiron/pyiron/blob/master/.ci_support/environment.yml>`_ file on Github. In this repository you can install pyiron from source. If conda is no option for you all the dependencies can also be installed via pip. 
 using pip
 ---------
+The default installation via pip installs the latest release version of pyiron. So incase your HPC cluster does not support installing pyiron via conda you can install this release version via pip and then continue with the setup of your remote HPC cluster as described above.
+
 .. code-block:: bash
 
     pip install pyiron
+
+For those who want to test the nighly releases of pyiron which include the latest status of the master branch you can install those via pip as well: 
 
 .. code-block:: bash
 
     pip install --pre pyiron
 
+While pip installation is supported, we highly recommend using conda when possible. 
+
 using git
 ---------
+To get the latest pyiron version and access changes on development branches pyiron can also be installed via git. For example you can download the pyiron sourcecode to `~/pyrion/software` using:
+
 .. code-block:: bash
 
-    git clone https://github.com/pyiron/pyiron.git
+    git clone https://github.com/pyiron/pyiron.git ~/pyrion/software
+
+Based on the previous workstation setup your `~/pyiron` directory should contain the following folders:
+
+.. code-block:: bash
+
+   pyiron/
+     projects/
+     resources/
+     software/
+     
+To include this version in your `PYTHONPATH` add the following line to your `~/.profile` or `~/.bashrc` configuration:
+
+.. code-block:: bash
+
+    export PYTHONPATH=${HOME}/pyiron/software/:${PYTHONPATH}
+
+When you import pyiron in any python shell or jupyter notebook it should load the version from `~/pyrion/software`. Finally you can switch to other branches using git: 
 
 .. code-block:: bash
 
     git checkout -b master
 
-setup pyiron configuration
-==========================
-Again create your `~/.pyiron` configuration file 
+In this case we switch to the master branch.  
 
 download pyiron parameter files
 ===============================
-After the installation of pyiron we need to configure pyiron. The default configuration can be generated automatically. In the terminal, start a new Python session and import pyiron:
+For source code based installations it is also possible to download the pyiron resources directly from within pyiron. Simply open a python shell and import pyiron:
 
 .. code-block:: python
 
@@ -369,29 +394,21 @@ After the installation of pyiron we need to configure pyiron. The default config
    > yes
    > exit()
 
-The configuration does the following steps in the background:
+This command does the following steps in the background:
 
 * Create an :code:`~/.pyiron` config file – with the default settings (for simple installations)
 
 * Create an :code:`~/pyiron/projects` directory – pyiron can only execute calculation within this project directory to prevent any interference, with other tools or simulation management solutions.
 
-* Create an :code:`~/pyiron/resources` directory – this directory includes the link to the executables and potentials, sorted by code. The potentials for lammps are inside :code:`pyiron_lammps` and those for vasp can be placed in :code:`pyiron_vasp`.
+* Create an :code:`~/pyiron/resources` directory – this directory includes the link to the executables and potentials, sorted by code. 
 
 ***************************************
 Demonstration and Training environments
 ***************************************
+For workshops, tutorials and lectures it is sometimes necessary to setup multiple computers with very similar configurations and depending on the conference location internet access might be limited. For these cases pyiron provides setup instructions for demonstration and training environments. 
 cloud solutions
 ===============
-You can test pyiron on `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/pyiron/master?urlpath=lab>`_, without the need of a local installation. This installation comes with the following limitations:
-
-* No `VASP <https://www.vasp.at>`_ license, DFT calculation can be imported and loaded but the execution is disabled.
-
-* No visualization of atomistic structures using `NGLview <https://github.com/arose/nglview>`_.
-
-* Only temporary data storage, when you leave your session on `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/pyiron/master?urlpath=lab>`_ the environment is reset.
-
-The `Mybinder service <https://mybinder.org>`_ is the most flexible way to test pyiron and get a first impression.
-`Start pyiron on MyBinder.org to test your first pyiron examples. <https://mybinder.org/v2/gh/pyiron/pyiron/master?urlpath=lab>`_
+You can test pyiron on `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/pyiron/master?urlpath=lab>`_, without the need of a local installation. It is a flexible way to get a first impression of pyiron but it does not provide any permanent storage by default. In addition loading the pyiron environment on mybinder can take 5 to 15 minutes in case a new docker container needs to be build. Finally sessions on mybinder are limited in duration, depending on the load of the public mybinder service your instance might be turned off when inactive. In particular during presentations which consist of a slide based introduction followed by an interactive tutorial the mybinder instance might be shutdown if it is idle for too long. 
 
 Docker container
 ================
@@ -423,12 +440,13 @@ Open the link with your personal jupyter token :code:`<your_token>` in the brows
 
 Install utility
 ===============
-To setup a local lab with pyiron we provide a classical installer for Windows, Mac Os X and Linux which is based on the conda constructor. If you do not have anaconda installed you can download this installer and get started with just a single download. 
-https://github.com/pyiron/pyiron-installer/releases
+To setup a local lab with pyiron when the internet connection is limited we provide a classical installer for Windows, Mac Os X and Linux which is based on the `conda constructor<https://github.com/conda/constructor>`. If you do not have anaconda installed you can download this installer and get started with just a single `download<https://github.com/pyiron/pyiron-installer/releases>`. 
 
 ***************
 Getting started
 ***************
+Finally once you have installed pyiron you can quickly test your installation with the following minimalistic example. Many more examples are available in the `Githup repository<https://github.com/pyiron/pyiron/tree/master/notebooks>`.
+
 First calculation
 =================
 After the successful configuration you can start your first pyiron calculation. Navigate to the the projects directory and start a jupyter notebook or jupyter lab session correspondingly:
