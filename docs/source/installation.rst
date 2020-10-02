@@ -17,7 +17,7 @@ Optional Dependencies
 =====================
 All the optional dependencies can also be installed via conda directly to simplify the setup of your simulation environment. 
 
-NGLview for visualising atomistic sturctures
+NGLview for Visualising Atomistic Sturctures
 --------------------------------------------
 In pyiron we use the `NGLview <http://nglviewer.org/nglview/latest/>`_ package to visualise atomistic structures directly in the jupyter notebook. To enable this feature the NGLview conda package can be installed using: 
 
@@ -41,7 +41,7 @@ In addition to `NGLview <http://nglviewer.org/nglview/latest/>`_ the first line 
     jupyter labextension list
 
   
-LAMMPS for interatomic potentials
+LAMMPS for Interatomic Potentials
 ---------------------------------
 `LAMMPS <https://lammps.sandia.gov>`_ stands for Large-scale Atomic/Molecular Massively Parallel Simulator and it is one of the most popular open-source moelcular dynamics simulation codes for simulating solid-state materials (metals, semiconductors). As part of the pyiron project we maintain the conda package for LAMMPS to simplifiy the installation. Still these executables can be a factor 2-3 slower than executables compiled on the hardware directly. Therefore the conda version is recommended for testing and experimental use your workstation but for high performance computing(HPC) we highly recommend to compile LAMMPS yourself and we discuss how to link your own LAMMPS version below in the addvanced section. 
 
@@ -51,7 +51,7 @@ LAMMPS for interatomic potentials
 
 On the conda-forge channel we provide the LAMMPS executable for both serial execution and parallel execution using the message passing interface(MPI) as well as python bindings for both serial and parallel execution. The LAMMPS version on the pyiron channel is for native windows installations only and it is limited to serial execution and does not support Python bindings. We therefore highly recommend using the Linux subsystem for Windows rather than the native Windows installation. 
 
-S/PHI/nX for density functional theory
+S/PHI/nX for Density Functional Theory
 --------------------------------------
 The `S/PHI/nX <https://sxrepo.mpie.de>`_ DFT code is an open-source DFT code developed in close collaboration with the pyiron developers, therefore it is the recommended DFT code to be used with pyiron. The applications of S/PHI/nX range from constrained magnetic calculation to charged defects which makes it suitable for ab initio thermodynamics and beyond. The S/PHI/nX DFT codes is only available on Linux therefore we recommend Windows users to use the Windows subsystem for Linux and Mac Os X users to use a virtual machine. 
 
@@ -61,7 +61,7 @@ The `S/PHI/nX <https://sxrepo.mpie.de>`_ DFT code is an open-source DFT code dev
 
 Again the generic executables provided via the conda-forge channel can be a factor of 2-3 slower than compiling S/PHI/nX directly. We therefore recommend to use these executables for testing only. 
 
-GPAW an alternative density functional theory code
+GPAW an alternative Density Functional Theory Code
 --------------------------------------------------
 `GPAW <https://wiki.fysik.dtu.dk/gpaw/>`_ is a open-source realspace DFT simulation code implemented in pyiron which is popular because of its Python bindings which allow accessing parameters of the DFT code during the run time. GPAW can be installed on Linux directly via conda:
 
@@ -72,11 +72,11 @@ GPAW an alternative density functional theory code
 Again the generic executables provided via the conda-forge channel can be a factor of 2-3 slower than compiling GPAW directly. We therefore recommend to use these executables for testing only. 
 
 **********************
-Advanced configuration
+Advanced Configuration
 **********************
 While the conda based installation is commonly sufficient for workstation installations to get started with pyiron it can be extended to support your own executable, include your own parameter files, support commercial codes like `VASP <https://www.vasp.at>`_ or updating the database performance by switching from `SQLite <https://www.sqlite.org>`_ to `PostgeSQL <https://www.postgresql.org>`_. 
 
-Custom executables and parameter files
+Custom Executables and Parameter Files
 ======================================
 pyiron can either be configured by a configuration file named `~/.pyiron` located in the users home directory or by specifying environment variables. The options are similar so we start with the configuration file. The default configuration file pyiron assums if it does not find a configuration file is:
 
@@ -131,7 +131,7 @@ In analogy to the `~/.pyiron` configuration file pyiron also supports using envi
 
 To further explain the usage of the different parameters we discuss common use cases in the following: 
 
-Use you own executable for LAMMPS/ S/PHI/nX or GPAW
+Use you own Executable for LAMMPS/ S/PHI/nX or GPAW
 ---------------------------------------------------
 To add your own executables or parameter files it is necessary to initialise a user defined configuration `~/.pyiron`. You can start with a basic configuration like: 
 
@@ -183,7 +183,7 @@ The `Vienna Ab initio Simulation Package <https://www.vasp.at>`_ is a popular co
 
 Similar to the LAMMPS resource directory discussed above the VASP resource directory also contains a `bin` diirectory and a `potentials` directory. By adding the `default` tag we can set the default executable, in particular when compiling multiple variants of the same VASP version. Finally the directories `potpaw` and `potpaw_PBE` contain the VASP pseudo potentials, which are included with the VASP license and have to be added by the user. 
 
-PostgreSQL database
+PostgreSQL Database
 ===================
 To accelerate the pyiron installation it is recommended to use a `PostgeSQL <https://www.postgresql.org>`_ database rather than the default `SQLite <https://www.sqlite.org>`_ database. To configure the database server, the following options can be added to the `~/.pyiron`:
 
@@ -215,7 +215,7 @@ A typical `.pyiron` configuration with a `PostgeSQL <https://www.postgresql.org>
 
 Be careful when updating the database configuration as pyiron does not transfer the content of the database automatically. 
 
-Remote HPC cluster
+Remote HPC Cluster
 ==================
 While the previous section discussed the installation of pyiron on a local workstation the following section discusses how to configure a remote HPC cluster to transfer jobs to the HPC cluser for execution and back for analysis. For setting up pyiron with an HPC cluster there are basically three different configurations available: 
 
@@ -227,7 +227,7 @@ While the previous section discussed the installation of pyiron on a local works
 
 We start by explaining the first configuration and then build on top of this setup to add the remote transfer capabilities. 
 
-HPC cluster with PostgreSQL database and Jupyterhub
+HPC Cluster with PostgreSQL Database and Jupyterhub
 ---------------------------------------------------
 The `~/.pyiron` is structured just like a workstation installation with a `PostgeSQL <https://www.postgresql.org>`_ database as explained above. In addition to the previous resource directories we add another subfolder in the resource directory to configure the queuing system using `pysqa <https://github.com/pyiron/pysqa>`_ as queuing system adapter. `pysqa <https://github.com/pyiron/pysqa>`_ is based on the idea of using shell script based templates to configure the different queues as modern queuing sytem provide a wide range of settings but most users commonly submit their jobs with very similar settings. We discuss a sample configuration for `SLURM <https://slurm.schedmd.com/documentation.html>`_ sample configurations for other queuing systems are available on `Github <https://github.com/pyiron/pysqa/tree/master/tests/config>`_.
 
@@ -273,7 +273,7 @@ Besides the queue templates the queues directory also contains the queue configu
 
 The queue configuration defines the limits of the individual queues which helps the user to select the appropriate queue for their simulation. The `queue_type` defines the type of the queuing system, the `queue_primary` defines the primary queue and finally `queues` defines the available queues. Typically each queue is associated with a shell script template, like in this case `queue_one` is associated with `queue_1.sh` and `queue_two` is associated with `queue_2.sh`. Additional queue configurations are available on  `Github <https://github.com/pyiron/pysqa/tree/master/tests/config>`_.
 
-Submit to remote HPC
+Submit to Remote HPC
 --------------------
 To be able to submit calculation to an remote HPC we first need to configure the remote HPC. On the remote HPC we disable the database in the `.pyiron` with the following lines:
 
@@ -314,7 +314,7 @@ This queue configuration now includes additional options to handle the SSH conne
 
 The `ssh_host` defines the name of the login node, with `ssh_username` the user on the remote machine and `known_hosts` and `ssh_key` the local configuration files to connect to the remote host. Currently pyiron only supports ssh key based authentification for remote calculation. By setting `ssh_continous_connection` the same connection is reused for data transfers which is commonly more sufficient that creating individual connections for each command. Still this is based on the assumption that a stable connection between the workstation or group server and the remote HPC cluster exists. If this is not the case for example when using a mobile connection it is recommended to disable this option. The `ssh_remote_config_dir` defines the configuration of the queuing system on the remote cluster. Finally the calculation are copied from the local directory `ssh_local_path` to the remote directory `ssh_remote_path`. In the above example if a calculation is submitted in the directory `/home/jan/pyiron/projects/first/subproject` then the files are copied to `/u/janj/remote/first/subproject`. By retaining the path when transfering the files it is easier to debug failed calculation. Finally the queues are defined locally to have quick access to the queue configurations, but it is not necessary to define the submission templates as those are available on the remote machine. In addition the other resources have to be identical on both systems. The easiest way to achieve this is to copy the resource directory once the installation is working on the remote machine.
 
-Submit to multiple remote HPC clusters
+Submit to multiple Remote HPC Clusters
 --------------------------------------
 Finally pyiron also supports configuring multiple HPC clusters. In this case rather than creating a `queue.yaml` file in the queues resource directory we create a `clusters.yaml` file with the following content: 
 
@@ -328,14 +328,14 @@ Finally pyiron also supports configuring multiple HPC clusters. In this case rat
 The `cluster_primary` defines the default cluster and the different clusters are each defined in their own `cluster_*.yaml` file. Those `cluster_*.yaml` have the same structure as the `queue.yaml` file discussed above, but they can not be named `queue.yaml` as pyiron otherwise assumes that only one cluster is available. 
    
 ********************************   
-Alternative installation options
+Alternative Installation Options
 ********************************
 So far we discussed the installation of pyiron on an individual workstation via conda or on a HPC cluster. In the following we focus on developer specific setups to install pyiron directly from source. It is recommended to start with a conda based installation and then replace only the pyiron version. Still in case this is not possible, for example if conda is not allowed on a HPC cluster then it is still possible to install pyiron via source. This is not recommended as pyiron relies on conda to dstribute reproducibile simulation environments and one of the key features of pyiron is the ability to download the simulation protocols developed by others and apply those to your own material system, still it is possible. 
 
-install from source 
+Install from Source 
 ===================
 To develop pyiron it is recommended to first create a conda environment containing all dependencies. The dependencies are available in the conda `environment.yml <https://github.com/pyiron/pyiron/blob/master/.ci_support/environment.yml>`_ file on Github. In this repository you can install pyiron from source. If conda is no option for you all the dependencies can also be installed via pip. 
-using pip
+Using pip
 ---------
 The default installation via pip installs the latest release version of pyiron. So incase your HPC cluster does not support installing pyiron via conda you can install this release version via pip and then continue with the setup of your remote HPC cluster as described above.
 
@@ -351,7 +351,7 @@ For those who want to test the nighly releases of pyiron which include the lates
 
 While pip installation is supported, we highly recommend using conda when possible. 
 
-using git
+Using git
 ---------
 To get the latest pyiron version and access changes on development branches pyiron can also be installed via git. For example you can download the pyiron sourcecode to `~/pyrion/software` using:
 
@@ -382,7 +382,7 @@ When you import pyiron in any python shell or jupyter notebook it should load th
 
 In this case we switch to the master branch.  
 
-download pyiron parameter files
+Download pyiron Parameter Files
 ===============================
 For source code based installations it is also possible to download the pyiron resources directly from within pyiron. Simply open a python shell and import pyiron:
 
@@ -403,14 +403,14 @@ This command does the following steps in the background:
 * Create an :code:`~/pyiron/resources` directory – this directory includes the link to the executables and potentials, sorted by code. 
 
 ***************************************
-Demonstration and Training environments
+Demonstration and Training Environments
 ***************************************
 For workshops, tutorials and lectures it is sometimes necessary to setup multiple computers with very similar configurations and depending on the conference location internet access might be limited. For these cases pyiron provides setup instructions for demonstration and training environments. 
-cloud solutions
+Cloud Solutions
 ===============
 You can test pyiron on `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/pyiron/master?urlpath=lab>`_, without the need of a local installation. It is a flexible way to get a first impression of pyiron but it does not provide any permanent storage by default. In addition loading the pyiron environment on mybinder can take 5 to 15 minutes in case a new docker container needs to be build. Finally sessions on mybinder are limited in duration, depending on the load of the public mybinder service your instance might be turned off when inactive. In particular during presentations which consist of a slide based introduction followed by an interactive tutorial the mybinder instance might be shutdown if it is idle for too long. 
 
-Docker container
+Docker Container
 ================
 For demonstration purposes we provide Docker containers on  `Dockerhub <https://hub.docker.com/r/pyiron/pyiron/>`_ these can be downloaded and executed locally once docker is installed. But they have to be used carefully as by default they do not provide any permanent storage, so all information is lost once the docker container is shut down. To download the docker container use: 
 
@@ -438,16 +438,16 @@ After the run command the following line is displayed: Copy/paste this URL into 
 
 Open the link with your personal jupyter token :code:`<your_token>` in the browser of your choice. Just like the Binder image also the Docker image comes with the examples preinstalled.
 
-Install utility
+Install Utility
 ===============
 To setup a local lab with pyiron when the internet connection is limited we provide a classical installer for Windows, Mac Os X and Linux which is based on the `conda constructor <https://github.com/conda/constructor>`. If you do not have anaconda installed you can download this installer and get started with just a single `download <https://github.com/pyiron/pyiron-installer/releases>`. 
 
 ***************
-Getting started
+Getting Started
 ***************
 Finally once you have installed pyiron you can quickly test your installation with the following minimalistic example. Many more examples are available in the `Githup repository <https://github.com/pyiron/pyiron/tree/master/notebooks>`.
 
-First calculation
+First Calculation
 =================
 After the successful configuration you can start your first pyiron calculation. Navigate to the the projects directory and start a jupyter notebook or jupyter lab session correspondingly:
 
@@ -481,8 +481,8 @@ Finally a first lammps calculation can be executed by:
     ham.potential = ham.list_potentials()[0]
     ham.run()
 
-Next step
-=========
+Next Steps
+==========
 To get a better overview of all the available functionality inside pyiron we recommend the examples provided in the examples section - :doc:`examples`.
 
 
