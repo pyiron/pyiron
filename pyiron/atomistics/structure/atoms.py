@@ -1548,7 +1548,7 @@ class Atoms(ASEAtoms):
         xyz = self.get_scaled_positions(wrap=False)
         return xyz[:, 0], xyz[:, 1], xyz[:, 2]
 
-    def get_boundary_region(self, width):
+    def get_extended_positions(self, width):
         """
         Get all atoms in the boundary around the supercell which have a distance
         to the supercell boundary of less than dist
@@ -1565,7 +1565,6 @@ class Atoms(ASEAtoms):
         rep = [np.arange(r)-int(r/2) for r in rep]
         meshgrid = np.meshgrid(rep[0], rep[1], rep[2])
         meshgrid = np.stack(meshgrid, axis=-1).reshape(-1, 3)
-        meshgrid = meshgrid[np.linalg.norm(meshgrid, axis=-1)!=0]
         v_repeated = np.einsum('ni,ij->nj', meshgrid, self.cell)
         v_repeated = v_repeated[:,np.newaxis,:]+positions[np.newaxis,:,:]
         v_repeated = v_repeated.reshape(-1, 3)
@@ -1575,17 +1574,7 @@ class Atoms(ASEAtoms):
         check_dist = np.all(dist-width/np.linalg.norm(self.cell, axis=-1)<0, axis=-1)
         indices = indices[check_dist]
         v_repeated = v_repeated[check_dist]
-        element_list = [self.indices[ia] for ia in indices]
-        self._ia_bounds = indices
-        # self._pbcVec = pbcVec[1:]
-        return Atoms(
-            indices=element_list,
-            positions=v_repeated,
-            cell=self.cell,
-            dimension=len(self.cell),
-            species=self.species,
-            pbc=self.pbc,
-        )
+        return v_repeated, indices
 
     def get_neighbors_by_distance(
         self,
@@ -1595,7 +1584,7 @@ class Atoms(ASEAtoms):
         exclude_self=True,
         tolerance=2,
         id_list=None,
-        cutoff_radius=None,
+        cutoff_radius=np.inf,
         boundary_width_factor=1.4,
     ):
         """
@@ -1609,7 +1598,7 @@ class Atoms(ASEAtoms):
             exclude_self (bool): include central __atom (i.e. distance = 0)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list:
-            cutoff_radius (float/None): Upper bound of the distance to which the search must be done
+            cutoff_radius (float): Upper bound of the distance to which the search must be done
 
         Returns:
 
@@ -1636,7 +1625,7 @@ class Atoms(ASEAtoms):
         exclude_self=True,
         tolerance=2,
         id_list=None,
-        cutoff_radius=None,
+        cutoff_radius=np.inf,
         boundary_width_factor=1.4,
     ):
         """
@@ -1650,7 +1639,7 @@ class Atoms(ASEAtoms):
             exclude_self (bool): include central __atom (i.e. distance = 0)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list:
-            cutoff_radius (float/None): Upper bound of the distance to which the search must be done
+            cutoff_radius (float): Upper bound of the distance to which the search must be done
 
         Returns:
 
@@ -1658,7 +1647,7 @@ class Atoms(ASEAtoms):
             and vectors
 
         """
-        if cutoff_radius is not None:
+        if cutoff_radius != np.inf:
             raise ValueError('cutoff_radius is deprecated in get_neighbors. Use get_neighbors_by_distance instead')
         neigh = self._get_neighbors(
             num_neighbors=num_neighbors,
@@ -1682,7 +1671,7 @@ class Atoms(ASEAtoms):
         exclude_self=True,
         tolerance=2,
         id_list=None,
-        cutoff_radius=None,
+        cutoff_radius=np.inf,
         boundary_width_factor=1.4,
     ):
         """
@@ -1714,12 +1703,9 @@ class Atoms(ASEAtoms):
         neighbor_obj = Neighbors(ref_structure=self, tolerance=tolerance)
         if not include_boundary:  # periodic boundaries are NOT included
             tree = cKDTree(self.positions)
-            if cutoff_radius is None:
-                neighbors = tree.query(self.positions, k=num_neighbors)
-            else:
-                neighbors = tree.query(
-                    self.positions, k=num_neighbors, distance_upper_bound=cutoff_radius
-                )
+            neighbors = tree.query(
+                self.positions, k=num_neighbors, distance_upper_bound=cutoff_radius
+            )
 
             d_lst, ind_lst, v_lst = [], [], []
             ic = 0
@@ -1741,25 +1727,17 @@ class Atoms(ASEAtoms):
         width = boundary_width_factor*(3*np.max([num_neighbors, 8])*self.get_volume(per_atom=True)/4/np.pi)**(1/3)
 
         # construct cell with additional atoms bounding original cell
-        boundary_atoms = self.get_boundary_region(width)
-        extended_cell = self + boundary_atoms
-
-        # build index to map boundary atoms back to original cell
-        map_to_cell = np.append(np.arange(len(self)), self._ia_bounds)
+        extended_positions, indices = self.get_extended_positions(width)
 
         # transfer relative to absolute coordinates
-        tree = cKDTree(extended_cell.positions)
+        tree = cKDTree(extended_positions)
         if id_list is None:
-            positions = self.positions
-        else:
-            positions = np.array([self.positions[i] for i in id_list])
+            id_list = np.arange(len(positions))
+        positions = self.positions[np.array(id_lst)]
         # print ("len positions: ", len(positions))
-        if cutoff_radius is None:
-            neighbors = tree.query(positions, k=num_neighbors)
-        else:
-            neighbors = tree.query(
-                positions, k=num_neighbors, distance_upper_bound=cutoff_radius
-            )
+        neighbors = tree.query(
+            positions, k=num_neighbors, distance_upper_bound=cutoff_radius
+        )
 
         # print ("neighbors: ", neighbors)
 
@@ -1768,55 +1746,14 @@ class Atoms(ASEAtoms):
         neighbor_indices = []
 
         # tolerance = 2 # tolerance for round floating point
-
-        def f_ind_ext(x):
-            return x < len(extended_cell)
-
-        neighbor_index = map(lambda x: filter(f_ind_ext, x), neighbors[1])
-        num_neighbors = []
-        for i, index in enumerate(neighbor_index):
-            # print "i, index: ", i, index
-            index = list(index)  # Filter conversion for python 3 compatibility
-            nbrs_distances = neighbors[0][i][i_start : len(index)]
-            # if radius:  # reduce neighborlist based on radius
-            #     new_index_lst, new_dist_lst = [], []
-            #     for index_red, dis_red in zip(index, nbrs_distances):
-            #         if dis_red < radius:
-            #             new_index_lst.append(index_red)
-            #             new_dist_lst.append(dis_red)
-            #     index, nbrs_distances= new_index_lst, new_dist_lst
-            neighbor_distance.append(nbrs_distances)
-            neighbor_indices.append(map_to_cell[index][i_start:])
-            if np.max(nbrs_distances)>width:
-                warnings.warn('boundary_width_factor been too small - most likely not all neighbors properly assigned')
-
+        for atom_id, index, distances in zip(id_list, neighbors[1], neighbrs[0]):
+            neighbor_distance.append(distances[1:])
+            neighbor_indices.append(indicies[index[1:]]%len(self))
+            if np.max(distances)>width:
+                warnings.warn('boundary_width_factor may have been too small - most likely not all neighbors properly assigned')
             if t_vec:
-                nbr_dist = []
-                if len(index) == 0:
-                    neighbor_distance_vec.append(nbr_dist)
-                    continue
-                vec0 = self.positions[index[0]]
-                for i_nbr, ind in enumerate(index[i_start:]):
-                    # ind0 = map_to_cell[ind]
-                    vec_r_ij = extended_cell.positions[ind] - vec0
+                neighbor_distances_vec.append(extended_positions[index]-self.positions[atom_id])
 
-                    dd0 = neighbors[0][i][i_nbr + i_start]
-                    dd = np.sqrt(np.dot(vec_r_ij, vec_r_ij))
-                    if not (dd - dd0 < 0.001):
-                        raise AssertionError()
-                    # if (dd - dd0 > 0.001):
-                    #     print "wrong: ", vec_r_ij, dd,dd0,i_nbr,ind,ind0,i
-                    #     print self.positions[ind0], extended_cell.positions[ind], vec0
-                    nbr_dist.append(vec_r_ij)
-                neighbor_distance_vec.append(nbr_dist)
-            num_neighbors.append(len(index) - i_start)
-
-        min_nbr, max_nbr = min(num_neighbors), max(num_neighbors)
-        if max_nbr == num_neighbors:
-            # print "neighbor distance: ", neighbor_distance
-            raise ValueError(
-                "Increase max_num_neighbors! " + str(max_nbr) + " " + str(num_neighbors)
-            )
         neighbor_obj.distances = neighbor_distance
         neighbor_obj.vecs = neighbor_distance_vec
         neighbor_obj.indices = neighbor_indices
@@ -1830,7 +1767,7 @@ class Atoms(ASEAtoms):
         include_boundary=True,
         tolerance=2,
         id_list=None,
-        cutoff_radius=None,
+        cutoff_radius=np.inf,
     ):
         """
 
@@ -1843,7 +1780,7 @@ class Atoms(ASEAtoms):
                                      False is needed e.g. in plot routines to avoid showing incorrect bonds
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list:
-            cutoff_radius (float/ None): Upper bound of the distance to which the search must be done
+            cutoff_radius (float): Upper bound of the distance to which the search must be done
 
         Returns:
 
