@@ -255,11 +255,13 @@ For demonstration purposes we provide Docker containers on  `Dockerhub <https://
     docker pull pyiron/pyiron:latest
 
 After downloading the docker container you can use it with either jupyter notebook:
+
 .. code-block:: bash
 
     docker run -i -t -p 8888:8888 pyiron/pyiron /bin/bash -c "source /srv/conda/envs/notebook/bin/activate; jupyter notebook --notebook-dir=/home/pyiron/ --ip='*' --port=8888"
 
 or with jupyter lab:
+
 .. code-block:: bash
 
     docker run -i -t -p 8888:8888 pyiron/pyiron /bin/bash -c "source /srv/conda/envs/notebook/bin/activate; jupyter lab --notebook-dir=/home/pyiron/ --ip='*' --port=8888"
