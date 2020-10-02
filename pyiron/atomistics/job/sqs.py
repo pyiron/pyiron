@@ -73,8 +73,8 @@ class SQSJob(AtomisticGenericJob):
             objective function. (Default is 0.)
         - iterations (int): How many iterations to make searching for the most special quasirandom structure using a
             random shuffling procedure. (Default is 1e6)
-        - output_structures (int): How many different SQS structures to return (in decreasing special quasirandomness).
-            (Default is 1.)
+        - n_output_structures (int): How many different SQS structures to return (in decreasing special
+            quasirandomness). (Default is 1.)
     """
 
     def __init__(self, project, job_name):
@@ -84,7 +84,7 @@ class SQSJob(AtomisticGenericJob):
         self.input.weights = None
         self.input.objective = 0.0
         self.input.iterations = 1e6
-        self.input.output_structures = 1
+        self.input.n_output_structures = 1
         self._python_only_job = True
         self._lst_of_struct = []
         self._fail_early_if_imports_missing()
@@ -119,7 +119,7 @@ class SQSJob(AtomisticGenericJob):
             weights=self.input.weights,
             objective=self.input.objective,
             iterations=self.input.iterations,
-            output_structures=self.input.output_structures,
+            output_structures=self.input.n_output_structures,
             num_threads=self.server.cores
         )
         for i, structure in enumerate(self._lst_of_struct):
