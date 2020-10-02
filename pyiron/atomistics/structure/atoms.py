@@ -1695,65 +1695,30 @@ class Atoms(ASEAtoms):
         i_start = 0
         if exclude_self:
             i_start = 1
-
-        def f_ind(x):
-            return x < len(self)
-
         num_neighbors += 1
         neighbor_obj = Neighbors(ref_structure=self, tolerance=tolerance)
         if not include_boundary:  # periodic boundaries are NOT included
-            tree = cKDTree(self.positions)
-            neighbors = tree.query(
-                self.positions, k=num_neighbors, distance_upper_bound=cutoff_radius
-            )
-
-            d_lst, ind_lst, v_lst = [], [], []
-            ic = 0
-            for d_i, ind_i in zip(neighbors[0], neighbors[1]):
-                ff = (ind_i < len(self)) & (ind_i != ic)
-                ind_l = ind_i[ff]
-                ind_lst.append(ind_l)
-                d_lst.append(d_i[ff])
-                v_lst.append(self.positions[ind_l] - self.positions[ic])
-                ic += 1
-            neighbor_obj.indices = ind_lst
-            neighbor_obj.distances = d_lst
-            neighbor_obj.vecs = v_lst
-            return neighbor_obj
-
-        # include periodic boundaries
-        # translate radius in boundary layer with relative coordinates
-        # TODO: introduce more rigoros definition
-        width = boundary_width_factor*(3*np.max([num_neighbors, 8])*self.get_volume(per_atom=True)/4/np.pi)**(1/3)
-
-        # construct cell with additional atoms bounding original cell
+            boundary_width_factor = 0
+        else:
+            width = boundary_width_factor*(3*np.max([num_neighbors, 8])*self.get_volume(per_atom=True)/4/np.pi)**(1/3)
         extended_positions, indices = self.get_extended_positions(width)
-
-        # transfer relative to absolute coordinates
         tree = cKDTree(extended_positions)
         if id_list is None:
             id_list = np.arange(len(self.positions))
         positions = self.positions[np.array(id_list)]
-        # print ("len positions: ", len(positions))
         neighbors = tree.query(
             positions, k=num_neighbors, distance_upper_bound=cutoff_radius
         )
-
-        # print ("neighbors: ", neighbors)
-
         neighbor_distance = []  # neighbors[0]
         neighbor_distance_vec = []
         neighbor_indices = []
-
-        # tolerance = 2 # tolerance for round floating point
         for atom_id, index, distances in zip(id_list, neighbors[1], neighbors[0]):
-            neighbor_distance.append(distances[1:])
-            neighbor_indices.append(indices[index[1:]]%len(self))
-            if np.max(distances)>width:
+            neighbor_distance.append(distances[i_start:])
+            neighbor_indices.append(indices[index[i_start:]]%len(self))
+            if np.max(distances)>width and include_boundary:
                 warnings.warn('boundary_width_factor may have been too small - most likely not all neighbors properly assigned')
             if t_vec:
                 neighbor_distance_vec.append(extended_positions[index]-self.positions[atom_id])
-
         neighbor_obj.distances = neighbor_distance
         neighbor_obj.vecs = neighbor_distance_vec
         neighbor_obj.indices = neighbor_indices
