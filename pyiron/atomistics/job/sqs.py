@@ -33,15 +33,18 @@ def pymatgen_to_pyiron(structure):
     return ase_to_pyiron(AseAtomsAdaptor.get_atoms(structure))
 
 
-def get_sqs_structures(structure, mole_fractions, weights=None, objective=0.0, iterations=1e6, output_structures=10, num_threads=None):
+def get_sqs_structures(structure, mole_fractions, weights=None, objective=0.0, iterations=1e6, output_structures=10,
+                       num_threads=None):
     structure = pyiron_to_pymatgen(structure)
     if not weights:
-        weights = {i: 1.0/i for i in range(1,7)}
+        weights = {i: 1.0/i for i in range(1, 7)}
     if not num_threads:
         # Thats default behaviour
         num_threads = cpu_count()
     iterator = ParallelSqsIterator(structure, mole_fractions, weights, num_threads=num_threads)
-    structures, decmp, iter_, cycle_time = iterator.iteration(iterations=iterations, output_structures=output_structures, objective=objective)
+    structures, decmp, iter_, cycle_time = iterator.iteration(
+        iterations=iterations, output_structures=output_structures, objective=objective
+    )
     return [pymatgen_to_pyiron(s) for s in structures], decmp, iter_, cycle_time
 
 
