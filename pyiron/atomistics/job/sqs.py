@@ -56,6 +56,19 @@ class SQSJob(AtomisticGenericJob):
         self.input.output_structures = 1
         self._python_only_job = True
         self._lst_of_struct = []
+        self._fail_early_if_imports_missing()
+
+    @staticmethod
+    def _fail_early_if_imports_missing():
+        """
+        Just a temporary measure as long as the imports are wrapped in a try/pass instead of being on the dependencies
+        list.
+        """
+        try:
+            AseAtomsAdaptor()
+        except NameError:
+            raise NameError("SQSJob relies on pymatgen.io.ase.AseAtomsAdaptor and "
+                            "sqsgenerator.core.sqs.ParallelSqsIterator; at least one of these is unavailable.)")
 
     @property
     def list_of_structures(self):
