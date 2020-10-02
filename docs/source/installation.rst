@@ -101,7 +101,39 @@ In the following the individual options are explained one by one:
 
 * the `RESOURCE_PATHS` option defines the resource path is a list of `;` separated paths where pyiron checks for resource files. A template of such a resource directory is available on `github <https://github.com/pyiron/pyiron-resources>`_ and it can be downloaded as an archive from the `release page <https://github.com/pyiron/pyiron-resources/releases>`_. We recommend to create a folder `~/pyiron/resources` and store the parameter files and likes to the executables there. The links are basically shell scripts which can be modified to load modules. By default the conda path is added, therefore there is no need to add it manually. 
 
-* the `PROJECT_PATHS` option is similar to the resource path but for storing 
+* the `PROJECT_PATHS` option is similar to the resource path but for storing simulation protocols rather than parameter files. When the `PROJECT_CHECK_ENABLED` option is set to `true` then the read and write access within pyiron is limited to the directories defined in the `PROJECT_PATHS`. Again multiple directories can be separated by `;`. An alternative but outdated name for this option is `TOP_LEVEL_DIRS`. 
+
+To further explain the usage of the different parameters we discuss common cases: 
+Use you own executable for LAMMPS/ S/PHI/nX or GPAW
+---------------------------------------------------
+.. code-block:: bash
+
+    resources/
+      lammps/
+        bin/
+          run_lammps_2020.03.03.sh
+          run_lammps_2020.03.03_mpi.sh
+        potentials/
+          potentials_lammps.csv
+
+Configure VASP
+--------------
+An example configuration of VASP for pyiron is available on `Github<https://github.com/pyiron/pyiron-resources/tree/master/vasp>`_: 
+
+.. code-block:: bash
+
+    resources/
+      vasp/
+        bin/
+          run_vasp_5.4.4_default.sh
+          run_vasp_5.4.4_default_mpi.sh
+        potentials/
+          potpaw/
+          potpaw_PBE/
+          potentials_vasp.csv
+          potentials_vasp_lda_default.csv
+          potentials_vasp_pbe_default.csv
+
 
 .. code-block:: bash
 
