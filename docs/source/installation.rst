@@ -113,6 +113,22 @@ Besides the general variables in the `~/.pyiron` configuration, the other settin
 
 * Finally some pyiron installations use a group management component which is currently in development. They might have additional options in their `~/.pyiron` configuration to enable sharing calculations between different users. These options are `VIEWERUSER`, `VIEWERPASSWD` and `VIEWER_TABLE`. As this is a development feature it is not yet fully documented. Basically those are the access details for the global database viewer, which can read the database entries of all users. With this configuration it is possible to load jobs of other users. 
 
+In analogy to the `~/.pyiron` configuration file pyiron also supports using environment variables to configure the pyiron installation. The available environment variables are: 
+
+* the `PYIRONCONFIG` environment variable defines the location of the `.pyiron` configuration file. 
+
+* the `PYIRONRESOURCEPATHS` environment variable defines the `RESOURCE_PATHS` option.
+
+* the `PYIRONPROJECTPATHS` environment variable defines the `PROJECT_PATHS` option.
+
+* the `PYIRONPROJECTCHECKENABLED` environment variable defines the `ROJECT_CHECK_ENABLED` option.
+
+* the `PYIRONDISABLE` environment variable defines the `DISABLE_DATABASE` option.
+
+* the `PYIRONSQLTYPE`, `PYIRONSQLFILE`, `PYIRONSQHOST`, `PYIRONSQLDATABASE`, `PYIRONUSER` and `PYIRONSQLUSERKEY` environment varaibles define the SQL database connection and can also be summarized in the `PYIRONSQLCONNECTIONSTRING` environment variable. 
+
+* the `PYIRONSQLVIEWTABLENAME`, `PYIRONSQLVIEWUSER` and `PYIRONSQLVIEWUSERKEY` environment variables define the SQL viewer connection and can also be summarized in the `PYIRONSQLVIEWCONNECTIONSTRING` environment variable. 
+
 To further explain the usage of the different parameters we discuss common use cases in the following: 
 
 Use you own executable for LAMMPS/ S/PHI/nX or GPAW
@@ -167,55 +183,41 @@ The `Vienna Ab initio Simulation Package<https://www.vasp.at>`_ is a popular com
 
 Similar to the LAMMPS resource directory discussed above the VASP resource directory also contains a `bin` diirectory and a `potentials` directory. By adding the `default` tag we can set the default executable, in particular when compiling multiple variants of the same VASP version. Finally the directories `potpaw` and `potpaw_PBE` contain the VASP pseudo potentials, which are included with the VASP license and have to be added by the user. 
 
+PostgreSQL database
+===================
+To accelerate the pyiron installation it is recommended to use a `PostgeSQL<https://www.postgresql.org>`_ database rather than the default `SQLite<https://www.sqlite.org>`_ database. To configure the database server, the following options can be added to the `~/.pyiron`:
+
+* `TYPE` the typ of the database, while `sqlalchemy<https://www.sqlalchemy.org>`_ supports a wide range of differnet databases `PostgeSQL<https://www.postgresql.org>`_ is recommended and can be selected by setting the type to `Postgres`. 
+
+* `HOST` the database host, where the database is running. 
+
+* `NAME` the name of the database.
+
+* `USER` the database user, in contrast to many other software packages pyiron requires one database user per system user who is using pyiron. The database is only used to store an index of the calculations executed with pyiron, therefore knowledge gained from accessing the database is limited unless the user has also access to the file system. 
+
+* `PASSWD` the database user password. While it is a bad practice to store the database password in the configuration file, the database only contains the the job index. Still it is important that the user creates an pyiron specific password and should never store their system user password in the `.pyiron` configuration file. 
+
+* `JOB_TABLE` the name of the database table. pyiron is commonly using one table per user. 
+
+A typical `.pyiron` configuration with a `PostgeSQL<https://www.postgresql.org>`_ database might look like this: 
+
 .. code-block:: bash
 
     [DEFAULT]  
-    FILE
-    DATABASE_FILE
-    TOP_LEVEL_DIRS
-    PROJECT_PATHS
-    RESOURCE_PATHS
-    DISABLE_DATABASE
-    PROJECT_CHECK_ENABLED
-    TYPE
-    HOST
-    NAME
-    USER
-    PASSWD
-    JOB_TABLE
-    VIEWERUSER
-    VIEWERPASSWD
-    VIEWER_TABLE
-    CONNECTION
+    TYPE = Postgres
+    HOST = pyiron-db-cmmc.esc.rzg.mpg.de
+    NAME = pyiron
+    USER = janj
+    PASSWD = **********
+    JOB_TABLE = jobs_cmmc
+    PROJECT_PATHS = ~/pyiron/projects
+    RESOURCE_PATHS = ~/pyiron/resources  
 
-The available environment variables are: 
-
-.. code-block:: bash
-
-    PYIRONCONFIG
-    PYIRONUSER
-    PYIRONRESOURCEPATHS
-    PYIRONPROJECTPATHS
-    PYIRONSQLCONNECTIONSTRING
-    PYIRONSQLTABLENAME
-    PYIRONSQLVIEWCONNECTIONSTRING
-    PYIRONSQLVIEWTABLENAME
-    PYIRONSQLVIEWUSER
-    PYIRONSQLVIEWUSERKEY
-    PYIRONSQLFILE
-    PYIRONSQHOST
-    PYIRONSQLTYPE
-    PYIRONSQLUSERKEY
-    PYIRONSQLDATABASE
-    PYIRONPROJECTCHECKENABLED
-    PYIRONDISABLE
-
-PostgreSQL database
-===================
-As pyiron provides direct access to a python shell and the python shell provides direct access to the file system we rely on the file system permissions to secure the user directories. 
+Be careful when updating the database configuration as pyiron does not transfer the content of the database automatically. 
 
 Remote HPC cluster
 ==================
+While the previous section discussed the installation of pyiron on a local workstation the following section discusses how to configure a remote HPC cluster to transfer jobs to the HPC cluser for execution and back for analysis. 
 
 .. code-block:: bash
 
