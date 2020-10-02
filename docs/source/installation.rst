@@ -4,7 +4,7 @@
 Installation
 ============
 ******************
-Conda installation
+Conda Installation
 ******************
 The recommended way to install pyiron is via the conda package manager in a Linux environment. So if you are using windows we recommend using the Linux subsystem for Windows to install pyiron and if you are on Mac Os X we recommend using a virutal machine. Native installations on both Windows and Mac Os X are possible but are restricted to molecular dynamics calculations with interatomic potentials and do not support density functional theory(DFT) codes. We collaborate with the open-source community at `conda-forge <https://conda-forge.org>`_ to not only provide the pyiron package via their community channel, but also executables for compatible simulation codes like GPAW, LAMMPS and S/PHI/nX and their parameter files like pseudo potentials and interatomic potentials. To get started you can install pyiron using: 
 
@@ -71,12 +71,13 @@ GPAW is a open-source realspace DFT simulation code implemented in pyiron which 
 
 Again the generic executables provided via the conda-forge channel can be a factor of 2-3 slower than compiling GPAW directly. We therefore recommend to use these executables for testing only. 
 
+**********************
 Advanced configuration
-======================
+**********************
 While the conda based installation is commonly sufficient for workstation installations to get started with pyiron it can be extended to support your own executable, include your own parameter files, support commercial codes like VASP or updating the database performance by switching from SQLite to PostgeSQL. 
 
 Custom executables and parameter files
---------------------------------------
+======================================
 pyiron can either be configured by a configuration file named `~/.pyiron` located in the users home directory or by specifying environment variables. The configuration file can contain the following options: 
 
 .. code-block:: bash
@@ -123,11 +124,12 @@ The available environment variables are:
     PYIRONDISABLE
 
 PostgreSQL database
--------------------
+===================
 As pyiron provides direct access to a python shell and the python shell provides direct access to the file system we rely on the file system permissions to secure the user directories. 
 
 Remote HPC cluster
-------------------
+==================
+
 .. code-block:: bash
 
     cluster_primary: cmti001
@@ -180,14 +182,54 @@ Remote HPC cluster
     #SBATCH --get-user-env=L
     {{command}}
    
+********************************   
 Alternative installation options
-================================
+********************************
 install from source 
--------------------
+===================
+using pip
+---------
+.. code-block:: bash
+
+    pip install pyiron
+
+.. code-block:: bash
+
+    pip install --pre pyiron
+
+using git
+---------
+.. code-block:: bash
+
+    git clone https://github.com/pyiron/pyiron.git
+
+.. code-block:: bash
+
+    git checkout -b master
+
 setup pyiron configuration
---------------------------
+==========================
+Again create your `~/.pyiron` configuration file 
+
 download pyiron parameter files
--------------------------------
+===============================
+After the installation of pyiron we need to configure pyiron. The default configuration can be generated automatically. In the terminal, start a new Python session and import pyiron:
+
+.. code-block:: python
+
+   > import pyiron
+   > pyiron.install()
+   >>> It appears that pyiron is not yet configured, do you want to create a default start configuration (recommended: yes). [yes/no]:
+   > yes
+   > exit()
+
+The configuration does the following steps in the background:
+
+* Create an :code:`~/.pyiron` config file – with the default settings (for simple installations)
+
+* Create an :code:`~/pyiron/projects` directory – pyiron can only execute calculation within this project directory to prevent any interference, with other tools or simulation management solutions.
+
+* Create an :code:`~/pyiron/resources` directory – this directory includes the link to the executables and potentials, sorted by code. The potentials for lammps are inside :code:`pyiron_lammps` and those for vasp can be placed in :code:`pyiron_vasp`.
 
 Demonstration and Training environments
 =======================================
