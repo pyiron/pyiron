@@ -1561,7 +1561,7 @@ class Atoms(ASEAtoms):
 
         """
         positions = self.positions.copy()
-        rep = np.rint(width/np.linalg.norm(self.cell, axis=-1)+1).astype(int)+1
+        rep = 2*np.ceil(width/np.linalg.norm(self.cell, axis=-1)+1e-8).astype(int)+1
         rep = [np.arange(r)-int(r/2) for r in rep]
         meshgrid = np.meshgrid(rep[0], rep[1], rep[2])
         meshgrid = np.stack(meshgrid, axis=-1).reshape(-1, 3)
@@ -1570,7 +1570,7 @@ class Atoms(ASEAtoms):
         v_repeated = v_repeated.reshape(-1, 3)
         indices = np.tile(np.arange(len(self)), len(meshgrid))
         dist = v_repeated-np.sum(self.cell*0.5, axis=0)
-        dist = np.absolute(np.einsum('ni,ij->nj', dist, np.linalg.inv(self.cell)))-0.5
+        dist = np.absolute(np.einsum('ni,ij->nj', dist+1e-8, np.linalg.inv(self.cell)))-0.5
         check_dist = np.all(dist-width/np.linalg.norm(self.cell, axis=-1)<0, axis=-1)
         indices = indices[check_dist]
         v_repeated = v_repeated[check_dist]
@@ -1585,7 +1585,7 @@ class Atoms(ASEAtoms):
         tolerance=2,
         id_list=None,
         cutoff_radius=np.inf,
-        boundary_width_factor=1.4,
+        boundary_width_factor=1.2,
     ):
         """
 
@@ -1626,7 +1626,7 @@ class Atoms(ASEAtoms):
         tolerance=2,
         id_list=None,
         cutoff_radius=np.inf,
-        boundary_width_factor=1.4,
+        boundary_width_factor=1.2,
     ):
         """
 
@@ -1672,7 +1672,7 @@ class Atoms(ASEAtoms):
         tolerance=2,
         id_list=None,
         cutoff_radius=np.inf,
-        boundary_width_factor=1.4,
+        boundary_width_factor=1.2,
     ):
         """
 
@@ -1698,7 +1698,9 @@ class Atoms(ASEAtoms):
         num_neighbors += 1
         neighbor_obj = Neighbors(ref_structure=self, tolerance=tolerance)
         if not include_boundary:  # periodic boundaries are NOT included
-            boundary_width_factor = 0
+            if num_neighbors > len(self):
+                raise ValueError('if not include_boundary, num_neighbors is not allowed to be larger than the number of atoms present in the box')
+            width = 0
         else:
             width = boundary_width_factor*(3*np.max([num_neighbors, 8])*self.get_volume(per_atom=True)/4/np.pi)**(1/3)
         extended_positions, indices = self.get_extended_positions(width)
@@ -1718,7 +1720,7 @@ class Atoms(ASEAtoms):
             if np.max(distances)>width and include_boundary:
                 warnings.warn('boundary_width_factor may have been too small - most likely not all neighbors properly assigned')
             if t_vec:
-                neighbor_distance_vec.append(extended_positions[index]-self.positions[atom_id])
+                neighbor_distance_vec.append(extended_positions[index[i_start:]]-self.positions[atom_id])
         neighbor_obj.distances = neighbor_distance
         neighbor_obj.vecs = neighbor_distance_vec
         neighbor_obj.indices = neighbor_indices
@@ -1758,7 +1760,7 @@ class Atoms(ASEAtoms):
             pass
 
         box = self.copy()
-        box += box[-1]
+        box.append(box[-1])
         pos = box.positions
         pos[-1] = np.array(position)
         box.positions = pos

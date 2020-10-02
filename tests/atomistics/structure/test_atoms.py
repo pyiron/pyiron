@@ -688,14 +688,6 @@ class TestAtoms(unittest.TestCase):
         )
         self.assertEqual(8 * len(self.CO2), len(self.CO2.repeat(np.int64(2))))
 
-    def test_boundary(self):
-        cell = 2.2 * np.identity(3)
-        NaCl = Atoms("NaCl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
-        NaCl.set_repeat([3, 3, 3])
-        # NaCl.plot3d()
-        NaCl_bound = NaCl.get_boundary_region(0.2)
-        # NaCl_bound.plot3d()
-
     def test_get_distance(self):
         cell = 2.2 * np.identity(3)
         NaCl = Atoms("NaCl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
@@ -737,15 +729,13 @@ class TestAtoms(unittest.TestCase):
         NaCl = Atoms("NaCl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
         # NaCl.repeat([3, 3, 3])
         # NaCl.positions = [(1,1,1)]
-        boundary = NaCl.get_boundary_region(3.5)
-        extended_cell = NaCl + boundary
-        # extended_cell.plot3d()
         nbr_dict = NaCl.get_neighbors(num_neighbors=12, t_vec=True)
         basis = Atoms(symbols="FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3))
-        neigh = basis.get_neighbors(include_boundary=False)
+        with self.assertRaises(ValueError):
+            neigh = basis.get_neighbors(include_boundary=False, num_neighbors=10)
+        neigh = basis.get_neighbors(include_boundary=False, num_neighbors=1)
         self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
         basis.set_repeat(2)
-        self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
         with self.assertRaises(ValueError):
             basis.get_neighbors(cutoff_radius=10)
         basis.get_neighbors_by_distance(cutoff_radius=10)
