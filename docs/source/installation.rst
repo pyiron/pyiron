@@ -3,6 +3,70 @@
 ============
 Installation
 ============
+******************
+Conda installation
+******************
+The recommended way to install pyiron is via the conda package manager in a Linux environment. So if you are using windows we recommend using the Linux subsystem for Windows to install pyiron and if you are on Mac Os X we recommend using a virutal machine. Native installations on both Windows and Mac Os X are possible but are restricted to molecular dynamics calculations with interatomic potentials and do not support density functional theory(DFT) codes. We collaborate with the open-source community at `conda-forge <https://conda-forge.org>`_ to not only provide the pyiron package via their community channel, but also executables for compatible simulation codes like GPAW, LAMMPS and S/PHI/nX and their parameter files like pseudo potentials and interatomic potentials. To get started you can install pyiron using: 
+
+.. code-block:: bash
+
+    conda install -c conda-forge pyiron
+    
+
+Optional Dependencies 
+=====================
+NGLview for visualising atomistic sturctures
+--------------------------------------------
+In pyiron we use the NGLview package to visualise atomistic structures directly in the jupyter notebook. To enable this feature the NGLview conda package can be installed using: 
+
+.. code-block:: bash
+
+    conda install -c conda-forge nglview
+
+In case you prefer jupyter lab over jupyter notebooks, you can also install NGLview for jupyter lab, this requires a few additional dependencies: 
+
+.. code-block:: bash
+
+    conda install -c conda-forge nodejs nglview
+    jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build
+    jupyter labextension install nglview-js-widgets
+
+In addition to NGLview the first line also installs nodejs which is required to install your own jupyterlab plugins and rebuild jupyter lab. The following two lines install the jupyterlab extensions. Starting with the jupyterlab manager and followed by the NGLview javascript widget. During the installation of NGLview it is important to confirm that the NGLview version installed via conda is the same as the version of the NGLview javascript widget: 
+
+.. code-block:: bash
+
+    conda list nglview
+    jupyter labextension nglview
+
+  
+LAMMPS for interatomic potentials
+---------------------------------
+LAMMPS stands for Large-scale Atomic/Molecular Massively Parallel Simulator and it is one of the most popular moelcular dynamics simulation codes for simulating solid-state materials (metals, semiconductors). As part of the pyiron project we maintain the conda package for LAMMPS to simplifiy the installation. Still these executables can be a factor 2-3 slower than executables compiled on the hardware directly. Therefore the conda version is recommended for testing and experimental use your workstation but for high performance computing(HPC) we highly recommend to compile LAMMPS yourself and we discuss how to link your own LAMMPS version below in the addvanced section. 
+
+.. code-block:: bash
+
+    conda install -c conda-forge -c pyiron lammps
+
+On the conda-forge channel we provide the LAMMPS executable for both serial execution and parallel execution using the message passing interface(MPI) as well as python bindings for both serial and parallel execution. The LAMMPS version on the pyiron channel is for native windows installations only and it is limited to serial execution and does not support Python bindings. We therefore highly recommend using the Linux subsystem for Windows rather than the native Windows installation. 
+
+S/PHI/nX for density functional theory
+--------------------------------------
+The S/PHI/nX DFT code is developed in close collaboration with the pyiron developers, therefore it is the recommended DFT code to be used with pyiron. The applications of S/PHI/nX range from constrained magnetic calculation to charged defects which makes it suitable for ab initio thermodynamics and beyond. The S/PHI/nX DFT codes is only available on Linux therefore we recommend Windows users to use the Windows subsystem for Linux and Mac Os X users to use a virtual machine. 
+
+.. code-block:: bash
+
+    conda install -c conda-forge sphinxdft
+
+Again the generic executables provided via the conda-forge channel can be a factor of 2-3 slower than compiling S/PHI/nX directly. We therefore recommend to use these executables for testing only. 
+
+GPAS an alternative density functional theory code
+--------------------------------------------------
+
+
+
+*****************
+OLD DOCUMENTATION
+*****************
 
 .. note:: **Before you install:** We provide various levels of environments to test pyiron:
 
