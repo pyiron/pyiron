@@ -217,7 +217,9 @@ Be careful when updating the database configuration as pyiron does not transfer 
 
 Remote HPC cluster
 ==================
-While the previous section discussed the installation of pyiron on a local workstation the following section discusses how to configure a remote HPC cluster to transfer jobs to the HPC cluser for execution and back for analysis. 
+While the previous section discussed the installation of pyiron on a local workstation the following section discusses how to configure a remote HPC cluster to transfer jobs to the HPC cluser for execution and back for analysis. For setting up pyiron with an HPC cluster there are basically three different configurations available: 
+
+* Install pyiron on the HPC cluster, with `jupyterhub<https://jupyterhub.readthedocs.io>`_ running as central service on the login node using the `sudospawner<https://github.com/jupyterhub/sudospawner>`_ to authorize users. In this configuration the user only needs a webbrowser and all simulation results remain on the HPC cluster. The limitation of this approach is that both the global `PostgeSQL<https://www.postgresql.org>`_ database as well as the `jupyterhub<https://jupyterhub.readthedocs.io>`_ have to be running on the cluster with the `PostgeSQL<https://www.postgresql.org>`_ database being accessible from all compute nodes. 
 
 .. code-block:: bash
 
