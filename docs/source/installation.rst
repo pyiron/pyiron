@@ -53,7 +53,7 @@ On the conda-forge channel we provide the LAMMPS executable for both serial exec
 
 S/PHI/nX for density functional theory
 --------------------------------------
-The `S/PHI/nX <https://sxrepo.mpie.de>` DFT code is an open-source DFT code developed in close collaboration with the pyiron developers, therefore it is the recommended DFT code to be used with pyiron. The applications of S/PHI/nX range from constrained magnetic calculation to charged defects which makes it suitable for ab initio thermodynamics and beyond. The S/PHI/nX DFT codes is only available on Linux therefore we recommend Windows users to use the Windows subsystem for Linux and Mac Os X users to use a virtual machine. 
+The `S/PHI/nX <https://sxrepo.mpie.de>`_ DFT code is an open-source DFT code developed in close collaboration with the pyiron developers, therefore it is the recommended DFT code to be used with pyiron. The applications of S/PHI/nX range from constrained magnetic calculation to charged defects which makes it suitable for ab initio thermodynamics and beyond. The S/PHI/nX DFT codes is only available on Linux therefore we recommend Windows users to use the Windows subsystem for Linux and Mac Os X users to use a virtual machine. 
 
 .. code-block:: bash
 
