@@ -1561,7 +1561,7 @@ class Atoms(ASEAtoms):
 
         """
         positions = self.positions.copy()
-        rep = 2*np.ceil(width/np.linalg.norm(self.cell, axis=-1)+1e-8).astype(int)+1
+        rep = 2*np.ceil(width/np.linalg.norm(self.cell, axis=-1)+1e-8).astype(int)*self.pbc+1
         rep = [np.arange(r)-int(r/2) for r in rep]
         meshgrid = np.meshgrid(rep[0], rep[1], rep[2])
         meshgrid = np.stack(meshgrid, axis=-1).reshape(-1, 3)
@@ -1692,18 +1692,24 @@ class Atoms(ASEAtoms):
             and vectors
 
         """
+        if not include_boundary:
+            raise NotImplementedError('include_boundary=False is not supported anymore - do structure.pbc = False instead and call get_neighbors')
         i_start = 0
         if exclude_self:
             i_start = 1
         num_neighbors += 1
         neighbor_obj = Neighbors(ref_structure=self, tolerance=tolerance)
-        if not include_boundary:  # periodic boundaries are NOT included
-            if num_neighbors > len(self):
-                raise ValueError('if not include_boundary, num_neighbors is not allowed to be larger than the number of atoms present in the box')
+        if all(self.pbc==False):
             width = 0
         else:
-            width = boundary_width_factor*(3*np.max([num_neighbors, 8])*self.get_volume(per_atom=True)/4/np.pi)**(1/3)
+            prefactor = [1, np.pi, 3/4*np.pi]
+            prefactor = prefactor[sum(self.pbc)-1]
+            volume = np.prod((np.linalg.norm(self.cell, axis=-1)-np.ones(3))*self.pbc+np.ones(3))
+            volume *= prefactor*np.max([num_neighbors, 8])/len(self)
+            width = boundary_width_factor*volume**(1/np.sum(self.pbc))
         extended_positions, indices = self.get_extended_positions(width)
+        if len(extended_positions) < num_neighbors:
+            raise ValueError('num_neighbors too large - make boundary_width_factor larger and/or make num_neighbors smaller')
         tree = cKDTree(extended_positions)
         if id_list is None:
             id_list = np.arange(len(self.positions))
