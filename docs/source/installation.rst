@@ -6,7 +6,7 @@ Installation
 ******************
 Conda Installation
 ******************
-The recommended way to install pyiron is via the conda package manager in a Linux environment. So if you are using windows we recommend using the Linux subsystem for Windows to install pyiron and if you are on Mac Os X we recommend using a virutal machine. Native installations on both Windows and Mac Os X are possible but are restricted to molecular dynamics calculations with interatomic potentials and do not support density functional theory(DFT) codes. We collaborate with the open-source community at `conda-forge <https://conda-forge.org>`_ to not only provide the pyiron package via their community channel, but also executables for compatible simulation codes like GPAW, LAMMPS and S/PHI/nX and their parameter files like pseudo potentials and interatomic potentials. To get started you can install pyiron using: 
+The recommended way to install pyiron is via the conda package manager in a Linux environment. So if you are using Windows we recommend using the `Windows subsystem for Linux<https://docs.microsoft.com/en-us/windows/wsl/install-win10>`_ to install pyiron and if you are on Mac Os X we recommend using a `virutal machine/ virtual box<https://www.virtualbox.org>`_. Native installations on both Windows and Mac Os X are possible but are restricted to molecular dynamics calculations with interatomic potentials and do not support density functional theory(DFT) codes. We collaborate with the open-source community at `conda-forge<https://conda-forge.org>`_ to not only provide the pyiron package via their community channel, but also executables for compatible simulation codes like `GPAW<https://wiki.fysik.dtu.dk/gpaw/>`_, `LAMMPS<https://lammps.sandia.gov>`_ and `S/PHI/nX<https://sxrepo.mpie.de>` and their parameter files like pseudo potentials and interatomic potentials. To get started you can install pyiron using: 
 
 .. code-block:: bash
 
@@ -19,13 +19,13 @@ All the optional dependencies can also be installed via conda directly to simpli
 
 NGLview for visualising atomistic sturctures
 --------------------------------------------
-In pyiron we use the NGLview package to visualise atomistic structures directly in the jupyter notebook. To enable this feature the NGLview conda package can be installed using: 
+In pyiron we use the `NGLview<http://nglviewer.org/nglview/latest/>`_ package to visualise atomistic structures directly in the jupyter notebook. To enable this feature the NGLview conda package can be installed using: 
 
 .. code-block:: bash
 
     conda install -c conda-forge nglview
 
-In case you prefer jupyter lab over jupyter notebooks, you can also install NGLview for jupyter lab, this requires a few additional dependencies: 
+In case you prefer `jupyter lab<https://jupyter.org>`_ over jupyter notebooks, you can also install NGLview for jupyter lab, this requires a few additional dependencies: 
 
 .. code-block:: bash
 
@@ -33,7 +33,7 @@ In case you prefer jupyter lab over jupyter notebooks, you can also install NGLv
     jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build
     jupyter labextension install nglview-js-widgets
 
-In addition to NGLview the first line also installs nodejs which is required to install your own jupyterlab plugins and rebuild jupyter lab. The following two lines install the jupyterlab extensions. Starting with the jupyterlab manager and followed by the NGLview javascript widget. During the installation of NGLview it is important to confirm that the NGLview version installed via conda is the same as the version of the NGLview javascript widget: 
+In addition to `NGLview<http://nglviewer.org/nglview/latest/>`_ the first line also installs nodejs which is required to install your own jupyterlab plugins and rebuild jupyter lab. The following two lines install the jupyterlab extensions. Starting with the jupyterlab manager and followed by the NGLview javascript widget. During the installation of `NGLview<http://nglviewer.org/nglview/latest/>`_ it is important to confirm that the NGLview version installed via conda is the same as the version of the NGLview javascript widget: 
 
 .. code-block:: bash
 
@@ -43,7 +43,7 @@ In addition to NGLview the first line also installs nodejs which is required to 
   
 LAMMPS for interatomic potentials
 ---------------------------------
-LAMMPS stands for Large-scale Atomic/Molecular Massively Parallel Simulator and it is one of the most popular open-source moelcular dynamics simulation codes for simulating solid-state materials (metals, semiconductors). As part of the pyiron project we maintain the conda package for LAMMPS to simplifiy the installation. Still these executables can be a factor 2-3 slower than executables compiled on the hardware directly. Therefore the conda version is recommended for testing and experimental use your workstation but for high performance computing(HPC) we highly recommend to compile LAMMPS yourself and we discuss how to link your own LAMMPS version below in the addvanced section. 
+`LAMMPS<https://lammps.sandia.gov>`_ stands for Large-scale Atomic/Molecular Massively Parallel Simulator and it is one of the most popular open-source moelcular dynamics simulation codes for simulating solid-state materials (metals, semiconductors). As part of the pyiron project we maintain the conda package for LAMMPS to simplifiy the installation. Still these executables can be a factor 2-3 slower than executables compiled on the hardware directly. Therefore the conda version is recommended for testing and experimental use your workstation but for high performance computing(HPC) we highly recommend to compile LAMMPS yourself and we discuss how to link your own LAMMPS version below in the addvanced section. 
 
 .. code-block:: bash
 
@@ -53,7 +53,7 @@ On the conda-forge channel we provide the LAMMPS executable for both serial exec
 
 S/PHI/nX for density functional theory
 --------------------------------------
-The S/PHI/nX DFT code is an open-source DFT code developed in close collaboration with the pyiron developers, therefore it is the recommended DFT code to be used with pyiron. The applications of S/PHI/nX range from constrained magnetic calculation to charged defects which makes it suitable for ab initio thermodynamics and beyond. The S/PHI/nX DFT codes is only available on Linux therefore we recommend Windows users to use the Windows subsystem for Linux and Mac Os X users to use a virtual machine. 
+The `S/PHI/nX<https://sxrepo.mpie.de>` DFT code is an open-source DFT code developed in close collaboration with the pyiron developers, therefore it is the recommended DFT code to be used with pyiron. The applications of S/PHI/nX range from constrained magnetic calculation to charged defects which makes it suitable for ab initio thermodynamics and beyond. The S/PHI/nX DFT codes is only available on Linux therefore we recommend Windows users to use the Windows subsystem for Linux and Mac Os X users to use a virtual machine. 
 
 .. code-block:: bash
 
@@ -63,7 +63,7 @@ Again the generic executables provided via the conda-forge channel can be a fact
 
 GPAW an alternative density functional theory code
 --------------------------------------------------
-GPAW is a open-source realspace DFT simulation code implemented in pyiron which is popular because of its Python bindings which allow accessing parameters of the DFT code during the run time. GPAW can be installed on Linux directly via conda:
+`GPAW<https://wiki.fysik.dtu.dk/gpaw/>`_ is a open-source realspace DFT simulation code implemented in pyiron which is popular because of its Python bindings which allow accessing parameters of the DFT code during the run time. GPAW can be installed on Linux directly via conda:
 
 .. code-block:: bash
 
@@ -74,7 +74,7 @@ Again the generic executables provided via the conda-forge channel can be a fact
 **********************
 Advanced configuration
 **********************
-While the conda based installation is commonly sufficient for workstation installations to get started with pyiron it can be extended to support your own executable, include your own parameter files, support commercial codes like VASP or updating the database performance by switching from SQLite to PostgeSQL. 
+While the conda based installation is commonly sufficient for workstation installations to get started with pyiron it can be extended to support your own executable, include your own parameter files, support commercial codes like `VASP<https://www.vasp.at>`_ or updating the database performance by switching from `SQLite<https://www.sqlite.org>`_ to `PostgeSQL<https://www.postgresql.org>`_. 
 
 Custom executables and parameter files
 ======================================
@@ -97,11 +97,11 @@ The first line `[DEFAULT]` defines the current configuration to overwrite the de
 
 In the following the individual options are explained one by one:
 
-* `[DEFAULT]` this option defines the current `~/.pyiron` configuration to overwrite the default configuration.
+* the `[DEFAULT]` option defines the current `~/.pyiron` configuration to overwrite the default configuration.
 
-* `RESOURCE_PATHS` the resource path is a list of `;` separated paths where pyiron checks for resource files. A template of such a resource directory is available on `github <https://github.com/pyiron/pyiron-resources>`_ and it can be downloaded as an archive from the `release page <https://github.com/pyiron/pyiron-resources/releases>`_. We recommend to create a folder `~/pyiron/resources` and store the parameter files and likes to the executables there. The links are basically shell scripts which can be modified to load modules. By default the conda path is added, therefore there is no need to add it manually. 
+* the `RESOURCE_PATHS` option defines the resource path is a list of `;` separated paths where pyiron checks for resource files. A template of such a resource directory is available on `github <https://github.com/pyiron/pyiron-resources>`_ and it can be downloaded as an archive from the `release page <https://github.com/pyiron/pyiron-resources/releases>`_. We recommend to create a folder `~/pyiron/resources` and store the parameter files and likes to the executables there. The links are basically shell scripts which can be modified to load modules. By default the conda path is added, therefore there is no need to add it manually. 
 
-* `PROJECT_PATHS` similar to the resource path but for storing 
+* the `PROJECT_PATHS` option is similar to the resource path but for storing 
 
 .. code-block:: bash
 
