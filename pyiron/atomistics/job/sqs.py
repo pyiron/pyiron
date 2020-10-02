@@ -4,7 +4,7 @@
 
 from multiprocessing import cpu_count
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
-from pyiron_base import GenericParameters
+from pyiron_base import InputList
 from pyiron.atomistics.structure.atoms import Atoms, ase_to_pyiron, pyiron_to_ase
 
 try:
@@ -48,15 +48,15 @@ def get_sqs_structures(structure, mole_fractions, weights=None, objective=0.0, i
 class SQSJob(AtomisticGenericJob):
     def __init__(self, project, job_name):
         super(SQSJob, self).__init__(project, job_name)
-        self.input = GenericParameters(table_name="input")
-        self.input['mole_fractions'] = dict()
-        self.input['weights'] = None
-        self.input['objective'] = 0.0 
-        self.input['iterations'] = 1e6 
-        self.input['output_structures'] = 1
+        self.input = InputList(table_name='input')
+        self.input.mole_fractions = dict()
+        self.input.weights = None
+        self.input.objective = 0.0
+        self.input.iterations = 1e6
+        self.input.output_structures = 1
         self._python_only_job = True
         self._lst_of_struct = []
-    
+
     @property
     def list_of_structures(self):
         return self._lst_of_struct
@@ -71,11 +71,11 @@ class SQSJob(AtomisticGenericJob):
     def run_static(self):
         self._lst_of_struct, decmp, iterations, cycle_time = get_sqs_structures(
             structure=self.structure, 
-            mole_fractions=self.input['mole_fractions'], 
-            weights=self.input['weights'], 
-            objective=self.input['objective'], 
-            iterations=self.input['iterations'], 
-            output_structures=self.input['output_structures'], 
+            mole_fractions=self.input.mole_fractions,
+            weights=self.input.weights,
+            objective=self.input.objective,
+            iterations=self.input.iterations,
+            output_structures=self.input.output_structures,
             num_threads=self.server.cores
         )
         for i, structure in enumerate(self._lst_of_struct):
