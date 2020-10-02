@@ -6,7 +6,7 @@ Installation
 ******************
 Conda Installation
 ******************
-The recommended way to install pyiron is via the conda package manager in a Linux environment. So if you are using Windows we recommend using the `Windows subsystem for Linux <https://docs.microsoft.com/en-us/windows/wsl/install-win10>`_ to install pyiron and if you are on Mac Os X we recommend using a `virutal machine/ virtual box <https://www.virtualbox.org>`_. Native installations on both Windows and Mac Os X are possible but are restricted to molecular dynamics calculations with interatomic potentials and do not support density functional theory(DFT) codes. We collaborate with the open-source community at `conda-forge <https://conda-forge.org>`_ to not only provide the pyiron package via their community channel, but also executables for compatible simulation codes like `GPAW <https://wiki.fysik.dtu.dk/gpaw/>`_, `LAMMPS <https://lammps.sandia.gov>`_ and `S/PHI/nX <https://sxrepo.mpie.de>` and their parameter files like pseudo potentials and interatomic potentials. To get started you can install pyiron using: 
+The recommended way to install pyiron is via the conda package manager in a Linux environment. So if you are using Windows we recommend using the `Windows subsystem for Linux <https://docs.microsoft.com/en-us/windows/wsl/install-win10>`_ to install pyiron and if you are on Mac Os X we recommend using a `virutal machine/ virtual box <https://www.virtualbox.org>`_. Native installations on both Windows and Mac Os X are possible but are restricted to molecular dynamics calculations with interatomic potentials and do not support density functional theory(DFT) codes. We collaborate with the open-source community at `conda-forge <https://conda-forge.org>`_ to not only provide the pyiron package via their community channel, but also executables for compatible simulation codes like `GPAW <https://wiki.fysik.dtu.dk/gpaw/>`_, `LAMMPS <https://lammps.sandia.gov>`_ and `S/PHI/nX <https://sxrepo.mpie.de>`_ and their parameter files like pseudo potentials and interatomic potentials. To get started you can install pyiron using: 
 
 .. code-block:: bash
 
@@ -334,7 +334,8 @@ So far we discussed the installation of pyiron on an individual workstation via 
 
 Install from Source 
 ===================
-To develop pyiron it is recommended to first create a conda environment containing all dependencies. The dependencies are available in the conda `environment.yml <https://github.com/pyiron/pyiron/blob/master/.ci_support/environment.yml>`_ file on Github. In this repository you can install pyiron from source. If conda is no option for you all the dependencies can also be installed via pip. 
+To develop pyiron it is recommended to first create a conda environment containing all dependencies. The dependencies are available in the conda `environment.yml <https://github.com/pyiron/pyiron/blob/master/.ci_support/environment.yml>`_ file on Github. In this repository you can install pyiron from source. If conda is no option for you all the dependencies can also be installed via pip.
+
 Using pip
 ---------
 The default installation via pip installs the latest release version of pyiron. So incase your HPC cluster does not support installing pyiron via conda you can install this release version via pip and then continue with the setup of your remote HPC cluster as described above.
@@ -406,6 +407,7 @@ This command does the following steps in the background:
 Demonstration and Training Environments
 ***************************************
 For workshops, tutorials and lectures it is sometimes necessary to setup multiple computers with very similar configurations and depending on the conference location internet access might be limited. For these cases pyiron provides setup instructions for demonstration and training environments. 
+
 Cloud Solutions
 ===============
 You can test pyiron on `Mybinder.org (beta) <https://mybinder.org/v2/gh/pyiron/pyiron/master?urlpath=lab>`_, without the need of a local installation. It is a flexible way to get a first impression of pyiron but it does not provide any permanent storage by default. In addition loading the pyiron environment on mybinder can take 5 to 15 minutes in case a new docker container needs to be build. Finally sessions on mybinder are limited in duration, depending on the load of the public mybinder service your instance might be turned off when inactive. In particular during presentations which consist of a slide based introduction followed by an interactive tutorial the mybinder instance might be shutdown if it is idle for too long. 
@@ -440,12 +442,12 @@ Open the link with your personal jupyter token :code:`<your_token>` in the brows
 
 Install Utility
 ===============
-To setup a local lab with pyiron when the internet connection is limited we provide a classical installer for Windows, Mac Os X and Linux which is based on the `conda constructor <https://github.com/conda/constructor>`. If you do not have anaconda installed you can download this installer and get started with just a single `download <https://github.com/pyiron/pyiron-installer/releases>`. 
+To setup a local lab with pyiron when the internet connection is limited we provide a classical installer for Windows, Mac Os X and Linux which is based on the `conda constructor <https://github.com/conda/constructor>`_. If you do not have anaconda installed you can download this installer and get started with just a single `download <https://github.com/pyiron/pyiron-installer/releases>`_. 
 
 ***************
 Getting Started
 ***************
-Finally once you have installed pyiron you can quickly test your installation with the following minimalistic example. Many more examples are available in the `Githup repository <https://github.com/pyiron/pyiron/tree/master/notebooks>`.
+Finally once you have installed pyiron you can quickly test your installation with the following minimalistic example. Many more examples are available in the `Githup repository <https://github.com/pyiron/pyiron/tree/master/notebooks>`_.
 
 First Calculation
 =================
