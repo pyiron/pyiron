@@ -103,9 +103,31 @@ In the following the individual options are explained one by one:
 
 * the `PROJECT_PATHS` option is similar to the resource path but for storing simulation protocols rather than parameter files. When the `PROJECT_CHECK_ENABLED` option is set to `true` then the read and write access within pyiron is limited to the directories defined in the `PROJECT_PATHS`. Again multiple directories can be separated by `;`. An alternative but outdated name for this option is `TOP_LEVEL_DIRS`. 
 
-To further explain the usage of the different parameters we discuss common cases: 
+Besides the general variables in the `~/.pyiron` configuration, the other settings are used to define the database connection. More detailed examples about the configuration can be found below, for now we continue with the configuration of the database. pyiron can use a database to build an index of the HDF5 files on the file system which accelerates the analysis. By default pyiron uses an `SQLite<https://www.sqlite.org>`_ database for this index, but the database can also be disabled or a `PostgeSQL<https://www.postgresql.org>`_ database can be used to improve the performance. 
+
+* By default the database is defined by the `FILE` option which is equal to the `DATABASE_FILE` option and gives the path to the `SQLite<https://www.sqlite.org>`_ database file. As the `SQLite<https://www.sqlite.org>`_ database is a file based database it struggles with parallel access on a shared file system like it is typically used in HPC clusters. 
+
+* To address this limitation it is possible to disable the database on HPC clusters using the `DISABLE_DATABASE` option by setting it to `true`. This is commonly used when the calculation are only executed on the remote cluster but the analysis is done on a local workstation or a group server which supports an SQL-based database. 
+
+* The other database options, namely `TYPE`, `HOST`, `NAME`, `USER`, `PASSWD` and `JOB_TABLE` define the connection details to connect to a PostgreSQL database. Inside pyiron `sqlalchemy<https://www.sqlalchemy.org>`_ is used to support different SQL-based databases, therefore it is also possible to provide the sqlalchemy connection string directly as `CONNECTION`. 
+
+* Finally some pyiron installations use a group management component which is currently in development. They might have additional options in their `~/.pyiron` configuration to enable sharing calculations between different users. These options are `VIEWERUSER`, `VIEWERPASSWD` and `VIEWER_TABLE`. As this is a development feature it is not yet fully documented. Basically those are the access details for the global database viewer, which can read the database entries of all users. With this configuration it is possible to load jobs of other users. 
+
+To further explain the usage of the different parameters we discuss common use cases in the following: 
+
 Use you own executable for LAMMPS/ S/PHI/nX or GPAW
 ---------------------------------------------------
+To add your own executables or parameter files it is necessary to initialise a user defined configuration `~/.pyiron`. You can start with a basic configuration like: 
+
+.. code-block:: bash
+
+    [DEFAULT]  
+    FILE = ~/pyiron.db
+    PROJECT_PATHS = ~/pyiron/projects
+    RESOURCE_PATHS = ~/pyiron/resources
+    
+In this case pyiron can only execute calculations in the `~/pyiron/projects` directory. In particular pyiron users can not delete files outside this directory. Next to the projects directory `~/pyiron/projects` we create a resource directory `~/pyiron/resources` to store links to the executables and the corresponding parameter files. Both directories have to be created by the user and in case no `FILE` option is defined pyiron by default creates an `SQLite<https://www.sqlite.org>`_ database in the resource directory. Example resource directories are available on `Github<https://github.com/pyiron/pyiron-resources/tree/master>`_ . Here we just discuss the LAMMPS resource directory as one example.
+
 .. code-block:: bash
 
     resources/
@@ -116,9 +138,18 @@ Use you own executable for LAMMPS/ S/PHI/nX or GPAW
         potentials/
           potentials_lammps.csv
 
+The resource directory contains two sub folders `bin` which includes links to the executables and `potentials` which includes links to the interatomic potentials. The links to the executables are shell script which follow the naming convention `run_<code name>_<version>(_<tag>).sh` the `mpi` tag is used to indicate the MPI-enabled executables. If we take a look at the `run_lammps_2020.03.03_mpi.sh` shell script, it contains the following lines: 
+
+.. code-block:: bash
+
+    #!/bin/bash
+    mpiexec -n $1 --oversubscribe lmp_mpi -in control.inp;
+
+Scripts with the `mpi` tag are called with two parameters the first being the number of cores the second the number of threads, while regular shell scripts do not get any input parameters. By using shell scripts it is easy to link exeisting executables which might require loading specific modules or setting environment variables. In the same way the parameter files for pyiron are stored in the csv format which makes them human editable. For shared installations we recommend storing the pyiron resources in a shared directory. 
+
 Configure VASP
 --------------
-An example configuration of VASP for pyiron is available on `Github<https://github.com/pyiron/pyiron-resources/tree/master/vasp>`_: 
+The `Vienna Ab initio Simulation Package<https://www.vasp.at>`_ is a popular commercial DFT code which is commonly used for large DFT calculations or high-throughput studies. pyiron implements a VASP wrapper but does not provide as VASP license. Therefore the users have to compile their own VASP executable and provide their own VASP Pseudopotentials which are included with the VASP license. An example configuration of VASP for pyiron is available on `Github<https://github.com/pyiron/pyiron-resources/tree/master/vasp>`_: 
 
 .. code-block:: bash
 
@@ -134,6 +165,7 @@ An example configuration of VASP for pyiron is available on `Github<https://gith
           potentials_vasp_lda_default.csv
           potentials_vasp_pbe_default.csv
 
+Similar to the LAMMPS resource directory discussed above the VASP resource directory also contains a `bin` diirectory and a `potentials` directory. By adding the `default` tag we can set the default executable, in particular when compiling multiple variants of the same VASP version. Finally the directories `potpaw` and `potpaw_PBE` contain the VASP pseudo potentials, which are included with the VASP license and have to be added by the user. 
 
 .. code-block:: bash
 
