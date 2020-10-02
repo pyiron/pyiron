@@ -1787,6 +1787,8 @@ class Atoms(ASEAtoms):
             #     index, nbrs_distances= new_index_lst, new_dist_lst
             neighbor_distance.append(nbrs_distances)
             neighbor_indices.append(map_to_cell[index][i_start:])
+            if np.max(nbrs_distances)>width:
+                warnings.warn('boundary_width_factor been too small - most likely not all neighbors properly assigned')
 
             if t_vec:
                 nbr_dist = []
