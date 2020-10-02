@@ -869,7 +869,7 @@ class TestAtoms(unittest.TestCase):
         )
         Al_sc.set_repeat([4, 4, 4])
         neighbors = Al_sc.get_neighbors(
-            num_neighbors=100, t_vec=False, exclude_self=True
+            num_neighbors=100, t_vec=False
         )
 
         c_Zn = 0.1
