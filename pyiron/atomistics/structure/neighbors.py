@@ -7,13 +7,13 @@ from sklearn.cluster import MeanShift
 from scipy.sparse import coo_matrix
 from pyiron_base import Settings
 
-__author__ = "Joerg Neugebauer, Sudarsan Surendralal"
+__author__ = "Joerg Neugebauer, Sam Waseda"
 __copyright__ = (
     "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
 )
 __version__ = "1.0"
-__maintainer__ = "Osamu Waseda"
+__maintainer__ = "Sam Waseda"
 __email__ = "waseda@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
