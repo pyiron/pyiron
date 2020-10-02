@@ -46,6 +46,37 @@ def get_sqs_structures(structure, mole_fractions, weights=None, objective=0.0, i
 
 
 class SQSJob(AtomisticGenericJob):
+    """
+    Produces special quasirandom structures designed to duplicate truly random chemical distributions as well as
+    possible while using finite periodic cells.
+
+    A pyiron wrapper for the [SQS code of Dominik Gehringer](https://git.unileoben.ac.at/p1655622/sqsgenerator).
+
+    'Structural models used in calculations of properties of substitutionally random $A_{1-x}B_x$ alloys are usually
+    constructed by randomly occupying each of the N sites of a periodic cell by A or B. We show that it is possible to
+    design ‘‘special quasirandom structures’’ (SQS’s) that mimic for small N (even N=8) the first few, physically most
+    relevant radial correlation functions of a perfectly random structure far better than the standard technique does.
+    We demonstrate the usefulness of these SQS’s by calculating optical and thermodynamic properties of a number of
+    semiconductor alloys in the local-density formalism.'
+    From the abstract of Zunger, Wei, Ferreira, and Bernard, Phys. Rev. Lett. 65 (1990) 353,
+    DOI:https://doi.org/10.1103/PhysRevLett.65.353
+
+    Input:
+        - mole_fractions (dict): Approximate chemical composition for the output structure(s), using chemical symbols
+            as the keys and floats as the values. Values should sum to 1, but within reason will be automatically
+            adjusted to accommodate the number of atoms in the provided structure (adjustments printed to standard out).
+            Vacancies can also be included using the key '0'.
+        - weights (list/numpy.ndarray): Specifies the weights of the individual shells. (Default is None, which uses the
+            inverse of the shell number for the weight, i.e.
+            [1, 0.5, 0.3333333333, 0.25, 0.2, 0.166666667, 0.1428571429].)
+        - objective (float): Specifies the value the objective functions. The program tries to reach the specified
+            objective function. (Default is 0.)
+        - iterations (int): How many iterations to make searching for the most special quasirandom structure using a
+            random shuffling procedure. (Default is 1e6)
+        - output_structures (int): How many different SQS structures to return (in decreasing special quasirandomness).
+            (Default is 1.)
+    """
+
     def __init__(self, project, job_name):
         super(SQSJob, self).__init__(project, job_name)
         self.input = InputList(table_name='input')
