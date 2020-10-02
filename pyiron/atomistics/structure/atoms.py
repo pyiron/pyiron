@@ -1732,8 +1732,8 @@ class Atoms(ASEAtoms):
         # transfer relative to absolute coordinates
         tree = cKDTree(extended_positions)
         if id_list is None:
-            id_list = np.arange(len(positions))
-        positions = self.positions[np.array(id_lst)]
+            id_list = np.arange(len(self.positions))
+        positions = self.positions[np.array(id_list)]
         # print ("len positions: ", len(positions))
         neighbors = tree.query(
             positions, k=num_neighbors, distance_upper_bound=cutoff_radius
@@ -1746,13 +1746,13 @@ class Atoms(ASEAtoms):
         neighbor_indices = []
 
         # tolerance = 2 # tolerance for round floating point
-        for atom_id, index, distances in zip(id_list, neighbors[1], neighbrs[0]):
+        for atom_id, index, distances in zip(id_list, neighbors[1], neighbors[0]):
             neighbor_distance.append(distances[1:])
-            neighbor_indices.append(indicies[index[1:]]%len(self))
+            neighbor_indices.append(indices[index[1:]]%len(self))
             if np.max(distances)>width:
                 warnings.warn('boundary_width_factor may have been too small - most likely not all neighbors properly assigned')
             if t_vec:
-                neighbor_distances_vec.append(extended_positions[index]-self.positions[atom_id])
+                neighbor_distance_vec.append(extended_positions[index]-self.positions[atom_id])
 
         neighbor_obj.distances = neighbor_distance
         neighbor_obj.vecs = neighbor_distance_vec
