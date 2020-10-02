@@ -1581,7 +1581,6 @@ class Atoms(ASEAtoms):
         num_neighbors=100,
         t_vec=True,
         include_boundary=True,
-        exclude_self=True,
         tolerance=2,
         id_list=None,
         cutoff_radius=np.inf,
@@ -1595,7 +1594,6 @@ class Atoms(ASEAtoms):
                         (pbc are automatically taken into account)
             include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
                                      False is needed e.g. in plot routines to avoid showing incorrect bonds
-            exclude_self (bool): include central __atom (i.e. distance = 0)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list:
             cutoff_radius (float): Upper bound of the distance to which the search must be done
@@ -1610,7 +1608,6 @@ class Atoms(ASEAtoms):
             num_neighbors=num_neighbors,
             t_vec=t_vec,
             include_boundary=include_boundary,
-            exclude_self=exclude_self,
             tolerance=tolerance,
             id_list=id_list,
             cutoff_radius=cutoff_radius,
@@ -1622,7 +1619,6 @@ class Atoms(ASEAtoms):
         num_neighbors=12,
         t_vec=True,
         include_boundary=True,
-        exclude_self=True,
         tolerance=2,
         id_list=None,
         cutoff_radius=np.inf,
@@ -1636,7 +1632,6 @@ class Atoms(ASEAtoms):
                         (pbc are automatically taken into account)
             include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
                                      False is needed e.g. in plot routines to avoid showing incorrect bonds
-            exclude_self (bool): include central __atom (i.e. distance = 0)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list:
             cutoff_radius (float): Upper bound of the distance to which the search must be done
@@ -1653,7 +1648,6 @@ class Atoms(ASEAtoms):
             num_neighbors=num_neighbors,
             t_vec=t_vec,
             include_boundary=include_boundary,
-            exclude_self=exclude_self,
             tolerance=tolerance,
             id_list=id_list,
             boundary_width_factor=boundary_width_factor,
@@ -1668,7 +1662,6 @@ class Atoms(ASEAtoms):
         num_neighbors=12,
         t_vec=True,
         include_boundary=True,
-        exclude_self=True,
         tolerance=2,
         id_list=None,
         cutoff_radius=np.inf,
@@ -1682,7 +1675,6 @@ class Atoms(ASEAtoms):
                         (pbc are automatically taken into account)
             include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
                                      False is needed e.g. in plot routines to avoid showing incorrect bonds
-            exclude_self (bool): include central __atom (i.e. distance = 0)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list:
 
@@ -1694,13 +1686,12 @@ class Atoms(ASEAtoms):
         """
         if not include_boundary:
             raise NotImplementedError('include_boundary=False is not supported anymore - do structure.pbc = False instead and call get_neighbors')
-        i_start = 0
-        if exclude_self:
-            i_start = 1
         num_neighbors += 1
         neighbor_obj = Neighbors(ref_structure=self, tolerance=tolerance)
         if all(self.pbc==False):
             width = 0
+        elif cutoff_radius!=np.inf:
+            width = cutoff_radius
         else:
             prefactor = [1, np.pi, 3/4*np.pi]
             prefactor = prefactor[sum(self.pbc)-1]
@@ -1721,12 +1712,12 @@ class Atoms(ASEAtoms):
         neighbor_distance_vec = []
         neighbor_indices = []
         for atom_id, index, distances in zip(id_list, neighbors[1], neighbors[0]):
-            neighbor_distance.append(distances[i_start:])
-            neighbor_indices.append(indices[index[i_start:]]%len(self))
+            neighbor_distance.append(distances[1:])
+            neighbor_indices.append(indices[index[1:]]%len(self))
             if np.max(distances)>width and include_boundary:
                 warnings.warn('boundary_width_factor may have been too small - most likely not all neighbors properly assigned')
             if t_vec:
-                neighbor_distance_vec.append(extended_positions[index[i_start:]]-self.positions[atom_id])
+                neighbor_distance_vec.append(extended_positions[index[1:]]-self.positions[atom_id])
         neighbor_obj.distances = neighbor_distance
         neighbor_obj.vecs = neighbor_distance_vec
         neighbor_obj.indices = neighbor_indices
@@ -1774,7 +1765,6 @@ class Atoms(ASEAtoms):
             num_neighbors=num_neighbors,
             t_vec=t_vec,
             include_boundary=include_boundary,
-            exclude_self=True,
             tolerance=tolerance,
             id_list=id_list,
             cutoff_radius=cutoff_radius,
