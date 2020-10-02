@@ -101,7 +101,7 @@ In the following the individual options are explained one by one:
 
 * `RESOURCE_PATHS` the resource path is a list of `;` separated paths where pyiron checks for resource files. A template of such a resource directory is available on `github <https://github.com/pyiron/pyiron-resources>`_ and it can be downloaded as an archive from the `release page <https://github.com/pyiron/pyiron-resources/releases>`_. We recommend to create a folder `~/pyiron/resources` and store the parameter files and likes to the executables there. The links are basically shell scripts which can be modified to load modules. By default the conda path is added, therefore there is no need to add it manually. 
 
-* `PROJECT_PATHS` similar to the resource path. 
+* `PROJECT_PATHS` similar to the resource path but for storing 
 
 .. code-block:: bash
 
