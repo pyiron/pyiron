@@ -78,7 +78,7 @@ While the conda based installation is commonly sufficient for workstation instal
 
 Custom Executables and Parameter Files
 ======================================
-pyiron can either be configured by a configuration file named `~/.pyiron` located in the users home directory or by specifying environment variables. The options are similar so we start with the configuration file. The default configuration file pyiron assums if it does not find a configuration file is:
+pyiron can either be configured by a configuration file named :code:`~/.pyiron` located in the users home directory or by specifying environment variables. The options are similar so we start with the configuration file. The default configuration file pyiron assums if it does not find a configuration file is:
 
 .. code-block:: bash
 
@@ -87,7 +87,7 @@ pyiron can either be configured by a configuration file named `~/.pyiron` locate
     FILE = ~/pyiron.db
     RESOURCE_PATHS = ${CONDA_PREFIX}/share/pyiron
 
-The first line `[DEFAULT]` defines the current configuration to overwrite the default configuration. The second line `PROJECT_CHECK_ENABLED` disables the project check which enables pyiron to write to the whole file system. The third lines defines the object index to be stored in an SQLite database file `FILE` which is located in the home directory `~/pyiron.db`. It is important to copy the database in case you change the configuration otherwise existing calculation are lost. Finally the `RESOURCE_PATHS` provides the path to the parameter files. Inside pyiron you can check the current configuration using: 
+The first line :code:`[DEFAULT]` defines the current configuration to overwrite the default configuration. The second line :code:`PROJECT_CHECK_ENABLED` disables the project check which enables pyiron to write to the whole file system. The third lines defines the object index to be stored in an SQLite database file :code:`FILE` which is located in the home directory :code:`~/pyiron.db`. It is important to copy the database in case you change the configuration otherwise existing calculation are lost. Finally the :code:`RESOURCE_PATHS` provides the path to the parameter files. Inside pyiron you can check the current configuration using: 
 
 .. code-block:: python
 
@@ -97,43 +97,43 @@ The first line `[DEFAULT]` defines the current configuration to overwrite the de
 
 In the following the individual options are explained one by one:
 
-* the `[DEFAULT]` option defines the current `~/.pyiron` configuration to overwrite the default configuration.
+* the :code:`[DEFAULT]` option defines the current :code:`~/.pyiron` configuration to overwrite the default configuration.
 
-* the `RESOURCE_PATHS` option defines the resource path is a list of `;` separated paths where pyiron checks for resource files. A template of such a resource directory is available on `github <https://github.com/pyiron/pyiron-resources>`_ and it can be downloaded as an archive from the `release page <https://github.com/pyiron/pyiron-resources/releases>`_. We recommend to create a folder `~/pyiron/resources` and store the parameter files and likes to the executables there. The links are basically shell scripts which can be modified to load modules. By default the conda path is added, therefore there is no need to add it manually. 
+* the :code:`RESOURCE_PATHS` option defines the resource path is a list of :code:`;` separated paths where pyiron checks for resource files. A template of such a resource directory is available on `github <https://github.com/pyiron/pyiron-resources>`_ and it can be downloaded as an archive from the `release page <https://github.com/pyiron/pyiron-resources/releases>`_. We recommend to create a folder :code:`~/pyiron/resources` and store the parameter files and likes to the executables there. The links are basically shell scripts which can be modified to load modules. By default the conda path is added, therefore there is no need to add it manually. 
 
-* the `PROJECT_PATHS` option is similar to the resource path but for storing simulation protocols rather than parameter files. When the `PROJECT_CHECK_ENABLED` option is set to `true` then the read and write access within pyiron is limited to the directories defined in the `PROJECT_PATHS`. Again multiple directories can be separated by `;`. An alternative but outdated name for this option is `TOP_LEVEL_DIRS`. 
+* the :code:`PROJECT_PATHS` option is similar to the resource path but for storing simulation protocols rather than parameter files. When the :code:`PROJECT_CHECK_ENABLED` option is set to :code:`true` then the read and write access within pyiron is limited to the directories defined in the :code:`PROJECT_PATHS`. Again multiple directories can be separated by :code:`;`. An alternative but outdated name for this option is :code:`TOP_LEVEL_DIRS`. 
 
-Besides the general variables in the `~/.pyiron` configuration, the other settings are used to define the database connection. More detailed examples about the configuration can be found below, for now we continue with the configuration of the database. pyiron can use a database to build an index of the HDF5 files on the file system which accelerates the analysis. By default pyiron uses an `SQLite <https://www.sqlite.org>`_ database for this index, but the database can also be disabled or a `PostgeSQL <https://www.postgresql.org>`_ database can be used to improve the performance. 
+Besides the general variables in the :code:`~/.pyiron` configuration, the other settings are used to define the database connection. More detailed examples about the configuration can be found below, for now we continue with the configuration of the database. pyiron can use a database to build an index of the HDF5 files on the file system which accelerates the analysis. By default pyiron uses an `SQLite <https://www.sqlite.org>`_ database for this index, but the database can also be disabled or a `PostgeSQL <https://www.postgresql.org>`_ database can be used to improve the performance. 
 
-* By default the database is defined by the `FILE` option which is equal to the `DATABASE_FILE` option and gives the path to the `SQLite <https://www.sqlite.org>`_ database file. As the `SQLite <https://www.sqlite.org>`_ database is a file based database it struggles with parallel access on a shared file system like it is typically used in HPC clusters. 
+* By default the database is defined by the :code:`FILE` option which is equal to the :code:`DATABASE_FILE` option and gives the path to the `SQLite <https://www.sqlite.org>`_ database file. As the `SQLite <https://www.sqlite.org>`_ database is a file based database it struggles with parallel access on a shared file system like it is typically used in HPC clusters. 
 
-* To address this limitation it is possible to disable the database on HPC clusters using the `DISABLE_DATABASE` option by setting it to `true`. This is commonly used when the calculation are only executed on the remote cluster but the analysis is done on a local workstation or a group server which supports an SQL-based database. 
+* To address this limitation it is possible to disable the database on HPC clusters using the :code:`DISABLE_DATABASE` option by setting it to :code:`true`. This is commonly used when the calculation are only executed on the remote cluster but the analysis is done on a local workstation or a group server which supports an SQL-based database. 
 
-* The other database options, namely `TYPE`, `HOST`, `NAME`, `USER`, `PASSWD` and `JOB_TABLE` define the connection details to connect to a PostgreSQL database. Inside pyiron `sqlalchemy <https://www.sqlalchemy.org>`_ is used to support different SQL-based databases, therefore it is also possible to provide the sqlalchemy connection string directly as `CONNECTION`. 
+* The other database options, namely :code:`TYPE`, :code:`HOST`, :code:`NAME`, :code:`USER`, :code:`PASSWD` and :code:`JOB_TABLE` define the connection details to connect to a PostgreSQL database. Inside pyiron `sqlalchemy <https://www.sqlalchemy.org>`_ is used to support different SQL-based databases, therefore it is also possible to provide the sqlalchemy connection string directly as :code:`CONNECTION`. 
 
-* Finally some pyiron installations use a group management component which is currently in development. They might have additional options in their `~/.pyiron` configuration to enable sharing calculations between different users. These options are `VIEWERUSER`, `VIEWERPASSWD` and `VIEWER_TABLE`. As this is a development feature it is not yet fully documented. Basically those are the access details for the global database viewer, which can read the database entries of all users. With this configuration it is possible to load jobs of other users. 
+* Finally some pyiron installations use a group management component which is currently in development. They might have additional options in their :code:`~/.pyiron` configuration to enable sharing calculations between different users. These options are :code:`VIEWERUSER`, :code:`VIEWERPASSWD` and :code:`VIEWER_TABLE`. As this is a development feature it is not yet fully documented. Basically those are the access details for the global database viewer, which can read the database entries of all users. With this configuration it is possible to load jobs of other users. 
 
-In analogy to the `~/.pyiron` configuration file pyiron also supports using environment variables to configure the pyiron installation. The available environment variables are: 
+In analogy to the :code:`~/.pyiron` configuration file pyiron also supports using environment variables to configure the pyiron installation. The available environment variables are: 
 
-* the `PYIRONCONFIG` environment variable defines the location of the `.pyiron` configuration file. 
+* the :code:`PYIRONCONFIG` environment variable defines the location of the :code:`.pyiron` configuration file. 
 
-* the `PYIRONRESOURCEPATHS` environment variable defines the `RESOURCE_PATHS` option.
+* the :code:`PYIRONRESOURCEPATHS` environment variable defines the :code:`RESOURCE_PATHS` option.
 
-* the `PYIRONPROJECTPATHS` environment variable defines the `PROJECT_PATHS` option.
+* the :code:`PYIRONPROJECTPATHS` environment variable defines the :code:`PROJECT_PATHS` option.
 
-* the `PYIRONPROJECTCHECKENABLED` environment variable defines the `ROJECT_CHECK_ENABLED` option.
+* the :code:`PYIRONPROJECTCHECKENABLED` environment variable defines the :code:`ROJECT_CHECK_ENABLED` option.
 
-* the `PYIRONDISABLE` environment variable defines the `DISABLE_DATABASE` option.
+* the :code:`PYIRONDISABLE` environment variable defines the :code:`DISABLE_DATABASE` option.
 
-* the `PYIRONSQLTYPE`, `PYIRONSQLFILE`, `PYIRONSQHOST`, `PYIRONSQLDATABASE`, `PYIRONUSER` and `PYIRONSQLUSERKEY` environment varaibles define the SQL database connection and can also be summarized in the `PYIRONSQLCONNECTIONSTRING` environment variable. 
+* the :code:`PYIRONSQLTYPE`, :code:`PYIRONSQLFILE`, :code:`PYIRONSQHOST`, :code:`PYIRONSQLDATABASE`, :code:`PYIRONUSER` and :code:`PYIRONSQLUSERKEY` environment varaibles define the SQL database connection and can also be summarized in the :code:`PYIRONSQLCONNECTIONSTRING` environment variable. 
 
-* the `PYIRONSQLVIEWTABLENAME`, `PYIRONSQLVIEWUSER` and `PYIRONSQLVIEWUSERKEY` environment variables define the SQL viewer connection and can also be summarized in the `PYIRONSQLVIEWCONNECTIONSTRING` environment variable. 
+* the :code:`PYIRONSQLVIEWTABLENAME`, :code:`PYIRONSQLVIEWUSER` and :code:`PYIRONSQLVIEWUSERKEY` environment variables define the SQL viewer connection and can also be summarized in the :code:`PYIRONSQLVIEWCONNECTIONSTRING` environment variable. 
 
 To further explain the usage of the different parameters we discuss common use cases in the following: 
 
 Use you own Executable for LAMMPS/ S/PHI/nX or GPAW
 ---------------------------------------------------
-To add your own executables or parameter files it is necessary to initialise a user defined configuration `~/.pyiron`. You can start with a basic configuration like: 
+To add your own executables or parameter files it is necessary to initialise a user defined configuration :code:`~/.pyiron`. You can start with a basic configuration like: 
 
 .. code-block:: bash
 
@@ -142,7 +142,7 @@ To add your own executables or parameter files it is necessary to initialise a u
     PROJECT_PATHS = ~/pyiron/projects
     RESOURCE_PATHS = ~/pyiron/resources
     
-In this case pyiron can only execute calculations in the `~/pyiron/projects` directory. In particular pyiron users can not delete files outside this directory. Next to the projects directory `~/pyiron/projects` we create a resource directory `~/pyiron/resources` to store links to the executables and the corresponding parameter files. Both directories have to be created by the user and in case no `FILE` option is defined pyiron by default creates an `SQLite <https://www.sqlite.org>`_ database in the resource directory. Example resource directories are available on `Github <https://github.com/pyiron/pyiron-resources/tree/master>`_ . Here we just discuss the LAMMPS resource directory as one example.
+In this case pyiron can only execute calculations in the :code:`~/pyiron/projects` directory. In particular pyiron users can not delete files outside this directory. Next to the projects directory :code:`~/pyiron/projects` we create a resource directory :code:`~/pyiron/resources` to store links to the executables and the corresponding parameter files. Both directories have to be created by the user and in case no `FILE` option is defined pyiron by default creates an `SQLite <https://www.sqlite.org>`_ database in the resource directory. Example resource directories are available on `Github <https://github.com/pyiron/pyiron-resources/tree/master>`_ . Here we just discuss the LAMMPS resource directory as one example.
 
 .. code-block:: bash
 
@@ -154,14 +154,14 @@ In this case pyiron can only execute calculations in the `~/pyiron/projects` dir
         potentials/
           potentials_lammps.csv
 
-The resource directory contains two sub folders `bin` which includes links to the executables and `potentials` which includes links to the interatomic potentials. The links to the executables are shell script which follow the naming convention `run_<code name>_<version>(_<tag>).sh` the `mpi` tag is used to indicate the MPI-enabled executables. If we take a look at the `run_lammps_2020.03.03_mpi.sh` shell script, it contains the following lines: 
+The resource directory contains two sub folders :code:`bin` which includes links to the executables and :code:`potentials` which includes links to the interatomic potentials. The links to the executables are shell script which follow the naming convention :code:`run_<code name>_<version>(_<tag>).sh` the :code:`mpi` tag is used to indicate the MPI-enabled executables. If we take a look at the :code:`run_lammps_2020.03.03_mpi.sh` shell script, it contains the following lines: 
 
 .. code-block:: bash
 
     #!/bin/bash
     mpiexec -n $1 --oversubscribe lmp_mpi -in control.inp;
 
-Scripts with the `mpi` tag are called with two parameters the first being the number of cores the second the number of threads, while regular shell scripts do not get any input parameters. By using shell scripts it is easy to link exeisting executables which might require loading specific modules or setting environment variables. In the same way the parameter files for pyiron are stored in the csv format which makes them human editable. For shared installations we recommend storing the pyiron resources in a shared directory. 
+Scripts with the :code:`mpi` tag are called with two parameters the first being the number of cores the second the number of threads, while regular shell scripts do not get any input parameters. By using shell scripts it is easy to link exeisting executables which might require loading specific modules or setting environment variables. In the same way the parameter files for pyiron are stored in the csv format which makes them human editable. For shared installations we recommend storing the pyiron resources in a shared directory. 
 
 Configure VASP
 --------------
@@ -181,25 +181,25 @@ The `Vienna Ab initio Simulation Package <https://www.vasp.at>`_ is a popular co
           potentials_vasp_lda_default.csv
           potentials_vasp_pbe_default.csv
 
-Similar to the LAMMPS resource directory discussed above the VASP resource directory also contains a `bin` diirectory and a `potentials` directory. By adding the `default` tag we can set the default executable, in particular when compiling multiple variants of the same VASP version. Finally the directories `potpaw` and `potpaw_PBE` contain the VASP pseudo potentials, which are included with the VASP license and have to be added by the user. 
+Similar to the LAMMPS resource directory discussed above the VASP resource directory also contains a :code:`bin` diirectory and a :code:`potentials` directory. By adding the :code:`default` tag we can set the default executable, in particular when compiling multiple variants of the same VASP version. Finally the directories :code:`potpaw` and :code:`potpaw_PBE` contain the VASP pseudo potentials, which are included with the VASP license and have to be added by the user. 
 
 PostgreSQL Database
 ===================
-To accelerate the pyiron installation it is recommended to use a `PostgeSQL <https://www.postgresql.org>`_ database rather than the default `SQLite <https://www.sqlite.org>`_ database. To configure the database server, the following options can be added to the `~/.pyiron`:
+To accelerate the pyiron installation it is recommended to use a `PostgeSQL <https://www.postgresql.org>`_ database rather than the default `SQLite <https://www.sqlite.org>`_ database. To configure the database server, the following options can be added to the :code:`~/.pyiron`:
 
-* `TYPE` the typ of the database, while `sqlalchemy <https://www.sqlalchemy.org>`_ supports a wide range of differnet databases `PostgeSQL <https://www.postgresql.org>`_ is recommended and can be selected by setting the type to `Postgres`. 
+* :code:`TYPE` the typ of the database, while `sqlalchemy <https://www.sqlalchemy.org>`_ supports a wide range of differnet databases `PostgeSQL <https://www.postgresql.org>`_ is recommended and can be selected by setting the type to :code:`Postgres`. 
 
-* `HOST` the database host, where the database is running. 
+* :code:`HOST` the database host, where the database is running. 
 
-* `NAME` the name of the database.
+* :code:`NAME` the name of the database.
 
-* `USER` the database user, in contrast to many other software packages pyiron requires one database user per system user who is using pyiron. The database is only used to store an index of the calculations executed with pyiron, therefore knowledge gained from accessing the database is limited unless the user has also access to the file system. 
+* :code:`USER` the database user, in contrast to many other software packages pyiron requires one database user per system user who is using pyiron. The database is only used to store an index of the calculations executed with pyiron, therefore knowledge gained from accessing the database is limited unless the user has also access to the file system. 
 
-* `PASSWD` the database user password. While it is a bad practice to store the database password in the configuration file, the database only contains the the job index. Still it is important that the user creates an pyiron specific password and should never store their system user password in the `.pyiron` configuration file. 
+* :code:`PASSWD` the database user password. While it is a bad practice to store the database password in the configuration file, the database only contains the the job index. Still it is important that the user creates an pyiron specific password and should never store their system user password in the `.pyiron` configuration file. 
 
-* `JOB_TABLE` the name of the database table. pyiron is commonly using one table per user. 
+* :code:`JOB_TABLE` the name of the database table. pyiron is commonly using one table per user. 
 
-A typical `.pyiron` configuration with a `PostgeSQL <https://www.postgresql.org>`_ database might look like this: 
+A typical :code:`.pyiron` configuration with a `PostgeSQL <https://www.postgresql.org>`_ database might look like this: 
 
 .. code-block:: bash
 
@@ -229,7 +229,7 @@ We start by explaining the first configuration and then build on top of this set
 
 HPC Cluster with PostgreSQL Database and Jupyterhub
 ---------------------------------------------------
-The `~/.pyiron` is structured just like a workstation installation with a `PostgeSQL <https://www.postgresql.org>`_ database as explained above. In addition to the previous resource directories we add another subfolder in the resource directory to configure the queuing system using `pysqa <https://github.com/pyiron/pysqa>`_ as queuing system adapter. `pysqa <https://github.com/pyiron/pysqa>`_ is based on the idea of using shell script based templates to configure the different queues as modern queuing sytem provide a wide range of settings but most users commonly submit their jobs with very similar settings. We discuss a sample configuration for `SLURM <https://slurm.schedmd.com/documentation.html>`_ sample configurations for other queuing systems are available on `Github <https://github.com/pyiron/pysqa/tree/master/tests/config>`_.
+The :code:`~/.pyiron` is structured just like a workstation installation with a `PostgeSQL <https://www.postgresql.org>`_ database as explained above. In addition to the previous resource directories we add another subfolder in the resource directory to configure the queuing system using `pysqa <https://github.com/pyiron/pysqa>`_ as queuing system adapter. `pysqa <https://github.com/pyiron/pysqa>`_ is based on the idea of using shell script based templates to configure the different queues as modern queuing sytem provide a wide range of settings but most users commonly submit their jobs with very similar settings. We discuss a sample configuration for `SLURM <https://slurm.schedmd.com/documentation.html>`_ sample configurations for other queuing systems are available on `Github <https://github.com/pyiron/pysqa/tree/master/tests/config>`_.
 
 .. code-block:: bash
 
@@ -239,7 +239,7 @@ The `~/.pyiron` is structured just like a workstation installation with a `Postg
         queue_2.sh
         queue.yaml
 
-The queues directory contains one `queue.yaml` configuration file and multiple `jinja <https://jinja.palletsprojects.com>`_ based shell script templates for submitting jobs. These templates define a commonly used set of parameters used to submit calculations, it can contain a restriction on a specific queue or partition but it does not have to. A typical queue template like they are used in `queue_1.sh` and `queue_2.sh` is shown below:
+The queues directory contains one :code:`queue.yaml` configuration file and multiple `jinja <https://jinja.palletsprojects.com>`_ based shell script templates for submitting jobs. These templates define a commonly used set of parameters used to submit calculations, it can contain a restriction on a specific queue or partition but it does not have to. A typical queue template like they are used in :code:`queue_1.sh` and :code:`queue_2.sh` is shown below:
       
 .. code-block:: bash
 
@@ -259,9 +259,9 @@ The queues directory contains one `queue.yaml` configuration file and multiple `
 
     {{command}}
 
-Such a template contains the variables `{{job_name}}` which is used to identify the job on the queuing system, typical pyiron job names are constructred using the prefix `pi` followed by the pyiron job id. This allows pyiron to match the job on the queuing system with the job table. The second option is the `{{working_directory}}` which is the directory where the job is located and the simulation code is executed. For pyiron this is typically a subdirectory of the simulation protocol to simplify identifiying broken calculation on the filesystem. The third option is the `run_time` which specifies the run time in seconds, followed by the `memoery_max` which specifies the memory requirement of a given calculation. Both parameters are optional. Finally the `cores` defines the number of CPU cores used for a calculation and the `command` parameter is set by pyiron to load a pyiron object during the execution. When a pyiron job is executed on a compute node initially a python process is called to reload the pyiron object and afterwards the pyiron object calls the shell script just list a regular job executed on the login node. By initially calling a python process pyiron is able to track the progress of the calculation. 
+Such a template contains the variables :code:`{{job_name}}` which is used to identify the job on the queuing system, typical pyiron job names are constructred using the prefix :code:`pi` followed by the pyiron job id. This allows pyiron to match the job on the queuing system with the job table. The second option is the :code:`{{working_directory}}` which is the directory where the job is located and the simulation code is executed. For pyiron this is typically a subdirectory of the simulation protocol to simplify identifiying broken calculation on the filesystem. The third option is the :code:`run_time` which specifies the run time in seconds, followed by the :code:`memory_max` which specifies the memory requirement of a given calculation. Both parameters are optional. Finally the :code:`cores` defines the number of CPU cores used for a calculation and the :code:`command` parameter is set by pyiron to load a pyiron object during the execution. When a pyiron job is executed on a compute node initially a python process is called to reload the pyiron object and afterwards the pyiron object calls the shell script just list a regular job executed on the login node. By initially calling a python process pyiron is able to track the progress of the calculation. 
 
-Besides the queue templates the queues directory also contains the queue configuration `queue.yaml`: 
+Besides the queue templates the queues directory also contains the queue configuration :code:`queue.yaml`: 
 
 .. code-block:: bash
 
@@ -271,11 +271,11 @@ Besides the queue templates the queues directory also contains the queue configu
       queue_one: {cores_max: 40, cores_min: 1, run_time_max: 3600, script: queue_1.sh}
       queue_two: {cores_max: 1200, cores_min: 40, run_time_max: 345600, script: queue_2.sh}
 
-The queue configuration defines the limits of the individual queues which helps the user to select the appropriate queue for their simulation. The `queue_type` defines the type of the queuing system, the `queue_primary` defines the primary queue and finally `queues` defines the available queues. Typically each queue is associated with a shell script template, like in this case `queue_one` is associated with `queue_1.sh` and `queue_two` is associated with `queue_2.sh`. Additional queue configurations are available on  `Github <https://github.com/pyiron/pysqa/tree/master/tests/config>`_.
+The queue configuration defines the limits of the individual queues which helps the user to select the appropriate queue for their simulation. The :code:`queue_type` defines the type of the queuing system, the `queue_primary` defines the primary queue and finally :code:`queues` defines the available queues. Typically each queue is associated with a shell script template, like in this case :code:`queue_one` is associated with :code:`queue_1.sh` and :code:`queue_two` is associated with :code:`queue_2.sh`. Additional queue configurations are available on  `Github <https://github.com/pyiron/pysqa/tree/master/tests/config>`_.
 
 Submit to Remote HPC
 --------------------
-To be able to submit calculation to an remote HPC we first need to configure the remote HPC. On the remote HPC we disable the database in the `.pyiron` with the following lines:
+To be able to submit calculation to an remote HPC we first need to configure the remote HPC. On the remote HPC we disable the database in the :code:`.pyiron` with the following lines:
 
 .. code-block:: bash
 
@@ -312,11 +312,11 @@ This queue configuration now includes additional options to handle the SSH conne
       queue_one: {cores_max: 40, cores_min: 1, run_time_max: 3600}
       queue_two: {cores_max: 1200, cores_min: 40, run_time_max: 345600}
 
-The `ssh_host` defines the name of the login node, with `ssh_username` the user on the remote machine and `known_hosts` and `ssh_key` the local configuration files to connect to the remote host. Currently pyiron only supports ssh key based authentification for remote calculation. By setting `ssh_continous_connection` the same connection is reused for data transfers which is commonly more sufficient that creating individual connections for each command. Still this is based on the assumption that a stable connection between the workstation or group server and the remote HPC cluster exists. If this is not the case for example when using a mobile connection it is recommended to disable this option. The `ssh_remote_config_dir` defines the configuration of the queuing system on the remote cluster. Finally the calculation are copied from the local directory `ssh_local_path` to the remote directory `ssh_remote_path`. In the above example if a calculation is submitted in the directory `/home/jan/pyiron/projects/first/subproject` then the files are copied to `/u/janj/remote/first/subproject`. By retaining the path when transfering the files it is easier to debug failed calculation. Finally the queues are defined locally to have quick access to the queue configurations, but it is not necessary to define the submission templates as those are available on the remote machine. In addition the other resources have to be identical on both systems. The easiest way to achieve this is to copy the resource directory once the installation is working on the remote machine.
+The :code:`ssh_host` defines the name of the login node, with :code:`ssh_username` the user on the remote machine and :code:`known_hosts` and :code:`ssh_key` the local configuration files to connect to the remote host. Currently pyiron only supports ssh key based authentification for remote calculation. By setting :code:`ssh_continous_connection` the same connection is reused for data transfers which is commonly more sufficient that creating individual connections for each command. Still this is based on the assumption that a stable connection between the workstation or group server and the remote HPC cluster exists. If this is not the case for example when using a mobile connection it is recommended to disable this option. The :code:`ssh_remote_config_dir` defines the configuration of the queuing system on the remote cluster. Finally the calculation are copied from the local directory :code:`ssh_local_path` to the remote directory :code:`ssh_remote_path`. In the above example if a calculation is submitted in the directory :code:`/home/jan/pyiron/projects/first/subproject` then the files are copied to :code:`/u/janj/remote/first/subproject`. By retaining the path when transfering the files it is easier to debug failed calculation. Finally the queues are defined locally to have quick access to the queue configurations, but it is not necessary to define the submission templates as those are available on the remote machine. In addition the other resources have to be identical on both systems. The easiest way to achieve this is to copy the resource directory once the installation is working on the remote machine.
 
 Submit to multiple Remote HPC Clusters
 --------------------------------------
-Finally pyiron also supports configuring multiple HPC clusters. In this case rather than creating a `queue.yaml` file in the queues resource directory we create a `clusters.yaml` file with the following content: 
+Finally pyiron also supports configuring multiple HPC clusters. In this case rather than creating a :code:`queue.yaml` file in the queues resource directory we create a :code:`clusters.yaml` file with the following content: 
 
 .. code-block:: bash
 
@@ -325,7 +325,7 @@ Finally pyiron also supports configuring multiple HPC clusters. In this case rat
       cluster_one: cluster_1.yaml
       cluster_two: cluster_2.yaml
 
-The `cluster_primary` defines the default cluster and the different clusters are each defined in their own `cluster_*.yaml` file. Those `cluster_*.yaml` have the same structure as the `queue.yaml` file discussed above, but they can not be named `queue.yaml` as pyiron otherwise assumes that only one cluster is available. 
+The :code:`cluster_primary` defines the default cluster and the different clusters are each defined in their own :code:`cluster_*.yaml` file. Those :code:`cluster_*.yaml` have the same structure as the :code:`queue.yaml` file discussed above, but they can not be named :code:`queue.yaml` as pyiron otherwise assumes that only one cluster is available. 
    
 ********************************   
 Alternative Installation Options
@@ -354,13 +354,13 @@ While pip installation is supported, we highly recommend using conda when possib
 
 Using git
 ---------
-To get the latest pyiron version and access changes on development branches pyiron can also be installed via git. For example you can download the pyiron sourcecode to `~/pyrion/software` using:
+To get the latest pyiron version and access changes on development branches pyiron can also be installed via git. For example you can download the pyiron sourcecode to :code:`~/pyrion/software` using:
 
 .. code-block:: bash
 
     git clone https://github.com/pyiron/pyiron.git ~/pyrion/software
 
-Based on the previous workstation setup your `~/pyiron` directory should contain the following folders:
+Based on the previous workstation setup your :code:`~/pyiron` directory should contain the following folders:
 
 .. code-block:: bash
 
@@ -369,13 +369,13 @@ Based on the previous workstation setup your `~/pyiron` directory should contain
      resources/
      software/
      
-To include this version in your `PYTHONPATH` add the following line to your `~/.profile` or `~/.bashrc` configuration:
+To include this version in your :code:`PYTHONPATH` add the following line to your :code:`~/.profile` or :code:`~/.bashrc` configuration:
 
 .. code-block:: bash
 
     export PYTHONPATH=${HOME}/pyiron/software/:${PYTHONPATH}
 
-When you import pyiron in any python shell or jupyter notebook it should load the version from `~/pyrion/software`. Finally you can switch to other branches using git: 
+When you import pyiron in any python shell or jupyter notebook it should load the version from :code:`~/pyrion/software`. Finally you can switch to other branches using git: 
 
 .. code-block:: bash
 
