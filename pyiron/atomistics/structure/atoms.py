@@ -1858,8 +1858,6 @@ class Atoms(ASEAtoms):
             raise ValueError(
                 "Increase max_num_neighbors! " + str(max_nbr) + " " + str(num_neighbors)
             )
-        self.min_nbr_number = min_nbr
-        self.max_nbr_number = max_nbr
         neighbor_obj.distances = neighbor_distance
         neighbor_obj.vecs = neighbor_distance_vec
         neighbor_obj.indices = neighbor_indices
@@ -1951,10 +1949,9 @@ class Atoms(ASEAtoms):
 
 
     def get_shell_matrix(
-        self, shell=None, id_list=None, restraint_matrix=None, num_neighbors=100, tolerance=2
+        self, id_list=None, chemical_pair=None, num_neighbors=100, tolerance=2,
+        cluster_by_distances=False, cluster_by_vecs=False
     ):
-        if shell is not None and shell<=0:
-            raise ValueError("Parameter 'shell' must be an integer greater than 0")
         neigh_list = self.get_neighbors(
             num_neighbors=num_neighbors, id_list=id_list, tolerance=tolerance
         )
@@ -1962,7 +1959,11 @@ class Atoms(ASEAtoms):
             + 'It is not guaranteed to be in service in vers. 1.0.'
             + 'Use neigh.get_shell_matrix() instead (after calling neigh = structure.get_neighbors()).',
             DeprecationWarning)
-        return neigh_list.get_shell_matrix(shell_numbers=shell, restraint_matrix=restraint_matrix)
+        return neigh_list.get_shell_matrix(
+            chemical_pair=chemical_pair,
+            cluster_by_distances=cluster_by_distances,
+            cluster_by_vecs=cluster_by_vecs
+        )
     get_shell_matrix.__doc__ = Neighbors.get_shell_matrix.__doc__
 
     def occupy_lattice(self, **qwargs):

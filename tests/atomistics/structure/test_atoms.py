@@ -720,6 +720,18 @@ class TestAtoms(unittest.TestCase):
         neigh = basis.get_neighborhood([0, 0, 0.1])
         self.assertEqual(neigh.distances[0], 0.1)
 
+    def test_get_neighbors_update_vectors(self):
+        structure = CrystalStructure(elements='Fe', lattice_constants=1, bravais_basis='bcc', pbc=True)
+        neigh = structure.get_neighbors(num_neighbors=8)
+        with self.assertRaises(AssertionError):
+            neigh.update_vectors()
+        structure = CrystalStructure(elements='Fe', lattice_constants=1, bravais_basis='bcc', pbc=True).repeat(2)
+        neigh = structure.get_neighbors(num_neighbors=8)
+        self.assertAlmostEqual(np.min(neigh.distances), np.sqrt(3)/2)
+        structure.positions[0] += 0.01
+        neigh.update_vectors()
+        self.assertAlmostEqual(np.min(neigh.distances), np.sqrt(3)*0.49)
+
     def test_get_neighbors(self):
         cell = 2.2 * np.identity(3)
         NaCl = Atoms("NaCl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
@@ -737,12 +749,12 @@ class TestAtoms(unittest.TestCase):
         with self.assertRaises(ValueError):
             basis.get_neighbors(cutoff_radius=10)
         basis.get_neighbors_by_distance(cutoff_radius=10)
-        structure = CrystalStructure(elements='Fe', lattice_constant=2.83, bravais='bcc').repeat(2)
-        neigh = structure.get_neighbors()
-        self.assertTrue(np.array_equal(neigh.shells, neigh.get_global_shells()))
-        structure += Atoms(elements='C', positions=[[0, 0, 0.5*2.83]])
-        neigh = structure.get_neighbors()
-        self.assertFalse(np.array_equal(neigh.shells, neigh.get_global_shells()))
+
+    def test_get_shell_matrix(self):
+        structure = CrystalStructure(elements='Fe', lattice_constants=2.83, bravais_basis='bcc')
+        shell_mat_atoms = structure.get_shell_matrix(num_neighbors=8)
+        neigh = structure.get_neighbors(num_neighbors=8)
+        self.assertEqual(shell_mat_atoms[0].sum(), neigh.get_shell_matrix()[0].sum())
 
     def test_center_coordinates(self):
         cell = 2.2 * np.identity(3)
@@ -816,15 +828,6 @@ class TestAtoms(unittest.TestCase):
         Al_sc = Atoms("AlAl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
         Al_sc.set_repeat([3, 3, 3])
         self.assertEqual(np.round(Al_sc.get_shells()[2], 6), 2.2)
-
-    def test_get_shell_matrix(self):
-        basis = Atoms(
-            "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
-        )
-        output = basis.get_shell_matrix(shell=1, restraint_matrix=["Fe", "Fe"])
-        self.assertIsInstance(output, np.ndarray)
-        self.assertEqual(np.sum(output), 16)
-        self.assertTrue(np.all(np.dot(output, output) == np.identity(2) * 64))
 
     def test_get_distances_array(self):
         basis = Atoms("FeFe", positions=[3*[0], 3*[0.9]], cell=np.identity(3), pbc=True)
@@ -1020,11 +1023,11 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(np.array_equal(self.CO2.positions, new_array))
 
     def test_get_positions(self):
-        basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
+        basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constants=4.2)
         self.assertTrue(np.array_equal(basis_Mg.positions, basis_Mg.get_positions()))
 
     def test_get_scaled_positions(self):
-        basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
+        basis_Mg = CrystalStructure("Mg", bravais_basis="fcc", lattice_constants=4.2)
         basis_Mg.set_cell(basis_Mg.cell+0.1 * np.random.random((3, 3)))
         basis_Mg = basis_Mg.center_coordinates_in_unit_cell()
         self.assertTrue(
