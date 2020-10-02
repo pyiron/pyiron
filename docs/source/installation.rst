@@ -142,7 +142,7 @@ To add your own executables or parameter files it is necessary to initialise a u
     PROJECT_PATHS = ~/pyiron/projects
     RESOURCE_PATHS = ~/pyiron/resources
     
-In this case pyiron can only execute calculations in the :code:`~/pyiron/projects` directory. In particular pyiron users can not delete files outside this directory. Next to the projects directory :code:`~/pyiron/projects` we create a resource directory :code:`~/pyiron/resources` to store links to the executables and the corresponding parameter files. Both directories have to be created by the user and in case no `FILE` option is defined pyiron by default creates an `SQLite <https://www.sqlite.org>`_ database in the resource directory. Example resource directories are available on `Github <https://github.com/pyiron/pyiron-resources/tree/master>`_ . Here we just discuss the LAMMPS resource directory as one example.
+In this case pyiron can only execute calculations in the :code:`~/pyiron/projects` directory. In particular pyiron users can not delete files outside this directory. Next to the projects directory :code:`~/pyiron/projects` we create a resource directory :code:`~/pyiron/resources` to store links to the executables and the corresponding parameter files. Both directories have to be created by the user and in case no :code:`FILE` option is defined pyiron by default creates an `SQLite <https://www.sqlite.org>`_ database in the resource directory. Example resource directories are available on `Github <https://github.com/pyiron/pyiron-resources/tree/master>`_ . Here we just discuss the LAMMPS resource directory as one example.
 
 .. code-block:: bash
 
@@ -195,7 +195,7 @@ To accelerate the pyiron installation it is recommended to use a `PostgeSQL <htt
 
 * :code:`USER` the database user, in contrast to many other software packages pyiron requires one database user per system user who is using pyiron. The database is only used to store an index of the calculations executed with pyiron, therefore knowledge gained from accessing the database is limited unless the user has also access to the file system. 
 
-* :code:`PASSWD` the database user password. While it is a bad practice to store the database password in the configuration file, the database only contains the the job index. Still it is important that the user creates an pyiron specific password and should never store their system user password in the `.pyiron` configuration file. 
+* :code:`PASSWD` the database user password. While it is a bad practice to store the database password in the configuration file, the database only contains the the job index. Still it is important that the user creates an pyiron specific password and should never store their system user password in the :code:`.pyiron` configuration file. 
 
 * :code:`JOB_TABLE` the name of the database table. pyiron is commonly using one table per user. 
 
@@ -271,7 +271,7 @@ Besides the queue templates the queues directory also contains the queue configu
       queue_one: {cores_max: 40, cores_min: 1, run_time_max: 3600, script: queue_1.sh}
       queue_two: {cores_max: 1200, cores_min: 40, run_time_max: 345600, script: queue_2.sh}
 
-The queue configuration defines the limits of the individual queues which helps the user to select the appropriate queue for their simulation. The :code:`queue_type` defines the type of the queuing system, the `queue_primary` defines the primary queue and finally :code:`queues` defines the available queues. Typically each queue is associated with a shell script template, like in this case :code:`queue_one` is associated with :code:`queue_1.sh` and :code:`queue_two` is associated with :code:`queue_2.sh`. Additional queue configurations are available on  `Github <https://github.com/pyiron/pysqa/tree/master/tests/config>`_.
+The queue configuration defines the limits of the individual queues which helps the user to select the appropriate queue for their simulation. The :code:`queue_type` defines the type of the queuing system, the :code:`queue_primary` defines the primary queue and finally :code:`queues` defines the available queues. Typically each queue is associated with a shell script template, like in this case :code:`queue_one` is associated with :code:`queue_1.sh` and :code:`queue_two` is associated with :code:`queue_2.sh`. Additional queue configurations are available on  `Github <https://github.com/pyiron/pysqa/tree/master/tests/config>`_.
 
 Submit to Remote HPC
 --------------------
