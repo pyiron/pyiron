@@ -698,7 +698,8 @@ class TestAtoms(unittest.TestCase):
     def test_find_neighbors_by_vector(self):
         basis = Atoms(symbols=2*["Fe"],
                       scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)],
-                      cell=np.identity(3))
+                      cell=np.identity(3),
+                      pbc=True)
         id_lst, dist = basis.find_neighbors_by_vector([0, 0, 1],
                                                       deviation=True,
                                                       num_neighbors=14)
@@ -707,7 +708,7 @@ class TestAtoms(unittest.TestCase):
 
     def test_get_neighborhood(self):
         basis = Atoms(
-            "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
+            "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3), pbc=True
         )
         neigh = basis.get_neighborhood([0, 0, 0.1])
         self.assertEqual(neigh.distances[0], 0.1)
@@ -725,23 +726,30 @@ class TestAtoms(unittest.TestCase):
         self.assertAlmostEqual(np.min(neigh.distances), np.sqrt(3)*0.49)
 
     def test_get_neighbors(self):
-        cell = 2.2 * np.identity(3)
-        NaCl = Atoms("NaCl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
-        # NaCl.repeat([3, 3, 3])
-        # NaCl.positions = [(1,1,1)]
-        nbr_dict = NaCl.get_neighbors(num_neighbors=12, t_vec=True)
-        basis = Atoms(symbols="FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3))
-        with self.assertRaises(ValueError):
-            neigh = basis.get_neighbors(include_boundary=False, num_neighbors=10)
-        neigh = basis.get_neighbors(include_boundary=False, num_neighbors=1)
+        basis = Atoms(symbols="FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3), pbc=True)
+        neigh = basis.get_neighbors(num_neighbors=58)
         self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
+        counts = np.unique(neigh.shells[0], return_counts=True)
+        self.assertTrue(np.array_equal(counts[0], np.arange(5)+1))
+        self.assertTrue(np.array_equal(counts[1], np.array([ 8,  6, 12, 24,  8])))
+        with self.assertRaises(NotImplementedError):
+            neigh = basis.get_neighbors(include_boundary=False, num_neighbors=10)
+        basis = Atoms(symbols="FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3), pbc=True)
+        basis.pbc = np.array([True, False, False])
+        neigh = basis.get_neighbors(num_neighbors=10)
+        self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
+        self.assertAlmostEqual(neigh.distances[0][2], 2)
+        self.assertAlmostEqual(neigh.distances[0][4], np.sqrt(11))
+        self.assertAlmostEqual(neigh.distances[0][6], 4)
+        self.assertAlmostEqual(neigh.distances[0][8], np.sqrt(27))
+        basis.pbc = True
         basis.set_repeat(2)
         with self.assertRaises(ValueError):
             basis.get_neighbors(cutoff_radius=10)
         basis.get_neighbors_by_distance(cutoff_radius=10)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            neigh = basis.get_neighbors(boundary_width_factor=0.5)
+            neigh = basis.get_neighbors(boundary_width_factor=0.1)
             self.assertGreaterEqual(len(w), 1)
 
     def test_get_shell_matrix(self):
@@ -795,7 +803,7 @@ class TestAtoms(unittest.TestCase):
         view = basis.plot3d()
 
     def test_get_shell_radius(self):
-        basis = Atoms("FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3))
+        basis = Atoms("FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3), pbc=True)
         self.assertAlmostEqual(
             basis.get_shell_radius(), np.mean(list(basis.get_shells().values()))
         )
@@ -806,7 +814,7 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(len(basis.group_points_by_symmetry([3 * [0.5], 3 * [1.4]])), 2)
 
     def test_get_equivalent_voronoi_vertices(self):
-        basis = Atoms("FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3))
+        basis = Atoms("FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3), pbc=True)
         vert = basis.get_equivalent_voronoi_vertices()
         self.assertEqual(len(vert), 1)
         self.assertGreater(
@@ -819,7 +827,7 @@ class TestAtoms(unittest.TestCase):
     def test_get_shells(self):
         dim = 3
         cell = 2.2 * np.identity(dim)
-        Al_sc = Atoms("AlAl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
+        Al_sc = Atoms("AlAl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell, pbc=True)
         Al_sc.set_repeat([3, 3, 3])
         self.assertEqual(np.round(Al_sc.get_shells()[2], 6), 2.2)
 
@@ -857,6 +865,7 @@ class TestAtoms(unittest.TestCase):
             elements=["Al", "Al"],
             scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)],
             cell=cell,
+            pbc=True,
         )
         Al_sc.set_repeat([4, 4, 4])
         neighbors = Al_sc.get_neighbors(
@@ -915,7 +924,7 @@ class TestAtoms(unittest.TestCase):
 
     def test_get_voronoi_vertices(self):
         cell = 2.2 * np.identity(3)
-        Al = Atoms("AlAl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
+        Al = Atoms("AlAl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell, pbc=True)
         pos, box = Al._get_voronoi_vertices()
         self.assertEqual(len(pos), 14)
 
