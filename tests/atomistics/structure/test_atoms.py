@@ -749,6 +749,10 @@ class TestAtoms(unittest.TestCase):
         with self.assertRaises(ValueError):
             basis.get_neighbors(cutoff_radius=10)
         basis.get_neighbors_by_distance(cutoff_radius=10)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            neigh = basis.get_neighbors(boundary_width_factor=0.5)
+            self.assertGreaterEqual(len(w), 1)
 
     def test_get_shell_matrix(self):
         structure = CrystalStructure(elements='Fe', lattice_constants=2.83, bravais_basis='bcc')
