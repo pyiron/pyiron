@@ -1560,8 +1560,12 @@ class Atoms(ASEAtoms):
             pyiron.atomistics.structure.atoms.Atoms: The required boundary region
 
         """
+        if width<0:
+            raise ValueError('Invalid width')
+        if width==0:
+            return self.positions, np.arange(len(self))
         positions = self.positions.copy()
-        rep = 2*np.ceil(width/np.linalg.norm(self.cell, axis=-1)+1e-8).astype(int)*self.pbc+1
+        rep = 2*np.ceil(width/np.linalg.norm(self.cell, axis=-1)).astype(int)*self.pbc+1
         rep = [np.arange(r)-int(r/2) for r in rep]
         meshgrid = np.meshgrid(rep[0], rep[1], rep[2])
         meshgrid = np.stack(meshgrid, axis=-1).reshape(-1, 3)
@@ -1686,6 +1690,7 @@ class Atoms(ASEAtoms):
         """
         if not include_boundary:
             raise NotImplementedError('include_boundary=False is not supported anymore - do structure.pbc = False instead and call get_neighbors')
+        boxsize = None
         num_neighbors += 1
         neighbor_obj = Neighbors(ref_structure=self, tolerance=tolerance)
         if all(self.pbc==False):
@@ -1693,15 +1698,20 @@ class Atoms(ASEAtoms):
         elif cutoff_radius!=np.inf:
             width = cutoff_radius
         else:
-            prefactor = [1, np.pi, 3/4*np.pi]
+            prefactor = [1, 1/np.pi, 4/(3*np.pi)]
             prefactor = prefactor[sum(self.pbc)-1]
-            volume = np.prod((np.linalg.norm(self.cell, axis=-1)-np.ones(3))*self.pbc+np.ones(3))
-            volume *= prefactor*np.max([num_neighbors, 8])/len(self)
-            width = boundary_width_factor*volume**(1/np.sum(self.pbc))
-        extended_positions, indices = self.get_extended_positions(width)
+            width = np.prod((np.linalg.norm(self.cell, axis=-1)-np.ones(3))*self.pbc+np.ones(3))
+            width *= prefactor*np.max([num_neighbors, 8])/len(self)
+            width = boundary_width_factor*width**(1/np.sum(self.pbc))
+        neighbor_obj._boundary_layer_width = width
+        if width<0.5*np.min(self.cell.diagonal()) and np.isclose(np.sum(self.cell**2)-np.sum(self.cell.diagonal()**2), 0):
+            boxsize = self.cell.diagonal()
+            extended_positions, indices = self.get_extended_positions(0)
+        else:
+            extended_positions, indices = self.get_extended_positions(width)
         if len(extended_positions) < num_neighbors:
             raise ValueError('num_neighbors too large - make boundary_width_factor larger and/or make num_neighbors smaller')
-        tree = cKDTree(extended_positions)
+        tree = cKDTree(extended_positions, boxsize=boxsize)
         if id_list is None:
             id_list = np.arange(len(self.positions))
         positions = self.positions[np.array(id_list)]

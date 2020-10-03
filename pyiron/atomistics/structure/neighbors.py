@@ -35,6 +35,7 @@ class Neighbors(object):
         self._ref_structure = ref_structure
         self._cluster_vecs = None
         self._cluster_dist = None
+        self._boundary_layer_width = 0
 
     @property
     def shells(self):

@@ -852,6 +852,12 @@ class TestAtoms(unittest.TestCase):
         v = np.random.rand(6).reshape(-1, 3)
         self.assertEqual(basis.repeat_points(v, 2).shape, (8, 2, 3))
 
+    def test_get_extended_positions(self):
+        basis = Atoms("FeFe", positions=[[0.01, 0, 0], [0.5, 0.5, 0.5]], cell=np.identity(3), pbc=True)
+        with self.assertRaises(ValueError):
+            basis.get_extended_positions(-0.1)
+        self.assertTrue(basis.get_extended_positions(0)[0], basis.positions)
+
     def test_get_equivalent_points(self):
         basis = Atoms("FeFe", positions=[[0.01, 0, 0], [0.5, 0.5, 0.5]], cell=np.identity(3))
         arr = basis.get_equivalent_points([0, 0, 0.5])
