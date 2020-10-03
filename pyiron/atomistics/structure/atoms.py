@@ -1808,17 +1808,6 @@ class Atoms(ASEAtoms):
         return neighbors.find_neighbors_by_vector(vector=vector, deviation=deviation)
     find_neighbors_by_vector.__doc__ = Neighbors.find_neighbors_by_vector.__doc__
 
-    def get_shells(self, id_list=None, max_shell=2, max_num_neighbors=100):
-        warnings.warn('structure.get_shells() is deprecated as of vers. 0.3.'
-            + 'It is not guaranteed to be in service in vers. 1.0.'
-            + 'Use neigh.get_shell_dict() instead (after calling neigh = structure.get_neighbors()).',
-            DeprecationWarning)
-        if id_list is None:
-            id_list = [0]
-        neighbors = self.get_neighbors(num_neighbors=max_num_neighbors, id_list=id_list)
-        return neighbors.get_shell_dict(max_shell=max_shell)
-    get_shells.__doc__ = Neighbors.get_shell_dict.__doc__
-
     def get_shell_matrix(
         self, id_list=None, chemical_pair=None, num_neighbors=100, tolerance=2,
         cluster_by_distances=False, cluster_by_vecs=False
@@ -1864,21 +1853,6 @@ class Atoms(ASEAtoms):
         self.set_species(new_species)
         self.indices = new_indices
 
-    def get_shell_radius(self, shell=1, id_list=None):
-        """
-
-        Args:
-            shell:
-            id_list:
-
-        Returns:
-
-        """
-        if id_list is None:
-            id_list = [0]
-        shells = self.get_shells(id_list=id_list, max_shell=shell + 1)
-        return np.mean(list(shells.values())[shell - 1 :])
-
     def cluster_analysis(
         self, id_list, neighbors=None, radius=None, return_cluster_sizes=False
     ):
@@ -1895,7 +1869,10 @@ class Atoms(ASEAtoms):
         """
         if neighbors is None:
             if radius is None:
-                radius = self.get_shell_radius()
+                neigh = self.get_neighbors(num_neighbors=100)
+                indices = np.unique(neigh.shells[0][neigh.shells[0]<=2], return_index=True)[1]
+                radius = neigh.distances[0][indices]
+                radius = np.mean(radius)
                 # print "radius: ", radius
             neighbors = self.get_neighbors(radius, t_vec=False)
         self._neighbor_index = neighbors.indices

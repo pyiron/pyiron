@@ -802,12 +802,6 @@ class TestAtoms(unittest.TestCase):
         )
         view = basis.plot3d()
 
-    def test_get_shell_radius(self):
-        basis = Atoms("FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3), pbc=True)
-        self.assertAlmostEqual(
-            basis.get_shell_radius(), np.mean(list(basis.get_shells().values()))
-        )
-
     def test_group_points_by_symmetry(self):
         basis = Atoms("FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3))
         self.assertEqual(len(basis.group_points_by_symmetry([3 * [0.5], 3 * [1.5]])), 1)
@@ -823,13 +817,6 @@ class TestAtoms(unittest.TestCase):
         self.assertGreater(
             np.min(np.linalg.norm(vert[0] - basis.positions[1], axis=-1)), 0.5
         )
-
-    def test_get_shells(self):
-        dim = 3
-        cell = 2.2 * np.identity(dim)
-        Al_sc = Atoms("AlAl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell, pbc=True)
-        Al_sc.set_repeat([3, 3, 3])
-        self.assertEqual(np.round(Al_sc.get_shells()[2], 6), 2.2)
 
     def test_get_distances_array(self):
         basis = Atoms("FeFe", positions=[3*[0], 3*[0.9]], cell=np.identity(3), pbc=True)

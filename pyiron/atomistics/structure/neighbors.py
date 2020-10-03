@@ -57,28 +57,6 @@ class Neighbors(object):
         self.vecs = vecs.reshape(self.vecs.shape)
         self.distances = np.linalg.norm(self.vecs, axis=-1)
 
-    def get_shell_dict(self, max_shell=2):
-        """
-
-        Args:
-            max_shell (int): maximum number of shells
-
-        Returns:
-
-        """
-
-        shells = self.shells[0]
-        dist = self.distances[0]
-        shell_dict = {}
-        for i_shell in set(shells):
-            if i_shell > max_shell:
-                break
-            shell_dict[i_shell] = np.mean(dist[shells == i_shell])
-            # print ("shells: ", i_shell, shell_dict[i_shell])
-        if not (max(shell_dict.keys()) == max_shell):
-            raise AssertionError()
-        return shell_dict
-
     def get_local_shells(self, tolerance=2, cluster_by_distances=False, cluster_by_vecs=False):
         """
         Set shell indices based on distances available to each atom. Clustering methods can be used
