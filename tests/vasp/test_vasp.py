@@ -57,7 +57,18 @@ class TestVasp(unittest.TestCase):
         self.job.structure = None
 
     def test_list_potentials(self):
-        print("vasp_pot_test", self.job_spin.list_potentials(), self.job_complete.list_potentials())
+        self.assertEqual([
+            'Fe', 'Fe_GW', 'Fe_pv', 'Fe_sv', 'Fe_sv_GW', 'Se', 'Se_GW',
+            'O', 'O_GW', 'O_GW_new', 'O_h', 'O_s', 'O_s_GW'
+        ], self.job_spin.list_potentials())
+        self.assertEqual(
+            ['Fe', 'Fe_GW', 'Fe_pv', 'Fe_sv', 'Fe_sv_GW'],
+            self.job_complete.list_potentials()
+        )
+        self.job_spin.potential["Fe"] = 'Fe_sv_GW'
+        self.job_complete.potential.Fe = 'Fe_sv_GW'
+        self.assertEqual('Fe_sv_GW', self.job_spin.potential.to_dict().values()[0])
+        self.assertEqual('Fe_sv_GW', self.job_complete.potential.to_dict().values()[0])
 
     def test_init(self):
         self.assertEqual(self.job.__name__, "Vasp")
