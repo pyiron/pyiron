@@ -57,7 +57,7 @@ class TestVasp(unittest.TestCase):
         self.job.structure = None
 
     def test_list_potentials(self):
-        print("vasp_pot_test", self.job.list_potentials(), self.job_spin.list_potentials(), self.job_complete.list_potentials())
+        print("vasp_pot_test", self.job_spin.list_potentials(), self.job_complete.list_potentials())
 
     def test_init(self):
         self.assertEqual(self.job.__name__, "Vasp")
