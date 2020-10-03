@@ -8,14 +8,14 @@ from ase import Atoms
 s = Settings()
 
 try:
-    from gpaw import GPAW, PW, MethfesselPaxton
+    from gpaw import GPAW as GPAWcode, PW, MethfesselPaxton
 except ImportError:
     pass
 
 
-class GpawJob(AseJob):
+class Gpaw(AseJob):
     def __init__(self, project, job_name):
-        super(GpawJob, self).__init__(project, job_name)
+        super(Gpaw, self).__init__(project, job_name)
         self.__name__ = "GpawJob"
         self.input = GpawInput()
 
@@ -157,7 +157,7 @@ class GpawJob(AseJob):
 
     def run_if_scheduler(self):
         self._create_working_directory()
-        super(GpawJob, self).run_if_scheduler()
+        super(Gpaw, self).run_if_scheduler()
 
     def run_if_interactive(self):
         if self.structure.calc is None:
@@ -167,7 +167,7 @@ class GpawJob(AseJob):
                     self.input["kpoints"].replace("[", "").replace("]", "").split()
                 )
             self._create_working_directory()
-            calc = GPAW(
+            calc = GPAWcode(
                 mode=PW(float(self.input["encut"])),
                 xc=self.input["potential"],
                 occupations=MethfesselPaxton(width=float(self.input["sigma"])),
@@ -187,7 +187,7 @@ class GpawJob(AseJob):
             hdf (ProjectHDFio): HDF5 group object - optional
             group_name (str): HDF5 subgroup name - optional
         """
-        super(GpawJob, self).to_hdf(hdf=hdf, group_name=group_name)
+        super(Gpaw, self).to_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input") as hdf5_input:
             self.input.to_hdf(hdf5_input)
 
@@ -199,7 +199,7 @@ class GpawJob(AseJob):
             hdf (ProjectHDFio): HDF5 group object - optional
             group_name (str): HDF5 subgroup name - optional
         """
-        super(GpawJob, self).from_hdf(hdf=hdf, group_name=group_name)
+        super(Gpaw, self).from_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input") as hdf5_input:
             self.input.from_hdf(hdf5_input)
 
