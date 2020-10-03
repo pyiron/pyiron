@@ -4,7 +4,7 @@
 
 from multiprocessing import cpu_count
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
-from pyiron_base import InputList
+from pyiron_base import InputList, GenericParameters
 from pyiron.atomistics.structure.atoms import Atoms, ase_to_pyiron, pyiron_to_ase
 
 try:
@@ -82,7 +82,8 @@ class SQSJob(AtomisticGenericJob):
 
     def __init__(self, project, job_name):
         super(SQSJob, self).__init__(project, job_name)
-        self.input = InputList(table_name='input')
+        # self.input = InputList(table_name='input')
+        self.input = InputList(table_name='custom_dict')
         self.input.mole_fractions = dict()
         self.input.weights = None
         self.input.objective = 0.0
@@ -91,6 +92,7 @@ class SQSJob(AtomisticGenericJob):
         self._python_only_job = True
         self._lst_of_struct = []
         self._fail_early_if_imports_missing()
+        self.__hdf_version__ = "0.2.0"
 
     @staticmethod
     def _fail_early_if_imports_missing():
@@ -148,10 +150,30 @@ class SQSJob(AtomisticGenericJob):
             hdf=hdf,
             group_name=group_name
         )
-        with self.project_hdf5.open("input") as h5in:
-            self.input.from_hdf(h5in)
+        self._backwards_compatible_input_from_hdf()
         with self.project_hdf5.open("output/structures") as hdf5_output:
             structure_names = hdf5_output.list_groups()
         for group in structure_names:
             with self.project_hdf5.open("output/structures/" + group) as hdf5_output:
                 self._lst_of_struct.append(Atoms().from_hdf(hdf5_output))
+
+    def _backwards_compatible_input_from_hdf(self):
+        if "HDF_VERSION" in self.project_hdf5.list_nodes():
+            version = self.project_hdf5["HDF_VERSION"]
+        else:
+            version = "0.1.0"
+
+        if version == "0.1.0":
+            with self.project_hdf5.open("input") as hdf5_input:
+                try:
+                    gp = GenericParameters(table_name="custom_dict")
+                    gp.from_hdf(hdf5_input)
+                    for k in gp.keys():
+                        self.input[k] = gp[k]
+                except TypeError:
+                    pass
+        elif version == "0.2.0":
+            with self.project_hdf5.open("input") as hdf5_input:
+                self.input.from_hdf(hdf5_input)
+        else:
+            raise ValueError("Cannot handle hdf version: {}".format(version))
