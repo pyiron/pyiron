@@ -56,7 +56,7 @@ class TestVasp(unittest.TestCase):
     def setUp(self):
         self.job.structure = None
 
-    def test_potential(self):
+    def test_list_potentials(self):
         print("vasp_pot_test", self.job.list_potentials(), self.job_spin.list_potentials(), self.job_complete.list_potentials())
 
     def test_init(self):
