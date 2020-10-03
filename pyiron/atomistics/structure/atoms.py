@@ -1583,7 +1583,6 @@ class Atoms(ASEAtoms):
         self,
         num_neighbors=100,
         t_vec=True,
-        include_boundary=True,
         tolerance=2,
         id_list=None,
         cutoff_radius=np.inf,
@@ -1595,11 +1594,10 @@ class Atoms(ASEAtoms):
             num_neighbors (int): number of neighbors
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
-            include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
-                                     False is needed e.g. in plot routines to avoid showing incorrect bonds
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
-            id_list:
+            id_list (list): list of atoms the neighbors are to be looked for
             cutoff_radius (float): Upper bound of the distance to which the search must be done
+            boundary_width_factor (float): width of the layer to be added to account for pbc.
 
         Returns:
 
@@ -1610,7 +1608,6 @@ class Atoms(ASEAtoms):
         return self._get_neighbors(
             num_neighbors=num_neighbors,
             t_vec=t_vec,
-            include_boundary=include_boundary,
             tolerance=tolerance,
             id_list=id_list,
             cutoff_radius=cutoff_radius,
@@ -1621,7 +1618,6 @@ class Atoms(ASEAtoms):
         self,
         num_neighbors=12,
         t_vec=True,
-        include_boundary=True,
         tolerance=2,
         id_list=None,
         cutoff_radius=np.inf,
@@ -1633,11 +1629,10 @@ class Atoms(ASEAtoms):
             num_neighbors (int): number of neighbors
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
-            include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
-                                     False is needed e.g. in plot routines to avoid showing incorrect bonds
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
-            id_list:
+            id_list (list): list of atoms the neighbors are to be looked for
             cutoff_radius (float): Upper bound of the distance to which the search must be done
+            boundary_width_factor (float): width of the layer to be added to account for pbc.
 
         Returns:
 
@@ -1650,7 +1645,6 @@ class Atoms(ASEAtoms):
         neigh = self._get_neighbors(
             num_neighbors=num_neighbors,
             t_vec=t_vec,
-            include_boundary=include_boundary,
             tolerance=tolerance,
             id_list=id_list,
             boundary_width_factor=boundary_width_factor,
@@ -1664,7 +1658,6 @@ class Atoms(ASEAtoms):
         self,
         num_neighbors=12,
         t_vec=True,
-        include_boundary=True,
         tolerance=2,
         id_list=None,
         cutoff_radius=np.inf,
@@ -1676,10 +1669,8 @@ class Atoms(ASEAtoms):
             num_neighbors (int): number of neighbors
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
-            include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
-                                     False is needed e.g. in plot routines to avoid showing incorrect bonds
-            tolerance (int): tolerance (round decimal points) used for computing neighbor shells
-            id_list:
+            id_list (list): list of atoms the neighbors are to be looked for
+            boundary_width_factor (float): width of the layer to be added to account for pbc.
 
         Returns:
 
@@ -1687,8 +1678,6 @@ class Atoms(ASEAtoms):
             and vectors
 
         """
-        if not include_boundary:
-            raise NotImplementedError('include_boundary=False is not supported anymore - do structure.pbc = False instead and call get_neighbors')
         boxsize = None
         num_neighbors += 1
         neighbor_obj = Neighbors(ref_structure=self, tolerance=tolerance)
@@ -1704,9 +1693,9 @@ class Atoms(ASEAtoms):
             width = boundary_width_factor*width**(1/np.sum(self.pbc))
         neighbor_obj._boundary_layer_width = width
         if (width<0.5*np.min(self.cell.diagonal())
-            and np.isclose(np.linalg.norm(self.cell-np.eye(3)*self.cell.diagonal()), 0)
-            and np.all(self.pbc)
-            and cutoff_radius==np.inf):
+                and np.isclose(np.linalg.norm(self.cell-np.eye(3)*self.cell.diagonal()), 0)
+                and np.all(self.pbc)
+                and cutoff_radius==np.inf):
             boxsize = self.cell.diagonal()
             extended_positions, indices = self.get_extended_positions(0)
             extended_positions /= self.cell.diagonal()
@@ -1743,7 +1732,6 @@ class Atoms(ASEAtoms):
         position,
         num_neighbors=12,
         t_vec=True,
-        include_boundary=True,
         tolerance=2,
         id_list=None,
         cutoff_radius=np.inf,
@@ -1755,10 +1743,8 @@ class Atoms(ASEAtoms):
             num_neighbors:
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
-            include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
-                                     False is needed e.g. in plot routines to avoid showing incorrect bonds
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
-            id_list:
+            id_list (list): list of atoms the neighbors are to be looked for
             cutoff_radius (float): Upper bound of the distance to which the search must be done
 
         Returns:
@@ -1779,7 +1765,6 @@ class Atoms(ASEAtoms):
         neigh = box.get_neighbors_by_distance(
             num_neighbors=num_neighbors,
             t_vec=t_vec,
-            include_boundary=include_boundary,
             tolerance=tolerance,
             id_list=id_list,
             cutoff_radius=cutoff_radius,
