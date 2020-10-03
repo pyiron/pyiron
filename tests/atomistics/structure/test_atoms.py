@@ -751,6 +751,11 @@ class TestAtoms(unittest.TestCase):
             warnings.simplefilter("always")
             neigh = basis.get_neighbors(boundary_width_factor=0.1)
             self.assertGreaterEqual(len(w), 1)
+        with self.assertRaises(ValueError):
+            neigh = basis.get_neighbors(boundary_width_factor=0.001, num_neighbors=100)
+        basis = Atoms(symbols="FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3))
+        neigh = basis.get_neighbors(num_neighbors=1)
+        self.assertEqual(neigh._boundary_layer_width, 0)
 
     def test_get_shell_matrix(self):
         structure = CrystalStructure(elements='Fe', lattice_constants=2.83, bravais_basis='bcc')
