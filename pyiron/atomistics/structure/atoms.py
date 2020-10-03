@@ -1714,7 +1714,7 @@ class Atoms(ASEAtoms):
         for atom_id, index, distances in zip(id_list, neighbors[1], neighbors[0]):
             neighbor_distance.append(distances[1:][index[1:]<len(indices)])
             neighbor_indices.append(indices[index[1:][index[1:]<len(indices)]]%len(self))
-            if np.max(distances)>width and include_boundary:
+            if np.max(distances)>width:
                 warnings.warn('boundary_width_factor may have been too small - most likely not all neighbors properly assigned')
             if t_vec:
                 neighbor_distance_vec.append(extended_positions[index[1:][index[1:]<len(indices)]]-self.positions[atom_id])
