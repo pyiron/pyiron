@@ -44,7 +44,7 @@ class SphinxJTHPotentialFile(VaspPotentialAbstract):
             potential_df = potential_df[(potential_df["Model"] == "jth-gga-pbe")]
         else:
             raise ValueError(
-                'The exchange correlation functional has to be set and it can either be "LDA" or "PBE"'
+                'The exchange correlation functional has to be set to "PBE" currently there are no "LDA" potentials.'
             )
         super(SphinxJTHPotentialFile, self).__init__(
             potential_df=potential_df,
