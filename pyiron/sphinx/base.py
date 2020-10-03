@@ -972,7 +972,7 @@ class SphinxBase(GenericDFTJob):
         """
         if ionic_forces is not None:
             warnings.warn(
-                "ionic_forces is deprecated as of vers. 0.3.0. It is not guaranteed " 
+                "ionic_forces is deprecated as of vers. 0.3.0. It is not guaranteed "
                 "to be in service in vers. 0.4.0. Use ionic_force_tolerance instead.",
                 DeprecationWarning
             )
