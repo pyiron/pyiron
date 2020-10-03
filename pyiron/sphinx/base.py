@@ -17,9 +17,10 @@ from collections import defaultdict
 import spglib
 
 from pyiron.dft.job.generic import GenericDFTJob
-from pyiron.vasp.potential import VaspPotentialFile
-from pyiron.vasp.potential import find_potential_file \
-    as find_potential_file_vasp
+from pyiron.vasp.potential import VaspPotentialFile, \
+    strip_xc_from_potential_name, \
+    find_potential_file as find_potential_file_vasp, \
+    VaspPotentialSetter
 from pyiron.sphinx.structure import read_atoms
 from pyiron.sphinx.potential import SphinxJTHPotentialFile
 from pyiron.sphinx.potential import find_potential_file \
@@ -95,22 +96,37 @@ class SphinxBase(GenericDFTJob):
         self._save_memory = False
         self._output_parser = Output(self)
         self.input_writer = InputWriter()
+        self._potential = VaspPotentialSetter([])
         if self.check_vasp_potentials():
             self.input["VaspPot"] = True  # use VASP potentials if available
         self._generic_input["restart_for_band_structure"] = False
         self._generic_input["path_name"] = None
         self._generic_input["n_path"] = None
 
-    def get_version_float(self):
-        version_str = self.executable.version.split("_")[0]
-        version_float = float(
-            version_str.split(".")[0]
-        )
-        if len(version_str.split(".")) > 1:
-            version_float += float(
-                "0." + "".join(version_str.split(".")[1:])
-                )
-        return version_float
+    @property
+    def structure(self):
+        """
+
+        Returns:
+
+        """
+        return GenericDFTJob.structure.fget(self)
+
+    @structure.setter
+    def structure(self, structure):
+        """
+
+        Args:
+            structure:
+
+        Returns:
+
+        """
+        GenericDFTJob.structure.fset(self, structure)
+        if structure is not None:
+            self._potential = VaspPotentialSetter(
+                element_lst=structure.get_species_symbols().tolist()
+            )
 
     @property
     def id_pyi_to_spx(self):
@@ -184,6 +200,39 @@ class SphinxBase(GenericDFTJob):
             self.input["Xcorr"] = val
         if "xc" in self.input.sphinx.PAWHamiltonian.keys():
             self.input.sphinx.PAWHamiltonian.xc = self.input["Xcorr"]
+
+    @property
+    def potential_view(self):
+        if self.structure is None:
+            raise ValueError("Can't list potentials unless a structure is set")
+        else:
+            if self.input["VaspPot"]:
+                potentials = VaspPotentialFile(xc=self.input["Xcorr"])
+            else:
+                potentials = SphinxJTHPotentialFile(xc=self.input["Xcorr"])
+            df = potentials.find(self.structure.get_species_symbols().tolist())
+            if len(df) > 0:
+                df["Name"] = [strip_xc_from_potential_name(n) for n in df["Name"].values]
+            return df
+
+    @property
+    def potential_list(self):
+        return list(self.potential_view["Name"].values)
+
+    @property
+    def potential(self):
+        return self._potential
+
+    def get_version_float(self):
+        version_str = self.executable.version.split("_")[0]
+        version_float = float(
+            version_str.split(".")[0]
+        )
+        if len(version_str.split(".")) > 1:
+            version_float += float(
+                "0." + "".join(version_str.split(".")[1:])
+                )
+        return version_float
 
     def set_input_to_read_only(self):
         """
@@ -1215,6 +1264,15 @@ class SphinxBase(GenericDFTJob):
         if not self.input.sphinx.main.read_only:
             self.load_main_group()
 
+    def list_potentials(self):
+        """
+        Lists all the possible POTCAR files for the elements in the structure depending on the XC functional
+
+        Returns:
+           list: a list of available potentials
+        """
+        return self.potential_list
+
     def write_input(self):
         """
         Generate all the required input files for the Sphinx job.
@@ -1248,11 +1306,18 @@ class SphinxBase(GenericDFTJob):
         if not structure_sync and not self.input.sphinx.pawPot.read_only:
             self.load_species_group(potformat=potformat)
 
+        modified_elements = {
+            key: value
+            for key, value in self._potential.to_dict().items()
+            if value is not None
+        }
+
         self.input_writer.structure = self.structure
         self.input_writer.copy_potentials(
             potformat=potformat,
             xc=self.input["Xcorr"],
-            cwd=self.working_directory
+            cwd=self.working_directory,
+            modified_elements=modified_elements
         )
 
         # Write spin constraints, if set via _generic_input.
@@ -1616,7 +1681,17 @@ class InputWriter(object):
         self.file_dict = {}
 
     def copy_potentials(self, potformat="JTH", xc=None, cwd=None,
-                        pot_path_dict=None):
+                        pot_path_dict=None, modified_elements=None):
+        """
+        Copy potential files
+
+        Args:
+            potformat (str):
+            xc (str/None):
+            cwd (str/None):
+            pot_path_dict (dict):
+            modified_elements (dict):
+        """
 
         if pot_path_dict is None:
             pot_path_dict = {}
@@ -1651,6 +1726,18 @@ class InputWriter(object):
                 assert os.path.isfile(
                     potential_path
                 ), "such a file does not exist in the pp directory"
+            elif elem in modified_elements.keys():
+                new_element = modified_elements[elem]
+                if os.path.isabs(new_element):
+                    potential_path = new_element
+                else:
+                    potentials.add_new_element(
+                        parent_element=elem, new_element=new_element
+                    )
+                    potential_path = find_potential_file(
+                        path=potentials.find_default(new_element)[
+                            "Filename"].values[0][0]
+                    )
             else:
                 potential_path = find_potential_file(
                     path=potentials.find_default(elem)[

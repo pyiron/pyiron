@@ -10,6 +10,7 @@ import warnings
 import time
 from pyiron.sphinx.base import SphinxBase, Group
 from pyiron.atomistics.job.interactive import GenericInteractive, GenericInteractiveOutput
+from pyiron.vasp.potential import VaspPotentialSetter
 
 BOHR_TO_ANGSTROM = (
     scipy.constants.physical_constants["Bohr radius"][0] / scipy.constants.angstrom
@@ -45,6 +46,10 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
     @structure.setter
     def structure(self, structure):
         GenericInteractive.structure.fset(self, structure)
+        if structure is not None:
+            self._potential = VaspPotentialSetter(
+                element_lst=structure.get_species_symbols().tolist()
+            )
 
     def get_structure(self, iteration_step=-1, wrap_atoms=True):
         return GenericInteractive.get_structure(
