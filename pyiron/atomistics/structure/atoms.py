@@ -1705,11 +1705,14 @@ class Atoms(ASEAtoms):
             width = boundary_width_factor*width**(1/np.sum(self.pbc))
         neighbor_obj._boundary_layer_width = width
         if (width<0.5*np.min(self.cell.diagonal())
-            and np.isclose(np.sum(self.cell**2)-np.sum(self.cell.diagonal()**2), 0)
+            and np.isclose(np.linalg.norm(self.cell-np.eye(3)*self.cell.diagonal()), 0)
             and np.all(self.pbc)
             and cutoff_radius==np.inf):
             boxsize = self.cell.diagonal()
             extended_positions, indices = self.get_extended_positions(0)
+            extended_positions /= self.cell.diagonal()
+            extended_positions -= np.floor(extended_positions)
+            extended_positions *= self.cell.diagonal()
         else:
             extended_positions, indices = self.get_extended_positions(width)
         if len(extended_positions) < num_neighbors and cutoff_radius==np.inf:
