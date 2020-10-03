@@ -856,7 +856,7 @@ class TestAtoms(unittest.TestCase):
         basis = Atoms("FeFe", positions=[[0.01, 0, 0], [0.5, 0.5, 0.5]], cell=np.identity(3), pbc=True)
         with self.assertRaises(ValueError):
             basis.get_extended_positions(-0.1)
-        self.assertTrue(basis.get_extended_positions(0)[0], basis.positions)
+        self.assertTrue(np.array_equal(basis.get_extended_positions(0)[0], basis.positions))
 
     def test_get_equivalent_points(self):
         basis = Atoms("FeFe", positions=[[0.01, 0, 0], [0.5, 0.5, 0.5]], cell=np.identity(3))
