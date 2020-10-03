@@ -1816,7 +1816,6 @@ class Atoms(ASEAtoms):
         return neighbors.get_shell_dict(max_shell=max_shell)
     get_shells.__doc__ = Neighbors.get_shell_dict.__doc__
 
-
     def get_shell_matrix(
         self, id_list=None, chemical_pair=None, num_neighbors=100, tolerance=2,
         cluster_by_distances=False, cluster_by_vecs=False
