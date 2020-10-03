@@ -1920,7 +1920,7 @@ class Atoms(ASEAtoms):
                     self.__probe_cluster(c_count, nbrs, id_list)
 
     # TODO: combine with corresponding routine in plot3d
-    def get_bonds(self, radius=None, max_shells=None, prec=0.1, num_neighbors=20):
+    def get_bonds(self, radius=np.inf, max_shells=None, prec=0.1, num_neighbors=20):
         """
 
         Args:
@@ -1939,7 +1939,7 @@ class Atoms(ASEAtoms):
             dist_vec_cl = [np.mean(group) for group in np.split(dist_vec, ind_where)]
             return ind_vec_cl, dist_vec_cl
 
-        neighbors = self.get_neighbors(
+        neighbors = self.get_neighbors_by_distance(
             cutoff_radius=radius, num_neighbors=num_neighbors
         )
 

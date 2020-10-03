@@ -827,6 +827,12 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(np.array_equal(key[1], [0]))
         self.assertEqual(counts[0], 1)
 
+    def test_get_bonds(self):
+        basis = CrystalStructure("Al", bravais_basis="fcc", lattice_constants=4.2).repeat(5)
+        bonds = basis.get_bonds()
+        self.assertTrue(np.array_equal(np.sort(bonds[0]['Al'][0]),
+                        np.sort(neigh.indices[0, neigh.shells[0]==1])))
+
     def test_get_distances_array(self):
         basis = Atoms("FeFe", positions=[3*[0], 3*[0.9]], cell=np.identity(3), pbc=True)
         self.assertAlmostEqual(basis.get_distances_array(mic=False)[0, 1], 0.9*np.sqrt(3))
