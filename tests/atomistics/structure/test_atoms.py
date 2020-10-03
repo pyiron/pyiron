@@ -818,6 +818,15 @@ class TestAtoms(unittest.TestCase):
             np.min(np.linalg.norm(vert[0] - basis.positions[1], axis=-1)), 0.5
         )
 
+    def test_cluster_analysis(self):
+        basis = CrystalStructure("Al", bravais_basis="fcc", lattice_constants=4.2).repeat(10)
+        key, counts = basis.cluster_analysis(id_list=[0,1], return_cluster_sizes=True)
+        self.assertTrue(np.array_equal(key[1], [0,1]))
+        self.assertEqual(counts[0], 2)
+        key, counts = basis.cluster_analysis(id_list=[0,int(len(basis)/2)], return_cluster_sizes=True)
+        self.assertTrue(np.array_equal(key[1], [0]))
+        self.assertEqual(counts[0], 1)
+
     def test_get_distances_array(self):
         basis = Atoms("FeFe", positions=[3*[0], 3*[0.9]], cell=np.identity(3), pbc=True)
         self.assertAlmostEqual(basis.get_distances_array(mic=False)[0, 1], 0.9*np.sqrt(3))

@@ -1727,7 +1727,7 @@ class Atoms(ASEAtoms):
         for atom_id, index, distances in zip(id_list, neighbors[1], neighbors[0]):
             neighbor_distance.append(distances[1:][index[1:]<len(indices)])
             neighbor_indices.append(indices[index[1:][index[1:]<len(indices)]]%len(self))
-            if np.max(distances)>width:
+            if np.max(distances[1:][index[1:]<len(indices)])>width:
                 warnings.warn('boundary_width_factor may have been too small - most likely not all neighbors properly assigned')
             if t_vec:
                 neighbor_distance_vec.append(extended_positions[index[1:][index[1:]<len(indices)]]-self.positions[atom_id])
@@ -1874,7 +1874,7 @@ class Atoms(ASEAtoms):
                 radius = neigh.distances[0][indices]
                 radius = np.mean(radius)
                 # print "radius: ", radius
-            neighbors = self.get_neighbors(radius, t_vec=False)
+            neighbors = self.get_neighbors_by_distance(cutoff_radius=radius, t_vec=False)
         self._neighbor_index = neighbors.indices
         self._cluster = [0] * len(self)
         c_count = 1
