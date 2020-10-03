@@ -733,7 +733,7 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(np.array_equal(counts[0], np.arange(5)+1))
         self.assertTrue(np.array_equal(counts[1], np.array([ 8,  6, 12, 24,  8])))
         with self.assertRaises(NotImplementedError):
-            neigh = basis.get_neighbors(include_boundary=False, num_neighbors=10)
+            neigh = basis.get_neighbors(num_neighbors=10)
         basis = Atoms(symbols="FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3), pbc=True)
         basis.pbc = np.array([True, False, False])
         neigh = basis.get_neighbors(num_neighbors=10)
