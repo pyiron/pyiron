@@ -1704,12 +1704,15 @@ class Atoms(ASEAtoms):
             width *= prefactor*np.max([num_neighbors, 8])/len(self)
             width = boundary_width_factor*width**(1/np.sum(self.pbc))
         neighbor_obj._boundary_layer_width = width
-        if width<0.5*np.min(self.cell.diagonal()) and np.isclose(np.sum(self.cell**2)-np.sum(self.cell.diagonal()**2), 0):
+        if (width<0.5*np.min(self.cell.diagonal())
+            and np.isclose(np.sum(self.cell**2)-np.sum(self.cell.diagonal()**2), 0)
+            and np.all(self.pbc)
+            and cutoff_radius==np.inf):
             boxsize = self.cell.diagonal()
             extended_positions, indices = self.get_extended_positions(0)
         else:
             extended_positions, indices = self.get_extended_positions(width)
-        if len(extended_positions) < num_neighbors:
+        if len(extended_positions) < num_neighbors and cutoff_radius==np.inf:
             raise ValueError('num_neighbors too large - make boundary_width_factor larger and/or make num_neighbors smaller')
         tree = cKDTree(extended_positions, boxsize=boxsize)
         if id_list is None:
