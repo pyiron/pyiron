@@ -833,6 +833,7 @@ class TestAtoms(unittest.TestCase):
     def test_get_bonds(self):
         basis = CrystalStructure("Al", bravais_basis="fcc", lattice_constants=4.2).repeat(5)
         bonds = basis.get_bonds()
+        neigh = basis.get_neighbors()
         self.assertTrue(np.array_equal(np.sort(bonds[0]['Al'][0]),
                         np.sort(neigh.indices[0, neigh.shells[0]==1])))
 

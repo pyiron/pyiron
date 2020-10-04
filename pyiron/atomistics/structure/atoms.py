@@ -1842,6 +1842,10 @@ class Atoms(ASEAtoms):
         Returns:
 
         """
+        warnings.warn('structure.cluster_analysis() is deprecated as of vers. 0.3.'
+            + 'It is not guaranteed to be in service in vers. 1.0.'
+            + 'Use neigh.cluster_analysis() instead (after calling neigh = structure.get_neighbors()).',
+            DeprecationWarning)
         if neighbors is None:
             if radius is None:
                 neigh = self.get_neighbors(num_neighbors=100)
@@ -1850,46 +1854,7 @@ class Atoms(ASEAtoms):
                 radius = np.mean(radius)
                 # print "radius: ", radius
             neighbors = self.get_neighbors_by_distance(cutoff_radius=radius, t_vec=False)
-        self._neighbor_index = neighbors.indices
-        self._cluster = [0] * len(self)
-        c_count = 1
-        # element_list = self.get_atomic_numbers()
-        for ia in id_list:
-            # el0 = element_list[ia]
-            nbrs = self._neighbor_index[ia]
-            # print ("nbrs: ", ia, nbrs)
-            if self._cluster[ia] == 0:
-                self._cluster[ia] = c_count
-                self.__probe_cluster(c_count, nbrs, id_list)
-                c_count += 1
-
-        cluster = np.array(self._cluster)
-        cluster_dict = {
-            i_c: np.where(cluster == i_c)[0].tolist() for i_c in range(1, c_count)
-        }
-        if return_cluster_sizes:
-            sizes = [self._cluster.count(i_c + 1) for i_c in range(c_count - 1)]
-            return cluster_dict, sizes
-
-        return cluster_dict  # sizes
-
-    def __probe_cluster(self, c_count, neighbors, id_list):
-        """
-
-        Args:
-            c_count:
-            neighbors:
-            id_list:
-
-        Returns:
-
-        """
-        for nbr_id in neighbors:
-            if self._cluster[nbr_id] == 0:
-                if nbr_id in id_list:  # TODO: check also for ordered structures
-                    self._cluster[nbr_id] = c_count
-                    nbrs = self._neighbor_index[nbr_id]
-                    self.__probe_cluster(c_count, nbrs, id_list)
+        return neighbors.cluster_analysis(id_list=id_list, return_cluster_sizes=return_cluster_sizes)
 
     # TODO: combine with corresponding routine in plot3d
     def get_bonds(self, radius=np.inf, max_shells=None, prec=0.1, num_neighbors=20):
@@ -1904,42 +1869,14 @@ class Atoms(ASEAtoms):
         Returns:
 
         """
-
-        def get_cluster(dist_vec, ind_vec, prec=prec):
-            ind_where = np.where(np.diff(dist_vec) > prec)[0] + 1
-            ind_vec_cl = [np.sort(group) for group in np.split(ind_vec, ind_where)]
-            dist_vec_cl = [np.mean(group) for group in np.split(dist_vec, ind_where)]
-            return ind_vec_cl, dist_vec_cl
-
+        warnings.warn('structure.cluster_analysis() is deprecated as of vers. 0.3.'
+            + 'It is not guaranteed to be in service in vers. 1.0.'
+            + 'Use neigh.cluster_analysis() instead (after calling neigh = structure.get_neighbors()).',
+            DeprecationWarning)
         neighbors = self.get_neighbors_by_distance(
             cutoff_radius=radius, num_neighbors=num_neighbors
         )
-
-        dist = neighbors.distances
-        ind = neighbors.indices
-        el_list = self.get_chemical_symbols()
-
-        ind_shell = []
-        for i_a, (d, i) in enumerate(zip(dist, ind)):
-            id_list, dist_lst = get_cluster(d[d < radius], i[d < radius])
-            # print ("id: ", d[d<radius], id_list, dist_lst)
-            ia_shells_dict = {}
-            for i_shell_list in id_list:
-                ia_shell_dict = {}
-                for i_s in i_shell_list:
-                    el = el_list[i_s]
-                    if el not in ia_shell_dict:
-                        ia_shell_dict[el] = []
-                    ia_shell_dict[el].append(i_s)
-                for el, ia_lst in ia_shell_dict.items():
-                    if el not in ia_shells_dict:
-                        ia_shells_dict[el] = []
-                    if max_shells is not None:
-                        if len(ia_shells_dict[el]) + 1 > max_shells:
-                            continue
-                    ia_shells_dict[el].append(ia_lst)
-            ind_shell.append(ia_shells_dict)
-        return ind_shell
+        return neighbors.get_bonds(radius=radius, max_shells=max_shells, prec=prec)
 
     # spglib calls
     def get_symmetry(

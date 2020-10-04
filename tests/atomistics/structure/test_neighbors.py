@@ -55,5 +55,22 @@ class TestAtoms(unittest.TestCase):
         mat = neigh.get_shell_matrix(chemical_pair=['Ni', 'Ni'])
         self.assertEqual(mat[0].sum(), 0)
 
+    def test_cluster_analysis(self):
+        basis = CrystalStructure("Al", bravais_basis="fcc", lattice_constants=4.2).repeat(10)
+        neigh = basis.get_neighbors(num_neighbors=100)
+        key, counts = neigh.cluster_analysis(id_list=[0,1], return_cluster_sizes=True)
+        self.assertTrue(np.array_equal(key[1], [0,1]))
+        self.assertEqual(counts[0], 2)
+        key, counts = neigh.cluster_analysis(id_list=[0,int(len(basis)/2)], return_cluster_sizes=True)
+        self.assertTrue(np.array_equal(key[1], [0]))
+        self.assertEqual(counts[0], 1)
+
+    def test_get_bonds(self):
+        basis = CrystalStructure("Al", bravais_basis="fcc", lattice_constants=4.2).repeat(5)
+        neigh = basis.get_neighbors(num_neighbors=20)
+        bonds = neigh.get_bonds()
+        self.assertTrue(np.array_equal(np.sort(bonds[0]['Al'][0]),
+                        np.sort(neigh.indices[0, neigh.shells[0]==1])))
+
 if __name__ == "__main__":
     unittest.main()
