@@ -1712,16 +1712,16 @@ class Atoms(ASEAtoms):
         neighbors = tree.query(
             positions, k=num_neighbors, distance_upper_bound=cutoff_radius
         )
-        neighbor_distance = []  # neighbors[0]
-        neighbor_distance_vec = []
-        neighbor_indices = []
-        for atom_id, index, distances in zip(id_list, neighbors[1], neighbors[0]):
-            neighbor_distance.append(distances[1:][index[1:]<len(indices)])
-            neighbor_indices.append(indices[index[1:][index[1:]<len(indices)]]%len(self))
+        neighbor_distance = np.zeros_like(id_list).tolist()
+        neighbor_distance_vec = np.zeros_like(id_list).tolist()
+        neighbor_indices = np.zeros_like(id_list).tolist()
+        for ii, (atom_id, index, distances) in enumerate(zip(id_list, neighbors[1], neighbors[0])):
+            neighbor_distance[ii] = distances[1:][index[1:]<len(indices)]
+            neighbor_indices[ii] = indices[index[1:][index[1:]<len(indices)]]%len(self)
             if np.max(distances[1:][index[1:]<len(indices)])>width:
                 warnings.warn('boundary_width_factor may have been too small - most likely not all neighbors properly assigned')
             if t_vec:
-                neighbor_distance_vec.append(extended_positions[index[1:][index[1:]<len(indices)]]-self.positions[atom_id])
+                neighbor_distance_vec[ii] = extended_positions[index[1:][index[1:]<len(indices)]]-self.positions[atom_id]
         neighbor_obj.distances = neighbor_distance
         neighbor_obj.vecs = neighbor_distance_vec
         neighbor_obj.indices = neighbor_indices
