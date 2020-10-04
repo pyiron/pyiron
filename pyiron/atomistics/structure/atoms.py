@@ -1605,7 +1605,7 @@ class Atoms(ASEAtoms):
             and vectors
 
         """
-        return self._get_neighbors(
+        neigh = self._get_neighbors(
             num_neighbors=num_neighbors,
             t_vec=t_vec,
             tolerance=tolerance,
@@ -1613,6 +1613,11 @@ class Atoms(ASEAtoms):
             cutoff_radius=cutoff_radius,
             boundary_width_factor=boundary_width_factor,
         )
+        neigh.indices = [indices[dist<np.inf] for indices, dist in zip(neigh.indices, neigh.distances)]
+        if t_vec:
+            neigh.vecs = [vecs[dist<np.inf] for vecs, dist in zip(neigh.vecs, neigh.distances)]
+        neigh.distances = [dist[dist<np.inf] for dist in neigh.distances]
+        return neigh
 
     def get_neighbors(
         self,
@@ -1642,17 +1647,13 @@ class Atoms(ASEAtoms):
         """
         if cutoff_radius != np.inf:
             raise ValueError('cutoff_radius is deprecated in get_neighbors. Use get_neighbors_by_distance instead')
-        neigh = self._get_neighbors(
+        return self._get_neighbors(
             num_neighbors=num_neighbors,
             t_vec=t_vec,
             tolerance=tolerance,
             id_list=id_list,
             boundary_width_factor=boundary_width_factor,
         )
-        neigh.distances = np.array(neigh.distances)
-        neigh.vecs = np.array(neigh.vecs)
-        neigh.indices = np.array(neigh.indices)
-        return neigh
 
     def _get_boundary_layer_width(self, num_neighbors, boundary_width_factor=1.2, cutoff_radius=np.inf):
         """
@@ -1730,19 +1731,15 @@ class Atoms(ASEAtoms):
         neighbors = tree.query(
             positions, k=num_neighbors, distance_upper_bound=cutoff_radius
         )
-        neighbor_distance = np.zeros_like(id_list).tolist()
-        neighbor_distance_vec = np.zeros_like(id_list).tolist()
-        neighbor_indices = np.zeros_like(id_list).tolist()
-        for ii, (atom_id, index, distances) in enumerate(zip(id_list, neighbors[1], neighbors[0])):
-            neighbor_distance[ii] = distances[1:][index[1:]<len(indices)]
-            neighbor_indices[ii] = indices[index[1:][index[1:]<len(indices)]]
-            if np.max(distances[1:][index[1:]<len(indices)])>width:
-                warnings.warn('boundary_width_factor may have been too small - most likely not all neighbors properly assigned')
-            if t_vec:
-                neighbor_distance_vec[ii] = extended_positions[index[1:][index[1:]<len(indices)]]-self.positions[atom_id]
-        neighbor_obj.distances = neighbor_distance
-        neighbor_obj.vecs = neighbor_distance_vec
-        neighbor_obj.indices = neighbor_indices
+        neighbor_obj.distances = neighbors[0][:,1:]
+        neighbor_obj.indices = np.append(indices, 0)[neighbors[1][:,1:]]
+        if t_vec:
+            x = np.append(extended_positions, np.zeros((1, 3)), axis=0)
+            neighbor_obj.vecs = x[neighbors[1][:,1:]]-self.positions[np.array(id_list),np.newaxis,:]
+        dist = neighbor_obj.distances.flatten()
+        dist = dist[dist<np.inf]
+        if np.max(dist)>width:
+            warnings.warn('boundary_width_factor may have been too small - most likely not all neighbors properly assigned')
         return neighbor_obj
 
     def get_neighborhood(
