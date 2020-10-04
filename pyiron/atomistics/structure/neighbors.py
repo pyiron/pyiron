@@ -35,6 +35,7 @@ class Neighbors(object):
         self._ref_structure = ref_structure
         self._cluster_vecs = None
         self._cluster_dist = None
+        self._boundary_layer_width = 0
 
     @property
     def shells(self):
@@ -56,29 +57,7 @@ class Neighbors(object):
         self.vecs = vecs.reshape(self.vecs.shape)
         self.distances = np.linalg.norm(self.vecs, axis=-1)
 
-    def get_shell_dict(self, max_shell=2):
-        """
-
-        Args:
-            max_shell (int): maximum number of shells
-
-        Returns:
-
-        """
-
-        shells = self.shells[0]
-        dist = self.distances[0]
-        shell_dict = {}
-        for i_shell in set(shells):
-            if i_shell > max_shell:
-                break
-            shell_dict[i_shell] = np.mean(dist[shells == i_shell])
-            # print ("shells: ", i_shell, shell_dict[i_shell])
-        if not (max(shell_dict.keys()) == max_shell):
-            raise AssertionError()
-        return shell_dict
-
-    def get_local_shells(self, tolerance=2, cluster_by_distances=False, cluster_by_vecs=False):
+    def get_local_shells(self, tolerance=None, cluster_by_distances=False, cluster_by_vecs=False):
         """
         Set shell indices based on distances available to each atom. Clustering methods can be used
         at the same time, which will be useful at finite temperature results, but depending on how
@@ -98,6 +77,8 @@ class Neighbors(object):
         Returns:
             shells (numpy.ndarray): shell indices
         """
+        if tolerance is None:
+            tolerance = self._tolerance
         if cluster_by_distances:
             if self._cluster_dist is None:
                 self.cluster_by_distances(use_vecs=cluster_by_vecs)
@@ -117,12 +98,12 @@ class Neighbors(object):
                 return None
             self._shells = []
             for dist in self.distances:
-                self._shells.append(np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1)
+                self._shells.append(np.unique(np.round(dist[dist<np.inf], decimals=tolerance), return_inverse=True)[1]+1)
             if isinstance(self.distances, np.ndarray):
                 self._shells = np.array(self._shells)
         return self._shells
 
-    def get_global_shells(self, tolerance=2, cluster_by_distances=False, cluster_by_vecs=False):
+    def get_global_shells(self, tolerance=None, cluster_by_distances=False, cluster_by_vecs=False):
         """
         Set shell indices based on all distances available in the system instead of
         setting them according to the local distances (in contrast to shells defined
@@ -144,6 +125,8 @@ class Neighbors(object):
         Returns:
             shells (numpy.ndarray): shell indices (cf. shells)
         """
+        if tolerance is None:
+            tolerance = self._tolerance
         if self.distances is None:
             raise ValueError('neighbors not set')
         distances = self.distances
@@ -285,4 +268,100 @@ class Neighbors(object):
             self._cluster_vecs = None
         if distances:
             self._cluster_distances = None
+
+    def cluster_analysis(
+        self, id_list, return_cluster_sizes=False
+    ):
+        """
+
+        Args:
+            id_list:
+            return_cluster_sizes:
+
+        Returns:
+
+        """
+        self._cluster = [0] * len(self._ref_structure)
+        c_count = 1
+        # element_list = self.get_atomic_numbers()
+        for ia in id_list:
+            # el0 = element_list[ia]
+            nbrs = self.indices[ia]
+            # print ("nbrs: ", ia, nbrs)
+            if self._cluster[ia] == 0:
+                self._cluster[ia] = c_count
+                self.__probe_cluster(c_count, nbrs, id_list)
+                c_count += 1
+
+        cluster = np.array(self._cluster)
+        cluster_dict = {
+            i_c: np.where(cluster == i_c)[0].tolist() for i_c in range(1, c_count)
+        }
+        if return_cluster_sizes:
+            sizes = [self._cluster.count(i_c + 1) for i_c in range(c_count - 1)]
+            return cluster_dict, sizes
+
+        return cluster_dict  # sizes
+
+    def __probe_cluster(self, c_count, neighbors, id_list):
+        """
+
+        Args:
+            c_count:
+            neighbors:
+            id_list:
+
+        Returns:
+
+        """
+        for nbr_id in neighbors:
+            if self._cluster[nbr_id] == 0:
+                if nbr_id in id_list:  # TODO: check also for ordered structures
+                    self._cluster[nbr_id] = c_count
+                    nbrs = self.indices[nbr_id]
+                    self.__probe_cluster(c_count, nbrs, id_list)
+
+    # TODO: combine with corresponding routine in plot3d
+    def get_bonds(self, radius=np.inf, max_shells=None, prec=0.1):
+        """
+
+        Args:
+            radius:
+            max_shells:
+            prec: minimum distance between any two clusters (if smaller considered to be single cluster)
+
+        Returns:
+
+        """
+
+        def get_cluster(dist_vec, ind_vec, prec=prec):
+            ind_where = np.where(np.diff(dist_vec) > prec)[0] + 1
+            ind_vec_cl = [np.sort(group) for group in np.split(ind_vec, ind_where)]
+            return ind_vec_cl
+
+        dist = self.distances
+        ind = self.indices
+        el_list = self._ref_structure.get_chemical_symbols()
+
+        ind_shell = []
+        for d, i in zip(dist, ind):
+            id_list = get_cluster(d[d < radius], i[d < radius])
+            # print ("id: ", d[d<radius], id_list, dist_lst)
+            ia_shells_dict = {}
+            for i_shell_list in id_list:
+                ia_shell_dict = {}
+                for i_s in i_shell_list:
+                    el = el_list[i_s]
+                    if el not in ia_shell_dict:
+                        ia_shell_dict[el] = []
+                    ia_shell_dict[el].append(i_s)
+                for el, ia_lst in ia_shell_dict.items():
+                    if el not in ia_shells_dict:
+                        ia_shells_dict[el] = []
+                    if max_shells is not None:
+                        if len(ia_shells_dict[el]) + 1 > max_shells:
+                            continue
+                    ia_shells_dict[el].append(ia_lst)
+            ind_shell.append(ia_shells_dict)
+        return ind_shell
 

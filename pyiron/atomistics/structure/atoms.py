@@ -1548,100 +1548,45 @@ class Atoms(ASEAtoms):
         xyz = self.get_scaled_positions(wrap=False)
         return xyz[:, 0], xyz[:, 1], xyz[:, 2]
 
-    def __select_slice(self, i_dim, i_flag, dist):
-        """
-
-        Args:
-            i_dim:
-            i_flag:
-            dist:
-
-        Returns:
-
-        """
-        if i_dim + 1 > self.dimension:
-            return True
-        if i_flag == 1:
-            return self.get_scaled_positions(wrap=False)[:, i_dim] < dist
-        elif i_flag == 0:
-            return True
-        elif i_flag == -1:
-            return self.get_scaled_positions(wrap=False)[:, i_dim] > 1.0 - dist
-
-    def get_boundary_region(self, dist):
+    def get_extended_positions(self, width):
         """
         Get all atoms in the boundary around the supercell which have a distance
         to the supercell boundary of less than dist
 
         Args:
-            dist (float): Distance in relative units
+            dist (float): Distance in Angstrom
 
         Returns:
             pyiron.atomistics.structure.atoms.Atoms: The required boundary region
 
         """
-        rel_coordinates = self.get_scaled_positions(wrap=False)
-
-        dim = self.dimension
-        cell = self.cell.T  # to use same definition as ASE
-        a1 = cell[0]
-        a2, a3 = 0, 0
-        min_i, max_i = -1, 2
-        iyl, iy, izl, iz = 0, 1, 0, 1
-        if dim > 1:
-            a2 = cell[1]
-            iyl, iy = min_i, max_i
-        if dim > 2:
-            a3 = cell[2]
-            izl, iz = min_i, max_i
-
-        index = np.arange(len(self))
-        new_coordinates = np.zeros((1, dim))
-        # pbcVec = np.zeros((1, dim))
-        ia_list = np.zeros((1, 1), dtype=np.int)
-        for i0 in range(min_i, max_i):
-            for i1 in range(iyl, iy):
-                for i2 in range(izl, iz):
-                    # r_vec_abs = i0 * a1 + i1 * a2 + i2 * a3
-                    r_vec = np.array([i0, i1, i2][:dim])
-                    select = (
-                        self.__select_slice(0, i0, dist)
-                        & self.__select_slice(1, i1, dist)
-                        & self.__select_slice(2, i2, dist)
-                    )
-                    if np.linalg.norm(r_vec) > 0:
-                        if len(select) > 0:
-                            sel_coordinates = rel_coordinates[select] + r_vec
-                            new_coordinates = np.append(
-                                new_coordinates, sel_coordinates, axis=0
-                            )
-                            if len(sel_coordinates) > 0:
-                                # rVecs = np.array(len(sel_coordinates) * [r_vec_abs])
-                                # pbcVec = np.append(pbcVec, rVecs, axis=0)
-                                ia_list = np.append(ia_list, index[select])
-                                # print "rVec: ", i0,i1,i2,rVecs[0],index[select],select
-
-        element_list = [self.indices[ia] for ia in ia_list[1:]]
-        self._ia_bounds = ia_list[1:]
-        # self._pbcVec = pbcVec[1:]
-        return Atoms(
-            indices=element_list,
-            scaled_positions=new_coordinates[1:],
-            cell=self.cell,
-            dimension=len(cell),
-            species=self.species,
-            pbc=self.pbc,
-        )
+        if width<0:
+            raise ValueError('Invalid width')
+        if width==0:
+            return self.positions, np.arange(len(self))
+        rep = 2*np.ceil(width/np.linalg.norm(self.cell, axis=-1)).astype(int)*self.pbc+1
+        rep = [np.arange(r)-int(r/2) for r in rep]
+        meshgrid = np.meshgrid(rep[0], rep[1], rep[2])
+        meshgrid = np.stack(meshgrid, axis=-1).reshape(-1, 3)
+        v_repeated = np.einsum('ni,ij->nj', meshgrid, self.cell)
+        v_repeated = v_repeated[:,np.newaxis,:]+self.positions[np.newaxis,:,:]
+        v_repeated = v_repeated.reshape(-1, 3)
+        indices = np.tile(np.arange(len(self)), len(meshgrid))
+        dist = v_repeated-np.sum(self.cell*0.5, axis=0)
+        dist = np.absolute(np.einsum('ni,ij->nj', dist+1e-8, np.linalg.inv(self.cell)))-0.5
+        check_dist = np.all(dist-width/np.linalg.norm(self.cell, axis=-1)<0, axis=-1)
+        indices = indices[check_dist]%len(self)
+        v_repeated = v_repeated[check_dist]
+        return v_repeated, indices
 
     def get_neighbors_by_distance(
         self,
         num_neighbors=100,
         t_vec=True,
-        include_boundary=True,
-        exclude_self=True,
         tolerance=2,
         id_list=None,
-        cutoff_radius=None,
+        cutoff_radius=np.inf,
+        boundary_width_factor=1.2,
     ):
         """
 
@@ -1649,12 +1594,10 @@ class Atoms(ASEAtoms):
             num_neighbors (int): number of neighbors
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
-            include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
-                                     False is needed e.g. in plot routines to avoid showing incorrect bonds
-            exclude_self (bool): include central __atom (i.e. distance = 0)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
-            id_list:
-            cutoff_radius (float/None): Upper bound of the distance to which the search must be done
+            id_list (list): list of atoms the neighbors are to be looked for
+            cutoff_radius (float): Upper bound of the distance to which the search must be done
+            boundary_width_factor (float): width of the layer to be added to account for pbc.
 
         Returns:
 
@@ -1662,25 +1605,28 @@ class Atoms(ASEAtoms):
             and vectors
 
         """
-        return self._get_neighbors(
+        neigh = self._get_neighbors(
             num_neighbors=num_neighbors,
             t_vec=t_vec,
-            include_boundary=include_boundary,
-            exclude_self=exclude_self,
             tolerance=tolerance,
             id_list=id_list,
             cutoff_radius=cutoff_radius,
+            boundary_width_factor=boundary_width_factor,
         )
+        neigh.indices = [indices[dist<np.inf] for indices, dist in zip(neigh.indices, neigh.distances)]
+        if t_vec:
+            neigh.vecs = [vecs[dist<np.inf] for vecs, dist in zip(neigh.vecs, neigh.distances)]
+        neigh.distances = [dist[dist<np.inf] for dist in neigh.distances]
+        return neigh
 
     def get_neighbors(
         self,
         num_neighbors=12,
         t_vec=True,
-        include_boundary=True,
-        exclude_self=True,
         tolerance=2,
         id_list=None,
-        cutoff_radius=None,
+        cutoff_radius=np.inf,
+        boundary_width_factor=1.2,
     ):
         """
 
@@ -1688,12 +1634,10 @@ class Atoms(ASEAtoms):
             num_neighbors (int): number of neighbors
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
-            include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
-                                     False is needed e.g. in plot routines to avoid showing incorrect bonds
-            exclude_self (bool): include central __atom (i.e. distance = 0)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
-            id_list:
-            cutoff_radius (float/None): Upper bound of the distance to which the search must be done
+            id_list (list): list of atoms the neighbors are to be looked for
+            cutoff_radius (float): Upper bound of the distance to which the search must be done
+            boundary_width_factor (float): width of the layer to be added to account for pbc.
 
         Returns:
 
@@ -1701,30 +1645,46 @@ class Atoms(ASEAtoms):
             and vectors
 
         """
-        if cutoff_radius is not None:
+        if cutoff_radius != np.inf:
             raise ValueError('cutoff_radius is deprecated in get_neighbors. Use get_neighbors_by_distance instead')
-        neigh = self._get_neighbors(
+        return self._get_neighbors(
             num_neighbors=num_neighbors,
             t_vec=t_vec,
-            include_boundary=include_boundary,
-            exclude_self=exclude_self,
             tolerance=tolerance,
             id_list=id_list,
+            boundary_width_factor=boundary_width_factor,
         )
-        neigh.distances = np.array(neigh.distances)
-        neigh.vecs = np.array(neigh.vecs)
-        neigh.indices = np.array(neigh.indices)
-        return neigh
+
+    def _get_boundary_layer_width(self, num_neighbors, boundary_width_factor=1.2, cutoff_radius=np.inf):
+        """
+
+        Args:
+            num_neighbors (int): number of neighbors
+            boundary_width_factor (float): width of the layer to be added to account for pbc.
+            cutoff_radius (float): self-explanatory
+
+        Returns:
+            Width of layre required for the given number of atoms
+
+        """
+        if all(self.pbc==False):
+            return 0
+        elif cutoff_radius!=np.inf:
+            return cutoff_radius
+        prefactor = [1, 1/np.pi, 4/(3*np.pi)]
+        prefactor = prefactor[sum(self.pbc)-1]
+        width = np.prod((np.linalg.norm(self.cell, axis=-1)-np.ones(3))*self.pbc+np.ones(3))
+        width *= prefactor*np.max([num_neighbors, 8])/len(self)
+        return boundary_width_factor*width**(1/np.sum(self.pbc))
 
     def _get_neighbors(
         self,
         num_neighbors=12,
         t_vec=True,
-        include_boundary=True,
-        exclude_self=True,
         tolerance=2,
         id_list=None,
-        cutoff_radius=None,
+        cutoff_radius=np.inf,
+        boundary_width_factor=1.2,
     ):
         """
 
@@ -1732,11 +1692,9 @@ class Atoms(ASEAtoms):
             num_neighbors (int): number of neighbors
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
-            include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
-                                     False is needed e.g. in plot routines to avoid showing incorrect bonds
-            exclude_self (bool): include central __atom (i.e. distance = 0)
-            tolerance (int): tolerance (round decimal points) used for computing neighbor shells
-            id_list:
+            id_list (list): list of atoms the neighbors are to be looked for
+            boundary_width_factor (float): width of the layer to be added to account for pbc.
+            cutoff_radius (float): self-explanatory
 
         Returns:
 
@@ -1744,123 +1702,50 @@ class Atoms(ASEAtoms):
             and vectors
 
         """
-        i_start = 0
-        if exclude_self:
-            i_start = 1
-
-        def f_ind(x):
-            return x < len(self)
-
+        if num_neighbors<1:
+            raise ValueError('num_neighbors must be a positive integer')
+        boxsize = None
         num_neighbors += 1
         neighbor_obj = Neighbors(ref_structure=self, tolerance=tolerance)
-        if not include_boundary:  # periodic boundaries are NOT included
-            tree = cKDTree(self.positions)
-            if cutoff_radius is None:
-                neighbors = tree.query(self.positions, k=num_neighbors)
-            else:
-                neighbors = tree.query(
-                    self.positions, k=num_neighbors, distance_upper_bound=cutoff_radius
-                )
-
-            d_lst, ind_lst, v_lst = [], [], []
-            ic = 0
-            for d_i, ind_i in zip(neighbors[0], neighbors[1]):
-                ff = (ind_i < len(self)) & (ind_i != ic)
-                ind_l = ind_i[ff]
-                ind_lst.append(ind_l)
-                d_lst.append(d_i[ff])
-                v_lst.append(self.positions[ind_l] - self.positions[ic])
-                ic += 1
-            neighbor_obj.indices = ind_lst
-            neighbor_obj.distances = d_lst
-            neighbor_obj.vecs = v_lst
-            return neighbor_obj
-
-        # include periodic boundaries
-        # translate radius in boundary layer with relative coordinates
-        # TODO: introduce more rigoros definition
-        radius = 3 * num_neighbors ** (1.0 / 3.0)
-        rel_width = [radius / np.sqrt(np.dot(a_i, a_i)) for a_i in self.cell]
-        rel_width_scalar = np.max(rel_width)
-
-        # construct cell with additional atoms bounding original cell
-        boundary_atoms = self.get_boundary_region(rel_width_scalar)
-        extended_cell = self + boundary_atoms
-
-        # build index to map boundary atoms back to original cell
-        map_to_cell = np.append(np.arange(len(self)), self._ia_bounds)
-
-        # transfer relative to absolute coordinates
-        tree = cKDTree(extended_cell.positions)
+        width = self._get_boundary_layer_width(
+            num_neighbors=num_neighbors,
+            boundary_width_factor=boundary_width_factor,
+            cutoff_radius=cutoff_radius
+        )
+        neighbor_obj._boundary_layer_width = width
+        if (width<0.5*np.min(self.cell.diagonal())
+                and np.isclose(np.linalg.norm(self.cell-np.eye(3)*self.cell.diagonal()), 0)
+                and np.all(self.pbc)
+                and cutoff_radius==np.inf):
+            boxsize = self.cell.diagonal()
+            extended_positions, indices = self.get_extended_positions(0)
+            extended_positions /= self.cell.diagonal()
+            extended_positions -= np.floor(extended_positions)
+            extended_positions *= self.cell.diagonal()
+        else:
+            extended_positions, indices = self.get_extended_positions(width)
+        if len(extended_positions) < num_neighbors and cutoff_radius==np.inf:
+            raise ValueError('num_neighbors too large - make boundary_width_factor larger and/or make num_neighbors smaller')
+        tree = cKDTree(extended_positions, boxsize=boxsize)
         if id_list is None:
-            positions = self.positions
-        else:
-            positions = np.array([self.positions[i] for i in id_list])
-        # print ("len positions: ", len(positions))
-        if cutoff_radius is None:
-            neighbors = tree.query(positions, k=num_neighbors)
-        else:
-            neighbors = tree.query(
-                positions, k=num_neighbors, distance_upper_bound=cutoff_radius
-            )
-
-        # print ("neighbors: ", neighbors)
-
-        neighbor_distance = []  # neighbors[0]
-        neighbor_distance_vec = []
-        neighbor_indices = []
-
-        # tolerance = 2 # tolerance for round floating point
-
-        def f_ind_ext(x):
-            return x < len(extended_cell)
-
-        neighbor_index = map(lambda x: filter(f_ind_ext, x), neighbors[1])
-        num_neighbors = []
-        for i, index in enumerate(neighbor_index):
-            # print "i, index: ", i, index
-            index = list(index)  # Filter conversion for python 3 compatibility
-            nbrs_distances = neighbors[0][i][i_start : len(index)]
-            # if radius:  # reduce neighborlist based on radius
-            #     new_index_lst, new_dist_lst = [], []
-            #     for index_red, dis_red in zip(index, nbrs_distances):
-            #         if dis_red < radius:
-            #             new_index_lst.append(index_red)
-            #             new_dist_lst.append(dis_red)
-            #     index, nbrs_distances= new_index_lst, new_dist_lst
-            neighbor_distance.append(nbrs_distances)
-            neighbor_indices.append(map_to_cell[index][i_start:])
-
-            if t_vec:
-                nbr_dist = []
-                if len(index) == 0:
-                    neighbor_distance_vec.append(nbr_dist)
-                    continue
-                vec0 = self.positions[index[0]]
-                for i_nbr, ind in enumerate(index[i_start:]):
-                    # ind0 = map_to_cell[ind]
-                    vec_r_ij = extended_cell.positions[ind] - vec0
-
-                    dd0 = neighbors[0][i][i_nbr + i_start]
-                    dd = np.sqrt(np.dot(vec_r_ij, vec_r_ij))
-                    if not (dd - dd0 < 0.001):
-                        raise AssertionError()
-                    # if (dd - dd0 > 0.001):
-                    #     print "wrong: ", vec_r_ij, dd,dd0,i_nbr,ind,ind0,i
-                    #     print self.positions[ind0], extended_cell.positions[ind], vec0
-                    nbr_dist.append(vec_r_ij)
-                neighbor_distance_vec.append(nbr_dist)
-            num_neighbors.append(len(index) - i_start)
-
-        min_nbr, max_nbr = min(num_neighbors), max(num_neighbors)
-        if max_nbr == num_neighbors:
-            # print "neighbor distance: ", neighbor_distance
-            raise ValueError(
-                "Increase max_num_neighbors! " + str(max_nbr) + " " + str(num_neighbors)
-            )
-        neighbor_obj.distances = neighbor_distance
-        neighbor_obj.vecs = neighbor_distance_vec
-        neighbor_obj.indices = neighbor_indices
+            id_list = np.arange(len(self.positions))
+        positions = self.positions[np.array(id_list)]
+        neighbors = tree.query(
+            positions, k=num_neighbors, distance_upper_bound=cutoff_radius
+        )
+        neighbor_obj.distances = neighbors[0][:,1:]
+        neighbor_obj.indices = np.append(indices, 0)[neighbors[1][:,1:]]
+        if t_vec:
+            x = np.append(extended_positions, np.zeros((1, 3)), axis=0)
+            neighbor_obj.vecs = x[neighbors[1][:,1:]]-self.positions[np.array(id_list),np.newaxis,:]
+            if boxsize is not None:
+                neighbor_obj.vecs /= self.cell.diagonal()
+                neighbor_obj.vecs = neighbor_obj.vecs-np.rint(neighbor_obj.vecs)
+                neighbor_obj.vecs *= self.cell.diagonal()
+            if any(self.pbc):
+                vecs = neighbor_obj.vecs.reshape(-1, 3)[neighbor_obj.distances.flatten()<np.inf]
+                if np.absolute(vecs[:,self.pbc]).max()>width:
+                    warnings.warn('boundary_width_factor may have been too small - most likely not all neighbors properly assigned')
         return neighbor_obj
 
     def get_neighborhood(
@@ -1868,10 +1753,10 @@ class Atoms(ASEAtoms):
         position,
         num_neighbors=12,
         t_vec=True,
-        include_boundary=True,
         tolerance=2,
         id_list=None,
-        cutoff_radius=None,
+        cutoff_radius=np.inf,
+        boundary_width_factor=1.2,
     ):
         """
 
@@ -1880,11 +1765,10 @@ class Atoms(ASEAtoms):
             num_neighbors:
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
-            include_boundary (bool): True: search for neighbors assuming periodic boundary conditions
-                                     False is needed e.g. in plot routines to avoid showing incorrect bonds
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
-            id_list:
-            cutoff_radius (float/ None): Upper bound of the distance to which the search must be done
+            id_list (list): list of atoms the neighbors are to be looked for
+            cutoff_radius (float): Upper bound of the distance to which the search must be done
+            boundary_width_factor (float): width of the layer to be added to account for pbc.
 
         Returns:
 
@@ -1896,35 +1780,25 @@ class Atoms(ASEAtoms):
         class NeighTemp(object):
             pass
 
-        box = self.copy()
-        box += box[-1]
-        pos = box.positions
-        pos[-1] = np.array(position)
-        box.positions = pos
-        neigh = box.get_neighbors_by_distance(
+        width = self._get_boundary_layer_width(
             num_neighbors=num_neighbors,
-            t_vec=t_vec,
-            include_boundary=include_boundary,
-            exclude_self=True,
-            tolerance=tolerance,
-            id_list=id_list,
-            cutoff_radius=cutoff_radius,
+            boundary_width_factor=boundary_width_factor,
+            cutoff_radius=cutoff_radius
         )
+        positions, indices = self.get_extended_positions(width)
+        positions -= position
+        dist = np.linalg.norm(positions, axis=-1)
+        positions = positions[np.argsort(dist)]
+        indices = indices[np.argsort(dist)]
+        dist = dist[np.argsort(dist)]
+        positions = positions[dist<cutoff_radius][:num_neighbors]
+        indices = indices[dist<cutoff_radius][:num_neighbors]
+        dist = dist[dist<cutoff_radius][:num_neighbors]
         neigh_return = NeighTemp()
-        setattr(neigh_return, "distances", neigh.distances[-1])
-        setattr(neigh_return, "shells", neigh.shells[-1])
-        setattr(neigh_return, "vecs", neigh.vecs[-1])
-        setattr(neigh_return, "indices", neigh.indices[-1])
-        neigh_return.distances = neigh_return.distances[
-            neigh_return.indices != len(box) - 1
-        ]
-        neigh_return.shells = neigh_return.shells[neigh_return.indices != len(box) - 1]
-        neigh_return.vecs = np.array(neigh_return.vecs)[
-            neigh_return.indices != len(box) - 1
-        ]
-        neigh_return.indices = neigh_return.indices[
-            neigh_return.indices != len(box) - 1
-        ]
+        setattr(neigh_return, "distances", dist)
+        setattr(neigh_return, "shells", np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1)
+        setattr(neigh_return, "vecs", positions)
+        setattr(neigh_return, "indices", indices)
         return neigh_return
 
     def find_neighbors_by_vector(self, vector, deviation=False, num_neighbors=96):
@@ -1935,18 +1809,6 @@ class Atoms(ASEAtoms):
         neighbors = self.get_neighbors(num_neighbors=num_neighbors)
         return neighbors.find_neighbors_by_vector(vector=vector, deviation=deviation)
     find_neighbors_by_vector.__doc__ = Neighbors.find_neighbors_by_vector.__doc__
-
-    def get_shells(self, id_list=None, max_shell=2, max_num_neighbors=100):
-        warnings.warn('structure.get_shells() is deprecated as of vers. 0.3.'
-            + 'It is not guaranteed to be in service in vers. 1.0.'
-            + 'Use neigh.get_shell_dict() instead (after calling neigh = structure.get_neighbors()).',
-            DeprecationWarning)
-        if id_list is None:
-            id_list = [0]
-        neighbors = self.get_neighbors(num_neighbors=max_num_neighbors, id_list=id_list)
-        return neighbors.get_shell_dict(max_shell=max_shell)
-    get_shells.__doc__ = Neighbors.get_shell_dict.__doc__
-
 
     def get_shell_matrix(
         self, id_list=None, chemical_pair=None, num_neighbors=100, tolerance=2,
@@ -1993,21 +1855,6 @@ class Atoms(ASEAtoms):
         self.set_species(new_species)
         self.indices = new_indices
 
-    def get_shell_radius(self, shell=1, id_list=None):
-        """
-
-        Args:
-            shell:
-            id_list:
-
-        Returns:
-
-        """
-        if id_list is None:
-            id_list = [0]
-        shells = self.get_shells(id_list=id_list, max_shell=shell + 1)
-        return np.mean(list(shells.values())[shell - 1 :])
-
     def cluster_analysis(
         self, id_list, neighbors=None, radius=None, return_cluster_sizes=False
     ):
@@ -2022,54 +1869,22 @@ class Atoms(ASEAtoms):
         Returns:
 
         """
+        warnings.warn('structure.cluster_analysis() is deprecated as of vers. 0.3.'
+            + 'It is not guaranteed to be in service in vers. 1.0.'
+            + 'Use neigh.cluster_analysis() instead (after calling neigh = structure.get_neighbors()).',
+            DeprecationWarning)
         if neighbors is None:
             if radius is None:
-                radius = self.get_shell_radius()
+                neigh = self.get_neighbors(num_neighbors=100)
+                indices = np.unique(neigh.shells[0][neigh.shells[0]<=2], return_index=True)[1]
+                radius = neigh.distances[0][indices]
+                radius = np.mean(radius)
                 # print "radius: ", radius
-            neighbors = self.get_neighbors(radius, t_vec=False)
-        self._neighbor_index = neighbors.indices
-        self._cluster = [0] * len(self)
-        c_count = 1
-        # element_list = self.get_atomic_numbers()
-        for ia in id_list:
-            # el0 = element_list[ia]
-            nbrs = self._neighbor_index[ia]
-            # print ("nbrs: ", ia, nbrs)
-            if self._cluster[ia] == 0:
-                self._cluster[ia] = c_count
-                self.__probe_cluster(c_count, nbrs, id_list)
-                c_count += 1
-
-        cluster = np.array(self._cluster)
-        cluster_dict = {
-            i_c: np.where(cluster == i_c)[0].tolist() for i_c in range(1, c_count)
-        }
-        if return_cluster_sizes:
-            sizes = [self._cluster.count(i_c + 1) for i_c in range(c_count - 1)]
-            return cluster_dict, sizes
-
-        return cluster_dict  # sizes
-
-    def __probe_cluster(self, c_count, neighbors, id_list):
-        """
-
-        Args:
-            c_count:
-            neighbors:
-            id_list:
-
-        Returns:
-
-        """
-        for nbr_id in neighbors:
-            if self._cluster[nbr_id] == 0:
-                if nbr_id in id_list:  # TODO: check also for ordered structures
-                    self._cluster[nbr_id] = c_count
-                    nbrs = self._neighbor_index[nbr_id]
-                    self.__probe_cluster(c_count, nbrs, id_list)
+            neighbors = self.get_neighbors_by_distance(cutoff_radius=radius, t_vec=False)
+        return neighbors.cluster_analysis(id_list=id_list, return_cluster_sizes=return_cluster_sizes)
 
     # TODO: combine with corresponding routine in plot3d
-    def get_bonds(self, radius=None, max_shells=None, prec=0.1, num_neighbors=20):
+    def get_bonds(self, radius=np.inf, max_shells=None, prec=0.1, num_neighbors=20):
         """
 
         Args:
@@ -2081,42 +1896,14 @@ class Atoms(ASEAtoms):
         Returns:
 
         """
-
-        def get_cluster(dist_vec, ind_vec, prec=prec):
-            ind_where = np.where(np.diff(dist_vec) > prec)[0] + 1
-            ind_vec_cl = [np.sort(group) for group in np.split(ind_vec, ind_where)]
-            dist_vec_cl = [np.mean(group) for group in np.split(dist_vec, ind_where)]
-            return ind_vec_cl, dist_vec_cl
-
-        neighbors = self.get_neighbors(
+        warnings.warn('structure.cluster_analysis() is deprecated as of vers. 0.3.'
+            + 'It is not guaranteed to be in service in vers. 1.0.'
+            + 'Use neigh.cluster_analysis() instead (after calling neigh = structure.get_neighbors()).',
+            DeprecationWarning)
+        neighbors = self.get_neighbors_by_distance(
             cutoff_radius=radius, num_neighbors=num_neighbors
         )
-
-        dist = neighbors.distances
-        ind = neighbors.indices
-        el_list = self.get_chemical_symbols()
-
-        ind_shell = []
-        for i_a, (d, i) in enumerate(zip(dist, ind)):
-            id_list, dist_lst = get_cluster(d[d < radius], i[d < radius])
-            # print ("id: ", d[d<radius], id_list, dist_lst)
-            ia_shells_dict = {}
-            for i_shell_list in id_list:
-                ia_shell_dict = {}
-                for i_s in i_shell_list:
-                    el = el_list[i_s]
-                    if el not in ia_shell_dict:
-                        ia_shell_dict[el] = []
-                    ia_shell_dict[el].append(i_s)
-                for el, ia_lst in ia_shell_dict.items():
-                    if el not in ia_shells_dict:
-                        ia_shells_dict[el] = []
-                    if max_shells is not None:
-                        if len(ia_shells_dict[el]) + 1 > max_shells:
-                            continue
-                    ia_shells_dict[el].append(ia_lst)
-            ind_shell.append(ia_shells_dict)
-        return ind_shell
+        return neighbors.get_bonds(radius=radius, max_shells=max_shells, prec=prec)
 
     # spglib calls
     def get_symmetry(

@@ -688,14 +688,6 @@ class TestAtoms(unittest.TestCase):
         )
         self.assertEqual(8 * len(self.CO2), len(self.CO2.repeat(np.int64(2))))
 
-    def test_boundary(self):
-        cell = 2.2 * np.identity(3)
-        NaCl = Atoms("NaCl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
-        NaCl.set_repeat([3, 3, 3])
-        # NaCl.plot3d()
-        NaCl_bound = NaCl.get_boundary_region(0.2)
-        # NaCl_bound.plot3d()
-
     def test_get_distance(self):
         cell = 2.2 * np.identity(3)
         NaCl = Atoms("NaCl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
@@ -706,7 +698,8 @@ class TestAtoms(unittest.TestCase):
     def test_find_neighbors_by_vector(self):
         basis = Atoms(symbols=2*["Fe"],
                       scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)],
-                      cell=np.identity(3))
+                      cell=np.identity(3),
+                      pbc=True)
         id_lst, dist = basis.find_neighbors_by_vector([0, 0, 1],
                                                       deviation=True,
                                                       num_neighbors=14)
@@ -715,7 +708,7 @@ class TestAtoms(unittest.TestCase):
 
     def test_get_neighborhood(self):
         basis = Atoms(
-            "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
+            "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3), pbc=True
         )
         neigh = basis.get_neighborhood([0, 0, 0.1])
         self.assertEqual(neigh.distances[0], 0.1)
@@ -733,22 +726,34 @@ class TestAtoms(unittest.TestCase):
         self.assertAlmostEqual(np.min(neigh.distances), np.sqrt(3)*0.49)
 
     def test_get_neighbors(self):
-        cell = 2.2 * np.identity(3)
-        NaCl = Atoms("NaCl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
-        # NaCl.repeat([3, 3, 3])
-        # NaCl.positions = [(1,1,1)]
-        boundary = NaCl.get_boundary_region(3.5)
-        extended_cell = NaCl + boundary
-        # extended_cell.plot3d()
-        nbr_dict = NaCl.get_neighbors(num_neighbors=12, t_vec=True)
-        basis = Atoms(symbols="FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3))
-        neigh = basis.get_neighbors(include_boundary=False)
+        basis = Atoms(symbols="FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3), pbc=True)
+        neigh = basis.get_neighbors(num_neighbors=58)
         self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
+        counts = np.unique(neigh.shells[0], return_counts=True)
+        self.assertTrue(np.array_equal(counts[0], np.arange(5)+1))
+        self.assertTrue(np.array_equal(counts[1], np.array([ 8,  6, 12, 24,  8])))
+        basis = Atoms(symbols="FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3), pbc=True)
+        basis.pbc = np.array([True, False, False])
+        neigh = basis.get_neighbors(num_neighbors=10)
+        self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
+        self.assertAlmostEqual(neigh.distances[0][2], 2)
+        self.assertAlmostEqual(neigh.distances[0][4], np.sqrt(11))
+        self.assertAlmostEqual(neigh.distances[0][6], 4)
+        self.assertAlmostEqual(neigh.distances[0][8], np.sqrt(27))
+        basis.pbc = True
         basis.set_repeat(2)
-        self.assertAlmostEqual(neigh.distances[0][0], np.sqrt(3))
         with self.assertRaises(ValueError):
             basis.get_neighbors(cutoff_radius=10)
         basis.get_neighbors_by_distance(cutoff_radius=10)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            neigh = basis.get_neighbors(boundary_width_factor=0.1)
+            self.assertGreaterEqual(len(w), 1)
+        with self.assertRaises(ValueError):
+            neigh = basis.get_neighbors(boundary_width_factor=0.001, num_neighbors=100)
+        basis = Atoms(symbols="FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3))
+        neigh = basis.get_neighbors(num_neighbors=1)
+        self.assertEqual(neigh._boundary_layer_width, 0)
 
     def test_get_shell_matrix(self):
         structure = CrystalStructure(elements='Fe', lattice_constants=2.83, bravais_basis='bcc')
@@ -800,19 +805,13 @@ class TestAtoms(unittest.TestCase):
         )
         view = basis.plot3d()
 
-    def test_get_shell_radius(self):
-        basis = Atoms("FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3))
-        self.assertAlmostEqual(
-            basis.get_shell_radius(), np.mean(list(basis.get_shells().values()))
-        )
-
     def test_group_points_by_symmetry(self):
         basis = Atoms("FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3))
         self.assertEqual(len(basis.group_points_by_symmetry([3 * [0.5], 3 * [1.5]])), 1)
         self.assertEqual(len(basis.group_points_by_symmetry([3 * [0.5], 3 * [1.4]])), 2)
 
     def test_get_equivalent_voronoi_vertices(self):
-        basis = Atoms("FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3))
+        basis = Atoms("FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3), pbc=True)
         vert = basis.get_equivalent_voronoi_vertices()
         self.assertEqual(len(vert), 1)
         self.assertGreater(
@@ -821,13 +820,6 @@ class TestAtoms(unittest.TestCase):
         self.assertGreater(
             np.min(np.linalg.norm(vert[0] - basis.positions[1], axis=-1)), 0.5
         )
-
-    def test_get_shells(self):
-        dim = 3
-        cell = 2.2 * np.identity(dim)
-        Al_sc = Atoms("AlAl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
-        Al_sc.set_repeat([3, 3, 3])
-        self.assertEqual(np.round(Al_sc.get_shells()[2], 6), 2.2)
 
     def test_get_distances_array(self):
         basis = Atoms("FeFe", positions=[3*[0], 3*[0.9]], cell=np.identity(3), pbc=True)
@@ -850,54 +842,33 @@ class TestAtoms(unittest.TestCase):
         v = np.random.rand(6).reshape(-1, 3)
         self.assertEqual(basis.repeat_points(v, 2).shape, (8, 2, 3))
 
+    def test_get_extended_positions(self):
+        basis = Atoms("FeFe", positions=[[0.01, 0, 0], [0.5, 0.5, 0.5]], cell=np.identity(3), pbc=True)
+        with self.assertRaises(ValueError):
+            basis.get_extended_positions(-0.1)
+        self.assertTrue(np.array_equal(basis.get_extended_positions(0)[0], basis.positions))
+
     def test_get_equivalent_points(self):
         basis = Atoms("FeFe", positions=[[0.01, 0, 0], [0.5, 0.5, 0.5]], cell=np.identity(3))
         arr = basis.get_equivalent_points([0, 0, 0.5])
         self.assertAlmostEqual(np.linalg.norm(arr-np.array([0.51, 0.5, 0]), axis=-1).min(), 0)
 
     def test_cluster_analysis(self):
-        import random
-
-        cell = 2.2 * np.identity(3)
-        Al_sc = Atoms(
-            elements=["Al", "Al"],
-            scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)],
-            cell=cell,
-        )
-        Al_sc.set_repeat([4, 4, 4])
-        neighbors = Al_sc.get_neighbors(
-            num_neighbors=100, t_vec=False, exclude_self=True
-        )
-
-        c_Zn = 0.1
-        pse = PeriodicTable()
-        Zn = pse.element("Zn")
-        random.seed(123456)
-        for _ in range(1):
-            Zn_ind = random.sample(range(len(Al_sc)), int(c_Zn * len(Al_sc)))
-            # for i_Zn in Zn_ind:
-            #     Al_sc.elements[i_Zn] = Zn
-
-            cluster = Al_sc.cluster_analysis(Zn_ind, neighbors)
-            cluster_len = np.sort([len(v) for k, v in cluster.items()])
-            # print np.histogram(cluster_len), np.sum(cluster_len), len(Zn_ind)
-            # for key, value in cluster.items():
-            #     el = pse.Element((key % 100) + 1)
-            #     for i_el in value:
-            #         Al_sc.elements[i_el] = el
-            # Al_sc.plot3d()
+        basis = CrystalStructure("Al", bravais_basis="fcc", lattice_constants=4.2).repeat(10)
+        key, counts = basis.cluster_analysis(id_list=[0,1], return_cluster_sizes=True)
+        self.assertTrue(np.array_equal(key[1], [0,1]))
+        self.assertEqual(counts[0], 2)
+        key, counts = basis.cluster_analysis(id_list=[0,int(len(basis)/2)], return_cluster_sizes=True)
+        self.assertTrue(np.array_equal(key[1], [0]))
+        self.assertEqual(counts[0], 1)
 
     def test_get_bonds(self):
-        dim = 3
-        cell = 2.62 * np.identity(dim)
-        d1, d2 = 0.6, 0.6
-        H2O = Atoms(
-            "H2O", scaled_positions=[(d1, d2, 0), (d1, -d2, 0), (0, 0, 0)], cell=cell
-        )
-        H2O.set_repeat([1, 1, 3])
-        # H2O.plot3d(show_bonds=True) #, bond_stretch=2)
-        # print H2O.get_bonds(radius=2.)[0]
-        # print np.sum(H2O.get_masses())/H2O.get_volume()
+        basis = CrystalStructure("Al", bravais_basis="fcc", lattice_constants=4.2).repeat(5)
+        bonds = basis.get_bonds()
+        neigh = basis.get_neighbors()
+        self.assertTrue(np.array_equal(np.sort(bonds[0]['Al'][0]),
+                        np.sort(neigh.indices[0, neigh.shells[0]==1])))
+
 
     def test_get_symmetr(self):
         cell = 2.2 * np.identity(3)
@@ -921,7 +892,7 @@ class TestAtoms(unittest.TestCase):
 
     def test_get_voronoi_vertices(self):
         cell = 2.2 * np.identity(3)
-        Al = Atoms("AlAl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell)
+        Al = Atoms("AlAl", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=cell, pbc=True)
         pos, box = Al._get_voronoi_vertices()
         self.assertEqual(len(pos), 14)
 
