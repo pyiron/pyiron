@@ -337,16 +337,15 @@ class Neighbors(object):
         def get_cluster(dist_vec, ind_vec, prec=prec):
             ind_where = np.where(np.diff(dist_vec) > prec)[0] + 1
             ind_vec_cl = [np.sort(group) for group in np.split(ind_vec, ind_where)]
-            dist_vec_cl = [np.mean(group) for group in np.split(dist_vec, ind_where)]
-            return ind_vec_cl, dist_vec_cl
+            return ind_vec_cl
 
         dist = self.distances
         ind = self.indices
         el_list = self._ref_structure.get_chemical_symbols()
 
         ind_shell = []
-        for i_a, (d, i) in enumerate(zip(dist, ind)):
-            id_list, dist_lst = get_cluster(d[d < radius], i[d < radius])
+        for d, i in zip(dist, ind):
+            id_list = get_cluster(d[d < radius], i[d < radius])
             # print ("id: ", d[d<radius], id_list, dist_lst)
             ia_shells_dict = {}
             for i_shell_list in id_list:
