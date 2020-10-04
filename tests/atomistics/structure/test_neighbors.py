@@ -29,7 +29,7 @@ class TestAtoms(unittest.TestCase):
         self.assertAlmostEqual(np.absolute(dist-neigh.distances.flatten()).max(), 0)
         vecs = struct.get_distances(myself.flatten(), neigh.indices.flatten(), mic=True, vector=True)
         self.assertAlmostEqual(np.absolute(vecs-neigh.vecs.reshape(-1, 3)).max(), 0)
-        dist = struct.get_distances_array().flatten()
+        dist = struct.get_distances_array(mic=True).flatten()
         dist = dist[dist>0]
         self.assertAlmostEqual(neigh.distances.min(), dist.min())
         struct = CrystalStructure(elements='Fe', lattice_constants=2.85, bravais_basis='bcc').repeat(10)
