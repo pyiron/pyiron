@@ -1575,7 +1575,7 @@ class Atoms(ASEAtoms):
         dist = v_repeated-np.sum(self.cell*0.5, axis=0)
         dist = np.absolute(np.einsum('ni,ij->nj', dist+1e-8, np.linalg.inv(self.cell)))-0.5
         check_dist = np.all(dist-width/np.linalg.norm(self.cell, axis=-1)<0, axis=-1)
-        indices = indices[check_dist]
+        indices = indices[check_dist]%len(self)
         v_repeated = v_repeated[check_dist]
         return v_repeated, indices
 
@@ -1654,6 +1654,28 @@ class Atoms(ASEAtoms):
         neigh.indices = np.array(neigh.indices)
         return neigh
 
+    def _get_boundary_layer_width(self, num_neighbors, boundary_width_factor=1.2, cutoff_radius=np.inf):
+        """
+
+        Args:
+            num_neighbors (int): number of neighbors
+            boundary_width_factor (float): width of the layer to be added to account for pbc.
+            cutoff_radius (float): self-explanatory
+
+        Returns:
+            Width of layre required for the given number of atoms
+
+        """
+        if all(self.pbc==False):
+            return 0
+        elif cutoff_radius!=np.inf:
+            return cutoff_radius
+        prefactor = [1, 1/np.pi, 4/(3*np.pi)]
+        prefactor = prefactor[sum(self.pbc)-1]
+        width = np.prod((np.linalg.norm(self.cell, axis=-1)-np.ones(3))*self.pbc+np.ones(3))
+        width *= prefactor*np.max([num_neighbors, 8])/len(self)
+        return boundary_width_factor*width**(1/np.sum(self.pbc))
+
     def _get_neighbors(
         self,
         num_neighbors=12,
@@ -1671,6 +1693,7 @@ class Atoms(ASEAtoms):
                         (pbc are automatically taken into account)
             id_list (list): list of atoms the neighbors are to be looked for
             boundary_width_factor (float): width of the layer to be added to account for pbc.
+            cutoff_radius (float): self-explanatory
 
         Returns:
 
@@ -1681,16 +1704,11 @@ class Atoms(ASEAtoms):
         boxsize = None
         num_neighbors += 1
         neighbor_obj = Neighbors(ref_structure=self, tolerance=tolerance)
-        if all(self.pbc==False):
-            width = 0
-        elif cutoff_radius!=np.inf:
-            width = cutoff_radius
-        else:
-            prefactor = [1, 1/np.pi, 4/(3*np.pi)]
-            prefactor = prefactor[sum(self.pbc)-1]
-            width = np.prod((np.linalg.norm(self.cell, axis=-1)-np.ones(3))*self.pbc+np.ones(3))
-            width *= prefactor*np.max([num_neighbors, 8])/len(self)
-            width = boundary_width_factor*width**(1/np.sum(self.pbc))
+        width = self._get_boundary_layer_width(
+            num_neighbors=num_neighbors,
+            boundary_width_factor=boundary_width_factor,
+            cutoff_radius=cutoff_radius
+        )
         neighbor_obj._boundary_layer_width = width
         if (width<0.5*np.min(self.cell.diagonal())
                 and np.isclose(np.linalg.norm(self.cell-np.eye(3)*self.cell.diagonal()), 0)
@@ -1717,7 +1735,7 @@ class Atoms(ASEAtoms):
         neighbor_indices = np.zeros_like(id_list).tolist()
         for ii, (atom_id, index, distances) in enumerate(zip(id_list, neighbors[1], neighbors[0])):
             neighbor_distance[ii] = distances[1:][index[1:]<len(indices)]
-            neighbor_indices[ii] = indices[index[1:][index[1:]<len(indices)]]%len(self)
+            neighbor_indices[ii] = indices[index[1:][index[1:]<len(indices)]]
             if np.max(distances[1:][index[1:]<len(indices)])>width:
                 warnings.warn('boundary_width_factor may have been too small - most likely not all neighbors properly assigned')
             if t_vec:
@@ -1735,6 +1753,7 @@ class Atoms(ASEAtoms):
         tolerance=2,
         id_list=None,
         cutoff_radius=np.inf,
+        boundary_width_factor=1.2,
     ):
         """
 
@@ -1746,6 +1765,7 @@ class Atoms(ASEAtoms):
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list (list): list of atoms the neighbors are to be looked for
             cutoff_radius (float): Upper bound of the distance to which the search must be done
+            boundary_width_factor (float): width of the layer to be added to account for pbc.
 
         Returns:
 
@@ -1757,12 +1777,16 @@ class Atoms(ASEAtoms):
         class NeighTemp(object):
             pass
 
-        positions = np.einsum('ni,ij->nj', self.positions-position, np.linalg.inv(self.cell))
-        positions[:, self.pbc] -= np.rint(positions[:, self.pbc])
-        positions = np.einsum('ni,ij->nj', positions, self.cell)
+        width = self._get_boundary_layer_width(
+            num_neighbors=num_neighbors,
+            boundary_width_factor=boundary_width_factor,
+            cutoff_radius=cutoff_radius
+        )
+        positions, indices = self.get_extended_positions(width)
+        positions -= position
         dist = np.linalg.norm(positions, axis=-1)
         positions = positions[np.argsort(dist)]
-        indices = np.arange(len(self))[np.argsort(dist)]
+        indices = indices[np.argsort(dist)]
         dist = dist[np.argsort(dist)]
         positions = positions[dist<cutoff_radius][:num_neighbors]
         indices = indices[dist<cutoff_radius][:num_neighbors]
