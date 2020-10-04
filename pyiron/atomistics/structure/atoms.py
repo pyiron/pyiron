@@ -1757,33 +1757,21 @@ class Atoms(ASEAtoms):
         class NeighTemp(object):
             pass
 
-        box = self.copy()
-        box.append(box[-1])
-        pos = box.positions
-        pos[-1] = np.array(position)
-        box.positions = pos
-        neigh = box.get_neighbors_by_distance(
-            num_neighbors=num_neighbors,
-            t_vec=t_vec,
-            tolerance=tolerance,
-            id_list=id_list,
-            cutoff_radius=cutoff_radius,
-        )
+        positions = np.einsum('ni,ij->nj', self.positions-position, np.linalg.inv(self.cell))
+        positions[:, self.pbc] -= np.rint(positions[:, self.pbc])
+        positions = np.einsum('ni,ij->nj', positions, self.cell)
+        dist = np.linalg.norm(positions, axis=-1)
+        positions = positions[np.argsort(dist)]
+        indices = np.arange(len(self))[np.argsort(dist)]
+        dist = dist[np.argsort(dist)]
+        positions = positions[dist<cutoff_radius][:num_neighbors]
+        indices = indices[dist<cutoff_radius][:num_neighbors]
+        dist = dist[dist<cutoff_radius][:num_neighbors]
         neigh_return = NeighTemp()
-        setattr(neigh_return, "distances", neigh.distances[-1])
-        setattr(neigh_return, "shells", neigh.shells[-1])
-        setattr(neigh_return, "vecs", neigh.vecs[-1])
-        setattr(neigh_return, "indices", neigh.indices[-1])
-        neigh_return.distances = neigh_return.distances[
-            neigh_return.indices != len(box) - 1
-        ]
-        neigh_return.shells = neigh_return.shells[neigh_return.indices != len(box) - 1]
-        neigh_return.vecs = np.array(neigh_return.vecs)[
-            neigh_return.indices != len(box) - 1
-        ]
-        neigh_return.indices = neigh_return.indices[
-            neigh_return.indices != len(box) - 1
-        ]
+        setattr(neigh_return, "distances", dist)
+        setattr(neigh_return, "shells", np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1)
+        setattr(neigh_return, "vecs", positions)
+        setattr(neigh_return, "indices", indices)
         return neigh_return
 
     def find_neighbors_by_vector(self, vector, deviation=False, num_neighbors=96):
