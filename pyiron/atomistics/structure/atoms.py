@@ -1702,6 +1702,8 @@ class Atoms(ASEAtoms):
             and vectors
 
         """
+        if num_neighbors<1:
+            raise ValueError('num_neighbors must be a positive integer')
         boxsize = None
         num_neighbors += 1
         neighbor_obj = Neighbors(ref_structure=self, tolerance=tolerance)
@@ -1736,10 +1738,14 @@ class Atoms(ASEAtoms):
         if t_vec:
             x = np.append(extended_positions, np.zeros((1, 3)), axis=0)
             neighbor_obj.vecs = x[neighbors[1][:,1:]]-self.positions[np.array(id_list),np.newaxis,:]
-        dist = neighbor_obj.distances.flatten()
-        dist = dist[dist<np.inf]
-        if np.max(dist)>width:
-            warnings.warn('boundary_width_factor may have been too small - most likely not all neighbors properly assigned')
+            if boxsize is not None:
+                neighbor_obj.vecs /= self.cell.diagonal()
+                neighbor_obj.vecs = neighbor_obj.vecs-np.rint(neighbor_obj.vecs)
+                neighbor_obj.vecs *= self.cell.diagonal()
+            if any(self.pbc):
+                vecs = neighbor_obj.vecs.reshape(-1, 3)[neighbor_obj.distances.flatten()<np.inf]
+                if np.absolute(vecs[:,self.pbc]).max()>width:
+                    warnings.warn('boundary_width_factor may have been too small - most likely not all neighbors properly assigned')
         return neighbor_obj
 
     def get_neighborhood(

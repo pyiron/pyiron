@@ -16,6 +16,48 @@ class TestAtoms(unittest.TestCase):
     def setUpClass(cls):
         pass
 
+    def test_get_neighbors(self):
+        struct = CrystalStructure(elements='Fe', lattice_constants=2.85, bravais_basis='bcc').repeat(10)
+        cell = struct.cell.copy()
+        cell += np.random.random((3,3))-0.5
+        struct.set_cell(cell, scale_atoms=True)
+        neigh = struct.get_neighbors()
+        myself = np.ones_like(neigh.indices)
+        myself = myself*np.arange(len(myself))[:,np.newaxis]
+        dist = struct.get_distances(myself.flatten(), neigh.indices.flatten(), mic=True)
+        self.assertAlmostEqual(np.absolute(dist-neigh.distances.flatten()).max(), 0)
+        vecs = struct.get_distances(myself.flatten(), neigh.indices.flatten(), mic=True, vector=True)
+        self.assertAlmostEqual(np.absolute(vecs-neigh.vecs.reshape(-1, 3)).max(), 0)
+        dist = struct.get_distances_array().flatten()
+        dist = dist[dist>0]
+        self.assertAlmostEqual(neigh.distances.min(), dist.min())
+        struct = CrystalStructure(elements='Fe', lattice_constants=2.85, bravais_basis='bcc').repeat(10)
+        struct.pbc = False
+        cell = struct.cell.copy()
+        cell += np.random.random((3,3))-0.5
+        struct.set_cell(cell, scale_atoms=True)
+        neigh = struct.get_neighbors()
+        myself = np.ones_like(neigh.indices)
+        myself = myself*np.arange(len(myself))[:,np.newaxis]
+        dist = np.linalg.norm(struct.positions[myself]-struct.positions[neigh.indices], axis=-1)
+        self.assertAlmostEqual(np.absolute(dist-neigh.distances).max(), 0)
+        struct = CrystalStructure(elements='Fe', lattice_constants=2.85, bravais_basis='bcc').repeat(10)
+        neigh = struct.get_neighbors()
+        self.assertAlmostEqual(neigh.vecs[neigh.shells==1].sum(), 0)
+        self.assertAlmostEqual(neigh.vecs[0, neigh.shells[0]==1].sum(), 0)
+        struct = CrystalStructure(elements='Fe', lattice_constants=2.85, bravais_basis='bcc')
+        neigh = struct.get_neighbors()
+        self.assertAlmostEqual(neigh.vecs[neigh.shells==1].sum(), 0)
+        struct = CrystalStructure(elements='Al', lattice_constants=4.04, bravais_basis='bcc').repeat(10)
+        neigh = struct.get_neighbors()
+        self.assertAlmostEqual(neigh.vecs[neigh.shells==1].sum(), 0)
+        self.assertAlmostEqual(neigh.vecs[0, neigh.shells[0]==1].sum(), 0)
+        struct = CrystalStructure(elements='Al', lattice_constants=4.04, bravais_basis='bcc')
+        neigh = struct.get_neighbors()
+        self.assertAlmostEqual(neigh.vecs[neigh.shells==1].sum(), 0)
+        with self.assertRaises(ValueError):
+            struct.get_neighbors(num_neighbors=0)
+
     def test_get_global_shells(self):
         structure = CrystalStructure(elements='Al', lattice_constants=4, bravais_basis='fcc').repeat(2)
         neigh = structure.get_neighbors()
