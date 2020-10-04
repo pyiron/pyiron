@@ -20,6 +20,7 @@ class TestAtoms(unittest.TestCase):
         struct = CrystalStructure(elements='Fe', lattice_constants=2.85, bravais_basis='bcc').repeat(10)
         cell = struct.cell.copy()
         cell += np.random.random((3,3))-0.5
+        struct.positions += np.random.random((len(struct), 3))-0.5
         struct.set_cell(cell, scale_atoms=True)
         neigh = struct.get_neighbors()
         self.assertAlmostEqual(np.absolute(neigh.distances-np.linalg.norm(neigh.vecs, axis=-1)).max(), 0)
@@ -29,7 +30,11 @@ class TestAtoms(unittest.TestCase):
         self.assertAlmostEqual(np.absolute(dist-neigh.distances.flatten()).max(), 0)
         vecs = struct.get_distances(myself.flatten(), neigh.indices.flatten(), mic=True, vector=True)
         self.assertAlmostEqual(np.absolute(vecs-neigh.vecs.reshape(-1, 3)).max(), 0)
-        dist = struct.get_distances_array(mic=True).flatten()
+        dist = struct.get_scaled_positions()
+        dist = dist[:,np.newaxis,:]-dist[np.newaxis,:,:]
+        dist -= np.rint(dist)
+        dist = np.einsum('nmi,ij->nmj', dist, struct.cell)
+        dist = np.linalg.norm(dist, axis=-1).flatten()
         dist = dist[dist>0]
         self.assertAlmostEqual(neigh.distances.min(), dist.min())
         struct = CrystalStructure(elements='Fe', lattice_constants=2.85, bravais_basis='bcc').repeat(10)
