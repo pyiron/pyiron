@@ -821,22 +821,6 @@ class TestAtoms(unittest.TestCase):
             np.min(np.linalg.norm(vert[0] - basis.positions[1], axis=-1)), 0.5
         )
 
-    def test_cluster_analysis(self):
-        basis = CrystalStructure("Al", bravais_basis="fcc", lattice_constants=4.2).repeat(10)
-        key, counts = basis.cluster_analysis(id_list=[0,1], return_cluster_sizes=True)
-        self.assertTrue(np.array_equal(key[1], [0,1]))
-        self.assertEqual(counts[0], 2)
-        key, counts = basis.cluster_analysis(id_list=[0,int(len(basis)/2)], return_cluster_sizes=True)
-        self.assertTrue(np.array_equal(key[1], [0]))
-        self.assertEqual(counts[0], 1)
-
-    def test_get_bonds(self):
-        basis = CrystalStructure("Al", bravais_basis="fcc", lattice_constants=4.2).repeat(5)
-        bonds = basis.get_bonds()
-        neigh = basis.get_neighbors()
-        self.assertTrue(np.array_equal(np.sort(bonds[0]['Al'][0]),
-                        np.sort(neigh.indices[0, neigh.shells[0]==1])))
-
     def test_get_distances_array(self):
         basis = Atoms("FeFe", positions=[3*[0], 3*[0.9]], cell=np.identity(3), pbc=True)
         self.assertAlmostEqual(basis.get_distances_array(mic=False)[0, 1], 0.9*np.sqrt(3))
@@ -870,49 +854,21 @@ class TestAtoms(unittest.TestCase):
         self.assertAlmostEqual(np.linalg.norm(arr-np.array([0.51, 0.5, 0]), axis=-1).min(), 0)
 
     def test_cluster_analysis(self):
-        import random
-
-        cell = 2.2 * np.identity(3)
-        Al_sc = Atoms(
-            elements=["Al", "Al"],
-            scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)],
-            cell=cell,
-            pbc=True,
-        )
-        Al_sc.set_repeat([4, 4, 4])
-        neighbors = Al_sc.get_neighbors(
-            num_neighbors=100, t_vec=False
-        )
-
-        c_Zn = 0.1
-        pse = PeriodicTable()
-        Zn = pse.element("Zn")
-        random.seed(123456)
-        for _ in range(1):
-            Zn_ind = random.sample(range(len(Al_sc)), int(c_Zn * len(Al_sc)))
-            # for i_Zn in Zn_ind:
-            #     Al_sc.elements[i_Zn] = Zn
-
-            cluster = Al_sc.cluster_analysis(Zn_ind, neighbors)
-            cluster_len = np.sort([len(v) for k, v in cluster.items()])
-            # print np.histogram(cluster_len), np.sum(cluster_len), len(Zn_ind)
-            # for key, value in cluster.items():
-            #     el = pse.Element((key % 100) + 1)
-            #     for i_el in value:
-            #         Al_sc.elements[i_el] = el
-            # Al_sc.plot3d()
+        basis = CrystalStructure("Al", bravais_basis="fcc", lattice_constants=4.2).repeat(10)
+        key, counts = basis.cluster_analysis(id_list=[0,1], return_cluster_sizes=True)
+        self.assertTrue(np.array_equal(key[1], [0,1]))
+        self.assertEqual(counts[0], 2)
+        key, counts = basis.cluster_analysis(id_list=[0,int(len(basis)/2)], return_cluster_sizes=True)
+        self.assertTrue(np.array_equal(key[1], [0]))
+        self.assertEqual(counts[0], 1)
 
     def test_get_bonds(self):
-        dim = 3
-        cell = 2.62 * np.identity(dim)
-        d1, d2 = 0.6, 0.6
-        H2O = Atoms(
-            "H2O", scaled_positions=[(d1, d2, 0), (d1, -d2, 0), (0, 0, 0)], cell=cell
-        )
-        H2O.set_repeat([1, 1, 3])
-        # H2O.plot3d(show_bonds=True) #, bond_stretch=2)
-        # print H2O.get_bonds(radius=2.)[0]
-        # print np.sum(H2O.get_masses())/H2O.get_volume()
+        basis = CrystalStructure("Al", bravais_basis="fcc", lattice_constants=4.2).repeat(5)
+        bonds = basis.get_bonds()
+        neigh = basis.get_neighbors()
+        self.assertTrue(np.array_equal(np.sort(bonds[0]['Al'][0]),
+                        np.sort(neigh.indices[0, neigh.shells[0]==1])))
+
 
     def test_get_symmetr(self):
         cell = 2.2 * np.identity(3)
