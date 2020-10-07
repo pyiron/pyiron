@@ -14,7 +14,7 @@ except ImportError:
     # sqsgenerator is not available for all systems
     # This is no reason to have pyiron fail catestrophically, it just means this job class is unavailable.
     # Pass silently for now, but throw an exception if the user tries to instantiate this job.
-    pass
+    ParallelSqsIterator
 
 __author__ = "Jan Janssen"
 __copyright__ = (
@@ -102,9 +102,7 @@ class SQSJob(AtomisticGenericJob):
         Just a temporary measure as long as the imports are wrapped in a try/pass instead of being on the dependencies
         list.
         """
-        try:
-            from sqsgenerator.core.sqs import ParallelSqsIterator
-        except NameError:
+        if ParallelSqsIterator is None:
             raise NameError("SQSJob relies on sqsgenerator.core.sqs.ParallelSqsIterator, but this is unavailable.")
 
     @property
