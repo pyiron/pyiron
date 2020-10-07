@@ -6,9 +6,9 @@ from multiprocessing import cpu_count
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 from pyiron_base import InputList, GenericParameters
 from pyiron.atomistics.structure.atoms import Atoms, ase_to_pyiron, pyiron_to_ase
+from pymatgen.io.ase import AseAtomsAdaptor
 
 try:
-    from pymatgen.io.ase import AseAtomsAdaptor
     from sqsgenerator.core.sqs import ParallelSqsIterator
 except ImportError:
     pass
