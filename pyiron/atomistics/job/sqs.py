@@ -101,10 +101,9 @@ class SQSJob(AtomisticGenericJob):
         list.
         """
         try:
-            AseAtomsAdaptor()
+            ParallelSqsIterator()
         except NameError:
-            raise NameError("SQSJob relies on pymatgen.io.ase.AseAtomsAdaptor and "
-                            "sqsgenerator.core.sqs.ParallelSqsIterator; at least one of these is unavailable.)")
+            raise NameError("SQSJob relies on sqsgenerator.core.sqs.ParallelSqsIterator, but this is unavailable.")
 
     @property
     def list_of_structures(self):
