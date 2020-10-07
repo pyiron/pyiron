@@ -94,14 +94,13 @@ class SQSJob(AtomisticGenericJob):
         self._fail_early_if_imports_missing()
         self.__hdf_version__ = "0.2.0"
 
-    @staticmethod
-    def _fail_early_if_imports_missing():
+    def _fail_early_if_imports_missing(self):
         """
         Just a temporary measure as long as the imports are wrapped in a try/pass instead of being on the dependencies
         list.
         """
         try:
-            ParallelSqsIterator()
+            from sqsgenerator.core.sqs import ParallelSqsIterator
         except NameError:
             raise NameError("SQSJob relies on sqsgenerator.core.sqs.ParallelSqsIterator, but this is unavailable.")
 
