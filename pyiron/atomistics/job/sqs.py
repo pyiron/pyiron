@@ -165,13 +165,10 @@ class SQSJob(AtomisticGenericJob):
 
         if version == "0.1.0":
             with self.project_hdf5.open("input") as hdf5_input:
-                try:
-                    gp = GenericParameters(table_name="custom_dict")
-                    gp.from_hdf(hdf5_input)
-                    for k in gp.keys():
-                        self.input[k] = gp[k]
-                except TypeError:
-                    pass
+                gp = GenericParameters(table_name="custom_dict")
+                gp.from_hdf(hdf5_input)
+                for k in gp.keys():
+                    self.input[k] = gp[k]
         elif version == "0.2.0":
             with self.project_hdf5.open("input") as hdf5_input:
                 self.input.from_hdf(hdf5_input)
