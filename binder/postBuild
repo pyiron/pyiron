@@ -7,7 +7,7 @@ jupyter nbextension enable nglview --py --sys-prefix
 
 # ngl view for jupyter lab
 jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build
-jupyter labextension install nglview-js-widgets
+jupyter labextension install nglview-js-widgets --minimize=False
 
 # clean up
 if [ -d "notebooks" ]; then
@@ -15,5 +15,5 @@ if [ -d "notebooks" ]; then
 fi
 if [ -d "${HOME}/pyiron" ]; then
     rm -r ${HOME}/binder ${HOME}/.ci_support ${HOME}/docs ${HOME}/pyiron ${HOME}/tests ${HOME}/notebooks
-    rm ${HOME}/.travis.yml ${HOME}/azure-pipelines.yml ${HOME}/appveyor.yml ${HOME}/LICENSE ${HOME}/MANIFEST.in ${HOME}/setup.cfg ${HOME}/setup.py ${HOME}/versioneer.py ${HOME}/CONTRIBUTING.rst ${HOME}/README.rst
+    rm ${HOME}/.travis.yml ${HOME}/azure-pipelines.yml ${HOME}/appveyor.yml ${HOME}/LICENSE ${HOME}/MANIFEST.in ${HOME}/setup.cfg ${HOME}/setup.py ${HOME}/versioneer.py ${HOME}/CONTRIBUTING.rst ${HOME}/README.rst ${HOME}/CODE_OF_CONDUCT.md
 fi

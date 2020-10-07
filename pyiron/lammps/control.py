@@ -213,7 +213,10 @@ class LammpsControl(GenericParameters):
 
         # Get something with six elements
         if not hasattr(pressure, "__len__"):
-            pressure = np.append(pressure * np.ones(3), 3 * [None])
+            if not np.isclose(np.matrix.trace(rotation_matrix), 3) and pressure == 0.0:
+                pressure = np.append(pressure * np.ones(3), pressure * np.ones(3))
+            else:
+                pressure = np.append(pressure * np.ones(3), 3 * [None])
         else:
             if len(pressure) > 6:
                 raise ValueError("Pressure can have a maximum of 6 values, (x, y, z, xy, xz, and yz), but got " +

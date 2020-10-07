@@ -13,6 +13,7 @@ class TestDatamining(unittest.TestCase):
     def setUpClass(cls):
         cls.execution_path = os.path.dirname(os.path.abspath(__file__))
         cls.project = Project(os.path.join(cls.execution_path, "table"))
+        cls.project.create_table()
 
     @classmethod
     def tearDownClass(cls):
@@ -42,7 +43,7 @@ class TestDatamining(unittest.TestCase):
             ),
             recursive=False,
         )
-        table = self.project.create_table()
+        table = self.project.create_table(delete_existing_job=True)
         table.filter_function = filter_job_type
         add_funtions(table)
         table.run()

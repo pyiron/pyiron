@@ -108,6 +108,15 @@ class TestSphinx(unittest.TestCase):
         self.assertEqual(len(self.sphinx.id_pyi_to_spx), len(self.sphinx.structure))
         self.assertEqual(len(self.sphinx.id_spx_to_pyi), len(self.sphinx.structure))
 
+    def test_potential(self):
+        self.assertEqual([], self.sphinx.list_potentials())
+        self.assertEqual(['Fe_GGA'], self.sphinx_2_3.list_potentials())
+        self.assertEqual(['Fe_GGA'], self.sphinx_2_5.list_potentials())
+        self.sphinx_2_3.potential.Fe = 'Fe_GGA'
+        self.sphinx_2_5.potential["Fe"] = 'Fe_GGA'
+        self.assertEqual('Fe_GGA', list(self.sphinx_2_3.potential.to_dict().values())[0])
+        self.assertEqual('Fe_GGA', list(self.sphinx_2_5.potential.to_dict().values())[0])
+
     def test_write_input(self):
 
         file_content = [
