@@ -6,6 +6,7 @@ import os
 import unittest
 from pyiron.project import Project
 
+
 class TestSQS(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
