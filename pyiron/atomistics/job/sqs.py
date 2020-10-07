@@ -11,6 +11,9 @@ from pymatgen.io.ase import AseAtomsAdaptor
 try:
     from sqsgenerator.core.sqs import ParallelSqsIterator
 except ImportError:
+    # sqsgenerator is not available for all systems
+    # This is no reason to have pyiron fail catestrophically, it just means this job class is unavailable.
+    # Pass silently for now, but throw an exception if the user tries to instantiate this job.
     pass
 
 __author__ = "Jan Janssen"
