@@ -65,6 +65,7 @@ class Outcar(object):
         n_elect = self.get_nelect(filename=filename, lines=lines)
         e_fermi_list, vbm_list, cbm_list = self.get_band_properties(filename=filename, lines=lines)
         elastic_constants = self.get_elastic_constants(filename=filename, lines=lines)
+        
         try:
             irreducible_kpoints = self.get_irreducible_kpoints(
                 filename=filename, lines=lines
@@ -829,7 +830,8 @@ class Outcar(object):
             elastic_constants = []
             for line in lines[start_index:end_index]:
                 elastic_constants.append(line.split()[1:])
-            return np.array(elastic_constants) / 10 #kBar in GPa
+            elastic_GPa = np.array(elastic_constants, dtype=float) / 10  
+            return elastic_GPa
      
 
     @staticmethod
