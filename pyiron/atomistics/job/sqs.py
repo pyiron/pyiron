@@ -7,6 +7,7 @@ from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 from pyiron_base import InputList, GenericParameters
 from pyiron.atomistics.structure.atoms import Atoms, ase_to_pyiron, pyiron_to_ase
 from pymatgen.io.ase import AseAtomsAdaptor
+import numpy as np
 
 try:
     from sqsgenerator.core.sqs import ParallelSqsIterator
@@ -104,6 +105,14 @@ class SQSJob(AtomisticGenericJob):
         """
         if ParallelSqsIterator is None:
             raise NameError("SQSJob relies on sqsgenerator.core.sqs.ParallelSqsIterator, but this is unavailable.")
+
+    def validate_ready_to_run(self):
+        super(SQSJob, self).validate_ready_to_run()
+        if len(self.input.mole_fractions)==0:
+            chem = np.unique(self.structure.get_chemical_symbols(), return_counts=True)
+            self.input.mole_fractions = dict(zip(chem[0], chem[1]/np.sum(chem[1])))
+        if len(self.input.mole_fractions)==1:
+            raise ValueError('There must be at least two chemical elements')
 
     @property
     def list_of_structures(self):
