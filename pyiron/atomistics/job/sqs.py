@@ -15,7 +15,7 @@ except ImportError:
     # sqsgenerator is not available for all systems
     # This is no reason to have pyiron fail catestrophically, it just means this job class is unavailable.
     # Pass silently for now, but throw an exception if the user tries to instantiate this job.
-    ParallelSqsIterator
+    ParallelSqsIterator = None
 
 __author__ = "Jan Janssen"
 __copyright__ = (
@@ -50,6 +50,15 @@ def get_sqs_structures(structure, mole_fractions, weights=None, objective=0.0, i
         iterations=iterations, output_structures=output_structures, objective=objective
     )
     return [pymatgen_to_pyiron(s) for s in structures], decmp, iter_, cycle_time
+
+
+def _fail_if_imports_missing():
+    """
+    Just a temporary measure as long as any imports are wrapped in a try/pass instead of being on the dependencies
+    list.
+    """
+    if ParallelSqsIterator is None:
+        raise ImportError("SQSJob relies on sqsgenerator.core.sqs.ParallelSqsIterator, but this is unavailable.")
 
 
 class SQSJob(AtomisticGenericJob):
@@ -95,7 +104,7 @@ class SQSJob(AtomisticGenericJob):
         self.input.n_output_structures = 1
         self._python_only_job = True
         self._lst_of_struct = []
-        self._fail_early_if_imports_missing()
+        _fail_if_imports_missing()
         self.__hdf_version__ = "0.2.0"
 
     def _fail_early_if_imports_missing(self):

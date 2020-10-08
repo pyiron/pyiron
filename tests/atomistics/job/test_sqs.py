@@ -22,9 +22,13 @@ class TestSQS(unittest.TestCase):
 
     def test_run(self):
         try:  # Only test if the machine has access to sqsgenerator -- at time of writing Windows doesn't
+<<<<<<< HEAD
             from sqsgenerator.core.sqs import ParallelSqsIterator
 
             job = self.project.create_job(
+=======
+            self.project.create_job(
+>>>>>>> 5ac6055c75920d283767203557391750b13aedad
                 'SQSJob', "job_test"
             )
             structure = CrystalStructure("Al", bravais_basis="fcc", lattice_constant=4)
