@@ -64,6 +64,7 @@ class Outcar(object):
         stresses = self.get_stresses(filename=filename, si_unit=False, lines=lines)
         n_elect = self.get_nelect(filename=filename, lines=lines)
         e_fermi_list, vbm_list, cbm_list = self.get_band_properties(filename=filename, lines=lines)
+        elastic_constants = self.get_elastic_constants(filename=filename, lines=lines)
         try:
             irreducible_kpoints = self.get_irreducible_kpoints(
                 filename=filename, lines=lines
@@ -98,6 +99,7 @@ class Outcar(object):
         self.parse_dict["e_fermi_list"] = e_fermi_list
         self.parse_dict["vbm_list"] = vbm_list
         self.parse_dict["cbm_list"] = cbm_list
+        self.parse_dict["elastic_constants"] = elastic_constants
 
         try:
             self.parse_dict["pressures"] = (
@@ -814,6 +816,21 @@ class Outcar(object):
                 cbm_level_list.append(band_energy[np.abs(band_occ) < 1e-6][0])
                 vbm_level_list.append(band_energy[np.abs(band_occ) >= 1e-6][-1])
         return np.array(fermi_level_list), np.array(vbm_level_list), np.array(cbm_level_list)
+
+    @staticmethod
+    def get_elastic_constants(filename="OUTCAR", lines=None):
+        lines = _get_lines_from_file(filename=filename, lines=lines)
+        trigger_indices = _get_trigger(lines=lines, filename=filename, trigger="TOTAL ELASTIC MODULI (kBar)", return_lines=False)
+        if len(trigger_indices) != 1:
+            return None
+        else:
+            start_index = trigger_indices[0] + 3
+            end_index = start_index + 6
+            elastic_constants = []
+            for line in lines[start_index:end_index]:
+                elastic_constants.append(line.split()[1:])
+            return np.array(elastic_constants) / 10 #kBar in GPa
+     
 
     @staticmethod
     def _get_positions_and_forces_parser(
