@@ -1911,7 +1911,8 @@ class Output:
         if outcar_working:
             log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
-            log_dict["elastic_constants"] = self.outcar.parse_dict["elastic_constants"]
+            if self.outcar.parse_dict["elastic_constants"] != None:
+                log_dict["elastic_constants"] = self.outcar.parse_dict["elastic_constants"]
             self.generic_output.dft_log_dict["n_elect"] = self.outcar.parse_dict[
                 "n_elect"
             ]
