@@ -66,7 +66,7 @@ class SQSJob(AtomisticGenericJob):
     Produces special quasirandom structures designed to duplicate truly random chemical distributions as well as
     possible while using finite periodic cells.
 
-    A pyiron wrapper for the [SQS code of Dominik Gehringer](https://git.unileoben.ac.at/p1655622/sqsgenerator).
+    A pyiron wrapper for the [SQS code of Dominik Gehringer](https://github.com/dgehringer/sqsgenerator).
 
     'Structural models used in calculations of properties of substitutionally random $A_{1-x}B_x$ alloys are usually
     constructed by randomly occupying each of the N sites of a periodic cell by A or B. We show that it is possible to
