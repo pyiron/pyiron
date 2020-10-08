@@ -21,8 +21,6 @@ class TestSQS(unittest.TestCase):
 
     def test_run(self):
         try:  # Only test if the machine has access to sqsgenerator -- at time of writing Windows doesn't
-            from sqsgenerator.core.sqs import ParallelSqsIterator
-
             self.project.create_job(
                 'SQSJob', "job_test"
             )

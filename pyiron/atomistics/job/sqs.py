@@ -57,7 +57,7 @@ def _fail_if_imports_missing():
     list.
     """
     if ParallelSqsIterator is None:
-        raise NameError("SQSJob relies on sqsgenerator.core.sqs.ParallelSqsIterator, but this is unavailable.")
+        raise ImportError("SQSJob relies on sqsgenerator.core.sqs.ParallelSqsIterator, but this is unavailable.")
 
 
 class SQSJob(AtomisticGenericJob):
