@@ -91,6 +91,22 @@ class SQSJob(AtomisticGenericJob):
             random shuffling procedure. (Default is 1e6)
         - n_output_structures (int): How many different SQS structures to return (in decreasing special
             quasirandomness). (Default is 1.)
+
+    Example:
+        Case I: Get SQS for a given mole fraction:
+
+        >>> job = SQSJob(job_name='sqs')
+        >>> job.structure = structure
+        >>> job.input.mole_fractions = {'Al': 0.8, 'Ni':0.2}
+        >>> job.run()
+        
+        Case II: Get SQS for a given structure already containing at least 2 elements:
+
+        >>> job = SQSJob(job_name='sqs')
+        >>> job.structure = structure
+        >>> job.run()
+
+        In Case II, if the mole fractions will be overwritten if you specify the values (like in Case I)
     """
 
     def __init__(self, project, job_name):
