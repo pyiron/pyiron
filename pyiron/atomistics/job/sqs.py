@@ -4,7 +4,7 @@
 
 from multiprocessing import cpu_count
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
-from pyiron_base import InputList, GenericParameters
+from pyiron_base import InputList, GenericParameters, Settings
 from pyiron.atomistics.structure.atoms import Atoms, ase_to_pyiron, pyiron_to_ase
 from pymatgen.io.ase import AseAtomsAdaptor
 import numpy as np
@@ -27,6 +27,9 @@ __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
 __status__ = "development"
 __date__ = "Aug 14, 2020"
+
+
+s = Settings()
 
 
 def pyiron_to_pymatgen(structure):
@@ -109,6 +112,22 @@ class SQSJob(AtomisticGenericJob):
         In Case II, if the mole fractions will be overwritten if you specify the values (like in Case I)
     """
 
+    publication = {
+        'sqs': {
+            "title": "Special quasirandom structures",
+            "author": ["Zunger, A.", "Wei, S.-H.", "Ferreira, L.G.", "Bernard, J.E."],
+            "journal": "Phys. Rev. Lett.",
+            "volume": "65",
+            "issue": "3",
+            "pages": "353",
+            "numpages": "0",
+            "month": "July",
+            "publisher": "American Physical Society",
+            "doi": "10.1103/PhysRevLett.65.353",
+            "url": "https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.65.353",
+        }
+    }
+
     def __init__(self, project, job_name):
         super(SQSJob, self).__init__(project, job_name)
         # self.input = InputList(table_name='input')
@@ -122,6 +141,7 @@ class SQSJob(AtomisticGenericJob):
         self._lst_of_struct = []
         _fail_if_imports_missing()
         self.__hdf_version__ = "0.2.0"
+        s.publication_add(self.publication)
 
     def validate_ready_to_run(self):
         super(SQSJob, self).validate_ready_to_run()
