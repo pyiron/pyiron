@@ -147,7 +147,7 @@ To add your own executables or parameter files it is necessary to initialise a u
     PROJECT_PATHS = ~/pyiron/projects
     RESOURCE_PATHS = ~/pyiron/resources
     
-In this case pyiron can only execute calculations in the :code:`~/pyiron/projects` directory. In particular pyiron users can not delete files outside this directory. Next to the projects directory :code:`~/pyiron/projects` we create a resource directory :code:`~/pyiron/resources` to store links to the executables and the corresponding parameter files. Both directories have to be created by the user and in case no :code:`FILE` option is defined pyiron by default creates an `SQLite <https://www.sqlite.org>`_ database in the resource directory. Example resource directories are available on `Github <https://github.com/pyiron/pyiron-resources/tree/master>`_ . Here we just discuss the LAMMPS resource directory as one example.
+In this case pyiron can only execute calculations in the :code:`~/pyiron/projects` directory. pyiron can’t delete files outside this directory. Next to the projects directory :code:`~/pyiron/projects` we create a resource directory :code:`~/pyiron/resources` to store links to the executables and the corresponding parameter files. Both directories have to be created by the user and in case no :code:`FILE` option is defined pyiron by default creates an `SQLite <https://www.sqlite.org>`_ database in the resource directory. Example resource directories are available on `Github <https://github.com/pyiron/pyiron-resources/tree/master>`_ . Here we just discuss the LAMMPS resource directory as one example.
 
 .. code-block:: bash
 
