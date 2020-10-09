@@ -206,10 +206,13 @@ class Neighbors(object):
             # in each direction.
         """
 
-        dist = np.linalg.norm(self.vecs-np.array(vector), axis=-1)
+        z = np.zeros(len(self._ref_structure)*3).reshape(-1, 3)
+        v = np.append(z[:,np.newaxis,:], self.vecs, axis=1)
+        dist = np.linalg.norm(v-np.array(vector), axis=-1)
+        indices = np.append(np.arange(len(self._ref_structure))[:,np.newaxis], self.indices, axis=1)
         if deviation:
-            return self.indices[np.arange(len(dist)), np.argmin(dist, axis=-1)], np.min(dist, axis=-1)
-        return self.indices[np.arange(len(dist)), np.argmin(dist, axis=-1)]
+            return indices[np.arange(len(dist)), np.argmin(dist, axis=-1)], np.min(dist, axis=-1)
+        return indices[np.arange(len(dist)), np.argmin(dist, axis=-1)]
 
     def cluster_by_vecs(self, bandwidth=None, n_jobs=None, max_iter=300):
         """
