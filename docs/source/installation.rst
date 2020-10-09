@@ -52,7 +52,7 @@ LAMMPS (Molecular Dynamics with Interatomic Potentials)
 
 .. code-block:: bash
 
-    # serial + parallel, for linux systems
+    # serial + parallel, for linux and mac systems
     conda install -c conda-forge lammps
 
     # only serial (no python bindings), for native windows
