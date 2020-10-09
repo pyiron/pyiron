@@ -45,10 +45,10 @@ ENV OMPI_MCA_rmaps_base_oversubscribe yes
 ENV OMPI_MCA_btl_vader_single_copy_mechanism none
 
 # Configure Miniconda
-ENV MINICONDA_VER 4.8.2
-ENV MINICONDA Miniconda3-py37_${MINICONDA_VER}-Linux-x86_64.sh
+ENV MINICONDA_VER 4.8.3
+ENV MINICONDA Miniconda3-py38_${MINICONDA_VER}-Linux-x86_64.sh
 ENV MINICONDA_URL https://repo.continuum.io/miniconda/${MINICONDA}
-ENV MINICONDA_MD5_SUM 87e77f097f6ebb5127c77662dfc3165e
+ENV MINICONDA_MD5_SUM d63adf39f2c220950a063e0529d4ff74
 
 COPY . ${HOME}
 
