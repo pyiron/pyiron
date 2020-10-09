@@ -700,11 +700,9 @@ class TestAtoms(unittest.TestCase):
                       scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)],
                       cell=np.identity(3),
                       pbc=True)
-        id_lst, dist = basis.find_neighbors_by_vector([0, 0, 1],
-                                                      deviation=True,
-                                                      num_neighbors=14)
+        id_lst = basis.find_neighbors_by_vector([0, 0, 1],
+                                                num_neighbors=14)
         self.assertEqual(len(np.unique(np.unique(id_lst, return_counts=True)[1])), 1)
-        self.assertLess(np.linalg.norm(dist), 1.0e-4)
 
     def test_get_neighborhood(self):
         basis = Atoms(

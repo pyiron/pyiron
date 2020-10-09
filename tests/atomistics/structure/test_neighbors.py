@@ -124,5 +124,18 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(np.array_equal(np.sort(bonds[0]['Al'][0]),
                         np.sort(neigh.indices[0, neigh.shells[0]==1])))
 
+    def test_find_neighbors_by_vector(self):
+        basis = Atoms(symbols=2*["Fe"],
+                      scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)],
+                      cell=np.identity(3),
+                      pbc=True)
+        neigh = basis.get_neighbors(num_neighbors=14)
+        id_lst, dist = neigh.find_neighbors_by_vector([0, 0, 1],
+                                                      deviation=True)
+        self.assertEqual(len(np.unique(np.unique(id_lst, return_counts=True)[1])), 1)
+        self.assertLess(np.linalg.norm(dist), 1.0e-4)
+        id_lst = neigh.find_neighbors_by_vector([0, 0, 0])
+        self.assertTrue(np.array_equal(id_lst, np.arange(len(basis))))
+
 if __name__ == "__main__":
     unittest.main()
