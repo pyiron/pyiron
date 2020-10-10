@@ -95,8 +95,6 @@ Read more about `citing individual modules/ plugins of pyiron and the implemente
    source/about.rst
    source/installation.rst
    source/examples.rst
-   |Team|
-   |Collaborators|
    Team <https://pyiron.org/team/>
    Collaborators <https://pyiron.org/collaborators/>
    source/commandline.rst
@@ -107,12 +105,3 @@ Read more about `citing individual modules/ plugins of pyiron and the implemente
    Module index <https://pyiron.readthedocs.io/en/latest/py-modindex.html>
    Imprint <https://www.mpie.de/impressum>
    Data protection <https://www.mpie.de/3392182/data-protection>
-
-
-.. |Collaborators| raw:: html
-
-   <a href="https://pyiron.org/collaborators/" target="_blank">Collaborators</a>
-   
-.. |Team| raw:: html
-
-   <a href="https://pyiron.org/team/" target="_blank">Team</a>
