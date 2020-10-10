@@ -67,33 +67,6 @@ Please contact us if you are interested in using pyiron:
 
 Please also check out the `pyiron contributing guidelines <source/developers.html>`_
 
-****
-News
-**** 
-* **22nd May 2020:** pyiron 0.2.15 released. By now pyiron was downloaded over 20000 times on `conda-forge <https://anaconda.org/conda-forge/pyiron/>`_ and gained attention with close to 100 stars on `github <https://github.com/pyiron/pyiron/stargazers/>`_.
-* **8th May 2020:** The tutorials of the 1st virtual pyiron workshop are now available `online <https://pyiron.github.io/pyiron-virtual-workshop-2020/>`_. 
-* **23rd March 2020:** Cancellation of the `1st pyiron workshop <http://potentials.rub.de>`_ due to COVID-19.
-* **20th December 2019:** Announcement of the `1st pyiron workshop <http://potentials.rub.de>`_ in Bochum (Germany) from the 31st of March to the 2nd of April 2020. 
-* **09th November 2019:** pyiron was downloaded over 10000 times on `conda-forge <https://anaconda.org/conda-forge/pyiron/>`_ and gained attention with over 50 stars on `github <https://github.com/pyiron/pyiron/stargazers/>`_.
-* **10th October 2019:** pyiron 0.2.9 released.
-* **20th June 2019:** pyiron was downloaded over 5000 times on `conda-forge <https://anaconda.org/conda-forge/pyiron/>`_ and 70% of our code are `covered with unit tests <https://coveralls.io/github/pyiron/pyiron?branch=master>`_.
-* **10th May 2019:** pyiron documentation hosted on `readthedocs.org <https://pyiron.readthedocs.io>`_.
-* **24th March 2019:** pyiron 0.2.2 released.
-* **15th March 2019:** `pyiron paper available as open access <https://doi.org/10.1016/j.commatsci.2018.07.043>`_ .
-* **20th January 2019:** pyiron 0.2.1 released.
-* **15th December 2019:** pyiron was downloaded over 2000 times on `conda-forge <https://anaconda.org/conda-forge/pyiron/>`_ .
-* **21st November 2018:** pyiron 0.2.0 released.
-* **2nd August 2018:** pyiron 0.1.8 released.
-* **21st July 2018:** pyiron paper accepted.
-* **20th July 2018:** pyiron 0.1.7 released.
-* **25th May 2018:** pyiron 0.1.5 released.
-* **11th May 2018:** pyiron 0.1.3 published on `conda-forge <https://anaconda.org/conda-forge/pyiron/>`_ install pyiron using: :code:`conda install -c conda-forge pyiron`
-* **07th May 2018:** pyiron paper submitted
-* **05th April 2018:** test pyiron on mybinder.org (beta)
-* **27th March 2018:** pyiron is available on `anaconda.org <https://anaconda.org/pyiron/>`_ install pyiron using: :code:`conda install -c pyiron -c conda-forge pyiron`
-* **27th February 2018:** pyiron is available on `pypi.org <https://pypi.org/user/pyiron/>`_ install pyiron using: :code:`pip install pyiron`
-* **05th December 2017:** The pyiron website goes online.
-
 ******
 Citing
 ******
@@ -122,8 +95,8 @@ Read more about `citing individual modules/ plugins of pyiron and the implemente
    source/about.rst
    source/installation.rst
    source/examples.rst
-   source/team.rst
-   source/software.rst
+   Team <https://pyiron.org/team/>
+   Collaborators <https://pyiron.org/collaborators/>
    source/commandline.rst
    source/citation.rst
    source/faq.rst
