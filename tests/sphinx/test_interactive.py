@@ -67,14 +67,6 @@ class TestSphinx(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             self.sphinx.interactive_cells_setter(np.eye(3))
 
-    def test_coarse_run(self):
-        self.assertFalse(self.sphinx.coarse_run)
-        with self.assertRaises(ValueError) as c:
-            self.sphinx.coarse_run = 1
-            self.assertTrue('boolean' in c.exception)
-        self.sphinx.coarse_run = True
-        self.assertTrue(self.sphinx.coarse_run)
-
     def test_interactive_pipe_write(self):
         with self.assertRaises(TypeError) as c:
             self.sphinx._interactive_pipe_write(self.sphinx)
