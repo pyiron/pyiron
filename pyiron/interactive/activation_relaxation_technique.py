@@ -126,7 +126,6 @@ class ActivationRelaxationTechnique(InteractiveWrapper):
         self.status.collect = True
         if self.ref_job.server.run_mode.interactive:
             self.ref_job.interactive_close()
-        self.project.db.item_update(self._runtime(), self.job_id)
         self.status.finished = True
 
 
