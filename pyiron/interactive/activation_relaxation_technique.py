@@ -28,8 +28,6 @@ class ART(object):
             raise ValueError('gamma must be a positive float')
         if dEdf<0:
             raise ValueError('dEdf must be a positive float')
-        if not isinstance(fix_layer, bool):
-            raise ValueError('fix_layer must be a boolean')
         if fix_layer and non_art_id is not None:
             raise ValueError('fix_layer and non_art_id cannot be set at the same time')
         self.art_id = art_id
