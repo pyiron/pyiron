@@ -45,12 +45,10 @@ class ART(object):
         value = value / np.linalg.norm(value)
         return np.outer(value, value)
 
-    def get_forces(self, f_in, gamma=None):
+    def get_forces(self, f_in):
         f = np.array(f_in)
         if len(f.shape)==2:
             f = np.array([f])
-        if gamma is not None:
-            self.gamma = gamma
         if self.non_art_id is None:
             self.non_art_id = np.arange(len(f[0]))!=self.art_id
         f_art = (1.0+self.gamma)*np.einsum('ij,nj->ni', self._R, f[:, self.art_id])
