@@ -61,9 +61,9 @@ class ART(object):
         f[:,self.art_id] -= f_art
         return f.reshape(np.array(f_in).shape)
 
-class ARTInteractive(InteractiveWrapper):
+class ActivationRelaxationTechnique(InteractiveWrapper):
     def __init__(self, project, job_name):
-        super(ARTInteractive, self).__init__(project, job_name)
+        super(ActivationRelaxationTechnique, self).__init__(project, job_name)
         self.__name__ = "ActivationRelaxationTechnique"
         self.input = InputList(table_name='custom_dict')
         self.input.gamma = 0.1
