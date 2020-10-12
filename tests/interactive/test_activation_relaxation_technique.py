@@ -16,12 +16,13 @@ class TestARTInteractive(unittest.TestCase):
                            scaled_positions=np.random.random(24).reshape(-1, 3),
                            cell=2.6 * np.eye(3))
         job = cls.project.create_job(cls.project.job_type.AtomisticExampleJob, "job_single")
+        job.server.run_mode.interactive = True
         job.structure = cls.basis
-        cls.artint = cls.project.create_job('ActivationRelaxationTechnique', 'job_art')
+        cls.artint = cls.project.create_job('ARTInteractive', 'job_art')
         cls.artint.ref_job = job
         cls.artint.input.art_id = 0
         cls.artint.input.direction = np.ones(3)
-        # cls.artint.run() # somehow run doesn't work
+        cls.artint.run()
 
     @classmethod
     def tearDownClass(cls):
@@ -41,6 +42,25 @@ class TestARTInteractive(unittest.TestCase):
         self.assertLessEqual(f_in[0, 0]*f_out[0, 0], 0)
         self.assertGreaterEqual(f_in[0, 1]*f_out[0, 1], 0)
         self.assertGreaterEqual(f_in[0, 2]*f_out[0, 2], 0)
+        self.art.fix_layer = True
+        f_out = self.art.get_forces(f_in)
+        self.assertAlmostEqual(np.sum(f_out[1:,0]), 0)
+        self.art.fix_layer = False
+
+    def test_forces(self):
+        self.assertEqual(self.artint.output.forces.shape, (1,8,3))
+
+    def test_errors(self):
+        with self.assertRaises(ValueError):
+            ART(art_id = -1, direction = [1, 0, 0])
+        with self.assertRaises(ValueError):
+            ART(art_id = 0, direction = [0, 0, 0])
+        with self.assertRaises(ValueError):
+            ART(art_id = 0, direction = [1, 0, 0], gamma=-0.1)
+        with self.assertRaises(ValueError):
+            ART(art_id = 0, direction = [1, 0, 0], dEdf=-0.1)
+        with self.assertRaises(ValueError):
+            ART(art_id = 0, direction = [1, 0, 0], fix_layer=True, non_art_id=[0])
 
 
 if __name__ == '__main__':

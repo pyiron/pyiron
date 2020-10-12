@@ -35,6 +35,8 @@ class ART(object):
         self.gamma = gamma
         self.dEdf = dEdf
         self.non_art_id = non_art_id
+        if non_art_id is not None:
+            self.non_art_id = np.array([non_art_id]).flatten()
         self.fix_layer = fix_layer
 
     @property
@@ -59,10 +61,10 @@ class ART(object):
         f[:,self.art_id] -= f_art
         return f.reshape(np.array(f_in).shape)
 
-class ActivationRelaxationTechnique(InteractiveWrapper):
+class ARTInteractive(InteractiveWrapper):
     def __init__(self, project, job_name):
-        super(ActivationRelaxationTechnique, self).__init__(project, job_name)
-        self.__name__ = "ActivationRelaxationTechnique"
+        super(ARTInteractive, self).__init__(project, job_name)
+        self.__name__ = "ARTInteractive"
         self.input = InputList(table_name='custom_dict')
         self.input.gamma = 0.1
         self.input.dEdf = 1.0e-4
