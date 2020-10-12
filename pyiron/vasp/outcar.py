@@ -65,7 +65,6 @@ class Outcar(object):
         n_elect = self.get_nelect(filename=filename, lines=lines)
         e_fermi_list, vbm_list, cbm_list = self.get_band_properties(filename=filename, lines=lines)
         elastic_constants = self.get_elastic_constants(filename=filename, lines=lines)
-        
         try:
             irreducible_kpoints = self.get_irreducible_kpoints(
                 filename=filename, lines=lines
@@ -101,7 +100,6 @@ class Outcar(object):
         self.parse_dict["vbm_list"] = vbm_list
         self.parse_dict["cbm_list"] = cbm_list
         self.parse_dict["elastic_constants"] = elastic_constants
-
         try:
             self.parse_dict["pressures"] = (
                 np.average(stresses[:, 0:3], axis=1) * KBAR_TO_EVA
@@ -833,7 +831,6 @@ class Outcar(object):
             elastic_GPa = np.array(elastic_constants, dtype=float) / 10  
             return elastic_GPa
      
-
     @staticmethod
     def _get_positions_and_forces_parser(
         lines, trigger_indices, n_atoms, pos_flag=True, force_flag=True
