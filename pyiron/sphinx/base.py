@@ -377,7 +377,6 @@ class SphinxBase(GenericDFTJob):
         self.input.WriteWaves = True
         self.input.KJxc = False
         self.input.SaveMemory = True
-        self.input.CoarseRun = False
         self.input.rhoMixing = 1.0
         self.input.spinMixing = 1.0
         self.input.CheckOverlap = True
@@ -1237,8 +1236,6 @@ class SphinxBase(GenericDFTJob):
                 f"{self.job_name} has not been assigned " +\
                 "a structure. Please load one first (e.g. " +\
                 f"{self.job_name}.structure = ...)")
-
-        self._coarse_run = self.input["CoarseRun"]
 
         if self.input["EmptyStates"] == "auto":
             if self._spin_enabled:
