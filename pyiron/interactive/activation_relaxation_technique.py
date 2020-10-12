@@ -108,8 +108,6 @@ class ActivationRelaxationTechnique(InteractiveWrapper):
         self._logger.debug('art status: '+ str(self.status))
 
     def interactive_forces_getter(self):
-        if self.art is None:
-            raise ValueError('ART not initialized')
         return self.art.get_forces(self.ref_job.output.forces[-1])
 
     def validate_ready_to_run(self):
