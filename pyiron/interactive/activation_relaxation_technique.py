@@ -117,8 +117,7 @@ class ActivationRelaxationTechnique(InteractiveWrapper):
             Checks whether parameters are set appropriately. It does not mean the simulation won't run even if it returns False
         """
         try:
-            self.input.art_id
-            self.input.direction
+            self.art
         except KeyError:
             raise ValueError('id and direction not set')
 
