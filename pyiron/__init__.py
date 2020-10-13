@@ -8,6 +8,7 @@ from pyiron_base import Notebook, install_dialog, JOB_CLASS_DICT
 
 
 # Make classes available for new pyiron version
+JOB_CLASS_DICT["ARTInteractive"] = "pyiron.interactive.activation_relaxation_technique"
 JOB_CLASS_DICT["Atoms"] = "pyiron.atomistics.structure.atoms"
 JOB_CLASS_DICT["AtomisticExampleJob"] = "pyiron.testing.randomatomistic"
 JOB_CLASS_DICT["ConvEncutParallel"] = "pyiron.dft.master.convergence_encut_parallel"
