@@ -19,21 +19,18 @@ s = Settings()
 
 
 class ART(object):
-    def __init__(self, art_id, direction, gamma=0.1, dEdf=1.0e-4, fix_layer=False, non_art_id=None):
+    def __init__(self, art_id, direction, gamma=0.1, fix_layer=False, non_art_id=None):
         if int(art_id)!=art_id or art_id<0:
             raise ValueError('art_id must be a posive integer')
         if len(direction)!=3 or np.isclose(np.linalg.norm(direction), 0):
             raise ValueError('direction must be a finite 3d vector')
         if gamma<0:
             raise ValueError('gamma must be a positive float')
-        if dEdf<0:
-            raise ValueError('dEdf must be a positive float')
         if fix_layer and non_art_id is not None:
             raise ValueError('fix_layer and non_art_id cannot be set at the same time')
         self.art_id = art_id
         self.direction = direction
         self.gamma = gamma
-        self.dEdf = dEdf
         self.non_art_id = non_art_id
         if non_art_id is not None:
             self.non_art_id = np.array([non_art_id]).flatten()
@@ -65,7 +62,6 @@ class ARTInteractive(InteractiveWrapper):
         self.__name__ = "ARTInteractive"
         self.input = InputList(table_name='custom_dict')
         self.input.gamma = 0.1
-        self.input.dEdf = 1.0e-4
         self.input.fix_layer = False
         self.input.non_art_id = None
         self.output = ARTIntOutput(job=self)
@@ -85,7 +81,6 @@ class ARTInteractive(InteractiveWrapper):
         if self._art is None:
             self._art = ART(art_id=self.input.art_id,
                             direction=self.input.direction,
-                            dEdf=self.input.dEdf,
                             gamma=self.input.gamma,
                             fix_layer=self.input.fix_layer,
                             non_art_id=self.input.non_art_id)
@@ -129,12 +124,3 @@ class ARTIntOutput(ReferenceJobOutput):
     def forces(self):
         return self._job.art.get_forces(self._job.ref_job.output.forces)
 
-    @property
-    def energy_pot(self):
-        return (self._job.ref_job.output.energy_pot
-                + self._job.input['dEdf']*np.max(np.linalg.norm(self._job.ref_job.output.forces[-1], axis=-1)))
-
-    @property
-    def energy_tot(self):
-        return (self._job.ref_job.output.energy_tot
-                + self._job.input['dEdf']*np.max(np.linalg.norm(self._job.ref_job.output.forces[-1], axis=-1)))
