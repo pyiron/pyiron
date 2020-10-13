@@ -52,11 +52,56 @@ class ART(object):
         if self.fix_layer:
             f[:,self.non_art_id] = np.einsum('nmj,ij->nmi', f[:,self.non_art_id], np.identity(3)-self._R)
         else:
-            f[:,self.non_art_id] += f_art[:,np.newaxis,:] / np.sum(self.non_art_id)
+            f[:,self.non_art_id] += f_art[:,np.newaxis,:] / np.sum(self.non_art_id!=False)
         f[:,self.art_id] -= f_art
         return f.reshape(np.array(f_in).shape)
 
 class ARTInteractive(InteractiveWrapper):
+    """
+    Apply an artificial force according to the Activation Relaxation Technique (ART)
+    DOI:https://doi.org/10.1103/PhysRevE.57.2419
+
+    The applied force f_art is calculated from the original force f by:
+
+    f_art = f-(1+gamma)*np.dot(n,f)*n
+
+    where gamma is a parameter to be determined in the input (default: 0.1) and n is
+    the direction along which the force is reversed (3d-vector). In order to homogenize
+    the total force in the system, f_art is distributed among atoms specified by
+    non_art_id (default: all atoms), or if fix_layer is defined, the forces acting on
+    all the other atoms along the direction n are cancelled. Note: Since the energy
+    is not compatible with the forces anymore, structure optimization methods which
+    rely on the energy variation (such as conjugate gradient) cannot/should not be used.
+
+    Input:
+        - art_id (int): atom id on which ART force is applied
+        - direction (list/numpy.ndarray): direction along which force is reversed
+        - gamma (float): prefactor for force inversion. v.s.
+        - non_art_id (list/numpy.ndarray): list of atoms to be used for the force cancellation
+        - fix_layer (bool): whether or not to fix all other atoms on the layer perpendicular
+            to the direction along which force is reversed.
+
+    Example:
+
+        # Structure creation
+        >>> vacancy_position = structure.positions[0]
+        >>> del structure[0]
+        >>> neighbors = structure.get_neighborhood(vacancy_position)
+        >>> direction = neighbors.vecs[0]
+        >>> art_id = neighbors.indices[0]
+        >>> structure.positions[art_id] -= 0.5*direction
+
+        # Job creation
+        >>> some_atomistic_job.structure = structure
+        >>> art = ARTInteractive(job_name='art')
+        >>> art.ref_job = some_atomistic_job
+        >>> art.input.art_id = art_id
+        >>> art.input.direction = direction
+        >>> some_minimizer.ref_job = art
+        >>> some_minimizer.run()
+
+        
+    """
     def __init__(self, project, job_name):
         super(ARTInteractive, self).__init__(project, job_name)
         self.__name__ = "ARTInteractive"
@@ -64,6 +109,8 @@ class ARTInteractive(InteractiveWrapper):
         self.input.gamma = 0.1
         self.input.fix_layer = False
         self.input.non_art_id = None
+        self.input.art_id = None
+        self.input.direction = None
         self.output = ARTIntOutput(job=self)
         self.server.run_mode.interactive = True
         self._interactive_interface = None
@@ -102,12 +149,10 @@ class ARTInteractive(InteractiveWrapper):
 
     def validate_ready_to_run(self):
         """
-            Checks whether parameters are set appropriately. It does not mean the simulation won't run even if it returns False
+            check whether art_id and direction are set
         """
-        try:
-            self.art
-        except KeyError:
-            raise ValueError('id and direction not set')
+        if self.input.art_id is None or self.input.direction is None:
+            raise AssertionError('art_id and/or direction not set')
 
     def interactive_close(self):
         self.status.collect = True

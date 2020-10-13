@@ -45,6 +45,8 @@ class TestARTInteractive(unittest.TestCase):
         job.structure = basis
         artint = self.project.create_job('ARTInteractive', 'job_art')
         artint.ref_job = job
+        with self.assertRaises(AssertionError):
+            artint.validate_ready_to_run()
         artint.input.art_id = 0
         artint.input.direction = np.ones(3)
         artint.run()
@@ -59,8 +61,6 @@ class TestARTInteractive(unittest.TestCase):
             ART(art_id = 0, direction = [0, 0, 0])
         with self.assertRaises(ValueError):
             ART(art_id = 0, direction = [1, 0, 0], gamma=-0.1)
-        with self.assertRaises(ValueError):
-            ART(art_id = 0, direction = [1, 0, 0], dEdf=-0.1)
         with self.assertRaises(ValueError):
             ART(art_id = 0, direction = [1, 0, 0], fix_layer=True, non_art_id=[0])
 
