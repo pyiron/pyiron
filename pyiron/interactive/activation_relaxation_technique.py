@@ -100,7 +100,7 @@ class ARTInteractive(InteractiveWrapper):
         >>> some_minimizer.ref_job = art
         >>> some_minimizer.run()
 
-        
+
     """
     def __init__(self, project, job_name):
         super(ARTInteractive, self).__init__(project, job_name)
