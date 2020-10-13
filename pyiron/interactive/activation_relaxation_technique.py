@@ -80,9 +80,6 @@ class ARTInteractive(InteractiveWrapper):
         """
         self.input.read_only = True
 
-    def write_input(self):
-        pass
-
     @property
     def art(self):
         if self._art is None:
