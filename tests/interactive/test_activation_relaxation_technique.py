@@ -12,17 +12,6 @@ class TestARTInteractive(unittest.TestCase):
         cls.art = ART(art_id = 0, direction = [1, 0, 0])
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
         cls.project = Project(os.path.join(cls.file_location, 'art'))
-        cls.basis = Atoms(elements=8*['Fe'],
-                           scaled_positions=np.random.random(24).reshape(-1, 3),
-                           cell=2.6 * np.eye(3))
-        job = cls.project.create_job(cls.project.job_type.AtomisticExampleJob, "job_single")
-        job.server.run_mode.interactive = True
-        job.structure = cls.basis
-        cls.artint = cls.project.create_job('ARTInteractive', 'job_art')
-        cls.artint.ref_job = job
-        cls.artint.input.art_id = 0
-        cls.artint.input.direction = np.ones(3)
-        cls.artint.run()
 
     @classmethod
     def tearDownClass(cls):
@@ -47,8 +36,21 @@ class TestARTInteractive(unittest.TestCase):
         self.assertAlmostEqual(np.sum(f_out[1:,0]), 0)
         self.art.fix_layer = False
 
-    def test_forces(self):
-        self.assertEqual(self.artint.output.forces.shape, (1,8,3))
+    def test_run(self):
+        basis = Atoms(elements=8*['Fe'],
+                      scaled_positions=np.random.random(24).reshape(-1, 3),
+                      cell=2.6 * np.eye(3))
+        job = self.project.create_job(self.project.job_type.AtomisticExampleJob, "job_single")
+        job.server.run_mode.interactive = True
+        job.structure = basis
+        artint = self.project.create_job('ARTInteractive', 'job_art')
+        artint.ref_job = job
+        artint.input.art_id = 0
+        artint.input.direction = np.ones(3)
+        artint.run()
+        self.assertEqual(artint.output.forces.shape, (1,8,3))
+        artint.interactive_close()
+        self.assertTrue(artint.status.finished)
 
     def test_errors(self):
         with self.assertRaises(ValueError):
