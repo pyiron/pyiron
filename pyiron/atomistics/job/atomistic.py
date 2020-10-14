@@ -866,12 +866,10 @@ class GenericOutput(object):
         """
         # Check if the cell changes in any snapshot
         c = cells.reshape(-1, 9)
-        if np.max(c.max(axis=0)-c.min(axis=0)) < 1e-5:
-            displacement = np.einsum('nki,ji->nkj', positions, np.linalg.inv(cells[-1]))
-        else:
+        if np.max(c.max(axis=0)-c.min(axis=0)) > 1e-5:
             warnings.warn("You are computing displacements in a simulation with periodic boundary conditions \n"
                           "and a varying cell shape.")
-            displacement = np.einsum('nki,nji->nkj', positions, np.linalg.inv(cells))
+        displacement = np.einsum('nki,nji->nkj', positions, np.linalg.inv(cells))
         displacement -= np.append(structure.get_scaled_positions(),
                                   displacement).reshape(len(positions) + 1, len(structure), 3)[:-1]
         displacement[:,:,structure.pbc] -= np.rint(displacement)[:,:,structure.pbc]
