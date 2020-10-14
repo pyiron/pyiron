@@ -865,7 +865,7 @@ class GenericOutput(object):
 
         """
         # Check if the cell changes in any snapshot
-        c = cell.reshape(-1, 9)
+        c = cells.reshape(-1, 9)
         if np.max(c.max(axis=0)-c.min(axis=0)) < 1e-5:
             displacement = np.einsum('nki,ji->nkj', positions, np.linalg.inv(cells[-1]))
         else:
