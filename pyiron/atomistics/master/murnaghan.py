@@ -647,6 +647,13 @@ class Murnaghan(AtomisticParallelMaster):
     def fit_vinet(self, vol_erg_dic=None):
         return self._fit_eos_general(vol_erg_dic=vol_erg_dic, fittype="vinet")
 
+    def _final_struct_to_hdf(self):
+        with self._hdf5.open("output") as hdf5:
+            structure = self.get_structure(iteration_step=-1)
+            if not isinstance(structure, Atoms):
+                structure = ase_to_pyiron(structure)
+            structure.to_hdf(hdf5)
+
     def _fit_eos_general(self, vol_erg_dic=None, fittype="birchmurnaghan"):
         self._set_fit_module(vol_erg_dic=vol_erg_dic)
         fit_dict = self.fit_module.fit_eos_general(fittype=fittype)
@@ -659,6 +666,7 @@ class Murnaghan(AtomisticParallelMaster):
             hdf5["equilibrium_volume"] = fit_dict["volume_eq"]
             hdf5["equilibrium_bulk_modulus"] = fit_dict["bulkmodul_eq"]
             hdf5["equilibrium_b_prime"] = fit_dict["b_prime_eq"]
+        self._final_struct_to_hdf()
 
         self.fit_dict = fit_dict
         return fit_dict
@@ -697,12 +705,7 @@ class Murnaghan(AtomisticParallelMaster):
                 hdf5["equilibrium_volume"] = fit_dict["volume_eq"]
                 hdf5["equilibrium_bulk_modulus"] = fit_dict["bulkmodul_eq"]
                 hdf5["equilibrium_b_prime"] = fit_dict["b_prime_eq"]
-
-            with self._hdf5.open("output") as hdf5:
-                structure = self.get_structure(iteration_step=-1)
-                if not isinstance(structure, Atoms):
-                    structure = ase_to_pyiron(structure)
-                structure.to_hdf(hdf5)
+            self._final_struct_to_hdf()
 
             self.fit_dict = fit_dict
         return fit_dict
