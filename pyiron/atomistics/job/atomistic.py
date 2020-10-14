@@ -870,8 +870,8 @@ class GenericOutput(object):
             warnings.warn("You are computing displacements in a simulation with periodic boundary conditions \n"
                           "and a varying cell shape.")
         displacement = np.einsum('nki,nji->nkj', positions, np.linalg.inv(cells))
-        displacement -= np.append(structure.get_scaled_positions(),
-                                  displacement).reshape(len(positions) + 1, len(structure), 3)[:-1]
+        displacement[1:] -= displacement[:-1]
+        displacement[0] -= structure.get_scaled_positions()
         displacement[:,:,structure.pbc] -= np.rint(displacement)[:,:,structure.pbc]
         displacement = np.einsum('nki,nji->nkj', displacement, cells)
         return displacement
