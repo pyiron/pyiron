@@ -864,9 +864,9 @@ class GenericOutput(object):
             numpy.ndarray: Displacements (N_steps x N_atoms x 3)
 
         """
-        # Check if the volume changes in any snapshot
-        vol = np.linalg.det(cells)
-        if vol.max()-vol.min() < 1e-5:
+        # Check if the cell changes in any snapshot
+        c = cell.reshape(-1, 9)
+        if np.max(c.max(axis=0)-c.min(axis=0)) < 1e-5:
             displacement = np.einsum('nki,ji->nkj', positions, np.linalg.inv(cells[-1]))
         else:
             warnings.warn("You are computing displacements in a simulation with periodic boundary conditions \n"
