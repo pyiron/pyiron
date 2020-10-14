@@ -869,11 +869,11 @@ class GenericOutput(object):
         if np.max(c.max(axis=0)-c.min(axis=0)) > 1e-5:
             warnings.warn("You are computing displacements in a simulation with periodic boundary conditions \n"
                           "and a varying cell shape.")
-        displacement = np.einsum('nki,nji->nkj', positions, np.linalg.inv(cells))
+        displacement = np.einsum('nki,nij->nkj', positions, np.linalg.inv(cells))
         displacement[1:] -= displacement[:-1]
         displacement[0] -= structure.get_scaled_positions()
         displacement[:,:,structure.pbc] -= np.rint(displacement)[:,:,structure.pbc]
-        displacement = np.einsum('nki,nji->nkj', displacement, cells)
+        displacement = np.einsum('nki,nij->nkj', displacement, cells)
         return displacement
 
     @property
