@@ -867,12 +867,14 @@ class GenericOutput(object):
         # Check if the volume changes in any snapshot
         vol = np.linalg.det(cells)
         if vol.max()-vol.min() < 1e-5:
-            displacement = np.einsum('ni,ji->nj', positions, np.linalg.inv(cells[-1]))
+            displacement = np.einsum('nki,ji->nkj', positions, np.linalg.inv(cells[-1]))
         else:
-            displacement = np.einsum('ni,nji->nj', positions, np.linalg.inv(cells))
+            warnings.warn("You are computing displacements in a simulation with periodic boundary conditions \n"
+                "and a varying cell shape.")
+            displacement = np.einsum('nki,nji->nkj', positions, np.linalg.inv(cells))
         displacement -= np.append(structure.get_scaled_positions(),
                                   displacement).reshape(len(positions) + 1, len(structure), 3)[:-1]
-        displacement[structure.pbc] -= np.rint(displacement)[structure.pbc]
+        displacement[:,:,structure.pbc] -= np.rint(displacement)[:,:,structure.pbc]
         displacement = np.einsum('nki,nji->nkj', displacement, cells)
         return displacement
 
