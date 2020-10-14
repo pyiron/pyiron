@@ -33,6 +33,7 @@ class VaspInteractive(VaspBase, GenericInteractive):
         super(VaspInteractive, self).__init__(project, job_name)
         self._interactive_write_input_files = True
         self._interactive_vasprun = None
+        self.interactive_flush_frequency = 1
 
     @property
     def structure(self):
