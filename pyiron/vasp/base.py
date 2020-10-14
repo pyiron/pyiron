@@ -400,6 +400,14 @@ class VaspBase(GenericDFTJob):
                 exclude_nodes=self._exclude_nodes_hdf,
             )
 
+    def nbands_convergence_check(self):
+        if (max(self["output/electronic_structure/occ_matrix"][:,-1])>0):
+            print ('Test to check if the function is working')
+            return False
+        else:
+            print ('Test to check if the function is working')
+            return True            
+
     def convergence_check(self):
         if "IBRION" in self["input/incar/data_dict"]["Parameter"]:
             ind = self["input/incar/data_dict"]["Parameter"].index("IBRION")
