@@ -37,6 +37,7 @@ class SphinxInteractive(SphinxBase, GenericInteractive):
         self._interactive_write_input_files = True
         self._interactive_library_read = None
         self._interactive_fetch_completed = True
+        self.interactive_flush_frequency = 1
 
     @property
     def structure(self):
