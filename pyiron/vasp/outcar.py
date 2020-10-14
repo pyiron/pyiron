@@ -828,9 +828,9 @@ class Outcar(object):
             elastic_constants = []
             for line in lines[start_index:end_index]:
                 elastic_constants.append(line.split()[1:])
-            elastic_GPa = np.array(elastic_constants, dtype=float) / 10  
+            elastic_GPa = np.array(elastic_constants, dtype=float) / 10
             return elastic_GPa
-     
+
     @staticmethod
     def _get_positions_and_forces_parser(
         lines, trigger_indices, n_atoms, pos_flag=True, force_flag=True
