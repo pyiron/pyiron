@@ -843,13 +843,10 @@ class GenericOutput(object):
         - there are atoms which move by more than half a box length in any direction within two snapshots (due to
         periodic boundary conditions)
         """
-        # Check if the volume changes in any snapshot
-        vol = np.linalg.det(self.cells)
-        varying_cell = np.sqrt(np.average((vol - vol[0])**2)) > 1e-5
-        return self.get_displacements(self._job.structure, self.positions, self.cells, varying_cell=varying_cell)
+        return self.get_displacements(self._job.structure, self.positions, self.cells)
 
     @staticmethod
-    def get_displacements(structure, positions, cells, varying_cell=False):
+    def get_displacements(structure, positions, cells):
         """
         Output for 3-d displacements between successive snapshots, with minimum image convention.
         For the total displacements from the initial configuration, use total_displacements
@@ -862,27 +859,21 @@ class GenericOutput(object):
             structure (pyiron.atomistics.structure.atoms.Atoms): The initial structure
             positions (numpy.ndarray/list): List of positions in cartesian coordinates (N_steps x N_atoms x 3)
             cells (numpy.ndarray/list): List of cells (N_steps x 3 x 3)
-            varying_cell (bool): True if the cell shape varies during the trajectory (raises a warning)
 
         Returns:
             numpy.ndarray: Displacements (N_steps x N_atoms x 3)
 
         """
-        if not varying_cell:
-            displacement = np.tensordot(positions, np.linalg.inv(cells[-1]), axes=([2, 0]))
-            displacement -= np.append(structure.get_scaled_positions(),
-                                      displacement).reshape(len(positions) + 1, len(structure), 3)[:-1]
-            displacement -= np.rint(displacement)
-            displacement = np.tensordot(displacement, cells[-1], axes=([2, 0]))
-        else:
+        # Check if the cell changes in any snapshot
+        c = cells.reshape(-1, 9)
+        if np.max(c.max(axis=0)-c.min(axis=0)) > 1e-5:
             warnings.warn("You are computing displacements in a simulation with periodic boundary conditions \n"
                           "and a varying cell shape.")
-            displacement = np.array(
-                [np.tensordot(pos, np.linalg.inv(cell), axes=([1, 1])) for pos, cell in zip(positions, cells)])
-            displacement -= np.append(structure.get_scaled_positions(),
-                                      displacement).reshape(len(positions) + 1, len(structure), 3)[:-1]
-            displacement -= np.rint(displacement)
-            displacement = np.einsum('nki,nji->nkj', displacement, cells)
+        displacement = np.einsum('nki,nij->nkj', positions, np.linalg.inv(cells))
+        displacement[1:] -= displacement[:-1]
+        displacement[0] -= structure.get_scaled_positions()
+        displacement[:,:,structure.pbc] -= np.rint(displacement)[:,:,structure.pbc]
+        displacement = np.einsum('nki,nij->nkj', displacement, cells)
         return displacement
 
     @property
