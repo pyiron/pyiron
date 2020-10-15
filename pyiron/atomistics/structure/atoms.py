@@ -1251,6 +1251,33 @@ class Atoms(ASEAtoms):
 
         return (distance_from_camera * flattened_orientation).ravel().tolist()
 
+    def plot3d_plotly(
+        self,
+        scalar_field=None,
+        particle_size=1.0,
+        camera="orthographic",
+    ):
+        try:
+            import plotly.express as px
+        except ImportError:
+            print("plotly not installed")
+            return
+        parent_basis = self.get_parent_basis()
+        elements = parent_basis.get_chemical_symbols()
+        atomic_numbers = parent_basis.get_atomic_numbers()
+        positions = self.positions
+        if scalar_field is None:
+            scalar_field = elements
+        fig = px.scatter_3d(x=positions[:,0],
+                            y=positions[:,1],
+                            z=positions[:,2],
+                            color=scalar_field,
+                            opacity=1,
+                            size=self._atomic_number_to_radius(atomic_numbers, scale=particle_size/(0.1*self.get_volume()**(1/3))))
+        fig.layout.scene.camera.projection.type = camera
+        fig.update_traces(marker=dict(line=dict(width=0.1, color='DarkSlateGrey')))
+        return fig
+
     def plot3d(
         self,
         show_cell=True,
