@@ -20,6 +20,7 @@ class TestSxExtOptInteractive(unittest.TestCase):
         job.set_force_constants(1)
         job.structure.positions[0,0] += 0.01
         cls.minim = job.create_job("ScipyMinimizer", "job_scipy")
+        cls.minim.input.ionic_force_tolerance = 1e-8
 
     @classmethod
     def tearDownClass(cls):
@@ -29,10 +30,6 @@ class TestSxExtOptInteractive(unittest.TestCase):
     def test_run(self):
         self.minim.run()
         self.assertAlmostEqual(np.linalg.norm(self.minim.ref_job['output/generic/forces'][-1], axis=-1).max(), 0)
-
-    def test_minimizer(self):
-        self.minim.minimizer = 'CG'
-        self.assertEqual(self.minim.minimizer, 'CG')
 
 if __name__ == "__main__":
     unittest.main()
