@@ -55,7 +55,7 @@ class ScipyMinimizer(InteractiveWrapper):
             self._delete_existing_job = False
         self.ref_job.run(delete_existing_job=self._delete_existing_job)
         self.status.running = True
-        self.output.result = minimize(
+        self.output._result = minimize(
             method=self.input.minimizer,
             fun=self._update_energy,
             x0=self.ref_job.structure.positions.flatten(),
@@ -107,9 +107,11 @@ class Input(InputList):
 class ScipyMinimizerOutput(GenericInteractiveOutput):
     def __init__(self, job):
         super(ScipyMinimizerOutput, self).__init__(job=job)
-        self.result = None
+        self._result = None
 
     def to_hdf(self, hdf, group_name="output"):
+        if self._result is None:
+            return
         with hdf.open(group_name) as hdf_output:
             hdf_output["convergence"] = self._result['success']
             if 'hess_inv' in self._result.keys():
