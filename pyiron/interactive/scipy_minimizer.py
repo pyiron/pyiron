@@ -40,13 +40,6 @@ class ScipyMinimizer(InteractiveWrapper):
     def write_input(self):
         pass
 
-    def interactive_close(self):
-        if self.interactive_is_activated():
-            self._interactive_library.close()
-            if len(self.interactive_cache[list(self.interactive_cache.keys())[0]]) != 0:
-                self.interactive_flush(path="generic")
-            super(ScipyMinimizer, self).interactive_close()
-
     def run_static(self):
         self.ref_job_initialize()
         self._logger.debug("cg status: " + str(self.status))
@@ -117,8 +110,3 @@ class ScipyMinimizerOutput(GenericInteractiveOutput):
             if 'hess_inv' in self._result.keys():
                 hdf_output["hessian"] = self._result['hess_inv']
 
-    def from_hdf(self, hdf, group_name="output"):
-        if "convergence" in hdf[group_name].list_nodes():
-            self._convergence = hdf[group_name]["convergence"]
-        if "hessian" in hdf[group_name].list_nodes():
-            self._hessian = hdf[group_name]["hessian"]
