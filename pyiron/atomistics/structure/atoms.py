@@ -1275,6 +1275,26 @@ class Atoms(ASEAtoms):
         view_plane=np.array([1, 1, 1]),
         distance_from_camera=1.25,
     ):
+        """
+
+        Args:
+            camera (str): 'perspective' or 'orthographic'. (Default is 'perspective'.)
+            particle_size (float): Size of the particles. (Default is 1.)
+            scalar_field (numpy.ndarray): Color each atom according to the array value (Default is None, use coloring
+                scheme.)
+            view_plane (numpy.ndarray): A Nx3-array (N = 1,2,3); the first 3d-component of the array specifies
+                which plane of the system to view (for example, [1, 0, 0], [1, 1, 0] or the [1, 1, 1] planes), the
+                second 3d-component (if specified, otherwise [1, 0, 0]) gives the horizontal direction, and the third
+                component (if specified) is the vertical component, which is ignored and calculated internally. The
+                orthonormality of the orientation is internally ensured, and therefore is not required in the function
+                call. (Default is np.array([0, 0, 1]), which is view normal to the x-y plane.)
+            distance_from_camera (float): Distance of the camera from the structure. Higher = farther away.
+                (Default is 14, which also seems to be the NGLView default value.)
+
+        Returns:
+            (plotly.express): The NGLView widget itself, which can be operated on further or viewed as-is.
+
+        """
         try:
             import plotly.express as px
         except ImportError:
