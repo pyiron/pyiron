@@ -6,7 +6,6 @@ from datetime import datetime
 import warnings
 from pyiron_base import GenericParameters, GenericJob, GenericMaster
 from pyiron.atomistics.structure.atoms import ase_to_pyiron
-from ase import Atoms as ASEAtoms
 from pyiron.atomistics.structure.atoms import Atoms as PAtoms
 
 __author__ = "Osamu Waseda, Jan Janssen"
