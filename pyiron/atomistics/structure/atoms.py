@@ -1215,6 +1215,35 @@ class Atoms(ASEAtoms):
         ]  # The slice gets RGB but leaves alpha
 
     @staticmethod
+    def _get_orientation(view_plane):
+        """
+        A helper method to plot3d, which generates a rotation matrix from the input `view_plane`, and returns a
+        flattened list of len = 16. This flattened list becomes the input argument to `view.contol.orient`.
+
+        Args:
+            view_plane (numpy.ndarray/list): A Nx3-array/list (N = 1,2,3); the first 3d-component of the array
+                specifies which plane of the system to view (for example, [1, 0, 0], [1, 1, 0] or the [1, 1, 1] planes),
+                the second 3d-component (if specified, otherwise [1, 0, 0]) gives the horizontal direction, and the
+                third component (if specified) is the vertical component, which is ignored and calculated internally.
+                The orthonormality of the orientation is internally ensured, and therefore is not required in the
+                function call.
+
+        Returns:
+            (list): orientation tensor
+        """
+        if len(np.array(view_plane).flatten()) % 3 != 0:
+            raise ValueError("The shape of view plane should be (N, 3), where N = 1, 2 or 3. Refer docs for more info.")
+        view_plane = np.array(view_plane).reshape(-1, 3)
+        rotation_matrix = np.roll(np.eye(3), -1, axis=0)
+        rotation_matrix[:len(view_plane)] = view_plane
+        rotation_matrix /= np.linalg.norm(rotation_matrix, axis=-1)[:, np.newaxis]
+        rotation_matrix[1] -= np.dot(rotation_matrix[0], rotation_matrix[1]) * rotation_matrix[0]  # Gran-Schmidt
+        rotation_matrix[2] = np.cross(rotation_matrix[0], rotation_matrix[1])  # Specify third axis
+        if np.isclose(np.linalg.det(rotation_matrix), 0):
+            return np.eye(3)  # view_plane = [0,0,1] is the default view of NGLview, so we do not modify it
+        return np.roll(rotation_matrix / np.linalg.norm(rotation_matrix, axis=-1)[:, np.newaxis], 2, axis=0).T
+
+    @staticmethod
     def _get_flattened_orientation(view_plane, distance_from_camera):
         """
         A helper method to plot3d, which generates a rotation matrix from the input `view_plane`, and returns a
@@ -1232,22 +1261,10 @@ class Atoms(ASEAtoms):
         Returns:
             (list): Flattened list of len = 16, which is the input argument to `view.contol.orient`
         """
-        if len(np.array(view_plane).flatten()) % 3 != 0:
-            raise ValueError("The shape of view plane should be (N, 3), where N = 1, 2 or 3. Refer docs for more info.")
         if distance_from_camera <= 0:
             raise ValueError("´distance_from_camera´ must be a positive float!")
-        view_plane = np.array(view_plane).reshape(-1, 3)
-        rotation_matrix = np.roll(np.eye(3), -1, axis=0)
-        rotation_matrix[:len(view_plane)] = view_plane
-        rotation_matrix /= np.linalg.norm(rotation_matrix, axis=-1)[:, np.newaxis]
-        rotation_matrix[1] -= np.dot(rotation_matrix[0], rotation_matrix[1]) * rotation_matrix[0]  # Gran-Schmidt
-        rotation_matrix[2] = np.cross(rotation_matrix[0], rotation_matrix[1])  # Specify third axis
-        if np.isclose(np.linalg.det(rotation_matrix), 0):
-            rotation_matrix = np.eye(3)  # view_plane = [0,0,1] is the default view of NGLview, so we do not modify it
-        else:
-            rotation_matrix = np.roll(rotation_matrix / np.linalg.norm(rotation_matrix, axis=-1)[:, np.newaxis], 2, axis=0).T
         flattened_orientation = np.eye(4)
-        flattened_orientation[:3, :3] = rotation_matrix
+        flattened_orientation[:3, :3] = self._get_orientation(view_plane)
 
         return (distance_from_camera * flattened_orientation).ravel().tolist()
 
@@ -1262,6 +1279,7 @@ class Atoms(ASEAtoms):
         except ImportError:
             print("plotly not installed")
             return
+
         parent_basis = self.get_parent_basis()
         elements = parent_basis.get_chemical_symbols()
         atomic_numbers = parent_basis.get_atomic_numbers()
@@ -1275,6 +1293,12 @@ class Atoms(ASEAtoms):
                             opacity=1,
                             size=self._atomic_number_to_radius(atomic_numbers, scale=particle_size/(0.1*self.get_volume()**(1/3))))
         fig.layout.scene.camera.projection.type = camera
+        angle = dict(
+            up=dict(x=0, y=0, z=1),
+            center=dict(x=0, y=0, z=0),
+            eye=dict(x=1.25, y=1.25, z=1.25)
+        )
+        fig.update_layout(scene_camera=angle)
         fig.update_traces(marker=dict(line=dict(width=0.1, color='DarkSlateGrey')))
         return fig
 
