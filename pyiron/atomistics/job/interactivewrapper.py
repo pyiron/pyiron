@@ -164,7 +164,7 @@ class InteractiveWrapper(GenericMaster):
         """
         db_dict = super(InteractiveWrapper, self).db_entry()
         if self.structure:
-            if type(self.structure) == ASEAtoms:
+            if isinstance(self.structure, ASEAtoms):
                 parent_structure = ase_to_pyiron(self.structure)
                 parent_structure = parent_structure.get_parent_basis()
             else:
