@@ -1243,8 +1243,7 @@ class Atoms(ASEAtoms):
             return np.eye(3)  # view_plane = [0,0,1] is the default view of NGLview, so we do not modify it
         return np.roll(rotation_matrix / np.linalg.norm(rotation_matrix, axis=-1)[:, np.newaxis], 2, axis=0).T
 
-    @staticmethod
-    def _get_flattened_orientation(view_plane, distance_from_camera):
+    def _get_flattened_orientation(self, view_plane, distance_from_camera):
         """
         A helper method to plot3d, which generates a rotation matrix from the input `view_plane`, and returns a
         flattened list of len = 16. This flattened list becomes the input argument to `view.contol.orient`.
