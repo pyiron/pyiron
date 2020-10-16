@@ -1305,12 +1305,11 @@ class Atoms(ASEAtoms):
         parent_basis = self.get_parent_basis()
         elements = parent_basis.get_chemical_symbols()
         atomic_numbers = parent_basis.get_atomic_numbers()
-        positions = self.positions
         if scalar_field is None:
             scalar_field = elements
-        fig = px.scatter_3d(x=positions[:,0],
-                            y=positions[:,1],
-                            z=positions[:,2],
+        fig = px.scatter_3d(x=self.positions[:,0],
+                            y=self.positions[:,1],
+                            z=self.positions[:,2],
                             color=scalar_field,
                             opacity=opacity,
                             size=self._atomic_number_to_radius(atomic_numbers, scale=particle_size/(0.1*self.get_volume()**(1/3))))
