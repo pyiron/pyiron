@@ -168,7 +168,6 @@ class InteractiveWrapper(GenericMaster):
                 parent_structure = self.structure.get_parent_basis()
             else:
                 parent_structure = ase_to_pyiron(self.structure).get_parent_basis()
-                parent_structure = parent_structure.get_parent_basis()
             db_dict["ChemicalFormula"] = parent_structure.get_chemical_formula()
         return db_dict
 
