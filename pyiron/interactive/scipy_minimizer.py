@@ -28,6 +28,7 @@ class ScipyMinimizer(InteractiveWrapper):
         self.input = Input()
         self.output = ScipyMinimizerOutput(job=self)
         self.interactive_cache = {}
+        self._delete_existing_job = True
 
     def set_input_to_read_only(self):
         """
@@ -43,7 +44,6 @@ class ScipyMinimizer(InteractiveWrapper):
     def run_static(self):
         self.ref_job_initialize()
         self._logger.debug("cg status: " + str(self.status))
-        self._delete_existing_job = True
         if self.ref_job.server.run_mode.interactive:
             self._delete_existing_job = False
         self.ref_job.run(delete_existing_job=self._delete_existing_job)
