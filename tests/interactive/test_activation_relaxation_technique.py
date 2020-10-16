@@ -43,7 +43,7 @@ class TestARTInteractive(unittest.TestCase):
         job = self.project.create_job(self.project.job_type.AtomisticExampleJob, "job_single")
         job.server.run_mode.interactive = True
         job.structure = basis
-        artint = self.project.create_job('ARTInteractive', 'job_art')
+        artint = self.project.create_job('ART', 'job_art')
         artint.ref_job = job
         with self.assertRaises(AssertionError):
             artint.validate_ready_to_run()
