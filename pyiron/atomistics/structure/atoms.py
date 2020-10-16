@@ -1274,6 +1274,7 @@ class Atoms(ASEAtoms):
         camera="orthographic",
         view_plane=np.array([1, 1, 1]),
         distance_from_camera=1.25,
+        opacity=1,
     ):
         """
 
@@ -1290,6 +1291,7 @@ class Atoms(ASEAtoms):
                 call. (Default is np.array([0, 0, 1]), which is view normal to the x-y plane.)
             distance_from_camera (float): Distance of the camera from the structure. Higher = farther away.
                 (Default is 14, which also seems to be the NGLView default value.)
+            opacity (float): opacity
 
         Returns:
             (plotly.express): The NGLView widget itself, which can be operated on further or viewed as-is.
@@ -1310,7 +1312,7 @@ class Atoms(ASEAtoms):
                             y=positions[:,1],
                             z=positions[:,2],
                             color=scalar_field,
-                            opacity=1,
+                            opacity=opacity,
                             size=self._atomic_number_to_radius(atomic_numbers, scale=particle_size/(0.1*self.get_volume()**(1/3))))
         fig.layout.scene.camera.projection.type = camera
         rot = self._get_orientation(view_plane).T
