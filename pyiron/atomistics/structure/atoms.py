@@ -1277,6 +1277,7 @@ class Atoms(ASEAtoms):
         opacity=1,
     ):
         """
+        Make a 3D plot of the atomic structure.
 
         Args:
             camera (str): 'perspective' or 'orthographic'. (Default is 'perspective'.)
