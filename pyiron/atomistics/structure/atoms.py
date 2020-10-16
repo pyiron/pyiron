@@ -1272,13 +1272,14 @@ class Atoms(ASEAtoms):
         scalar_field=None,
         particle_size=1.0,
         camera="orthographic",
+        view_plane=np.array([1, 1, 1]),
+        distance_from_camera=1.25,
     ):
         try:
             import plotly.express as px
         except ImportError:
             print("plotly not installed")
             return
-
         parent_basis = self.get_parent_basis()
         elements = parent_basis.get_chemical_symbols()
         atomic_numbers = parent_basis.get_atomic_numbers()
@@ -1292,10 +1293,11 @@ class Atoms(ASEAtoms):
                             opacity=1,
                             size=self._atomic_number_to_radius(atomic_numbers, scale=particle_size/(0.1*self.get_volume()**(1/3))))
         fig.layout.scene.camera.projection.type = camera
+        rot = self._get_orientation(view_plane).T
+        rot[0,:] *= distance_from_camera
         angle = dict(
-            up=dict(x=0, y=0, z=1),
-            center=dict(x=0, y=0, z=0),
-            eye=dict(x=1.25, y=1.25, z=1.25)
+            up=dict(x=rot[2,0], y=rot[2,1], z=rot[2,2]),
+            eye=dict(x=rot[0,0], y=rot[0,1], z=rot[0,2])
         )
         fig.update_layout(scene_camera=angle)
         fig.update_traces(marker=dict(line=dict(width=0.1, color='DarkSlateGrey')))
