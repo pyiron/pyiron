@@ -7,6 +7,7 @@ import warnings
 from pyiron_base import GenericParameters, GenericJob, GenericMaster
 from pyiron.atomistics.structure.atoms import ase_to_pyiron
 from ase import Atoms as ASEAtoms
+from pyiron.atomistics.structure.atoms import Atoms as PAtoms
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = (
@@ -164,11 +165,11 @@ class InteractiveWrapper(GenericMaster):
         """
         db_dict = super(InteractiveWrapper, self).db_entry()
         if self.structure:
-            if isinstance(self.structure, ASEAtoms):
+            if isinstance(self.structure, PAtoms):
+                parent_structure = self.structure.get_parent_basis()
+            else:
                 parent_structure = ase_to_pyiron(self.structure)
                 parent_structure = parent_structure.get_parent_basis()
-            else:
-                parent_structure = self.structure.get_parent_basis()
             db_dict["ChemicalFormula"] = parent_structure.get_chemical_formula()
         return db_dict
 
