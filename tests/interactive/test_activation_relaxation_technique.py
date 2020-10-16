@@ -3,13 +3,13 @@ import numpy as np
 import unittest
 from pyiron.project import Project
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.interactive.activation_relaxation_technique import ART
+from pyiron.interactive.activation_relaxation_technique import ARTInteractive
 
 
 class TestARTInteractive(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.art = ART(art_id = 0, direction = [1, 0, 0])
+        cls.art = ARTInteractive(art_id = 0, direction = [1, 0, 0])
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
         cls.project = Project(os.path.join(cls.file_location, 'art'))
 
@@ -56,13 +56,13 @@ class TestARTInteractive(unittest.TestCase):
 
     def test_errors(self):
         with self.assertRaises(ValueError):
-            ART(art_id = -1, direction = [1, 0, 0])
+            ARTInteractive(art_id = -1, direction = [1, 0, 0])
         with self.assertRaises(ValueError):
-            ART(art_id = 0, direction = [0, 0, 0])
+            ARTInteractive(art_id = 0, direction = [0, 0, 0])
         with self.assertRaises(ValueError):
-            ART(art_id = 0, direction = [1, 0, 0], gamma=-0.1)
+            ARTInteractive(art_id = 0, direction = [1, 0, 0], gamma=-0.1)
         with self.assertRaises(ValueError):
-            ART(art_id = 0, direction = [1, 0, 0], fix_layer=True, non_art_id=[0])
+            ARTInteractive(art_id = 0, direction = [1, 0, 0], fix_layer=True, non_art_id=[0])
 
 
 if __name__ == '__main__':

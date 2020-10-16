@@ -18,7 +18,7 @@ __date__ = "Sep 1, 2018"
 s = Settings()
 
 
-class ART(object):
+class ARTInteractive(object):
     def __init__(self, art_id, direction, gamma=0.1, fix_layer=False, non_art_id=None):
         if int(art_id)!=art_id or art_id<0:
             raise ValueError('art_id must be a posive integer')
@@ -56,7 +56,7 @@ class ART(object):
         f[:,self.art_id] -= f_art
         return f.reshape(np.array(f_in).shape)
 
-class ARTInteractive(InteractiveWrapper):
+class ART(InteractiveWrapper):
     """
     Apply an artificial force according to the Activation Relaxation Technique (ART)
     DOI:https://doi.org/10.1103/PhysRevE.57.2419
@@ -93,7 +93,7 @@ class ARTInteractive(InteractiveWrapper):
 
         # Job creation
         >>> some_atomistic_job.structure = structure
-        >>> art = ARTInteractive(job_name='art')
+        >>> art = ART(job_name='art')
         >>> art.ref_job = some_atomistic_job
         >>> art.input.art_id = art_id
         >>> art.input.direction = direction
@@ -103,7 +103,7 @@ class ARTInteractive(InteractiveWrapper):
 
     """
     def __init__(self, project, job_name):
-        super(ARTInteractive, self).__init__(project, job_name)
+        super(ART, self).__init__(project, job_name)
         self.__name__ = "ART"
         self.input = InputList(table_name='custom_dict')
         self.input.gamma = 0.1
@@ -126,7 +126,7 @@ class ARTInteractive(InteractiveWrapper):
     @property
     def art(self):
         if self._art is None:
-            self._art = ART(art_id=self.input.art_id,
+            self._art = ARTInteractive(art_id=self.input.art_id,
                             direction=self.input.direction,
                             gamma=self.input.gamma,
                             fix_layer=self.input.fix_layer,
