@@ -33,7 +33,6 @@ class AseJob(GenericInteractive):
         self.__version__ = (
             None
         )  # Reset the version number to the executable is set automatically
-        self._structure = None
         self.output = GenericInteractiveOutput(job=self)
         self._python_only_job = True
 
