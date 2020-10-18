@@ -7,8 +7,7 @@ from ase.constraints import dict2constraint
 import copy
 import importlib
 import numpy as np
-from pyiron_base import InteractiveBase
-from pyiron.atomistics.job.interactive import GenericInteractiveOutput
+from pyiron.atomistics.job.interactive import GenericInteractiveOutput, GenericInteractive
 
 try:
     from ase.cell import Cell
@@ -27,7 +26,7 @@ __status__ = "development"
 __date__ = "Sep 1, 2018"
 
 
-class AseJob(InteractiveBase):
+class AseJob(GenericInteractive):
     def __init__(self, project, job_name):
         super(AseJob, self).__init__(project, job_name)
         self.__name__ = "AseJob"
