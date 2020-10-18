@@ -35,17 +35,6 @@ class AseJob(InteractiveBase):
             None
         )  # Reset the version number to the executable is set automatically
         self._structure = None
-        self.interactive_cache = {
-            "cells": [],
-            "energy_pot": [],
-            "energy_tot": [],
-            "forces": [],
-            "positions": [],
-            "steps": [],
-            "indices": [],
-            "time": [],
-            "volume": [],
-        }
         self.output = GenericInteractiveOutput(job=self)
         self._python_only_job = True
 
@@ -183,62 +172,6 @@ class AseJob(InteractiveBase):
 
     def interactive_cells_getter(self):
         return self._structure.cell.copy()
-
-    def interactive_collect(self):
-        if "cells" in self.interactive_cache.keys():
-            self.interactive_cache["cells"].append(self.interactive_cells_getter())
-        if "energy_pot" in self.interactive_cache.keys():
-            self.interactive_cache["energy_pot"].append(
-                self.interactive_energy_pot_getter()
-            )
-        if "energy_tot" in self.interactive_cache.keys():
-            self.interactive_cache["energy_tot"].append(
-                self.interactive_energy_tot_getter()
-            )
-        if "forces" in self.interactive_cache.keys():
-            self.interactive_cache["forces"].append(self.interactive_forces_getter())
-        if "positions" in self.interactive_cache.keys():
-            self.interactive_cache["positions"].append(
-                self.interactive_positions_getter()
-            )
-        if "pressures" in self.interactive_cache.keys():
-            self.interactive_cache["pressures"].append(
-                self.interactive_pressures_getter()
-            )
-        if "steps" in self.interactive_cache.keys():
-            self.interactive_cache["steps"].append(self.interactive_steps_getter())
-        if "temperatures" in self.interactive_cache.keys():
-            self.interactive_cache["temperatures"].append(
-                self.interactive_temperatures_getter()
-            )
-        if "time" in self.interactive_cache.keys():
-            self.interactive_cache["time"].append(self.interactive_time_getter())
-        if "indices" in self.interactive_cache.keys():
-            self.interactive_cache["indices"].append(self.interactive_indices_getter())
-        if "spin_constraints" in self.interactive_cache.keys():
-            self.interactive_cache["spin_constraints"].append(
-                self.interactive_spin_constraints_getter()
-            )
-        if "magnetic_forces" in self.interactive_cache.keys():
-            if np.any(self._structure_current.get_initial_magnetic_moments()):
-                self.interactive_cache["magnetic_forces"].append(
-                    self.interactive_magnetic_forces_getter()
-                )
-            else:
-                del self.interactive_cache["magnetic_forces"]
-        if "unwrapped_positions" in self.interactive_cache.keys():
-            self.interactive_cache["unwrapped_positions"].append(
-                self.interactive_unwrapped_positions_getter()
-            )
-        if "volume" in self.interactive_cache.keys():
-            self.interactive_cache["volume"].append(self.interactive_volume_getter())
-        if (
-            len(list(self.interactive_cache.keys())) > 0
-            and len(self.interactive_cache[list(self.interactive_cache.keys())[0]])
-            % self._interactive_flush_frequency
-            == 0
-        ):
-            self.interactive_flush(path="interactive")
 
 
 class AseAdapter(object):
