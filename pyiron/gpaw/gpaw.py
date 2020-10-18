@@ -148,18 +148,11 @@ class Gpaw(AseJob):
     def collect_output(self):
         pass
 
-    def run_static(self):
-        pre_run_mode = self.server.run_mode
-        self.server.run_mode.interactive = True
-        self.run_if_interactive()
-        self.interactive_close()
-        self.server.run_mode = pre_run_mode
-
     def run_if_scheduler(self):
         self._create_working_directory()
         super(Gpaw, self).run_if_scheduler()
 
-    def run_if_interactive(self):
+    def interactive_initialize_interface(self):
         if self.structure.calc is None:
             kpoints = self.input["kpoints"]
             if isinstance(kpoints, str):
@@ -175,9 +168,7 @@ class Gpaw(AseJob):
                 txt=self.working_directory + "/" + self.job_name + ".txt",
             )
             self.structure.set_calculator(calc)
-        self.status.running = True
-        self.structure.calc.calculate(self.structure)
-        self.interactive_collect()
+        super(Gpaw, self).interactive_initialize_interface()
 
     def to_hdf(self, hdf=None, group_name=None):
         """

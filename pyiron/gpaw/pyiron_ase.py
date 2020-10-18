@@ -120,13 +120,22 @@ class AseJob(GenericInteractive):
             self.structure = self._fromdict(hdf_input["structure"])
 
     def run_static(self):
-        raise ValueError("ASEJob requires interactive mode.")
+        pre_run_mode = self.server.run_mode
+        self.server.run_mode.interactive = True
+        self.run_if_interactive()
+        self.interactive_close()
+        self.server.run_mode = pre_run_mode
 
     def run_if_interactive(self):
-        self.status.running = True
-        self._structure.calc.set_label(self.working_directory + "/")
+        if not self.interactive_is_activated():
+            self.interactive_initialize_interface()
         self.structure.calc.calculate(self.structure)
         self.interactive_collect()
+
+    def interactive_initialize_interface(self):
+        self.status.running = True
+        self._structure.calc.set_label(self.working_directory + "/")
+        self._interactive_library = True
 
     def interactive_close(self):
         self.status.collect = True
