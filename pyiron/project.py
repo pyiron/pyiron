@@ -264,7 +264,7 @@ class Project(ProjectCore):
             rel_path:
             project_to_import_from:
             job_type (str): Type of the calculation which is going to be imported.
-            copy_raw_files (bool): Copy
+            copy_raw_files (bool): True if raw files are to be imported.
         """
         if job_type not in ["Vasp", "KMC"]:
             raise ValueError("The job_type is not supported.")
