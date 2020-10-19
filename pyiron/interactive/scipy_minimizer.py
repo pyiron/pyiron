@@ -49,7 +49,7 @@ class ScipyMinimizer(InteractiveWrapper):
             self._delete_existing_job = False
         self.ref_job.run(delete_existing_job=self._delete_existing_job)
         self.status.running = True
-        if self.input.pressure is None:
+        if self.input.pressure is not None:
             x0 = self.ref_job.structure.cell.flatten()
             if not self.input.volume_only:
                 x0 = np.append(x0, self.ref_job.structure.get_scaled_positions().flatten())
