@@ -137,8 +137,8 @@ class ScipyMinimizer(InteractiveWrapper):
         if pressure is not None and not volume_only:
             warnings.warn('Simultaneous optimization of pressures and positions is a mathematically ill posed problem '
                           + '- there is no guarantee that it converges to the desired structure')
-        if not hasattr(pressure, '__len__'):
-            pressures = pressure*np.eye(3)
+        if pressure is not None and not hasattr(pressure, '__len__'):
+            pressure = pressure*np.eye(3)
         self.input.minimizer = algorithm
         self.input.ionic_steps = max_iter
         self.input.pressure = pressure
