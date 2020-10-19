@@ -803,6 +803,13 @@ class TestAtoms(unittest.TestCase):
         )
         view = basis.plot3d()
 
+    @staticmethod
+    def test_plot3d_plotly():
+        basis = Atoms(
+            "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
+        )
+        basis.plot3d_plotly()
+
     def test_group_points_by_symmetry(self):
         basis = Atoms("FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3))
         self.assertEqual(len(basis.group_points_by_symmetry([3 * [0.5], 3 * [1.5]])), 1)

@@ -1215,7 +1215,35 @@ class Atoms(ASEAtoms):
         ]  # The slice gets RGB but leaves alpha
 
     @staticmethod
-    def _get_flattened_orientation(view_plane, distance_from_camera):
+    def _get_orientation(view_plane):
+        """
+        A helper method to plot3d, which generates a rotation matrix from the input `view_plane`, and returns a
+        flattened list of len = 16. This flattened list becomes the input argument to `view.contol.orient`.
+
+        Args:
+            view_plane (numpy.ndarray/list): A Nx3-array/list (N = 1,2,3); the first 3d-component of the array
+                specifies which plane of the system to view (for example, [1, 0, 0], [1, 1, 0] or the [1, 1, 1] planes),
+                the second 3d-component (if specified, otherwise [1, 0, 0]) gives the horizontal direction, and the
+                third component (if specified) is the vertical component, which is ignored and calculated internally.
+                The orthonormality of the orientation is internally ensured, and therefore is not required in the
+                function call.
+
+        Returns:
+            (list): orientation tensor
+        """
+        if len(np.array(view_plane).flatten()) % 3 != 0:
+            raise ValueError("The shape of view plane should be (N, 3), where N = 1, 2 or 3. Refer docs for more info.")
+        view_plane = np.array(view_plane).reshape(-1, 3)
+        rotation_matrix = np.roll(np.eye(3), -1, axis=0)
+        rotation_matrix[:len(view_plane)] = view_plane
+        rotation_matrix /= np.linalg.norm(rotation_matrix, axis=-1)[:, np.newaxis]
+        rotation_matrix[1] -= np.dot(rotation_matrix[0], rotation_matrix[1]) * rotation_matrix[0]  # Gran-Schmidt
+        rotation_matrix[2] = np.cross(rotation_matrix[0], rotation_matrix[1])  # Specify third axis
+        if np.isclose(np.linalg.det(rotation_matrix), 0):
+            return np.eye(3)  # view_plane = [0,0,1] is the default view of NGLview, so we do not modify it
+        return np.roll(rotation_matrix / np.linalg.norm(rotation_matrix, axis=-1)[:, np.newaxis], 2, axis=0).T
+
+    def _get_flattened_orientation(self, view_plane, distance_from_camera):
         """
         A helper method to plot3d, which generates a rotation matrix from the input `view_plane`, and returns a
         flattened list of len = 16. This flattened list becomes the input argument to `view.contol.orient`.
@@ -1232,24 +1260,70 @@ class Atoms(ASEAtoms):
         Returns:
             (list): Flattened list of len = 16, which is the input argument to `view.contol.orient`
         """
-        if len(np.array(view_plane).flatten()) % 3 != 0:
-            raise ValueError("The shape of view plane should be (N, 3), where N = 1, 2 or 3. Refer docs for more info.")
         if distance_from_camera <= 0:
             raise ValueError("´distance_from_camera´ must be a positive float!")
-        view_plane = np.array(view_plane).reshape(-1, 3)
-        rotation_matrix = np.roll(np.eye(3), -1, axis=0)
-        rotation_matrix[:len(view_plane)] = view_plane
-        rotation_matrix /= np.linalg.norm(rotation_matrix, axis=-1)[:, np.newaxis]
-        rotation_matrix[1] -= np.dot(rotation_matrix[0], rotation_matrix[1]) * rotation_matrix[0]  # Gran-Schmidt
-        rotation_matrix[2] = np.cross(rotation_matrix[0], rotation_matrix[1])  # Specify third axis
-        if np.isclose(np.linalg.det(rotation_matrix), 0):
-            rotation_matrix = np.eye(3)  # view_plane = [0,0,1] is the default view of NGLview, so we do not modify it
-        else:
-            rotation_matrix = np.roll(rotation_matrix / np.linalg.norm(rotation_matrix, axis=-1)[:, np.newaxis], 2, axis=0).T
         flattened_orientation = np.eye(4)
-        flattened_orientation[:3, :3] = rotation_matrix
+        flattened_orientation[:3, :3] = self._get_orientation(view_plane)
 
         return (distance_from_camera * flattened_orientation).ravel().tolist()
+
+    def plot3d_plotly(
+        self,
+        scalar_field=None,
+        particle_size=1.0,
+        camera="orthographic",
+        view_plane=np.array([1, 1, 1]),
+        distance_from_camera=1.25,
+        opacity=1,
+    ):
+        """
+        Make a 3D plot of the atomic structure.
+
+        Args:
+            camera (str): 'perspective' or 'orthographic'. (Default is 'perspective'.)
+            particle_size (float): Size of the particles. (Default is 1.)
+            scalar_field (numpy.ndarray): Color each atom according to the array value (Default is None, use coloring
+                scheme.)
+            view_plane (numpy.ndarray): A Nx3-array (N = 1,2,3); the first 3d-component of the array specifies
+                which plane of the system to view (for example, [1, 0, 0], [1, 1, 0] or the [1, 1, 1] planes), the
+                second 3d-component (if specified, otherwise [1, 0, 0]) gives the horizontal direction, and the third
+                component (if specified) is the vertical component, which is ignored and calculated internally. The
+                orthonormality of the orientation is internally ensured, and therefore is not required in the function
+                call. (Default is np.array([0, 0, 1]), which is view normal to the x-y plane.)
+            distance_from_camera (float): Distance of the camera from the structure. Higher = farther away.
+                (Default is 14, which also seems to be the NGLView default value.)
+            opacity (float): opacity
+
+        Returns:
+            (plotly.express): The NGLView widget itself, which can be operated on further or viewed as-is.
+
+        """
+        try:
+            import plotly.express as px
+        except ImportError:
+            print("plotly not installed")
+            return
+        parent_basis = self.get_parent_basis()
+        elements = parent_basis.get_chemical_symbols()
+        atomic_numbers = parent_basis.get_atomic_numbers()
+        if scalar_field is None:
+            scalar_field = elements
+        fig = px.scatter_3d(x=self.positions[:,0],
+                            y=self.positions[:,1],
+                            z=self.positions[:,2],
+                            color=scalar_field,
+                            opacity=opacity,
+                            size=self._atomic_number_to_radius(atomic_numbers, scale=particle_size/(0.1*self.get_volume()**(1/3))))
+        fig.layout.scene.camera.projection.type = camera
+        rot = self._get_orientation(view_plane).T
+        rot[0,:] *= distance_from_camera
+        angle = dict(
+            up=dict(x=rot[2,0], y=rot[2,1], z=rot[2,2]),
+            eye=dict(x=rot[0,0], y=rot[0,1], z=rot[0,2])
+        )
+        fig.update_layout(scene_camera=angle)
+        fig.update_traces(marker=dict(line=dict(width=0.1, color='DarkSlateGrey')))
+        return fig
 
     def plot3d(
         self,
