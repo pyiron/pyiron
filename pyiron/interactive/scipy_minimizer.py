@@ -72,11 +72,11 @@ class ScipyMinimizer(InteractiveWrapper):
     def _update(self, x):
         rerun = False
         if self.input.pressure is not None:
-            if not np.allclose(x, self.ref_job.structure.cell.flatten()):
+            if not np.allclose(x[:9], self.ref_job.structure.cell.flatten()):
                 self.ref_job.structure.set_cell(x[:9].reshape(-3,3), scale_atoms=True)
                 rerun = True
             if not self.input.volume_only and not np.allclose(x[9:], self.ref_job.structure.get_scaled_positions().flatten()):
-                self.ref_job.structure.set_scaled_positions(x.reshape(-1, 3))
+                self.ref_job.structure.set_scaled_positions(x[9:].reshape(-1, 3))
                 rerun = True
         elif not np.allclose(x, self.ref_job.structure.positions.flatten()):
             self.ref_job.structure.positions = x.reshape(-1, 3)
@@ -88,7 +88,7 @@ class ScipyMinimizer(InteractiveWrapper):
         self._update(x)
         prefactor = 1
         if len(self.ref_job.output.energy_pot)>=2:
-            if np.absolute(np.diff(self.ref_job.output)[-1])<self.input.ionic_energy_tolerance:
+            if np.absolute(np.diff(self.ref_job.output.energy_pot)[-1])<self.input.ionic_energy_tolerance:
                 prefactor = 0
         if self.input.pressure is not None:
             pressure = -(self.ref_job.output.pressures[-1].flatten()-self.input.pressure.flatten())
@@ -136,6 +136,8 @@ class ScipyMinimizer(InteractiveWrapper):
         if pressure is not None and not volume_only:
             warnings.warn('Simultaneous optimization of pressures and positions is a mathematically ill posed problem '
                           + '- there is no guarantee that it converges to the desired structure')
+        if not hasattr(pressure, '__len__'):
+            pressures = pressure*np.eye(3)
         self.input.minimizer = algorithm
         self.input.ionic_steps = max_iter
         self.input.pressure = pressure
