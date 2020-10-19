@@ -22,6 +22,43 @@ __date__ = "Sep 1, 2018"
 
 
 class ScipyMinimizer(InteractiveWrapper):
+    """
+    Structure optimization class based on Scipy minimizers.
+
+    Example I:
+
+    # Position optimization
+    >>> pr = Project('position')
+    >>> job = pr.create_job('SomeAtomisticJob', 'atomistic')
+    >>> job.structure = pr.create_structure('Al', 'fcc', 4.)
+    >>> # it works also in the static mode, but interactive is recommended
+    >>> job.server.run_mode.interactive = True 
+    >>> minim = pr.create_job('ScipyMinimizer', 'scipy')
+    >>> minim.ref_job = job
+    >>> minim.run()
+
+    Example II:
+
+    # Volume optimization:
+    >>> pr = Project('volume')
+    >>> job = pr.create_job('SomeAtomisticJob', 'atomistic')
+    >>> job.structure = pr.create_structure('Al', 'fcc', 4.)
+    >>> # it works also in the static mode, but interactive is recommended
+    >>> job.server.run_mode.interactive = True 
+    >>> minim = pr.create_job('ScipyMinimizer', 'scipy')
+    >>> minim.ref_job = job
+    >>> minim.calc_minimize(pressure=0, volume_only=True)
+    >>> minim.run()
+
+    By setting `volume_only`, positions are not updated, so that only the pressures are minimized.
+
+    It is possible to optimize both the volume and the positions, but since changing the cell also
+    changes the definition of coordinates, it is a mathematically ill-defined problem and therefore
+    it might end up in a physically undefined state. For this reason, it is strongly recommended to
+    launch several jobs using the Murnaghan class (cf. `Murnaghan`).
+
+    In order to perform volume optimization, the child job must have 3x3-pressure output.
+    """
     def __init__(self, project, job_name):
         super(ScipyMinimizer, self).__init__(project, job_name)
         self.__name__ = "ScipyMinimizer"
