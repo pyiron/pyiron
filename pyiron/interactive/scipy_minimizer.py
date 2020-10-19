@@ -94,9 +94,10 @@ class ScipyMinimizer(InteractiveWrapper):
             pressure = -(self.ref_job.output.pressures[-1].flatten()-self.input.pressure.flatten())
             if self.input.volume_only:
                 return pressure*prefactor
-            else: np.append(pressure, -np.einsum('ij,ni->nj',
-                                                 np.linalg.inv(self.ref_job.structure.cell),
-                                                 self.ref_job.output.forces[-1]).flatten()).flatten()*prefactor
+            else:
+                return np.append(pressure, -np.einsum('ij,ni->nj',
+                                                      np.linalg.inv(self.ref_job.structure.cell),
+                                                      self.ref_job.output.forces[-1]).flatten()).flatten()*prefactor
         else:
             return -self.ref_job.output.forces[-1].flatten()*prefactor
 
