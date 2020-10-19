@@ -312,11 +312,13 @@ class Project(ProjectCore):
 
     def import_from_path(self, path, recursive=True, copy_raw_files=False):
         """
-
+				A method to import jobs into pyiron. Currently, it supports VASP and KMC 
+				calculations.
+				
         Args:
-            path (str):
-            recursive (bool):
-            copy_raw_files (bool):
+            path (str): The path of the directory to import
+            recursive (bool): True if sub-directories to be imported.
+            copy_raw_files (bool): True if the raw files are to be copied.
 
         """
         if os.path.abspath(path):
