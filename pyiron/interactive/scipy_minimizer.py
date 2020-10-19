@@ -156,9 +156,9 @@ class Input(InputList):
         self.minimizer = 'CG'
         self.ionic_steps = 100
         self.ionic_force_tolerance = 1.0e-2
-        self.pressures = None
+        self.pressure = None
         self.volume_only = False
-        self.input.ionic_energy_tolerance = 0
+        self.ionic_energy_tolerance = 0
 
 
 class ScipyMinimizerOutput(GenericInteractiveOutput):
