@@ -44,7 +44,7 @@ class ScipyMinimizer(InteractiveWrapper):
     >>> job = pr.create_job('SomeAtomisticJob', 'atomistic')
     >>> job.structure = pr.create_structure('Al', 'fcc', 4.)
     >>> # it works also in the static mode, but interactive is recommended
-    >>> job.server.run_mode.interactive = True 
+    >>> job.server.run_mode.interactive = True
     >>> minim = pr.create_job('ScipyMinimizer', 'scipy')
     >>> minim.ref_job = job
     >>> minim.calc_minimize(pressure=0, volume_only=True)
