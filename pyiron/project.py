@@ -258,7 +258,7 @@ class Project(ProjectCore):
         self, project_to_import_from, rel_path=None, job_type="Vasp", copy_raw_files=False
     ):
         """
-        A method to import a single-calculation jobs into pyiron. Currently, it suppor
+        A method to import a single calculation jobs into pyiron. Currently, it suppor
         ts VASP and KMC calculations.
         Args:
             rel_path:
