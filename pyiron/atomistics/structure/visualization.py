@@ -22,250 +22,6 @@ __date__ = "Sep 1, 2017"
 s = Settings()
 
 
-def _ngl_write_cell(a1, a2, a3, f1=90, f2=90, f3=90):
-    """
-    Writes a PDB-formatted line to represent the simulation cell.
-
-    Args:
-        a1, a2, a3 (float): Lengths of the cell vectors.
-        f1, f2, f3 (float): Angles between the cell vectors (which angles exactly?) (in degrees).
-
-    Returns:
-        (str): The line defining the cell in PDB format.
-    """
-    return "CRYST1 {:8.3f} {:8.3f} {:8.3f} {:6.2f} {:6.2f} {:6.2f} P 1\n".format(
-        a1, a2, a3, f1, f2, f3
-    )
-
-def _ngl_write_atom(
-    num,
-    species,
-    x,
-    y,
-    z,
-    group=None,
-    num2=None,
-    occupancy=1.0,
-    temperature_factor=0.0,
-):
-    """
-    Writes a PDB-formatted line to represent an atom.
-
-    Args:
-        num (int): Atomic index.
-        species (str): Elemental species.
-        x, y, z (float): Cartesian coordinates of the atom.
-        group (str): A...group name? (Default is None, repeat elemental species.)
-        num2 (int): An "alternate" index. (Don't ask me...) (Default is None, repeat first number.)
-        occupancy (float): PDB occupancy parameter. (Default is 1.)
-        temperature_factor (float): PDB temperature factor parameter. (Default is 0.
-
-    Returns:
-        (str): The line defining an atom in PDB format
-
-    Warnings:
-        * The [PDB docs](https://www.cgl.ucsf.edu/chimera/docs/UsersGuide/tutorials/pdbintro.html) indicate that
-            the xyz coordinates might need to be in some sort of orthogonal basis. If you have weird behaviour,
-            this might be a good place to investigate.
-    """
-    if group is None:
-        group = species
-    if num2 is None:
-        num2 = num
-    return "ATOM {:>6} {:>4} {:>4} {:>5} {:10.3f} {:7.3f} {:7.3f} {:5.2f} {:5.2f} {:>11} \n".format(
-        num, species, group, num2, x, y, z, occupancy, temperature_factor, species
-    )
-
-def _ngl_write_structure(elements, positions, cell):
-    """
-    Turns structure information into a NGLView-readable protein-database-formatted string.
-
-    Args:
-        elements (numpy.ndarray/list): Element symbol for each atom.
-        positions (numpy.ndarray/list): Vector of Cartesian atom positions.
-        cell (numpy.ndarray/list): Simulation cell Bravais matrix.
-
-    Returns:
-        (str): The PDB-formatted representation of the structure.
-    """
-    from ase.geometry import cell_to_cellpar, cellpar_to_cell
-    if cell is None or any(np.max(cell, axis=0) < 1e-2):
-        # Define a dummy cell if it doesn't exist (eg. for clusters)
-        max_pos = np.max(positions, axis=0)
-        max_pos[np.abs(max_pos) < 1e-2] = 10
-        cell = np.eye(3) * max_pos
-    cellpar = cell_to_cellpar(cell)
-    exportedcell = cellpar_to_cell(cellpar)
-    rotation = np.linalg.solve(cell, exportedcell)
-
-    pdb_str = _ngl_write_cell(*cellpar)
-    pdb_str += "MODEL     1\n"
-
-    if rotation is not None:
-        positions = np.array(positions).dot(rotation)
-
-    for i, p in enumerate(positions):
-        pdb_str += _ngl_write_atom(i, elements[i], *p)
-
-    pdb_str += "ENDMDL \n"
-    return pdb_str
-
-def _atomic_number_to_radius(atomic_number, shift=0.2, slope=0.1, scale=1.0):
-    """
-    Give the atomic radius for plotting, which scales like the root of the atomic number.
-
-    Args:
-        atomic_number (int/float): The atomic number.
-        shift (float): A constant addition to the radius. (Default is 0.2.)
-        slope (float): A multiplier for the root of the atomic number. (Default is 0.1)
-        scale (float): How much to rescale the whole thing by.
-
-    Returns:
-        (float): The radius. (Not physical, just for visualization!)
-    """
-    return (shift + slope * np.sqrt(atomic_number)) * scale
-
-def _add_colorscheme_spacefill(
-    view, elements, atomic_numbers, particle_size, scheme="element"
-):
-    """
-    Set NGLView spacefill parameters according to a color-scheme.
-
-    Args:
-        view (NGLWidget): The widget to work on.
-        elements (numpy.ndarray/list): Elemental symbols.
-        atomic_numbers (numpy.ndarray/list): Integer atomic numbers for determining atomic size.
-        particle_size (float): A scale factor for the atomic size.
-        scheme (str): The scheme to use. (Default is "element".)
-
-        Possible NGLView color schemes:
-          " ", "picking", "random", "uniform", "atomindex", "residueindex",
-          "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
-          "hydrophobicity", "value", "volume", "occupancy"
-
-    Returns:
-        (nglview.NGLWidget): The modified widget.
-    """
-    for elem, num in set(list(zip(elements, atomic_numbers))):
-        view.add_spacefill(
-            selection="#" + elem,
-            radius_type="vdw",
-            radius=_atomic_number_to_radius(num, scale=particle_size),
-            color_scheme=scheme,
-        )
-    return view
-
-def _add_custom_color_spacefill(view, atomic_numbers, particle_size, colors):
-    """
-    Set NGLView spacefill parameters according to per-atom colors.
-
-    Args:
-        view (NGLWidget): The widget to work on.
-        atomic_numbers (numpy.ndarray/list): Integer atomic numbers for determining atomic size.
-        particle_size (float): A scale factor for the atomic size.
-        colors (numpy.ndarray/list): A per-atom list of HTML or hex color codes.
-
-    Returns:
-        (nglview.NGLWidget): The modified widget.
-    """
-    for n, num in enumerate(atomic_numbers):
-        view.add_spacefill(
-            selection=[n],
-            radius_type="vdw",
-            radius=_atomic_number_to_radius(num, scale=particle_size),
-            color=colors[n],
-        )
-    return view
-
-def _scalars_to_hex_colors(scalar_field, start=None, end=None, cmap=None):
-    """
-    Convert scalar values to hex codes using a colormap.
-
-    Args:
-        scalar_field (numpy.ndarray/list): Scalars to convert.
-        start (float): Scalar value to map to the bottom of the colormap (values below are clipped). (Default is
-            None, use the minimal scalar value.)
-        end (float): Scalar value to map to the top of the colormap (values above are clipped).  (Default is
-            None, use the maximal scalar value.)
-        cmap (matplotlib.cm): The colormap to use. (Default is None, which gives a blue-red divergent map.)
-
-    Returns:
-        (list): The corresponding hex codes for each scalar value passed in.
-    """
-    if start is None:
-        start = np.amin(scalar_field)
-    if end is None:
-        end = np.amax(scalar_field)
-    interp = interp1d([start, end], [0, 1])
-    remapped_field = interp(
-        np.clip(scalar_field, start, end)
-    )  # Map field onto [0,1]
-
-    if cmap is None:
-        try:
-            from seaborn import diverging_palette
-        except ImportError:
-            print(
-                "The package seaborn needs to be installed for the plot3d() function!"
-            )
-        cmap = diverging_palette(245, 15, as_cmap=True)  # A nice blue-red palette
-
-    return [
-        rgb2hex(cmap(scalar)[:3]) for scalar in remapped_field
-    ]  # The slice gets RGB but leaves alpha
-
-def _get_orientation(view_plane):
-    """
-    A helper method to plot3d, which generates a rotation matrix from the input `view_plane`, and returns a
-    flattened list of len = 16. This flattened list becomes the input argument to `view.contol.orient`.
-
-    Args:
-        view_plane (numpy.ndarray/list): A Nx3-array/list (N = 1,2,3); the first 3d-component of the array
-            specifies which plane of the system to view (for example, [1, 0, 0], [1, 1, 0] or the [1, 1, 1] planes),
-            the second 3d-component (if specified, otherwise [1, 0, 0]) gives the horizontal direction, and the
-            third component (if specified) is the vertical component, which is ignored and calculated internally.
-            The orthonormality of the orientation is internally ensured, and therefore is not required in the
-            function call.
-
-    Returns:
-        (list): orientation tensor
-    """
-    if len(np.array(view_plane).flatten()) % 3 != 0:
-        raise ValueError("The shape of view plane should be (N, 3), where N = 1, 2 or 3. Refer docs for more info.")
-    view_plane = np.array(view_plane).reshape(-1, 3)
-    rotation_matrix = np.roll(np.eye(3), -1, axis=0)
-    rotation_matrix[:len(view_plane)] = view_plane
-    rotation_matrix /= np.linalg.norm(rotation_matrix, axis=-1)[:, np.newaxis]
-    rotation_matrix[1] -= np.dot(rotation_matrix[0], rotation_matrix[1]) * rotation_matrix[0]  # Gran-Schmidt
-    rotation_matrix[2] = np.cross(rotation_matrix[0], rotation_matrix[1])  # Specify third axis
-    if np.isclose(np.linalg.det(rotation_matrix), 0):
-        return np.eye(3)  # view_plane = [0,0,1] is the default view of NGLview, so we do not modify it
-    return np.roll(rotation_matrix / np.linalg.norm(rotation_matrix, axis=-1)[:, np.newaxis], 2, axis=0).T
-
-def _get_flattened_orientation(view_plane, distance_from_camera):
-    """
-    A helper method to plot3d, which generates a rotation matrix from the input `view_plane`, and returns a
-    flattened list of len = 16. This flattened list becomes the input argument to `view.contol.orient`.
-
-    Args:
-        view_plane (numpy.ndarray/list): A Nx3-array/list (N = 1,2,3); the first 3d-component of the array
-            specifies which plane of the system to view (for example, [1, 0, 0], [1, 1, 0] or the [1, 1, 1] planes),
-            the second 3d-component (if specified, otherwise [1, 0, 0]) gives the horizontal direction, and the
-            third component (if specified) is the vertical component, which is ignored and calculated internally.
-            The orthonormality of the orientation is internally ensured, and therefore is not required in the
-            function call.
-        distance_from_camera (float): Distance of the camera from the structure. Higher = farther away.
-
-    Returns:
-        (list): Flattened list of len = 16, which is the input argument to `view.contol.orient`
-    """
-    if distance_from_camera <= 0:
-        raise ValueError("´distance_from_camera´ must be a positive float!")
-    flattened_orientation = np.eye(4)
-    flattened_orientation[:3, :3] = _get_orientation(view_plane)
-
-    return (distance_from_camera * flattened_orientation).ravel().tolist()
-
 def plot3d_plotly(
     atoms,
     scalar_field=None,
@@ -600,5 +356,249 @@ def plot3d_ase(
     view.camera = camera
     view.background = background
     return view
+
+def _ngl_write_cell(a1, a2, a3, f1=90, f2=90, f3=90):
+    """
+    Writes a PDB-formatted line to represent the simulation cell.
+
+    Args:
+        a1, a2, a3 (float): Lengths of the cell vectors.
+        f1, f2, f3 (float): Angles between the cell vectors (which angles exactly?) (in degrees).
+
+    Returns:
+        (str): The line defining the cell in PDB format.
+    """
+    return "CRYST1 {:8.3f} {:8.3f} {:8.3f} {:6.2f} {:6.2f} {:6.2f} P 1\n".format(
+        a1, a2, a3, f1, f2, f3
+    )
+
+def _ngl_write_atom(
+    num,
+    species,
+    x,
+    y,
+    z,
+    group=None,
+    num2=None,
+    occupancy=1.0,
+    temperature_factor=0.0,
+):
+    """
+    Writes a PDB-formatted line to represent an atom.
+
+    Args:
+        num (int): Atomic index.
+        species (str): Elemental species.
+        x, y, z (float): Cartesian coordinates of the atom.
+        group (str): A...group name? (Default is None, repeat elemental species.)
+        num2 (int): An "alternate" index. (Don't ask me...) (Default is None, repeat first number.)
+        occupancy (float): PDB occupancy parameter. (Default is 1.)
+        temperature_factor (float): PDB temperature factor parameter. (Default is 0.
+
+    Returns:
+        (str): The line defining an atom in PDB format
+
+    Warnings:
+        * The [PDB docs](https://www.cgl.ucsf.edu/chimera/docs/UsersGuide/tutorials/pdbintro.html) indicate that
+            the xyz coordinates might need to be in some sort of orthogonal basis. If you have weird behaviour,
+            this might be a good place to investigate.
+    """
+    if group is None:
+        group = species
+    if num2 is None:
+        num2 = num
+    return "ATOM {:>6} {:>4} {:>4} {:>5} {:10.3f} {:7.3f} {:7.3f} {:5.2f} {:5.2f} {:>11} \n".format(
+        num, species, group, num2, x, y, z, occupancy, temperature_factor, species
+    )
+
+def _ngl_write_structure(elements, positions, cell):
+    """
+    Turns structure information into a NGLView-readable protein-database-formatted string.
+
+    Args:
+        elements (numpy.ndarray/list): Element symbol for each atom.
+        positions (numpy.ndarray/list): Vector of Cartesian atom positions.
+        cell (numpy.ndarray/list): Simulation cell Bravais matrix.
+
+    Returns:
+        (str): The PDB-formatted representation of the structure.
+    """
+    from ase.geometry import cell_to_cellpar, cellpar_to_cell
+    if cell is None or any(np.max(cell, axis=0) < 1e-2):
+        # Define a dummy cell if it doesn't exist (eg. for clusters)
+        max_pos = np.max(positions, axis=0)
+        max_pos[np.abs(max_pos) < 1e-2] = 10
+        cell = np.eye(3) * max_pos
+    cellpar = cell_to_cellpar(cell)
+    exportedcell = cellpar_to_cell(cellpar)
+    rotation = np.linalg.solve(cell, exportedcell)
+
+    pdb_str = _ngl_write_cell(*cellpar)
+    pdb_str += "MODEL     1\n"
+
+    if rotation is not None:
+        positions = np.array(positions).dot(rotation)
+
+    for i, p in enumerate(positions):
+        pdb_str += _ngl_write_atom(i, elements[i], *p)
+
+    pdb_str += "ENDMDL \n"
+    return pdb_str
+
+def _atomic_number_to_radius(atomic_number, shift=0.2, slope=0.1, scale=1.0):
+    """
+    Give the atomic radius for plotting, which scales like the root of the atomic number.
+
+    Args:
+        atomic_number (int/float): The atomic number.
+        shift (float): A constant addition to the radius. (Default is 0.2.)
+        slope (float): A multiplier for the root of the atomic number. (Default is 0.1)
+        scale (float): How much to rescale the whole thing by.
+
+    Returns:
+        (float): The radius. (Not physical, just for visualization!)
+    """
+    return (shift + slope * np.sqrt(atomic_number)) * scale
+
+def _add_colorscheme_spacefill(
+    view, elements, atomic_numbers, particle_size, scheme="element"
+):
+    """
+    Set NGLView spacefill parameters according to a color-scheme.
+
+    Args:
+        view (NGLWidget): The widget to work on.
+        elements (numpy.ndarray/list): Elemental symbols.
+        atomic_numbers (numpy.ndarray/list): Integer atomic numbers for determining atomic size.
+        particle_size (float): A scale factor for the atomic size.
+        scheme (str): The scheme to use. (Default is "element".)
+
+        Possible NGLView color schemes:
+          " ", "picking", "random", "uniform", "atomindex", "residueindex",
+          "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
+          "hydrophobicity", "value", "volume", "occupancy"
+
+    Returns:
+        (nglview.NGLWidget): The modified widget.
+    """
+    for elem, num in set(list(zip(elements, atomic_numbers))):
+        view.add_spacefill(
+            selection="#" + elem,
+            radius_type="vdw",
+            radius=_atomic_number_to_radius(num, scale=particle_size),
+            color_scheme=scheme,
+        )
+    return view
+
+def _add_custom_color_spacefill(view, atomic_numbers, particle_size, colors):
+    """
+    Set NGLView spacefill parameters according to per-atom colors.
+
+    Args:
+        view (NGLWidget): The widget to work on.
+        atomic_numbers (numpy.ndarray/list): Integer atomic numbers for determining atomic size.
+        particle_size (float): A scale factor for the atomic size.
+        colors (numpy.ndarray/list): A per-atom list of HTML or hex color codes.
+
+    Returns:
+        (nglview.NGLWidget): The modified widget.
+    """
+    for n, num in enumerate(atomic_numbers):
+        view.add_spacefill(
+            selection=[n],
+            radius_type="vdw",
+            radius=_atomic_number_to_radius(num, scale=particle_size),
+            color=colors[n],
+        )
+    return view
+
+def _scalars_to_hex_colors(scalar_field, start=None, end=None, cmap=None):
+    """
+    Convert scalar values to hex codes using a colormap.
+
+    Args:
+        scalar_field (numpy.ndarray/list): Scalars to convert.
+        start (float): Scalar value to map to the bottom of the colormap (values below are clipped). (Default is
+            None, use the minimal scalar value.)
+        end (float): Scalar value to map to the top of the colormap (values above are clipped).  (Default is
+            None, use the maximal scalar value.)
+        cmap (matplotlib.cm): The colormap to use. (Default is None, which gives a blue-red divergent map.)
+
+    Returns:
+        (list): The corresponding hex codes for each scalar value passed in.
+    """
+    if start is None:
+        start = np.amin(scalar_field)
+    if end is None:
+        end = np.amax(scalar_field)
+    interp = interp1d([start, end], [0, 1])
+    remapped_field = interp(
+        np.clip(scalar_field, start, end)
+    )  # Map field onto [0,1]
+
+    if cmap is None:
+        try:
+            from seaborn import diverging_palette
+        except ImportError:
+            print(
+                "The package seaborn needs to be installed for the plot3d() function!"
+            )
+        cmap = diverging_palette(245, 15, as_cmap=True)  # A nice blue-red palette
+
+    return [
+        rgb2hex(cmap(scalar)[:3]) for scalar in remapped_field
+    ]  # The slice gets RGB but leaves alpha
+
+def _get_orientation(view_plane):
+    """
+    A helper method to plot3d, which generates a rotation matrix from the input `view_plane`, and returns a
+    flattened list of len = 16. This flattened list becomes the input argument to `view.contol.orient`.
+
+    Args:
+        view_plane (numpy.ndarray/list): A Nx3-array/list (N = 1,2,3); the first 3d-component of the array
+            specifies which plane of the system to view (for example, [1, 0, 0], [1, 1, 0] or the [1, 1, 1] planes),
+            the second 3d-component (if specified, otherwise [1, 0, 0]) gives the horizontal direction, and the
+            third component (if specified) is the vertical component, which is ignored and calculated internally.
+            The orthonormality of the orientation is internally ensured, and therefore is not required in the
+            function call.
+
+    Returns:
+        (list): orientation tensor
+    """
+    if len(np.array(view_plane).flatten()) % 3 != 0:
+        raise ValueError("The shape of view plane should be (N, 3), where N = 1, 2 or 3. Refer docs for more info.")
+    view_plane = np.array(view_plane).reshape(-1, 3)
+    rotation_matrix = np.roll(np.eye(3), -1, axis=0)
+    rotation_matrix[:len(view_plane)] = view_plane
+    rotation_matrix /= np.linalg.norm(rotation_matrix, axis=-1)[:, np.newaxis]
+    rotation_matrix[1] -= np.dot(rotation_matrix[0], rotation_matrix[1]) * rotation_matrix[0]  # Gran-Schmidt
+    rotation_matrix[2] = np.cross(rotation_matrix[0], rotation_matrix[1])  # Specify third axis
+    if np.isclose(np.linalg.det(rotation_matrix), 0):
+        return np.eye(3)  # view_plane = [0,0,1] is the default view of NGLview, so we do not modify it
+    return np.roll(rotation_matrix / np.linalg.norm(rotation_matrix, axis=-1)[:, np.newaxis], 2, axis=0).T
+
+def _get_flattened_orientation(view_plane, distance_from_camera):
+    """
+    A helper method to plot3d, which generates a rotation matrix from the input `view_plane`, and returns a
+    flattened list of len = 16. This flattened list becomes the input argument to `view.contol.orient`.
+
+    Args:
+        view_plane (numpy.ndarray/list): A Nx3-array/list (N = 1,2,3); the first 3d-component of the array
+            specifies which plane of the system to view (for example, [1, 0, 0], [1, 1, 0] or the [1, 1, 1] planes),
+            the second 3d-component (if specified, otherwise [1, 0, 0]) gives the horizontal direction, and the
+            third component (if specified) is the vertical component, which is ignored and calculated internally.
+            The orthonormality of the orientation is internally ensured, and therefore is not required in the
+            function call.
+        distance_from_camera (float): Distance of the camera from the structure. Higher = farther away.
+
+    Returns:
+        (list): Flattened list of len = 16, which is the input argument to `view.contol.orient`
+    """
+    if distance_from_camera <= 0:
+        raise ValueError("´distance_from_camera´ must be a positive float!")
+    flattened_orientation = np.eye(4)
+    flattened_orientation[:3, :3] = _get_orientation(view_plane)
+
+    return (distance_from_camera * flattened_orientation).ravel().tolist()
 
 
