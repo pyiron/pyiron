@@ -4,8 +4,6 @@
 
 import unittest
 import numpy as np
-import os
-import warnings
 from pyiron.atomistics.structure.visualization import _get_flattened_orientation
 
 
