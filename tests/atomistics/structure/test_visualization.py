@@ -6,7 +6,7 @@ import unittest
 import numpy as np
 import os
 import warnings
-from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
+from pyiron.atomistics.structure.visualization import _get_flattened_orientation
 
 
 class TestAtoms(unittest.TestCase):
@@ -19,9 +19,8 @@ class TestAtoms(unittest.TestCase):
         pass
 
     def test_get_flattened_orientation(self):
-        basis = CrystalStructure("Al", bravais_basis='fcc', lattice_constants=4)
         R = np.random.random(9).reshape(-1, 3)
-        R = np.array(basis.visualization._get_flattened_orientation(R, 1)).reshape(4, 4)
+        R = np.array(_get_flattened_orientation(R, 1)).reshape(4, 4)
         self.assertAlmostEqual(np.linalg.det(R), 1)
 
 
