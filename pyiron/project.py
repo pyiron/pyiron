@@ -258,12 +258,13 @@ class Project(ProjectCore):
         self, project_to_import_from, rel_path=None, job_type="Vasp", copy_raw_files=False
     ):
         """
-
+        A method to import a single calculation jobs into pyiron. Currently, it suppor
+        ts VASP and KMC calculations.
         Args:
             rel_path:
             project_to_import_from:
-            job_type (str): Type of the calculation which is going to be imported
-            copy_raw_files (bool): Copy
+            job_type (str): Type of the calculation which is going to be imported.
+            copy_raw_files (bool): True if raw files are to be imported.
         """
         if job_type not in ["Vasp", "KMC"]:
             raise ValueError("The job_type is not supported.")
@@ -312,11 +313,13 @@ class Project(ProjectCore):
 
     def import_from_path(self, path, recursive=True, copy_raw_files=False):
         """
+        A method to import jobs into pyiron. Currently, it supports VASP and
+        KMC calculations.
 
         Args:
-            path (str):
-            recursive (bool):
-            copy_raw_files (bool):
+            path (str): The path of the directory to import
+            recursive (bool): True if sub-directories to be imported.
+            copy_raw_files (bool): True if the raw files are to be copied.
 
         """
         if os.path.abspath(path):
