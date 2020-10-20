@@ -27,9 +27,25 @@ class TestSxExtOptInteractive(unittest.TestCase):
         job.set_force_constants(1)
         job.structure.positions[0,0] += 0.01
         minim = job.create_job("ScipyMinimizer", "job_scipy")
-        minim.input.ionic_force_tolerance = 1e-8
+        force_tolerance = 1.0e-3
+        minim.input.ionic_force_tolerance = force_tolerance
         minim.run()
-        self.assertAlmostEqual(np.linalg.norm(minim.ref_job['output/generic/forces'][-1], axis=-1).max(), 0)
+        self.assertLess(np.linalg.norm(minim.ref_job['output/generic/forces'][-1], axis=-1).max(), force_tolerance)
+
+    def test_run_pressure(self):
+        basis = self.project.create_structure("Al", "fcc", 4)
+        job = self.project.create_job( 'HessianJob', "job_pressure")
+        job.server.run_mode.interactive = True
+        job.set_reference_structure(basis)
+        job.set_force_constants(1)
+        job.set_elastic_moduli(1,1)
+        job.structure.set_cell(job.structure.cell*1.01, scale_atoms=True)
+        minim = job.create_job("ScipyMinimizer", "job_scipy_pressure")
+        minim.calc_minimize(pressure=0, volume_only=True)
+        pressure_tolerance = 1.0e-3
+        minim.input.ionic_force_tolerance = pressure_tolerance
+        minim.run()
+        self.assertLess(np.absolute(minim.ref_job['output/generic/pressures'][-1]).max(), pressure_tolerance)
 
     def test_calc_minimize(self):
         minim = self.project.create_job('ScipyMinimizer', 'calc_minimize')
