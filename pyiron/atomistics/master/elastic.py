@@ -10,6 +10,7 @@ import warnings
 from pyiron.atomistics.structure.atoms import Atoms, ase_to_pyiron
 from pyiron.atomistics.master.parallel import AtomisticParallelMaster
 from pyiron_base import JobGenerator
+from sklearn.linear_model import LinearRegression
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = (
@@ -26,6 +27,38 @@ __date__ = "Sep 1, 2017"
 eV_div_A3_to_GPa = (
     1e21 / scipy.constants.physical_constants["joule-electron volt relationship"][0]
 )
+
+class CalcElasticTensor(object):
+    def __init__(self):
+        self.strain = []
+        self.stress = []
+        self.energy = []
+        self.volume = []
+        self.rotations = []
+
+    def run(self):
+        if len(self.strain)==1:
+            raise ValueError('Not enough points')
+        rotations = np.append(np.eye(3), self.rotations).reshape(-1, 3, 3)
+        _, indices = np.unique(np.round(rotations, 6), axis=0, return_inverse=True)
+        rotations = rotations[np.unique(indices)]
+        strain = np.array(self.strain)
+        strain = np.einsum('nik,mkl,njl->nmij', rotations, strain, rotations).reshape(-1, 3, 3)
+        strain = np.stack((strain[:,0,0], strain[:,1,1], strain[:,2,2], 2*strain[:,1,2], 2*strain[:,0,2], 2*strain[:,0,1]), axis=-1)
+        coeff = []
+        if len(self.stress)==len(self.strain):
+            stress = np.array(self.stress)
+            stress = np.einsum('nik,mkl,njl->nmij', rotations, stress, rotations).reshape(-1, 3, 3)
+            stress = np.stack((stress[:,0,0], stress[:,1,1], stress[:,2,2], stress[:,1,2], stress[:,0,2], stress[:,0,1]), axis=-1)
+            for ii in range(6):
+                reg = LinearRegression().fit(strain, stress[:,ii])
+                coeff.append(reg.coef_)
+                coeff = np.array(coeff)
+        elif len(self.energy)==len(self.strain) and len(self.strain)==len(self.volume):
+            energy = np.tile(self.energy, len(rotations))
+            volume = np.tile(self.volume, len(rotations))
+        else:
+            raise ValueError('Problem with fitting data')
 
 
 class ElasticJobGenerator(JobGenerator):
