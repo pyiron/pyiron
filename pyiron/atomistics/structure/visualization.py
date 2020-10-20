@@ -2,7 +2,6 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
-from ase.atoms import Atoms as ASEAtoms, get_distances as ase_get_distances, Atom as ASEAtom
 import numpy as np
 import warnings
 from matplotlib.colors import rgb2hex
@@ -128,7 +127,8 @@ class Visualization(object):
         pdb_str += "ENDMDL \n"
         return pdb_str
 
-    def _atomic_number_to_radius(self, atomic_number, shift=0.2, slope=0.1, scale=1.0):
+    @staticmethod
+    def _atomic_number_to_radius(atomic_number, shift=0.2, slope=0.1, scale=1.0):
         """
         Give the atomic radius for plotting, which scales like the root of the atomic number.
 
