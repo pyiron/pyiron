@@ -14,7 +14,7 @@ from matplotlib.colors import rgb2hex
 import seekpath
 from pyiron.atomistics.structure.atom import Atom, ase_to_pyiron as ase_to_pyiron_atom
 from pyiron.atomistics.structure.neighbors import Neighbors
-from pyiron.atomistics.structure.visualization import Visualization
+from pyiron.atomistics.structure.visualization import plot3d, plot3d_plotly, plot3d_ase
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
 from pyiron.atomistics.structure.periodic_table import (
     PeriodicTable,
@@ -23,6 +23,7 @@ from pyiron.atomistics.structure.periodic_table import (
 from pyiron_base import Settings
 from scipy.spatial import cKDTree, Voronoi
 import spglib
+from types import MethodType
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal"
 __copyright__ = (
@@ -192,7 +193,9 @@ class Atoms(ASEAtoms):
             self.dimension = len(self.positions[0])
         else:
             self.dimension = 0
-        self.visualization = Visualization(self)
+        self.plot3d = MethodType(plot3d, self)
+        self.plot3d_plotly = MethodType(plot3d_plotly, self)
+        self.plot3d_ase = MethodType(plot3d_ase, self)
 
     @property
     def species(self):
@@ -1019,93 +1022,6 @@ class Atoms(ASEAtoms):
             "analyse_phonopy_equivalent_atoms() is obsolete use get_symmetry()['equivalent_atoms'] instead"
         )
         return analyse_phonopy_equivalent_atoms(atoms)
-
-    def plot3d_plotly(
-        self,
-        scalar_field=None,
-        particle_size=1.0,
-        camera="orthographic",
-        view_plane=np.array([1, 1, 1]),
-        distance_from_camera=1.25,
-        opacity=1,
-    ):
-        return self.visualization.plot3d_plotly(
-            scalar_field=scalar_field,
-            particle_size=particle_size,
-            camera=camera,
-            view_plane=view_plane,
-            distance_from_camera=distance_from_camera,
-            opacity=opacity,
-        )
-    plot3d_plotly.__doc__ = Visualization.plot3d_plotly.__doc__
-
-    def plot3d(
-        self,
-        show_cell=True,
-        show_axes=True,
-        camera="orthographic",
-        spacefill=True,
-        particle_size=1.0,
-        select_atoms=None,
-        background="white",
-        color_scheme=None,
-        colors=None,
-        scalar_field=None,
-        scalar_start=None,
-        scalar_end=None,
-        scalar_cmap=None,
-        vector_field=None,
-        vector_color=None,
-        magnetic_moments=False,
-        custom_array=None,
-        custom_3darray=None,
-        view_plane=np.array([0, 0, 1]),
-        distance_from_camera=14.0
-    ):
-        return self.visualization.plot3d(
-            show_cell=show_cell,
-            show_axes=show_axes,
-            camera=camera,
-            spacefill=spacefill,
-            particle_size=particle_size,
-            select_atoms=select_atoms,
-            background=background,
-            color_scheme=color_scheme,
-            colors=colors,
-            scalar_field=scalar_field,
-            scalar_start=scalar_start,
-            scalar_end=scalar_end,
-            scalar_cmap=scalar_cmap,
-            vector_field=vector_field,
-            vector_color=vector_color,
-            magnetic_moments=magnetic_moments,
-            custom_array=custom_array,
-            custom_3darray=custom_3darray,
-            view_plane=view_plane,
-            distance_from_camera=distance_from_camera,
-        )
-    plot3d.__doc__ = Visualization.plot3d.__doc__
-
-    def plot3d_ase(
-        self,
-        spacefill=True,
-        show_cell=True,
-        camera="perspective",
-        particle_size=0.5,
-        background="white",
-        color_scheme="element",
-        show_axes=True,
-    ):
-        return self.visualization.plot3d_ase(
-            spacefill=spacefill,
-            show_cell=show_cell,
-            camera=camera,
-            particle_size=particle_size,
-            background=background,
-            color_scheme=color_scheme,
-            show_axes=show_axes,
-        )
-    plot3d_ase.__doc__ = Visualization.plot3d_ase.__doc__
 
     def pos_xyz(self):
         """
