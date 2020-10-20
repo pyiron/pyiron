@@ -11,7 +11,6 @@ import numpy as np
 from six import string_types
 import warnings
 from matplotlib.colors import rgb2hex
-from scipy.interpolate import interp1d
 import seekpath
 from pyiron.atomistics.structure.atom import Atom, ase_to_pyiron as ase_to_pyiron_atom
 from pyiron.atomistics.structure.neighbors import Neighbors
@@ -1030,14 +1029,14 @@ class Atoms(ASEAtoms):
         distance_from_camera=1.25,
         opacity=1,
     ):
-    self.visualization.plot3d_plotly(
-        scalar_field=scalar_field,
-        particle_size=particle_size,
-        camera=camera,
-        view_plane=view_plane,
-        distance_from_camera=distance_from_camera,
-        opacity=opacity,
-    )
+        return self.visualization.plot3d_plotly(
+            scalar_field=scalar_field,
+            particle_size=particle_size,
+            camera=camera,
+            view_plane=view_plane,
+            distance_from_camera=distance_from_camera,
+            opacity=opacity,
+        )
     plot3d_plotly.__doc__ = Visualization.plot3d_plotly.__doc__
 
     def plot3d(
@@ -1063,28 +1062,28 @@ class Atoms(ASEAtoms):
         view_plane=np.array([0, 0, 1]),
         distance_from_camera=14.0
     ):
-    self.visualization.plo3d(
-        show_cell=show_cell,
-        show_axes=show_axes,
-        camera=camera,
-        spacefill=spacefill,
-        particle_size=particle_size,
-        select_atoms=select_atoms,
-        background=background,
-        color_scheme=color_scheme,
-        colors=colors,
-        scalar_field=scalar_field,
-        scalar_start=scalar_start,
-        scalar_end=scalar_end,
-        scalar_cmap=scalar_cmap,
-        vector_field=vector_field,
-        vector_color=vector_color,
-        magnetic_moments=magnetic_moments,
-        custom_array=custom_array,
-        custom_3darray=custom_3darray,
-        view_plane=view_plane,
-        distance_from_camera=distance_from_camera,
-    )
+        return self.visualization.plot3d(
+            show_cell=show_cell,
+            show_axes=show_axes,
+            camera=camera,
+            spacefill=spacefill,
+            particle_size=particle_size,
+            select_atoms=select_atoms,
+            background=background,
+            color_scheme=color_scheme,
+            colors=colors,
+            scalar_field=scalar_field,
+            scalar_start=scalar_start,
+            scalar_end=scalar_end,
+            scalar_cmap=scalar_cmap,
+            vector_field=vector_field,
+            vector_color=vector_color,
+            magnetic_moments=magnetic_moments,
+            custom_array=custom_array,
+            custom_3darray=custom_3darray,
+            view_plane=view_plane,
+            distance_from_camera=distance_from_camera,
+        )
     plot3d.__doc__ = Visualization.plot3d.__doc__
 
     def plot3d_ase(
@@ -1097,15 +1096,15 @@ class Atoms(ASEAtoms):
         color_scheme="element",
         show_axes=True,
     ):
-    self.visualization.plot3d_ase(
-        spacefill=spacefill,
-        show_cell=show_cell,
-        camera=camera,
-        particle_size=particle_size,
-        background=background,
-        color_scheme=color_scheme,
-        show_axes=show_axes,
-    )
+        return self.visualization.plot3d_ase(
+            spacefill=spacefill,
+            show_cell=show_cell,
+            camera=camera,
+            particle_size=particle_size,
+            background=background,
+            color_scheme=color_scheme,
+            show_axes=show_axes,
+        )
     plot3d_ase.__doc__ = Visualization.plot3d_ase.__doc__
 
     def pos_xyz(self):

@@ -7,6 +7,7 @@ import numpy as np
 import warnings
 from matplotlib.colors import rgb2hex
 from pyiron_base import Settings
+from scipy.interpolate import interp1d
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal"
 __copyright__ = (
@@ -24,6 +25,13 @@ s = Settings()
 
 class Visualization(object):
     """
+    Visualization class. Available functions are:
+
+        plot3d: NGLView based structure plot tool
+        plot3d_ase: ASE version of plot3d
+        plot_plotly: plotly based structure plot tool
+
+    Read DocStrings of individual functions for more info
 
     """
 
@@ -514,7 +522,7 @@ class Visualization(object):
         if vector_color is None and vector_field is not None:
             vector_color = (
                 0.5
-                * vector_field
+                * np.array(vector_field)
                 / np.linalg.norm(vector_field, axis=-1)[:, np.newaxis]
                 + 0.5
             )
