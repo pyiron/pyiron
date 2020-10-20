@@ -55,8 +55,8 @@ def plot3d_plotly(
     """
     try:
         import plotly.express as px
-    except ImportError:
-        print("plotly not installed")
+    except ModuleNotFoundError:
+        print("plotly not installed - use plot3d instead")
         return
     parent_basis = atoms.get_parent_basis()
     elements = parent_basis.get_chemical_symbols()
