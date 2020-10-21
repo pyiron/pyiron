@@ -57,6 +57,10 @@ class CalcElasticTensor(object):
         elif len(self.energy)==len(self.strain) and len(self.strain)==len(self.volume):
             energy = np.tile(self.energy, len(rotations))
             volume = np.tile(self.volume, len(rotations))
+            C = np.einsum('n,ni,nj->nij', volume, strain, strain)
+            C = np.triu(C).reshape(-1, 36)
+            C = C[np.sum(C, axis=0)[np.newaxis,:]!=0]
+            C = np.append(np.ones(len(C)).reshape(-1, 1), C, axis=0).reshape(-1, 36)
         else:
             raise ValueError('Problem with fitting data')
 
