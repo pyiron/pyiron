@@ -70,11 +70,6 @@ class ElasticJobGenerator(JobGenerator):
             (list)
         """
         parameter_lst = []
-        if len(self._job.input['strain_matrices'])==0:
-            eps_lst = np.random.random((int(self._job.input['num_points']), 3, 3))-0.5
-            eps_lst *= self._job.input['max_strain']
-            eps_lst += np.einsum('nij->nji', eps_lst)
-            self._job.input['strain_matrices'] = eps_lst.tolist()
         for ii, epsilon in enumerate(self._job.input['strain_matrices']):
             basis = self._job.ref_job.structure.copy()
             basis.apply_strain(np.array(epsilon))
@@ -104,13 +99,37 @@ class ElasticTensor(AtomisticParallelMaster):
         # print ("h5_path: ", self.project_hdf5._h5_path)
 
         # define default input
-        self.input["num_points"] = (11, "number of sample points")
+        self.input["min_num_measurements"] = (11, "minimum number of samples to be taken")
+        self.input["min_num_points"] = (105, "minimum number of data points"
+            + "(number of measurements will be min_num_points/len(rotations))")
         self.input["max_strain"] = (
             0.01,
             "relative volume variation around volume defined by ref_ham",
         )
         self.input['strain_matrices'] = []
+        self.input['use_symmetry'] = True
+        self.input['rotations'] = []
         self._job_generator = ElasticJobGenerator(self)
+
+    @property
+    def _number_of_measurements(self):
+        return max(
+            self.input['min_num_measurements'],
+            int(self.input['min_num_points']/max(len(self.input['rotations']), 1))
+        )
+
+    def validate_ready_to_run(self):
+        super().validate_ready_to_run()
+        if self.input['use_symmetry'] and len(self.input['rotations'])==0:
+            rotations = self.ref_job.structure.get_symmetry()['rotations']
+            _, indices = np.unique(np.round(rotations, 6), axis=0, return_inverse=True)
+            rotations = rotations[np.unique(indices)]
+            self.input['rotations'] = rotations.tolist()
+        if len(self.input['strain_matrices'])==0:
+            eps_lst = np.random.random((int(self._number_of_measurements), 3, 3))-0.5
+            eps_lst *= self.input['max_strain']
+            eps_lst += np.einsum('nij->nji', eps_lst)
+            self.input['strain_matrices'] = eps_lst.tolist()
 
     def list_structures(self):
         if self.ref_job.structure is not None:
@@ -144,14 +163,13 @@ class ElasticTensor(AtomisticParallelMaster):
             self._output["pressures"] = np.array(pressure_lst)
             self._output["energy"] = np.array(erg_lst)
             self._output["id"] = np.array(id_lst)
-        self._output['rotations'] = self.ref_job.get_structure(0).get_symmetry()['rotations']
         pressure = self._output['pressures']
         if pressure is None:
             pressure = []
         self._output['elastic_tensor'] = calc_elastic_tensor(
             strain = self.input['strain_matrices'],
             stress = -pressure,
-            rotations = self._output['rotations'],
+            rotations = self.input['rotations'],
             energy = self._output['energy'],
             volume = self._output['volume'],
         )
