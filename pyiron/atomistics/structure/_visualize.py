@@ -22,12 +22,73 @@ __date__ = "Sep 1, 2017"
 s = Settings()
 
 class Visualize(object):
-    """
-        Structure visualization class. This class is not meant to be used standalone - either import
-        `Visualize` and call `Visualize.plot3d(atoms)` or call individual functions from `Atoms`,
-        i.e. `atoms.plot3d()`.
-    """
-    def plot3d_plotly(
+    def __init__(self, job):
+        self._job = job
+
+    def plot3d(self, mode='NGLview', **kwargs):
+        """
+        Plot3d relies on NGLView or plotly to visualize atomic structures. Here, we construct a string in the "protein database"
+
+        The final widget is returned. If it is assigned to a variable, the visualization is suppressed until that
+        variable is evaluated, and in the meantime more NGL operations can be applied to it to modify the visualization.
+
+        Args:
+            mode (str): `NGLView`, `plotly` or `ase`
+            show_cell (bool): Whether or not to show the frame. (Default is True.)
+            show_axes (bool): Whether or not to show xyz axes. (Default is True.)
+            camera (str): 'perspective' or 'orthographic'. (Default is 'perspective'.)
+            spacefill (bool): Whether to use a space-filling or ball-and-stick representation. (Default is True, use
+                space-filling atoms.)
+            particle_size (float): Size of the particles. (Default is 1.)
+            select_atoms (numpy.ndarray): Indices of atoms to show, either as integers or a boolean array mask.
+                (Default is None, show all atoms.)
+            background (str): Background color. (Default is 'white'.)
+            color_scheme (str): NGLView color scheme to use. (Default is None, color by element.)
+            colors (numpy.ndarray): A per-atom array of HTML color names or hex color codes to use for atomic colors.
+                (Default is None, use coloring scheme.)
+            scalar_field (numpy.ndarray): Color each atom according to the array value (Default is None, use coloring
+                scheme.)
+            scalar_start (float): The scalar value to be mapped onto the low end of the color map (lower values are
+                clipped). (Default is None, use the minimum value in `scalar_field`.)
+            scalar_end (float): The scalar value to be mapped onto the high end of the color map (higher values are
+                clipped). (Default is None, use the maximum value in `scalar_field`.)
+            scalar_cmap (matplotlib.cm): The colormap to use. (Default is None, giving a blue-red divergent map.)
+            vector_field (numpy.ndarray): Add vectors (3 values) originating at each atom. (Default is None, no
+                vectors.)
+            vector_color (numpy.ndarray): Colors for the vectors (only available with vector_field). (Default is None,
+                vectors are colored by their direction.)
+            magnetic_moments (bool): Plot magnetic moments as 'scalar_field' or 'vector_field'.
+            view_plane (numpy.ndarray): A Nx3-array (N = 1,2,3); the first 3d-component of the array specifies
+                which plane of the system to view (for example, [1, 0, 0], [1, 1, 0] or the [1, 1, 1] planes), the
+                second 3d-component (if specified, otherwise [1, 0, 0]) gives the horizontal direction, and the third
+                component (if specified) is the vertical component, which is ignored and calculated internally. The
+                orthonormality of the orientation is internally ensured, and therefore is not required in the function
+                call. (Default is np.array([0, 0, 1]), which is view normal to the x-y plane.)
+            distance_from_camera (float): Distance of the camera from the structure. Higher = farther away.
+                (Default is 14, which also seems to be the NGLView default value.)
+
+            Possible NGLView color schemes:
+              " ", "picking", "random", "uniform", "atomindex", "residueindex",
+              "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
+              "hydrophobicity", "value", "volume", "occupancy"
+
+        Returns:
+            (nglview.NGLWidget): The NGLView widget itself, which can be operated on further or viewed as-is.
+
+        Warnings:
+            * Many features only work with space-filling atoms (e.g. coloring by a scalar field).
+            * The colour interpretation of some hex codes is weird, e.g. 'green'.
+        """
+        if mode=='NGLview':
+            return self._plot3d(**kwargs)
+        elif mode=='plotly':
+            return self._plot3d_plotly(**kwargs)
+        elif mode=='ase':
+            return self._plot3d_ase(**kwargs)
+        else:
+            raise ValueError('plot method not recognized')
+
+    def _plot3d_plotly(
         self,
         scalar_field=None,
         particle_size=1.0,
@@ -61,19 +122,18 @@ class Visualize(object):
         try:
             import plotly.express as px
         except ModuleNotFoundError:
-            print("plotly not installed - use plot3d instead")
-            return
-        parent_basis = self.get_parent_basis()
+            raise ModuleNotFoundError("plotly not installed - use plot3d instead")
+        parent_basis = self._job.get_parent_basis()
         elements = parent_basis.get_chemical_symbols()
         atomic_numbers = parent_basis.get_atomic_numbers()
         if scalar_field is None:
             scalar_field = elements
-        fig = px.scatter_3d(x=self.positions[:,0],
-                            y=self.positions[:,1],
-                            z=self.positions[:,2],
+        fig = px.scatter_3d(x=self._job.positions[:,0],
+                            y=self._job.positions[:,1],
+                            z=self._job.positions[:,2],
                             color=scalar_field,
                             opacity=opacity,
-                            size=_atomic_number_to_radius(atomic_numbers, scale=particle_size/(0.1*self.get_volume()**(1/3))))
+                            size=_atomic_number_to_radius(atomic_numbers, scale=particle_size/(0.1*self._job.get_volume()**(1/3))))
         fig.layout.scene.camera.projection.type = camera
         rot = _get_orientation(view_plane).T
         rot[0,:] *= distance_from_camera
@@ -85,7 +145,7 @@ class Visualize(object):
         fig.update_traces(marker=dict(line=dict(width=0.1, color='DarkSlateGrey')))
         return fig
 
-    def plot3d(
+    def _plot3d(
         self,
         show_cell=True,
         show_axes=True,
@@ -183,16 +243,16 @@ class Visualize(object):
             )
             vector_field = custom_3darray
 
-        if magnetic_moments is True and hasattr(self, 'spin'):
-            if len(self.get_initial_magnetic_moments().shape) == 1:
-                scalar_field = self.get_initial_magnetic_moments()
+        if magnetic_moments is True and hasattr(self._job, 'spin'):
+            if len(self._job.get_initial_magnetic_moments().shape) == 1:
+                scalar_field = self._job.get_initial_magnetic_moments()
             else:
-                vector_field = self.get_initial_magnetic_moments()
+                vector_field = self._job.get_initial_magnetic_moments()
 
-        parent_basis = self.get_parent_basis()
+        parent_basis = self._job.get_parent_basis()
         elements = parent_basis.get_chemical_symbols()
         atomic_numbers = parent_basis.get_atomic_numbers()
-        positions = self.positions
+        positions = self._job.positions
 
         # If `select_atoms` was given, visualize only a subset of the `parent_basis`
         if select_atoms is not None:
@@ -215,7 +275,7 @@ class Visualize(object):
 
         # Write the nglview protein-database-formatted string
         struct = nglview.TextStructure(
-            _ngl_write_structure(elements, positions, self.cell)
+            _ngl_write_structure(elements, positions, self._job.cell)
         )
 
         # Parse the string into the displayable widget
@@ -271,12 +331,12 @@ class Visualize(object):
             vector_field is not None and vector_field is not None
         ):  # WARNING: There must be a bug here...
             try:
-                if vector_color.shape != np.ones((len(self), 3)).shape:
+                if vector_color.shape != np.ones((len(self._job), 3)).shape:
                     vector_color = np.outer(
-                        np.ones(len(self)), vector_color / np.linalg.norm(vector_color)
+                        np.ones(len(self._job)), vector_color / np.linalg.norm(vector_color)
                     )
             except AttributeError:
-                vector_color = np.ones((len(self), 3)) * vector_color
+                vector_color = np.ones((len(self._job), 3)) * vector_color
 
         if vector_field is not None:
             for arr, pos, col in zip(vector_field, positions, vector_color):
@@ -313,7 +373,7 @@ class Visualize(object):
 
         return view
 
-    def plot3d_ase(
+    def _plot3d_ase(
         self,
         spacefill=True,
         show_cell=True,
@@ -337,7 +397,7 @@ class Visualize(object):
                 "The package nglview needs to be installed for the plot3d() function!"
             )
         # Always visualize the parent basis
-        parent_basis = self.get_parent_basis()
+        parent_basis = self._job.get_parent_basis()
         view = nglview.show_ase(parent_basis)
         if spacefill:
             view.add_spacefill(

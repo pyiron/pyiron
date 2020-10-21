@@ -193,9 +193,7 @@ class Atoms(ASEAtoms):
             self.dimension = len(self.positions[0])
         else:
             self.dimension = 0
-        self.plot3d = MethodType(Visualize.plot3d, self)
-        self.plot3d_plotly = MethodType(Visualize.plot3d_plotly, self)
-        self.plot3d_ase = MethodType(Visualize.plot3d_ase, self)
+        self.visualize = Visualize(self)
 
     @property
     def species(self):
@@ -1022,6 +1020,10 @@ class Atoms(ASEAtoms):
             "analyse_phonopy_equivalent_atoms() is obsolete use get_symmetry()['equivalent_atoms'] instead"
         )
         return analyse_phonopy_equivalent_atoms(atoms)
+
+    def plot3d(self, **kwargs):
+        return self.visualize.plot3d(**kwargs)
+    plot3d.__doc__ = Visualize.plot3d.__doc__
 
     def pos_xyz(self):
         """
