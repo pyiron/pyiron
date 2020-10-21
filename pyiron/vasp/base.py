@@ -401,6 +401,14 @@ class VaspBase(GenericDFTJob):
             )
 
     def nbands_convergence_check(self):
+        """
+        Function to check the convergence of nbands in the Vasp calculation
+
+        Returns:
+
+            bool : True if the highest band is unoccupied, False if the highest band is occupied
+            
+        """
         return np.all(np.isclose(self["output/electronic_structure/occ_matrix"][:,-1], 0))
 
     def convergence_check(self):
