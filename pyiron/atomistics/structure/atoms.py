@@ -14,7 +14,7 @@ from matplotlib.colors import rgb2hex
 import seekpath
 from pyiron.atomistics.structure.atom import Atom, ase_to_pyiron as ase_to_pyiron_atom
 from pyiron.atomistics.structure.neighbors import Neighbors
-from pyiron.atomistics.structure.visualization import plot3d, plot3d_plotly, plot3d_ase
+from pyiron.atomistics.structure.visualization import Visualize
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
 from pyiron.atomistics.structure.periodic_table import (
     PeriodicTable,
@@ -193,9 +193,9 @@ class Atoms(ASEAtoms):
             self.dimension = len(self.positions[0])
         else:
             self.dimension = 0
-        self.plot3d = MethodType(plot3d, self)
-        self.plot3d_plotly = MethodType(plot3d_plotly, self)
-        self.plot3d_ase = MethodType(plot3d_ase, self)
+        self.plot3d = MethodType(Visualize.plot3d, self)
+        self.plot3d_plotly = MethodType(Visualize.plot3d_plotly, self)
+        self.plot3d_ase = MethodType(Visualize.plot3d_ase, self)
 
     @property
     def species(self):

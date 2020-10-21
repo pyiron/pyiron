@@ -21,341 +21,341 @@ __date__ = "Sep 1, 2017"
 
 s = Settings()
 
+class Visualize(object):
+    def plot3d_plotly(
+        self,
+        scalar_field=None,
+        particle_size=1.0,
+        camera="orthographic",
+        view_plane=np.array([1, 1, 1]),
+        distance_from_camera=1.25,
+        opacity=1,
+    ):
+        """
+        Make a 3D plot of the atomic structure.
 
-def plot3d_plotly(
-    atoms,
-    scalar_field=None,
-    particle_size=1.0,
-    camera="orthographic",
-    view_plane=np.array([1, 1, 1]),
-    distance_from_camera=1.25,
-    opacity=1,
-):
-    """
-    Make a 3D plot of the atomic structure.
+        Args:
+            camera (str): 'perspective' or 'orthographic'. (Default is 'perspective'.)
+            particle_size (float): Size of the particles. (Default is 1.)
+            scalar_field (numpy.ndarray): Color each atom according to the array value (Default is None, use coloring
+                scheme.)
+            view_plane (numpy.ndarray): A Nx3-array (N = 1,2,3); the first 3d-component of the array specifies
+                which plane of the system to view (for example, [1, 0, 0], [1, 1, 0] or the [1, 1, 1] planes), the
+                second 3d-component (if specified, otherwise [1, 0, 0]) gives the horizontal direction, and the third
+                component (if specified) is the vertical component, which is ignored and calculated internally. The
+                orthonormality of the orientation is internally ensured, and therefore is not required in the function
+                call. (Default is np.array([0, 0, 1]), which is view normal to the x-y plane.)
+            distance_from_camera (float): Distance of the camera from the structure. Higher = farther away.
+                (Default is 14, which also seems to be the NGLView default value.)
+            opacity (float): opacity
 
-    Args:
-        camera (str): 'perspective' or 'orthographic'. (Default is 'perspective'.)
-        particle_size (float): Size of the particles. (Default is 1.)
-        scalar_field (numpy.ndarray): Color each atom according to the array value (Default is None, use coloring
-            scheme.)
-        view_plane (numpy.ndarray): A Nx3-array (N = 1,2,3); the first 3d-component of the array specifies
-            which plane of the system to view (for example, [1, 0, 0], [1, 1, 0] or the [1, 1, 1] planes), the
-            second 3d-component (if specified, otherwise [1, 0, 0]) gives the horizontal direction, and the third
-            component (if specified) is the vertical component, which is ignored and calculated internally. The
-            orthonormality of the orientation is internally ensured, and therefore is not required in the function
-            call. (Default is np.array([0, 0, 1]), which is view normal to the x-y plane.)
-        distance_from_camera (float): Distance of the camera from the structure. Higher = farther away.
-            (Default is 14, which also seems to be the NGLView default value.)
-        opacity (float): opacity
+        Returns:
+            (plotly.express): The NGLView widget itself, which can be operated on further or viewed as-is.
 
-    Returns:
-        (plotly.express): The NGLView widget itself, which can be operated on further or viewed as-is.
+        """
+        try:
+            import plotly.express as px
+        except ModuleNotFoundError:
+            print("plotly not installed - use plot3d instead")
+            return
+        parent_basis = self.get_parent_basis()
+        elements = parent_basis.get_chemical_symbols()
+        atomic_numbers = parent_basis.get_atomic_numbers()
+        if scalar_field is None:
+            scalar_field = elements
+        fig = px.scatter_3d(x=self.positions[:,0],
+                            y=self.positions[:,1],
+                            z=self.positions[:,2],
+                            color=scalar_field,
+                            opacity=opacity,
+                            size=_atomic_number_to_radius(atomic_numbers, scale=particle_size/(0.1*self.get_volume()**(1/3))))
+        fig.layout.scene.camera.projection.type = camera
+        rot = _get_orientation(view_plane).T
+        rot[0,:] *= distance_from_camera
+        angle = dict(
+            up=dict(x=rot[2,0], y=rot[2,1], z=rot[2,2]),
+            eye=dict(x=rot[0,0], y=rot[0,1], z=rot[0,2])
+        )
+        fig.update_layout(scene_camera=angle)
+        fig.update_traces(marker=dict(line=dict(width=0.1, color='DarkSlateGrey')))
+        return fig
 
-    """
-    try:
-        import plotly.express as px
-    except ModuleNotFoundError:
-        print("plotly not installed - use plot3d instead")
-        return
-    parent_basis = atoms.get_parent_basis()
-    elements = parent_basis.get_chemical_symbols()
-    atomic_numbers = parent_basis.get_atomic_numbers()
-    if scalar_field is None:
-        scalar_field = elements
-    fig = px.scatter_3d(x=atoms.positions[:,0],
-                        y=atoms.positions[:,1],
-                        z=atoms.positions[:,2],
-                        color=scalar_field,
-                        opacity=opacity,
-                        size=_atomic_number_to_radius(atomic_numbers, scale=particle_size/(0.1*atoms.get_volume()**(1/3))))
-    fig.layout.scene.camera.projection.type = camera
-    rot = _get_orientation(view_plane).T
-    rot[0,:] *= distance_from_camera
-    angle = dict(
-        up=dict(x=rot[2,0], y=rot[2,1], z=rot[2,2]),
-        eye=dict(x=rot[0,0], y=rot[0,1], z=rot[0,2])
-    )
-    fig.update_layout(scene_camera=angle)
-    fig.update_traces(marker=dict(line=dict(width=0.1, color='DarkSlateGrey')))
-    return fig
+    def plot3d(
+        self,
+        show_cell=True,
+        show_axes=True,
+        camera="orthographic",
+        spacefill=True,
+        particle_size=1.0,
+        select_atoms=None,
+        background="white",
+        color_scheme=None,
+        colors=None,
+        scalar_field=None,
+        scalar_start=None,
+        scalar_end=None,
+        scalar_cmap=None,
+        vector_field=None,
+        vector_color=None,
+        magnetic_moments=False,
+        custom_array=None,
+        custom_3darray=None,
+        view_plane=np.array([0, 0, 1]),
+        distance_from_camera=14.0
+    ):
+        """
+        Plot3d relies on NGLView to visualize atomic structures. Here, we construct a string in the "protein database"
+        ("pdb") format, then turn it into an NGLView "structure". PDB is a white-space sensitive format, so the
+        string snippets are carefully formatted.
 
-def plot3d(
-    atoms,
-    show_cell=True,
-    show_axes=True,
-    camera="orthographic",
-    spacefill=True,
-    particle_size=1.0,
-    select_atoms=None,
-    background="white",
-    color_scheme=None,
-    colors=None,
-    scalar_field=None,
-    scalar_start=None,
-    scalar_end=None,
-    scalar_cmap=None,
-    vector_field=None,
-    vector_color=None,
-    magnetic_moments=False,
-    custom_array=None,
-    custom_3darray=None,
-    view_plane=np.array([0, 0, 1]),
-    distance_from_camera=14.0
-):
-    """
-    Plot3d relies on NGLView to visualize atomic structures. Here, we construct a string in the "protein database"
-    ("pdb") format, then turn it into an NGLView "structure". PDB is a white-space sensitive format, so the
-    string snippets are carefully formatted.
+        The final widget is returned. If it is assigned to a variable, the visualization is suppressed until that
+        variable is evaluated, and in the meantime more NGL operations can be applied to it to modify the visualization.
 
-    The final widget is returned. If it is assigned to a variable, the visualization is suppressed until that
-    variable is evaluated, and in the meantime more NGL operations can be applied to it to modify the visualization.
+        Args:
+            show_cell (bool): Whether or not to show the frame. (Default is True.)
+            show_axes (bool): Whether or not to show xyz axes. (Default is True.)
+            camera (str): 'perspective' or 'orthographic'. (Default is 'perspective'.)
+            spacefill (bool): Whether to use a space-filling or ball-and-stick representation. (Default is True, use
+                space-filling atoms.)
+            particle_size (float): Size of the particles. (Default is 1.)
+            select_atoms (numpy.ndarray): Indices of atoms to show, either as integers or a boolean array mask.
+                (Default is None, show all atoms.)
+            background (str): Background color. (Default is 'white'.)
+            color_scheme (str): NGLView color scheme to use. (Default is None, color by element.)
+            colors (numpy.ndarray): A per-atom array of HTML color names or hex color codes to use for atomic colors.
+                (Default is None, use coloring scheme.)
+            scalar_field (numpy.ndarray): Color each atom according to the array value (Default is None, use coloring
+                scheme.)
+            scalar_start (float): The scalar value to be mapped onto the low end of the color map (lower values are
+                clipped). (Default is None, use the minimum value in `scalar_field`.)
+            scalar_end (float): The scalar value to be mapped onto the high end of the color map (higher values are
+                clipped). (Default is None, use the maximum value in `scalar_field`.)
+            scalar_cmap (matplotlib.cm): The colormap to use. (Default is None, giving a blue-red divergent map.)
+            vector_field (numpy.ndarray): Add vectors (3 values) originating at each atom. (Default is None, no
+                vectors.)
+            vector_color (numpy.ndarray): Colors for the vectors (only available with vector_field). (Default is None,
+                vectors are colored by their direction.)
+            magnetic_moments (bool): Plot magnetic moments as 'scalar_field' or 'vector_field'.
+            view_plane (numpy.ndarray): A Nx3-array (N = 1,2,3); the first 3d-component of the array specifies
+                which plane of the system to view (for example, [1, 0, 0], [1, 1, 0] or the [1, 1, 1] planes), the
+                second 3d-component (if specified, otherwise [1, 0, 0]) gives the horizontal direction, and the third
+                component (if specified) is the vertical component, which is ignored and calculated internally. The
+                orthonormality of the orientation is internally ensured, and therefore is not required in the function
+                call. (Default is np.array([0, 0, 1]), which is view normal to the x-y plane.)
+            distance_from_camera (float): Distance of the camera from the structure. Higher = farther away.
+                (Default is 14, which also seems to be the NGLView default value.)
 
-    Args:
-        show_cell (bool): Whether or not to show the frame. (Default is True.)
-        show_axes (bool): Whether or not to show xyz axes. (Default is True.)
-        camera (str): 'perspective' or 'orthographic'. (Default is 'perspective'.)
-        spacefill (bool): Whether to use a space-filling or ball-and-stick representation. (Default is True, use
-            space-filling atoms.)
-        particle_size (float): Size of the particles. (Default is 1.)
-        select_atoms (numpy.ndarray): Indices of atoms to show, either as integers or a boolean array mask.
-            (Default is None, show all atoms.)
-        background (str): Background color. (Default is 'white'.)
-        color_scheme (str): NGLView color scheme to use. (Default is None, color by element.)
-        colors (numpy.ndarray): A per-atom array of HTML color names or hex color codes to use for atomic colors.
-            (Default is None, use coloring scheme.)
-        scalar_field (numpy.ndarray): Color each atom according to the array value (Default is None, use coloring
-            scheme.)
-        scalar_start (float): The scalar value to be mapped onto the low end of the color map (lower values are
-            clipped). (Default is None, use the minimum value in `scalar_field`.)
-        scalar_end (float): The scalar value to be mapped onto the high end of the color map (higher values are
-            clipped). (Default is None, use the maximum value in `scalar_field`.)
-        scalar_cmap (matplotlib.cm): The colormap to use. (Default is None, giving a blue-red divergent map.)
-        vector_field (numpy.ndarray): Add vectors (3 values) originating at each atom. (Default is None, no
-            vectors.)
-        vector_color (numpy.ndarray): Colors for the vectors (only available with vector_field). (Default is None,
-            vectors are colored by their direction.)
-        magnetic_moments (bool): Plot magnetic moments as 'scalar_field' or 'vector_field'.
-        view_plane (numpy.ndarray): A Nx3-array (N = 1,2,3); the first 3d-component of the array specifies
-            which plane of the system to view (for example, [1, 0, 0], [1, 1, 0] or the [1, 1, 1] planes), the
-            second 3d-component (if specified, otherwise [1, 0, 0]) gives the horizontal direction, and the third
-            component (if specified) is the vertical component, which is ignored and calculated internally. The
-            orthonormality of the orientation is internally ensured, and therefore is not required in the function
-            call. (Default is np.array([0, 0, 1]), which is view normal to the x-y plane.)
-        distance_from_camera (float): Distance of the camera from the structure. Higher = farther away.
-            (Default is 14, which also seems to be the NGLView default value.)
+            Possible NGLView color schemes:
+              " ", "picking", "random", "uniform", "atomindex", "residueindex",
+              "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
+              "hydrophobicity", "value", "volume", "occupancy"
 
-        Possible NGLView color schemes:
+        Returns:
+            (nglview.NGLWidget): The NGLView widget itself, which can be operated on further or viewed as-is.
+
+        Warnings:
+            * Many features only work with space-filling atoms (e.g. coloring by a scalar field).
+            * The colour interpretation of some hex codes is weird, e.g. 'green'.
+        """
+        try:  # If the graphical packages are not available, the GUI will not work.
+            import nglview
+        except ImportError:
+            raise ImportError(
+                "The package nglview needs to be installed for the plot3d() function!"
+            )
+
+        if custom_array is not None:
+            warnings.warn(
+                "custom_array is deprecated. Use scalar_field instead",
+                DeprecationWarning,
+            )
+            scalar_field = custom_array
+
+        if custom_3darray is not None:
+            warnings.warn(
+                "custom_3darray is deprecated. Use vector_field instead",
+                DeprecationWarning,
+            )
+            vector_field = custom_3darray
+
+        if magnetic_moments is True and hasattr(self, 'spin'):
+            if len(self.get_initial_magnetic_moments().shape) == 1:
+                scalar_field = self.get_initial_magnetic_moments()
+            else:
+                vector_field = self.get_initial_magnetic_moments()
+
+        parent_basis = self.get_parent_basis()
+        elements = parent_basis.get_chemical_symbols()
+        atomic_numbers = parent_basis.get_atomic_numbers()
+        positions = self.positions
+
+        # If `select_atoms` was given, visualize only a subset of the `parent_basis`
+        if select_atoms is not None:
+            select_atoms = np.array(select_atoms, dtype=int)
+            elements = elements[select_atoms]
+            atomic_numbers = atomic_numbers[select_atoms]
+            positions = positions[select_atoms]
+            if colors is not None:
+                colors = np.array(colors)
+                colors = colors[select_atoms]
+            if scalar_field is not None:
+                scalar_field = np.array(scalar_field)
+                scalar_field = scalar_field[select_atoms]
+            if vector_field is not None:
+                vector_field = np.array(vector_field)
+                vector_field = vector_field[select_atoms]
+            if vector_color is not None:
+                vector_color = np.array(vector_color)
+                vector_color = vector_color[select_atoms]
+
+        # Write the nglview protein-database-formatted string
+        struct = nglview.TextStructure(
+            _ngl_write_structure(elements, positions, self.cell)
+        )
+
+        # Parse the string into the displayable widget
+        view = nglview.NGLWidget(struct)
+
+        if spacefill:
+            # Color by scheme
+            if color_scheme is not None:
+                if colors is not None:
+                    warnings.warn("`color_scheme` is overriding `colors`")
+                if scalar_field is not None:
+                    warnings.warn("`color_scheme` is overriding `scalar_field`")
+                view = _add_colorscheme_spacefill(
+                    view, elements, atomic_numbers, particle_size, color_scheme
+                )
+            # Color by per-atom colors
+            elif colors is not None:
+                if scalar_field is not None:
+                    warnings.warn("`colors` is overriding `scalar_field`")
+                view = _add_custom_color_spacefill(
+                    view, atomic_numbers, particle_size, colors
+                )
+            # Color by per-atom scalars
+            elif scalar_field is not None:  # Color by per-atom scalars
+                colors = _scalars_to_hex_colors(
+                    scalar_field, scalar_start, scalar_end, scalar_cmap
+                )
+                view = _add_custom_color_spacefill(
+                    view, atomic_numbers, particle_size, colors
+                )
+            # Color by element
+            else:
+                view = _add_colorscheme_spacefill(
+                    view, elements, atomic_numbers, particle_size
+                )
+            view.remove_ball_and_stick()
+        else:
+            view.add_ball_and_stick()
+
+        if show_cell:
+            if parent_basis.cell is not None:
+                if all(np.max(parent_basis.cell, axis=0) > 1e-2):
+                    view.add_unitcell()
+
+        if vector_color is None and vector_field is not None:
+            vector_color = (
+                0.5
+                * np.array(vector_field)
+                / np.linalg.norm(vector_field, axis=-1)[:, np.newaxis]
+                + 0.5
+            )
+        elif (
+            vector_field is not None and vector_field is not None
+        ):  # WARNING: There must be a bug here...
+            try:
+                if vector_color.shape != np.ones((len(self), 3)).shape:
+                    vector_color = np.outer(
+                        np.ones(len(self)), vector_color / np.linalg.norm(vector_color)
+                    )
+            except AttributeError:
+                vector_color = np.ones((len(self), 3)) * vector_color
+
+        if vector_field is not None:
+            for arr, pos, col in zip(vector_field, positions, vector_color):
+                view.shape.add_arrow(list(pos), list(pos + arr), list(col), 0.2)
+
+        if show_axes:  # Add axes
+            axes_origin = -np.ones(3)
+            arrow_radius = 0.1
+            text_size = 1
+            text_color = [0, 0, 0]
+            arrow_names = ["x", "y", "z"]
+
+            for n in [0, 1, 2]:
+                start = list(axes_origin)
+                shift = np.zeros(3)
+                shift[n] = 1
+                end = list(start + shift)
+                color = list(shift)
+                # We cast as list to avoid JSON warnings
+                view.shape.add_arrow(start, end, color, arrow_radius)
+                view.shape.add_text(end, text_color, text_size, arrow_names[n])
+
+        if camera != "perspective" and camera != "orthographic":
+            warnings.warn(
+                "Only perspective or orthographic is (likely to be) permitted for camera"
+            )
+
+        view.camera = camera
+        view.background = background
+
+        orientation = _get_flattened_orientation(view_plane=view_plane,
+                                                 distance_from_camera=distance_from_camera)
+        view.control.orient(orientation)
+
+        return view
+
+    def plot3d_ase(
+        self,
+        spacefill=True,
+        show_cell=True,
+        camera="perspective",
+        particle_size=0.5,
+        background="white",
+        color_scheme="element",
+        show_axes=True,
+    ):
+        """
+        Possible color schemes:
           " ", "picking", "random", "uniform", "atomindex", "residueindex",
           "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
           "hydrophobicity", "value", "volume", "occupancy"
-
-    Returns:
-        (nglview.NGLWidget): The NGLView widget itself, which can be operated on further or viewed as-is.
-
-    Warnings:
-        * Many features only work with space-filling atoms (e.g. coloring by a scalar field).
-        * The colour interpretation of some hex codes is weird, e.g. 'green'.
-    """
-    try:  # If the graphical packages are not available, the GUI will not work.
-        import nglview
-    except ImportError:
-        raise ImportError(
-            "The package nglview needs to be installed for the plot3d() function!"
-        )
-
-    if custom_array is not None:
-        warnings.warn(
-            "custom_array is deprecated. Use scalar_field instead",
-            DeprecationWarning,
-        )
-        scalar_field = custom_array
-
-    if custom_3darray is not None:
-        warnings.warn(
-            "custom_3darray is deprecated. Use vector_field instead",
-            DeprecationWarning,
-        )
-        vector_field = custom_3darray
-
-    if magnetic_moments is True and hasattr(atoms, 'spin'):
-        if len(atoms.get_initial_magnetic_moments().shape) == 1:
-            scalar_field = atoms.get_initial_magnetic_moments()
+        Returns:
+        """
+        try:  # If the graphical packages are not available, the GUI will not work.
+            import nglview
+        except ImportError:
+            raise ImportError(
+                "The package nglview needs to be installed for the plot3d() function!"
+            )
+        # Always visualize the parent basis
+        parent_basis = self.get_parent_basis()
+        view = nglview.show_ase(parent_basis)
+        if spacefill:
+            view.add_spacefill(
+                radius_type="vdw", color_scheme=color_scheme, radius=particle_size
+            )
+            # view.add_spacefill(radius=1.0)
+            view.remove_ball_and_stick()
         else:
-            vector_field = atoms.get_initial_magnetic_moments()
-
-    parent_basis = atoms.get_parent_basis()
-    elements = parent_basis.get_chemical_symbols()
-    atomic_numbers = parent_basis.get_atomic_numbers()
-    positions = atoms.positions
-
-    # If `select_atoms` was given, visualize only a subset of the `parent_basis`
-    if select_atoms is not None:
-        select_atoms = np.array(select_atoms, dtype=int)
-        elements = elements[select_atoms]
-        atomic_numbers = atomic_numbers[select_atoms]
-        positions = positions[select_atoms]
-        if colors is not None:
-            colors = np.array(colors)
-            colors = colors[select_atoms]
-        if scalar_field is not None:
-            scalar_field = np.array(scalar_field)
-            scalar_field = scalar_field[select_atoms]
-        if vector_field is not None:
-            vector_field = np.array(vector_field)
-            vector_field = vector_field[select_atoms]
-        if vector_color is not None:
-            vector_color = np.array(vector_color)
-            vector_color = vector_color[select_atoms]
-
-    # Write the nglview protein-database-formatted string
-    struct = nglview.TextStructure(
-        _ngl_write_structure(elements, positions, atoms.cell)
-    )
-
-    # Parse the string into the displayable widget
-    view = nglview.NGLWidget(struct)
-
-    if spacefill:
-        # Color by scheme
-        if color_scheme is not None:
-            if colors is not None:
-                warnings.warn("`color_scheme` is overriding `colors`")
-            if scalar_field is not None:
-                warnings.warn("`color_scheme` is overriding `scalar_field`")
-            view = _add_colorscheme_spacefill(
-                view, elements, atomic_numbers, particle_size, color_scheme
-            )
-        # Color by per-atom colors
-        elif colors is not None:
-            if scalar_field is not None:
-                warnings.warn("`colors` is overriding `scalar_field`")
-            view = _add_custom_color_spacefill(
-                view, atomic_numbers, particle_size, colors
-            )
-        # Color by per-atom scalars
-        elif scalar_field is not None:  # Color by per-atom scalars
-            colors = _scalars_to_hex_colors(
-                scalar_field, scalar_start, scalar_end, scalar_cmap
-            )
-            view = _add_custom_color_spacefill(
-                view, atomic_numbers, particle_size, colors
-            )
-        # Color by element
-        else:
-            view = _add_colorscheme_spacefill(
-                view, elements, atomic_numbers, particle_size
-            )
-        view.remove_ball_and_stick()
-    else:
-        view.add_ball_and_stick()
-
-    if show_cell:
-        if parent_basis.cell is not None:
-            if all(np.max(parent_basis.cell, axis=0) > 1e-2):
-                view.add_unitcell()
-
-    if vector_color is None and vector_field is not None:
-        vector_color = (
-            0.5
-            * np.array(vector_field)
-            / np.linalg.norm(vector_field, axis=-1)[:, np.newaxis]
-            + 0.5
-        )
-    elif (
-        vector_field is not None and vector_field is not None
-    ):  # WARNING: There must be a bug here...
-        try:
-            if vector_color.shape != np.ones((len(atoms), 3)).shape:
-                vector_color = np.outer(
-                    np.ones(len(atoms)), vector_color / np.linalg.norm(vector_color)
-                )
-        except AttributeError:
-            vector_color = np.ones((len(atoms), 3)) * vector_color
-
-    if vector_field is not None:
-        for arr, pos, col in zip(vector_field, positions, vector_color):
-            view.shape.add_arrow(list(pos), list(pos + arr), list(col), 0.2)
-
-    if show_axes:  # Add axes
-        axes_origin = -np.ones(3)
-        arrow_radius = 0.1
-        text_size = 1
-        text_color = [0, 0, 0]
-        arrow_names = ["x", "y", "z"]
-
-        for n in [0, 1, 2]:
-            start = list(axes_origin)
-            shift = np.zeros(3)
-            shift[n] = 1
-            end = list(start + shift)
-            color = list(shift)
-            # We cast as list to avoid JSON warnings
-            view.shape.add_arrow(start, end, color, arrow_radius)
-            view.shape.add_text(end, text_color, text_size, arrow_names[n])
-
-    if camera != "perspective" and camera != "orthographic":
-        warnings.warn(
-            "Only perspective or orthographic is (likely to be) permitted for camera"
-        )
-
-    view.camera = camera
-    view.background = background
-
-    orientation = _get_flattened_orientation(view_plane=view_plane,
-                                             distance_from_camera=distance_from_camera)
-    view.control.orient(orientation)
-
-    return view
-
-def plot3d_ase(
-    atoms,
-    spacefill=True,
-    show_cell=True,
-    camera="perspective",
-    particle_size=0.5,
-    background="white",
-    color_scheme="element",
-    show_axes=True,
-):
-    """
-    Possible color schemes:
-      " ", "picking", "random", "uniform", "atomindex", "residueindex",
-      "chainindex", "modelindex", "sstruc", "element", "resname", "bfactor",
-      "hydrophobicity", "value", "volume", "occupancy"
-    Returns:
-    """
-    try:  # If the graphical packages are not available, the GUI will not work.
-        import nglview
-    except ImportError:
-        raise ImportError(
-            "The package nglview needs to be installed for the plot3d() function!"
-        )
-    # Always visualize the parent basis
-    parent_basis = atoms.get_parent_basis()
-    view = nglview.show_ase(parent_basis)
-    if spacefill:
-        view.add_spacefill(
-            radius_type="vdw", color_scheme=color_scheme, radius=particle_size
-        )
-        # view.add_spacefill(radius=1.0)
-        view.remove_ball_and_stick()
-    else:
-        view.add_ball_and_stick()
-    if show_cell:
-        if parent_basis.cell is not None:
-            if all(np.max(parent_basis.cell, axis=0) > 1e-2):
-                view.add_unitcell()
-    if show_axes:
-        view.shape.add_arrow([-2, -2, -2], [2, -2, -2], [1, 0, 0], 0.5)
-        view.shape.add_arrow([-2, -2, -2], [-2, 2, -2], [0, 1, 0], 0.5)
-        view.shape.add_arrow([-2, -2, -2], [-2, -2, 2], [0, 0, 1], 0.5)
-    if camera != "perspective" and camera != "orthographic":
-        print("Only perspective or orthographic is permitted")
-        return None
-    view.camera = camera
-    view.background = background
-    return view
+            view.add_ball_and_stick()
+        if show_cell:
+            if parent_basis.cell is not None:
+                if all(np.max(parent_basis.cell, axis=0) > 1e-2):
+                    view.add_unitcell()
+        if show_axes:
+            view.shape.add_arrow([-2, -2, -2], [2, -2, -2], [1, 0, 0], 0.5)
+            view.shape.add_arrow([-2, -2, -2], [-2, 2, -2], [0, 1, 0], 0.5)
+            view.shape.add_arrow([-2, -2, -2], [-2, -2, 2], [0, 0, 1], 0.5)
+        if camera != "perspective" and camera != "orthographic":
+            print("Only perspective or orthographic is permitted")
+            return None
+        view.camera = camera
+        view.background = background
+        return view
 
 def _ngl_write_cell(a1, a2, a3, f1=90, f2=90, f3=90):
     """
