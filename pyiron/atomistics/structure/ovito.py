@@ -86,6 +86,43 @@ def analyse_ovito_centro_symmetry(atoms, num_neighbors=12):
     return output.particle_properties["Centrosymmetry"].array
 
 
+def analyse_ovito_diamond(atoms, mode="total"):
+    """
+    Use Ovito's Diamond structure analysis bindings.
+    
+    Args:
+        atoms (pyrion.structure.atoms.Atoms): The structure to analyze.
+        mode ("total"/"numeric"/"str"): Controls the style and level of detail of the output. (Default is "total", only
+            return a summary of the values in the structure.)
+    Returns:
+        (depends on `mode`)
+    """
+    s.publication_add(publication())
+    if not mode in ["total", "numeric", "str"]:
+        raise ValueError("Unsupported mode")
+    data = DataCollection.create_from_ase_atoms(atoms.copy())
+    node = ObjectNode()
+    node.source = data
+    node.modifiers.append(
+        IdentifyDiamondModifier()
+    )
+    output = node.compute()
+    if mode == "total":
+        return output.attributes
+    else:
+        atoms_output = output.to_ase_atoms()
+        if mode == "numeric":
+            return atoms_output.get_array("Structure Type")
+        elif mode == "str":
+            diamond_property = output.particle_properties.structure_type
+            return np.array(
+                [
+                    diamond_property.get_type_by_id(cnatype).name
+                    for cnatype in atoms_output.get_array("Structure Type")
+                ]
+            )
+
+
 def analyse_ovito_voronoi_volume(atoms):
     """
 
