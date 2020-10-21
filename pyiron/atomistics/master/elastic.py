@@ -28,41 +28,37 @@ eV_div_A3_to_GPa = (
     1e21 / scipy.constants.physical_constants["joule-electron volt relationship"][0]
 )
 
-class CalcElasticTensor(object):
-    def __init__(self):
-        self.strain = []
-        self.stress = []
-        self.energy = []
-        self.volume = []
-        self.rotations = []
-
-    def run(self):
-        if len(self.strain)==1:
-            raise ValueError('Not enough points')
-        rotations = np.append(np.eye(3), self.rotations).reshape(-1, 3, 3)
-        _, indices = np.unique(np.round(rotations, 6), axis=0, return_inverse=True)
-        rotations = rotations[np.unique(indices)]
-        strain = np.array(self.strain)
-        strain = np.einsum('nik,mkl,njl->nmij', rotations, strain, rotations).reshape(-1, 3, 3)
-        strain = np.stack((strain[:,0,0], strain[:,1,1], strain[:,2,2], 2*strain[:,1,2], 2*strain[:,0,2], 2*strain[:,0,1]), axis=-1)
-        coeff = []
-        if len(self.stress)==len(self.strain):
-            stress = np.array(self.stress)
-            stress = np.einsum('nik,mkl,njl->nmij', rotations, stress, rotations).reshape(-1, 3, 3)
-            stress = np.stack((stress[:,0,0], stress[:,1,1], stress[:,2,2], stress[:,1,2], stress[:,0,2], stress[:,0,1]), axis=-1)
-            for ii in range(6):
-                reg = LinearRegression().fit(strain, stress[:,ii])
-                coeff.append(reg.coef_)
-                coeff = np.array(coeff)
-        elif len(self.energy)==len(self.strain) and len(self.strain)==len(self.volume):
-            energy = np.tile(self.energy, len(rotations))
-            volume = np.tile(self.volume, len(rotations))
-            C = np.einsum('n,ni,nj->nij', volume, strain, strain)
-            C = np.triu(C).reshape(-1, 36)
-            C = C[np.sum(C, axis=0)[np.newaxis,:]!=0]
-            C = np.append(np.ones(len(C)).reshape(-1, 1), C, axis=0).reshape(-1, 36)
-        else:
-            raise ValueError('Problem with fitting data')
+def calc_elastic_tensor(self, strain, stress=[], energy=[], rotations=[], volume=[]):
+    if len(strain)==0:
+        raise ValueError('Not enough points')
+    rotations = np.append(np.eye(3), rotations).reshape(-1, 3, 3)
+    _, indices = np.unique(np.round(rotations, 6), axis=0, return_inverse=True)
+    rotations = rotations[np.unique(indices)]
+    strain = np.einsum('nik,mkl,njl->nmij', rotations, strain, rotations).reshape(-1, 3, 3)
+    strain = np.stack((strain[:,0,0], strain[:,1,1], strain[:,2,2], 2*strain[:,1,2], 2*strain[:,0,2], 2*strain[:,0,1]), axis=-1)
+    coeff = []
+    if len(stress)==len(strain):
+        stress = np.einsum('nik,mkl,njl->nmij', rotations, stress, rotations).reshape(-1, 3, 3)
+        stress = np.stack((stress[:,0,0], stress[:,1,1], stress[:,2,2], stress[:,1,2], stress[:,0,2], stress[:,0,1]), axis=-1)
+        for ii in range(6):
+            reg = LinearRegression().fit(strain, stress[:,ii])
+            coeff.append(reg.coef_)
+            coeff = np.array(coeff)
+    elif len(energy)==len(strain) and len(strain)==len(volume):
+        energy = np.tile(energy, len(rotations))
+        volume = np.tile(volume, len(rotations))
+        C = np.einsum('n,ni,nj->nij', 0.5*volume, strain, strain)
+        C = np.triu(C).reshape(-1, 36)
+        C = C[np.sum(C, axis=0)[np.newaxis,:]!=0]
+        C = np.append(np.ones(len(C)).reshape(-1, 1), C, axis=-1)
+        reg = LinearRegression().fit(C, energy)
+        coeff = np.triu(np.ones((6,6))).flatten()
+        coeff[coeff!=0] *= reg.coef_[1:]*eV_div_A3_to_GPa 
+        coeff = coeff.reshape(6,6)
+        coeff = coeff+coeff.T-np.eye(6)*coeff.diagonal()
+    else:
+        raise ValueError('Problem with fitting data')
+    return coeff
 
 
 class ElasticJobGenerator(JobGenerator):
@@ -144,8 +140,19 @@ class ElasticTensor(AtomisticParallelMaster):
             self._output["pressures"] = np.array(pressure_lst)
             self._output["energy"] = np.array(erg_lst)
             self._output["id"] = np.array(id_lst)
+        pressure = self._output['pressures']
+        if pressure is None:
+            pressure = []
+        self._output['elastic_tensor'] = calc_elastic_tensor(
+            strain = self.input['strain_matrices'],
+            stress = -pressure,
+            rotations = self.ref_job.structure.get_symmetry()['rotations'],
+            energy = self._output['energy'],
+            volume = self._output['volume'],
+        )
         with self.project_hdf5.open("output") as hdf5_out:
             for key, val in self._output.items():
                 hdf5_out[key] = val
+
 
 
