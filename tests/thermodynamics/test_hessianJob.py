@@ -49,5 +49,34 @@ class TestHessianJob(unittest.TestCase):
         self.assertAlmostEqual(self.job.output.pressures[0, 0, 0], -0.03)
 
 
+class TestSelectiveDynamics(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.file_location = os.path.dirname(os.path.abspath(__file__))
+        cls.project = Project(
+            os.path.join(cls.file_location, "hessian_class")
+        )
+        cls.project.remove_jobs_silently(recursive=True)
+        
+    def test_selective_dynamics(self):
+        structure = self.project.create_ase_bulk("Al", cubic=True)
+        structure.add_tag(selective_dynamics=None)
+        structure.selective_dynamics[0] = [True, True, True]
+        structure.selective_dynamics[1] = [True, True, True]
+        structure.selective_dynamics[2] = [False, False, False]
+        structure.selective_dynamics[3] = [False, False, False]
+        job = self.project.create_job(self.project.job_type.Lammps, "lmp")
+        job.structure = structure
+        job.run()
+        job_reload = self.project.load(job.job_name)
+        structure_reload = job_reload.get_structure()
+        structure_reload.add_tag(selective_dynamics=None)
+        structure_reload.selective_dynamics[0] = [True, True, True]
+        structure_reload.selective_dynamics[1] = [True, True, True]
+        structure_reload.selective_dynamics[2] = [False, False, False]
+        structure_reload.selective_dynamics[3] = [False, False, False]
+        self.assertTrue(True)
+
+
 if __name__ == "__main__":
     unittest.main()
