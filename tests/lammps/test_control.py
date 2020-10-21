@@ -48,12 +48,12 @@ class TestLammps(unittest.TestCase):
 
     def test_pressure_to_lammps(self):
         lc = LammpsControl()
-        # Correct normalization without rotation.
+        # Correct normalization without rotation. Note that we convert from GPa to bar for LAMMPS.
         no_rot = np.identity(3)
-        self.assertEqual(lc.pressure_to_lammps(1.0, no_rot), [1.0, 1.0, 1.0, None, None, None])
-        self.assertEqual(lc.pressure_to_lammps([1.0, 2.0, 3.0], no_rot), [1.0, 2.0, 3.0, None, None, None])
-        self.assertEqual(lc.pressure_to_lammps([1.0, 2.0, 3.0, None, None, None], no_rot), [1.0, 2.0, 3.0, None, None, None])
-        self.assertEqual(lc.pressure_to_lammps([None, None, None, None, None, 2.0], no_rot), [None, None, None, None, None, 2.0])        
+        self.assertEqual(lc.pressure_to_lammps(1.0, no_rot), [10000.0, 10000.0, 10000.0, None, None, None])
+        self.assertEqual(lc.pressure_to_lammps([1.0, 2.0, 3.0], no_rot), [10000.0, 20000.0, 30000.0, None, None, None])
+        self.assertEqual(lc.pressure_to_lammps([1.0, 2.0, 3.0, None, None, None], no_rot), [10000.0, 20000.0, 30000.0, None, None, None])
+        self.assertEqual(lc.pressure_to_lammps([None, None, None, None, None, 2.0], no_rot), [None, None, None, None, None, 20000.0])
 
 if __name__ == "__main__":
     unittest.main()
