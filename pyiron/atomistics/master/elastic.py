@@ -161,13 +161,21 @@ class ElasticTensor(AtomisticParallelMaster):
                 output_dict['id'].append(job_id)
             for k,v in output_dict.items():
                 self._output[k] = np.array(v)
-        self._output['elastic_tensor'] = calc_elastic_tensor(
+        C = calc_elastic_tensor(
             strain = self.input['strain_matrices'],
             stress = -np.array(self._output['pressures']),
             rotations = self.input['rotations'],
             energy = self._output['energy'],
             volume = self._output['volume'],
         )
+        self._output['elastic_tensor'] = C
+        self._output['lame_coefficient'] = np.mean(C[:3, :3].diagonal())
+        self._output['shear_modulus'] = np.mean(C[3:, 3:].diagonal())
+        self._output['bulk_modulus'] = np.mean(C[:3,:3])
+        self._output['poissons_ratio'] = 0.5/(1+self._output['shear_modulus']/self._output['lame_coefficient'])
+        self._output['youngs_modulus'] = 1/np.mean(np.linalg.inv(C[:3,:3]).diagonal())
+        self._output['poissons_ratio'] = -self._output['youngs_modulus']*np.sum(np.linalg.inv(C[:3,:3]))/6+0.5
+        self._output['zener_ratio'] = 12*np.mean(C[3:,3:].diagonal())/(3*np.trace(C[:3,:3])-np.sum(C[:3,:3]))
         with self.project_hdf5.open("output") as hdf5_out:
             for key, val in self._output.items():
                 hdf5_out[key] = val
