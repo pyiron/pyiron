@@ -401,10 +401,7 @@ class VaspBase(GenericDFTJob):
             )
 
     def nbands_convergence_check(self):
-        if (max(self["output/electronic_structure/occ_matrix"][:,-1])>0):
-            return False
-        else:
-            return True            
+        return np.all(np.isclose(self["output/electronic_structure/occ_matrix"][:,-1], 0))
 
     def convergence_check(self):
         if "IBRION" in self["input/incar/data_dict"]["Parameter"]:
