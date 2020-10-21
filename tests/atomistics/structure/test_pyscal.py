@@ -67,7 +67,7 @@ class Testpyscal(unittest.TestCase):
         self.assertEqual(cna[rand], 1)
 
         cna = pas.analyse_cna_adaptive(self.job.structure, mode="str")
-        self.assertEqual(cna[rand], "fcc")
+        self.assertEqual(cna[rand].lower(), "fcc")
 
     def test_volume(self):
         vols = pas.analyse_voronoi_volume(self.job.structure)
