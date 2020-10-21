@@ -1010,6 +1010,28 @@ class Atoms(ASEAtoms):
         from pyiron.atomistics.structure.pyscal import get_steinhardt_parameter_structure
         return get_steinhardt_parameter_structure(structure=atoms, cutoff=cutoff, n_clusters=n_clusters, q=q)
 
+    def analyse_pyscal_cna_adaptive(self, mode="total"):
+        """
+        Use pyscal's common neighbor analysis binding.
+
+        Args:
+            mode ("total"/"numeric"/"str"): Controls the style and level of detail of the output. (Default is "total", only
+                return a summary of the values in the structure.)
+
+        Returns:
+            (depends on `mode`)
+        """
+        from pyiron.atomistics.structure.pyscal import analyse_cna_adaptive
+        return analyse_cna_adaptive(atoms=self, mode=mode)
+    
+    def analyse_pyscal_centro_symmetry(atoms, num_neighbors=12):
+        from pyiron.atomistics.structure.pyscal import analyse_analyse_centro_symmetry
+        return analyse_centro_symmetry(atoms, num_neighbors=num_neighbors)
+    
+    def analyse_pyscal_voronoi_volume(atoms):
+        from pyiron.atomistics.structure.pyscal import analyse_voronoi_volume
+        return analyse_voronoi_volume(atoms)
+    
     def analyse_phonopy_equivalent_atoms(atoms):
         from pyiron.atomistics.structure.phonopy import analyse_phonopy_equivalent_atoms
 
