@@ -22,6 +22,11 @@ __date__ = "Sep 1, 2017"
 s = Settings()
 
 class Visualize(object):
+    """
+        Structure visualization class. This class is not meant to be used standalone - either import
+        `Visualize` and call `Visualize.plot3d(atoms)` or call individual functions from `Atoms`,
+        i.e. `atoms.plot3d()`.
+    """
     def plot3d_plotly(
         self,
         scalar_field=None,
