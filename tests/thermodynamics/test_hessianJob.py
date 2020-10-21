@@ -67,6 +67,7 @@ class TestSelectiveDynamics(unittest.TestCase):
         structure.selective_dynamics[1] = [False, False, False]
         job = self.project.create_job("HessianJob", "hess")
         job.structure = structure
+        job.set_force_constants(force_constants=1)
         job.run()
         job_reload = self.project.load(job.job_name)
         structure_reload = job_reload.get_structure()
