@@ -18,7 +18,7 @@ class TestHessianJob(unittest.TestCase):
         )
         cls.project.remove_jobs_silently(recursive=True)
         cls.job = cls.project.create_job(
-            "HessianJob"
+            "HessianJob", "job_test_hessian"
         )
         structure = Atoms(
             positions=[[0, 0, 0], [1, 1, 1]], elements=["Fe", "Fe"], cell=2 * np.eye(3)
