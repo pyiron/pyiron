@@ -140,14 +140,22 @@ def analyse_cna_adaptive(atoms, mode="total"):
     cna = sys.calculate_cna(cutoff=None)
 
     if mode == "total":
-        return {n: c for n, c in zip(["unknown", "fcc", "hcp", "bcc", "ico"], cna)}
+        return {n: c for n, c in zip(
+            [
+                'CommonNeighborAnalysis.counts.OTHER', 
+                'CommonNeighborAnalysis.counts.FCC', 
+                'CommonNeighborAnalysis.counts.HCP', 
+                'CommonNeighborAnalysis.counts.BCC', 
+                'CommonNeighborAnalysis.counts.ICO'], 
+            cna
+        )}
     else:
         atoms = sys.atoms
         cnalist = ([atom.structure for atom in atoms])
         if mode == "numeric":
             return cnalist
         else:
-            dd = ["unknown", "fcc", "hcp", "bcc", "ico"]
+            dd = ["OTHER", "FCC", "HCP", "BCC", "ICO"]
             cnalist = [dd[int(x)] for x in cnalist]
             return cnalist
 
