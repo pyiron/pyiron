@@ -37,14 +37,14 @@ def calc_elastic_tensor(strain, stress=[], energy=[], rotations=[], volume=[]):
     strain = np.einsum('nik,mkl,njl->nmij', rotations, strain, rotations).reshape(-1, 3, 3)
     strain = np.stack((strain[:,0,0], strain[:,1,1], strain[:,2,2], 2*strain[:,1,2], 2*strain[:,0,2], 2*strain[:,0,1]), axis=-1)
     coeff = []
-    if len(stress)==len(strain):
+    if len(stress)*len(rotations)==len(strain):
         stress = np.einsum('nik,mkl,njl->nmij', rotations, stress, rotations).reshape(-1, 3, 3)
         stress = np.stack((stress[:,0,0], stress[:,1,1], stress[:,2,2], stress[:,1,2], stress[:,0,2], stress[:,0,1]), axis=-1)
         for ii in range(6):
             reg = LinearRegression().fit(strain, stress[:,ii])
             coeff.append(reg.coef_)
-            coeff = np.array(coeff)
-    elif len(energy)==len(strain) and len(strain)==len(volume):
+        coeff = np.array(coeff)
+    elif len(energy)==len(strain)*len(rotations) and len(energy)==len(volume):
         energy = np.tile(energy, len(rotations))
         volume = np.tile(volume, len(rotations))
         C = np.einsum('n,ni,nj->nij', 0.5*volume, strain, strain)
@@ -123,6 +123,7 @@ class ElasticTensor(AtomisticParallelMaster):
             ham = self.project_hdf5.inspect(self.child_ids[0])
             self._output["energy"] = ham["output/generic/energy_tot"]
             self._output["pressures"] = ham["output/generic/pressures"]
+            self._output["volume"] = ham["output/generic/volume"]
         else:
             erg_lst, vol_lst, pressure_lst, id_lst = [], [], [], []
             for job_id in self.child_ids:
@@ -137,19 +138,20 @@ class ElasticTensor(AtomisticParallelMaster):
                 if "pressures" in ham['output/generic'].list_nodes():
                     pressure_lst.append(ham["output/generic/pressures"][-1])
                 if "volume" in ham['output/generic'].list_nodes():
-                    pressure_lst.append(ham["output/generic/volume"][-1])
+                    vol_lst.append(ham["output/generic/volume"][-1])
                 id_lst.append(job_id)
             self._output['volume'] = np.array(vol_lst)
             self._output["pressures"] = np.array(pressure_lst)
             self._output["energy"] = np.array(erg_lst)
             self._output["id"] = np.array(id_lst)
+        self._output['rotations'] = self.ref_job.get_structure(0).get_symmetry()['rotations']
         pressure = self._output['pressures']
         if pressure is None:
             pressure = []
         self._output['elastic_tensor'] = calc_elastic_tensor(
             strain = self.input['strain_matrices'],
             stress = -pressure,
-            rotations = self.ref_job.structure.get_symmetry()['rotations'],
+            rotations = self._output['rotations'],
             energy = self._output['energy'],
             volume = self._output['volume'],
         )
