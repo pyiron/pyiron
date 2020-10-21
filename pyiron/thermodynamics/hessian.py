@@ -33,7 +33,7 @@ class HessianJob(GenericInteractive):
 
     @property
     def structure(self):
-        return GenericInteractive.structure.fget(self)
+        structure = GenericInteractive.structure.fget(self)
 
     @structure.setter
     def structure(self, structure):
@@ -191,6 +191,7 @@ class HessianJob(GenericInteractive):
         with self.project_hdf5.open("input") as hdf5_input:
             if "structure" in hdf5_input.list_groups():
                 self._reference_structure = Atoms().from_hdf(hdf5_input)
+                self._structure = self._reference_structure.copy()
             if "force_constants" in hdf5_input.list_nodes():
                 self._force_constants = hdf5_input["force_constants"]
 
