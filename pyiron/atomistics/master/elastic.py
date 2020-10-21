@@ -30,7 +30,7 @@ eV_div_A3_to_GPa = (
 def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations=None):
     """
     Calculate 6x6-elastic tensor from the strain and stress or strain and energy+volume.
-    
+
     Rotations matrices can be added to take box symmetries into account (unit matrix can
     be added but does not have to be included in the list)
 
