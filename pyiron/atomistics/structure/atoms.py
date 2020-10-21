@@ -23,7 +23,6 @@ from pyiron.atomistics.structure.periodic_table import (
 from pyiron_base import Settings
 from scipy.spatial import cKDTree, Voronoi
 import spglib
-from types import MethodType
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal"
 __copyright__ = (
