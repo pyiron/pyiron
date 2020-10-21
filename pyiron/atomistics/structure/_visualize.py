@@ -21,7 +21,7 @@ __date__ = "Sep 1, 2017"
 
 s = Settings()
 
-class Visualize(object):
+class Visualize:
     def __init__(self, job):
         self._job = job
 
