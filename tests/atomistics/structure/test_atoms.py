@@ -808,7 +808,7 @@ class TestAtoms(unittest.TestCase):
         basis = Atoms(
             "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
         )
-        basis.plot3d_plotly()
+        basis.plot3d(mode='plotly')
 
     def test_group_points_by_symmetry(self):
         basis = Atoms("FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3))
@@ -1450,13 +1450,6 @@ class TestAtoms(unittest.TestCase):
             warnings.simplefilter("always")
             c3.get_scaled_positions()
             self.assertEqual(len(w), 0)
-
-    def test_get_flattened_orientation(self):
-        pos, cell = generate_fcc_lattice()
-        basis = Atoms(symbols="Al", positions=pos, cell=cell)
-        R = np.random.random(9).reshape(-1, 3)
-        R = np.array(basis._get_flattened_orientation(R, 1)).reshape(4, 4)
-        self.assertAlmostEqual(np.linalg.det(R), 1)
 
 
 def generate_fcc_lattice(a=4.2):
