@@ -808,7 +808,7 @@ class TestAtoms(unittest.TestCase):
         basis = Atoms(
             "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
         )
-        basis.plot3d_plotly()
+        basis.plot3d(mode='plotly')
 
     def test_group_points_by_symmetry(self):
         basis = Atoms("FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3))
