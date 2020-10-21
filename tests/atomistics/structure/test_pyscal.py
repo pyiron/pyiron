@@ -59,7 +59,7 @@ class Testpyscal(unittest.TestCase):
 
     def test_cna(self):
         cna = pas.analyse_cna_adaptive(self.job.structure)
-        self.assertEqual(cna[1], len(self.job.structure))
+        self.assertEqual(cna['CommonNeighborAnalysis.counts.FCC'], len(self.job.structure))
 
         rand = np.random.randint(0, len(self.job.structure))
 
