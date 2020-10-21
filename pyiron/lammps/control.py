@@ -213,33 +213,35 @@ class LammpsControl(GenericParameters):
 
         # Get something with six elements
         if not hasattr(pressure, "__len__"):
-            # This is a hydrostatic stress. It is invariant under rotation, so no transformation needed.
-            pressure = [float(pressure), float(pressure), float(pressure), None, None, None]
+            if np.isclose(pressure, 0.0):
+                pressure = 6*[0.0]
+            else:
+                pressure = [float(pressure), float(pressure), float(pressure), None, None, None]
         else:
             if len(pressure) > 6:
                 raise ValueError("Pressure can have a maximum of 6 values, (x, y, z, xy, xz, and yz), but got " +
                                  "{}".format(len(pressure)))
             pressure = list(pressure) + (6 - len(pressure)) * [None]
 
-            if all(p is None for p in pressure):
-                raise ValueError("Pressure cannot have a length but all be None")
+        if all(p is None for p in pressure):
+            raise ValueError("Pressure cannot have a length but all be None")
 
-            # If necessary, rotate the pressure tensor to the Lammps coordinate frame
-            if not np.isclose(np.matrix.trace(rotation_matrix), 3):
-                if any(p is None for p in pressure):
-                    raise ValueError("Cells which are not orthorhombic or an upper-triangular cell are incompatible with Lammps "
-                                     "constant pressure calculations unless the entire pressure tensor is defined."
-                                     "The reason is that Lammps demands such cells be represented with an "
-                                     "upper-triangular unit cell, thus a rotation between Lammps and pyiron coordinate"
-                                     "frames is required; it is not possible to rotate the pressure tensor if any of "
-                                     "its components is None.")
-                pxx, pyy, pzz, pxy, pxz, pyz = pressure
-                pressure_tensor = np.array(
-                    [[pxx, pxy, pxz],
-                     [pxy, pyy, pyz],
-                     [pxz, pyz, pzz]]
-                )
-                lammps_pressure_tensor = rotation_matrix.T @ pressure_tensor @ rotation_matrix
+        # If necessary, rotate the pressure tensor to the Lammps coordinate frame
+        if not np.isclose(np.matrix.trace(rotation_matrix), 3):
+            if any(p is None for p in pressure):
+                raise ValueError("Cells which are not orthorhombic or an upper-triangular cell are incompatible with Lammps "
+                                 "constant pressure calculations unless the entire pressure tensor is defined."
+                                 "The reason is that Lammps demands such cells be represented with an "
+                                 "upper-triangular unit cell, thus a rotation between Lammps and pyiron coordinate"
+                                 "frames is required; it is not possible to rotate the pressure tensor if any of "
+                                 "its components is None.")
+            pxx, pyy, pzz, pxy, pxz, pyz = pressure
+            pressure_tensor = np.array(
+                [[pxx, pxy, pxz],
+                 [pxy, pyy, pyz],
+                 [pxz, pyz, pzz]]
+            )
+            lammps_pressure_tensor = rotation_matrix.T @ pressure_tensor @ rotation_matrix
                 pressure = list(lammps_pressure_tensor[[0, 1, 2, 0, 0, 1], [0, 1, 2, 1, 2, 2]])
 
         return [(p * LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
