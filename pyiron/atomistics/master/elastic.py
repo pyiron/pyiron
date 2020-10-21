@@ -27,7 +27,20 @@ eV_div_A3_to_GPa = (
     1e21 / scipy.constants.physical_constants["joule-electron volt relationship"][0]
 )
 
-def calc_elastic_tensor(strain, stress=None, energy=None, rotations=None, volume=None):
+def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations=None):
+    """
+    Calculate 6x6-elastic tensor from the strain and stress or strain and energy+volume.
+    
+    Rotations matrices can be added to take box symmetries into account (unit matrix can
+    be added but does not have to be included in the list)
+
+    Args:
+        strain (numpy.ndarray): nx3x3 strain tensors
+        stress (numpy.ndarray): nx3x3 stress tensors
+        energy (numpy.ndarray): n energy values
+        volume (numpy.ndarray): n volume values
+        rotations (numpy.ndarray): mx3x3 rotation matrices
+    """
     if len(strain)==0:
         raise ValueError('Not enough points')
     if rotations is not None:
@@ -63,6 +76,15 @@ def calc_elastic_tensor(strain, stress=None, energy=None, rotations=None, volume
     return coeff
 
 def calc_elastic_constants(elastic_tensor):
+    """
+    Calculate elastic constants from the elastic tensor.
+
+    For anistropic material (i.e. zener_ratio!=1), the values may or may not make
+    sense -> don't trust the results straightforwardly
+
+    Args:
+        elastic_tensor (numpy.ndarray): 6x6 tensor
+    """
     output = {}
     output['elastic_tensor'] = elastic_tensor
     output['lame_coefficient'] = np.mean(elastic_tensor[:3, :3].diagonal())
@@ -99,6 +121,19 @@ class ElasticJobGenerator(JobGenerator):
 
 # ToDo: not all abstract methods implemented
 class ElasticTensor(AtomisticParallelMaster):
+    """
+    Class to calculate the elastic tensor and isotropic elastic constants
+
+    Example:
+
+    >>> job = pr.create_job('SomeAtomisticJob', 'atomistic')
+    >>> job.structure = pr.create_structure('Fe', 'bcc', 2.83)
+    >>> elastic = job.create_job('ElasticTensor', 'elastic')
+    >>> elastic.run()
+
+    This class is still under construction and there's no guarantee that it does
+    what it looks like it does.
+    """
     def __init__(self, project, job_name="elastic"):
         """
 
