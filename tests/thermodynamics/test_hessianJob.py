@@ -57,7 +57,7 @@ class TestSelectiveDynamics(unittest.TestCase):
             os.path.join(cls.file_location, "selective_dynamics")
         )
         cls.project.remove_jobs_silently(recursive=True)
-        
+  
     def test_selective_dynamics(self):
         structure = Atoms(
             positions=[[0, 0, 0], [1, 1, 1]], elements=["Fe", "Fe"], cell=2 * np.eye(3)
