@@ -28,7 +28,7 @@ eV_div_A3_to_GPa = (
     1e21 / scipy.constants.physical_constants["joule-electron volt relationship"][0]
 )
 
-def calc_elastic_tensor(self, strain, stress=[], energy=[], rotations=[], volume=[]):
+def calc_elastic_tensor(strain, stress=[], energy=[], rotations=[], volume=[]):
     if len(strain)==0:
         raise ValueError('Not enough points')
     rotations = np.append(np.eye(3), rotations).reshape(-1, 3, 3)
@@ -124,7 +124,7 @@ class ElasticTensor(AtomisticParallelMaster):
             self._output["energy"] = ham["output/generic/energy_tot"]
             self._output["pressures"] = ham["output/generic/pressures"]
         else:
-            erg_lst, pressure_lst, id_lst = [], [], []
+            erg_lst, vol_lst, pressure_lst, id_lst = [], [], [], []
             for job_id in self.child_ids:
                 ham = self.project_hdf5.inspect(job_id)
                 print("job_id: ", job_id, ham.status)
@@ -136,7 +136,10 @@ class ElasticTensor(AtomisticParallelMaster):
                     raise ValueError('Neither energy_pot or energy_tot was found.')
                 if "pressures" in ham['output/generic'].list_nodes():
                     pressure_lst.append(ham["output/generic/pressures"][-1])
+                if "volume" in ham['output/generic'].list_nodes():
+                    pressure_lst.append(ham["output/generic/volume"][-1])
                 id_lst.append(job_id)
+            self._output['volume'] = np.array(vol_lst)
             self._output["pressures"] = np.array(pressure_lst)
             self._output["energy"] = np.array(erg_lst)
             self._output["id"] = np.array(id_lst)
@@ -153,6 +156,5 @@ class ElasticTensor(AtomisticParallelMaster):
         with self.project_hdf5.open("output") as hdf5_out:
             for key, val in self._output.items():
                 hdf5_out[key] = val
-
 
 
