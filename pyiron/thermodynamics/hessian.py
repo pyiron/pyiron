@@ -33,7 +33,7 @@ class HessianJob(GenericInteractive):
 
     @property
     def structure(self):
-        structure = GenericInteractive.structure.fget(self)
+        return GenericInteractive.structure.fget(self)
 
     @structure.setter
     def structure(self, structure):
