@@ -2,6 +2,7 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
+import numpy as np
 import unittest
 from pyiron.lammps.control import LammpsControl
 
@@ -45,6 +46,14 @@ class TestLammps(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             lc.measure_mean_value('something')
 
+    def test_pressure_to_lammps(self):
+        lc = LammpsControl()
+        # Correct normalization without rotation.
+        no_rot = np.identity(3)
+        self.assertEqual(lc.pressure_to_lammps(1.0, no_rot), [1.0, 1.0, 1.0, None, None, None])
+        self.assertEqual(lc.pressure_to_lammps([1.0, 2.0, 3.0], no_rot), [1.0, 2.0, 3.0, None, None, None])
+        self.assertEqual(lc.pressure_to_lammps([1.0, 2.0, 3.0, None, None, None], no_rot), [1.0, 2.0, 3.0, None, None, None])
+        self.assertEqual(lc.pressure_to_lammps([None, None, None, None, None, 2.0], no_rot), [None, None, None, None, None, 2.0])        
 
 if __name__ == "__main__":
     unittest.main()
