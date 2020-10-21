@@ -1021,8 +1021,51 @@ class Atoms(ASEAtoms):
         )
         return analyse_phonopy_equivalent_atoms(atoms)
 
-    def plot3d(self, **kwargs):
-        return self.visualize.plot3d(**kwargs)
+    def plot3d(
+        self,
+        mode='NGLview',
+        show_cell=True,
+        show_axes=True,
+        camera="orthographic",
+        spacefill=True,
+        particle_size=1.0,
+        select_atoms=None,
+        background="white",
+        color_scheme=None,
+        colors=None,
+        scalar_field=None,
+        scalar_start=None,
+        scalar_end=None,
+        scalar_cmap=None,
+        vector_field=None,
+        vector_color=None,
+        magnetic_moments=False,
+        view_plane=np.array([0, 0, 1]),
+        distance_from_camera=1.0,
+        opacity=1.0
+    ):
+        return self.visualize.plot3d(
+            mode=mode,
+            show_cell=show_cell,
+            show_axes=show_axes,
+            camera=camera,
+            spacefill=spacefill,
+            particle_size=particle_size,
+            select_atoms=select_atoms,
+            background=background,
+            color_scheme=color_scheme,
+            colors=colors,
+            scalar_field=scalar_field,
+            scalar_start=scalar_start,
+            scalar_end=scalar_end,
+            scalar_cmap=scalar_cmap,
+            vector_field=vector_field,
+            vector_color=vector_color,
+            magnetic_moments=magnetic_moments,
+            view_plane=view_plane,
+            distance_from_camera=distance_from_camera,
+            opacity=opacity,
+        )
     plot3d.__doc__ = Visualize.plot3d.__doc__
 
     def pos_xyz(self):

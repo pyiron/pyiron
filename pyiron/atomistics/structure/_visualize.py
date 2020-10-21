@@ -22,10 +22,31 @@ __date__ = "Sep 1, 2017"
 s = Settings()
 
 class Visualize:
-    def __init__(self, job):
-        self._job = job
+    def __init__(self, atoms):
+        self._ref_atoms = atoms
 
-    def plot3d(self, mode='NGLview', **kwargs):
+    def plot3d(self,
+        mode='NGLview',
+        show_cell=True,
+        show_axes=True,
+        camera="orthographic",
+        spacefill=True,
+        particle_size=1.0,
+        select_atoms=None,
+        background="white",
+        color_scheme=None,
+        colors=None,
+        scalar_field=None,
+        scalar_start=None,
+        scalar_end=None,
+        scalar_cmap=None,
+        vector_field=None,
+        vector_color=None,
+        magnetic_moments=False,
+        view_plane=np.array([0, 0, 1]),
+        distance_from_camera=1.0,
+        opacity=1.0
+    ):
         """
         Plot3d relies on NGLView or plotly to visualize atomic structures. Here, we construct a string in the "protein database"
 
@@ -80,21 +101,57 @@ class Visualize:
             * The colour interpretation of some hex codes is weird, e.g. 'green'.
         """
         if mode=='NGLview':
-            return self._plot3d(**kwargs)
+            return self._plot3d(
+                show_cell=show_cell,
+                show_axes=show_axes,
+                camera=camera,
+                spacefill=spacefill,
+                particle_size=particle_size,
+                select_atoms=select_atoms,
+                background=background,
+                color_scheme=color_scheme,
+                colors=colors,
+                scalar_field=scalar_field,
+                scalar_start=scalar_start,
+                scalar_end=scalar_end,
+                scalar_cmap=scalar_cmap,
+                vector_field=vector_field,
+                vector_color=vector_color,
+                magnetic_moments=magnetic_moments,
+                view_plane=view_plane,
+                distance_from_camera=distance_from_camera,
+            )
         elif mode=='plotly':
-            return self._plot3d_plotly(**kwargs)
+            return self._plot3d_plotly(
+                camera=camera,
+                particle_size=particle_size,
+                select_atoms=select_atoms,
+                scalar_field=scalar_field,
+                view_plane=view_plane,
+                distance_from_camera=distance_from_camera,
+                opacity=opacity,
+            )
         elif mode=='ase':
-            return self._plot3d_ase(**kwargs)
+            return self._plot3d_ase(
+                show_cell=show_cell,
+                show_axes=show_axes,
+                camera=camera,
+                spacefill=spacefill,
+                particle_size=particle_size,
+                background=background,
+                color_scheme=color_scheme,
+            )
         else:
             raise ValueError('plot method not recognized')
 
     def _plot3d_plotly(
         self,
         scalar_field=None,
+        select_atoms=None,
         particle_size=1.0,
         camera="orthographic",
         view_plane=np.array([1, 1, 1]),
-        distance_from_camera=1.25,
+        distance_from_camera=1,
         opacity=1,
     ):
         """
@@ -123,20 +180,22 @@ class Visualize:
             import plotly.express as px
         except ModuleNotFoundError:
             raise ModuleNotFoundError("plotly not installed - use plot3d instead")
-        parent_basis = self._job.get_parent_basis()
+        parent_basis = self._ref_atoms.get_parent_basis()
+        if select_atoms is None:
+            select_atoms = np.arange(len(self._ref_atoms))
         elements = parent_basis.get_chemical_symbols()
         atomic_numbers = parent_basis.get_atomic_numbers()
         if scalar_field is None:
             scalar_field = elements
-        fig = px.scatter_3d(x=self._job.positions[:,0],
-                            y=self._job.positions[:,1],
-                            z=self._job.positions[:,2],
+        fig = px.scatter_3d(x=self._ref_atoms.positions[select_atoms,0],
+                            y=self._ref_atoms.positions[select_atoms,1],
+                            z=self._ref_atoms.positions[select_atoms,2],
                             color=scalar_field,
                             opacity=opacity,
-                            size=_atomic_number_to_radius(atomic_numbers, scale=particle_size/(0.1*self._job.get_volume()**(1/3))))
+                            size=_atomic_number_to_radius(atomic_numbers, scale=particle_size/(0.1*self._ref_atoms.get_volume()**(1/3))))
         fig.layout.scene.camera.projection.type = camera
         rot = _get_orientation(view_plane).T
-        rot[0,:] *= distance_from_camera
+        rot[0,:] *= distance_from_camera*1.25
         angle = dict(
             up=dict(x=rot[2,0], y=rot[2,1], z=rot[2,2]),
             eye=dict(x=rot[0,0], y=rot[0,1], z=rot[0,2])
@@ -163,10 +222,8 @@ class Visualize:
         vector_field=None,
         vector_color=None,
         magnetic_moments=False,
-        custom_array=None,
-        custom_3darray=None,
         view_plane=np.array([0, 0, 1]),
-        distance_from_camera=14.0
+        distance_from_camera=1.0
     ):
         """
         Plot3d relies on NGLView to visualize atomic structures. Here, we construct a string in the "protein database"
@@ -229,30 +286,16 @@ class Visualize:
                 "The package nglview needs to be installed for the plot3d() function!"
             )
 
-        if custom_array is not None:
-            warnings.warn(
-                "custom_array is deprecated. Use scalar_field instead",
-                DeprecationWarning,
-            )
-            scalar_field = custom_array
-
-        if custom_3darray is not None:
-            warnings.warn(
-                "custom_3darray is deprecated. Use vector_field instead",
-                DeprecationWarning,
-            )
-            vector_field = custom_3darray
-
-        if magnetic_moments is True and hasattr(self._job, 'spin'):
-            if len(self._job.get_initial_magnetic_moments().shape) == 1:
-                scalar_field = self._job.get_initial_magnetic_moments()
+        if magnetic_moments is True and hasattr(self._ref_atoms, 'spin'):
+            if len(self._ref_atoms.get_initial_magnetic_moments().shape) == 1:
+                scalar_field = self._ref_atoms.get_initial_magnetic_moments()
             else:
-                vector_field = self._job.get_initial_magnetic_moments()
+                vector_field = self._ref_atoms.get_initial_magnetic_moments()
 
-        parent_basis = self._job.get_parent_basis()
+        parent_basis = self._ref_atoms.get_parent_basis()
         elements = parent_basis.get_chemical_symbols()
         atomic_numbers = parent_basis.get_atomic_numbers()
-        positions = self._job.positions
+        positions = self._ref_atoms.positions
 
         # If `select_atoms` was given, visualize only a subset of the `parent_basis`
         if select_atoms is not None:
@@ -275,7 +318,7 @@ class Visualize:
 
         # Write the nglview protein-database-formatted string
         struct = nglview.TextStructure(
-            _ngl_write_structure(elements, positions, self._job.cell)
+            _ngl_write_structure(elements, positions, self._ref_atoms.cell)
         )
 
         # Parse the string into the displayable widget
@@ -331,12 +374,12 @@ class Visualize:
             vector_field is not None and vector_field is not None
         ):  # WARNING: There must be a bug here...
             try:
-                if vector_color.shape != np.ones((len(self._job), 3)).shape:
+                if vector_color.shape != np.ones((len(self._ref_atoms), 3)).shape:
                     vector_color = np.outer(
-                        np.ones(len(self._job)), vector_color / np.linalg.norm(vector_color)
+                        np.ones(len(self._ref_atoms)), vector_color / np.linalg.norm(vector_color)
                     )
             except AttributeError:
-                vector_color = np.ones((len(self._job), 3)) * vector_color
+                vector_color = np.ones((len(self._ref_atoms), 3)) * vector_color
 
         if vector_field is not None:
             for arr, pos, col in zip(vector_field, positions, vector_color):
@@ -368,7 +411,7 @@ class Visualize:
         view.background = background
 
         orientation = _get_flattened_orientation(view_plane=view_plane,
-                                                 distance_from_camera=distance_from_camera)
+                                                 distance_from_camera=distance_from_camera*14)
         view.control.orient(orientation)
 
         return view
@@ -397,7 +440,7 @@ class Visualize:
                 "The package nglview needs to be installed for the plot3d() function!"
             )
         # Always visualize the parent basis
-        parent_basis = self._job.get_parent_basis()
+        parent_basis = self._ref_atoms.get_parent_basis()
         view = nglview.show_ase(parent_basis)
         if spacefill:
             view.add_spacefill(
