@@ -242,7 +242,7 @@ class LammpsControl(GenericParameters):
                  [pxz, pyz, pzz]]
             )
             lammps_pressure_tensor = rotation_matrix.T @ pressure_tensor @ rotation_matrix
-                pressure = list(lammps_pressure_tensor[[0, 1, 2, 0, 0, 1], [0, 1, 2, 1, 2, 2]])
+            pressure = list(lammps_pressure_tensor[[0, 1, 2, 0, 0, 1], [0, 1, 2, 1, 2, 2]])
 
         return [(p * LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
                  if p is not None
