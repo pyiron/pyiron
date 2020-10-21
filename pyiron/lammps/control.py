@@ -208,48 +208,44 @@ class LammpsControl(GenericParameters):
             rotation_matrix (numpy.ndarray): The 3x3 matrix rotating from the pyiron to Lammps coordinate frame.
 
         Returns:
-            (numpy.ndarray): pxx, pyy, pzz, pxy, pxz, and pyz to be passed to Lammps.
+            (list): pxx, pyy, pzz, pxy, pxz, and pyz to be passed to Lammps.
         """
 
         # Get something with six elements
         if not hasattr(pressure, "__len__"):
-            if not np.isclose(np.matrix.trace(rotation_matrix), 3) and pressure == 0.0:
-                pressure = np.append(pressure * np.ones(3), pressure * np.ones(3))
-            else:
-                pressure = np.append(pressure * np.ones(3), 3 * [None])
+            # This is a hydrostatic stress. It is invariant under rotation, so no transformation needed.
+            pressure = [float(pressure), float(pressure), float(pressure), None, None, None]
         else:
             if len(pressure) > 6:
                 raise ValueError("Pressure can have a maximum of 6 values, (x, y, z, xy, xz, and yz), but got " +
                                  "{}".format(len(pressure)))
-            all_pressures = 6 * [None]
-            all_pressures[:len(pressure)] = pressure
-            pressure = np.array(all_pressures, dtype=float)
+            pressure = list(pressure) + (6 - len(pressure)) * [None]
 
-        # Cell degrees of freedom can be kept fixed using None for the pressure, check where that's done.
-        not_none_mask = (pressure!=None)
-        if not np.any(not_none_mask):
-            raise ValueError("Pressure cannot have a length but all be None")
+            if all(p is None for p in pressure):
+                raise ValueError("Pressure cannot have a length but all be None")
 
-        # If necessary, rotate the pressure tensor to the Lammps coordinate frame
-        if not np.isclose(np.matrix.trace(rotation_matrix), 3):
-            if not np.all(not_none_mask):
-                raise ValueError("Cells which are not orthorhombic or rectangular are incompatible with Lammps "
-                                 "constant pressure calculations unless the entire pressure tensor is defined."
-                                 "The reason is that Lammps demands such cells be represented with an "
-                                 "upper-triangular unit cell, thus a rotation between Lammps and pyiron coordinate"
-                                 "frames is required; it is not possible to rotate the pressure tensor if any of "
-                                 "its components is None.")
-            pxx, pyy, pzz, pxy, pxz, pyz = pressure
-            pressure_tensor = np.array(
-                [[pxx, pxy, pxz],
-                 [pxy, pyy, pyz],
-                 [pxz, pyz, pzz]]
-            )
-            lammps_pressure_tensor = rotation_matrix.T @ pressure_tensor @ rotation_matrix
-            pressure = lammps_pressure_tensor[[0, 1, 2, 0, 0, 1], [0, 1, 2, 1, 2, 2]]
+            # If necessary, rotate the pressure tensor to the Lammps coordinate frame
+            if not np.isclose(np.matrix.trace(rotation_matrix), 3):
+                if any(p is None for p in pressure):
+                    raise ValueError("Cells which are not orthorhombic or an upper-triangular cell are incompatible with Lammps "
+                                     "constant pressure calculations unless the entire pressure tensor is defined."
+                                     "The reason is that Lammps demands such cells be represented with an "
+                                     "upper-triangular unit cell, thus a rotation between Lammps and pyiron coordinate"
+                                     "frames is required; it is not possible to rotate the pressure tensor if any of "
+                                     "its components is None.")
+                pxx, pyy, pzz, pxy, pxz, pyz = pressure
+                pressure_tensor = np.array(
+                    [[pxx, pxy, pxz],
+                     [pxy, pyy, pyz],
+                     [pxz, pyz, pzz]]
+                )
+                lammps_pressure_tensor = rotation_matrix.T @ pressure_tensor @ rotation_matrix
+                pressure = list(lammps_pressure_tensor[[0, 1, 2, 0, 0, 1], [0, 1, 2, 1, 2, 2]])
 
-        pressure[not_none_mask] *= LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
-        return pressure
+        return [(p * LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
+                 if p is not None
+                 else p)
+                for p in pressure]
 
     def calc_minimize(
         self,
@@ -300,18 +296,12 @@ class LammpsControl(GenericParameters):
         ionic_force_tolerance *= force_units
 
         if pressure is not None:
-            if None in np.array([pressure]).flatten():
-                if rotation_matrix is not None and not np.isclose(np.linalg.det(rotation_matrix), 1):
-                    raise AssertionError('Pressure cannot contain None if upper triangle in cell is defined')
-            elif rotation_matrix is not None:
-                pressure = self.pressure_to_lammps(pressure, rotation_matrix)
+            pressure = self.pressure_to_lammps(pressure, rotation_matrix)
             str_press = ""
             for press, str_axis in zip(pressure, [" x ", " y ", " z ", " xy ", " xz ", " yz "]):
                 if press is not None:
                     str_press += str_axis + str(press*pressure_units )
-            if len(str_press) == 0:
-                raise ValueError("Pressure values cannot all be None")
-            elif len(str_press) > 1:
+            if len(str_press) > 1:
                 str_press += " couple none"
             self.set(fix___ensemble=r"all box/relax" + str_press)
         self.remove_keys(["fix___nve"])
@@ -498,18 +488,10 @@ class LammpsControl(GenericParameters):
             
         # Set thermodynamic ensemble
         if pressure is not None:  # NPT
-
-            if np.sum(np.array([pressure]).flatten()!=None)==0:
-                raise ValueError("At least one component of pressure must be other than None")
-
-            if hasattr(pressure, "__len__") and len(pressure) > 6:
-                raise ValueError("Pressure must be a float or a vector with length <= 6")
-
             if temperature is None or temperature.min() <= 0:
                 raise ValueError("Target temperature for fix nvt/npt/nph cannot be 0 or negative")
 
-            if rotation_matrix is not None:
-                pressure = self.pressure_to_lammps(pressure, rotation_matrix)
+            pressure = self.pressure_to_lammps(pressure, rotation_matrix)
 
             pressure_string = ""
             for coord, value in zip(["x", "y", "z", "xy", "xz", "yz"], pressure):
