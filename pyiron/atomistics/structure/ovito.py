@@ -89,7 +89,7 @@ def analyse_ovito_centro_symmetry(atoms, num_neighbors=12):
 def analyse_ovito_diamond(atoms, mode="total"):
     """
     Use Ovito's Diamond structure analysis bindings.
-    
+
     Args:
         atoms (pyrion.structure.atoms.Atoms): The structure to analyze.
         mode ("total"/"numeric"/"str"): Controls the style and level of detail of the output. (Default is "total", only
