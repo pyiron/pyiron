@@ -4,7 +4,7 @@
 
 import unittest
 import numpy as np
-from pyiron.atomistics.structure.visualization import _get_flattened_orientation
+from pyiron.atomistics.structure._visualize import _get_flattened_orientation
 
 
 class TestAtoms(unittest.TestCase):
