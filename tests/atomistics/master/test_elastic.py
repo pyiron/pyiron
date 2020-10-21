@@ -6,7 +6,7 @@ import os
 import unittest
 from pyiron.atomistics.structure.atoms import CrystalStructure
 from pyiron_base import Project
-from pyiron.atomistics.master.elastic import calc_elastic_tensor
+from pyiron.atomistics.master.elastic import calc_elastic_tensor, calc_elastic_constants
 import numpy as np
 
 
@@ -25,6 +25,17 @@ class TestMurnaghan(unittest.TestCase):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
         cls.project.remove(enable=True, enforce=True)
 
+    def test_validate_ready_to_run(self):
+        job = self.project.create_job(
+            'HessianJob', "job_test"
+        )
+        job.set_reference_structure(self.basis)
+        elast = job.create_job('ElasticTensor', 'elast_job')
+        elast.input['min_num_measurements'] = 100
+        elast.validate_ready_to_run()
+        self.assertEqual(len(elast.input['rotations']), 48)
+        self.assertEqual(len(elast.input['strain_matrices']), 100)
+
     def test_calc_elastic_tensor(self):
         strain = [[[0.005242761019305993, -0.0012053606628952052, -0.0032546722513198236],
                    [-0.0012053606628952052, -0.007127371135828069, 3.041718158272068e-06],
@@ -41,6 +52,9 @@ class TestMurnaghan(unittest.TestCase):
         C = calc_elastic_tensor(strain=strain, rotations=self.basis.get_symmetry()['rotations'], stress=stress)
         self.assertGreater(np.min(C[:3,:3].diagonal()), 200)
         self.assertLess(np.min(C[:3,:3].diagonal()), 300)
+        output = calc_elastic_constants(C)
+        self.assertGreater(output['poissons_ratio'], 0)
+        self.assertLess(output['poissons_ratio'], 1)
         energy = [-8.02446818, -8.02538938]
         volume = [23.38682061, 23.24219739]
         C = calc_elastic_tensor(strain=strain,
