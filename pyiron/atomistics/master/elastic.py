@@ -11,6 +11,7 @@ from pyiron.atomistics.structure.atoms import Atoms, ase_to_pyiron
 from pyiron.atomistics.master.parallel import AtomisticParallelMaster
 from pyiron_base import JobGenerator
 from sklearn.linear_model import LinearRegression
+from collections import defaultdict
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = (
@@ -44,18 +45,18 @@ def calc_elastic_tensor(strain, stress=[], energy=[], rotations=[], volume=[]):
             reg = LinearRegression().fit(strain, stress[:,ii])
             coeff.append(reg.coef_)
         coeff = np.array(coeff)
-    elif len(energy)==len(strain)*len(rotations) and len(energy)==len(volume):
+    elif len(energy)*len(rotations)==len(strain) and len(energy)==len(volume):
         energy = np.tile(energy, len(rotations))
         volume = np.tile(volume, len(rotations))
         C = np.einsum('n,ni,nj->nij', 0.5*volume, strain, strain)
         C = np.triu(C).reshape(-1, 36)
-        C = C[np.sum(C, axis=0)[np.newaxis,:]!=0]
+        C = C[:,np.sum(C, axis=0)!=0]
         C = np.append(np.ones(len(C)).reshape(-1, 1), C, axis=-1)
         reg = LinearRegression().fit(C, energy)
         coeff = np.triu(np.ones((6,6))).flatten()
         coeff[coeff!=0] *= reg.coef_[1:]*eV_div_A3_to_GPa 
         coeff = coeff.reshape(6,6)
-        coeff = coeff+coeff.T-np.eye(6)*coeff.diagonal()
+        coeff = 0.5*(coeff+coeff.T)
     else:
         raise ValueError('Problem with fitting data')
     return coeff
@@ -140,35 +141,28 @@ class ElasticTensor(AtomisticParallelMaster):
     def collect_output(self):
         if self.ref_job.server.run_mode.interactive:
             ham = self.project_hdf5.inspect(self.child_ids[0])
-            self._output["energy"] = ham["output/generic/energy_tot"]
-            self._output["pressures"] = ham["output/generic/pressures"]
-            self._output["volume"] = ham["output/generic/volume"]
+            for key in ['energy_tot', 'pressures', 'volume']:
+                if key in ham["output/generic"].list_nodes():
+                    self._output[key.split('_')[0]] = ham["output/generic/{}".format(key)]
+                else:
+                    self._output[key.split('_')[0]] = []
         else:
+            output_dict = defaultdict(list)
             erg_lst, vol_lst, pressure_lst, id_lst = [], [], [], []
             for job_id in self.child_ids:
                 ham = self.project_hdf5.inspect(job_id)
                 print("job_id: ", job_id, ham.status)
-                if "energy_tot" in ham["output/generic"].list_nodes():
-                    erg_lst.append(ham["output/generic/energy_tot"][-1])
-                elif "energy_pot" in ham["output/generic"].list_nodes():
-                    erg_lst.append(ham["output/generic/energy_pot"][-1])
-                else:
-                    raise ValueError('Neither energy_pot or energy_tot was found.')
-                if "pressures" in ham['output/generic'].list_nodes():
-                    pressure_lst.append(ham["output/generic/pressures"][-1])
-                if "volume" in ham['output/generic'].list_nodes():
-                    vol_lst.append(ham["output/generic/volume"][-1])
-                id_lst.append(job_id)
-            self._output['volume'] = np.array(vol_lst)
-            self._output["pressures"] = np.array(pressure_lst)
-            self._output["energy"] = np.array(erg_lst)
-            self._output["id"] = np.array(id_lst)
-        pressure = self._output['pressures']
-        if pressure is None:
-            pressure = []
+                for key in ['energy_tot', 'energy_pot', 'pressures', 'volume']:
+                    if key in ham["output/generic"].list_nodes():
+                        output_dict[key.split('_')[0]].append(ham["output/generic/{}".format(key)][-1])
+                    else:
+                        output_dict[key.split('_')[0]] = []
+                output_dict['id'].append(job_id)
+            for k,v in output_dict.items():
+                self._output[k] = np.array(v)
         self._output['elastic_tensor'] = calc_elastic_tensor(
             strain = self.input['strain_matrices'],
-            stress = -pressure,
+            stress = -np.array(self._output['pressures']),
             rotations = self.input['rotations'],
             energy = self._output['energy'],
             volume = self._output['volume'],
