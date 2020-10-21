@@ -140,7 +140,7 @@ def analyse_cna_adaptive(atoms, mode="total"):
     cna = sys.calculate_cna(cutoff=None)
 
     if mode == "total":
-        return cna
+        return {n: c for n, c in zip(["unknown", "fcc", "hcp", "bcc", "ico"], cna)}
     else:
         atoms = sys.atoms
         cnalist = ([atom.structure for atom in atoms])
