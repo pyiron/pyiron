@@ -231,10 +231,12 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(len(basis), 8)
         self.assertEqual(basis.get_majority_species()["symbol"], "Al")
         self.assertEqual(basis.get_spacegroup()["Number"], 225)
-        print(basis.selective_dynamics[7])
-        print(basis.selective_dynamics[0])
         self.assertTrue(basis.selective_dynamics[7][0])
         self.assertFalse(basis.selective_dynamics[0][0])
+        basis.add_tag(selective_dynamics=[False, False, False])
+        basis.selective_dynamics[6] = [True, True, True]
+        self.assertTrue(basis.selective_dynamics[6][0])
+        self.assertFalse(basis.selective_dynamics[5][0])
 
     def test_to_object(self):
         filename = os.path.join(
