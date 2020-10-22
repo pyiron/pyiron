@@ -158,6 +158,8 @@ class ElasticTensor(AtomisticParallelMaster):
         self.input['strain_matrices'] = []
         self.input['use_symmetry'] = True
         self.input['rotations'] = []
+        self.input['use_elements'] = (True, 'whether or not consider chemical elements for '
+                                            + 'the symmetry analysis. Could be useful for SQS')
         self._job_generator = ElasticJobGenerator(self)
 
     @property
@@ -170,7 +172,7 @@ class ElasticTensor(AtomisticParallelMaster):
     def validate_ready_to_run(self):
         super().validate_ready_to_run()
         if self.input['use_symmetry'] and len(self.input['rotations'])==0:
-            rotations = self.ref_job.structure.get_symmetry()['rotations']
+            rotations = self.ref_job.structure.get_symmetry(use_elements=self.input['use_elements'])['rotations']
             _, indices = np.unique(np.round(rotations, 6), axis=0, return_inverse=True)
             rotations = rotations[np.unique(indices)]
             self.input['rotations'] = rotations.tolist()
