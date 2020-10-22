@@ -683,8 +683,8 @@ class Vasprun(object):
         es_obj = ElectronicStructure()
         es_obj.kpoint_list = self.vasprun_dict["kpoints"]["kpoint_list"]
         es_obj.kpoint_weights = self.vasprun_dict["kpoints"]["kpoint_weights"]
-        es_obj.eigenvalue_matrix = self.vasprun_dict["grand_eigenvalue_matrix"][0, :, :]
-        es_obj.occupancy_matrix = self.vasprun_dict["grand_occupancy_matrix"][0, :, :]
+        es_obj.eigenvalue_matrix = self.vasprun_dict["grand_eigenvalue_matrix"]
+        es_obj.occupancy_matrix = self.vasprun_dict["grand_occupancy_matrix"]
         if "grand_dos_matrix" in self.vasprun_dict.keys():
             es_obj.grand_dos_matrix = self.vasprun_dict["grand_dos_matrix"]
         if "efermi" in self.vasprun_dict.keys():
