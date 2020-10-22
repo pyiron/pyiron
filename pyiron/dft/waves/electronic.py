@@ -150,16 +150,20 @@ class ElectronicStructure(object):
     @property
     def eigenvalues(self):
         """
+        Returns the eigenvalues for each spin value
+
         numpy.ndarray: Eigenvalues of the bands
         """
-        return self.eigenvalue_matrix.reshape(-1)
+        return np.array([val.reshape(-1) for val in self._eigenvalue_matrix])
 
     @property
     def occupancies(self):
         """
+        Returns the occupancies for each spin value
+
         numpy.ndarray: Occupancies of the bands
         """
-        return self.occupancy_matrix.reshape(-1)
+        return np.array([val.reshape(-1) for val in self._occupancy_matrix])
 
     @property
     def eigenvalue_matrix(self):
