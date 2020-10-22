@@ -232,11 +232,11 @@ class ElasticTensor(AtomisticParallelMaster):
     def collect_output(self):
         if self.ref_job.server.run_mode.interactive:
             ham = self.project_hdf5.inspect(self.child_ids[0])
-            for key in ['energy_tot', 'pressures', 'volume']:
+            for key in ['energy_tot', 'energy_pot', 'pressures', 'volume']:
                 if key in ham["output/generic"].list_nodes():
-                    self._output[key.split('_')[0]] = ham["output/generic/{}".format(key)]
+                    self._output[key] = ham["output/generic/{}".format(key)]
                 else:
-                    self._output[key.split('_')[0]] = []
+                    self._output[key] = []
         else:
             output_dict = defaultdict(list)
             for job_id in self.child_ids:
