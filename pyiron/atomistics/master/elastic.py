@@ -141,11 +141,6 @@ def calc_elastic_constants(elastic_tensor):
 class ElasticJobGenerator(JobGenerator):
     @property
     def parameter_list(self):
-        """
-
-        Returns:
-            (list)
-        """
         parameter_lst = []
         for ii, epsilon in enumerate(self._job.input['strain_matrices']):
             basis = self._job.ref_job.structure.copy()
