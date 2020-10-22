@@ -68,13 +68,7 @@ class TestSelectiveDynamics(unittest.TestCase):
         job = self.project.create_job("HessianJob", "hess")
         job.structure = structure
         job.to_hdf()
-        job_reload = self.project.create_job("HessianJob", "hess")
-        job_reload.from_hdf()
-        structure_reload = job_reload.structure
-        structure_reload.add_tag(selective_dynamics=None)
-        structure_reload.selective_dynamics[0] = [True, True, True]
-        structure_reload.selective_dynamics[1] = [False, False, False]
-        self.assertTrue(True)
+        self.assertEqual(job["output/structure"].to_object().selective_dynamics.tolist(), [[True, True, True], [False, False, False]]) 
 
 
 if __name__ == "__main__":
