@@ -161,7 +161,6 @@ class ElasticJobGenerator(JobGenerator):
         job.structure = parameter[1]
         return job
 
-# ToDo: not all abstract methods implemented
 class ElasticTensor(AtomisticParallelMaster):
     """
     Class to calculate the elastic tensor and isotropic elastic constants
@@ -179,13 +178,7 @@ class ElasticTensor(AtomisticParallelMaster):
     Also if the child job does not support pressure, better increase the number
     of measurements.
     """
-    def __init__(self, project, job_name="elastic"):
-        """
-
-        Args:
-            project:
-            job_name:
-        """
+    def __init__(self, project, job_name):
         super().__init__(project, job_name)
         self.__name__ = "ElasticTensor"
         self.__version__ = "0.1.0"
