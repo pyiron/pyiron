@@ -223,12 +223,6 @@ class ElasticTensor(AtomisticParallelMaster):
             eps_lst += np.einsum('nij->nji', eps_lst)
             self.input['strain_matrices'] = eps_lst.tolist()
 
-    def list_structures(self):
-        if self.ref_job.structure is not None:
-            return [parameter[1] for parameter in self._job_generator.parameter_list]
-        else:
-            return []
-
     def collect_output(self):
         if self.ref_job.server.run_mode.interactive:
             ham = self.project_hdf5.inspect(self.child_ids[0])
