@@ -243,17 +243,20 @@ class ElasticTensor(AtomisticParallelMaster):
                 ham = self.project_hdf5.inspect(job_id)
                 for key in ['energy_tot', 'energy_pot', 'pressures', 'volume']:
                     if key in ham["output/generic"].list_nodes():
-                        output_dict[key.split('_')[0]].append(ham["output/generic/{}".format(key)][-1])
+                        output_dict[key].append(ham["output/generic/{}".format(key)][-1])
                     else:
-                        output_dict[key.split('_')[0]] = []
+                        output_dict[key] = []
                 output_dict['id'].append(job_id)
             for k,v in output_dict.items():
                 self._output[k] = np.array(v)
+        energy = self._output['energy_tot']
+        if len(self._output['energy_pot'])==len(self._output['volume']):
+            energy = self._output['energy_pot']
         elastic_tensor, score = calc_elastic_tensor(
             strain = self.input['strain_matrices'],
             stress = -np.array(self._output['pressures']),
             rotations = self.input['rotations'],
-            energy = self._output['energy'],
+            energy = energy,
             volume = self._output['volume'],
             return_score = True,
         )
