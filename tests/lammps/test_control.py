@@ -3,10 +3,33 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import unittest
-from pyiron.lammps.control import LammpsControl
+from pyiron.lammps.control import LammpsControl, LAMMPS_UNIT_CONVERSIONS
+import numpy as np
 
 
 class TestLammps(unittest.TestCase):
+    def test_calc_minimize(self):
+        lc = LammpsControl()
+        p = 1
+        lc.calc_minimize(pressure=p, rotation_matrix=np.eye(3))
+        self.assertTrue(
+            np.isclose(
+                float(lc['fix___ensemble'].split(' x ')[1].split(' ')[0]),
+                p * LAMMPS_UNIT_CONVERSIONS[lc["units"]]["pressure"]
+            )
+        )
+
+    def test_calc_md(self):
+        lc = LammpsControl()
+        p = 1
+        lc.calc_md(temperature=300, pressure=p, rotation_matrix=np.eye(3))
+        self.assertTrue(
+            np.isclose(
+                float(lc['fix___ensemble'].split(' x ')[1].split(' ')[0]),
+                p * LAMMPS_UNIT_CONVERSIONS[lc["units"]]["pressure"]
+            )
+        )
+
     def test_generate_seed_from_job(self):
         lc = LammpsControl()
         job_hash_dict = {
