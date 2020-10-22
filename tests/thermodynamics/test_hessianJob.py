@@ -49,27 +49,5 @@ class TestHessianJob(unittest.TestCase):
         self.assertAlmostEqual(self.job.output.pressures[0, 0, 0], -0.03)
 
 
-class TestSelectiveDynamics(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.file_location = os.path.dirname(os.path.abspath(__file__))
-        cls.project = Project(
-            os.path.join(cls.file_location, "selective_dynamics")
-        )
-        cls.project.remove_jobs_silently(recursive=True)
-
-    def test_selective_dynamics(self):
-        structure = Atoms(
-            positions=[[0, 0, 0], [1, 1, 1]], elements=["Fe", "Fe"], cell=2 * np.eye(3)
-        )
-        structure.add_tag(selective_dynamics=None)
-        structure.selective_dynamics[0] = [True, True, True]
-        structure.selective_dynamics[1] = [False, False, False]
-        job = self.project.create_job("HessianJob", "hess")
-        job.structure = structure
-        job.to_hdf()
-        self.assertEqual(job["output/structure"].to_object().selective_dynamics.tolist(), [[True, True, True], [False, False, False]]) 
-
-
 if __name__ == "__main__":
     unittest.main()
