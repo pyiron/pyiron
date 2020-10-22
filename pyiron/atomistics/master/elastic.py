@@ -112,7 +112,7 @@ def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations
     elif energy is not None and volume is not None and len(energy)*len(rotations)==len(strain) and len(energy)==len(volume):
         coeff, score = _fit_coeffs_with_energies(strain=strain, energy=energy, volume=volume, rotations=rotations)
     else:
-        raise ValueError('Problem with fitting data')
+        raise ValueError('You have to provide either strain and stress, or strain, energy and volume of same length.')
     if return_score:
         return np.array(coeff), score
     else:
