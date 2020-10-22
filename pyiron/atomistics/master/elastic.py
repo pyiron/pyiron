@@ -20,7 +20,7 @@ __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
 __status__ = "production"
-__date__ = "Sep 1, 2017"
+__date__ = "Oct 21, 2020"
 
 
 eV_div_A3_to_GPa = (
@@ -270,6 +270,15 @@ class ElasticTensor(AtomisticParallelMaster):
                 hdf5_out[key] = val
 
     def get_C_by_orientation(self, orientation):
+        """
+        Get elastic tensor in given orientation.
+
+        Args:
+            orientation (numpy.ndarray): 3x3 orientation tensor (e.g. [[1,1,1],[-1,0,1],[1,-2,1]])
+
+        Returns:
+            elastic tensor in the given orientation
+        """
         return get_elastic_tensor_by_orientation(orientation, self['output/elastic_tensor'])
 
 
