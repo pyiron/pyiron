@@ -264,7 +264,7 @@ class ElasticTensor(AtomisticParallelMaster):
             for key, val in self._output.items():
                 hdf5_out[key] = val
 
-    def get_C_by_orientation(self, orientation):
+    def get_elastic_tensor_by_orientation(self, orientation):
         """
         Get elastic tensor in given orientation.
 
