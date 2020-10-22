@@ -294,7 +294,6 @@ class LammpsControl(GenericParameters):
             raise NotImplementedError
         energy_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["energy"]
         force_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["force"]
-        pressure_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
 
         ionic_energy_tolerance *= energy_units
         ionic_force_tolerance *= force_units
