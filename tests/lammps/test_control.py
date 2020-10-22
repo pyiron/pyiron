@@ -4,7 +4,7 @@
 
 import numpy as np
 import unittest
-from pyiron.lammps.control import LammpsControl
+from pyiron.lammps.control import LammpsControl, LAMMPS_UNIT_CONVERSIONS
 
 
 class TestLammps(unittest.TestCase):
@@ -50,10 +50,27 @@ class TestLammps(unittest.TestCase):
         lc = LammpsControl()
         # Correct normalization without rotation. Note that we convert from GPa to bar for LAMMPS.
         no_rot = np.identity(3)
-        self.assertEqual(lc.pressure_to_lammps(1.0, no_rot), [10000.0, 10000.0, 10000.0, None, None, None])
-        self.assertEqual(lc.pressure_to_lammps([1.0, 2.0, 3.0], no_rot), [10000.0, 20000.0, 30000.0, None, None, None])
-        self.assertEqual(lc.pressure_to_lammps([1.0, 2.0, 3.0, None, None, None], no_rot), [10000.0, 20000.0, 30000.0, None, None, None])
-        self.assertEqual(lc.pressure_to_lammps([None, None, None, None, None, 2.0], no_rot), [None, None, None, None, None, 20000.0])
+        cnv = LAMMPS_UNIT_CONVERSIONS[lc["units"]]["pressure"]
+        self.assertTrue(
+            np.isclose(lc.pressure_to_lammps(0.0, no_rot), 0.0)
+        )
+        self.assertTrue(
+            np.isclose(lc.pressure_to_lammps(1.0, no_rot), 1.0*cnv)
+        )
+        for input_pressure, output_pressure in (
+                ([1.0, 2.0, 3.0], [1.0*cnv, 2.0*cnv, 3.0*cnv, None, None, None]),
+                ([1.0, 2.0, 3.0, None, None, None], [1.0*cnv, 2.0*cnv, 3.0*cnv, None, None, None]),
+                ([None, None, None, None, None, 2.0], [None, None, None, None, None, 2.0*cnv]),
+                ([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [1.0*cnv, 2.0*cnv, 3.0*cnv, 4.0*cnv, 5.0*cnv, 6.0*cnv]),
+        ):
+            out = lc.pressure_to_lammps(input_pressure, no_rot)
+            for out_i, ref_i in zip(out, output_pressure):
+                self.assertTrue(
+                    (out_i is None and ref_i is None)
+                    or
+                    np.isclose(out_i, ref_i)
+                )
+        # TODO: tests with rotation.
 
 if __name__ == "__main__":
     unittest.main()
