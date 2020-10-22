@@ -40,6 +40,9 @@ class TestMurnaghan(unittest.TestCase):
         self.assertEqual(len(elast.input['strain_matrices']), 10)
         elast.run()
         self.assertAlmostEqual(elast['output/bulk_modulus'], 100)
+        with self.assertRaises(ValueError):
+            elast.get_elastic_tensor_by_orientation([[1,1,1],[1,0,-1],[1,-2,1]])
+        elast.get_elastic_tensor_by_orientation([[1,1,1],[-1,0,1],[1,-2,1]])
 
     def test_calc_elastic_tensor(self):
         strain = [[[0.005242761019305993, -0.0012053606628952052, -0.0032546722513198236],
