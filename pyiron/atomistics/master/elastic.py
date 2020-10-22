@@ -172,7 +172,18 @@ class ElasticTensor(AtomisticParallelMaster):
     >>> elastic = job.create_job('ElasticTensor', 'elastic')
     >>> elastic.run()
 
-    The input parameters might not be chosen adequately. If you have a large
+    Input parameters:
+
+        min_num_measurements (int): Minimum number of measurements/simulations to be launched
+        min_num_points (int): Minimum number of data points to fit data (number of measurements
+            times number of symmetry operations)
+        strain_matrices (numpy.ndarray): Strain tensors to be applied on simulation boxes (optional)
+        rotations (numpy.ndarray): Rotation matrices for box symmetry
+        use_symmetry (bool): Whether or not exploit box symmetry (ignored if `rotations` already specified)
+        use_elements (bool): Whether or not respect chemical elements for box symmetry (ignored if `rotations`
+            already specified)
+
+    The defaultinput parameters might not be chosen adequately. If you have a large
     computation power, increase `min_num_measurements`. At the same time, make
     sure to choose an orientation which maximizes the number symmetry operations.
     Also if the child job does not support pressure, better increase the number
