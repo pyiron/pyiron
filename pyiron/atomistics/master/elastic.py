@@ -27,7 +27,36 @@ eV_div_A3_to_GPa = (
     1e21 / scipy.constants.physical_constants["joule-electron volt relationship"][0]
 )
 
-def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations=None):
+def get_elastic_tensor_by_orientation(orientation, elastic_tensor):
+    """
+    Get elastic tensor in a given orientation
+
+    Args:
+        orientation (numpy.ndarray): 3x3 orthogonal orientation (no need to be orthonormal)
+        elastic_tensor (numpy.ndarray): 6x6 elastic tensor
+
+    Returns:
+        elastic_tensor in a given orientation
+    """
+    orientation = np.einsum('ij,i->ij', orientation, 1/np.linalg.norm(orientation, axis=-1))
+    if not np.isclose(np.linalg.det(orientation), 1):
+        raise ValueError('orientation must be an orthogonal 3x3 tensor')
+    C = np.zeros((3,3,3,3))
+    for i in range(3):
+        for j in range(3):
+            for k in range(3):
+                for l in range(3):
+                    C[i,j,k,l] = elastic_tensor[i+(i!=j)*(6-2*i-j), k+(k!=l)*(6-2*k-l)]
+    C = np.einsum('Ii,Jj,ijkl,Kk,Ll->IJKL', orientation, orientation, C, orientation, orientation)
+    elastic_tensor_to_return = np.zeros_like(elastic_tensor)
+    for i in range(3):
+        for j in range(3):
+            for k in range(3):
+                for l in range(3):
+                    elastic_tensor_to_return[i+(i!=j)*(6-2*i-j), k+(k!=l)*(6-2*k-l)] = C[i,j,k,l]
+    return elastic_tensor_to_return
+
+def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations=None, return_score=False):
     """
     Calculate 6x6-elastic tensor from the strain and stress or strain and energy+volume.
 
@@ -40,6 +69,7 @@ def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations
         energy (numpy.ndarray): n energy values
         volume (numpy.ndarray): n volume values
         rotations (numpy.ndarray): mx3x3 rotation matrices
+        return_score (numpy.ndarray): return regression score (cf. sklearn.linear_mode.LinearRegression)
     """
     if len(strain)==0:
         raise ValueError('Not enough points')
@@ -55,10 +85,11 @@ def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations
     if stress is not None and len(stress)*len(rotations)==len(strain):
         stress = np.einsum('nik,mkl,njl->nmij', rotations, stress, rotations).reshape(-1, 3, 3)
         stress = np.stack((stress[:,0,0], stress[:,1,1], stress[:,2,2], stress[:,1,2], stress[:,0,2], stress[:,0,1]), axis=-1)
+        score = []
         for ii in range(6):
             reg = LinearRegression().fit(strain, stress[:,ii])
             coeff.append(reg.coef_)
-        coeff = np.array(coeff)
+            score.append(reg.score(strain, stress[:,ii]))
     elif energy is not None and volume is not None and len(energy)*len(rotations)==len(strain) and len(energy)==len(volume):
         energy = np.tile(energy, len(rotations))
         volume = np.tile(volume, len(rotations))
@@ -67,13 +98,17 @@ def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations
         C = C[:,np.sum(C, axis=0)!=0]
         C = np.append(np.ones(len(C)).reshape(-1, 1), C, axis=-1)
         reg = LinearRegression().fit(C, energy)
+        score = reg.score(C, energy)
         coeff = np.triu(np.ones((6,6))).flatten()
         coeff[coeff!=0] *= reg.coef_[1:]*eV_div_A3_to_GPa
         coeff = coeff.reshape(6,6)
         coeff = 0.5*(coeff+coeff.T)
     else:
         raise ValueError('Problem with fitting data')
-    return coeff
+    if return_score:
+        return np.array(coeff), score
+    else:
+        return np.array(coeff)
 
 def calc_elastic_constants(elastic_tensor):
     """
@@ -130,8 +165,11 @@ class ElasticTensor(AtomisticParallelMaster):
     >>> elastic = job.create_job('ElasticTensor', 'elastic')
     >>> elastic.run()
 
-    This class is still under construction and there's no guarantee that it does
-    what it looks like it does.
+    The input parameters might not be chosen adequately. If you have a large
+    computation power, increase `min_num_measurements`. At the same time, make
+    sure to choose an orientation which maximizes the number symmetry operations.
+    Also if the child job does not support pressure, better increase the number
+    of measurements.
     """
     def __init__(self, project, job_name="elastic"):
         """
@@ -208,17 +246,22 @@ class ElasticTensor(AtomisticParallelMaster):
                 output_dict['id'].append(job_id)
             for k,v in output_dict.items():
                 self._output[k] = np.array(v)
-        elastic_tensor = calc_elastic_tensor(
+        elastic_tensor, score = calc_elastic_tensor(
             strain = self.input['strain_matrices'],
             stress = -np.array(self._output['pressures']),
             rotations = self.input['rotations'],
             energy = self._output['energy'],
             volume = self._output['volume'],
+            return_score = True,
         )
+        self._output['fit_score'] = score
         for k,v in calc_elastic_constants(elastic_tensor).items():
             self._output[k] = v
         with self.project_hdf5.open("output") as hdf5_out:
             for key, val in self._output.items():
                 hdf5_out[key] = val
+
+    def get_C_by_orientation(self, orientation):
+        return get_elastic_tensor_by_orientation(orientation, self['output/elastic_tensor'])
 
 
