@@ -25,7 +25,7 @@ class TestMurnaghan(unittest.TestCase):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
         cls.project.remove(enable=True, enforce=True)
 
-    def test__run(self):
+    def test_run(self):
         job = self.project.create_job(
             "HessianJob", "job_test"
         )
