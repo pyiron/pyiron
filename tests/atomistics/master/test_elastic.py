@@ -25,16 +25,21 @@ class TestMurnaghan(unittest.TestCase):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
         cls.project.remove(enable=True, enforce=True)
 
-    def test_validate_ready_to_run(self):
+    def test__run(self):
         job = self.project.create_job(
-            'HessianJob', "job_test"
+            "HessianJob", "job_test"
         )
         job.set_reference_structure(self.basis)
+        job.set_force_constants(1)
+        job.set_elastic_moduli(100, 100)
+        job.server.run_mode.interactive = True
         elast = job.create_job('ElasticTensor', 'elast_job')
-        elast.input['min_num_measurements'] = 100
+        elast.input['min_num_measurements'] = 10
         elast.validate_ready_to_run()
         self.assertEqual(len(elast.input['rotations']), 48)
-        self.assertEqual(len(elast.input['strain_matrices']), 100)
+        self.assertEqual(len(elast.input['strain_matrices']), 10)
+        elast.run()
+        self.assertAlmostEqual(elast['output/bulk_modulus'], 100)
 
     def test_calc_elastic_tensor(self):
         strain = [[[0.005242761019305993, -0.0012053606628952052, -0.0032546722513198236],

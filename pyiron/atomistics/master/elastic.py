@@ -190,9 +190,6 @@ class ElasticTensor(AtomisticParallelMaster):
         self.__name__ = "ElasticTensor"
         self.__version__ = "0.1.0"
 
-        # print ("h5_path: ", self.project_hdf5._h5_path)
-
-        # define default input
         self.input["min_num_measurements"] = (11, "minimum number of samples to be taken")
         self.input["min_num_points"] = (105, "minimum number of data points"
             + "(number of measurements will be min_num_points/len(rotations))")
@@ -245,7 +242,6 @@ class ElasticTensor(AtomisticParallelMaster):
             output_dict = defaultdict(list)
             for job_id in self.child_ids:
                 ham = self.project_hdf5.inspect(job_id)
-                print("job_id: ", job_id, ham.status)
                 for key in ['energy_tot', 'energy_pot', 'pressures', 'volume']:
                     if key in ham["output/generic"].list_nodes():
                         output_dict[key.split('_')[0]].append(ham["output/generic/{}".format(key)][-1])
