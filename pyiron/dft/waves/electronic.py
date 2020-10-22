@@ -243,7 +243,7 @@ class ElectronicStructure(object):
 
     def get_vbm(self, resolution=1e-6):
         """
-        Gets the valence band maximum (VBM) of the system
+        Gets the valence band maximum (VBM) of the system for each spin value
 
         Args:
             resolution (float): An occupancy below this value is considered unoccupied
@@ -279,7 +279,7 @@ class ElectronicStructure(object):
 
     def get_cbm(self, resolution=1e-6):
         """
-        Gets the conduction band minimum (CBM) of the system
+        Gets the conduction band minimum (CBM) of the system for each spin value
 
         Args:
             resolution (float): An occupancy above this value is considered occupied
@@ -315,7 +315,7 @@ class ElectronicStructure(object):
 
     def get_band_gap(self, resolution=1e-6):
         """
-        Gets the band gap of the system
+        Gets the band gap of the system for each spin value
 
         Args:
             resolution (float): An occupancy above this value is considered occupied
