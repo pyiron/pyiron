@@ -90,7 +90,6 @@ def calc_elastic_constants(elastic_tensor):
     output['lame_coefficient'] = np.mean(elastic_tensor[:3, :3].diagonal())
     output['shear_modulus'] = np.mean(elastic_tensor[3:, 3:].diagonal())
     output['bulk_modulus'] = np.mean(elastic_tensor[:3,:3])
-    output['poissons_ratio'] = 0.5/(1+output['shear_modulus']/output['lame_coefficient'])
     output['youngs_modulus'] = 1/np.mean(np.linalg.inv(elastic_tensor[:3,:3]).diagonal())
     output['poissons_ratio'] = -output['youngs_modulus']*np.sum(np.linalg.inv(elastic_tensor[:3,:3]))/6+0.5
     output['zener_ratio'] = 12*np.mean(elastic_tensor[3:,3:].diagonal())/(3*np.trace(elastic_tensor[:3,:3])-np.sum(elastic_tensor[:3,:3]))
