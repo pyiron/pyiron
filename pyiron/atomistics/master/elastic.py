@@ -104,7 +104,7 @@ def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations
         _, indices = np.unique(np.round(rotations, 6), axis=0, return_inverse=True)
         rotations = rotations[np.unique(indices)]
     else:
-        rotations = np.eye(3)
+        rotations = [np.eye(3)]
     strain = np.einsum('nik,mkl,njl->nmij', rotations, strain, rotations).reshape(-1, 3, 3)
     strain = np.stack((strain[:,0,0], strain[:,1,1], strain[:,2,2], 2*strain[:,1,2], 2*strain[:,0,2], 2*strain[:,0,1]), axis=-1)
     if stress is not None and len(stress)*len(rotations)==len(strain):
@@ -207,7 +207,7 @@ class ElasticTensor(AtomisticParallelMaster):
     def _number_of_measurements(self):
         return max(
             self.input['min_num_measurements'],
-            int(self.input['min_num_points']/max(len(self.input['rotations']), 1))
+            int(np.ceil(self.input['min_num_points']/max(len(self.input['rotations']), 1)))
         )
 
     def _get_rotation_matrices(self):
