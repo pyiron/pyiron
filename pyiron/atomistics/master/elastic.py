@@ -210,24 +210,24 @@ class ElasticTensor(AtomisticParallelMaster):
             int(self.input['min_num_points']/max(len(self.input['rotations']), 1))
         )
 
+    def _get_rotation_matrices(self):
+        rotations = self.ref_job.structure.get_symmetry(use_elements=self.input['use_elements'])['rotations']
+        _, indices = np.unique(np.round(rotations, 6), axis=0, return_inverse=True)
+        rotations = rotations[np.unique(indices)]
+        self.input['rotations'] = rotations.tolist()
+
+    def _create_strain_matrices(self):
+        if self.input['use_symmetry'] and len(self.input['rotations'])==0:
+            self._get_rotation_matrices()
+        eps_lst = np.random.random((int(self._number_of_measurements), 3, 3))-0.5
+        eps_lst *= self.input['max_strain']
+        eps_lst += np.einsum('nij->nji', eps_lst)
+        self.input['strain_matrices'] = eps_lst.tolist()
+
     def validate_ready_to_run(self):
         super().validate_ready_to_run()
-        if self.input['use_symmetry'] and len(self.input['rotations'])==0:
-            rotations = self.ref_job.structure.get_symmetry(use_elements=self.input['use_elements'])['rotations']
-            _, indices = np.unique(np.round(rotations, 6), axis=0, return_inverse=True)
-            rotations = rotations[np.unique(indices)]
-            self.input['rotations'] = rotations.tolist()
         if len(self.input['strain_matrices'])==0:
-            eps_lst = np.random.random((int(self._number_of_measurements), 3, 3))-0.5
-            eps_lst *= self.input['max_strain']
-            eps_lst += np.einsum('nij->nji', eps_lst)
-            self.input['strain_matrices'] = eps_lst.tolist()
-
-    def list_structures(self):
-        if self.ref_job.structure is not None:
-            return [parameter[1] for parameter in self._job_generator.parameter_list]
-        else:
-            return []
+            self._create_strain_matrices()
 
     def collect_output(self):
         if self.ref_job.server.run_mode.interactive:
