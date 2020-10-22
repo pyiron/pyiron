@@ -56,6 +56,32 @@ def get_elastic_tensor_by_orientation(orientation, elastic_tensor):
                     elastic_tensor_to_return[i+(i!=j)*(6-2*i-j), k+(k!=l)*(6-2*k-l)] = C[i,j,k,l]
     return elastic_tensor_to_return
 
+def _fit_coeffs_with_stress(strain, stress, rotations):
+    stress = np.einsum('nik,mkl,njl->nmij', rotations, stress, rotations).reshape(-1, 3, 3)
+    stress = np.stack((stress[:,0,0], stress[:,1,1], stress[:,2,2], stress[:,1,2], stress[:,0,2], stress[:,0,1]), axis=-1)
+    score = []
+    coeff = []
+    for ii in range(6):
+        reg = LinearRegression().fit(strain, stress[:,ii])
+        coeff.append(reg.coef_)
+        score.append(reg.score(strain, stress[:,ii]))
+    return coeff, score
+
+def _fit_coeffs_with_energies(strain, energy, volume, rotations):
+    energy = np.tile(energy, len(rotations))
+    volume = np.tile(volume, len(rotations))
+    C = np.einsum('n,ni,nj->nij', 0.5*volume, strain, strain)
+    C = np.triu(C).reshape(-1, 36)
+    C = C[:,np.sum(C, axis=0)!=0]
+    C = np.append(np.ones(len(C)).reshape(-1, 1), C, axis=-1)
+    reg = LinearRegression().fit(C, energy)
+    score = reg.score(C, energy)
+    coeff = np.triu(np.ones((6,6))).flatten()
+    coeff[coeff!=0] *= reg.coef_[1:]*eV_div_A3_to_GPa
+    coeff = coeff.reshape(6,6)
+    coeff = 0.5*(coeff+coeff.T)
+    return coeff, score
+
 def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations=None, return_score=False):
     """
     Calculate 6x6-elastic tensor from the strain and stress or strain and energy+volume.
@@ -81,28 +107,10 @@ def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations
         rotations = np.eye(3)
     strain = np.einsum('nik,mkl,njl->nmij', rotations, strain, rotations).reshape(-1, 3, 3)
     strain = np.stack((strain[:,0,0], strain[:,1,1], strain[:,2,2], 2*strain[:,1,2], 2*strain[:,0,2], 2*strain[:,0,1]), axis=-1)
-    coeff = []
     if stress is not None and len(stress)*len(rotations)==len(strain):
-        stress = np.einsum('nik,mkl,njl->nmij', rotations, stress, rotations).reshape(-1, 3, 3)
-        stress = np.stack((stress[:,0,0], stress[:,1,1], stress[:,2,2], stress[:,1,2], stress[:,0,2], stress[:,0,1]), axis=-1)
-        score = []
-        for ii in range(6):
-            reg = LinearRegression().fit(strain, stress[:,ii])
-            coeff.append(reg.coef_)
-            score.append(reg.score(strain, stress[:,ii]))
+        coeff, score = _fit_coeffs_with_stress(strain=strain, stress=stress, rotations=rotations)
     elif energy is not None and volume is not None and len(energy)*len(rotations)==len(strain) and len(energy)==len(volume):
-        energy = np.tile(energy, len(rotations))
-        volume = np.tile(volume, len(rotations))
-        C = np.einsum('n,ni,nj->nij', 0.5*volume, strain, strain)
-        C = np.triu(C).reshape(-1, 36)
-        C = C[:,np.sum(C, axis=0)!=0]
-        C = np.append(np.ones(len(C)).reshape(-1, 1), C, axis=-1)
-        reg = LinearRegression().fit(C, energy)
-        score = reg.score(C, energy)
-        coeff = np.triu(np.ones((6,6))).flatten()
-        coeff[coeff!=0] *= reg.coef_[1:]*eV_div_A3_to_GPa
-        coeff = coeff.reshape(6,6)
-        coeff = 0.5*(coeff+coeff.T)
+        coeff, score = _fit_coeffs_with_energies(strain=strain, energy=energy, volume=volume, rotations=rotations)
     else:
         raise ValueError('Problem with fitting data')
     if return_score:
