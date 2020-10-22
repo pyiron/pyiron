@@ -308,7 +308,7 @@ class LammpsControl(GenericParameters):
             str_press = ""
             for press, str_axis in zip(pressure, [" x ", " y ", " z ", " xy ", " xz ", " yz "]):
                 if press is not None:
-                    str_press += str_axis + str(press*pressure_units )
+                    str_press += str_axis + str(press)
             if len(str_press) == 0:
                 raise ValueError("Pressure values cannot all be None")
             elif len(str_press) > 1:
