@@ -178,7 +178,7 @@ class TestVasprun(unittest.TestCase):
                     vp.vasprun_dict["grand_dos_matrix"]
                 )
                 self.assertEqual(len(es_obj.kpoints), n_kpts)
-                self.assertEqual(len(es_obj.kpoints[0].bands), n_bands)
+                self.assertEqual(len(es_obj.kpoints[0].bands[0]), n_bands)
 
     def test_species_info(self):
         for i, vp in enumerate(self.vp_list):
