@@ -131,7 +131,7 @@ class Dos(object):
         r_dos = np.zeros_like(self.t_dos[spin_indices])
         w_dos = np.zeros_like(self.t_dos[spin_indices])
         eigenvalues = self.es_obj.eigenvalues[spin_indices]
-        for i, e in enumerate(eigenvalues):
+        for e in eigenvalues:
             weight = np.sum(tot_val[spin_indices, k, b, :, :])
             weight_sum = np.sum(tot_val[:, k, b, :, :])
             if b < n_bands - 1:
@@ -178,7 +178,7 @@ class Dos(object):
         r_dos = np.zeros_like(self.t_dos[spin_indices])
         w_dos = np.zeros_like(self.t_dos[spin_indices])
         eigenvalues = self.es_obj.eigenvalues[spin_indices]
-        for i, e in enumerate(eigenvalues):
+        for e in eigenvalues:
             weight = np.sum(tot_val[spin_indices, k, b, atom_indices, :])
             weight_sum = np.sum(tot_val[spin_indices, k, b, :, :])
             if b < n_bands - 1:
@@ -225,7 +225,7 @@ class Dos(object):
         r_dos = np.zeros_like(self.t_dos)[spin_indices]
         w_dos = np.zeros_like(self.t_dos)[spin_indices]
         eigenvalues = self.es_obj.eigenvalues[spin_indices]
-        for i, e in enumerate(eigenvalues):
+        for e in eigenvalues:
             weight = np.sum(tot_val[spin_indices, k, b, :, orbital_indices])
             weight_sum = np.sum(tot_val[spin_indices, k, b, :, :])
             if b < n_bands - 1:
@@ -275,7 +275,7 @@ class Dos(object):
         w_dos = np.zeros_like(self.t_dos)[spin_indices]
 
         eigenvalues = self.es_obj.eigenvalues[spin_indices]
-        for i, e in enumerate(eigenvalues):
+        for e in eigenvalues:
             weight = np.sum(
                 [
                     np.sum(tot_val[spin_indices, k, b, atom_indices, o])
