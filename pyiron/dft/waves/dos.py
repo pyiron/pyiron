@@ -288,7 +288,7 @@ class Dos(object):
             else:
                 b = 0
                 k += 1
-            index = len(self.energies[self.energies < e]) - 1
+            index = len(self.energies[spin_indices][self.energies[spin_indices] < e]) - 1
             if index >= 0:
                 r_dos[index] = r_dos[index] + weight
                 w_dos[index] = w_dos[index] + weight_sum
