@@ -205,7 +205,7 @@ class ScipyMinimizer(InteractiveWrapper):
             self.input.ionic_force_tolerance = ionic_force_tolerance
         if ionic_energy_tolerance is not None:
             self.input.ionic_energy_tolerance = ionic_energy_tolerance
-   
+
 
 class Input(InputList):
     """
