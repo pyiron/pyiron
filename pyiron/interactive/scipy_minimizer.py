@@ -105,6 +105,7 @@ class ScipyMinimizer(InteractiveWrapper):
         self.collect_output()
         if self.ref_job.server.run_mode.interactive:
             self.ref_job.interactive_close()
+        self.status.finished = True
 
     def _update(self, x):
         rerun = False
