@@ -771,7 +771,7 @@ class Kpoint(object):
     @property
     def eig_occ_matrix(self):
         eig_occ_list = list()
-        for spin, bands in self.bands.items():
+        for bands in self.bands.values():
             eig_occ_list.append([[b.eigenvalue, b.occupancy] for b in bands])
         return np.array(eig_occ_list)
 
