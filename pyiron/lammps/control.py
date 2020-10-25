@@ -201,6 +201,9 @@ class LammpsControl(GenericParameters):
         Lammps handles complex cells in a particular way, namely by using an upper triangular cell. This means we may
         need to convert our pressure tensor to a new coordinate frame. We also handle that transformation here.
 
+        I case of a single pressure value, it is again returned as a single pressure value, to be used with the "iso"
+        option (i.e., coupled deformation in x, y, and z).
+
         Finally, we also ensure that the units are converted from pyiron's GPa to whatever Lammps needs.
 
         Args:
@@ -208,35 +211,49 @@ class LammpsControl(GenericParameters):
             rotation_matrix (numpy.ndarray): The 3x3 matrix rotating from the pyiron to Lammps coordinate frame.
 
         Returns:
-            (numpy.ndarray): pxx, pyy, pzz, pxy, pxz, and pyz to be passed to Lammps.
+            (list): pxx, pyy, pzz, pxy, pxz, and pyz to be passed to Lammps.
+
+            or
+
+            (float): a single, isotropic pressure to be used with the "iso" option
         """
 
-        # Get something with six elements
-        if not hasattr(pressure, "__len__"):
-            if not np.isclose(np.matrix.trace(rotation_matrix), 3) and pressure == 0.0:
-                pressure = np.append(pressure * np.ones(3), pressure * np.ones(3))
-            else:
-                pressure = np.append(pressure * np.ones(3), 3 * [None])
-        else:
-            if len(pressure) > 6:
-                raise ValueError("Pressure can have a maximum of 6 values, (x, y, z, xy, xz, and yz), but got " +
-                                 "{}".format(len(pressure)))
-            all_pressures = 6 * [None]
-            all_pressures[:len(pressure)] = pressure
-            pressure = np.array(all_pressures, dtype=float)
+        # If pressure is a scalar, only unit conversion is needed.
+        if np.isscalar(pressure):
+            return float(pressure) * LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
 
-        # Cell degrees of freedom can be kept fixed using None for the pressure, check where that's done.
-        not_none_mask = (pressure!=None)
-        if not np.any(not_none_mask):
+        # Normalize pressure to a list of 6 entries of either float or NoneType type.
+        if len(pressure) > 6:
+            raise ValueError("Pressure can have a maximum of 6 values, (x, y, z, xy, xz, and yz), but got " +
+                             "{}".format(len(pressure)))
+        pressure = [float(p) if p is not None else None
+                    for p in pressure]
+        pressure += (6 - len(pressure)) * [None]
+
+        if all(p is None for p in pressure):
             raise ValueError("Pressure cannot have a length but all be None")
 
-        # If necessary, rotate the pressure tensor to the Lammps coordinate frame
-        if not np.isclose(np.matrix.trace(rotation_matrix), 3):
-            if not np.all(not_none_mask):
-                raise ValueError("Cells which are not orthorhombic or rectangular are incompatible with Lammps "
-                                 "constant pressure calculations unless the entire pressure tensor is defined."
+        # If necessary, rotate the pressure tensor to the Lammps coordinate frame.
+        # Isotropic, hydrostatic pressures are rotation invariant.
+        is_isotropic_hydrostatic = (
+            # All diagonal components must be equal and not None.
+            pressure[0] is not None and pressure[1] is not None and pressure[2] is not None
+            and np.isclose(pressure[0], pressure[1]) and np.isclose(pressure[1], pressure[2])
+            # Either all shear components must be None, or all shear components must be zero.
+            and (
+                (pressure[3] is None and pressure[4] is None and pressure[5] is None)
+                or
+                (pressure[3] is not None and np.isclose(pressure[3], 0.0) and
+                 pressure[4] is not None and np.isclose(pressure[4], 0.0) and
+                 pressure[5] is not None and np.isclose(pressure[5], 0.0))
+            )
+        )
+        if not np.isclose(np.matrix.trace(rotation_matrix), 3) and not is_isotropic_hydrostatic:
+            if any(p is None for p in pressure):
+                raise ValueError("Cells which are not orthorhombic or an upper-triangular cell are incompatible with Lammps "
+                                 "constant pressure calculations unless the entire pressure tensor is defined. "
                                  "The reason is that Lammps demands such cells be represented with an "
-                                 "upper-triangular unit cell, thus a rotation between Lammps and pyiron coordinate"
+                                 "upper-triangular unit cell, thus a rotation between Lammps and pyiron coordinate "
                                  "frames is required; it is not possible to rotate the pressure tensor if any of "
                                  "its components is None.")
             pxx, pyy, pzz, pxy, pxz, pyz = pressure
@@ -246,10 +263,12 @@ class LammpsControl(GenericParameters):
                  [pxz, pyz, pzz]]
             )
             lammps_pressure_tensor = rotation_matrix.T @ pressure_tensor @ rotation_matrix
-            pressure = lammps_pressure_tensor[[0, 1, 2, 0, 0, 1], [0, 1, 2, 1, 2, 2]]
+            pressure = list(lammps_pressure_tensor[[0, 1, 2, 0, 0, 1], [0, 1, 2, 1, 2, 2]])
 
-        pressure[not_none_mask] *= LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
-        return pressure
+        return [(p * LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
+                 if p is not None
+                 else p)
+                for p in pressure]
 
     def calc_minimize(
         self,
@@ -275,9 +294,11 @@ class LammpsControl(GenericParameters):
                 `max_iter` steps, terminate at the converged step. If the minimisation does not converge up to
                 `max_iter` steps, terminate at the `max_iter` step. (Default is 100000.)
             pressure (None/float/numpy.ndarray/list): Target pressure. If set to None, an isochoric (constant V)
-                calculation is performed. A list of up to length 6 can be given to specify xx, yy, zz, xy, xz, and yz
-                components of the pressure tensor, respectively. These values can mix floats and `None` to allow only
-                certain degrees of cell freedom to change. (Default is None, run isochorically.)
+                calculation is performed. If set to a scalar, the shear of the cell and the ratio of the x, y, and
+                z components is kept constant, while an isotropic, hydrostatic pressure is applied. A list of up to
+                length 6 can be given to specify xx, yy, zz, xy, xz, and yz components of the pressure tensor,
+                respectively. These values can mix floats and `None` to allow only certain degrees of cell freedom
+                to change. (Default is None, run isochorically.)
             n_print (int): Write (dump or print) to the output file every n steps (Default: 100)
             style ('cg'/'sd'/other values from Lammps docs): The style of the numeric minimization, either conjugate
                 gradient, steepest descent, or other keys permissible from the Lammps docs on 'min_style'. (Default
@@ -294,25 +315,21 @@ class LammpsControl(GenericParameters):
             raise NotImplementedError
         energy_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["energy"]
         force_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["force"]
-        pressure_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
 
         ionic_energy_tolerance *= energy_units
         ionic_force_tolerance *= force_units
 
         if pressure is not None:
-            if None in np.array([pressure]).flatten():
-                if rotation_matrix is not None and not np.isclose(np.linalg.det(rotation_matrix), 1):
-                    raise AssertionError('Pressure cannot contain None if upper triangle in cell is defined')
-            elif rotation_matrix is not None:
-                pressure = self.pressure_to_lammps(pressure, rotation_matrix)
-            str_press = ""
-            for press, str_axis in zip(pressure, [" x ", " y ", " z ", " xy ", " xz ", " yz "]):
-                if press is not None:
-                    str_press += str_axis + str(press*pressure_units )
-            if len(str_press) == 0:
-                raise ValueError("Pressure values cannot all be None")
-            elif len(str_press) > 1:
-                str_press += " couple none"
+            pressure = self.pressure_to_lammps(pressure, rotation_matrix)
+            if np.isscalar(pressure):
+                str_press = " iso {}".format(pressure)
+            else:
+                str_press = ""
+                for press, str_axis in zip(pressure, [" x ", " y ", " z ", " xy ", " xz ", " yz "]):
+                    if press is not None:
+                        str_press += str_axis + str(press)
+                if len(str_press) > 1:
+                    str_press += " couple none"
             self.set(fix___ensemble=r"all box/relax" + str_press)
         self.remove_keys(["fix___nve"])
         self.set(min_style=style)
@@ -419,9 +436,11 @@ class LammpsControl(GenericParameters):
                                            temperature and the final target temperature (in between the target value
                                            is varied linearly).
             pressure (None/float/numpy.ndarray/list): Target pressure. If set to None, an NVE or an NVT calculation is
-                performed. A list of up to length 6 can be given to specify xx, yy, zz, xy, xz, and yz components of
-                the pressure tensor, respectively. These values can mix floats and `None` to allow only certain degrees
-                of cell freedom to change. (Default is None, run isochorically.)
+                performed. If set to a scalar, the shear of the cell and the ratio of the x, y, and z components is kept
+                constant, while an isotropic, hydrostatic pressure is applied. A list of up to length 6 can be given to
+                specify xx, yy, zz, xy, xz, and yz components of the pressure tensor, respectively. These values can mix
+                floats and `None` to allow only certain degrees of cell freedom to change. (Default is None, run
+                isochorically.)
             n_ionic_steps (int): Number of ionic steps
             time_step (float): Step size in fs between two steps.
             n_print (int):  Print frequency
@@ -498,25 +517,20 @@ class LammpsControl(GenericParameters):
             
         # Set thermodynamic ensemble
         if pressure is not None:  # NPT
-
-            if np.sum(np.array([pressure]).flatten()!=None)==0:
-                raise ValueError("At least one component of pressure must be other than None")
-
-            if hasattr(pressure, "__len__") and len(pressure) > 6:
-                raise ValueError("Pressure must be a float or a vector with length <= 6")
-
             if temperature is None or temperature.min() <= 0:
                 raise ValueError("Target temperature for fix nvt/npt/nph cannot be 0 or negative")
 
-            if rotation_matrix is not None:
-                pressure = self.pressure_to_lammps(pressure, rotation_matrix)
+            pressure = self.pressure_to_lammps(pressure, rotation_matrix)
 
-            pressure_string = ""
-            for coord, value in zip(["x", "y", "z", "xy", "xz", "yz"], pressure):
-                if value is not None:
-                    pressure_string += " {0} {1} {1} {2}".format(
-                        coord, str(value), str(pressure_damping_timescale)
-                    )
+            if np.isscalar(pressure):
+                pressure_string = " iso {0} {0} {1}".format(pressure, pressure_damping_timescale)
+            else:
+                pressure_string = ""
+                for coord, value in zip(["x", "y", "z", "xy", "xz", "yz"], pressure):
+                    if value is not None:
+                        pressure_string += " {0} {1} {1} {2}".format(
+                            coord, value, pressure_damping_timescale
+                        )
 
             if langevin:  # NPT(Langevin)
                 fix_ensemble_str = "all nph" + pressure_string
