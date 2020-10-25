@@ -222,11 +222,13 @@ class LammpsControl(GenericParameters):
         if np.isscalar(pressure):
             return float(pressure) * LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
 
-        # Normalize pressure to a list of 6 entries.
+        # Normalize pressure to a list of 6 entries of either float or NoneType type.
         if len(pressure) > 6:
             raise ValueError("Pressure can have a maximum of 6 values, (x, y, z, xy, xz, and yz), but got " +
                              "{}".format(len(pressure)))
-        pressure = list(pressure) + (6 - len(pressure)) * [None]
+        pressure = [float(p) if p is not None else None
+                    for p in pressure]
+        pressure += (6 - len(pressure)) * [None]
 
         if all(p is None for p in pressure):
             raise ValueError("Pressure cannot have a length but all be None")

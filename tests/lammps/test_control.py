@@ -3,6 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import numpy as np
+from scipy.spatial.transform import Rotation
 import unittest
 from pyiron.lammps.control import LammpsControl, LAMMPS_UNIT_CONVERSIONS
 
@@ -57,12 +58,14 @@ class TestLammps(unittest.TestCase):
         self.assertTrue(
             np.isclose(lc.pressure_to_lammps(1.0, no_rot), 1.0*cnv)
         )
-        for input_pressure, output_pressure in (
-                ([1.0, 2.0, 3.0], [1.0*cnv, 2.0*cnv, 3.0*cnv, None, None, None]),
-                ([1.0, 2.0, 3.0, None, None, None], [1.0*cnv, 2.0*cnv, 3.0*cnv, None, None, None]),
-                ([None, None, None, None, None, 2.0], [None, None, None, None, None, 2.0*cnv]),
-                ([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], [1.0*cnv, 2.0*cnv, 3.0*cnv, 4.0*cnv, 5.0*cnv, 6.0*cnv]),
-        ):
+        for input_pressure in ([1.0, 2.0, 3.0],
+                               [1.0, 2.0, 3.0, None, None, None],
+                               [None, None, None, None, None, 2.0],
+                               [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+                               np.random.uniform(-1, 1, 6),
+                               np.random.uniform(-1, 1, 6)):
+            output_pressure = [p * cnv if p is not None else None
+                               for p in input_pressure]
             out = lc.pressure_to_lammps(input_pressure, no_rot)
             for out_i, ref_i in zip(out, output_pressure):
                 self.assertTrue(
@@ -70,7 +73,63 @@ class TestLammps(unittest.TestCase):
                     or
                     np.isclose(out_i, ref_i)
                 )
-        # TODO: tests with rotation.
+        # Check if invalid input raises exceptions.
+        with self.assertRaises(ValueError):
+            lc.pressure_to_lammps("foo", no_rot)
+        with self.assertRaises(ValueError):
+            lc.pressure_to_lammps([], no_rot)
+        with self.assertRaises(ValueError):
+            lc.pressure_to_lammps([1,2,3,4,5,6,7], no_rot)
+        with self.assertRaises(ValueError):
+            lc.pressure_to_lammps([None, None, None, None, None, None], no_rot)
+        with self.assertRaises(ValueError):
+            lc.pressure_to_lammps(["foo", "bar"], no_rot)
+        # With rotation.
+        rot = Rotation.random().as_matrix()
+        self.assertTrue(
+            np.isclose(lc.pressure_to_lammps(0.0, rot), 0.0)
+        )
+        self.assertTrue(
+            np.isclose(lc.pressure_to_lammps(1.0, rot), 1.0*cnv)
+        )
+        tmp = lc.pressure_to_lammps([1.0, 1.0, 1.0], rot)
+        self.assertTrue(
+            np.all(np.isclose(tmp[:3], [1.0*cnv, 1.0*cnv, 1.0*cnv]))
+            and tmp[3] == tmp[4] == tmp[5] == None
+        )
+        tmp = lc.pressure_to_lammps([1.0, 1.0, 1.0, None, None, None], rot)
+        self.assertTrue(
+            np.all(np.isclose(tmp[:3], [1.0*cnv, 1.0*cnv, 1.0*cnv]))
+            and tmp[3] == tmp[4] == tmp[5] == None
+        )
+        del tmp
+        for input_pressure in ([1.0, 1.0, 1.0, 0.0, 0.0, 0.0],
+                               [1.0, 2.0, 3.0, 0.0, 0.0, 0.0],
+                               [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+                               [1.0, -2.0, 3.0, -4.0, -5.0, 6.0],
+                               np.random.uniform(-1, 1, 6),
+                               np.random.uniform(-1, 1, 6)):
+            output_pressure = np.array([[input_pressure[0], input_pressure[3], input_pressure[4]],
+                                        [input_pressure[3], input_pressure[1], input_pressure[5]],
+                                        [input_pressure[4], input_pressure[5], input_pressure[2]]])
+            output_pressure = rot.T @ output_pressure @ rot
+            output_pressure = output_pressure[[0, 1, 2, 0, 0, 1], [0, 1, 2, 1, 2, 2]] * cnv
+            out = lc.pressure_to_lammps(input_pressure, rot)
+            self.assertTrue(np.all(np.isclose(out, output_pressure)))
+        # Check if invalid input raises exceptions.
+        with self.assertRaises(ValueError):
+            lc.pressure_to_lammps([1.0], rot)
+        with self.assertRaises(ValueError):
+            lc.pressure_to_lammps([1.0, None, None], rot)
+        with self.assertRaises(ValueError):
+            lc.pressure_to_lammps([1.0, None, None, None, None, None], rot)
+        with self.assertRaises(ValueError):
+            lc.pressure_to_lammps([1.0, 2.0, 3.0, None, None, None], rot)
+        with self.assertRaises(ValueError):
+            lc.pressure_to_lammps([None, 1.0, 1.0, 0.0, 0.0, 0.0], rot)
+        with self.assertRaises(ValueError):
+            lc.pressure_to_lammps([None, 1.0, 1.0, 1.0, 2.0, 3.0], rot)
+
 
 if __name__ == "__main__":
     unittest.main()

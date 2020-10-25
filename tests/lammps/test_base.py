@@ -534,6 +534,12 @@ class TestLammps(unittest.TestCase):
         self.minimize_control_job.calc_minimize(pressure=0)
         self.assertEqual(
             self.minimize_control_job.input.control['fix___ensemble'],
+            "all box/relax iso 0.0"
+        )
+
+        self.minimize_control_job.calc_minimize(pressure=[0.0, 0.0, 0.0])
+        self.assertEqual(
+            self.minimize_control_job.input.control['fix___ensemble'],
             "all box/relax x 0.0 y 0.0 z 0.0 couple none"
         )
 
