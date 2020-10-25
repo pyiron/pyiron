@@ -315,7 +315,6 @@ class LammpsControl(GenericParameters):
             raise NotImplementedError
         energy_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["energy"]
         force_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["force"]
-        pressure_units = LAMMPS_UNIT_CONVERSIONS[self["units"]]["pressure"]
 
         ionic_energy_tolerance *= energy_units
         ionic_force_tolerance *= force_units
@@ -328,7 +327,7 @@ class LammpsControl(GenericParameters):
                 str_press = ""
                 for press, str_axis in zip(pressure, [" x ", " y ", " z ", " xy ", " xz ", " yz "]):
                     if press is not None:
-                        str_press += str_axis + str(press*pressure_units )
+                        str_press += str_axis + str(press)
                 if len(str_press) > 1:
                     str_press += " couple none"
             self.set(fix___ensemble=r"all box/relax" + str_press)

@@ -6,10 +6,12 @@ import unittest
 import numpy as np
 import pandas as pd
 import os
+import re
 from pyiron_base import Project, ProjectHDFio
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.lammps.lammps import Lammps
 from pyiron.lammps.base import LammpsStructure, UnfoldingPrism
+from pyiron.lammps.control import LAMMPS_UNIT_CONVERSIONS
 import ase.units as units
 
 
@@ -45,6 +47,14 @@ class TestLammps(unittest.TestCase):
         cls.minimize_control_job = Lammps(
             project=ProjectHDFio(project=cls.project, file_name="lammps"),
             job_name="minimize_control_lammps",
+        )
+        cls.md_job = Lammps(
+            project=ProjectHDFio(project=cls.project, file_name="lammps"),
+            job_name="md_lammps",
+        )
+        cls.md_control_job = Lammps(
+            project=ProjectHDFio(project=cls.project, file_name="lammps"),
+            job_name="md_control_lammps",
         )
         cls.job_read_restart = Lammps(
             project=ProjectHDFio(project=cls.project, file_name="lammps"),
@@ -543,11 +553,71 @@ class TestLammps(unittest.TestCase):
             "all box/relax x 0.0 y 0.0 z 0.0 couple none"
         )
 
-        self.minimize_control_job.calc_minimize(pressure=[1, 2, None, 0., 0., None])
+        cnv = LAMMPS_UNIT_CONVERSIONS[self.minimize_control_job.input.control["units"]]["pressure"]
+
+        self.minimize_control_job.calc_minimize(pressure=-2.0)
+        m = re.match(r"all +box/relax +iso +([-\d.]+)$",
+                     self.minimize_control_job.input.control['fix___ensemble'].strip())
+        self.assertTrue(m)
+        self.assertTrue(np.isclose(float(m.group(1)), -2.0 * cnv))
+
+        self.minimize_control_job.calc_minimize(pressure=[1, 2, None, 3., 0., None])
+        m = re.match(r"all +box/relax +x +([\d.]+) +y ([\d.]+) +xy +([\d.]+) +xz +([\d.]+) +couple +none$",
+                     self.minimize_control_job.input.control['fix___ensemble'].strip())
+        self.assertTrue(m)
+        self.assertTrue(np.isclose(float(m.group(1)), 1.0 * cnv))
+        self.assertTrue(np.isclose(float(m.group(2)), 2.0 * cnv))
+        self.assertTrue(np.isclose(float(m.group(3)), 3.0 * cnv))
+        self.assertTrue(np.isclose(float(m.group(4)), 0.0 * cnv))
+
+    def test_calc_md_input(self):
+        # Ensure that defaults match control defaults
+        atoms = Atoms("Fe8", positions=np.zeros((8, 3)), cell=np.eye(3))
+        self.md_control_job.structure = atoms
+        self.md_control_job.input.control.calc_md()
+
+        self.md_job.sturcture = atoms
+        self.md_job._prism = UnfoldingPrism(atoms.cell)
+        self.md_job.calc_md()
+        for k in self.job.input.control.keys():
+            self.assertEqual(self.md_job.input.control[k], self.md_control_job.input.control[k])
+
+        # Ensure that pressure inputs are being parsed OK
+        self.md_control_job.calc_md(temperature=300.0, pressure=0)
         self.assertEqual(
-            self.minimize_control_job.input.control['fix___ensemble'],
-            "all box/relax x 10000.0 y 20000.0 xy 0.0 xz 0.0 couple none"
+            self.md_control_job.input.control['fix___ensemble'],
+            "all npt temp 300.0 300.0 0.1 iso 0.0 0.0 1.0"
         )
+
+        self.md_control_job.calc_md(temperature=300.0, pressure=[0.0, 0.0, 0.0])
+        self.assertEqual(
+            self.md_control_job.input.control['fix___ensemble'],
+            "all npt temp 300.0 300.0 0.1 x 0.0 0.0 1.0 y 0.0 0.0 1.0 z 0.0 0.0 1.0"
+        )
+
+        cnv = LAMMPS_UNIT_CONVERSIONS[self.md_control_job.input.control["units"]]["pressure"]
+
+        self.md_control_job.calc_md(temperature=300.0, pressure=-2.0)
+        m = re.match(r"all +npt +temp +300.0 +300.0 +0.1 +iso +([-\d.]+) +([-\d.]+) 1.0$",
+                     self.md_control_job.input.control['fix___ensemble'].strip())
+        self.assertTrue(m)
+        self.assertTrue(np.isclose(float(m.group(1)), -2.0 * cnv))
+        self.assertTrue(np.isclose(float(m.group(2)), -2.0 * cnv))
+
+        self.md_control_job.calc_md(temperature=300.0, pressure=[1, 2, None, 3., 0., None])
+        m = re.match(r"all +npt +temp +300.0 +300.0 +0.1 +"
+                     r"x +([\d.]+) +([\d.]+) +1.0 +y +([\d.]+) +([\d.]+) +1.0 +"
+                     r"xy +([\d.]+) +([\d.]+) +1.0 +xz +([\d.]+) +([\d.]+) +1.0$",
+                     self.md_control_job.input.control['fix___ensemble'].strip())
+        self.assertTrue(m)
+        self.assertTrue(np.isclose(float(m.group(1)), 1.0 * cnv))
+        self.assertTrue(np.isclose(float(m.group(2)), 1.0 * cnv))
+        self.assertTrue(np.isclose(float(m.group(3)), 2.0 * cnv))
+        self.assertTrue(np.isclose(float(m.group(4)), 2.0 * cnv))
+        self.assertTrue(np.isclose(float(m.group(5)), 3.0 * cnv))
+        self.assertTrue(np.isclose(float(m.group(6)), 3.0 * cnv))
+        self.assertTrue(np.isclose(float(m.group(7)), 0.0 * cnv))
+        self.assertTrue(np.isclose(float(m.group(8)), 0.0 * cnv))
 
     def test_read_restart_file(self):
         self.job_read_restart.read_restart_file()
