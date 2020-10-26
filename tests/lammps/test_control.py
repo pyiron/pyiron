@@ -137,20 +137,20 @@ class TestLammps(unittest.TestCase):
             self.lc.pressure_to_lammps([None, 1.0, 1.0, 1.0, 2.0, 3.0], rot)
 
     def test_is_isotropic_hydrostatic(self):
-        for pressure in (
+        for isotropic_pressure in (
                 [0, 0, 0, None, None, None],
                 [1., 1., 1., None, None, None],
                 [0, 0, 0, 0, 0, 0],
                 [1., 1., 1., 0., 0., 0.]
 
         ):
-            self.assertTrue(self.lc._is_isotropic_hydrostatic(pressure))
-        for pressure in (
+            self.assertTrue(self.lc._is_isotropic_hydrostatic(isotropic_pressure))
+        for nonisotropic_pressure in (
                 [0, 0, 0, 1, 1, 1],
                 [None, 0, 0, None, None, None],
                 [0, 0, 0, 0, 0, None]
         ):
-            self.assertFalse(self.lc._is_isotropic_hydrostatic(pressure))
+            self.assertFalse(self.lc._is_isotropic_hydrostatic(nonisotropic_pressure))
 
 
 if __name__ == "__main__":
