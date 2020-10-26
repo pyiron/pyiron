@@ -1118,24 +1118,77 @@ class Atoms(ASEAtoms):
         v_repeated = v_repeated[check_dist]
         return v_repeated, indices
 
+    def get_number_of_neighbors_in_sphere(
+            self,
+            cutoff_radius=10,
+            num_neighbors=None,
+            tolerance=2,
+            id_list=None,
+            boundary_width_factor=1.2,
+    ):
+        """
+        Function to compute the number of neighbors in a sphere around each atom.
+        Args:
+            cutoff_radius (float): Upper bound of the distance to which the search must be done
+            num_neighbors (int): maximum number of neighbors found
+            tolerance (int): tolerance (round decimal points) used for computing neighbor shells
+            id_list (list): list of atoms the neighbors are to be looked for
+            boundary_width_factor (float): width of the layer to be added to account for pbc.
+
+        Returns:
+            maximum number of neigbors found in the sphere of radius cutoff_radius (<= num_neighbors if specified)
+        """
+        if num_neighbors is not None:
+            neigh = self._get_neighbors(
+                num_neighbors=num_neighbors,
+                t_vec=False,
+                tolerance=tolerance,
+                id_list=id_list,
+                cutoff_radius=cutoff_radius,
+                boundary_width_factor=boundary_width_factor,
+            )
+            num_neighbors = max(len(elem) for elem in neigh.indices)
+        else:
+            num_neighbors = int(0.5*cutoff_radius**3)
+            num_neighbors_old = 1
+            while num_neighbors_old < num_neighbors:
+                print ("old, start", num_neighbors_old,  num_neighbors)
+                neigh = self._get_neighbors(
+                    num_neighbors=num_neighbors,
+                    t_vec=False,
+                    tolerance=tolerance,
+                    id_list=id_list,
+                    cutoff_radius=cutoff_radius,
+                    boundary_width_factor=boundary_width_factor,
+                )
+                neigh.indices = [indices[dist < np.inf] for indices, dist in zip(neigh.indices, neigh.distances)]
+                neigh.distances = [dist[dist < np.inf] for dist in neigh.distances]
+                num_neighbors_old = num_neighbors
+                num_neighbors = max(len(elem) for elem in neigh.indices)
+                print("new", num_neighbors)
+                if num_neighbors == num_neighbors_old:
+                    num_neighbors = 2 * num_neighbors
+        return num_neighbors
+
+
     def get_neighbors_by_distance(
         self,
-        num_neighbors=100,
+        cutoff_radius=5,
+        num_neighbors=None,
         t_vec=True,
         tolerance=2,
         id_list=None,
-        cutoff_radius=np.inf,
         boundary_width_factor=1.2,
     ):
         """
 
         Args:
-            num_neighbors (int): number of neighbors
+            cutoff_radius (float): Upper bound of the distance to which the search must be done
+            num_neighbors (int): maximum number of neighbors found
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list (list): list of atoms the neighbors are to be looked for
-            cutoff_radius (float): Upper bound of the distance to which the search must be done
             boundary_width_factor (float): width of the layer to be added to account for pbc.
 
         Returns:
@@ -1144,6 +1197,13 @@ class Atoms(ASEAtoms):
             and vectors
 
         """
+        if num_neighbors is None:
+            num_neighbors = self.get_number_of_neighbors_in_sphere(
+                cutoff_radius=cutoff_radius,
+                tolerance=tolerance,
+                id_list=id_list,
+                boundary_width_factor=boundary_width_factor,
+            )
         neigh = self._get_neighbors(
             num_neighbors=num_neighbors,
             t_vec=t_vec,
