@@ -46,7 +46,7 @@ setup(
         'phonopy>=2.4.2',
         'psutil>=5.7.0',
         'pyfileindex>=0.0.4',
-        'pyiron_base>=0.1.22',
+        'pyiron_base>=0.1.23',
         'pysqa>=0.0.11',
         'quickff>=2.2.4',
         'scipy>=1.4.1',
