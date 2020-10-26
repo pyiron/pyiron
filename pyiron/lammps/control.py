@@ -259,13 +259,10 @@ class LammpsControl(GenericParameters):
 
     @staticmethod
     def _is_isotropic_hydrostatic(pressure):
-        return (
-            None not in pressure[:3] and np.allclose(pressure[:3], pressure[0])
-            and (
-                all(p is None for p in pressure[3:])
-                or (None not in pressure[3:] and np.allclose(pressure[3:], 0.))
-            )
-        )
+        axial_all_alike = None not in pressure[:3] and np.allclose(pressure[:3], pressure[0])
+        shear_all_none = all(p is None for p in pressure[3:])
+        shear_all_zero = None not in pressure[3:] and np.allclose(pressure[3:], 0)
+        return axial_all_alike and (shear_all_none or shear_all_zero)
 
     def calc_minimize(
         self,
