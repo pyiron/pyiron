@@ -21,7 +21,7 @@ dependencies:
   - psutil =5.7.0
   - pyfileindex =0.0.4
   - pymatgen =2020.9.14
-  - pyiron_base =0.1.22
+  - pyiron_base =0.1.23
   - pyscal =2.7.5
   - pysqa =0.0.11
   - pytables =3.6.1
