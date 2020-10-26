@@ -9,15 +9,17 @@ from pyiron.lammps.control import LammpsControl, LAMMPS_UNIT_CONVERSIONS
 
 
 class TestLammps(unittest.TestCase):
+    def setUp(self):
+        self.lc = LammpsControl()
+
     def test_generate_seed_from_job(self):
-        lc = LammpsControl()
         job_hash_dict = {
-            "job_0_0": lc.generate_seed_from_job(job_name="job_0", seed=0),
-            "job_0_1": lc.generate_seed_from_job(job_name="job_0", seed=1),
-            "job_0_2": lc.generate_seed_from_job(job_name="job_0", seed=2),
-            "job_1_0": lc.generate_seed_from_job(job_name="job_1", seed=0),
-            "job_1_1": lc.generate_seed_from_job(job_name="job_1", seed=1),
-            "job_1_2": lc.generate_seed_from_job(job_name="job_1", seed=2),
+            "job_0_0": self.lc.generate_seed_from_job(job_name="job_0", seed=0),
+            "job_0_1": self.lc.generate_seed_from_job(job_name="job_0", seed=1),
+            "job_0_2": self.lc.generate_seed_from_job(job_name="job_0", seed=2),
+            "job_1_0": self.lc.generate_seed_from_job(job_name="job_1", seed=0),
+            "job_1_1": self.lc.generate_seed_from_job(job_name="job_1", seed=1),
+            "job_1_2": self.lc.generate_seed_from_job(job_name="job_1", seed=2),
         }
         self.assertEqual(job_hash_dict["job_0_0"], 94639)
         self.assertEqual(job_hash_dict["job_0_1"], 84051)
@@ -27,36 +29,40 @@ class TestLammps(unittest.TestCase):
         self.assertEqual(job_hash_dict["job_1_2"], 45752)
 
     def test_mean(self):
-        lc = LammpsControl()
-        lc.measure_mean_value('energy_pot')
-        self.assertEqual(lc['fix___mean_energy_pot'], 'all ave/time 1 ${mean_repeat_times} ${thermotime} v_energy_pot')
-        lc.measure_mean_value('pressures')
-        self.assertEqual(lc['variable___pressure_1'], 'equal pyy')
-        lc.measure_mean_value('energy_tot', 2)
-        self.assertEqual(lc['fix___mean_energy_tot'], 'all ave/time 2 ${mean_repeat_times} ${thermotime} v_energy_tot')
-        lc.measure_mean_value('volume')
-        lc.measure_mean_value('temperature')
-        lc.measure_mean_value('positions')
-        self.assertEqual(lc['compute___unwrap'], 'all property/atom xu yu zu')
-        lc.measure_mean_value('forces')
-        self.assertEqual(lc['variable___forces_0'], 'atom fx')
-        lc.measure_mean_value('velocities')
-        self.assertEqual(lc['variable___velocities_0'], 'atom vx')
+        self.lc.measure_mean_value('energy_pot')
+        self.assertEqual(
+            self.lc['fix___mean_energy_pot'],
+            'all ave/time 1 ${mean_repeat_times} ${thermotime} v_energy_pot'
+        )
+        self.lc.measure_mean_value('pressures')
+        self.assertEqual(self.lc['variable___pressure_1'], 'equal pyy')
+        self.lc.measure_mean_value('energy_tot', 2)
+        self.assertEqual(
+            self.lc['fix___mean_energy_tot'],
+            'all ave/time 2 ${mean_repeat_times} ${thermotime} v_energy_tot'
+        )
+        self.lc.measure_mean_value('volume')
+        self.lc.measure_mean_value('temperature')
+        self.lc.measure_mean_value('positions')
+        self.assertEqual(self.lc['compute___unwrap'], 'all property/atom xu yu zu')
+        self.lc.measure_mean_value('forces')
+        self.assertEqual(self.lc['variable___forces_0'], 'atom fx')
+        self.lc.measure_mean_value('velocities')
+        self.assertEqual(self.lc['variable___velocities_0'], 'atom vx')
         with self.assertWarns(Warning):
-            lc.measure_mean_value('pe**2', name='pepe')
+            self.lc.measure_mean_value('pe**2', name='pepe')
         with self.assertRaises(NotImplementedError):
-            lc.measure_mean_value('something')
+            self.lc.measure_mean_value('something')
 
     def test_pressure_to_lammps(self):
-        lc = LammpsControl()
         # Correct normalization without rotation. Note that we convert from GPa to bar for LAMMPS.
         no_rot = np.identity(3)
-        cnv = LAMMPS_UNIT_CONVERSIONS[lc["units"]]["pressure"]
+        cnv = LAMMPS_UNIT_CONVERSIONS[self.lc["units"]]["pressure"]
         self.assertTrue(
-            np.isclose(lc.pressure_to_lammps(0.0, no_rot), 0.0)
+            np.isclose(self.lc.pressure_to_lammps(0.0, no_rot), 0.0)
         )
         self.assertTrue(
-            np.isclose(lc.pressure_to_lammps(1.0, no_rot), 1.0*cnv)
+            np.isclose(self.lc.pressure_to_lammps(1.0, no_rot), 1.0*cnv)
         )
         for input_pressure in ([1.0, 2.0, 3.0],
                                [1.0, 2.0, 3.0, None, None, None],
@@ -66,7 +72,7 @@ class TestLammps(unittest.TestCase):
                                np.random.uniform(-1, 1, 6)):
             output_pressure = [p * cnv if p is not None else None
                                for p in input_pressure]
-            out = lc.pressure_to_lammps(input_pressure, no_rot)
+            out = self.lc.pressure_to_lammps(input_pressure, no_rot)
             for out_i, ref_i in zip(out, output_pressure):
                 self.assertTrue(
                     (out_i is None and ref_i is None)
@@ -75,29 +81,29 @@ class TestLammps(unittest.TestCase):
                 )
         # Check if invalid input raises exceptions.
         with self.assertRaises(ValueError):
-            lc.pressure_to_lammps("foo", no_rot)
+            self.lc.pressure_to_lammps("foo", no_rot)
         with self.assertRaises(ValueError):
-            lc.pressure_to_lammps([], no_rot)
+            self.lc.pressure_to_lammps([], no_rot)
         with self.assertRaises(ValueError):
-            lc.pressure_to_lammps([1,2,3,4,5,6,7], no_rot)
+            self.lc.pressure_to_lammps([1,2,3,4,5,6,7], no_rot)
         with self.assertRaises(ValueError):
-            lc.pressure_to_lammps([None, None, None, None, None, None], no_rot)
+            self.lc.pressure_to_lammps([None, None, None, None, None, None], no_rot)
         with self.assertRaises(ValueError):
-            lc.pressure_to_lammps(["foo", "bar"], no_rot)
+            self.lc.pressure_to_lammps(["foo", "bar"], no_rot)
         # With rotation.
         rot = Rotation.random().as_matrix()
         self.assertTrue(
-            np.isclose(lc.pressure_to_lammps(0.0, rot), 0.0)
+            np.isclose(self.lc.pressure_to_lammps(0.0, rot), 0.0)
         )
         self.assertTrue(
-            np.isclose(lc.pressure_to_lammps(1.0, rot), 1.0*cnv)
+            np.isclose(self.lc.pressure_to_lammps(1.0, rot), 1.0*cnv)
         )
-        tmp = lc.pressure_to_lammps([1.0, 1.0, 1.0], rot)
+        tmp = self.lc.pressure_to_lammps([1.0, 1.0, 1.0], rot)
         self.assertTrue(
             np.all(np.isclose(tmp[:3], [1.0*cnv, 1.0*cnv, 1.0*cnv]))
             and tmp[3] == tmp[4] == tmp[5] == None
         )
-        tmp = lc.pressure_to_lammps([1.0, 1.0, 1.0, None, None, None], rot)
+        tmp = self.lc.pressure_to_lammps([1.0, 1.0, 1.0, None, None, None], rot)
         self.assertTrue(
             np.all(np.isclose(tmp[:3], [1.0*cnv, 1.0*cnv, 1.0*cnv]))
             and tmp[3] == tmp[4] == tmp[5] == None
@@ -114,21 +120,37 @@ class TestLammps(unittest.TestCase):
                                         [input_pressure[4], input_pressure[5], input_pressure[2]]])
             output_pressure = rot.T @ output_pressure @ rot
             output_pressure = output_pressure[[0, 1, 2, 0, 0, 1], [0, 1, 2, 1, 2, 2]] * cnv
-            out = lc.pressure_to_lammps(input_pressure, rot)
+            out = self.lc.pressure_to_lammps(input_pressure, rot)
             self.assertTrue(np.all(np.isclose(out, output_pressure)))
         # Check if invalid input raises exceptions.
         with self.assertRaises(ValueError):
-            lc.pressure_to_lammps([1.0], rot)
+            self.lc.pressure_to_lammps([1.0], rot)
         with self.assertRaises(ValueError):
-            lc.pressure_to_lammps([1.0, None, None], rot)
+            self.lc.pressure_to_lammps([1.0, None, None], rot)
         with self.assertRaises(ValueError):
-            lc.pressure_to_lammps([1.0, None, None, None, None, None], rot)
+            self.lc.pressure_to_lammps([1.0, None, None, None, None, None], rot)
         with self.assertRaises(ValueError):
-            lc.pressure_to_lammps([1.0, 2.0, 3.0, None, None, None], rot)
+            self.lc.pressure_to_lammps([1.0, 2.0, 3.0, None, None, None], rot)
         with self.assertRaises(ValueError):
-            lc.pressure_to_lammps([None, 1.0, 1.0, 0.0, 0.0, 0.0], rot)
+            self.lc.pressure_to_lammps([None, 1.0, 1.0, 0.0, 0.0, 0.0], rot)
         with self.assertRaises(ValueError):
-            lc.pressure_to_lammps([None, 1.0, 1.0, 1.0, 2.0, 3.0], rot)
+            self.lc.pressure_to_lammps([None, 1.0, 1.0, 1.0, 2.0, 3.0], rot)
+
+    def test_is_isotropic_hydrostatic(self):
+        for isotropic_pressure in (
+                [0, 0, 0, None, None, None],
+                [1., 1., 1., None, None, None],
+                [0, 0, 0, 0, 0, 0],
+                [1., 1., 1., 0., 0., 0.]
+
+        ):
+            self.assertTrue(self.lc._is_isotropic_hydrostatic(isotropic_pressure))
+        for nonisotropic_pressure in (
+                [0, 0, 0, 1, 1, 1],
+                [None, 0, 0, None, None, None],
+                [0, 0, 0, 0, 0, None]
+        ):
+            self.assertFalse(self.lc._is_isotropic_hydrostatic(nonisotropic_pressure))
 
 
 if __name__ == "__main__":

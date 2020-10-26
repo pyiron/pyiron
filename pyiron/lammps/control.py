@@ -235,20 +235,7 @@ class LammpsControl(GenericParameters):
 
         # If necessary, rotate the pressure tensor to the Lammps coordinate frame.
         # Isotropic, hydrostatic pressures are rotation invariant.
-        is_isotropic_hydrostatic = (
-            # All diagonal components must be equal and not None.
-            pressure[0] is not None and pressure[1] is not None and pressure[2] is not None
-            and np.isclose(pressure[0], pressure[1]) and np.isclose(pressure[1], pressure[2])
-            # Either all shear components must be None, or all shear components must be zero.
-            and (
-                (pressure[3] is None and pressure[4] is None and pressure[5] is None)
-                or
-                (pressure[3] is not None and np.isclose(pressure[3], 0.0) and
-                 pressure[4] is not None and np.isclose(pressure[4], 0.0) and
-                 pressure[5] is not None and np.isclose(pressure[5], 0.0))
-            )
-        )
-        if not np.isclose(np.matrix.trace(rotation_matrix), 3) and not is_isotropic_hydrostatic:
+        if not np.isclose(np.matrix.trace(rotation_matrix), 3) and not self._is_isotropic_hydrostatic(pressure):
             if any(p is None for p in pressure):
                 raise ValueError("Cells which are not orthorhombic or an upper-triangular cell are incompatible with Lammps "
                                  "constant pressure calculations unless the entire pressure tensor is defined. "
@@ -269,6 +256,13 @@ class LammpsControl(GenericParameters):
                  if p is not None
                  else p)
                 for p in pressure]
+
+    @staticmethod
+    def _is_isotropic_hydrostatic(pressure):
+        axial_all_alike = None not in pressure[:3] and np.allclose(pressure[:3], pressure[0])
+        shear_all_none = all(p is None for p in pressure[3:])
+        shear_all_zero = None not in pressure[3:] and np.allclose(pressure[3:], 0)
+        return axial_all_alike and (shear_all_none or shear_all_zero)
 
     def calc_minimize(
         self,
