@@ -17,6 +17,7 @@ from collections import defaultdict
 import spglib
 
 from pyiron.dft.job.generic import GenericDFTJob
+from pyiron.dft.waves.electronic import ElectronicStructure
 from pyiron.vasp.potential import VaspPotentialFile, \
     strip_xc_from_potential_name, \
     find_potential_file as find_potential_file_vasp, \
@@ -2031,9 +2032,7 @@ class Output(object):
                 else:
                     eps_up = eps_up[1:]
                     eps_down = eps_down[1:]
-                self._parse_dict["bands_eigen_values"] = np.array(
-                    list(zip(eps_up.tolist(), eps_down.tolist()))
-                )
+                self._parse_dict["bands_eigen_values"] = np.array(list(zip(eps_up.tolist(), eps_down.tolist())))
         return None
 
     def collect_energy_struct(self, file_name="energy-structOpt.dat",
@@ -2119,16 +2118,10 @@ class Output(object):
                 + "in cartesian coordinates\n",
                 "\n",
             )[2:-1]
-            self._parse_dict["bands_k_weights"] = np.array(
-                [float(kk.split()[6]) for kk in k_points]
-            )
-            k_points = (
-                np.array(
-                    [[float(kk.split()[i]) for i in range(2, 5)]
-                     for kk in k_points]
-                )
-                / BOHR_TO_ANGSTROM
-            )
+            self._parse_dict["bands_k_weights"] = np.array([float(kk.split()[6]) for kk in k_points])
+            k_points = np.array([[float(kk.split()[i]) for i in range(2, 5)] for kk in k_points])
+            rec_cell = np.linalg.inv(self._job.structure / BOHR_TO_ANGSTROM) * 2 * np.pi
+            self._parse_dict["kpoints_cartesian"] = np.einsum('ni,ij->nj', k_points, np.linalg.inv(rec_cell))
             counter = [
                 int(line.replace("F(", "").replace(")", " ").split()[0])
                 for line in log_main
@@ -2330,6 +2323,15 @@ class Output(object):
                 normalize=False
             )
 
+    def _get_electronic_structure_object(self):
+        es = ElectronicStructure()
+        es.eigenvalue_matrix = self._parse_dict["bands_eigen_values"][-1]
+        es.occupancy_matrix = self._parse_dict["bands_occ"][-1]
+        es.efermi = self._parse_dict["bands_e_fermi"][-1]
+        es.n_spins = len(es.occupancy_matrix)
+        es.kpoint_list = self._parse_dict["kpoints_cartesian"]
+        es.kpoint_weights = self._parse_dict["bands_k_weights"]
+
     def collect(self, directory=os.getcwd()):
         """
         The collect function, collects all the output from a Sphinx simulation.
@@ -2350,6 +2352,7 @@ class Output(object):
         self.collect_charge_density(file_name="rho.sxb",
                                     cwd=directory)
         self._job.compress()
+
 
     def to_hdf(self, hdf, force_update=False):
         """
@@ -2391,6 +2394,9 @@ class Output(object):
                 self.charge_density.to_hdf(
                     hdf5_output, group_name="charge_density"
                 )
+            es = self._get_electronic_structure_object()
+            if len(es.kpoint_list) > 0:
+                es.to_hdf(hdf5_output)
             with hdf5_output.open("generic") as hdf5_generic:
                 if "dft" not in hdf5_generic.list_groups():
                     hdf5_generic.create_group("dft")
