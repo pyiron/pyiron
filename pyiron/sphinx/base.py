@@ -2325,8 +2325,14 @@ class Output(object):
 
     def _get_electronic_structure_object(self):
         es = ElectronicStructure()
-        es.eigenvalue_matrix = self._parse_dict["bands_eigen_values"][-1]
-        es.occupancy_matrix = self._parse_dict["bands_occ"][-1]
+        eig_mat = self._parse_dict["bands_eigen_values"][-1]
+        occ_mat = self._parse_dict["bands_occ"][-1]
+        if len(eig_mat.shape) == 3:
+            es.eigenvalue_matrix = eig_mat
+            es.occupancy_matrix = occ_mat
+        else:
+            es.eigenvalue_matrix = np.array([eig_mat])
+            es.occupancy_matrix = np.array([occ_mat])
         es.efermi = self._parse_dict["bands_e_fermi"][-1]
         es.n_spins = len(es.occupancy_matrix)
         es.kpoint_list = self._parse_dict["kpoints_cartesian"]
