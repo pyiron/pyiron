@@ -2120,7 +2120,7 @@ class Output(object):
             )[2:-1]
             self._parse_dict["bands_k_weights"] = np.array([float(kk.split()[6]) for kk in k_points])
             k_points = np.array([[float(kk.split()[i]) for i in range(2, 5)] for kk in k_points])
-            rec_cell = np.linalg.inv(self._job.structure.cell / BOHR_TO_ANGSTROM) * 2 * np.pi
+            rec_cell = np.linalg.inv(self._job.structure.cell.T / BOHR_TO_ANGSTROM) * 2 * np.pi
             self._parse_dict["kpoints_cartesian"] = np.einsum('ni,ij->nj', k_points, np.linalg.inv(rec_cell))
             counter = [
                 int(line.replace("F(", "").replace(")", " ").split()[0])
