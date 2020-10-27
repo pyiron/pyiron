@@ -665,10 +665,10 @@ class ElectronicStructure(object):
             import matplotlib.pylab as plt
         except ModuleNotFoundError:
             import matplotlib.pyplot as plt
-        arg = np.argsort(self.eigenvalues)
-        plt.plot(
-            self.eigenvalues[arg], self.occupancies[arg], linewidth=2.0, color="blue"
-        )
+        for spin, eigenvalues in self.eigenvalues:
+            arg = np.argsort(eigenvalues)
+            plt.plot(eigenvalues[arg], self.occupancies[spin][arg], linewidth=2.0, label="spin:{}".format(spin))
+        plt.legend()
         plt.axvline(self.efermi, linewidth=2.0, linestyle="dashed", color="black")
         plt.xlabel("Energies (eV)")
         plt.ylabel("Occupancy")
