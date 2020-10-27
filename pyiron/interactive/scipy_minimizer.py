@@ -138,12 +138,12 @@ class ScipyMinimizer(InteractiveWrapper):
             if max_force > self.input.ionic_force_tolerance:
                 return False
         elif self.input.volume_only:
-            if np.absolute(self.ref_job.output.pressures[-1]-self.input.pressure).max() > self.input.ionic_force_tolerance:
+            if np.absolute(self.ref_job.output.pressures[-1]-self.input.pressure).max() > self.input.pressure_tolerance:
                 return False
         else:
             if max_force > self.input.ionic_force_tolerance:
                 return False
-            if np.absolute(self.ref_job.output.pressures[-1]-self.input.pressure).max() > self.input.ionic_force_tolerance:
+            if np.absolute(self.ref_job.output.pressures[-1]-self.input.pressure).max() > self.input.pressure_tolerance:
                 return False
         return True
 
@@ -181,6 +181,7 @@ class ScipyMinimizer(InteractiveWrapper):
         algorithm='CG',
         ionic_energy_tolerance=0,
         ionic_force_tolerance=1.0e-2,
+        pressure_tolerance=1.0e-3,
         volume_only=False,
     ):
         """
@@ -207,6 +208,7 @@ class ScipyMinimizer(InteractiveWrapper):
         self.input.volume_only = volume_only
         self.input.ionic_force_tolerance = ionic_force_tolerance
         self.input.ionic_energy_tolerance = ionic_energy_tolerance
+        self.input.pressure_tolerance = pressure_tolerance
 
 
 class Input(InputList):
@@ -224,6 +226,7 @@ class Input(InputList):
         self.pressure = None
         self.volume_only = False
         self.ionic_energy_tolerance = 0
+        self.pressure_tolerance = 1.0e-3
 
 
 class ScipyMinimizerOutput(GenericInteractiveOutput):
