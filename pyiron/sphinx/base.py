@@ -2394,9 +2394,10 @@ class Output(object):
                 self.charge_density.to_hdf(
                     hdf5_output, group_name="charge_density"
                 )
-            es = self._get_electronic_structure_object()
-            if len(es.kpoint_list) > 0:
-                es.to_hdf(hdf5_output)
+            if "bands_eigen_values" in self._parse_dict.keys():
+                es = self._get_electronic_structure_object()
+                if len(es.kpoint_list) > 0:
+                    es.to_hdf(hdf5_output)
             with hdf5_output.open("generic") as hdf5_generic:
                 if "dft" not in hdf5_generic.list_groups():
                     hdf5_generic.create_group("dft")
