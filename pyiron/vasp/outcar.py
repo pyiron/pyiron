@@ -812,7 +812,11 @@ class Outcar(object):
                 args = np.argsort(band_energy)
                 band_occ = band_occ[args]
                 band_energy = band_energy[args]
-                cbm_level_list.append(band_energy[np.abs(band_occ) < 1e-6][0])
+                cbm_bool = np.abs(band_occ) < 1e-6
+                if any(cbm_bool):
+                    cbm_level_list.append(band_energy[np.abs(band_occ) < 1e-6][0])
+                else:
+                    cbm_level_list.append(band_energy[-1])
                 vbm_level_list.append(band_energy[np.abs(band_occ) >= 1e-6][-1])
         return np.array(fermi_level_list), np.array(vbm_level_list), np.array(cbm_level_list)
 
