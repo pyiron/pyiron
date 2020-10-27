@@ -2331,6 +2331,7 @@ class Output(object):
         es.n_spins = len(es.occupancy_matrix)
         es.kpoint_list = self._parse_dict["kpoints_cartesian"]
         es.kpoint_weights = self._parse_dict["bands_k_weights"]
+        es.generate_from_matrices()
         return es
 
     def collect(self, directory=os.getcwd()):
