@@ -192,7 +192,6 @@ class Atoms(ASEAtoms):
             self.dimension = len(self.positions[0])
         else:
             self.dimension = 0
-        self.visualize = Visualize(self)
 
     @property
     def species(self):
@@ -1020,6 +1019,10 @@ class Atoms(ASEAtoms):
         )
         return analyse_phonopy_equivalent_atoms(atoms)
 
+    @property
+    def _visualize(self):
+        return Visualize(self)
+
     def plot3d(
         self,
         mode='NGLview',
@@ -1043,7 +1046,7 @@ class Atoms(ASEAtoms):
         distance_from_camera=1.0,
         opacity=1.0
     ):
-        return self.visualize.plot3d(
+        return self._visualize.plot3d(
             mode=mode,
             show_cell=show_cell,
             show_axes=show_axes,
@@ -1998,7 +2001,6 @@ class Atoms(ASEAtoms):
         for key, val in self.__dict__.items():
             if key not in ase_keys:
                 atoms_new.__dict__[key] = copy(val)
-        atoms_new.visualize = Visualize(atoms_new)
         return atoms_new
 
     def __delitem__(self, key):
@@ -2480,7 +2482,6 @@ class Atoms(ASEAtoms):
             dummy_basis = copy(self)
             dummy_basis.rotate(a=a, v=v, center=center, rotate_cell=rotate_cell)
             self.positions[index_list] = dummy_basis.positions[index_list]
-
 
 class _CrystalStructure(Atoms):
     """

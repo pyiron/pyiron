@@ -6,6 +6,7 @@ import numpy as np
 import warnings
 from matplotlib.colors import rgb2hex
 from pyiron_base import Settings
+from pyiron_base.generic.util import Singleton
 from scipy.interpolate import interp1d
 
 __author__ = "Joerg Neugebauer, Sudarsan Surendralal"
@@ -21,7 +22,7 @@ __date__ = "Sep 1, 2017"
 
 s = Settings()
 
-class Visualize:
+class Visualize(Singleton):
     def __init__(self, atoms):
         self._ref_atoms = atoms
 
