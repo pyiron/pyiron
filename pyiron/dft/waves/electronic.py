@@ -665,7 +665,7 @@ class ElectronicStructure(object):
             import matplotlib.pylab as plt
         except ModuleNotFoundError:
             import matplotlib.pyplot as plt
-        for spin, eigenvalues in self.eigenvalues:
+        for spin, eigenvalues in enumerate(self.eigenvalues):
             arg = np.argsort(eigenvalues)
             plt.plot(eigenvalues[arg], self.occupancies[spin][arg], linewidth=2.0, label="spin:{}".format(spin))
         plt.legend()
