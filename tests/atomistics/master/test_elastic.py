@@ -37,7 +37,7 @@ class TestMurnaghan(unittest.TestCase):
         elast.input['min_num_measurements'] = 10
         elast.validate_ready_to_run()
         self.assertEqual(len(elast.input['rotations']), 48)
-        self.assertEqual(len(elast.input['strain_matrices']), 10)
+        self.assertEqual(len(elast.input['strain_matrices']), 20)
         elast.run()
         self.assertAlmostEqual(elast['output/bulk_modulus'], 100)
         with self.assertRaises(ValueError):

@@ -191,7 +191,7 @@ def get_strain(max_strain=0.05, n_set=10, polynomial_order=3, additional_points=
     if normalize:
         strain_lst = np.einsum('nij,n->nij', strain_lst, 1/np.linalg.norm(strain_lst.reshape(-1, 9), axis=-1))
     strain_lst *= max_strain
-    m = np.linspace(-1, 1, 2*polynomial_order+2*additional_points-1)
+    m = np.linspace(-1, 1, int(2*polynomial_order+2*additional_points-1))
     m = m[~np.isclose(m, 0)]
     strain_lst = np.einsum('k,nij->nkij', m, strain_lst).reshape(-1, 3, 3)
     return strain_lst
