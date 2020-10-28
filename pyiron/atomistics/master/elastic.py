@@ -94,38 +94,49 @@ def _fit_coeffs_with_energies(strain, energy, volume, rotations, additional_poin
     coeff = 0.5*(coeff+coeff.T)
     return coeff, score
 
+def _get_linearly_dependent_indices(strain_lst):
+    """
+    This function returns an array of booleans, which shows linearly dependent strain matrices. Strain matrices
+    which have True along axis=0 are linearly dependent. Axis=1 should contain the total number of strain matrices.
+    """
+    s = np.array(strain_lst).reshape(-1, 9)
+    norm = np.linalg.norm(s, axis=-1)
+    indices = np.round(np.einsum('ni,n,n->ni', s, np.sign(np.sum(s, axis=-1)), 1/(norm+np.isclose(norm, 0))), 8)
+    indices = np.unique(indices, axis=0, return_inverse=True)[1]
+    indices = np.unique(indices[~np.isclose(norm, 0)])[:,np.newaxis]==indices[np.newaxis,:]
+    # 0-tensor gets a special treatment, since it's linearly dependent on all terms
+    indices[:,np.isclose(norm, 0)] = True
+    return indices
+
 def _get_higher_order_terms(strain_lst, derivative=False, additional_points=0, rotations=None):
     if rotations is None:
         rotations = np.eye(3).reshape(1, 3, 3)
     strain_lst = np.array(strain_lst)
-    s = np.array(strain_lst).reshape(-1, 9)
-    s = s[:, [0, 4, 8, 5, 2, 1]]
-    s[:,3:] *= 2
-    indices = np.round(np.einsum('ni,n,n->ni', s, np.sign(np.sum(s, axis=-1)), 1/np.linalg.norm(s, axis=-1)), 8)
-    indices = np.unique(indices, axis=0, return_inverse=True)[1]
-    counts = np.unique(indices, return_counts=True)[1]-2*additional_points
-    counts = np.floor(counts/2-0.25).astype(int)
+    indices = _get_linearly_dependent_indices(strain_lst)
+    # counts stands for the polynomial degree, starting from 1 meaning first anharmonic contribution
+    counts = np.sum(indices, axis=1)-2*additional_points
+    counts = np.floor(counts/2-0.75).astype(int)
     if sum(counts)==0:
         return None
-    strain_higher_terms = np.zeros((len(indices), np.sum(counts)))
+    strain_higher_terms = np.zeros((len(strain_lst), np.sum(counts)))
     if derivative:
-        indices = np.tile(indices, len(rotations))
-        strain_higher_terms = np.zeros((len(indices), np.sum(counts)*6))
+        indices = np.einsum('k,ni->nki', np.ones(len(rotations)), indices).reshape(indices.shape[0], -1)
         strain_lst = np.einsum('nik,mkl,njl->nmij', rotations, strain_lst, rotations).reshape(-1, 9)
         s_voigt = strain_lst[:, [0, 4, 8, 5, 2, 1]]
         s_voigt[:,3:] *= 2
+        strain_higher_terms = np.zeros((len(strain_lst), np.sum(counts)*6))
     na = np.newaxis
-    for ind in np.unique(indices):
-        E = strain_lst[indices==indices[ind]][0]
+    for cc, ind in zip(counts, indices):
+        E = strain_lst[ind][np.linalg.norm(strain_lst[ind].reshape(-1,9), axis=-1).argmax()]
         E /= np.linalg.norm(E)
-        E = np.sum((E*strain_lst[indices==indices[ind]]).reshape(-1, 9), axis=-1)
+        E = np.sum((E*strain_lst[ind]).reshape(-1, 9), axis=-1)
         if derivative:
-            E = E[:,na,na]**(np.arange(counts[ind])+2)[na,:,na]*s_voigt[indices==indices[ind],na,:]
+            E = E[:,na,na]**(np.arange(cc)+2)[na,:,na]*s_voigt[ind,na,:]
             E = E.reshape(E.shape[0], -1)
         else:
-            E = E[:,na]**(np.arange(counts[ind])+3)[na,:]
+            E = E[:,na]**(np.arange(cc)+3)[na,:]
         starting_index = np.sum(np.any(strain_higher_terms!=0, axis=0))
-        strain_higher_terms[indices==indices[ind], starting_index:starting_index+E.shape[1]] = E
+        strain_higher_terms[ind, starting_index:starting_index+E.shape[1]] = E
     if not derivative:
         strain_higher_terms = np.einsum('n,ij->nij', np.ones(len(rotations)), strain_higher_terms)
         strain_higher_terms = strain_higher_terms.reshape(-1, strain_higher_terms.shape[-1])
@@ -192,9 +203,8 @@ def get_strain(max_strain=0.05, n_set=10, polynomial_order=3, additional_points=
         strain_lst = np.einsum('nij,n->nij', strain_lst, 1/np.linalg.norm(strain_lst.reshape(-1, 9), axis=-1))
     strain_lst *= max_strain
     m = np.linspace(-1, 1, int(2*polynomial_order+2*additional_points-1))
-    m = m[~np.isclose(m, 0)]
-    strain_lst = np.einsum('k,nij->nkij', m, strain_lst).reshape(-1, 3, 3)
-    return strain_lst
+    strain_lst = np.einsum('k,nij->nkij', m, strain_lst).reshape(-1, 9)
+    return np.unique(strain_lst, axis=0).reshape(-1, 3, 3)
 
 class ElasticJobGenerator(JobGenerator):
     @property
