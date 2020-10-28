@@ -402,8 +402,13 @@ class ElectronicStructure(object):
     @property
     def is_metal(self):
         """
-        bool: Tells if the given system is metallic or not. The Fermi level crosses bands in the cas of metals but is
-              present in the band gap in the case of semi-conductors.
+        Tells if the given system is metallic or not in each spin channel (up and down respectively).
+        The Fermi level crosses bands in the cas of metals but is present in the band gap in the
+        case of semi-conductors.
+
+        Returns:
+
+            list: List of boolean values for each spin channel
         """
         if not (self._efermi is not None):
             raise ValueError(
