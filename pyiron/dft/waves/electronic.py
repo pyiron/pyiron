@@ -698,19 +698,25 @@ class ElectronicStructure(object):
         output_string = list()
         output_string.append("ElectronicStructure Instance")
         output_string.append("----------------------------")
-        if self.grand_dos_matrix is not None:
-            output_string.append(
-                "Spin Configurations: {}".format(len(self.grand_dos_matrix))
-            )
+        output_string.append("Number of spin channels: {}".format(len(self.eigenvalue_matrix)))
         output_string.append("Number of k-points: {}".format(len(self.kpoints)))
         output_string.append("Number of bands: {}".format(len(self.kpoints[0].bands[0])))
-
+        info_str = list()
         try:
-            if self.is_metal:
-                output_string.append("Is a metal: {}".format(self.is_metal))
+            for spin, is_metal in enumerate(self.is_metal):
+                if is_metal:
+                    output_string.append("spin {}:".format(spin) + " Is a metal: {}".format(is_metal))
+                else:
+                    output_string.append("spin {}:".format(spin) + " Is a metal: "
+                                                                   "{}".format(is_metal) + " Band gap (ev) "
+                                                                                           "{}".format(self.eg[spin]))
+            else:
+                output_string.append("Is a metal: " + ",".join(["spin {}:".format(i) + str(val)
+                                                                for i, val in enumerate(self.is_metal)]))
+
         except ValueError:
             pass
-        if not self.is_metal:
+        if not all(self.is_metal):
             output_string.append(
                 "Band Gap for : {} eV".format([val["band_gap"] for val in self.get_band_gap(resolution=1.0e-4)])
             )
