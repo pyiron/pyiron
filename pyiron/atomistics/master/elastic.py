@@ -84,7 +84,7 @@ def _fit_coeffs_with_energies(strain, energy, volume, rotations, additional_poin
     strain = np.triu(strain).reshape(-1, 36)
     strain = strain[:,np.sum(strain, axis=0)!=0]
     if higher_terms is not None:
-        higher_order_strain = np.einsum('n,ni->ni', volume, higher_order_strain)
+        higher_terms = np.einsum('n,ni->ni', volume, higher_terms)
         strain = np.concatenate((strain, higher_terms), axis=-1)
     reg = LinearRegression().fit(strain, energy)
     score = reg.score(strain, energy)
