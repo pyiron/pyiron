@@ -1,7 +1,7 @@
 channels:
   - conda-forge
 dependencies:
-  - ase =3.19
+  - ase =3.20
   - coveralls
   - coverage
   - codacy-coverage
