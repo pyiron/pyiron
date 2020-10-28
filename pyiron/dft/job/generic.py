@@ -317,7 +317,7 @@ class GenericDFTJob(AtomisticGenericJob):
         Returns:
                 pyiron.atomistics.waves.electronic.ElectronicStructure instance
         """
-        if not self.status in ["finished", "warning", "not_converged"]:
+        if self.status not in ["finished", "warning", "not_converged"]:
             return
         else:
             with self.project_hdf5.open("output") as ho:
