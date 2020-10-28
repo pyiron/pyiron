@@ -120,7 +120,7 @@ def _get_higher_order_terms(strain_lst, derivative=False, additional_points=0, r
         return None
     strain_higher_terms = np.zeros((len(strain_lst), np.sum(counts)))
     if derivative:
-        indices = np.einsum('k,ni->nki', np.ones(len(rotations)), indices).reshape(indices.shape[0], -1)
+        indices = np.isclose(np.einsum('k,ni->nki', np.ones(len(rotations)), indices).reshape(indices.shape[0], -1), 1)
         strain_lst = np.einsum('nik,mkl,njl->nmij', rotations, strain_lst, rotations).reshape(-1, 9)
         s_voigt = strain_lst[:, [0, 4, 8, 5, 2, 1]]
         s_voigt[:,3:] *= 2
@@ -305,6 +305,12 @@ class ElasticTensor(AtomisticParallelMaster):
             self._create_strain_matrices()
         if self.input['polynomial_order']<2:
             raise ValueError('Minimum polynomial order: 2')
+        if self.input['polynomial_order']==2 and self.input['additional_points']>0:
+            warnings.warn('Setting additional points for anharmonic calculations only increases the number of calculations')
+        if self.input['polynomial_order']==2 and self.input['normalize_magnitude']:
+            warnings.warn('Magnitude normalization could reduce accuracy in harmonic calculations')
+        if self.input['polynomial_order']>2 and not self.input['normalize_magnitude']:
+            warnings.warn('Not normalizing magnitude could destabilise fit procedure')
 
     def collect_output(self):
         if self.ref_job.server.run_mode.interactive:
