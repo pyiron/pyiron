@@ -2163,13 +2163,8 @@ class Output(object):
                 check_conv(line) for line in log_main
                 if check_conv(line) is not None
             ]
-            self._parse_dict["bands_e_fermi"] = np.array(
-                [
-                    float(line.split()[3])
-                    for line in log_main
-                    if line.startswith("| Fermi energy:")
-                ]
-            )
+            self._parse_dict["bands_e_fermi"] = np.array([float(line.split()[3])
+                                                          for line in log_main if line.startswith("| Fermi energy:")])
             line_vol = np.where(["Omega:" in line for line in log_file])[0][0]
             volume = float(log_file[line_vol].split()[2]) \
                 * BOHR_TO_ANGSTROM ** 3
@@ -2361,7 +2356,6 @@ class Output(object):
         self.collect_charge_density(file_name="rho.sxb",
                                     cwd=directory)
         self._job.compress()
-
 
     def to_hdf(self, hdf, force_update=False):
         """
