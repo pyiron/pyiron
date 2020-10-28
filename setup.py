@@ -41,7 +41,7 @@ setup(
         'numpy>=1.18.1',
         'pandas>=1.0.1',
         'phonopy>=2.4.2',
-        'pyiron_base>=0.1.23',
+        'pyiron_base>=0.1.24',
         'quickff>=2.2.4',
         'scipy>=1.4.1',
         'seekpath>=1.9.4',
