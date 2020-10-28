@@ -38,6 +38,7 @@ class AseJob(GenericInteractive):
 
     @staticmethod
     def _cellfromdict(celldict):
+        celldict.pop("pbc", None)
         if Cell is not None:
             return Cell(**celldict)
         else:
