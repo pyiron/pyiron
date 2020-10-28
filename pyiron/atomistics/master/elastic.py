@@ -56,9 +56,15 @@ def get_elastic_tensor_by_orientation(orientation, elastic_tensor):
                     elastic_tensor_to_return[i+(i!=j)*(6-2*i-j), k+(k!=l)*(6-2*k-l)] = C[i,j,k,l]
     return elastic_tensor_to_return
 
-def _fit_coeffs_with_stress(strain, stress, rotations):
-    stress = np.einsum('nik,mkl,njl->nmij', rotations, stress, rotations).reshape(-1, 3, 3)
-    stress = np.stack((stress[:,0,0], stress[:,1,1], stress[:,2,2], stress[:,1,2], stress[:,0,2], stress[:,0,1]), axis=-1)
+def _fit_coeffs_with_stress(strain, stress, rotations, addtional_points=0):
+    higher_terms = _get_higher_order_terms(strain, derivative=True, addtional_points=additional_points, rotations=rotations)
+    strain = np.einsum('nik,mkl,njl->nmij', rotations, strain, rotations).reshape(-1, 9)
+    strain = strain[:, [0, 4, 8, 5, 2, 1]]
+    strain[:,3:] *= 2
+    if higher_terms is not None:
+        strain = np.concatenate((strain, higher_order_strain), axis=-1)
+    stress = np.einsum('nik,mkl,njl->nmij', rotations, stress, rotations).reshape(-1, 9)
+    stress = stress[:, [0, 4, 8, 5, 2, 1]]
     score = []
     coeff = []
     for ii in range(6):
@@ -67,22 +73,28 @@ def _fit_coeffs_with_stress(strain, stress, rotations):
         score.append(reg.score(strain, stress[:,ii]))
     return coeff, score
 
-def _fit_coeffs_with_energies(strain, energy, volume, rotations):
+def _fit_coeffs_with_energies(strain, energy, volume, rotations, addtional_points=0):
+    higher_terms = _get_higher_order_terms(strain, derivative=False, addtional_points=additional_points, rotations=rotations)
+    strain = np.einsum('nik,mkl,njl->nmij', rotations, strain, rotations).reshape(-1, 9)
+    strain = strain[:, [0, 4, 8, 5, 2, 1]]
+    strain[:,3:] *= 2
     energy = np.tile(energy, len(rotations))
     volume = np.tile(volume, len(rotations))
-    C = np.einsum('n,ni,nj->nij', 0.5*volume, strain, strain)
-    C = np.triu(C).reshape(-1, 36)
-    C = C[:,np.sum(C, axis=0)!=0]
-    C = np.append(np.ones(len(C)).reshape(-1, 1), C, axis=-1)
-    reg = LinearRegression().fit(C, energy)
-    score = reg.score(C, energy)
+    strain = np.einsum('n,ni,nj->nij', 0.5*volume, strain, strain)
+    strain = np.triu(strain).reshape(-1, 36)
+    strain = strain[:,np.sum(strain, axis=0)!=0]
+    if higher_terms is not None:
+        higher_order_strain = np.einsum('n,ni->ni', volume, higher_order_strain)
+        strain = np.concatenate((strain, higher_order_strain), axis=-1)
+    reg = LinearRegression().fit(strain, energy)
+    score = reg.score(strain, energy)
     coeff = np.triu(np.ones((6,6))).flatten()
-    coeff[coeff!=0] *= reg.coef_[1:]*eV_div_A3_to_GPa
+    coeff[coeff!=0] *= reg.coef_*eV_div_A3_to_GPa
     coeff = coeff.reshape(6,6)
     coeff = 0.5*(coeff+coeff.T)
     return coeff, score
 
-def _get_higher_order_terms(strain_lst, derivative=False, additional_points=0, rotations=np.eye(3)):
+def _get_higher_order_terms(strain_lst, derivative=False, additional_points=0, rotations=[np.eye(3)]):
     s = strain_lst.reshape(-1, 9)
     s = s[:, [0, 4, 8, 5, 2, 1]]
     s[:,3:] *= 2
@@ -116,7 +128,7 @@ def _get_higher_order_terms(strain_lst, derivative=False, additional_points=0, r
         strain_higher_terms = strain_higher_terms.reshape(-1, strain_higher_terms.shape[-1])
     return strain_higher_terms
 
-def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations=None, return_score=False):
+def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations=None, return_score=False, additional_points=0):
     """
     Calculate 6x6-elastic tensor from the strain and stress or strain and energy+volume.
 
@@ -139,12 +151,10 @@ def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations
         rotations = rotations[np.unique(indices)]
     else:
         rotations = [np.eye(3)]
-    strain = np.einsum('nik,mkl,njl->nmij', rotations, strain, rotations).reshape(-1, 3, 3)
-    strain = np.stack((strain[:,0,0], strain[:,1,1], strain[:,2,2], 2*strain[:,1,2], 2*strain[:,0,2], 2*strain[:,0,1]), axis=-1)
     if stress is not None and len(stress)*len(rotations)==len(strain):
-        coeff, score = _fit_coeffs_with_stress(strain=strain, stress=stress, rotations=rotations)
+        coeff, score = _fit_coeffs_with_stress(strain=strain, stress=stress, rotations=rotations, additional_points=additional_points)
     elif energy is not None and volume is not None and len(energy)*len(rotations)==len(strain) and len(energy)==len(volume):
-        coeff, score = _fit_coeffs_with_energies(strain=strain, energy=energy, volume=volume, rotations=rotations)
+        coeff, score = _fit_coeffs_with_energies(strain=strain, energy=energy, volume=volume, rotations=rotations, additional_points=additional_points)
     else:
         raise ValueError('You have to provide either strain and stress, or strain, energy and volume of same length.')
     if return_score:
@@ -171,6 +181,17 @@ def calc_elastic_constants(elastic_tensor):
     output['poissons_ratio'] = -output['youngs_modulus']*np.sum(np.linalg.inv(elastic_tensor[:3,:3]))/6+0.5
     output['zener_ratio'] = 12*np.mean(elastic_tensor[3:,3:].diagonal())/(3*np.trace(elastic_tensor[:3,:3])-np.sum(elastic_tensor[:3,:3]))
     return output
+
+def get_strain(max_strain=0.05, n_set=10, polynomial_order=3, additional_points=0, normalize=False):
+    strain_lst = np.random.random((n_set, 3, 3))-0.5
+    strain_lst += np.einsum('nij->nji', strain_lst)
+    if normalize:
+        strain_lst = np.einsum('nij,n->nij', strain_lst, 1/np.linalg.norm(strain_lst.reshape(-1, 9), axis=-1))
+    strain_lst *= max_strain
+    m = np.linspace(-1, 1, 2*polynomial_order+2*additional_points-1)
+    m = m[~np.isclose(m, 0)]
+    strain_lst = np.einsum('k,nij->nkij', m, strain_lst).reshape(-1, 3, 3)
+    return strain_lst
 
 class ElasticJobGenerator(JobGenerator):
     @property
@@ -212,7 +233,7 @@ class ElasticTensor(AtomisticParallelMaster):
         use_elements (bool): Whether or not respect chemical elements for box symmetry (ignored if `rotations`
             already specified)
 
-    The defaultinput parameters might not be chosen adequately. If you have a large
+    The default input parameters might not be chosen adequately. If you have a large
     computation power, increase `min_num_measurements`. At the same time, make
     sure to choose an orientation which maximizes the number symmetry operations.
     Also if the child job does not support pressure, better increase the number
@@ -230,9 +251,12 @@ class ElasticTensor(AtomisticParallelMaster):
             0.01,
             "relative volume variation around volume defined by ref_ham",
         )
+        self.input['polynomial_order'] = 2
+        self.input['additional_points'] = 0
         self.input['strain_matrices'] = []
         self.input['use_symmetry'] = True
         self.input['rotations'] = []
+        self.input['normalize_magnitude'] = False
         self.input['use_elements'] = (True, 'whether or not consider chemical elements for '
                                             + 'the symmetry analysis. Could be useful for SQS')
         self._job_generator = ElasticJobGenerator(self)
@@ -256,7 +280,11 @@ class ElasticTensor(AtomisticParallelMaster):
         eps_lst = np.random.random((int(self._number_of_measurements), 3, 3))-0.5
         eps_lst *= self.input['max_strain']
         eps_lst += np.einsum('nij->nji', eps_lst)
-        self.input['strain_matrices'] = eps_lst.tolist()
+        self.input['strain_matrices'] = get_strain(max_strain=self.input['max_strain'],
+                                                   n_set=self._number_of_measurements,
+                                                   polynomial_order=self.input['polynomial_order'],
+                                                   additional_points=self.input['additional_point'],
+                                                   normalize=self.input['normalize_magnitude']).tolist()
 
     def validate_ready_to_run(self):
         super().validate_ready_to_run()
