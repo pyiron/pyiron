@@ -701,7 +701,6 @@ class ElectronicStructure(object):
         output_string.append("Number of spin channels: {}".format(len(self.eigenvalue_matrix)))
         output_string.append("Number of k-points: {}".format(len(self.kpoints)))
         output_string.append("Number of bands: {}".format(len(self.kpoints[0].bands[0])))
-        info_str = list()
         try:
             for spin, is_metal in enumerate(self.is_metal):
                 if is_metal:
@@ -710,10 +709,6 @@ class ElectronicStructure(object):
                     output_string.append("spin {}:".format(spin) + " Is a metal: "
                                                                    "{}".format(is_metal) + " Band gap (ev) "
                                                                                            "{}".format(self.eg[spin]))
-            else:
-                output_string.append("Is a metal: " + ",".join(["spin {}:".format(i) + str(val)
-                                                                for i, val in enumerate(self.is_metal)]))
-
         except ValueError:
             pass
         if not all(self.is_metal):
