@@ -89,7 +89,7 @@ def _fit_coeffs_with_energies(strain, energy, volume, rotations, additional_poin
     reg = LinearRegression().fit(strain, energy)
     score = reg.score(strain, energy)
     coeff = np.triu(np.ones((6,6))).flatten()
-    coeff[coeff!=0] *= reg.coef_*eV_div_A3_to_GPa
+    coeff[coeff!=0] *= reg.coef_[:21]*eV_div_A3_to_GPa
     coeff = coeff.reshape(6,6)
     coeff = 0.5*(coeff+coeff.T)
     return coeff, score
