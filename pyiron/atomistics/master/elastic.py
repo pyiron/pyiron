@@ -97,6 +97,7 @@ def _fit_coeffs_with_energies(strain, energy, volume, rotations, additional_poin
 def _get_higher_order_terms(strain_lst, derivative=False, additional_points=0, rotations=None):
     if rotations is None:
         rotations = np.eye(3).reshape(1, 3, 3)
+    strain_lst = np.array(strain_lst)
     s = np.array(strain_lst).reshape(-1, 9)
     s = s[:, [0, 4, 8, 5, 2, 1]]
     s[:,3:] *= 2
