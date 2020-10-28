@@ -56,13 +56,13 @@ def get_elastic_tensor_by_orientation(orientation, elastic_tensor):
                     elastic_tensor_to_return[i+(i!=j)*(6-2*i-j), k+(k!=l)*(6-2*k-l)] = C[i,j,k,l]
     return elastic_tensor_to_return
 
-def _fit_coeffs_with_stress(strain, stress, rotations, addtional_points=0):
-    higher_terms = _get_higher_order_terms(strain, derivative=True, addtional_points=additional_points, rotations=rotations)
+def _fit_coeffs_with_stress(strain, stress, rotations, additional_points=0):
+    higher_terms = _get_higher_order_terms(strain, derivative=True, additional_points=additional_points, rotations=rotations)
     strain = np.einsum('nik,mkl,njl->nmij', rotations, strain, rotations).reshape(-1, 9)
     strain = strain[:, [0, 4, 8, 5, 2, 1]]
     strain[:,3:] *= 2
     if higher_terms is not None:
-        strain = np.concatenate((strain, higher_order_strain), axis=-1)
+        strain = np.concatenate((strain, higher_terms), axis=-1)
     stress = np.einsum('nik,mkl,njl->nmij', rotations, stress, rotations).reshape(-1, 9)
     stress = stress[:, [0, 4, 8, 5, 2, 1]]
     score = []
@@ -71,10 +71,10 @@ def _fit_coeffs_with_stress(strain, stress, rotations, addtional_points=0):
         reg = LinearRegression().fit(strain, stress[:,ii])
         coeff.append(reg.coef_)
         score.append(reg.score(strain, stress[:,ii]))
-    return coeff, score
+    return np.array(coeff), np.array(score)
 
-def _fit_coeffs_with_energies(strain, energy, volume, rotations, addtional_points=0):
-    higher_terms = _get_higher_order_terms(strain, derivative=False, addtional_points=additional_points, rotations=rotations)
+def _fit_coeffs_with_energies(strain, energy, volume, rotations, additional_points=0):
+    higher_terms = _get_higher_order_terms(strain, derivative=False, additional_points=additional_points, rotations=rotations)
     strain = np.einsum('nik,mkl,njl->nmij', rotations, strain, rotations).reshape(-1, 9)
     strain = strain[:, [0, 4, 8, 5, 2, 1]]
     strain[:,3:] *= 2
@@ -85,7 +85,7 @@ def _fit_coeffs_with_energies(strain, energy, volume, rotations, addtional_point
     strain = strain[:,np.sum(strain, axis=0)!=0]
     if higher_terms is not None:
         higher_order_strain = np.einsum('n,ni->ni', volume, higher_order_strain)
-        strain = np.concatenate((strain, higher_order_strain), axis=-1)
+        strain = np.concatenate((strain, higher_terms), axis=-1)
     reg = LinearRegression().fit(strain, energy)
     score = reg.score(strain, energy)
     coeff = np.triu(np.ones((6,6))).flatten()
@@ -95,7 +95,7 @@ def _fit_coeffs_with_energies(strain, energy, volume, rotations, addtional_point
     return coeff, score
 
 def _get_higher_order_terms(strain_lst, derivative=False, additional_points=0, rotations=[np.eye(3)]):
-    s = strain_lst.reshape(-1, 9)
+    s = np.array(strain_lst).reshape(-1, 9)
     s = s[:, [0, 4, 8, 5, 2, 1]]
     s[:,3:] *= 2
     indices = np.round(np.einsum('ni,n,n->ni', s, np.sign(np.sum(s, axis=-1)), 1/np.linalg.norm(s, axis=-1)), 8)
@@ -158,9 +158,9 @@ def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations
     else:
         raise ValueError('Provide either strain and stress, or strain, energy and volume of same length.')
     if return_score:
-        return np.array(coeff), score
+        return np.array(coeff)[:,:6], score
     else:
-        return np.array(coeff)
+        return np.array(coeff)[:,:6]
 
 def calc_elastic_constants(elastic_tensor):
     """
