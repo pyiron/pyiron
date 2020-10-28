@@ -12,7 +12,6 @@ from pyiron.vasp.vasprun import Vasprun
 from pyiron.dft.waves.dos import Dos
 from pyiron.dft.waves.electronic import ElectronicStructure
 from pyiron_base import FileHDFio
-import sys
 
 """
 @author: surendralal
@@ -134,4 +133,4 @@ class TestElectronicStructure(unittest.TestCase):
         )
 
     def test_is_metal(self):
-        self.assertTrue(self.es_list[1].is_metal)
+        self.assertTrue(self.es_list[1].is_metal[0])
