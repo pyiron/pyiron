@@ -151,12 +151,12 @@ def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations
         rotations = rotations[np.unique(indices)]
     else:
         rotations = [np.eye(3)]
-    if stress is not None and len(stress)*len(rotations)==len(strain):
+    if stress is not None and len(stress)==len(strain):
         coeff, score = _fit_coeffs_with_stress(strain=strain, stress=stress, rotations=rotations, additional_points=additional_points)
-    elif energy is not None and volume is not None and len(energy)*len(rotations)==len(strain) and len(energy)==len(volume):
+    elif energy is not None and volume is not None and len(energy)==len(strain) and len(energy)==len(volume):
         coeff, score = _fit_coeffs_with_energies(strain=strain, energy=energy, volume=volume, rotations=rotations, additional_points=additional_points)
     else:
-        raise ValueError('You have to provide either strain and stress, or strain, energy and volume of same length.')
+        raise ValueError('Provide either strain and stress, or strain, energy and volume of same length.')
     if return_score:
         return np.array(coeff), score
     else:
@@ -263,10 +263,10 @@ class ElasticTensor(AtomisticParallelMaster):
 
     @property
     def _number_of_measurements(self):
-        return max(
+        return int(max(
             self.input['min_num_measurements'],
-            int(np.ceil(self.input['min_num_points']/max(len(self.input['rotations']), 1)))
-        )
+            np.ceil(self.input['min_num_points']/max(len(self.input['rotations']), 1))
+        ))
 
     def _get_rotation_matrices(self):
         rotations = self.ref_job.structure.get_symmetry(use_elements=self.input['use_elements'])['rotations']
@@ -283,13 +283,15 @@ class ElasticTensor(AtomisticParallelMaster):
         self.input['strain_matrices'] = get_strain(max_strain=self.input['max_strain'],
                                                    n_set=self._number_of_measurements,
                                                    polynomial_order=self.input['polynomial_order'],
-                                                   additional_points=self.input['additional_point'],
+                                                   additional_points=self.input['additional_points'],
                                                    normalize=self.input['normalize_magnitude']).tolist()
 
     def validate_ready_to_run(self):
         super().validate_ready_to_run()
         if len(self.input['strain_matrices'])==0:
             self._create_strain_matrices()
+        if self.input['polynomial_order']<2:
+            raise ValueError('Minimum polynomial order: 2')
 
     def collect_output(self):
         if self.ref_job.server.run_mode.interactive:
