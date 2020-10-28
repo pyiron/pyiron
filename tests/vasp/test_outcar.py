@@ -697,19 +697,19 @@ class TestOutcar(unittest.TestCase):
 
     def test_get_band_properties(self):
         fermi_level_list = [2.9738, 5.9788, 5.9613, 5.9613, 5.9614, 5.9614, 3.9092]
-        vbm_level_list = [3.076, 6.5823, 6.6175, 6.6175, 6.618, 6.618]
-        cbm_level_list = [4.3112, 6.7396, 6.8568, 6.8568, 6.8569, 6.8569]
+        vbm_level_list = [[[3.076]], [[15.1392]], [[6.0004], [6.6175]], [[6.0004], [6.6175]], [[6.618]], [[6.618]]]
+        cbm_level_list = [[[4.3112]], [[15.1392]], [[6.8568], [6.9402]], [[6.8568], [6.9402]], [[6.8569]], [[6.8569]]]
         for i, filename in enumerate(self.file_list):
             fermi_list, vbm_list, cbm_list = \
                 self.outcar_parser.get_band_properties(filename=filename)
             if i <= 5:
-                self.assertEqual(fermi_list[-1], fermi_level_list[i])
-                self.assertEqual(vbm_list[-1], vbm_level_list[i])
-                self.assertEqual(cbm_list[-1], cbm_level_list[i])
+                self.assertTrue(np.array_equal(fermi_list[-1], fermi_level_list[i]))
+                self.assertTrue(np.allclose(np.array(vbm_list), np.array(vbm_level_list[i])))
+                self.assertTrue(np.array_equal(cbm_list, cbm_level_list[i]))
             elif i == 8:
                 self.assertTrue(np.array_equal(fermi_list, [-7.3532, -5.7586]))
-                self.assertTrue(np.array_equal(vbm_list, [-9.7778, -7.9449]))
-                self.assertTrue(np.array_equal(cbm_list, [-1.8327, -3.5781]))
+                self.assertTrue(np.array_equal(vbm_list[0], [-9.7778, -7.9449]))
+                self.assertTrue(np.array_equal(cbm_list[0], [-1.8327, -3.5781]))
 
 
 if __name__ == "__main__":

@@ -1998,6 +1998,7 @@ class Atoms(ASEAtoms):
         for key, val in self.__dict__.items():
             if key not in ase_keys:
                 atoms_new.__dict__[key] = copy(val)
+        atoms_new.visualize = Visualize(atoms_new)
         return atoms_new
 
     def __delitem__(self, key):

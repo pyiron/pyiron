@@ -2,6 +2,7 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
+from collections import OrderedDict
 import numpy as np
 import warnings
 import scipy.constants
@@ -786,11 +787,12 @@ class Outcar(object):
             lines=lines, filename=filename, trigger=fermi_trigger
         )
         fermi_level_list = list()
-        vbm_level_list = list()
-        cbm_level_list = list()
+        vbm_level_dict = OrderedDict()
+        cbm_level_dict = OrderedDict()
         for ind in fermi_trigger_indices:
             fermi_level_list.append(float(lines[ind].strip().split()[2]))
         band_trigger = "band No.  band energies     occupation"
+        is_spin_polarized = False
         for n, ind in enumerate(fermi_trigger_indices):
             if n == len(fermi_trigger_indices) - 1:
                 trigger_indices, lines_new = _get_trigger(
@@ -802,19 +804,42 @@ class Outcar(object):
                 )
             band_data = list()
             for ind in trigger_indices:
+                if "spin component" in lines_new[ind-3]:
+                    is_spin_polarized = True
                 for line in lines_new[ind+1:]:
                     data = line.strip().split()
                     if len(data) != 3:
                         break
                     band_data.append([float(d) for d in data[1:]])
-            if len(band_data) > 0:
-                band_energy, band_occ = [np.array(band_data)[:, i] for i in range(2)]
-                args = np.argsort(band_energy)
-                band_occ = band_occ[args]
-                band_energy = band_energy[args]
-                cbm_level_list.append(band_energy[np.abs(band_occ) < 1e-6][0])
-                vbm_level_list.append(band_energy[np.abs(band_occ) >= 1e-6][-1])
-        return np.array(fermi_level_list), np.array(vbm_level_list), np.array(cbm_level_list)
+            if is_spin_polarized:
+                band_data_per_spin = [np.array(band_data[0:int(len(band_data)/2)]).tolist(),
+                                      np.array(band_data[int(len(band_data)/2):]).tolist()]
+            else:
+                band_data_per_spin = [band_data]
+            for spin, band_data in enumerate(band_data_per_spin):
+                if spin in cbm_level_dict.keys():
+                    pass
+                else:
+                    cbm_level_dict[spin] = list()
+                if spin in vbm_level_dict.keys():
+                    pass
+                else:
+                    vbm_level_dict[spin] = list()
+                if len(band_data) > 0:
+                    band_energy, band_occ = [np.array(band_data)[:, i] for i in range(2)]
+                    args = np.argsort(band_energy)
+                    band_occ = band_occ[args]
+                    band_energy = band_energy[args]
+                    cbm_bool = np.abs(band_occ) < 1e-6
+                    if any(cbm_bool):
+                        cbm_level_dict[spin].append(band_energy[np.abs(band_occ) < 1e-6][0])
+                    else:
+                        cbm_level_dict[spin].append(band_energy[-1])
+                    vbm_level_dict[spin].append(band_energy[np.abs(band_occ) >= 1e-6][-1])
+        return np.array(fermi_level_list), np.array([val for val
+                                                     in vbm_level_dict.values()]), np.array([val
+                                                                                             for val in
+                                                                                             cbm_level_dict.values()])
 
     @staticmethod
     def get_elastic_constants(filename="OUTCAR", lines=None):
