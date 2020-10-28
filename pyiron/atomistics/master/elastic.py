@@ -94,7 +94,9 @@ def _fit_coeffs_with_energies(strain, energy, volume, rotations, additional_poin
     coeff = 0.5*(coeff+coeff.T)
     return coeff, score
 
-def _get_higher_order_terms(strain_lst, derivative=False, additional_points=0, rotations=[np.eye(3)]):
+def _get_higher_order_terms(strain_lst, derivative=False, additional_points=0, rotations=None):
+    if rotations is None:
+        rotations = np.eye(3).reshape(1, 3, 3)
     s = np.array(strain_lst).reshape(-1, 9)
     s = s[:, [0, 4, 8, 5, 2, 1]]
     s[:,3:] *= 2
@@ -108,16 +110,16 @@ def _get_higher_order_terms(strain_lst, derivative=False, additional_points=0, r
     if derivative:
         indices = np.tile(indices, len(rotations))
         strain_higher_terms = np.zeros((len(indices), np.sum(counts)*6))
-        s = np.einsum('nik,mkl,njl->nmij', rotations, strain_lst, rotations).reshape(-1, 9)
-        s = s[:, [0, 4, 8, 5, 2, 1]]
-        s[:,3:] *= 2
+        strain_lst = np.einsum('nik,mkl,njl->nmij', rotations, strain_lst, rotations).reshape(-1, 9)
+        s_voigt = strain_lst[:, [0, 4, 8, 5, 2, 1]]
+        s_voigt[:,3:] *= 2
     na = np.newaxis
     for ind in np.unique(indices):
-        E = s[indices==indices[ind]][0]
+        E = strain_lst[indices==indices[ind]][0]
         E /= np.linalg.norm(E)
-        E = np.sum((E*s[indices==indices[ind]]), axis=-1)
+        E = np.sum((E*strain_lst[indices==indices[ind]]).reshape(-1, 9), axis=-1)
         if derivative:
-            E = E[:,na,na]**(np.arange(counts[ind])+2)[na,:,na]*s[indices==indices[ind],na,:]
+            E = E[:,na,na]**(np.arange(counts[ind])+2)[na,:,na]*s_voigt[indices==indices[ind],na,:]
             E = E.reshape(E.shape[0], -1)
         else:
             E = E[:,na]**(np.arange(counts[ind])+3)[na,:]
