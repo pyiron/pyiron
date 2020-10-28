@@ -38,6 +38,14 @@ class Gpaw(AseJob):
         self.plane_wave_cutoff = val
 
     @property
+    def kpoint_mesh(self):
+        return self.get_kpoints()
+
+    @kpoint_mesh.setter
+    def kpoint_mesh(self, val):
+        self.set_kpoints(mesh=val)
+
+    @property
     def plane_wave_cutoff(self):
         return self.input["encut"]
 
@@ -55,6 +63,9 @@ class Gpaw(AseJob):
         if kmesh.min() <= 0:
             raise AssertionError("kpoint per angstrom too low")
         return [int(k) for k in kmesh]
+
+    def get_kpoints(self):
+        return self.input["kpoints"]
 
     def set_kpoints(
         self,
