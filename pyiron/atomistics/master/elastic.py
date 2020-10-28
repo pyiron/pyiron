@@ -305,7 +305,7 @@ class ElasticTensor(AtomisticParallelMaster):
         self.input['strain_matrices'] = get_strain(max_strain=self.input['max_strain'],
                                                    n_set=self._number_of_measurements,
                                                    polynomial_order=self.input['polynomial_order'],
-                                                   polynomial_degree_reduction=self.input['additional_points'],
+                                                   additional_points=self.input['additional_points'],
                                                    normalize=self.input['normalize_magnitude']).tolist()
 
     def validate_ready_to_run(self):
