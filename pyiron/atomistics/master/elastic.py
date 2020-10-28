@@ -116,6 +116,7 @@ def _get_higher_order_terms(strain_lst, derivative=False, additional_points=0, r
     # counts stands for the polynomial degree, starting from 1 meaning first anharmonic contribution
     counts = np.sum(indices, axis=1)-2*additional_points
     counts = np.floor(counts/2-0.75).astype(int)
+    counts[counts<0] = 0
     if sum(counts)==0:
         return None
     strain_higher_terms = np.zeros((len(strain_lst), np.sum(counts)))
