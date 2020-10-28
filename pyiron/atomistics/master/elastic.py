@@ -82,6 +82,40 @@ def _fit_coeffs_with_energies(strain, energy, volume, rotations):
     coeff = 0.5*(coeff+coeff.T)
     return coeff, score
 
+def _get_higher_order_terms(strain_lst, derivative=False, additional_points=0, rotations=np.eye(3)):
+    s = strain_lst.reshape(-1, 9)
+    s = s[:, [0, 4, 8, 5, 2, 1]]
+    s[:,3:] *= 2
+    indices = np.round(np.einsum('ni,n,n->ni', s, np.sign(np.sum(s, axis=-1)), 1/np.linalg.norm(s, axis=-1)), 8)
+    indices = np.unique(indices, axis=0, return_inverse=True)[1]
+    counts = np.unique(indices, return_counts=True)[1]-2*additional_points
+    counts = np.floor(counts/2-0.25).astype(int)
+    if sum(counts)==0:
+        return None
+    strain_higher_terms = np.zeros((len(indices), np.sum(counts)))
+    if derivative:
+        indices = np.tile(indices, len(rotations))
+        strain_higher_terms = np.zeros((len(indices), np.sum(counts)*6))
+        s = np.einsum('nik,mkl,njl->nmij', rotations, strain_lst, rotations).reshape(-1, 9)
+        s = s[:, [0, 4, 8, 5, 2, 1]]
+        s[:,3:] *= 2
+    na = np.newaxis
+    for ind in np.unique(indices):
+        E = s[indices==indices[ind]][0]
+        E /= np.linalg.norm(E)
+        E = np.sum((E*s[indices==indices[ind]]), axis=-1)
+        if derivative:
+            E = E[:,na,na]**(np.arange(counts[ind])+2)[na,:,na]*s[indices==indices[ind],na,:]
+            E = E.reshape(E.shape[0], -1)
+        else:
+            E = E[:,na]**(np.arange(counts[ind])+3)[na,:]
+        starting_index = np.sum(np.any(strain_higher_terms!=0, axis=0))
+        strain_higher_terms[indices==indices[ind], starting_index:starting_index+E.shape[1]] = E
+    if not derivative:
+        strain_higher_terms = np.einsum('n,ij->nij', np.ones(len(rotations)), strain_higher_terms)
+        strain_higher_terms = strain_higher_terms.reshape(-1, strain_higher_terms.shape[-1])
+    return strain_higher_terms
+
 def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations=None, return_score=False):
     """
     Calculate 6x6-elastic tensor from the strain and stress or strain and energy+volume.
