@@ -1354,21 +1354,6 @@ class VaspBase(GenericDFTJob):
         else:
             return None
 
-    def get_electronic_structure(self):
-        """
-        Gets the electronic structure instance from the hdf5 file
-
-        Returns:
-                pyiron.atomistics.waves.electronic.ElectronicStructure instance
-        """
-        if not self.status.finished:
-            return
-        else:
-            with self.project_hdf5.open("output") as ho:
-                es_obj = ElectronicStructure()
-                es_obj.from_hdf(ho)
-            return es_obj
-
     def get_charge_density(self):
         """
         Gets the charge density from the hdf5 file. This value is normalized by the volume
