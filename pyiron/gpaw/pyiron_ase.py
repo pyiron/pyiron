@@ -219,6 +219,68 @@ class AseJob(GenericInteractive):
             self._logger.debug("Generic library: indices changed!")
             self.interactive_indices_setter(self._structure_current.indices)
 
+    def get_structure(self, iteration_step=-1, wrap_atoms=True):
+        """
+        Gets the structure from a given iteration step of the simulation (MD/ionic relaxation). For static calculations
+        there is only one ionic iteration step
+        Args:
+            iteration_step (int): Step for which the structure is requested
+            wrap_atoms (bool):
+
+        Returns:
+            atomistics.structure.atoms.Atoms object
+        """
+        if (
+            self.server.run_mode.interactive
+            or self.server.run_mode.interactive_non_modal
+        ):
+            # Warning: We only copy symbols, positions and cell information - no tags.
+            if self.output.indices is not None and len(self.output.indices) != 0:
+                indices = self.output.indices[iteration_step]
+            else:
+                return None
+            if len(self._interactive_species_lst) == 0:
+                el_lst = list(
+                    np.unique(self._structure_current.get_chemical_symbols())
+                )
+            else:
+                el_lst = self._interactive_species_lst.tolist()
+            if indices is not None:
+                if wrap_atoms:
+                    positions = self.output.positions[iteration_step]
+                else:
+                    if len(self.output.unwrapped_positions) > max([iteration_step, 0]):
+                        positions = self.output.unwrapped_positions[iteration_step]
+                    else:
+                        positions = (
+                            self.output.positions[iteration_step]
+                            + self.output.total_displacements[iteration_step]
+                        )
+                atoms = Atoms(
+                    symbols=np.array([el_lst[el] for el in indices]),
+                    positions=positions,
+                    cell=self.output.cells[iteration_step],
+                    pbc=self.structure.pbc,
+                )
+                # Update indicies to match the indicies in the cache.
+                atoms.set_species([self._periodic_table.element(el) for el in el_lst])
+                atoms.indices = indices
+                if wrap_atoms:
+                    atoms = atoms.center_coordinates_in_unit_cell()
+                return atoms
+            else:
+                return None
+        else:
+            if (
+                self.get("output/generic/cells") is not None
+                and len(self.get("output/generic/cells")) != 0
+            ):
+                return super(GenericInteractive, self).get_structure(
+                    iteration_step=iteration_step, wrap_atoms=wrap_atoms
+                )
+            else:
+                return None
+
 
 class AseAdapter(object):
     def __init__(self, ham, fast_mode=False):
