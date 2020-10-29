@@ -64,7 +64,8 @@ def _fit_coeffs_with_stress(
     higher_terms = _get_higher_order_terms(
         strain,
         polynomial_degree_reduction=polynomial_degree_reduction,
-        rotations=rotations
+        rotations=rotations,
+        derivative=True,
     )
     strain = np.einsum('nik,mkl,njl->nmij',
                        rotations, strain, rotations).reshape(-1, 9)
@@ -81,9 +82,9 @@ def _fit_coeffs_with_stress(
         strain_tmp = strain.copy()
         strain_tmp[:, 6:] *= strain[:, ii, np.newaxis]
         reg = LinearRegression(
-            fit_intercept=fit_first_order).fit(strain, stress[:,ii])
+            fit_intercept=fit_first_order).fit(strain_tmp, stress[:,ii])
         coeff.append(reg.coef_)
-        score.append(reg.score(strain, stress[:,ii]))
+        score.append(reg.score(strain_tmp, stress[:,ii]))
     return np.array(coeff), np.array(score)
 
 def _fit_coeffs_with_energies(
@@ -97,7 +98,8 @@ def _fit_coeffs_with_energies(
     higher_terms = _get_higher_order_terms(
         strain,
         polynomial_degree_reduction=polynomial_degree_reduction,
-        rotations=rotations
+        rotations=rotations,
+        derivative=False,
     )
     strain_voigt = np.einsum('nik,mkl,njl->nmij',
                              rotations, strain, rotations).reshape(-1, 9)
@@ -140,7 +142,8 @@ def _get_linear_dependent_indices(strain_lst):
 def _get_higher_order_terms(
         strain_lst,
         polynomial_degree_reduction=0,
-        rotations=None
+        rotations=None,
+        derivative=False,
     ):
     """
     Returns a matrix containing higher order terms. axis=0 corresponds to the elastic tensors and
@@ -165,7 +168,10 @@ def _get_higher_order_terms(
         E = strain_lst[ind][np.linalg.norm(strain_lst[ind].reshape(-1,9), axis=-1).argmax()]
         E /= np.linalg.norm(E)
         E = np.sum((E*strain_lst[ind]).reshape(-1, 9), axis=-1)
-        E = E[:,na]**(np.arange(cc)+3)[na,:]
+        if derivative:
+            E = (np.arange(cc)+3)[na,:]*E[:,na]**(np.arange(cc)+1)[na,:]
+        else:
+            E = E[:,na]**(np.arange(cc)+3)[na,:]
         starting_index = np.sum(np.any(strain_higher_terms!=0, axis=0))
         strain_higher_terms[ind, starting_index:starting_index+E.shape[1]] = E
     strain_higher_terms = np.einsum('n,ij->nij', np.ones(len(rotations)), strain_higher_terms)
