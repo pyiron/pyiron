@@ -11,6 +11,7 @@ from pyiron_base import JobGenerator
 from sklearn.linear_model import LinearRegression
 from collections import defaultdict
 import warnings
+import itertools
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = (
@@ -62,7 +63,6 @@ def _fit_coeffs_with_stress(
     ):
     higher_terms = _get_higher_order_terms(
         strain,
-        derivative=True,
         polynomial_degree_reduction=polynomial_degree_reduction,
         rotations=rotations
     )
@@ -78,6 +78,8 @@ def _fit_coeffs_with_stress(
     score = []
     coeff = []
     for ii in range(6):
+        strain_tmp = strain.copy()
+        strain_tmp[:, 6:] *= strain[:, ii, np.newaxis]
         reg = LinearRegression(
             fit_intercept=fit_first_order).fit(strain, stress[:,ii])
         coeff.append(reg.coef_)
@@ -94,7 +96,6 @@ def _fit_coeffs_with_energies(
     ):
     higher_terms = _get_higher_order_terms(
         strain,
-        derivative=False,
         polynomial_degree_reduction=polynomial_degree_reduction,
         rotations=rotations
     )
@@ -138,7 +139,6 @@ def _get_linear_dependent_indices(strain_lst):
 
 def _get_higher_order_terms(
         strain_lst,
-        derivative=False,
         polynomial_degree_reduction=0,
         rotations=None
     ):
@@ -160,28 +160,16 @@ def _get_higher_order_terms(
     if sum(counts)==0: # No term gets more than harmonic part
         return None
     strain_higher_terms = np.zeros((len(strain_lst), np.sum(counts)))
-    if derivative:
-        # repeat indices (np.tile doesn't allow copying of 2d-arrays)
-        indices = np.isclose(np.einsum('k,ni->nki', np.ones(len(rotations)), indices).reshape(indices.shape[0], -1), 1)
-        strain_lst = np.einsum('nik,mkl,njl->nmij', rotations, strain_lst, rotations).reshape(-1, 9)
-        s_voigt = strain_lst[:, [0, 4, 8, 5, 2, 1]]
-        s_voigt[:,3:] *= 2
-        strain_higher_terms = np.zeros((len(strain_lst), np.sum(counts)*6))
     na = np.newaxis
     for cc, ind in zip(counts, indices):
         E = strain_lst[ind][np.linalg.norm(strain_lst[ind].reshape(-1,9), axis=-1).argmax()]
         E /= np.linalg.norm(E)
         E = np.sum((E*strain_lst[ind]).reshape(-1, 9), axis=-1)
-        if derivative:
-            E = E[:,na,na]**(np.arange(cc)+2)[na,:,na]*s_voigt[ind,na,:]
-            E = E.reshape(E.shape[0], -1)
-        else:
-            E = E[:,na]**(np.arange(cc)+3)[na,:]
+        E = E[:,na]**(np.arange(cc)+3)[na,:]
         starting_index = np.sum(np.any(strain_higher_terms!=0, axis=0))
         strain_higher_terms[ind, starting_index:starting_index+E.shape[1]] = E
-    if not derivative:
-        strain_higher_terms = np.einsum('n,ij->nij', np.ones(len(rotations)), strain_higher_terms)
-        strain_higher_terms = strain_higher_terms.reshape(-1, strain_higher_terms.shape[-1])
+    strain_higher_terms = np.einsum('n,ij->nij', np.ones(len(rotations)), strain_higher_terms)
+    strain_higher_terms = strain_higher_terms.reshape(-1, strain_higher_terms.shape[-1])
     return strain_higher_terms
 
 def calc_elastic_tensor(
