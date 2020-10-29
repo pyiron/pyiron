@@ -1152,7 +1152,6 @@ class Atoms(ASEAtoms):
             num_neighbors = int(0.5*cutoff_radius**3)
             num_neighbors_old = 1
             while num_neighbors_old < num_neighbors:
-                print ("old, start", num_neighbors_old,  num_neighbors)
                 neigh = self._get_neighbors(
                     num_neighbors=num_neighbors,
                     t_vec=False,
@@ -1165,7 +1164,6 @@ class Atoms(ASEAtoms):
                 neigh.distances = [dist[dist < np.inf] for dist in neigh.distances]
                 num_neighbors_old = num_neighbors
                 num_neighbors = max(len(elem) for elem in neigh.indices)
-                print("new", num_neighbors)
                 if num_neighbors == num_neighbors_old:
                     num_neighbors = 2 * num_neighbors
         return num_neighbors
