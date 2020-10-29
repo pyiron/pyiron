@@ -137,4 +137,4 @@ class TestElectronicStructure(unittest.TestCase):
 
     def test__str__(self):
         self.assertIsInstance(self.es_list[1].__str__(), str)
-        self.assertTrue("spin 0:True" in self.es_list[1].__str__())
+        self.assertTrue(" Is a metal: True" in self.es_list[1].__str__())
