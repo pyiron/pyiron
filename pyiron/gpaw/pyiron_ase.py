@@ -199,6 +199,26 @@ class AseJob(GenericInteractive):
         self._create_working_directory()
         super(AseJob, self).run_if_scheduler()
 
+    def interactive_index_organizer(self):
+        index_merge_lst = self._interactive_species_lst.tolist() + list(
+            np.unique(self._structure_current.get_chemical_symbols())
+        )
+        el_lst = sorted(set(index_merge_lst), key=index_merge_lst.index)
+        current_structure_index = [
+            el_lst.index(el)
+            for el in self._structure_current.get_chemical_symbols()
+        ]
+        previous_structure_index = [
+            el_lst.index(el)
+            for el in self._structure_previous.get_chemical_symbols()
+        ]
+        if not np.array_equal(
+            np.array(current_structure_index),
+            np.array(previous_structure_index),
+        ):
+            self._logger.debug("Generic library: indices changed!")
+            self.interactive_indices_setter(self._structure_current.indices)
+
 
 class AseAdapter(object):
     def __init__(self, ham, fast_mode=False):
