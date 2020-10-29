@@ -34,6 +34,14 @@ class GenericDFTJob(AtomisticGenericJob):
         self.plane_wave_cutoff = val
 
     @property
+    def kpoint_mesh(self):
+        return self.get_kpoints()
+
+    @kpoint_mesh.setter
+    def kpoint_mesh(self, val):
+        self.set_kpoints(mesh=val)
+
+    @property
     def xc(self):
         return self.exchange_correlation_functional
 
@@ -76,25 +84,6 @@ class GenericDFTJob(AtomisticGenericJob):
         raise NotImplementedError(
             "The exchange property is not implemented for this code."
         )
-
-    def get_k_mesh_by_cell(self, kpoints_per_reciprocal_angstrom, cell=None):
-        """
-            get k-mesh density according to the box size.
-
-            Args:
-                kpoints_per_reciprocal_angstrom: (float) number of k-points per reciprocal angstrom (i.e. per 2*pi / box_length)
-                cell: (list/ndarray) 3x3 cell. If not set, the current cell is used.
-        """
-        if cell is None:
-            if self.structure is None:
-                raise AssertionError('structure not set')
-            cell = self.structure.cell
-        latlens = np.linalg.norm(cell, axis=-1)
-        kmesh = np.rint( 2 * np.pi / latlens * kpoints_per_reciprocal_angstrom)
-        if kmesh.min() <= 0:
-            self._logger.warning("Calculated kmesh was 0 for at least one axis, setting it to 1 instead")
-            kmesh[kmesh==0] = 1
-        return [int(k) for k in kmesh]
 
     @property
     def fix_spin_constraint(self):
@@ -177,21 +166,29 @@ class GenericDFTJob(AtomisticGenericJob):
         else:
             return None
 
-    def _set_kpoints(
-        self,
-        mesh=None,
-        scheme="MP",
-        center_shift=None,
-        symmetry_reduction=True,
-        manual_kpoints=None,
-        weights=None,
-        reciprocal=True,
-        n_path=None,
-        path_name=None,
-    ):
+    def get_kpoints(self):
         raise NotImplementedError(
-            "The set_kpoints function is not implemented for this code."
+            "The get_kpoints() function is not implemented for this code."
         )
+
+    def get_k_mesh_by_cell(self, kpoints_per_reciprocal_angstrom, cell=None):
+        """
+            get k-mesh density according to the box size.
+
+            Args:
+                kpoints_per_reciprocal_angstrom: (float) number of k-points per reciprocal angstrom (i.e. per 2*pi / box_length)
+                cell: (list/ndarray) 3x3 cell. If not set, the current cell is used.
+        """
+        if cell is None:
+            if self.structure is None:
+                raise AssertionError('structure not set')
+            cell = self.structure.cell
+        latlens = np.linalg.norm(cell, axis=-1)
+        kmesh = np.rint(2 * np.pi / latlens * kpoints_per_reciprocal_angstrom)
+        if kmesh.min() <= 0:
+            self._logger.warning("Calculated kmesh was 0 for at least one axis, setting it to 1 instead")
+            kmesh[kmesh == 0] = 1
+        return [int(k) for k in kmesh]
 
     def set_kpoints(
         self,
@@ -308,6 +305,22 @@ class GenericDFTJob(AtomisticGenericJob):
     def set_empty_states(self, n_empty_states=None):
         raise NotImplementedError(
             "The set_empty_states function is not implemented for this code."
+        )
+
+    def _set_kpoints(
+        self,
+        mesh=None,
+        scheme="MP",
+        center_shift=None,
+        symmetry_reduction=True,
+        manual_kpoints=None,
+        weights=None,
+        reciprocal=True,
+        n_path=None,
+        path_name=None,
+    ):
+        raise NotImplementedError(
+            "The set_kpoints function is not implemented for this code."
         )
 
     def get_electronic_structure(self):

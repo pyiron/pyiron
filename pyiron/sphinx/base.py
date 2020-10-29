@@ -224,6 +224,9 @@ class SphinxBase(GenericDFTJob):
     def potential(self):
         return self._potential
 
+    def get_kpoints(self):
+        return self.input.KpointFolding
+
     def get_version_float(self):
         version_str = self.executable.version.split("_")[0]
         version_float = float(
