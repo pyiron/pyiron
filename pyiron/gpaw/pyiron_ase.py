@@ -263,10 +263,7 @@ class AseJob(GenericInteractive):
                     pbc=self.structure.pbc,
                 )
                 # Update indicies to match the indicies in the cache.
-                atoms.set_species([self._periodic_table.element(el) for el in el_lst])
                 atoms.indices = indices
-                if wrap_atoms:
-                    atoms = atoms.center_coordinates_in_unit_cell()
                 return atoms
             else:
                 return None
