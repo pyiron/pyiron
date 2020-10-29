@@ -57,7 +57,6 @@ def _fit_coeffs_with_stress(
         strain,
         stress,
         rotations,
-        regression_model,
         polynomial_degree_reduction=0,
         fit_first_order=False,
     ):
@@ -79,7 +78,7 @@ def _fit_coeffs_with_stress(
     score = []
     coeff = []
     for ii in range(6):
-        reg = regression_model(
+        reg = LinearRegression(
             fit_intercept=fit_first_order).fit(strain, stress[:,ii])
         coeff.append(reg.coef_)
         score.append(reg.score(strain, stress[:,ii]))
@@ -90,7 +89,6 @@ def _fit_coeffs_with_energies(
         energy,
         volume,
         rotations,
-        regression_model,
         polynomial_degree_reduction=0,
         fit_first_order=False,
     ):
@@ -114,7 +112,7 @@ def _fit_coeffs_with_energies(
     if fit_first_order:
         strain = np.concatenate((strain, strain_voigt), axis=-1)
     strain = np.einsum('n,ni->ni', volume, strain)
-    reg = regression_model.fit(strain, energy)
+    reg = LinearRegression().fit(strain, energy)
     score = reg.score(strain, energy)
     coeff = np.triu(np.ones((6,6))).flatten()
     coeff[coeff!=0] *= reg.coef_[:21]*eV_div_A3_to_GPa
@@ -195,7 +193,6 @@ def calc_elastic_tensor(
         return_score=False,
         polynomial_degree_reduction=0,
         fit_first_order=False,
-        regression_model=None,
     ):
     """
     Calculate 6x6-elastic tensor from the strain and stress or strain and energy+volume.
@@ -213,8 +210,6 @@ def calc_elastic_tensor(
     """
     if len(strain)==0:
         raise ValueError('Not enough points')
-    if regression_model is None:
-        regression_model = LinearRegression()
     if rotations is not None:
         rotations = np.append(np.eye(3), rotations).reshape(-1, 3, 3)
         _, indices = np.unique(np.round(rotations, 6), axis=0, return_inverse=True)
@@ -228,7 +223,6 @@ def calc_elastic_tensor(
             rotations=rotations,
             polynomial_degree_reduction=polynomial_degree_reduction,
             fit_first_order=fit_first_order,
-            regression_model=regression_model,
         )
     elif (energy is not None
           and volume is not None
@@ -241,7 +235,6 @@ def calc_elastic_tensor(
             rotations=rotations,
             polynomial_degree_reduction=polynomial_degree_reduction,
             fit_first_order=fit_first_order,
-            regression_model=regression_model,
         )
     else:
         raise ValueError('Provide either strain and stress, or strain, energy and volume of same length.')
@@ -420,7 +413,6 @@ class ElasticTensor(AtomisticParallelMaster):
             volume = self._output['volume'],
             return_score = True,
             fit_first_order=self.input['fit_first_order'],
-            regression_model=LinearRegression(),
         )
         self._output['fit_score'] = score
         for k,v in calc_elastic_constants(elastic_tensor).items():
