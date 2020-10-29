@@ -78,11 +78,11 @@ class Gpaw(AseJob, GenericDFTJob):
             raise ValueError(
                 "reciprocal is not implemented in the pyiron wrapper."
             )
-        if not n_path:
+        if n_path is not None:
             raise ValueError(
                 "n_path is not implemented in the pyiron wrapper."
             )
-        if not path_name:
+        if path_name is not None:
             raise ValueError(
                 "path_name is not implemented in the pyiron wrapper."
             )
