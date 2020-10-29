@@ -57,7 +57,7 @@ def get_elastic_tensor_by_orientation(orientation, elastic_tensor):
                     elastic_tensor_to_return[i+(i!=j)*(6-2*i-j), k+(k!=l)*(6-2*k-l)] = C[i,j,k,l]
     return elastic_tensor_to_return
 
-def _fit_coeffs_with_stress(strain, stress, rotations, polynomial_degree_reduction=0):
+def _fit_coeffs_with_stress(strain, stress, rotations, polynomial_degree_reduction=0, fit_first_order=False):
     higher_terms = _get_higher_order_terms(strain, derivative=True, polynomial_degree_reduction=polynomial_degree_reduction, rotations=rotations)
     strain = np.einsum('nik,mkl,njl->nmij', rotations, strain, rotations).reshape(-1, 9)
     strain = strain[:, [0, 4, 8, 5, 2, 1]]
@@ -69,24 +69,26 @@ def _fit_coeffs_with_stress(strain, stress, rotations, polynomial_degree_reducti
     score = []
     coeff = []
     for ii in range(6):
-        reg = LinearRegression().fit(strain, stress[:,ii])
+        reg = LinearRegression(fit_intercept=fit_first_order).fit(strain, stress[:,ii])
         coeff.append(reg.coef_)
         score.append(reg.score(strain, stress[:,ii]))
     return np.array(coeff), np.array(score)
 
-def _fit_coeffs_with_energies(strain, energy, volume, rotations, polynomial_degree_reduction=0):
+def _fit_coeffs_with_energies(strain, energy, volume, rotations, polynomial_degree_reduction=0, fit_first_order=False):
     higher_terms = _get_higher_order_terms(strain, derivative=False, polynomial_degree_reduction=polynomial_degree_reduction, rotations=rotations)
-    strain = np.einsum('nik,mkl,njl->nmij', rotations, strain, rotations).reshape(-1, 9)
-    strain = strain[:, [0, 4, 8, 5, 2, 1]]
-    strain[:,3:] *= 2
+    strain_voigt = np.einsum('nik,mkl,njl->nmij', rotations, strain, rotations).reshape(-1, 9)
+    strain_voigt = strain_voigt[:, [0, 4, 8, 5, 2, 1]]
+    strain_voigt[:,3:] *= 2
     energy = np.tile(energy, len(rotations))
     volume = np.tile(volume, len(rotations))
-    strain = np.einsum('n,ni,nj->nij', 0.5*volume, strain, strain)
+    strain = 0.5*np.einsum('ni,nj->nij', strain_voigt, strain_voigt)
     strain = np.triu(strain).reshape(-1, 36)
     strain = strain[:,np.sum(strain, axis=0)!=0]
     if higher_terms is not None:
-        higher_terms = np.einsum('n,ni->ni', volume, higher_terms)
         strain = np.concatenate((strain, higher_terms), axis=-1)
+    if fit_first_order:
+        strain = np.concatenate((strain, strain_voigt), axis=-1)
+    strain = np.einsum('n,ni->ni', volume, strain)
     reg = LinearRegression().fit(strain, energy)
     score = reg.score(strain, energy)
     coeff = np.triu(np.ones((6,6))).flatten()
@@ -95,14 +97,14 @@ def _fit_coeffs_with_energies(strain, energy, volume, rotations, polynomial_degr
     coeff = 0.5*(coeff+coeff.T)
     return coeff, score
 
-def _get_linearly_dependent_indices(strain_lst):
+def _get_linear_dependent_indices(strain_lst):
     """
     This function returns an array of booleans, which shows linearly dependent strain matrices. Strain matrices
     which have True along axis=0 are linearly dependent. Axis=1 should contain the total number of strain matrices.
     """
     s = np.array(strain_lst).reshape(-1, 9)
     norm = np.linalg.norm(s, axis=-1)
-    indices = np.round(np.einsum('ni,n,n->ni', s, np.sign(np.sum(s, axis=-1)), 1/(norm+np.isclose(norm, 0))), 8)
+    indices = np.round(np.einsum('ni,n,n->ni', s, np.sign(np.sum(s, axis=-1)), 1/(norm+np.isclose(norm, 0))), decimals=8)
     indices = np.unique(indices, axis=0, return_inverse=True)[1]
     indices = np.unique(indices[~np.isclose(norm, 0)])[:,np.newaxis]==indices[np.newaxis,:]
     # 0-tensor gets a special treatment, since it's linearly dependent on all terms
@@ -120,7 +122,7 @@ def _get_higher_order_terms(strain_lst, derivative=False, polynomial_degree_redu
     if rotations is None:
         rotations = np.eye(3).reshape(1, 3, 3)
     strain_lst = np.array(strain_lst)
-    indices = _get_linearly_dependent_indices(strain_lst)
+    indices = _get_linear_dependent_indices(strain_lst)
     # counts stands for the polynomial degree, starting from 1 meaning first anharmonic contribution
     counts = np.sum(indices, axis=1)
     counts = np.floor(counts/2-0.75).astype(int)-polynomial_degree_reduction
@@ -129,7 +131,7 @@ def _get_higher_order_terms(strain_lst, derivative=False, polynomial_degree_redu
         return None
     strain_higher_terms = np.zeros((len(strain_lst), np.sum(counts)))
     if derivative:
-        # repeat indices
+        # repeat indices (np.tile doesn't allow copying of 2d-arrays)
         indices = np.isclose(np.einsum('k,ni->nki', np.ones(len(rotations)), indices).reshape(indices.shape[0], -1), 1)
         strain_lst = np.einsum('nik,mkl,njl->nmij', rotations, strain_lst, rotations).reshape(-1, 9)
         s_voigt = strain_lst[:, [0, 4, 8, 5, 2, 1]]
@@ -152,7 +154,7 @@ def _get_higher_order_terms(strain_lst, derivative=False, polynomial_degree_redu
         strain_higher_terms = strain_higher_terms.reshape(-1, strain_higher_terms.shape[-1])
     return strain_higher_terms
 
-def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations=None, return_score=False, polynomial_degree_reduction=0):
+def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations=None, return_score=False, polynomial_degree_reduction=0, fit_first_order=False):
     """
     Calculate 6x6-elastic tensor from the strain and stress or strain and energy+volume.
 
@@ -176,9 +178,9 @@ def calc_elastic_tensor(strain, stress=None, energy=None, volume=None, rotations
     else:
         rotations = [np.eye(3)]
     if stress is not None and len(stress)==len(strain):
-        coeff, score = _fit_coeffs_with_stress(strain=strain, stress=stress, rotations=rotations, polynomial_degree_reduction=polynomial_degree_reduction)
+        coeff, score = _fit_coeffs_with_stress(strain=strain, stress=stress, rotations=rotations, polynomial_degree_reduction=polynomial_degree_reduction, fit_first_order=fit_first_order)
     elif energy is not None and volume is not None and len(energy)==len(strain) and len(energy)==len(volume):
-        coeff, score = _fit_coeffs_with_energies(strain=strain, energy=energy, volume=volume, rotations=rotations, polynomial_degree_reduction=polynomial_degree_reduction)
+        coeff, score = _fit_coeffs_with_energies(strain=strain, energy=energy, volume=volume, rotations=rotations, polynomial_degree_reduction=polynomial_degree_reduction, fit_first_order=fit_first_order)
     else:
         raise ValueError('Provide either strain and stress, or strain, energy and volume of same length.')
     if return_score:
@@ -282,6 +284,7 @@ class ElasticTensor(AtomisticParallelMaster):
         self.input['normalize_magnitude'] = False
         self.input['use_elements'] = (True, 'whether or not consider chemical elements for '
                                             + 'the symmetry analysis. Could be useful for SQS')
+        self.input['fit_first_order'] = False
         self._job_generator = ElasticJobGenerator(self)
 
     @property
@@ -352,6 +355,7 @@ class ElasticTensor(AtomisticParallelMaster):
             energy = energy,
             volume = self._output['volume'],
             return_score = True,
+            fit_first_order=self.input['fit_first_order'],
         )
         self._output['fit_score'] = score
         for k,v in calc_elastic_constants(elastic_tensor).items():
