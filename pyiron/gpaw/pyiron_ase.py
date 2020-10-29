@@ -143,6 +143,9 @@ class AseJob(GenericInteractive):
     def interactive_structure_setter(self, structure):
         self.structure.calc.calculate(structure)
 
+    def interactive_positions_setter(self, positions):
+        self.structure.positions = positions
+
     def interactive_initialize_interface(self):
         self.status.running = True
         self._structure.calc.set_label(self.working_directory + "/")
