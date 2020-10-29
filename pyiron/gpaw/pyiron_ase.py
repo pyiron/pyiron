@@ -275,7 +275,7 @@ class AseJob(GenericInteractive):
                 self.get("output/generic/cells") is not None
                 and len(self.get("output/generic/cells")) != 0
             ):
-                return super(GenericInteractive, self).get_structure(
+                return super(AseJob, self).get_structure(
                     iteration_step=iteration_step, wrap_atoms=wrap_atoms
                 )
             else:
