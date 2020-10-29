@@ -10,6 +10,7 @@ from pyiron.atomistics.master.parallel import AtomisticParallelMaster
 from pyiron_base import JobGenerator
 from sklearn.linear_model import LinearRegression
 from collections import defaultdict
+import warnings
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = (
