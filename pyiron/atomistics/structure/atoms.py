@@ -418,7 +418,7 @@ class Atoms(ASEAtoms):
                     self.convert_element(el, self._pse) for el in hdf_atoms["species"]
                 ]
                 self.indices = hdf_atoms["indices"]
-                self._tag_list._length = len(self)
+                self._tag_list._length = len(self.indices)
 
                 self.set_species(el_object_list)
                 self.bonds = None
@@ -1998,6 +1998,7 @@ class Atoms(ASEAtoms):
         for key, val in self.__dict__.items():
             if key not in ase_keys:
                 atoms_new.__dict__[key] = copy(val)
+        atoms_new.visualize = Visualize(atoms_new)
         return atoms_new
 
     def __delitem__(self, key):

@@ -224,11 +224,19 @@ class TestAtoms(unittest.TestCase):
         pos, cell = generate_fcc_lattice()
         basis_store = Atoms(symbols="Al", positions=pos, cell=cell)
         basis_store.set_repeat([2, 2, 2])
+        basis_store.add_tag(selective_dynamics=[False, False, False])
+        basis_store.selective_dynamics[7] = [True, True, True]
         basis_store.to_hdf(hdf_obj, "simple_structure")
         basis = Atoms().from_hdf(hdf_obj, group_name="simple_structure")
         self.assertEqual(len(basis), 8)
         self.assertEqual(basis.get_majority_species()["symbol"], "Al")
         self.assertEqual(basis.get_spacegroup()["Number"], 225)
+        self.assertTrue(basis.selective_dynamics[7][0])
+        self.assertFalse(basis.selective_dynamics[0][0])
+        basis.add_tag(selective_dynamics=[False, False, False])
+        basis.selective_dynamics[6] = [True, True, True]
+        self.assertTrue(basis.selective_dynamics[6][0])
+        self.assertFalse(basis.selective_dynamics[5][0])
 
     def test_to_object(self):
         filename = os.path.join(

@@ -105,6 +105,10 @@ class ScipyMinimizer(InteractiveWrapper):
         self.collect_output()
         if self.ref_job.server.run_mode.interactive:
             self.ref_job.interactive_close()
+        if self["output/convergence"] > 0:
+            self.status.finished = True
+        else:
+            self.status.not_converged = True
 
     def _update(self, x):
         rerun = False
