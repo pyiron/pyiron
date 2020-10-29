@@ -327,6 +327,9 @@ class VaspBase(GenericDFTJob):
             }
         }
 
+    def get_kpoints(self):
+        return [int(v) for v in self.input.kpoints[3].split()]
+
     def set_input_to_read_only(self):
         """
         This function enforces read-only mode for the input classes, but it has to be implement in the individual
