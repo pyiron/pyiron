@@ -169,7 +169,7 @@ def _get_higher_order_terms(
         E /= np.linalg.norm(E)
         E = np.sum((E*strain_lst[ind]).reshape(-1, 9), axis=-1)
         if derivative:
-            E = (np.arange(cc)+3)[na,:]*E[:,na]**(np.arange(cc)+1)[na,:]
+            E = E[:,na]**(np.arange(cc)+1)[na,:]
         else:
             E = E[:,na]**(np.arange(cc)+3)[na,:]
         starting_index = np.sum(np.any(strain_higher_terms!=0, axis=0))
