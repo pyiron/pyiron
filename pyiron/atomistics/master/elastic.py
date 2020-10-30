@@ -224,7 +224,23 @@ def calc_elastic_tensor(
     else:
         return np.array(coeff)[:,:6]
 
-def get_strain(max_strain=0.05, n_set=10, polynomial_order=3, additional_points=0, normalize=False):
+def get_strain(max_strain=0.05, n_set=10, polynomial_order=2, additional_points=0, normalize=False):
+    """
+        Args:
+            max_strain (float): Maximum strain (for each component)
+            n_set (int): Number of strain values to return
+            polynomial_order (int): This value determines the number of
+                linear-dependent strain values. For a polynomial order of two,
+                there will be +-strain and for 3, there will be +-strain and
+                +-0.5*strain etc.
+            additional_points (int): Additional linear-dependent points
+            normalize (bool): Whether to normalize the strain values. If True,
+                the norm (Frobenius norm) of all outer most strain (i.e. the
+                greatest strain within the linear-dependent terms) will be
+                equal to max_strain
+
+        Returns: numpy.ndarray of strains (n, 3, 3)
+    """
     strain_lst = np.random.random((n_set, 3, 3))-0.5
     strain_lst += np.einsum('nij->nji', strain_lst)
     if normalize:
