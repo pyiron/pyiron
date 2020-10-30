@@ -6,7 +6,7 @@ import os
 import unittest
 from pyiron.atomistics.structure.atoms import CrystalStructure
 from pyiron_base import Project
-from pyiron.atomistics.master.elastic import calc_elastic_tensor, calc_elastic_constants
+from pyiron.atomistics.master.elastic import calc_elastic_tensor
 import numpy as np
 
 
@@ -39,10 +39,6 @@ class TestMurnaghan(unittest.TestCase):
         self.assertEqual(len(elast.input['rotations']), 48)
         self.assertEqual(len(elast.input['strain_matrices']), 21)
         elast.run()
-        self.assertAlmostEqual(elast['output/bulk_modulus'], 100)
-        with self.assertRaises(ValueError):
-            elast.get_elastic_tensor_by_orientation([[1,1,1],[1,0,-1],[1,-2,1]])
-        elast.get_elastic_tensor_by_orientation([[1,1,1],[-1,0,1],[1,-2,1]])
 
     def test_calc_elastic_tensor(self):
         strain = [[[0.005242761019305993, -0.0012053606628952052, -0.0032546722513198236],
@@ -60,9 +56,6 @@ class TestMurnaghan(unittest.TestCase):
         C = calc_elastic_tensor(strain=strain, rotations=self.basis.get_symmetry()['rotations'], stress=stress)
         self.assertGreater(np.min(C[:3,:3].diagonal()), 200)
         self.assertLess(np.min(C[:3,:3].diagonal()), 300)
-        output = calc_elastic_constants(C)
-        self.assertGreater(output['poissons_ratio'], 0)
-        self.assertLess(output['poissons_ratio'], 1)
         energy = [-8.02446818, -8.02538938]
         volume = [23.38682061, 23.24219739]
         C = calc_elastic_tensor(strain=strain,
