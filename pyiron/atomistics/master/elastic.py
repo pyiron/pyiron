@@ -382,11 +382,11 @@ class ElasticTensor(AtomisticParallelMaster):
         if self.input['polynomial_order']<2:
             raise ValueError('Minimum polynomial order: 2')
         if self.input['polynomial_order']==2 and self.input['additional_points']>0:
-            warnings.warn('Setting additional points for anharmonic calculations only increases the number of calculations')
+            warnings.warn('Setting additional points in harmonic calculations only increases the number of calculations')
         if self.input['polynomial_order']==2 and self.input['normalize_magnitude']:
             warnings.warn('Magnitude normalization could reduce accuracy in harmonic calculations')
         if self.input['polynomial_order']>2 and not self.input['normalize_magnitude']:
-            warnings.warn('Not normalizing magnitude could destabilise fit procedure')
+            warnings.warn('Not normalizing magnitude could destabilise fit')
         if self.input['fit_first_order']:
             warnings.warn('First order fit does not correct the second order coefficients in the current implementation')
 
