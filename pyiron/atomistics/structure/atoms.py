@@ -1118,7 +1118,7 @@ class Atoms(ASEAtoms):
         v_repeated = v_repeated[check_dist]
         return v_repeated, indices
 
-    def get_number_of_neighbors_in_sphere(
+    def get_numbers_of_neighbors_in_sphere(
             self,
             cutoff_radius=10,
             num_neighbors=None,
@@ -1138,7 +1138,8 @@ class Atoms(ASEAtoms):
             num_neighbors_estimate_buffer (float): Extra volume taken into account for the num_neighbors estimation
 
         Returns:
-            maximum number of neighbors found in the sphere of radius cutoff_radius (<= num_neighbors if specified)
+            (np.ndarray) : for each atom the number of neighbors found in the sphere of radius
+                           cutoff_radius (<= num_neighbors if specified)
         """
         if num_neighbors is not None:
             neigh = self._get_neighbors(
@@ -1149,7 +1150,7 @@ class Atoms(ASEAtoms):
                 cutoff_radius=cutoff_radius,
                 boundary_width_factor=boundary_width_factor,
             )
-            num_neighbors = np.sum(neigh.distances < np.inf, axis=-1).max()
+            num_neighbors_per_atom = np.sum(neigh.distances < np.inf, axis=-1)
         else:
             volume_per_atom = self.get_volume(per_atom=True)
             if id_list is not None:
@@ -1167,10 +1168,11 @@ class Atoms(ASEAtoms):
                     boundary_width_factor=boundary_width_factor,
                 )
                 num_neighbors_old = num_neighbors
-                num_neighbors = np.sum(neigh.distances < np.inf, axis=-1).max()
+                num_neighbors_per_atom = np.sum(neigh.distances < np.inf, axis=-1)
+                num_neighbors = num_neighbors_per_atom.max()
                 if num_neighbors == num_neighbors_old:
                     num_neighbors = 2 * num_neighbors
-        return num_neighbors
+        return num_neighbors_per_atom
 
 
     def get_neighbors_by_distance(
