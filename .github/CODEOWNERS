@@ -1,0 +1,17 @@
+# This file contains file patterns that triggers automatic
+# code review requests from users that are owners of these files
+# Order matters, the last match has the highest precedence
+
+pyiron/atomistics           @jan-janssen
+pyiron/dft                  @jan-janssen
+pyiron/gaussian             @SanderBorgmans
+pyiron/gpaw                 @jan-janssen
+pyiron/interactive          @jan-janssen
+pyiron/lammps               @jan-janssen
+pyiron/quickff              @SanderBorgmans
+pyiron/sphinx               @samwaseda
+pyiron/table                @jan-janssen
+pyiron/testing              @jan-janssen
+pyiron/thermodynamics       @jan-janssen
+pyiron/vasp                 @sudarsan-surendralal
+pyiron/yaff                 @jan-janssen
