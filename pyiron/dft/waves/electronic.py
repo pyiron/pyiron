@@ -675,7 +675,7 @@ class ElectronicStructure(object):
             plt.plot(eigenvalues[arg], self.occupancies[spin][arg], "-o", label="spin:{}".format(spin), linewidth=2)
         plt.legend()
         plt.axvline(self.efermi, linewidth=2.0, linestyle="dashed", color="black")
-        plt.xlabel("Energies (eV)")
+        plt.xlabel("Eigen value (eV)")
         plt.ylabel("Occupancy")
         return plt
 
