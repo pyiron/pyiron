@@ -711,10 +711,6 @@ class ElectronicStructure(object):
                                                                                            "{}".format(self.eg[spin]))
         except ValueError:
             pass
-        if not all(self.is_metal):
-            output_string.append(
-                "Band Gap for : {} eV".format([val["band_gap"] for val in self.get_band_gap(resolution=1.0e-4)])
-            )
         return "\n".join(output_string)
 
     def __repr__(self):
