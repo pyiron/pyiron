@@ -134,8 +134,10 @@ def _get_linear_dependent_indices(strain_lst):
     indices = np.round(np.einsum('ni,n,n->ni', s, np.sign(np.sum(s, axis=-1)),
                        1/(norm+np.isclose(norm, 0))), decimals=8)
     indices = np.unique(indices, axis=0, return_inverse=True)[1]
-    indices = np.unique(indices[~np.isclose(norm, 0)])[:,np.newaxis]==indices[np.newaxis,:]
-    # 0-tensor gets a special treatment, since it's linearly dependent on all terms
+    na = np.newaxis
+    indices = np.unique(indices[~np.isclose(norm, 0)])[:,na]==indices[na,:]
+    # 0-tensor gets a special treatment, since it's linearly dependent on all
+    # terms (even though it virtually changes nothing)
     indices[:,np.isclose(norm, 0)] = True
     return indices
 
@@ -146,17 +148,15 @@ def _get_higher_order_terms(
         derivative=False,
     ):
     """
-    Returns a matrix containing higher order terms. axis=0 corresponds to the elastic tensors and
-    axis=1 the higher order terms. From the number of linearly dependent terms the polynomial order
-    is calculated internally -> up to 3: harmonic; 4 and 5: third degree etc. If derivative=True,
-    each of the component is multiplied with the elastic tensor, so that the total length becomes
-    6 times as large.
+    Returns a matrix containing higher order terms. axis=0 corresponds to the
+    elastic tensors and axis=1 the higher order terms. From the number of
+    linearly dependent terms the polynomial order is calculated internally
+    -> up to 3: harmonic; 4 and 5: third degree etc.
     """
-    if rotations is None:
-        rotations = np.eye(3).reshape(1, 3, 3)
     strain_lst = np.array(strain_lst)
     indices = _get_linear_dependent_indices(strain_lst)
-    # counts stands for the polynomial degree, starting from 1 meaning first anharmonic contribution
+    # counts stands for the polynomial degree, starting from 1 meaning first
+    # anharmonic contribution
     counts = np.sum(indices, axis=1)
     counts = np.floor(counts/2-0.75).astype(int)-polynomial_degree_reduction
     counts[counts<0] = 0
@@ -165,7 +165,8 @@ def _get_higher_order_terms(
     strain_higher_terms = np.zeros((len(strain_lst), np.sum(counts)))
     na = np.newaxis
     for cc, ind in zip(counts, indices):
-        E = strain_lst[ind][np.linalg.norm(strain_lst[ind].reshape(-1,9), axis=-1).argmax()]
+        E = strain_lst[ind][
+            np.linalg.norm(strain_lst[ind].reshape(-1, 9), axis=-1).argmax()]
         E /= np.linalg.norm(E)
         E = np.sum((E*strain_lst[ind]).reshape(-1, 9), axis=-1)
         if derivative:
@@ -174,8 +175,12 @@ def _get_higher_order_terms(
             E = E[:,na]**(np.arange(cc)+3)[na,:]
         starting_index = np.sum(np.any(strain_higher_terms!=0, axis=0))
         strain_higher_terms[ind, starting_index:starting_index+E.shape[1]] = E
-    strain_higher_terms = np.einsum('n,ij->nij', np.ones(len(rotations)), strain_higher_terms)
-    strain_higher_terms = strain_higher_terms.reshape(-1, strain_higher_terms.shape[-1])
+    strain_higher_terms = np.einsum('n,ij->nij',
+                                    np.ones(len(rotations)),
+                                    strain_higher_terms)
+    strain_higher_terms = strain_higher_terms.reshape(
+        -1, strain_higher_terms.shape[-1]
+    )
     return strain_higher_terms
 
 def calc_elastic_tensor(
@@ -189,10 +194,11 @@ def calc_elastic_tensor(
         fit_first_order=False,
     ):
     """
-    Calculate 6x6-elastic tensor from the strain and stress or strain and energy+volume.
+    Calculate 6x6-elastic tensor from the strain and stress or strain and
+    energy+volume.
 
-    Rotations matrices can be added to take box symmetries into account (unit matrix can
-    be added but does not have to be included in the list)
+    Rotations matrices can be added to take box symmetries into account (unit
+    matrix can be added but does not have to be included in the list)
 
     Args:
         strain (numpy.ndarray): nx3x3 strain tensors
@@ -200,16 +206,19 @@ def calc_elastic_tensor(
         energy (numpy.ndarray): n energy values
         volume (numpy.ndarray): n volume values
         rotations (numpy.ndarray): mx3x3 rotation matrices
-        return_score (numpy.ndarray): return regression score (cf. sklearn.linear_mode.LinearRegression)
+        return_score (numpy.ndarray): return regression score
+            (cf. sklearn.linear_mode.LinearRegression)
     """
     if len(strain)==0:
         raise ValueError('Not enough points')
     if rotations is not None:
         rotations = np.append(np.eye(3), rotations).reshape(-1, 3, 3)
-        _, indices = np.unique(np.round(rotations, 6), axis=0, return_inverse=True)
+        _, indices = np.unique(
+            np.round(rotations, 6), axis=0, return_inverse=True
+        )
         rotations = rotations[np.unique(indices)]
     else:
-        rotations = [np.eye(3)]
+        rotations = np.eye(3).reshape(1, 3, 3)
     if stress is not None and len(stress)==len(strain):
         coeff, score = _fit_coeffs_with_stress(
             strain=strain,
@@ -231,7 +240,8 @@ def calc_elastic_tensor(
             fit_first_order=fit_first_order,
         )
     else:
-        raise ValueError('Provide either strain and stress, or strain, energy and volume of same length.')
+        raise ValueError('Provide either strain and stress, or strain, energy '
+                         + 'and volume of same length.')
     if return_score:
         return np.array(coeff)[:,:6], score
     else:
@@ -253,8 +263,11 @@ def calc_elastic_constants(elastic_tensor):
     output['shear_modulus'] = np.mean(elastic_tensor[3:, 3:].diagonal())
     output['bulk_modulus'] = np.mean(elastic_tensor[:3,:3])
     output['youngs_modulus'] = 1/np.mean(np.linalg.inv(elastic_tensor[:3,:3]).diagonal())
-    output['poissons_ratio'] = -output['youngs_modulus']*np.sum(np.linalg.inv(elastic_tensor[:3,:3]))/6+0.5
-    output['zener_ratio'] = 12*np.mean(elastic_tensor[3:,3:].diagonal())/(3*np.trace(elastic_tensor[:3,:3])-np.sum(elastic_tensor[:3,:3]))
+    output['poissons_ratio'] = -output['youngs_modulus']*np.sum(
+        np.linalg.inv(elastic_tensor[:3,:3])
+    )/6+0.5
+    output['zener_ratio'] = 12*np.mean(elastic_tensor[3:,3:].diagonal())
+    output['zener_ratio'] /= (3*np.trace(elastic_tensor[:3,:3])-np.sum(elastic_tensor[:3,:3]))
     return output
 
 def get_strain(max_strain=0.05, n_set=10, polynomial_order=3, additional_points=0, normalize=False):
