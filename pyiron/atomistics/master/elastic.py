@@ -13,7 +13,7 @@ from collections import defaultdict
 import warnings
 import itertools
 
-__author__ = "Joerg Neugebauer, Jan Janssen"
+__author__ = "Sam Waseda"
 __copyright__ = (
     "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
     "Computational Materials Design (CM) Department"
@@ -57,7 +57,8 @@ def _fit_coeffs_with_stress(
         strain_tmp = strain.copy()
         strain_tmp[:, 6:] *= strain[:, ii, np.newaxis]
         reg = LinearRegression(
-            fit_intercept=fit_first_order).fit(strain_tmp, stress[:,ii])
+            fit_intercept=fit_first_order
+        ).fit(strain_tmp, stress[:,ii])
         coeff.append(reg.coef_)
         score.append(reg.score(strain_tmp, stress[:,ii]))
     return np.array(coeff), np.array(score)
@@ -106,14 +107,17 @@ def _get_linear_dependent_indices(strain_lst):
     """
     s = np.array(strain_lst).reshape(-1, 9)
     norm = np.linalg.norm(s, axis=-1)
-    indices = np.round(np.einsum('ni,n,n->ni', s, np.sign(np.sum(s, axis=-1)),
-                       1/(norm+np.isclose(norm, 0))), decimals=8)
+    sign = np.sign(np.sum(s, axis=-1))
+    indices = np.round(
+        np.einsum('ni,n->ni', s, sign/(norm+np.isclose(norm, 0))),
+        decimals=8
+    )
     indices = np.unique(indices, axis=0, return_inverse=True)[1]
     na = np.newaxis
     indices = np.unique(indices[~np.isclose(norm, 0)])[:,na]==indices[na,:]
     # 0-tensor gets a special treatment, since it's linearly dependent on all
     # terms (even though it virtually changes nothing)
-    indices[:,np.isclose(norm, 0)] = True
+    indices[:, np.isclose(norm, 0)] = True
     return indices
 
 def _get_higher_order_terms(
@@ -224,6 +228,11 @@ def calc_elastic_tensor(
     else:
         return np.array(coeff)[:,:6]
 
+def _get_random_symmetric_matrices(n):
+    matrices = np.random.random((n, 3, 3))-0.5
+    return matrices + np.einsum('nij->nji', matrices)
+
+
 def get_strain(max_strain=0.05, n_set=10, polynomial_order=2, additional_points=0, normalize=False):
     """
         Args:
@@ -241,8 +250,7 @@ def get_strain(max_strain=0.05, n_set=10, polynomial_order=2, additional_points=
 
         Returns: numpy.ndarray of strains (n, 3, 3)
     """
-    strain_lst = np.random.random((n_set, 3, 3))-0.5
-    strain_lst += np.einsum('nij->nji', strain_lst)
+    strain_lst = _get_random_symmetric_matrices(n_set)
     if normalize:
         strain_lst = np.einsum('nij,n->nij', strain_lst, 1/np.linalg.norm(strain_lst.reshape(-1, 9), axis=-1))
     strain_lst *= max_strain
@@ -336,8 +344,10 @@ class ElasticTensor(AtomisticParallelMaster):
         )
         self.input['fit_first_order'] = (
             False,
-            'Whether or not fit first order terms. Setting this to True does'
-            ' not correct the second order terms'
+            'Whether or not fit first order terms. In principle it should not'
+            + ' be necessary, but might stabilize the calculation if the'
+            + ' reference structure is not exactly in the zero pressure state.'
+            + ' Setting this to True does not correct the second order terms'
         )
         self._job_generator = _ElasticJobGenerator(self)
 
@@ -357,9 +367,8 @@ class ElasticTensor(AtomisticParallelMaster):
     def _create_strain_matrices(self):
         if self.input['use_symmetry'] and len(self.input['rotations'])==0:
             self._get_rotation_matrices()
-        eps_lst = np.random.random((int(self._number_of_measurements), 3, 3))-0.5
+        eps_lst = _get_random_symmetric_matrices(int(self._number_of_measurements))
         eps_lst *= self.input['max_strain']
-        eps_lst += np.einsum('nij->nji', eps_lst)
         self.input['strain_matrices'] = get_strain(max_strain=self.input['max_strain'],
                                                    n_set=self._number_of_measurements,
                                                    polynomial_order=self.input['polynomial_order'],
