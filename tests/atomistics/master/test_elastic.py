@@ -10,7 +10,7 @@ from pyiron.atomistics.master.elastic import calc_elastic_tensor, _get_higher_or
 import numpy as np
 
 
-class TestMurnaghan(unittest.TestCase):
+class TestElasticTensor(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))

@@ -270,7 +270,7 @@ class _ElasticJobGenerator(JobGenerator):
 
 class ElasticTensor(AtomisticParallelMaster):
     """
-    Class to calculate the elastic tensor and isotropic elastic constants
+    Class to calculate the elastic tensor and isotropic elastic constants.
 
     Example:
 
@@ -309,14 +309,36 @@ class ElasticTensor(AtomisticParallelMaster):
             "relative volume variation around volume defined by ref_ham",
         )
         self.input['polynomial_order'] = 2
-        self.input['additional_points'] = 0
-        self.input['strain_matrices'] = []
-        self.input['use_symmetry'] = True
-        self.input['rotations'] = []
-        self.input['normalize_magnitude'] = False
-        self.input['use_elements'] = (True, 'whether or not consider chemical elements for '
-                                            + 'the symmetry analysis. Could be useful for SQS')
-        self.input['fit_first_order'] = False
+        self.input['additional_points'] = (
+            0,
+            'number of additional linear-dependent points to make anharmonic'
+             + ' contribution more stable. It should not be larger than 0 if'
+             + ' polynomial_order=2'
+        )
+        self.input['strain_matrices'] = (
+            [], 
+            'List of strain matrices (generated automatically if not set)'
+        )
+        self.input['use_symmetry'] = (True, 'Whether to consider box symmetries')
+        self.input['rotations'] = (
+            [],
+            'List of rotation matrices (generated automatically if not set)'
+        )
+        self.input['normalize_magnitude'] = (
+            False,
+            'Whether or normalize magnitude, so that the Frobenius norm is '
+            + 'always max_strain'
+        )
+        self.input['use_elements'] = (
+            True,
+            'Whether or not consider chemical elements for the symmetry'
+            + ' analysis. Could be useful for SQS'
+        )
+        self.input['fit_first_order'] = (
+            False,
+            'Whether or not fit first order terms. Setting this to True does'
+            ' not correct the second order terms'
+        )
         self._job_generator = _ElasticJobGenerator(self)
 
     @property
@@ -357,38 +379,36 @@ class ElasticTensor(AtomisticParallelMaster):
         if self.input['polynomial_order']>2 and not self.input['normalize_magnitude']:
             warnings.warn('Not normalizing magnitude could destabilise fit procedure')
         if self.input['fit_first_order']:
-            warnings.warn('first order fit does not correct the second order coefficients in the current implementation')
+            warnings.warn('First order fit does not correct the second order coefficients in the current implementation')
 
     def collect_output(self):
         if self.ref_job.server.run_mode.interactive:
-            ham = self.project_hdf5.inspect(self.child_ids[0])
+            job = self.project_hdf5.inspect(self.child_ids[0])
             for key in ['energy_tot', 'energy_pot', 'pressures', 'volume']:
-                if key in ham["output/generic"].list_nodes():
-                    self._output[key] = ham["output/generic/{}".format(key)]
+                if key in job["output/generic"].list_nodes():
+                    self._output[key] = job["output/generic/{}".format(key)]
                 else:
                     self._output[key] = []
         else:
-            output_dict = defaultdict(list)
-            for job_id in self.child_ids:
-                ham = self.project_hdf5.inspect(job_id)
-                for key in ['energy_tot', 'energy_pot', 'pressures', 'volume']:
-                    if key in ham["output/generic"].list_nodes():
-                        output_dict[key].append(ham["output/generic/{}".format(key)][-1])
-                    else:
-                        output_dict[key] = []
-                output_dict['id'].append(job_id)
-            for k,v in output_dict.items():
-                self._output[k] = np.array(v)
+            job_lst = [self.project_hdf5.inspect(job_id) for job_id in self.child_ids]
+            self._output['id'] = self.child_ids
+            for key in ['energy_tot', 'energy_pot', 'pressures', 'volume']:
+                if all(key in job["output/generic"].list_nodes() for job in job_list):
+                    self._output[key] = np.array([
+                        job["output/generic/{}".format(key)][-1] for job in job_list
+                    ])
+                else:
+                    self._output[key] = []
         energy = self._output['energy_tot']
         if len(self._output['energy_pot'])==len(self._output['volume']):
             energy = self._output['energy_pot']
         elastic_tensor, score = calc_elastic_tensor(
-            strain = self.input['strain_matrices'],
-            stress = -np.array(self._output['pressures']),
-            rotations = self.input['rotations'],
-            energy = energy,
-            volume = self._output['volume'],
-            return_score = True,
+            strain=self.input['strain_matrices'],
+            stress=-np.array(self._output['pressures']),
+            rotations=self.input['rotations'],
+            energy=energy,
+            volume=self._output['volume'],
+            return_score=True,
             fit_first_order=self.input['fit_first_order'],
             max_polynomial_order=self.input['polynomial_order'],
         )
@@ -397,5 +417,6 @@ class ElasticTensor(AtomisticParallelMaster):
         with self.project_hdf5.open("output") as hdf5_out:
             for key, val in self._output.items():
                 hdf5_out[key] = val
+
 
 
