@@ -672,7 +672,7 @@ class ElectronicStructure(object):
             import matplotlib.pyplot as plt
         for spin, eigenvalues in enumerate(self.eigenvalues):
             arg = np.argsort(eigenvalues)
-            plt.plot(eigenvalues[arg], self.occupancies[spin][arg], linewidth=2.0, label="spin:{}".format(spin))
+            plt.plot(eigenvalues[arg], self.occupancies[spin][arg], "x", label="spin:{}".format(spin))
         plt.legend()
         plt.axvline(self.efermi, linewidth=2.0, linestyle="dashed", color="black")
         plt.xlabel("Energies (eV)")
