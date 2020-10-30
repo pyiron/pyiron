@@ -250,7 +250,7 @@ def get_strain(max_strain=0.05, n_set=10, polynomial_order=2, additional_points=
     strain_lst = np.einsum('k,nij->nkij', m, strain_lst).reshape(-1, 9)
     return np.unique(strain_lst, axis=0).reshape(-1, 3, 3)
 
-class ElasticJobGenerator(JobGenerator):
+class _ElasticJobGenerator(JobGenerator):
     @property
     def parameter_list(self):
         parameter_lst = []
@@ -317,7 +317,7 @@ class ElasticTensor(AtomisticParallelMaster):
         self.input['use_elements'] = (True, 'whether or not consider chemical elements for '
                                             + 'the symmetry analysis. Could be useful for SQS')
         self.input['fit_first_order'] = False
-        self._job_generator = ElasticJobGenerator(self)
+        self._job_generator = _ElasticJobGenerator(self)
 
     @property
     def _number_of_measurements(self):
