@@ -33,12 +33,12 @@ def _fit_coeffs_with_stress(
         strain,
         stress,
         rotations,
-        polynomial_degree_reduction=0,
+        max_polynomial_order=None,
         fit_first_order=False,
     ):
     higher_terms = _get_higher_order_terms(
         strain,
-        polynomial_degree_reduction=polynomial_degree_reduction,
+        max_polynomial_order=max_polynomial_order,
         rotations=rotations,
         derivative=True,
     )
@@ -67,12 +67,12 @@ def _fit_coeffs_with_energies(
         energy,
         volume,
         rotations,
-        polynomial_degree_reduction=0,
+        max_polynomial_order=None,
         fit_first_order=False,
     ):
     higher_terms = _get_higher_order_terms(
         strain,
-        polynomial_degree_reduction=polynomial_degree_reduction,
+        max_polynomial_order=max_polynomial_order,
         rotations=rotations,
         derivative=False,
     )
@@ -118,7 +118,7 @@ def _get_linear_dependent_indices(strain_lst):
 
 def _get_higher_order_terms(
         strain_lst,
-        polynomial_degree_reduction=0,
+        max_polynomial_order=None,
         rotations=None,
         derivative=False,
     ):
@@ -133,7 +133,9 @@ def _get_higher_order_terms(
     # counts stands for the polynomial degree, starting from 1 meaning first
     # anharmonic contribution
     counts = np.sum(indices, axis=1)
-    counts = np.floor(counts/2-0.75).astype(int)-polynomial_degree_reduction
+    counts = np.floor(counts/2-0.75).astype(int)
+    if max_polynomial_order is not None:
+        counts[counts>max_polynomial_order-2] = max_polynomial_order-2
     counts[counts<0] = 0
     if sum(counts)==0: # No term gets more than harmonic part
         return None
@@ -165,7 +167,7 @@ def calc_elastic_tensor(
         volume=None,
         rotations=None,
         return_score=False,
-        polynomial_degree_reduction=0,
+        max_polynomial_order=None,
         fit_first_order=False,
     ):
     """
@@ -199,7 +201,7 @@ def calc_elastic_tensor(
             strain=strain,
             stress=stress,
             rotations=rotations,
-            polynomial_degree_reduction=polynomial_degree_reduction,
+            max_polynomial_order=max_polynomial_order,
             fit_first_order=fit_first_order,
         )
     elif (energy is not None
@@ -211,7 +213,7 @@ def calc_elastic_tensor(
             energy=energy,
             volume=volume,
             rotations=rotations,
-            polynomial_degree_reduction=polynomial_degree_reduction,
+            max_polynomial_order=max_polynomial_order,
             fit_first_order=fit_first_order,
         )
     else:
@@ -372,6 +374,7 @@ class ElasticTensor(AtomisticParallelMaster):
             volume = self._output['volume'],
             return_score = True,
             fit_first_order=self.input['fit_first_order'],
+            max_polynomial_order=self.input['polynomial_order'],
         )
         self._output['fit_score'] = score
         self._output['elastic_tensor'] = elastic_tensor
