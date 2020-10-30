@@ -1125,18 +1125,20 @@ class Atoms(ASEAtoms):
             tolerance=2,
             id_list=None,
             boundary_width_factor=1.2,
+            num_neighbors_estimate_buffer=1.0,
     ):
         """
-        Function to compute the number of neighbors in a sphere around each atom.
+        Function to compute the maximum number of neighbors in a sphere around each atom.
         Args:
             cutoff_radius (float): Upper bound of the distance to which the search must be done
-            num_neighbors (int): maximum number of neighbors found
+            num_neighbors (int/None): maximum number of neighbors found
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list (list): list of atoms the neighbors are to be looked for
             boundary_width_factor (float): width of the layer to be added to account for pbc.
+            num_neighbors_estimate_buffer (float): Extra volume taken into account for the num_neighbors estimation
 
         Returns:
-            maximum number of neigbors found in the sphere of radius cutoff_radius (<= num_neighbors if specified)
+            maximum number of neighbors found in the sphere of radius cutoff_radius (<= num_neighbors if specified)
         """
         if num_neighbors is not None:
             neigh = self._get_neighbors(
@@ -1147,9 +1149,13 @@ class Atoms(ASEAtoms):
                 cutoff_radius=cutoff_radius,
                 boundary_width_factor=boundary_width_factor,
             )
-            num_neighbors = max(len(elem) for elem in neigh.indices)
+            num_neighbors = np.sum(neigh.distances < np.inf, axis=-1).max()
         else:
-            num_neighbors = int(0.5*cutoff_radius**3)
+            volume_per_atom = self.get_volume(per_atom=True)
+            if id_list is not None:
+                volume_per_atom = self.get_volume() / len(id_list)
+            num_neighbors = int((1 + num_neighbors_estimate_buffer) *
+                                4. / 3. * np.pi * cutoff_radius ** 3 / volume_per_atom)
             num_neighbors_old = 1
             while num_neighbors_old < num_neighbors:
                 neigh = self._get_neighbors(
@@ -1160,10 +1166,8 @@ class Atoms(ASEAtoms):
                     cutoff_radius=cutoff_radius,
                     boundary_width_factor=boundary_width_factor,
                 )
-                neigh.indices = [indices[dist < np.inf] for indices, dist in zip(neigh.indices, neigh.distances)]
-                neigh.distances = [dist[dist < np.inf] for dist in neigh.distances]
                 num_neighbors_old = num_neighbors
-                num_neighbors = max(len(elem) for elem in neigh.indices)
+                num_neighbors = np.sum(neigh.distances < np.inf, axis=-1).max()
                 if num_neighbors == num_neighbors_old:
                     num_neighbors = 2 * num_neighbors
         return num_neighbors
@@ -1177,18 +1181,19 @@ class Atoms(ASEAtoms):
         tolerance=2,
         id_list=None,
         boundary_width_factor=1.2,
+        num_neighbors_estimate_buffer=1.0,
     ):
         """
 
         Args:
             cutoff_radius (float): Upper bound of the distance to which the search must be done
-            num_neighbors (int): maximum number of neighbors found
+            num_neighbors (int/None): maximum number of neighbors found; if None this is estimated based on the density.
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list (list): list of atoms the neighbors are to be looked for
             boundary_width_factor (float): width of the layer to be added to account for pbc.
-
+            num_neighbors_estimate_buffer (float): Extra volume taken into account for the num_neighbors estimation
         Returns:
 
             pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor indices, distances
@@ -1196,12 +1201,12 @@ class Atoms(ASEAtoms):
 
         """
         if num_neighbors is None:
-            num_neighbors = self.get_number_of_neighbors_in_sphere(
-                cutoff_radius=cutoff_radius,
-                tolerance=tolerance,
-                id_list=id_list,
-                boundary_width_factor=boundary_width_factor,
-            )
+            volume_per_atom = self.get_volume(per_atom=True)
+            if id_list is not None:
+                volume_per_atom = self.get_volume() / len(id_list)
+            num_neighbors = int((1 + num_neighbors_estimate_buffer) *
+                                4. / 3. * np.pi * cutoff_radius ** 3 / volume_per_atom)
+
         neigh = self._get_neighbors(
             num_neighbors=num_neighbors,
             t_vec=t_vec,
@@ -1210,6 +1215,10 @@ class Atoms(ASEAtoms):
             cutoff_radius=cutoff_radius,
             boundary_width_factor=boundary_width_factor,
         )
+        if not np.all(neigh.distances.T[-1]==np.inf):
+            warnings.warn('The number of neighbors found within the cutoff_radius is equal to the (estimated) ' +
+                          'num_neighbors. Increase num_neighbors or num_neighbors_estimate_buffer to find all ' +
+                          'neighbors within the cutoff_radius.')
         neigh.indices = [indices[dist<np.inf] for indices, dist in zip(neigh.indices, neigh.distances)]
         if t_vec:
             neigh.vecs = [vecs[dist<np.inf] for vecs, dist in zip(neigh.vecs, neigh.distances)]
