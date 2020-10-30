@@ -1141,6 +1141,8 @@ class Atoms(ASEAtoms):
             (np.ndarray) : for each atom the number of neighbors found in the sphere of radius
                            cutoff_radius (<= num_neighbors if specified)
         """
+        if num_neighbors_estimate_buffer < 0:
+            raise ValueError('num_neighbors_estimate_buffer must not be negative')
         if num_neighbors is not None:
             neigh = self._get_neighbors(
                 num_neighbors=num_neighbors,
@@ -1150,6 +1152,10 @@ class Atoms(ASEAtoms):
                 cutoff_radius=cutoff_radius,
                 boundary_width_factor=boundary_width_factor,
             )
+            if not np.all(neigh.distances.T[-1] == np.inf):
+                warnings.warn('The number of neighbors found within the cutoff_radius is equal to  ' +
+                              'num_neighbors. Increase num_neighbors to find all ' +
+                              'neighbors within the cutoff_radius.')
             num_neighbors_per_atom = np.sum(neigh.distances < np.inf, axis=-1)
         else:
             volume_per_atom = self.get_volume(per_atom=True)
@@ -1202,6 +1208,8 @@ class Atoms(ASEAtoms):
             and vectors
 
         """
+        if num_neighbors_estimate_buffer < 0:
+            raise ValueError('num_neighbors_estimate_buffer must not be negative')
         if num_neighbors is None:
             volume_per_atom = self.get_volume(per_atom=True)
             if id_list is not None:
