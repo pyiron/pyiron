@@ -415,7 +415,7 @@ class ElectronicStructure(object):
                 "e_fermi has to be set before you can determine if the system is metallic or not"
             )
         n_spin, _, n_bands = np.shape(self.eigenvalue_matrix)
-        fermi_crossed = [[False] * n_spin]
+        fermi_crossed = [False] * n_spin
         for spin in range(n_spin):
             for i in range(n_bands):
                 values = self.eigenvalue_matrix[spin, :, i]
