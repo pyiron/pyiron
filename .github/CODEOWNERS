@@ -14,4 +14,4 @@ pyiron/table                @jan-janssen
 pyiron/testing              @jan-janssen
 pyiron/thermodynamics       @jan-janssen
 pyiron/vasp                 @sudarsan-surendralal
-pyiron/yaff                 @jan-janssen
+pyiron/yaff                 @SanderBorgmans
