@@ -305,6 +305,7 @@ class AtomisticGenericJob(GenericJobCore):
         stride=1,
         center_of_mass=False,
         particle_size=0.5,
+        camera="orthographic",
     ):
         """
         Animates the job if a trajectory is present
@@ -316,6 +317,8 @@ class AtomisticGenericJob(GenericJobCore):
                           use value >1 to make animation faster
                            default=1
             center_of_mass (bool):
+            camera (str):
+                camera perspective, choose from "orthographic" or "perspective"
 
         Returns:
             animation: nglview IPython widget
@@ -339,6 +342,7 @@ class AtomisticGenericJob(GenericJobCore):
         if show_cell:
             if self.structure.cell is not None:
                 animation.add_unitcell()
+        animation.camera = camera
         return animation
 
     def view_structure(self, snapshot=-1, spacefill=True, show_cell=True):
