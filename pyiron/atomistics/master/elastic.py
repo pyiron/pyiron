@@ -374,6 +374,7 @@ class ElasticTensor(AtomisticParallelMaster):
             fit_first_order=self.input['fit_first_order'],
         )
         self._output['fit_score'] = score
+        self._output['elastic_tensor'] = elastic_tensor
         with self.project_hdf5.open("output") as hdf5_out:
             for key, val in self._output.items():
                 hdf5_out[key] = val
