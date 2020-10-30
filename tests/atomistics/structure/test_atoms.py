@@ -785,8 +785,8 @@ class TestAtoms(unittest.TestCase):
         basis = Atoms(symbols="FeFeFe", positions=[3 * [0], 3 * [1], [0, 0, 1]], cell=2 * np.eye(3), pbc=True)
         num_neighbors_per_atom = basis.get_numbers_of_neighbors_in_sphere(cutoff_radius=2)
         self.assertEqual(num_neighbors_per_atom[0], 10)
-        self.assertEqual(num_neighbors_per_atom[0], 12)
-        self.assertEqual(num_neighbors_per_atom[0], 6)
+        self.assertEqual(num_neighbors_per_atom[1], 12)
+        self.assertEqual(num_neighbors_per_atom[2], 6)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             num_neighbors_per_atom = basis.get_numbers_of_neighbors_in_sphere(cutoff_radius=1.5, num_neighbors=5)
