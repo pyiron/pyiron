@@ -443,40 +443,37 @@ class ElasticTensor(AtomisticParallelMaster):
                           + ' coefficients in the current implementation')
 
     def collect_output(self):
+        output_data = defaultdict(list)
         if self.ref_job.server.run_mode.interactive:
             job = self.project_hdf5.inspect(self.child_ids[0])
             for key in ['energy_tot', 'energy_pot', 'pressures', 'volume']:
                 if key in job["output/generic"].list_nodes():
-                    self._output[key] = job["output/generic/{}".format(key)]
-                else:
-                    self._output[key] = []
+                    output_data[key] = job["output/generic/{}".format(key)]
         else:
             job_lst = [self.project_hdf5.inspect(job_id) for job_id in self.child_ids]
-            self._output['id'] = self.child_ids
+            output_data['id'] = self.child_ids
             for key in ['energy_tot', 'energy_pot', 'pressures', 'volume']:
                 if all(key in job["output/generic"].list_nodes() for job in job_list):
-                    self._output[key] = np.array([
+                    output_data[key] = np.array([
                         job["output/generic/{}".format(key)][-1] for job in job_list
                     ])
-                else:
-                    self._output[key] = []
-        energy = self._output['energy_tot']
-        if len(self._output['energy_pot'])==len(self._output['volume']):
-            energy = self._output['energy_pot']
+        energy = output_data['energy_tot']
+        if len(output_data['energy_pot'])==len(output_data['volume']):
+            energy = output_data['energy_pot']
         elastic_tensor, score = calc_elastic_tensor(
             strain=self.input['strain_matrices'],
-            stress=-np.array(self._output['pressures']),
+            stress=-np.array(output_data['pressures']),
             rotations=self.input['rotations'],
             energy=energy,
-            volume=self._output['volume'],
+            volume=output_data['volume'],
             return_score=True,
             fit_first_order=self.input['fit_first_order'],
             max_polynomial_order=self.input['polynomial_order'],
         )
-        self._output['fit_score'] = score
-        self._output['elastic_tensor'] = elastic_tensor
+        output_data['fit_score'] = score
+        output_data['elastic_tensor'] = elastic_tensor
         with self.project_hdf5.open("output") as hdf5_out:
-            for key, val in self._output.items():
+            for key, val in output_data.items():
                 hdf5_out[key] = val
 
 
