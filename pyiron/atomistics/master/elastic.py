@@ -88,8 +88,11 @@ def _fit_coeffs_with_energies(
     strain_voigt = _convert_to_voigt(strain, rotations=rotations, strain=True)
     energy = np.tile(energy, len(rotations))
     volume = np.tile(volume, len(rotations))
+    # Create symmetric tensor for elastic tensor
     strain = 0.5*np.einsum('ni,nj->nij', strain_voigt, strain_voigt)
+    # Set lower triangle to 0 (which is the same as the upper triangle)
     strain = np.triu(strain).reshape(-1, 36)
+    # Remove lower triangle
     strain = strain[:,np.sum(strain, axis=0)!=0]
     if higher_strains is not None:
         strain = np.concatenate((strain, higher_strains), axis=-1)
@@ -98,7 +101,9 @@ def _fit_coeffs_with_energies(
     strain = np.einsum('n,ni->ni', volume, strain)
     reg = LinearRegression().fit(strain, energy)
     score = reg.score(strain, energy)
+    # Create base tensor for elastic tensor
     coeff = np.triu(np.ones((6,6))).flatten()
+    # Multiply upper triangle with upper triangle coeffs (v.s.)
     coeff[coeff!=0] *= reg.coef_[:21]*eV_div_A3_to_GPa
     coeff = coeff.reshape(6,6)
     coeff = 0.5*(coeff+coeff.T)
