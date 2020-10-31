@@ -29,6 +29,19 @@ eV_div_A3_to_GPa = (
     1e21 / scipy.constants.physical_constants["joule-electron volt relationship"][0]
 )
 
+def _convert_to_voigt(s, rotations=None, strain=False):
+    if rotations is not None:
+        s_tmp = np.einsum('nik,mkl,njl->nmij',
+            rotations, s, rotations
+        ).reshape(-1, 9)
+    else:
+        s_tmp = s.reshape(-1, 9)
+    s_tmp = s_tmp[:, [0, 4, 8, 5, 2, 1]]
+    if strain:
+        s_tmp[:, 3:] *= 2
+    return s_tmp
+
+
 def _fit_coeffs_with_stress(
         strain,
         stress,
@@ -42,15 +55,10 @@ def _fit_coeffs_with_stress(
         rotations=rotations,
         derivative=True,
     )
-    strain = np.einsum('nik,mkl,njl->nmij',
-                       rotations, strain, rotations).reshape(-1, 9)
-    strain = strain[:, [0, 4, 8, 5, 2, 1]]
-    strain[:,3:] *= 2
+    strain = _convert_to_voigt(strain, rotations=rotations, strain=True)
     if higher_strains is not None:
         strain = np.concatenate((strain, higher_strains), axis=-1)
-    stress = np.einsum('nik,mkl,njl->nmij',
-                       rotations, stress, rotations).reshape(-1, 9)
-    stress = stress[:, [0, 4, 8, 5, 2, 1]]
+    stress = _convert_to_voigt(stress, rotations=rotations, strain=False)
     score = []
     coeff = []
     for ii in range(6):
@@ -77,10 +85,7 @@ def _fit_coeffs_with_energies(
         rotations=rotations,
         derivative=False,
     )
-    strain_voigt = np.einsum('nik,mkl,njl->nmij',
-                             rotations, strain, rotations).reshape(-1, 9)
-    strain_voigt = strain_voigt[:, [0, 4, 8, 5, 2, 1]]
-    strain_voigt[:,3:] *= 2
+    strain_voigt = _convert_to_voigt(strain, rotations=rotations, strain=True)
     energy = np.tile(energy, len(rotations))
     volume = np.tile(volume, len(rotations))
     strain = 0.5*np.einsum('ni,nj->nij', strain_voigt, strain_voigt)
@@ -157,8 +162,8 @@ def _get_higher_order_strains(
         starting_index = np.sum(np.any(strain_higher_strains!=0, axis=0))
         strain_higher_strains[ind, starting_index:starting_index+E.shape[1]] = E
     strain_higher_strains = np.einsum('n,ij->nij',
-                                    np.ones(len(rotations)),
-                                    strain_higher_strains)
+                                      np.ones(len(rotations)),
+                                      strain_higher_strains)
     strain_higher_strains = strain_higher_strains.reshape(
         -1, strain_higher_strains.shape[-1]
     )

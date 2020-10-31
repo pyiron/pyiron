@@ -6,7 +6,7 @@ import os
 import unittest
 from pyiron.atomistics.structure.atoms import CrystalStructure
 from pyiron_base import Project
-from pyiron.atomistics.master.elastic import calc_elastic_tensor, _get_higher_order_terms
+from pyiron.atomistics.master.elastic import calc_elastic_tensor, _get_higher_order_strains
 import numpy as np
 
 
@@ -40,12 +40,12 @@ class TestElasticTensor(unittest.TestCase):
         self.assertEqual(len(elast.input['strain_matrices']), 21)
         elast.run()
 
-    def test_get_higher_order_terms(self):
+    def test_get_higher_order_strains(self):
         epsilon = np.random.random((3,3))-0.5
         epsilon += epsilon.T
         epsilon /= np.linalg.norm(epsilon.flatten())
         epsilon = np.einsum('n,ij->nij', np.linspace(-0.01, 0.01, 5), epsilon)
-        self.assertEqual(_get_higher_order_terms(
+        self.assertEqual(_get_higher_order_strains(
             strain_lst=epsilon,
             rotations=np.eye(3).reshape(1,3,3)
         ).shape, (5, 1))
