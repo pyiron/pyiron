@@ -36,7 +36,7 @@ def _fit_coeffs_with_stress(
         max_polynomial_order=None,
         fit_first_order=False,
     ):
-    higher_terms = _get_higher_order_terms(
+    higher_strains = _get_higher_order_strains(
         strain,
         max_polynomial_order=max_polynomial_order,
         rotations=rotations,
@@ -46,8 +46,8 @@ def _fit_coeffs_with_stress(
                        rotations, strain, rotations).reshape(-1, 9)
     strain = strain[:, [0, 4, 8, 5, 2, 1]]
     strain[:,3:] *= 2
-    if higher_terms is not None:
-        strain = np.concatenate((strain, higher_terms), axis=-1)
+    if higher_strains is not None:
+        strain = np.concatenate((strain, higher_strains), axis=-1)
     stress = np.einsum('nik,mkl,njl->nmij',
                        rotations, stress, rotations).reshape(-1, 9)
     stress = stress[:, [0, 4, 8, 5, 2, 1]]
@@ -71,7 +71,7 @@ def _fit_coeffs_with_energies(
         max_polynomial_order=None,
         fit_first_order=False,
     ):
-    higher_terms = _get_higher_order_terms(
+    higher_strains = _get_higher_order_strains(
         strain,
         max_polynomial_order=max_polynomial_order,
         rotations=rotations,
@@ -86,8 +86,8 @@ def _fit_coeffs_with_energies(
     strain = 0.5*np.einsum('ni,nj->nij', strain_voigt, strain_voigt)
     strain = np.triu(strain).reshape(-1, 36)
     strain = strain[:,np.sum(strain, axis=0)!=0]
-    if higher_terms is not None:
-        strain = np.concatenate((strain, higher_terms), axis=-1)
+    if higher_strains is not None:
+        strain = np.concatenate((strain, higher_strains), axis=-1)
     if fit_first_order:
         strain = np.concatenate((strain, strain_voigt), axis=-1)
     strain = np.einsum('n,ni->ni', volume, strain)
@@ -116,20 +116,20 @@ def _get_linear_dependent_indices(strain_lst):
     na = np.newaxis
     indices = np.unique(indices[~np.isclose(norm, 0)])[:,na]==indices[na,:]
     # 0-tensor gets a special treatment, since it's linearly dependent on all
-    # terms (even though it virtually changes nothing)
+    # strains (even though it virtually changes nothing)
     indices[:, np.isclose(norm, 0)] = True
     return indices
 
-def _get_higher_order_terms(
+def _get_higher_order_strains(
         strain_lst,
         max_polynomial_order=None,
         rotations=None,
         derivative=False,
     ):
     """
-    Returns a matrix containing higher order terms. axis=0 corresponds to the
-    elastic tensors and axis=1 the higher order terms. From the number of
-    linearly dependent terms the polynomial order is calculated internally
+    Returns a matrix containing higher order strains. axis=0 corresponds to the
+    elastic tensors and axis=1 the higher order strains. From the number of
+    linearly dependent strains the polynomial order is calculated internally
     -> up to 3: harmonic; 4 and 5: third degree etc.
     """
     strain_lst = np.array(strain_lst)
@@ -143,7 +143,7 @@ def _get_higher_order_terms(
     counts[counts<0] = 0
     if sum(counts)==0: # No term gets more than harmonic part
         return None
-    strain_higher_terms = np.zeros((len(strain_lst), np.sum(counts)))
+    strain_higher_strains = np.zeros((len(strain_lst), np.sum(counts)))
     na = np.newaxis
     for cc, ind in zip(counts, indices):
         E = strain_lst[ind][
@@ -154,15 +154,15 @@ def _get_higher_order_terms(
             E = E[:,na]**(np.arange(cc)+1)[na,:]*np.sign(E)[:,na]
         else:
             E = E[:,na]**(np.arange(cc)+3)[na,:]
-        starting_index = np.sum(np.any(strain_higher_terms!=0, axis=0))
-        strain_higher_terms[ind, starting_index:starting_index+E.shape[1]] = E
-    strain_higher_terms = np.einsum('n,ij->nij',
+        starting_index = np.sum(np.any(strain_higher_strains!=0, axis=0))
+        strain_higher_strains[ind, starting_index:starting_index+E.shape[1]] = E
+    strain_higher_strains = np.einsum('n,ij->nij',
                                     np.ones(len(rotations)),
-                                    strain_higher_terms)
-    strain_higher_terms = strain_higher_terms.reshape(
-        -1, strain_higher_terms.shape[-1]
+                                    strain_higher_strains)
+    strain_higher_strains = strain_higher_strains.reshape(
+        -1, strain_higher_strains.shape[-1]
     )
-    return strain_higher_terms
+    return strain_higher_strains
 
 def calc_elastic_tensor(
         strain,
@@ -233,7 +233,8 @@ def _get_random_symmetric_matrices(n):
     return matrices + np.einsum('nij->nji', matrices)
 
 
-def get_strain(max_strain=0.05, n_set=10, polynomial_order=2, additional_points=0, normalize=False):
+def get_strain(max_strain=0.05, n_set=10, polynomial_order=2,
+               additional_points=0, normalize=False):
     """
         Args:
             max_strain (float): Maximum strain (for each component)
@@ -245,14 +246,18 @@ def get_strain(max_strain=0.05, n_set=10, polynomial_order=2, additional_points=
             additional_points (int): Additional linear-dependent points
             normalize (bool): Whether to normalize the strain values. If True,
                 the norm (Frobenius norm) of all outer most strain (i.e. the
-                greatest strain within the linear-dependent terms) will be
+                greatest strain within the linear-dependent strains) will be
                 equal to max_strain
 
         Returns: numpy.ndarray of strains (n, 3, 3)
     """
     strain_lst = _get_random_symmetric_matrices(n_set)
     if normalize:
-        strain_lst = np.einsum('nij,n->nij', strain_lst, 1/np.linalg.norm(strain_lst.reshape(-1, 9), axis=-1))
+        strain_lst = np.einsum(
+            'nij,n->nij',
+            strain_lst,
+            1/np.linalg.norm(strain_lst.reshape(-1, 9), axis=-1)
+        )
     strain_lst *= max_strain
     m = np.linspace(-1, 1, int(2*polynomial_order+2*additional_points-1))
     strain_lst = np.einsum('k,nij->nkij', m, strain_lst).reshape(-1, 9)
@@ -269,7 +274,9 @@ class _ElasticJobGenerator(JobGenerator):
         return parameter_lst
 
     def job_name(self, parameter):
-        return "{}_{}".format(self._job.job_name, parameter[0]).replace(".", "_")
+        return "{}_{}".format(
+            self._job.job_name, parameter[0]
+        ).replace(".", "_")
 
     @staticmethod
     def modify_job(job, parameter):
@@ -289,27 +296,50 @@ class ElasticTensor(AtomisticParallelMaster):
 
     Input parameters:
 
-        min_num_measurements (int): Minimum number of measurements/simulations to be launched
-        min_num_points (int): Minimum number of data points to fit data (number of measurements
-            times number of symmetry operations)
-        strain_matrices (numpy.ndarray): Strain tensors to be applied on simulation boxes (optional)
+        min_num_measurements (int): Minimum number of measurements/simulations
+            to be launched
+        min_num_points (int): Minimum number of data points to fit data 
+            (number of measurements times number of symmetry operations)
+        polynomial_order (int): Polynomial order to use (default: 2)
+        additional_points (int): Additional points for linearly dependent
+            strains. Twice the number of strains will be created for +-strain.
+            If additional_points > 0, polynomial order should be at least 3.
+        strain_matrices (numpy.ndarray): Strain tensors to be applied on
+            simulation boxes (optional)
         rotations (numpy.ndarray): Rotation matrices for box symmetry
-        use_symmetry (bool): Whether or not exploit box symmetry (ignored if `rotations` already specified)
-        use_elements (bool): Whether or not respect chemical elements for box symmetry (ignored if `rotations`
-            already specified)
+        normalize_magnitude (bool): Whether to normalize strains following
+            Frobenius norm or not. When polynomial_order = 2, strains should
+            not be normalized in order for the fit to get both large and small
+            strains. When polynomial order > 2, then they should be normalized
+            to not get too small strains which could destabilize higher order
+            fitting.
+        use_symmetry (bool): Whether or not exploit box symmetry (ignored if
+            `rotations` already specified)
+        use_elements (bool): Whether or not respect chemical elements for box
+            symmetry (ignored if `rotations` already specified)
+        fit_first_order (bool): Whether or not fit first order strains. In
+            principle it should not be necessary, but might stabilize the
+            calculation if the reference structure is not exactly in the zero
+            pressure state. Setting this to True does not correct the second
+            order strains
 
-    The default input parameters might not be chosen adequately. If you have a large
-    computation power, increase `min_num_measurements`. At the same time, make
-    sure to choose an orientation which maximizes the number symmetry operations.
-    Also if the child job does not support pressure, better increase the number
-    of measurements.
+    The default input parameters might not be chosen adequately. If you have a
+    large computation power, increase `min_num_measurements`. At the same
+    time, make sure to choose an orientation which maximizes the number
+    symmetry operations. Also if the child job does not support pressure,
+    better increase the number of measurements - without pressure the constants
+    must be fit to total cell energies, which contain only a fraction of the
+    data that the pressure matrix does. This lack can be compensated by
+    sampling more rotations.
     """
     def __init__(self, project, job_name):
         super().__init__(project, job_name)
         self.__name__ = "ElasticTensor"
         self.__version__ = "0.1.0"
 
-        self.input["min_num_measurements"] = (11, "minimum number of samples to be taken")
+        self.input["min_num_measurements"] = (
+            11, "minimum number of samples to be taken"
+        )
         self.input["min_num_points"] = (105, "minimum number of data points"
             + "(number of measurements will be min_num_points/len(rotations))")
         self.input["max_strain"] = (
@@ -344,10 +374,10 @@ class ElasticTensor(AtomisticParallelMaster):
         )
         self.input['fit_first_order'] = (
             False,
-            'Whether or not fit first order terms. In principle it should not'
+            'Whether or not fit first order strains. In principle it should not'
             + ' be necessary, but might stabilize the calculation if the'
             + ' reference structure is not exactly in the zero pressure state.'
-            + ' Setting this to True does not correct the second order terms'
+            + ' Setting this to True does not correct the second order strains'
         )
         self._job_generator = _ElasticJobGenerator(self)
 
@@ -359,7 +389,9 @@ class ElasticTensor(AtomisticParallelMaster):
         ))
 
     def _get_rotation_matrices(self):
-        rotations = self.ref_job.structure.get_symmetry(use_elements=self.input['use_elements'])['rotations']
+        rotations = self.ref_job.structure.get_symmetry(
+            use_elements=self.input['use_elements']
+        )['rotations']
         _, indices = np.unique(np.round(rotations, 6), axis=0, return_inverse=True)
         rotations = rotations[np.unique(indices)]
         self.input['rotations'] = rotations.tolist()
@@ -367,13 +399,17 @@ class ElasticTensor(AtomisticParallelMaster):
     def _create_strain_matrices(self):
         if self.input['use_symmetry'] and len(self.input['rotations'])==0:
             self._get_rotation_matrices()
-        eps_lst = _get_random_symmetric_matrices(int(self._number_of_measurements))
+        eps_lst = _get_random_symmetric_matrices(
+            int(self._number_of_measurements)
+        )
         eps_lst *= self.input['max_strain']
-        self.input['strain_matrices'] = get_strain(max_strain=self.input['max_strain'],
-                                                   n_set=self._number_of_measurements,
-                                                   polynomial_order=self.input['polynomial_order'],
-                                                   additional_points=self.input['additional_points'],
-                                                   normalize=self.input['normalize_magnitude']).tolist()
+        self.input['strain_matrices'] = get_strain(
+            max_strain=self.input['max_strain'],
+            n_set=self._number_of_measurements,
+            polynomial_order=self.input['polynomial_order'],
+            additional_points=self.input['additional_points'],
+            normalize=self.input['normalize_magnitude']
+        ).tolist()
 
     def validate_ready_to_run(self):
         super().validate_ready_to_run()
@@ -381,14 +417,20 @@ class ElasticTensor(AtomisticParallelMaster):
             self._create_strain_matrices()
         if self.input['polynomial_order']<2:
             raise ValueError('Minimum polynomial order: 2')
-        if self.input['polynomial_order']==2 and self.input['additional_points']>0:
-            warnings.warn('Setting additional points in harmonic calculations only increases the number of calculations')
-        if self.input['polynomial_order']==2 and self.input['normalize_magnitude']:
-            warnings.warn('Magnitude normalization could reduce accuracy in harmonic calculations')
-        if self.input['polynomial_order']>2 and not self.input['normalize_magnitude']:
+        if (self.input['polynomial_order']==2
+            and self.input['additional_points']>0):
+            warnings.warn('Setting additional points in harmonic calculations'
+                + ' only increases the number of calculations')
+        if (self.input['polynomial_order']==2
+            and self.input['normalize_magnitude']):
+            warnings.warn('Magnitude normalization could reduce accuracy in'
+                + ' harmonic calculations')
+        if (self.input['polynomial_order']>2
+            and not self.input['normalize_magnitude']):
             warnings.warn('Not normalizing magnitude could destabilise fit')
         if self.input['fit_first_order']:
-            warnings.warn('First order fit does not correct the second order coefficients in the current implementation')
+            warnings.warn('First order fit does not correct the second order'
+                          + ' coefficients in the current implementation')
 
     def collect_output(self):
         if self.ref_job.server.run_mode.interactive:
