@@ -7,6 +7,7 @@ from pyiron.atomistics.job.interactivewrapper import InteractiveWrapper
 from pyiron_base import InputList
 from pyiron.atomistics.job.interactive import GenericInteractiveOutput
 from scipy.optimize import minimize
+import scipy
 import warnings
 
 __author__ = "Osamu Waseda"
@@ -19,6 +20,10 @@ __maintainer__ = "Osamu Waseda"
 __email__ = "waseda@mpie.de"
 __status__ = "development"
 __date__ = "Sep 1, 2018"
+
+GPa_to_eV_by_A3 = (
+    1e21 / scipy.constants.physical_constants["joule-electron volt relationship"][0]
+)
 
 
 class ScipyMinimizer(InteractiveWrapper):
@@ -50,14 +55,17 @@ class ScipyMinimizer(InteractiveWrapper):
     >>> minim.calc_minimize(pressure=0, volume_only=True)
     >>> minim.run()
 
-    By setting `volume_only`, positions are not updated, so that only the pressures are minimized.
+    By setting `volume_only`, positions are not updated, so that only the
+    pressures are minimized.
 
-    It is possible to optimize both the volume and the positions, but since changing the cell also
-    changes the definition of coordinates, it is a mathematically ill-defined problem and therefore
-    it might end up in a physically undefined state. For this reason, it is strongly recommended to
+    It is possible to optimize both the volume and the positions, but since
+    changing the cell also changes the definition of coordinates, it is a
+    mathematically ill-defined problem and therefore it might end up in a
+    physically undefined state. For this reason, it is strongly recommended to
     launch several jobs using the Murnaghan class (cf. `Murnaghan`).
 
-    In order to perform volume optimization, the child job must have 3x3-pressure output.
+    In order to perform volume optimization, the child job must have
+    3x3-pressure output.
     """
     def __init__(self, project, job_name):
         super(ScipyMinimizer, self).__init__(project, job_name)
@@ -70,8 +78,8 @@ class ScipyMinimizer(InteractiveWrapper):
 
     def set_input_to_read_only(self):
         """
-        This function enforces read-only mode for the input classes, but it has to be implement in the individual
-        classes.
+        This function enforces read-only mode for the input classes, but it
+        has to be implement in the individual classes.
         """
         super(ScipyMinimizer, self).set_input_to_read_only()
         self.input.read_only = True
@@ -116,7 +124,10 @@ class ScipyMinimizer(InteractiveWrapper):
             if not np.allclose(x[:9], self.ref_job.structure.cell.flatten()):
                 self.ref_job.structure.set_cell(x[:9].reshape(-3,3), scale_atoms=True)
                 rerun = True
-            if not self.input.volume_only and not np.allclose(x[9:], self.ref_job.structure.get_scaled_positions().flatten()):
+            if (not self.input.volume_only
+                and not np.allclose(
+                    x[9:], self.ref_job.structure.get_scaled_positions().flatten()
+                )):
                 self.ref_job.structure.set_scaled_positions(x[9:].reshape(-1, 3))
                 rerun = True
         elif not np.allclose(x, self.ref_job.structure.positions.flatten()):
@@ -153,13 +164,20 @@ class ScipyMinimizer(InteractiveWrapper):
         if self.check_convergence():
             prefactor = 0
         if self.input.pressure is not None:
-            pressure = -(self.ref_job.output.pressures[-1].flatten()-self.input.pressure.flatten())
+            pressure = -(
+                self.ref_job.output.pressures[-1].flatten()-self.input.pressure.flatten()
+            )
             if self.input.volume_only:
-                return pressure*prefactor
+                return pressure*prefactor*GPa_to_eV_by_A3
             else:
-                return np.append(pressure, -np.einsum('ij,ni->nj',
-                                                      np.linalg.inv(self.ref_job.structure.cell),
-                                                      self.ref_job.output.forces[-1]).flatten()).flatten()*prefactor
+                return np.append(
+                    pressure*GPa_to_eV_by_A3,
+                    -np.einsum(
+                        'ij,ni->nj',
+                        np.linalg.inv(self.ref_job.structure.cell),
+                        self.ref_job.output.forces[-1]
+                    ).flatten()
+                ).flatten()*prefactor
         else:
             return -self.ref_job.output.forces[-1].flatten()*prefactor
 
@@ -198,8 +216,11 @@ class ScipyMinimizer(InteractiveWrapper):
         if pressure is None and volume_only:
             raise ValueError('pressure must be specified if volume_only')
         if pressure is not None and not volume_only:
-            warnings.warn('Simultaneous optimization of pressures and positions is a mathematically ill posed problem '
-                          + '- there is no guarantee that it converges to the desired structure')
+            warnings.warn(
+                'Simultaneous optimization of pressures and positions is a'
+                + ' mathematically ill posed problem - there is no guarantee'
+                + ' that it converges to the desired structure'
+            )
         if pressure is not None and not hasattr(pressure, '__len__'):
             pressure = pressure*np.eye(3)
         self.input.minimizer = algorithm
@@ -214,7 +235,8 @@ class ScipyMinimizer(InteractiveWrapper):
 class Input(InputList):
     """
     Args:
-        minimizer (str): minimizer to use (currently only 'CG' and 'BFGS' run reliably)
+        minimizer (str): minimizer to use (currently only 'CG' and 'BFGS' run
+            reliably)
         ionic_steps (int): max number of steps
         ionic_force_tolerance (float): maximum force tolerance
     """
