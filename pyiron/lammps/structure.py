@@ -613,7 +613,10 @@ class LammpsStructure(GenericParameters):
         for id_eam, el_eam in enumerate(self._el_eam_lst):
             if el_eam in el_struct_lst:
                 id_el = list(el_struct_lst).index(el_eam)
-                el = el_obj_lst[id_el]
+                if id_el in el_obj_lst.keys():
+                    el = el_obj_lst[id_el]
+                else:
+                    raise ValueError("Selected potential does not support the existing chemical composition")
                 el_dict[el] = id_eam + 1
                 masses += "{0:3d} {1:f}".format(id_eam + 1, el.AtomicMass) + "\n"
             else:
