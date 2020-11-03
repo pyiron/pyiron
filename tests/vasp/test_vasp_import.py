@@ -7,6 +7,7 @@ import numpy as np
 import os
 from pyiron.project import Project
 from pyiron.vasp.vasp import Vasp
+from pyiron.vasp.volumetric_data import VaspVolumetricData
 import warnings
 
 
@@ -74,6 +75,7 @@ class TestVaspImport(unittest.TestCase):
     def test_output(self):
         ham = self.project.inspect("full_job_sample")
         self.assertEqual(ham["output/generic/dft/energy_free"][-1], -17.7379867884)
+        self.assertIsInstance(ham["output/charge_density"].to_object(), VaspVolumetricData)
 
 
 if __name__ == "__main__":
