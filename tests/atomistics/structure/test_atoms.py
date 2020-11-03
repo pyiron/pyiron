@@ -783,7 +783,8 @@ class TestAtoms(unittest.TestCase):
 
     def test_get_number_of_neighbors_in_sphere(self):
         basis = Atoms(symbols="FeFeFe", positions=[3 * [0], 3 * [1], [0, 0, 1]], cell=2 * np.eye(3), pbc=True)
-        num_neighbors_per_atom = basis.get_numbers_of_neighbors_in_sphere(cutoff_radius=2)
+        num_neighbors_per_atom = basis.get_numbers_of_neighbors_in_sphere(cutoff_radius=2,
+                                                                          num_neighbors_estimate_buffer=0)
         self.assertEqual(num_neighbors_per_atom[0], 10)
         self.assertEqual(num_neighbors_per_atom[1], 12)
         self.assertEqual(num_neighbors_per_atom[2], 6)

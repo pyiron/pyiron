@@ -1160,7 +1160,7 @@ class Atoms(ASEAtoms):
                 volume_per_atom = self.get_volume() / len(id_list)
             num_neighbors = int((1 + num_neighbors_estimate_buffer) *
                                 4. / 3. * np.pi * cutoff_radius ** 3 / volume_per_atom)
-            num_neighbors_old = 1
+            num_neighbors_old = num_neighbors - 1
             while num_neighbors_old < num_neighbors:
                 neigh = self._get_neighbors(
                     num_neighbors=num_neighbors,
