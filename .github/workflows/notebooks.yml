@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CONDA_PREFIX: /usr/share/miniconda/
+      GPAW_SETUP_PATH: /usr/share/miniconda/share/gpaw
 
     steps:
     - uses: actions/checkout@v2
