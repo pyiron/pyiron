@@ -13,6 +13,8 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    env:
+      CONDA_PREFIX: /usr/share/miniconda/
 
     steps:
     - uses: actions/checkout@v2
