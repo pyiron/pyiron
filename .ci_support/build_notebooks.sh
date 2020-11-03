@@ -2,7 +2,7 @@
 
 # Remove excluded notebooks
 for f in $(cat .ci_support/exclude); do 
-    rm notebooks/$f;     
+    rm "notebooks/$f";     
 done;
 
 # Select ipykernelt
