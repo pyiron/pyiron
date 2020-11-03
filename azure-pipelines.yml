@@ -27,6 +27,34 @@ jobs:
     displayName: Add conda to PATH
   - template: .ci_support/azure-unix-test-template.yml
 
+- job: 'Notebooks'
+  pool:
+    vmImage: $(linux)
+  strategy:
+    matrix:
+      Python38:
+        python.version: '3.8'
+    maxParallel: 4
+
+  steps:
+  - bash: echo "##vso[task.prependpath]/usr/share/miniconda/bin"
+    displayName: Add conda to PATH
+  - template: .ci_support/azure-notebooks-template.yml
+
+- job: 'Backwards'
+  pool:
+    vmImage: $(linux)
+  strategy:
+    matrix:
+      Python38:
+        python.version: '3.8'
+    maxParallel: 4
+
+  steps:
+  - bash: echo "##vso[task.prependpath]/usr/share/miniconda/bin"
+    displayName: Add conda to PATH
+  - template: .ci_support/azure-backwards-template.yml
+
 - job: 'OSX'
   pool:
     vmImage: $(mac)
