@@ -38,5 +38,5 @@ steps:
 
 - bash: |
     source activate pyiron
-    ./.ci_support/travis_build_notebooks.sh
+    ./.ci_support/build_notebooks.sh
   displayName: Execute Notebooks
