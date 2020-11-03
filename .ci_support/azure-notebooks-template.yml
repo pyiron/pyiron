@@ -14,6 +14,9 @@ steps:
 - bash: conda create -n pyiron -q --yes -c conda-forge python=$(python.version)
   displayName: Init environment
 
+- bash: sed 's/=/>=/g' .ci_support/environment.yml > environment.yml
+  displayName: update environment
+
 - bash: |
     source activate pyiron
     conda env update --file environment.yml
