@@ -87,15 +87,20 @@ class ScipyMinimizer(InteractiveWrapper):
     def write_input(self):
         pass
 
+    def _initialize_structure(self):
+        self._original_cell = self.ref_job.structure.cell.copy()
+        self._current_strain = np.zeros(6)
+
     def run_static(self):
         self.ref_job_initialize()
         self._logger.debug("cg status: " + str(self.status))
+        self._initialize_structure()
         if self.ref_job.server.run_mode.interactive:
             self._delete_existing_job = False
         self.ref_job.run(delete_existing_job=self._delete_existing_job)
         self.status.running = True
         if self.input.pressure is not None:
-            x0 = self.ref_job.structure.cell.flatten()
+            x0 = np.zeros(sum(self.input.pressure!=None))
             if not self.input.volume_only:
                 x0 = np.append(x0, self.ref_job.structure.get_scaled_positions().flatten())
         else:
@@ -105,7 +110,7 @@ class ScipyMinimizer(InteractiveWrapper):
             fun=self._get_value,
             x0=x0,
             jac=self._get_gradient,
-            tol=1.0e-10,
+            tol=1.0e-20,
             options={'maxiter': self.input.ionic_steps,
                      'return_all': True }
         )
@@ -118,17 +123,42 @@ class ScipyMinimizer(InteractiveWrapper):
         else:
             self.status.not_converged = True
 
+    @staticmethod
+    def _tensor_to_voigt(s, strain=False):
+        ss = 0.5*(s+s.T)
+        ss = ss.flatten()[[0, 4, 8, 5, 2, 1]]
+        if strain:
+            ss[3:] *= 2
+        return ss
+
+    @staticmethod
+    def _voigt_to_tensor(s, strain=False):
+        ss = np.array(s).copy()
+        if not strain:
+            ss[:3] /= 2
+        ss = np.array([[ss[0], ss[5], ss[4]], [0, ss[1], ss[3]], [0, 0, ss[2]]])
+        ss += ss.T
+        return ss
+
     def _update(self, x):
         rerun = False
         if self.input.pressure is not None:
-            if not np.allclose(x[:9], self.ref_job.structure.cell.flatten()):
-                self.ref_job.structure.set_cell(x[:9].reshape(-3,3), scale_atoms=True)
+            if not np.allclose(x[:len(self.input.pressure)], self._current_strain):
+                if len(self.input.pressure)==1:
+                    self._current_strain[:3] = x[0]
+                else:
+                    self._current_strain[self.input.pressure!=None] = x[:len(self.input.pressure)]
+                cell = np.matmul(
+                    self._voigt_to_tensor(self._current_strain, strain=True)+np.eye(3),
+                    self._original_cell
+                )
+                self.ref_job.structure.set_cell(cell, scale_atoms=True)
                 rerun = True
             if (not self.input.volume_only
                 and not np.allclose(
-                    x[9:], self.ref_job.structure.get_scaled_positions().flatten()
+                    x[len(self.input.pressure):], self.ref_job.structure.get_scaled_positions().flatten()
                 )):
-                self.ref_job.structure.set_scaled_positions(x[9:].reshape(-1, 3))
+                self.ref_job.structure.set_scaled_positions(x[len(self.input.pressure):].reshape(-1, 3))
                 rerun = True
         elif not np.allclose(x, self.ref_job.structure.positions.flatten()):
             self.ref_job.structure.positions = x.reshape(-1, 3)
@@ -149,14 +179,20 @@ class ScipyMinimizer(InteractiveWrapper):
             if max_force > self.input.ionic_force_tolerance:
                 return False
         elif self.input.volume_only:
-            if np.absolute(self.ref_job.output.pressures[-1]-self.input.pressure).max() > self.input.pressure_tolerance:
+            if np.absolute(self._get_pressure()-self.input.pressure).max() > self.input.pressure_tolerance:
                 return False
         else:
             if max_force > self.input.ionic_force_tolerance:
                 return False
-            if np.absolute(self.ref_job.output.pressures[-1]-self.input.pressure).max() > self.input.pressure_tolerance:
+            if np.absolute(self._get_pressure()-self.input.pressure).max() > self.input.pressure_tolerance:
                 return False
         return True
+
+    def _get_pressure(self):
+        if len(self.input.pressure)==1:
+            return [np.mean(np.diagonal(self.ref_job.output.pressures[-1]))]
+        else:
+            return self._tensor_to_voigt(self.ref_job.output.pressures[-1])[self.input.pressure!=None]
 
     def _get_gradient(self, x):
         self._update(x)
@@ -165,13 +201,13 @@ class ScipyMinimizer(InteractiveWrapper):
             prefactor = 0
         if self.input.pressure is not None:
             pressure = -(
-                self.ref_job.output.pressures[-1].flatten()-self.input.pressure.flatten()
-            )
+                self._get_pressure()-self.input.pressure
+            )*1.0e-4
             if self.input.volume_only:
-                return pressure*prefactor*GPa_to_eV_by_A3
+                return pressure*prefactor
             else:
                 return np.append(
-                    pressure*GPa_to_eV_by_A3,
+                    pressure,
                     -np.einsum(
                         'ij,ni->nj',
                         np.linalg.inv(self.ref_job.structure.cell),
@@ -221,8 +257,12 @@ class ScipyMinimizer(InteractiveWrapper):
                 + ' mathematically ill posed problem - there is no guarantee'
                 + ' that it converges to the desired structure'
             )
-        if pressure is not None and not hasattr(pressure, '__len__'):
-            pressure = pressure*np.eye(3)
+        if pressure is not None:
+            pressure = np.array([pressure]).flatten()
+            if len(pressure)==9:
+                pressure = self._tensor_to_voigt(pressure.reshape(3,3))
+            if len(pressure)==3:
+                pressure = np.append(pressure, 3*[None])
         self.input.minimizer = algorithm
         self.input.ionic_steps = max_iter
         self.input.pressure = pressure
