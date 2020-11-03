@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Remove excluded notebooks
+for f in $(cat .ci_support/exclude); do 
+    rm notebooks/$f;     
+done;
+
 # Select ipykernelt
 if [ "$PYTHONVER" = "2.7" ]; then
     kernel="python2"
