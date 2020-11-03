@@ -1122,7 +1122,6 @@ class Atoms(ASEAtoms):
             self,
             cutoff_radius=10,
             num_neighbors=None,
-            tolerance=2,
             id_list=None,
             boundary_width_factor=1.2,
             num_neighbors_estimate_buffer=1.0,
@@ -1132,7 +1131,6 @@ class Atoms(ASEAtoms):
         Args:
             cutoff_radius (float): Upper bound of the distance to which the search must be done
             num_neighbors (int/None): maximum number of neighbors found
-            tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list (list): list of atoms the neighbors are to be looked for
             boundary_width_factor (float): width of the layer to be added to account for pbc.
             num_neighbors_estimate_buffer (float): Extra volume taken into account for the num_neighbors estimation
@@ -1147,7 +1145,6 @@ class Atoms(ASEAtoms):
             neigh = self._get_neighbors(
                 num_neighbors=num_neighbors,
                 t_vec=False,
-                tolerance=tolerance,
                 id_list=id_list,
                 cutoff_radius=cutoff_radius,
                 boundary_width_factor=boundary_width_factor,
@@ -1168,7 +1165,6 @@ class Atoms(ASEAtoms):
                 neigh = self._get_neighbors(
                     num_neighbors=num_neighbors,
                     t_vec=False,
-                    tolerance=tolerance,
                     id_list=id_list,
                     cutoff_radius=cutoff_radius,
                     boundary_width_factor=boundary_width_factor,
