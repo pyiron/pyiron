@@ -153,26 +153,38 @@ def _get_higher_order_strains(
     counts[counts<0] = 0
     if sum(counts)==0: # No term gets more than harmonic part
         return None
-    strain_higher_strains = np.zeros((len(strain_lst), np.sum(counts)))
+    strain_higher_order = np.zeros((len(strain_lst), np.sum(counts)))
     na = np.newaxis
     for cc, ind in zip(counts, indices):
+        # Take strain with the highest magnitude among linearly dependent ones
+        # It does not have to be the highest magnitude, but it's important that
+        # it does not choose the zero strain vector (which is with all the
+        # strains linearly dependent)
         E = strain_lst[ind][
             np.linalg.norm(strain_lst[ind].reshape(-1, 9), axis=-1).argmax()]
+        # Normalize strain
         E /= np.linalg.norm(E)
+        # Take inner product (Instead of taking the inner product, it is also
+        # possible to take the magnitude of each strain, in which case there
+        # must be a well defined convention on the sign so that the odd 
+        # exponent terms can take asymmetry around strain=0 into account).
         E = np.sum((E*strain_lst[ind]).reshape(-1, 9), axis=-1)
+        # Take polynomial development
         if derivative:
             E = E[:,na]**(np.arange(cc)+1)[na,:]*np.sign(E)[:,na]
         else:
             E = E[:,na]**(np.arange(cc)+3)[na,:]
-        starting_index = np.sum(np.any(strain_higher_strains!=0, axis=0))
-        strain_higher_strains[ind, starting_index:starting_index+E.shape[1]] = E
-    strain_higher_strains = np.einsum('n,ij->nij',
+        # Check starting column
+        starting_index = np.sum(np.any(strain_higher_order!=0, axis=0))
+        strain_higher_order[ind, starting_index:starting_index+E.shape[1]] = E
+    # Repeat by the number of rotations (nothing to do with real rotations)
+    strain_higher_order = np.einsum('n,ij->nij',
                                       np.ones(len(rotations)),
-                                      strain_higher_strains)
-    strain_higher_strains = strain_higher_strains.reshape(
-        -1, strain_higher_strains.shape[-1]
+                                      strain_higher_order)
+    strain_higher_order = strain_higher_order.reshape(
+        -1, strain_higher_order.shape[-1]
     )
-    return strain_higher_strains
+    return strain_higher_order
 
 def calc_elastic_tensor(
         strain,
