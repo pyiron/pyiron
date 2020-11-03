@@ -626,7 +626,10 @@ class LammpsStructure(GenericParameters):
 
         el_lst = self._structure.get_chemical_elements()
         for id_atom, (el, coord) in enumerate(zip(el_lst, coords)):
-            id_el = el_dict[el]
+            if el in el_dict.keys():
+                id_el = el_dict[el]
+            else:
+                raise ValueError("Selected potential does not support the existing chemical composition")
             dim = self._structure.dimension
             c = np.zeros(3)
             c[:dim] = coord

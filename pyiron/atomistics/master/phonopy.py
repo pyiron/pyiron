@@ -140,6 +140,7 @@ class PhonopyJob(AtomisticParallelMaster):
         )
         self.input["displacement"] = (0.01, "atoms displacement, Ang")
         self.input["dos_mesh"] = (20, "mesh size for DOS calculation")
+        self.input["primitive_matrix"] = None
 
         self.phonopy = None
         self._job_generator = PhonopyJobGenerator(self)
@@ -167,6 +168,7 @@ class PhonopyJob(AtomisticParallelMaster):
                 self.phonopy = Phonopy(
                     unitcell=self._phonopy_unit_cell,
                     supercell_matrix=self._phonopy_supercell_matrix(),
+                    primitive_matrix=self.input["primitive_matrix"],
                     factor=self.input["factor"],
                 )
                 self.phonopy.generate_displacements(distance=self.input["displacement"])

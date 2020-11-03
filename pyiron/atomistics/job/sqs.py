@@ -113,18 +113,20 @@ class SQSJob(AtomisticGenericJob):
     """
 
     publication = {
-        'sqs': {
-            "title": "Special quasirandom structures",
-            "author": ["Zunger, A.", "Wei, S.-H.", "Ferreira, L.G.", "Bernard, J.E."],
-            "journal": "Phys. Rev. Lett.",
-            "volume": "65",
-            "issue": "3",
-            "pages": "353",
-            "numpages": "0",
-            "month": "July",
-            "publisher": "American Physical Society",
-            "doi": "10.1103/PhysRevLett.65.353",
-            "url": "https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.65.353",
+        "sqs": {
+            "method": {
+                "title": "Special quasirandom structures",
+                "author": ["Zunger, A.", "Wei, S.-H.", "Ferreira, L.G.", "Bernard, J.E."],
+                "journal": "Phys. Rev. Lett.",
+                "volume": "65",
+                "issue": "3",
+                "pages": "353",
+                "numpages": "0",
+                "month": "July",
+                "publisher": "American Physical Society",
+                "doi": "10.1103/PhysRevLett.65.353",
+                "url": "https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.65.353",
+            }
         }
     }
 
@@ -187,6 +189,7 @@ class SQSJob(AtomisticGenericJob):
             hdf=hdf,
             group_name=group_name
         )
+        self._structure_to_hdf()
         with self.project_hdf5.open("input") as h5in:
             self.input.to_hdf(h5in)
 
@@ -195,6 +198,7 @@ class SQSJob(AtomisticGenericJob):
             hdf=hdf,
             group_name=group_name
         )
+        self._structure_from_hdf()
         self._backwards_compatible_input_from_hdf()
         with self.project_hdf5.open("output/structures") as hdf5_output:
             structure_names = hdf5_output.list_groups()

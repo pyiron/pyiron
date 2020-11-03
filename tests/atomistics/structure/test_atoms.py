@@ -224,11 +224,19 @@ class TestAtoms(unittest.TestCase):
         pos, cell = generate_fcc_lattice()
         basis_store = Atoms(symbols="Al", positions=pos, cell=cell)
         basis_store.set_repeat([2, 2, 2])
+        basis_store.add_tag(selective_dynamics=[False, False, False])
+        basis_store.selective_dynamics[7] = [True, True, True]
         basis_store.to_hdf(hdf_obj, "simple_structure")
         basis = Atoms().from_hdf(hdf_obj, group_name="simple_structure")
         self.assertEqual(len(basis), 8)
         self.assertEqual(basis.get_majority_species()["symbol"], "Al")
         self.assertEqual(basis.get_spacegroup()["Number"], 225)
+        self.assertTrue(basis.selective_dynamics[7][0])
+        self.assertFalse(basis.selective_dynamics[0][0])
+        basis.add_tag(selective_dynamics=[False, False, False])
+        basis.selective_dynamics[6] = [True, True, True]
+        self.assertTrue(basis.selective_dynamics[6][0])
+        self.assertFalse(basis.selective_dynamics[5][0])
 
     def test_to_object(self):
         filename = os.path.join(
@@ -802,6 +810,13 @@ class TestAtoms(unittest.TestCase):
             "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
         )
         view = basis.plot3d()
+
+    @staticmethod
+    def test_plot3d_plotly():
+        basis = Atoms(
+            "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
+        )
+        basis.plot3d(mode='plotly')
 
     def test_group_points_by_symmetry(self):
         basis = Atoms("FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3))
@@ -1443,13 +1458,6 @@ class TestAtoms(unittest.TestCase):
             warnings.simplefilter("always")
             c3.get_scaled_positions()
             self.assertEqual(len(w), 0)
-
-    def test_get_flattened_orientation(self):
-        pos, cell = generate_fcc_lattice()
-        basis = Atoms(symbols="Al", positions=pos, cell=cell)
-        R = np.random.random(9).reshape(-1, 3)
-        R = np.array(basis._get_flattened_orientation(R, 1)).reshape(4, 4)
-        self.assertAlmostEqual(np.linalg.det(R), 1)
 
 
 def generate_fcc_lattice(a=4.2):

@@ -108,6 +108,11 @@ class TestLammpsInteractive(unittest.TestCase):
         # Ensure that pressure inputs are being parsed OK
         self.minimize_job.calc_minimize(pressure=0)
         self.minimize_job._interactive_lammps_input()
+        self.assertTrue(("fix ensemble all box/relax iso 0.0" in
+                         self.minimize_job._interactive_library._command))
+
+        self.minimize_job.calc_minimize(pressure=[0.0, 0.0, 0.0])
+        self.minimize_job._interactive_lammps_input()
         self.assertTrue(("fix ensemble all box/relax x 0.0 y 0.0 z 0.0 couple none" in
                          self.minimize_job._interactive_library._command))
 

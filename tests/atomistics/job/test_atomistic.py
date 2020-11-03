@@ -51,7 +51,7 @@ class TestAtomisticGenericJob(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             disp = self.job.output.get_displacements(self.job.structure,
-                                                     positions=positions, cells=cells, varying_cell=True)
+                                                     positions=positions, cells=cells)
             self.assertEqual(len(w), 1)
             self.assertIsInstance(w[-1].message, UserWarning)
         self.assertFalse(np.allclose(disp, disp_ref))
@@ -67,3 +67,7 @@ class TestAtomisticGenericJob(unittest.TestCase):
             diff[diff <= -0.5] += 1.0
             disp_ref.append(np.dot(diff, cell))
         self.assertTrue(np.allclose(disp, disp_ref))
+
+
+if __name__ == "__main__":
+    unittest.main()
