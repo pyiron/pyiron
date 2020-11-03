@@ -278,34 +278,34 @@ class VaspVolumetricData(VolumetricData):
     def diff_data(self, val):
         self._diff_data = val
 
-    def to_hdf(self, hdf5, group_name="volumetric_data"):
+    def to_hdf(self, hdf, group_name="volumetric_data"):
         """
         Writes the data as a group to a HDF5 file
 
         Args:
-            hdf5 (pyiron_base.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
             group_name (str): The name of the group under which the data must be stored as
 
         """
-        with hdf5.open(group_name) as hdf_vd:
+        with hdf.open(group_name) as hdf_vd:
             hdf_vd["TYPE"] = str(type(self))
             hdf_vd["total"] = self.total_data
             if self.diff_data is not None:
                 hdf_vd["diff"] = self.diff_data
 
-    def from_hdf(self, hdf5, group_name="volumetric_data"):
+    def from_hdf(self, hdf, group_name="volumetric_data"):
         """
         Recreating the VolumetricData instance by reading data from the HDF5 files
 
         Args:
-            hdf5 (pyiron_base.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
             group_name (str): The name of the group under which the data must be stored as
 
         Returns:
             pyiron.atomistics.volumetric.generic.VolumetricData: The VolumetricData instance
 
         """
-        with hdf5.open(group_name) as hdf_vd:
+        with hdf.open(group_name) as hdf_vd:
             self._total_data = hdf_vd["total"]
             if "diff" in hdf_vd.list_nodes():
                 self._diff_data = hdf_vd["diff"]
