@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# Conda fix
-eval "$(conda shell.bash hook)"
-conda activate root
-env
-
 # Select ipykernelt
 if [ "$PYTHONVER" = "2.7" ]; then
     kernel="python2"
