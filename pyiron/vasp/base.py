@@ -9,17 +9,18 @@ import subprocess
 import numpy as np
 
 from pyiron.dft.job.generic import GenericDFTJob
-from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentialSetter, Potcar
+from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentialSetter, Potcar, \
+    strip_xc_from_potential_name
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
-from pyiron.base.settings.generic import Settings
-from pyiron.base.generic.parameters import GenericParameters
+from pyiron_base import Settings, GenericParameters
 from pyiron.vasp.outcar import Outcar
+from pyiron.vasp.oszicar import Oszicar
 from pyiron.vasp.procar import Procar
 from pyiron.vasp.structure import read_atoms, write_poscar, vasp_sorter
 from pyiron.vasp.vasprun import Vasprun as Vr
-from pyiron.vasp.vasprun import VasprunError
+from pyiron.vasp.vasprun import VasprunError, VasprunWarning
 from pyiron.vasp.volumetric_data import VaspVolumetricData
-from pyiron.vasp.potential import get_enmax_among_species
+from pyiron.vasp.potential import get_enmax_among_potentials
 from pyiron.dft.waves.electronic import ElectronicStructure
 from pyiron.dft.waves.bandstructure import Bandstructure
 import warnings
@@ -80,7 +81,7 @@ class VaspBase(GenericDFTJob):
         self._output_parser = Output()
         self._potential = VaspPotentialSetter([])
         self._compress_by_default = True
-        self.get_enmax_among_species = get_enmax_among_species
+        self.get_enmax_among_species = get_enmax_among_potentials
         s.publication_add(self.publication)
 
     @property
@@ -142,13 +143,10 @@ class VaspBase(GenericDFTJob):
     @property
     def spin_constraints(self):
         """
-        Returns True if the calculation is spin polarized
+        Returns True if the calculation is spin constrained
         """
         if "I_CONSTRAINED_M" in self.input.incar._dataset["Parameter"]:
-            return (
-                self.input.incar["I_CONSTRAINED_M"] == 1
-                or self.input.incar["I_CONSTRAINED_M"] == 2
-            )
+            return (self.input.incar["I_CONSTRAINED_M"] >= 1)
         else:
             return False
 
@@ -270,22 +268,16 @@ class VaspBase(GenericDFTJob):
         if self.structure is None:
             raise ValueError("Can't list potentials unless a structure is set")
         else:
-            return VaspPotentialFile(xc=self.input.potcar["xc"]).find(
-                self.structure.get_species_symbols().tolist()
-            )
-
-    @property
-    def potential_list(self):
-        if self.structure is None:
-            raise ValueError("Can't list potentials unless a structure is set")
-        else:
             df = VaspPotentialFile(xc=self.input.potcar["xc"]).find(
                 self.structure.get_species_symbols().tolist()
             )
-            if len(df) != 0:
-                return df["Name"]
-            else:
-                return []
+            if len(df) > 0:
+                df["Name"] = [strip_xc_from_potential_name(n) for n in df["Name"].values]
+            return df
+
+    @property
+    def potential_list(self):
+        return list(self.potential_view["Name"].values)
 
     @property
     def publication(self):
@@ -334,6 +326,9 @@ class VaspBase(GenericDFTJob):
                 },
             }
         }
+
+    def get_kpoints(self):
+        return [int(v) for v in self.input.kpoints[3].split()]
 
     def set_input_to_read_only(self):
         """
@@ -385,7 +380,7 @@ class VaspBase(GenericDFTJob):
                 self.structure = self.get_final_structure_from_file(filename="CONTCAR")
             except IOError:
                 self.structure = self.get_final_structure_from_file(filename="POSCAR")
-            self.sorted_indices = np.array(range(len(self.structure)))
+            self._sorted_indices = np.array(range(len(self.structure)))
         self._output_parser.structure = self.structure.copy()
         try:
             self._output_parser.collect(
@@ -394,6 +389,12 @@ class VaspBase(GenericDFTJob):
         except VaspCollectError:
             self.status.aborted = True
             return
+        # Try getting high precision positions from CONTCAR
+        try:
+            self._output_parser.structure = self.get_final_structure_from_file(filename="CONTCAR")
+        except (IOError, ValueError, FileNotFoundError):
+            pass
+
         self._output_parser.to_hdf(self._hdf5)
         if len(self._exclude_groups_hdf) > 0 or len(self._exclude_nodes_hdf) > 0:
             self.project_hdf5.rewrite_hdf5(
@@ -663,7 +664,7 @@ class VaspBase(GenericDFTJob):
         Stores the instance attributes into the hdf5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): The HDF file/path to write the data to
             group_name (str): The name of the group under which the data must be stored as
 
         """
@@ -677,7 +678,7 @@ class VaspBase(GenericDFTJob):
         Recreates instance from the hdf5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): The HDF file/path to read the data from
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): The HDF file/path to read the data from
             group_name (str): The name of the group under which the data must be stored as
 
         """
@@ -939,7 +940,10 @@ class VaspBase(GenericDFTJob):
             self.write_charge_density = retain_charge_density
         if retain_electrostatic_potential:
             self.write_electrostatic_potential = retain_electrostatic_potential
-        return
+        self.set_convergence_precision(ionic_force_tolerance=ionic_force_tolerance,
+                                       ionic_energy_tolerance=ionic_energy_tolerance,
+                                       ionic_energy=ionic_energy, ionic_forces=ionic_forces,
+                                       electronic_energy=None)
 
     def calc_static(
         self,
@@ -1177,28 +1181,36 @@ class VaspBase(GenericDFTJob):
 
         Args:
             ionic_energy_tolerance (float): Ionic energy convergence precision (eV)
-            electronic_energy (float): Electronic energy convergence precision (eV)
+            electronic_energy (float/NoneType): Electronic energy convergence precision (eV)
             ionic_force_tolerance (float): Ionic force convergence precision (eV/A)
-            ionic_energy (float): Same as ionic_energy_tolerance (deprecated)
-            ionic_forces (float): Same as ionic_force_tolerance (deprecated)
+            ionic_energy (float/NoneType): Same as ionic_energy_tolerance (deprecated)
+            ionic_forces (float/NoneType): Same as ionic_force_tolerance (deprecated)
         """
         if ionic_forces is not None:
             warnings.warn(
-                "ionic_forces is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. Use ionic_force_tolerance instead.",
+                "ionic_forces is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. "
+                "Use ionic_force_tolerance instead.",
                 DeprecationWarning
             )
-            ionic_force_tolerance = ionic_forces
+            if ionic_force_tolerance is None:
+                ionic_force_tolerance = ionic_forces
         if ionic_energy is not None:
             warnings.warn(
-                "ionic_energy is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. Use ionic_energy_tolerance instead.",
+                "ionic_energy is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. "
+                "Use ionic_energy_tolerance instead.",
                 DeprecationWarning
             )
-            ionic_energy_tolerance = ionic_tolerance
-        self.input.incar["EDIFF"] = electronic_energy
-        if ionic_forces is not None:
+            if ionic_energy_tolerance is None:
+                ionic_energy_tolerance = ionic_energy
+        if ionic_force_tolerance is not None:
             self.input.incar["EDIFFG"] = -1.0 * abs(ionic_force_tolerance)
-        else:
+        elif ionic_energy_tolerance is not None:
             self.input.incar["EDIFFG"] = abs(ionic_energy_tolerance)
+        else:
+            # Using default convergence criterion
+            self.input.incar["EDIFFG"] = -0.01
+        if electronic_energy is not None:
+            self.input.incar["EDIFF"] = electronic_energy
 
     def set_dipole_correction(self, direction=2, dipole_center=None):
         """
@@ -1344,21 +1356,6 @@ class VaspBase(GenericDFTJob):
             return spins[iteration_step]
         else:
             return None
-
-    def get_electronic_structure(self):
-        """
-        Gets the electronic structure instance from the hdf5 file
-
-        Returns:
-                pyiron.atomistics.waves.electronic.ElectronicStructure instance
-        """
-        if not self.status.finished:
-            return
-        else:
-            with self.project_hdf5.open("output") as ho:
-                es_obj = ElectronicStructure()
-                es_obj.from_hdf(ho)
-            return es_obj
 
     def get_charge_density(self):
         """
@@ -1782,7 +1779,7 @@ class Input:
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
 
@@ -1839,6 +1836,7 @@ class Output:
     def __init__(self):
         self._structure = None
         self.outcar = Outcar()
+        self.oszicar = Oszicar()
         self.generic_output = GenericOutput()
         self.description = (
             "This contains all the output static from this particular vasp run"
@@ -1878,21 +1876,30 @@ class Output:
         vasprun_working, outcar_working = False, False
         if not ("OUTCAR" in files_present or "vasprun.xml" in files_present):
             raise IOError("Either the OUTCAR or vasprun.xml files need to be present")
+        if "OSZICAR" in files_present:
+            self.oszicar.from_file(filename=posixpath.join(directory, "OSZICAR"))
         if "OUTCAR" in files_present:
             self.outcar.from_file(filename=posixpath.join(directory, "OUTCAR"))
             outcar_working = True
         if "vasprun.xml" in files_present:
             try:
-                self.vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter("always")
+                    self.vp_new.from_file(filename=posixpath.join(directory, "vasprun.xml"))
+                    if any([isinstance(warn.category, VasprunWarning) for warn in w]):
+                        s.logger.warning("vasprun.xml parsed but with some inconsistencies. "
+                                         "Check vasp output to be sure")
+                        warnings.warn("vasprun.xml parsed but with some inconsistencies. "
+                                      "Check vasp output to be sure", VasprunWarning)
             except VasprunError:
                 s.logger.warning("Unable to parse the vasprun.xml file. Will attempt to get data from OUTCAR")
             else:
                 # If parsing the vasprun file does not throw an error, then set to True
                 vasprun_working = True
-
         if outcar_working:
             log_dict["temperature"] = self.outcar.parse_dict["temperatures"]
             log_dict["pressures"] = self.outcar.parse_dict["pressures"]
+            log_dict["elastic_constants"] = self.outcar.parse_dict["elastic_constants"]
             self.generic_output.dft_log_dict["n_elect"] = self.outcar.parse_dict[
                 "n_elect"
             ]
@@ -1911,6 +1918,9 @@ class Output:
                 self.generic_output.dft_log_dict[
                     "final_magmoms"
                 ] = final_magmoms.tolist()
+            self.generic_output.dft_log_dict["e_fermi_list"] = self.outcar.parse_dict["e_fermi_list"]
+            self.generic_output.dft_log_dict["vbm_list"] = self.outcar.parse_dict["vbm_list"]
+            self.generic_output.dft_log_dict["cbm_list"] = self.outcar.parse_dict["cbm_list"]
 
         if vasprun_working:
             log_dict["forces"] = self.vp_new.vasprun_dict["forces"]
@@ -1991,6 +2001,9 @@ class Output:
             self.generic_output.dft_log_dict["energy_zero"] = self.outcar.parse_dict[
                 "energies_zero"
             ]
+            self.generic_output.dft_log_dict["energy_int"] = self.outcar.parse_dict[
+                "energies_int"
+            ]
             if "PROCAR" in files_present:
                 try:
                     self.electronic_structure = self.procar.from_file(
@@ -2010,7 +2023,6 @@ class Output:
                         ]
                 except ValueError:
                     pass
-
         # important that we "reverse sort" the atoms in the vasp format into the atoms in the atoms class
         self.generic_output.log_dict = log_dict
         if vasprun_working:
@@ -2047,6 +2059,11 @@ class Output:
                     for e_free in self.generic_output.dft_log_dict["scf_energy_free"]
                 ]
             )
+            # Overwrite energy_free with much better precision from the OSZICAR file
+            if "energy_pot" in self.oszicar.parse_dict.keys():
+                if np.array_equal(self.generic_output.dft_log_dict["energy_free"],
+                                  np.round(self.oszicar.parse_dict["energy_pot"], 8)):
+                    self.generic_output.dft_log_dict["energy_free"] = self.oszicar.parse_dict["energy_pot"]
             self.generic_output.dft_log_dict["energy_zero"] = np.array(
                 [
                     e_zero[-1]
@@ -2082,7 +2099,7 @@ class Output:
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
         with hdf.open("output") as hdf5_output:
@@ -2172,7 +2189,7 @@ class GenericOutput:
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
         with hdf.open("generic") as hdf_go:
@@ -2223,7 +2240,7 @@ class DFTOutput:
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
         with hdf.open("dft") as hdf_dft:

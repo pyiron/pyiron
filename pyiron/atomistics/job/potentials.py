@@ -8,7 +8,7 @@ OpenKim https://openkim.org database.
 """
 import pandas
 import os
-from pyiron.base.settings.generic import Settings
+from pyiron_base import Settings
 
 __author__ = "Martin Boeckmann, Jan Janssen"
 __copyright__ = (

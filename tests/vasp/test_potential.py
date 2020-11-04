@@ -4,7 +4,7 @@
 
 import unittest
 import os
-from pyiron.vasp.potential import get_enmax_among_species
+from pyiron.vasp.potential import get_enmax_among_potentials, strip_xc_from_potential_name
 
 
 class TestPotential(unittest.TestCase):
@@ -13,15 +13,18 @@ class TestPotential(unittest.TestCase):
     def setUpClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
 
-    def test_get_enmax_among_species(self):
-        float_out = get_enmax_among_species(['Fe'], return_list=False)
+    def test_get_enmax_among_potentials(self):
+        float_out = get_enmax_among_potentials('Fe', return_list=False)
         self.assertTrue(isinstance(float_out, float))
 
-        tuple_out = get_enmax_among_species(['Fe'], return_list=True)
+        tuple_out = get_enmax_among_potentials('Fe', return_list=True)
         self.assertTrue(isinstance(tuple_out, tuple))
 
-        self.assertRaises(KeyError, get_enmax_among_species, symbol_lst=['X'])
-        self.assertRaises(ValueError, get_enmax_among_species, symbol_lst=['Fe'], xc='FOO')
+        self.assertRaises(ValueError, get_enmax_among_potentials, 'X')
+        self.assertRaises(ValueError, get_enmax_among_potentials, 'Fe', xc='FOO')
+
+    def test_strip_xc_from_potential_name(self):
+        self.assertEqual(strip_xc_from_potential_name('X_pv-gga-pbe'), 'X_pv')
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ from __future__ import print_function
 import numpy as np
 from numpy import transpose as tr
 from numpy.linalg import inv, norm
-from pyiron.base.generic.template import PyironObject
+from pyiron_base import PyironObject
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
 __copyright__ = (

@@ -33,6 +33,7 @@ class VaspInteractive(VaspBase, GenericInteractive):
         super(VaspInteractive, self).__init__(project, job_name)
         self._interactive_write_input_files = True
         self._interactive_vasprun = None
+        self.interactive_flush_frequency = 1
 
     @property
     def structure(self):
@@ -342,7 +343,7 @@ class GenericOutput(GenericOutputBase):
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
         with hdf.open("generic") as hdf_go:
@@ -372,7 +373,7 @@ class DFTOutput(DFTOutputBase):
         Save the object in a HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): HDF path to which the object is to be saved
 
         """
         with hdf.open("dft") as hdf_dft:

@@ -1,4 +1,4 @@
-from pyiron.base.generic.parameters import GenericParameters
+from pyiron_base import GenericParameters
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 from yaff import System, log as Yafflog, ForceField

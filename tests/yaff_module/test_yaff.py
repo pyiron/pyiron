@@ -10,8 +10,7 @@ import numpy as np
 from molmod.units import *
 
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.base.generic.hdfio import ProjectHDFio
-from pyiron.base.project.generic import Project
+from pyiron_base import ProjectHDFio, Project
 
 from pyiron.yaff.yaff import YaffInput
 from pyiron.yaff.yaff import Yaff

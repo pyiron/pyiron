@@ -5,7 +5,7 @@
 from __future__ import print_function
 from collections import OrderedDict
 import numpy as np
-from pyiron.base.generic.parameters import GenericParameters
+from pyiron_base import GenericParameters
 import decimal as dec
 
 try:
@@ -416,7 +416,7 @@ class LammpsStructure(GenericParameters):
             cutoff_list.append(np.max(val["cutoff_list"]))
         max_cutoff = np.max(cutoff_list)
         # Calculate neighbors only once
-        neighbors = self._structure.get_neighbors(cutoff_radius=max_cutoff)
+        neighbors = self._structure.get_neighbors_by_distance(cutoff_radius=max_cutoff)
         id_mol = 0
         indices = self._structure.indices
         for id_el, id_species in enumerate(indices):
@@ -431,12 +431,12 @@ class LammpsStructure(GenericParameters):
                     for i, v in enumerate(val["element_list"]):
                         el_2_list = self._structure.select_index(v)
                         cutoff_dist = val["cutoff_list"][i]
-                        for j, ind in enumerate(neighbors.indices[el_1_list]):
+                        for j, ind in enumerate(np.array(neighbors.indices)[el_1_list]):
                             # Only chose those indices within the cutoff distance and which belong
                             # to the species defined in the element_list
                             # i is the index of each bond type, and j is the element index
                             id_el = el_1_list[j]
-                            bool_1 = neighbors.distances[id_el] <= cutoff_dist
+                            bool_1 = np.array(neighbors.distances)[id_el] <= cutoff_dist
                             act_ind = ind[bool_1]
                             bool_2 = np.in1d(act_ind, el_2_list)
                             final_ind = act_ind[bool_2]
@@ -626,7 +626,10 @@ class LammpsStructure(GenericParameters):
 
         el_lst = self._structure.get_chemical_elements()
         for id_atom, (el, coord) in enumerate(zip(el_lst, coords)):
-            id_el = el_dict[el]
+            if el in el_dict.keys():
+                id_el = el_dict[el]
+            else:
+                raise ValueError("Selected potential does not support the existing chemical composition")
             dim = self._structure.dimension
             c = np.zeros(3)
             c[:dim] = coord

@@ -6,7 +6,6 @@ from __future__ import print_function, unicode_literals
 import os
 import posixpath
 
-import sys
 import h5py
 import numpy as np
 import pandas as pd
@@ -15,8 +14,7 @@ from io import StringIO
 
 from pyiron.lammps.potential import LammpsPotentialFile, PotentialAvailable
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
-from pyiron.base.settings.generic import Settings
-from pyiron.base.pyio.parser import Logstatus, extract_data_from_file
+from pyiron_base import Settings, extract_data_from_file
 from pyiron.lammps.control import LammpsControl
 from pyiron.lammps.potential import LammpsPotential
 from pyiron.lammps.structure import LammpsStructure, UnfoldingPrism
@@ -225,9 +223,14 @@ class LammpsBase(AtomisticGenericJob):
         """
         super(LammpsBase, self).validate_ready_to_run()
         if self.potential is None:
-            raise ValueError(
-                "This job does not contain a valid potential: {}".format(self.job_name)
-            )
+            lst_of_potentials = self.list_potentials()
+            if len(lst_of_potentials) > 0:
+                self.potential = lst_of_potentials[0]
+                warnings.warn("No potential set via job.potential - use default potential, " + lst_of_potentials[0])
+            else:
+                raise ValueError(
+                    "This job does not contain a valid potential: {}".format(self.job_name)
+                )
         scaled_positions = self.structure.get_scaled_positions(wrap=False)
         # Check if atoms located outside of non periodic box
         conditions = [(np.min(scaled_positions[:, i]) < 0.0 or
@@ -742,6 +745,7 @@ class LammpsBase(AtomisticGenericJob):
             window_moves (int): The number of times the sampling window is moved during one MC cycle. (Default is None,
                 number of moves is determined automatically.)
         """
+        rotation_matrix = self._get_rotation_matrix(pressure=pressure)
         if mu is None:
             mu = {}
             for el in self.input.potential.get_element_lst():
@@ -773,6 +777,7 @@ class LammpsBase(AtomisticGenericJob):
             initial_temperature=initial_temperature,
             langevin=langevin,
             job_name=self.job_name,
+            rotation_matrix=rotation_matrix
         )
 
     # define hdf5 input and output

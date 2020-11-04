@@ -13,8 +13,8 @@ pyiron
     :target: https://anaconda.org/conda-forge/pyiron/
     :alt: Release_Date
 
-.. image:: https://travis-ci.org/pyiron/pyiron.svg?branch=master
-    :target: https://travis-ci.org/pyiron/pyiron
+.. image:: https://travis-ci.com/pyiron/pyiron.svg?branch=master
+    :target: https://travis-ci.com/pyiron/pyiron
     :alt: Build Status
 
 .. image:: https://ci.appveyor.com/api/projects/status/wfdgqkxca1i19xcq/branch/master?svg=true
@@ -66,7 +66,7 @@ After the installation of pyiron you need to configure pyiron. The default confi
    > exit()
 
 
-See the `Documentation-Installation <https://pyiron.github.io/source/installation.html>`_ page for more details.
+See the `Documentation-Installation <https://pyiron.readthedocs.io/en/latest/source/installation.html>`_ page for more details.
 
 
 Example
@@ -93,18 +93,11 @@ Finally a first lammps calculation can be executed by::
 
 Getting started:
 ----------------
-For users - test pyiron with mybinder:
+Test pyiron with mybinder:
 
 .. image:: https://mybinder.org/badge_logo.svg
      :target: https://mybinder.org/v2/gh/pyiron/pyiron/master
      :alt: mybinder
- 
- 
-For developers - browse the pyiron code with gitpod: 
-
-.. image:: https://gitpod.io/button/open-in-gitpod.svg
-     :target: https://gitpod.io/#https://github.com/pyiron/pyiron
-     :alt: Gitpod
 
 
 License and Acknowledgments

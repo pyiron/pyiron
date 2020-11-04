@@ -5,6 +5,7 @@
 import os
 import unittest
 from pyiron.project import Project
+import numpy as np
 
 
 class TestSxExtOptInteractive(unittest.TestCase):
@@ -12,21 +13,48 @@ class TestSxExtOptInteractive(unittest.TestCase):
     def setUpClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
         cls.project = Project(os.path.join(cls.file_location, "../static/minim"))
-        cls.basis = cls.project.create_structure("Fe", "bcc", 2.8)
-        job = cls.project.create_job(
-            cls.project.job_type.AtomisticExampleJob, "job_single"
-        )
-        job.server.run_mode.interactive = True
-        job.structure = cls.basis
-        cls.minim = cls.project.create_job("ScipyMinimizer", "job_scipy")
-        cls.minim.ref_job = job
 
     @classmethod
     def tearDownClass(cls):
         cls.project.remove_jobs_silently(recursive=True)
+        cls.project.remove(enable=True, enforce=True)
 
-    def test_minimizer(self):
-        self.assertEqual(self.minim.minimizer, 'CG')
+    def test_run(self):
+        basis = self.project.create_structure("Fe", "bcc", 2.8)
+        job = self.project.create_job( 'HessianJob', "job_single")
+        job.server.run_mode.interactive = True
+        job.set_reference_structure(basis)
+        job.set_force_constants(1)
+        job.structure.positions[0,0] += 0.01
+        minim = job.create_job("ScipyMinimizer", "job_scipy")
+        force_tolerance = 1.0e-3
+        minim.input.ionic_force_tolerance = force_tolerance
+        minim.run()
+        self.assertLess(np.linalg.norm(minim.ref_job['output/generic/forces'][-1], axis=-1).max(), force_tolerance)
+
+    def test_run_pressure(self):
+        basis = self.project.create_structure("Al", "fcc", 4)
+        job = self.project.create_job( 'HessianJob', "job_pressure")
+        job.server.run_mode.interactive = True
+        job.set_reference_structure(basis)
+        job.set_force_constants(1)
+        job.set_elastic_moduli(1,1)
+        job.structure.set_cell(job.structure.cell*1.01, scale_atoms=True)
+        minim = job.create_job("ScipyMinimizer", "job_scipy_pressure")
+        minim.calc_minimize(pressure=0, volume_only=True)
+        pressure_tolerance = 1.0e-3
+        minim.input.ionic_force_tolerance = pressure_tolerance
+        minim.run()
+        self.assertLess(np.absolute(minim.ref_job['output/generic/pressures'][-1]).max(), pressure_tolerance)
+
+    def test_calc_minimize(self):
+        minim = self.project.create_job('ScipyMinimizer', 'calc_minimize')
+        with self.assertRaises(ValueError):
+            minim.calc_minimize(volume_only=True, pressure=None)
+        minim.calc_minimize(pressure=0)
+        self.assertTrue(np.array_equal(minim.input.pressure, np.zeros((3,3))))
+        minim.calc_minimize(pressure=1)
+        self.assertTrue(np.array_equal(minim.input.pressure, np.eye(3)))
 
 if __name__ == "__main__":
     unittest.main()

@@ -28,7 +28,7 @@ class TestVasprun(unittest.TestCase):
         )
         file_list = sorted(os.listdir(cls.direc))
         del file_list[file_list.index("vasprun_spoilt.xml")]
-        cls.num_species = [3, 1, 2, 2, 3, 4, 4, 2]
+        cls.num_species = [3, 1, 2, 2, 3, 4, 4, 4, 2]
 
         for f in file_list:
             vp = Vasprun()
@@ -178,7 +178,7 @@ class TestVasprun(unittest.TestCase):
                     vp.vasprun_dict["grand_dos_matrix"]
                 )
                 self.assertEqual(len(es_obj.kpoints), n_kpts)
-                self.assertEqual(len(es_obj.kpoints[0].bands), n_bands)
+                self.assertEqual(len(es_obj.kpoints[0].bands[0]), n_bands)
 
     def test_species_info(self):
         for i, vp in enumerate(self.vp_list):
@@ -192,6 +192,12 @@ class TestVasprun(unittest.TestCase):
             self.assertEqual(
                 vp.get_final_structure().get_number_of_species(), self.num_species[i]
             )
+
+    def test_energies(self):
+        for i, vp in enumerate(self.vp_list):
+            self.assertIsInstance(vp.vasprun_dict["total_0_energies"], np.ndarray)
+            if i == 7:
+                self.assertEqual(vp.vasprun_dict["scf_fr_energies"][0][0], 0.0)
 
 
 if __name__ == "__main__":

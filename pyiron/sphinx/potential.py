@@ -4,7 +4,7 @@
 
 import os
 import pandas
-from pyiron.base.settings.generic import Settings
+from pyiron_base import Settings
 from pyiron.vasp.potential import VaspPotentialAbstract, find_potential_file_base
 
 __author__ = "Osamu Waseda"
@@ -44,7 +44,7 @@ class SphinxJTHPotentialFile(VaspPotentialAbstract):
             potential_df = potential_df[(potential_df["Model"] == "jth-gga-pbe")]
         else:
             raise ValueError(
-                'The exchange correlation functional has to be set and it can either be "LDA" or "PBE"'
+                'The exchange correlation functional has to be set to "PBE" currently there are no "LDA" potentials.'
             )
         super(SphinxJTHPotentialFile, self).__init__(
             potential_df=potential_df,
@@ -79,8 +79,9 @@ class SphinxJTHPotentialFile(VaspPotentialAbstract):
 def find_potential_file(path):
     env = os.environ
     resource_path_lst = s.resource_paths
-    if "CONDA_PREFIX" in env.keys():  # support sphinx-data package
-        resource_path_lst += [os.path.join(os.environ["CONDA_PREFIX"], "share", "sphinxdft")]
+    for conda_var in ["CONDA_PREFIX", "CONDA_DIR"]:
+        if conda_var in env.keys():  # support sphinx-data package
+            resource_path_lst += [os.path.join(os.environ[conda_var], "share", "sphinxdft")]
     return find_potential_file_base(
         path=path,
         resource_path_lst=resource_path_lst,

@@ -3,8 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import numpy as np
-from pyiron.base.settings.generic import Settings
-from pyiron.base.job.interactive import InteractiveBase
+from pyiron_base import Settings, InteractiveBase
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob, GenericOutput
@@ -274,6 +273,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         there is only one ionic iteration step
         Args:
             iteration_step (int): Step for which the structure is requested
+            wrap_atoms (bool):
 
         Returns:
             atomistics.structure.atoms.Atoms object

@@ -5,9 +5,8 @@
 import unittest
 import numpy as np
 import os
-from pyiron.base.project.generic import Project
+from pyiron_base import Project, ProjectHDFio
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.base.generic.hdfio import ProjectHDFio
 from pyiron.lammps.lammps import Lammps
 
 
@@ -108,6 +107,11 @@ class TestLammpsInteractive(unittest.TestCase):
 
         # Ensure that pressure inputs are being parsed OK
         self.minimize_job.calc_minimize(pressure=0)
+        self.minimize_job._interactive_lammps_input()
+        self.assertTrue(("fix ensemble all box/relax iso 0.0" in
+                         self.minimize_job._interactive_library._command))
+
+        self.minimize_job.calc_minimize(pressure=[0.0, 0.0, 0.0])
         self.minimize_job._interactive_lammps_input()
         self.assertTrue(("fix ensemble all box/relax x 0.0 y 0.0 z 0.0 couple none" in
                          self.minimize_job._interactive_library._command))

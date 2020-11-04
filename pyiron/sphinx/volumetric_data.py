@@ -6,7 +6,7 @@ import numpy as np
 import scipy
 from scipy.io.netcdf import netcdf_file
 import os
-from pyiron.base.settings.generic import Settings
+from pyiron_base import Settings
 from pyiron.atomistics.volumetric.generic import VolumetricData
 
 __author__ = "Sudarsan Surendralal"
@@ -147,13 +147,12 @@ class SphinxVolumetricData(VolumetricData):
     def diff_data(self, val):
         self._diff_data = val
 
-
     def to_hdf(self, hdf5, group_name="volumetric_data"):
         """
         Writes the data as a group to a HDF5 file
 
         Args:
-            hdf5 (pyiron.base.generic.hdfio.ProjectHDFio): The
+            hdf5 (pyiron_base.generic.hdfio.ProjectHDFio): The
                 HDF file/path to write the data
             group_name (str): The name of the group under which
                 the data must be stored
@@ -165,13 +164,12 @@ class SphinxVolumetricData(VolumetricData):
             if self.diff_data is not None:
                 hdf_vd["diff"] = self.diff_data
 
-
     def from_hdf(self, hdf5, group_name="volumetric_data"):
         """
         Extract a VolumetricData instance from an HDF5 file.
 
         Args:
-            hdf5 (pyiron.base.generic.hdfio.ProjectHDFio): The HDF
+            hdf5 (pyiron_base.generic.hdfio.ProjectHDFio): The HDF
                 file/path to read the data
             group_name (str): The name of the group under which
                 the data have been stored

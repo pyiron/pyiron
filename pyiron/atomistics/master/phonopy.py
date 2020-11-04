@@ -16,8 +16,7 @@ from phonopy.file_IO import write_FORCE_CONSTANTS
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.master.parallel import AtomisticParallelMaster
 from pyiron.atomistics.structure.phonopy import publication as phonopy_publication
-from pyiron.base.master.parallel import JobGenerator
-from pyiron.base.settings.generic import Settings
+from pyiron_base import JobGenerator, Settings
 
 __author__ = "Jan Janssen, Yury Lysogorskiy"
 __copyright__ = (
@@ -95,9 +94,23 @@ class PhonopyJobGenerator(JobGenerator):
         """
         supercells = self._job.phonopy.get_supercells_with_displacements()
         return [
-            ["supercell_phonon_%d" % ind, phonopy_to_atoms(sc)]
+            ["{}_{}".format(self._job.ref_job.job_name, ind), self._restore_magmoms(phonopy_to_atoms(sc))]
             for ind, sc in enumerate(supercells)
         ]
+
+    def _restore_magmoms(self, structure):
+        """
+        Args:
+            structure (pyiron.atomistics.structure.atoms): input structure
+
+        Returns:
+            structure (pyiron.atomistics.structure.atoms): output structure with magnetic moments
+        """
+        if any(self._job.structure.get_initial_magnetic_moments()!=None):
+            magmoms = self._job.structure.get_initial_magnetic_moments()
+            magmoms = np.tile(magmoms, np.prod(np.diagonal(self._job._phonopy_supercell_matrix())).astype(int))
+            structure.set_initial_magnetic_moments(magmoms)
+        return structure
 
     @staticmethod
     def job_name(parameter):
@@ -127,6 +140,7 @@ class PhonopyJob(AtomisticParallelMaster):
         )
         self.input["displacement"] = (0.01, "atoms displacement, Ang")
         self.input["dos_mesh"] = (20, "mesh size for DOS calculation")
+        self.input["primitive_matrix"] = None
 
         self.phonopy = None
         self._job_generator = PhonopyJobGenerator(self)
@@ -154,6 +168,7 @@ class PhonopyJob(AtomisticParallelMaster):
                 self.phonopy = Phonopy(
                     unitcell=self._phonopy_unit_cell,
                     supercell_matrix=self._phonopy_supercell_matrix(),
+                    primitive_matrix=self.input["primitive_matrix"],
                     factor=self.input["factor"],
                 )
                 self.phonopy.generate_displacements(distance=self.input["displacement"])

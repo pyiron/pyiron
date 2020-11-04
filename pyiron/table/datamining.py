@@ -15,9 +15,7 @@ from pandas.errors import EmptyDataError
 from tqdm import tqdm
 import types
 
-from pyiron.base.job.generic import GenericJob
-from pyiron.base.generic.hdfio import FileHDFio
-from pyiron.base.master.generic import get_function_from_string
+from pyiron_base import GenericJob, FileHDFio, get_function_from_string
 from pyiron.table.funct import (
     get_incar,
     get_sigma,
@@ -35,9 +33,11 @@ from pyiron.table.funct import (
     get_job_name,
     get_job_id,
     get_energy_tot,
+    get_energy_pot,
     get_energy_free,
     get_energy_int,
     get_energy_tot_per_atom,
+    get_energy_pot_per_atom,
     get_energy_free_per_atom,
     get_energy_int_per_atom,
     get_e_conv_level,
@@ -92,9 +92,11 @@ class FunctionContainer(object):
             get_job_name,
             get_job_id,
             get_energy_tot,
+            get_energy_pot,
             get_energy_free,
             get_energy_int,
             get_energy_tot_per_atom,
+            get_energy_pot_per_atom,
             get_energy_free_per_atom,
             get_energy_int_per_atom,
             get_e_conv_level,
@@ -319,17 +321,11 @@ class PyironTable(object):
             temp_user_function_dict, temp_system_function_dict = self._get_data_from_hdf5(
                 hdf=file
             )
-            job_stored_ids = self._get_job_ids()
-            job_update_lst = [
-                self._project.inspect(job_id)
-                for job_id in self._get_filtered_job_ids_from_project()
-                if job_id not in job_stored_ids
-            ]
-            job_update_lst = [
-                job
-                for job in job_update_lst
-                if job.status in job_status_list and filter_funct(job)
-            ]
+            job_update_lst = self._collect_job_update_lst(
+                job_status_list=job_status_list,
+                filter_funct=filter_funct,
+                job_stored_ids=self._get_job_ids()
+            )
             keys_update_user_lst = [
                 key
                 for key in self.add._user_function_dict.keys()
@@ -348,15 +344,11 @@ class PyironTable(object):
             ):
                 skip_table_update = True
         else:
-            job_update_lst = [
-                self._project.inspect(job_id)
-                for job_id in self._get_filtered_job_ids_from_project()
-            ]
-            job_update_lst = [
-                job
-                for job in job_update_lst
-                if job.status in job_status_list and filter_funct(job)
-            ]
+            job_update_lst = self._collect_job_update_lst(
+                job_status_list=job_status_list,
+                filter_funct=filter_funct,
+                job_stored_ids=None
+            )
             keys_update_user_lst, keys_update_system_lst = [], []
         if not skip_table_update and len(job_update_lst) != 0:
             df_new_ids = self._iterate_over_job_lst(
@@ -367,14 +359,11 @@ class PyironTable(object):
         if not skip_table_update and (
             len(keys_update_user_lst) != 0 or len(keys_update_system_lst) != 0
         ):
-            job_update_lst = [
-                self._project.inspect(job_id) for job_id in self._get_job_ids()
-            ]
-            job_update_lst = [
-                job
-                for job in job_update_lst
-                if job is not None and job.status in job_status_list and filter_funct(job)
-            ]
+            job_update_lst = self._collect_job_update_lst(
+                job_status_list=job_status_list,
+                filter_funct=filter_funct,
+                job_stored_ids=None
+            )
             function_lst = [
                 v
                 for k, v in self.add._user_function_dict.items()
@@ -550,6 +539,37 @@ class PyironTable(object):
         self.refill_dict(diff_dict_lst)
         return pandas.DataFrame(diff_dict_lst)
 
+    def _collect_job_update_lst(self, job_status_list, filter_funct, job_stored_ids=None):
+        """
+        Collect jobs to update the pyiron table
+
+        Args:
+            job_status_list (list): List of job status to consider
+            filter_funct (function): Filter function
+            job_stored_ids (list/ None): List of already analysed job ids
+
+        Returns:
+            list: List of JobCore objects
+        """
+        if job_stored_ids is not None:
+            job_id_lst = [
+                job_id
+                for job_id in self._get_filtered_job_ids_from_project()
+                if job_id not in job_stored_ids
+            ]
+        else:
+            job_id_lst = self._get_filtered_job_ids_from_project()
+
+        job_update_lst = []
+        for job_id in tqdm(job_id_lst):
+            try:
+                job = self._project.inspect(job_id)
+            except IndexError:  # In case the job was deleted while the pyiron table is running
+                job = None
+            if job is not None and job.status in job_status_list and filter_funct(job):
+                job_update_lst.append(job)
+        return job_update_lst
+
     def _repr_html_(self):
         """
         Internal helper function to represent the GenericParameters object within the Jupyter Framework
@@ -650,12 +670,11 @@ class TableJob(GenericJob):
 
     @staticmethod
     def convert_numpy_to_list(table_dict):
-        for k,v in table_dict.items():
-            for k1,v1 in v.items():
-                if isinstance(v1,np.ndarray):
+        for k, v in table_dict.items():
+            for k1, v1 in v.items():
+                if isinstance(v1, np.ndarray):
                     v[k1] = v1.tolist()
         return table_dict
-
 
     def to_hdf(self, hdf=None, group_name=None):
         """
@@ -759,7 +778,6 @@ class TableJob(GenericJob):
         self.status.running = True
         self.update_table()
         self.status.finished = True
-        self.run()
 
     def update_table(self, job_status_list=None):
         """
