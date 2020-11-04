@@ -1186,22 +1186,30 @@ class Atoms(ASEAtoms):
         id_list=None,
         boundary_width_factor=1.2,
         num_neighbors_estimate_buffer=1.0,
+        remove_inf=True,
     ):
         """
 
         Args:
-            cutoff_radius (float): Upper bound of the distance to which the search must be done
-            num_neighbors (int/None): maximum number of neighbors found; if None this is estimated based on the density.
-            t_vec (bool): True: compute distance vectors
-                        (pbc are automatically taken into account)
-            tolerance (int): tolerance (round decimal points) used for computing neighbor shells
+            cutoff_radius (float): Upper bound of the distance to which the
+                search must be done
+            num_neighbors (int/None): maximum number of neighbors found; if
+                None this is estimated based on the density.
+            t_vec (bool): True: compute distance vectors (pbc are automatically
+                taken into account)
+            tolerance (int): tolerance (round decimal points) used for
+                computing neighbor shells
             id_list (list): list of atoms the neighbors are to be looked for
-            boundary_width_factor (float): width of the layer to be added to account for pbc.
-            num_neighbors_estimate_buffer (float): Extra volume taken into account for the num_neighbors estimation
-        Returns:
+            boundary_width_factor (float): width of the layer to be added to
+                account for pbc.
+            num_neighbors_estimate_buffer (float): Extra volume taken into
+                account for the num_neighbors estimation
+            remove_inf (bool): Whether or not remove np.inf which fill all
+                slots of the neighbors above distance limit
 
-            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor indices, distances
-            and vectors
+        Returns:
+            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances
+                with the neighbor indices, distances and vectors
 
         """
         if num_neighbors_estimate_buffer < 0:
@@ -1225,10 +1233,11 @@ class Atoms(ASEAtoms):
             warnings.warn('The number of neighbors found within the cutoff_radius is equal to the (estimated) ' +
                           'num_neighbors. Increase num_neighbors or num_neighbors_estimate_buffer to find all ' +
                           'neighbors within the cutoff_radius.')
-        neigh.indices = [indices[dist<np.inf] for indices, dist in zip(neigh.indices, neigh.distances)]
-        if t_vec:
-            neigh.vecs = [vecs[dist<np.inf] for vecs, dist in zip(neigh.vecs, neigh.distances)]
-        neigh.distances = [dist[dist<np.inf] for dist in neigh.distances]
+        if remove_inf:
+            neigh.indices = [indices[dist<np.inf] for indices, dist in zip(neigh.indices, neigh.distances)]
+            if t_vec:
+                neigh.vecs = [vecs[dist<np.inf] for vecs, dist in zip(neigh.vecs, neigh.distances)]
+            neigh.distances = [dist[dist<np.inf] for dist in neigh.distances]
         return neigh
 
     def get_neighbors(
