@@ -174,8 +174,8 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
 
     def interactive_positions_organizer(self):
         if not np.allclose(
-            self._structure_current.get_scaled_positions(),
-            self._structure_previous.get_scaled_positions(),
+            self._structure_current.positions,
+            self._structure_previous.positions,
             rtol=1e-15,
             atol=1e-15,
         ):
