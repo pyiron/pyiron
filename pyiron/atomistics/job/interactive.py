@@ -273,6 +273,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         there is only one ionic iteration step
         Args:
             iteration_step (int): Step for which the structure is requested
+            wrap_atoms (bool):
 
         Returns:
             atomistics.structure.atoms.Atoms object

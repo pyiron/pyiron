@@ -1,0 +1,32 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Notebooks
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    env:
+      CONDA_PREFIX: /usr/share/miniconda/
+      GPAW_SETUP_PATH: /usr/share/miniconda/share/gpaw
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup conda
+      uses: s-weigand/setup-conda@v1
+      with:
+        update-conda: true
+        python-version: 3.8
+        conda-channels: anaconda, conda-forge
+    - run: conda config --set always_yes yes --set changeps1 no
+    - run: conda env update --name root --file .ci_support/environment.yml
+    - run: pip install -e .
+    - run: conda env update --name root --file .ci_support/environment-notebooks.yml
+    - run: ./.ci_support/build_notebooks.sh

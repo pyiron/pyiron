@@ -147,29 +147,29 @@ class SphinxVolumetricData(VolumetricData):
     def diff_data(self, val):
         self._diff_data = val
 
-    def to_hdf(self, hdf5, group_name="volumetric_data"):
+    def to_hdf(self, hdf, group_name="volumetric_data"):
         """
         Writes the data as a group to a HDF5 file
 
         Args:
-            hdf5 (pyiron_base.generic.hdfio.ProjectHDFio): The
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): The
                 HDF file/path to write the data
             group_name (str): The name of the group under which
                 the data must be stored
 
         """
-        with hdf5.open(group_name) as hdf_vd:
+        with hdf.open(group_name) as hdf_vd:
             hdf_vd["TYPE"] = str(type(self))
             hdf_vd["total"] = self.total_data
             if self.diff_data is not None:
                 hdf_vd["diff"] = self.diff_data
 
-    def from_hdf(self, hdf5, group_name="volumetric_data"):
+    def from_hdf(self, hdf, group_name="volumetric_data"):
         """
         Extract a VolumetricData instance from an HDF5 file.
 
         Args:
-            hdf5 (pyiron_base.generic.hdfio.ProjectHDFio): The HDF
+            hdf (pyiron_base.generic.hdfio.ProjectHDFio): The HDF
                 file/path to read the data
             group_name (str): The name of the group under which
                 the data have been stored
@@ -179,7 +179,7 @@ class SphinxVolumetricData(VolumetricData):
                 VolumetricData instance
 
         """
-        with hdf5.open(group_name) as hdf_vd:
+        with hdf.open(group_name) as hdf_vd:
             self._total_data = hdf_vd["total"]
             if len(self._total_data) == 2:
                 self.is_spin_polarized = True

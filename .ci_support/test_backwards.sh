@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# # Conda fix
-# eval "$(conda shell.bash hook)"
-# conda activate root
-# env
-
 pip install --force --ignore-installed --no-deps pyiron==0.2.16
 echo "Before save";
 for t in tests/backwards/*save.py; do
