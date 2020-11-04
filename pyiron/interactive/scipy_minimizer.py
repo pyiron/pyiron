@@ -196,13 +196,13 @@ class ScipyMinimizer(InteractiveWrapper):
 
     def _get_gradient(self, x):
         self._update(x)
-        prefactor = 1
+        prefactor = 1.0e-1
         if self.check_convergence():
             prefactor = 0
         if self.input.pressure is not None:
             pressure = -(
                 self._get_pressure()-self.input.pressure
-            )*1.0e-4
+            )
             if self.input.volume_only:
                 return pressure*prefactor
             else:
