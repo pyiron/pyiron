@@ -192,9 +192,12 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             )
         ):
             self._logger.debug("Generic library: magnetic moments changed!")
-            self.interactive_spin_constraints_setter(
-                self._structure_current.get_initial_magnetic_moments()
-            )
+            try:
+                self.interactive_spin_constraints_setter(
+                    self._structure_current.get_initial_magnetic_moments()
+                )
+            except NotImplementedError:
+                del self.interactive_input_functions['magnetic_moments']
 
     def interactive_cells_getter(self):
         return self.initial_structure.cell
