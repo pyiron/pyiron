@@ -143,6 +143,7 @@ class SQSJob(AtomisticGenericJob):
         self._lst_of_struct = []
         _fail_if_imports_missing()
         self.__hdf_version__ = "0.2.0"
+        self.__name__ = "SQSJob"
         s.publication_add(self.publication)
 
     def validate_ready_to_run(self):
@@ -162,6 +163,18 @@ class SQSJob(AtomisticGenericJob):
             return self._lst_of_struct
         else:
             return []
+    
+    def get_structure(self, iteration_step=-1, wrap_atoms=True):
+        """
+        Gets the structure from a given iteration step of the simulation (MD/ionic relaxation). For static calculations
+        there is only one ionic iteration step
+        Args:
+            iteration_step (int): Step for which the structure is requested
+            wrap_atoms (bool): True if the atoms are to be wrapped back into the unit cell
+        Returns:
+            pyiron.atomistics.structure.atoms.Atoms: The required structure
+        """
+        return self.list_structures[iteration_step]
     
     # This function is executed 
     def run_static(self):
