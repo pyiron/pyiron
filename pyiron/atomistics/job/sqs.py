@@ -174,7 +174,7 @@ class SQSJob(AtomisticGenericJob):
         Returns:
             pyiron.atomistics.structure.atoms.Atoms: The required structure
         """
-        return self.list_structures[iteration_step]
+        return self.list_structures()[iteration_step]
     
     # This function is executed 
     def run_static(self):
