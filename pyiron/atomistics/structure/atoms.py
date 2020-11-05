@@ -1087,7 +1087,7 @@ class Atoms(ASEAtoms):
         xyz = self.get_scaled_positions(wrap=False)
         return xyz[:, 0], xyz[:, 1], xyz[:, 2]
 
-    def get_extended_positions(self, width):
+    def get_extended_positions(self, width, return_indices=False):
         """
         Get all atoms in the boundary around the supercell which have a distance
         to the supercell boundary of less than dist
@@ -1096,7 +1096,9 @@ class Atoms(ASEAtoms):
             dist (float): Distance in Angstrom
 
         Returns:
-            pyiron.atomistics.structure.atoms.Atoms: The required boundary region
+            pyiron.atomistics.structure.atoms.Atoms, numpy.ndarray:
+                Positions of all atoms in the extended box, indices of atoms in
+                their original option (if return_indices=True)
 
         """
         if width<0:
@@ -1116,7 +1118,9 @@ class Atoms(ASEAtoms):
         check_dist = np.all(dist-width/np.linalg.norm(self.cell, axis=-1)<0, axis=-1)
         indices = indices[check_dist]%len(self)
         v_repeated = v_repeated[check_dist]
-        return v_repeated, indices
+        if return_indices:
+            return v_repeated, indices
+        return v_repeated
 
     def get_numbers_of_neighbors_in_sphere(
             self,
@@ -1330,12 +1334,12 @@ class Atoms(ASEAtoms):
                 and np.all(self.pbc)
                 and cutoff_radius==np.inf):
             boxsize = self.cell.diagonal()
-            extended_positions, indices = self.get_extended_positions(0)
+            extended_positions, indices = self.get_extended_positions(0, return_indices=True)
             extended_positions /= self.cell.diagonal()
             extended_positions -= np.floor(extended_positions)
             extended_positions *= self.cell.diagonal()
         else:
-            extended_positions, indices = self.get_extended_positions(width)
+            extended_positions, indices = self.get_extended_positions(width, return_indices=True)
         if len(extended_positions) < num_neighbors and cutoff_radius==np.inf:
             raise ValueError('num_neighbors too large - make boundary_width_factor larger and/or make num_neighbors smaller')
         tree = cKDTree(extended_positions, boxsize=boxsize)
@@ -1397,7 +1401,7 @@ class Atoms(ASEAtoms):
             boundary_width_factor=boundary_width_factor,
             cutoff_radius=cutoff_radius
         )
-        positions, indices = self.get_extended_positions(width)
+        positions, indices = self.get_extended_positions(width, return_indices=True)
         positions -= position
         dist = np.linalg.norm(positions, axis=-1)
         positions = positions[np.argsort(dist)]
