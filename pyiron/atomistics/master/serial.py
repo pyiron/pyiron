@@ -4,12 +4,14 @@
 
 from __future__ import print_function
 from collections import OrderedDict
-from pyiron.base.master.serial import SerialMasterBase
+from pyiron_base import SerialMasterBase
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -124,6 +126,7 @@ class SerialMaster(SerialMasterBase, AtomisticGenericJob):
 
             The input of the start job - the first job of the series.
     """
+
     def __init__(self, project, job_name):
         super(SerialMaster, self).__init__(project, job_name=job_name)
 
@@ -139,7 +142,9 @@ class SerialMaster(SerialMasterBase, AtomisticGenericJob):
         if self.start_job:
             self._start_job.structure = basis
         else:
-            raise ValueError('A structure can only be set after a start job has been assinged.')
+            raise ValueError(
+                "A structure can only be set after a start job has been assinged."
+            )
 
     def get_structure(self, iteration_step=-1):
         """
@@ -148,6 +153,8 @@ class SerialMaster(SerialMasterBase, AtomisticGenericJob):
 
         """
         if len(self.child_ids) > 0:
-            return self.project.load(self.child_ids[-1]).get_structure(iteration_step=iteration_step)
+            return self.project.load(self.child_ids[-1]).get_structure(
+                iteration_step=iteration_step
+            )
         else:
             return None

@@ -40,6 +40,43 @@ How to use VASP tags which are not supported by pyiron?
 
 How to use a custom potential in LAMMPS?
 ========================================
+A custom empirical potential (here, a hybrid potential) can be defined in the following format:
+
+.. code-block::
+
+  custom_potential = pd.DataFrame({    
+    'Name': ['SrTiO3_Pedone'],
+    'Filename': [[]],
+    'Model': ['Custom'],
+    'Species': [['O', 'Sr', 'Ti']],
+    'Config': [['atom_style full\n',  # I use 'full' here as atom_style 'charge' gives the same result
+                '## create groups ###\n', 
+                'group O type 1\n', 
+                'group Sr type 2\n', 
+                'group Ti type 3\n', 
+                '\n', 
+                '## set charges - beside manually ###\n', 
+                'set group O charge -1.2000\n',  
+                'set group Sr charge 1.2000\n',
+                'set group Ti charge 2.4000\n',
+                '\n', 
+                'pair_style hybrid/overlay morse 15.0 mie/cut 15.0 coul/long 15.0 beck 15.0\n', 
+                'pair_coeff * * coul/long\n', 
+                'pair_coeff 1 2 beck 3.0 0 0 0 0\n', 
+                'pair_coeff 1 3 beck 1.0 0 0 0 0\n', 
+                'pair_coeff 1 1 beck 22.0 0 0 0 0\n', 
+                'pair_coeff 1 2 mie/cut 3.0 1.0 12.0 0\n', 
+                'pair_coeff 1 3 mie/cut 1.0 1.0 12.0 0\n', 
+                'pair_coeff 1 1 mie/cut 22.0 1.0 12.0 0\n', 
+                'pair_coeff 1 2 morse 0.019623 1.8860 3.32833\n', 
+                'pair_coeff 1 3 morse 0.024235 2.2547 2.708943\n', 
+                'pair_coeff 1 1 morse 0.042395 1.3793 3.618701\n', 
+                'kspace_style ewald 1.0e-8\n']]
+  })
+  
+The lines in ``Config`` will be written to the LAMMPS ``potential.inp`` file. Make sure that the arrangement of the species in ``Species`` is the same as the group types ``create groups`` within ``Config``. Otherwise, a mixup or the species may occur in the LAMMPS ``structure.inp`` file.
+
+The potential can then be used by assigning ``job.potential = custom_potential``.
 
 How to extend the potential database inside pyiron?
 ===================================================
@@ -69,4 +106,3 @@ Which output quantities are stored in pyiron?
 
 .. toctree::
    :maxdepth:2
-

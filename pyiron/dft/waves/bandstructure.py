@@ -9,11 +9,13 @@ from __future__ import print_function
 import numpy as np
 from numpy import transpose as tr
 from numpy.linalg import inv, norm
-from pyiron.base.generic.template import PyironObject
+from pyiron_base import PyironObject
 
 __author__ = "Joerg Neugebauer, Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -22,7 +24,6 @@ __date__ = "Sep 1, 2017"
 
 
 class BandPath(object):
-
     def __init__(self, bs_obj, n_points=20):
         self.bs_obj = bs_obj
         self.translate_to_pylab = {"Gamma": r"$\Gamma$", "G'": r"$\Gamma^\prime$"}
@@ -91,69 +92,91 @@ class Bandstructure(PyironObject):
         # print "B3",b3
         point_group = self.point_group
 
-        special_points = {"Gamma": [0, 0, 0],
-                          "G'": b2,
-                          "L": 0.5 * (b1 + b2 + b3),
-                          "K": 1. / 8. * (3 * b1 + 6 * b2 + 3 * b3),
-                          "U": 1. / 8. * (2 * b1 + 5 * b2 + 5 * b3),
-                          "X": 0.5 * (b2 + b3),
-                          "W": 0.25 * b1 + 0.75 * b2 + 0.5 * b3,
-                          "X'": 0.5 * (b1 + 2 * b2 + b3),
-                          # replace by correct nomenclature
-                          "M": 0.5 * (b1 + b2),
-                          "X1": 0.5 * b1,
-                          "X2": 0.5 * b2
-                          }
+        special_points = {
+            "Gamma": [0, 0, 0],
+            "G'": b2,
+            "L": 0.5 * (b1 + b2 + b3),
+            "K": 1.0 / 8.0 * (3 * b1 + 6 * b2 + 3 * b3),
+            "U": 1.0 / 8.0 * (2 * b1 + 5 * b2 + 5 * b3),
+            "X": 0.5 * (b2 + b3),
+            "W": 0.25 * b1 + 0.75 * b2 + 0.5 * b3,
+            "X'": 0.5 * (b1 + 2 * b2 + b3),
+            # replace by correct nomenclature
+            "M": 0.5 * (b1 + b2),
+            "X1": 0.5 * b1,
+            "X2": 0.5 * b2,
+        }
 
         if point_group == 225:  # fcc
-            path_dict = {"very_short": ["L", "Gamma", "X"],
-                         "full": ["Gamma", "X", "U", "L", "Gamma", "K"],  # , "U", "W", "L", "K"],
-                         "full_20": ["G", "X", "U", "Gamma", "L"],
-                         "full_CM": ["G'", "X'", "K", "Gamma", "L"]
-                         }
+            path_dict = {
+                "very_short": ["L", "Gamma", "X"],
+                "full": [
+                    "Gamma",
+                    "X",
+                    "U",
+                    "L",
+                    "Gamma",
+                    "K",
+                ],  # , "U", "W", "L", "K"],
+                "full_20": ["G", "X", "U", "Gamma", "L"],
+                "full_CM": ["G'", "X'", "K", "Gamma", "L"],
+            }
         elif point_group == 229:  # bcc
-            path_dict = {"very_short": ["Gamma", "X"],
-                         "full": ["Gamma", "X", "L", "W", "Gamma"]
-                         }
+            path_dict = {
+                "very_short": ["Gamma", "X"],
+                "full": ["Gamma", "X", "L", "W", "Gamma"],
+            }
         elif point_group == 221:  # sc
-            path_dict = {"very_short": ["L", "Gamma", "X1"],
-                         "full": ["Gamma", "X1", "X", "L", "Gamma"]
-                         }
+            path_dict = {
+                "very_short": ["L", "Gamma", "X1"],
+                "full": ["Gamma", "X1", "X", "L", "Gamma"],
+            }
         elif point_group == 129:
-            path_dict = {"very_short": ["Gamma", "X1"],
-                         "full": ["Gamma", "X1", "M", "X2", "Gamma"]
-                         }
+            path_dict = {
+                "very_short": ["Gamma", "X1"],
+                "full": ["Gamma", "X1", "M", "X2", "Gamma"],
+            }
         elif point_group == 123:  # used here for 1d system
-            path_dict = {"very_short": ["X2", "Gamma", "X1"],
-                         "full": ["Gamma", "X1", "M", "X2", "Gamma"]
-                         }
+            path_dict = {
+                "very_short": ["X2", "Gamma", "X1"],
+                "full": ["Gamma", "X1", "M", "X2", "Gamma"],
+            }
         elif point_group == 166:
-            path_dict = {"very_short": ["L", "Gamma", "X"],
-                         # "full": ["Gamma", "X", "K", "Gamma", "L"],
-                         # "full_20": ["Gamma", "X", "K", "Gamma", "L"]
-                         "full": ["Gamma", "X", "Gamma", "L"],
-                         "full_20": ["Gamma", "X", "Gamma", "L"]
-                         }
+            path_dict = {
+                "very_short": ["L", "Gamma", "X"],
+                # "full": ["Gamma", "X", "K", "Gamma", "L"],
+                # "full_20": ["Gamma", "X", "K", "Gamma", "L"]
+                "full": ["Gamma", "X", "Gamma", "L"],
+                "full_20": ["Gamma", "X", "Gamma", "L"],
+            }
         elif point_group == 167:
-            path_dict = {"very_short": ["L", "Gamma", "X"],
-                         # "full": ["Gamma", "X", "K", "Gamma", "L"],
-                         # "full_20": ["Gamma", "X", "K", "Gamma", "L"]
-                         "full": ["Gamma", "X", "Gamma", "L"],
-                         "full_20": ["Gamma", "X", "Gamma", "L"]
-                         }
+            path_dict = {
+                "very_short": ["L", "Gamma", "X"],
+                # "full": ["Gamma", "X", "K", "Gamma", "L"],
+                # "full_20": ["Gamma", "X", "K", "Gamma", "L"]
+                "full": ["Gamma", "X", "Gamma", "L"],
+                "full_20": ["Gamma", "X", "Gamma", "L"],
+            }
 
         elif point_group == 186:
-            special_points = {"Gamma": [0, 0, 0], "A": 0.5 * b3, "L": 0.5 * (b1 + b3), "M": 0.5 * b1,
-                              "K": (1. / .3) * (b1 + b2), "H": (1. / .3) * (b1 + b2) + 0.5 * b3}
+            special_points = {
+                "Gamma": [0, 0, 0],
+                "A": 0.5 * b3,
+                "L": 0.5 * (b1 + b3),
+                "M": 0.5 * b1,
+                "K": (1.0 / 0.3) * (b1 + b2),
+                "H": (1.0 / 0.3) * (b1 + b2) + 0.5 * b3,
+            }
             path_dict = {"full": ["A", "L", "M", "Gamma", "A"]}
 
         else:  # TODO: taking fcc path for testing reasons, change this later
-            path_dict = {"very_short": ["L", "Gamma", "X"],
-                         # "full": ["Gamma", "X", "K", "Gamma", "L"],
-                         # "full_20": ["Gamma", "X", "K", "Gamma", "L"]
-                         "full": ["Gamma", "X", "Gamma", "L"],
-                         "full_20": ["Gamma", "X", "Gamma", "L"]
-                         }
+            path_dict = {
+                "very_short": ["L", "Gamma", "X"],
+                # "full": ["Gamma", "X", "K", "Gamma", "L"],
+                # "full_20": ["Gamma", "X", "K", "Gamma", "L"]
+                "full": ["Gamma", "X", "Gamma", "L"],
+                "full_20": ["Gamma", "X", "Gamma", "L"],
+            }
         self.path_dict = path_dict
         self.special_points = special_points
 
@@ -167,7 +190,12 @@ class Bandstructure(PyironObject):
         if path_type in self.path_dict.keys():
             q_labels = self.path_dict[path_type]
         else:
-            raise("path type " + path_type + " does not exist for point group " + str(self.point_group))
+            raise (
+                "path type "
+                + path_type
+                + " does not exist for point group "
+                + str(self.point_group)
+            )
 
         self.num_points = num_points
         self.path_type = path_type
@@ -177,7 +205,7 @@ class Bandstructure(PyironObject):
         #        print "q_path: ", q_path
 
         # get total length of q_path
-        q_length = 0.
+        q_length = 0.0
         q_vec_list = []
         for i, q in enumerate(q_path[1:]):
             d_q = q - q_path[i]
@@ -189,7 +217,7 @@ class Bandstructure(PyironObject):
         # get q-points on path
         q_point_list = []
         q_dist_list = []
-        q_dist_sum = 0.
+        q_dist_sum = 0.0
         q_ticks = []  # indices where q is special point (for graphical output)
 
         count = 0
@@ -226,9 +254,13 @@ class Bandstructure(PyironObject):
 
     def set_eigenvalues(self, ew_list, ev_list=None):
         if not len(ew_list) == len(self.q_points):
-            print('Failed')
-            raise("Number of eigenvalues inconsistent with q-path: " + str(len(ew_list)) + " vs " +
-                  str(len(self.q_points)))
+            print("Failed")
+            raise (
+                "Number of eigenvalues inconsistent with q-path: "
+                + str(len(ew_list))
+                + " vs "
+                + str(len(self.q_points))
+            )
 
         self.ew_list = ew_list
         self.ev_list = ev_list
@@ -245,6 +277,7 @@ class Bandstructure(PyironObject):
 
     def plot(self):
         import pylab as plt
+
         q_ticks_int = [self.q_dist[i] for i in self.q_ticks]
         q_ticks_label = self.q_labels
         for i, q in enumerate(q_ticks_label):
@@ -253,12 +286,12 @@ class Bandstructure(PyironObject):
         plt.plot(self.q_dist, self.ew_list)
         plt.xticks(q_ticks_int, q_ticks_label)
         for x in q_ticks_int:
-            plt.axvline(x, color='black')
+            plt.axvline(x, color="black")
         return plt
 
     def to_hdf(self, hdf=None, group_name=None):
         if not group_name:
-            group_name = 'bandstructure'
+            group_name = "bandstructure"
         with hdf.open(group_name) as hdf5_band:
             hdf5_band["path_type"] = self.path_type
             hdf5_band["num_points"] = self.num_points
@@ -270,7 +303,7 @@ class Bandstructure(PyironObject):
 
     def from_hdf(self, hdf=None, group_name=None):
         if not group_name:
-            group_name = 'bandstructure'
+            group_name = "bandstructure"
         with hdf.open(group_name) as hdf5_band:
             self.path_type = hdf5_band["path_type"]
             self.num_points = hdf5_band["num_points"]

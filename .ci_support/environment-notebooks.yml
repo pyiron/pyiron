@@ -1,0 +1,15 @@
+channels:
+  - conda-forge
+dependencies:
+  - gpaw
+  - jupyter
+  - lammps
+  - nglview
+  - papermill
+  - seaborn
+  - sphinxdft >=2.7.0
+  - sphinxdft-data
+  - iprpy-data
+  - pyiron-data
+  - pymatgen
+  - sqsgenerator

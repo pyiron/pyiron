@@ -8,8 +8,10 @@ from pyiron.atomistics.structure.atoms import Atoms
 import warnings
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -17,7 +19,12 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 
-def read_atoms(filename='CONTCAR', return_velocities=False, species_list=None, species_from_potcar=False):
+def read_atoms(
+    filename="CONTCAR",
+    return_velocities=False,
+    species_list=None,
+    species_from_potcar=False,
+):
     """
     Routine to read structural static from a POSCAR type file
 
@@ -41,7 +48,9 @@ def read_atoms(filename='CONTCAR', return_velocities=False, species_list=None, s
         for line in f:
             line = line.strip()
             file_string.append(line)
-    return atoms_from_string(file_string, read_velocities=return_velocities, species_list=species_list)
+    return atoms_from_string(
+        file_string, read_velocities=return_velocities, species_list=species_list
+    )
 
 
 def get_species_list_from_potcar(filename="POTCAR"):
@@ -80,20 +89,20 @@ def write_poscar(structure, filename="POSCAR", write_species=True, cartesian=Tru
 
     """
     endline = "\n"
-    with open(filename, 'w') as f:
+    with open(filename, "w") as f:
         selec_dyn = False
-        f.write('Poscar file generated with pyiron' + endline)
-        f.write('1.0' + endline)
+        f.write("Poscar file generated with pyiron" + endline)
+        f.write("1.0" + endline)
         for a_i in structure.get_cell():
             x, y, z = a_i
-            f.write('{0:f} {1:f} {2:f}'.format(x, y, z) + endline)
+            f.write("{0:.15f} {1:.15f} {2:.15f}".format(x, y, z) + endline)
         atom_numbers = structure.get_number_species_atoms()
         if write_species:
             f.write(" ".join(atom_numbers.keys()) + endline)
         num_str = [str(val) for val in atom_numbers.values()]
         f.write(" ".join(num_str))
         f.write(endline)
-        if 'selective_dynamics' in structure.get_tags():
+        if "selective_dynamics" in structure.get_tags():
             selec_dyn = True
             f.write("Selective dynamics" + endline)
         sorted_coords = list()
@@ -114,12 +123,17 @@ def write_poscar(structure, filename="POSCAR", write_species=True, cartesian=Tru
         if selec_dyn:
             for i, vec in enumerate(sorted_coords):
                 x, y, z = vec
-                sd_string = ' '.join(['T' if sd else 'F' for sd in selec_dyn_lst[i]])
-                f.write('{0:.15f} {1:.15f} {2:.15f}'.format(x, y, z) + ' ' + sd_string + endline)
+                sd_string = " ".join(["T" if sd else "F" for sd in selec_dyn_lst[i]])
+                f.write(
+                    "{0:.15f} {1:.15f} {2:.15f}".format(x, y, z)
+                    + " "
+                    + sd_string
+                    + endline
+                )
         else:
             for i, vec in enumerate(sorted_coords):
                 x, y, z = vec
-                f.write('{0:.15f} {1:.15f} {2:.15f}'.format(x, y, z) + endline)
+                f.write("{0:.15f} {1:.15f} {2:.15f}".format(x, y, z) + endline)
 
 
 def atoms_from_string(string, read_velocities=False, species_list=None):
@@ -136,14 +150,14 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
 
     """
     string = [s.strip() for s in string]
+    string_lower = [s.lower() for s in string]
     atoms_dict = dict()
     atoms_dict["first_line"] = string[0]
     # del string[0]
     atoms_dict["selective_dynamics"] = False
     atoms_dict["relative"] = False
-    for val in ['direct', 'Direct', "D", "d"]:
-        if val in string:
-            atoms_dict["relative"] = True
+    if "direct" in string_lower or "d" in string_lower:
+        atoms_dict["relative"] = True
     atoms_dict["scaling_factor"] = float(string[1])
     unscaled_cell = list()
     for i in [2, 3, 4]:
@@ -151,13 +165,14 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
         for j in range(3):
             vec.append(float(string[i].split()[j]))
         unscaled_cell.append(vec)
-    if atoms_dict["scaling_factor"] > 0.:
+    if atoms_dict["scaling_factor"] > 0.0:
         atoms_dict["cell"] = np.array(unscaled_cell) * atoms_dict["scaling_factor"]
     else:
-        atoms_dict["cell"] = np.array(unscaled_cell) * ((-atoms_dict["scaling_factor"]) ** (1. / 3.))
-    for val in ["Selective Dynamics", "selective dynamics", "Selective dynamics", "selective Dynamics"]:
-        if val in string:
-            atoms_dict["selective_dynamics"] = True
+        atoms_dict["cell"] = np.array(unscaled_cell) * (
+            (-atoms_dict["scaling_factor"]) ** (1.0 / 3.0)
+        )
+    if "selective dynamics" in string_lower:
+        atoms_dict["selective_dynamics"] = True
     no_of_species = len(string[5].split())
     species_dict = OrderedDict()
     position_index = 7
@@ -175,7 +190,12 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
         position_index += 1
     positions = list()
     selective_dynamics = list()
-    n_atoms = sum([atoms_dict["species_dict"][key]["count"] for key in atoms_dict["species_dict"].keys()])
+    n_atoms = sum(
+        [
+            atoms_dict["species_dict"][key]["count"]
+            for key in atoms_dict["species_dict"].keys()
+        ]
+    )
     try:
         for i in range(position_index, position_index + n_atoms):
             string_list = np.array(string[i].split())
@@ -183,13 +203,15 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
             if atoms_dict["selective_dynamics"]:
                 selective_dynamics.append(["T" in val for val in string_list[3:6]])
     except (ValueError, IndexError):
-        raise AssertionError("The number of positions given does not match the number of atoms")
+        raise AssertionError(
+            "The number of positions given does not match the number of atoms"
+        )
     atoms_dict["positions"] = np.array(positions)
     if not atoms_dict["relative"]:
-        if atoms_dict["scaling_factor"] > 0.:
+        if atoms_dict["scaling_factor"] > 0.0:
             atoms_dict["positions"] *= atoms_dict["scaling_factor"]
         else:
-            atoms_dict["positions"] *= (-atoms_dict["scaling_factor"]) ** (1. / 3.)
+            atoms_dict["positions"] *= (-atoms_dict["scaling_factor"]) ** (1.0 / 3.0)
     velocities = list()
     try:
         atoms = _dict_to_atoms(atoms_dict, species_list=species_list)
@@ -197,8 +219,9 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
         atoms = _dict_to_atoms(atoms_dict, read_from_first_line=True)
     if atoms_dict["selective_dynamics"]:
         selective_dynamics = np.array(selective_dynamics)
-        unique_sel_dyn, inverse, counts = np.unique(selective_dynamics, axis=0, return_counts=True,
-                                                    return_inverse=True)
+        unique_sel_dyn, inverse, counts = np.unique(
+            selective_dynamics, axis=0, return_counts=True, return_inverse=True
+        )
         count_index = np.argmax(counts)
         atoms.add_tag(selective_dynamics=unique_sel_dyn.tolist()[count_index])
         is_not_majority = np.arange(len(unique_sel_dyn), dtype=int) != count_index
@@ -214,8 +237,11 @@ def atoms_from_string(string, read_velocities=False, species_list=None):
             except IndexError:
                 break
         if not (len(velocities) == n_atoms):
-            warnings.warn("The velocities are either not available or they are incomplete/corrupted. Returning empty "
-                          "list instead", UserWarning)
+            warnings.warn(
+                "The velocities are either not available or they are incomplete/corrupted. Returning empty "
+                "list instead",
+                UserWarning,
+            )
             return atoms, list()
         return atoms, velocities
     else:
@@ -246,25 +272,36 @@ def _dict_to_atoms(atoms_dict, species_list=None, read_from_first_line=False):
                 el_list = np.array([species_list[i]])
                 el_list = np.tile(el_list, atoms_dict["species_dict"][sp_key]["count"])
                 if isinstance(species_list[i], str):
-                    symbol += species_list[i] + str(atoms_dict["species_dict"][sp_key]["count"])
-                else: 
-                    symbol += species_list[i].Abbreviation + str(atoms_dict["species_dict"][sp_key]["count"])
+                    symbol += species_list[i] + str(
+                        atoms_dict["species_dict"][sp_key]["count"]
+                    )
+                else:
+                    symbol += species_list[i].Abbreviation + str(
+                        atoms_dict["species_dict"][sp_key]["count"]
+                    )
             except IndexError:
-                raise ValueError("Number of species in the specified species list does not match that in the file")
+                raise ValueError(
+                    "Number of species in the specified species list does not match that in the file"
+                )
         elif "species" in atoms_dict["species_dict"][sp_key].keys():
             el_list = np.array([atoms_dict["species_dict"][sp_key]["species"]])
             el_list = np.tile(el_list, atoms_dict["species_dict"][sp_key]["count"])
             symbol += atoms_dict["species_dict"][sp_key]["species"]
             symbol += str(atoms_dict["species_dict"][sp_key]["count"])
         elif read_from_first_line:
-            if not (len(atoms_dict["first_line"].split()) == len(atoms_dict["species_dict"].keys())):
+            if not (
+                len(atoms_dict["first_line"].split())
+                == len(atoms_dict["species_dict"].keys())
+            ):
                 raise AssertionError()
             el_list = np.array(atoms_dict["first_line"].split()[i])
             el_list = np.tile(el_list, atoms_dict["species_dict"][sp_key]["count"])
             symbol += atoms_dict["first_line"].split()[i]
             symbol += str(atoms_dict["species_dict"][sp_key]["count"])
         elif species_list is None:
-            raise ValueError("Species list should be provided since pyiron can't detect species information")
+            raise ValueError(
+                "Species list should be provided since pyiron can't detect species information"
+            )
         elements.append(el_list)
     elements_new = list()
     for ele in elements:
@@ -272,9 +309,9 @@ def _dict_to_atoms(atoms_dict, species_list=None, read_from_first_line=False):
             elements_new.append(e)
     elements = elements_new
     if is_absolute:
-        atoms = Atoms(elements, positions=positions, cell=cell)
+        atoms = Atoms(elements, positions=positions, cell=cell, pbc=True)
     else:
-        atoms = Atoms(elements, scaled_positions=positions, cell=cell)
+        atoms = Atoms(elements, scaled_positions=positions, cell=cell, pbc=True)
     return atoms
 
 
@@ -295,7 +332,7 @@ def vasp_sorter(structure):
         indices = structure.select_index(species)
         for i in indices:
             sorted_indices.append(i)
-    return sorted_indices
+    return np.array(sorted_indices)
 
 
 def manip_contcar(filename, new_filename, add_pos):
@@ -320,12 +357,12 @@ def manip_contcar(filename, new_filename, add_pos):
             n += 1
     pos_list = list()
     sd_list = list()
-    if len(lines[n+1].split()) == 6:
-        for line in lines[n+1: n+1+len(actual_struct)]:
+    if len(lines[n + 1].split()) == 6:
+        for line in lines[n + 1 : n + 1 + len(actual_struct)]:
             pos_list.append([float(val) for val in line.split()[0:3]])
-            sd_list.append(['T' in val for val in line.split()[3:]])
+            sd_list.append(["T" in val for val in line.split()[3:]])
     else:
-        for line in lines[n+1: n+1+len(actual_struct)]:
+        for line in lines[n + 1 : n + 1 + len(actual_struct)]:
             pos_list.append([float(val) for val in line.split()[0:3]])
     old_pos = np.array(pos_list)
     if direct:
@@ -341,15 +378,15 @@ def manip_contcar(filename, new_filename, add_pos):
         bool_list[np.array(sd_list)] = "T"
         for i, pos in enumerate(new_pos_str):
             linestr = np.append(pos, bool_list[i])
-            new_lines[n+1+i] = " ".join([str(val) for val in linestr]) + "\n"
+            new_lines[n + 1 + i] = " ".join([str(val) for val in linestr]) + "\n"
     else:
         for i, pos in enumerate(new_pos_str):
             linestr = pos
-            new_lines[n+1+i] = " ".join([str(val) for val in linestr]) + "\n"
+            new_lines[n + 1 + i] = " ".join([str(val) for val in linestr]) + "\n"
 
     # Exclude predictor corrector positions
-    if len(new_lines[n+len(new_pos_str):]) >= 2*len(new_pos_str):
-        new_lines = new_lines[:n + 2*(len(new_pos_str)) + 2]
+    if len(new_lines[n + len(new_pos_str) :]) >= 2 * len(new_pos_str):
+        new_lines = new_lines[: n + 2 * (len(new_pos_str)) + 2]
 
     with open(new_filename, "w") as f:
         for new_line in new_lines:

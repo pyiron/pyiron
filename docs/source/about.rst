@@ -24,18 +24,18 @@ pyiron is an integrated development environment for implementing, testing, and r
 
 • Hierarchical data management – interfacing with storage resources like SQL and `HDF5 <https://support.hdfgroup.org/HDF5/>`_.
 
-• Integrated visualization – based on `NGLview <https://github.com/arose/nglview>`_. 
+• Integrated visualization – based on `NGLview <https://github.com/arose/nglview>`_.
 
 • Interactive simulation protocols - based on `Jupyter notebooks <http://jupyter.org>`_.
 
 • Object oriented job management – for scaling complex simulation protocols from single jobs to high-throughput simulations.
 
-pyiron (called pyron) is developed in the `Computational Materials Design department <https://www.mpie.de/CM>`_ of `Joerg Neugebauer <https://www.mpie.de/person/43010/2763386>`_ at the `Max Planck Insitut für Eisenforschung (Max Planck Insitute for iron research) <https://www.mpie.de/2281/en>`_. While its original focus was to provide a framework to develop and run complex simulation protocols as needed for ab initio thermodynamics it quickly evolved into a versatile tool to manage a wide variety of simulation tasks. In 2016 the `Interdisciplinary Centre for Advanced Materials Simulation (ICAMS) <http://www.icams.de>`_ joined the development of the framework with a specific focus on high throughput applications. In 2018 pyiron was released as open-source project. 
+pyiron (called pyron) is developed in the `Computational Materials Design department <https://www.mpie.de/CM>`_ of `Joerg Neugebauer <https://www.mpie.de/person/43010/2763386>`_ at the `Max Planck Institut für Eisenforschung (Max Planck Institute for iron research) <https://www.mpie.de/2281/en>`_. While its original focus was to provide a framework to develop and run complex simulation protocols as needed for ab initio thermodynamics it quickly evolved into a versatile tool to manage a wide variety of simulation tasks. In 2016 the `Interdisciplinary Centre for Advanced Materials Simulation (ICAMS) <http://www.icams.de>`_ joined the development of the framework with a specific focus on high throughput applications. In 2018 pyiron was released as open-source project.
 
 ************
 Getting Help
 ************
-Technical issues and bugs should be reported on `Github <https://github.com/pyiron>`_.
+Technical issues and bugs should be reported on `Github <https://github.com/pyiron>`_ all other questions can be asked on `stackoverflow using the tag pyiron <https://stackoverflow.com/questions/tagged/pyiron>`_. 
 
 ***************
 Release history
@@ -43,7 +43,7 @@ Release history
 
 Release 0.2.0 (2018)
 ====================
-* Implement interactive interface to communicate with codes at runtime. 
+* Implement interactive interface to communicate with codes at runtime.
 
 Release 0.1.0 (2018)
 ====================

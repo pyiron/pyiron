@@ -13,17 +13,17 @@ pyiron
     :target: https://anaconda.org/conda-forge/pyiron/
     :alt: Release_Date
 
-.. image:: https://travis-ci.org/pyiron/pyiron.svg?branch=master
-    :target: https://travis-ci.org/pyiron/pyiron
+.. image:: https://github.com/pyiron/pyiron/workflows/Python%20package/badge.svg
+    :target: https://github.com/pyiron//pyiron/actions
     :alt: Build Status
-
-.. image:: https://ci.appveyor.com/api/projects/status/wfdgqkxca1i19xcq/branch/master?svg=true
-    :target: https://ci.appveyor.com/project/pyiron-runner/pyiron/branch/master
-    :alt: Build status
 
 .. image:: https://anaconda.org/conda-forge/pyiron/badges/downloads.svg
     :target: https://anaconda.org/conda-forge/pyiron/
     :alt: Downloads
+
+.. image:: https://readthedocs.org/projects/pyiron/badge/?version=latest
+    :target: https://pyiron.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
 
 
 .. image:: docs/_static/screenshot.png
@@ -41,7 +41,7 @@ pyiron - an integrated development environment (IDE) for computational materials
  - Interactive simulation protocols - based on `Jupyter notebooks <http://jupyter.org>`_.
  - Object oriented job management – for scaling complex simulation protocols from single jobs to high-throughput simulations.
 
-pyiron (called pyron) is developed in the `Computational Materials Design department <https://www.mpie.de/CM>`_ of `Joerg Neugebauer <https://www.mpie.de/person/43010/2763386>`_ at the `Max Planck Insitut für Eisenforschung (Max Planck Insitute for iron research) <https://www.mpie.de/2281/en>`_. While its original focus was to provide a framework to develop and run complex simulation protocols as needed for ab initio thermodynamics it quickly evolved into a versatile tool to manage a wide variety of simulation tasks. In 2016 the `Interdisciplinary Centre for Advanced Materials Simulation (ICAMS) <http://www.icams.de>`_ joined the development of the framework with a specific focus on high throughput applications. In 2018 pyiron was released as open-source project.
+pyiron (called pyron) is developed in the `Computational Materials Design department <https://www.mpie.de/CM>`_ of `Joerg Neugebauer <https://www.mpie.de/person/43010/2763386>`_ at the `Max Planck Institut für Eisenforschung (Max Planck Institute for iron research) <https://www.mpie.de/2281/en>`_. While its original focus was to provide a framework to develop and run complex simulation protocols as needed for ab initio thermodynamics it quickly evolved into a versatile tool to manage a wide variety of simulation tasks. In 2016 the `Interdisciplinary Centre for Advanced Materials Simulation (ICAMS) <http://www.icams.de>`_ joined the development of the framework with a specific focus on high throughput applications. In 2018 pyiron was released as open-source project.
 See the `Documentation <http://pyiron.org>`_ page for more details.
 
 
@@ -56,12 +56,13 @@ For a local installation we recommend to install pyiron inside an `anaconda <htt
 After the installation of pyiron you need to configure pyiron. The default configuration can be generated automatically. Start a new Python session and import pyiron::
 
    > import pyiron
+   > pyiron.install()
    >>> It appears that pyiron is not yet configured, do you want to create a default start configuration (recommended: yes). [yes/no]:
    > yes
    > exit()
 
 
-See the `Documentation-Installation <https://pyiron.github.io/source/installation.html>`_ page for more details.
+See the `Documentation-Installation <https://pyiron.readthedocs.io/en/latest/source/installation.html>`_ page for more details.
 
 
 Example
@@ -85,6 +86,14 @@ Finally a first lammps calculation can be executed by::
     job.potential = job.list_potentials()[0]
     job.run()
 
+
+Getting started:
+----------------
+Test pyiron with mybinder:
+
+.. image:: https://mybinder.org/badge_logo.svg
+     :target: https://mybinder.org/v2/gh/pyiron/pyiron/master
+     :alt: mybinder
 
 
 License and Acknowledgments

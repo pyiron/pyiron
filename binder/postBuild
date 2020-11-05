@@ -1,32 +1,18 @@
-# ngl install
+# pip install master
+pip install .
+
+# ngl view for jupyter
+jupyter nbextension install nglview --py --sys-prefix
+jupyter nbextension enable nglview --py --sys-prefix
+
+# ngl view for jupyter lab
 jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build
-jupyter labextension install nglview-js-widget
-
-# pyiron setup
-echo "[DEFAULT]\nTOP_LEVEL_DIRS = ${HOME}\nRESOURCE_PATHS = ${HOME}/resources" > ${HOME}/.pyiron
-git clone https://github.com/pyiron/pyiron-resources.git ${HOME}/resources
-
-# gpaw setup
-mkdir -p ${HOME}/resources/gpaw
-wget https://wiki.fysik.dtu.dk/gpaw-files/gpaw-setups-0.9.20000.tar.gz
-tar -xf gpaw-setups-0.9.20000.tar.gz
-mv gpaw-setups-0.9.20000 ${HOME}/resources/gpaw/potentials
-rm gpaw-setups-0.9.20000.tar.gz
+jupyter labextension install nglview-js-widgets --minimize=False
 
 # clean up
 if [ -d "notebooks" ]; then
     mv notebooks/* .
 fi
 if [ -d "${HOME}/pyiron" ]; then
-    rm -r ${HOME}/binder ${HOME}/.ci_support ${HOME}/conda ${HOME}/docs ${HOME}/pyiron ${HOME}/tests ${HOME}/notebooks
-    rm ${HOME}/.travis.yml ${HOME}/azure-pipelines.yml ${HOME}/appveyor.yml ${HOME}/LICENSE ${HOME}/MANIFEST.in ${HOME}/setup.cfg ${HOME}/setup.py ${HOME}/versioneer.py
-fi
-if [ -d "${HOME}/conda-bld" ]; then
-    rm -r ${HOME}/conda-bld
-fi
-if [ -f "${HOME}/README.md" ]; then
-    rm ${HOME}/README.md
-fi
-if [ -f "${HOME}/README.rst" ]; then
-    rm ${HOME}/README.rst
+    rm -r ${HOME}/binder ${HOME}/.ci_support ${HOME}/.github ${HOME}/docs ${HOME}/pyiron ${HOME}/tests ${HOME}/notebooks ${HOME}/LICENSE ${HOME}/MANIFEST.in ${HOME}/setup.cfg ${HOME}/setup.py ${HOME}/versioneer.py ${HOME}/CONTRIBUTING.rst ${HOME}/README.rst ${HOME}/CODE_OF_CONDUCT.md
 fi

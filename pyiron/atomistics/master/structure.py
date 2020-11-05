@@ -4,15 +4,17 @@
 
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.master.parallel import ParallelMaster
-from pyiron.base.master.parallel import JobGenerator
+from pyiron_base import JobGenerator
 
 """
-The StructureListMaster class is a parallel master consisting of a list of structures which are executed in parallel. 
+The StructureListMaster class is a parallel master consisting of a list of structures which are executed in parallel.
 """
 
 __author__ = "Jan Janssen"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -26,6 +28,7 @@ class StructureJobGenerator(JobGenerator):
     modify the individual jobs according to the parameter list and generate the new job names according to the
     parameter list.
     """
+
     @property
     def parameter_list(self):
         """
@@ -159,10 +162,11 @@ class StructureListMaster(ParallelMaster):
 
             Dictionary matching the child ID to the child job name.
     """
+
     def __init__(self, project, job_name):
         super(StructureListMaster, self).__init__(project, job_name)
-        self.__name__ = 'StructureListMaster'
-        self.__version__ = '0.0.1'
+        self.__name__ = "StructureListMaster"
+        self.__version__ = "0.0.1"
         self._job_generator = StructureJobGenerator(self)
         self._structure_lst = []
 
@@ -185,7 +189,7 @@ class StructureListMaster(ParallelMaster):
         super(StructureListMaster, self).to_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input/structures") as hdf5_input:
             for ind, struct in enumerate(self.structure_lst):
-                struct.to_hdf(hdf=hdf5_input, group_name='s_' + str(ind))
+                struct.to_hdf(hdf=hdf5_input, group_name="s_" + str(ind))
 
     def from_hdf(self, hdf=None, group_name=None):
         """
@@ -197,8 +201,10 @@ class StructureListMaster(ParallelMaster):
         """
         super(StructureListMaster, self).from_hdf(hdf=hdf, group_name=group_name)
         with self.project_hdf5.open("input/structures") as hdf5_input:
-            self._structure_lst = [Atoms().from_hdf(hdf5_input, group_name)
-                                   for group_name in sorted(hdf5_input.list_groups())]
+            self._structure_lst = [
+                Atoms().from_hdf(hdf5_input, group_name)
+                for group_name in sorted(hdf5_input.list_groups())
+            ]
 
     def collect_output(self):
         """

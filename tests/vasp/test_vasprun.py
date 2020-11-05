@@ -1,3 +1,7 @@
+# coding: utf-8
+# Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
+# Distributed under the terms of "New BSD License", see the LICENSE file.
+
 import unittest
 import os
 import posixpath
@@ -19,10 +23,12 @@ class TestVasprun(unittest.TestCase):
     def setUpClass(cls):
         cls.file_location = os.path.dirname(os.path.abspath(__file__))
         cls.vp_list = list()
-        cls.direc = os.path.join(cls.file_location, "../static/vasp_test_files/vasprun_samples")
+        cls.direc = os.path.join(
+            cls.file_location, "../static/vasp_test_files/vasprun_samples"
+        )
         file_list = sorted(os.listdir(cls.direc))
         del file_list[file_list.index("vasprun_spoilt.xml")]
-        cls.num_species = [3, 1, 2, 2, 3, 4, 2]
+        cls.num_species = [3, 1, 2, 2, 3, 4, 4, 4, 2]
 
         for f in file_list:
             vp = Vasprun()
@@ -116,7 +122,10 @@ class TestVasprun(unittest.TestCase):
             self.assertEqual(np.shape(d["cells"][0]), np.shape(np.eye(3)))
             self.assertIsInstance(d["grand_eigenvalue_matrix"], np.ndarray)
             self.assertIsInstance(d["grand_occupancy_matrix"], np.ndarray)
-            self.assertEqual(np.shape(d["grand_occupancy_matrix"]), np.shape(d["grand_eigenvalue_matrix"]))
+            self.assertEqual(
+                np.shape(d["grand_occupancy_matrix"]),
+                np.shape(d["grand_eigenvalue_matrix"]),
+            )
             [n_spin, n_kpts, n_bands] = np.shape(d["grand_occupancy_matrix"])
             self.assertEqual(len(d["kpoints"]["kpoint_list"]), n_kpts)
             self.assertEqual(len(d["kpoints"]["kpoint_list"]), n_kpts)
@@ -130,7 +139,9 @@ class TestVasprun(unittest.TestCase):
                 self.assertIsInstance(d["efermi"], float)
             if "grand_dos_matrix" in d.keys():
                 [n_spin0, n_kpts0, n_bands0] = np.shape(d["grand_occupancy_matrix"])
-                [n_spin, n_kpts, n_bands, n_atoms, n_orbitals] = np.shape(d["grand_dos_matrix"])
+                [n_spin, n_kpts, n_bands, n_atoms, n_orbitals] = np.shape(
+                    d["grand_dos_matrix"]
+                )
                 self.assertEqual(len(d["kpoints"]["kpoint_list"]), n_kpts)
                 self.assertEqual(len(d["positions"][0]), n_atoms)
                 self.assertEqual(n_spin, n_spin0)
@@ -163,16 +174,31 @@ class TestVasprun(unittest.TestCase):
             es_obj = vp.get_electronic_structure()
             self.assertIsInstance(es_obj, ElectronicStructure)
             if "grand_dos_matrix" in vp.vasprun_dict.keys():
-                [_, n_kpts, n_bands, _, _] = np.shape(vp.vasprun_dict["grand_dos_matrix"])
+                [_, n_kpts, n_bands, _, _] = np.shape(
+                    vp.vasprun_dict["grand_dos_matrix"]
+                )
                 self.assertEqual(len(es_obj.kpoints), n_kpts)
-                self.assertEqual(len(es_obj.kpoints[0].bands), n_bands)
+                self.assertEqual(len(es_obj.kpoints[0].bands[0]), n_bands)
 
     def test_species_info(self):
         for i, vp in enumerate(self.vp_list):
-            self.assertEqual(len(vp.vasprun_dict["atominfo"]["species_dict"].keys()), self.num_species[i])
-            self.assertEqual(vp.get_initial_structure().get_number_of_species(), self.num_species[i])
-            self.assertEqual(vp.get_final_structure().get_number_of_species(), self.num_species[i])
+            self.assertEqual(
+                len(vp.vasprun_dict["atominfo"]["species_dict"].keys()),
+                self.num_species[i],
+            )
+            self.assertEqual(
+                vp.get_initial_structure().get_number_of_species(), self.num_species[i]
+            )
+            self.assertEqual(
+                vp.get_final_structure().get_number_of_species(), self.num_species[i]
+            )
+
+    def test_energies(self):
+        for i, vp in enumerate(self.vp_list):
+            self.assertIsInstance(vp.vasprun_dict["total_0_energies"], np.ndarray)
+            if i == 7:
+                self.assertEqual(vp.vasprun_dict["scf_fr_energies"][0][0], 0.0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

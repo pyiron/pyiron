@@ -12,8 +12,10 @@ Simple python executable that resembles the behavior of a real job
 """
 
 __author__ = "Joerg Neugebauer"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Jan Janssen"
 __email__ = "janssen@mpie.de"
@@ -22,12 +24,14 @@ __date__ = "Sep 1, 2017"
 
 
 # Set the logging behaviour of the executable
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-                    datefmt='%m-%d %H:%M',
-                    filename='info.log',
-                    filemode='w')
-module_logger = logging.getLogger('exampleExecutable')
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s %(name)-12s %(levelname)-8s %(message)s",
+    datefmt="%m-%d %H:%M",
+    filename="info.log",
+    filemode="w",
+)
+module_logger = logging.getLogger("exampleExecutable")
 
 
 class ExampleExecutable(object):
@@ -35,10 +39,11 @@ class ExampleExecutable(object):
     Simple python executable that resembles the behavior of a real job, i.e., it processes input files, generates
     output files and can perform restarts. Will be mainly used to test the genericJob class.
     """
+
     def __init__(self):
         print("Execution started")
-        self.logger = logging.getLogger('exampleExecutable.module')
-        self.logger.info('creating an instance')
+        self.logger = logging.getLogger("exampleExecutable.module")
+        self.logger.info("creating an instance")
 
         self.input_file = "input.inp"
         self.output_file = "output.log"
@@ -75,7 +80,10 @@ class ExampleExecutable(object):
         Returns:
             (list): list of n random energy values, where n equals self._count
         """
-        return self._potential(alat - self._alat_0) + np.random.random(self._count) * self._alpha
+        return (
+            self._potential(alat - self._alat_0)
+            + np.random.random(self._count) * self._alpha
+        )
 
     def run_lib(self, input_dict):
         """
@@ -100,7 +108,7 @@ class ExampleExecutable(object):
 
         # make the executable a bit more real and throw warnings and error messages
         # depending on the input parameters
-        self.logger.debug('type: alpha %s', type(input_dict["alpha"]))
+        self.logger.debug("type: alpha %s", type(input_dict["alpha"]))
         if self._alpha < 0:
             raise ValueError("noise amplitude alpha < 0")
         if self._count < 1:
@@ -125,7 +133,7 @@ class ExampleExecutable(object):
                 key, value = line[0], line[1]
                 # key, value = line.split()
                 input_dict[key] = value
-                self.logger.info('-> %s %s', key, str(value))
+                self.logger.info("-> %s %s", key, str(value))
 
         # parse the input into the correct format
         n_max = 4  # max. order of polynomial describing the potential
@@ -139,7 +147,7 @@ class ExampleExecutable(object):
 
         # make the executable a bit more real and throw warnings and error messages
         # depending on the input parameters
-        self.logger.debug('type: alpha %s', type(input_dict["alpha"]))
+        self.logger.debug("type: alpha %s", type(input_dict["alpha"]))
         if self._alpha < 0:
             raise ValueError("noise amplitude alpha < 0")
         if self._count < 1:

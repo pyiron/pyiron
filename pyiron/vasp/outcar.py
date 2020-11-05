@@ -2,21 +2,26 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
+from collections import OrderedDict
 import numpy as np
 import warnings
 import scipy.constants
 import re
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
 __status__ = "production"
 __date__ = "Sep 1, 2017"
 
-KBAR_TO_EVA = scipy.constants.physical_constants['joule-electron volt relationship'][0] / 1e22
+KBAR_TO_EVA = (
+    scipy.constants.physical_constants["joule-electron volt relationship"][0] / 1e22
+)
 
 
 class Outcar(object):
@@ -41,7 +46,7 @@ class Outcar(object):
             filename (str): Filename of the OUTCAR file to parse
 
         """
-        with open(filename, 'r') as f:
+        with open(filename, "r") as f:
             lines = f.readlines()
         energies = self.get_total_energies(filename=filename, lines=lines)
         energies_int = self.get_energy_without_entropy(filename=filename, lines=lines)
@@ -59,12 +64,18 @@ class Outcar(object):
         kin_energy_error = self.get_kinetic_energy_error(filename=filename, lines=lines)
         stresses = self.get_stresses(filename=filename, si_unit=False, lines=lines)
         n_elect = self.get_nelect(filename=filename, lines=lines)
+        e_fermi_list, vbm_list, cbm_list = self.get_band_properties(filename=filename, lines=lines)
+        elastic_constants = self.get_elastic_constants(filename=filename, lines=lines)
         try:
-            irreducible_kpoints = self.get_irreducible_kpoints(filename=filename, lines=lines)
+            irreducible_kpoints = self.get_irreducible_kpoints(
+                filename=filename, lines=lines
+            )
         except ValueError:
-            print('irreducible kpoints not parsed !')
+            print("irreducible kpoints not parsed !")
             irreducible_kpoints = None
-        magnetization, final_magmom_lst = self.get_magnetization(filename=filename, lines=lines)
+        magnetization, final_magmom_lst = self.get_magnetization(
+            filename=filename, lines=lines
+        )
         broyden_mixing = self.get_broyden_mixing_mesh(filename=filename, lines=lines)
 
         self.parse_dict["energies"] = energies
@@ -86,9 +97,14 @@ class Outcar(object):
         self.parse_dict["final_magmoms"] = final_magmom_lst
         self.parse_dict["broyden_mixing"] = broyden_mixing
         self.parse_dict["n_elect"] = n_elect
-
+        self.parse_dict["e_fermi_list"] = e_fermi_list
+        self.parse_dict["vbm_list"] = vbm_list
+        self.parse_dict["cbm_list"] = cbm_list
+        self.parse_dict["elastic_constants"] = elastic_constants
         try:
-            self.parse_dict["pressures"] = np.average(stresses[:, 0:3], axis=1) * KBAR_TO_EVA
+            self.parse_dict["pressures"] = (
+                np.average(stresses[:, 0:3], axis=1) * KBAR_TO_EVA
+            )
         except IndexError:
             self.parse_dict["pressures"] = np.zeros(len(steps))
 
@@ -97,7 +113,7 @@ class Outcar(object):
         Store output in an HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.FileHDFio): HDF5 group or file
+            hdf (pyiron_base.generic.hdfio.FileHDFio): HDF5 group or file
             group_name (str): Name of the HDF5 group
         """
         with hdf.open(group_name) as hdf5_output:
@@ -109,10 +125,15 @@ class Outcar(object):
         Store minimal output in an HDF5 file (output unique to OUTCAR)
 
         Args:
-            hdf (pyiron.base.generic.hdfio.FileHDFio): HDF5 group or file
+            hdf (pyiron_base.generic.hdfio.FileHDFio): HDF5 group or file
             group_name (str): Name of the HDF5 group
         """
-        unique_quantities = ["kin_energy_error", "broyden_mixing", "stresses", "irreducible_kpoints"]
+        unique_quantities = [
+            "kin_energy_error",
+            "broyden_mixing",
+            "stresses",
+            "irreducible_kpoints",
+        ]
         with hdf.open(group_name) as hdf5_output:
             for key in self.parse_dict.keys():
                 if key in unique_quantities:
@@ -123,7 +144,7 @@ class Outcar(object):
         Load output from an HDF5 file
 
         Args:
-            hdf (pyiron.base.generic.hdfio.FileHDFio): HDF5 group or file
+            hdf (pyiron_base.generic.hdfio.FileHDFio): HDF5 group or file
             group_name (str): Name of the HDF5 group
         """
         with hdf.open(group_name) as hdf5_output:
@@ -148,9 +169,16 @@ class Outcar(object):
         """
         if n_atoms is None:
             n_atoms = self.get_number_of_atoms(filename=filename, lines=lines)
-        trigger_indices, lines = _get_trigger(lines=lines, filename=filename, trigger="TOTAL-FORCE (eV/Angst)")
-        return self._get_positions_and_forces_parser(lines=lines, trigger_indices=trigger_indices, n_atoms=n_atoms,
-                                                     pos_flag=True, force_flag=True)
+        trigger_indices, lines = _get_trigger(
+            lines=lines, filename=filename, trigger="TOTAL-FORCE (eV/Angst)"
+        )
+        return self._get_positions_and_forces_parser(
+            lines=lines,
+            trigger_indices=trigger_indices,
+            n_atoms=n_atoms,
+            pos_flag=True,
+            force_flag=True,
+        )
 
     def get_positions(self, filename="OUTCAR", lines=None, n_atoms=None):
 
@@ -169,9 +197,16 @@ class Outcar(object):
         """
         if n_atoms is None:
             n_atoms = self.get_number_of_atoms(filename=filename, lines=lines)
-        trigger_indices, lines = _get_trigger(lines=lines, filename=filename, trigger="TOTAL-FORCE (eV/Angst)")
-        return self._get_positions_and_forces_parser(lines=lines, trigger_indices=trigger_indices, n_atoms=n_atoms,
-                                                     pos_flag=True, force_flag=False)
+        trigger_indices, lines = _get_trigger(
+            lines=lines, filename=filename, trigger="TOTAL-FORCE (eV/Angst)"
+        )
+        return self._get_positions_and_forces_parser(
+            lines=lines,
+            trigger_indices=trigger_indices,
+            n_atoms=n_atoms,
+            pos_flag=True,
+            force_flag=False,
+        )
 
     def get_forces(self, filename="OUTCAR", lines=None, n_atoms=None):
         """
@@ -190,9 +225,16 @@ class Outcar(object):
         """
         if n_atoms is None:
             n_atoms = self.get_number_of_atoms(filename=filename, lines=lines)
-        trigger_indices, lines = _get_trigger(lines=lines, filename=filename, trigger="TOTAL-FORCE (eV/Angst)")
-        return self._get_positions_and_forces_parser(lines=lines, trigger_indices=trigger_indices, n_atoms=n_atoms,
-                                                     pos_flag=False, force_flag=True)
+        trigger_indices, lines = _get_trigger(
+            lines=lines, filename=filename, trigger="TOTAL-FORCE (eV/Angst)"
+        )
+        return self._get_positions_and_forces_parser(
+            lines=lines,
+            trigger_indices=trigger_indices,
+            n_atoms=n_atoms,
+            pos_flag=False,
+            force_flag=True,
+        )
 
     def get_cells(self, filename="OUTCAR", lines=None):
         """
@@ -207,7 +249,9 @@ class Outcar(object):
 
             where M is the number of time steps
         """
-        trigger_indices, lines = _get_trigger(lines=lines, filename=filename, trigger="VOLUME and BASIS-vectors are now :")
+        trigger_indices, lines = _get_trigger(
+            lines=lines, filename=filename, trigger="VOLUME and BASIS-vectors are now :"
+        )
         return self._get_cells_praser(lines=lines, trigger_indices=trigger_indices)
 
     @staticmethod
@@ -223,25 +267,33 @@ class Outcar(object):
             numpy.ndarray: An array of stress values
 
         """
-        trigger_indices, lines = _get_trigger(lines=lines,
-                                              filename=filename,
-                                              trigger="FORCE on cell =-STRESS in cart. coord.  units (eV):")
+        trigger_indices, lines = _get_trigger(
+            lines=lines,
+            filename=filename,
+            trigger="FORCE on cell =-STRESS in cart. coord.  units (eV):",
+        )
         pullay_stress_lst = []
         for j in trigger_indices:
             try:
                 if si_unit:
-                    pullay_stress_lst.append([float(l) for l in lines[j + 13].split()[1:7]])
+                    pullay_stress_lst.append(
+                        [float(l) for l in lines[j + 13].split()[1:7]]
+                    )
                 else:
-                    pullay_stress_lst.append([float(l) for l in lines[j + 14].split()[2:8]])
+                    pullay_stress_lst.append(
+                        [float(l) for l in lines[j + 14].split()[2:8]]
+                    )
             except ValueError:
                 if si_unit:
-                    pullay_stress_lst.append([float('NaN')] * 6)
+                    pullay_stress_lst.append([float("NaN")] * 6)
                 else:
-                    pullay_stress_lst.append([float('NaN')] * 6)
+                    pullay_stress_lst.append([float("NaN")] * 6)
         return np.array(pullay_stress_lst)
 
     @staticmethod
-    def get_irreducible_kpoints(filename="OUTCAR", reciprocal=True, weight=True, planewaves=True, lines=None):
+    def get_irreducible_kpoints(
+        filename="OUTCAR", reciprocal=True, weight=True, planewaves=True, lines=None
+    ):
         """
         Function to extract the irreducible kpoints from the OUTCAR file
 
@@ -275,14 +327,16 @@ class Outcar(object):
             trigger_start = trigger_number + 7
         else:
             trigger_start = trigger_number + 10 + number_irr_kpoints
-        for line in lines[trigger_start: trigger_start + number_irr_kpoints]:
+        for line in lines[trigger_start : trigger_start + number_irr_kpoints]:
             line = line.strip()
             line = _clean_line(line)
             kpoint_lst.append([float(l) for l in line.split()[0:3]])
             if weight:
                 weight_lst.append(float(line.split()[3]))
-        if planewaves:
-            for line in lines[trigger_plane_waves: trigger_plane_waves + number_irr_kpoints]:
+        if planewaves and trigger_plane_waves != 0:
+            for line in lines[
+                trigger_plane_waves : trigger_plane_waves + number_irr_kpoints
+            ]:
                 line = line.strip()
                 line = _clean_line(line)
                 planewaves_lst.append(float(line.split()[-1]))
@@ -309,13 +363,18 @@ class Outcar(object):
 
             where M is the number of time steps
         """
+
         def get_total_energies_from_line(line):
             return float(_clean_line(line.strip()).split()[-2])
 
-        trigger_indices, lines = _get_trigger(lines=lines,
-                                              filename=filename,
-                                              trigger="FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)")
-        return np.array([get_total_energies_from_line(lines[j + 2]) for j in trigger_indices])
+        trigger_indices, lines = _get_trigger(
+            lines=lines,
+            filename=filename,
+            trigger="FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)",
+        )
+        return np.array(
+            [get_total_energies_from_line(lines[j + 2]) for j in trigger_indices]
+        )
 
     @staticmethod
     def get_energy_without_entropy(filename="OUTCAR", lines=None):
@@ -331,13 +390,21 @@ class Outcar(object):
 
             where M is the number of time steps
         """
+
         def get_energy_without_entropy_from_line(line):
             return float(_clean_line(line.strip()).split()[3])
 
-        trigger_indices, lines = _get_trigger(lines=lines,
-                                              filename=filename,
-                                              trigger="FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)")
-        return np.array([get_energy_without_entropy_from_line(lines[j + 4]) for j in trigger_indices])
+        trigger_indices, lines = _get_trigger(
+            lines=lines,
+            filename=filename,
+            trigger="FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)",
+        )
+        return np.array(
+            [
+                get_energy_without_entropy_from_line(lines[j + 4])
+                for j in trigger_indices
+            ]
+        )
 
     @staticmethod
     def get_energy_sigma_0(filename="OUTCAR", lines=None):
@@ -353,13 +420,18 @@ class Outcar(object):
 
             where M is the number of time steps
         """
+
         def get_energy_sigma_0_from_line(line):
             return float(_clean_line(line.strip()).split()[-1])
 
-        trigger_indices, lines = _get_trigger(lines=lines,
-                                              filename=filename,
-                                              trigger="FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)")
-        return np.array([get_energy_sigma_0_from_line(lines[j + 4]) for j in trigger_indices])
+        trigger_indices, lines = _get_trigger(
+            lines=lines,
+            filename=filename,
+            trigger="FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)",
+        )
+        return np.array(
+            [get_energy_sigma_0_from_line(lines[j + 4]) for j in trigger_indices]
+        )
 
     @staticmethod
     def get_all_total_energies(filename="OUTCAR", lines=None):
@@ -408,9 +480,9 @@ class Outcar(object):
         local_spin_trigger = False
         n_atoms = None
         mag_dict = dict()
-        mag_dict['x'] = list()
-        mag_dict['y'] = list()
-        mag_dict['z'] = list()
+        mag_dict["x"] = list()
+        mag_dict["y"] = list()
+        mag_dict["z"] = list()
         lines = _get_lines_from_file(filename=filename, lines=lines)
         istep_energies = list()
         final_magmom_lst = list()
@@ -419,21 +491,25 @@ class Outcar(object):
             if ionic_trigger in line:
                 mag_lst.append(np.array(istep_energies))
                 istep_energies = list()
-            if 'Atomic Wigner-Seitz radii' in line:
+            if "Atomic Wigner-Seitz radii" in line:
                 local_spin_trigger = True
 
             if electronic_trigger in line:
                 try:
-                    line = lines[i + 2].split('magnetization')[-1]
-                    if line != ' \n':
+                    line = lines[i + 2].split("magnetization")[-1]
+                    if line != " \n":
                         spin_str_lst = line.split()
                         spin_str_len = len(spin_str_lst)
                         if spin_str_len == 1:
                             ene = float(line)
                         elif spin_str_len == 3:
-                            ene = [float(spin_str_lst[0]), float(spin_str_lst[1]), float(spin_str_lst[2])]
+                            ene = [
+                                float(spin_str_lst[0]),
+                                float(spin_str_lst[1]),
+                                float(spin_str_lst[2]),
+                            ]
                         else:
-                            warnings.warn('Unrecognized spin configuration.')
+                            warnings.warn("Unrecognized spin configuration.")
                             return mag_lst, final_magmom_lst
                         istep_energies.append(ene)
                 except ValueError:
@@ -443,21 +519,27 @@ class Outcar(object):
                     n_atoms = int(line.split(nion_trigger)[-1])
             if local_spin_trigger:
                 try:
-                    for ind_dir, direc in enumerate(['x', 'y', 'z']):
-                        if 'magnetization ({})'.format(direc) in line:
-                            mag_dict[direc].append([float(lines[i + 4 + atom_index].split()[-1])
-                                                    for atom_index in range(n_atoms)])
+                    for ind_dir, direc in enumerate(["x", "y", "z"]):
+                        if "magnetization ({})".format(direc) in line:
+                            mag_dict[direc].append(
+                                [
+                                    float(lines[i + 4 + atom_index].split()[-1])
+                                    for atom_index in range(n_atoms)
+                                ]
+                            )
                 except ValueError:
-                    warnings.warn("Something went wrong in parsing the magnetic moments")
-        if len(mag_dict['x']) > 0:
-            if len(mag_dict['y']) == 0:
-                final_mag = np.array(mag_dict['x'])
+                    warnings.warn(
+                        "Something went wrong in parsing the magnetic moments"
+                    )
+        if len(mag_dict["x"]) > 0:
+            if len(mag_dict["y"]) == 0:
+                final_mag = np.array(mag_dict["x"])
             else:
-                n_ionic_steps = np.array(mag_dict['x']).shape[0]
+                n_ionic_steps = np.array(mag_dict["x"]).shape[0]
                 final_mag = np.abs(np.zeros((n_ionic_steps, n_atoms, 3)))
-                final_mag[:, :, 0] = np.array(mag_dict['x'])
-                final_mag[:, :, 1] = np.array(mag_dict['y'])
-                final_mag[:, :, 2] = np.array(mag_dict['z'])
+                final_mag[:, :, 0] = np.array(mag_dict["x"])
+                final_mag[:, :, 1] = np.array(mag_dict["y"])
+                final_mag[:, :, 2] = np.array(mag_dict["z"])
             final_magmom_lst = final_mag.tolist()
         return mag_lst, final_magmom_lst
 
@@ -473,14 +555,20 @@ class Outcar(object):
         Returns:
             int: Mesh size
         """
-        trigger_indices, lines = _get_trigger(lines=lines, filename=filename, trigger="gives a total of ")
+        trigger_indices, lines = _get_trigger(
+            lines=lines, filename=filename, trigger="gives a total of "
+        )
         if len(trigger_indices) > 0:
-            line_ngx = lines[trigger_indices[0]-2]
+            line_ngx = lines[trigger_indices[0] - 2]
         else:
-            warnings.warn("Unable to parse the Broyden mixing mesh. Returning 0 instead")
+            warnings.warn(
+                "Unable to parse the Broyden mixing mesh. Returning 0 instead"
+            )
             return 0
         # Exclude all alphabets, and spaces. Then split based on '='
-        str_list = re.sub(r'[a-zA-Z]', r'', line_ngx.replace(" ", "").replace("\n", "")).split("=")
+        str_list = re.sub(
+            r"[a-zA-Z]", r"", line_ngx.replace(" ", "").replace("\n", "")
+        ).split("=")
         return np.prod([int(val) for val in str_list[1:]])
 
     @staticmethod
@@ -495,7 +583,9 @@ class Outcar(object):
         Returns:
             numpy.ndarray: An array of temperatures in Kelvin
         """
-        trigger_indices, lines = _get_trigger(lines=lines, filename=filename, trigger="kin. lattice  EKIN_LAT= ")
+        trigger_indices, lines = _get_trigger(
+            lines=lines, filename=filename, trigger="kin. lattice  EKIN_LAT= "
+        )
         temperatures = []
         if len(trigger_indices) > 0:
             for j in trigger_indices:
@@ -503,9 +593,15 @@ class Outcar(object):
                 line = _clean_line(line)
                 temperatures.append(float(line.split()[-2]))
         else:
-            temperatures = np.zeros(len(_get_trigger(lines=lines,
-                                                     trigger="FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)",
-                                                     return_lines=False)))
+            temperatures = np.zeros(
+                len(
+                    _get_trigger(
+                        lines=lines,
+                        trigger="FREE ENERGIE OF THE ION-ELECTRON SYSTEM (eV)",
+                        return_lines=False,
+                    )
+                )
+            )
         return np.array(temperatures)
 
     @staticmethod
@@ -582,7 +678,9 @@ class Outcar(object):
             if trigger in line:
                 e_kin_err.append(float(line.split()[5]))
             if nion_trigger in line:
-                n_species_list = [float(val) for val in line.split(nion_trigger)[-1].strip().split()]
+                n_species_list = [
+                    float(val) for val in line.split(nion_trigger)[-1].strip().split()
+                ]
         if len(n_species_list) > 0 and len(n_species_list) == len(e_kin_err):
             tot_kin_error = np.sum(np.array(n_species_list) * np.array(e_kin_err))
         return tot_kin_error
@@ -600,7 +698,9 @@ class Outcar(object):
             float: The Kohn-Sham Fermi level in eV
         """
         trigger = "E-fermi :"
-        trigger_indices, lines = _get_trigger(lines=lines, filename=filename, trigger=trigger)
+        trigger_indices, lines = _get_trigger(
+            lines=lines, filename=filename, trigger=trigger
+        )
         if len(trigger_indices) != 0:
             try:
                 return float(lines[trigger_indices[-1]].split(trigger)[-1].split()[0])
@@ -672,14 +772,94 @@ class Outcar(object):
 
         """
         ions_trigger = "NIONS ="
-        trigger_indices, lines = _get_trigger(lines=lines, filename=filename, trigger=ions_trigger)
+        trigger_indices, lines = _get_trigger(
+            lines=lines, filename=filename, trigger=ions_trigger
+        )
         if len(trigger_indices) != 0:
             return int(lines[trigger_indices[0]].split(ions_trigger)[-1])
         else:
             raise ValueError()
 
     @staticmethod
-    def _get_positions_and_forces_parser(lines, trigger_indices, n_atoms, pos_flag=True, force_flag=True):
+    def get_band_properties(filename="OUTCAR", lines=None):
+        fermi_trigger = "E-fermi"
+        fermi_trigger_indices, lines = _get_trigger(
+            lines=lines, filename=filename, trigger=fermi_trigger
+        )
+        fermi_level_list = list()
+        vbm_level_dict = OrderedDict()
+        cbm_level_dict = OrderedDict()
+        for ind in fermi_trigger_indices:
+            fermi_level_list.append(float(lines[ind].strip().split()[2]))
+        band_trigger = "band No.  band energies     occupation"
+        is_spin_polarized = False
+        for n, ind in enumerate(fermi_trigger_indices):
+            if n == len(fermi_trigger_indices) - 1:
+                trigger_indices, lines_new = _get_trigger(
+                    lines=lines[ind:-1], filename=filename, trigger=band_trigger
+                )
+            else:
+                trigger_indices, lines_new = _get_trigger(
+                    lines=lines[ind:fermi_trigger_indices[n+1]], filename=filename, trigger=band_trigger
+                )
+            band_data = list()
+            for ind in trigger_indices:
+                if "spin component" in lines_new[ind-3]:
+                    is_spin_polarized = True
+                for line in lines_new[ind+1:]:
+                    data = line.strip().split()
+                    if len(data) != 3:
+                        break
+                    band_data.append([float(d) for d in data[1:]])
+            if is_spin_polarized:
+                band_data_per_spin = [np.array(band_data[0:int(len(band_data)/2)]).tolist(),
+                                      np.array(band_data[int(len(band_data)/2):]).tolist()]
+            else:
+                band_data_per_spin = [band_data]
+            for spin, band_data in enumerate(band_data_per_spin):
+                if spin in cbm_level_dict.keys():
+                    pass
+                else:
+                    cbm_level_dict[spin] = list()
+                if spin in vbm_level_dict.keys():
+                    pass
+                else:
+                    vbm_level_dict[spin] = list()
+                if len(band_data) > 0:
+                    band_energy, band_occ = [np.array(band_data)[:, i] for i in range(2)]
+                    args = np.argsort(band_energy)
+                    band_occ = band_occ[args]
+                    band_energy = band_energy[args]
+                    cbm_bool = np.abs(band_occ) < 1e-6
+                    if any(cbm_bool):
+                        cbm_level_dict[spin].append(band_energy[np.abs(band_occ) < 1e-6][0])
+                    else:
+                        cbm_level_dict[spin].append(band_energy[-1])
+                    vbm_level_dict[spin].append(band_energy[np.abs(band_occ) >= 1e-6][-1])
+        return np.array(fermi_level_list), np.array([val for val
+                                                     in vbm_level_dict.values()]), np.array([val
+                                                                                             for val in
+                                                                                             cbm_level_dict.values()])
+
+    @staticmethod
+    def get_elastic_constants(filename="OUTCAR", lines=None):
+        lines = _get_lines_from_file(filename=filename, lines=lines)
+        trigger_indices = _get_trigger(lines=lines, filename=filename, trigger="TOTAL ELASTIC MODULI (kBar)", return_lines=False)
+        if len(trigger_indices) != 1:
+            return None
+        else:
+            start_index = trigger_indices[0] + 3
+            end_index = start_index + 6
+            elastic_constants = []
+            for line in lines[start_index:end_index]:
+                elastic_constants.append(line.split()[1:])
+            elastic_GPa = np.array(elastic_constants, dtype=float) / 10
+            return elastic_GPa
+
+    @staticmethod
+    def _get_positions_and_forces_parser(
+        lines, trigger_indices, n_atoms, pos_flag=True, force_flag=True
+    ):
         """
         Parser to get the forces and or positions for every ionic step from the OUTCAR file
 
@@ -703,7 +883,7 @@ class Outcar(object):
         for j in trigger_indices:
             pos = []
             force = []
-            for line in lines[j + 2: j + n_atoms + 2]:
+            for line in lines[j + 2 : j + n_atoms + 2]:
                 line = line.strip()
                 line = _clean_line(line)
                 if pos_flag:
@@ -736,14 +916,18 @@ class Outcar(object):
 
         """
         cells = []
-        for j in trigger_indices:
-            cell = []
-            for line in lines[j + 5: j + 8]:
-                line = line.strip()
-                line = _clean_line(line)
-                cell.append([float(l) for l in line.split()[0:3]])
-            cells.append(cell)
-        return np.array(cells)
+        try:
+            for j in trigger_indices:
+                cell = []
+                for line in lines[j + 5: j + 8]:
+                    line = line.strip()
+                    line = _clean_line(line)
+                    cell.append([float(l) for l in line.split()[0:3]])
+                cells.append(cell)
+            return np.array(cells)
+        except ValueError:
+            warnings.warn("Unable to parse the cells from the OUTCAR file")
+            return
 
 
 def _clean_line(line):
@@ -782,6 +966,6 @@ def _get_lines_from_file(filename, lines=None):
         list: list of lines
     """
     if lines is None:
-        with open(filename, 'r') as f:
+        with open(filename, "r") as f:
             lines = f.readlines()
     return lines

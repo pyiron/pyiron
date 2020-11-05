@@ -3,20 +3,24 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import os
+
 # import xml.etree.cElementTree as ETree
 import numpy as np
 from collections import OrderedDict
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
-from pyiron.base.settings.generic import Settings
+from pyiron_base import Settings
 from pyiron.dft.waves.electronic import ElectronicStructure
 import defusedxml.cElementTree as ETree
 from defusedxml.ElementTree import ParseError
+import warnings
 
 
 __author__ = "Sudarsan Surendralal"
-__copyright__ = "Copyright 2019, Max-Planck-Institut für Eisenforschung GmbH - " \
-                "Computational Materials Design (CM) Department"
+__copyright__ = (
+    "Copyright 2020, Max-Planck-Institut für Eisenforschung GmbH - "
+    "Computational Materials Design (CM) Department"
+)
 __version__ = "1.0"
 __maintainer__ = "Sudarsan Surendralal"
 __email__ = "surendralal@mpie.de"
@@ -57,7 +61,9 @@ class Vasprun(object):
         try:
             self.root = ETree.parse(filename).getroot()
         except ParseError:
-            raise VasprunError("The vasprun.xml file is either corrupted or the simulation has failed")
+            raise VasprunError(
+                "The vasprun.xml file is either corrupted or the simulation has failed"
+            )
 
         self.parse_root_to_dict()
 
@@ -136,29 +142,45 @@ class Vasprun(object):
                     line_mode_kpoints = list()
                     for item in leaf:
                         if item.tag == "v":
-                            line_mode_kpoints.append(self._parse_vector(item, vec_type=float))
+                            line_mode_kpoints.append(
+                                self._parse_vector(item, vec_type=float)
+                            )
                     d["line_mode_kpoints"] = np.array(line_mode_kpoints)
                 else:
                     gen_vec = np.zeros((3, 3))
                     for item in leaf:
                         if item.tag == "v":
                             if item.attrib["name"] in ["divisions"]:
-                                d[leaf.tag]["divisions"] = self._parse_vector(item, vec_type=int)
-                            if item.attrib["name"] in ["genvec{}".format(i) for i in range(1, 4)]:
+                                d[leaf.tag]["divisions"] = self._parse_vector(
+                                    item, vec_type=int
+                                )
+                            if item.attrib["name"] in [
+                                "genvec{}".format(i) for i in range(1, 4)
+                            ]:
                                 if item.attrib["name"] == "genvec1":
-                                    gen_vec[0, :] = self._parse_vector(item, vec_type=float)
+                                    gen_vec[0, :] = self._parse_vector(
+                                        item, vec_type=float
+                                    )
                                 if item.attrib["name"] == "genvec2":
-                                    gen_vec[1, :] = self._parse_vector(item, vec_type=float)
+                                    gen_vec[1, :] = self._parse_vector(
+                                        item, vec_type=float
+                                    )
                                 if item.attrib["name"] == "genvec3":
-                                    gen_vec[2, :] = self._parse_vector(item, vec_type=float)
+                                    gen_vec[2, :] = self._parse_vector(
+                                        item, vec_type=float
+                                    )
                             if item.attrib["name"] in ["shift", "usershift"]:
-                                d[leaf.tag][item.attrib["name"]] = self._parse_vector(item, vec_type=float)
+                                d[leaf.tag][item.attrib["name"]] = self._parse_vector(
+                                    item, vec_type=float
+                                )
                     d[leaf.tag]["genvec"] = np.array(gen_vec)
             if leaf.tag == "varray":
                 if leaf.attrib["name"] == "kpointlist":
                     d["kpoint_list"] = self._parse_2d_matrix(leaf, vec_type=float)
                 if leaf.attrib["name"] == "weights":
-                    d["kpoint_weights"] = self._parse_2d_matrix(leaf, vec_type=float).flatten()
+                    d["kpoint_weights"] = self._parse_2d_matrix(
+                        leaf, vec_type=float
+                    ).flatten()
 
     def parse_atom_information_to_dict(self, node, d):
         """
@@ -188,13 +210,15 @@ class Vasprun(object):
                                     not_unique = True
                                     species_key = None
                                     while not_unique:
-                                        species_key = "_".join([elements[1].text, str(count)])
+                                        species_key = "_".join(
+                                            [elements[1].text, str(count)]
+                                        )
                                         if species_key not in species_dict.keys():
                                             not_unique = False
                                         else:
                                             count += 1
                                     if species_key is not None:
-                                        pse.add_element(elements[1].text, species_key)
+                                        pse.add_element(clean_character(elements[1].text), species_key)
                                         special_element = pse.element(species_key)
                                         species_dict[special_element] = dict()
                                         species_dict[special_element]["n_atoms"] = int(elements[0].text)
@@ -261,7 +285,7 @@ class Vasprun(object):
     def parse_partial_dos_to_dict(self, node, d):
         """
         Parses partial dos data from a node to a dictionary
-    
+
         Args:
             node (xml.etree.Element instance): The node to parse
             d (dict): The dictionary to which data is to be parsed
@@ -283,18 +307,28 @@ class Vasprun(object):
                             spin_resolved_dos = list()
                             if ion.tag == "set" and "ion" in ion.attrib["comment"]:
                                 for sp in ion:
-                                    if sp.tag == "set" and "spin" in sp.attrib["comment"]:
-                                        values = self._parse_2d_matrix(sp, vec_type=float)
+                                    if (
+                                        sp.tag == "set"
+                                        and "spin" in sp.attrib["comment"]
+                                    ):
+                                        values = self._parse_2d_matrix(
+                                            sp, vec_type=float
+                                        )
                                         spin_resolved_dos.append(values[:, 1:])
                             atom_resolved_dos.append(spin_resolved_dos)
                         atom_resolved_dos = np.array(atom_resolved_dos)
-                        n_atoms, n_spin, n_densities, n_orbitals = np.shape(atom_resolved_dos)
-                        new_grand_dos_matrix = np.zeros((n_spin, n_atoms, n_orbitals, n_densities))
+                        n_atoms, n_spin, n_densities, n_orbitals = np.shape(
+                            atom_resolved_dos
+                        )
+                        new_grand_dos_matrix = np.zeros(
+                            (n_spin, n_atoms, n_orbitals, n_densities)
+                        )
                         for i_spin in range(n_spin):
                             for i_atom in range(n_atoms):
                                 for i_orbitals in range(n_orbitals):
-                                    new_grand_dos_matrix[i_spin, i_atom, i_orbitals, :] = \
-                                        atom_resolved_dos[i_atom, i_spin, :, i_orbitals]
+                                    new_grand_dos_matrix[
+                                        i_spin, i_atom, i_orbitals, :
+                                    ] = atom_resolved_dos[i_atom, i_spin, :, i_orbitals]
                         d["resolved_dos_matrix"] = new_grand_dos_matrix
 
     def parse_projected_dos_to_dict(self, node, d):
@@ -323,7 +357,9 @@ class Vasprun(object):
                                 for kpt in sp:
                                     band_dos_mat = list()
                                     for band in kpt:
-                                        dos_matrix = self._parse_2d_matrix(band, vec_type=float)
+                                        dos_matrix = self._parse_2d_matrix(
+                                            band, vec_type=float
+                                        )
                                         band_dos_mat.append(dos_matrix)
                                     kpt_dos_mat.append(band_dos_mat)
                                 spin_dos_mat.append(kpt_dos_mat)
@@ -348,11 +384,11 @@ class Vasprun(object):
             if item.tag == "energy":
                 for i in item:
                     if i.attrib["name"] == "e_wo_entrp":
-                        d["scf_energy"] = float(i.text)
+                        d["scf_energy"] = get_float_with_exception(i.text)
                     if i.attrib["name"] == "e_fr_energy":
-                        d["scf_fr_energy"] = float(i.text)
+                        d["scf_fr_energy"] = get_float_with_exception(i.text)
                     if i.attrib["name"] == "e_0_energy":
-                        d["scf_0_energy"] = float(i.text)
+                        d["scf_0_energy"] = get_float_with_exception(i.text)
             if item.tag == "dipole":
                 for i in item:
                     if i.attrib["name"] == "dipole":
@@ -539,7 +575,9 @@ class Vasprun(object):
                         self.parse_item_to_dict(item, d[dict_key][item.attrib["name"]])
                     except (KeyError, ValueError, IndexError):
                         try:
-                            self.parse_recursively(item, d[dict_key], item.attrib["name"])
+                            self.parse_recursively(
+                                item, d[dict_key], item.attrib["name"]
+                            )
                         except (KeyError, ValueError, IndexError):
                             pass
             except KeyError:
@@ -597,17 +635,21 @@ class Vasprun(object):
             cell = self.vasprun_dict["init_structure"]["cell"]
             positions = self.vasprun_dict["init_structure"]["positions"]
             if len(positions[positions > 1.01]) > 0:
-                basis = Atoms(el_list, positions=positions, cell=cell)
+                basis = Atoms(el_list, positions=positions, cell=cell, pbc=True)
             else:
-                basis = Atoms(el_list, scaled_positions=positions, cell=cell)
+                basis = Atoms(el_list, scaled_positions=positions, cell=cell, pbc=True)
             if "selective_dynamics" in self.vasprun_dict["init_structure"].keys():
                 basis.add_tag(selective_dynamics=[True, True, True])
-                for i, val in enumerate(self.vasprun_dict["init_structure"]["selective_dynamics"]):
+                for i, val in enumerate(
+                    self.vasprun_dict["init_structure"]["selective_dynamics"]
+                ):
                     basis[i].selective_dynamics = val
             return basis
         except KeyError:
             s = Settings()
-            s.logger.warning("The initial structure could not be extracted from vasprun properly")
+            s.logger.warning(
+                "The initial structure could not be extracted from vasprun properly"
+            )
             return
 
     def get_final_structure(self):
@@ -620,7 +662,7 @@ class Vasprun(object):
         """
         try:
             basis = self.get_initial_structure()
-            basis.cell = self.vasprun_dict["final_structure"]["cell"]
+            basis.set_cell(self.vasprun_dict["final_structure"]["cell"])
             positions = self.vasprun_dict["final_structure"]["positions"]
             if len(positions[positions > 1.01]) > 0:
                 basis.positions = positions
@@ -641,8 +683,9 @@ class Vasprun(object):
         es_obj = ElectronicStructure()
         es_obj.kpoint_list = self.vasprun_dict["kpoints"]["kpoint_list"]
         es_obj.kpoint_weights = self.vasprun_dict["kpoints"]["kpoint_weights"]
-        es_obj.eigenvalue_matrix = self.vasprun_dict["grand_eigenvalue_matrix"][0, :, :]
-        es_obj.occupancy_matrix = self.vasprun_dict["grand_occupancy_matrix"][0, :, :]
+        es_obj.eigenvalue_matrix = self.vasprun_dict["grand_eigenvalue_matrix"]
+        es_obj.occupancy_matrix = self.vasprun_dict["grand_occupancy_matrix"]
+        es_obj.n_spins = len(es_obj.occupancy_matrix)
         if "grand_dos_matrix" in self.vasprun_dict.keys():
             es_obj.grand_dos_matrix = self.vasprun_dict["grand_dos_matrix"]
         if "efermi" in self.vasprun_dict.keys():
@@ -676,7 +719,7 @@ def clean_character(a, remove_char=" "):
 def clean_key(a, remove_char=" "):
     """
     Replaces blanck spaces from a string for a dictionary key with "_"
-    
+
     Args:
         a (str): String to be cleaned
         remove_char (str): Character to be replaced
@@ -690,5 +733,28 @@ def clean_key(a, remove_char=" "):
         return a
 
 
+def get_float_with_exception(text, exception_value=0.0):
+    """
+    Converts a text into a corresponding float or returns `exception_value` if it can't do this
+
+    Args:
+        text (str/numpy.str_): String to convert to float
+        exception_value (float/None): Value to be returned if you can't text to a float
+
+    Returns:
+        float/None: Exception value
+
+    """
+    try:
+        return float(text)
+    except ValueError:
+        warnings.warn(message=" ", category=VasprunWarning)
+        return exception_value
+
+
 class VasprunError(ValueError):
+    pass
+
+
+class VasprunWarning(UserWarning):
     pass

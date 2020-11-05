@@ -1,14 +1,19 @@
 channels:
 - conda-forge
 dependencies:
-- jupyterlab
 - python
 - pyiron
+- pyiron_base
 - lammps
+- iprpy-data
 - gpaw
-- nodejs
-- ipython
-- ipywidgets 
-- notebook
-- ipykernel
+- sphinxdft >=2.7.0
+- sphinxdft-data
 - nglview
+- seaborn
+- ovito
+- pyscal
+- jupyterlab
+- pyiron-data
+- sqsgenerator
+- pymatgen
