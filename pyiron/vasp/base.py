@@ -411,8 +411,8 @@ class VaspBase(GenericDFTJob):
 
             bool : True if the highest band is unoccupied, False if the highest band is occupied
             
-        """
-        return np.all(np.isclose(self["output/electronic_structure/occ_matrix"][:,-1], 0))
+        """        
+        return np.all(np.isclose(self["output/electronic_structure/occ_matrix"][:,:,-1], 0)) #shape is n_spin x n_kpoints x n_bands
 
     def convergence_check(self):
         if "IBRION" in self["input/incar/data_dict"]["Parameter"]:
