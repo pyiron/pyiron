@@ -878,10 +878,10 @@ class Atoms(ASEAtoms):
 
         """
         scaled_positions = np.einsum(
-            'ji,nj->ni', np.linalg.norm(self.cell), np.asarray(positions).reshape(-1, 3)
+            'ji,nj->ni', np.linalg.inv(self.cell), np.asarray(positions).reshape(-1, 3)
         )
         if any(self.pbc):
-            scaled_positions[self.pbc] -= np.floor(scaled_positions[self.pbc])
+            scaled_positions[:, self.pbc] -= np.floor(scaled_positions[:, self.pbc])
         new_positions = np.einsum('ji,nj->ni', self.cell, scaled_positions)
         return new_positions.reshape(np.asarray(positions).shape)
 

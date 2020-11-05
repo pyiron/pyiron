@@ -1494,6 +1494,13 @@ class TestAtoms(unittest.TestCase):
             c3.get_scaled_positions()
             self.assertEqual(len(w), 0)
 
+    def test_get_wrapped_coordinates(self):
+        structure = CrystalStructure("Fe", bravais_basis="bcc", lattice_constant=4.2, pbc=True)
+        position = structure.get_wrapped_coordinates(structure.cell*1.1)
+        self.assertAlmostEqual(
+            np.linalg.norm(position-structure.cell*0.1), 0
+        )
+
 
 def generate_fcc_lattice(a=4.2):
     positions = [[0, 0, 0]]
