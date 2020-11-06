@@ -865,6 +865,26 @@ class Atoms(ASEAtoms):
         if not self._is_scaled:
             self._is_scaled = True
 
+    def get_wrapped_coordinates(self, positions):
+        """
+        Return coordinates in wrapped in the periodic cell
+        
+        Args:
+            positions (list/numpy.ndarray): Positions
+
+        Returns:
+
+            numpy.ndarray: Wrapped positions
+
+        """
+        scaled_positions = np.einsum(
+            'ji,nj->ni', np.linalg.inv(self.cell), np.asarray(positions).reshape(-1, 3)
+        )
+        if any(self.pbc):
+            scaled_positions[:, self.pbc] -= np.floor(scaled_positions[:, self.pbc])
+        new_positions = np.einsum('ji,nj->ni', self.cell, scaled_positions)
+        return new_positions.reshape(np.asarray(positions).shape)
+
     def center_coordinates_in_unit_cell(self, origin=0, eps=1e-4):
         """
         Wrap atomic coordinates within the supercell as given by a1, a2., a3
