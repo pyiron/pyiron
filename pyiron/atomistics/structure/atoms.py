@@ -2005,7 +2005,7 @@ class Atoms(ASEAtoms):
             a0[:,np.newaxis,:]-a1[np.newaxis,:,:]
         )
         if mic:
-            x[:,self.pbc] -= np.rint(x)[:,self.pbc]
+            x[:,:,self.pbc] -= np.rint(x)[:,:,self.pbc]
         x = np.einsum('ji,nkj->nki', self.cell, x)
         if vector:
             return x
