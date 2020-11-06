@@ -4,6 +4,7 @@
 
 import numpy as np
 from pyiron.atomistics.job.atomistic import AtomisticGenericJob, MapFunctions as AtomisticMapFunctions
+from pyiron.dft.waves.electronic import ElectronicStructure
 import warnings
 
 __author__ = "Jan Janssen"
@@ -321,6 +322,21 @@ class GenericDFTJob(AtomisticGenericJob):
         raise NotImplementedError(
             "The set_kpoints function is not implemented for this code."
         )
+
+    def get_electronic_structure(self):
+        """
+        Gets the electronic structure instance from the hdf5 file
+
+        Returns:
+                pyiron.atomistics.waves.electronic.ElectronicStructure instance
+        """
+        if self.status not in ["finished", "warning", "not_converged"]:
+            return
+        else:
+            with self.project_hdf5.open("output") as ho:
+                es_obj = ElectronicStructure()
+                es_obj.from_hdf(ho)
+            return es_obj
 
 
 def set_encut(job, parameter):

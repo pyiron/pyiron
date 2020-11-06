@@ -670,12 +670,11 @@ class TableJob(GenericJob):
 
     @staticmethod
     def convert_numpy_to_list(table_dict):
-        for k,v in table_dict.items():
-            for k1,v1 in v.items():
-                if isinstance(v1,np.ndarray):
+        for k, v in table_dict.items():
+            for k1, v1 in v.items():
+                if isinstance(v1, np.ndarray):
                     v[k1] = v1.tolist()
         return table_dict
-
 
     def to_hdf(self, hdf=None, group_name=None):
         """
@@ -779,7 +778,6 @@ class TableJob(GenericJob):
         self.status.running = True
         self.update_table()
         self.status.finished = True
-        self.run()
 
     def update_table(self, job_status_list=None):
         """

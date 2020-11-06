@@ -1087,7 +1087,7 @@ class Atoms(ASEAtoms):
         xyz = self.get_scaled_positions(wrap=False)
         return xyz[:, 0], xyz[:, 1], xyz[:, 2]
 
-    def get_extended_positions(self, width):
+    def get_extended_positions(self, width, return_indices=False):
         """
         Get all atoms in the boundary around the supercell which have a distance
         to the supercell boundary of less than dist
@@ -1096,7 +1096,9 @@ class Atoms(ASEAtoms):
             dist (float): Distance in Angstrom
 
         Returns:
-            pyiron.atomistics.structure.atoms.Atoms: The required boundary region
+            pyiron.atomistics.structure.atoms.Atoms, numpy.ndarray:
+                Positions of all atoms in the extended box, indices of atoms in
+                their original option (if return_indices=True)
 
         """
         if width<0:
@@ -1116,34 +1118,105 @@ class Atoms(ASEAtoms):
         check_dist = np.all(dist-width/np.linalg.norm(self.cell, axis=-1)<0, axis=-1)
         indices = indices[check_dist]%len(self)
         v_repeated = v_repeated[check_dist]
-        return v_repeated, indices
+        if return_indices:
+            return v_repeated, indices
+        return v_repeated
+
+    def get_numbers_of_neighbors_in_sphere(
+            self,
+            cutoff_radius=10,
+            num_neighbors=None,
+            id_list=None,
+            boundary_width_factor=1.2,
+            num_neighbors_estimate_buffer=1.0,
+    ):
+        """
+        Function to compute the maximum number of neighbors in a sphere around each atom.
+        Args:
+            cutoff_radius (float): Upper bound of the distance to which the search must be done
+            num_neighbors (int/None): maximum number of neighbors found
+            id_list (list): list of atoms the neighbors are to be looked for
+            boundary_width_factor (float): width of the layer to be added to account for pbc.
+            num_neighbors_estimate_buffer (float): Extra volume taken into account for the num_neighbors estimation
+
+        Returns:
+            (np.ndarray) : for each atom the number of neighbors found in the sphere of radius
+                           cutoff_radius (<= num_neighbors if specified)
+        """
+        if num_neighbors_estimate_buffer < 0:
+            raise ValueError('num_neighbors_estimate_buffer must not be negative')
+        if num_neighbors is not None:
+            neigh = self._get_neighbors(
+                num_neighbors=num_neighbors,
+                t_vec=False,
+                id_list=id_list,
+                cutoff_radius=cutoff_radius,
+                boundary_width_factor=boundary_width_factor,
+            )
+            if not np.all(neigh.distances.T[-1] == np.inf):
+                warnings.warn('The number of neighbors found within the cutoff_radius is equal to  ' +
+                              'num_neighbors. Increase num_neighbors to find all ' +
+                              'neighbors within the cutoff_radius.')
+            num_neighbors_per_atom = np.sum(neigh.distances < np.inf, axis=-1)
+        else:
+            volume_per_atom = self.get_volume(per_atom=True)
+            if id_list is not None:
+                volume_per_atom = self.get_volume() / len(id_list)
+            num_neighbors = int((1 + num_neighbors_estimate_buffer) *
+                                4. / 3. * np.pi * cutoff_radius ** 3 / volume_per_atom)
+            num_neighbors_old = num_neighbors - 1
+            while num_neighbors_old < num_neighbors:
+                neigh = self._get_neighbors(
+                    num_neighbors=num_neighbors,
+                    t_vec=False,
+                    id_list=id_list,
+                    cutoff_radius=cutoff_radius,
+                    boundary_width_factor=boundary_width_factor,
+                )
+                num_neighbors_old = num_neighbors
+                num_neighbors_per_atom = np.sum(neigh.distances < np.inf, axis=-1)
+                num_neighbors = num_neighbors_per_atom.max()
+                if num_neighbors == num_neighbors_old:
+                    num_neighbors = 2 * num_neighbors
+        return num_neighbors_per_atom
+
 
     def get_neighbors_by_distance(
         self,
-        num_neighbors=100,
+        cutoff_radius=5,
+        num_neighbors=None,
         t_vec=True,
         tolerance=2,
         id_list=None,
-        cutoff_radius=np.inf,
         boundary_width_factor=1.2,
+        num_neighbors_estimate_buffer=1.0,
     ):
         """
 
         Args:
-            num_neighbors (int): number of neighbors
+            cutoff_radius (float): Upper bound of the distance to which the search must be done
+            num_neighbors (int/None): maximum number of neighbors found; if None this is estimated based on the density.
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list (list): list of atoms the neighbors are to be looked for
-            cutoff_radius (float): Upper bound of the distance to which the search must be done
             boundary_width_factor (float): width of the layer to be added to account for pbc.
-
+            num_neighbors_estimate_buffer (float): Extra volume taken into account for the num_neighbors estimation
         Returns:
 
             pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor indices, distances
             and vectors
 
         """
+        if num_neighbors_estimate_buffer < 0:
+            raise ValueError('num_neighbors_estimate_buffer must not be negative')
+        if num_neighbors is None:
+            volume_per_atom = self.get_volume(per_atom=True)
+            if id_list is not None:
+                volume_per_atom = self.get_volume() / len(id_list)
+            num_neighbors = int((1 + num_neighbors_estimate_buffer) *
+                                4. / 3. * np.pi * cutoff_radius ** 3 / volume_per_atom)
+
         neigh = self._get_neighbors(
             num_neighbors=num_neighbors,
             t_vec=t_vec,
@@ -1152,6 +1225,10 @@ class Atoms(ASEAtoms):
             cutoff_radius=cutoff_radius,
             boundary_width_factor=boundary_width_factor,
         )
+        if not np.all(neigh.distances.T[-1]==np.inf):
+            warnings.warn('The number of neighbors found within the cutoff_radius is equal to the (estimated) ' +
+                          'num_neighbors. Increase num_neighbors or num_neighbors_estimate_buffer to find all ' +
+                          'neighbors within the cutoff_radius.')
         neigh.indices = [indices[dist<np.inf] for indices, dist in zip(neigh.indices, neigh.distances)]
         if t_vec:
             neigh.vecs = [vecs[dist<np.inf] for vecs, dist in zip(neigh.vecs, neigh.distances)]
@@ -1257,12 +1334,12 @@ class Atoms(ASEAtoms):
                 and np.all(self.pbc)
                 and cutoff_radius==np.inf):
             boxsize = self.cell.diagonal()
-            extended_positions, indices = self.get_extended_positions(0)
+            extended_positions, indices = self.get_extended_positions(0, return_indices=True)
             extended_positions /= self.cell.diagonal()
             extended_positions -= np.floor(extended_positions)
             extended_positions *= self.cell.diagonal()
         else:
-            extended_positions, indices = self.get_extended_positions(width)
+            extended_positions, indices = self.get_extended_positions(width, return_indices=True)
         if len(extended_positions) < num_neighbors and cutoff_radius==np.inf:
             raise ValueError('num_neighbors too large - make boundary_width_factor larger and/or make num_neighbors smaller')
         tree = cKDTree(extended_positions, boxsize=boxsize)
@@ -1324,7 +1401,7 @@ class Atoms(ASEAtoms):
             boundary_width_factor=boundary_width_factor,
             cutoff_radius=cutoff_radius
         )
-        positions, indices = self.get_extended_positions(width)
+        positions, indices = self.get_extended_positions(width, return_indices=True)
         positions -= position
         dist = np.linalg.norm(positions, axis=-1)
         positions = positions[np.argsort(dist)]
