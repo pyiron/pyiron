@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import division, print_function
-from ase.atoms import Atoms as ASEAtoms, get_distances as ase_get_distances, Atom as ASEAtom
+from ase.atoms import Atoms as ASEAtoms, Atom as ASEAtom
 import ast
 from copy import copy
 from collections import OrderedDict
@@ -1983,8 +1983,6 @@ class Atoms(ASEAtoms):
         distances between all positions in a0 are desired. a1 will be set to a0 in this case.
         if both a0 and a1 are not set, the distances between all atoms in the box are returned
         Use mic to use the minimum image convention.
-        Learn more about get_distances from the ase website:
-        https://wiki.fysik.dtu.dk/ase/ase/geometry.html#ase.geometry.get_distances
 
         Args:
             a0 (numpy.ndarray/list): Nx3 array of positions
@@ -1997,20 +1995,22 @@ class Atoms(ASEAtoms):
         """
         if a0 is None and a1 is not None:
             a0 = a1
-            a1 = None
         if a0 is None:
-            a0 = self.positions
+            a0 = a1 = self.positions
         a0 = np.array(a0).reshape(-1, 3)
-        if a1 is not None:
-            a1 = np.array(a1).reshape(-1, 3)
+        a1 = np.array(a1).reshape(-1, 3)
+        x = np.einsum(
+            'ji,nkj->nki',
+            np.linalg.inv(self.cell), 
+            a0[:,np.newaxis,:]-a1[np.newaxis,:,:]
+        )
         if mic:
-            vec, dist = ase_get_distances(a0, a1, cell=self.cell, pbc=self.pbc)
-        else:
-            vec, dist = ase_get_distances(a0, a1)
+            x[:,self.pbc] -= np.rint(x)[:,self.pbc]
+        x = np.einsum('ji,nkj->nki', self.cell, x)
         if vector:
-            return vec
+            return x
         else:
-            return dist
+            return np.linalg.norm(x, axis=-1)
 
     def append(self, atom):
         if isinstance(atom, ASEAtom):
