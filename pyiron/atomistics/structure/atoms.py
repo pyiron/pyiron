@@ -1952,7 +1952,7 @@ class Atoms(ASEAtoms):
         vecs = np.asarray(v).reshape(-1, 3)
         if any(self.pbc):
             vecs = np.einsum('ji,nj->ni', np.linalg.inv(self.cell), vecs)
-            vecs[self.pbc] -= np.rint(vecs)[self.pbc]
+            vecs[:,self.pbc] -= np.rint(vecs)[:,self.pbc]
             vecs = np.einsum('ji,nj->ni', self.cell, vecs)
         if vectors:
             return vecs.reshape(np.asarray(v).shape)

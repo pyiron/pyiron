@@ -14,6 +14,7 @@ from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalEl
 from pyiron_base import FileHDFio, ProjectHDFio, Project
 from ase.cell import Cell as ASECell
 from ase.atoms import Atoms as ASEAtoms
+from ase.geometry.geometry import find_mic
 
 
 class TestAtoms(unittest.TestCase):
@@ -868,6 +869,21 @@ class TestAtoms(unittest.TestCase):
         self.assertGreater(
             np.min(np.linalg.norm(vert[0] - basis.positions[1], axis=-1)), 0.5
         )
+
+    def test_find_mic(self):
+        cell = 0.1*(np.random.random((3,3))-0.5)+np.eye(3)
+        cell = 0.5*(cell+cell.T)
+        basis = Atoms("Fe", positions=[3*[0.5]], cell=cell, pbc=True)
+        v = 10*(2*np.random.random((3, 3))-1)
+        vecs, dists = find_mic(v, cell, pbc=True)
+        self.assertAlmostEqual(
+            np.linalg.norm(vecs-basis.find_mic(v, vectors=True), axis=-1).max(), 0
+        )
+        self.assertAlmostEqual(
+            np.linalg.norm(dists-basis.find_mic(v, vectors=False), axis=-1).max(), 0
+        )
+        for v in [np.ones(3), np.ones((3,3)), np.ones((3,3,3))]:
+            self.assertTrue(np.array_equal(basis.find_mic(v).shape, v.shape))
 
     def test_get_distances_array(self):
         basis = Atoms("FeFe", positions=[3*[0], 3*[0.9]], cell=np.identity(3), pbc=True)
