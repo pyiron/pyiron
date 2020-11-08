@@ -1977,33 +1977,33 @@ class Atoms(ASEAtoms):
 
         return d_len[0]
 
-    def get_distances_array(self, a0=None, a1=None, mic=True, vector=False):
+    def get_distances_array(self, p0=None, p1=None, mic=True, vector=False):
         """
-        Return distance matrix of every position in a1 with every position in
-        a2. If a1 is not set, it is assumed that distances between all
-        positions in a0 are desired. a1 will be set to a0 in this case. If both
-        a0 and a1 are not set, the distances between all atoms in the box are
+        Return distance matrix of every position in p0 with every position in
+        p1. If p1 is not set, it is assumed that distances between all
+        positions in p0 are desired. p1 will be set to p0 in this case. If both
+        p0 and p1 are not set, the distances between all atoms in the box are
         returned.
 
         Args:
-            a0 (numpy.ndarray/list): Nx3 array of positions
-            a1 (numpy.ndarray/list): Nx3 array of positions
+            p0 (numpy.ndarray/list): Nx3 array of positions
+            p1 (numpy.ndarray/list): Nx3 array of positions
             mic (bool): minimum image convention
             vector (bool): return vectors instead of distances
         Returns:
             numpy.ndarray: NxN if vector=False and NxNx3 if vector=True
 
         """
-        if a0 is None and a1 is not None:
-            a0 = a1
-            a1 = None
-        if a0 is None:
-            a0 = self.positions
-        if a1 is None:
-            a1 = self.positions
-        a0 = np.array(a0).reshape(-1, 3)
-        a1 = np.array(a1).reshape(-1, 3)
-        diff_relative = a1[np.newaxis,:,:]-a0[:,np.newaxis,:]
+        if p0 is None and p1 is not None:
+            p0 = p1
+            p1 = None
+        if p0 is None:
+            p0 = self.positions
+        if p1 is None:
+            p1 = self.positions
+        p0 = np.array(p0).reshape(-1, 3)
+        p1 = np.array(p1).reshape(-1, 3)
+        diff_relative = p1[np.newaxis,:,:]-p0[:,np.newaxis,:]
         if mic:
             diff_relative = np.einsum(
                 'ji,nkj->nki',
