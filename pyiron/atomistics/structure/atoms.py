@@ -1977,33 +1977,33 @@ class Atoms(ASEAtoms):
 
         return d_len[0]
 
-    def get_distances_array(self, p0=None, p1=None, mic=True, vector=False):
+    def get_distances_array(self, p1=None, p2=None, mic=True, vector=False):
         """
-        Return distance matrix of every position in p0 with every position in
-        p1. If p1 is not set, it is assumed that distances between all
-        positions in p0 are desired. p1 will be set to p0 in this case. If both
-        p0 and p1 are not set, the distances between all atoms in the box are
+        Return distance matrix of every position in p1 with every position in
+        p2. If p2 is not set, it is assumed that distances between all
+        positions in p1 are desired. p2 will be set to p1 in this case. If both
+        p1 and p2 are not set, the distances between all atoms in the box are
         returned.
 
         Args:
-            p0 (numpy.ndarray/list): Nx3 array of positions
             p1 (numpy.ndarray/list): Nx3 array of positions
+            p2 (numpy.ndarray/list): Nx3 array of positions
             mic (bool): minimum image convention
             vector (bool): return vectors instead of distances
         Returns:
             numpy.ndarray: NxN if vector=False and NxNx3 if vector=True
 
         """
-        if p0 is None and p1 is not None:
-            p0 = p1
-            p1 = None
-        if p0 is None:
-            p0 = self.positions
+        if p1 is None and p2 is not None:
+            p1 = p2
+            p2 = None
         if p1 is None:
             p1 = self.positions
-        p0 = np.array(p0).reshape(-1, 3)
+        if p2 is None:
+            p2 = self.positions
         p1 = np.array(p1).reshape(-1, 3)
-        diff_relative = p1[np.newaxis,:,:]-p0[:,np.newaxis,:]
+        p2 = np.array(p2).reshape(-1, 3)
+        diff_relative = p2[np.newaxis,:,:]-p1[:,np.newaxis,:]
         if mic:
             diff_relative = np.einsum(
                 'ji,nkj->nki',
