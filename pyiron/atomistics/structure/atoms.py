@@ -1979,10 +1979,11 @@ class Atoms(ASEAtoms):
 
     def get_distances_array(self, a0=None, a1=None, mic=True, vector=False):
         """
-        Return distance matrix of every position in p1 with every position in p2. If a1 is not set, it is assumed that
-        distances between all positions in a0 are desired. a1 will be set to a0 in this case.
-        if both a0 and a1 are not set, the distances between all atoms in the box are returned
-        Use mic to use the minimum image convention.
+        Return distance matrix of every position in a1 with every position in
+        a2. If a1 is not set, it is assumed that distances between all
+        positions in a0 are desired. a1 will be set to a0 in this case. If both
+        a0 and a1 are not set, the distances between all atoms in the box are
+        returned.
 
         Args:
             a0 (numpy.ndarray/list): Nx3 array of positions
@@ -1995,22 +1996,30 @@ class Atoms(ASEAtoms):
         """
         if a0 is None and a1 is not None:
             a0 = a1
+            a1 = None
         if a0 is None:
-            a0 = a1 = self.positions
+            a0 = self.positions
+        if a1 is None:
+            a1 = self.positions
         a0 = np.array(a0).reshape(-1, 3)
         a1 = np.array(a1).reshape(-1, 3)
-        x = np.einsum(
-            'ji,nkj->nki',
-            np.linalg.inv(self.cell), 
-            a0[:,np.newaxis,:]-a1[np.newaxis,:,:]
-        )
+        diff_relative = a1[np.newaxis,:,:]-a0[:,np.newaxis,:]
         if mic:
-            x[:,:,self.pbc] -= np.rint(x)[:,:,self.pbc]
-        x = np.einsum('ji,nkj->nki', self.cell, x)
+            diff_relative = np.einsum(
+                'ji,nkj->nki',
+                np.linalg.inv(self.cell), 
+                diff_relative
+            )
+            diff_relative[:,:,self.pbc] -= np.rint(diff_relative)[:,:,self.pbc]
+            diff_relative = np.einsum('ji,nkj->nki', self.cell, diff_relative)
+        shape = diff_relative.shape
+        if shape[0]==1 or shape[1]==1:
+            shape = (shape[0]*shape[1], 3)
+            diff_relative = diff_relative.reshape(shape)
         if vector:
-            return x
+            return diff_relative
         else:
-            return np.linalg.norm(x, axis=-1)
+            return np.linalg.norm(diff_relative, axis=-1)
 
     def append(self, atom):
         if isinstance(atom, ASEAtom):
