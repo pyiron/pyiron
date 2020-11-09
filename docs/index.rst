@@ -7,8 +7,9 @@
 pyiron
 ======
 
-.. image:: https://travis-ci.org/pyiron/pyiron.svg?branch=master
-    :target: https://travis-ci.org/pyiron/pyiron
+.. image:: https://github.com/pyiron/pyiron/workflows/Python%20package/badge.svg
+    :target: https://github.com/pyiron//pyiron/actions
+    :alt: Build Status
 
 .. image:: https://anaconda.org/conda-forge/pyiron/badges/downloads.svg
 
