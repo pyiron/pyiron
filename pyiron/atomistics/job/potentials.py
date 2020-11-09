@@ -71,7 +71,11 @@ class PotentialAbstract(object):
         ]
 
     def find_by_name(self, potential_name):
-        return self._potential_df[(self._potential_df["Name"] == potential_name)]
+        mask = (self._potential_df["Name"] == potential_name)
+        if not mask.any():
+            raise ValueError("Potential '{}' not found in database.".format(
+                             potential_name))
+        return self._potential_df[mask]
 
     def list(self):
         """
