@@ -14,7 +14,6 @@ from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalEl
 from pyiron_base import FileHDFio, ProjectHDFio, Project
 from ase.cell import Cell as ASECell
 from ase.atoms import Atoms as ASEAtoms
-from ase.geometry.geometry import find_mic
 
 
 class TestAtoms(unittest.TestCase):
