@@ -1944,8 +1944,7 @@ class Atoms(ASEAtoms):
 
         Args:
             v (list/numpy.ndarray): 3d vector or a list/array of 3d vectors
-            vectors (bool): Whether to return vectors (distances are returned
-                if False)
+            vectors (bool): Whether to return vectors (distances are returned if False)
 
         Returns: numpy.ndarray of the same shape as input with mic
         """

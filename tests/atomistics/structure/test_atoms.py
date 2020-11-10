@@ -872,16 +872,14 @@ class TestAtoms(unittest.TestCase):
 
     def test_find_mic(self):
         cell = 0.1*(np.random.random((3,3))-0.5)+np.eye(3)
-        cell = 0.5*(cell+cell.T)
         basis = Atoms("Fe", positions=[3*[0.5]], cell=cell, pbc=True)
-        v = 10*(2*np.random.random((3, 3))-1)
-        vecs, dists = find_mic(v, cell, pbc=True)
-        self.assertAlmostEqual(
-            np.linalg.norm(vecs-basis.find_mic(v, vectors=True), axis=-1).max(), 0
-        )
-        self.assertAlmostEqual(
-            np.linalg.norm(dists-basis.find_mic(v, vectors=False), axis=-1).max(), 0
-        )
+        v = 2*np.random.random(3)-1
+        r = np.linalg.inv(cell.T).dot(v)
+        r -= np.rint(r)
+        self.assertTrue(np.isclose(
+            r[0]*cell[0]+r[1]*cell[1]+r[2]*cell[2],
+            basis.find_mic(v, vectors=True)
+        ).all())
         for v in [np.ones(3), np.ones((3,3)), np.ones((3,3,3))]:
             self.assertTrue(np.array_equal(basis.find_mic(v).shape, v.shape))
 
