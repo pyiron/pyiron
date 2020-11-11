@@ -887,7 +887,7 @@ class TestAtoms(unittest.TestCase):
         self.assertAlmostEqual(basis.get_distances_array(mic=False)[0, 1], 0.9*np.sqrt(3))
         self.assertTrue(np.allclose(basis.get_distances_array(p1=0.5*np.ones(3)),
                                     basis.get_distances_array(p2=0.5*np.ones(3))))
-        self.assertTrue(np.allclose(basis.get_distances_array(vector=True)[0, 1], -0.1*np.ones(3)))
+        self.assertTrue(np.allclose(basis.get_distances_array(vectors=True)[0, 1], -0.1*np.ones(3)))
 
     def test_repeat_points(self):
         basis = Atoms("Fe", positions=np.random.rand(3).reshape(-1, 3), cell=np.identity(3))

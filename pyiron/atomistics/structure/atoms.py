@@ -1997,7 +1997,7 @@ class Atoms(ASEAtoms):
 
         return d_len[0]
 
-    def get_distances_array(self, p1=None, p2=None, mic=True, vector=False):
+    def get_distances_array(self, p1=None, p2=None, mic=True, vectors=False):
         """
         Return distance matrix of every position in p1 with every position in
         p2. If p2 is not set, it is assumed that distances between all
@@ -2009,7 +2009,7 @@ class Atoms(ASEAtoms):
             p1 (numpy.ndarray/list): Nx3 array of positions
             p2 (numpy.ndarray/list): Nx3 array of positions
             mic (bool): minimum image convention
-            vector (bool): return vectors instead of distances
+            vectors (bool): return vectors instead of distances
         Returns:
             numpy.ndarray: NxN if vector=False and NxNx3 if vector=True
 
@@ -2021,25 +2021,16 @@ class Atoms(ASEAtoms):
             p1 = self.positions
         if p2 is None:
             p2 = self.positions
-        p1 = np.array(p1).reshape(-1, 3)
-        p2 = np.array(p2).reshape(-1, 3)
-        diff_relative = p2[np.newaxis,:,:]-p1[:,np.newaxis,:]
-        if mic:
-            diff_relative = np.einsum(
-                'ji,nkj->nki',
-                np.linalg.inv(self.cell), 
-                diff_relative
-            )
-            diff_relative[:,:,self.pbc] -= np.rint(diff_relative)[:,:,self.pbc]
-            diff_relative = np.einsum('ji,nkj->nki', self.cell, diff_relative)
-        shape = diff_relative.shape
-        if shape[0]==1 or shape[1]==1:
-            shape = (shape[0]*shape[1], 3)
-            diff_relative = diff_relative.reshape(shape)
-        if vector:
-            return diff_relative
-        else:
-            return np.linalg.norm(diff_relative, axis=-1)
+        p1 = np.asarray(p1)
+        p2 = np.asarray(p2)
+        diff_relative = p2.reshape(-1,3)[np.newaxis,:,:]-p1.reshape(-1,3)[:,np.newaxis,:]
+        diff_relative = diff_relative.reshape(p1.shape[:-1]+p2.shape[:-1]+(3,))
+        if not mic:
+            if vectors:
+                return diff_relative
+            else:
+                return np.linalg.norm(diff_relative, axis=-1)
+        return self.find_mic(diff_relative, vectors=vectors)
 
     def append(self, atom):
         if isinstance(atom, ASEAtom):
