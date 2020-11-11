@@ -1200,7 +1200,6 @@ class Atoms(ASEAtoms):
                     num_neighbors = 2 * num_neighbors
         return num_neighbors_per_atom
 
-
     def get_neighbors_by_distance(
         self,
         cutoff_radius=5,
@@ -1234,8 +1233,8 @@ class Atoms(ASEAtoms):
             volume_per_atom = self.get_volume(per_atom=True)
             if id_list is not None:
                 volume_per_atom = self.get_volume() / len(id_list)
-            num_neighbors = int((1 + num_neighbors_estimate_buffer) *
-                                4. / 3. * np.pi * cutoff_radius ** 3 / volume_per_atom)
+            num_neighbors = max(4, int((1 + num_neighbors_estimate_buffer) *
+                                       4. / 3. * np.pi * cutoff_radius ** 3 / volume_per_atom))
 
         neigh = self._get_neighbors(
             num_neighbors=num_neighbors,
@@ -1338,7 +1337,7 @@ class Atoms(ASEAtoms):
             and vectors
 
         """
-        if num_neighbors<1:
+        if num_neighbors < 1:
             raise ValueError('num_neighbors must be a positive integer')
         boxsize = None
         num_neighbors += 1
