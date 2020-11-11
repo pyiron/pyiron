@@ -786,10 +786,8 @@ class TestAtoms(unittest.TestCase):
         r_H1 = [dx, dx, 0]
         r_H2 = [-dx, dx, 0]
         unit_cell = 10 * np.eye(3)
-        water = Atoms(elements=['H', 'H', 'O'],
-                                positions=[r_H1, r_H2, r_O],
-                                cell=unit_cell, pbc=True)
-        water.get_neighbors_by_distance(1.3)
+        water = Atoms(elements=['H', 'H', 'O'], positions=[r_H1, r_H2, r_O], cell=unit_cell, pbc=True)
+        self.assertIsInstance(water.get_neighbors_by_distance(1.3).indices, list)
 
     def test_get_number_of_neighbors_in_sphere(self):
         basis = Atoms(symbols="FeFeFe", positions=[3 * [0], 3 * [1], [0, 0, 1]], cell=2 * np.eye(3), pbc=True)
