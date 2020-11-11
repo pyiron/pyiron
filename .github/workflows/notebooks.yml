@@ -14,7 +14,6 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      CONDA_PREFIX: /usr/share/miniconda/
       GPAW_SETUP_PATH: /usr/share/miniconda/envs/test/share/gpaw
 
     steps:
