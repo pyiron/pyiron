@@ -20,12 +20,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Setup conda
-      uses: s-weigand/setup-conda@v1
+    - uses: conda-incubator/setup-miniconda@v2
       with:
-        update-conda: true
+        auto-update-conda: true
         python-version: ${{ matrix.python-version }}
-        conda-channels: anaconda, conda-forge
     - run: python .ci_support/pyironconfig.py
     - run: conda config --set always_yes yes --set changeps1 no
     - run: conda env update --name root --file .ci_support/environment.yml
