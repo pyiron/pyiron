@@ -178,9 +178,10 @@ def _get_higher_order_strains(
         starting_index = np.sum(np.any(strain_higher_order!=0, axis=0))
         strain_higher_order[ind, starting_index:starting_index+E.shape[1]] = E
     # Repeat by the number of rotations (nothing to do with real rotations)
-    strain_higher_order = np.einsum('n,ij->nij',
-                                      np.ones(len(rotations)),
-                                      strain_higher_order)
+    if rotations is not None:
+        strain_higher_order = np.einsum('n,ij->nij',
+                                          np.ones(len(rotations)),
+                                          strain_higher_order)
     strain_higher_order = strain_higher_order.reshape(
         -1, strain_higher_order.shape[-1]
     )
