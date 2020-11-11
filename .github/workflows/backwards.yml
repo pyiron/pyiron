@@ -20,9 +20,13 @@ jobs:
       with:
         auto-update-conda: true
         python-version: 3.8
-    - run: python .ci_support/pyironconfig.py
-    - run: conda config --set always_yes yes --set changeps1 no
-    - run: conda env update --name root --file .ci_support/environment.yml
-    - run: pip install -e .
-    - run: conda env update --name root --file .ci_support/environment-notebooks.yml
-    - run: ./.ci_support/test_backwards.sh
+        environment-file: .ci_support/environment.yml
+    - name: Setup
+      shell: bash -l {0}
+      run: |
+        python .ci_support/pyironconfig.py
+        pip install -e .
+        conda env update --name test --file .ci_support/environment-notebooks.yml
+    - name: Test
+      shell: bash -l {0}
+      run: ./.ci_support/test_backwards.sh
