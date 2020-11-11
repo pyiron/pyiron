@@ -780,6 +780,16 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(len(neigh.distances[2]), 5)
         with self.assertRaises(ValueError):
             basis.get_neighbors_by_distance(num_neighbors_estimate_buffer=-1)
+        # Check with large cell with few atoms
+        dx = 0.7
+        r_O = [0, 0, 0]
+        r_H1 = [dx, dx, 0]
+        r_H2 = [-dx, dx, 0]
+        unit_cell = 10 * np.eye(3)
+        water = Atoms(elements=['H', 'H', 'O'],
+                                positions=[r_H1, r_H2, r_O],
+                                cell=unit_cell, pbc=True)
+        water.get_neighbors_by_distance(1.3)
 
     def test_get_number_of_neighbors_in_sphere(self):
         basis = Atoms(symbols="FeFeFe", positions=[3 * [0], 3 * [1], [0, 0, 1]], cell=2 * np.eye(3), pbc=True)
