@@ -1937,6 +1937,26 @@ class Atoms(ASEAtoms):
         )
         return self.analyse_ovito_voronoi_volume()
 
+    def find_mic(self, v, vectors=True):
+        """
+        Find vectors following minimum image convention (mic). In principle this
+        function does the same as ase.geometry.find_mic
+
+        Args:
+            v (list/numpy.ndarray): 3d vector or a list/array of 3d vectors
+            vectors (bool): Whether to return vectors (distances are returned if False)
+
+        Returns: numpy.ndarray of the same shape as input with mic
+        """
+        vecs = np.asarray(v).reshape(-1, 3)
+        if any(self.pbc):
+            vecs = np.einsum('ji,nj->ni', np.linalg.inv(self.cell), vecs)
+            vecs[:,self.pbc] -= np.rint(vecs)[:,self.pbc]
+            vecs = np.einsum('ji,nj->ni', self.cell, vecs)
+        if vectors:
+            return vecs.reshape(np.asarray(v).shape)
+        return np.linalg.norm(vecs, axis=-1).reshape(np.asarray(v).shape[:-1])
+
     def get_distance(self, a0, a1, mic=True, vector=False):
         """
         Return distance between two atoms.
