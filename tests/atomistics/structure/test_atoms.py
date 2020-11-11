@@ -869,6 +869,19 @@ class TestAtoms(unittest.TestCase):
             np.min(np.linalg.norm(vert[0] - basis.positions[1], axis=-1)), 0.5
         )
 
+    def test_find_mic(self):
+        cell = 0.1*(np.random.random((3,3))-0.5)+np.eye(3)
+        basis = Atoms("Fe", positions=[3*[0.5]], cell=cell, pbc=True)
+        v = 2*np.random.random(3)-1
+        r = np.linalg.inv(cell.T).dot(v)
+        r -= np.rint(r)
+        self.assertTrue(np.isclose(
+            r[0]*cell[0]+r[1]*cell[1]+r[2]*cell[2],
+            basis.find_mic(v, vectors=True)
+        ).all())
+        for v in [np.ones(3), np.ones((3,3)), np.ones((3,3,3))]:
+            self.assertTrue(np.array_equal(basis.find_mic(v).shape, v.shape))
+
     def test_get_distances_array(self):
         basis = Atoms("FeFe", positions=[3*[0], 3*[0.9]], cell=np.identity(3), pbc=True)
         self.assertAlmostEqual(basis.get_distances_array(mic=False)[0, 1], 0.9*np.sqrt(3))
