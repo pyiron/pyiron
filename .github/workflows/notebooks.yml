@@ -27,7 +27,6 @@ jobs:
     - name: Setup
       shell: bash -l {0}
       run: |
-        python .ci_support/pyironconfig.py
         pip install -e .
         conda env update --name test --file .ci_support/environment-notebooks.yml
     - name: Tests
