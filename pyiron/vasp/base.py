@@ -419,6 +419,12 @@ class VaspBase(GenericDFTJob):
             max_i_steps = int(self["input/incar/data_dict"]["Value"][ind])
         else:
             max_i_steps = 0
+        if "ALGO" in self["input/incar/data_dict"]["Parameter"]:
+            ind = self["input/incar/data_dict"]["Parameter"].index("ALGO")
+            algo = str(self["input/incar/data_dict"]["Value"][ind])
+            if algo.upper() in ["EIGENVAL", "EXACT"]:
+                if max_e_steps == 1:
+                    return True
         scf_energies = self["output/generic/dft/scf_energy_free"]
         if scf_energies is None:
             scf_energies = self["output/outcar/scf_energies"]
