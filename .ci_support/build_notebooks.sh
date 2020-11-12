@@ -1,4 +1,5 @@
 #!/bin/bash
+env
 
 # Remove excluded notebooks
 for f in $(cat .ci_support/exclude); do 
