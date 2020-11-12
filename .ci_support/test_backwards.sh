@@ -1,13 +1,13 @@
 #!/bin/bash
 
-pip install --force-reinstall --ignore-installed --no-deps pyiron==0.2.16
+pip install --ignore-installed --no-deps pyiron==0.2.16
 echo "Before save";
 for t in tests/backwards/*save.py; do
     echo "Running $t";
     python $t
 done
 
-pip install --force-reinstall --ignore-installed --no-deps .
+pip install --ignore-installed --no-deps .
 i=0;
 echo "Before loading";
 for t in tests/backwards/*load.py; do
