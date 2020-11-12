@@ -1378,9 +1378,11 @@ class Atoms(ASEAtoms):
                 neighbor_obj.vecs = neighbor_obj.vecs-np.rint(neighbor_obj.vecs)
                 neighbor_obj.vecs *= self.cell.diagonal()
             if any(self.pbc):
-                vecs = neighbor_obj.vecs.reshape(-1, 3)[neighbor_obj.distances.flatten()<np.inf]
-                if np.absolute(vecs[:,self.pbc]).max()>width:
-                    warnings.warn('boundary_width_factor may have been too small - most likely not all neighbors properly assigned')
+                vecs = neighbor_obj.vecs.reshape(-1, 3)[neighbor_obj.distances.flatten() < np.inf]
+                if len(vecs) > 0:
+                    if np.absolute(vecs[:, self.pbc]).max() > width:
+                        warnings.warn('boundary_width_factor may have been too small - '
+                                      'most likely not all neighbors properly assigned')
         return neighbor_obj
 
     def get_neighborhood(
