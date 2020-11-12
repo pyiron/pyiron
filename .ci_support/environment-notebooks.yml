@@ -10,6 +10,6 @@ dependencies:
   - sphinxdft >=2.7.0
   - sphinxdft-data
   - iprpy-data
-  - pyiron-data
+  - pyiron-data >=0.0.5
   - pymatgen
   - sqsgenerator
