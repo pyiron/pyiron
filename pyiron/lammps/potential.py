@@ -201,7 +201,7 @@ class LammpsPotential(GenericParameters):
                     "Species": [hdf_pot["Species"]],
                 }
                 if "Citations" in hdf_pot.list_nodes():
-                    entry_dict["Species"] = [hdf_pot["Citations"]]
+                    entry_dict["Citations"] = [hdf_pot["Citations"]]
                 self._df = pd.DataFrame(entry_dict)
             except ValueError:
                 pass
