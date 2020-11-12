@@ -19,18 +19,23 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Setup conda
-      uses: s-weigand/setup-conda@v1
+    - uses: conda-incubator/setup-miniconda@v2
       with:
-        update-conda: true
+        auto-update-conda: true
         python-version: 3.8
-        conda-channels: anaconda, conda-forge
-    - run: python .ci_support/pyironconfig.py
-    - run: conda config --set always_yes yes --set changeps1 no
-    - run: conda env update --name root --file .ci_support/environment.yml
-    - run: pip install -e .
-    - run: coverage run --omit pyiron/_version.py -m unittest discover tests
-    - run: coverage combine
-    - run: coveralls
-    - run: coverage xml
-    - run: python-codacy-coverage -r coverage.xml
+        environment-file: .ci_support/environment.yml
+    - name: Setup
+      shell: bash -l {0}
+      run: |
+        python .ci_support/pyironconfig.py
+        pip install -e .
+    - name: Test
+      shell: bash -l {0}
+      run: coverage run --omit pyiron/_version.py -m unittest discover tests
+    - name: Coverage
+      shell: bash -l {0}
+      run: |
+        coverage combine
+        coveralls
+        coverage xml
+        python-codacy-coverage -r coverage.xml
