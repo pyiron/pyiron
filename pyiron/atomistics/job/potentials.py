@@ -113,7 +113,12 @@ class PotentialAbstract(object):
         Returns:
             pandas.DataFrame:
         """
-        for resource_path in s.resource_paths:
+        env = os.environ
+        resource_path_lst = s.resource_paths
+        for conda_var in ["CONDA_PREFIX", "CONDA_DIR"]:
+            if conda_var in env.keys():  # support iprpy-data package
+                resource_path_lst += [os.path.join(env[conda_var], "share", "iprpy")]
+        for resource_path in resource_path_lst:
             if os.path.exists(os.path.join(resource_path, plugin_name, "potentials")):
                 resource_path = os.path.join(resource_path, plugin_name, "potentials")
             if "potentials" in resource_path:

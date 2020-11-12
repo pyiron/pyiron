@@ -6,6 +6,7 @@ from __future__ import print_function, unicode_literals
 import os
 import posixpath
 
+import ast
 import h5py
 import numpy as np
 import pandas as pd
@@ -168,6 +169,12 @@ class LammpsBase(AtomisticGenericJob):
                                      structure_elements
                                 ))
         self.input.potential.df = potential
+        if "Citations" in potential.columns.values:
+            pot_pub_dict = {}
+            for p in ast.literal_eval(potential["Citations"].values[0]):
+                for k in p.keys():
+                    pot_pub_dict[k] = p[k]
+            s.publication_add({"lammps_potential": pot_pub_dict})
         for val in ["units", "atom_style", "dimension"]:
             v = self.input.potential[val]
             if v is not None:
