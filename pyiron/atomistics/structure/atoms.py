@@ -3,7 +3,7 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 from __future__ import division, print_function
-from ase.atoms import Atoms as ASEAtoms, get_distances as ase_get_distances, Atom as ASEAtom
+from ase.atoms import Atoms as ASEAtoms, Atom as ASEAtom
 import ast
 from copy import copy
 from collections import OrderedDict
@@ -1998,40 +1998,40 @@ class Atoms(ASEAtoms):
 
         return d_len[0]
 
-    def get_distances_array(self, a0=None, a1=None, mic=True, vector=False):
+    def get_distances_array(self, p1=None, p2=None, mic=True, vectors=False):
         """
-        Return distance matrix of every position in p1 with every position in p2. If a1 is not set, it is assumed that
-        distances between all positions in a0 are desired. a1 will be set to a0 in this case.
-        if both a0 and a1 are not set, the distances between all atoms in the box are returned
-        Use mic to use the minimum image convention.
-        Learn more about get_distances from the ase website:
-        https://wiki.fysik.dtu.dk/ase/ase/geometry.html#ase.geometry.get_distances
+        Return distance matrix of every position in p1 with every position in
+        p2. If p2 is not set, it is assumed that distances between all
+        positions in p1 are desired. p2 will be set to p1 in this case. If both
+        p1 and p2 are not set, the distances between all atoms in the box are
+        returned.
 
         Args:
-            a0 (numpy.ndarray/list): Nx3 array of positions
-            a1 (numpy.ndarray/list): Nx3 array of positions
+            p1 (numpy.ndarray/list): Nx3 array of positions
+            p2 (numpy.ndarray/list): Nx3 array of positions
             mic (bool): minimum image convention
-            vector (bool): return vectors instead of distances
+            vectors (bool): return vectors instead of distances
         Returns:
             numpy.ndarray: NxN if vector=False and NxNx3 if vector=True
 
         """
-        if a0 is None and a1 is not None:
-            a0 = a1
-            a1 = None
-        if a0 is None:
-            a0 = self.positions
-        a0 = np.array(a0).reshape(-1, 3)
-        if a1 is not None:
-            a1 = np.array(a1).reshape(-1, 3)
-        if mic:
-            vec, dist = ase_get_distances(a0, a1, cell=self.cell, pbc=self.pbc)
-        else:
-            vec, dist = ase_get_distances(a0, a1)
-        if vector:
-            return vec
-        else:
-            return dist
+        if p1 is None and p2 is not None:
+            p1 = p2
+            p2 = None
+        if p1 is None:
+            p1 = self.positions
+        if p2 is None:
+            p2 = self.positions
+        p1 = np.asarray(p1)
+        p2 = np.asarray(p2)
+        diff_relative = p2.reshape(-1,3)[np.newaxis,:,:]-p1.reshape(-1,3)[:,np.newaxis,:]
+        diff_relative = diff_relative.reshape(p1.shape[:-1]+p2.shape[:-1]+(3,))
+        if not mic:
+            if vectors:
+                return diff_relative
+            else:
+                return np.linalg.norm(diff_relative, axis=-1)
+        return self.find_mic(diff_relative, vectors=vectors)
 
     def append(self, atom):
         if isinstance(atom, ASEAtom):
