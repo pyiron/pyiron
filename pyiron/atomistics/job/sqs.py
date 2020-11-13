@@ -165,7 +165,7 @@ class SQSJob(AtomisticGenericJob):
         Returns:
             (dict): db_dict
         """
-        db_dict = super(AtomisticGenericJob, self).db_entry()
+        db_dict = super(SQSJob, self).db_entry()
         if self.structure:
             struct_len = len(self.structure)
             mole_fractions = {
