@@ -1250,10 +1250,7 @@ class Atoms(ASEAtoms):
             warnings.warn('The number of neighbors found within the cutoff_radius is equal to the (estimated) ' +
                           'num_neighbors. Increase num_neighbors or num_neighbors_estimate_buffer to find all ' +
                           'neighbors within the cutoff_radius.')
-        neigh.indices = [indices[dist<np.inf] for indices, dist in zip(neigh.indices, neigh.distances)]
-        if t_vec:
-            neigh.vecs = [vecs[dist<np.inf] for vecs, dist in zip(neigh.vecs, neigh.distances)]
-        neigh.distances = [dist[dist<np.inf] for dist in neigh.distances]
+        neigh.allow_ragged = True
         return neigh
 
     def get_neighbors(

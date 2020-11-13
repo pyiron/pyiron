@@ -38,6 +38,44 @@ class Neighbors(object):
         self._boundary_layer_width = 0
         self._extended_positions = None
         self._wrapped_indices = None
+        self._allow_ragged = True
+
+    def _get_max_length(self):
+        length = 0
+        for dd in self.distances:
+            if len(dd)>length:
+                length = len(dd)
+        return length
+
+    def _fill(self, value, filler=np.inf):
+        arr = np.zeros((len(value), self._get_max_length())+value[0].shape[1:])
+        arr.fill(filler)
+        for ii, vv in enumerate(value):
+            arr[ii,:len(vv)] = vv
+        return arr
+
+    def _contract(self, value):
+        return [vv[dist<np.inf] for vv, dist in zip(value, self._fill(self.distances))]
+
+    @property
+    def allow_ragged(self):
+        return self._allow_ragged
+
+    @allow_ragged.setter
+    def allow_ragged(self, new_bool):
+        if not isinstance(new_bool, bool):
+            raise ValueError('allow_ragged must be a boolean')
+        self._allow_ragged = new_bool
+        if new_bool:
+            self.distances = self._contract(self.distances)
+            if self.vecs is not None:
+                self.vecs = self._contract(self.vecs)
+            self.indices = self._contract(self.indices)
+        else:
+            self.distances = self._fill(self.distances)
+            self.indices = self._fill(self.indices, filler=len(self._ref_structure))
+            if self.vecs is not None:
+                self.vecs = self._fill(self.vecs)
 
     def _get_extended_positions(self):
         if self._extended_positions is None:
