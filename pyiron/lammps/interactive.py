@@ -212,11 +212,12 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
         self._interactive_run_command = " ".join(df.T[df.index[-1]].values)
 
     def interactive_initialize_interface(self):
+        self._create_working_directory()
         if self.server.run_mode.interactive and self.server.cores == 1:
             lammps = getattr(importlib.import_module("lammps"), "lammps")
-            self._interactive_library = lammps(cmdargs=["-screen", "none"])
+            log_file = os.path.join(self.working_directory, "log.lammps")
+            self._interactive_library = lammps(cmdargs=["-screen", "none", "-log", log_file])
         else:
-            self._create_working_directory()
             self._interactive_library = LammpsLibrary(
                 cores=self.server.cores,
                 working_directory=self.working_directory

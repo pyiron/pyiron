@@ -6,6 +6,7 @@ from __future__ import print_function, unicode_literals
 import os
 import posixpath
 
+import ast
 import h5py
 import numpy as np
 import pandas as pd
@@ -168,6 +169,12 @@ class LammpsBase(AtomisticGenericJob):
                                      structure_elements
                                 ))
         self.input.potential.df = potential
+        if "Citations" in potential.columns.values:
+            pot_pub_dict = {}
+            for p in ast.literal_eval(potential["Citations"].values[0]):
+                for k in p.keys():
+                    pot_pub_dict[k] = p[k]
+            s.publication_add({"lammps_potential": pot_pub_dict})
         for val in ["units", "atom_style", "dimension"]:
             v = self.input.potential[val]
             if v is not None:
@@ -319,6 +326,7 @@ class LammpsBase(AtomisticGenericJob):
         )
         lmp_structure.write_file(file_name="structure.inp", cwd=self.working_directory)
         version_int_lst = self._get_executable_version_number()
+        update_input_hdf5 = False
         if (
             version_int_lst is not None
             and "dump_modify" in self.input.control._dataset["Parameter"]
@@ -330,11 +338,15 @@ class LammpsBase(AtomisticGenericJob):
             self.input.control["dump_modify"] = self.input.control[
                 "dump_modify"
             ].replace(" line ", " ")
+            update_input_hdf5 = True
         if not all(self.structure.pbc):
             self.input.control["boundary"] = " ".join(
                 ["p" if coord else "f" for coord in self.structure.pbc]
             )
+            update_input_hdf5 = True
         self._set_selective_dynamics()
+        if update_input_hdf5:
+            self.input.to_hdf(self._hdf5)
         self.input.control.write_file(
             file_name="control.inp", cwd=self.working_directory
         )

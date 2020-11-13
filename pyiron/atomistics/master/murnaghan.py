@@ -304,7 +304,7 @@ class MurnaghanJobGenerator(JobGenerator):
         for strain in np.linspace(
             1 - self._job.input["vol_range"],
             1 + self._job.input["vol_range"],
-            self._job.input["num_points"],
+            int(self._job.input["num_points"]),
         ):
             basis = self._job.ref_job.structure.copy()
             basis.set_cell(basis.cell * strain ** (1.0 / 3.0), scale_atoms=True)

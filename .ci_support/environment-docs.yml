@@ -1,0 +1,11 @@
+channels:
+  - conda-forge
+dependencies:
+  - sphinx
+  - nbsphinx
+  - ipywidgets
+  - sphinx_rtd_theme
+  - pylint
+  - Graphviz
+  - sphinxcontrib-applehelp
+  - seaborn

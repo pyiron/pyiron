@@ -174,8 +174,8 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
 
     def interactive_positions_organizer(self):
         if not np.allclose(
-            self._structure_current.get_scaled_positions(),
-            self._structure_previous.get_scaled_positions(),
+            self._structure_current.positions,
+            self._structure_previous.positions,
             rtol=1e-15,
             atol=1e-15,
         ):
@@ -192,9 +192,12 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             )
         ):
             self._logger.debug("Generic library: magnetic moments changed!")
-            self.interactive_spin_constraints_setter(
-                self._structure_current.get_initial_magnetic_moments()
-            )
+            try:
+                self.interactive_spin_constraints_setter(
+                    self._structure_current.get_initial_magnetic_moments()
+                )
+            except NotImplementedError:
+                del self.interactive_input_functions['magnetic_moments']
 
     def interactive_cells_getter(self):
         return self.initial_structure.cell
@@ -273,6 +276,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         there is only one ionic iteration step
         Args:
             iteration_step (int): Step for which the structure is requested
+            wrap_atoms (bool):
 
         Returns:
             atomistics.structure.atoms.Atoms object

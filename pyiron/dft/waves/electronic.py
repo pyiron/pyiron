@@ -150,16 +150,20 @@ class ElectronicStructure(object):
     @property
     def eigenvalues(self):
         """
+        Returns the eigenvalues for each spin value
+
         numpy.ndarray: Eigenvalues of the bands
         """
-        return self.eigenvalue_matrix.reshape(-1)
+        return np.array([val.reshape(-1) for val in self._eigenvalue_matrix])
 
     @property
     def occupancies(self):
         """
+        Returns the occupancies for each spin value
+
         numpy.ndarray: Occupancies of the bands
         """
-        return self.occupancy_matrix.reshape(-1)
+        return np.array([val.reshape(-1) for val in self._occupancy_matrix])
 
     @property
     def eigenvalue_matrix(self):
@@ -243,7 +247,7 @@ class ElectronicStructure(object):
 
     def get_vbm(self, resolution=1e-6):
         """
-        Gets the valence band maximum (VBM) of the system
+        Gets the valence band maximum (VBM) of the system for each spin value
 
         Args:
             resolution (float): An occupancy below this value is considered unoccupied
@@ -254,27 +258,32 @@ class ElectronicStructure(object):
                 "kpoint": The Kpoint instance associated with the VBM
                 "band": The Band instance associated with the VBM
         """
-        vbm = None
-        vbm_dict = dict()
-        for kpt in self.kpoints:
-            for band in kpt.bands:
-                if band.occupancy > resolution:
-                    if vbm is None:
-                        vbm = band.eigenvalue
-                        vbm_dict["value"] = vbm
-                        vbm_dict["kpoint"] = kpt
-                        vbm_dict["band"] = band
-                    else:
-                        if band.eigenvalue > vbm:
+        vbm_spin_dict = dict()
+        n_spins = len(self._eigenvalue_matrix)
+        for spin in range(n_spins):
+            vbm = None
+            vbm_spin_dict[spin] = dict()
+            vbm_dict = dict()
+            for kpt in self.kpoints:
+                for band in kpt.bands[spin]:
+                    if band.occupancy > resolution:
+                        if vbm is None:
                             vbm = band.eigenvalue
                             vbm_dict["value"] = vbm
                             vbm_dict["kpoint"] = kpt
                             vbm_dict["band"] = band
-        return vbm_dict
+                        else:
+                            if band.eigenvalue > vbm:
+                                vbm = band.eigenvalue
+                                vbm_dict["value"] = vbm
+                                vbm_dict["kpoint"] = kpt
+                                vbm_dict["band"] = band
+                vbm_spin_dict[spin] = vbm_dict
+        return vbm_spin_dict
 
     def get_cbm(self, resolution=1e-6):
         """
-        Gets the conduction band minimum (CBM) of the system
+        Gets the conduction band minimum (CBM) of the system for each spin value
 
         Args:
             resolution (float): An occupancy above this value is considered occupied
@@ -285,27 +294,32 @@ class ElectronicStructure(object):
                  "kpoint": The Kpoint instance associated with the CBM
                  "band": The Band instance associated with the CBM
         """
-        cbm = None
-        cbm_dict = dict()
-        for kpt in self.kpoints:
-            for band in kpt.bands:
-                if band.occupancy <= resolution:
-                    if cbm is None:
-                        cbm = band.eigenvalue
-                        cbm_dict["value"] = cbm
-                        cbm_dict["kpoint"] = kpt
-                        cbm_dict["band"] = band
-                    else:
-                        if band.eigenvalue < cbm:
+        cbm_spin_dict = dict()
+        n_spins = len(self._eigenvalue_matrix)
+        for spin in range(n_spins):
+            cbm = None
+            cbm_spin_dict[spin] = dict()
+            cbm_dict = dict()
+            for kpt in self.kpoints:
+                for band in kpt.bands[spin]:
+                    if band.occupancy <= resolution:
+                        if cbm is None:
                             cbm = band.eigenvalue
                             cbm_dict["value"] = cbm
                             cbm_dict["kpoint"] = kpt
                             cbm_dict["band"] = band
-        return cbm_dict
+                        else:
+                            if band.eigenvalue < cbm:
+                                cbm = band.eigenvalue
+                                cbm_dict["value"] = cbm
+                                cbm_dict["kpoint"] = kpt
+                                cbm_dict["band"] = band
+                cbm_spin_dict[spin] = cbm_dict
+        return cbm_spin_dict
 
     def get_band_gap(self, resolution=1e-6):
         """
-        Gets the band gap of the system
+        Gets the band gap of the system for each spin value
 
         Args:
             resolution (float): An occupancy above this value is considered occupied
@@ -317,21 +331,26 @@ class ElectronicStructure(object):
                  "cbm": The dictionary associated with the CBM
         """
         gap_dict = {}
-        vbm_dict = self.get_vbm(resolution)
-        cbm_dict = self.get_cbm(resolution)
-        vbm = vbm_dict["value"]
-        cbm = cbm_dict["value"]
-        gap_dict["band_gap"] = max(0.0, cbm - vbm)
-        gap_dict["vbm"] = vbm_dict
-        gap_dict["cbm"] = cbm_dict
+        vbm_spin_dict = self.get_vbm(resolution)
+        cbm_spin_dict = self.get_cbm(resolution)
+        for spin, vbm_dict in vbm_spin_dict.items():
+            gap_dict[spin] = dict()
+            vbm = vbm_dict["value"]
+            cbm = cbm_spin_dict[spin]["value"]
+            gap_dict[spin]["band_gap"] = max(0.0, cbm - vbm)
+            gap_dict[spin]["vbm"] = vbm_dict
+            gap_dict[spin]["cbm"] = cbm_spin_dict[spin]
         return gap_dict
 
     @property
     def eg(self):
         """
-        float: The band gap (eV)
+        The band gap for each spin channel
+
+        Returns:
+            list: list of band gap values for each spin channel
         """
-        self._eg = self.get_band_gap()["band_gap"]
+        self._eg = [val["band_gap"] for val in self.get_band_gap().values()]
         return self._eg
 
     @eg.setter
@@ -341,9 +360,12 @@ class ElectronicStructure(object):
     @property
     def vbm(self):
         """
-        float: The Kohn-Sham VBM (value only) (eV)
+        The Kohn-Sham valence band maximum for each spin channel
+
+        Returns:
+            list: list of valence band maximum values for each spin channel
         """
-        self._vbm = self.get_vbm()["value"]
+        self._vbm = [val["value"] for val in self.get_vbm().values()]
         return self._vbm
 
     @vbm.setter
@@ -353,9 +375,12 @@ class ElectronicStructure(object):
     @property
     def cbm(self):
         """
-        float: The Kohn-Sham CBM (value only) (eV)
+        The Kohn-Sham conduction band minimum for each spin channel
+
+        Returns:
+            list: list of conduction band minimum values for each spin channel
         """
-        self._cbm = self.get_cbm()["value"]
+        self._cbm = [val["value"] for val in self.get_cbm().values()]
         return self._cbm
 
     @cbm.setter
@@ -377,19 +402,25 @@ class ElectronicStructure(object):
     @property
     def is_metal(self):
         """
-        bool: Tells if the given system is metallic or not. The Fermi level crosses bands in the cas of metals but is
-              present in the band gap in the case of semi-conductors.
+        Tells if the given system is metallic or not in each spin channel (up and down respectively).
+        The Fermi level crosses bands in the cas of metals but is present in the band gap in the
+        case of semi-conductors.
+
+        Returns:
+
+            list: List of boolean values for each spin channel
         """
         if not (self._efermi is not None):
             raise ValueError(
                 "e_fermi has to be set before you can determine if the system is metallic or not"
             )
-        fermi_crossed = False
-        _, n_bands = np.shape(self.eigenvalue_matrix)
-        for i in range(n_bands):
-            values = self.eigenvalue_matrix[:, i]
-            if (self.efermi < np.max(values)) and (self.efermi >= np.min(values)):
-                fermi_crossed = True
+        n_spin, _, n_bands = np.shape(self.eigenvalue_matrix)
+        fermi_crossed = [False] * n_spin
+        for spin in range(n_spin):
+            for i in range(n_bands):
+                values = self.eigenvalue_matrix[spin, :, i]
+                if (self.efermi < np.max(values)) and (self.efermi >= np.min(values)):
+                    fermi_crossed[spin] = True
         return fermi_crossed
 
     @property
@@ -411,7 +442,7 @@ class ElectronicStructure(object):
         if self._grand_dos_matrix is None:
             try:
                 n_atoms, n_orbitals = np.shape(
-                    self.kpoints[0].bands[0].resolved_dos_matrix
+                    self.kpoints[0].bands[0][0].resolved_dos_matrix
                 )
             except ValueError:
                 return self._grand_dos_matrix
@@ -484,8 +515,13 @@ class ElectronicStructure(object):
                     self.structure.to_hdf(h_es)
                 self.kpoint_list = h_es["k_points"]
                 self.kpoint_weights = h_es["k_weights"]
-                self.eigenvalue_matrix = h_es["eig_matrix"]
-                self.occupancy_matrix = h_es["occ_matrix"]
+                if len(h_es["eig_matrix"].shape) == 2:
+                    self.eigenvalue_matrix = np.array([h_es["eig_matrix"]])
+                    self.occupancy_matrix = np.array([h_es["occ_matrix"]])
+                else:
+                    self._eigenvalue_matrix = h_es["eig_matrix"]
+                    self._occupancy_matrix = h_es["occ_matrix"]
+                self.n_spins = len(self._eigenvalue_matrix)
                 if "efermi" in nodes:
                     self.efermi = h_es["efermi"]
                 with h_es.open("dos") as h_dos:
@@ -539,8 +575,8 @@ class ElectronicStructure(object):
             nodes = h_es.list_nodes()
             self.kpoint_list = h_es["k_points"]
             self.kpoint_weights = h_es["k_point_weights"]
-            self.eigenvalue_matrix = h_es["eigenvalue_matrix"]
-            self.occupancy_matrix = h_es["occupancy_matrix"]
+            self.eigenvalue_matrix = np.array([h_es["eigenvalue_matrix"]])
+            self.occupancy_matrix = np.array([h_es["occupancy_matrix"]])
             try:
                 self.dos_energies = h_es["dos_energies"]
                 self.dos_densities = h_es["dos_densities"]
@@ -562,15 +598,16 @@ class ElectronicStructure(object):
         """
         for i in range(len(self.kpoint_list)):
             self.add_kpoint(self.kpoint_list[i], self.kpoint_weights[i])
-            _, length = np.shape(self.eigenvalue_matrix)
-            for j in range(length):
-                val = self.eigenvalue_matrix[i][j]
-                occ = self.occupancy_matrix[i][j]
-                self.kpoints[-1].add_band(eigenvalue=val, occupancy=occ)
-                if self._grand_dos_matrix is not None:
-                    self.kpoints[-1].bands[
-                        -1
-                    ].resolved_dos_matrix = self.grand_dos_matrix[0, i, j, :, :]
+            n_spin, _, length = np.shape(self._eigenvalue_matrix)
+            for spin in range(n_spin):
+                for j in range(length):
+                    val = self.eigenvalue_matrix[spin][i][j]
+                    occ = self.occupancy_matrix[spin][i][j]
+                    self.kpoints[-1].add_band(eigenvalue=val, occupancy=occ, spin=spin)
+                    if self._grand_dos_matrix is not None:
+                        self.kpoints[-1].bands[spin][
+                            -1
+                        ].resolved_dos_matrix = self.grand_dos_matrix[spin, i, j, :, :]
 
     def get_spin_resolved_dos(self, spin_indices=0):
         """
@@ -633,12 +670,12 @@ class ElectronicStructure(object):
             import matplotlib.pylab as plt
         except ModuleNotFoundError:
             import matplotlib.pyplot as plt
-        arg = np.argsort(self.eigenvalues)
-        plt.plot(
-            self.eigenvalues[arg], self.occupancies[arg], linewidth=2.0, color="blue"
-        )
+        for spin, eigenvalues in enumerate(self.eigenvalues):
+            arg = np.argsort(eigenvalues)
+            plt.plot(eigenvalues[arg], self.occupancies[spin][arg], "-o", label="spin:{}".format(spin), linewidth=2)
+        plt.legend()
         plt.axvline(self.efermi, linewidth=2.0, linestyle="dashed", color="black")
-        plt.xlabel("Energies (eV)")
+        plt.xlabel("Eigen value (eV)")
         plt.ylabel("Occupancy")
         return plt
 
@@ -661,22 +698,19 @@ class ElectronicStructure(object):
         output_string = list()
         output_string.append("ElectronicStructure Instance")
         output_string.append("----------------------------")
-        if self.grand_dos_matrix is not None:
-            output_string.append(
-                "Spin Configurations: {}".format(len(self.grand_dos_matrix))
-            )
+        output_string.append("Number of spin channels: {}".format(len(self.eigenvalue_matrix)))
         output_string.append("Number of k-points: {}".format(len(self.kpoints)))
-        output_string.append("Number of bands: {}".format(len(self.kpoints[0].bands)))
-
+        output_string.append("Number of bands: {}".format(len(self.kpoints[0].bands[0])))
         try:
-            if self.is_metal:
-                output_string.append("Is a metal: {}".format(self.is_metal))
+            for spin, is_metal in enumerate(self.is_metal):
+                if is_metal:
+                    output_string.append("spin {}:".format(spin) + " Is a metal: {}".format(is_metal))
+                else:
+                    output_string.append("spin {}:".format(spin) + " Is a metal: "
+                                                                   "{}".format(is_metal) + " Band gap (ev) "
+                                                                                           "{}".format(self.eg[spin]))
         except ValueError:
             pass
-        if not self.is_metal:
-            output_string.append(
-                "Band Gap: {} eV".format(self.get_band_gap(resolution=1.0e-4)["band_gap"])
-            )
         return "\n".join(output_string)
 
     def __repr__(self):
@@ -691,17 +725,17 @@ class Kpoint(object):
 
     Attributes:
 
-        bands (list): List of pyiron.objects.waves.settings.Band object
-        .. value (float): Value of the k-point
-        .. weight (float): Weight of the k-point used in integration of quantities
-        .. eig_occ_matrix (numpy.ndarray): A Nx2 matrix with the first column with eigenvalues and the second with
+        bands (dict): Dict of pyiron.objects.waves.settings.Band objects for each spin channel
+        value (float): Value of the k-point
+        weight (float): Weight of the k-point used in integration of quantities
+        eig_occ_matrix (numpy.ndarray): A Nx2 matrix with the first column with eigenvalues and the second with
                                     occupancies of every band. N being the number of bands assoiated with the k-point
     """
 
     def __init__(self):
         self._value = None
         self._weight = None
-        self.bands = list()
+        self.bands = dict()
         self.is_relative = False
 
     @property
@@ -720,22 +754,28 @@ class Kpoint(object):
     def weight(self, val):
         self._weight = val
 
-    def add_band(self, eigenvalue, occupancy):
+    def add_band(self, eigenvalue, occupancy, spin):
         """
         Add a pyiron.objects.waves.core.Band instance
 
         Args:
             eigenvalue (float): The eigenvalue associated with the Band instance
             occupancy (flaot): The occupancy associated with the Band instance
+            spin (int): Spin channel
         """
         band_obj = Band()
         band_obj.eigenvalue = eigenvalue
         band_obj.occupancy = occupancy
-        self.bands.append(band_obj)
+        if spin not in self.bands.keys():
+            self.bands[spin] = list()
+        self.bands[spin].append(band_obj)
 
     @property
     def eig_occ_matrix(self):
-        return np.array([[b.eigenvalue, b.occupancy] for b in self.bands])
+        eig_occ_list = list()
+        for bands in self.bands.values():
+            eig_occ_list.append([[b.eigenvalue, b.occupancy] for b in bands])
+        return np.array(eig_occ_list)
 
 
 class Band(object):

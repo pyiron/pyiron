@@ -7,6 +7,7 @@ from pyiron.atomistics.job.interactivewrapper import InteractiveWrapper
 from pyiron_base import InputList
 from pyiron.atomistics.job.interactive import GenericInteractiveOutput
 from scipy.optimize import minimize
+import scipy
 import warnings
 
 __author__ = "Osamu Waseda"
@@ -19,6 +20,10 @@ __maintainer__ = "Osamu Waseda"
 __email__ = "waseda@mpie.de"
 __status__ = "development"
 __date__ = "Sep 1, 2018"
+
+GPa_to_eV_by_A3 = (
+    1e21 / scipy.constants.physical_constants["joule-electron volt relationship"][0]
+)
 
 
 class ScipyMinimizer(InteractiveWrapper):
@@ -50,14 +55,17 @@ class ScipyMinimizer(InteractiveWrapper):
     >>> minim.calc_minimize(pressure=0, volume_only=True)
     >>> minim.run()
 
-    By setting `volume_only`, positions are not updated, so that only the pressures are minimized.
+    By setting `volume_only`, positions are not updated, so that only the
+    pressures are minimized.
 
-    It is possible to optimize both the volume and the positions, but since changing the cell also
-    changes the definition of coordinates, it is a mathematically ill-defined problem and therefore
-    it might end up in a physically undefined state. For this reason, it is strongly recommended to
+    It is possible to optimize both the volume and the positions, but since
+    changing the cell also changes the definition of coordinates, it is a
+    mathematically ill-defined problem and therefore it might end up in a
+    physically undefined state. For this reason, it is strongly recommended to
     launch several jobs using the Murnaghan class (cf. `Murnaghan`).
 
-    In order to perform volume optimization, the child job must have 3x3-pressure output.
+    In order to perform volume optimization, the child job must have
+    3x3-pressure output.
     """
     def __init__(self, project, job_name):
         super(ScipyMinimizer, self).__init__(project, job_name)
@@ -70,8 +78,8 @@ class ScipyMinimizer(InteractiveWrapper):
 
     def set_input_to_read_only(self):
         """
-        This function enforces read-only mode for the input classes, but it has to be implement in the individual
-        classes.
+        This function enforces read-only mode for the input classes, but it
+        has to be implement in the individual classes.
         """
         super(ScipyMinimizer, self).set_input_to_read_only()
         self.input.read_only = True
@@ -79,15 +87,20 @@ class ScipyMinimizer(InteractiveWrapper):
     def write_input(self):
         pass
 
+    def _initialize_structure(self):
+        self._original_cell = self.ref_job.structure.cell.copy()
+        self._current_strain = np.zeros(6)
+
     def run_static(self):
         self.ref_job_initialize()
         self._logger.debug("cg status: " + str(self.status))
+        self._initialize_structure()
         if self.ref_job.server.run_mode.interactive:
             self._delete_existing_job = False
         self.ref_job.run(delete_existing_job=self._delete_existing_job)
         self.status.running = True
         if self.input.pressure is not None:
-            x0 = self.ref_job.structure.cell.flatten()
+            x0 = np.zeros(sum(self.input.pressure!=None))
             if not self.input.volume_only:
                 x0 = np.append(x0, self.ref_job.structure.get_scaled_positions().flatten())
         else:
@@ -97,7 +110,7 @@ class ScipyMinimizer(InteractiveWrapper):
             fun=self._get_value,
             x0=x0,
             jac=self._get_gradient,
-            tol=1.0e-10,
+            tol=1.0e-20,
             options={'maxiter': self.input.ionic_steps,
                      'return_all': True }
         )
@@ -105,15 +118,47 @@ class ScipyMinimizer(InteractiveWrapper):
         self.collect_output()
         if self.ref_job.server.run_mode.interactive:
             self.ref_job.interactive_close()
+        if self["output/convergence"] > 0:
+            self.status.finished = True
+        else:
+            self.status.not_converged = True
+
+    @staticmethod
+    def _tensor_to_voigt(s, strain=False):
+        ss = 0.5*(s+s.T)
+        ss = ss.flatten()[[0, 4, 8, 5, 2, 1]]
+        if strain:
+            ss[3:] *= 2
+        return ss
+
+    @staticmethod
+    def _voigt_to_tensor(s, strain=False):
+        ss = np.array(s).copy()
+        if not strain:
+            ss[:3] /= 2
+        ss = np.array([[ss[0], ss[5], ss[4]], [0, ss[1], ss[3]], [0, 0, ss[2]]])
+        ss += ss.T
+        return ss
 
     def _update(self, x):
         rerun = False
         if self.input.pressure is not None:
-            if not np.allclose(x[:9], self.ref_job.structure.cell.flatten()):
-                self.ref_job.structure.set_cell(x[:9].reshape(-3,3), scale_atoms=True)
+            if not np.allclose(x[:len(self.input.pressure)], self._current_strain):
+                if len(self.input.pressure)==1:
+                    self._current_strain[:3] = x[0]
+                else:
+                    self._current_strain[self.input.pressure!=None] = x[:len(self.input.pressure)]
+                cell = np.matmul(
+                    self._voigt_to_tensor(self._current_strain, strain=True)+np.eye(3),
+                    self._original_cell
+                )
+                self.ref_job.structure.set_cell(cell, scale_atoms=True)
                 rerun = True
-            if not self.input.volume_only and not np.allclose(x[9:], self.ref_job.structure.get_scaled_positions().flatten()):
-                self.ref_job.structure.set_scaled_positions(x[9:].reshape(-1, 3))
+            if (not self.input.volume_only
+                and not np.allclose(
+                    x[len(self.input.pressure):], self.ref_job.structure.get_scaled_positions().flatten()
+                )):
+                self.ref_job.structure.set_scaled_positions(x[len(self.input.pressure):].reshape(-1, 3))
                 rerun = True
         elif not np.allclose(x, self.ref_job.structure.positions.flatten()):
             self.ref_job.structure.positions = x.reshape(-1, 3)
@@ -134,28 +179,41 @@ class ScipyMinimizer(InteractiveWrapper):
             if max_force > self.input.ionic_force_tolerance:
                 return False
         elif self.input.volume_only:
-            if np.absolute(self.ref_job.output.pressures[-1]-self.input.pressure).max() > self.input.ionic_force_tolerance:
+            if np.absolute(self._get_pressure()-self.input.pressure).max() > self.input.pressure_tolerance:
                 return False
         else:
             if max_force > self.input.ionic_force_tolerance:
                 return False
-            if np.absolute(self.ref_job.output.pressures[-1]-self.input.pressure).max() > self.input.ionic_force_tolerance:
+            if np.absolute(self._get_pressure()-self.input.pressure).max() > self.input.pressure_tolerance:
                 return False
         return True
 
+    def _get_pressure(self):
+        if len(self.input.pressure)==1:
+            return [np.mean(np.diagonal(self.ref_job.output.pressures[-1]))]
+        else:
+            return self._tensor_to_voigt(self.ref_job.output.pressures[-1])[self.input.pressure!=None]
+
     def _get_gradient(self, x):
         self._update(x)
-        prefactor = 1
+        prefactor = 1.0e-1
         if self.check_convergence():
             prefactor = 0
         if self.input.pressure is not None:
-            pressure = -(self.ref_job.output.pressures[-1].flatten()-self.input.pressure.flatten())
+            pressure = -(
+                self._get_pressure()-self.input.pressure
+            )
             if self.input.volume_only:
                 return pressure*prefactor
             else:
-                return np.append(pressure, -np.einsum('ij,ni->nj',
-                                                      np.linalg.inv(self.ref_job.structure.cell),
-                                                      self.ref_job.output.forces[-1]).flatten()).flatten()*prefactor
+                return np.append(
+                    pressure,
+                    -np.einsum(
+                        'ij,ni->nj',
+                        np.linalg.inv(self.ref_job.structure.cell),
+                        self.ref_job.output.forces[-1]
+                    ).flatten()
+                ).flatten()*prefactor
         else:
             return -self.ref_job.output.forces[-1].flatten()*prefactor
 
@@ -177,6 +235,7 @@ class ScipyMinimizer(InteractiveWrapper):
         algorithm='CG',
         ionic_energy_tolerance=0,
         ionic_force_tolerance=1.0e-2,
+        pressure_tolerance=1.0e-3,
         volume_only=False,
     ):
         """
@@ -193,22 +252,31 @@ class ScipyMinimizer(InteractiveWrapper):
         if pressure is None and volume_only:
             raise ValueError('pressure must be specified if volume_only')
         if pressure is not None and not volume_only:
-            warnings.warn('Simultaneous optimization of pressures and positions is a mathematically ill posed problem '
-                          + '- there is no guarantee that it converges to the desired structure')
-        if pressure is not None and not hasattr(pressure, '__len__'):
-            pressure = pressure*np.eye(3)
+            warnings.warn(
+                'Simultaneous optimization of pressures and positions is a'
+                + ' mathematically ill posed problem - there is no guarantee'
+                + ' that it converges to the desired structure'
+            )
+        if pressure is not None:
+            pressure = np.array([pressure]).flatten()
+            if len(pressure)==9:
+                pressure = self._tensor_to_voigt(pressure.reshape(3,3))
+            if len(pressure)==3:
+                pressure = np.append(pressure, 3*[None])
         self.input.minimizer = algorithm
         self.input.ionic_steps = max_iter
         self.input.pressure = pressure
         self.input.volume_only = volume_only
         self.input.ionic_force_tolerance = ionic_force_tolerance
         self.input.ionic_energy_tolerance = ionic_energy_tolerance
+        self.input.pressure_tolerance = pressure_tolerance
 
 
 class Input(InputList):
     """
     Args:
-        minimizer (str): minimizer to use (currently only 'CG' and 'BFGS' run reliably)
+        minimizer (str): minimizer to use (currently only 'CG' and 'BFGS' run
+            reliably)
         ionic_steps (int): max number of steps
         ionic_force_tolerance (float): maximum force tolerance
     """
@@ -220,6 +288,7 @@ class Input(InputList):
         self.pressure = None
         self.volume_only = False
         self.ionic_energy_tolerance = 0
+        self.pressure_tolerance = 1.0e-3
 
 
 class ScipyMinimizerOutput(GenericInteractiveOutput):

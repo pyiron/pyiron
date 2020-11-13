@@ -52,9 +52,11 @@ class TestSxExtOptInteractive(unittest.TestCase):
         with self.assertRaises(ValueError):
             minim.calc_minimize(volume_only=True, pressure=None)
         minim.calc_minimize(pressure=0)
-        self.assertTrue(np.array_equal(minim.input.pressure, np.zeros((3,3))))
+        self.assertTrue(np.array_equal(minim.input.pressure, np.zeros(1)))
         minim.calc_minimize(pressure=1)
-        self.assertTrue(np.array_equal(minim.input.pressure, np.eye(3)))
+        self.assertTrue(np.array_equal(minim.input.pressure, np.ones(1)))
+        minim.calc_minimize(pressure=[1, None, 0])
+        self.assertTrue(np.array_equal(minim.input.pressure, np.array([1, None, 0, None, None, None])))
 
 if __name__ == "__main__":
     unittest.main()
