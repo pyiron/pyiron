@@ -98,6 +98,7 @@ def get_steinhardt_parameter_structure(structure, neighbor_method="cutoff", cuto
     else:
         return sysq
 
+
 def analyse_centro_symmetry(atoms, num_neighbors=12):
     """
     Analyse centrosymmetry parameter
@@ -114,6 +115,7 @@ def analyse_centro_symmetry(atoms, num_neighbors=12):
     sys.calculate_centrosymmetry(nmax=num_neighbors)
     atoms = sys.atoms
     return np.array([atom.centrosymmetry for atom in atoms])
+
 
 def analyse_cna_adaptive(atoms, mode="total"):
     """
@@ -147,7 +149,7 @@ def analyse_cna_adaptive(atoms, mode="total"):
                 'CommonNeighborAnalysis.counts.BCC',
                 'CommonNeighborAnalysis.counts.ICO'
             ],
-            cna
+            cna.values()
         )}
     else:
         atoms = sys.atoms
