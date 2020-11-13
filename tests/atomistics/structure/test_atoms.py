@@ -750,7 +750,6 @@ class TestAtoms(unittest.TestCase):
         basis.set_repeat(2)
         with self.assertRaises(ValueError):
             basis.get_neighbors(cutoff_radius=10)
-        basis.get_neighbors_by_distance(cutoff_radius=10)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             neigh = basis.get_neighbors(boundary_width_factor=0.1)
@@ -760,6 +759,52 @@ class TestAtoms(unittest.TestCase):
         basis = Atoms(symbols="FeFe", positions=[3 * [0], 3 * [1]], cell=2 * np.eye(3))
         neigh = basis.get_neighbors(num_neighbors=1)
         self.assertEqual(neigh._boundary_layer_width, 0)
+
+    def test_get_neighbors_by_distance(self):
+        basis = Atoms(symbols="FeFeFe", positions=[3 * [0], 3 * [1], [0, 0, 1]], cell=2 * np.eye(3), pbc=True)
+        neigh = basis.get_neighbors_by_distance(1.5)
+        self.assertEqual(len(neigh.distances[0]), 2)
+        self.assertEqual(len(neigh.distances[1]), 4)
+        self.assertEqual(len(neigh.distances[2]), 6)
+        self.assertEqual(neigh.distances[0][0], 1.)
+        self.assertAlmostEqual(neigh.distances[1][0], np.sqrt(2))
+        self.assertEqual(neigh.distances[2][0], 1.)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            basis.get_neighbors_by_distance(cutoff_radius=1.5, num_neighbors_estimate_buffer=0)
+            self.assertGreaterEqual(len(w), 1)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            neigh = basis.get_neighbors_by_distance(cutoff_radius=1.5, num_neighbors=5)
+            self.assertGreaterEqual(len(w), 1)
+        self.assertEqual(len(neigh.distances[2]), 5)
+        with self.assertRaises(ValueError):
+            basis.get_neighbors_by_distance(num_neighbors_estimate_buffer=-1)
+        # Check with large cell with few atoms
+        dx = 0.7
+        r_O = [0, 0, 0]
+        r_H1 = [dx, dx, 0]
+        r_H2 = [-dx, dx, 0]
+        unit_cell = 10 * np.eye(3)
+        water = Atoms(elements=['H', 'H', 'O'], positions=[r_H1, r_H2, r_O], cell=unit_cell, pbc=True)
+        self.assertIsInstance(water.get_neighbors_by_distance(1.3).indices, list)
+        water_new = water[[0, 1]]
+        self.assertTrue(np.array_equal(water_new.get_neighbors_by_distance(1.3).indices, [np.array([]), np.array([])]))
+
+    def test_get_number_of_neighbors_in_sphere(self):
+        basis = Atoms(symbols="FeFeFe", positions=[3 * [0], 3 * [1], [0, 0, 1]], cell=2 * np.eye(3), pbc=True)
+        num_neighbors_per_atom = basis.get_numbers_of_neighbors_in_sphere(cutoff_radius=2,
+                                                                          num_neighbors_estimate_buffer=0)
+        self.assertEqual(num_neighbors_per_atom[0], 10)
+        self.assertEqual(num_neighbors_per_atom[1], 12)
+        self.assertEqual(num_neighbors_per_atom[2], 6)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            num_neighbors_per_atom = basis.get_numbers_of_neighbors_in_sphere(cutoff_radius=1.5, num_neighbors=5)
+            self.assertGreaterEqual(len(w), 1)
+        self.assertEqual(num_neighbors_per_atom[2], 5)
+        with self.assertRaises(ValueError):
+            basis.get_numbers_of_neighbors_in_sphere(num_neighbors_estimate_buffer=-1)
 
     def test_get_shell_matrix(self):
         structure = CrystalStructure(elements='Fe', lattice_constants=2.83, bravais_basis='bcc')
@@ -834,12 +879,25 @@ class TestAtoms(unittest.TestCase):
             np.min(np.linalg.norm(vert[0] - basis.positions[1], axis=-1)), 0.5
         )
 
+    def test_find_mic(self):
+        cell = 0.1*(np.random.random((3,3))-0.5)+np.eye(3)
+        basis = Atoms("Fe", positions=[3*[0.5]], cell=cell, pbc=True)
+        v = 2*np.random.random(3)-1
+        r = np.linalg.inv(cell.T).dot(v)
+        r -= np.rint(r)
+        self.assertTrue(np.isclose(
+            r[0]*cell[0]+r[1]*cell[1]+r[2]*cell[2],
+            basis.find_mic(v, vectors=True)
+        ).all())
+        for v in [np.ones(3), np.ones((3,3)), np.ones((3,3,3))]:
+            self.assertTrue(np.array_equal(basis.find_mic(v).shape, v.shape))
+
     def test_get_distances_array(self):
         basis = Atoms("FeFe", positions=[3*[0], 3*[0.9]], cell=np.identity(3), pbc=True)
         self.assertAlmostEqual(basis.get_distances_array(mic=False)[0, 1], 0.9*np.sqrt(3))
-        self.assertTrue(np.allclose(basis.get_distances_array(a0=0.5*np.ones(3)),
-                                    basis.get_distances_array(a1=0.5*np.ones(3))))
-        self.assertTrue(np.allclose(basis.get_distances_array(vector=True)[0, 1], -0.1*np.ones(3)))
+        self.assertTrue(np.allclose(basis.get_distances_array(p1=0.5*np.ones(3)),
+                                    basis.get_distances_array(p2=0.5*np.ones(3))))
+        self.assertTrue(np.allclose(basis.get_distances_array(vectors=True)[0, 1], -0.1*np.ones(3)))
 
     def test_repeat_points(self):
         basis = Atoms("Fe", positions=np.random.rand(3).reshape(-1, 3), cell=np.identity(3))
@@ -1458,6 +1516,13 @@ class TestAtoms(unittest.TestCase):
             warnings.simplefilter("always")
             c3.get_scaled_positions()
             self.assertEqual(len(w), 0)
+
+    def test_get_wrapped_coordinates(self):
+        structure = CrystalStructure("Fe", bravais_basis="bcc", lattice_constant=4.2, pbc=True)
+        position = structure.get_wrapped_coordinates(structure.cell*1.1)
+        self.assertAlmostEqual(
+            np.linalg.norm(position-structure.cell*0.1), 0
+        )
 
 
 def generate_fcc_lattice(a=4.2):

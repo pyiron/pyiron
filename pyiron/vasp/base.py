@@ -327,6 +327,9 @@ class VaspBase(GenericDFTJob):
             }
         }
 
+    def get_kpoints(self):
+        return [int(v) for v in self.input.kpoints[3].split()]
+
     def set_input_to_read_only(self):
         """
         This function enforces read-only mode for the input classes, but it has to be implement in the individual
@@ -416,6 +419,12 @@ class VaspBase(GenericDFTJob):
             max_i_steps = int(self["input/incar/data_dict"]["Value"][ind])
         else:
             max_i_steps = 0
+        if "ALGO" in self["input/incar/data_dict"]["Parameter"]:
+            ind = self["input/incar/data_dict"]["Parameter"].index("ALGO")
+            algo = str(self["input/incar/data_dict"]["Value"][ind])
+            if algo.upper() in ["EIGENVAL", "EXACT"]:
+                if max_e_steps == 1:
+                    return True
         scf_energies = self["output/generic/dft/scf_energy_free"]
         if scf_energies is None:
             scf_energies = self["output/outcar/scf_energies"]
@@ -1353,21 +1362,6 @@ class VaspBase(GenericDFTJob):
             return spins[iteration_step]
         else:
             return None
-
-    def get_electronic_structure(self):
-        """
-        Gets the electronic structure instance from the hdf5 file
-
-        Returns:
-                pyiron.atomistics.waves.electronic.ElectronicStructure instance
-        """
-        if not self.status.finished:
-            return
-        else:
-            with self.project_hdf5.open("output") as ho:
-                es_obj = ElectronicStructure()
-                es_obj.from_hdf(ho)
-            return es_obj
 
     def get_charge_density(self):
         """

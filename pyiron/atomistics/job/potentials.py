@@ -71,7 +71,11 @@ class PotentialAbstract(object):
         ]
 
     def find_by_name(self, potential_name):
-        return self._potential_df[(self._potential_df["Name"] == potential_name)]
+        mask = (self._potential_df["Name"] == potential_name)
+        if not mask.any():
+            raise ValueError("Potential '{}' not found in database.".format(
+                             potential_name))
+        return self._potential_df[mask]
 
     def list(self):
         """
@@ -109,10 +113,15 @@ class PotentialAbstract(object):
         Returns:
             pandas.DataFrame:
         """
-        for resource_path in s.resource_paths:
+        env = os.environ
+        resource_path_lst = s.resource_paths
+        for conda_var in ["CONDA_PREFIX", "CONDA_DIR"]:
+            if conda_var in env.keys():  # support iprpy-data package
+                resource_path_lst += [os.path.join(env[conda_var], "share", "iprpy")]
+        for resource_path in resource_path_lst:
             if os.path.exists(os.path.join(resource_path, plugin_name, "potentials")):
                 resource_path = os.path.join(resource_path, plugin_name, "potentials")
-            if "potentials" in resource_path:
+            if "potentials" in resource_path or "iprpy" in resource_path:
                 for path, folder_lst, file_lst in os.walk(resource_path):
                     for periodic_table_file_name in file_name_lst:
                         if (
