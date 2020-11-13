@@ -1320,6 +1320,7 @@ class Atoms(ASEAtoms):
         cutoff_radius=np.inf,
         boundary_width_factor=1.2,
         exclude_self=False,
+        get_tree=False,
     ):
         """
 
@@ -1362,6 +1363,8 @@ class Atoms(ASEAtoms):
         if len(extended_positions) < num_neighbors and cutoff_radius==np.inf:
             raise ValueError('num_neighbors too large - make boundary_width_factor larger and/or make num_neighbors smaller')
         neigh._tree = cKDTree(extended_positions, boxsize=boxsize)
+        if get_tree:
+            return neigh
         positions = self.positions
         if id_list is not None:
             positions = positions[np.array(id_list)]

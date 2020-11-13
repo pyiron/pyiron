@@ -41,21 +41,17 @@ class Neighbors(object):
         self._allow_ragged = True
 
     def _get_max_length(self):
-        length = 0
-        for dd in self.distances:
-            if len(dd)>length:
-                length = len(dd)
-        return length
+        return max(len(dd[dd<np.inf]) for dd in self.distances)
 
     def _fill(self, value, filler=np.inf):
-        arr = np.zeros((len(value), self._get_max_length())+value[0].shape[1:])
+        arr = np.zeros((len(value), self._get_max_length())+value[0].shape[1:], dtype=type(filler))
         arr.fill(filler)
         for ii, vv in enumerate(value):
             arr[ii,:len(vv)] = vv
         return arr
 
     def _contract(self, value):
-        return [vv[dist<np.inf] for vv, dist in zip(value, self._fill(self.distances))]
+        return [vv[:np.sum(dist<np.inf)] for vv, dist in zip(value, self.distances)]
 
     @property
     def allow_ragged(self):
@@ -86,6 +82,11 @@ class Neighbors(object):
         if self._wrapped_indices is None:
             return np.arange(len(self._ref_structure.positions))
         return self._wrapped_indices
+
+    def get_neighborhood(
+        self,
+    ):
+        pass
 
     def _get_neighborhood(
         self,
