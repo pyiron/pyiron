@@ -1124,7 +1124,9 @@ class Atoms(ASEAtoms):
         if width<0:
             raise ValueError('Invalid width')
         if width==0:
-            return self.positions, np.arange(len(self))
+            if return_indices:
+                return self.positions, np.arange(len(self))
+            return self.positions
         rep = 2*np.ceil(width/np.linalg.norm(self.cell, axis=-1)).astype(int)*self.pbc+1
         rep = [np.arange(r)-int(r/2) for r in rep]
         meshgrid = np.meshgrid(rep[0], rep[1], rep[2])
@@ -1244,7 +1246,7 @@ class Atoms(ASEAtoms):
             cutoff_radius=cutoff_radius,
             boundary_width_factor=boundary_width_factor,
         )
-        if not np.all(neigh.distances.T[-1]==np.inf):
+        if np.prod(neigh.distances.shape)>0 and not np.all(neigh.distances.T[-1]==np.inf):
             warnings.warn('The number of neighbors found within the cutoff_radius is equal to the (estimated) ' +
                           'num_neighbors. Increase num_neighbors or num_neighbors_estimate_buffer to find all ' +
                           'neighbors within the cutoff_radius.')
@@ -1342,32 +1344,32 @@ class Atoms(ASEAtoms):
             raise ValueError('num_neighbors must be a positive integer')
         boxsize = None
         num_neighbors += 1
-        neighbor_obj = Neighbors(ref_structure=self, tolerance=tolerance)
+        neigh = Neighbors(ref_structure=self, tolerance=tolerance)
         width = self._get_boundary_layer_width(
             num_neighbors=num_neighbors,
             boundary_width_factor=boundary_width_factor,
             cutoff_radius=cutoff_radius
         )
-        neighbor_obj._boundary_layer_width = width
+        neigh._boundary_layer_width = width
         if (width<0.5*np.min(self.cell.diagonal())
                 and np.isclose(np.linalg.norm(self.cell-np.eye(3)*self.cell.diagonal()), 0)
                 and np.all(self.pbc)
                 and cutoff_radius==np.inf):
             boxsize = self.cell.diagonal()
-            extended_positions, indices = self.get_extended_positions(0, return_indices=True)
-            extended_positions /= self.cell.diagonal()
-            extended_positions -= np.floor(extended_positions)
-            extended_positions *= self.cell.diagonal()
+            extended_positions = self.get_extended_positions(0, return_indices=False).copy()
+            extended_positions -= boxsize*np.floor(extended_positions/boxsize)
         else:
-            extended_positions, self._wrapped_indices = self.get_extended_positions(width, return_indices=True)
+            extended_positions, wrapped_indices = self.get_extended_positions(width, return_indices=True)
+            neigh._extended_positions = extended_positions
+            neigh._wrapped_indices = wrapped_indices 
         if len(extended_positions) < num_neighbors and cutoff_radius==np.inf:
             raise ValueError('num_neighbors too large - make boundary_width_factor larger and/or make num_neighbors smaller')
-        neighbor_obj._tree = cKDTree(extended_positions, boxsize=boxsize)
+        neigh._tree = cKDTree(extended_positions, boxsize=boxsize)
         positions = self.positions
         if id_list is not None:
             positions = positions[np.array(id_list)]
-        neigh = neighbor_obj._get_neighborhood(
-            position=positions,
+        neigh._get_neighborhood(
+            positions=positions,
             num_neighbors=num_neighbors,
             t_vec=t_vec,
             cutoff_radius=cutoff_radius,

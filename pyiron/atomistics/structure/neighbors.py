@@ -36,6 +36,18 @@ class Neighbors(object):
         self._cluster_vecs = None
         self._cluster_dist = None
         self._boundary_layer_width = 0
+        self._extended_positions = None
+        self._wrapped_indices = None
+
+    def _get_extended_positions(self):
+        if self._extended_positions is None:
+            return self._ref_structure.positions
+        return self._extended_positions
+
+    def _get_wrapped_indices(self):
+        if self._wrapped_indices is None:
+            return np.arange(len(self._ref_structure.positions))
+        return self._wrapped_indices
 
     def _get_neighborhood(
         self,
@@ -54,27 +66,28 @@ class Neighbors(object):
         distances, indices = self._tree.query(
             positions_copy, k=num_neighbors, distance_upper_bound=cutoff_radius
         )
-        max_column = np.sum(distances<np.inf, axis=1)
+        max_column = np.sum(distances<np.inf, axis=1).max()
         distances = distances[:,start_column:max_column]
         indices = indices[:,start_column:max_column]
         if t_vec:
             vectors = np.zeros(distances.shape+(3,))
-            vectors += positions_copy[:,np.newaxis,:]
-            vectors[distances<np.inf] -= extended_positions[indices[distances<np.inf]]
+            vectors -= positions_copy[:,np.newaxis,:]
+            vectors[distances<np.inf] += self._get_extended_positions()[indices[distances<np.inf]]
             vectors[distances==np.inf] = np.array(3*[np.inf])
-            vectors = vectors.reshape(shape[:-1]+(-1, 3,))
             if pbc_and_rectangular:
-                LL = self.cell.diagonal()
+                LL = self._ref_structure.cell.diagonal()
                 vectors[distances<np.inf] -= LL*np.rint(vectors[distances<np.inf]/LL)
-        self._extended_indices = indices
-        self.indices[distances<np.inf] = self._wrapped_indices[indices[distances<np.inf]]
-        distances = distances.reshape(shape[:-1]+(-1,))
-        indices = indices.reshape(shape[:-1]+(-1,))
+            vectors = vectors.reshape(shape[:-1]+(-1, 3,))
+            self.vecs = vectors
+        self._extended_indices = indices.copy()
+        indices[distances<np.inf] = self._get_wrapped_indices()[indices[distances<np.inf]]
+        self.distances = distances.reshape(shape[:-1]+(-1,))
+        self.indices = indices.reshape(shape[:-1]+(-1,))
         return self
 
     def _check_width(self, width, pbc):
-        if any(pbc) and np.prod(self.distances.shape)>0:
-            if np.absolute(self.vectors[self.distances<np.inf, pbc]).max() > width:
+        if any(pbc) and np.prod(self.distances.shape)>0 and self.vecs is not None:
+            if np.absolute(self.vecs[self.distances<np.inf][:,pbc]).max() > width:
                 return True
         return False
 
