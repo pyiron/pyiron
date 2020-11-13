@@ -16,6 +16,16 @@ class TestAtoms(unittest.TestCase):
     def setUpClass(cls):
         pass
 
+    def test_allow_ragged(self):
+        struct = CrystalStructure(elements='Al', lattice_constants=4, bravais_basis='fcc').repeat(10)
+        del struct[0]
+        neigh = struct.get_neighbors_by_distance(cutoff_radius=3)
+        indices = neigh.indices.copy()
+        neigh.allow_ragged = False
+        self.assertGreater(len(neigh.indices[0]), len(indices[0]))
+        neigh.allow_ragged = True
+        self.assertTrue(np.array_equal(neigh.indices[0], indices[0]))
+
     def test_get_neighbors(self):
         struct = CrystalStructure(elements='Fe', lattice_constants=2.85, bravais_basis='bcc').repeat(10)
         cell = struct.cell.copy()

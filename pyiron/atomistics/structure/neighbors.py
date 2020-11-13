@@ -83,11 +83,6 @@ class Neighbors(object):
             return np.arange(len(self._ref_structure.positions))
         return self._wrapped_indices
 
-    def get_neighborhood(
-        self,
-    ):
-        pass
-
     def _get_neighborhood(
         self,
         positions,
