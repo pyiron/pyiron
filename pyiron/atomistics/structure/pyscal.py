@@ -136,7 +136,7 @@ def analyse_cna_adaptive(atoms, mode="total"):
 
     sys = pc.System()
     sys.read_inputfile(atoms, format="ase")
-    cna = sys.calculate_cna(cutoff=None)
+    cna = sys.calculate_cna()
 
     if mode == "total":
         return {n: c for n, c in zip(
