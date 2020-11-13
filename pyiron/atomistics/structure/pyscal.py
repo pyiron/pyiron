@@ -141,10 +141,10 @@ def analyse_cna_adaptive(atoms, mode="total"):
     if mode == "total":
         return {n: c for n, c in zip(
             [
-                'CommonNeighborAnalysis.counts.OTHER', 
-                'CommonNeighborAnalysis.counts.FCC', 
-                'CommonNeighborAnalysis.counts.HCP', 
-                'CommonNeighborAnalysis.counts.BCC', 
+                'CommonNeighborAnalysis.counts.OTHER',
+                'CommonNeighborAnalysis.counts.FCC',
+                'CommonNeighborAnalysis.counts.HCP',
+                'CommonNeighborAnalysis.counts.BCC',
                 'CommonNeighborAnalysis.counts.ICO'], 
             cna
         )}
