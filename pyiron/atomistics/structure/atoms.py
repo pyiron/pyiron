@@ -1046,7 +1046,7 @@ class Atoms(ASEAtoms):
         return analyse_cna_adaptive(atoms=self, mode=mode)
     
     def analyse_pyscal_centro_symmetry(atoms, num_neighbors=12):
-        from pyiron.atomistics.structure.pyscal import analyse_analyse_centro_symmetry
+        from pyiron.atomistics.structure.pyscal import analyse_centro_symmetry
         return analyse_centro_symmetry(atoms, num_neighbors=num_neighbors)
     
     def analyse_pyscal_voronoi_volume(atoms):
