@@ -12,7 +12,6 @@ from pyiron.vasp.vasprun import Vasprun
 from pyiron.dft.waves.dos import Dos
 from pyiron.dft.waves.electronic import ElectronicStructure
 from pyiron_base import FileHDFio
-import sys
 
 """
 @author: surendralal
@@ -73,15 +72,17 @@ class TestElectronicStructure(unittest.TestCase):
 
     def test_eigenvalues(self):
         for es in self.es_list:
-            self.assertEqual(
-                len(es.eigenvalues), np.product(np.shape(es.eigenvalue_matrix))
-            )
+            for i in range(es.n_spins):
+                self.assertEqual(
+                    len(es.eigenvalues[i]), np.product(np.shape(es.eigenvalue_matrix[i]))
+                )
 
     def test_occupancies(self):
         for es in self.es_list:
-            self.assertEqual(
-                len(es.occupancies), np.product(np.shape(es.occupancy_matrix))
-            )
+            for i in range(es.n_spins):
+                self.assertEqual(
+                    len(es.occupancies[i]), np.product(np.shape(es.occupancy_matrix[i]))
+                )
 
     def test_from_hdf(self):
         filename = os.path.join(
@@ -132,4 +133,8 @@ class TestElectronicStructure(unittest.TestCase):
         )
 
     def test_is_metal(self):
-        self.assertTrue(self.es_list[1].is_metal)
+        self.assertTrue(self.es_list[1].is_metal[0])
+
+    def test__str__(self):
+        self.assertIsInstance(self.es_list[1].__str__(), str)
+        self.assertTrue(" Is a metal: True" in self.es_list[1].__str__())

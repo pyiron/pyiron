@@ -186,20 +186,23 @@ class LammpsPotential(GenericParameters):
                 hdf_pot["Name"] = self._df["Name"].values[0]
                 hdf_pot["Model"] = self._df["Model"].values[0]
                 hdf_pot["Species"] = self._df["Species"].values[0]
+                if "Citations" in self._df.columns.values:
+                    hdf_pot["Citations"] = self._df["Citations"].values[0]
         super(LammpsPotential, self).to_hdf(hdf, group_name=group_name)
 
     def from_hdf(self, hdf, group_name=None):
         with hdf.open("potential") as hdf_pot:
             try:
-                self._df = pd.DataFrame(
-                    {
-                        "Config": [hdf_pot["Config"]],
-                        "Filename": [hdf_pot["Filename"]],
-                        "Name": [hdf_pot["Name"]],
-                        "Model": [hdf_pot["Model"]],
-                        "Species": [hdf_pot["Species"]],
-                    }
-                )
+                entry_dict = {
+                    "Config": [hdf_pot["Config"]],
+                    "Filename": [hdf_pot["Filename"]],
+                    "Name": [hdf_pot["Name"]],
+                    "Model": [hdf_pot["Model"]],
+                    "Species": [hdf_pot["Species"]],
+                }
+                if "Citations" in hdf_pot.list_nodes():
+                    entry_dict["Citations"] = [hdf_pot["Citations"]]
+                self._df = pd.DataFrame(entry_dict)
             except ValueError:
                 pass
         super(LammpsPotential, self).from_hdf(hdf, group_name=group_name)

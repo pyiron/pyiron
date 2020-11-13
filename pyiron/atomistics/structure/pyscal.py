@@ -70,8 +70,7 @@ def get_steinhardt_parameter_structure(structure, neighbor_method="cutoff", cuto
     sys = pc.System()
     sys.read_inputfile(
         pyiron_to_ase(structure),
-        format='ase',
-        is_triclinic=not UnfoldingPrism(structure.cell, digits=15).is_skewed()
+        format='ase'
     )
 
     sys.find_neighbors(

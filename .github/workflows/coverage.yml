@@ -1,0 +1,41 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Coverage
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    env: 
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        auto-update-conda: true
+        python-version: 3.8
+        environment-file: .ci_support/environment.yml
+    - name: Setup
+      shell: bash -l {0}
+      run: |
+        python .ci_support/pyironconfig.py
+        pip install -e .
+    - name: Test
+      shell: bash -l {0}
+      run: coverage run --omit pyiron/_version.py -m unittest discover tests
+    - name: Coverage
+      shell: bash -l {0}
+      run: |
+        coverage combine
+        coveralls
+        coverage xml
+        python-codacy-coverage -r coverage.xml

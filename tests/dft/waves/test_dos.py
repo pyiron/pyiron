@@ -40,8 +40,8 @@ class TestDos(unittest.TestCase):
             if es.grand_dos_matrix is not None:
                 self.assertIsInstance(es.grand_dos_matrix, np.ndarray)
             dos = Dos(es_obj=es, n_bins=100)
-            self.assertIsInstance(dos.energies, np.ndarray)
-            self.assertIsInstance(dos.t_dos, np.ndarray)
+            self.assertIsInstance(dos.energies[0], np.ndarray)
+            self.assertIsInstance(dos.t_dos[0], np.ndarray)
             self.assertIsInstance(dos.orbital_dict, dict)
             self.assertIsInstance(dos.n_bins, int)
             self.assertEqual(len(dos.energies), len(dos.t_dos))

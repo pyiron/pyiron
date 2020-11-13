@@ -13,13 +13,9 @@ pyiron
     :target: https://anaconda.org/conda-forge/pyiron/
     :alt: Release_Date
 
-.. image:: https://travis-ci.org/pyiron/pyiron.svg?branch=master
-    :target: https://travis-ci.org/pyiron/pyiron
+.. image:: https://github.com/pyiron/pyiron/workflows/Python%20package/badge.svg
+    :target: https://github.com/pyiron//pyiron/actions
     :alt: Build Status
-
-.. image:: https://ci.appveyor.com/api/projects/status/wfdgqkxca1i19xcq/branch/master?svg=true
-    :target: https://ci.appveyor.com/project/pyiron-runner/pyiron/branch/master
-    :alt: Build status
 
 .. image:: https://anaconda.org/conda-forge/pyiron/badges/downloads.svg
     :target: https://anaconda.org/conda-forge/pyiron/
