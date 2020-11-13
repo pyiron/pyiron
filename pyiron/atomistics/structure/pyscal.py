@@ -145,7 +145,8 @@ def analyse_cna_adaptive(atoms, mode="total"):
                 'CommonNeighborAnalysis.counts.FCC',
                 'CommonNeighborAnalysis.counts.HCP',
                 'CommonNeighborAnalysis.counts.BCC',
-                'CommonNeighborAnalysis.counts.ICO'], 
+                'CommonNeighborAnalysis.counts.ICO'
+            ],
             cna
         )}
     else:
