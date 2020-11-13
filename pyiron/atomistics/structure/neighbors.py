@@ -37,6 +37,47 @@ class Neighbors(object):
         self._cluster_dist = None
         self._boundary_layer_width = 0
 
+    def _get_neighborhood(
+        self,
+        positions,
+        num_neighbors=12,
+        t_vec=True,
+        cutoff_radius=np.inf,
+        exclude_self=False,
+        pbc_and_rectangular=False,
+    ):
+        positions_copy = np.asarray(positions).reshape(-1, 3)
+        shape = np.asarray(positions).shape
+        start_column = 0
+        if exclude_self:
+            start_column = 1
+        distances, indices = self._tree.query(
+            positions_copy, k=num_neighbors, distance_upper_bound=cutoff_radius
+        )
+        max_column = np.sum(distances<np.inf, axis=1)
+        distances = distances[:,start_column:max_column]
+        indices = indices[:,start_column:max_column]
+        if t_vec:
+            vectors = np.zeros(distances.shape+(3,))
+            vectors += positions_copy[:,np.newaxis,:]
+            vectors[distances<np.inf] -= extended_positions[indices[distances<np.inf]]
+            vectors[distances==np.inf] = np.array(3*[np.inf])
+            vectors = vectors.reshape(shape[:-1]+(-1, 3,))
+            if pbc_and_rectangular:
+                LL = self.cell.diagonal()
+                vectors[distances<np.inf] -= LL*np.rint(vectors[distances<np.inf]/LL)
+        self._extended_indices = indices
+        self.indices[distances<np.inf] = self._wrapped_indices[indices[distances<np.inf]]
+        distances = distances.reshape(shape[:-1]+(-1,))
+        indices = indices.reshape(shape[:-1]+(-1,))
+        return self
+
+    def _check_width(self, width, pbc):
+        if any(pbc) and np.prod(self.distances.shape)>0:
+            if np.absolute(self.vectors[self.distances<np.inf, pbc]).max() > width:
+                return True
+        return False
+
     @property
     def shells(self):
         """

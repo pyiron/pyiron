@@ -1320,6 +1320,7 @@ class Atoms(ASEAtoms):
         id_list=None,
         cutoff_radius=np.inf,
         boundary_width_factor=1.2,
+        exclude_self=False,
     ):
         """
 
@@ -1358,32 +1359,25 @@ class Atoms(ASEAtoms):
             extended_positions -= np.floor(extended_positions)
             extended_positions *= self.cell.diagonal()
         else:
-            extended_positions, indices = self.get_extended_positions(width, return_indices=True)
+            extended_positions, self._wrapped_indices = self.get_extended_positions(width, return_indices=True)
         if len(extended_positions) < num_neighbors and cutoff_radius==np.inf:
             raise ValueError('num_neighbors too large - make boundary_width_factor larger and/or make num_neighbors smaller')
-        tree = cKDTree(extended_positions, boxsize=boxsize)
-        if id_list is None:
-            id_list = np.arange(len(self.positions))
-        positions = self.positions[np.array(id_list)]
-        neighbors = tree.query(
-            positions, k=num_neighbors, distance_upper_bound=cutoff_radius
+        neighbor_obj._tree = cKDTree(extended_positions, boxsize=boxsize)
+        positions = self.positions
+        if id_list is not None:
+            positions = positions[np.array(id_list)]
+        neigh = neighbor_obj._get_neighborhood(
+            position=positions,
+            num_neighbors=num_neighbors,
+            t_vec=t_vec,
+            cutoff_radius=cutoff_radius,
+            exclude_self=True,
+            pbc_and_rectangular=(boxsize is not None),
         )
-        neighbor_obj.distances = neighbors[0][:,1:]
-        neighbor_obj.indices = np.append(indices, 0)[neighbors[1][:,1:]]
-        if t_vec:
-            x = np.append(extended_positions, np.zeros((1, 3)), axis=0)
-            neighbor_obj.vecs = x[neighbors[1][:,1:]]-self.positions[np.array(id_list),np.newaxis,:]
-            if boxsize is not None:
-                neighbor_obj.vecs /= self.cell.diagonal()
-                neighbor_obj.vecs = neighbor_obj.vecs-np.rint(neighbor_obj.vecs)
-                neighbor_obj.vecs *= self.cell.diagonal()
-            if any(self.pbc):
-                vecs = neighbor_obj.vecs.reshape(-1, 3)[neighbor_obj.distances.flatten() < np.inf]
-                if len(vecs) > 0:
-                    if np.absolute(vecs[:, self.pbc]).max() > width:
-                        warnings.warn('boundary_width_factor may have been too small - '
-                                      'most likely not all neighbors properly assigned')
-        return neighbor_obj
+        if neigh._check_width(width=width, pbc=self.pbc):
+            warnings.warn('boundary_width_factor may have been too small - '
+                          'most likely not all neighbors properly assigned')
+        return neigh
 
     def get_neighborhood(
         self,
