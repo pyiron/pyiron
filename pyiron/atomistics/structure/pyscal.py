@@ -136,16 +136,17 @@ def analyse_cna_adaptive(atoms, mode="total"):
 
     sys = pc.System()
     sys.read_inputfile(atoms, format="ase")
-    cna = sys.calculate_cna(cutoff=None)
+    cna = sys.calculate_cna()
 
     if mode == "total":
         return {n: c for n, c in zip(
             [
-                'CommonNeighborAnalysis.counts.OTHER', 
-                'CommonNeighborAnalysis.counts.FCC', 
-                'CommonNeighborAnalysis.counts.HCP', 
-                'CommonNeighborAnalysis.counts.BCC', 
-                'CommonNeighborAnalysis.counts.ICO'], 
+                'CommonNeighborAnalysis.counts.OTHER',
+                'CommonNeighborAnalysis.counts.FCC',
+                'CommonNeighborAnalysis.counts.HCP',
+                'CommonNeighborAnalysis.counts.BCC',
+                'CommonNeighborAnalysis.counts.ICO'
+            ],
             cna
         )}
     else:
