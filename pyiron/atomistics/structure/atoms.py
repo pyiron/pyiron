@@ -2908,19 +2908,25 @@ class _CrystalStructure(Atoms):
             elif self.bravais_basis == "primitive":
                 basis = np.array([[0.0, 0.0, 0.0]])
             else:
-                exit()
+                raise ValueError(
+                    "Only fcc, bcc, hcp, base-centered, body-centered and primitive cells are supported for 3D."
+                )
         elif self.dimension == 2:
             if self.bravais_basis == "primitive":
                 basis = np.array([[0.0, 0.0]])
             elif self.bravais_basis == "centered":
                 basis = np.array([[0.0, 0.0], [0.5, 0.5]])
             else:
-                exit()
+                raise ValueError(
+                    "Only centered and primitive cells are supported for 2D."
+                )
         elif self.dimension == 1:
             if self.bravais_basis == "primitive":
                 basis = np.array([[0.0]])
             else:
-                exit()
+                raise ValueError(
+                    "Only primitive cells are supported for 1D."
+                )
         self.coordinates = basis
 
     # ########################### get commmands ########################
