@@ -233,9 +233,9 @@ class ScipyMinimizer(InteractiveWrapper):
         max_iter=100,
         pressure=None,
         algorithm='CG',
-        ionic_energy_tolerance=None,
-        ionic_force_tolerance=None,
-        pressure_tolerance=None,
+        ionic_energy_tolerance=0,
+        ionic_force_tolerance=1.0e-2,
+        pressure_tolerance=1.0e-3,
         volume_only=False,
     ):
         """
@@ -243,9 +243,9 @@ class ScipyMinimizer(InteractiveWrapper):
             algorithm (str): scipy algorithm (currently only 'CG' and 'BFGS' run reliably)
             pressure (float/list/numpy.ndarray): target pressures
             max_iter (int): maximum number of iterations
-            ionic_energy_tolerance (float/None): convergence goal in terms of
+            ionic_energy_tolerance (float): convergence goal in terms of
                                   energy (optional)
-            ionic_force_tolerance (float/None): convergence goal in terms of
+            ionic_force_tolerance (float): convergence goal in terms of
                                   forces (optional)
             volume_only (bool): Only pressure minimization
         """
@@ -267,12 +267,9 @@ class ScipyMinimizer(InteractiveWrapper):
         self.input.ionic_steps = max_iter
         self.input.pressure = pressure
         self.input.volume_only = volume_only
-        if pressure_tolerance is not None:
-            self.input.pressure_tolerance = pressure_tolerance
-        if ionic_force_tolerance is not None:
-            self.input.ionic_force_tolerance = ionic_force_tolerance
-        if ionic_energy_tolerance is not None:
-            self.input.ionic_energy_tolerance = ionic_energy_tolerance
+        self.input.ionic_force_tolerance = ionic_force_tolerance
+        self.input.ionic_energy_tolerance = ionic_energy_tolerance
+        self.input.pressure_tolerance = pressure_tolerance
 
 
 class Input(InputList):
@@ -306,3 +303,4 @@ class ScipyMinimizerOutput(GenericInteractiveOutput):
             hdf_output["convergence"] = self._result['success']
             if 'hess_inv' in self._result.keys():
                 hdf_output["hessian"] = self._result['hess_inv']
+
