@@ -11,6 +11,7 @@ from ovito.modifiers import (
     CommonNeighborAnalysisModifier,
     CentroSymmetryModifier,
     VoronoiAnalysisModifier,
+    IdentifyDiamondModifier
 )
 
 __author__ = "Jan Janssen"
