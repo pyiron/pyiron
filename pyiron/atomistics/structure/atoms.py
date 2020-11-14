@@ -1026,7 +1026,7 @@ class Atoms(ASEAtoms):
             "please use analyse_ovito_voronoi_volume()",
             DeprecationWarning
         )
-        return self.analyse_ovito_voronoi_volume()
+        return self.analyse_pyscal_voronoi_volume()
 
     def analyse_pyscal_steinhardt_parameter(self, neighbor_method="cutoff", cutoff=0, n_clusters=2,
                                             q=(4, 6), averaged=False, clustering=True):
