@@ -1023,7 +1023,7 @@ class Atoms(ASEAtoms):
     def analyse_ovito_voronoi_volume(self):
         warnings.warn(
             "analyse_ovito_voronoi_volume() is available for backwards compatiblity, " +
-            "please use analyse_ovito_voronoi_volume()",
+            "please use analyse_pyscal_voronoi_volume()",
             DeprecationWarning
         )
         return self.analyse_pyscal_voronoi_volume()
