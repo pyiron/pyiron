@@ -61,6 +61,8 @@ class Neighbors(object):
     def allow_ragged(self, new_bool):
         if not isinstance(new_bool, bool):
             raise ValueError('allow_ragged must be a boolean')
+        if self._allow_ragged == new_bool:
+            return
         self._allow_ragged = new_bool
         if new_bool:
             self.distances = self._contract(self.distances)
