@@ -23,6 +23,8 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(neigh.allow_ragged)
         self.assertTrue(isinstance(neigh.indices, list))
         indices = neigh.indices.copy()
+        with self.assertRaises(ValueError):
+            neigh.allow_ragged = 'yes'
         neigh.allow_ragged = False
         self.assertTrue(isinstance(neigh.indices, np.ndarray))
         self.assertGreater(len(neigh.indices[0]), len(indices[0]))
