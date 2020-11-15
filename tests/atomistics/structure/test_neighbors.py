@@ -29,7 +29,7 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(isinstance(neigh.indices, np.ndarray))
         self.assertGreater(len(neigh.indices[0]), len(indices[0]))
         with self.assertRaises(IndexError):
-            struct.positions[neigh.indices]
+            struct.positions[neigh.indices] = struct.positions[neigh.indices]
         neigh.allow_ragged = True
         self.assertTrue(np.array_equal(neigh.indices[0], indices[0]))
         neigh = struct.get_neighbors(cutoff_radius=3, num_neighbors=None)
