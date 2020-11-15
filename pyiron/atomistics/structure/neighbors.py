@@ -21,27 +21,17 @@ __date__ = "Sep 1, 2017"
 
 s = Settings()
 
-
-class Neighbors(object):
-    """
-    Class for storage of the neighbor information for a given atom based on the KDtree algorithm
-    """
-
-    def __init__(self, ref_structure, tolerance=2):
+class Tree:
+    def __init__(self, ref_structure):
         self.distances = None
         self.vecs = None
         self.indices = None
-        self._shells = None
-        self._tolerance = tolerance
-        self._ref_structure = ref_structure
-        self._cluster_vecs = None
-        self._cluster_dist = None
-        self._boundary_layer_width = 0
         self._extended_positions = None
         self._wrapped_indices = None
         self._allow_ragged = False
         self._cell = None
         self._extended_indices = None
+        self._ref_structure = ref_structure
 
     def _get_max_length(self):
         if (self.distances is None
@@ -97,19 +87,6 @@ class Neighbors(object):
             return np.arange(len(self._ref_structure.positions))
         return self._wrapped_indices
 
-    def get_neighborhood(
-        self,
-        positions,
-        num_neighbors=12,
-        t_vec=True,
-        cutoff_radius=np.inf,
-        boundary_width_factor=1.2,
-    ):
-        arr = np.asarray(position).reshape(-1, 3)
-
-        class NeighTemp(object):
-            pass
-
     def _get_distances_and_indices(
         self,
         positions=None,
@@ -128,13 +105,11 @@ class Neighbors(object):
         if num_neighbors is None and cutoff_radius==np.inf:
             raise ValueError('num_neighbors or cutoff_radius must be specified')
         distances, indices = self._tree.query(
-            np.asarray(positions).reshape(-1,3), k=num_neighbors, distance_upper_bound=cutoff_radius
+            np.asarray(positions), k=num_neighbors, distance_upper_bound=cutoff_radius
         )
         if self._extended_indices is None:
             self._extended_indices = indices.copy()
         indices[distances<np.inf] = self._get_wrapped_indices()[indices[distances<np.inf]]
-        shape = np.asarray(positions).shape[:-1]+(-1,)
-        distances, indices = distances.reshape(shape), indices.reshape(shape)
         if allow_ragged:
             return self._contract(distances), self._contract(indices)
         return distances, indices
@@ -177,21 +152,19 @@ class Neighbors(object):
         indices=None,
     ):
         if positions is not None:
-            arr_pos = np.asarray(positions).reshape(-1, 3)
             if distances is None or indices is None:
                 distances, indices = self._get_distances_and_indices(
-                    positions=arr_pos,
+                    positions=positions,
                     allow_ragged=False,
                     num_neighbors=num_neighbors,
                     cutoff_radius=cutoff_radius,
                 )
             vectors = np.zeros(distances.shape+(3,))
-            vectors -= arr_pos[:,np.newaxis,:]
+            vectors -= np.asarray(positions).reshape(distances.shape[:-1]+(1, 3))
             vectors[distances<np.inf] += self._get_extended_positions()[indices[distances<np.inf]]
             vectors[distances==np.inf] = np.array(3*[np.inf])
             if self._cell is not None:
                 vectors[distances<np.inf] -= self._cell*np.rint(vectors[distances<np.inf]/self._cell)
-            vectors = vectors.reshape(np.asarray(positions).shape[:-1]+(-1, 3,))
         elif self.vecs is not None:
             vectors = self.vecs
         else:
@@ -213,29 +186,27 @@ class Neighbors(object):
         exclude_self=False,
         pbc_and_rectangular=False,
     ):
-        positions_copy = np.asarray(positions).reshape(-1, 3)
         if pbc_and_rectangular:
             self._cell = self._ref_structure.cell.diagonal()
-        shape = np.asarray(positions).shape
         start_column = 0
         if exclude_self:
             start_column = 1
         distances, indices = self._get_distances_and_indices(
-            positions_copy, num_neighbors=num_neighbors, cutoff_radius=cutoff_radius
+            positions, num_neighbors=num_neighbors, cutoff_radius=cutoff_radius
         )
-        max_column = np.sum(distances<np.inf, axis=1).max()
+        max_column = np.sum(distances<np.inf, axis=-1).max()
         if max_column == num_neighbors and cutoff_radius<np.inf:
             warnings.warn(
                 'Number of neighbors found within the cutoff_radius is equal to (estimated) '
                 + 'num_neighbors. Increase num_neighbors (or set it to None) or '
                 + 'num_neighbors_estimate_buffer to find all neighbors within the cutoff_radius.'
             )
-        self.distances = distances[:,start_column:max_column]
-        self.indices = indices[:,start_column:max_column]
-        self._extended_indices = self._extended_indices[:,start_column:max_column]
+        self.distances = distances[...,start_column:max_column]
+        self.indices = indices[...,start_column:max_column]
+        self._extended_indices = self._extended_indices[...,start_column:max_column]
         if t_vec:
             self.vecs = self.get_vectors(
-                positions=positions_copy, distances=self.distances, indices=self._extended_indices
+                positions=positions, distances=self.distances, indices=self._extended_indices
             )
         return self
 
@@ -244,6 +215,19 @@ class Neighbors(object):
             if np.absolute(self.vecs[self.distances<np.inf][:,pbc]).max() > width:
                 return True
         return False
+
+
+class Neighbors(Tree):
+    """
+    Class for storage of the neighbor information for a given atom based on the KDtree algorithm
+    """
+
+    def __init__(self, ref_structure, tolerance=2):
+        super().__init__(ref_structure=ref_structure)
+        self._shells = None
+        self._tolerance = tolerance
+        self._cluster_vecs = None
+        self._cluster_dist = None
 
     @property
     def shells(self):
