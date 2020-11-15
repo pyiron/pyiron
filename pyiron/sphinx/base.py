@@ -1823,7 +1823,7 @@ class InputWriter(object):
                             spins_list.append(str(value))
                         else:
                             spins_list.append("X")
-                    spins_str = "\n".join(spins_list)
+                    spins_str = "\n".join(spins_list)+'\n'
         if spins_str is not None:
             if cwd is not None:
                 file_name = posixpath.join(cwd, file_name)

@@ -1,7 +1,7 @@
 channels:
   - conda-forge
 dependencies:
-  - gpaw
+  - gpaw >=20
   - jupyter
   - lammps
   - nglview
@@ -10,6 +10,6 @@ dependencies:
   - sphinxdft >=2.7.0
   - sphinxdft-data
   - iprpy-data
-  - pyiron-data
+  - pyiron-data >=0.0.5
   - pymatgen
   - sqsgenerator
