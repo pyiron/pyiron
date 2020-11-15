@@ -39,7 +39,7 @@ class Neighbors(object):
         self._boundary_layer_width = 0
         self._extended_positions = None
         self._wrapped_indices = None
-        self._allow_ragged = True
+        self._allow_ragged = False
 
     def _get_max_length(self):
         return max(len(dd[dd<np.inf]) for dd in self.distances)
