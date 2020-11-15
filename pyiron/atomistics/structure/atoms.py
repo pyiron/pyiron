@@ -1023,7 +1023,7 @@ class Atoms(ASEAtoms):
     def analyse_ovito_voronoi_volume(self):
         warnings.warn(
             "analyse_ovito_voronoi_volume() is available for backwards compatiblity, " +
-            "please use analyse_ovito_voronoi_volume()",
+            "please use analyse_pyscal_voronoi_volume()",
             DeprecationWarning
         )
         return self.analyse_pyscal_voronoi_volume()
@@ -2018,10 +2018,10 @@ class Atoms(ASEAtoms):
         """
         warnings.warn(
             "This function doesn't account for periodic boundary conditions. Call "
-            "`analyse_ovito_voronoi_volume` instead. This is what will now be returned.",
+            "`analyse_pyscal_voronoi_volume` instead. This is what will now be returned.",
             DeprecationWarning,
         )
-        return self.analyse_ovito_voronoi_volume()
+        return self.analyse_pyscal_voronoi_volume()
 
     def find_mic(self, v, vectors=True):
         """
