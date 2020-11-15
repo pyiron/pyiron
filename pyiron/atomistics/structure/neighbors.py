@@ -40,18 +40,29 @@ class Neighbors(object):
         self._extended_positions = None
         self._wrapped_indices = None
         self._allow_ragged = False
+        self._cell = None
+        self._extended_indices = None
 
     def _get_max_length(self):
+        if (self.distances is None
+            or len(self.distances)==0
+            or not hasattr(self.distances[0], '__len__')):
+            return None
         return max(len(dd[dd<np.inf]) for dd in self.distances)
 
     def _fill(self, value, filler=np.inf):
-        arr = np.zeros((len(value), self._get_max_length())+value[0].shape[1:], dtype=type(filler))
+        max_length = self._get_max_length()
+        if max_length is None:
+            return value
+        arr = np.zeros((len(value), max_length)+value[0].shape[1:], dtype=type(filler))
         arr.fill(filler)
         for ii, vv in enumerate(value):
             arr[ii,:len(vv)] = vv
         return arr
 
     def _contract(self, value):
+        if self._get_max_length() is None:
+            return value
         return [vv[:np.sum(dist<np.inf)] for vv, dist in zip(value, self.distances)]
 
     @property
@@ -86,6 +97,113 @@ class Neighbors(object):
             return np.arange(len(self._ref_structure.positions))
         return self._wrapped_indices
 
+    def get_neighborhood(
+        self,
+        positions,
+        num_neighbors=12,
+        t_vec=True,
+        cutoff_radius=np.inf,
+        boundary_width_factor=1.2,
+    ):
+        arr = np.asarray(position).reshape(-1, 3)
+
+        class NeighTemp(object):
+            pass
+
+    def _get_distances_and_indices(
+        self,
+        positions=None,
+        allow_ragged=False,
+        num_neighbors=None,
+        cutoff_radius=np.inf,
+    ):
+        if positions is None:
+            if allow_ragged==self.allow_ragged:
+                return self.distances, self.indices
+            if allow_ragged:
+                return (self._contract(self.distances),
+                        self._contract(self.indices))
+            return (self._fill(self.distances),
+                    self._fill(self.indices, filler=len(self._ref_structure)))
+        if num_neighbors is None and cutoff_radius==np.inf:
+            raise ValueError('num_neighbors or cutoff_radius must be specified')
+        distances, indices = self._tree.query(
+            np.asarray(positions).reshape(-1,3), k=num_neighbors, distance_upper_bound=cutoff_radius
+        )
+        if self._extended_indices is None:
+            self._extended_indices = indices.copy()
+        indices[distances<np.inf] = self._get_wrapped_indices()[indices[distances<np.inf]]
+        shape = np.asarray(positions).shape[:-1]+(-1,)
+        distances, indices = distances.reshape(shape), indices.reshape(shape)
+        if allow_ragged:
+            return self._contract(distances), self._contract(indices)
+        return distances, indices
+
+    def get_indices(
+        self,
+        positions=None,
+        allow_ragged=False,
+        num_neighbors=None,
+        cutoff_radius=np.inf,
+    ):
+        return self._get_distances_and_indices(
+            positions=positions,
+            allow_ragged=allow_ragged,
+            num_neighbors=num_neighbors,
+            cutoff_radius=cutoff_radius,
+        )[1]
+
+    def get_distances(
+        self,
+        positions=None,
+        allow_ragged=False,
+        num_neighbors=None,
+        cutoff_radius=np.inf,
+    ):
+        return self._get_distances_and_indices(
+            positions=positions,
+            allow_ragged=allow_ragged,
+            num_neighbors=num_neighbors,
+            cutoff_radius=cutoff_radius,
+        )[0]
+
+    def get_vectors(
+        self,
+        positions=None,
+        allow_ragged=False,
+        num_neighbors=None,
+        cutoff_radius=np.inf,
+        distances=None,
+        indices=None,
+    ):
+        if positions is not None:
+            arr_pos = np.asarray(positions).reshape(-1, 3)
+            if distances is None or indices is None:
+                distances, indices = self._get_distances_and_indices(
+                    positions=arr_pos,
+                    allow_ragged=False,
+                    num_neighbors=num_neighbors,
+                    cutoff_radius=cutoff_radius,
+                )
+            vectors = np.zeros(distances.shape+(3,))
+            vectors -= arr_pos[:,np.newaxis,:]
+            vectors[distances<np.inf] += self._get_extended_positions()[indices[distances<np.inf]]
+            vectors[distances==np.inf] = np.array(3*[np.inf])
+            if self._cell is not None:
+                vectors[distances<np.inf] -= self._cell*np.rint(vectors[distances<np.inf]/self._cell)
+            vectors = vectors.reshape(np.asarray(positions).shape[:-1]+(-1, 3,))
+        elif self.vecs is not None:
+            vectors = self.vecs
+        else:
+            raise AssertionError(
+                'vectors not created yet -> put positions or reinitialize with t_vec=True'
+            )
+        if allow_ragged==self.allow_ragged:
+            return vectors
+        if allow_ragged:
+            return self._contract(vectors)
+        return self._fill(vectors)
+
     def _get_neighborhood(
         self,
         positions,
@@ -96,34 +214,29 @@ class Neighbors(object):
         pbc_and_rectangular=False,
     ):
         positions_copy = np.asarray(positions).reshape(-1, 3)
+        if pbc_and_rectangular:
+            self._cell = self._ref_structure.cell.diagonal()
         shape = np.asarray(positions).shape
         start_column = 0
         if exclude_self:
             start_column = 1
-        distances, indices = self._tree.query(
-            positions_copy, k=num_neighbors, distance_upper_bound=cutoff_radius
+        distances, indices = self._get_distances_and_indices(
+            positions_copy, num_neighbors=num_neighbors, cutoff_radius=cutoff_radius
         )
         max_column = np.sum(distances<np.inf, axis=1).max()
-        if max_column == distances.shape[1] and cutoff_radius<np.inf:
-            warnings.warn('The number of neighbors found within the cutoff_radius is equal to the (estimated) ' +
-                          'num_neighbors. Increase num_neighbors (or set it to None) or num_neighbors_estimate_buffer ' +
-                          ' to find all neighbors within the cutoff_radius.')
-        distances = distances[:,start_column:max_column]
-        indices = indices[:,start_column:max_column]
+        if max_column == num_neighbors and cutoff_radius<np.inf:
+            warnings.warn(
+                'Number of neighbors found within the cutoff_radius is equal to (estimated) '
+                + 'num_neighbors. Increase num_neighbors (or set it to None) or '
+                + 'num_neighbors_estimate_buffer to find all neighbors within the cutoff_radius.'
+            )
+        self.distances = distances[:,start_column:max_column]
+        self.indices = indices[:,start_column:max_column]
+        self._extended_indices = self._extended_indices[:,start_column:max_column]
         if t_vec:
-            vectors = np.zeros(distances.shape+(3,))
-            vectors -= positions_copy[:,np.newaxis,:]
-            vectors[distances<np.inf] += self._get_extended_positions()[indices[distances<np.inf]]
-            vectors[distances==np.inf] = np.array(3*[np.inf])
-            if pbc_and_rectangular:
-                LL = self._ref_structure.cell.diagonal()
-                vectors[distances<np.inf] -= LL*np.rint(vectors[distances<np.inf]/LL)
-            vectors = vectors.reshape(shape[:-1]+(-1, 3,))
-            self.vecs = vectors
-        self._extended_indices = indices.copy()
-        indices[distances<np.inf] = self._get_wrapped_indices()[indices[distances<np.inf]]
-        self.distances = distances.reshape(shape[:-1]+(-1,))
-        self.indices = indices.reshape(shape[:-1]+(-1,))
+            self.vecs = self.get_vectors(
+                positions=positions_copy, distances=self.distances, indices=self._extended_indices
+            )
         return self
 
     def _check_width(self, width, pbc):
@@ -144,7 +257,9 @@ class Neighbors(object):
             Update vecs and distances with the same indices
         """
         if np.max(np.absolute(self.vecs)) > 0.49*np.min(np.linalg.norm(self._ref_structure.cell, axis=-1)):
-            raise AssertionError('Largest distance value is larger than half the box -> rerun get_neighbors')
+            raise AssertionError(
+                'Largest distance value is larger than half the box -> rerun get_neighbors'
+            )
         myself = np.ones_like(self.indices)*np.arange(len(self.indices))[:, np.newaxis]
         vecs = self._ref_structure.get_distances(
             myself.flatten(), self.indices.flatten(), mic=np.all(self._ref_structure.pbc), vector=True

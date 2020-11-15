@@ -1469,7 +1469,6 @@ class Atoms(ASEAtoms):
         num_neighbors=12,
         t_vec=True,
         tolerance=2,
-        id_list=None,
         cutoff_radius=np.inf,
         boundary_width_factor=1.2,
     ):
@@ -1494,6 +1493,18 @@ class Atoms(ASEAtoms):
 
         class NeighTemp(object):
             pass
+
+        # neigh = self._get_neighbors(
+        #     num_neighbors=num_neighbors,
+        #     cutoff_radius=cutoff_radius,
+        #     boundary_width_factor=boundary_width_factor,
+        # )
+        # return neigh.get_neighborhood(
+        #     num_neighbors=num_neighbors,
+        #     t_vec=t_vec,
+        #     cutoff_radius=cutoff_radius,
+        #     boundary_width_factor=boundary_width_factor,
+        # )
 
         width = self._get_boundary_layer_width(
             num_neighbors=num_neighbors,
