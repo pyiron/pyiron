@@ -1175,10 +1175,6 @@ class Atoms(ASEAtoms):
                 cutoff_radius=cutoff_radius,
                 boundary_width_factor=boundary_width_factor,
             )
-            if not np.all(neigh.distances.T[-1] == np.inf):
-                warnings.warn('The number of neighbors found within the cutoff_radius is equal to  ' +
-                              'num_neighbors. Increase num_neighbors to find all ' +
-                              'neighbors within the cutoff_radius.')
             num_neighbors_per_atom = np.sum(neigh.distances < np.inf, axis=-1)
         else:
             volume_per_atom = self.get_volume(per_atom=True)
@@ -1246,10 +1242,6 @@ class Atoms(ASEAtoms):
             cutoff_radius=cutoff_radius,
             boundary_width_factor=boundary_width_factor,
         )
-        if np.prod(neigh.distances.shape)>0 and not np.all(neigh.distances.T[-1]==np.inf):
-            warnings.warn('The number of neighbors found within the cutoff_radius is equal to the (estimated) ' +
-                          'num_neighbors. Increase num_neighbors or num_neighbors_estimate_buffer to find all ' +
-                          'neighbors within the cutoff_radius.')
         neigh.allow_ragged = True
         return neigh
 

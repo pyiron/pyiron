@@ -6,6 +6,7 @@ import numpy as np
 from sklearn.cluster import MeanShift
 from scipy.sparse import coo_matrix
 from pyiron_base import Settings
+import warnings
 
 __author__ = "Joerg Neugebauer, Sam Waseda"
 __copyright__ = (
@@ -103,6 +104,10 @@ class Neighbors(object):
             positions_copy, k=num_neighbors, distance_upper_bound=cutoff_radius
         )
         max_column = np.sum(distances<np.inf, axis=1).max()
+        if max_column == distances.shape[1] and cutoff_radius<np.inf:
+            warnings.warn('The number of neighbors found within the cutoff_radius is equal to the (estimated) ' +
+                          'num_neighbors. Increase num_neighbors or num_neighbors_estimate_buffer to find all ' +
+                          'neighbors within the cutoff_radius.')
         distances = distances[:,start_column:max_column]
         indices = indices[:,start_column:max_column]
         if t_vec:
