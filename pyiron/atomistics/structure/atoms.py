@@ -1207,6 +1207,7 @@ class Atoms(ASEAtoms):
         id_list=None,
         boundary_width_factor=1.2,
         num_neighbors_estimate_buffer=1.0,
+        allow_ragged=False,
     ):
         """
 
@@ -1242,7 +1243,7 @@ class Atoms(ASEAtoms):
             cutoff_radius=cutoff_radius,
             boundary_width_factor=boundary_width_factor,
         )
-        neigh.allow_ragged = True
+        neigh.allow_ragged = allow_ragged
         return neigh
 
     def get_neighbors(
