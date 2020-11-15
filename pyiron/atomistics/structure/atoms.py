@@ -1351,7 +1351,7 @@ class Atoms(ASEAtoms):
         else:
             extended_positions, wrapped_indices = self.get_extended_positions(width, return_indices=True)
             neigh._extended_positions = extended_positions
-            neigh._wrapped_indices = wrapped_indices 
+            neigh._wrapped_indices = wrapped_indices
         if len(extended_positions) < num_neighbors and cutoff_radius==np.inf:
             raise ValueError('num_neighbors too large - make boundary_width_factor larger and/or make num_neighbors smaller')
         neigh._tree = cKDTree(extended_positions, boxsize=boxsize)
