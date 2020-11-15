@@ -106,8 +106,8 @@ class Neighbors(object):
         max_column = np.sum(distances<np.inf, axis=1).max()
         if max_column == distances.shape[1] and cutoff_radius<np.inf:
             warnings.warn('The number of neighbors found within the cutoff_radius is equal to the (estimated) ' +
-                          'num_neighbors. Increase num_neighbors or num_neighbors_estimate_buffer to find all ' +
-                          'neighbors within the cutoff_radius.')
+                          'num_neighbors. Increase num_neighbors (or set it to None) or num_neighbors_estimate_buffer ' +
+                          ' to find all neighbors within the cutoff_radius.')
         distances = distances[:,start_column:max_column]
         indices = indices[:,start_column:max_column]
         if t_vec:

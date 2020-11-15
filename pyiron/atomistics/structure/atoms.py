@@ -1207,7 +1207,7 @@ class Atoms(ASEAtoms):
         id_list=None,
         boundary_width_factor=1.2,
         num_neighbors_estimate_buffer=1.0,
-        allow_ragged=False,
+        allow_ragged=True,
     ):
         """
 
@@ -1226,25 +1226,16 @@ class Atoms(ASEAtoms):
             and vectors
 
         """
-        if num_neighbors_estimate_buffer < 0:
-            raise ValueError('num_neighbors_estimate_buffer must not be negative')
-        if num_neighbors is None:
-            volume_per_atom = self.get_volume(per_atom=True)
-            if id_list is not None:
-                volume_per_atom = self.get_volume() / len(id_list)
-            num_neighbors = max(4, int((1 + num_neighbors_estimate_buffer) *
-                                       4. / 3. * np.pi * cutoff_radius ** 3 / volume_per_atom))
-
-        neigh = self._get_neighbors(
+        return self.get_neighbors(
+            cutoff_radius=cutoff_radius,
             num_neighbors=num_neighbors,
             t_vec=t_vec,
             tolerance=tolerance,
             id_list=id_list,
-            cutoff_radius=cutoff_radius,
             boundary_width_factor=boundary_width_factor,
+            num_neighbors_estimate_buffer=num_neighbors_estimate_buffer,
+            allow_ragged=allow_ragged,
         )
-        neigh.allow_ragged = allow_ragged
-        return neigh
 
     def get_neighbors(
         self,
@@ -1254,6 +1245,8 @@ class Atoms(ASEAtoms):
         id_list=None,
         cutoff_radius=np.inf,
         boundary_width_factor=1.2,
+        num_neighbors_estimate_buffer=1.0,
+        allow_ragged=False,
     ):
         """
 
@@ -1272,15 +1265,26 @@ class Atoms(ASEAtoms):
             and vectors
 
         """
-        if cutoff_radius != np.inf:
-            raise ValueError('cutoff_radius is deprecated in get_neighbors. Use get_neighbors_by_distance instead')
-        return self._get_neighbors(
+        if num_neighbors_estimate_buffer < 0:
+            raise ValueError('num_neighbors_estimate_buffer must not be negative')
+        if num_neighbors is None and cutoff_radius<np.inf:
+            volume_per_atom = self.get_volume(per_atom=True)
+            if id_list is not None:
+                volume_per_atom = self.get_volume() / len(id_list)
+            num_neighbors = max(4, int((1 + num_neighbors_estimate_buffer) *
+                                       4. / 3. * np.pi * cutoff_radius ** 3 / volume_per_atom))
+        if num_neighbors is None:
+            raise ValueError('set num_neighbors and/or cutoff_radius')
+        neigh = self._get_neighbors(
             num_neighbors=num_neighbors,
             t_vec=t_vec,
             tolerance=tolerance,
             id_list=id_list,
+            cutoff_radius=cutoff_radius,
             boundary_width_factor=boundary_width_factor,
         )
+        neigh.allow_ragged = allow_ragged
+        return neigh
 
     def _get_boundary_layer_width(self, num_neighbors, boundary_width_factor=1.2, cutoff_radius=np.inf):
         """

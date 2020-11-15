@@ -748,8 +748,6 @@ class TestAtoms(unittest.TestCase):
         self.assertAlmostEqual(neigh.distances[0][8], np.sqrt(27))
         basis.pbc = True
         basis.set_repeat(2)
-        with self.assertRaises(ValueError):
-            basis.get_neighbors(cutoff_radius=10)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             neigh = basis.get_neighbors(boundary_width_factor=0.1)
