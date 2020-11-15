@@ -20,11 +20,19 @@ class TestAtoms(unittest.TestCase):
         struct = CrystalStructure(elements='Al', lattice_constants=4, bravais_basis='fcc').repeat(10)
         del struct[0]
         neigh = struct.get_neighbors_by_distance(cutoff_radius=3)
+        self.assertTrue(neigh.allow_ragged)
+        self.assertTrue(isinstance(neigh.indices, list))
         indices = neigh.indices.copy()
         neigh.allow_ragged = False
+        self.assertTrue(isinstance(neigh.indices, np.ndarray))
         self.assertGreater(len(neigh.indices[0]), len(indices[0]))
+        with self.assertRaises(IndexError):
+            struct.positions[neigh.indices]
         neigh.allow_ragged = True
         self.assertTrue(np.array_equal(neigh.indices[0], indices[0]))
+        neigh = struct.get_neighbors(cutoff_radius=3, num_neighbors=None)
+        self.assertFalse(neigh.allow_ragged)
+        self.assertTrue(isinstance(neigh.indices, np.ndarray))
 
     def test_get_neighbors(self):
         struct = CrystalStructure(elements='Fe', lattice_constants=2.85, bravais_basis='bcc').repeat(10)
