@@ -88,6 +88,15 @@ class TestAtoms(unittest.TestCase):
         with self.assertRaises(ValueError):
             struct.get_neighbors(num_neighbors=0)
 
+    def test_wrapped_positions(self):
+        structure = CrystalStructure(elements='Al', lattice_constants=4, bravais_basis='fcc').repeat(2)
+        neigh = structure.get_neighbors()
+        distances = neigh.distances
+        new_positions = structure.positions+structure.cell.diagonal()
+        self.assertFalse(np.all(np.isclose(distances, neigh.get_distances(new_positions, num_neighbors=13)[:,1:])))
+        neigh.wrap_positions = True
+        self.assertTrue(np.all(np.isclose(distances, neigh.get_distances(new_positions, num_neighbors=13)[:,1:])))
+
     def test_get_global_shells(self):
         structure = CrystalStructure(elements='Al', lattice_constants=4, bravais_basis='fcc').repeat(2)
         neigh = structure.get_neighbors()
@@ -99,6 +108,7 @@ class TestAtoms(unittest.TestCase):
         neigh = structure.get_neighbors()
         shells = neigh.get_global_shells()
         structure.positions += 0.01*(np.random.random((len(structure), 3))-0.5)
+        structure.center_coordinates_in_unit_cell()
         neigh = structure.get_neighbors()
         self.assertTrue(np.array_equal(shells, neigh.get_global_shells(cluster_by_vecs=True, cluster_by_distances=True)))
         neigh.reset_clusters()

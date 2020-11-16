@@ -22,6 +22,12 @@ __date__ = "Sep 1, 2017"
 s = Settings()
 
 class Tree:
+    """
+        Class to get tree structure
+
+        If the structure is large and it's known that the atoms are inside the box, set
+        wrap_positions to False for quicker calculation
+    """
     def __init__(self, ref_structure):
         self.distances = None
         self.vecs = None
@@ -32,6 +38,7 @@ class Tree:
         self._cell = None
         self._extended_indices = None
         self._ref_structure = ref_structure
+        self.wrap_positions = False
 
     def _get_max_length(self):
         if (self.distances is None
@@ -87,6 +94,16 @@ class Tree:
             return np.arange(len(self._ref_structure.positions))
         return self._wrapped_indices
 
+    def _get_wrapped_positions(self, positions):
+        if not self.wrap_positions:
+            return np.asarray(positions)
+        x = np.array(positions).copy()
+        cell = self._ref_structure.cell
+        x_scale = np.dot(x, np.linalg.inv(cell))+1.0e-12
+        x[...,self._ref_structure.pbc] -= np.dot(np.floor(x_scale),
+                                                 cell)[...,self._ref_structure.pbc]
+        return x
+
     def _get_distances_and_indices(
         self,
         positions=None,
@@ -105,10 +122,11 @@ class Tree:
         if num_neighbors is None and cutoff_radius==np.inf:
             raise ValueError('num_neighbors or cutoff_radius must be specified')
         distances, indices = self._tree.query(
-            np.asarray(positions), k=num_neighbors, distance_upper_bound=cutoff_radius
+            self._get_wrapped_positions(positions),
+            k=num_neighbors,
+            distance_upper_bound=cutoff_radius
         )
-        if self._extended_indices is None:
-            self._extended_indices = indices.copy()
+        self._extended_indices = indices.copy()
         indices[distances<np.inf] = self._get_wrapped_indices()[indices[distances<np.inf]]
         if allow_ragged:
             return self._contract(distances), self._contract(indices)
@@ -148,6 +166,20 @@ class Tree:
         allow_ragged=False,
         num_neighbors=None,
         cutoff_radius=np.inf,
+    ):
+        return self._get_vectors(
+            positions=positions,
+            allow_ragged=allow_ragged,
+            num_neighbors=num_neighbors,
+            cutoff_radius=cutoff_radius,
+        )
+
+    def _get_vectors(
+        self,
+        positions=None,
+        allow_ragged=False,
+        num_neighbors=None,
+        cutoff_radius=np.inf,
         distances=None,
         indices=None,
     ):
@@ -160,8 +192,10 @@ class Tree:
                     cutoff_radius=cutoff_radius,
                 )
             vectors = np.zeros(distances.shape+(3,))
-            vectors -= np.asarray(positions).reshape(distances.shape[:-1]+(1, 3))
-            vectors[distances<np.inf] += self._get_extended_positions()[indices[distances<np.inf]]
+            vectors -= self._get_wrapped_positions(positions).reshape(distances.shape[:-1]+(1, 3))
+            vectors[distances<np.inf] += self._get_extended_positions()[
+                self._extended_indices[distances<np.inf]
+            ]
             vectors[distances==np.inf] = np.array(3*[np.inf])
             if self._cell is not None:
                 vectors[distances<np.inf] -= self._cell*np.rint(vectors[distances<np.inf]/self._cell)
@@ -205,7 +239,7 @@ class Tree:
         self.indices = indices[...,start_column:max_column]
         self._extended_indices = self._extended_indices[...,start_column:max_column]
         if t_vec:
-            self.vecs = self.get_vectors(
+            self.vecs = self._get_vectors(
                 positions=positions, distances=self.distances, indices=self._extended_indices
             )
         return self
