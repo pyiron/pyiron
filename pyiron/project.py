@@ -397,82 +397,7 @@ class Project(ProjectCore):
         ):
             self.import_single_calculation(path, rel_path=rel_path, job_type="KMC", copy_raw_files=copy_raw_files)
 
-    @staticmethod
-    def create_atoms(
-        symbols=None,
-        positions=None,
-        numbers=None,
-        tags=None,
-        momenta=None,
-        masses=None,
-        magmoms=None,
-        charges=None,
-        scaled_positions=None,
-        cell=None,
-        pbc=None,
-        celldisp=None,
-        constraint=None,
-        calculator=None,
-        info=None,
-        indices=None,
-        elements=None,
-        dimension=None,
-        species=None,
-        **qwargs
-    ):
-        """
-        Creates a atomistics.structure.atoms.Atoms instance.
 
-        Args:
-            elements (list/numpy.ndarray): List of strings containing the elements or a list of
-                                atomistics.structure.periodic_table.ChemicalElement instances
-            numbers (list/numpy.ndarray): List of atomic numbers of elements
-            symbols (list/numpy.ndarray): List of chemical symbols
-            positions (list/numpy.ndarray): List of positions
-            scaled_positions (list/numpy.ndarray): List of scaled positions (relative coordinates)
-            pbc (boolean): Tells if periodic boundary conditions should be applied
-            cell (list/numpy.ndarray): A 3x3 array representing the lattice vectors of the structure
-            momenta (list/numpy.ndarray): List of momentum values
-            tags (list/numpy.ndarray): A list of tags
-            masses (list/numpy.ndarray): A list of masses
-            magmoms (list/numpy.ndarray): A list of magnetic moments
-            charges (list/numpy.ndarray): A list of point charges
-            celldisp:
-            constraint (list/numpy.ndarray): A list of constraints
-            calculator: ASE calculator
-            info (list/str): ASE compatibility
-            indices (list/numpy.ndarray): The list of species indices
-            dimension (int): Dimension of the structure
-            species (list): List of species
-
-        Returns:
-            pyiron.atomistics.structure.atoms.Atoms: The required structure instance
-
-        """
-        if pbc is None:
-            pbc = True
-        return Atoms(
-            symbols=symbols,
-            positions=positions,
-            numbers=numbers,
-            tags=tags,
-            momenta=momenta,
-            masses=masses,
-            magmoms=magmoms,
-            charges=charges,
-            scaled_positions=scaled_positions,
-            cell=cell,
-            pbc=pbc,
-            celldisp=celldisp,
-            constraint=constraint,
-            calculator=calculator,
-            info=info,
-            indices=indices,
-            elements=elements,
-            dimension=dimension,
-            species=species,
-            **qwargs
-        )
 
     @staticmethod
     def inspect_periodic_table():
@@ -485,55 +410,6 @@ class Project(ProjectCore):
     @staticmethod
     def inspect_pseudo_potentials():
         return VaspPotential()
-
-    @staticmethod
-    def create_element(
-        parent_element, new_element_name=None, spin=None, potential_file=None
-    ):
-        """
-
-        Args:
-            parent_element (str, int): The parent element eq. "N", "O", "Mg" etc.
-            new_element_name (str): The name of the new parent element (can be arbitrary)
-            spin (float): Value of the magnetic moment (with sign)
-            potential_file (str): Location of the new potential file if necessary
-
-        Returns:
-            atomistics.structure.periodic_table.ChemicalElement instance
-        """
-        periodic_table = PeriodicTable()
-        if new_element_name is None:
-            if spin is not None:
-                new_element_name = (
-                    parent_element + "_spin_" + str(spin).replace(".", "_")
-                )
-            else:
-                new_element_name = parent_element + "_1"
-        if potential_file is not None:
-            if spin is not None:
-                periodic_table.add_element(
-                    parent_element=parent_element,
-                    new_element=new_element_name,
-                    spin=str(spin),
-                    pseudo_potcar_file=potential_file,
-                )
-            else:
-                periodic_table.add_element(
-                    parent_element=parent_element,
-                    new_element=new_element_name,
-                    pseudo_potcar_file=potential_file,
-                )
-        elif spin is not None:
-            periodic_table.add_element(
-                parent_element=parent_element,
-                new_element=new_element_name,
-                spin=str(spin),
-            )
-        else:
-            periodic_table.add_element(
-                parent_element=parent_element, new_element=new_element_name
-            )
-        return periodic_table.element(new_element_name)
 
     # Graphical user interfaces
     def gui(self):
@@ -649,3 +525,107 @@ class Project(ProjectCore):
         )
         return self.structure.create_surface(element=element, surface_type=surface_type, size=size, vacuum=vacuum,
                                              center=center, pbc=pbc, **kwargs)
+
+    def create_atoms(
+            self,
+            symbols=None,
+            positions=None,
+            numbers=None,
+            tags=None,
+            momenta=None,
+            masses=None,
+            magmoms=None,
+            charges=None,
+            scaled_positions=None,
+            cell=None,
+            pbc=None,
+            celldisp=None,
+            constraint=None,
+            calculator=None,
+            info=None,
+            indices=None,
+            elements=None,
+            dimension=None,
+            species=None,
+            **qwargs
+    ):
+        """
+        Deprecated as of v.0.3.12, please use `Project.structure.create_atoms`.
+
+        Creates a atomistics.structure.atoms.Atoms instance.
+
+        Args:
+            elements (list/numpy.ndarray): List of strings containing the elements or a list of
+                                atomistics.structure.periodic_table.ChemicalElement instances
+            numbers (list/numpy.ndarray): List of atomic numbers of elements
+            symbols (list/numpy.ndarray): List of chemical symbols
+            positions (list/numpy.ndarray): List of positions
+            scaled_positions (list/numpy.ndarray): List of scaled positions (relative coordinates)
+            pbc (boolean): Tells if periodic boundary conditions should be applied
+            cell (list/numpy.ndarray): A 3x3 array representing the lattice vectors of the structure
+            momenta (list/numpy.ndarray): List of momentum values
+            tags (list/numpy.ndarray): A list of tags
+            masses (list/numpy.ndarray): A list of masses
+            magmoms (list/numpy.ndarray): A list of magnetic moments
+            charges (list/numpy.ndarray): A list of point charges
+            celldisp:
+            constraint (list/numpy.ndarray): A list of constraints
+            calculator: ASE calculator
+            info (list/str): ASE compatibility
+            indices (list/numpy.ndarray): The list of species indices
+            dimension (int): Dimension of the structure
+            species (list): List of species
+
+        Returns:
+            pyiron.atomistics.structure.atoms.Atoms: The required structure instance
+        """
+        warnings.warn(
+            "Project.create_atoms is deprecated as of v0.3.12. Please use Project.structure.create_atoms.",
+            DeprecationWarning
+        )
+        return self.structure.create_atoms(
+            symbols=symbols,
+            positions=positions,
+            numbers=numbers,
+            tags=tags,
+            momenta=momenta,
+            masses=masses,
+            magmoms=magmoms,
+            charges=charges,
+            scaled_positions=scaled_positions,
+            cell=cell,
+            pbc=pbc,
+            celldisp=celldisp,
+            constraint=constraint,
+            calculator=calculator,
+            info=info,
+            indices=indices,
+            elements=elements,
+            dimension=dimension,
+            species=species,
+            **qwargs
+        )
+
+    def create_element(self, parent_element, new_element_name=None, spin=None, potential_file=None):
+        """
+        Deprecated as of v.0.3.12, please use `Project.structure.create_element`.
+
+        Args:
+            parent_element (str, int): The parent element eq. "N", "O", "Mg" etc.
+            new_element_name (str): The name of the new parent element (can be arbitrary)
+            spin (float): Value of the magnetic moment (with sign)
+            potential_file (str): Location of the new potential file if necessary
+
+        Returns:
+            atomistics.structure.periodic_table.ChemicalElement instance
+        """
+        warnings.warn(
+            "Project.create_element is deprecated as of v0.3.12. Please use Project.structure.create_element.",
+            DeprecationWarning
+        )
+        return self.structure.create_element(
+            parent_element=parent_element,
+            new_element_name=new_element_name,
+            spin=spin,
+            potential_file=potential_file
+        )
