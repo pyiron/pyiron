@@ -64,6 +64,10 @@ class Tree:
 
     @property
     def allow_ragged(self):
+        """
+        Whether to allow ragged list of distancs/vectors/indices or fill empty slots with numpy.inf
+        to get rectangular arrays
+        """
         return self._allow_ragged
 
     @allow_ragged.setter
@@ -110,6 +114,7 @@ class Tree:
         allow_ragged=False,
         num_neighbors=None,
         cutoff_radius=np.inf,
+        width_buffer=1.5,
     ):
         if positions is None:
             if allow_ragged==self.allow_ragged:
@@ -119,13 +124,27 @@ class Tree:
                         self._contract(self.indices))
             return (self._fill(self.distances),
                     self._fill(self.indices, filler=len(self._ref_structure)))
-        if num_neighbors is None and cutoff_radius==np.inf:
-            raise ValueError('num_neighbors or cutoff_radius must be specified')
+        num_neighbors = self._estimate_num_neighbors(
+            num_neighbors=num_neighbors,
+            cutoff_radius=cutoff_radius,
+            width_buffer=width_buffer,
+        )
+        if len(self._get_extended_positions()) < num_neighbors:
+            raise ValueError(
+                'num_neighbors too large - make width_buffer larger and/or make '
+                + 'num_neighbors smaller'
+            )
         distances, indices = self._tree.query(
             self._get_wrapped_positions(positions),
             k=num_neighbors,
             distance_upper_bound=cutoff_radius
         )
+        if cutoff_radius<np.inf and np.any(distances.T[-1]<np.inf):
+            warnings.warn(
+                'Number of neighbors found within the cutoff_radius is equal to (estimated) '
+                + 'num_neighbors. Increase num_neighbors (or set it to None) or '
+                + 'width_buffer to find all neighbors within cutoff_radius.'
+            )
         self._extended_indices = indices.copy()
         indices[distances<np.inf] = self._get_wrapped_indices()[indices[distances<np.inf]]
         if allow_ragged:
@@ -138,12 +157,31 @@ class Tree:
         allow_ragged=False,
         num_neighbors=None,
         cutoff_radius=np.inf,
+        width_buffer=1.5,
     ):
+        """
+        Get current indices or neighbor indices for given positions
+
+        Args:
+            positions (list/numpy.ndarray/None): Positions around which neighborhood vectors
+                are to be computed (None to get current vectors)
+            allow_ragged (bool): Whether to allow ragged list of arrays or rectangular
+                numpy.ndarray filled with np.inf for values outside cutoff_radius
+            num_neighbors (int/None): Number of neighboring atoms to calculate vectors for
+                (estimated if None)
+            cutoff_radius (float): cutoff radius
+            width_buffer (float): Buffer length for the estimation of num_neighbors
+
+        Returns:
+            (list/numpy.ndarray) list (if allow_ragged=True) or numpy.ndarray (otherwise) of
+                neighbor indices
+        """
         return self._get_distances_and_indices(
             positions=positions,
             allow_ragged=allow_ragged,
             num_neighbors=num_neighbors,
             cutoff_radius=cutoff_radius,
+            width_buffer=width_buffer,
         )[1]
 
     def get_distances(
@@ -152,12 +190,31 @@ class Tree:
         allow_ragged=False,
         num_neighbors=None,
         cutoff_radius=np.inf,
+        width_buffer=1.5,
     ):
+        """
+        Get current distances or neighbor distances for given positions
+
+        Args:
+            positions (list/numpy.ndarray/None): Positions around which neighborhood vectors
+                are to be computed (None to get current vectors)
+            allow_ragged (bool): Whether to allow ragged list of arrays or rectangular
+                numpy.ndarray filled with np.inf for values outside cutoff_radius
+            num_neighbors (int/None): Number of neighboring atoms to calculate vectors for
+                (estimated if None)
+            cutoff_radius (float): cutoff radius
+            width_buffer (float): Buffer length for the estimation of num_neighbors
+
+        Returns:
+            (list/numpy.ndarray) list (if allow_ragged=True) or numpy.ndarray (otherwise) of
+                neighbor distances
+        """
         return self._get_distances_and_indices(
             positions=positions,
             allow_ragged=allow_ragged,
             num_neighbors=num_neighbors,
             cutoff_radius=cutoff_radius,
+            width_buffer=width_buffer,
         )[0]
 
     def get_vectors(
@@ -166,12 +223,31 @@ class Tree:
         allow_ragged=False,
         num_neighbors=None,
         cutoff_radius=np.inf,
+        width_buffer=1.5,
     ):
+        """
+        Get current vectors or neighbor vectors for given positions
+
+        Args:
+            positions (list/numpy.ndarray/None): Positions around which neighborhood vectors
+                are to be computed (None to get current vectors)
+            allow_ragged (bool): Whether to allow ragged list of arrays or rectangular
+                numpy.ndarray filled with np.inf for values outside cutoff_radius
+            num_neighbors (int/None): Number of neighboring atoms to calculate vectors for
+                (estimated if None)
+            cutoff_radius (float): cutoff radius
+            width_buffer (float): Buffer length for the estimation of num_neighbors
+
+        Returns:
+            (list/numpy.ndarray) list (if allow_ragged=True) or numpy.ndarray (otherwise) of
+                neighbor vectors
+        """
         return self._get_vectors(
             positions=positions,
             allow_ragged=allow_ragged,
             num_neighbors=num_neighbors,
             cutoff_radius=cutoff_radius,
+            width_buffer=width_buffer,
         )
 
     def _get_vectors(
@@ -182,6 +258,7 @@ class Tree:
         cutoff_radius=np.inf,
         distances=None,
         indices=None,
+        width_buffer=1.5,
     ):
         if positions is not None:
             if distances is None or indices is None:
@@ -190,6 +267,7 @@ class Tree:
                     allow_ragged=False,
                     num_neighbors=num_neighbors,
                     cutoff_radius=cutoff_radius,
+                    width_buffer=width_buffer,
                 )
             vectors = np.zeros(distances.shape+(3,))
             vectors -= self._get_wrapped_positions(positions).reshape(distances.shape[:-1]+(1, 3))
@@ -211,6 +289,51 @@ class Tree:
             return self._contract(vectors)
         return self._fill(vectors)
 
+    def _estimate_num_neighbors(self, num_neighbors=None, cutoff_radius=np.inf, width_buffer=1.2):
+        """
+
+        Args:
+            num_neighbors (int): number of neighbors
+            width_buffer (float): width of the layer to be added to account for pbc.
+            cutoff_radius (float): self-explanatory
+
+        Returns:
+            Number of atoms required for a given cutoff
+
+        """
+        if num_neighbors is None and cutoff_radius==np.inf:
+            raise ValueError('Specify num_neighbors or cutoff_radius')
+        elif num_neighbors is None:
+            volume = self._ref_structure.get_volume(per_atom=True)
+            num_neighbors = max(14, int(width_buffer*4./3.*np.pi*cutoff_radius**3/volume))
+        return num_neighbors
+
+    def _estimate_width(self, num_neighbors=None, cutoff_radius=np.inf, width_buffer=1.2):
+        """
+
+        Args:
+            num_neighbors (int): number of neighbors
+            width_buffer (float): width of the layer to be added to account for pbc.
+            cutoff_radius (float): self-explanatory
+
+        Returns:
+            Width of layer required for the given number of atoms
+
+        """
+        if all(self._ref_structure.pbc==False):
+            return 0
+        elif cutoff_radius!=np.inf:
+            return cutoff_radius
+        pbc = self._ref_structure.pbc
+        prefactor = [1, 1/np.pi, 4/(3*np.pi)]
+        prefactor = prefactor[sum(pbc)-1]
+        width = np.prod(
+            (np.linalg.norm(self._ref_structure.cell, axis=-1)-np.ones(3))*pbc+np.ones(3)
+        )
+        width *= prefactor*np.max([num_neighbors, 8])/len(self._ref_structure)
+        cutoff_radius = width_buffer*width**(1/np.sum(pbc))
+        return cutoff_radius
+
     def _get_neighborhood(
         self,
         positions,
@@ -219,22 +342,22 @@ class Tree:
         cutoff_radius=np.inf,
         exclude_self=False,
         pbc_and_rectangular=False,
+        width_buffer=1.5,
     ):
         if pbc_and_rectangular:
             self._cell = self._ref_structure.cell.diagonal()
         start_column = 0
         if exclude_self:
             start_column = 1
+            if num_neighbors is not None:
+                num_neighbors += 1
         distances, indices = self._get_distances_and_indices(
-            positions, num_neighbors=num_neighbors, cutoff_radius=cutoff_radius
+            positions,
+            num_neighbors=num_neighbors,
+            cutoff_radius=cutoff_radius,
+            width_buffer=width_buffer,
         )
         max_column = np.sum(distances<np.inf, axis=-1).max()
-        if max_column == num_neighbors and cutoff_radius<np.inf:
-            warnings.warn(
-                'Number of neighbors found within the cutoff_radius is equal to (estimated) '
-                + 'num_neighbors. Increase num_neighbors (or set it to None) or '
-                + 'num_neighbors_estimate_buffer to find all neighbors within the cutoff_radius.'
-            )
         self.distances = distances[...,start_column:max_column]
         self.indices = indices[...,start_column:max_column]
         self._extended_indices = self._extended_indices[...,start_column:max_column]
