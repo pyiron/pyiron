@@ -1386,7 +1386,7 @@ class Atoms(ASEAtoms):
 
         Returns:
 
-            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor 
+            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor
                 indices, distances and vectors
 
         """
