@@ -48,6 +48,14 @@ s = Settings()
 
 
 class StructureGenerator:
+    def ase_read(self, *args, **kwargs):
+        """
+        Returns a ASE's read result, wrapped as a `pyiron.atomstic.structure.atoms.Atoms` object.
+
+        """
+        return ase_to_pyiron(read(*args, **kwargs))
+    ase_read.__doc__ += read.__doc__
+
     @staticmethod
     def create_surface(
         element, surface_type, size=(1, 1, 1), vacuum=1.0, center=False, pbc=True, **kwargs
