@@ -5,6 +5,7 @@
 from __future__ import print_function
 import os
 import posixpath
+import warnings
 from string import punctuation
 from shutil import copyfile
 from pyiron_base import Settings, ProjectHDFio, JobType, JobTypeChoice, Project as ProjectCore
@@ -113,6 +114,7 @@ class Project(ProjectCore):
         )
         self.job_type = JobTypeChoice()
         self.object_type = ObjectTypeChoice()
+        self.structure = StructureGenerator()
 
     def create_job(self, job_type, job_name, delete_existing_job=False):
         """
@@ -396,54 +398,6 @@ class Project(ProjectCore):
             self.import_single_calculation(path, rel_path=rel_path, job_type="KMC", copy_raw_files=copy_raw_files)
 
     @staticmethod
-    def create_structure(element, bravais_basis, lattice_constant):
-        """
-        Create a crystal structure using pyiron's native crystal structure generator
-
-        Args:
-            element (str): Element name
-            bravais_basis (str): Basis type
-            lattice_constant (float/list): Lattice constants
-
-        Returns:
-            pyiron.atomistics.structure.atoms.Atoms: The required crystal structure
-
-        """
-        return StructureGenerator.create_structure(element=element, bravais_basis=bravais_basis, lattice_constant=lattice_constant)
-
-    @staticmethod
-    def create_ase_bulk(
-        name,
-        crystalstructure=None,
-        a=None,
-        c=None,
-        covera=None,
-        u=None,
-        orthorhombic=False,
-        cubic=False,
-    ):
-        """
-        Creating bulk systems using ASE bulk module. Crystal structure and lattice constant(s) will be guessed if not
-        provided.
-
-        name (str): Chemical symbol or symbols as in 'MgO' or 'NaCl'.
-        crystalstructure (str): Must be one of sc, fcc, bcc, hcp, diamond, zincblende,
-                                rocksalt, cesiumchloride, fluorite or wurtzite.
-        a (float): Lattice constant.
-        c (float): Lattice constant.
-        c_over_a (float): c/a ratio used for hcp.  Default is ideal ratio: sqrt(8/3).
-        u (float): Internal coordinate for Wurtzite structure.
-        orthorhombic (bool): Construct orthorhombic unit cell instead of primitive cell which is the default.
-        cubic (bool): Construct cubic unit cell if possible.
-
-        Returns:
-
-            pyiron.atomistics.structure.atoms.Atoms: Required bulk structure
-        """
-        return StructureGenerator.create_ase_bulk(name=name, crystalstructure=crystalstructure, a=a, c=c, covera=covera, u=u,
-                               orthorhombic=orthorhombic, cubic=cubic)
-
-    @staticmethod
     def create_atoms(
         symbols=None,
         positions=None,
@@ -519,32 +473,6 @@ class Project(ProjectCore):
             species=species,
             **qwargs
         )
-
-    @staticmethod
-    def create_surface(
-        element, surface_type, size=(1, 1, 1), vacuum=1.0, center=False, pbc=None, **kwargs
-    ):
-        """
-        Generate a surface based on the ase.build.surface module.
-
-        Args:
-            element (str): Element name
-            surface_type (str): The string specifying the surface type generators available through ase (fcc111,
-            hcp0001 etc.)
-            size (tuple): Size of the surface
-            vacuum (float): Length of vacuum layer added to the surface along the z direction
-            center (bool): Tells if the surface layers have to be at the center or at one end along the z-direction
-            pbc (list/numpy.ndarray): List of booleans specifying the periodic boundary conditions along all three
-                                      directions. If None, it is set to [True, True, True]
-            **kwargs: Additional, arguments you would normally pass to the structure generator like 'a', 'b',
-            'orthogonal' etc.
-
-        Returns:
-            pyiron.atomistics.structure.atoms.Atoms instance: Required surface
-
-        """
-        return StructureGenerator.create_surface(element=element, surface_type=surface_type,
-                              size=size, vacuum=vacuum, center=center, pbc=pbc, **kwargs)
 
     @staticmethod
     def inspect_periodic_table():
@@ -628,3 +556,96 @@ class Project(ProjectCore):
             FlexibleMaster:
         """
         return pipe(project=self, job=job, step_lst=step_lst, delete_existing_job=delete_existing_job)
+
+    # Deprecated methods
+
+    def create_ase_bulk(
+            self,
+            name,
+            crystalstructure=None,
+            a=None,
+            c=None,
+            covera=None,
+            u=None,
+            orthorhombic=False,
+            cubic=False,
+    ):
+        """
+        Deprecated as of v.0.3.12, please use `Project.structure.create_ase_bulk`.
+
+        Creating bulk systems using ASE bulk module. Crystal structure and lattice constant(s) will be guessed if not
+        provided.
+
+        name (str): Chemical symbol or symbols as in 'MgO' or 'NaCl'.
+        crystalstructure (str): Must be one of sc, fcc, bcc, hcp, diamond, zincblende,
+                                rocksalt, cesiumchloride, fluorite or wurtzite.
+        a (float): Lattice constant.
+        c (float): Lattice constant.
+        c_over_a (float): c/a ratio used for hcp.  Default is ideal ratio: sqrt(8/3).
+        u (float): Internal coordinate for Wurtzite structure.
+        orthorhombic (bool): Construct orthorhombic unit cell instead of primitive cell which is the default.
+        cubic (bool): Construct cubic unit cell if possible.
+
+        Returns:
+
+            pyiron.atomistics.structure.atoms.Atoms: Required bulk structure
+        """
+        warnings.warn(
+            "Project.create_ase_bulk is deprecated as of v0.3.12. Please use Project.structure.create_ase_bulk.",
+            DeprecationWarning
+        )
+        return self.structure.create_ase_bulk(name=name, crystalstructure=crystalstructure, a=a, c=c, covera=covera,
+                                              u=u, orthorhombic=orthorhombic, cubic=cubic)
+
+    def create_structure(self, element, bravais_basis, lattice_constant):
+        """
+        Deprecated as of v.0.3.12, please use `Project.structure.create_structure`.
+
+        Create a crystal structure using pyiron's native crystal structure generator
+
+        Args:
+            element (str): Element name
+            bravais_basis (str): Basis type
+            lattice_constant (float/list): Lattice constants
+
+        Returns:
+            pyiron.atomistics.structure.atoms.Atoms: The required crystal structure
+
+        """
+        warnings.warn(
+            "Project.create_structure is deprecated as of v0.3.12. Please use Project.structure.create_structure.",
+            DeprecationWarning
+        )
+        return self.structure.create_structure(element=element, bravais_basis=bravais_basis,
+                                               lattice_constant=lattice_constant)
+
+    def create_surface(
+            self, element, surface_type, size=(1, 1, 1), vacuum=1.0, center=False, pbc=None, **kwargs
+    ):
+        """
+        Deprecated as of v.0.3.12, please use `Project.structure.create_surface`.
+
+        Generate a surface based on the ase.build.surface module.
+
+        Args:
+            element (str): Element name
+            surface_type (str): The string specifying the surface type generators available through ase (fcc111,
+            hcp0001 etc.)
+            size (tuple): Size of the surface
+            vacuum (float): Length of vacuum layer added to the surface along the z direction
+            center (bool): Tells if the surface layers have to be at the center or at one end along the z-direction
+            pbc (list/numpy.ndarray): List of booleans specifying the periodic boundary conditions along all three
+                                      directions. If None, it is set to [True, True, True]
+            **kwargs: Additional, arguments you would normally pass to the structure generator like 'a', 'b',
+            'orthogonal' etc.
+
+        Returns:
+            pyiron.atomistics.structure.atoms.Atoms instance: Required surface
+
+        """
+        warnings.warn(
+            "Project.create_surface is deprecated as of v0.3.12. Please use Project.structure.create_surface.",
+            DeprecationWarning
+        )
+        return self.structure.create_surface(element=element, surface_type=surface_type, size=size, vacuum=vacuum,
+                                             center=center, pbc=pbc, **kwargs)
