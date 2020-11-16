@@ -114,7 +114,7 @@ class Project(ProjectCore):
         )
         self.job_type = JobTypeChoice()
         self.object_type = ObjectTypeChoice()
-        self.structure = StructureGenerator()
+        self.create = _ProjectObjectCreator()
 
     def create_job(self, job_type, job_name, delete_existing_job=False):
         """
@@ -397,8 +397,6 @@ class Project(ProjectCore):
         ):
             self.import_single_calculation(path, rel_path=rel_path, job_type="KMC", copy_raw_files=copy_raw_files)
 
-
-
     @staticmethod
     def inspect_periodic_table():
         return PeriodicTable()
@@ -470,8 +468,8 @@ class Project(ProjectCore):
             "Project.create_ase_bulk is deprecated as of v0.3.12. Please use Project.structure.create_ase_bulk.",
             DeprecationWarning
         )
-        return self.structure.create_ase_bulk(name=name, crystalstructure=crystalstructure, a=a, c=c, covera=covera,
-                                              u=u, orthorhombic=orthorhombic, cubic=cubic)
+        return self.create.structure.ase_bulk(name=name, crystalstructure=crystalstructure, a=a, c=c,
+                                              covera=covera, u=u, orthorhombic=orthorhombic, cubic=cubic)
 
     def create_structure(self, element, bravais_basis, lattice_constant):
         """
@@ -492,7 +490,7 @@ class Project(ProjectCore):
             "Project.create_structure is deprecated as of v0.3.12. Please use Project.structure.create_structure.",
             DeprecationWarning
         )
-        return self.structure.create_structure(element=element, bravais_basis=bravais_basis,
+        return self.create.structure.structure(element=element, bravais_basis=bravais_basis,
                                                lattice_constant=lattice_constant)
 
     def create_surface(
@@ -523,8 +521,8 @@ class Project(ProjectCore):
             "Project.create_surface is deprecated as of v0.3.12. Please use Project.structure.create_surface.",
             DeprecationWarning
         )
-        return self.structure.create_surface(element=element, surface_type=surface_type, size=size, vacuum=vacuum,
-                                             center=center, pbc=pbc, **kwargs)
+        return self.create.structure.surface(element=element, surface_type=surface_type, size=size,
+                                             vacuum=vacuum, center=center, pbc=pbc, **kwargs)
 
     def create_atoms(
             self,
@@ -583,7 +581,7 @@ class Project(ProjectCore):
             "Project.create_atoms is deprecated as of v0.3.12. Please use Project.structure.create_atoms.",
             DeprecationWarning
         )
-        return self.structure.create_atoms(
+        return self.create.structure.atoms(
             symbols=symbols,
             positions=positions,
             numbers=numbers,
@@ -623,9 +621,15 @@ class Project(ProjectCore):
             "Project.create_element is deprecated as of v0.3.12. Please use Project.structure.create_element.",
             DeprecationWarning
         )
-        return self.structure.create_element(
+        return self.create.structure.element(
             parent_element=parent_element,
             new_element_name=new_element_name,
             spin=spin,
             potential_file=potential_file
         )
+
+
+class _ProjectObjectCreator:
+
+    def __init__(self):
+        self.structure = StructureGenerator()

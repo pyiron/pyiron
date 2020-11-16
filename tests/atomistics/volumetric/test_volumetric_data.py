@@ -65,7 +65,7 @@ class TestVolumetricData(unittest.TestCase):
         vd = VolumetricData()
         n_x, n_y, n_z = (10, 15, 20)
         vd.total_data = np.random.rand(n_x, n_y, n_z)
-        struct = StructureGenerator.create_ase_bulk("Al")
+        struct = StructureGenerator.ase_bulk("Al")
         cyl_avg = vd.cylindrical_average_potential(struct, spherical_center=[0, 0, 0],
                                                    axis_of_cyl=2, rad=2, fwhm=0.529177)
         self.assertIsInstance(cyl_avg, float)

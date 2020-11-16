@@ -57,7 +57,7 @@ class StructureGenerator:
     ase_read.__doc__ += read.__doc__
 
     @staticmethod
-    def create_surface(
+    def surface(
         element, surface_type, size=(1, 1, 1), vacuum=1.0, center=False, pbc=True, **kwargs
     ):
         """
@@ -123,7 +123,7 @@ class StructureGenerator:
             return None
 
     @staticmethod
-    def create_hkl_surface(lattice, hkl, layers, vacuum=1.0, center=False, pbc=True):
+    def hkl_surface(lattice, hkl, layers, vacuum=1.0, center=False, pbc=True):
         """
         Use ase.build.surface to build a surface with surface normal (hkl).
 
@@ -151,7 +151,7 @@ class StructureGenerator:
         return ase_to_pyiron(surface)
 
     @staticmethod
-    def create_structure(element, bravais_basis, lattice_constant):
+    def structure(element, bravais_basis, lattice_constant):
         """
         Create a crystal structure using pyiron's native crystal structure generator
 
@@ -170,7 +170,7 @@ class StructureGenerator:
         )
 
     @staticmethod
-    def create_ase_bulk(
+    def ase_bulk(
         name,
         crystalstructure=None,
         a=None,
@@ -210,7 +210,7 @@ class StructureGenerator:
         ))
 
     @staticmethod
-    def create_atoms(
+    def atoms(
             symbols=None,
             positions=None,
             numbers=None,
@@ -286,7 +286,7 @@ class StructureGenerator:
         )
 
     @staticmethod
-    def create_element(parent_element, new_element_name=None, spin=None, potential_file=None):
+    def element(parent_element, new_element_name=None, spin=None, potential_file=None):
         """
 
         Args:
