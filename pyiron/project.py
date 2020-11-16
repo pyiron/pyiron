@@ -18,7 +18,7 @@ from pyiron.lammps.potential import LammpsPotentialFile
 from pyiron.vasp.potential import VaspPotential
 import pyiron.atomistics.structure.pyironase as ase
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.atomistics.structure.generator import create_surface, create_ase_bulk, create_structure
+from pyiron.atomistics.structure.generator import StructureGenerator
 from pyiron.atomistics.master.parallel import pipe
 
 
@@ -409,7 +409,7 @@ class Project(ProjectCore):
             pyiron.atomistics.structure.atoms.Atoms: The required crystal structure
 
         """
-        return create_structure(element=element, bravais_basis=bravais_basis, lattice_constant=lattice_constant)
+        return StructureGenerator.create_structure(element=element, bravais_basis=bravais_basis, lattice_constant=lattice_constant)
 
     @staticmethod
     def create_ase_bulk(
@@ -440,7 +440,7 @@ class Project(ProjectCore):
 
             pyiron.atomistics.structure.atoms.Atoms: Required bulk structure
         """
-        return create_ase_bulk(name=name, crystalstructure=crystalstructure, a=a, c=c, covera=covera, u=u,
+        return StructureGenerator.create_ase_bulk(name=name, crystalstructure=crystalstructure, a=a, c=c, covera=covera, u=u,
                                orthorhombic=orthorhombic, cubic=cubic)
 
     @staticmethod
@@ -543,7 +543,7 @@ class Project(ProjectCore):
             pyiron.atomistics.structure.atoms.Atoms instance: Required surface
 
         """
-        return create_surface(element=element, surface_type=surface_type,
+        return StructureGenerator.create_surface(element=element, surface_type=surface_type,
                               size=size, vacuum=vacuum, center=center, pbc=pbc, **kwargs)
 
     @staticmethod

@@ -3,7 +3,7 @@ __all__ = []
 
 from pyiron.project import Project
 from pyiron.atomistics.structure.atoms import ase_to_pyiron, pyiron_to_ase, Atoms
-from pyiron.atomistics.structure.generator import create_surface, create_ase_bulk, create_structure
+from pyiron.atomistics.structure.generator import StructureGenerator  # create_surface, create_ase_bulk, create_structure
 from pyiron_base import Notebook, install_dialog, JOB_CLASS_DICT
 
 
