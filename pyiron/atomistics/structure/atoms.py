@@ -1426,6 +1426,7 @@ class Atoms(ASEAtoms):
             cutoff_radius=cutoff_radius,
             exclude_self=True,
             pbc_and_rectangular=(boxsize is not None),
+            width_buffer=width_buffer,
         )
         if neigh._check_width(width=width, pbc=self.pbc):
             warnings.warn('width_buffer may have been too small - '

@@ -766,9 +766,10 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(neigh.distances[0][0], 1.)
         self.assertAlmostEqual(neigh.distances[1][0], np.sqrt(2))
         self.assertEqual(neigh.distances[2][0], 1.)
+        basis.set_repeat(4)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            basis.get_neighbors_by_distance(cutoff_radius=1.5, num_neighbors_estimate_buffer=0)
+            basis.get_neighbors_by_distance(cutoff_radius=3, width_buffer=0)
             self.assertGreaterEqual(len(w), 1)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
