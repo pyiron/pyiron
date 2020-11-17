@@ -8,7 +8,7 @@ import os
 import warnings
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
-from pyiron.atomistics.structure.generator import StructureGenerator
+from pyiron.atomistics.structure.factory import StructureFactory
 from pyiron.atomistics.structure.sparse_list import SparseList
 from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement
 from pyiron_base import FileHDFio, ProjectHDFio, Project
@@ -38,7 +38,7 @@ class TestAtoms(unittest.TestCase):
         C = Atom("C").element
         cls.C3 = Atoms([C, C, C], positions=[[0, 0, 0], [0, 0, 2], [0, 2, 0]])
         cls.C2 = Atoms(2 * [Atom("C")])
-        cls.g = StructureGenerator()
+        cls.g = StructureFactory()
 
     def setUp(self):
         # These atoms are reset before every test.

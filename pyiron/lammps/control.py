@@ -415,6 +415,7 @@ class LammpsControl(GenericParameters):
         tloop=None,
         initial_temperature=None,
         langevin=False,
+        drag=None,
         delta_temp=None,
         delta_press=None,
         job_name="",
@@ -454,6 +455,9 @@ class LammpsControl(GenericParameters):
                                                be used). If any other number is given, this value is going to be used
                                                for the initial temperature.
             langevin (bool): (True or False) Activate Langevin dynamics
+            drag (float): Drag to apply. Note: Using this flag will destroy your thermodynamics and you will no longer
+                acheive the NVT/NPT/NPH/NVE ensemble averages you would otherwise expect. (Default is None, no
+                additional drag (Langevin drag still applied in case of a Langevin thermostat).)
             delta_temp (float): Thermostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
             delta_press (float): Barostat timescale, but in your Lammps time units, whatever those are. (DEPRECATED.)
             job_name (str): Job name of the job to generate a unique random seed.
@@ -574,6 +578,9 @@ class LammpsControl(GenericParameters):
         if tloop is not None:
             fix_ensemble_str += " tloop " + str(tloop)
 
+        if drag is not None:
+            fix_ensemble_str += " drag " + str(drag)
+
         self.remove_keys(["minimize"])
         self.modify(
             fix___ensemble=fix_ensemble_str,
@@ -619,6 +626,7 @@ class LammpsControl(GenericParameters):
         seed=None,
         initial_temperature=None,
         langevin=False,
+        drag=None,
         job_name="",
         rotation_matrix=None
     ):
@@ -672,6 +680,7 @@ class LammpsControl(GenericParameters):
             tloop=None,
             initial_temperature=initial_temperature,
             langevin=langevin,
+            drag=drag,
             job_name=job_name,
             rotation_matrix=rotation_matrix
         )

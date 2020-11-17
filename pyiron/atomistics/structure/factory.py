@@ -47,7 +47,7 @@ __date__ = "May 1, 2020"
 s = Settings()
 
 
-class StructureGenerator:
+class StructureFactory:
     def ase_read(self, *args, **kwargs):
         """
         Returns a ASE's read result, wrapped as a `pyiron.atomstic.structure.atoms.Atoms` object.

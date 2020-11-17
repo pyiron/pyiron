@@ -19,7 +19,7 @@ from pyiron.lammps.potential import LammpsPotentialFile
 from pyiron.vasp.potential import VaspPotential
 import pyiron.atomistics.structure.pyironase as ase
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.atomistics.structure.generator import StructureGenerator
+from pyiron.atomistics.structure.factory import StructureFactory
 from pyiron.atomistics.master.parallel import pipe
 
 
@@ -632,4 +632,4 @@ class Project(ProjectCore):
 class _ProjectObjectCreator:
 
     def __init__(self):
-        self.structure = StructureGenerator()
+        self.structure = StructureFactory()
