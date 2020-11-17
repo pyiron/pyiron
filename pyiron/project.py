@@ -16,6 +16,7 @@ from pyiron.atomistics.generic.object_type import ObjectType, ObjectTypeChoice
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
 from pyiron.lammps.potential import LammpsPotentialFile
 from pyiron.vasp.potential import VaspPotential
+from pyiron.atomistics.generic.factory import AtomisticCreator
 import pyiron.atomistics.structure.pyironase as ase
 from pyiron.atomistics.structure.atoms import Atoms
 from pyiron.atomistics.structure.generator import create_surface, create_ase_bulk, create_structure
@@ -113,6 +114,7 @@ class Project(ProjectCore):
         )
         self.job_type = JobTypeChoice()
         self.object_type = ObjectTypeChoice()
+        self._creator = AtomisticCreator(project=self)
 
     def create_job(self, job_type, job_name, delete_existing_job=False):
         """
