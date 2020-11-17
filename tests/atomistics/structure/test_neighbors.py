@@ -51,9 +51,9 @@ class TestAtoms(unittest.TestCase):
         neigh = struct.get_neighborhood(positions)
         positions = np.random.random((2, 3)).dot(struct.cell)
         new_neigh = neigh.get_neighborhood(positions)
-        self.assertTrue(new_neigh.distances, neigh.get_distances(positions))
-        self.assertTrue(new_neigh.vecs, neigh.get_vectors(positions))
-        self.assertTrue(new_neigh.indices, neigh.get_indices(positions))
+        self.assertTrue(np.array_equal(new_neigh.distances, neigh.get_distances(positions)))
+        self.assertTrue(np.array_equal(new_neigh.vecs, neigh.get_vectors(positions)))
+        self.assertTrue(np.array_equal(new_neigh.indices, neigh.get_indices(positions)))
 
     def test_get_neighbors(self):
         struct = CrystalStructure(elements='Fe', lattice_constants=2.85, bravais_basis='bcc').repeat(10)

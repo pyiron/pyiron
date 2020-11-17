@@ -398,7 +398,7 @@ class Tree:
             num_neighbors=num_neighbors,
             t_vec=t_vec,
             cutoff_radius=cutoff_radius,
-            exclude_self=True,
+            exclude_self=False,
             width_buffer=width_buffer,
         )
 
