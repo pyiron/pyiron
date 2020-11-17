@@ -449,8 +449,6 @@ class Project(ProjectCore):
             cubic=False,
     ):
         """
-        Deprecated as of v.0.3, please use `Project.create.structure.ase_bulk`.
-
         Creating bulk systems using ASE bulk module. Crystal structure and lattice constant(s) will be guessed if not
         provided.
 
@@ -468,17 +466,15 @@ class Project(ProjectCore):
 
             pyiron.atomistics.structure.atoms.Atoms: Required bulk structure
         """
-        warnings.warn(
-            "Project.create_ase_bulk is deprecated as of v0.3. Please use Project.create.structure.ase_bulk.",
-            DeprecationWarning
-        )
+        # warnings.warn(
+        #     "Project.create_ase_bulk is deprecated as of v0.3. Please use Project.create.structure.ase_bulk.",
+        #     DeprecationWarning
+        # )
         return self.create.structure.ase_bulk(name=name, crystalstructure=crystalstructure, a=a, c=c,
                                               covera=covera, u=u, orthorhombic=orthorhombic, cubic=cubic)
 
     def create_structure(self, element, bravais_basis, lattice_constant):
         """
-        Deprecated as of v.0.3, please use `Project.create.structure.structure`.
-
         Create a crystal structure using pyiron's native crystal structure generator
 
         Args:
@@ -490,10 +486,10 @@ class Project(ProjectCore):
             pyiron.atomistics.structure.atoms.Atoms: The required crystal structure
 
         """
-        warnings.warn(
-            "Project.create_structure is deprecated as of v0.3. Please use Project.create.structure.structure.",
-            DeprecationWarning
-        )
+        # warnings.warn(
+        #     "Project.create_structure is deprecated as of v0.3. Please use Project.create.structure.structure.",
+        #     DeprecationWarning
+        # )
         return self.create.structure.structure(element=element, bravais_basis=bravais_basis,
                                                lattice_constant=lattice_constant)
 
@@ -501,8 +497,6 @@ class Project(ProjectCore):
             self, element, surface_type, size=(1, 1, 1), vacuum=1.0, center=False, pbc=None, **kwargs
     ):
         """
-        Deprecated as of v.0.3, please use `Project.create.structure.surface`.
-
         Generate a surface based on the ase.build.surface module.
 
         Args:
@@ -521,10 +515,10 @@ class Project(ProjectCore):
             pyiron.atomistics.structure.atoms.Atoms instance: Required surface
 
         """
-        warnings.warn(
-            "Project.create_surface is deprecated as of v0.3. Please use Project.create.structure.surface.",
-            DeprecationWarning
-        )
+        # warnings.warn(
+        #     "Project.create_surface is deprecated as of v0.3. Please use Project.create.structure.surface.",
+        #     DeprecationWarning
+        # )
         return self.create.structure.surface(element=element, surface_type=surface_type, size=size,
                                              vacuum=vacuum, center=center, pbc=pbc, **kwargs)
 
@@ -552,8 +546,6 @@ class Project(ProjectCore):
             **qwargs
     ):
         """
-        Deprecated as of v.0.3, please use `Project.create.structure.atoms`.
-
         Creates a atomistics.structure.atoms.Atoms instance.
 
         Args:
@@ -581,10 +573,10 @@ class Project(ProjectCore):
         Returns:
             pyiron.atomistics.structure.atoms.Atoms: The required structure instance
         """
-        warnings.warn(
-            "Project.create_atoms is deprecated as of v0.3. Please use Project.create.structure.atoms.",
-            DeprecationWarning
-        )
+        # warnings.warn(
+        #     "Project.create_atoms is deprecated as of v0.3. Please use Project.create.structure.atoms.",
+        #     DeprecationWarning
+        # )
         return self.create.structure.atoms(
             symbols=symbols,
             positions=positions,
@@ -610,8 +602,6 @@ class Project(ProjectCore):
 
     def create_element(self, parent_element, new_element_name=None, spin=None, potential_file=None):
         """
-        Deprecated as of v.0.3, please use `Project.create.structure.element`.
-
         Args:
             parent_element (str, int): The parent element eq. "N", "O", "Mg" etc.
             new_element_name (str): The name of the new parent element (can be arbitrary)
@@ -621,10 +611,10 @@ class Project(ProjectCore):
         Returns:
             atomistics.structure.periodic_table.ChemicalElement instance
         """
-        warnings.warn(
-            "Project.create_element is deprecated as of v0.3. Please use Project.create.structure.element.",
-            DeprecationWarning
-        )
+        # warnings.warn(
+        #     "Project.create_element is deprecated as of v0.3. Please use Project.create.structure.element.",
+        #     DeprecationWarning
+        # )
         return self.create.structure.element(
             parent_element=parent_element,
             new_element_name=new_element_name,
