@@ -1212,6 +1212,7 @@ class Atoms(ASEAtoms):
             if return_indices:
                 return self.positions, np.arange(len(self))
             return self.positions
+        width *= np.prod(np.linalg.norm(self.cell, axis=-1))/np.linalg.det(self.cell)
         rep = 2*np.ceil(width/np.linalg.norm(self.cell, axis=-1)).astype(int)*self.pbc+1
         rep = [np.arange(r)-int(r/2) for r in rep]
         meshgrid = np.meshgrid(rep[0], rep[1], rep[2])
