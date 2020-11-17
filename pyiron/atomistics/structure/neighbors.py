@@ -164,7 +164,7 @@ class Tree:
             cutoff_radius=cutoff_radius,
             width_buffer=width_buffer,
         )
-        if len(self._get_extended_positions()) < num_neighbors:
+        if len(self._get_extended_positions()) < num_neighbors and cutoff_radius==np.inf:
             raise ValueError(
                 'num_neighbors too large - make width_buffer larger and/or make '
                 + 'num_neighbors smaller'

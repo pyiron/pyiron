@@ -1212,8 +1212,11 @@ class Atoms(ASEAtoms):
             if return_indices:
                 return self.positions, np.arange(len(self))
             return self.positions
-        width *= np.prod(np.linalg.norm(self.cell, axis=-1))/np.linalg.det(self.cell)
-        rep = 2*np.ceil(width/np.linalg.norm(self.cell, axis=-1)).astype(int)*self.pbc+1
+        width /= np.linalg.det(self.cell)
+        width *= np.linalg.norm(
+            np.cross(np.roll(self.cell, -1, axis=0), np.roll(self.cell, 1, axis=0)), axis=-1
+        )
+        rep = 2*np.ceil(width).astype(int)*self.pbc+1
         rep = [np.arange(r)-int(r/2) for r in rep]
         meshgrid = np.meshgrid(rep[0], rep[1], rep[2])
         meshgrid = np.stack(meshgrid, axis=-1).reshape(-1, 3)
@@ -1223,7 +1226,7 @@ class Atoms(ASEAtoms):
         indices = np.tile(np.arange(len(self)), len(meshgrid))
         dist = v_repeated-np.sum(self.cell*0.5, axis=0)
         dist = np.absolute(np.einsum('ni,ij->nj', dist+1e-8, np.linalg.inv(self.cell)))-0.5
-        check_dist = np.all(dist-width/np.linalg.norm(self.cell, axis=-1)<0, axis=-1)
+        check_dist = np.all(dist-width<0, axis=-1)
         indices = indices[check_dist]%len(self)
         v_repeated = v_repeated[check_dist]
         if return_indices:
