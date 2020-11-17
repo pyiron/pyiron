@@ -36,6 +36,25 @@ class TestAtoms(unittest.TestCase):
         self.assertFalse(neigh.allow_ragged)
         self.assertTrue(isinstance(neigh.indices, np.ndarray))
 
+    def test_getters(self):
+        struct = CrystalStructure(elements='Al', lattice_constants=4, bravais_basis='fcc')
+        neigh = struct.get_neighbors()
+        self.assertTrue(np.array_equal(neigh.distances, neigh.get_distances()))
+        self.assertTrue(np.array_equal(neigh.vecs, neigh.get_vectors()))
+        self.assertTrue(np.array_equal(neigh.indices, neigh.get_indices()))
+
+    def test_get_neighborhood(self):
+        struct = CrystalStructure(elements='Al', lattice_constants=4, bravais_basis='fcc')
+        struct.positions += 0.01*(2*np.random.random(struct.positions.shape)-1)
+        struct = struct.center_coordinates_in_unit_cell()
+        positions = np.random.random((2, 3)).dot(struct.cell)
+        neigh = struct.get_neighborhood(positions)
+        positions = np.random.random((2, 3)).dot(struct.cell)
+        new_neigh = neigh.get_neighborhood(positions)
+        self.assertTrue(new_neigh.distances, neigh.get_distances(positions))
+        self.assertTrue(new_neigh.vecs, neigh.get_vectors(positions))
+        self.assertTrue(new_neigh.indices, neigh.get_indices(positions))
+
     def test_get_neighbors(self):
         struct = CrystalStructure(elements='Fe', lattice_constants=2.85, bravais_basis='bcc').repeat(10)
         cell = struct.cell.copy()

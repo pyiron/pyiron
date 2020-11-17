@@ -147,7 +147,7 @@ class Tree:
         self,
         positions=None,
         allow_ragged=False,
-        num_neighbors=None,
+        num_neighbors=12,
         cutoff_radius=np.inf,
         width_buffer=1.2,
     ):
@@ -190,7 +190,7 @@ class Tree:
         self,
         positions=None,
         allow_ragged=False,
-        num_neighbors=None,
+        num_neighbors=12,
         cutoff_radius=np.inf,
         width_buffer=1.2,
     ):
@@ -223,7 +223,7 @@ class Tree:
         self,
         positions=None,
         allow_ragged=False,
-        num_neighbors=None,
+        num_neighbors=12,
         cutoff_radius=np.inf,
         width_buffer=1.2,
     ):
@@ -256,7 +256,7 @@ class Tree:
         self,
         positions=None,
         allow_ragged=False,
-        num_neighbors=None,
+        num_neighbors=12,
         cutoff_radius=np.inf,
         width_buffer=1.2,
     ):
@@ -289,7 +289,7 @@ class Tree:
         self,
         positions=None,
         allow_ragged=False,
-        num_neighbors=None,
+        num_neighbors=12,
         cutoff_radius=np.inf,
         distances=None,
         indices=None,
