@@ -43,6 +43,29 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(np.array_equal(neigh.vecs, neigh.get_vectors()))
         self.assertTrue(np.array_equal(neigh.indices, neigh.get_indices()))
 
+    def test_getter_and_ragged(self):
+        struct = CrystalStructure(elements='Al', lattice_constants=4, bravais_basis='fcc').repeat(2)
+        del struct[0]
+        neigh = struct.get_neighbors_by_distance(cutoff_radius=3)
+        vecs = neigh.get_vectors(allow_ragged=False)
+        distances = neigh.get_distances(allow_ragged=False)
+        indices = neigh.get_indices(allow_ragged=False)
+        neigh.allow_ragged = False
+        self.assertTrue(np.array_equal(neigh.distances, distances))
+        self.assertTrue(np.array_equal(neigh.indices, indices))
+        self.assertTrue(np.array_equal(neigh.vecs, vecs))
+
+    def test_get_neighborhood_single(self):
+        struct = CrystalStructure(elements='Al', lattice_constants=4, bravais_basis='fcc')
+        neigh = struct.get_neighborhood(np.random.random(3), cutoff_radius=3)
+        distances = neigh.distances.copy()
+        neigh.allow_ragged = False
+        self.assertTrue(np.array_equal(neigh.distances, distances))
+        neigh.allow_ragged = True
+        self.assertTrue(np.array_equal(neigh.distances, distances))
+        neigh.allow_ragged = False
+        self.assertTrue(np.array_equal(neigh.distances, distances))
+
     def test_get_neighborhood(self):
         struct = CrystalStructure(elements='Al', lattice_constants=4, bravais_basis='fcc')
         struct.positions += 0.01*(2*np.random.random(struct.positions.shape)-1)
