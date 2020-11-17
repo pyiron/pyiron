@@ -340,7 +340,7 @@ class Tree:
             raise ValueError('Specify num_neighbors or cutoff_radius')
         elif num_neighbors is None:
             volume = self._ref_structure.get_volume(per_atom=True)
-            num_neighbors = max(14, int(width_buffer*4./3.*np.pi*cutoff_radius**3/volume))
+            num_neighbors = max(14, int((1+width_buffer)*4./3.*np.pi*cutoff_radius**3/volume))
         return num_neighbors
 
     def _estimate_width(self, num_neighbors=None, cutoff_radius=np.inf, width_buffer=1.2):
