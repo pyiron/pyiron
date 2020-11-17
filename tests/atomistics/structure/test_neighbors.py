@@ -76,9 +76,9 @@ class TestAtoms(unittest.TestCase):
         neigh = struct.get_neighbors()
         self.assertAlmostEqual(np.absolute(neigh.distances-np.linalg.norm(neigh.vecs, axis=-1)).max(), 0)
         self.assertAlmostEqual(neigh.vecs[neigh.shells==1].sum(), 0)
+        self.assertAlmostEqual(neigh.vecs[0, neigh.shells[0]==1].sum(), 0)
 
     def test_fe_small(self):
-        self.assertAlmostEqual(neigh.vecs[0, neigh.shells[0]==1].sum(), 0)
         struct = CrystalStructure(elements='Fe', lattice_constants=2.85, bravais_basis='bcc')
         neigh = struct.get_neighbors()
         self.assertAlmostEqual(neigh.vecs[neigh.shells==1].sum(), 0)
