@@ -1369,7 +1369,6 @@ class Atoms(ASEAtoms):
         id_list=None,
         cutoff_radius=np.inf,
         width_buffer=1.2,
-        exclude_self=False,
         get_tree=False,
     ):
         """
@@ -1461,7 +1460,6 @@ class Atoms(ASEAtoms):
             cutoff_radius=cutoff_radius,
             width_buffer=width_buffer,
             t_vec=t_vec,
-            exclude_self=False,
             get_tree=True,
         )
         return neigh._get_neighborhood(
