@@ -1300,6 +1300,8 @@ class Atoms(ASEAtoms):
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list (list): list of atoms the neighbors are to be looked for
             width_buffer (float): width of the layer to be added to account for pbc.
+            allow_ragged (bool): Whether to allow ragged list of arrays or rectangular
+                numpy.ndarray filled with np.inf for values outside cutoff_radius
         Returns:
 
             pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor indices, distances
@@ -1336,6 +1338,8 @@ class Atoms(ASEAtoms):
             id_list (list): list of atoms the neighbors are to be looked for
             cutoff_radius (float): Upper bound of the distance to which the search must be done
             width_buffer (float): width of the layer to be added to account for pbc.
+            allow_ragged (bool): Whether to allow ragged list of arrays or rectangular
+                numpy.ndarray filled with np.inf for values outside cutoff_radius
 
         Returns:
 
@@ -1374,6 +1378,8 @@ class Atoms(ASEAtoms):
             id_list (list): list of atoms the neighbors are to be looked for
             width_buffer (float): width of the layer to be added to account for pbc.
             cutoff_radius (float): self-explanatory
+            allow_ragged (bool): Whether to allow ragged list of arrays or rectangular
+                numpy.ndarray filled with np.inf for values outside cutoff_radius
 
         Returns:
 
