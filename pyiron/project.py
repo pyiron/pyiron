@@ -114,7 +114,11 @@ class Project(ProjectCore):
         )
         self.job_type = JobTypeChoice()
         self.object_type = ObjectTypeChoice()
-        self.create = _ProjectObjectCreator()
+        self._create = _Creator()
+
+    @property
+    def create(self):
+        return self._create
 
     def create_job(self, job_type, job_name, delete_existing_job=False):
         """
@@ -629,7 +633,11 @@ class Project(ProjectCore):
         )
 
 
-class _ProjectObjectCreator:
+class _Creator:
 
     def __init__(self):
-        self.structure = StructureFactory()
+        self._structure = StructureFactory()
+
+    @property
+    def structure(self):
+        return self._structure
