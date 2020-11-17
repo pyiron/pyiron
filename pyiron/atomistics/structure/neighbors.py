@@ -23,10 +23,30 @@ s = Settings()
 
 class Tree:
     """
-        Class to get tree structure
+    Class to get tree structure for the neighborhood information.
 
-        If the structure is large and it's known that the atoms are inside the box, set
-        wrap_positions to False for quicker calculation
+    Main attributes (do not modify them):
+
+    - distances (numpy.ndarray/list): Distances to the neighbors of given positions
+    - indices (numpy.ndarray/list): Indices of the neighbors of given positions
+    - vecs (numpy.ndarray/list): Vectors to the neighbors of given positions
+
+    Auxiliary attributes:
+
+    - allow_ragged (bool): Whether to allow a ragged list of numpy arrays or not. This is relevant
+        only if the cutoff length was specified, in which case the number of atoms for each
+        position could differ.
+    - wrap_positions (bool): Whether to wrap back the positions entered by user in get_neighborhood
+        etc. Since the information outside the original box is limited to a few layer,
+        wrap_positions=False might miss some points without issuing an error.
+
+    Furthermore, you can re-employ the original tree structure to get neighborhood information via
+    get_indices, get_vectors, get_distances and get_neighborhood. The information delivered by
+    get_neighborhood is the same as what can be obtained through the other three getters (except
+    for the fact that get_neighborhood returns a Tree instance, while the others return numpy
+    arrays), but since get_vectors anyway has to call get_distances and get_indices internally, the
+    computational cost of get_neighborhood and get_vectors is the same.
+
     """
     def __init__(self, ref_structure):
         self.distances = None
@@ -37,8 +57,23 @@ class Tree:
         self._allow_ragged = False
         self._cell = None
         self._extended_indices = None
-        self._ref_structure = ref_structure
+        self._ref_structure = ref_structure.copy()
         self.wrap_positions = False
+        self._tree = None
+
+    def copy(self):
+        new_neigh = Tree(self._ref_structure)
+        new_neigh.distances = self.distances.copy()
+        new_neigh.vecs = self.vecs.copy()
+        new_neigh.indices = self.indices.copy()
+        new_neigh._extended_positions = self._extended_positions
+        new_neigh._wrapped_indices = self._wrapped_indices
+        new_neigh._allow_ragged = self._allow_ragged
+        new_neigh._cell = self._cell
+        new_neigh._extended_indices = self._extended_indices
+        new_neigh.wrap_positions = self.wrap_positions
+        new_neigh._tree = self._tree
+        return new_neigh
 
     def _get_max_length(self):
         if (self.distances is None
@@ -114,7 +149,7 @@ class Tree:
         allow_ragged=False,
         num_neighbors=None,
         cutoff_radius=np.inf,
-        width_buffer=1.5,
+        width_buffer=1.2,
     ):
         if positions is None:
             if allow_ragged==self.allow_ragged:
@@ -157,7 +192,7 @@ class Tree:
         allow_ragged=False,
         num_neighbors=None,
         cutoff_radius=np.inf,
-        width_buffer=1.5,
+        width_buffer=1.2,
     ):
         """
         Get current indices or neighbor indices for given positions
@@ -190,7 +225,7 @@ class Tree:
         allow_ragged=False,
         num_neighbors=None,
         cutoff_radius=np.inf,
-        width_buffer=1.5,
+        width_buffer=1.2,
     ):
         """
         Get current distances or neighbor distances for given positions
@@ -223,7 +258,7 @@ class Tree:
         allow_ragged=False,
         num_neighbors=None,
         cutoff_radius=np.inf,
-        width_buffer=1.5,
+        width_buffer=1.2,
     ):
         """
         Get current vectors or neighbor vectors for given positions
@@ -258,7 +293,7 @@ class Tree:
         cutoff_radius=np.inf,
         distances=None,
         indices=None,
-        width_buffer=1.5,
+        width_buffer=1.2,
     ):
         if positions is not None:
             if distances is None or indices is None:
@@ -314,7 +349,7 @@ class Tree:
         Args:
             num_neighbors (int): number of neighbors
             width_buffer (float): width of the layer to be added to account for pbc.
-            cutoff_radius (float): self-explanatory
+            cutoff_radius (float): cutoff radius
 
         Returns:
             Width of layer required for the given number of atoms
@@ -334,6 +369,39 @@ class Tree:
         cutoff_radius = width_buffer*width**(1/np.sum(pbc))
         return cutoff_radius
 
+    def get_neighborhood(
+        self,
+        positions,
+        num_neighbors=12,
+        t_vec=True,
+        cutoff_radius=np.inf,
+        width_buffer=1.2,
+    ):
+        """
+
+        Args:
+            position: Position in a box whose neighborhood information is analysed
+            num_neighbors (int): Number of nearest neighbors
+            t_vec (bool): True: compute distance vectors (pbc are taken into account)
+            cutoff_radius (float): Upper bound of the distance to which the search is to be done
+            width_buffer (float): Width of the layer to be added to account for pbc.
+
+        Returns:
+
+            pyiron.atomistics.structure.atoms.Tree: Neighbors instances with the neighbor indices,
+                distances and vectors
+
+        """
+        new_neigh = self.copy()
+        return new_neigh._get_neighborhood(
+            positions=positions,
+            num_neighbors=num_neighbors,
+            t_vec=t_vec,
+            cutoff_radius=cutoff_radius,
+            exclude_self=True,
+            width_buffer=width_buffer,
+        )
+
     def _get_neighborhood(
         self,
         positions,
@@ -341,11 +409,8 @@ class Tree:
         t_vec=True,
         cutoff_radius=np.inf,
         exclude_self=False,
-        pbc_and_rectangular=False,
-        width_buffer=1.5,
+        width_buffer=1.2,
     ):
-        if pbc_and_rectangular:
-            self._cell = self._ref_structure.cell.diagonal()
         start_column = 0
         if exclude_self:
             start_column = 1
@@ -377,6 +442,28 @@ class Tree:
 class Neighbors(Tree):
     """
     Class for storage of the neighbor information for a given atom based on the KDtree algorithm
+
+    Main attributes (do not modify them):
+
+    - distances (numpy.ndarray/list): Distances to the neighbors of all atoms
+    - indices (numpy.ndarray/list): Indices of the neighbors of all atoms
+    - vecs (numpy.ndarray/list): Vectors to the neighbors of all atoms
+
+    Auxiliary attributes:
+
+    - allow_ragged (bool): Whether to allow a ragged list of numpy arrays or not. This is relevant
+        only if the cutoff length was specified, in which case the number of atoms for each
+        position could differ.
+    - wrap_positions (bool): Whether to wrap back the positions entered by user in get_neighborhood
+        etc. Since the information outside the original box is limited to a few layer,
+        wrap_positions=False might miss some points without issuing an error.
+
+    Furthermore, you can re-employ the original tree structure to get neighborhood information via
+    get_indices, get_vectors, get_distances and get_neighborhood. The information delivered by
+    get_neighborhood is the same as what can be obtained through the other three getters (except
+    for the fact that get_neighborhood returns a Tree instance, while the others return numpy
+    arrays), but since get_vectors anyway has to call get_distances and get_indices internally, the
+    computational cost of get_neighborhood and get_vectors is the same.
     """
 
     def __init__(self, ref_structure, tolerance=2):
@@ -392,21 +479,6 @@ class Neighbors(Tree):
             Returns the cell numbers of each atom according to the distances
         """
         return self.get_local_shells(tolerance=self._tolerance)
-
-    def update_vectors(self):
-        """
-            Update vecs and distances with the same indices
-        """
-        if np.max(np.absolute(self.vecs)) > 0.49*np.min(np.linalg.norm(self._ref_structure.cell, axis=-1)):
-            raise AssertionError(
-                'Largest distance value is larger than half the box -> rerun get_neighbors'
-            )
-        myself = np.ones_like(self.indices)*np.arange(len(self.indices))[:, np.newaxis]
-        vecs = self._ref_structure.get_distances(
-            myself.flatten(), self.indices.flatten(), mic=np.all(self._ref_structure.pbc), vector=True
-        )
-        self.vecs = vecs.reshape(self.vecs.shape)
-        self.distances = np.linalg.norm(self.vecs, axis=-1)
 
     def get_local_shells(self, tolerance=None, cluster_by_distances=False, cluster_by_vecs=False):
         """

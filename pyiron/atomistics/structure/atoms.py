@@ -1235,7 +1235,6 @@ class Atoms(ASEAtoms):
             num_neighbors=None,
             id_list=None,
             width_buffer=1.2,
-            num_neighbors_estimate_buffer=1.0,
     ):
         """
         Function to compute the maximum number of neighbors in a sphere around each atom.
@@ -1244,14 +1243,11 @@ class Atoms(ASEAtoms):
             num_neighbors (int/None): maximum number of neighbors found
             id_list (list): list of atoms the neighbors are to be looked for
             width_buffer (float): width of the layer to be added to account for pbc.
-            num_neighbors_estimate_buffer (float): Extra volume taken into account for the num_neighbors estimation
 
         Returns:
             (np.ndarray) : for each atom the number of neighbors found in the sphere of radius
                            cutoff_radius (<= num_neighbors if specified)
         """
-        if num_neighbors_estimate_buffer < 0:
-            raise ValueError('num_neighbors_estimate_buffer must not be negative')
         if num_neighbors is not None:
             neigh = self._get_neighbors(
                 num_neighbors=num_neighbors,
@@ -1265,7 +1261,7 @@ class Atoms(ASEAtoms):
             volume_per_atom = self.get_volume(per_atom=True)
             if id_list is not None:
                 volume_per_atom = self.get_volume() / len(id_list)
-            num_neighbors = int((1 + num_neighbors_estimate_buffer) *
+            num_neighbors = int((1 + width_buffer) *
                                 4. / 3. * np.pi * cutoff_radius ** 3 / volume_per_atom)
             num_neighbors_old = num_neighbors - 1
             while num_neighbors_old < num_neighbors:
@@ -1291,7 +1287,6 @@ class Atoms(ASEAtoms):
         tolerance=2,
         id_list=None,
         width_buffer=1.2,
-        num_neighbors_estimate_buffer=1.0,
         allow_ragged=True,
     ):
         """
@@ -1304,7 +1299,6 @@ class Atoms(ASEAtoms):
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list (list): list of atoms the neighbors are to be looked for
             width_buffer (float): width of the layer to be added to account for pbc.
-            num_neighbors_estimate_buffer (float): Extra volume taken into account for the num_neighbors estimation
         Returns:
 
             pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor indices, distances
@@ -1318,7 +1312,6 @@ class Atoms(ASEAtoms):
             tolerance=tolerance,
             id_list=id_list,
             width_buffer=width_buffer,
-            num_neighbors_estimate_buffer=num_neighbors_estimate_buffer,
             allow_ragged=allow_ragged,
         )
 
@@ -1330,7 +1323,6 @@ class Atoms(ASEAtoms):
         id_list=None,
         cutoff_radius=np.inf,
         width_buffer=1.2,
-        num_neighbors_estimate_buffer=1.0,
         allow_ragged=False,
     ):
         """
@@ -1350,8 +1342,6 @@ class Atoms(ASEAtoms):
             and vectors
 
         """
-        if num_neighbors_estimate_buffer < 0:
-            raise ValueError('num_neighbors_estimate_buffer must not be negative')
         neigh = self._get_neighbors(
             num_neighbors=num_neighbors,
             t_vec=t_vec,
@@ -1390,7 +1380,8 @@ class Atoms(ASEAtoms):
                 indices, distances and vectors
 
         """
-        boxsize = None
+        if width_buffer<0:
+            raise ValueError('width_buffer must be a positive float')
         if get_tree:
             neigh = Tree(ref_structure=self)
         else:
@@ -1404,16 +1395,15 @@ class Atoms(ASEAtoms):
                 and np.isclose(np.linalg.norm(self.cell-np.eye(3)*self.cell.diagonal()), 0)
                 and np.all(self.pbc)
                 and cutoff_radius==np.inf):
-            boxsize = self.cell.diagonal()
+            neigh._cell = self.cell.diagonal()
             extended_positions = self.get_extended_positions(0, return_indices=False).copy()
-            extended_positions -= boxsize*np.floor(extended_positions/boxsize)
+            extended_positions -= neigh._cell*np.floor(extended_positions/neigh._cell)
         else:
-            extended_positions, wrapped_indices = self.get_extended_positions(
+            extended_positions, neigh._wrapped_indices = self.get_extended_positions(
                 width, return_indices=True
             )
             neigh._extended_positions = extended_positions
-            neigh._wrapped_indices = wrapped_indices
-        neigh._tree = cKDTree(extended_positions, boxsize=boxsize)
+        neigh._tree = cKDTree(extended_positions, boxsize=neigh._cell)
         if get_tree:
             return neigh
         positions = self.positions
@@ -1425,7 +1415,6 @@ class Atoms(ASEAtoms):
             t_vec=t_vec,
             cutoff_radius=cutoff_radius,
             exclude_self=True,
-            pbc_and_rectangular=(boxsize is not None),
             width_buffer=width_buffer,
         )
         if neigh._check_width(width=width, pbc=self.pbc):
@@ -1444,18 +1433,16 @@ class Atoms(ASEAtoms):
         """
 
         Args:
-            position: position in a box whose neighborhood information is analysed
-            num_neighbors:
-            t_vec (bool): True: compute distance vectors
-                        (pbc are automatically taken into account)
-            id_list (list): list of atoms the neighbors are to be looked for
-            cutoff_radius (float): Upper bound of the distance to which the search must be done
-            width_buffer (float): width of the layer to be added to account for pbc.
+            position: Position in a box whose neighborhood information is analysed
+            num_neighbors (int): Number of nearest neighbors
+            t_vec (bool): True: compute distance vectors (pbc are taken into account)
+            cutoff_radius (float): Upper bound of the distance to which the search is to be done
+            width_buffer (float): Width of the layer to be added to account for pbc.
 
         Returns:
 
-            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor
-                indices, distances and vectors
+            pyiron.atomistics.structure.atoms.Tree: Neighbors instances with the neighbor indices,
+                distances and vectors
 
         """
 
