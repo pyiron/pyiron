@@ -39,7 +39,7 @@ class TestPhonopy(unittest.TestCase):
         job.structure.set_repeat(rep)
         job.set_force_constants(1)
         # phono.run() # removed because somehow it's extremely slow
-        
+
     def test_non_static_ref_job(self):
         structure = CrystalStructure(
             element="Al", bravais_basis="fcc", lattice_constant=4.5
