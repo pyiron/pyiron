@@ -40,6 +40,18 @@ class TestPhonopy(unittest.TestCase):
         job.set_force_constants(1)
         # phono.run() # removed because somehow it's extremely slow
 
+    def test_non_static_ref_job(self):
+        structure = CrystalStructure(
+            element="Al", bravais_basis="fcc", lattice_constant=4.5
+        )
+        phon_ref_job = self.project.create_job('Lammps', 'ref_job')
+        phon_ref_job.structure = structure
+        phon_ref_job.potential = phon_ref_job.list_potentials()[0]
+        phon_ref_job.calc_minimize()
+        phonopy_job = self.project.create_job("PhonopyJob",'phonopy_job')
+        phonopy_job.ref_job = phon_ref_job
+        with self.assertRaises(ValueError):
+            phonopy_job.validate_ready_to_run()
 
 if __name__ == "__main__":
     unittest.main()
