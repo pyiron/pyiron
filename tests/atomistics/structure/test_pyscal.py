@@ -92,6 +92,7 @@ class Testpyscalatoms(unittest.TestCase):
         self.assertTrue(all([np.isclose(v, 0.0) for v in self.al_fcc.analyse_pyscal_centro_symmetry()]))
         self.assertTrue(all([np.isclose(v, 6.177675) for v in self.fe_bcc.analyse_pyscal_centro_symmetry()]))
         self.assertTrue(all([np.isclose(v, 8.7025) for v in self.ti_hcp.analyse_pyscal_centro_symmetry()]))
+        print(self.si_dia.analyse_pyscal_centro_symmetry())
         self.assertTrue(all([
             np.isclose(v, 22.113675) or np.isclose(v, 16.58525625)
             for v in self.si_dia.analyse_pyscal_centro_symmetry()
