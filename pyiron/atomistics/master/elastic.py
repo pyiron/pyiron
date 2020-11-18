@@ -110,9 +110,11 @@ def _fit_coeffs_with_energies(
 
 def _get_linear_dependent_indices(strain_lst):
     """
+
     This function returns an array of booleans, which shows linearly dependent
     strain matrices. Strain matrices which have True along axis=0 are linearly
     dependent. Axis=1 should contain the total number of strain matrices.
+
     """
     s = np.array(strain_lst).reshape(-1, 9)
     norm = np.linalg.norm(s, axis=-1)
@@ -355,6 +357,12 @@ class ElasticTensor(AtomisticParallelMaster):
     sampling more rotations.
     """
     def __init__(self, project, job_name):
+        """
+
+        Args:
+            project: project
+            job_name: job_name
+        """
         super().__init__(project, job_name)
         self.__name__ = "ElasticTensor"
         self.__version__ = "0.1.0"
