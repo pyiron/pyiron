@@ -114,6 +114,9 @@ class Project(ProjectCore):
         )
         self.job_type = JobTypeChoice()
         self.object_type = ObjectTypeChoice()
+        self._creator = Creator(self)
+        # TODO: instead of re-initialzing, auto-update pyiron_base creator with factories, like we update job class
+        #  creation
 
     def create_job(self, job_type, job_name, delete_existing_job=False):
         """
