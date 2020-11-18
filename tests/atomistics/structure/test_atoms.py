@@ -1290,19 +1290,19 @@ class TestAtoms(unittest.TestCase):
             basis_1 += basis_2
             self.assertEqual(len(w), 1)
         a_0 = 2.86
-        structure = self.struct_factory.structure('Fe', 'bcc', a_0)
+        structure = self.struct_factory.crystal('Fe', 'bcc', a_0)
         carbon = Atoms(symbols=['C'], positions=[[0, 0, 0.5 * a_0]])
         structure += carbon
         self.assertEqual(carbon.indices[0], 0)
 
     def test_append(self):
         a_0 = 2.86
-        structure = self.struct_factory.structure('Fe', 'bcc', a_0)
+        structure = self.struct_factory.crystal('Fe', 'bcc', a_0)
         carbon = Atoms(symbols=['C'], positions=[[0, 0, 0.5 * a_0]], pbc=True)
         with warnings.catch_warnings(record=True) as w:
             structure.append(carbon)
             self.assertEqual(len(w), 0)
-            structure = self.struct_factory.structure('Fe', 'bcc', a_0)
+            structure = self.struct_factory.crystal('Fe', 'bcc', a_0)
             carbon.cell = np.random.rand(3)
             structure.append(carbon)
             self.assertEqual(len(w), 1)

@@ -151,7 +151,7 @@ class StructureFactory:
         return ase_to_pyiron(surface)
 
     @staticmethod
-    def structure(element, bravais_basis, lattice_constant):
+    def crystal(element, bravais_basis, lattice_constant):
         """
         Create a crystal structure using pyiron's native crystal structure generator
 

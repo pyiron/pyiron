@@ -479,8 +479,8 @@ class Project(ProjectCore):
         #     "Project.create_structure is deprecated as of v0.3. Please use Project.create.structure.structure.",
         #     DeprecationWarning
         # )
-        return self.create.structure.structure(element=element, bravais_basis=bravais_basis,
-                                               lattice_constant=lattice_constant)
+        return self.create.structure.crystal(element=element, bravais_basis=bravais_basis,
+                                             lattice_constant=lattice_constant)
 
     def create_surface(
             self, element, surface_type, size=(1, 1, 1), vacuum=1.0, center=False, pbc=None, **kwargs
