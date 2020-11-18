@@ -52,6 +52,7 @@ class StructureFactory:
         """
         Returns a ASE's read result, wrapped as a `pyiron.atomstic.structure.atoms.Atoms` object.
 
+        ase.io.read docstring:
         """
         return ase_to_pyiron(read(*args, **kwargs))
     ase_read.__doc__ += read.__doc__
