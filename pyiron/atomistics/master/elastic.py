@@ -11,7 +11,6 @@ from pyiron_base import JobGenerator
 from sklearn.linear_model import LinearRegression
 from collections import defaultdict
 import warnings
-import itertools
 
 __author__ = "Sam Waseda"
 __copyright__ = (
@@ -166,7 +165,7 @@ def _get_higher_order_strains(
         E /= np.linalg.norm(E)
         # Take inner product (Instead of taking the inner product, it is also
         # possible to take the magnitude of each strain, in which case there
-        # must be a well defined convention on the sign so that the odd 
+        # must be a well defined convention on the sign so that the odd
         # exponent terms can take asymmetry around strain=0 into account).
         E = np.sum((E*strain_lst[ind]).reshape(-1, 9), axis=-1)
         # Take polynomial development
@@ -321,7 +320,7 @@ class ElasticTensor(AtomisticParallelMaster):
 
         min_num_measurements (int): Minimum number of measurements/simulations
             to be launched
-        min_num_points (int): Minimum number of data points to fit data 
+        min_num_points (int): Minimum number of data points to fit data
             (number of measurements times number of symmetry operations)
         polynomial_order (int): Polynomial order to use (default: 2)
         additional_points (int): Additional points for linearly dependent
@@ -377,7 +376,7 @@ class ElasticTensor(AtomisticParallelMaster):
              + ' polynomial_order=2'
         )
         self.input['strain_matrices'] = (
-            [], 
+            [],
             'List of strain matrices (generated automatically if not set)'
         )
         self.input['use_symmetry'] = (True, 'Whether to consider box symmetries')
@@ -463,7 +462,7 @@ class ElasticTensor(AtomisticParallelMaster):
                 if key in job["output/generic"].list_nodes():
                     output_data[key] = job["output/generic/{}".format(key)]
         else:
-            job_lst = [self.project_hdf5.inspect(job_id) for job_id in self.child_ids]
+            job_list = [self.project_hdf5.inspect(job_id) for job_id in self.child_ids]
             output_data['id'] = self.child_ids
             for key in ['energy_tot', 'energy_pot', 'pressures', 'volume']:
                 if all(key in job["output/generic"].list_nodes() for job in job_list):
