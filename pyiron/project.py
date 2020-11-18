@@ -5,7 +5,7 @@
 from __future__ import print_function
 import os
 import posixpath
-import warnings
+# import warnings
 from string import punctuation
 from shutil import copyfile
 from pyiron_base import Settings, ProjectHDFio, JobType, JobTypeChoice, Project as ProjectCore, Creator as CreatorCore
