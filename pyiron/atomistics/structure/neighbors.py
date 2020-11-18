@@ -6,6 +6,7 @@ import numpy as np
 from sklearn.cluster import MeanShift
 from scipy.sparse import coo_matrix
 from pyiron_base import Settings
+import warnings
 
 __author__ = "Joerg Neugebauer, Sam Waseda"
 __copyright__ = (
@@ -20,22 +21,457 @@ __date__ = "Sep 1, 2017"
 
 s = Settings()
 
-
-class Neighbors(object):
+class Tree:
     """
-    Class for storage of the neighbor information for a given atom based on the KDtree algorithm
-    """
+    Class to get tree structure for the neighborhood information.
 
-    def __init__(self, ref_structure, tolerance=2):
+    Main attributes (do not modify them):
+
+    - distances (numpy.ndarray/list): Distances to the neighbors of given positions
+    - indices (numpy.ndarray/list): Indices of the neighbors of given positions
+    - vecs (numpy.ndarray/list): Vectors to the neighbors of given positions
+
+    Auxiliary attributes:
+
+    - allow_ragged (bool): Whether to allow a ragged list of numpy arrays or not. This is relevant
+        only if the cutoff length was specified, in which case the number of atoms for each
+        position could differ.
+    - wrap_positions (bool): Whether to wrap back the positions entered by user in get_neighborhood
+        etc. Since the information outside the original box is limited to a few layer,
+        wrap_positions=False might miss some points without issuing an error.
+
+    Furthermore, you can re-employ the original tree structure to get neighborhood information via
+    get_indices, get_vectors, get_distances and get_neighborhood. The information delivered by
+    get_neighborhood is the same as what can be obtained through the other three getters (except
+    for the fact that get_neighborhood returns a Tree instance, while the others return numpy
+    arrays), but since get_vectors anyway has to call get_distances and get_indices internally, the
+    computational cost of get_neighborhood and get_vectors is the same.
+
+    """
+    def __init__(self, ref_structure):
         self.distances = None
         self.vecs = None
         self.indices = None
+        self._extended_positions = None
+        self._wrapped_indices = None
+        self._allow_ragged = False
+        self._cell = None
+        self._extended_indices = None
+        self._ref_structure = ref_structure.copy()
+        self.wrap_positions = False
+        self._tree = None
+
+    def copy(self):
+        new_neigh = Tree(self._ref_structure)
+        new_neigh.distances = self.distances.copy()
+        new_neigh.vecs = self.vecs.copy()
+        new_neigh.indices = self.indices.copy()
+        new_neigh._extended_positions = self._extended_positions
+        new_neigh._wrapped_indices = self._wrapped_indices
+        new_neigh._allow_ragged = self._allow_ragged
+        new_neigh._cell = self._cell
+        new_neigh._extended_indices = self._extended_indices
+        new_neigh.wrap_positions = self.wrap_positions
+        new_neigh._tree = self._tree
+        return new_neigh
+
+    def _get_max_length(self):
+        if (self.distances is None
+            or len(self.distances)==0
+            or not hasattr(self.distances[0], '__len__')):
+            return None
+        return max(len(dd[dd<np.inf]) for dd in self.distances)
+
+    def _fill(self, value, filler=np.inf):
+        max_length = self._get_max_length()
+        if max_length is None:
+            return value
+        arr = np.zeros((len(value), max_length)+value[0].shape[1:], dtype=type(filler))
+        arr.fill(filler)
+        for ii, vv in enumerate(value):
+            arr[ii,:len(vv)] = vv
+        return arr
+
+    def _contract(self, value):
+        if self._get_max_length() is None:
+            return value
+        return [vv[:np.sum(dist<np.inf)] for vv, dist in zip(value, self.distances)]
+
+    @property
+    def allow_ragged(self):
+        """
+        Whether to allow ragged list of distancs/vectors/indices or fill empty slots with numpy.inf
+        to get rectangular arrays
+        """
+        return self._allow_ragged
+
+    @allow_ragged.setter
+    def allow_ragged(self, new_bool):
+        if not isinstance(new_bool, bool):
+            raise ValueError('allow_ragged must be a boolean')
+        if self._allow_ragged == new_bool:
+            return
+        self._allow_ragged = new_bool
+        if new_bool:
+            self.distances = self._contract(self.distances)
+            if self.vecs is not None:
+                self.vecs = self._contract(self.vecs)
+            self.indices = self._contract(self.indices)
+        else:
+            self.distances = self._fill(self.distances)
+            self.indices = self._fill(self.indices, filler=len(self._ref_structure))
+            if self.vecs is not None:
+                self.vecs = self._fill(self.vecs)
+
+    def _get_extended_positions(self):
+        if self._extended_positions is None:
+            return self._ref_structure.positions
+        return self._extended_positions
+
+    def _get_wrapped_indices(self):
+        if self._wrapped_indices is None:
+            return np.arange(len(self._ref_structure.positions))
+        return self._wrapped_indices
+
+    def _get_wrapped_positions(self, positions):
+        if not self.wrap_positions:
+            return np.asarray(positions)
+        x = np.array(positions).copy()
+        cell = self._ref_structure.cell
+        x_scale = np.dot(x, np.linalg.inv(cell))+1.0e-12
+        x[...,self._ref_structure.pbc] -= np.dot(np.floor(x_scale),
+                                                 cell)[...,self._ref_structure.pbc]
+        return x
+
+    def _get_distances_and_indices(
+        self,
+        positions=None,
+        allow_ragged=False,
+        num_neighbors=12,
+        cutoff_radius=np.inf,
+        width_buffer=1.2,
+    ):
+        if positions is None:
+            if allow_ragged==self.allow_ragged:
+                return self.distances, self.indices
+            if allow_ragged:
+                return (self._contract(self.distances),
+                        self._contract(self.indices))
+            return (self._fill(self.distances),
+                    self._fill(self.indices, filler=len(self._ref_structure)))
+        num_neighbors = self._estimate_num_neighbors(
+            num_neighbors=num_neighbors,
+            cutoff_radius=cutoff_radius,
+            width_buffer=width_buffer,
+        )
+        if len(self._get_extended_positions()) < num_neighbors and cutoff_radius==np.inf:
+            raise ValueError(
+                'num_neighbors too large - make width_buffer larger and/or make '
+                + 'num_neighbors smaller'
+            )
+        distances, indices = self._tree.query(
+            self._get_wrapped_positions(positions),
+            k=num_neighbors,
+            distance_upper_bound=cutoff_radius
+        )
+        if cutoff_radius<np.inf and np.any(distances.T[-1]<np.inf):
+            warnings.warn(
+                'Number of neighbors found within the cutoff_radius is equal to (estimated) '
+                + 'num_neighbors. Increase num_neighbors (or set it to None) or '
+                + 'width_buffer to find all neighbors within cutoff_radius.'
+            )
+        self._extended_indices = indices.copy()
+        indices[distances<np.inf] = self._get_wrapped_indices()[indices[distances<np.inf]]
+        if allow_ragged:
+            return self._contract(distances), self._contract(indices)
+        return distances, indices
+
+    def get_indices(
+        self,
+        positions=None,
+        allow_ragged=False,
+        num_neighbors=12,
+        cutoff_radius=np.inf,
+        width_buffer=1.2,
+    ):
+        """
+        Get current indices or neighbor indices for given positions
+
+        Args:
+            positions (list/numpy.ndarray/None): Positions around which neighborhood vectors
+                are to be computed (None to get current vectors)
+            allow_ragged (bool): Whether to allow ragged list of arrays or rectangular
+                numpy.ndarray filled with np.inf for values outside cutoff_radius
+            num_neighbors (int/None): Number of neighboring atoms to calculate vectors for
+                (estimated if None)
+            cutoff_radius (float): cutoff radius
+            width_buffer (float): Buffer length for the estimation of num_neighbors
+
+        Returns:
+            (list/numpy.ndarray) list (if allow_ragged=True) or numpy.ndarray (otherwise) of
+                neighbor indices
+        """
+        return self._get_distances_and_indices(
+            positions=positions,
+            allow_ragged=allow_ragged,
+            num_neighbors=num_neighbors,
+            cutoff_radius=cutoff_radius,
+            width_buffer=width_buffer,
+        )[1]
+
+    def get_distances(
+        self,
+        positions=None,
+        allow_ragged=False,
+        num_neighbors=12,
+        cutoff_radius=np.inf,
+        width_buffer=1.2,
+    ):
+        """
+        Get current distances or neighbor distances for given positions
+
+        Args:
+            positions (list/numpy.ndarray/None): Positions around which neighborhood vectors
+                are to be computed (None to get current vectors)
+            allow_ragged (bool): Whether to allow ragged list of arrays or rectangular
+                numpy.ndarray filled with np.inf for values outside cutoff_radius
+            num_neighbors (int/None): Number of neighboring atoms to calculate vectors for
+                (estimated if None)
+            cutoff_radius (float): cutoff radius
+            width_buffer (float): Buffer length for the estimation of num_neighbors
+
+        Returns:
+            (list/numpy.ndarray) list (if allow_ragged=True) or numpy.ndarray (otherwise) of
+                neighbor distances
+        """
+        return self._get_distances_and_indices(
+            positions=positions,
+            allow_ragged=allow_ragged,
+            num_neighbors=num_neighbors,
+            cutoff_radius=cutoff_radius,
+            width_buffer=width_buffer,
+        )[0]
+
+    def get_vectors(
+        self,
+        positions=None,
+        allow_ragged=False,
+        num_neighbors=12,
+        cutoff_radius=np.inf,
+        width_buffer=1.2,
+    ):
+        """
+        Get current vectors or neighbor vectors for given positions
+
+        Args:
+            positions (list/numpy.ndarray/None): Positions around which neighborhood vectors
+                are to be computed (None to get current vectors)
+            allow_ragged (bool): Whether to allow ragged list of arrays or rectangular
+                numpy.ndarray filled with np.inf for values outside cutoff_radius
+            num_neighbors (int/None): Number of neighboring atoms to calculate vectors for
+                (estimated if None)
+            cutoff_radius (float): cutoff radius
+            width_buffer (float): Buffer length for the estimation of num_neighbors
+
+        Returns:
+            (list/numpy.ndarray) list (if allow_ragged=True) or numpy.ndarray (otherwise) of
+                neighbor vectors
+        """
+        return self._get_vectors(
+            positions=positions,
+            allow_ragged=allow_ragged,
+            num_neighbors=num_neighbors,
+            cutoff_radius=cutoff_radius,
+            width_buffer=width_buffer,
+        )
+
+    def _get_vectors(
+        self,
+        positions=None,
+        allow_ragged=False,
+        num_neighbors=12,
+        cutoff_radius=np.inf,
+        distances=None,
+        indices=None,
+        width_buffer=1.2,
+    ):
+        if positions is not None:
+            if distances is None or indices is None:
+                distances, indices = self._get_distances_and_indices(
+                    positions=positions,
+                    allow_ragged=False,
+                    num_neighbors=num_neighbors,
+                    cutoff_radius=cutoff_radius,
+                    width_buffer=width_buffer,
+                )
+            vectors = np.zeros(distances.shape+(3,))
+            vectors -= self._get_wrapped_positions(positions).reshape(distances.shape[:-1]+(1, 3))
+            vectors[distances<np.inf] += self._get_extended_positions()[
+                self._extended_indices[distances<np.inf]
+            ]
+            vectors[distances==np.inf] = np.array(3*[np.inf])
+            if self._cell is not None:
+                vectors[distances<np.inf] -= self._cell*np.rint(vectors[distances<np.inf]/self._cell)
+        elif self.vecs is not None:
+            vectors = self.vecs
+        else:
+            raise AssertionError(
+                'vectors not created yet -> put positions or reinitialize with t_vec=True'
+            )
+        if allow_ragged==self.allow_ragged:
+            return vectors
+        if allow_ragged:
+            return self._contract(vectors)
+        return self._fill(vectors)
+
+    def _estimate_num_neighbors(self, num_neighbors=None, cutoff_radius=np.inf, width_buffer=1.2):
+        """
+
+        Args:
+            num_neighbors (int): number of neighbors
+            width_buffer (float): width of the layer to be added to account for pbc.
+            cutoff_radius (float): self-explanatory
+
+        Returns:
+            Number of atoms required for a given cutoff
+
+        """
+        if num_neighbors is None and cutoff_radius==np.inf:
+            raise ValueError('Specify num_neighbors or cutoff_radius')
+        elif num_neighbors is None:
+            volume = self._ref_structure.get_volume(per_atom=True)
+            num_neighbors = max(14, int((1+width_buffer)*4./3.*np.pi*cutoff_radius**3/volume))
+        return num_neighbors
+
+    def _estimate_width(self, num_neighbors=None, cutoff_radius=np.inf, width_buffer=1.2):
+        """
+
+        Args:
+            num_neighbors (int): number of neighbors
+            width_buffer (float): width of the layer to be added to account for pbc.
+            cutoff_radius (float): cutoff radius
+
+        Returns:
+            Width of layer required for the given number of atoms
+
+        """
+        if all(self._ref_structure.pbc==False):
+            return 0
+        elif cutoff_radius!=np.inf:
+            return cutoff_radius
+        pbc = self._ref_structure.pbc
+        prefactor = [1, 1/np.pi, 4/(3*np.pi)]
+        prefactor = prefactor[sum(pbc)-1]
+        width = np.prod(
+            (np.linalg.norm(self._ref_structure.cell, axis=-1)-np.ones(3))*pbc+np.ones(3)
+        )
+        width *= prefactor*np.max([num_neighbors, 8])/len(self._ref_structure)
+        cutoff_radius = width_buffer*width**(1/np.sum(pbc))
+        return cutoff_radius
+
+    def get_neighborhood(
+        self,
+        positions,
+        num_neighbors=12,
+        t_vec=True,
+        cutoff_radius=np.inf,
+        width_buffer=1.2,
+    ):
+        """
+
+        Args:
+            position: Position in a box whose neighborhood information is analysed
+            num_neighbors (int): Number of nearest neighbors
+            t_vec (bool): True: compute distance vectors (pbc are taken into account)
+            cutoff_radius (float): Upper bound of the distance to which the search is to be done
+            width_buffer (float): Width of the layer to be added to account for pbc.
+
+        Returns:
+
+            pyiron.atomistics.structure.atoms.Tree: Neighbors instances with the neighbor indices,
+                distances and vectors
+
+        """
+        new_neigh = self.copy()
+        return new_neigh._get_neighborhood(
+            positions=positions,
+            num_neighbors=num_neighbors,
+            t_vec=t_vec,
+            cutoff_radius=cutoff_radius,
+            exclude_self=False,
+            width_buffer=width_buffer,
+        )
+
+    def _get_neighborhood(
+        self,
+        positions,
+        num_neighbors=12,
+        t_vec=True,
+        cutoff_radius=np.inf,
+        exclude_self=False,
+        width_buffer=1.2,
+    ):
+        start_column = 0
+        if exclude_self:
+            start_column = 1
+            if num_neighbors is not None:
+                num_neighbors += 1
+        distances, indices = self._get_distances_and_indices(
+            positions,
+            num_neighbors=num_neighbors,
+            cutoff_radius=cutoff_radius,
+            width_buffer=width_buffer,
+        )
+        max_column = np.sum(distances<np.inf, axis=-1).max()
+        self.distances = distances[...,start_column:max_column]
+        self.indices = indices[...,start_column:max_column]
+        self._extended_indices = self._extended_indices[...,start_column:max_column]
+        if t_vec:
+            self.vecs = self._get_vectors(
+                positions=positions, distances=self.distances, indices=self._extended_indices
+            )
+        return self
+
+    def _check_width(self, width, pbc):
+        if any(pbc) and np.prod(self.distances.shape)>0 and self.vecs is not None:
+            if np.absolute(self.vecs[self.distances<np.inf][:,pbc]).max() > width:
+                return True
+        return False
+
+
+class Neighbors(Tree):
+    """
+    Class for storage of the neighbor information for a given atom based on the KDtree algorithm
+
+    Main attributes (do not modify them):
+
+    - distances (numpy.ndarray/list): Distances to the neighbors of all atoms
+    - indices (numpy.ndarray/list): Indices of the neighbors of all atoms
+    - vecs (numpy.ndarray/list): Vectors to the neighbors of all atoms
+
+    Auxiliary attributes:
+
+    - allow_ragged (bool): Whether to allow a ragged list of numpy arrays or not. This is relevant
+        only if the cutoff length was specified, in which case the number of atoms for each
+        position could differ.
+    - wrap_positions (bool): Whether to wrap back the positions entered by user in get_neighborhood
+        etc. Since the information outside the original box is limited to a few layer,
+        wrap_positions=False might miss some points without issuing an error.
+
+    Furthermore, you can re-employ the original tree structure to get neighborhood information via
+    get_indices, get_vectors, get_distances and get_neighborhood. The information delivered by
+    get_neighborhood is the same as what can be obtained through the other three getters (except
+    for the fact that get_neighborhood returns a Tree instance, while the others return numpy
+    arrays), but since get_vectors anyway has to call get_distances and get_indices internally, the
+    computational cost of get_neighborhood and get_vectors is the same.
+    """
+
+    def __init__(self, ref_structure, tolerance=2):
+        super().__init__(ref_structure=ref_structure)
         self._shells = None
         self._tolerance = tolerance
-        self._ref_structure = ref_structure
         self._cluster_vecs = None
         self._cluster_dist = None
-        self._boundary_layer_width = 0
 
     @property
     def shells(self):
@@ -43,19 +479,6 @@ class Neighbors(object):
             Returns the cell numbers of each atom according to the distances
         """
         return self.get_local_shells(tolerance=self._tolerance)
-
-    def update_vectors(self):
-        """
-            Update vecs and distances with the same indices
-        """
-        if np.max(np.absolute(self.vecs)) > 0.49*np.min(np.linalg.norm(self._ref_structure.cell, axis=-1)):
-            raise AssertionError('Largest distance value is larger than half the box -> rerun get_neighbors')
-        myself = np.ones_like(self.indices)*np.arange(len(self.indices))[:, np.newaxis]
-        vecs = self._ref_structure.get_distances(
-            myself.flatten(), self.indices.flatten(), mic=np.all(self._ref_structure.pbc), vector=True
-        )
-        self.vecs = vecs.reshape(self.vecs.shape)
-        self.distances = np.linalg.norm(self.vecs, axis=-1)
 
     def get_local_shells(self, tolerance=None, cluster_by_distances=False, cluster_by_vecs=False):
         """

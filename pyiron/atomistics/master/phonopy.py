@@ -393,3 +393,10 @@ class PhonopyJob(AtomisticParallelMaster):
         ax.set_ylabel("DOS")
         ax.set_title("Phonon DOS vs Energy")
         return ax
+
+    def validate_ready_to_run(self):
+        if self.ref_job._generic_input["calc_mode"] != "static":
+            raise ValueError("Phonopy reference jobs should be static calculations, but got {}".format(
+                self.ref_job._generic_input["calc_mode"]
+            ))
+        super().validate_ready_to_run()
