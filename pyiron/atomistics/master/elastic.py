@@ -427,8 +427,6 @@ class ElasticTensor(AtomisticParallelMaster):
         self.input['rotations'] = rotations.tolist()
 
     def _create_strain_matrices(self):
-        if self.input['use_symmetry'] and len(self.input['rotations'])==0:
-            self._get_rotation_matrices()
         self.input['strain_matrices'] = get_strain(
             max_strain=self.input['max_strain'],
             n_set=self._number_of_measurements,
@@ -441,6 +439,8 @@ class ElasticTensor(AtomisticParallelMaster):
         super().validate_ready_to_run()
         if len(self.input['strain_matrices'])==0:
             self._create_strain_matrices()
+        if self.input['use_symmetry'] and len(self.input['rotations'])==0:
+            self._get_rotation_matrices()
         if self.input['polynomial_order']<2:
             raise ValueError('Minimum polynomial order: 2')
         if (self.input['polynomial_order']==2
