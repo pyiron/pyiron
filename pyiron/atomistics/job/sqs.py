@@ -146,17 +146,41 @@ class SQSJob(AtomisticGenericJob):
         self.__name__ = "SQSJob"
         s.publication_add(self.publication)
 
-    def validate_ready_to_run(self):
-        super(SQSJob, self).validate_ready_to_run()
-        if len(self.input.mole_fractions)==0:
-            chem = np.unique(self.structure.get_chemical_symbols(), return_counts=True)
-            self.input.mole_fractions = dict(zip(chem[0], chem[1]/np.sum(chem[1])))
-        if len(self.input.mole_fractions)==1:
-            raise ValueError('There must be at least two chemical elements')
-
     @property
     def list_of_structures(self):
         return self._lst_of_struct
+
+    def validate_ready_to_run(self):
+        super(SQSJob, self).validate_ready_to_run()
+        if len(self.input.mole_fractions) == 0:
+            chem = np.unique(self.structure.get_chemical_symbols(), return_counts=True)
+            self.input.mole_fractions = dict(zip(chem[0], chem[1]/np.sum(chem[1])))
+        if len(self.input.mole_fractions) == 1:
+            raise ValueError('There must be at least two chemical elements')
+
+    def db_entry(self):
+        """
+        Generate the initial database entry
+
+        Returns:
+            (dict): db_dict
+        """
+        db_dict = super(SQSJob, self).db_entry()
+        if self.structure:
+            struct_len = len(self.structure)
+            mole_fractions = {
+                k: v for k, v in self.input.mole_fractions.items()
+            }
+            el_lst = sorted(mole_fractions.keys())
+            atom_number_lst = [
+                int(np.round(mole_fractions[el]*struct_len))
+                for el in el_lst
+            ]
+            db_dict["ChemicalFormula"] = "".join([
+                e + str(n)
+                for e, n in zip(el_lst, atom_number_lst)
+            ])
+        return db_dict
 
     def list_structures(self):
         if self.status.finished:

@@ -10,10 +10,9 @@ from collections import OrderedDict
 import numpy as np
 from six import string_types
 import warnings
-from matplotlib.colors import rgb2hex
 import seekpath
 from pyiron.atomistics.structure.atom import Atom, ase_to_pyiron as ase_to_pyiron_atom
-from pyiron.atomistics.structure.neighbors import Neighbors
+from pyiron.atomistics.structure.neighbors import Neighbors, Tree
 from pyiron.atomistics.structure._visualize import Visualize
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
 from pyiron.atomistics.structure.periodic_table import (
@@ -1006,39 +1005,125 @@ class Atoms(ASEAtoms):
         raise NotImplementedError("This function was removed!")
 
     def analyse_ovito_cna_adaptive(self, mode="total"):
+        warnings.warn(
+            "analyse_ovito_cna_adaptive() is available for backwards compatiblity, " +
+            "please use analyse_pyscal_cna_adaptive()",
+            DeprecationWarning
+        )
+        return self.analyse_pyscal_cna_adaptive(mode=mode, ovito_compatibility=True)
+
+    def analyse_ovito_centro_symmetry(self, num_neighbors=12):
+        warnings.warn(
+            "analyse_ovito_centro_symmetry() is available for backwards compatiblity, " +
+            "please use analyse_pyscal_centro_symmetry()",
+            DeprecationWarning
+        )
+        return self.analyse_pyscal_centro_symmetry(num_neighbors=num_neighbors)
+
+    def analyse_ovito_voronoi_volume(self):
+        warnings.warn(
+            "analyse_ovito_voronoi_volume() is available for backwards compatiblity, " +
+            "please use analyse_pyscal_voronoi_volume()",
+            DeprecationWarning
+        )
+        return self.analyse_pyscal_voronoi_volume()
+
+    def analyse_pyscal_steinhardt_parameter(self, neighbor_method="cutoff", cutoff=0, n_clusters=2,
+                                            q=(4, 6), averaged=False, clustering=True):
         """
-        Use Ovito's common neighbor analysis binding.
+        Calculate Steinhardts parameters
 
         Args:
-            mode ("total"/"numeric"/"str"): Controls the style and level of detail of the output. (Default is "total", only
-                return a summary of the values in the structure.)
+            job (job): pyiron job
+            neighbor_method (str) : can be ['cutoff', 'voronoi']
+            cutoff (float) : can be 0 for adaptive cutoff or any other value
+            n_clusters (int) : number of clusters for K means clustering
+            q (list) : can be from 2-12, the required q values to be calculated
+            averaged (bool) : If True, calculates the averaged versions of the parameter
+            clustering (bool) : If True, cluster based on the q values
+
+        Returns:
+            q (list) : calculated q parameters
+
+        """
+        from pyiron.atomistics.structure.pyscal import get_steinhardt_parameter_structure
+        return get_steinhardt_parameter_structure(
+            structure=self, neighbor_method=neighbor_method, cutoff=cutoff, n_clusters=n_clusters,
+            q=q, averaged=averaged, clustering=clustering
+        )
+
+    def analyse_pyscal_cna_adaptive(self, mode="total", ovito_compatibility=False):
+        """
+        Use common neighbor analysis
+
+        Args:
+            atoms (pyiron.structure.atoms.Atoms): The structure to analyze.
+            mode ("total"/"numeric"/"str"): Controls the style and level
+                of detail of the output.
+                - total : return number of atoms belonging to each structure
+                - numeric : return a per atom list of numbers- 0 for unknown,
+                    1 fcc, 2 hcp, 3 bcc and 4 icosa
+                - str : return a per atom string of sructures
+            ovito_compatibility(bool): use ovito compatiblity mode
 
         Returns:
             (depends on `mode`)
         """
-        from pyiron.atomistics.structure.ovito import analyse_ovito_cna_adaptive
-        return analyse_ovito_cna_adaptive(atoms=self, mode=mode)
+        from pyiron.atomistics.structure.pyscal import analyse_cna_adaptive
+        return analyse_cna_adaptive(atoms=self, mode=mode, ovito_compatibility=ovito_compatibility)
+    
+    def analyse_pyscal_centro_symmetry(self, num_neighbors=12):
+        """
+        Analyse centrosymmetry parameter
 
-    def analyse_ovito_centro_symmetry(atoms, num_neighbors=12):
-        from pyiron.atomistics.structure.ovito import analyse_ovito_centro_symmetry
-        return analyse_ovito_centro_symmetry(atoms, num_neighbors=num_neighbors)
+        Args:
+            atoms: Atoms object
+            num_neighbors (int) : number of neighbors
 
-    def analyse_ovito_voronoi_volume(atoms):
-        from pyiron.atomistics.structure.ovito import analyse_ovito_voronoi_volume
-        return analyse_ovito_voronoi_volume(atoms)
+        Returns:
+            csm (list) : list of centrosymmetry parameter
+        """
+        from pyiron.atomistics.structure.pyscal import analyse_centro_symmetry
+        return analyse_centro_symmetry(atoms=self, num_neighbors=num_neighbors)
 
-    def analyse_pyscal_steinhardt_parameter(atoms, cutoff=3.5, n_clusters=2, q=[4, 6]):
-        from pyiron.atomistics.structure.pyscal import get_steinhardt_parameter_structure
-        return get_steinhardt_parameter_structure(structure=atoms, cutoff=cutoff, n_clusters=n_clusters, q=q)
+    def analyse_pyscal_diamond_structure(self, mode="total", ovito_compatibility=False):
+        """
+        Analyse diamond structure
 
-    def analyse_phonopy_equivalent_atoms(atoms):
+        Args:
+            atoms: Atoms object
+            mode ("total"/"numeric"/"str"): Controls the style and level
+            of detail of the output.
+                - total : return number of atoms belonging to each structure
+                - numeric : return a per atom list of numbers- 0 for unknown,
+                    1 fcc, 2 hcp, 3 bcc and 4 icosa
+                - str : return a per atom string of sructures
+            ovito_compatibility(bool): use ovito compatiblity mode
+
+        Returns:
+            (depends on `mode`)
+        """
+        from pyiron.atomistics.structure.pyscal import analyse_diamond_structure
+        return analyse_diamond_structure(atoms=self, mode=mode, ovito_compatibility=ovito_compatibility)
+
+    def analyse_pyscal_voronoi_volume(self):
+        """
+        Calculate the Voronoi volume of atoms
+
+        Args:
+            atoms : (pyiron.structure.atoms.Atoms): The structure to analyze.
+        """
+        from pyiron.atomistics.structure.pyscal import analyse_voronoi_volume
+        return analyse_voronoi_volume(atoms=self)
+    
+    def analyse_phonopy_equivalent_atoms(self):
         from pyiron.atomistics.structure.phonopy import analyse_phonopy_equivalent_atoms
 
         # warnings.filterwarnings("ignore")
         warnings.warn(
             "analyse_phonopy_equivalent_atoms() is obsolete use get_symmetry()['equivalent_atoms'] instead"
         )
-        return analyse_phonopy_equivalent_atoms(atoms)
+        return analyse_phonopy_equivalent_atoms(atoms=self)
 
     def plot3d(
         self,
@@ -1124,8 +1209,14 @@ class Atoms(ASEAtoms):
         if width<0:
             raise ValueError('Invalid width')
         if width==0:
-            return self.positions, np.arange(len(self))
-        rep = 2*np.ceil(width/np.linalg.norm(self.cell, axis=-1)).astype(int)*self.pbc+1
+            if return_indices:
+                return self.positions, np.arange(len(self))
+            return self.positions
+        width /= np.linalg.det(self.cell)
+        width *= np.linalg.norm(
+            np.cross(np.roll(self.cell, -1, axis=0), np.roll(self.cell, 1, axis=0)), axis=-1
+        )
+        rep = 2*np.ceil(width).astype(int)*self.pbc+1
         rep = [np.arange(r)-int(r/2) for r in rep]
         meshgrid = np.meshgrid(rep[0], rep[1], rep[2])
         meshgrid = np.stack(meshgrid, axis=-1).reshape(-1, 3)
@@ -1135,7 +1226,7 @@ class Atoms(ASEAtoms):
         indices = np.tile(np.arange(len(self)), len(meshgrid))
         dist = v_repeated-np.sum(self.cell*0.5, axis=0)
         dist = np.absolute(np.einsum('ni,ij->nj', dist+1e-8, np.linalg.inv(self.cell)))-0.5
-        check_dist = np.all(dist-width/np.linalg.norm(self.cell, axis=-1)<0, axis=-1)
+        check_dist = np.all(dist-width<0, axis=-1)
         indices = indices[check_dist]%len(self)
         v_repeated = v_repeated[check_dist]
         if return_indices:
@@ -1147,8 +1238,7 @@ class Atoms(ASEAtoms):
             cutoff_radius=10,
             num_neighbors=None,
             id_list=None,
-            boundary_width_factor=1.2,
-            num_neighbors_estimate_buffer=1.0,
+            width_buffer=1.2,
     ):
         """
         Function to compute the maximum number of neighbors in a sphere around each atom.
@@ -1156,33 +1246,26 @@ class Atoms(ASEAtoms):
             cutoff_radius (float): Upper bound of the distance to which the search must be done
             num_neighbors (int/None): maximum number of neighbors found
             id_list (list): list of atoms the neighbors are to be looked for
-            boundary_width_factor (float): width of the layer to be added to account for pbc.
-            num_neighbors_estimate_buffer (float): Extra volume taken into account for the num_neighbors estimation
+            width_buffer (float): width of the layer to be added to account for pbc.
 
         Returns:
             (np.ndarray) : for each atom the number of neighbors found in the sphere of radius
                            cutoff_radius (<= num_neighbors if specified)
         """
-        if num_neighbors_estimate_buffer < 0:
-            raise ValueError('num_neighbors_estimate_buffer must not be negative')
         if num_neighbors is not None:
             neigh = self._get_neighbors(
                 num_neighbors=num_neighbors,
                 t_vec=False,
                 id_list=id_list,
                 cutoff_radius=cutoff_radius,
-                boundary_width_factor=boundary_width_factor,
+                width_buffer=width_buffer,
             )
-            if not np.all(neigh.distances.T[-1] == np.inf):
-                warnings.warn('The number of neighbors found within the cutoff_radius is equal to  ' +
-                              'num_neighbors. Increase num_neighbors to find all ' +
-                              'neighbors within the cutoff_radius.')
             num_neighbors_per_atom = np.sum(neigh.distances < np.inf, axis=-1)
         else:
             volume_per_atom = self.get_volume(per_atom=True)
             if id_list is not None:
                 volume_per_atom = self.get_volume() / len(id_list)
-            num_neighbors = int((1 + num_neighbors_estimate_buffer) *
+            num_neighbors = int((1 + width_buffer) *
                                 4. / 3. * np.pi * cutoff_radius ** 3 / volume_per_atom)
             num_neighbors_old = num_neighbors - 1
             while num_neighbors_old < num_neighbors:
@@ -1191,7 +1274,7 @@ class Atoms(ASEAtoms):
                     t_vec=False,
                     id_list=id_list,
                     cutoff_radius=cutoff_radius,
-                    boundary_width_factor=boundary_width_factor,
+                    width_buffer=width_buffer,
                 )
                 num_neighbors_old = num_neighbors
                 num_neighbors_per_atom = np.sum(neigh.distances < np.inf, axis=-1)
@@ -1207,8 +1290,8 @@ class Atoms(ASEAtoms):
         t_vec=True,
         tolerance=2,
         id_list=None,
-        boundary_width_factor=1.2,
-        num_neighbors_estimate_buffer=1.0,
+        width_buffer=1.2,
+        allow_ragged=True,
     ):
         """
 
@@ -1219,40 +1302,24 @@ class Atoms(ASEAtoms):
                         (pbc are automatically taken into account)
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list (list): list of atoms the neighbors are to be looked for
-            boundary_width_factor (float): width of the layer to be added to account for pbc.
-            num_neighbors_estimate_buffer (float): Extra volume taken into account for the num_neighbors estimation
+            width_buffer (float): width of the layer to be added to account for pbc.
+            allow_ragged (bool): Whether to allow ragged list of arrays or rectangular
+                numpy.ndarray filled with np.inf for values outside cutoff_radius
         Returns:
 
             pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor indices, distances
             and vectors
 
         """
-        if num_neighbors_estimate_buffer < 0:
-            raise ValueError('num_neighbors_estimate_buffer must not be negative')
-        if num_neighbors is None:
-            volume_per_atom = self.get_volume(per_atom=True)
-            if id_list is not None:
-                volume_per_atom = self.get_volume() / len(id_list)
-            num_neighbors = max(4, int((1 + num_neighbors_estimate_buffer) *
-                                       4. / 3. * np.pi * cutoff_radius ** 3 / volume_per_atom))
-
-        neigh = self._get_neighbors(
+        return self.get_neighbors(
+            cutoff_radius=cutoff_radius,
             num_neighbors=num_neighbors,
             t_vec=t_vec,
             tolerance=tolerance,
             id_list=id_list,
-            cutoff_radius=cutoff_radius,
-            boundary_width_factor=boundary_width_factor,
+            width_buffer=width_buffer,
+            allow_ragged=allow_ragged,
         )
-        if not np.all(neigh.distances.T[-1]==np.inf):
-            warnings.warn('The number of neighbors found within the cutoff_radius is equal to the (estimated) ' +
-                          'num_neighbors. Increase num_neighbors or num_neighbors_estimate_buffer to find all ' +
-                          'neighbors within the cutoff_radius.')
-        neigh.indices = [indices[dist<np.inf] for indices, dist in zip(neigh.indices, neigh.distances)]
-        if t_vec:
-            neigh.vecs = [vecs[dist<np.inf] for vecs, dist in zip(neigh.vecs, neigh.distances)]
-        neigh.distances = [dist[dist<np.inf] for dist in neigh.distances]
-        return neigh
 
     def get_neighbors(
         self,
@@ -1261,7 +1328,8 @@ class Atoms(ASEAtoms):
         tolerance=2,
         id_list=None,
         cutoff_radius=np.inf,
-        boundary_width_factor=1.2,
+        width_buffer=1.2,
+        allow_ragged=False,
     ):
         """
 
@@ -1272,7 +1340,9 @@ class Atoms(ASEAtoms):
             tolerance (int): tolerance (round decimal points) used for computing neighbor shells
             id_list (list): list of atoms the neighbors are to be looked for
             cutoff_radius (float): Upper bound of the distance to which the search must be done
-            boundary_width_factor (float): width of the layer to be added to account for pbc.
+            width_buffer (float): width of the layer to be added to account for pbc.
+            allow_ragged (bool): Whether to allow ragged list of arrays or rectangular
+                numpy.ndarray filled with np.inf for values outside cutoff_radius
 
         Returns:
 
@@ -1280,37 +1350,16 @@ class Atoms(ASEAtoms):
             and vectors
 
         """
-        if cutoff_radius != np.inf:
-            raise ValueError('cutoff_radius is deprecated in get_neighbors. Use get_neighbors_by_distance instead')
-        return self._get_neighbors(
+        neigh = self._get_neighbors(
             num_neighbors=num_neighbors,
             t_vec=t_vec,
             tolerance=tolerance,
             id_list=id_list,
-            boundary_width_factor=boundary_width_factor,
+            cutoff_radius=cutoff_radius,
+            width_buffer=width_buffer,
         )
-
-    def _get_boundary_layer_width(self, num_neighbors, boundary_width_factor=1.2, cutoff_radius=np.inf):
-        """
-
-        Args:
-            num_neighbors (int): number of neighbors
-            boundary_width_factor (float): width of the layer to be added to account for pbc.
-            cutoff_radius (float): self-explanatory
-
-        Returns:
-            Width of layre required for the given number of atoms
-
-        """
-        if all(self.pbc==False):
-            return 0
-        elif cutoff_radius!=np.inf:
-            return cutoff_radius
-        prefactor = [1, 1/np.pi, 4/(3*np.pi)]
-        prefactor = prefactor[sum(self.pbc)-1]
-        width = np.prod((np.linalg.norm(self.cell, axis=-1)-np.ones(3))*self.pbc+np.ones(3))
-        width *= prefactor*np.max([num_neighbors, 8])/len(self)
-        return boundary_width_factor*width**(1/np.sum(self.pbc))
+        neigh.allow_ragged = allow_ragged
+        return neigh
 
     def _get_neighbors(
         self,
@@ -1319,7 +1368,8 @@ class Atoms(ASEAtoms):
         tolerance=2,
         id_list=None,
         cutoff_radius=np.inf,
-        boundary_width_factor=1.2,
+        width_buffer=1.2,
+        get_tree=False,
     ):
         """
 
@@ -1328,118 +1378,100 @@ class Atoms(ASEAtoms):
             t_vec (bool): True: compute distance vectors
                         (pbc are automatically taken into account)
             id_list (list): list of atoms the neighbors are to be looked for
-            boundary_width_factor (float): width of the layer to be added to account for pbc.
+            width_buffer (float): width of the layer to be added to account for pbc.
             cutoff_radius (float): self-explanatory
+            allow_ragged (bool): Whether to allow ragged list of arrays or rectangular
+                numpy.ndarray filled with np.inf for values outside cutoff_radius
 
         Returns:
 
-            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor indices, distances
-            and vectors
+            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor
+                indices, distances and vectors
 
         """
-        if num_neighbors < 1:
-            raise ValueError('num_neighbors must be a positive integer')
-        boxsize = None
-        num_neighbors += 1
-        neighbor_obj = Neighbors(ref_structure=self, tolerance=tolerance)
-        width = self._get_boundary_layer_width(
+        if width_buffer<0:
+            raise ValueError('width_buffer must be a positive float')
+        if get_tree:
+            neigh = Tree(ref_structure=self)
+        else:
+            neigh = Neighbors(ref_structure=self, tolerance=tolerance)
+        width = neigh._estimate_width(
             num_neighbors=num_neighbors,
-            boundary_width_factor=boundary_width_factor,
-            cutoff_radius=cutoff_radius
+            cutoff_radius=cutoff_radius,
+            width_buffer=width_buffer,
         )
-        neighbor_obj._boundary_layer_width = width
         if (width<0.5*np.min(self.cell.diagonal())
                 and np.isclose(np.linalg.norm(self.cell-np.eye(3)*self.cell.diagonal()), 0)
                 and np.all(self.pbc)
                 and cutoff_radius==np.inf):
-            boxsize = self.cell.diagonal()
-            extended_positions, indices = self.get_extended_positions(0, return_indices=True)
-            extended_positions /= self.cell.diagonal()
-            extended_positions -= np.floor(extended_positions)
-            extended_positions *= self.cell.diagonal()
+            neigh._cell = self.cell.diagonal()
+            extended_positions = self.get_extended_positions(0, return_indices=False).copy()
+            extended_positions -= neigh._cell*np.floor(extended_positions/neigh._cell)
         else:
-            extended_positions, indices = self.get_extended_positions(width, return_indices=True)
-        if len(extended_positions) < num_neighbors and cutoff_radius==np.inf:
-            raise ValueError('num_neighbors too large - make boundary_width_factor larger and/or make num_neighbors smaller')
-        tree = cKDTree(extended_positions, boxsize=boxsize)
-        if id_list is None:
-            id_list = np.arange(len(self.positions))
-        positions = self.positions[np.array(id_list)]
-        neighbors = tree.query(
-            positions, k=num_neighbors, distance_upper_bound=cutoff_radius
+            extended_positions, neigh._wrapped_indices = self.get_extended_positions(
+                width, return_indices=True
+            )
+            neigh._extended_positions = extended_positions
+        neigh._tree = cKDTree(extended_positions, boxsize=neigh._cell)
+        if get_tree:
+            return neigh
+        positions = self.positions
+        if id_list is not None:
+            positions = positions[np.array(id_list)]
+        neigh._get_neighborhood(
+            positions=positions,
+            num_neighbors=num_neighbors,
+            t_vec=t_vec,
+            cutoff_radius=cutoff_radius,
+            exclude_self=True,
+            width_buffer=width_buffer,
         )
-        neighbor_obj.distances = neighbors[0][:,1:]
-        neighbor_obj.indices = np.append(indices, 0)[neighbors[1][:,1:]]
-        if t_vec:
-            x = np.append(extended_positions, np.zeros((1, 3)), axis=0)
-            neighbor_obj.vecs = x[neighbors[1][:,1:]]-self.positions[np.array(id_list),np.newaxis,:]
-            if boxsize is not None:
-                neighbor_obj.vecs /= self.cell.diagonal()
-                neighbor_obj.vecs = neighbor_obj.vecs-np.rint(neighbor_obj.vecs)
-                neighbor_obj.vecs *= self.cell.diagonal()
-            if any(self.pbc):
-                vecs = neighbor_obj.vecs.reshape(-1, 3)[neighbor_obj.distances.flatten() < np.inf]
-                if len(vecs) > 0:
-                    if np.absolute(vecs[:, self.pbc]).max() > width:
-                        warnings.warn('boundary_width_factor may have been too small - '
-                                      'most likely not all neighbors properly assigned')
-        return neighbor_obj
+        if neigh._check_width(width=width, pbc=self.pbc):
+            warnings.warn('width_buffer may have been too small - '
+                          'most likely not all neighbors properly assigned')
+        return neigh
 
     def get_neighborhood(
         self,
-        position,
+        positions,
         num_neighbors=12,
         t_vec=True,
-        tolerance=2,
-        id_list=None,
         cutoff_radius=np.inf,
-        boundary_width_factor=1.2,
+        width_buffer=1.2,
     ):
         """
 
         Args:
-            position: position in a box whose neighborhood information is analysed
-            num_neighbors:
-            t_vec (bool): True: compute distance vectors
-                        (pbc are automatically taken into account)
-            tolerance (int): tolerance (round decimal points) used for computing neighbor shells
-            id_list (list): list of atoms the neighbors are to be looked for
-            cutoff_radius (float): Upper bound of the distance to which the search must be done
-            boundary_width_factor (float): width of the layer to be added to account for pbc.
+            position: Position in a box whose neighborhood information is analysed
+            num_neighbors (int): Number of nearest neighbors
+            t_vec (bool): True: compute distance vectors (pbc are taken into account)
+            cutoff_radius (float): Upper bound of the distance to which the search is to be done
+            width_buffer (float): Width of the layer to be added to account for pbc.
 
         Returns:
 
-            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor indices, distances
-            and vectors
+            pyiron.atomistics.structure.atoms.Tree: Neighbors instances with the neighbor indices,
+                distances and vectors
 
         """
 
-        class NeighTemp(object):
-            pass
-
-        width = self._get_boundary_layer_width(
+        neigh = self._get_neighbors(
             num_neighbors=num_neighbors,
-            boundary_width_factor=boundary_width_factor,
-            cutoff_radius=cutoff_radius
+            cutoff_radius=cutoff_radius,
+            width_buffer=width_buffer,
+            t_vec=t_vec,
+            get_tree=True,
         )
-        positions, indices = self.get_extended_positions(width, return_indices=True)
-        positions -= position
-        dist = np.linalg.norm(positions, axis=-1)
-        positions = positions[np.argsort(dist)]
-        indices = indices[np.argsort(dist)]
-        dist = dist[np.argsort(dist)]
-        positions = positions[dist<cutoff_radius][:num_neighbors]
-        indices = indices[dist<cutoff_radius][:num_neighbors]
-        dist = dist[dist<cutoff_radius][:num_neighbors]
-        neigh_return = NeighTemp()
-        setattr(neigh_return, "distances", dist)
-        setattr(neigh_return, "shells", np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1)
-        setattr(neigh_return, "vecs", positions)
-        setattr(neigh_return, "indices", indices)
-        return neigh_return
+        return neigh._get_neighborhood(
+            positions=positions,
+            num_neighbors=num_neighbors,
+            t_vec=t_vec,
+            cutoff_radius=cutoff_radius,
+        )
 
     def find_neighbors_by_vector(self, vector, deviation=False, num_neighbors=96):
-        warnings.warn('structure.find_neighbors_by_vector() is deprecated as of vers. 0.3.'
+        warnings.warn(
+            'structure.find_neighbors_by_vector() is deprecated as of vers. 0.3.'
             + 'It is not guaranteed to be in service in vers. 1.0.'
             + 'Use neigh.find_neighbors_by_vector() instead (after calling neigh = structure.get_neighbors()).',
             DeprecationWarning)
@@ -1933,10 +1965,10 @@ class Atoms(ASEAtoms):
         """
         warnings.warn(
             "This function doesn't account for periodic boundary conditions. Call "
-            "`analyse_ovito_voronoi_volume` instead. This is what will now be returned.",
+            "`analyse_pyscal_voronoi_volume` instead. This is what will now be returned.",
             DeprecationWarning,
         )
-        return self.analyse_ovito_voronoi_volume()
+        return self.analyse_pyscal_voronoi_volume()
 
     def find_mic(self, v, vectors=True):
         """
@@ -2823,19 +2855,25 @@ class _CrystalStructure(Atoms):
             elif self.bravais_basis == "primitive":
                 basis = np.array([[0.0, 0.0, 0.0]])
             else:
-                exit()
+                raise ValueError(
+                    "Only fcc, bcc, hcp, base-centered, body-centered and primitive cells are supported for 3D."
+                )
         elif self.dimension == 2:
             if self.bravais_basis == "primitive":
                 basis = np.array([[0.0, 0.0]])
             elif self.bravais_basis == "centered":
                 basis = np.array([[0.0, 0.0], [0.5, 0.5]])
             else:
-                exit()
+                raise ValueError(
+                    "Only centered and primitive cells are supported for 2D."
+                )
         elif self.dimension == 1:
             if self.bravais_basis == "primitive":
                 basis = np.array([[0.0]])
             else:
-                exit()
+                raise ValueError(
+                    "Only primitive cells are supported for 1D."
+                )
         self.coordinates = basis
 
     # ########################### get commmands ########################
