@@ -11,8 +11,6 @@ create_surface = _StructureFactory.surface
 create_ase_bulk = _StructureFactory.ase_bulk
 create_structure = _StructureFactory.crystal
 
-
-
 # Make classes available for new pyiron version
 JOB_CLASS_DICT["ART"] = "pyiron.interactive.activation_relaxation_technique"
 JOB_CLASS_DICT["Atoms"] = "pyiron.atomistics.structure.atoms"
