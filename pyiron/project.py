@@ -168,7 +168,16 @@ class Project(ProjectCore):
         Returns:
             GenericJob: job object depending on the job_type selected
         """
-        return super().create_job(job_type=job_type, job_name=job_name, delete_existing_job=delete_existing_job)
+        job = JobType(
+            job_type,
+            project=ProjectHDFio(project=self.copy(), file_name=job_name),
+            job_name=job_name,
+            job_class_dict=self.job_type.job_class_dict,
+            delete_existing_job=delete_existing_job,
+        )
+        if self.user is not None:
+            job.user = self.user
+        return job
 
     @staticmethod
     def create_object(object_type):
