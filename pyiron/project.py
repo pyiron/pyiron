@@ -114,11 +114,6 @@ class Project(ProjectCore):
         )
         self.job_type = JobTypeChoice()
         self.object_type = ObjectTypeChoice()
-        self._create = _Creator()
-
-    @property
-    def create(self):
-        return self._create
 
     def create_job(self, job_type, job_name, delete_existing_job=False):
         """
