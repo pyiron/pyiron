@@ -123,7 +123,7 @@ class StructureFactory:
             return None
 
     @staticmethod
-    def hkl_surface(lattice, hkl, layers, vacuum=1.0, center=False, pbc=True):
+    def surface_hkl(lattice, hkl, layers, vacuum=1.0, center=False, pbc=True):
         """
         Use ase.build.surface to build a surface with surface normal (hkl).
 

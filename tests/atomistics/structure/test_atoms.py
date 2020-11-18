@@ -1493,10 +1493,10 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(all(surface.pbc[0:2]))
         self.assertFalse(surface.pbc[2])
         self.assertIsInstance(surface, Atoms)
-        hkl_surface = self.struct_factory.hkl_surface(Al_bulk, [10, 8, 7], layers=20, vacuum=10)
+        hkl_surface = self.struct_factory.surface_hkl(Al_bulk, [10, 8, 7], layers=20, vacuum=10)
         self.assertIsInstance(hkl_surface, Atoms)
         self.assertTrue(all(hkl_surface.pbc))
-        hkl_surface_center = self.struct_factory.hkl_surface(
+        hkl_surface_center = self.struct_factory.surface_hkl(
             Al_bulk, [10, 8, 7], layers=20, vacuum=10, center=True
         )
         mean_z = np.mean([p[2] for p in hkl_surface_center.positions])
