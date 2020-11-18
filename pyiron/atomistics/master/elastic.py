@@ -429,10 +429,6 @@ class ElasticTensor(AtomisticParallelMaster):
     def _create_strain_matrices(self):
         if self.input['use_symmetry'] and len(self.input['rotations'])==0:
             self._get_rotation_matrices()
-        eps_lst = _get_random_symmetric_matrices(
-            int(self._number_of_measurements)
-        )
-        eps_lst *= self.input['max_strain']
         self.input['strain_matrices'] = get_strain(
             max_strain=self.input['max_strain'],
             n_set=self._number_of_measurements,
