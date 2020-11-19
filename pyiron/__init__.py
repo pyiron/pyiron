@@ -15,6 +15,7 @@ JOB_CLASS_DICT["ConvEncutParallel"] = "pyiron.dft.master.convergence_encut_paral
 JOB_CLASS_DICT["ConvEncutSerial"] = "pyiron.dft.master.convergence_encut_serial"
 JOB_CLASS_DICT["ConvergenceVolume"] = "pyiron.atomistics.master.convergence_volume"
 JOB_CLASS_DICT["ConvKpointParallel"] = "pyiron.dft.master.convergence_kpoint_parallel"
+JOB_CLASS_DICT["ElasticTensor"] = "pyiron.atomistics.master.elastic"
 JOB_CLASS_DICT["ExampleJob"] = "pyiron.testing.randomatomistic"
 JOB_CLASS_DICT["Gaussian"] = "pyiron.gaussian.gaussian"
 JOB_CLASS_DICT["Gpaw"] = "pyiron.gpaw.gpaw"
