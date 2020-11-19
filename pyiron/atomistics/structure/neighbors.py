@@ -75,7 +75,8 @@ class Tree:
         new_neigh._tree = self._tree
         return new_neigh
 
-    def _get_max_length(self, value):
+    @staticmethod
+    def _get_max_length(value):
         if (value is None
             or len(value)==0
             or not hasattr(value[0], '__len__')):
