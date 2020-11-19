@@ -75,15 +75,15 @@ class Tree:
         new_neigh._tree = self._tree
         return new_neigh
 
-    def _get_max_length(self):
-        if (self.distances is None
-            or len(self.distances)==0
-            or not hasattr(self.distances[0], '__len__')):
+    def _get_max_length(self, value):
+        if (value is None
+            or len(value)==0
+            or not hasattr(value[0], '__len__')):
             return None
-        return max(len(dd[dd<np.inf]) for dd in self.distances)
+        return max(len(dd[dd<np.inf]) for dd in value)
 
     def _fill(self, value, filler=np.inf):
-        max_length = self._get_max_length()
+        max_length = self._get_max_length(value)
         if max_length is None:
             return value
         arr = np.zeros((len(value), max_length)+value[0].shape[1:], dtype=type(filler))
@@ -93,7 +93,7 @@ class Tree:
         return arr
 
     def _contract(self, value):
-        if self._get_max_length() is None:
+        if self._get_max_length(value) is None:
             return value
         return [vv[:np.sum(dist<np.inf)] for vv, dist in zip(value, self.distances)]
 
