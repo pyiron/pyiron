@@ -219,5 +219,14 @@ class TestAtoms(unittest.TestCase):
         id_lst = neigh.find_neighbors_by_vector([0, 0, 0])
         self.assertTrue(np.array_equal(id_lst, np.arange(len(basis))))
 
+    def test_get_distances_arbitrary_array(self):
+        basis = CrystalStructure("Al", bravais_basis="fcc", lattice_constants=4.2).repeat(3)
+        del basis[0]
+        neigh = basis.get_neighbors(cutoff_radius=3.5, num_neighbors=None)
+        self.assertTrue(len(neigh.get_indices(np.random.random(3), num_neighbors=12)), 12)
+        self.assertTrue(len(neigh.get_distances(np.random.random(3), num_neighbors=12)), 12)
+        self.assertTrue(neigh.get_vectors(np.random.random((2,3)), num_neighbors=12).shape==(2,12,3))
+
+
 if __name__ == "__main__":
     unittest.main()
