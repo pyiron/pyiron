@@ -224,7 +224,7 @@ class TestAtoms(unittest.TestCase):
         neigh = basis.get_neighbors(cutoff_radius=3.5, num_neighbors=None)
         self.assertEqual(len(neigh.get_indices(np.random.random(3), num_neighbors=12)), 12)
         self.assertEqual(len(neigh.get_distances(np.random.random(3), num_neighbors=12, allow_ragged=True)), 12)
-        self.assertLessEqual(len(neigh.get_indices(np.random.random(3), num_neighbors=12, allow_ragged=True, cutoff_radius=3.5)), 12)
+        self.assertLessEqual(len(neigh.get_vectors(np.random.random(3), num_neighbors=12, allow_ragged=True, cutoff_radius=3.5)), 12)
         self.assertTrue(neigh.get_vectors(np.random.random((2,3)), num_neighbors=12).shape==(2,12,3))
 
 
