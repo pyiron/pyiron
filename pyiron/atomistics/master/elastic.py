@@ -28,6 +28,51 @@ eV_div_A3_to_GPa = (
     1e21 / scipy.constants.physical_constants["joule-electron volt relationship"][0]
 )
 
+def get_elastic_tensor_by_orientation(orientation, elastic_tensor):
+    """
+    Get elastic tensor in a given orientation
+    Args:
+        orientation (numpy.ndarray): 3x3 orthogonal orientation (no need to be orthonormal)
+        elastic_tensor (numpy.ndarray): 6x6 elastic tensor
+    Returns:
+        elastic_tensor in a given orientation
+    """
+    orientation = np.einsum('ij,i->ij', orientation, 1/np.linalg.norm(orientation, axis=-1))
+    if not np.isclose(np.linalg.det(orientation), 1):
+        raise ValueError('orientation must be an orthogonal 3x3 tensor')
+    C = np.zeros((3,3,3,3))
+    r = np.arange(3)
+    for i, j, k, l in itertools.product(r, r, r, r):
+        C[i,j,k,l] = elastic_tensor[i+(i!=j)*(6-2*i-j), k+(k!=l)*(6-2*k-l)]
+    C = np.einsum('Ii,Jj,ijkl,Kk,Ll->IJKL',
+                  orientation, orientation, C, orientation, orientation)
+    elastic_tensor_to_return = np.zeros_like(elastic_tensor)
+    for i, j, k, l in itertools.product(r, r, r, r):
+        elastic_tensor_to_return[i+(i!=j)*(6-2*i-j), k+(k!=l)*(6-2*k-l)] = C[i,j,k,l]
+    return elastic_tensor_to_return
+
+
+def calc_elastic_constants(elastic_tensor):
+    """
+    Calculate elastic constants from the elastic tensor.
+    For anistropic material (i.e. zener_ratio!=1), the values may or may not make
+    sense -> don't trust the results straightforwardly
+    Args:
+        elastic_tensor (numpy.ndarray): 6x6 tensor
+    """
+    output = {}
+    output['elastic_tensor'] = elastic_tensor
+    output['lame_coefficient'] = np.mean(elastic_tensor[:3, :3].diagonal())
+    output['shear_modulus'] = np.mean(elastic_tensor[3:, 3:].diagonal())
+    output['bulk_modulus'] = np.mean(elastic_tensor[:3,:3])
+    output['youngs_modulus'] = 1/np.mean(np.linalg.inv(elastic_tensor[:3,:3]).diagonal())
+    output['poissons_ratio'] = -output['youngs_modulus']*np.sum(
+        np.linalg.inv(elastic_tensor[:3,:3])
+    )/6+0.5
+    output['zener_ratio'] = 12*np.mean(elastic_tensor[3:,3:].diagonal())
+    output['zener_ratio'] /= (3*np.trace(elastic_tensor[:3,:3])-np.sum(elastic_tensor[:3,:3]))
+    return output
+
 def _convert_to_voigt(s, rotations=None, strain=False):
     if rotations is not None:
         s_tmp = np.einsum('nik,mkl,njl->nmij',
@@ -492,5 +537,14 @@ class ElasticTensor(AtomisticParallelMaster):
             for key, val in output_data.items():
                 hdf5_out[key] = val
 
+    def get_elastic_tensor_by_orientation(self, orientation):
+        """
+        Get elastic tensor in given orientation.
+        Args:
+            orientation (numpy.ndarray): 3x3 orientation tensor (e.g. [[1,1,1],[-1,0,1],[1,-2,1]])
+        Returns:
+            elastic tensor in the given orientation
+        """
+        return get_elastic_tensor_by_orientation(orientation, self['output/elastic_tensor'])
 
 
