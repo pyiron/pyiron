@@ -127,8 +127,8 @@ class GenericDFTJob(AtomisticGenericJob):
         return self._generic_input["reduce_kpoint_symmetry"]
 
     @reduce_kpoint_symmetry.setter
-    def reduce_kpoint_symmetry(self, val):
-        self._generic_input["reduce_kpoint_symmetry"] = val
+    def reduce_kpoint_symmetry(self, boolean):
+        self._generic_input["reduce_kpoint_symmetry"] = boolean
 
     @property
     def fix_spin_constraint(self):
@@ -387,10 +387,10 @@ class GenericDFTJob(AtomisticGenericJob):
             return es_obj
 
     def write_input(self):
-        if self._k_mesh_per_reciprocal_angstrom is not None:
+        if self.k_mesh_per_reciprocal_angstrom is not None:
             self.set_kpoints(center_shift=self.k_mesh_center_shift,
                              kpoints_per_reciprocal_angstrom=self.k_mesh_per_reciprocal_angstrom,
-                             symmetry_reduction=self._reduce_kpoint_symmetry)
+                             symmetry_reduction=self.reduce_kpoint_symmetry)
 
 
 def get_k_mesh_by_density(cell, kmesh_density_per_inverse_angstrom=1.0):
