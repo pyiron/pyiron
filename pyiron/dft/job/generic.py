@@ -26,7 +26,7 @@ class GenericDFTJob(AtomisticGenericJob):
         self.map_functions = MapFunctions()
         self._generic_input["k_mesh_per_reciprocal_angstrom"] = None
         self._generic_input["k_mesh_center_shift"] = None
-        self._generic_input["_reduce_kpoint_symmetry"] = True
+        self._generic_input["reduce_kpoint_symmetry"] = True
 
     @property
     def encut(self):
