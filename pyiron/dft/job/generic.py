@@ -202,7 +202,6 @@ class GenericDFTJob(AtomisticGenericJob):
             if self.structure is None:
                 raise AssertionError('structure not set')
             cell = self.structure.cell
-        self._k_mesh_per_reciprocal_angstrom = kpoints_per_reciprocal_angstrom
         return get_k_mesh_by_density(cell=cell, kmesh_density_per_inverse_angstrom=kpoints_per_reciprocal_angstrom)
 
     def set_kpoints(
@@ -238,6 +237,7 @@ class GenericDFTJob(AtomisticGenericJob):
             if mesh is not None:
                 warnings.warn("mesh value is overwritten by kpoints_per_reciprocal_angstrom")
             mesh = self.get_k_mesh_by_cell(kpoints_per_reciprocal_angstrom=kpoints_per_reciprocal_angstrom)
+            self._k_mesh_per_reciprocal_angstrom = kpoints_per_reciprocal_angstrom
         if mesh is not None:
             if np.min(mesh) <= 0:
                 raise ValueError("mesh values must be larger than 0")
