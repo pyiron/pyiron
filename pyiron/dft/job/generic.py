@@ -338,6 +338,16 @@ class GenericDFTJob(AtomisticGenericJob):
                 es_obj.from_hdf(ho)
             return es_obj
 
+    def nbands_convergence_check(self):
+        """
+        Function to check the convergence of nbands in the Vasp calculation
+
+        Returns:
+
+            bool : True if the highest band is unoccupied, False if the highest band is occupied
+        """
+        return np.all(np.isclose(self["output/electronic_structure/occ_matrix"][:,:,-1], 0)) #shape is n_spin x n_kpoints x n_bands
+
 
 def set_encut(job, parameter):
     job.set_encut(parameter)

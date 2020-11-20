@@ -403,16 +403,6 @@ class VaspBase(GenericDFTJob):
                 exclude_nodes=self._exclude_nodes_hdf,
             )
 
-    def nbands_convergence_check(self):
-        """
-        Function to check the convergence of nbands in the Vasp calculation
-
-        Returns:
-
-            bool : True if the highest band is unoccupied, False if the highest band is occupied
-        """
-        return np.all(np.isclose(self["output/electronic_structure/occ_matrix"][:,:,-1], 0)) #shape is n_spin x n_kpoints x n_bands
-
     def convergence_check(self):
         if "IBRION" in self["input/incar/data_dict"]["Parameter"]:
             ind = self["input/incar/data_dict"]["Parameter"].index("IBRION")
