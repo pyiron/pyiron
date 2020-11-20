@@ -25,6 +25,8 @@ class GenericDFTJob(AtomisticGenericJob):
         self._generic_input["fix_symmetry"] = True
         self.map_functions = MapFunctions()
         self._k_mesh_per_reciprocal_angstrom = None
+        self._k_mesh_center_shift = None
+        self._reduce_kpoint_symmetry = True
 
     @property
     def encut(self):
@@ -99,6 +101,34 @@ class GenericDFTJob(AtomisticGenericJob):
     @k_mesh_per_reciprocal_angstrom.setter
     def k_mesh_per_reciprocal_angstrom(self, val):
         self._k_mesh_per_reciprocal_angstrom = val
+
+    @property
+    def k_mesh_center_shift(self):
+        """
+        Number of unreduced k-points per Angstrom of the lattice vector
+
+        Returns:
+            float: Number of k-points per Angstrom
+        """
+        return self._k_mesh_center_shift
+
+    @k_mesh_center_shift.setter
+    def k_mesh_center_shift(self, val):
+        self._k_mesh_center_shift = val
+
+    @property
+    def reduce_kpoint_symmetry(self):
+        """
+        Number of unreduced k-points per Angstrom of the lattice vector
+
+        Returns:
+            float: Number of k-points per Angstrom
+        """
+        return self._reduce_kpoint_symmetry
+
+    @reduce_kpoint_symmetry.setter
+    def reduce_kpoint_symmetry(self, val):
+        self._reduce_kpoint_symmetry = val
 
     @property
     def fix_spin_constraint(self):
@@ -200,7 +230,7 @@ class GenericDFTJob(AtomisticGenericJob):
         """
         if cell is None:
             if self.structure is None:
-                raise AssertionError('structure not set')
+                raise ValueError("Can't genreate k-points without structure being set")
             cell = self.structure.cell
         return get_k_mesh_by_density(cell=cell, kmesh_density_per_inverse_angstrom=kpoints_per_reciprocal_angstrom)
 
@@ -221,9 +251,10 @@ class GenericDFTJob(AtomisticGenericJob):
         Function to setup the k-points
 
         Args:
-            mesh (list): Size of the mesh (ignored if scheme is not set to 'MP' or kpoints_per_reciprocal_angstrom is set)
+            mesh (list/numpy.ndarray): Size of the mesh (ignored if scheme is not set to 'MP' or kpoints_per_reciprocal_
+            angstrom is set)
             scheme (str): Type of k-point generation scheme (MP/GP(gamma point)/Manual/Line)
-            center_shift (list): Shifts the center of the mesh from the gamma point by the given vector in relative coordinates
+            center_shift (list/numpy.ndarray/None): Shifts the center of the mesh from the gamma point by the given vector in relative coordinates
             symmetry_reduction (boolean): Tells if the symmetry reduction is to be applied to the k-points
             manual_kpoints (list/numpy.ndarray): Manual list of k-points
             weights(list/numpy.ndarray): Manually supplied weights to each k-point in case of the manual mode
@@ -237,7 +268,9 @@ class GenericDFTJob(AtomisticGenericJob):
             if mesh is not None:
                 warnings.warn("mesh value is overwritten by kpoints_per_reciprocal_angstrom")
             mesh = self.get_k_mesh_by_cell(kpoints_per_reciprocal_angstrom=kpoints_per_reciprocal_angstrom)
-            self._k_mesh_per_reciprocal_angstrom = kpoints_per_reciprocal_angstrom
+        self._k_mesh_per_reciprocal_angstrom = kpoints_per_reciprocal_angstrom
+        self._k_mesh_center_shift = center_shift
+        self._reduce_kpoint_symmetry = symmetry_reduction
         if mesh is not None:
             if np.min(mesh) <= 0:
                 raise ValueError("mesh values must be larger than 0")
@@ -352,6 +385,12 @@ class GenericDFTJob(AtomisticGenericJob):
                 es_obj = ElectronicStructure()
                 es_obj.from_hdf(ho)
             return es_obj
+
+    def write_input(self):
+        if self._k_mesh_per_reciprocal_angstrom is not None:
+            self.set_kpoints(center_shift=self.k_mesh_center_shift,
+                             kpoints_per_reciprocal_angstrom=self.k_mesh_per_reciprocal_angstrom,
+                             symmetry_reduction=self._reduce_kpoint_symmetry)
 
 
 def get_k_mesh_by_density(cell, kmesh_density_per_inverse_angstrom=1.0):
