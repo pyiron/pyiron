@@ -24,9 +24,9 @@ class GenericDFTJob(AtomisticGenericJob):
         super(GenericDFTJob, self).__init__(project, job_name)
         self._generic_input["fix_symmetry"] = True
         self.map_functions = MapFunctions()
-        self._k_mesh_per_reciprocal_angstrom = None
-        self._k_mesh_center_shift = None
-        self._reduce_kpoint_symmetry = True
+        self._generic_input["k_mesh_per_reciprocal_angstrom"] = None
+        self._generic_input["k_mesh_center_shift"] = None
+        self._generic_input["_reduce_kpoint_symmetry"] = True
 
     @property
     def encut(self):
@@ -96,11 +96,11 @@ class GenericDFTJob(AtomisticGenericJob):
         Returns:
             float: Number of k-points per Angstrom
         """
-        return self._k_mesh_per_reciprocal_angstrom
+        return self._generic_input["k_mesh_per_reciprocal_angstrom"]
 
     @k_mesh_per_reciprocal_angstrom.setter
     def k_mesh_per_reciprocal_angstrom(self, val):
-        self._k_mesh_per_reciprocal_angstrom = val
+        self._generic_input["k_mesh_per_reciprocal_angstrom"] = val
 
     @property
     def k_mesh_center_shift(self):
@@ -110,11 +110,11 @@ class GenericDFTJob(AtomisticGenericJob):
         Returns:
             float: Number of k-points per Angstrom
         """
-        return self._k_mesh_center_shift
+        return self._generic_input["k_mesh_center_shift"]
 
     @k_mesh_center_shift.setter
     def k_mesh_center_shift(self, val):
-        self._k_mesh_center_shift = val
+        self._generic_input["k_mesh_center_shift"] = val
 
     @property
     def reduce_kpoint_symmetry(self):
@@ -124,11 +124,11 @@ class GenericDFTJob(AtomisticGenericJob):
         Returns:
             float: Number of k-points per Angstrom
         """
-        return self._reduce_kpoint_symmetry
+        return self._generic_input["reduce_kpoint_symmetry"]
 
     @reduce_kpoint_symmetry.setter
     def reduce_kpoint_symmetry(self, val):
-        self._reduce_kpoint_symmetry = val
+        self._generic_input["reduce_kpoint_symmetry"] = val
 
     @property
     def fix_spin_constraint(self):
@@ -268,9 +268,9 @@ class GenericDFTJob(AtomisticGenericJob):
             if mesh is not None:
                 warnings.warn("mesh value is overwritten by kpoints_per_reciprocal_angstrom")
             mesh = self.get_k_mesh_by_cell(kpoints_per_reciprocal_angstrom=kpoints_per_reciprocal_angstrom)
-        self._k_mesh_per_reciprocal_angstrom = kpoints_per_reciprocal_angstrom
-        self._k_mesh_center_shift = center_shift
-        self._reduce_kpoint_symmetry = symmetry_reduction
+        self.k_mesh_per_reciprocal_angstrom = kpoints_per_reciprocal_angstrom
+        self.k_mesh_center_shift = center_shift
+        self.reduce_kpoint_symmetry = symmetry_reduction
         if mesh is not None:
             if np.min(mesh) <= 0:
                 raise ValueError("mesh values must be larger than 0")
