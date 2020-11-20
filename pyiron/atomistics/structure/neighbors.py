@@ -356,7 +356,7 @@ class Tree:
         if allow_ragged==self.allow_ragged:
             return vectors
         if allow_ragged:
-            return self._contract(vectors)
+            return self._contract(vectors, distances)
         return self._fill(vectors)
 
     def _estimate_num_neighbors(self, num_neighbors=None, cutoff_radius=np.inf, width_buffer=1.2):
