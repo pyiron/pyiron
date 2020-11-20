@@ -290,6 +290,11 @@ class TestAtoms(unittest.TestCase):
             _ = neigh.get_distances(np.random.random(3), num_neighbors=51)
             self.assertEqual(len(w), 2)
 
+    def test_repr(self):
+        basis = CrystalStructure("Al", bravais_basis="fcc", lattice_constants=4.2).repeat(3)
+        neigh = basis.get_neighbors(cutoff_radius=3.5, num_neighbors=None)
+        self.assertTrue('each atom' in neigh.__repr__())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -63,6 +63,16 @@ class Tree:
         self.num_neighbors = None
         self.cutoff_radius = np.inf
 
+    def __repr__(self):
+        to_return = (
+            "Main attributes:\n"
+            + "- distances : Distances to the neighbors of given positions\n"
+            + "- indices : Indices of the neighbors of given positions\n"
+        )
+        if self.vecs is not None:
+            to_return += "- vecs : Vectors to the neighbors of given positions\n"
+        return to_return
+
     def copy(self):
         new_neigh = Tree(self._ref_structure)
         new_neigh.distances = self.distances.copy()
@@ -489,6 +499,10 @@ class Neighbors(Tree):
         self._tolerance = tolerance
         self._cluster_vecs = None
         self._cluster_dist = None
+
+    def __repr__(self):
+        to_return = super().__repr__()
+        return to_return.replace('given positions', 'each atom')
 
     @property
     def shells(self):
