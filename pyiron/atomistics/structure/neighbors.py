@@ -522,6 +522,9 @@ class Neighbors(Tree):
         self._cluster_dist = None
 
     def __repr__(self):
+        """
+            Returns: __repr__
+        """
         to_return = super().__repr__()
         return to_return.replace('given positions', 'each atom')
 
