@@ -3,9 +3,13 @@ __all__ = []
 
 from pyiron.project import Project
 from pyiron.atomistics.structure.atoms import ase_to_pyiron, pyiron_to_ase, Atoms
-from pyiron.atomistics.structure.generator import create_surface, create_ase_bulk, create_structure
 from pyiron_base import Notebook, install_dialog, JOB_CLASS_DICT
 
+# To maintain backwards compatibility until we deprecate the old structure creation functions:
+from pyiron.atomistics.structure.factory import StructureFactory as _StructureFactory
+create_surface = _StructureFactory.surface
+create_ase_bulk = _StructureFactory.ase_bulk
+create_structure = _StructureFactory.crystal
 
 # Make classes available for new pyiron version
 JOB_CLASS_DICT["ART"] = "pyiron.interactive.activation_relaxation_technique"

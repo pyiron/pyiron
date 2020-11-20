@@ -8,7 +8,7 @@ import os
 import warnings
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
-from pyiron.atomistics.structure.generator import create_ase_bulk, create_surface, create_hkl_surface, create_structure
+from pyiron.atomistics.structure.factory import StructureFactory
 from pyiron.atomistics.structure.sparse_list import SparseList
 from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalElement
 from pyiron_base import FileHDFio, ProjectHDFio, Project
@@ -38,6 +38,7 @@ class TestAtoms(unittest.TestCase):
         C = Atom("C").element
         cls.C3 = Atoms([C, C, C], positions=[[0, 0, 0], [0, 0, 2], [0, 2, 0]])
         cls.C2 = Atoms(2 * [Atom("C")])
+        cls.struct_factory = StructureFactory()
 
     def setUp(self):
         # These atoms are reset before every test.
@@ -1270,19 +1271,19 @@ class TestAtoms(unittest.TestCase):
             basis_1 += basis_2
             self.assertEqual(len(w), 1)
         a_0 = 2.86
-        structure = create_structure('Fe', 'bcc', a_0)
+        structure = self.struct_factory.crystal('Fe', 'bcc', a_0)
         carbon = Atoms(symbols=['C'], positions=[[0, 0, 0.5 * a_0]])
         structure += carbon
         self.assertEqual(carbon.indices[0], 0)
 
     def test_append(self):
         a_0 = 2.86
-        structure = create_structure('Fe', 'bcc', a_0)
+        structure = self.struct_factory.crystal('Fe', 'bcc', a_0)
         carbon = Atoms(symbols=['C'], positions=[[0, 0, 0.5 * a_0]], pbc=True)
         with warnings.catch_warnings(record=True) as w:
             structure.append(carbon)
             self.assertEqual(len(w), 0)
-            structure = create_structure('Fe', 'bcc', a_0)
+            structure = self.struct_factory.crystal('Fe', 'bcc', a_0)
             carbon.cell = np.random.rand(3)
             structure.append(carbon)
             self.assertEqual(len(w), 1)
@@ -1464,19 +1465,19 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(struct.get_chemical_formula(), 'Mg4')
 
     def test_static_functions(self):
-        Al_bulk = create_ase_bulk("Al")
+        Al_bulk = self.struct_factory.ase_bulk("Al")
         self.assertIsInstance(Al_bulk, Atoms)
         self.assertTrue(all(Al_bulk.pbc))
-        surface = create_surface("Al", "fcc111", size=(4, 4, 4), vacuum=10)
+        surface = self.struct_factory.surface("Al", "fcc111", size=(4, 4, 4), vacuum=10)
         self.assertTrue(all(surface.pbc))
-        surface = create_surface("Al", "fcc111", size=(4, 4, 4), vacuum=10, pbc=[True, True, False])
+        surface = self.struct_factory.surface("Al", "fcc111", size=(4, 4, 4), vacuum=10, pbc=[True, True, False])
         self.assertTrue(all(surface.pbc[0:2]))
         self.assertFalse(surface.pbc[2])
         self.assertIsInstance(surface, Atoms)
-        hkl_surface = create_hkl_surface(Al_bulk, [10, 8, 7], layers=20, vacuum=10)
+        hkl_surface = self.struct_factory.surface_hkl(Al_bulk, [10, 8, 7], layers=20, vacuum=10)
         self.assertIsInstance(hkl_surface, Atoms)
         self.assertTrue(all(hkl_surface.pbc))
-        hkl_surface_center = create_hkl_surface(
+        hkl_surface_center = self.struct_factory.surface_hkl(
             Al_bulk, [10, 8, 7], layers=20, vacuum=10, center=True
         )
         mean_z = np.mean([p[2] for p in hkl_surface_center.positions])
