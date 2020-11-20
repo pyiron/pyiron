@@ -24,6 +24,7 @@ class GenericDFTJob(AtomisticGenericJob):
         super(GenericDFTJob, self).__init__(project, job_name)
         self._generic_input["fix_symmetry"] = True
         self.map_functions = MapFunctions()
+        self._k_mesh_per_reciprocal_angstrom = None
 
     @property
     def encut(self):
@@ -84,6 +85,20 @@ class GenericDFTJob(AtomisticGenericJob):
         raise NotImplementedError(
             "The exchange property is not implemented for this code."
         )
+
+    @property
+    def k_mesh_per_reciprocal_angstrom(self):
+        """
+        Number of unreduced k-points per Angstrom of the lattice vector
+
+        Returns:
+            float: Number of k-points per Angstrom
+        """
+        return self._k_mesh_per_reciprocal_angstrom
+
+    @k_mesh_per_reciprocal_angstrom.setter
+    def k_mesh_per_reciprocal_angstrom(self, val):
+        self._k_mesh_per_reciprocal_angstrom = val
 
     @property
     def fix_spin_constraint(self):
@@ -173,22 +188,22 @@ class GenericDFTJob(AtomisticGenericJob):
 
     def get_k_mesh_by_cell(self, kpoints_per_reciprocal_angstrom, cell=None):
         """
-            get k-mesh density according to the box size.
+        Get k-mesh density according to the box size.
 
-            Args:
-                kpoints_per_reciprocal_angstrom: (float) number of k-points per reciprocal angstrom (i.e. per 2*pi / box_length)
-                cell: (list/ndarray) 3x3 cell. If not set, the current cell is used.
+        Args:
+            kpoints_per_reciprocal_angstrom (float): Number of k-points per reciprocal angstrom
+            cell (numpy.ndarray/list): The cell shape
+
+        Returns:
+            list/numpy.ndarray: Mesh size
+
         """
         if cell is None:
             if self.structure is None:
                 raise AssertionError('structure not set')
             cell = self.structure.cell
-        latlens = np.linalg.norm(cell, axis=-1)
-        kmesh = np.rint(2 * np.pi / latlens * kpoints_per_reciprocal_angstrom)
-        if kmesh.min() <= 0:
-            self._logger.warning("Calculated kmesh was 0 for at least one axis, setting it to 1 instead")
-            kmesh[kmesh == 0] = 1
-        return [int(k) for k in kmesh]
+        self._k_mesh_per_reciprocal_angstrom = kpoints_per_reciprocal_angstrom
+        return get_k_mesh_by_density(cell=cell, kmesh_density_per_inverse_angstrom=kpoints_per_reciprocal_angstrom)
 
     def set_kpoints(
         self,
@@ -337,6 +352,31 @@ class GenericDFTJob(AtomisticGenericJob):
                 es_obj = ElectronicStructure()
                 es_obj.from_hdf(ho)
             return es_obj
+
+
+def get_k_mesh_by_density(cell, kmesh_density_per_inverse_angstrom=1.0):
+    """"
+    Get k-mesh density according to the box size.
+
+    Args:
+        cell (numpy.ndarray/list): The cell shape
+        kmesh_density_per_inverse_angstrom (float): Number of k-points per reciprocal angstrom
+
+    Returns:
+        list/numpy.ndarray: Mesh size
+
+    """
+    omega = np.linalg.det(cell)
+    l1, l2, l3 = cell
+    g1 = 2 * np.pi / omega * np.cross(l2, l3)
+    g2 = 2 * np.pi / omega * np.cross(l3, l1)
+    g3 = 2 * np.pi / omega * np.cross(l1, l2)
+
+    kmesh = np.rint(
+        np.array([np.linalg.norm(g) for g in [g1, g2, g3]]) / kmesh_density_per_inverse_angstrom
+    )
+    kmesh[kmesh < 1] = 1
+    return [int(k) for k in kmesh]
 
 
 def set_encut(job, parameter):
