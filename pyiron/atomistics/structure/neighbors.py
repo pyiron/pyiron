@@ -89,16 +89,17 @@ class Tree:
         new_neigh.cutoff_radius = self.cutoff_radius
         return new_neigh
 
-    @staticmethod
-    def _get_max_length(value):
-        if (value is None
-            or len(value)==0
-            or not hasattr(value[0], '__len__')):
+    def _get_max_length(self, ref_vector=None):
+        if ref_vector is None:
+            ref_vector = self.distances
+        if (ref_vector is None
+            or len(ref_vector)==0
+            or not hasattr(ref_vector[0], '__len__')):
             return None
-        return max(len(dd[dd<np.inf]) for dd in value)
+        return max(len(dd[dd<np.inf]) for dd in ref_vector)
 
     def _fill(self, value, filler=np.inf):
-        max_length = self._get_max_length(value)
+        max_length = self._get_max_length()
         if max_length is None:
             return value
         arr = np.zeros((len(value), max_length)+value[0].shape[1:], dtype=type(filler))
@@ -107,8 +108,8 @@ class Tree:
             arr[ii,:len(vv)] = vv
         return arr
 
-    def _contract(self, value):
-        if self._get_max_length(value) is None:
+    def _contract(self, value, ref_vector=None):
+        if self._get_max_length(ref_vector=ref_vector) is None:
             return value
         return [vv[:np.sum(dist<np.inf)] for vv, dist in zip(value, self.distances)]
 
@@ -197,8 +198,10 @@ class Tree:
             )
         self._extended_indices = indices.copy()
         indices[distances<np.inf] = self._get_wrapped_indices()[indices[distances<np.inf]]
+        if allow_ragged is None:
+            allow_ragged = self.allow_ragged
         if allow_ragged:
-            return self._contract(distances), self._contract(indices)
+            return self._contract(distances, distances), self._contract(indices, distances)
         return distances, indices
 
     def get_indices(
@@ -479,7 +482,7 @@ class Tree:
 
     def _check_width(self, width, pbc):
         if any(pbc) and np.prod(self.distances.shape)>0 and self.vecs is not None:
-            if np.linalg.norm(self.vecs[self.distances<np.inf][:,pbc], axis=-1).max() > width:
+            if np.linalg.norm(self._fill(self.vecs, filler=0)[...,pbc], axis=-1).max() > width:
                 return True
         return False
 
