@@ -281,16 +281,18 @@ class LammpsPotentialFile(PotentialAbstract):
 
 class PotentialAvailable(object):
     def __init__(self, list_of_potentials):
-        self._list_of_potentials = list_of_potentials
+        self._list_of_potentials = {
+            v.replace("-", "_"):v for v in list_of_potentials
+        }
 
     def __getattr__(self, name):
-        if name in self._list_of_potentials:
-            return name
+        if name in self._list_of_potentials.keys():
+            return self._list_of_potentials[name]
         else:
             raise AttributeError
 
     def __dir__(self):
-        return self._list_of_potentials
+        return list(self._list_of_potentials.keys())
 
     def __repr__(self):
         return str(dir(self))
