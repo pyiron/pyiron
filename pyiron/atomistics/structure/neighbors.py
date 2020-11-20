@@ -368,6 +368,8 @@ class Tree:
             Width of layer required for the given number of atoms
 
         """
+        if num_neighbors is None and cutoff_radius==np.inf:
+            raise ValueError('Define either num_neighbors or cutoff_radius')
         if all(self._ref_structure.pbc==False):
             return 0
         elif cutoff_radius!=np.inf:
@@ -449,7 +451,7 @@ class Tree:
 
     def _check_width(self, width, pbc):
         if any(pbc) and np.prod(self.distances.shape)>0 and self.vecs is not None:
-            if np.absolute(self.vecs[self.distances<np.inf][:,pbc]).max() > width:
+            if np.linalg.norm(self.vecs[self.distances<np.inf][:,pbc], axis=-1).max() > width:
                 return True
         return False
 

@@ -141,6 +141,8 @@ class TestAtoms(unittest.TestCase):
         struct = CrystalStructure(elements='Fe', lattice_constants=2.85, bravais_basis='bcc')
         neigh = struct.get_neighbors()
         self.assertAlmostEqual(neigh.vecs[neigh.shells==1].sum(), 0)
+        with self.assertRaises(ValueError):
+            _ = struct.get_neighbors(num_neighbors=None)
 
     def test_al_large(self):
         struct = CrystalStructure(
