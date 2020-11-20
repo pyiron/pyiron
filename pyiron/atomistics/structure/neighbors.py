@@ -64,6 +64,9 @@ class Tree:
         self.cutoff_radius = np.inf
 
     def __repr__(self):
+        """
+            Returns: __repr__
+        """
         to_return = (
             "Main attributes:\n"
             + "- distances : Distances to the neighbors of given positions\n"
