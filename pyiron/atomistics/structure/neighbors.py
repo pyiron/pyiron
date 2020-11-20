@@ -60,6 +60,8 @@ class Tree:
         self._ref_structure = ref_structure.copy()
         self.wrap_positions = False
         self._tree = None
+        self.num_neighbors = None
+        self.cutoff_radius = np.inf
 
     def copy(self):
         new_neigh = Tree(self._ref_structure)
@@ -73,6 +75,8 @@ class Tree:
         new_neigh._extended_indices = self._extended_indices
         new_neigh.wrap_positions = self.wrap_positions
         new_neigh._tree = self._tree
+        new_neigh.num_neighbors = self.num_neighbors
+        new_neigh.cutoff_radius = self.cutoff_radius
         return new_neigh
 
     @staticmethod
@@ -148,7 +152,7 @@ class Tree:
         self,
         positions=None,
         allow_ragged=False,
-        num_neighbors=12,
+        num_neighbors=None,
         cutoff_radius=np.inf,
         width_buffer=1.2,
     ):
@@ -191,7 +195,7 @@ class Tree:
         self,
         positions=None,
         allow_ragged=False,
-        num_neighbors=12,
+        num_neighbors=None,
         cutoff_radius=np.inf,
         width_buffer=1.2,
     ):
@@ -224,7 +228,7 @@ class Tree:
         self,
         positions=None,
         allow_ragged=False,
-        num_neighbors=12,
+        num_neighbors=None,
         cutoff_radius=np.inf,
         width_buffer=1.2,
     ):
@@ -257,7 +261,7 @@ class Tree:
         self,
         positions=None,
         allow_ragged=False,
-        num_neighbors=12,
+        num_neighbors=None,
         cutoff_radius=np.inf,
         width_buffer=1.2,
     ):
@@ -290,7 +294,7 @@ class Tree:
         self,
         positions=None,
         allow_ragged=False,
-        num_neighbors=12,
+        num_neighbors=None,
         cutoff_radius=np.inf,
         distances=None,
         indices=None,
@@ -337,11 +341,19 @@ class Tree:
             Number of atoms required for a given cutoff
 
         """
-        if num_neighbors is None and cutoff_radius==np.inf:
+        if num_neighbors is None and cutoff_radius==np.inf and self.num_neighbors is None:
             raise ValueError('Specify num_neighbors or cutoff_radius')
-        elif num_neighbors is None:
+        elif num_neighbors is None and self.num_neighbors is None:
             volume = self._ref_structure.get_volume(per_atom=True)
             num_neighbors = max(14, int((1+width_buffer)*4./3.*np.pi*cutoff_radius**3/volume))
+        elif num_neighbors is None:
+            num_neighbors = self.num_neighbors
+        if self.num_neighbors is None:
+            self.num_neighbors = num_neighbors
+            self.cutoff_radius = cutoff_radius
+        if num_neighbors > self.num_neighbors:
+            warnings.warn("Taking a larger search area after initialization has the risk of "
+                          + "missing neighborhood atoms")
         return num_neighbors
 
     def _estimate_width(self, num_neighbors=None, cutoff_radius=np.inf, width_buffer=1.2):
@@ -373,7 +385,7 @@ class Tree:
     def get_neighborhood(
         self,
         positions,
-        num_neighbors=12,
+        num_neighbors=None,
         t_vec=True,
         cutoff_radius=np.inf,
         width_buffer=1.2,
@@ -423,6 +435,8 @@ class Tree:
             cutoff_radius=cutoff_radius,
             width_buffer=width_buffer,
         )
+        if num_neighbors is not None:
+            self.num_neighbors -= 1
         max_column = np.sum(distances<np.inf, axis=-1).max()
         self.distances = distances[...,start_column:max_column]
         self.indices = indices[...,start_column:max_column]
