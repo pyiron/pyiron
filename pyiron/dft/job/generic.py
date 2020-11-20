@@ -386,7 +386,7 @@ class GenericDFTJob(AtomisticGenericJob):
                 es_obj.from_hdf(ho)
             return es_obj
 
-    def write_input(self):
+    def modify_kpoints(self):
         if self.k_mesh_per_reciprocal_angstrom is not None:
             self.set_kpoints(center_shift=self.k_mesh_center_shift,
                              kpoints_per_reciprocal_angstrom=self.k_mesh_per_reciprocal_angstrom,

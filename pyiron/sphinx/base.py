@@ -1290,7 +1290,6 @@ class SphinxBase(GenericDFTJob):
         # If the structure group was not modified directly by the
         # user, via job.input.structure (which is likely True),
         # load it based on job.structure.
-        super(SphinxBase, self).write_input()
         structure_sync = (str(self.input.sphinx.structure)
                           == str(self.get_structure_group()))
         if not structure_sync and not self.input.sphinx.structure.read_only:
@@ -1302,6 +1301,8 @@ class SphinxBase(GenericDFTJob):
         else:
             potformat = "JTH"
 
+        # Modifying kpoints
+        self.modify_kpoints()
         # If the species group was not modified directly by the user,
         # via job.input.pawPot (which is likely True),
         # load it based on job.structure.
