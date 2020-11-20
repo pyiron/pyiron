@@ -161,13 +161,13 @@ class Tree:
     def _get_distances_and_indices(
         self,
         positions=None,
-        allow_ragged=False,
+        allow_ragged=None,
         num_neighbors=None,
         cutoff_radius=np.inf,
         width_buffer=1.2,
     ):
         if positions is None:
-            if allow_ragged==self.allow_ragged:
+            if allow_ragged is None:
                 return self.distances, self.indices
             if allow_ragged:
                 return (self._contract(self.distances),
@@ -204,27 +204,32 @@ class Tree:
     def get_indices(
         self,
         positions=None,
-        allow_ragged=False,
+        allow_ragged=None,
         num_neighbors=None,
         cutoff_radius=np.inf,
         width_buffer=1.2,
     ):
         """
-        Get current indices or neighbor indices for given positions
+        Get current indices or neighbor indices for given positions using the same Tree structure
+        used for the instantiation of the Neighbor class. This function should not be used if the
+        structure changed in the meantime. If `positions` is None and `allow_ragged` is None, this
+        function returns the same content as `indices`.
 
         Args:
             positions (list/numpy.ndarray/None): Positions around which neighborhood vectors
                 are to be computed (None to get current vectors)
             allow_ragged (bool): Whether to allow ragged list of arrays or rectangular
                 numpy.ndarray filled with np.inf for values outside cutoff_radius
-            num_neighbors (int/None): Number of neighboring atoms to calculate vectors for
-                (estimated if None)
-            cutoff_radius (float): cutoff radius
-            width_buffer (float): Buffer length for the estimation of num_neighbors
+            num_neighbors (int/None): Number of neighboring atoms to calculate vectors for.
+                Ignored if `positions` is None.
+            cutoff_radius (float): cutoff radius. Ignored if `positions` is None.
+            width_buffer (float): Buffer length for the estimation of num_neighbors. Ignored if
+                `positions` is None.
 
         Returns:
             (list/numpy.ndarray) list (if allow_ragged=True) or numpy.ndarray (otherwise) of
                 neighbor indices
+
         """
         return self._get_distances_and_indices(
             positions=positions,
@@ -237,23 +242,27 @@ class Tree:
     def get_distances(
         self,
         positions=None,
-        allow_ragged=False,
+        allow_ragged=None,
         num_neighbors=None,
         cutoff_radius=np.inf,
         width_buffer=1.2,
     ):
         """
-        Get current distances or neighbor distances for given positions
+        Get current positions or neighbor positions for given positions using the same Tree
+        structure used for the instantiation of the Neighbor class. This function should not be
+        used if the structure changed in the meantime. If `positions` is None and `allow_ragged` is
+        None, this function returns the same content as `positions`.
 
         Args:
             positions (list/numpy.ndarray/None): Positions around which neighborhood vectors
                 are to be computed (None to get current vectors)
             allow_ragged (bool): Whether to allow ragged list of arrays or rectangular
                 numpy.ndarray filled with np.inf for values outside cutoff_radius
-            num_neighbors (int/None): Number of neighboring atoms to calculate vectors for
-                (estimated if None)
-            cutoff_radius (float): cutoff radius
-            width_buffer (float): Buffer length for the estimation of num_neighbors
+            num_neighbors (int/None): Number of neighboring atoms to calculate vectors for.
+                Ignored if `positions` is None.
+            cutoff_radius (float): cutoff radius. Ignored if `positions` is None.
+            width_buffer (float): Buffer length for the estimation of num_neighbors. Ignored if
+                `positions` is None.
 
         Returns:
             (list/numpy.ndarray) list (if allow_ragged=True) or numpy.ndarray (otherwise) of
@@ -276,17 +285,22 @@ class Tree:
         width_buffer=1.2,
     ):
         """
-        Get current vectors or neighbor vectors for given positions
+        Get current vectors or neighbor vectors for given positions using the same Tree structure
+        used for the instantiation of the Neighbor class. This function should not be used if the
+        structure changed in the meantime. If `positions` is None and `allow_ragged` is None, this
+        function returns the same content as `vecs`.
 
         Args:
             positions (list/numpy.ndarray/None): Positions around which neighborhood vectors
                 are to be computed (None to get current vectors)
             allow_ragged (bool): Whether to allow ragged list of arrays or rectangular
                 numpy.ndarray filled with np.inf for values outside cutoff_radius
-            num_neighbors (int/None): Number of neighboring atoms to calculate vectors for
-                (estimated if None)
-            cutoff_radius (float): cutoff radius
-            width_buffer (float): Buffer length for the estimation of num_neighbors
+            num_neighbors (int/None): Number of neighboring atoms to calculate vectors for.
+                Ignored if `positions` is None.
+            cutoff_radius (float): cutoff radius. Ignored if `positions` is None.
+            width_buffer (float): Buffer length for the estimation of num_neighbors. Ignored if
+                `positions` is None.
+
 
         Returns:
             (list/numpy.ndarray) list (if allow_ragged=True) or numpy.ndarray (otherwise) of
@@ -303,7 +317,7 @@ class Tree:
     def _get_vectors(
         self,
         positions=None,
-        allow_ragged=False,
+        allow_ragged=None,
         num_neighbors=None,
         cutoff_radius=np.inf,
         distances=None,
@@ -403,6 +417,10 @@ class Tree:
         width_buffer=1.2,
     ):
         """
+        Get neighborhood information of `positions`. What it returns is in principle the same as
+        `get_neighborhood` in `Atoms`. The only one difference is the reuse of the same Tree
+        structure, which makes the algorithm more efficient, but will fail if the reference
+        structure changed in the meantime.
 
         Args:
             position: Position in a box whose neighborhood information is analysed
