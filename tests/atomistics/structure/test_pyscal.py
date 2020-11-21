@@ -90,8 +90,10 @@ class Testpyscalatoms(unittest.TestCase):
 
     def test_analyse_pyscal_centro_symmetry(self):
         self.assertTrue(all([np.isclose(v, 0.0) for v in self.al_fcc.analyse_pyscal_centro_symmetry()]))
-        print("Fe bcc: ", self.fe_bcc.analyse_pyscal_centro_symmetry())
-        self.assertTrue(all([np.isclose(v, 6.177675) for v in self.fe_bcc.analyse_pyscal_centro_symmetry()]))
+        self.assertTrue(all([
+            any(np.isclose(centrosym, [0.0, 6.177675]))
+            for centrosym in self.fe_bcc.analyse_pyscal_centro_symmetry()
+        ]))
         self.assertTrue(all([np.isclose(v, 8.7025) for v in self.ti_hcp.analyse_pyscal_centro_symmetry()]))
         self.assertTrue(all([
             any(np.isclose(centrosym, [11.0568375, 16.58525625, 22.113675]))
