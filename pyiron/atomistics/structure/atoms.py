@@ -192,8 +192,16 @@ class Atoms(ASEAtoms):
             self.dimension = len(self.positions[0])
         else:
             self.dimension = 0
-        self.visualize = Visualize(self)
-        self.analyse = Analyse(self)
+        self._visualize = Visualize(self)
+        self._analyse = Analyse(self)
+
+    @property
+    def visualize(self):
+        return self._visualize
+
+    @property
+    def analyse(self):
+        return self._analyse
 
     @property
     def species(self):
@@ -2150,8 +2158,8 @@ class Atoms(ASEAtoms):
         for key, val in self.__dict__.items():
             if key not in ase_keys:
                 atoms_new.__dict__[key] = copy(val)
-        atoms_new.visualize = Visualize(atoms_new)
-        atoms_new.analyse = Analyse(atoms_new)
+        atoms_new._visualize = Visualize(atoms_new)
+        atoms_new._analyse = Analyse(atoms_new)
         return atoms_new
 
     def __delitem__(self, key):
