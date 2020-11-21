@@ -8,14 +8,6 @@ from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 
 
 class TestAtoms(unittest.TestCase):
-    @classmethod
-    def tearDownClass(cls):
-        pass
-
-    @classmethod
-    def setUpClass(cls):
-        pass
-
     def test_allow_ragged(self):
         a_0 = 4
         struct = CrystalStructure('Al', lattice_constants=a_0, bravais_basis='fcc').repeat(10)
