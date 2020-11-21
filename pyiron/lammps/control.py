@@ -800,7 +800,8 @@ class LammpsControl(GenericParameters):
 
         Args:
             ids (list/numpy.ndarray): Integer ids of the atoms to move in the job's structure.
-            velocity (list/numpy.ndarray/tuple): The velocity in x-y-z-direction for the group. `None` arguments are OK.
+            velocity (list/numpy.ndarray/tuple): The velocity in x-y-z-direction for the group. `None` arguments are
+                converted to Lammps 'NULL' values and the velocity in this direction is left unchanged.
         """
         if len(velocity) != 3:
             raise ValueError('Velocity must have three components, but got {}'.format(velocity))
