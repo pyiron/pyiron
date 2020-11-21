@@ -221,7 +221,9 @@ class GenericDFTJob(AtomisticGenericJob):
         Get k-mesh density according to the box size.
 
         Args:
-            kpoints_per_reciprocal_angstrom (float): Number of k-points per reciprocal angstrom
+            kpoints_per_reciprocal_angstrom (float): One divided by the number of k-points per 2 * pi reciprocal
+                                                     Angstrom. (smaller values result in a denser mesh for a given
+                                                     structure).
             cell (numpy.ndarray/list): The cell shape
 
         Returns:
@@ -230,7 +232,7 @@ class GenericDFTJob(AtomisticGenericJob):
         """
         if cell is None:
             if self.structure is None:
-                raise ValueError("Can't genreate k-points without structure being set")
+                raise ValueError("Can't generate k-points without structure being set and if cell is not specified")
             cell = self.structure.cell
         return get_k_mesh_by_density(cell=cell, kmesh_density_per_inverse_angstrom=kpoints_per_reciprocal_angstrom)
 
@@ -399,7 +401,9 @@ def get_k_mesh_by_density(cell, kmesh_density_per_inverse_angstrom=1.0):
 
     Args:
         cell (numpy.ndarray/list): The cell shape
-        kmesh_density_per_inverse_angstrom (float): Number of k-points per reciprocal angstrom
+        kmesh_density_per_inverse_angstrom (float): One divided by the number of k-points per 2 * pi reciprocal
+                                                     Angstrom. (smaller values result in a denser mesh for a given
+                                                     structure).
 
     Returns:
         list/numpy.ndarray: Mesh size
