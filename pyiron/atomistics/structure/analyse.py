@@ -20,15 +20,17 @@ __date__ = "Sep 1, 2017"
 s = Settings()
 
 class Analyse:
-    """
-    Class to analyse atom structure.
-    """
+    """ Class to analyse atom structure.  """
     def __init__(self, ref_structure):
+        """
+        Args:
+            ref_structure (pyiron.atomistics.structure.atoms.Atoms): reference Atom structure
+        """
         self._ref_structure = ref_structure
 
     def __repr__(self):
         """
-            Returns: __repr__
+        Returns: __repr__
         """
         return ''
 
