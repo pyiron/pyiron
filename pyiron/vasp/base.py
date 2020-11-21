@@ -1063,7 +1063,6 @@ class VaspBase(GenericDFTJob):
             weights(list/numpy.ndarray): Manually supplied weights to each k-point in case of the manual mode
             reciprocal (bool): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
             reciprocal space)
-            kmesh_density (float): Value of the required density
             n_path (int): Number of points per trace part for line mode
             path_name (str): Name of high symmetry path used for band structure calculations.
         """
