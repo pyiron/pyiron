@@ -54,6 +54,8 @@ class Analyse:
         """
         if id_list is None:
             id_list = np.arange(len(self._ref_structure))
+        if len(id_list)==0:
+            raise ValueError('id_list must contain at least one id')
         layers = []
         for x in self._ref_structure.positions[np.array(id_list)].T:
             cluster = AgglomerativeClustering(
