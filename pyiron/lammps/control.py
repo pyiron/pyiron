@@ -789,6 +789,28 @@ class LammpsControl(GenericParameters):
             self['dump___1'] += ' c_energy_pot_per_atom'
             self['dump_modify___1'] = self['dump_modify___1'][:-1] + ' %20.15g"'
 
+    def _set_group_by_id(self, group_name, ids):
+        self['group___{}'.format(group_name)] = 'id {}'.format(' '.join(np.array(ids).astype(int).astype(str)))
+
+    def fix_move_linear_by_id(self, ids, velocity):
+        """
+        Displace atoms at each timestep. Creates a new group with a unique name based off the hash of the ids.
+
+        Args:
+            ids (list/numpy.ndarray): Integer ids of the atoms to move in the job's structure.
+            velocity (list/numpy.ndarray/tuple): The velocity in x-y-z-direction for the group. `None` arguments are OK.
+        """
+        conversion = LAMMPS_UNIT_CONVERSIONS[self["units"]]["velocity"]
+        velocity = list(velocity)
+        for i, v in enumerate(velocity):
+            if v is None:
+                velocity[i] = 'NULL'
+            else:
+                velocity[i] = str(v * conversion)
+        name = str(hash(tuple(ids))).replace('-', 'm')  # A unique name for the group
+        self._set_group_by_id(name, ids)
+        self['fix___velocity_{}'.format(name)] = '{} move linear {}'.format(name, ' '.join(velocity))
+
     def _measure_mean_value(self, key_pyiron, key_lmp, every, atom=False):
         """
             Args:
