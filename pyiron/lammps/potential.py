@@ -282,7 +282,7 @@ class LammpsPotentialFile(PotentialAbstract):
 class PotentialAvailable(object):
     def __init__(self, list_of_potentials):
         self._list_of_potentials = {
-            v.replace("-", "_"): v for v in list_of_potentials
+            "pot_" + v.replace("-", "_"): v for v in list_of_potentials
         }
 
     def __getattr__(self, name):
