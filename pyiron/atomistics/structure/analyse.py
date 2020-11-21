@@ -21,12 +21,12 @@ s = Settings()
 
 class Analyse:
     """ Class to analyse atom structure.  """
-    def __init__(self, ref_structure):
+    def __init__(self, structure):
         """
         Args:
-            ref_structure (pyiron.atomistics.structure.atoms.Atoms): reference Atom structure
+            structure (pyiron.atomistics.structure.atoms.Atoms): reference Atom structure
         """
-        self._ref_structure = ref_structure
+        self._structure = structure
 
     def get_layers(self, distance_threshold=0.01, id_list=None, wrap_atoms=True):
         """
@@ -53,13 +53,13 @@ class Analyse:
         ... )
         """
         if id_list is None:
-            id_list = np.arange(len(self._ref_structure))
+            id_list = np.arange(len(self._structure))
         if len(id_list)==0:
             raise ValueError('id_list must contain at least one id')
         layers = []
-        positions = self._ref_structure.positions[np.array(id_list)]
+        positions = self._structure.positions[np.array(id_list)]
         if wrap_atoms:
-            positions = self._ref_structure.get_wrapped_coordinates(positions)
+            positions = self._structure.get_wrapped_coordinates(positions)
         for x in positions.T:
             cluster = AgglomerativeClustering(
                 linkage='complete',
