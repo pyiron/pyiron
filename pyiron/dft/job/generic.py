@@ -261,7 +261,8 @@ class GenericDFTJob(AtomisticGenericJob):
             weights(list/numpy.ndarray): Manually supplied weights to each k-point in case of the manual mode
             reciprocal (bool): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
             reciprocal space)
-            k_mesh_spacing (float): Number of kpoint per angstrom in each direction
+            k_mesh_spacing (float): K-point spacing in units of 2 * pi reciprocal Angstrom.
+                                (smaller values result in a denser mesh for a given structure).
             n_path (int): Number of points per trace part for line mode
             path_name (str): Name of high symmetry path used for band structure calculations.
         """
