@@ -111,7 +111,7 @@ class TestSphinx(unittest.TestCase):
     def test_potential(self):
         self.assertEqual([], self.sphinx.list_potentials())
         self.assertEqual(['Fe_GGA'], self.sphinx_2_3.list_potentials())
-        self.assertEqual(['Fe_GGA'], self.sphinx_2_5.list_potentials())
+        self.assertEqual(['Fe_GGA', 'Ni_GGA'], sorted(self.sphinx_2_5.list_potentials()))
         self.sphinx_2_3.potential.Fe = 'Fe_GGA'
         self.sphinx_2_5.potential["Fe"] = 'Fe_GGA'
         self.assertEqual('Fe_GGA', list(self.sphinx_2_3.potential.to_dict().values())[0])
@@ -270,7 +270,7 @@ class TestSphinx(unittest.TestCase):
         self.assertTrue("kPoints" not in self.sphinx_band_structure.input.sphinx.basis)
         self.assertEqual(self.sphinx_band_structure.input.KpointFolding, mesh)
         self.assertEqual(self.sphinx_band_structure.input.KpointCoords, center_shift)
-        self.assertEqual(self.sphinx_band_structure.get_k_mesh_by_cell(2.81/2/np.pi), [1,1,1])
+        self.assertEqual(self.sphinx_band_structure.get_k_mesh_by_cell(2.81/2/np.pi), [1, 1, 1])
 
     def test_set_empty_states(self):
         with self.assertRaises(ValueError):
