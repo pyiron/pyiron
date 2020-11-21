@@ -396,7 +396,7 @@ class GenericDFTJob(AtomisticGenericJob):
 
 
 def get_k_mesh_by_density(cell, k_mesh_spacing=0.5):
-    """"
+    """
     Get k-mesh density according to the box size.
 
     Args:
