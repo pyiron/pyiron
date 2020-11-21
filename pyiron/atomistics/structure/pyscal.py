@@ -87,9 +87,7 @@ def analyse_centro_symmetry(atoms, num_neighbors=12):
     s.publication_add(publication())
     sys = pc.System()
     sys.read_inputfile(atoms, format="ase")
-    sys.calculate_centrosymmetry(nmax=num_neighbors)
-    atoms = sys.atoms
-    return np.array([atom.centrosymmetry for atom in atoms])
+    return np.array(sys.calculate_centrosymmetry(nmax=num_neighbors))
 
 
 def analyse_diamond_structure(atoms, mode="total", ovito_compatibility=False):
