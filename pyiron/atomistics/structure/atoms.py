@@ -14,6 +14,7 @@ import seekpath
 from pyiron.atomistics.structure.atom import Atom, ase_to_pyiron as ase_to_pyiron_atom
 from pyiron.atomistics.structure.neighbors import Neighbors, Tree
 from pyiron.atomistics.structure._visualize import Visualize
+from pyiron.atomistics.structure.analyse import Analyse
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
 from pyiron.atomistics.structure.periodic_table import (
     PeriodicTable,
@@ -192,6 +193,7 @@ class Atoms(ASEAtoms):
         else:
             self.dimension = 0
         self.visualize = Visualize(self)
+        self.analyse = Analyse(self)
 
     @property
     def species(self):
@@ -2149,6 +2151,7 @@ class Atoms(ASEAtoms):
             if key not in ase_keys:
                 atoms_new.__dict__[key] = copy(val)
         atoms_new.visualize = Visualize(atoms_new)
+        atoms_new.analyse = Analyse(atoms_new)
         return atoms_new
 
     def __delitem__(self, key):
