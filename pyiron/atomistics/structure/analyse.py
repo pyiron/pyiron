@@ -28,12 +28,6 @@ class Analyse:
         """
         self._ref_structure = ref_structure
 
-    def __repr__(self):
-        """
-        Returns: __repr__
-        """
-        return ''
-
     def get_layers(self, distance_threshold=0.01, id_list=None):
         """
         Get an array of layer numbers.
