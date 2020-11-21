@@ -270,7 +270,7 @@ class TestSphinx(unittest.TestCase):
         self.assertTrue("kPoints" not in self.sphinx_band_structure.input.sphinx.basis)
         self.assertEqual(self.sphinx_band_structure.input.KpointFolding, mesh)
         self.assertEqual(self.sphinx_band_structure.input.KpointCoords, center_shift)
-        self.assertEqual(self.sphinx_band_structure.get_k_mesh_by_cell(2.81/2/np.pi), [1,1,1])
+        self.assertEqual(self.sphinx_band_structure.get_k_mesh_by_cell(2*np.pi/2.81), [1,1,1])
 
     def test_set_empty_states(self):
         with self.assertRaises(ValueError):
