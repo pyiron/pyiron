@@ -22,7 +22,7 @@ s = Settings()
 
 class Analyse:
     """
-
+    Class to analyse atom structure.
     """
     def __init__(self, ref_structure):
         self._ref_structure = ref_structure
@@ -34,10 +34,33 @@ class Analyse:
         return ''
 
     def get_layers(self, distance_threshold=0.01, id_list=None):
+        """
+        Get an array of layer numbers.
+
+        Args:
+            distance_threshold (float): Distance below which two points are
+                considered to belong to the same layer. For detailed
+                description: sklearn.cluster.AgglomerativeClustering
+            id_list (list/numpy.ndarray): List of atoms for which the layers
+                should be considered.
+
+        Returns: Array of layer numbers (same shape as structure.positions)
+
+        Example I - how to get the number of layers in each direction:
+
+        >>> structure = Project('.').create_structure('Fe', 'bcc', 2.83).repeat(5)
+        >>> print('Numbers of layers:', np.max(structure.analyse.get_layers(), axis=0)+1)
+
+        Example II - get layers of only one species:
+
+        >>> print('Iron layers:', structure.analyse.get_layers(
+        ...     id_list=structure.select_index('Fe'))
+        ... )
+        """
         if id_list is None:
             id_list = np.arange(len(self._ref_structure))
         layers = []
-        for x in self._ref_structure.positions[id_list].T:
+        for x in self._ref_structure.positions[np.array(id_list)].T:
             cluster = AgglomerativeClustering(
                 linkage='complete',
                 n_clusters=None,
