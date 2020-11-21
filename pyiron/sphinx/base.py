@@ -1093,7 +1093,7 @@ class SphinxBase(GenericDFTJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
-        kpoints_per_reciprocal_angstrom=None,
+        k_mesh_spacing=None,
         n_path=None,
         path_name=None,
     ):
@@ -1113,7 +1113,7 @@ class SphinxBase(GenericDFTJob):
             mesh (list): Size of the mesh (in the MP scheme)
             center_shift (list): Shifts the center of the mesh from the
                                  gamma point by the given vector
-            kpoints_per_reciprocal_angstrom (float): Number of kpoint per angstrom
+            k_mesh_spacing (float): Number of kpoint per angstrom
                                           in each direction
             n_path (int): Number of points per trace part for line mode
             path_name (str): Name of high symmetry path used for band
@@ -1134,14 +1134,14 @@ class SphinxBase(GenericDFTJob):
             # Remove kPoints and set kPoint
             if "kPoints" in self.input.sphinx.basis:
                 del self.input.sphinx.basis.kPoints
-            if kpoints_per_reciprocal_angstrom is not None:
+            if k_mesh_spacing is not None:
                 if mesh is not None:
                     warnings.warn(
                         "mesh value is overwritten "
-                        "by kpoints_per_reciprocal_angstrom"
+                        "by k_mesh_spacing"
                     )
                 mesh = self.get_k_mesh_by_cell(
-                    kpoints_per_reciprocal_angstrom=kpoints_per_reciprocal_angstrom
+                    k_mesh_spacing=k_mesh_spacing
                     )
             self.input.sphinx.basis.get("kPoint", create = True)
             if mesh is not None:
