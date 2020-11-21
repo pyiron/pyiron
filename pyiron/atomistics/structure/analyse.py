@@ -5,7 +5,6 @@
 import numpy as np
 from pyiron_base import Settings
 from sklearn.cluster import AgglomerativeClustering
-import warnings
 
 __author__ = "Joerg Neugebauer, Sam Waseda"
 __copyright__ = (
