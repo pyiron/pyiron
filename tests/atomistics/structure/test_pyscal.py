@@ -89,16 +89,10 @@ class Testpyscalatoms(unittest.TestCase):
         cls.si_dia = ase_to_pyiron(bulk("Si", cubic=True))
 
     def test_analyse_pyscal_centro_symmetry(self):
-        self.assertTrue(all([np.isclose(v, 0.0) for v in self.al_fcc.analyse_pyscal_centro_symmetry()]))
-        self.assertTrue(all([
-            any(np.isclose(centrosym, [0.0, 6.177675]))
-            for centrosym in self.fe_bcc.analyse_pyscal_centro_symmetry()
-        ]))
-        self.assertTrue(all([np.isclose(v, 8.7025) for v in self.ti_hcp.analyse_pyscal_centro_symmetry()]))
-        self.assertTrue(all([
-            any(np.isclose(centrosym, [11.0568375, 16.58525625, 22.113675]))
-            for centrosym in self.si_dia.analyse_pyscal_centro_symmetry()
-        ]))
+        self.assertTrue(all([np.isclose(v, 0.0) for v in self.al_fcc.analyse_pyscal_centro_symmetry(num_neighbors=12)]))
+        self.assertTrue(all([np.isclose(v, 0.0) for v in self.fe_bcc.analyse_pyscal_centro_symmetry(num_neighbors=8)]))
+        self.assertTrue(all([np.isclose(v, 8.7025) for v in self.ti_hcp.analyse_pyscal_centro_symmetry(num_neighbors=12)]))
+        self.assertTrue(all([np.isclose(v, 14.742449) for v in self.si_dia.analyse_pyscal_centro_symmetry(num_neighbors=4)]))
         self.assertEqual(len(self.al_fcc.analyse_pyscal_centro_symmetry()), len(self.al_fcc))
         self.assertEqual(len(self.fe_bcc.analyse_pyscal_centro_symmetry()), len(self.fe_bcc))
         self.assertEqual(len(self.ti_hcp.analyse_pyscal_centro_symmetry()), len(self.ti_hcp))
