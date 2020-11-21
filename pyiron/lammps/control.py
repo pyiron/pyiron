@@ -790,6 +790,8 @@ class LammpsControl(GenericParameters):
             self['dump_modify___1'] = self['dump_modify___1'][:-1] + ' %20.15g"'
 
     def _set_group_by_id(self, group_name, ids):
+        if len(ids) < 1:
+            raise ValueError('Group ids must have at least length one, but got {}'.format(ids))
         self['group___{}'.format(group_name)] = 'id {}'.format(' '.join(np.array(ids).astype(int).astype(str)))
 
     def fix_move_linear_by_id(self, ids, velocity):
@@ -800,6 +802,8 @@ class LammpsControl(GenericParameters):
             ids (list/numpy.ndarray): Integer ids of the atoms to move in the job's structure.
             velocity (list/numpy.ndarray/tuple): The velocity in x-y-z-direction for the group. `None` arguments are OK.
         """
+        if len(velocity) != 3:
+            raise ValueError('Velocity must have three components, but got {}'.format(velocity))
         conversion = LAMMPS_UNIT_CONVERSIONS[self["units"]]["velocity"]
         velocity = list(velocity)
         for i, v in enumerate(velocity):
