@@ -874,12 +874,13 @@ class Atoms(ASEAtoms):
         if not self._is_scaled:
             self._is_scaled = True
 
-    def get_wrapped_coordinates(self, positions):
+    def get_wrapped_coordinates(self, positions, epsilon=1.0e-8):
         """
         Return coordinates in wrapped in the periodic cell
         
         Args:
             positions (list/numpy.ndarray): Positions
+            epsilon (float): displacement to add to avoid wrapping of atoms at borders
 
         Returns:
 
@@ -890,7 +891,7 @@ class Atoms(ASEAtoms):
             'ji,nj->ni', np.linalg.inv(self.cell), np.asarray(positions).reshape(-1, 3)
         )
         if any(self.pbc):
-            scaled_positions[:, self.pbc] -= np.floor(scaled_positions[:, self.pbc])
+            scaled_positions[:, self.pbc] -= np.floor(scaled_positions[:, self.pbc]+epsilon)
         new_positions = np.einsum('ji,nj->ni', self.cell, scaled_positions)
         return new_positions.reshape(np.asarray(positions).shape)
 

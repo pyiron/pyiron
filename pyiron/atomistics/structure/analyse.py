@@ -28,7 +28,7 @@ class Analyse:
         """
         self._ref_structure = ref_structure
 
-    def get_layers(self, distance_threshold=0.01, id_list=None):
+    def get_layers(self, distance_threshold=0.01, id_list=None, wrap_atoms=True):
         """
         Get an array of layer numbers.
 
@@ -57,7 +57,10 @@ class Analyse:
         if len(id_list)==0:
             raise ValueError('id_list must contain at least one id')
         layers = []
-        for x in self._ref_structure.positions[np.array(id_list)].T:
+        positions = self._ref_structure.positions[np.array(id_list)]
+        if wrap_atoms:
+            positions = self._ref_structure.get_wrapped_coordinates(positions)
+        for x in positions.T:
             cluster = AgglomerativeClustering(
                 linkage='complete',
                 n_clusters=None,

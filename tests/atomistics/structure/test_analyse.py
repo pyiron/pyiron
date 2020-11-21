@@ -8,7 +8,7 @@ from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 
 
 class TestAtoms(unittest.TestCase):
-    def test_allow_ragged(self):
+    def test_get_layers(self):
         a_0 = 4
         struct = CrystalStructure('Al', lattice_constants=a_0, bravais_basis='fcc').repeat(10)
         layers = struct.analyse.get_layers().tolist()
