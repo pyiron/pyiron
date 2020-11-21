@@ -13,7 +13,6 @@ create_structure = _StructureFactory.crystal
 
 # Make classes available for new pyiron version
 JOB_CLASS_DICT["ART"] = "pyiron.interactive.activation_relaxation_technique"
-JOB_CLASS_DICT["Atoms"] = "pyiron.atomistics.structure.atoms"
 JOB_CLASS_DICT["AtomisticExampleJob"] = "pyiron.testing.randomatomistic"
 JOB_CLASS_DICT["ConvEncutParallel"] = "pyiron.dft.master.convergence_encut_parallel"
 JOB_CLASS_DICT["ConvEncutSerial"] = "pyiron.dft.master.convergence_encut_serial"
