@@ -96,7 +96,7 @@ class GenericDFTJob(AtomisticGenericJob):
         Returns:
             float: Number of k-points per Angstrom
         """
-        return self._generic_input["k_mesh_per_reciprocal_angstrom"]
+        return self._generic_input["k_mesh_spacing"]
 
     @k_mesh_spacing.setter
     def k_mesh_spacing(self, val):
