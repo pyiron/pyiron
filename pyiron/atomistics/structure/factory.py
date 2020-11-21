@@ -30,7 +30,7 @@ import numpy as np
 from pyiron.atomistics.structure.pyironase import publication as publication_ase
 from pyiron.atomistics.structure.atoms import CrystalStructure, ase_to_pyiron, Atoms
 from pyiron.atomistics.structure.periodic_table import PeriodicTable
-from pyiron_base import Settings
+from pyiron_base import Settings, PyironFactory
 import types
 
 __author__ = "Sudarsan Surendralal"
@@ -47,7 +47,7 @@ __date__ = "May 1, 2020"
 s = Settings()
 
 
-class StructureFactory:
+class StructureFactory(PyironFactory):
     def ase_read(self, *args, **kwargs):
         """
         Returns a ASE's read result, wrapped as a `pyiron.atomstic.structure.atoms.Atoms` object.
