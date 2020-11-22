@@ -24,6 +24,9 @@ class GenericDFTJob(AtomisticGenericJob):
         super(GenericDFTJob, self).__init__(project, job_name)
         self._generic_input["fix_symmetry"] = True
         self.map_functions = MapFunctions()
+        self._generic_input["k_mesh_spacing"] = None
+        self._generic_input["k_mesh_center_shift"] = None
+        self._generic_input["reduce_kpoint_symmetry"] = True
 
     @property
     def encut(self):
@@ -84,6 +87,48 @@ class GenericDFTJob(AtomisticGenericJob):
         raise NotImplementedError(
             "The exchange property is not implemented for this code."
         )
+
+    @property
+    def k_mesh_spacing(self):
+        """
+        Number of unreduced k-points per Angstrom of the lattice vector
+
+        Returns:
+            float: Number of k-points per Angstrom
+        """
+        return self._generic_input["k_mesh_spacing"]
+
+    @k_mesh_spacing.setter
+    def k_mesh_spacing(self, val):
+        self._generic_input["k_mesh_spacing"] = val
+
+    @property
+    def k_mesh_center_shift(self):
+        """
+        Number of unreduced k-points per Angstrom of the lattice vector
+
+        Returns:
+            float: Number of k-points per Angstrom
+        """
+        return self._generic_input["k_mesh_center_shift"]
+
+    @k_mesh_center_shift.setter
+    def k_mesh_center_shift(self, val):
+        self._generic_input["k_mesh_center_shift"] = val
+
+    @property
+    def reduce_kpoint_symmetry(self):
+        """
+        Number of unreduced k-points per Angstrom of the lattice vector
+
+        Returns:
+            float: Number of k-points per Angstrom
+        """
+        return self._generic_input["reduce_kpoint_symmetry"]
+
+    @reduce_kpoint_symmetry.setter
+    def reduce_kpoint_symmetry(self, boolean):
+        self._generic_input["reduce_kpoint_symmetry"] = boolean
 
     @property
     def fix_spin_constraint(self):
@@ -171,24 +216,24 @@ class GenericDFTJob(AtomisticGenericJob):
             "The get_kpoints() function is not implemented for this code."
         )
 
-    def get_k_mesh_by_cell(self, kpoints_per_reciprocal_angstrom, cell=None):
+    def get_k_mesh_by_cell(self, k_mesh_spacing, cell=None):
         """
-            get k-mesh density according to the box size.
+        Get k-mesh density according to the box size.
 
-            Args:
-                kpoints_per_reciprocal_angstrom: (float) number of k-points per reciprocal angstrom (i.e. per 2*pi / box_length)
-                cell: (list/ndarray) 3x3 cell. If not set, the current cell is used.
+        Args:
+            k_mesh_spacing (float): K-point spacing in units of 2 * pi reciprocal Angstrom.
+                                (smaller values result in a denser mesh for a given structure).
+            cell (numpy.ndarray/list): The cell shape
+
+        Returns:
+            list/numpy.ndarray: Mesh size
+
         """
         if cell is None:
             if self.structure is None:
-                raise AssertionError('structure not set')
+                raise ValueError("Can't generate k-points without structure being set and if cell is not specified")
             cell = self.structure.cell
-        latlens = np.linalg.norm(cell, axis=-1)
-        kmesh = np.rint(2 * np.pi / latlens * kpoints_per_reciprocal_angstrom)
-        if kmesh.min() <= 0:
-            self._logger.warning("Calculated kmesh was 0 for at least one axis, setting it to 1 instead")
-            kmesh[kmesh == 0] = 1
-        return [int(k) for k in kmesh]
+        return get_k_mesh_by_density(cell=cell, k_mesh_spacing=k_mesh_spacing)
 
     def set_kpoints(
         self,
@@ -199,7 +244,7 @@ class GenericDFTJob(AtomisticGenericJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
-        kpoints_per_reciprocal_angstrom=None,
+        k_mesh_spacing=None,
         n_path=None,
         path_name=None,
     ):
@@ -207,22 +252,27 @@ class GenericDFTJob(AtomisticGenericJob):
         Function to setup the k-points
 
         Args:
-            mesh (list): Size of the mesh (ignored if scheme is not set to 'MP' or kpoints_per_reciprocal_angstrom is set)
+            mesh (list/numpy.ndarray): Size of the mesh (ignored if scheme is not set to 'MP' or kpoints_per_reciprocal_
+            angstrom is set)
             scheme (str): Type of k-point generation scheme (MP/GP(gamma point)/Manual/Line)
-            center_shift (list): Shifts the center of the mesh from the gamma point by the given vector in relative coordinates
+            center_shift (list/numpy.ndarray/None): Shifts the center of the mesh from the gamma point by the given vector in relative coordinates
             symmetry_reduction (boolean): Tells if the symmetry reduction is to be applied to the k-points
             manual_kpoints (list/numpy.ndarray): Manual list of k-points
             weights(list/numpy.ndarray): Manually supplied weights to each k-point in case of the manual mode
             reciprocal (bool): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
             reciprocal space)
-            kpoints_per_reciprocal_angstrom (float): Number of kpoint per angstrom in each direction
+            k_mesh_spacing (float): K-point spacing in units of 2 * pi reciprocal Angstrom.
+                                (smaller values result in a denser mesh for a given structure).
             n_path (int): Number of points per trace part for line mode
             path_name (str): Name of high symmetry path used for band structure calculations.
         """
-        if kpoints_per_reciprocal_angstrom is not None:
+        if k_mesh_spacing is not None:
             if mesh is not None:
-                warnings.warn("mesh value is overwritten by kpoints_per_reciprocal_angstrom")
-            mesh = self.get_k_mesh_by_cell(kpoints_per_reciprocal_angstrom=kpoints_per_reciprocal_angstrom)
+                warnings.warn("mesh value is overwritten by k_mesh_spacing")
+            mesh = self.get_k_mesh_by_cell(k_mesh_spacing=k_mesh_spacing)
+        self.k_mesh_spacing = k_mesh_spacing
+        self.k_mesh_center_shift = center_shift
+        self.reduce_kpoint_symmetry = symmetry_reduction
         if mesh is not None:
             if np.min(mesh) <= 0:
                 raise ValueError("mesh values must be larger than 0")
@@ -337,6 +387,38 @@ class GenericDFTJob(AtomisticGenericJob):
                 es_obj = ElectronicStructure()
                 es_obj.from_hdf(ho)
             return es_obj
+
+    def modify_kpoints(self):
+        if self.k_mesh_spacing is not None:
+            self.set_kpoints(center_shift=self.k_mesh_center_shift,
+                             k_mesh_spacing=self.k_mesh_spacing,
+                             symmetry_reduction=self.reduce_kpoint_symmetry)
+
+
+def get_k_mesh_by_density(cell, k_mesh_spacing=0.5):
+    """
+    Get k-mesh density according to the box size.
+
+    Args:
+        cell (numpy.ndarray/list): The cell shape
+        k_mesh_spacing (float): K-point spacing in units of 2 * pi reciprocal Angstrom.
+                                (smaller values result in a denser mesh for a given structure).
+
+    Returns:
+        list/numpy.ndarray: Mesh size
+
+    """
+    omega = np.linalg.det(cell)
+    l1, l2, l3 = cell
+    g1 = 2 * np.pi / omega * np.cross(l2, l3)
+    g2 = 2 * np.pi / omega * np.cross(l3, l1)
+    g3 = 2 * np.pi / omega * np.cross(l1, l2)
+
+    kmesh = np.rint(
+        np.array([np.linalg.norm(g) for g in [g1, g2, g3]]) / k_mesh_spacing
+    )
+    kmesh[kmesh < 1] = 1
+    return [int(k) for k in kmesh]
 
 
 def set_encut(job, parameter):
