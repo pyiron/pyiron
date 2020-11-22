@@ -3,10 +3,11 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import numpy as np
-from sklearn.cluster import MeanShift
+from sklearn.cluster import AgglomerativeClustering
 from scipy.sparse import coo_matrix
 from pyiron_base import Settings
 import warnings
+from sklearn.neighbors import NearestCentroid
 
 __author__ = "Joerg Neugebauer, Sam Waseda"
 __copyright__ = (
@@ -695,7 +696,9 @@ class Neighbors(Tree):
             return indices[np.arange(len(dist)), np.argmin(dist, axis=-1)], np.min(dist, axis=-1)
         return indices[np.arange(len(dist)), np.argmin(dist, axis=-1)]
 
-    def cluster_by_vecs(self, bandwidth=None, n_jobs=None, max_iter=300):
+    def cluster_by_vecs(
+        self, distance_threshold=None, n_clusters=None, linkage='complete', affinity='euclidean'
+    ):
         """
         Method to group vectors which have similar values. This method should be used as a part of
         neigh.get_global_shells(cluster_by_vecs=True) or neigh.get_local_shells(cluster_by_vecs=True).
@@ -704,17 +707,40 @@ class Neighbors(Tree):
         will be stored in the variable `_cluster_vecs`
 
         Args:
-            bandwidth (float): Resolution (cf. sklearn.cluster.MeanShift)
-            n_jobs (int): Number of cores (cf. sklearn.cluster.MeanShift)
-            max_iter (int): Number of maximum iterations (cf. sklearn.cluster.MeanShift)
-        """
-        if bandwidth is None:
-            bandwidth = 0.2*np.min(self.distances)
-        dr = self.vecs.copy().reshape(-1, 3)
-        self._cluster_vecs = MeanShift(bandwidth=bandwidth, n_jobs=n_jobs, max_iter=max_iter).fit(dr)
-        self._cluster_vecs.labels_ = self._cluster_vecs.labels_.reshape(self.indices.shape)
+            distance_threshold (float/None): The linkage distance threshold above which, clusters
+                will not be merged. (cf. sklearn.cluster.AgglomerativeClustering)
+            n_clusters (int/None): The number of clusters to find.
+                (cf. sklearn.cluster.AgglomerativeClustering)
+            linkage (str): Which linkage criterion to use. The linkage criterion determines which
+                distance to use between sets of observation. The algorithm will merge the pairs of
+                cluster that minimize this criterion. (cf. sklearn.cluster.AgglomerativeClustering)
+            affinity (str/callable): Metric used to compute the linkage. Can be `euclidean`, `l1`,
+                `l2`, `manhattan`, `cosine`, or `precomputed`. If linkage is `ward`, only
+                `euclidean` is accepted.
 
-    def cluster_by_distances(self, bandwidth=None, use_vecs=False, n_jobs=None, max_iter=300):
+        """
+        if distance_threshold is None and n_clusters is None:
+            distance_threshold = np.min(self.distances)
+        dr = self.vecs.copy().reshape(-1, 3)
+        self._cluster_vecs = AgglomerativeClustering(
+            distance_threshold=distance_threshold,
+            n_clusters=n_clusters,
+            linkage=linkage,
+            affinity=affinity,
+        ).fit(dr)
+        clf = NearestCentroid()
+        clf.fit(dr, self._cluster_vecs.labels_)
+        self._cluster_vecs.labels_ = self._cluster_vecs.labels_.reshape(self.indices.shape)
+        self._cluster_vecs.cluster_centers_ = clf.centroids_
+
+    def cluster_by_distances(
+        self,
+        distance_threshold=None,
+        n_clusters=None,
+        linkage='complete',
+        affinity='euclidean',
+        use_vecs=False,
+    ):
         """
         Method to group vectors which have similar values. This method should be used as a part of
         neigh.get_global_shells(cluster_by_vecs=True) or neigh.get_local_shells(cluster_by_distances=True).
@@ -723,21 +749,36 @@ class Neighbors(Tree):
         will be stored in the variable `_cluster_distances`
 
         Args:
-            bandwidth (float): Resolution (cf. sklearn.cluster.MeanShift)
-            use_vecs (bool): Whether to form clusters for vecs beforehand. If true, the distances obtained
-                from the clustered vectors is used for the distance clustering.  Otherwise neigh.distances
-                is used.
-            n_jobs (int): Number of cores (cf. sklearn.cluster.MeanShift)
-            max_iter (int): Number of maximum iterations (cf. sklearn.cluster.MeanShift)
+            distance_threshold (float/None): The linkage distance threshold above which, clusters
+                will not be merged. (cf. sklearn.cluster.AgglomerativeClustering)
+            n_clusters (int/None): The number of clusters to find.
+                (cf. sklearn.cluster.AgglomerativeClustering)
+            linkage (str): Which linkage criterion to use. The linkage criterion determines which
+                distance to use between sets of observation. The algorithm will merge the pairs of
+                cluster that minimize this criterion. (cf. sklearn.cluster.AgglomerativeClustering)
+            affinity (str/callable): Metric used to compute the linkage. Can be `euclidean`, `l1`,
+                `l2`, `manhattan`, `cosine`, or `precomputed`. If linkage is `ward`, only
+                `euclidean` is accepted.
+            use_vecs (bool): Whether to form clusters for vecs beforehand. If true, the distances
+                obtained from the clustered vectors is used for the distance clustering. Otherwise
+                neigh.distances is used.
         """
-        if bandwidth is None:
-            bandwidth = 0.05*np.min(self.distances)
+        if distance_threshold is None:
+            distance_threshold = 0.1*np.min(self.distances)
         dr = self.distances
         if use_vecs:
             if self._cluster_vecs is None:
                 self.cluster_by_vecs()
             dr = np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1)
-        self._cluster_dist = MeanShift(bandwidth=bandwidth, n_jobs=n_jobs, max_iter=max_iter).fit(dr.reshape(-1, 1))
+        self._cluster_dist = AgglomerativeClustering(
+            distance_threshold=distance_threshold,
+            n_clusters=n_clusters,
+            linkage=linkage,
+            affinity=affinity,
+        ).fit(dr.reshape(-1, 1))
+        clf = NearestCentroid()
+        clf.fit(dr.reshape(-1,1), self._cluster_dist.labels_)
+        self._cluster_dist.cluster_centers_ = clf.centroids_
         self._cluster_dist.labels_ = self._cluster_dist.labels_.reshape(self.indices.shape)
 
     def reset_clusters(self, vecs=True, distances=True):
