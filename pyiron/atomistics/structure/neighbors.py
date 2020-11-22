@@ -7,7 +7,6 @@ from sklearn.cluster import AgglomerativeClustering
 from scipy.sparse import coo_matrix
 from pyiron_base import Settings
 import warnings
-from sklearn.neighbors import NearestCentroid
 
 __author__ = "Joerg Neugebauer, Sam Waseda"
 __copyright__ = (
@@ -21,6 +20,15 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 s = Settings()
+
+def get_average_of_unique_labels(labels, values):
+    labels = np.asarray(labels).flatten()
+    unique_labels = np.unique(labels)
+    mat = coo_matrix((np.ones_like(labels), (labels, np.arange(len(labels)))))
+    mean_values = np.asarray(mat.dot(np.asarray(values).reshape(len(labels), -1))/mat.sum(axis=1))
+    if np.prod(mean_values.shape).astype(int)==len(unique_labels):
+        return mean_values.flatten()
+    return mean_values
 
 class Tree:
     """
@@ -721,17 +729,17 @@ class Neighbors(Tree):
         """
         if distance_threshold is None and n_clusters is None:
             distance_threshold = np.min(self.distances)
-        dr = self.vecs.copy().reshape(-1, 3)
+        dr = self.vecs.reshape(-1, 3)
         self._cluster_vecs = AgglomerativeClustering(
             distance_threshold=distance_threshold,
             n_clusters=n_clusters,
             linkage=linkage,
             affinity=affinity,
         ).fit(dr)
-        clf = NearestCentroid()
-        clf.fit(dr, self._cluster_vecs.labels_)
+        self._cluster_vecs.cluster_centers_ = get_average_of_unique_labels(
+            self._cluster_vecs.labels_, dr
+        )
         self._cluster_vecs.labels_ = self._cluster_vecs.labels_.reshape(self.indices.shape)
-        self._cluster_vecs.cluster_centers_ = clf.centroids_
 
     def cluster_by_distances(
         self,
@@ -776,9 +784,9 @@ class Neighbors(Tree):
             linkage=linkage,
             affinity=affinity,
         ).fit(dr.reshape(-1, 1))
-        clf = NearestCentroid()
-        clf.fit(dr.reshape(-1,1), self._cluster_dist.labels_)
-        self._cluster_dist.cluster_centers_ = clf.centroids_
+        self._cluster_dist.cluster_centers_ = get_average_of_unique_labels(
+            self._cluster_dist.labels_, dr
+        )
         self._cluster_dist.labels_ = self._cluster_dist.labels_.reshape(self.indices.shape)
 
     def reset_clusters(self, vecs=True, distances=True):
