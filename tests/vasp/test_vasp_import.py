@@ -55,6 +55,7 @@ class TestVaspImport(unittest.TestCase):
         self.assertEqual(ham["output/generic/dft/scf_energy_free"][0][1], 0.0)
         self.assertEqual(ham["output/electronic_structure/occ_matrix"].shape, (1, 4, 12))
         self.assertEqual(ham["output/electronic_structure/eig_matrix"].shape, (1, 4, 12))
+        self.assertEqual(ham._generic_input["reduce_kpoint_symmetry"], ham.reduce_kpoint_symmetry)
 
     def test_incar_import(self):
         file_path = os.path.join(
