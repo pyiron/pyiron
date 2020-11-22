@@ -222,6 +222,31 @@ def npt_liquid(temperature_solid, temperature_liquid, basis, project_parameter, 
     return ham_npt_liquid_low
 
 
+def check_diamond(structure):
+    cna_dict = structure.analyse_pyscal_cna_adaptive(
+        mode="total",
+        ovito_compatibility=True
+    )
+    dia_dict = structure.analyse_pyscal_diamond_structure(
+        mode="total",
+        ovito_compatibility=True
+    )
+    return cna_dict['CommonNeighborAnalysis.counts.OTHER'] < dia_dict['IdentifyDiamond.counts.OTHER']
+
+
+def analyse_structure(structure, mode="total", diamond=False):
+    if not diamond:
+        return structure.analyse_pyscal_cna_adaptive(
+            mode=mode,
+            ovito_compatibility=True
+        )
+    else:
+        return structure.analyse_pyscal_diamond_structure(
+            mode=mode,
+            ovito_compatibility=True
+        )
+
+
 def next_step_funct(number_of_atoms,
                     key_max,
                     structure_left,
@@ -232,13 +257,15 @@ def next_step_funct(number_of_atoms,
                     structure_after_minimization,
                     run_time_steps,
                     project_parameter):
-    structure_left_dict = structure_left.analyse_pyscal_cna_adaptive(
+    structure_left_dict = analyse_structure(
+        structure=structure_left,
         mode="total",
-        ovito_compatibility=True
+        diamond=project_parameter['crystalstructure'].lower()  == 'diamond'
     )
-    structure_right_dict = structure_right.analyse_pyscal_cna_adaptive(
+    structure_right_dict = analyse_structure(
+        structure=structure_right,
         mode="total",
-        ovito_compatibility=True
+        diamond=project_parameter['crystalstructure'].lower()  == 'diamond'
     )
     temperature_diff = temperature_right - temperature_left
     if structure_left_dict[key_max] / number_of_atoms > distribution_initial_half and \
@@ -368,9 +395,10 @@ def strain_circle(basis_relative, temperature_next, nve_run_time_steps, project_
             np.mean(ham_nve['output/generic/temperature'][-20:]),
             np.std(get_press(ham=ham_nve, step=-20)),
             np.std(ham_nve['output/generic/temperature'][-20:]),
-            ham_nve.get_structure(iteration_step=-1).analyse_pyscal_cna_adaptive(
+            analyse_structure(
+                structure=ham_nve.get_structure(iteration_step=-1),
                 mode="total",
-                ovito_compatibility=True
+                diamond=project_parameter['crystalstructure'].lower() == 'diamond'
             )
         ]
         strain_lst.append(strain)
@@ -386,9 +414,11 @@ def analyse_minimized_structure(ham):
     final_structure = ham.get_structure(
         iteration_step=-1
     )
-    final_structure_dict = final_structure.analyse_pyscal_cna_adaptive(
+    diamond_flag = check_diamond(structure=final_structure)
+    final_structure_dict = analyse_structure(
+        structure=final_structure,
         mode="total",
-        ovito_compatibility=True
+        diamond=diamond_flag
     )
     key_max = max(final_structure_dict.items(), key=operator.itemgetter(1))[0]
     number_of_atoms = len(final_structure)
@@ -441,13 +471,22 @@ def plot_solid_liquid_ratio(temperature_next, strain_lst, nve_run_time_steps, pr
         )
         ham_nve = project_parameter['project'].load(job_name)
         struct = ham_nve.get_structure().center_coordinates_in_unit_cell()
-        cna = struct.analyse_pyscal_cna_adaptive(mode="str", ovito_compatibility=True)
-        bcc_count = sum(cna == 'BCC')
-        fcc_count = sum(cna == 'FCC')
-        hcp_count = sum(cna == 'HCP')
-        if (cna_str == 'BCC' and bcc_count > fcc_count and bcc_count > hcp_count) or \
+        cna = analyse_structure(
+            structure=struct,
+            mode="str",
+            diamond=project_parameter['crystalstructure'].lower() == 'diamond'
+        )
+        if not project_parameter['crystalstructure'].lower() == 'diamond':
+            bcc_count = sum(cna == 'BCC')
+            fcc_count = sum(cna == 'FCC')
+            hcp_count = sum(cna == 'HCP')
+            cond = (cna_str == 'BCC' and bcc_count > fcc_count and bcc_count > hcp_count) or \
                 (cna_str == 'FCC' and fcc_count > bcc_count and fcc_count > hcp_count) or \
-                (cna_str == 'HCP' and hcp_count > bcc_count and hcp_count > fcc_count):
+                (cna_str == 'HCP' and hcp_count > bcc_count and hcp_count > fcc_count)
+        else:
+            cna_str = 'IdentifyDiamond.counts.CUBIC_DIAMOND'
+            cond = True
+        if cond:
             # plt.figure(figsize=(16,12))
             bandwidth = (struct.get_volume()/len(struct))**(1.0/3.0)
             kde = KernelDensity(kernel='gaussian',
@@ -485,9 +524,53 @@ def plot_solid_liquid_ratio(temperature_next, strain_lst, nve_run_time_steps, pr
             plt.xlabel('position z')
             plt.ylabel('position x')
             plt.plot(struct.positions[:, 2], struct.positions[:, 0], 'o', label='all')
-            plt.plot(struct.positions[:, 2][cna == 'BCC'], struct.positions[:, 0][cna == 'BCC'], 'x', label='BCC')
-            plt.plot(struct.positions[:, 2][cna == 'FCC'], struct.positions[:, 0][cna == 'FCC'], 'x', label='FCC')
-            plt.plot(struct.positions[:, 2][cna == 'HCP'], struct.positions[:, 0][cna == 'HCP'], 'x', label='HCP')
+            if not project_parameter['crystalstructure'].lower() == 'diamond':
+                plt.plot(struct.positions[:, 2][cna == 'BCC'], struct.positions[:, 0][cna == 'BCC'], 'x', label='BCC')
+                plt.plot(struct.positions[:, 2][cna == 'FCC'], struct.positions[:, 0][cna == 'FCC'], 'x', label='FCC')
+                plt.plot(struct.positions[:, 2][cna == 'HCP'], struct.positions[:, 0][cna == 'HCP'], 'x', label='HCP')
+            else:
+                plt.plot(
+                    struct.positions[:, 2][cna == 'IdentifyDiamond.counts.CUBIC_DIAMOND'],
+                    struct.positions[:, 0][cna == 'IdentifyDiamond.counts.CUBIC_DIAMOND'],
+                    'x',
+                    label='CUBIC_DIAMOND'
+                )
+                plt.plot(
+                    struct.positions[:, 2][cna == 'IdentifyDiamond.counts.CUBIC_DIAMOND_FIRST_NEIGHBOR'],
+                    struct.positions[:, 0][cna == 'IdentifyDiamond.counts.CUBIC_DIAMOND_FIRST_NEIGHBOR'],
+                    'x',
+                    label='CUBIC_DIAMOND_FIRST_NEIGHBOR'
+                )
+                plt.plot(
+                    struct.positions[:, 2][cna == 'IdentifyDiamond.counts.CUBIC_DIAMOND_SECOND_NEIGHBOR'],
+                    struct.positions[:, 0][cna == 'IdentifyDiamond.counts.CUBIC_DIAMOND_SECOND_NEIGHBOR'],
+                    'x',
+                    label='CUBIC_DIAMOND_SECOND_NEIGHBOR'
+                )
+                plt.plot(
+                    struct.positions[:, 2][cna == 'IdentifyDiamond.counts.HEX_DIAMOND'],
+                    struct.positions[:, 0][cna == 'IdentifyDiamond.counts.HEX_DIAMOND'],
+                    'x',
+                    label='HEX_DIAMOND'
+                )
+                plt.plot(
+                    struct.positions[:, 2][cna == 'IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR'],
+                    struct.positions[:, 0][cna == 'IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR'],
+                    'x',
+                    label='HEX_DIAMOND_FIRST_NEIGHBOR'
+                )
+                plt.plot(
+                    struct.positions[:, 2][cna == 'IdentifyDiamond.counts.HEX_DIAMOND_SECOND_NEIGHBOR'],
+                    struct.positions[:, 0][cna == 'IdentifyDiamond.counts.HEX_DIAMOND_SECOND_NEIGHBOR'],
+                    'x',
+                    label='HEX_DIAMOND_SECOND_NEIGHBOR'
+                )
+                plt.plot(
+                    struct.positions[:, 2][cna == 'IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR'],
+                    struct.positions[:, 0][cna == 'IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR'],
+                    'x',
+                    label='HEX_DIAMOND_FIRST_NEIGHBOR'
+                )
             cna_str_lst = struct.positions[:, 2][cna == cna_str]
             if len(cna_str_lst) != 0:
                 plt.axvline(cna_str_lst.max(), color='red')
