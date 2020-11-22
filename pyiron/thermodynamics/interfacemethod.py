@@ -484,7 +484,7 @@ def plot_solid_liquid_ratio(temperature_next, strain_lst, nve_run_time_steps, pr
                 (cna_str == 'FCC' and fcc_count > bcc_count and fcc_count > hcp_count) or \
                 (cna_str == 'HCP' and hcp_count > bcc_count and hcp_count > fcc_count)
         else:
-            cna_str = 'CUBIC_DIAMOND'
+            cna_str = 'Cubic diamond'
             cond = True
         if cond:
             # plt.figure(figsize=(16,12))
@@ -530,46 +530,40 @@ def plot_solid_liquid_ratio(temperature_next, strain_lst, nve_run_time_steps, pr
                 plt.plot(struct.positions[:, 2][cna == 'HCP'], struct.positions[:, 0][cna == 'HCP'], 'x', label='HCP')
             else:
                 plt.plot(
-                    struct.positions[:, 2][cna == 'CUBIC_DIAMOND'],
-                    struct.positions[:, 0][cna == 'CUBIC_DIAMOND'],
+                    struct.positions[:, 2][cna == 'Cubic diamond'],
+                    struct.positions[:, 0][cna == 'Cubic diamond'],
                     'x',
-                    label='CUBIC_DIAMOND'
+                    label='Cubic diamond'
                 )
                 plt.plot(
-                    struct.positions[:, 2][cna == 'CUBIC_DIAMOND_FIRST_NEIGHBOR'],
-                    struct.positions[:, 0][cna == 'CUBIC_DIAMOND_FIRST_NEIGHBOR'],
+                    struct.positions[:, 2][cna == 'Cubic diamond (1st neighbor)'],
+                    struct.positions[:, 0][cna == 'Cubic diamond (1st neighbor)'],
                     'x',
-                    label='CUBIC_DIAMOND_FIRST_NEIGHBOR'
+                    label='Cubic diamond (1st neighbor)'
                 )
                 plt.plot(
-                    struct.positions[:, 2][cna == 'CUBIC_DIAMOND_SECOND_NEIGHBOR'],
-                    struct.positions[:, 0][cna == 'CUBIC_DIAMOND_SECOND_NEIGHBOR'],
+                    struct.positions[:, 2][cna == 'Cubic diamond (2nd neighbor)'],
+                    struct.positions[:, 0][cna == 'Cubic diamond (2nd neighbor)'],
                     'x',
-                    label='CUBIC_DIAMOND_SECOND_NEIGHBOR'
+                    label='Cubic diamond (2nd neighbor)'
                 )
                 plt.plot(
-                    struct.positions[:, 2][cna == 'HEX_DIAMOND'],
-                    struct.positions[:, 0][cna == 'HEX_DIAMOND'],
+                    struct.positions[:, 2][cna == 'Hexagonal diamond'],
+                    struct.positions[:, 0][cna == 'Hexagonal diamond'],
                     'x',
-                    label='HEX_DIAMOND'
+                    label='Hexagonal diamond'
                 )
                 plt.plot(
-                    struct.positions[:, 2][cna == 'HEX_DIAMOND_FIRST_NEIGHBOR'],
-                    struct.positions[:, 0][cna == 'HEX_DIAMOND_FIRST_NEIGHBOR'],
+                    struct.positions[:, 2][cna == 'Hexagonal diamond (1st neighbor)'],
+                    struct.positions[:, 0][cna == 'Hexagonal diamond (1st neighbor)'],
                     'x',
-                    label='HEX_DIAMOND_FIRST_NEIGHBOR'
+                    label='Hexagonal diamond (1st neighbor)'
                 )
                 plt.plot(
-                    struct.positions[:, 2][cna == 'HEX_DIAMOND_SECOND_NEIGHBOR'],
-                    struct.positions[:, 0][cna == 'HEX_DIAMOND_SECOND_NEIGHBOR'],
+                    struct.positions[:, 2][cna == 'Hexagonal diamond (2nd neighbor)'],
+                    struct.positions[:, 0][cna == 'Hexagonal diamond (2nd neighbor)'],
                     'x',
-                    label='HEX_DIAMOND_SECOND_NEIGHBOR'
-                )
-                plt.plot(
-                    struct.positions[:, 2][cna == 'HEX_DIAMOND_FIRST_NEIGHBOR'],
-                    struct.positions[:, 0][cna == 'HEX_DIAMOND_FIRST_NEIGHBOR'],
-                    'x',
-                    label='HEX_DIAMOND_FIRST_NEIGHBOR'
+                    label='Hexagonal diamond (2nd neighbor)'
                 )
             cna_str_lst = struct.positions[:, 2][cna == cna_str]
             if len(cna_str_lst) != 0:
