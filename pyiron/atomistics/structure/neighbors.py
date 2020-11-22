@@ -22,7 +22,19 @@ __date__ = "Sep 1, 2017"
 s = Settings()
 
 def get_average_of_unique_labels(labels, values):
-    labels = np.asarray(labels).flatten()
+    """
+
+    This function returns the average values of those elements, which share the same labels
+
+    Example:
+
+    >>> labels = [0, 1, 0, 2]
+    >>> values = [0, 1, 2, 3]
+    >>> print(get_average_of_unique_labels(labels, values))
+    array([1, 1, 3])
+
+    """
+    labels = np.unique(labels, return_inverse=True)[1]
     unique_labels = np.unique(labels)
     mat = coo_matrix((np.ones_like(labels), (labels, np.arange(len(labels)))))
     mean_values = np.asarray(mat.dot(np.asarray(values).reshape(len(labels), -1))/mat.sum(axis=1))
