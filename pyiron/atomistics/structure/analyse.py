@@ -5,6 +5,7 @@
 import numpy as np
 from pyiron_base import Settings
 from sklearn.cluster import AgglomerativeClustering
+from scipy.sparse import coo_matrix
 
 __author__ = "Joerg Neugebauer, Sam Waseda"
 __copyright__ = (
@@ -18,6 +19,27 @@ __status__ = "production"
 __date__ = "Sep 1, 2017"
 
 s = Settings()
+
+def get_average_of_unique_labels(labels, values):
+    """
+
+    This function returns the average values of those elements, which share the same labels
+
+    Example:
+
+    >>> labels = [0, 1, 0, 2]
+    >>> values = [0, 1, 2, 3]
+    >>> print(get_average_of_unique_labels(labels, values))
+    array([1, 1, 3])
+
+    """
+    labels = np.unique(labels, return_inverse=True)[1]
+    unique_labels = np.unique(labels)
+    mat = coo_matrix((np.ones_like(labels), (labels, np.arange(len(labels)))))
+    mean_values = np.asarray(mat.dot(np.asarray(values).reshape(len(labels), -1))/mat.sum(axis=1))
+    if np.prod(mean_values.shape).astype(int)==len(unique_labels):
+        return mean_values.flatten()
+    return mean_values
 
 class Analyse:
     """ Class to analyse atom structure.  """
@@ -91,19 +113,15 @@ class Analyse:
             permutation = x[first_occurrences].argsort().argsort()
             labels = permutation[cluster.labels_]
             if wrap_atoms and planes is None and self._structure.pbc[ii]:
-                unique_labels = np.unique(labels)
-                mat = np.zeros((len(labels), len(unique_labels)))
-                mat[np.arange(len(labels)), labels] = 1
-                mean_positions = np.einsum('ij,ik,j->jk', mat, positions, 1/np.sum(mat, axis=0))
+                mean_positions = get_average_of_unique_labels(labels, positions)
                 scaled_positions = np.einsum(
                     'ji,nj->ni', np.linalg.inv(self._structure.cell), mean_positions
                 )
                 unique_inside_box = np.all(np.absolute(scaled_positions-0.5+1.0e-8)<0.5, axis=-1)
                 arr_inside_box = np.any(
-                    labels[:,None]==unique_labels[unique_inside_box][None,:], axis=-1
+                    labels[:,None]==np.unique(labels)[unique_inside_box][None,:], axis=-1
                 )
-                labels_inside_box = indices[arr_inside_box]
-                first_occurences = np.unique(labels_inside_box, return_index=True)[1]
+                first_occurences = np.unique(indices[arr_inside_box], return_index=True)[1]
                 labels = labels[arr_inside_box]
                 labels -= np.min(labels)
                 labels = labels[first_occurences]
