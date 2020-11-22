@@ -60,18 +60,26 @@ class Analyse:
         """
         if distance_threshold <= 0:
             raise ValueError('distance_threshold must be a positive float')
-        if id_list is None:
-            id_list = np.arange(len(self._structure))
-        if len(id_list)==0:
+        if id_list is not None and len(id_list)==0:
             raise ValueError('id_list must contain at least one id')
-        positions = self._structure.positions[np.array(id_list)]
         if wrap_atoms:
-            positions = self._structure.get_wrapped_coordinates(positions)
+            positions, indices = self._structure.get_extended_positions(
+                width=distance_threshold, return_indices=True
+            )
+            if id_list is not None:
+                id_list = np.arange(len(self._structure))[np.array(id_list)]
+                id_list = np.any(id_list[:,None]==indices[None,:], axis=0)
+                positions = positions[id_list]
+                indices = indices[id_list]
+        else:
+            positions = self._structure.positions[np.array(id_list)]
+            if id_list is not None:
+                positions = positions[id_list]
         if planes is not None:
             mat = np.asarray(planes).reshape(-1, 3)
             positions = np.einsum('ij,i,nj->ni', mat, 1/np.linalg.norm(mat, axis=-1), positions)
         layers = []
-        for x in positions.T:
+        for ii,x in enumerate(positions.T):
             cluster = AgglomerativeClustering(
                 linkage='complete',
                 n_clusters=None,
@@ -79,7 +87,27 @@ class Analyse:
             ).fit(x.reshape(-1,1))
             first_occurrences = np.unique(cluster.labels_, return_index=True)[1]
             permutation = x[first_occurrences].argsort().argsort()
-            layers.append(permutation[cluster.labels_])
+            labels = permutation[cluster.labels_]
+            if (wrap_atoms and
+                    (planes is None and self._structure.pbc[ii]) or
+                    all(self._structure.pbc)):
+                unique_labels = np.unique(labels)
+                mat = np.zeros((len(labels), len(unique_labels)))
+                mat[np.arange(len(labels)), labels] = 1
+                mean_positions = np.einsum('ij,ik,j->jk', mat, positions, 1/np.sum(mat, axis=0))
+                scaled_positions = np.einsum(
+                    'ji,nj->ni', np.linalg.inv(self._structure.cell), mean_positions
+                )
+                unique_inside_box = np.all(np.absolute(scaled_positions-0.5)<0.5, axis=-1)
+                arr_inside_box = np.any(
+                    labels[:,None]==unique_labels[unique_inside_box][None,:], axis=-1
+                )
+                labels_inside_box = indices[arr_inside_box]
+                first_occurences = np.unique(labels_inside_box, return_index=True)[1]
+                labels = labels[arr_inside_box]
+                labels -= np.min(labels)
+                labels = labels[first_occurences]
+            layers.append(labels)
         if planes is not None and len(np.asarray(planes).shape)==1:
             return np.asarray(layers).flatten()
         return np.vstack(layers).T
