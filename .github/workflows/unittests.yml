@@ -29,7 +29,7 @@ jobs:
       shell: bash -l {0}
       run: |
         python .ci_support/pyironconfig.py
-        pip install -e .
+        pip install --no-deps .
     - name: Tests
       shell: bash -l {0}
       run: coverage run --omit pyiron/_version.py -m unittest discover tests

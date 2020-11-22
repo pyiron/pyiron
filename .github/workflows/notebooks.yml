@@ -25,7 +25,7 @@ jobs:
     - name: Setup
       shell: bash -l {0}
       run: |
-        pip install -e .
+        pip install --no-deps .
         conda env update --name test --file .ci_support/environment-notebooks.yml
     - name: Tests
       shell: bash -l {0}
