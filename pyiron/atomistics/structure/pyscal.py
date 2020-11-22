@@ -113,13 +113,13 @@ def analyse_diamond_structure(atoms, mode="total", ovito_compatibility=False):
     diamond_dict = sys.identify_diamond()
 
     ovito_identifiers = [
-        'CUBIC_DIAMOND',
-        'CUBIC_DIAMOND_FIRST_NEIGHBOR',
-        'CUBIC_DIAMOND_SECOND_NEIGHBOR',
-        'HEX_DIAMOND',
-        'HEX_DIAMOND_FIRST_NEIGHBOR',
-        'HEX_DIAMOND_SECOND_NEIGHBOR',
-        'OTHER'
+        'Cubic diamond',
+        'Cubic diamond (1st neighbor)',
+        'Cubic diamond (2nd neighbor)',
+        'Hexagonal diamond',
+        'Hexagonal diamond (1st neighbor)',
+        'Hexagonal diamond (2nd neighbor)',
+        'Other'
     ]
     pyscal_identifiers = [
         'others', 'fcc', 'hcp', 'bcc', 'ico', 'cubic diamond',
