@@ -484,7 +484,7 @@ def plot_solid_liquid_ratio(temperature_next, strain_lst, nve_run_time_steps, pr
                 (cna_str == 'FCC' and fcc_count > bcc_count and fcc_count > hcp_count) or \
                 (cna_str == 'HCP' and hcp_count > bcc_count and hcp_count > fcc_count)
         else:
-            cna_str = 'IdentifyDiamond.counts.CUBIC_DIAMOND'
+            cna_str = 'CUBIC_DIAMOND'
             cond = True
         if cond:
             # plt.figure(figsize=(16,12))
@@ -530,44 +530,44 @@ def plot_solid_liquid_ratio(temperature_next, strain_lst, nve_run_time_steps, pr
                 plt.plot(struct.positions[:, 2][cna == 'HCP'], struct.positions[:, 0][cna == 'HCP'], 'x', label='HCP')
             else:
                 plt.plot(
-                    struct.positions[:, 2][cna == 'IdentifyDiamond.counts.CUBIC_DIAMOND'],
-                    struct.positions[:, 0][cna == 'IdentifyDiamond.counts.CUBIC_DIAMOND'],
+                    struct.positions[:, 2][cna == 'CUBIC_DIAMOND'],
+                    struct.positions[:, 0][cna == 'CUBIC_DIAMOND'],
                     'x',
                     label='CUBIC_DIAMOND'
                 )
                 plt.plot(
-                    struct.positions[:, 2][cna == 'IdentifyDiamond.counts.CUBIC_DIAMOND_FIRST_NEIGHBOR'],
-                    struct.positions[:, 0][cna == 'IdentifyDiamond.counts.CUBIC_DIAMOND_FIRST_NEIGHBOR'],
+                    struct.positions[:, 2][cna == 'CUBIC_DIAMOND_FIRST_NEIGHBOR'],
+                    struct.positions[:, 0][cna == 'CUBIC_DIAMOND_FIRST_NEIGHBOR'],
                     'x',
                     label='CUBIC_DIAMOND_FIRST_NEIGHBOR'
                 )
                 plt.plot(
-                    struct.positions[:, 2][cna == 'IdentifyDiamond.counts.CUBIC_DIAMOND_SECOND_NEIGHBOR'],
-                    struct.positions[:, 0][cna == 'IdentifyDiamond.counts.CUBIC_DIAMOND_SECOND_NEIGHBOR'],
+                    struct.positions[:, 2][cna == 'CUBIC_DIAMOND_SECOND_NEIGHBOR'],
+                    struct.positions[:, 0][cna == 'CUBIC_DIAMOND_SECOND_NEIGHBOR'],
                     'x',
                     label='CUBIC_DIAMOND_SECOND_NEIGHBOR'
                 )
                 plt.plot(
-                    struct.positions[:, 2][cna == 'IdentifyDiamond.counts.HEX_DIAMOND'],
-                    struct.positions[:, 0][cna == 'IdentifyDiamond.counts.HEX_DIAMOND'],
+                    struct.positions[:, 2][cna == 'HEX_DIAMOND'],
+                    struct.positions[:, 0][cna == 'HEX_DIAMOND'],
                     'x',
                     label='HEX_DIAMOND'
                 )
                 plt.plot(
-                    struct.positions[:, 2][cna == 'IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR'],
-                    struct.positions[:, 0][cna == 'IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR'],
+                    struct.positions[:, 2][cna == 'HEX_DIAMOND_FIRST_NEIGHBOR'],
+                    struct.positions[:, 0][cna == 'HEX_DIAMOND_FIRST_NEIGHBOR'],
                     'x',
                     label='HEX_DIAMOND_FIRST_NEIGHBOR'
                 )
                 plt.plot(
-                    struct.positions[:, 2][cna == 'IdentifyDiamond.counts.HEX_DIAMOND_SECOND_NEIGHBOR'],
-                    struct.positions[:, 0][cna == 'IdentifyDiamond.counts.HEX_DIAMOND_SECOND_NEIGHBOR'],
+                    struct.positions[:, 2][cna == 'HEX_DIAMOND_SECOND_NEIGHBOR'],
+                    struct.positions[:, 0][cna == 'HEX_DIAMOND_SECOND_NEIGHBOR'],
                     'x',
                     label='HEX_DIAMOND_SECOND_NEIGHBOR'
                 )
                 plt.plot(
-                    struct.positions[:, 2][cna == 'IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR'],
-                    struct.positions[:, 0][cna == 'IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR'],
+                    struct.positions[:, 2][cna == 'HEX_DIAMOND_FIRST_NEIGHBOR'],
+                    struct.positions[:, 0][cna == 'HEX_DIAMOND_FIRST_NEIGHBOR'],
                     'x',
                     label='HEX_DIAMOND_FIRST_NEIGHBOR'
                 )
