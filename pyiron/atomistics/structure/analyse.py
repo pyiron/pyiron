@@ -77,21 +77,9 @@ class Analyse:
                 n_clusters=None,
                 distance_threshold=distance_threshold
             ).fit(x.reshape(-1,1))
-            args = np.unique(cluster.labels_, return_index=True)[1]
-            # argsort(argsort) looks weird, but what we're trying to do here is
-            # permuting the plane indices such that label 0 corresponds to the plane
-            # closest to the origin, 1 to the second closest, etc.  For that we first
-            # calculate the mean x position of all labels and argsort it.  This gives a
-            # mapping from the sorted indices to the labels returned by the clustering,
-            # i.e. argsort(x)[0] maps the first sorted index 0 to the cluster index
-            # closest to the origin, etc.  However we actually want to have the inverse
-            # mapping, from cluster indices to sorted indices!  Curiously argsort also
-            # inverts index permutations.  Inverting a index permutation means building
-            # an array where the ith item is the index at which i appears in the
-            # original permutation, which is just sorting indices into the original
-            # permutation array according to the value in the permuation array. i.e.
-            # argsorting.
-            layers.append(x[args].argsort().argsort()[cluster.labels_])
+            first_occurrences = np.unique(cluster.labels_, return_index=True)[1]
+            permutation = x[first_occurrences].argsort().argsort()
+            layers.append(permutation[cluster.labels_])
         if planes is not None and len(np.asarray(planes).shape)==1:
             return np.asarray(layers).flatten()
         return np.vstack(layers).T
