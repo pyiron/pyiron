@@ -6,7 +6,6 @@ dependencies:
   - coverage
   - codacy-coverage
   - defusedxml >=0.6.0
-  - dill >=0.3.1.1
   - future >=0.18.2
   - h5py >=2.10.0
   - matplotlib >=3.2.0
@@ -26,5 +25,4 @@ dependencies:
   - scikit-learn >=0.22
   - spglib >=1.14.1
   - tamkin >=1.2.6
-  - tqdm >=4.43.0
   - yaff >=1.4.2

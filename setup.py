@@ -32,7 +32,6 @@ setup(
     install_requires=[
         'ase>=3.20',
         'defusedxml>=0.6.0',
-        'dill>=0.3.1.1',
         'future>=0.18.2',
         'h5py>=2.10.0',
         'matplotlib>=3.2.0',
@@ -50,7 +49,6 @@ setup(
         'spglib>=1.14.1',
         'tables>=3.6.1',
         'tamkin>=1.2.6',
-        'tqdm>=4.43.0',
         'yaff>=1.4.2'
     ],
     cmdclass=versioneer.get_cmdclass(),
