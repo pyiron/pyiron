@@ -19,13 +19,13 @@ jobs:
     - uses: conda-incubator/setup-miniconda@v2
       with:
         auto-update-conda: true
-        python-version: 3.8
+        python-version: 3.9
         environment-file: .ci_support/environment.yml
         auto-activate-base: false
     - name: Setup
       shell: bash -l {0}
       run: |
-        pip install -e .
+        pip install --no-deps .
         conda env update --name test --file .ci_support/environment-notebooks.yml
     - name: Tests
       shell: bash -l {0}

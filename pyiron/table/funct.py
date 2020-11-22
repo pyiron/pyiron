@@ -132,7 +132,10 @@ def get_majority_crystal_structure(job):
     majority_index = [
         ind for ind, el in enumerate(basis) if el.symbol == majority_element
     ]
-    type_list = list(basis[majority_index].analyse_ovito_cna_adaptive(mode="str"))
+    type_list = list(basis[majority_index].analyse_pyscal_cna_adaptive(
+        mode="str",
+        ovito_compatibility=True
+    ))
     return {"crystal_structure": get_majority(type_list, minority=False)}
 
 

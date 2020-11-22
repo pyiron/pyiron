@@ -89,10 +89,10 @@ class Testpyscalatoms(unittest.TestCase):
         cls.si_dia = ase_to_pyiron(bulk("Si", cubic=True))
 
     def test_analyse_pyscal_centro_symmetry(self):
-        self.assertTrue(all([np.isclose(v, 0.0) for v in self.al_fcc.analyse_pyscal_centro_symmetry()]))
-        self.assertTrue(all([np.isclose(v, 6.177675) for v in self.fe_bcc.analyse_pyscal_centro_symmetry()]))
-        self.assertTrue(all([np.isclose(v, 8.7025) for v in self.ti_hcp.analyse_pyscal_centro_symmetry()]))
-        self.assertTrue(all([np.isclose(v, 22.113675) for v in self.si_dia.analyse_pyscal_centro_symmetry()]))
+        self.assertTrue(all([np.isclose(v, 0.0) for v in self.al_fcc.analyse_pyscal_centro_symmetry(num_neighbors=12)]))
+        self.assertTrue(all([np.isclose(v, 0.0) for v in self.fe_bcc.analyse_pyscal_centro_symmetry(num_neighbors=8)]))
+        self.assertTrue(all([np.isclose(v, 8.7025) for v in self.ti_hcp.analyse_pyscal_centro_symmetry(num_neighbors=12)]))
+        self.assertTrue(all([np.isclose(v, 14.742449) for v in self.si_dia.analyse_pyscal_centro_symmetry(num_neighbors=4)]))
         self.assertEqual(len(self.al_fcc.analyse_pyscal_centro_symmetry()), len(self.al_fcc))
         self.assertEqual(len(self.fe_bcc.analyse_pyscal_centro_symmetry()), len(self.fe_bcc))
         self.assertEqual(len(self.ti_hcp.analyse_pyscal_centro_symmetry()), len(self.ti_hcp))
@@ -195,7 +195,7 @@ class Testpyscalatoms(unittest.TestCase):
         self.assertTrue(all([v == 'HCP' for v in res_str]))
         res_str = self.si_dia.analyse_pyscal_cna_adaptive(mode="str", ovito_compatibility=True)
         self.assertEqual(len(res_str), len(self.si_dia))
-        self.assertTrue(all([v == 'OTHER' for v in res_str]))
+        self.assertTrue(all([v == 'Other' for v in res_str]))
 
     def test_analyse_pyscal_diamond_structure(self):
         pyscal_keys = [
@@ -279,16 +279,16 @@ class Testpyscalatoms(unittest.TestCase):
 
         res_str = self.al_fcc.analyse_pyscal_diamond_structure(mode="str", ovito_compatibility=True)
         self.assertEqual(len(res_str), len(self.al_fcc))
-        self.assertTrue(all([v == 'IdentifyDiamond.counts.OTHER' for v in res_str]))
+        self.assertTrue(all([v == 'Other' for v in res_str]))
         res_str = self.fe_bcc.analyse_pyscal_diamond_structure(mode="str", ovito_compatibility=True)
         self.assertEqual(len(res_str), len(self.fe_bcc))
-        self.assertTrue(all([v == 'IdentifyDiamond.counts.OTHER' for v in res_str]))
+        self.assertTrue(all([v == 'Other' for v in res_str]))
         res_str = self.ti_hcp.analyse_pyscal_diamond_structure(mode="str", ovito_compatibility=True)
         self.assertEqual(len(res_str), len(self.ti_hcp))
-        self.assertTrue(all([v == 'IdentifyDiamond.counts.OTHER' for v in res_str]))
+        self.assertTrue(all([v == 'Other' for v in res_str]))
         res_str = self.si_dia.analyse_pyscal_diamond_structure(mode="str", ovito_compatibility=True)
         self.assertEqual(len(res_str), len(self.si_dia))
-        self.assertTrue(all([v == 'IdentifyDiamond.counts.CUBIC_DIAMOND' for v in res_str]))
+        self.assertTrue(all([v == 'Cubic diamond' for v in res_str]))
 
 
 if __name__ == "__main__":
