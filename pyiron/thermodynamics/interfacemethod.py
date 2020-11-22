@@ -232,8 +232,14 @@ def next_step_funct(number_of_atoms,
                     structure_after_minimization,
                     run_time_steps,
                     project_parameter):
-    structure_left_dict = structure_left.analyse_ovito_cna_adaptive()
-    structure_right_dict = structure_right.analyse_ovito_cna_adaptive()
+    structure_left_dict = structure_left.analyse_pyscal_cna_adaptive(
+        mode="total",
+        ovito_compatibility=True
+    )
+    structure_right_dict = structure_right.analyse_pyscal_cna_adaptive(
+        mode="total",
+        ovito_compatibility=True
+    )
     temperature_diff = temperature_right - temperature_left
     if structure_left_dict[key_max] / number_of_atoms > distribution_initial_half and \
             structure_right_dict[key_max] / number_of_atoms > distribution_initial_half:
@@ -362,7 +368,10 @@ def strain_circle(basis_relative, temperature_next, nve_run_time_steps, project_
             np.mean(ham_nve['output/generic/temperature'][-20:]),
             np.std(get_press(ham=ham_nve, step=-20)),
             np.std(ham_nve['output/generic/temperature'][-20:]),
-            ham_nve.get_structure(iteration_step=-1).analyse_ovito_cna_adaptive()
+            ham_nve.get_structure(iteration_step=-1).analyse_pyscal_cna_adaptive(
+                mode="total",
+                ovito_compatibility=True
+            )
         ]
         strain_lst.append(strain)
         pressure_lst.append(press)
@@ -377,7 +386,10 @@ def analyse_minimized_structure(ham):
     final_structure = ham.get_structure(
         iteration_step=-1
     )
-    final_structure_dict = final_structure.analyse_ovito_cna_adaptive()
+    final_structure_dict = final_structure.analyse_pyscal_cna_adaptive(
+        mode="total",
+        ovito_compatibility=True
+    )
     key_max = max(final_structure_dict.items(), key=operator.itemgetter(1))[0]
     number_of_atoms = len(final_structure)
     distribution_initial = final_structure_dict[key_max] / number_of_atoms
@@ -429,7 +441,7 @@ def plot_solid_liquid_ratio(temperature_next, strain_lst, nve_run_time_steps, pr
         )
         ham_nve = project_parameter['project'].load(job_name)
         struct = ham_nve.get_structure().center_coordinates_in_unit_cell()
-        cna = struct.analyse_ovito_cna_adaptive(mode='str')
+        cna = struct.analyse_pyscal_cna_adaptive(mode="str", ovito_compatibility=True)
         bcc_count = sum(cna == 'BCC')
         fcc_count = sum(cna == 'FCC')
         hcp_count = sum(cna == 'HCP')
@@ -756,7 +768,7 @@ def get_voronoi_volume(temperature_next, strain_lst, nve_run_time_steps, project
             nve_run_time_steps=nve_run_time_steps
         )
         ham_nve = project_parameter['project'].load(job_name)
-        structure_voronoi_lst = ham_nve.get_structure().analyse_ovito_voronoi_volume()
+        structure_voronoi_lst = ham_nve.get_structure().analyse_pyscal_voronoi_volume()
         max_lst.append(np.max(structure_voronoi_lst))
         mean_lst.append(np.mean(structure_voronoi_lst))
     return max_lst, mean_lst
