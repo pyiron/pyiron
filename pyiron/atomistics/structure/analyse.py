@@ -42,7 +42,9 @@ class Analyse:
                 given in vectors, i.e. [1, 0, 0] gives the layers along the x-axis. Default planes
                 are orthogonal unit vectors: [[1, 0, 0], [0, 1, 0], [0, 0, 1]]. If you have a
                 tilted box and want to calculate the layers along the directions of the cell
-                vectors, use `planes=np.linalg.inv(structure.cell).T`.
+                vectors, use `planes=np.linalg.inv(structure.cell).T`. Whatever values are
+                inserted, they are internally normalized, so whether [1, 0, 0] is entered or
+                [2, 0, 0], the results will be the same.
 
         Returns: Array of layer numbers (same shape as structure.positions)
 
