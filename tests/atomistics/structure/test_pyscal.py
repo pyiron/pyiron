@@ -195,7 +195,7 @@ class Testpyscalatoms(unittest.TestCase):
         self.assertTrue(all([v == 'HCP' for v in res_str]))
         res_str = self.si_dia.analyse_pyscal_cna_adaptive(mode="str", ovito_compatibility=True)
         self.assertEqual(len(res_str), len(self.si_dia))
-        self.assertTrue(all([v == 'OTHER' for v in res_str]))
+        self.assertTrue(all([v == 'Other' for v in res_str]))
 
     def test_analyse_pyscal_diamond_structure(self):
         pyscal_keys = [

@@ -215,7 +215,7 @@ def analyse_cna_adaptive(atoms, mode="total", ovito_compatibility=False):
                 dd = ['others', 'fcc', 'hcp', 'bcc', 'ico']
                 return [dd[int(x)] for x in cnalist]
             else:
-                dd = ["OTHER", "FCC", "HCP", "BCC", "ICO"]
+                dd = ['Other', "FCC", "HCP", "BCC", "ICO"]
                 return [dd[int(x)] for x in cnalist]
         else:
             raise ValueError("Only total, str and numeric mode is imported for analyse_cna_adaptive()")
