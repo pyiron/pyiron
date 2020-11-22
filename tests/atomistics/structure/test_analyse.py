@@ -11,13 +11,17 @@ class TestAtoms(unittest.TestCase):
     def test_get_layers(self):
         a_0 = 4
         struct = CrystalStructure('Al', lattice_constants=a_0, bravais_basis='fcc').repeat(10)
-        layers = struct.analyse.get_layers().tolist()
-        self.assertEqual(
-            layers, np.rint(2*struct.positions/a_0).astype(int).tolist()
-        )
+        layers = struct.analyse.get_layers()
+        self.assertAlmostEqual(np.linalg.norm(layers-np.rint(2*struct.positions/a_0).astype(int)), 0)
         struct.append(Atoms(elements=['C'], positions=np.random.random((1,3))))
         self.assertEqual(
-            layers, struct.analyse.get_layers(id_list=struct.select_index('Al')).tolist()
+            np.linalg.norm(layers-struct.analyse.get_layers(id_list=struct.select_index('Al'))), 0
+        )
+        self.assertEqual(
+            np.linalg.norm(layers-struct.analyse.get_layers(
+                id_list=struct.select_index('Al'),
+                wrap_atoms=False
+            )), 0
         )
         with self.assertRaises(ValueError):
             _ = struct.analyse.get_layers(distance_threshold=0)
@@ -32,6 +36,11 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(
             layers, structure.analyse.get_layers(planes=np.linalg.inv(structure.cell).T).tolist()
         )
+        structure = CrystalStructure('Fe', bravais_basis='bcc', lattice_constants=2.8).repeat(2)
+        layers = structure.analyse.get_layers()
+        structure.cell[1,0] += 0.01
+        structure.center_coordinates_in_unit_cell()
+        self.assertEqual(len(np.unique(layers[structure.analyse.get_layers()[:,0]==0,0])), 1)
 
 
 if __name__ == "__main__":
