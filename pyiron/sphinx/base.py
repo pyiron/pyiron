@@ -1288,9 +1288,6 @@ class SphinxBase(GenericDFTJob):
             potformat = "VASP"
         else:
             potformat = "JTH"
-
-        # Modifying kpoints
-        self.modify_kpoints()
         # If the species group was not modified directly by the user,
         # via job.input.pawPot (which is likely True),
         # load it based on job.structure.

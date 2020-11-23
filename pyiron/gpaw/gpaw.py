@@ -128,10 +128,6 @@ class Gpaw(AseJob, GenericDFTJob):
         with self.project_hdf5.open("input") as hdf5_input:
             self.input.from_hdf(hdf5_input)
 
-    def write_input(self):
-        super(Gpaw, self).write_input()
-        self.modify_kpoints()
-
 
 class GpawInput(GenericParameters):
     """
