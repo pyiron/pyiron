@@ -231,7 +231,7 @@ def check_diamond(structure):
         mode="total",
         ovito_compatibility=True
     )
-    return cna_dict['CommonNeighborAnalysis.counts.OTHER'] < dia_dict['IdentifyDiamond.counts.OTHER']
+    return cna_dict['CommonNeighborAnalysis.counts.OTHER'] > dia_dict['IdentifyDiamond.counts.OTHER']
 
 
 def analyse_structure(structure, mode="total", diamond=False):
@@ -260,12 +260,12 @@ def next_step_funct(number_of_atoms,
     structure_left_dict = analyse_structure(
         structure=structure_left,
         mode="total",
-        diamond=project_parameter['crystalstructure'].lower()  == 'diamond'
+        diamond=project_parameter['crystalstructure'].lower() == 'diamond'
     )
     structure_right_dict = analyse_structure(
         structure=structure_right,
         mode="total",
-        diamond=project_parameter['crystalstructure'].lower()  == 'diamond'
+        diamond=project_parameter['crystalstructure'].lower() == 'diamond'
     )
     temperature_diff = temperature_right - temperature_left
     if structure_left_dict[key_max] / number_of_atoms > distribution_initial_half and \
