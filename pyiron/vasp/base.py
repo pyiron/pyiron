@@ -352,6 +352,7 @@ class VaspBase(GenericDFTJob):
             for key, value in self._potential.to_dict().items()
             if value is not None
         }
+        self.modify_kpoints()
         self.write_magmoms()
         self.set_coulomb_interactions()
         if "CONTCAR" in self.restart_file_dict.keys():
@@ -1062,7 +1063,6 @@ class VaspBase(GenericDFTJob):
             weights(list/numpy.ndarray): Manually supplied weights to each k-point in case of the manual mode
             reciprocal (bool): Tells if the supplied values are in reciprocal (direct) or cartesian coordinates (in
             reciprocal space)
-            kmesh_density (float): Value of the required density
             n_path (int): Number of points per trace part for line mode
             path_name (str): Name of high symmetry path used for band structure calculations.
         """

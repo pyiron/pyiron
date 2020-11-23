@@ -113,13 +113,13 @@ def analyse_diamond_structure(atoms, mode="total", ovito_compatibility=False):
     diamond_dict = sys.identify_diamond()
 
     ovito_identifiers = [
-        'IdentifyDiamond.counts.CUBIC_DIAMOND',
-        'IdentifyDiamond.counts.CUBIC_DIAMOND_FIRST_NEIGHBOR',
-        'IdentifyDiamond.counts.CUBIC_DIAMOND_SECOND_NEIGHBOR',
-        'IdentifyDiamond.counts.HEX_DIAMOND',
-        'IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR',
-        'IdentifyDiamond.counts.HEX_DIAMOND_SECOND_NEIGHBOR',
-        'IdentifyDiamond.counts.OTHER'
+        'Cubic diamond',
+        'Cubic diamond (1st neighbor)',
+        'Cubic diamond (2nd neighbor)',
+        'Hexagonal diamond',
+        'Hexagonal diamond (1st neighbor)',
+        'Hexagonal diamond (2nd neighbor)',
+        'Other'
     ]
     pyscal_identifiers = [
         'others', 'fcc', 'hcp', 'bcc', 'ico', 'cubic diamond',
@@ -215,7 +215,7 @@ def analyse_cna_adaptive(atoms, mode="total", ovito_compatibility=False):
                 dd = ['others', 'fcc', 'hcp', 'bcc', 'ico']
                 return [dd[int(x)] for x in cnalist]
             else:
-                dd = ["OTHER", "FCC", "HCP", "BCC", "ICO"]
+                dd = ['Other', "FCC", "HCP", "BCC", "ICO"]
                 return [dd[int(x)] for x in cnalist]
         else:
             raise ValueError("Only total, str and numeric mode is imported for analyse_cna_adaptive()")
