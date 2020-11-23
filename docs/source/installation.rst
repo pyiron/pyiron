@@ -79,7 +79,7 @@ pyiron also supports `GPAW <https://wiki.fysik.dtu.dk/gpaw/>`_, an open-source r
 **********************
 Advanced Configuration
 **********************
-While the conda-based installation is usually sufficient for workstation installations to get started with pyiron, it can be extended to support your own executables, include your own parameter files, support commercial codes like `VASP <https://www.vasp.at>`_ or updating the database performance by switching from `SQLite <https://www.sqlite.org>`_ to `PostgeSQL <https://www.postgresql.org>`_. 
+While the conda-based installation is usually sufficient for workstation installations to get started with pyiron, it can be extended to support your own executables, include your own parameter files, support commercial codes like `VASP <https://www.vasp.at>`_ or updating the database performance by switching from `SQLite <https://www.sqlite.org>`_ to `PostgreSQL <https://www.postgresql.org>`_. 
 
 Custom Executables and Parameter Files
 ======================================
@@ -108,7 +108,7 @@ Below, the individual options are explained one by one:
 
 * the :code:`PROJECT_PATHS` option is similar to the resource path but for storing simulation protocols rather than parameter files. When the :code:`PROJECT_CHECK_ENABLED` option is set to :code:`true` then the read and write access within pyiron is limited to the directories defined in the :code:`PROJECT_PATHS`. Again multiple directories can be separated by :code:`;`. An alternative but outdated name for this option is :code:`TOP_LEVEL_DIRS`. 
 
-Besides the general variables in the :code:`~/.pyiron` configuration, the other settings are used to define the database connection. More detailed examples about the configuration can be found below; for now we continue with the configuration of the database. pyiron can use a database to build an index of the HDF5 files on the file system which accelerates job analysis. By default pyiron uses an `SQLite <https://www.sqlite.org>`_ database for this index, but the database can also be disabled or a `PostgeSQL <https://www.postgresql.org>`_ database can be used to improve performance. 
+Besides the general variables in the :code:`~/.pyiron` configuration, the other settings are used to define the database connection. More detailed examples about the configuration can be found below; for now we continue with the configuration of the database. pyiron can use a database to build an index of the HDF5 files on the file system which accelerates job analysis. By default pyiron uses an `SQLite <https://www.sqlite.org>`_ database for this index, but the database can also be disabled or a `PostgreSQL <https://www.postgresql.org>`_ database can be used to improve performance. 
 
 * By default the database is defined by the :code:`FILE` option which is equal to the :code:`DATABASE_FILE` option and gives the path to the `SQLite <https://www.sqlite.org>`_ database file. As the `SQLite <https://www.sqlite.org>`_ database is a file-based database, it struggles with parallel access on a shared file system (common for HPC clusters). 
 
@@ -190,9 +190,9 @@ Similar to the LAMMPS resource directory discussed above the VASP resource direc
 
 PostgreSQL Database
 ===================
-To accelerate the pyiron installation it is recommended to use a `PostgeSQL <https://www.postgresql.org>`_ database rather than the default `SQLite <https://www.sqlite.org>`_ database. To configure the database server, the following options can be added to the :code:`~/.pyiron`:
+To accelerate the pyiron installation it is recommended to use a `PostgreSQL <https://www.postgresql.org>`_ database rather than the default `SQLite <https://www.sqlite.org>`_ database. To configure the database server, the following options can be added to the :code:`~/.pyiron`:
 
-* :code:`TYPE` the typ of the database, while `sqlalchemy <https://www.sqlalchemy.org>`_ supports a wide range of differnet databases `PostgeSQL <https://www.postgresql.org>`_ is recommended and can be selected by setting the type to :code:`Postgres`. 
+* :code:`TYPE` the typ of the database, while `sqlalchemy <https://www.sqlalchemy.org>`_ supports a wide range of differnet databases `PostgreSQL <https://www.postgresql.org>`_ is recommended and can be selected by setting the type to :code:`Postgres`. 
 
 * :code:`HOST` the database host where the database is running. 
 
@@ -204,7 +204,7 @@ To accelerate the pyiron installation it is recommended to use a `PostgeSQL <htt
 
 * :code:`JOB_TABLE` the name of the database table. pyiron is commonly using one table per user. 
 
-A typical :code:`.pyiron` configuration with a `PostgeSQL <https://www.postgresql.org>`_ database might look like this: 
+A typical :code:`.pyiron` configuration with a `PostgreSQL <https://www.postgresql.org>`_ database might look like this: 
 
 .. code-block:: bash
 
@@ -224,17 +224,17 @@ Remote HPC Cluster
 ==================
 While the previous section discussed the installation of pyiron on a local workstation, the following section discusses how to configure a remote HPC cluster to transfer jobs to the HPC cluser for execution and back for analysis. For setting up pyiron on an HPC cluster there are basically three different configurations available: 
 
-* Install pyiron on the HPC cluster, with `jupyterhub <https://jupyterhub.readthedocs.io>`_ running as a central service on the login node using the `sudospawner <https://github.com/jupyterhub/sudospawner>`_ to authorize users. In this configuration the user only needs a web browser and all simulation results will remain on the HPC cluster. The limitation of this approach is that both the global `PostgeSQL <https://www.postgresql.org>`_ database as well as the `jupyterhub <https://jupyterhub.readthedocs.io>`_ have to be running on the cluster with the `PostgeSQL <https://www.postgresql.org>`_ database being accessible from all compute nodes. 
+* Install pyiron on the HPC cluster, with `jupyterhub <https://jupyterhub.readthedocs.io>`_ running as a central service on the login node using the `sudospawner <https://github.com/jupyterhub/sudospawner>`_ to authorize users. In this configuration the user only needs a web browser and all simulation results will remain on the HPC cluster. The limitation of this approach is that both the global `PostgreSQL <https://www.postgresql.org>`_ database as well as the `jupyterhub <https://jupyterhub.readthedocs.io>`_ have to be running on the cluster with the `PostgreSQL <https://www.postgresql.org>`_ database being accessible from all compute nodes. 
 
-* The second configuration is running pyiron on the HPC without the `jupyterhub <https://jupyterhub.readthedocs.io>`_ or a database, and storing the simulation results on a group server. Servers in the research group are commonly less strictly governed, so installing the `jupyterhub <https://jupyterhub.readthedocs.io>`_ on the group server as well as the `PostgeSQL <https://www.postgresql.org>`_ database for faster data analysis should be possible in most cases. From the user perspective the setup still only requires a web browser on the user's end device, and leaves the task of backing up the simulation data on the group server side rather than the end-user. 
+* The second configuration is running pyiron on the HPC without the `jupyterhub <https://jupyterhub.readthedocs.io>`_ or a database, and storing the simulation results on a group server. Servers in the research group are commonly less strictly governed, so installing the `jupyterhub <https://jupyterhub.readthedocs.io>`_ on the group server as well as the `PostgreSQL <https://www.postgresql.org>`_ database for faster data analysis should be possible in most cases. From the user perspective the setup still only requires a web browser on the user's end device, and leaves the task of backing up the simulation data on the group server side rather than the end-user. 
 
-* Finally the third configuration is the workstation installation, with a `PostgeSQL <https://www.postgresql.org>`_ database or even just a `SQLite <https://www.sqlite.org>`_ file based database with using the HPC cluster only to execute the calculation and copying the simulation results to local workstation after every calculation. 
+* Finally the third configuration is the workstation installation, with a `PostgreSQL <https://www.postgresql.org>`_ database or even just a `SQLite <https://www.sqlite.org>`_ file based database with using the HPC cluster only to execute the calculation and copying the simulation results to local workstation after every calculation. 
 
 We start by explaining the first configuration and then build on top of this setup to add the remote transfer capabilities. 
 
 HPC Cluster with PostgreSQL Database and Jupyterhub
 ---------------------------------------------------
-The :code:`~/.pyiron` is structured just like a workstation installation with a `PostgeSQL <https://www.postgresql.org>`_ database as explained above. In addition to the previous resource directories we add another subfolder in the resource directory to configure the queuing system using `pysqa <https://github.com/pyiron/pysqa>`_ as queuing system adapter. `pysqa <https://github.com/pyiron/pysqa>`_ is based on the idea of using shell script based templates to configure the different queues as modern queuing sytem provide a wide range of settings but most users commonly submit their jobs with very similar settings. We discuss a sample configuration for `SLURM <https://slurm.schedmd.com/documentation.html>`_ sample configurations for other queuing systems are available on `Github <https://github.com/pyiron/pysqa/tree/master/tests/config>`_.
+The :code:`~/.pyiron` is structured just like a workstation installation with a `PostgreSQL <https://www.postgresql.org>`_ database as explained above. In addition to the previous resource directories we add another subfolder in the resource directory to configure the queuing system using `pysqa <https://github.com/pyiron/pysqa>`_ as queuing system adapter. `pysqa <https://github.com/pyiron/pysqa>`_ is based on the idea of using shell script based templates to configure the different queues as modern queuing sytem provide a wide range of settings but most users commonly submit their jobs with very similar settings. We discuss a sample configuration for `SLURM <https://slurm.schedmd.com/documentation.html>`_ sample configurations for other queuing systems are available on `Github <https://github.com/pyiron/pysqa/tree/master/tests/config>`_.
 
 .. code-block:: bash
 

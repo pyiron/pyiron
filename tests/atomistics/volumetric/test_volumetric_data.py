@@ -7,7 +7,7 @@ import numpy as np
 import os
 from pyiron.atomistics.volumetric.generic import VolumetricData
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.atomistics.structure.generator import create_ase_bulk
+from pyiron.atomistics.structure.factory import StructureFactory
 from pyiron.vasp.volumetric_data import VaspVolumetricData
 
 
@@ -65,7 +65,7 @@ class TestVolumetricData(unittest.TestCase):
         vd = VolumetricData()
         n_x, n_y, n_z = (10, 15, 20)
         vd.total_data = np.random.rand(n_x, n_y, n_z)
-        struct = create_ase_bulk("Al")
+        struct = StructureFactory.ase_bulk("Al")
         cyl_avg = vd.cylindrical_average_potential(struct, spherical_center=[0, 0, 0],
                                                    axis_of_cyl=2, rad=2, fwhm=0.529177)
         self.assertIsInstance(cyl_avg, float)
