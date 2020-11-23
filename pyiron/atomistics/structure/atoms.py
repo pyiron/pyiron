@@ -14,6 +14,7 @@ import seekpath
 from pyiron.atomistics.structure.atom import Atom, ase_to_pyiron as ase_to_pyiron_atom
 from pyiron.atomistics.structure.neighbors import Neighbors, Tree
 from pyiron.atomistics.structure._visualize import Visualize
+from pyiron.atomistics.structure.analyse import Analyse
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
 from pyiron.atomistics.structure.periodic_table import (
     PeriodicTable,
@@ -191,7 +192,16 @@ class Atoms(ASEAtoms):
             self.dimension = len(self.positions[0])
         else:
             self.dimension = 0
-        self.visualize = Visualize(self)
+        self._visualize = Visualize(self)
+        self._analyse = Analyse(self)
+
+    @property
+    def visualize(self):
+        return self._visualize
+
+    @property
+    def analyse(self):
+        return self._analyse
 
     @property
     def species(self):
@@ -864,12 +874,13 @@ class Atoms(ASEAtoms):
         if not self._is_scaled:
             self._is_scaled = True
 
-    def get_wrapped_coordinates(self, positions):
+    def get_wrapped_coordinates(self, positions, epsilon=1.0e-8):
         """
         Return coordinates in wrapped in the periodic cell
-        
+
         Args:
             positions (list/numpy.ndarray): Positions
+            epsilon (float): displacement to add to avoid wrapping of atoms at borders
 
         Returns:
 
@@ -880,7 +891,7 @@ class Atoms(ASEAtoms):
             'ji,nj->ni', np.linalg.inv(self.cell), np.asarray(positions).reshape(-1, 3)
         )
         if any(self.pbc):
-            scaled_positions[:, self.pbc] -= np.floor(scaled_positions[:, self.pbc])
+            scaled_positions[:, self.pbc] -= np.floor(scaled_positions[:, self.pbc]+epsilon)
         new_positions = np.einsum('ji,nj->ni', self.cell, scaled_positions)
         return new_positions.reshape(np.asarray(positions).shape)
 
@@ -1071,7 +1082,7 @@ class Atoms(ASEAtoms):
         """
         from pyiron.atomistics.structure.pyscal import analyse_cna_adaptive
         return analyse_cna_adaptive(atoms=self, mode=mode, ovito_compatibility=ovito_compatibility)
-    
+
     def analyse_pyscal_centro_symmetry(self, num_neighbors=12):
         """
         Analyse centrosymmetry parameter
@@ -1115,7 +1126,7 @@ class Atoms(ASEAtoms):
         """
         from pyiron.atomistics.structure.pyscal import analyse_voronoi_volume
         return analyse_voronoi_volume(atoms=self)
-    
+
     def analyse_phonopy_equivalent_atoms(self):
         from pyiron.atomistics.structure.phonopy import analyse_phonopy_equivalent_atoms
 
@@ -2148,7 +2159,8 @@ class Atoms(ASEAtoms):
         for key, val in self.__dict__.items():
             if key not in ase_keys:
                 atoms_new.__dict__[key] = copy(val)
-        atoms_new.visualize = Visualize(atoms_new)
+        atoms_new._visualize = Visualize(atoms_new)
+        atoms_new._analyse = Analyse(atoms_new)
         return atoms_new
 
     def __delitem__(self, key):
@@ -3413,3 +3425,4 @@ def default(data, dflt):
         return newdata
     else:
         return data
+
