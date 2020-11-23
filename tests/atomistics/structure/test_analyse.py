@@ -27,15 +27,21 @@ class TestAtoms(unittest.TestCase):
             _ = struct.analyse.get_layers(distance_threshold=0)
         with self.assertRaises(ValueError):
             _ = struct.analyse.get_layers(id_list=[])
+
+    def test_get_layers_other_planes(self):
         structure = CrystalStructure('Fe', bravais_basis='fcc', lattice_constants=3.5).repeat(2)
         layers = structure.analyse.get_layers(planes=[1,1,1])
         self.assertEqual(np.unique(layers).tolist(), [0,1,2,3,4])
+
+    def test_get_layers_with_strain(self):
         structure = CrystalStructure('Fe', bravais_basis='bcc', lattice_constants=2.8).repeat(2)
         layers = structure.analyse.get_layers().tolist()
         structure.apply_strain(0.1*(np.random.random((3,3))-0.5))
         self.assertEqual(
             layers, structure.analyse.get_layers(planes=np.linalg.inv(structure.cell).T).tolist()
         )
+
+    def test_get_layers_across_pbc(self):
         structure = CrystalStructure('Fe', bravais_basis='bcc', lattice_constants=2.8).repeat(2)
         layers = structure.analyse.get_layers()
         structure.cell[1,0] += 0.01
