@@ -90,7 +90,7 @@ class Analyse:
             )
             if id_list is not None:
                 id_list = np.arange(len(self._structure))[np.array(id_list)]
-                id_list = np.any(id_list[:,None]==indices[None,:], axis=0)
+                id_list = np.any(id_list[:,np.newaxis]==indices[np.newaxis,:], axis=0)
                 positions = positions[id_list]
                 indices = indices[id_list]
         else:
