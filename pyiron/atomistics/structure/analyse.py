@@ -46,7 +46,7 @@ class Analyse:
     def __init__(self, structure):
         """
         Args:
-            structure (pyiron.atomistics.structure.atoms.Atoms): reference Atom structure
+            structure (pyiron.atomistics.structure.atoms.Atoms): reference Atom structure.
         """
         self._structure = structure
 
