@@ -762,11 +762,12 @@ class Neighbors(Tree):
         use_vecs=False,
     ):
         """
-        Method to group vectors which have similar values. This method should be used as a part of
-        neigh.get_global_shells(cluster_by_vecs=True) or neigh.get_local_shells(cluster_by_distances=True).
-        However, in order to specify certain arguments (such as n_jobs or max_iter), it might help to
-        have run this function before calling parent functions, as the data obtained with this function
-        will be stored in the variable `_cluster_distances`
+        Method to group vectors which have similar lengths. This method should be used as a part of
+        neigh.get_global_shells(cluster_by_vecs=True) or
+        neigh.get_local_shells(cluster_by_distances=True).  However, in order to specify certain
+        arguments (such as n_jobs or max_iter), it might help to have run this function before
+        calling parent functions, as the data obtained with this function will be stored in the
+        variable `_cluster_distances`
 
         Args:
             distance_threshold (float/None): The linkage distance threshold above which, clusters
