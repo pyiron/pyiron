@@ -3,9 +3,10 @@
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
 import numpy as np
-from sklearn.cluster import MeanShift
+from sklearn.cluster import AgglomerativeClustering
 from scipy.sparse import coo_matrix
 from pyiron_base import Settings
+from pyiron.atomistics.structure.analyse import get_average_of_unique_labels
 import warnings
 
 __author__ = "Joerg Neugebauer, Sam Waseda"
@@ -35,7 +36,10 @@ class Tree:
 
     - allow_ragged (bool): Whether to allow a ragged list of numpy arrays or not. This is relevant
         only if the cutoff length was specified, in which case the number of atoms for each
-        position could differ.
+        position could differ. `allow_ragged = False` is computationally more efficient in most of the
+        methods. When `allow_ragged = False`, the variables are filled as follows:
+        `np.inf` in `distances`, `numpy.array([np.inf, np.inf, np.inf])` in `vecs`, `n_atoms+1` (or
+        a larger value) in `indices` and -1 in `shells`
     - wrap_positions (bool): Whether to wrap back the positions entered by user in get_neighborhood
         etc. Since the information outside the original box is limited to a few layer,
         wrap_positions=False might miss some points without issuing an error.
@@ -485,7 +489,9 @@ class Tree:
 
     def _check_width(self, width, pbc):
         if any(pbc) and np.prod(self.distances.shape)>0 and self.vecs is not None:
-            if np.linalg.norm(self._fill(self.vecs, filler=0)[...,pbc], axis=-1).max() > width:
+            if np.linalg.norm(
+                self._fill(self._contract(self.vecs), filler=0.0)[...,pbc], axis=-1
+            ).max() > width:
                 return True
         return False
 
@@ -503,8 +509,11 @@ class Neighbors(Tree):
     Auxiliary attributes:
 
     - allow_ragged (bool): Whether to allow a ragged list of numpy arrays or not. This is relevant
-        only if the cutoff length was specified, in which case the number of atoms for each
-        position could differ.
+        only if the cutoff length was specified, in which case the number of neighbor atoms for each
+        atom could differ. `allow_ragged = False` is computationally more efficient in most of the
+        methods. When `allow_ragged = False`, the variables are filled as follows:
+        `np.inf` in `distances`, `numpy.array([np.inf, np.inf, np.inf])` in `vecs`, `n_atoms+1` (or
+        a larger value) in `indices` and -1 in `shells`
     - wrap_positions (bool): Whether to wrap back the positions entered by user in get_neighborhood
         etc. Since the information outside the original box is limited to a few layer,
         wrap_positions=False might miss some points without issuing an error.
@@ -536,7 +545,11 @@ class Neighbors(Tree):
         """
             Returns the cell numbers of each atom according to the distances
         """
-        return self.get_local_shells(tolerance=self._tolerance)
+        if self._shells is None:
+            self._shells = self.get_local_shells()
+        if self.allow_ragged:
+            return self._contract(self._shells)
+        return self._shells
 
     def get_local_shells(self, tolerance=None, cluster_by_distances=False, cluster_by_vecs=False):
         """
@@ -558,31 +571,36 @@ class Neighbors(Tree):
         Returns:
             shells (numpy.ndarray): shell indices
         """
+        allow_ragged = self.allow_ragged
+        if allow_ragged:
+            self.allow_ragged = False
         if tolerance is None:
             tolerance = self._tolerance
         if cluster_by_distances:
             if self._cluster_dist is None:
                 self.cluster_by_distances(use_vecs=cluster_by_vecs)
-            shells = [np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1
-                         for dist in self._cluster_dist.cluster_centers_[self._cluster_dist.labels_].flatten()
-                     ]
-            return np.array(shells).reshape(self.indices.shape)
-        if cluster_by_vecs:
+            shells = np.array([np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1
+                         for dist in self._cluster_dist.cluster_centers_[self._cluster_dist.labels_]
+                     ])
+            shells[self._cluster_dist.labels_<0] = -1
+            shells = shells.reshape(self.indices.shape)
+        elif cluster_by_vecs:
             if self._cluster_vecs is None:
                 self.cluster_by_vecs()
-            shells = [np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1
+            shells = np.array([np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1
                          for dist in np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1)
-                     ]
-            return np.array(shells).reshape(self.indices.shape)
-        if self._shells is None:
-            if self.distances is None:
-                return None
-            self._shells = []
+                     ])
+            shells[self._cluster_vecs.labels_<0] = -1
+            shells = shells.reshape(self.indices.shape)
+        else:
+            shells = []
             for dist in self.distances:
-                self._shells.append(np.unique(np.round(dist[dist<np.inf], decimals=tolerance), return_inverse=True)[1]+1)
-            if isinstance(self.distances, np.ndarray):
-                self._shells = np.array(self._shells)
-        return self._shells
+                shells.append(np.unique(np.round(dist[dist<np.inf], decimals=tolerance), return_inverse=True)[1]+1)
+            shells = self._fill(shells, filler=-1)
+        self.allow_ragged = allow_ragged 
+        if allow_ragged:
+            return self._contract(shells)
+        return shells
 
     def get_global_shells(self, tolerance=None, cluster_by_distances=False, cluster_by_vecs=False):
         """
@@ -606,6 +624,9 @@ class Neighbors(Tree):
         Returns:
             shells (numpy.ndarray): shell indices (cf. shells)
         """
+        allow_ragged = self.allow_ragged
+        if allow_ragged:
+            self.allow_ragged = False
         if tolerance is None:
             tolerance = self._tolerance
         if self.distances is None:
@@ -614,14 +635,25 @@ class Neighbors(Tree):
         if cluster_by_distances:
             if self._cluster_dist is None:
                 self.cluster_by_distances(use_vecs=cluster_by_vecs)
-            distances = self._cluster_dist.cluster_centers_[self._cluster_dist.labels_].reshape(self.distances.shape)
+            distances = self._cluster_dist.cluster_centers_[
+                self._cluster_dist.labels_
+            ].reshape(self.distances.shape)
+            distances[self._cluster_dist.labels_<0] = np.inf
         elif cluster_by_vecs:
             if self._cluster_vecs is None:
                 self.cluster_by_vecs()
-            distances = np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1).reshape(self.distances.shape)
+            distances = np.linalg.norm(
+                self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1
+            ).reshape(self.distances.shape)
+            distances[self._cluster_vecs.labels_<0] = np.inf
         dist_lst = np.unique(np.round(a=distances, decimals=tolerance))
-        shells = distances[:,:,np.newaxis]-dist_lst[np.newaxis,np.newaxis,:]
-        shells = np.absolute(shells).argmin(axis=-1)+1
+        shells = -np.ones_like(self.indices).astype(int)
+        shells[distances<np.inf] = np.absolute(
+            distances[distances<np.inf, np.newaxis]-dist_lst[np.newaxis, dist_lst<np.inf]
+        ).argmin(axis=-1)+1
+        self.allow_ragged = allow_ragged 
+        if allow_ragged:
+            return self._contract(shells)
         return shells
 
     def get_shell_matrix(
@@ -669,11 +701,11 @@ class Neighbors(Tree):
                 shell_matrix.append(coo_matrix((len(self._ref_structure), len(self._ref_structure))))
         return shell_matrix
 
-    def find_neighbors_by_vector(self, vector, deviation=False):
+    def find_neighbors_by_vector(self, vector, return_deviation=False):
         """
         Args:
             vector (list/np.ndarray): vector by which positions are translated (and neighbors are searched)
-            deviation (bool): whether to return distance between the expect positions and real positions
+            return_deviation (bool): whether to return distance between the expect positions and real positions
 
         Returns:
             np.ndarray: list of id's for the specified translation
@@ -691,11 +723,13 @@ class Neighbors(Tree):
         v = np.append(z[:,np.newaxis,:], self.vecs, axis=1)
         dist = np.linalg.norm(v-np.array(vector), axis=-1)
         indices = np.append(np.arange(len(self._ref_structure))[:,np.newaxis], self.indices, axis=1)
-        if deviation:
+        if return_deviation:
             return indices[np.arange(len(dist)), np.argmin(dist, axis=-1)], np.min(dist, axis=-1)
         return indices[np.arange(len(dist)), np.argmin(dist, axis=-1)]
 
-    def cluster_by_vecs(self, bandwidth=None, n_jobs=None, max_iter=300):
+    def cluster_by_vecs(
+        self, distance_threshold=None, n_clusters=None, linkage='complete', affinity='euclidean'
+    ):
         """
         Method to group vectors which have similar values. This method should be used as a part of
         neigh.get_global_shells(cluster_by_vecs=True) or neigh.get_local_shells(cluster_by_vecs=True).
@@ -704,41 +738,93 @@ class Neighbors(Tree):
         will be stored in the variable `_cluster_vecs`
 
         Args:
-            bandwidth (float): Resolution (cf. sklearn.cluster.MeanShift)
-            n_jobs (int): Number of cores (cf. sklearn.cluster.MeanShift)
-            max_iter (int): Number of maximum iterations (cf. sklearn.cluster.MeanShift)
-        """
-        if bandwidth is None:
-            bandwidth = 0.2*np.min(self.distances)
-        dr = self.vecs.copy().reshape(-1, 3)
-        self._cluster_vecs = MeanShift(bandwidth=bandwidth, n_jobs=n_jobs, max_iter=max_iter).fit(dr)
-        self._cluster_vecs.labels_ = self._cluster_vecs.labels_.reshape(self.indices.shape)
+            distance_threshold (float/None): The linkage distance threshold above which, clusters
+                will not be merged. (cf. sklearn.cluster.AgglomerativeClustering)
+            n_clusters (int/None): The number of clusters to find.
+                (cf. sklearn.cluster.AgglomerativeClustering)
+            linkage (str): Which linkage criterion to use. The linkage criterion determines which
+                distance to use between sets of observation. The algorithm will merge the pairs of
+                cluster that minimize this criterion. (cf. sklearn.cluster.AgglomerativeClustering)
+            affinity (str/callable): Metric used to compute the linkage. Can be `euclidean`, `l1`,
+                `l2`, `manhattan`, `cosine`, or `precomputed`. If linkage is `ward`, only
+                `euclidean` is accepted.
 
-    def cluster_by_distances(self, bandwidth=None, use_vecs=False, n_jobs=None, max_iter=300):
         """
-        Method to group vectors which have similar values. This method should be used as a part of
-        neigh.get_global_shells(cluster_by_vecs=True) or neigh.get_local_shells(cluster_by_distances=True).
-        However, in order to specify certain arguments (such as n_jobs or max_iter), it might help to
-        have run this function before calling parent functions, as the data obtained with this function
-        will be stored in the variable `_cluster_distances`
+        allow_ragged = self.allow_ragged
+        if allow_ragged:
+            self.allow_ragged = False
+        if distance_threshold is None and n_clusters is None:
+            distance_threshold = np.min(self.distances)
+        dr = self.vecs[self.distances<np.inf]
+        self._cluster_vecs = AgglomerativeClustering(
+            distance_threshold=distance_threshold,
+            n_clusters=n_clusters,
+            linkage=linkage,
+            affinity=affinity,
+        ).fit(dr)
+        self._cluster_vecs.cluster_centers_ = get_average_of_unique_labels(
+            self._cluster_vecs.labels_, dr
+        )
+        new_labels = -np.ones_like(self.indices).astype(int)
+        new_labels[self.distances<np.inf] = self._cluster_vecs.labels_
+        self._cluster_vecs.labels_ = new_labels
+        self.allow_ragged = allow_ragged
+
+    def cluster_by_distances(
+        self,
+        distance_threshold=None,
+        n_clusters=None,
+        linkage='complete',
+        affinity='euclidean',
+        use_vecs=False,
+    ):
+        """
+        Method to group vectors which have similar lengths. This method should be used as a part of
+        neigh.get_global_shells(cluster_by_vecs=True) or
+        neigh.get_local_shells(cluster_by_distances=True).  However, in order to specify certain
+        arguments (such as n_jobs or max_iter), it might help to have run this function before
+        calling parent functions, as the data obtained with this function will be stored in the
+        variable `_cluster_distances`
 
         Args:
-            bandwidth (float): Resolution (cf. sklearn.cluster.MeanShift)
-            use_vecs (bool): Whether to form clusters for vecs beforehand. If true, the distances obtained
-                from the clustered vectors is used for the distance clustering.  Otherwise neigh.distances
-                is used.
-            n_jobs (int): Number of cores (cf. sklearn.cluster.MeanShift)
-            max_iter (int): Number of maximum iterations (cf. sklearn.cluster.MeanShift)
+            distance_threshold (float/None): The linkage distance threshold above which, clusters
+                will not be merged. (cf. sklearn.cluster.AgglomerativeClustering)
+            n_clusters (int/None): The number of clusters to find.
+                (cf. sklearn.cluster.AgglomerativeClustering)
+            linkage (str): Which linkage criterion to use. The linkage criterion determines which
+                distance to use between sets of observation. The algorithm will merge the pairs of
+                cluster that minimize this criterion. (cf. sklearn.cluster.AgglomerativeClustering)
+            affinity (str/callable): Metric used to compute the linkage. Can be `euclidean`, `l1`,
+                `l2`, `manhattan`, `cosine`, or `precomputed`. If linkage is `ward`, only
+                `euclidean` is accepted.
+            use_vecs (bool): Whether to form clusters for vecs beforehand. If true, the distances
+                obtained from the clustered vectors is used for the distance clustering. Otherwise
+                neigh.distances is used.
         """
-        if bandwidth is None:
-            bandwidth = 0.05*np.min(self.distances)
-        dr = self.distances
+        allow_ragged = self.allow_ragged
+        if allow_ragged:
+            self.allow_ragged = False
+        if distance_threshold is None:
+            distance_threshold = 0.1*np.min(self.distances)
+        dr = self.distances[self.distances<np.inf]
         if use_vecs:
             if self._cluster_vecs is None:
                 self.cluster_by_vecs()
-            dr = np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1)
-        self._cluster_dist = MeanShift(bandwidth=bandwidth, n_jobs=n_jobs, max_iter=max_iter).fit(dr.reshape(-1, 1))
-        self._cluster_dist.labels_ = self._cluster_dist.labels_.reshape(self.indices.shape)
+            labels_to_consider = self._cluster_vecs.labels_[self._cluster_vecs.labels_>=0]
+            dr = np.linalg.norm(self._cluster_vecs.cluster_centers_[labels_to_consider], axis=-1)
+        self._cluster_dist = AgglomerativeClustering(
+            distance_threshold=distance_threshold,
+            n_clusters=n_clusters,
+            linkage=linkage,
+            affinity=affinity,
+        ).fit(dr.reshape(-1, 1))
+        self._cluster_dist.cluster_centers_ = get_average_of_unique_labels(
+            self._cluster_dist.labels_, dr
+        )
+        new_labels = -np.ones_like(self.indices).astype(int)
+        new_labels[self.distances<np.inf] = self._cluster_dist.labels_
+        self._cluster_dist.labels_ = new_labels
+        self.allow_ragged = allow_ragged
 
     def reset_clusters(self, vecs=True, distances=True):
         """

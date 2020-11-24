@@ -877,7 +877,7 @@ class Atoms(ASEAtoms):
     def get_wrapped_coordinates(self, positions, epsilon=1.0e-8):
         """
         Return coordinates in wrapped in the periodic cell
-        
+
         Args:
             positions (list/numpy.ndarray): Positions
             epsilon (float): displacement to add to avoid wrapping of atoms at borders
@@ -1082,7 +1082,7 @@ class Atoms(ASEAtoms):
         """
         from pyiron.atomistics.structure.pyscal import analyse_cna_adaptive
         return analyse_cna_adaptive(atoms=self, mode=mode, ovito_compatibility=ovito_compatibility)
-    
+
     def analyse_pyscal_centro_symmetry(self, num_neighbors=12):
         """
         Analyse centrosymmetry parameter
@@ -1126,7 +1126,7 @@ class Atoms(ASEAtoms):
         """
         from pyiron.atomistics.structure.pyscal import analyse_voronoi_volume
         return analyse_voronoi_volume(atoms=self)
-    
+
     def analyse_phonopy_equivalent_atoms(self):
         from pyiron.atomistics.structure.phonopy import analyse_phonopy_equivalent_atoms
 
@@ -1480,14 +1480,14 @@ class Atoms(ASEAtoms):
             cutoff_radius=cutoff_radius,
         )
 
-    def find_neighbors_by_vector(self, vector, deviation=False, num_neighbors=96):
+    def find_neighbors_by_vector(self, vector, return_deviation=False, num_neighbors=96):
         warnings.warn(
             'structure.find_neighbors_by_vector() is deprecated as of vers. 0.3.'
             + 'It is not guaranteed to be in service in vers. 1.0.'
             + 'Use neigh.find_neighbors_by_vector() instead (after calling neigh = structure.get_neighbors()).',
             DeprecationWarning)
         neighbors = self.get_neighbors(num_neighbors=num_neighbors)
-        return neighbors.find_neighbors_by_vector(vector=vector, deviation=deviation)
+        return neighbors.find_neighbors_by_vector(vector=vector, return_deviation=return_deviation)
     find_neighbors_by_vector.__doc__ = Neighbors.find_neighbors_by_vector.__doc__
 
     def get_shell_matrix(
@@ -3425,3 +3425,4 @@ def default(data, dflt):
         return newdata
     else:
         return data
+
