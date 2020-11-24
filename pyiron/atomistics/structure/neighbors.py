@@ -592,7 +592,7 @@ class Neighbors(Tree):
             for dist in self.distances:
                 shells.append(np.unique(np.round(dist[dist<np.inf], decimals=tolerance), return_inverse=True)[1]+1)
             shells = self._fill(shells, filler=-1)
-            self.allow_ragged = allow_ragged 
+        self.allow_ragged = allow_ragged 
         if allow_ragged:
             return self._contract(shells)
         return shells
