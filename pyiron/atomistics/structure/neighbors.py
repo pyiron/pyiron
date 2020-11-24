@@ -36,7 +36,10 @@ class Tree:
 
     - allow_ragged (bool): Whether to allow a ragged list of numpy arrays or not. This is relevant
         only if the cutoff length was specified, in which case the number of atoms for each
-        position could differ.
+        position could differ. `allow_ragged = False` is computationally more efficient in most of the
+        methods. When `allow_ragged = False`, the variables are filled as follows:
+        `np.inf` in `distances`, `numpy.array([np.inf, np.inf, np.inf])` in `vecs`, `n_atoms+1` (or
+        a larger value) in `indices` and -1 in `shells`
     - wrap_positions (bool): Whether to wrap back the positions entered by user in get_neighborhood
         etc. Since the information outside the original box is limited to a few layer,
         wrap_positions=False might miss some points without issuing an error.
@@ -507,8 +510,10 @@ class Neighbors(Tree):
 
     - allow_ragged (bool): Whether to allow a ragged list of numpy arrays or not. This is relevant
         only if the cutoff length was specified, in which case the number of neighbor atoms for each
-        atom could differ. allow_ragged = False is computationally more efficient in most of the
-        methods.
+        atom could differ. `allow_ragged = False` is computationally more efficient in most of the
+        methods. When `allow_ragged = False`, the variables are filled as follows:
+        `np.inf` in `distances`, `numpy.array([np.inf, np.inf, np.inf])` in `vecs`, `n_atoms+1` (or
+        a larger value) in `indices` and -1 in `shells`
     - wrap_positions (bool): Whether to wrap back the positions entered by user in get_neighborhood
         etc. Since the information outside the original box is limited to a few layer,
         wrap_positions=False might miss some points without issuing an error.
