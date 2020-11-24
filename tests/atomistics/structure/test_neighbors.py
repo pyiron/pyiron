@@ -262,7 +262,7 @@ class TestAtoms(unittest.TestCase):
                       pbc=True)
         neigh = basis.get_neighbors(num_neighbors=14)
         id_lst, dist = neigh.find_neighbors_by_vector([0, 0, 1],
-                                                      deviation=True)
+                                                      return_deviation=True)
         self.assertEqual(len(np.unique(np.unique(id_lst, return_counts=True)[1])), 1)
         self.assertLess(np.linalg.norm(dist), 1.0e-4)
         id_lst = neigh.find_neighbors_by_vector([0, 0, 0])

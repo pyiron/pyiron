@@ -681,11 +681,11 @@ class Neighbors(Tree):
                 shell_matrix.append(coo_matrix((len(self._ref_structure), len(self._ref_structure))))
         return shell_matrix
 
-    def find_neighbors_by_vector(self, vector, deviation=False):
+    def find_neighbors_by_vector(self, vector, return_deviation=False):
         """
         Args:
             vector (list/np.ndarray): vector by which positions are translated (and neighbors are searched)
-            deviation (bool): whether to return distance between the expect positions and real positions
+            return_deviation (bool): whether to return distance between the expect positions and real positions
 
         Returns:
             np.ndarray: list of id's for the specified translation
