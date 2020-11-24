@@ -486,7 +486,9 @@ class Tree:
 
     def _check_width(self, width, pbc):
         if any(pbc) and np.prod(self.distances.shape)>0 and self.vecs is not None:
-            if np.linalg.norm(self._fill(self.vecs, filler=0)[...,pbc], axis=-1).max() > width:
+            if np.linalg.norm(
+                self._fill(self._contract(self.vecs), filler=0.0)[...,pbc], axis=-1
+            ).max() > width:
                 return True
         return False
 
@@ -721,7 +723,7 @@ class Neighbors(Tree):
         """
         if distance_threshold is None and n_clusters is None:
             distance_threshold = np.min(self.distances)
-        dr = self.vecs.reshape(-1, 3)
+        dr = self.vecs[self.distances<np.inf]
         self._cluster_vecs = AgglomerativeClustering(
             distance_threshold=distance_threshold,
             n_clusters=n_clusters,
@@ -766,7 +768,7 @@ class Neighbors(Tree):
         """
         if distance_threshold is None:
             distance_threshold = 0.1*np.min(self.distances)
-        dr = self.distances
+        dr = self.distances[self.distances<np.inf]
         if use_vecs:
             if self._cluster_vecs is None:
                 self.cluster_by_vecs()
