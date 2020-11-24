@@ -506,8 +506,9 @@ class Neighbors(Tree):
     Auxiliary attributes:
 
     - allow_ragged (bool): Whether to allow a ragged list of numpy arrays or not. This is relevant
-        only if the cutoff length was specified, in which case the number of atoms for each
-        position could differ.
+        only if the cutoff length was specified, in which case the number of neighbor atoms for each
+        atom could differ. allow_ragged = False is computationally more efficient in most of the
+        methods.
     - wrap_positions (bool): Whether to wrap back the positions entered by user in get_neighborhood
         etc. Since the information outside the original box is limited to a few layer,
         wrap_positions=False might miss some points without issuing an error.
