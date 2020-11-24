@@ -539,7 +539,11 @@ class Neighbors(Tree):
         """
             Returns the cell numbers of each atom according to the distances
         """
-        return self.get_local_shells(tolerance=self._tolerance)
+        if self._shells is None:
+            self._shells = self.get_local_shells()
+        if self.allow_ragged:
+            return self._contract(self._shells)
+        return self._shells
 
     def get_local_shells(self, tolerance=None, cluster_by_distances=False, cluster_by_vecs=False):
         """
@@ -566,26 +570,23 @@ class Neighbors(Tree):
         if cluster_by_distances:
             if self._cluster_dist is None:
                 self.cluster_by_distances(use_vecs=cluster_by_vecs)
-            shells = [np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1
+            shells = np.array([np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1
                          for dist in self._cluster_dist.cluster_centers_[self._cluster_dist.labels_].flatten()
-                     ]
-            return np.array(shells).reshape(self.indices.shape)
+                     ])
+            shells[self._cluster_dist.labels_<0] = -1
+            return shells.reshape(self.indices.shape)
         if cluster_by_vecs:
             if self._cluster_vecs is None:
                 self.cluster_by_vecs()
-            shells = [np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1
+            shells = np.array([np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1
                          for dist in np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1)
-                     ]
-            return np.array(shells).reshape(self.indices.shape)
-        if self._shells is None:
-            if self.distances is None:
-                return None
-            self._shells = []
-            for dist in self.distances:
-                self._shells.append(np.unique(np.round(dist[dist<np.inf], decimals=tolerance), return_inverse=True)[1]+1)
-            if isinstance(self.distances, np.ndarray):
-                self._shells = np.array(self._shells)
-        return self._shells
+                     ])
+            shells[self._cluster_vecs.labels_<0] = -1
+            return shells.reshape(self.indices.shape)
+        shells = []
+        for dist in self.distances:
+            shells.append(np.unique(np.round(dist[dist<np.inf], decimals=tolerance), return_inverse=True)[1]+1)
+        return self._fill(shells, filler=-1)
 
     def get_global_shells(self, tolerance=None, cluster_by_distances=False, cluster_by_vecs=False):
         """
