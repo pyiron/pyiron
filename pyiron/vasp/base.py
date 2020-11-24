@@ -352,7 +352,6 @@ class VaspBase(GenericDFTJob):
             for key, value in self._potential.to_dict().items()
             if value is not None
         }
-        self.modify_kpoints()
         self.write_magmoms()
         self.set_coulomb_interactions()
         if "CONTCAR" in self.restart_file_dict.keys():

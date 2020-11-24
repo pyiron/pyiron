@@ -394,6 +394,10 @@ class GenericDFTJob(AtomisticGenericJob):
                              k_mesh_spacing=self.k_mesh_spacing,
                              symmetry_reduction=self.reduce_kpoint_symmetry)
 
+    def save(self):
+        self.modify_kpoints()
+        super(GenericDFTJob, self).save()
+
 
 def get_k_mesh_by_density(cell, k_mesh_spacing=0.5):
     """
