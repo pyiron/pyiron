@@ -565,27 +565,34 @@ class Neighbors(Tree):
         Returns:
             shells (numpy.ndarray): shell indices
         """
+        allow_ragged = self.allow_ragged
+        if allow_ragged:
+            self.allow_ragged = False
         if tolerance is None:
             tolerance = self._tolerance
         if cluster_by_distances:
             if self._cluster_dist is None:
                 self.cluster_by_distances(use_vecs=cluster_by_vecs)
             shells = np.array([np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1
-                         for dist in self._cluster_dist.cluster_centers_[self._cluster_dist.labels_].flatten()
+                         for dist in self._cluster_dist.cluster_centers_[self._cluster_dist.labels_]
                      ])
             shells[self._cluster_dist.labels_<0] = -1
-            return shells.reshape(self.indices.shape)
-        if cluster_by_vecs:
+            shells = shells.reshape(self.indices.shape)
+        elif cluster_by_vecs:
             if self._cluster_vecs is None:
                 self.cluster_by_vecs()
             shells = np.array([np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1
                          for dist in np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1)
                      ])
             shells[self._cluster_vecs.labels_<0] = -1
-            return shells.reshape(self.indices.shape)
-        shells = []
-        for dist in self.distances:
-            shells.append(np.unique(np.round(dist[dist<np.inf], decimals=tolerance), return_inverse=True)[1]+1)
+            shells = shells.reshape(self.indices.shape)
+        else:
+            shells = []
+            for dist in self.distances:
+                shells.append(np.unique(np.round(dist[dist<np.inf], decimals=tolerance), return_inverse=True)[1]+1)
+        self.allow_ragged = allow_ragged 
+        if allow_ragged:
+            return self._contract(shells)
         return self._fill(shells, filler=-1)
 
     def get_global_shells(self, tolerance=None, cluster_by_distances=False, cluster_by_vecs=False):
@@ -610,6 +617,9 @@ class Neighbors(Tree):
         Returns:
             shells (numpy.ndarray): shell indices (cf. shells)
         """
+        allow_ragged = self.allow_ragged
+        if allow_ragged:
+            self.allow_ragged = False
         if tolerance is None:
             tolerance = self._tolerance
         if self.distances is None:
@@ -634,7 +644,10 @@ class Neighbors(Tree):
         shells[distances<np.inf] = np.absolute(
             distances[distances<np.inf, np.newaxis]-dist_lst[np.newaxis, dist_lst<np.inf]
         ).argmin(axis=-1)+1
-        return shells
+        self.allow_ragged = allow_ragged 
+        if allow_ragged:
+            return self._contract(shells)
+        return self._fill(shells, filler=-1)
 
     def get_shell_matrix(
         self, chemical_pair=None, cluster_by_distances=False, cluster_by_vecs=False
@@ -703,7 +716,7 @@ class Neighbors(Tree):
         v = np.append(z[:,np.newaxis,:], self.vecs, axis=1)
         dist = np.linalg.norm(v-np.array(vector), axis=-1)
         indices = np.append(np.arange(len(self._ref_structure))[:,np.newaxis], self.indices, axis=1)
-        if deviation:
+        if return_deviation:
             return indices[np.arange(len(dist)), np.argmin(dist, axis=-1)], np.min(dist, axis=-1)
         return indices[np.arange(len(dist)), np.argmin(dist, axis=-1)]
 

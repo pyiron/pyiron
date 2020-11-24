@@ -223,6 +223,42 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(np.array_equal(shells, neigh.get_local_shells(cluster_by_vecs=True)))
         self.assertFalse(np.array_equal(shells, neigh.get_local_shells()))
 
+    def test_get_global_shells_ragged(self):
+        structure = CrystalStructure(
+            elements='Al', lattice_constants=4, bravais_basis='fcc'
+        ).repeat(2)
+        del structure[0]
+        neigh = structure.get_neighbors(cutoff_radius=3.5, num_neighbors=None)
+        self.assertEqual(np.sum(neigh.get_global_shells()==-1), 12)
+        self.assertEqual(np.sum(neigh.get_global_shells(cluster_by_distances=True)==-1), 12)
+        self.assertEqual(np.sum(neigh.get_global_shells(cluster_by_vecs=True)==-1), 12)
+        self.assertEqual(
+            np.sum(neigh.get_global_shells(cluster_by_distances=True, cluster_by_vecs=True)==-1), 12
+        )
+        neigh.allow_ragged = True
+        self.assertEqual(np.sum([len(s)==11 for s in neigh.get_global_shells()]), 12)
+        self.assertEqual(np.sum([len(s)==11 for s in neigh.get_global_shells(cluster_by_distances=True)]), 12)
+        self.assertEqual(np.sum([len(s)==11 for s in neigh.get_global_shells(cluster_by_vecs=True)]), 12)
+        self.assertEqual(np.sum([len(s)==11 for s in neigh.get_global_shells(cluster_by_distances=True, cluster_by_vecs=True)]), 12)
+
+    def test_get_local_shells_ragged(self):
+        structure = CrystalStructure(
+            elements='Al', lattice_constants=4, bravais_basis='fcc'
+        ).repeat(2)
+        del structure[0]
+        neigh = structure.get_neighbors(cutoff_radius=3.5, num_neighbors=None)
+        self.assertEqual(np.sum(neigh.shells==-1), 12)
+        self.assertEqual(np.sum(neigh.get_local_shells(cluster_by_distances=True)==-1), 12)
+        self.assertEqual(np.sum(neigh.get_local_shells(cluster_by_vecs=True)==-1), 12)
+        self.assertEqual(
+            np.sum(neigh.get_local_shells(cluster_by_distances=True, cluster_by_vecs=True)==-1), 12
+        )
+        neigh.allow_ragged = True
+        self.assertEqual(np.sum([len(s)==11 for s in neigh.shells]), 12)
+        self.assertEqual(np.sum([len(s)==11 for s in neigh.get_local_shells(cluster_by_distances=True)]), 12)
+        self.assertEqual(np.sum([len(s)==11 for s in neigh.get_local_shells(cluster_by_vecs=True)]), 12)
+        self.assertEqual(np.sum([len(s)==11 for s in neigh.get_local_shells(cluster_by_distances=True, cluster_by_vecs=True)]), 12)
+
     def test_get_shell_matrix(self):
         structure = CrystalStructure(
             elements='Fe', lattice_constants=2.83, bravais_basis='bcc'
