@@ -1480,14 +1480,14 @@ class Atoms(ASEAtoms):
             cutoff_radius=cutoff_radius,
         )
 
-    def find_neighbors_by_vector(self, vector, deviation=False, num_neighbors=96):
+    def find_neighbors_by_vector(self, vector, return_deviation=False, num_neighbors=96):
         warnings.warn(
             'structure.find_neighbors_by_vector() is deprecated as of vers. 0.3.'
             + 'It is not guaranteed to be in service in vers. 1.0.'
             + 'Use neigh.find_neighbors_by_vector() instead (after calling neigh = structure.get_neighbors()).',
             DeprecationWarning)
         neighbors = self.get_neighbors(num_neighbors=num_neighbors)
-        return neighbors.find_neighbors_by_vector(vector=vector, deviation=deviation)
+        return neighbors.find_neighbors_by_vector(vector=vector, return_deviation=return_deviation)
     find_neighbors_by_vector.__doc__ = Neighbors.find_neighbors_by_vector.__doc__
 
     def get_shell_matrix(
