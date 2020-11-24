@@ -590,10 +590,11 @@ class Neighbors(Tree):
             shells = []
             for dist in self.distances:
                 shells.append(np.unique(np.round(dist[dist<np.inf], decimals=tolerance), return_inverse=True)[1]+1)
-        self.allow_ragged = allow_ragged 
+            shells = self._fill(shells, filler=-1)
+            self.allow_ragged = allow_ragged 
         if allow_ragged:
             return self._contract(shells)
-        return self._fill(shells, filler=-1)
+        return shells
 
     def get_global_shells(self, tolerance=None, cluster_by_distances=False, cluster_by_vecs=False):
         """
@@ -647,7 +648,7 @@ class Neighbors(Tree):
         self.allow_ragged = allow_ragged 
         if allow_ragged:
             return self._contract(shells)
-        return self._fill(shells, filler=-1)
+        return shells
 
     def get_shell_matrix(
         self, chemical_pair=None, cluster_by_distances=False, cluster_by_vecs=False
