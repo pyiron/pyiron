@@ -485,7 +485,7 @@ def plot_solid_liquid_ratio(temperature_next, strain_lst, nve_run_time_steps, pr
                 (cna_str == 'HCP' and hcp_count > bcc_count and hcp_count > fcc_count)
         else:
             cna_str = 'Cubic diamond'
-            cond = True
+            cond = sum(cna == cna_str) > 0.05 * len(struct)
         if cond:
             # plt.figure(figsize=(16,12))
             bandwidth = (struct.get_volume()/len(struct))**(1.0/3.0)
