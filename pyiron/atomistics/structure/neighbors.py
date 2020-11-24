@@ -617,14 +617,22 @@ class Neighbors(Tree):
         if cluster_by_distances:
             if self._cluster_dist is None:
                 self.cluster_by_distances(use_vecs=cluster_by_vecs)
-            distances = self._cluster_dist.cluster_centers_[self._cluster_dist.labels_].reshape(self.distances.shape)
+            distances = self._cluster_dist.cluster_centers_[
+                self._cluster_dist.labels_
+            ].reshape(self.distances.shape)
+            distances[self._cluster_dist.labels_<0] = np.inf
         elif cluster_by_vecs:
             if self._cluster_vecs is None:
                 self.cluster_by_vecs()
-            distances = np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1).reshape(self.distances.shape)
+            distances = np.linalg.norm(
+                self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1
+            ).reshape(self.distances.shape)
+            distances[self._cluster_vecs.labels_<0] = np.inf
         dist_lst = np.unique(np.round(a=distances, decimals=tolerance))
-        shells = distances[:,:,np.newaxis]-dist_lst[np.newaxis,np.newaxis,:]
-        shells = np.absolute(shells).argmin(axis=-1)+1
+        shells = -np.ones_like(self.indices).astype(int)
+        shells[distances<np.inf] = np.absolute(
+            distances[distances<np.inf, np.newaxis]-dist_lst[np.newaxis, dist_lst<np.inf]
+        ).argmin(axis=-1)+1
         return shells
 
     def get_shell_matrix(
@@ -721,6 +729,9 @@ class Neighbors(Tree):
                 `euclidean` is accepted.
 
         """
+        allow_ragged = self.allow_ragged
+        if allow_ragged:
+            self.allow_ragged = False
         if distance_threshold is None and n_clusters is None:
             distance_threshold = np.min(self.distances)
         dr = self.vecs[self.distances<np.inf]
@@ -733,7 +744,10 @@ class Neighbors(Tree):
         self._cluster_vecs.cluster_centers_ = get_average_of_unique_labels(
             self._cluster_vecs.labels_, dr
         )
-        self._cluster_vecs.labels_ = self._cluster_vecs.labels_.reshape(self.indices.shape)
+        new_labels = -np.ones_like(self.indices).astype(int)
+        new_labels[self.distances<np.inf] = self._cluster_vecs.labels_
+        self._cluster_vecs.labels_ = new_labels
+        self.allow_ragged = allow_ragged
 
     def cluster_by_distances(
         self,
@@ -766,13 +780,17 @@ class Neighbors(Tree):
                 obtained from the clustered vectors is used for the distance clustering. Otherwise
                 neigh.distances is used.
         """
+        allow_ragged = self.allow_ragged
+        if allow_ragged:
+            self.allow_ragged = False
         if distance_threshold is None:
             distance_threshold = 0.1*np.min(self.distances)
         dr = self.distances[self.distances<np.inf]
         if use_vecs:
             if self._cluster_vecs is None:
                 self.cluster_by_vecs()
-            dr = np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1)
+            labels_to_consider = self._cluster_vecs.labels_[self._cluster_vecs.labels_>=0]
+            dr = np.linalg.norm(self._cluster_vecs.cluster_centers_[labels_to_consider], axis=-1)
         self._cluster_dist = AgglomerativeClustering(
             distance_threshold=distance_threshold,
             n_clusters=n_clusters,
@@ -782,7 +800,10 @@ class Neighbors(Tree):
         self._cluster_dist.cluster_centers_ = get_average_of_unique_labels(
             self._cluster_dist.labels_, dr
         )
-        self._cluster_dist.labels_ = self._cluster_dist.labels_.reshape(self.indices.shape)
+        new_labels = -np.ones_like(self.indices).astype(int)
+        new_labels[self.distances<np.inf] = self._cluster_dist.labels_
+        self._cluster_dist.labels_ = new_labels
+        self.allow_ragged = allow_ragged
 
     def reset_clusters(self, vecs=True, distances=True):
         """
