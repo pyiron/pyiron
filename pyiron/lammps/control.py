@@ -822,6 +822,12 @@ class LammpsControl(GenericParameters):
             ids (list/numpy.ndarray): Integer ids of the atoms to move in the job's structure.
             velocity (list/numpy.ndarray/tuple): The velocity in x-y-z-direction for the group. `None` arguments are
                 converted to Lammps 'NULL' values and the velocity in this direction is left unchanged.
+
+        Warning: This fix does not exclude these atoms from
+            [other fixes](https://stackoverflow.com/questions/3402168/permanently-add-a-directory-to-pythonpath). You
+            may wish to combine this call with `selective_dynamics` on your corresponding structure. Future developers
+            can find a more complete discussion [here](https://github.com/pyiron/pyiron/pull/1212) when further
+            modifying this capability.
         """
         self._fix_to_three_vector(ids, velocity, 'move linear', LAMMPS_UNIT_CONVERSIONS[self["units"]]["velocity"])
 
