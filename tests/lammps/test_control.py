@@ -154,7 +154,7 @@ class TestLammps(unittest.TestCase):
 
     def test_fix_move_linear_by_id(self):
         fix = self.lc.fix_move_linear_by_id
-        good_ids = np.arange(4)
+        good_ids = np.arange(4, dtype=int)
         good_velocities = [None, -0.004, 0.001]
         fix(good_ids, good_velocities)
 
