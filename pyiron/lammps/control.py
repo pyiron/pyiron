@@ -799,6 +799,21 @@ class LammpsControl(GenericParameters):
             raise ValueError('Group ids must be non-negative to be parsed by Lammps, but got {}'.format(ids))
         self['group___{}'.format(group_name)] = 'id {}'.format(' '.join(np.array(ids).astype(int).astype(str)))
 
+    def _fix_to_three_vector(self, ids, vector, fix_string, conversion):
+        if len(vector) != 3:
+            raise ValueError('{} must have three components, but got {}'.format(fix_string, vector))
+        vector = list(vector)
+        for i, v in enumerate(vector):
+            if v is None:
+                vector[i] = 'NULL'
+            else:
+                vector[i] = str(v * conversion)
+        name = str(hash(tuple(ids))).replace('-', 'm')  # A unique name for the group
+        self._set_group_by_id(name, ids)
+        self['fix___{}_{}'.format(fix_string.replace(' ', '_'), name)] = '{} {} {}'.format(
+            name, fix_string, ' '.join(vector)
+        )
+
     def fix_move_linear_by_id(self, ids, velocity):
         """
         Displace atoms at each timestep. Creates a new group with a unique name based off the hash of the ids.
@@ -808,18 +823,17 @@ class LammpsControl(GenericParameters):
             velocity (list/numpy.ndarray/tuple): The velocity in x-y-z-direction for the group. `None` arguments are
                 converted to Lammps 'NULL' values and the velocity in this direction is left unchanged.
         """
-        if len(velocity) != 3:
-            raise ValueError('Velocity must have three components, but got {}'.format(velocity))
-        conversion = LAMMPS_UNIT_CONVERSIONS[self["units"]]["velocity"]
-        velocity = list(velocity)
-        for i, v in enumerate(velocity):
-            if v is None:
-                velocity[i] = 'NULL'
-            else:
-                velocity[i] = str(v * conversion)
-        name = str(hash(tuple(ids))).replace('-', 'm')  # A unique name for the group
-        self._set_group_by_id(name, ids)
-        self['fix___velocity_{}'.format(name)] = '{} move linear {}'.format(name, ' '.join(velocity))
+        self._fix_to_three_vector(ids, velocity, 'move linear', LAMMPS_UNIT_CONVERSIONS[self["units"]]["velocity"])
+
+    def fix_setforce_by_id(self, ids, force):
+        """
+        Set the force on a collection of atoms to a specified value.
+
+        ids (list/numpy.ndarray): Integer ids of the atoms to move in the job's structure.
+        force (list/numpy.ndarray/tuple): The force in x-y-z-direction for the group. `None` arguments are
+            converted to Lammps 'NULL' values and the force in this direction is left unchanged.
+        """
+        self._fix_to_three_vector(ids, force, 'setforce', LAMMPS_UNIT_CONVERSIONS[self["units"]]["force"])
 
     def _measure_mean_value(self, key_pyiron, key_lmp, every, atom=False):
         """
