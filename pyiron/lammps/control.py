@@ -829,6 +829,9 @@ class LammpsControl(GenericParameters):
             further modifying this capability. Further, it will malfunction if the Lammps coordinate frame and pyiron
             coordinate frame differ.
         """
+        warnings.warn('This fix does not exclude these atoms from other fixes. You may wish to combine this call with '
+                      '`selective_dynamics` on your corresponding structure. Further, it will malfunction if the '
+                      'Lammps coordinate frame and pyiron coordinate frame differ.')
         self._fix_with_three_vector(ids, velocity, 'move linear', LAMMPS_UNIT_CONVERSIONS[self["units"]]["velocity"])
 
     def fix_setforce_by_id(self, ids, force):
@@ -841,6 +844,8 @@ class LammpsControl(GenericParameters):
 
         Warning: This fix will malfunction (silently) if the Lammps coordinate frame and pyiron coordinate frame differ.
         """
+        warnings.warn('This fix will malfunction (silently) if the Lammps coordinate frame and pyiron coordinate frame '
+                      'differ.')
         self._fix_with_three_vector(ids, force, 'setforce', LAMMPS_UNIT_CONVERSIONS[self["units"]]["force"])
 
     def _measure_mean_value(self, key_pyiron, key_lmp, every, atom=False):
