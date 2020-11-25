@@ -789,6 +789,65 @@ class LammpsControl(GenericParameters):
             self['dump___1'] += ' c_energy_pot_per_atom'
             self['dump_modify___1'] = self['dump_modify___1'][:-1] + ' %20.15g"'
 
+    def _set_group_by_id(self, group_name, ids):
+        if len(ids) < 1:
+            raise ValueError('Group ids must have at least length one, but got {}'.format(ids))
+        if np.any([isinstance(id_, bool) or not isinstance(id_, (int, np.integer)) for id_ in ids]):
+            # Note: it turns out bool is a subclass of int. Weird, eh.
+            raise TypeError('Group ids must be integers, but got {}'.format(ids))
+        if np.any(np.array(ids) < 0):
+            raise ValueError('Group ids must be non-negative to be parsed by Lammps, but got {}'.format(ids))
+        self['group___{}'.format(group_name)] = 'id {}'.format(' '.join(np.array(ids).astype(int).astype(str)))
+
+    def _fix_with_three_vector(self, ids, vector, fix_string, conversion):
+        if len(vector) != 3:
+            raise ValueError('{} must have three components, but got {}'.format(fix_string, vector))
+        vector = list(vector)
+        for i, v in enumerate(vector):
+            if v is None:
+                vector[i] = 'NULL'
+            else:
+                vector[i] = str(v * conversion)
+        name = str(hash(tuple(ids))).replace('-', 'm')  # A unique name for the group
+        self._set_group_by_id(name, ids)
+        self['fix___{}_{}'.format(fix_string.replace(' ', '_'), name)] = '{} {} {}'.format(
+            name, fix_string, ' '.join(vector)
+        )
+
+    def fix_move_linear_by_id(self, ids, velocity):
+        """
+        Displace atoms at each timestep. Creates a new group with a unique name based off the hash of the ids.
+
+        Args:
+            ids (list/numpy.ndarray): Integer ids of the atoms to move in the job's structure.
+            velocity (list/numpy.ndarray/tuple): The velocity in x-y-z-direction for the group. `None` arguments are
+                converted to Lammps 'NULL' values and the velocity in this direction is left unchanged.
+
+        Warning: This fix does not exclude these atoms from [other fixes](https://lammps.sandia.gov/doc/fix_move.html).
+            You may wish to combine this call with `selective_dynamics` on your corresponding structure. Future
+            developers can find a more complete discussion [here](https://github.com/pyiron/pyiron/pull/1212) when
+            further modifying this capability. Further, it will malfunction if the Lammps coordinate frame and pyiron
+            coordinate frame differ.
+        """
+        warnings.warn('This fix does not exclude these atoms from other fixes. You may wish to combine this call with '
+                      '`selective_dynamics` on your corresponding structure. Further, it will malfunction if the '
+                      'Lammps coordinate frame and pyiron coordinate frame differ.')
+        self._fix_with_three_vector(ids, velocity, 'move linear', LAMMPS_UNIT_CONVERSIONS[self["units"]]["velocity"])
+
+    def fix_setforce_by_id(self, ids, force):
+        """
+        Set the force on a collection of atoms to a specified value.
+
+        ids (list/numpy.ndarray): Integer ids of the atoms to move in the job's structure.
+        force (list/numpy.ndarray/tuple): The force in x-y-z-direction for the group. `None` arguments are
+            converted to Lammps 'NULL' values and the force in this direction is left unchanged.
+
+        Warning: This fix will malfunction (silently) if the Lammps coordinate frame and pyiron coordinate frame differ.
+        """
+        warnings.warn('This fix will malfunction (silently) if the Lammps coordinate frame and pyiron coordinate frame '
+                      'differ.')
+        self._fix_with_three_vector(ids, force, 'setforce', LAMMPS_UNIT_CONVERSIONS[self["units"]]["force"])
+
     def _measure_mean_value(self, key_pyiron, key_lmp, every, atom=False):
         """
             Args:
