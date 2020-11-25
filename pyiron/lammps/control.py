@@ -799,7 +799,7 @@ class LammpsControl(GenericParameters):
             raise ValueError('Group ids must be non-negative to be parsed by Lammps, but got {}'.format(ids))
         self['group___{}'.format(group_name)] = 'id {}'.format(' '.join(np.array(ids).astype(int).astype(str)))
 
-    def _fix_to_three_vector(self, ids, vector, fix_string, conversion):
+    def _fix_with_three_vector(self, ids, vector, fix_string, conversion):
         if len(vector) != 3:
             raise ValueError('{} must have three components, but got {}'.format(fix_string, vector))
         vector = list(vector)
@@ -829,7 +829,7 @@ class LammpsControl(GenericParameters):
             can find a more complete discussion [here](https://github.com/pyiron/pyiron/pull/1212) when further
             modifying this capability.
         """
-        self._fix_to_three_vector(ids, velocity, 'move linear', LAMMPS_UNIT_CONVERSIONS[self["units"]]["velocity"])
+        self._fix_with_three_vector(ids, velocity, 'move linear', LAMMPS_UNIT_CONVERSIONS[self["units"]]["velocity"])
 
     def fix_setforce_by_id(self, ids, force):
         """
@@ -839,7 +839,7 @@ class LammpsControl(GenericParameters):
         force (list/numpy.ndarray/tuple): The force in x-y-z-direction for the group. `None` arguments are
             converted to Lammps 'NULL' values and the force in this direction is left unchanged.
         """
-        self._fix_to_three_vector(ids, force, 'setforce', LAMMPS_UNIT_CONVERSIONS[self["units"]]["force"])
+        self._fix_with_three_vector(ids, force, 'setforce', LAMMPS_UNIT_CONVERSIONS[self["units"]]["force"])
 
     def _measure_mean_value(self, key_pyiron, key_lmp, every, atom=False):
         """
