@@ -792,7 +792,7 @@ class LammpsControl(GenericParameters):
     def _set_group_by_id(self, group_name, ids):
         if len(ids) < 1:
             raise ValueError('Group ids must have at least length one, but got {}'.format(ids))
-        if np.any([isinstance(id_, bool) or not isinstance(id_, (int, np.int64)) for id_ in ids]):
+        if np.any([isinstance(id_, bool) or not isinstance(id_, (int, np.integer)) for id_ in ids]):
             # Note: it turns out bool is a subclass of int. Weird, eh.
             raise TypeError('Group ids must be integers, but got {}'.format(ids))
         if np.any(np.array(ids) < 0):
