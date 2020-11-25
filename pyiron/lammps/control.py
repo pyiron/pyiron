@@ -823,12 +823,11 @@ class LammpsControl(GenericParameters):
             velocity (list/numpy.ndarray/tuple): The velocity in x-y-z-direction for the group. `None` arguments are
                 converted to Lammps 'NULL' values and the velocity in this direction is left unchanged.
 
-        Warning: This fix does not exclude these atoms from
-            [other fixes](https://stackoverflow.com/questions/3402168/permanently-add-a-directory-to-pythonpath). You
-            may wish to combine this call with `selective_dynamics` on your corresponding structure. Future developers
-            can find a more complete discussion [here](https://github.com/pyiron/pyiron/pull/1212) when further
-            modifying this capability. Further, it will malfunction if the Lammps coordinate frame and pyiron coordinate
-            frame differ.
+        Warning: This fix does not exclude these atoms from [other fixes](https://lammps.sandia.gov/doc/fix_move.html).
+            You may wish to combine this call with `selective_dynamics` on your corresponding structure. Future
+            developers can find a more complete discussion [here](https://github.com/pyiron/pyiron/pull/1212) when
+            further modifying this capability. Further, it will malfunction if the Lammps coordinate frame and pyiron
+            coordinate frame differ.
         """
         self._fix_with_three_vector(ids, velocity, 'move linear', LAMMPS_UNIT_CONVERSIONS[self["units"]]["velocity"])
 
