@@ -827,7 +827,8 @@ class LammpsControl(GenericParameters):
             [other fixes](https://stackoverflow.com/questions/3402168/permanently-add-a-directory-to-pythonpath). You
             may wish to combine this call with `selective_dynamics` on your corresponding structure. Future developers
             can find a more complete discussion [here](https://github.com/pyiron/pyiron/pull/1212) when further
-            modifying this capability.
+            modifying this capability. Further, it will malfunction if the Lammps coordinate frame and pyiron coordinate
+            frame differ.
         """
         self._fix_with_three_vector(ids, velocity, 'move linear', LAMMPS_UNIT_CONVERSIONS[self["units"]]["velocity"])
 
