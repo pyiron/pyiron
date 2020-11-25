@@ -612,7 +612,10 @@ def ratio_selection(strain_lst, ratio_lst, pressure_lst, temperature_lst, ratio_
             plt.axvline(np.min(strain_value_lst), color='blue', linestyle='--')
             plt.axvline(np.max(strain_value_lst), color='blue', linestyle='--')
             plt.show()
-        return strain_value_lst, ratio_value_lst, pressure_value_lst, temperature_value_lst, None
+        if np.mean(ratio_value_lst) > 0.5:
+            return strain_value_lst, ratio_value_lst, pressure_value_lst, temperature_value_lst, 1
+        else:
+            return strain_value_lst, ratio_value_lst, pressure_value_lst, temperature_value_lst, -1
     else:
         if np.mean(ratio_lst) > 0.5:
             return [], [], [], [], 1
