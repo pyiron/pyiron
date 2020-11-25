@@ -839,6 +839,8 @@ class LammpsControl(GenericParameters):
         ids (list/numpy.ndarray): Integer ids of the atoms to move in the job's structure.
         force (list/numpy.ndarray/tuple): The force in x-y-z-direction for the group. `None` arguments are
             converted to Lammps 'NULL' values and the force in this direction is left unchanged.
+
+        Warning: This fix will malfunction (silently) if the Lammps coordinate frame and pyiron coordinate frame differ.
         """
         self._fix_with_three_vector(ids, force, 'setforce', LAMMPS_UNIT_CONVERSIONS[self["units"]]["force"])
 
