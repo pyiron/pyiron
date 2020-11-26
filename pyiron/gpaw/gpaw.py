@@ -22,7 +22,19 @@ s = Settings()
 try:
     from gpaw import GPAW as GPAWcode, PW, MethfesselPaxton
 except ImportError:
-    pass
+    GPAWcode = None
+
+
+def _fail_if_imports_missing():
+    """
+    Just a temporary measure as long as any imports are wrapped in a try/pass instead of being on the dependencies
+    list.
+    """
+    if GPAWcode is None:
+        raise ImportError(
+            "Gpaw relies on the gpaw module but th is unavailable. Please ensure your python environment contains "
+            "gpaw, e.g. by running `conda install -c conda-forge gpaw`."
+        )
 
 
 class Gpaw(AseJob, GenericDFTJob):
