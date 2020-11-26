@@ -40,8 +40,8 @@ In addition to `NGLview <http://nglviewer.org/nglview/latest/>`_ the first line 
     conda list nglview
     jupyter labextension list
 
-Supported simulation packages
------------------------------
+Supported simulation packages (quantum engines)
+-----------------------------------------------
 
 The following packages are supported to work out-of-the-box with pyiron,
 but must be installed independently either using conda or manual compilation. Manually compiled executables can be as much as 2-3x faster than conda-installed executables, and are therefore *strongly* recommended for high performance computing (HPC) usage. We discuss how to link any "homemade" executables to your pyiron installation in the advanced section.
@@ -75,6 +75,19 @@ pyiron also supports `GPAW <https://wiki.fysik.dtu.dk/gpaw/>`_, an open-source r
 .. code-block:: bash
 
     conda install -c conda-forge gpaw
+
+
+Additional simulation packages 
+------------------------------
+
+SQSgenerator
+^^^^^^^^^^^^
+The `sqsgenerator <https://github.com/dgehringer/sqsgenerator>`_ is command line tool written in Python/Cython for finding optimized SQS structures. It is available as a separate conda package, once it is installed pyiron is able to use it inside pyiron simulation protocols without any additional imports: 
+
+.. code-block:: bash
+
+    conda install -c conda-forge sqsgenerator
+ 
 
 **********************
 Advanced Configuration
