@@ -42,6 +42,7 @@ class Gpaw(AseJob, GenericDFTJob):
         super(Gpaw, self).__init__(project, job_name)
         self.__name__ = "GpawJob"
         self.input = GpawInput()
+        _fail_if_imports_missing()
 
     @property
     def plane_wave_cutoff(self):
