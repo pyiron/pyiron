@@ -61,7 +61,11 @@ def _fail_if_imports_missing():
     list.
     """
     if ParallelSqsIterator is None:
-        raise ImportError("SQSJob relies on sqsgenerator.core.sqs.ParallelSqsIterator, but this is unavailable.")
+        raise ImportError(
+            "SQSJob relies on sqsgenerator.core.sqs.ParallelSqsIterator, but this is unavailable. Please ensure your "
+            "python environment contains the [sqsgenerator module](https://github.com/dgehringer/sqsgenerator), e.g. "
+            "with `conda install -c conda-forge sqsgenerator`."
+        )
 
 
 class SQSJob(AtomisticGenericJob):
