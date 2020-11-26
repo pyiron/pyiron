@@ -311,13 +311,6 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
 
     def run_if_interactive(self):
         if self._generic_input["calc_mode"] in ["md", "vcsgc"]:
-            if 'fix___langevin' in self.input.control.keys():
-                warnings.warn(
-                    "Langevin thermostatted MD in interactive mode only gives correct physics in the limit that the "
-                    "n_print variable goes to infinity. A more in-depth discussion can be found "
-                    "[here](https://github.com/pyiron/pyiron/issues/1173).",
-                    stacklevel=2
-                )
             self.input.control["run"] = self._generic_input["n_print"]
             super(LammpsInteractive, self).run_if_interactive()
             self._reset_interactive_run_command()
@@ -335,6 +328,18 @@ class LammpsInteractive(LammpsBase, GenericInteractive):
             super(LammpsInteractive, self).run_if_interactive()
             self.interactive_execute()
             self.interactive_collect()
+
+    def validate_ready_to_run(self):
+        if self.server.run_mode.interactive \
+                and self._generic_input["calc_mode"] in ["md", "vcsgc"] \
+                and 'fix___langevin' in self.input.control.keys():
+            warnings.warn(
+                "Langevin thermostatted MD in interactive mode only gives correct physics in the limit that the "
+                "n_print variable goes to infinity. A more in-depth discussion can be found "
+                "[here](https://github.com/pyiron/pyiron/issues/1173).",
+                stacklevel=2
+            )
+        super().validate_ready_to_run()
 
     def run_if_interactive_non_modal(self):
         if not self._interactive_fetch_completed:
