@@ -25,7 +25,8 @@ setup(
                  'Programming Language :: Python :: 3.5',
                  'Programming Language :: Python :: 3.6',
                  'Programming Language :: Python :: 3.7',
-                 'Programming Language :: Python :: 3.8'],
+                 'Programming Language :: Python :: 3.8',
+                 'Programming Language :: Python :: 3.9'],
 
     keywords='pyiron',
     packages=find_packages(exclude=["*tests*", "*docs*", "*binder*", "*conda*", "*notebooks*", "*.ci_support*"]),
@@ -40,7 +41,7 @@ setup(
         'numpy>=1.18.1',
         'pandas>=1.0.1',
         'phonopy>=2.4.2',
-        'pyiron_base>=0.1.35',
+        'pyiron_base>=0.1.36',
         'quickff>=2.2.4',
         'scipy>=1.4.1',
         'seekpath>=1.9.4',
