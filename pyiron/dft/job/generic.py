@@ -270,6 +270,8 @@ class GenericDFTJob(AtomisticGenericJob):
             if mesh is not None:
                 warnings.warn("mesh value is overwritten by k_mesh_spacing")
             mesh = self.get_k_mesh_by_cell(k_mesh_spacing=k_mesh_spacing)
+        elif self.k_mesh_spacing is not None: # switching off k_mesh_spacing would preserve the current mesh
+            mesh = self.get_k_mesh_by_cell(k_mesh_spacing=self.k_mesh_spacing)
         self.k_mesh_spacing = k_mesh_spacing
         self.k_mesh_center_shift = center_shift
         self.reduce_kpoint_symmetry = symmetry_reduction
