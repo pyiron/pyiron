@@ -926,7 +926,7 @@ def ratio_selection(strain_lst, ratio_lst, pressure_lst, temperature_lst, ratio_
     if len(rat_lst) != 0:
         rat_col_lst.append(rat_lst)
     if len(rat_col_lst) != 0:
-        rat_max_ind = np.argmax([len(l) for l in rat_col_lst])
+        rat_max_ind = np.argmax([len(lst) for lst in rat_col_lst])
         ratio_ind = [r in rat_col_lst[rat_max_ind] for r in ratio_lst]
         strain_value_lst = np.array(strain_lst)[ratio_ind]
         ratio_value_lst = np.array(ratio_lst)[ratio_ind]
@@ -1114,9 +1114,11 @@ def calc_temp_iteration(basis, temperature_next, project_parameter, timestep, nv
         )
     else:
         if sl_flag < 0:
-            temperature_next, temperature_mean, temperature_left, temperature_right = temperature_next * 0.95, 0.0, 0.0, 0.0
+            temperature_next, temperature_mean, temperature_left, temperature_right = \
+                temperature_next * 0.90, 0.0, 0.0, 0.0
         else:
-            temperature_next, temperature_mean, temperature_left, temperature_right = temperature_next * 1.05, 0.0, 0.0, 0.0
+            temperature_next, temperature_mean, temperature_left, temperature_right = \
+                temperature_next * 1.10, 0.0, 0.0, 0.0
     return temperature_next, temperature_mean, temperature_left, temperature_right, strain_value_lst, pressure_value_lst
 
 
@@ -1232,8 +1234,8 @@ def validate_convergence(pr, temperature_left, temperature_next, temperature_rig
         convergence_goal_achieved = True
     else:
         convergence_goal_achieved = False
-    return convergence_goal_achieved, enable_iteration, step_count, step_dict, timestep, fit_range, nve_run_time_steps, \
-        boundary_value, ratio_boundary, temperature_next, center
+    return convergence_goal_achieved, enable_iteration, step_count, step_dict, timestep, \
+        fit_range, nve_run_time_steps, boundary_value, ratio_boundary, temperature_next, center
 
 
 def initialise_iterators(project_parameter):
@@ -1327,8 +1329,10 @@ def generate_structure(project_parameter):
             cubic=True
         )
     basis_lst = [basis.repeat([i, i, i]) for i in range(5, 30)]
-    basis = basis_lst[np.argmin([np.abs(len(b) - project_parameter['number_of_atoms'] / 2)
-                                 for b in basis_lst])]
+    basis = basis_lst[np.argmin([
+        np.abs(len(b) - project_parameter['number_of_atoms'] / 2)
+        for b in basis_lst
+    ])]
     return basis
 
 
