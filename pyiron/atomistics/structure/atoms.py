@@ -21,6 +21,7 @@ from pyiron.atomistics.structure.periodic_table import (
     ChemicalElement
 )
 from pyiron_base import Settings
+from pyiron_base.generic.util import deprecate
 from scipy.spatial import cKDTree, Voronoi
 import spglib
 
@@ -1015,30 +1016,19 @@ class Atoms(ASEAtoms):
     def reset_absolute(self, is_absolute):
         raise NotImplementedError("This function was removed!")
 
+    @deprecate("use analyse.pyscal_cna_adaptive() with ovito_compatibility=True instead.")
     def analyse_ovito_cna_adaptive(self, mode="total"):
-        warnings.warn(
-            "analyse_ovito_cna_adaptive() is available for backwards compatiblity, " +
-            "please use analyse_pyscal_cna_adaptive()",
-            DeprecationWarning
-        )
-        return self.analyse_pyscal_cna_adaptive(mode=mode, ovito_compatibility=True)
+        return self._analyse.pyscal_cna_adaptive(mode=mode, ovito_compatibility=True)
 
+    @deprecate('use analyse.pyscal_centro_symmetry() instead.')
     def analyse_ovito_centro_symmetry(self, num_neighbors=12):
-        warnings.warn(
-            "analyse_ovito_centro_symmetry() is available for backwards compatiblity, " +
-            "please use analyse_pyscal_centro_symmetry()",
-            DeprecationWarning
-        )
-        return self.analyse_pyscal_centro_symmetry(num_neighbors=num_neighbors)
+        return self._analyse.pyscal_centro_symmetry(num_neighbors=num_neighbors)
 
+    @deprecate("use analyse.pyscal_voronoi_volume() instead.")
     def analyse_ovito_voronoi_volume(self):
-        warnings.warn(
-            "analyse_ovito_voronoi_volume() is available for backwards compatiblity, " +
-            "please use analyse_pyscal_voronoi_volume()",
-            DeprecationWarning
-        )
-        return self.analyse_pyscal_voronoi_volume()
+        return self._analyse.pyscal_voronoi_volume()
 
+    @deprecate("use analyse.pyscal_steinhardt_parameter() instead.")
     def analyse_pyscal_steinhardt_parameter(self, neighbor_method="cutoff", cutoff=0, n_clusters=2,
                                             q=(4, 6), averaged=False, clustering=True):
         """
@@ -1057,12 +1047,12 @@ class Atoms(ASEAtoms):
             q (list) : calculated q parameters
 
         """
-        from pyiron.atomistics.structure.pyscal import get_steinhardt_parameter_structure
-        return get_steinhardt_parameter_structure(
-            structure=self, neighbor_method=neighbor_method, cutoff=cutoff, n_clusters=n_clusters,
+        return self._analyse.pyscal_steinhardt_parameter(
+            neighbor_method=neighbor_method, cutoff=cutoff, n_clusters=n_clusters,
             q=q, averaged=averaged, clustering=clustering
         )
 
+    @deprecate("use analyse.pyscal_cna_adaptive() instead.")
     def analyse_pyscal_cna_adaptive(self, mode="total", ovito_compatibility=False):
         """
         Use common neighbor analysis
@@ -1080,9 +1070,9 @@ class Atoms(ASEAtoms):
         Returns:
             (depends on `mode`)
         """
-        from pyiron.atomistics.structure.pyscal import analyse_cna_adaptive
-        return analyse_cna_adaptive(atoms=self, mode=mode, ovito_compatibility=ovito_compatibility)
+        return self._analyse.pyscal_cna_adaptive(mode=mode, ovito_compatibility=ovito_compatibility)
 
+    @deprecate("use analyse.pyscal_centro_symmetry() instead.")
     def analyse_pyscal_centro_symmetry(self, num_neighbors=12):
         """
         Analyse centrosymmetry parameter
@@ -1094,9 +1084,9 @@ class Atoms(ASEAtoms):
         Returns:
             csm (list) : list of centrosymmetry parameter
         """
-        from pyiron.atomistics.structure.pyscal import analyse_centro_symmetry
-        return analyse_centro_symmetry(atoms=self, num_neighbors=num_neighbors)
+        return self._analyse.pyscal_centro_symmetry(num_neighbors=num_neighbors)
 
+    @deprecate("use analyse.pyscal_diamond_structure() instead.")
     def analyse_pyscal_diamond_structure(self, mode="total", ovito_compatibility=False):
         """
         Analyse diamond structure
@@ -1114,9 +1104,9 @@ class Atoms(ASEAtoms):
         Returns:
             (depends on `mode`)
         """
-        from pyiron.atomistics.structure.pyscal import analyse_diamond_structure
-        return analyse_diamond_structure(atoms=self, mode=mode, ovito_compatibility=ovito_compatibility)
+        return self._analyse.pyscal_diamond_structure(mode=mode, ovito_compatibility=ovito_compatibility)
 
+    @deprecate("use analyse.pyscal_voronoi_volume() instead.")
     def analyse_pyscal_voronoi_volume(self):
         """
         Calculate the Voronoi volume of atoms
@@ -1124,16 +1114,11 @@ class Atoms(ASEAtoms):
         Args:
             atoms : (pyiron.structure.atoms.Atoms): The structure to analyze.
         """
-        from pyiron.atomistics.structure.pyscal import analyse_voronoi_volume
-        return analyse_voronoi_volume(atoms=self)
+        return self._analyse.pyscal_voronoi_volume()
 
+    @deprecate("use get_symmetry()['equivalent_atoms'] instead.")
     def analyse_phonopy_equivalent_atoms(self):
         from pyiron.atomistics.structure.phonopy import analyse_phonopy_equivalent_atoms
-
-        # warnings.filterwarnings("ignore")
-        warnings.warn(
-            "analyse_phonopy_equivalent_atoms() is obsolete use get_symmetry()['equivalent_atoms'] instead"
-        )
         return analyse_phonopy_equivalent_atoms(atoms=self)
 
     def plot3d(
