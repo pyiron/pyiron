@@ -1019,102 +1019,46 @@ class Atoms(ASEAtoms):
     @deprecate("use analyse.pyscal_cna_adaptive() with ovito_compatibility=True instead.")
     def analyse_ovito_cna_adaptive(self, mode="total"):
         return self._analyse.pyscal_cna_adaptive(mode=mode, ovito_compatibility=True)
+    analyse_ovito_cna_adaptive.__doc__ = Analyse.pyscal_cna_adaptive.__doc__
 
     @deprecate('use analyse.pyscal_centro_symmetry() instead.')
     def analyse_ovito_centro_symmetry(self, num_neighbors=12):
         return self._analyse.pyscal_centro_symmetry(num_neighbors=num_neighbors)
+    analyse_ovito_centro_symmetry.__doc__ = Analyse.pyscal_centro_symmetry.__doc__
 
     @deprecate("use analyse.pyscal_voronoi_volume() instead.")
     def analyse_ovito_voronoi_volume(self):
         return self._analyse.pyscal_voronoi_volume()
+    analyse_ovito_voronoi_volume.__doc__ = Analyse.pyscal_voronoi_volume.__doc__
 
     @deprecate("use analyse.pyscal_steinhardt_parameter() instead.")
     def analyse_pyscal_steinhardt_parameter(self, neighbor_method="cutoff", cutoff=0, n_clusters=2,
                                             q=(4, 6), averaged=False, clustering=True):
-        """
-        Calculate Steinhardts parameters
-
-        Args:
-            job (job): pyiron job
-            neighbor_method (str) : can be ['cutoff', 'voronoi']
-            cutoff (float) : can be 0 for adaptive cutoff or any other value
-            n_clusters (int) : number of clusters for K means clustering
-            q (list) : can be from 2-12, the required q values to be calculated
-            averaged (bool) : If True, calculates the averaged versions of the parameter
-            clustering (bool) : If True, cluster based on the q values
-
-        Returns:
-            q (list) : calculated q parameters
-
-        """
         return self._analyse.pyscal_steinhardt_parameter(
             neighbor_method=neighbor_method, cutoff=cutoff, n_clusters=n_clusters,
             q=q, averaged=averaged, clustering=clustering
         )
+    analyse_pyscal_steinhardt_parameter.__doc__ = Analyse.pyscal_steinhardt_parameter.__doc__
 
     @deprecate("use analyse.pyscal_cna_adaptive() instead.")
     def analyse_pyscal_cna_adaptive(self, mode="total", ovito_compatibility=False):
-        """
-        Use common neighbor analysis
-
-        Args:
-            atoms (pyiron.structure.atoms.Atoms): The structure to analyze.
-            mode ("total"/"numeric"/"str"): Controls the style and level
-                of detail of the output.
-                - total : return number of atoms belonging to each structure
-                - numeric : return a per atom list of numbers- 0 for unknown,
-                    1 fcc, 2 hcp, 3 bcc and 4 icosa
-                - str : return a per atom string of sructures
-            ovito_compatibility(bool): use ovito compatiblity mode
-
-        Returns:
-            (depends on `mode`)
-        """
         return self._analyse.pyscal_cna_adaptive(mode=mode, ovito_compatibility=ovito_compatibility)
+    analyse_pyscal_cna_adaptive.__doc__ = Analyse.pyscal_cna_adaptive.__doc__
 
     @deprecate("use analyse.pyscal_centro_symmetry() instead.")
     def analyse_pyscal_centro_symmetry(self, num_neighbors=12):
-        """
-        Analyse centrosymmetry parameter
-
-        Args:
-            atoms: Atoms object
-            num_neighbors (int) : number of neighbors
-
-        Returns:
-            csm (list) : list of centrosymmetry parameter
-        """
         return self._analyse.pyscal_centro_symmetry(num_neighbors=num_neighbors)
+    analyse_pyscal_centro_symmetry.__doc__ = Analyse.pyscal_centro_symmetry.__doc__
 
     @deprecate("use analyse.pyscal_diamond_structure() instead.")
     def analyse_pyscal_diamond_structure(self, mode="total", ovito_compatibility=False):
-        """
-        Analyse diamond structure
-
-        Args:
-            atoms: Atoms object
-            mode ("total"/"numeric"/"str"): Controls the style and level
-            of detail of the output.
-                - total : return number of atoms belonging to each structure
-                - numeric : return a per atom list of numbers- 0 for unknown,
-                    1 fcc, 2 hcp, 3 bcc and 4 icosa
-                - str : return a per atom string of sructures
-            ovito_compatibility(bool): use ovito compatiblity mode
-
-        Returns:
-            (depends on `mode`)
-        """
         return self._analyse.pyscal_diamond_structure(mode=mode, ovito_compatibility=ovito_compatibility)
+    analyse_pyscal_diamond_structure.__doc__ = Analyse.pyscal_diamond_structure.__doc__
 
     @deprecate("use analyse.pyscal_voronoi_volume() instead.")
     def analyse_pyscal_voronoi_volume(self):
-        """
-        Calculate the Voronoi volume of atoms
-
-        Args:
-            atoms : (pyiron.structure.atoms.Atoms): The structure to analyze.
-        """
         return self._analyse.pyscal_voronoi_volume()
+    analyse_pyscal_voronoi_volume.__doc__ = Analyse.pyscal_voronoi_volume.__doc__
 
     @deprecate("use get_symmetry()['equivalent_atoms'] instead.")
     def analyse_phonopy_equivalent_atoms(self):
@@ -1953,18 +1897,10 @@ class Atoms(ASEAtoms):
         # TODO: implement
         pass
 
+    @deprecate("use analyse.pyscal_voronoi_volume() instead.")
     def get_voronoi_volume(self):
-        """
-
-        Returns:
-
-        """
-        warnings.warn(
-            "This function doesn't account for periodic boundary conditions. Call "
-            "`analyse_pyscal_voronoi_volume` instead. This is what will now be returned.",
-            DeprecationWarning,
-        )
-        return self.analyse_pyscal_voronoi_volume()
+        return self._analyse.pyscal_voronoi_volume()
+    get_voronoi_volume.__doc__ = Analyse.pyscal_voronoi_volume.__doc__
 
     def find_mic(self, v, vectors=True):
         """
