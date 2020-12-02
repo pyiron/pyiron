@@ -48,7 +48,7 @@ class Analyse:
     def __init__(self, structure):
         """
         Args:
-            structure (pyiron.atomistics.structure.atoms.Atoms): reference Atom structure.
+            structure (:class:`pyiron.atomistics.structure.atoms.Atoms`): reference Atom structure.
         """
         self._structure = structure
 
@@ -138,7 +138,6 @@ class Analyse:
         Calculate Steinhardts parameters
 
         Args:
-            job (job): pyiron job
             neighbor_method (str) : can be ['cutoff', 'voronoi']
             cutoff (float) : can be 0 for adaptive cutoff or any other value
             n_clusters (int) : number of clusters for K means clustering
@@ -147,7 +146,7 @@ class Analyse:
             clustering (bool) : If True, cluster based on the q values
 
         Returns:
-            q (list) : calculated q parameters
+            list: calculated q parameters
 
         """
         return get_steinhardt_parameter_structure(
@@ -160,7 +159,6 @@ class Analyse:
         Use common neighbor analysis
 
         Args:
-            atoms (pyiron.structure.atoms.Atoms): The structure to analyze.
             mode ("total"/"numeric"/"str"): Controls the style and level
                 of detail of the output.
                 - total : return number of atoms belonging to each structure
@@ -179,11 +177,10 @@ class Analyse:
         Analyse centrosymmetry parameter
 
         Args:
-            atoms: Atoms object
             num_neighbors (int) : number of neighbors
 
         Returns:
-            csm (list) : list of centrosymmetry parameter
+            list: list of centrosymmetry parameter
         """
         return analyse_centro_symmetry(atoms=self._structure, num_neighbors=num_neighbors)
 
@@ -192,7 +189,6 @@ class Analyse:
         Analyse diamond structure
 
         Args:
-            atoms: Atoms object
             mode ("total"/"numeric"/"str"): Controls the style and level
             of detail of the output.
                 - total : return number of atoms belonging to each structure
@@ -207,11 +203,6 @@ class Analyse:
         return analyse_diamond_structure(atoms=self._structure, mode=mode, ovito_compatibility=ovito_compatibility)
 
     def pyscal_voronoi_volume(self):
-        """
-        Calculate the Voronoi volume of atoms
-
-        Args:
-            atoms : (pyiron.structure.atoms.Atoms): The structure to analyze.
-        """
+        """    Calculate the Voronoi volume of atoms        """
         return analyse_voronoi_volume(atoms=self._structure)
 
