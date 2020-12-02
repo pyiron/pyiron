@@ -5,6 +5,7 @@
 from datetime import datetime
 import warnings
 from pyiron_base import GenericParameters, GenericJob, GenericMaster
+from pyiron_base.generic.util import deprecate
 from pyiron.atomistics.structure.atoms import ase_to_pyiron
 from pyiron.atomistics.structure.atoms import Atoms as PAtoms
 
@@ -108,16 +109,13 @@ class InteractiveWrapper(GenericMaster):
                 self._ref_job.master_id = self.job_id
                 self._ref_job.server.cores = self.server.cores
 
+    @deprecate("use get_structure() instead")
     def get_final_structure(self):
         """
 
         Returns:
 
         """
-        warnings.warn(
-            "get_final_structure() is deprecated - please use get_structure() instead.",
-            DeprecationWarning,
-        )
         if self.ref_job:
             return self._ref_job.get_structure(iteration_step=-1)
         else:
