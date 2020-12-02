@@ -337,8 +337,10 @@ class LammpsControl(GenericParameters):
             + str(int(max_evaluations))
         )
         self.remove_keys(["run", "velocity"])
-        self.modify(variable___dumptime="equal " + str(n_print))
-        self.modify(variable___thermotime="equal " + str(n_print))
+        self.modify(
+            variable___dumptime="equal " + str(n_print),
+            variable___thermotime="equal " + str(n_print)
+        )
 
     def calc_static(self):
         self.set(run="0")
