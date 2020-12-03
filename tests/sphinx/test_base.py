@@ -165,7 +165,7 @@ class TestSphinx(unittest.TestCase):
             '}\n',
             'PAWHamiltonian {\n',
             '\tnEmptyStates = 6;\n',
-            '\tekt = 0.007349864435130998;\n',
+            '\tekt = 0.2;\n',
             '\txc = PBE;\n',
             '\tspinPolarized;\n',
             '}\n',

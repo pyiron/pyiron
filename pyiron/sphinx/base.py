@@ -1558,7 +1558,7 @@ class SphinxBase(GenericDFTJob):
                 )
 
             if round(self.input["Sigma"], 1) != \
-                    round(self.input.sphinx.PAWHamiltonian.ekt * HARTREE_TO_EV, 1):
+                    round(self.input.sphinx.PAWHamiltonian.ekt, 1):
                 warnings.warn(
                     "job.input.PAWHamiltonian.ekt was modified directly. "
                     "It is recommended to set it via "
