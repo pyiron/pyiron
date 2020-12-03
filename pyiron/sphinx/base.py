@@ -1478,7 +1478,7 @@ class SphinxBase(GenericDFTJob):
                     isinstance(self.input.sphinx.PAWHamiltonian["ekt"], int)
                     or isinstance(self.input.sphinx.PAWHamiltonian["ekt"], float)
                 )
-                or round(self.input.sphinx.PAWHamiltonian["ekt"]*HARTREE_TO_EV, 1) == 0.2
+                or round(self.input.sphinx.PAWHamiltonian["ekt"], 1) == 0.2
             ):
                 warnings.warn(
                     "Fermi smearing value wrong or not modified from default "+
