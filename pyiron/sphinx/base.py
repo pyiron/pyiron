@@ -524,7 +524,7 @@ class SphinxBase(GenericDFTJob):
             "nEmptyStates", self.input["EmptyStates"]
             )
         self.input.sphinx.PAWHamiltonian.setdefault(
-            "ekt", self.input["Sigma"]/HARTREE_TO_EV
+            "ekt", self.input["Sigma"]
             )
         self.input.sphinx.PAWHamiltonian.setdefault("xc", self.input["Xcorr"])
         self.input.sphinx.PAWHamiltonian["spinPolarized"] = self._spin_enabled
