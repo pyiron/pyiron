@@ -6,6 +6,8 @@ import numpy as np
 from pyiron_base import Settings
 from sklearn.cluster import AgglomerativeClustering
 from scipy.sparse import coo_matrix
+from pyiron.atomistics.structure.pyscal import get_steinhardt_parameter_structure, analyse_cna_adaptive, \
+    analyse_centro_symmetry, analyse_diamond_structure, analyse_voronoi_volume
 
 __author__ = "Joerg Neugebauer, Sam Waseda"
 __copyright__ = (
@@ -147,7 +149,6 @@ class Analyse:
             list: calculated q parameters
 
         """
-        from pyiron.atomistics.structure.pyscal import get_steinhardt_parameter_structure
         return get_steinhardt_parameter_structure(
             structure=self._structure, neighbor_method=neighbor_method, cutoff=cutoff, n_clusters=n_clusters,
             q=q, averaged=averaged, clustering=clustering
@@ -169,7 +170,6 @@ class Analyse:
         Returns:
             (depends on `mode`)
         """
-        from pyiron.atomistics.structure.pyscal import analyse_cna_adaptive
         return analyse_cna_adaptive(atoms=self._structure, mode=mode, ovito_compatibility=ovito_compatibility)
 
     def pyscal_centro_symmetry(self, num_neighbors=12):
@@ -182,7 +182,6 @@ class Analyse:
         Returns:
             list: list of centrosymmetry parameter
         """
-        from pyiron.atomistics.structure.pyscal import analyse_centro_symmetry
         return analyse_centro_symmetry(atoms=self._structure, num_neighbors=num_neighbors)
 
     def pyscal_diamond_structure(self, mode="total", ovito_compatibility=False):
@@ -201,11 +200,9 @@ class Analyse:
         Returns:
             (depends on `mode`)
         """
-        from pyiron.atomistics.structure.pyscal import analyse_diamond_structure
         return analyse_diamond_structure(atoms=self._structure, mode=mode, ovito_compatibility=ovito_compatibility)
 
     def pyscal_voronoi_volume(self):
         """    Calculate the Voronoi volume of atoms        """
-        from pyiron.atomistics.structure.pyscal import analyse_voronoi_volume
         return analyse_voronoi_volume(atoms=self._structure)
 
