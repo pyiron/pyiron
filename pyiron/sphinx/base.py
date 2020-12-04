@@ -1989,6 +1989,25 @@ class Output(object):
                 residue[:, 1:] * HARTREE_TO_EV, residue[:, 0]
             )
 
+    def collect_density_of_state(self, file_names=["tdos.0.dat", "tdos.1.dat"], cwd=None):
+        """
+
+        Args:
+            file_name:
+            cwd:
+
+        Returns:
+
+        """
+        for file_name in file_names:
+            file_name = posixpath.join(cwd, file_name)
+            if os.path.isfile(file_name):
+                data = np.loadtxt(file_name)
+                if len(self._parse_dict["dos_energies"])==0:
+                    self._parse_dict["dos_energies"] = data[:,0]
+                self._parse_dict["dos_tot_densities"].append(data[:,1])
+        return None
+
     def collect_eps_dat(self, file_name="eps.dat", cwd=None):
         """
 
@@ -2345,6 +2364,7 @@ class Output(object):
                                              cwd=directory)
         self.collect_charge_density(file_name="rho.sxb",
                                     cwd=directory)
+        self.collect_density_of_state(file_names=["tdos.0.dat", "tdos.1.dat"], cwd=directory)
         self._job.compress()
 
     def to_hdf(self, hdf, force_update=False):
@@ -2391,6 +2411,13 @@ class Output(object):
                 es = self._get_electronic_structure_object()
                 if len(es.kpoint_list) > 0:
                     es.to_hdf(hdf5_output)
+            with hdf5_output.open("electronic_structure") as hdf5_es:
+                if "dos" not in hdf5_es.list_groups():
+                    hdf5_es.create_group("dos")
+                with hdf5_es.open("dos") as hdf5_dos:
+                    for k,v in self._parse_dict.items():
+                        if k.startswith('dos_'):
+                            hdf5_dos[k.replace('dos_', '')] = v
             with hdf5_output.open("generic") as hdf5_generic:
                 if "dft" not in hdf5_generic.list_groups():
                     hdf5_generic.create_group("dft")
