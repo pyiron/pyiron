@@ -21,7 +21,7 @@ from pyiron.atomistics.structure.periodic_table import (
     ChemicalElement
 )
 from pyiron_base import Settings
-from pyiron_base.generic.util import deprecate
+from pyiron_base.generic.util import deprecate, deprecate_soon
 from scipy.spatial import cKDTree, Voronoi
 import spglib
 
@@ -1515,6 +1515,7 @@ class Atoms(ASEAtoms):
         return neighbors.get_bonds(radius=radius, max_shells=max_shells, prec=prec)
 
     # spglib calls
+    @deprecate_soon
     def get_symmetry(
         self, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0
     ):
@@ -1552,6 +1553,7 @@ class Atoms(ASEAtoms):
                 angle_tolerance=angle_tolerance,
             )
 
+    @deprecate_soon
     def symmetrize_vectors(
         self, vectors, force_update=False, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0
     ):
@@ -1588,6 +1590,7 @@ class Atoms(ASEAtoms):
         return np.einsum('ijk,ink->nj', self._symmetry_dataset['rotations'],
                          vectors[self._symmetry_dataset['indices']])/len(self._symmetry_dataset['rotations'])
 
+    @deprecate_soon
     def group_points_by_symmetry(self, points):
         """
             This function classifies the points into groups according to the box symmetry given by spglib.
@@ -1673,6 +1676,7 @@ class Atoms(ASEAtoms):
             neigh = box_copy.get_neighbors()
         return pos_total, box_copy
 
+    @deprecate_soon
     def get_equivalent_voronoi_vertices(
         self, return_box=False, minimum_dist=0.1, symprec=1e-5, angle_tolerance=-1.0
     ):
@@ -1701,6 +1705,7 @@ class Atoms(ASEAtoms):
         else:
             return list_positions
 
+    @deprecate_soon
     def get_equivalent_points(self, points, use_magmoms=False, use_elements=True, symprec=1e-5, angle_tolerance=-1.0):
         """
 
@@ -1729,6 +1734,7 @@ class Atoms(ASEAtoms):
         x = np.einsum('ji,mj->mi', self.cell, x)
         return x
 
+    @deprecate_soon
     def get_symmetry_dataset(self, symprec=1e-5, angle_tolerance=-1.0):
         """
 
@@ -1751,6 +1757,7 @@ class Atoms(ASEAtoms):
             angle_tolerance=angle_tolerance,
         )
 
+    @deprecate_soon
     def get_spacegroup(self, symprec=1e-5, angle_tolerance=-1.0):
         """
 
@@ -1780,6 +1787,7 @@ class Atoms(ASEAtoms):
                 "Number": ast.literal_eval(space_group[1]),
             }
 
+    @deprecate_soon
     def refine_cell(self, symprec=1e-5, angle_tolerance=-1.0):
         """
 
@@ -1806,6 +1814,7 @@ class Atoms(ASEAtoms):
             symbols=list(self.get_chemical_symbols()), positions=coords, cell=cell, pbc=self.pbc
         )
 
+    @deprecate_soon
     def get_primitive_cell(self, symprec=1e-5, angle_tolerance=-1.0):
         """
 
@@ -1843,6 +1852,7 @@ class Atoms(ASEAtoms):
             red_structure.cell = amat_fcc
         return red_structure
 
+    @deprecate_soon
     def get_ir_reciprocal_mesh(
         self,
         mesh,
