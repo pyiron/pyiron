@@ -806,21 +806,27 @@ class TestAtoms(unittest.TestCase):
         self.assertTrue(0 <= np.min(NaCl.positions))
         self.assertTrue(np.max(NaCl.get_scaled_positions() < 1))
 
-    @unittest.skip("skip ovito because it is not installed in the test environment")
     def test_analyse_ovito_cna_adaptive(self):
         basis = Atoms(
             "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
         )
-        basis.analyse_ovito_cna_adaptive()["CommonNeighborAnalysis.counts.BCC"] == 2
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            self.assertTrue(
+                basis.analyse_ovito_cna_adaptive()["CommonNeighborAnalysis.counts.BCC"] == 2
+            )
+            self.assertGreaterEqual(len(w), 1)
 
-    @unittest.skip("skip ovito because it is not installed in the test environment")
     def test_analyse_ovito_centro_symmetry(self):
         basis = Atoms(
             "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
         )
-        self.assertTrue(
-            all(basis.analyse_ovito_centro_symmetry() == np.array([0.75, 0.75]))
-        )
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            self.assertTrue(
+                all(basis.analyse_ovito_centro_symmetry() == np.array([0.75, 0.75]))
+            )
+            self.assertGreaterEqual(len(w), 1)
 
     @unittest.skip("skip ovito because it is not installed in the test environment")
     def test_analyse_ovito_voronoi_volume(self):
