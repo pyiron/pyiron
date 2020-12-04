@@ -2,6 +2,12 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
+"""
+pyiron based implementation of the coexistence method. Currently this functionality is primarly used as part
+of the melting point simulation protocol which is available at:
+https://github.com/pyiron/pyiron_meltingpoint
+"""
+
 import json
 import numpy as np
 import operator
@@ -21,6 +27,16 @@ __date__ = "Apr 24, 2020"
 
 
 def freeze_one_half(basis):
+    """
+    Split the structure into two parts along the z-axis and then freeze the position of the atoms
+    of the upper part (z>0.5) by setting selective dynamics to False.
+
+    Args:
+        basis (pyiron.structure.atoms.Atoms): Atomistic structure object
+
+    Returns:
+        pyiron.structure.atoms.Atoms: Atomistic structure object with half of the atoms fixed
+    """
     basis.add_tag(selective_dynamics=None)
     _, _, z = basis.scaled_pos_xyz()
     for selector, ind in zip(z < 0.5, range(len(basis))):
@@ -32,6 +48,15 @@ def freeze_one_half(basis):
 
 
 def remove_selective_dynamics(basis):
+    """
+    If the selective dyanmics tag is set, allow all atoms to move by setting selective dynamics to True
+
+    Args:
+        basis (pyiron.structure.atoms.Atoms): Atomistic structure object
+
+    Returns:
+        Atoms: Atomistic structure object with selective dynamics set to True
+    """
     if 'selective_dynamics' in basis._tag_list.keys():
         for ind in range(len(basis)):
             basis.selective_dynamics[ind] = [True, True, True]
@@ -39,6 +64,16 @@ def remove_selective_dynamics(basis):
 
 
 def set_server(job, project_parameter):
+    """
+    Set the potential, queue and cpu_cores defined in the project_parameter dictionary to the job object.
+
+    Args:
+        job (GenericJob): Job object
+        project_parameter (dict): Dictionary with the keys potential and cpu_cores and optionally queue
+
+    Returns:
+        GenericJob: Updated job object
+    """
     job.potential = project_parameter['potential']
     if 'queue' in project_parameter.keys():
         job.server.queue = project_parameter['queue']
@@ -47,6 +82,21 @@ def set_server(job, project_parameter):
 
 
 def create_job_template(job_name, structure, project_parameter):
+    """
+    Create a job template using the project_parameter dictionary. The dictionary has to contain the following keys:
+    - job_type: Type of Simulation code to be used
+    - project: Project object used to create the job
+    - potential: Interatomic Potential
+    - queue (optional): HPC Job queue to be used
+
+    Args:
+        job_name (str): Name of the job object
+        structure (pyiron.structure.atoms.Atoms): Atomistic Structure object to be set to the job as input sturcture
+        project_parameter (dict): Dictionary with the project parameters
+
+    Returns:
+        GenericJob: New job object
+    """
     pr = project_parameter['project']
     job = pr.create_job(project_parameter['job_type'], job_name)
     job.structure = structure
@@ -54,22 +104,67 @@ def create_job_template(job_name, structure, project_parameter):
 
 
 def fix_iso(job):
+    """
+    Add couple xyz to the fix_ensemble inside LAMMPS
+
+    Args:
+        job (LAMMPS): Lammps job object
+
+    Returns:
+        LAMMPS: Return updated job object
+    """
     job.input.control['fix___ensemble'] = job.input.control['fix___ensemble'] + ' couple xyz'
     return job
 
 
 def fix_z_dir(job):
+    """
+    Rather than fixing all directions only fix the z-direction during an NPT simulation
+
+    Args:
+        job (LAMMPS): Lammps job object
+
+    Returns:
+        LAMMPS: Return updated job object
+    """
     job.input.control['fix___ensemble'] = \
         job.input.control['fix___ensemble'].replace('x 0.0 0.0 1.0 y 0.0 0.0 1.0 z 0.0 0.0 1.0', 'z 0.0 0.0 1.0')
     return job
 
 
 def half_velocity(job, temperature):
+    """
+    Rather than setting twice the kinetic energy at the beginning of a molecular dynamics simulation reduce the
+    velocity to half the initial velocity. This is required to continue MD claculation.
+
+    Args:
+        job (LAMMPS): Lammps job object
+        temperature (float): Temperature of the molecular dynamics calculation in K
+
+    Returns:
+        LAMMPS: Return updated job object
+    """
     job.input.control['velocity'] = job.input.control['velocity'].replace(str(temperature * 2), str(temperature))
     return job
 
 
 def minimize_pos(structure, project_parameter, max_iter=1000):
+    """
+    Minimize the positions in a given structure using the job type defined in the project_parameters, which
+    contains the following keys:
+    - job_type: Type of Simulation code to be used
+    - project: Project object used to create the job
+    - potential: Interatomic Potential
+    - queue (optional): HPC Job queue to be used
+
+    Args:
+        structure (pyiron.structure.atoms.Atoms): Atomistic Structure object to be set to the job as input sturcture
+        project_parameter (dict): Dictionary wtih the project parameters
+        max_iter (int): Maximum number of steps during minimization
+
+    Returns:
+        job object used to execute the calculation
+    """
     ham_minimize_pos = create_job_template(
         job_name='minimize_pos',
         structure=structure,
@@ -91,6 +186,22 @@ def minimize_pos(structure, project_parameter, max_iter=1000):
 
 
 def minimize_vol(structure, project_parameter, max_iter=1000):
+    """
+    Minimize the volume for a given structure using the job type defined in the project_parameters, which
+    contains the following keys:
+    - job_type: Type of Simulation code to be used
+    - project: Project object used to create the job
+    - potential: Interatomic Potential
+    - queue (optional): HPC Job queue to be used
+
+    Args:
+        structure (pyiron.structure.atoms.Atoms): Atomistic Structure object to be set to the job as input sturcture
+        project_parameter (dict): Dictionary with the project parameters
+        max_iter (int): Maximum number of steps during minimization
+
+    Returns:
+        job object used to execute the calculation
+    """
     ham_minimize_vol = create_job_template(
         job_name='minimize_vol',
         structure=structure,
@@ -114,6 +225,22 @@ def minimize_vol(structure, project_parameter, max_iter=1000):
 
 
 def next_calc(structure, temperature, project_parameter, run_time_steps=10000):
+    """
+    Calculate NPT ensemble at a given temperature using the job defined in the project parameters:
+    - job_type: Type of Simulation code to be used
+    - project: Project object used to create the job
+    - potential: Interatomic Potential
+    - queue (optional): HPC Job queue to be used
+
+    Args:
+        structure (pyiron.structure.atoms.Atoms): Atomistic Structure object to be set to the job as input sturcture
+        temperature (float): Temperature of the Molecular dynamics calculation
+        project_parameter (dict): Dictionary with the project parameters
+        run_time_steps (int): Number of Molecular dynamics steps
+
+    Returns:
+        Final Atomistic Structure object
+    """
     ham_temp = create_job_template(
         job_name='temp_heating_' + str(temperature).replace('.', '_'),
         structure=structure,
@@ -143,6 +270,22 @@ def next_calc(structure, temperature, project_parameter, run_time_steps=10000):
 
 
 def npt_solid(temperature, basis, project_parameter, timestep=1.0):
+    """
+    Calculate NPT ensemble at a given temperature using the job defined in the project parameters:
+    - job_type: Type of Simulation code to be used
+    - project: Project object used to create the job
+    - potential: Interatomic Potential
+    - queue (optional): HPC Job queue to be used
+
+    Args:
+        temperature (float): Temperature of the Molecular dynamics calculation
+        basis (pyiron.structure.atoms.Atoms): Atomistic Structure object to be set to the job as input sturcture
+        project_parameter (dict): Dictionary with the project parameters
+        timestep (float): Molecular dynamics time step
+
+    Returns:
+        job object used to execute the calculation
+    """
     ham_npt_solid = create_job_template(
         job_name='ham_npt_solid_' + str(temperature).replace('.', '_'),
         structure=basis,
@@ -173,6 +316,24 @@ def npt_solid(temperature, basis, project_parameter, timestep=1.0):
 
 
 def setup_liquid_job(job_name, basis, temperature, project_parameter, timestep=1.0):
+    """
+    Calculate NPT ensemble at a given temperature while freezing the position of the atoms
+    of the upper part (z>0.5) amd the using the job defined in the project parameters:
+    - job_type: Type of Simulation code to be used
+    - project: Project object used to create the job
+    - potential: Interatomic Potential
+    - queue (optional): HPC Job queue to be used
+
+    Args:
+        job_name (str): Job name for the liquid calculation
+        basis (pyiron.structure.atoms.Atoms): Atomistic Structure object to be set to the job as input sturcture
+        temperature (float): Temperature of the Molecular dynamics calculation
+        project_parameter (dict): Dictionary with the project parameters
+        timestep (float): Molecular dynamics time step
+
+    Returns:
+        job object used to execute the calculation
+    """
     ham_npt_liquid_high = create_job_template(
         job_name=job_name,
         structure=freeze_one_half(basis),
@@ -182,7 +343,7 @@ def setup_liquid_job(job_name, basis, temperature, project_parameter, timestep=1
         temperature=temperature,
         temperature_damping_timescale=100.0,
         time_step=timestep,
-        pressure=0.0,
+        pressure=[0.0, 0.0, 0.0],
         pressure_damping_timescale=1000.0,
         n_print=project_parameter['run_time_steps'],
         n_ionic_steps=project_parameter['run_time_steps'],
@@ -205,6 +366,26 @@ def setup_liquid_job(job_name, basis, temperature, project_parameter, timestep=1
 
 
 def npt_liquid(temperature_solid, temperature_liquid, basis, project_parameter, timestep=1.0):
+    """
+    Calculate NPT ensemble at a given temperature while initally freezing the position of the atoms
+    of the upper part (z>0.5) and afterwards calculating the full sample at a lower temperature.
+    These steps are used to construct the solid liquid interface as part of the coexistence approach.
+    For the calculations the job object is defined in the project parameters:
+    - job_type: Type of Simulation code to be used
+    - project: Project object used to create the job
+    - potential: Interatomic Potential
+    - queue (optional): HPC Job queue to be used
+
+    Args:
+        temperature_solid (flaot): Temperature to simulate the whole structure
+        temperature_liquid (float): Temperature to simulate the upper half of the structure
+        basis (pyiron.structure.atoms.Atoms): Atomistic Structure object to be set to the job as input sturcture
+        project_parameter (dict): Dictionary with the project parameters
+        timestep (float): Molecular dynamics time step
+
+    Returns:
+        job object used to execute the calculation
+    """
     ham_npt_liquid_high = setup_liquid_job(
         job_name='ham_npt_liquid_high_' + str(temperature_liquid).replace('.', '_'),
         basis=basis,
@@ -222,6 +403,57 @@ def npt_liquid(temperature_solid, temperature_liquid, basis, project_parameter, 
     return ham_npt_liquid_low
 
 
+def check_diamond(structure):
+    """
+    Utility function to check if the structure is fcc, bcc, hcp or diamond
+
+    Args:
+        structure (pyiron.structure.atoms.Atoms): Atomistic Structure object to check
+
+    Returns:
+        bool: true if diamond else false
+    """
+    cna_dict = structure.analyse_pyscal_cna_adaptive(
+        mode="total",
+        ovito_compatibility=True
+    )
+    dia_dict = structure.analyse_pyscal_diamond_structure(
+        mode="total",
+        ovito_compatibility=True
+    )
+    return cna_dict['CommonNeighborAnalysis.counts.OTHER'] > dia_dict['IdentifyDiamond.counts.OTHER']
+
+
+def analyse_structure(structure, mode="total", diamond=False):
+    """
+    Use either common neighbor analysis or the diamond structure detector
+
+    Args:
+        structure (pyiron.structure.atoms.Atoms): The structure to analyze.
+        mode ("total"/"numeric"/"str"): Controls the style and level
+            of detail of the output.
+            - total : return number of atoms belonging to each structure
+            - numeric : return a per atom list of numbers- 0 for unknown,
+                1 fcc, 2 hcp, 3 bcc and 4 icosa
+            - str : return a per atom string of sructures
+        diamond (bool): Flag to either use the diamond structure detector or
+            the common neighbor analysis.
+
+    Returns:
+        (depends on `mode`)
+    """
+    if not diamond:
+        return structure.analyse_pyscal_cna_adaptive(
+            mode=mode,
+            ovito_compatibility=True
+        )
+    else:
+        return structure.analyse_pyscal_diamond_structure(
+            mode=mode,
+            ovito_compatibility=True
+        )
+
+
 def next_step_funct(number_of_atoms,
                     key_max,
                     structure_left,
@@ -232,8 +464,33 @@ def next_step_funct(number_of_atoms,
                     structure_after_minimization,
                     run_time_steps,
                     project_parameter):
-    structure_left_dict = structure_left.analyse_ovito_cna_adaptive()
-    structure_right_dict = structure_right.analyse_ovito_cna_adaptive()
+    """
+
+    Args:
+        number_of_atoms:
+        key_max:
+        structure_left:
+        structure_right:
+        temperature_left:
+        temperature_right:
+        distribution_initial_half:
+        structure_after_minimization:
+        run_time_steps:
+        project_parameter:
+
+    Returns:
+
+    """
+    structure_left_dict = analyse_structure(
+        structure=structure_left,
+        mode="total",
+        diamond=project_parameter['crystalstructure'].lower() == 'diamond'
+    )
+    structure_right_dict = analyse_structure(
+        structure=structure_right,
+        mode="total",
+        diamond=project_parameter['crystalstructure'].lower() == 'diamond'
+    )
     temperature_diff = temperature_right - temperature_left
     if structure_left_dict[key_max] / number_of_atoms > distribution_initial_half and \
             structure_right_dict[key_max] / number_of_atoms > distribution_initial_half:
@@ -274,11 +531,36 @@ def next_step_funct(number_of_atoms,
 
 
 def round_temperature_next(temperature_next):
+    """
+    Round temperature to the last two dicits
+
+    Args:
+        temperature_next (float): Temperature
+
+    Returns:
+        float: rounded temperature
+    """
     return np.round(temperature_next, 2)
 
 
 def strain_circle(basis_relative, temperature_next, nve_run_time_steps, project_parameter, timestep=1.0,
                   strain_result_lst=None, pressure_result_lst=None, center=None, fit_range=0.02):
+    """
+
+    Args:
+        basis_relative:
+        temperature_next:
+        nve_run_time_steps:
+        project_parameter:
+        timestep:
+        strain_result_lst:
+        pressure_result_lst:
+        center:
+        fit_range:
+
+    Returns:
+
+    """
     strain_lst, pressure_lst, temperature_lst, pressure_std_lst, temperature_std_lst = [], [], [], [], []
     ovito_dict_lst, ham_nvt_lst, ham_nve_lst = [], [], []
     strain_value_lst = get_strain_lst(
@@ -362,7 +644,11 @@ def strain_circle(basis_relative, temperature_next, nve_run_time_steps, project_
             np.mean(ham_nve['output/generic/temperature'][-20:]),
             np.std(get_press(ham=ham_nve, step=-20)),
             np.std(ham_nve['output/generic/temperature'][-20:]),
-            ham_nve.get_structure(iteration_step=-1).analyse_ovito_cna_adaptive()
+            analyse_structure(
+                structure=ham_nve.get_structure(iteration_step=-1),
+                mode="total",
+                diamond=project_parameter['crystalstructure'].lower() == 'diamond'
+            )
         ]
         strain_lst.append(strain)
         pressure_lst.append(press)
@@ -374,10 +660,23 @@ def strain_circle(basis_relative, temperature_next, nve_run_time_steps, project_
 
 
 def analyse_minimized_structure(ham):
+    """
+
+    Args:
+        ham (GenericJob):
+
+    Returns:
+
+    """
     final_structure = ham.get_structure(
         iteration_step=-1
     )
-    final_structure_dict = final_structure.analyse_ovito_cna_adaptive()
+    diamond_flag = check_diamond(structure=final_structure)
+    final_structure_dict = analyse_structure(
+        structure=final_structure,
+        mode="total",
+        diamond=diamond_flag
+    )
     key_max = max(final_structure_dict.items(), key=operator.itemgetter(1))[0]
     number_of_atoms = len(final_structure)
     distribution_initial = final_structure_dict[key_max] / number_of_atoms
@@ -386,10 +685,29 @@ def analyse_minimized_structure(ham):
 
 
 def get_press(ham, step=20):
+    """
+
+    Args:
+        ham:
+        step:
+
+    Returns:
+
+    """
     return np.mean(ham['output/generic/pressures'][step:, :, :].diagonal(0, 2), axis=1)
 
 
 def get_center_point(strain_result_lst=None, pressure_result_lst=None, center=None):
+    """
+
+    Args:
+        strain_result_lst:
+        pressure_result_lst:
+        center:
+
+    Returns:
+
+    """
     if strain_result_lst is not None and len(strain_result_lst) != 0 and \
             pressure_result_lst is not None and len(pressure_result_lst) != 0:
         center_point = np.round(np.roots(np.polyfit(strain_result_lst, pressure_result_lst, 1))[0], 2)
@@ -401,6 +719,18 @@ def get_center_point(strain_result_lst=None, pressure_result_lst=None, center=No
 
 
 def get_strain_lst(fit_range=0.02, points=21, strain_result_lst=None, pressure_result_lst=None, center=None):
+    """
+
+    Args:
+        fit_range:
+        points:
+        strain_result_lst:
+        pressure_result_lst:
+        center:
+
+    Returns:
+
+    """
     center_point = get_center_point(
         strain_result_lst=strain_result_lst,
         pressure_result_lst=pressure_result_lst,
@@ -410,6 +740,17 @@ def get_strain_lst(fit_range=0.02, points=21, strain_result_lst=None, pressure_r
 
 
 def get_nve_job_name(temperature_next, strain, steps_lst, nve_run_time_steps):
+    """
+
+    Args:
+        temperature_next:
+        strain:
+        steps_lst:
+        nve_run_time_steps:
+
+    Returns:
+
+    """
     temperature_next = round_temperature_next(temperature_next)
     temp_str = str(temperature_next).replace('.', '_')
     strain_str = str(strain).replace('.', '_')
@@ -418,6 +759,18 @@ def get_nve_job_name(temperature_next, strain, steps_lst, nve_run_time_steps):
 
 
 def plot_solid_liquid_ratio(temperature_next, strain_lst, nve_run_time_steps, project_parameter, debug_plot=True):
+    """
+
+    Args:
+        temperature_next:
+        strain_lst:
+        nve_run_time_steps:
+        project_parameter:
+        debug_plot:
+
+    Returns:
+
+    """
     cna_str = project_parameter['crystalstructure'].upper()
     ratio_lst = []
     for strain in strain_lst:
@@ -429,13 +782,22 @@ def plot_solid_liquid_ratio(temperature_next, strain_lst, nve_run_time_steps, pr
         )
         ham_nve = project_parameter['project'].load(job_name)
         struct = ham_nve.get_structure().center_coordinates_in_unit_cell()
-        cna = struct.analyse_ovito_cna_adaptive(mode='str')
-        bcc_count = sum(cna == 'BCC')
-        fcc_count = sum(cna == 'FCC')
-        hcp_count = sum(cna == 'HCP')
-        if (cna_str == 'BCC' and bcc_count > fcc_count and bcc_count > hcp_count) or \
+        cna = analyse_structure(
+            structure=struct,
+            mode="str",
+            diamond=project_parameter['crystalstructure'].lower() == 'diamond'
+        )
+        if not project_parameter['crystalstructure'].lower() == 'diamond':
+            bcc_count = sum(cna == 'BCC')
+            fcc_count = sum(cna == 'FCC')
+            hcp_count = sum(cna == 'HCP')
+            cond = (cna_str == 'BCC' and bcc_count > fcc_count and bcc_count > hcp_count) or \
                 (cna_str == 'FCC' and fcc_count > bcc_count and fcc_count > hcp_count) or \
-                (cna_str == 'HCP' and hcp_count > bcc_count and hcp_count > fcc_count):
+                (cna_str == 'HCP' and hcp_count > bcc_count and hcp_count > fcc_count)
+        else:
+            cna_str = 'Cubic diamond'
+            cond = sum(cna == cna_str) > 0.05 * len(struct)
+        if cond:
             # plt.figure(figsize=(16,12))
             bandwidth = (struct.get_volume()/len(struct))**(1.0/3.0)
             kde = KernelDensity(kernel='gaussian',
@@ -473,9 +835,47 @@ def plot_solid_liquid_ratio(temperature_next, strain_lst, nve_run_time_steps, pr
             plt.xlabel('position z')
             plt.ylabel('position x')
             plt.plot(struct.positions[:, 2], struct.positions[:, 0], 'o', label='all')
-            plt.plot(struct.positions[:, 2][cna == 'BCC'], struct.positions[:, 0][cna == 'BCC'], 'x', label='BCC')
-            plt.plot(struct.positions[:, 2][cna == 'FCC'], struct.positions[:, 0][cna == 'FCC'], 'x', label='FCC')
-            plt.plot(struct.positions[:, 2][cna == 'HCP'], struct.positions[:, 0][cna == 'HCP'], 'x', label='HCP')
+            if not project_parameter['crystalstructure'].lower() == 'diamond':
+                plt.plot(struct.positions[:, 2][cna == 'BCC'], struct.positions[:, 0][cna == 'BCC'], 'x', label='BCC')
+                plt.plot(struct.positions[:, 2][cna == 'FCC'], struct.positions[:, 0][cna == 'FCC'], 'x', label='FCC')
+                plt.plot(struct.positions[:, 2][cna == 'HCP'], struct.positions[:, 0][cna == 'HCP'], 'x', label='HCP')
+            else:
+                plt.plot(
+                    struct.positions[:, 2][cna == 'Cubic diamond'],
+                    struct.positions[:, 0][cna == 'Cubic diamond'],
+                    'x',
+                    label='Cubic diamond'
+                )
+                plt.plot(
+                    struct.positions[:, 2][cna == 'Cubic diamond (1st neighbor)'],
+                    struct.positions[:, 0][cna == 'Cubic diamond (1st neighbor)'],
+                    'x',
+                    label='Cubic diamond (1st neighbor)'
+                )
+                plt.plot(
+                    struct.positions[:, 2][cna == 'Cubic diamond (2nd neighbor)'],
+                    struct.positions[:, 0][cna == 'Cubic diamond (2nd neighbor)'],
+                    'x',
+                    label='Cubic diamond (2nd neighbor)'
+                )
+                plt.plot(
+                    struct.positions[:, 2][cna == 'Hexagonal diamond'],
+                    struct.positions[:, 0][cna == 'Hexagonal diamond'],
+                    'x',
+                    label='Hexagonal diamond'
+                )
+                plt.plot(
+                    struct.positions[:, 2][cna == 'Hexagonal diamond (1st neighbor)'],
+                    struct.positions[:, 0][cna == 'Hexagonal diamond (1st neighbor)'],
+                    'x',
+                    label='Hexagonal diamond (1st neighbor)'
+                )
+                plt.plot(
+                    struct.positions[:, 2][cna == 'Hexagonal diamond (2nd neighbor)'],
+                    struct.positions[:, 0][cna == 'Hexagonal diamond (2nd neighbor)'],
+                    'x',
+                    label='Hexagonal diamond (2nd neighbor)'
+                )
             cna_str_lst = struct.positions[:, 2][cna == cna_str]
             if len(cna_str_lst) != 0:
                 plt.axvline(cna_str_lst.max(), color='red')
@@ -496,6 +896,19 @@ def plot_solid_liquid_ratio(temperature_next, strain_lst, nve_run_time_steps, pr
 
 
 def ratio_selection(strain_lst, ratio_lst, pressure_lst, temperature_lst, ratio_boundary, debug_plot=True):
+    """
+
+    Args:
+        strain_lst:
+        ratio_lst:
+        pressure_lst:
+        temperature_lst:
+        ratio_boundary:
+        debug_plot:
+
+    Returns:
+
+    """
     if debug_plot:
         plt.plot(strain_lst, ratio_lst)
         plt.axhline(0.5 + ratio_boundary, color='red', linestyle='--')
@@ -513,7 +926,7 @@ def ratio_selection(strain_lst, ratio_lst, pressure_lst, temperature_lst, ratio_
     if len(rat_lst) != 0:
         rat_col_lst.append(rat_lst)
     if len(rat_col_lst) != 0:
-        rat_max_ind = np.argmax([len(l) for l in rat_col_lst])
+        rat_max_ind = np.argmax([len(lst) for lst in rat_col_lst])
         ratio_ind = [r in rat_col_lst[rat_max_ind] for r in ratio_lst]
         strain_value_lst = np.array(strain_lst)[ratio_ind]
         ratio_value_lst = np.array(ratio_lst)[ratio_ind]
@@ -523,7 +936,10 @@ def ratio_selection(strain_lst, ratio_lst, pressure_lst, temperature_lst, ratio_
             plt.axvline(np.min(strain_value_lst), color='blue', linestyle='--')
             plt.axvline(np.max(strain_value_lst), color='blue', linestyle='--')
             plt.show()
-        return strain_value_lst, ratio_value_lst, pressure_value_lst, temperature_value_lst, None
+        if np.mean(ratio_value_lst) > 0.5:
+            return strain_value_lst, ratio_value_lst, pressure_value_lst, temperature_value_lst, 1
+        else:
+            return strain_value_lst, ratio_value_lst, pressure_value_lst, temperature_value_lst, -1
     else:
         if np.mean(ratio_lst) > 0.5:
             return [], [], [], [], 1
@@ -532,6 +948,18 @@ def ratio_selection(strain_lst, ratio_lst, pressure_lst, temperature_lst, ratio_
 
 
 def plot_equilibration(temperature_next, strain_lst, nve_run_time_steps, project_parameter, debug_plot=True):
+    """
+
+    Args:
+        temperature_next:
+        strain_lst:
+        nve_run_time_steps:
+        project_parameter:
+        debug_plot:
+
+    Returns:
+
+    """
     if debug_plot:
         for strain in strain_lst:
             job_name = get_nve_job_name(
@@ -553,6 +981,18 @@ def plot_equilibration(temperature_next, strain_lst, nve_run_time_steps, project
 
 def plot_melting_point_prediction(strain_value_lst, pressure_value_lst, temperature_value_lst, boundary_value=0.25,
                                   debug_plot=True):
+    """
+
+    Args:
+        strain_value_lst:
+        pressure_value_lst:
+        temperature_value_lst:
+        boundary_value:
+        debug_plot:
+
+    Returns:
+
+    """
     fit_press = np.poly1d(np.polyfit(strain_value_lst, pressure_value_lst, 1))
     fit_temp = np.poly1d(np.polyfit(strain_value_lst, temperature_value_lst, 1))
     fit_temp_from_press = np.poly1d(np.polyfit(pressure_value_lst, temperature_value_lst, 1))
@@ -590,6 +1030,21 @@ def plot_melting_point_prediction(strain_value_lst, pressure_value_lst, temperat
 
 def calc_temp_iteration(basis, temperature_next, project_parameter, timestep, nve_run_time_steps, fit_range, center,
                         debug_plot=True):
+    """
+
+    Args:
+        basis:
+        temperature_next:
+        project_parameter:
+        timestep:
+        nve_run_time_steps:
+        fit_range:
+        center:
+        debug_plot:
+
+    Returns:
+
+    """
     temperature_next = round_temperature_next(temperature_next)
     ham_npt_solid = npt_solid(
         temperature=temperature_next,
@@ -659,13 +1114,25 @@ def calc_temp_iteration(basis, temperature_next, project_parameter, timestep, nv
         )
     else:
         if sl_flag < 0:
-            temperature_next, temperature_mean, temperature_left, temperature_right = temperature_next * 0.95, 0.0, 0.0, 0.0
+            temperature_next, temperature_mean, temperature_left, temperature_right = \
+                temperature_next * 0.90, 0.0, 0.0, 0.0
         else:
-            temperature_next, temperature_mean, temperature_left, temperature_right = temperature_next * 1.05, 0.0, 0.0, 0.0
+            temperature_next, temperature_mean, temperature_left, temperature_right = \
+                temperature_next * 1.10, 0.0, 0.0, 0.0
     return temperature_next, temperature_mean, temperature_left, temperature_right, strain_value_lst, pressure_value_lst
 
 
 def get_initial_melting_temperature_guess(project_parameter, ham_minimize_vol, temperature_next=None):
+    """
+
+    Args:
+        project_parameter:
+        ham_minimize_vol:
+        temperature_next:
+
+    Returns:
+
+    """
     structure_after_minimization, key_max, number_of_atoms, distribution_initial_half, _ = analyse_minimized_structure(
         ham_minimize_vol
     )
@@ -704,6 +1171,35 @@ def validate_convergence(pr, temperature_left, temperature_next, temperature_rig
                          nve_run_time_steps_iter, nve_run_time_steps_lst, nve_run_time_steps,
                          strain_result_lst, pressure_result_lst, step_count, step_dict, boundary_value, ratio_boundary,
                          convergence_goal, output_file='melting.json'):
+    """
+
+    Args:
+        pr:
+        temperature_left:
+        temperature_next:
+        temperature_right:
+        enable_iteration:
+        timestep_iter:
+        timestep_lst:
+        timestep:
+        fit_range_iter:
+        fit_range_lst:
+        fit_range:
+        nve_run_time_steps_iter:
+        nve_run_time_steps_lst:
+        nve_run_time_steps:
+        strain_result_lst:
+        pressure_result_lst:
+        step_count:
+        step_dict:
+        boundary_value:
+        ratio_boundary:
+        convergence_goal:
+        output_file:
+
+    Returns:
+
+    """
     if temperature_left < temperature_next < temperature_right and enable_iteration:
         timestep = next(timestep_iter)
         fit_range = next(fit_range_iter)
@@ -738,15 +1234,34 @@ def validate_convergence(pr, temperature_left, temperature_next, temperature_rig
         convergence_goal_achieved = True
     else:
         convergence_goal_achieved = False
-    return convergence_goal_achieved, enable_iteration, step_count, step_dict, timestep, fit_range, nve_run_time_steps, \
-        boundary_value, ratio_boundary, temperature_next, center
+    return convergence_goal_achieved, enable_iteration, step_count, step_dict, timestep, \
+        fit_range, nve_run_time_steps, boundary_value, ratio_boundary, temperature_next, center
 
 
 def initialise_iterators(project_parameter):
+    """
+
+    Args:
+        project_parameter:
+
+    Returns:
+
+    """
     return iter(project_parameter['timestep_lst']), iter(project_parameter['fit_range_lst']), iter(project_parameter['nve_run_time_steps_lst'])
 
 
 def get_voronoi_volume(temperature_next, strain_lst, nve_run_time_steps, project_parameter):
+    """
+
+    Args:
+        temperature_next:
+        strain_lst:
+        nve_run_time_steps:
+        project_parameter:
+
+    Returns:
+
+    """
     max_lst, mean_lst = [], []
     for strain in strain_lst:
         job_name = get_nve_job_name(
@@ -756,13 +1271,25 @@ def get_voronoi_volume(temperature_next, strain_lst, nve_run_time_steps, project
             nve_run_time_steps=nve_run_time_steps
         )
         ham_nve = project_parameter['project'].load(job_name)
-        structure_voronoi_lst = ham_nve.get_structure().analyse_ovito_voronoi_volume()
+        structure_voronoi_lst = ham_nve.get_structure().analyse_pyscal_voronoi_volume()
         max_lst.append(np.max(structure_voronoi_lst))
         mean_lst.append(np.mean(structure_voronoi_lst))
     return max_lst, mean_lst
 
 
 def check_for_holes(temperature_next, strain_value_lst, nve_run_time_steps, project_parameter, debug_plot=True):
+    """
+
+    Args:
+        temperature_next:
+        strain_value_lst:
+        nve_run_time_steps:
+        project_parameter:
+        debug_plot:
+
+    Returns:
+
+    """
     max_lst, mean_lst = get_voronoi_volume(
         temperature_next=temperature_next,
         strain_lst=strain_value_lst,
@@ -781,6 +1308,14 @@ def check_for_holes(temperature_next, strain_value_lst, nve_run_time_steps, proj
 
 
 def generate_structure(project_parameter):
+    """
+
+    Args:
+        project_parameter:
+
+    Returns:
+
+    """
     if 'lattice_constant' in project_parameter.keys():
         basis = project_parameter['project'].create_structure(
             project_parameter['element'],
@@ -794,12 +1329,23 @@ def generate_structure(project_parameter):
             cubic=True
         )
     basis_lst = [basis.repeat([i, i, i]) for i in range(5, 30)]
-    basis = basis_lst[np.argmin([np.abs(len(b) - project_parameter['number_of_atoms'] / 2)
-                                 for b in basis_lst])]
+    basis = basis_lst[np.argmin([
+        np.abs(len(b) - project_parameter['number_of_atoms'] / 2)
+        for b in basis_lst
+    ])]
     return basis
 
 
 def generate_random_seed(project_parameter):
+    """
+    Generate random seed for project parameters
+
+    Args:
+        project_parameter (dict):
+
+    Returns:
+        dict: The project parameters dictionary including the key 'seed'
+    """
     if 'seed' not in project_parameter.keys():
         project_parameter['seed'] = random.randint(0, 99999)
     return project_parameter

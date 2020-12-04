@@ -14,12 +14,14 @@ import seekpath
 from pyiron.atomistics.structure.atom import Atom, ase_to_pyiron as ase_to_pyiron_atom
 from pyiron.atomistics.structure.neighbors import Neighbors, Tree
 from pyiron.atomistics.structure._visualize import Visualize
+from pyiron.atomistics.structure.analyse import Analyse
 from pyiron.atomistics.structure.sparse_list import SparseArray, SparseList
 from pyiron.atomistics.structure.periodic_table import (
     PeriodicTable,
     ChemicalElement
 )
 from pyiron_base import Settings
+from pyiron_base.generic.util import deprecate
 from scipy.spatial import cKDTree, Voronoi
 import spglib
 
@@ -191,7 +193,16 @@ class Atoms(ASEAtoms):
             self.dimension = len(self.positions[0])
         else:
             self.dimension = 0
-        self.visualize = Visualize(self)
+        self._visualize = Visualize(self)
+        self._analyse = Analyse(self)
+
+    @property
+    def visualize(self):
+        return self._visualize
+
+    @property
+    def analyse(self):
+        return self._analyse
 
     @property
     def species(self):
@@ -854,22 +865,23 @@ class Atoms(ASEAtoms):
         # assert(len(self) == np.sum(self.get_number_species_atoms().values()))
         return len(self)
 
+    @deprecate
     def set_absolute(self):
-        warnings.warn("set_relative is deprecated as of 2020/02/26. It is not guaranteed from v. 0.3", DeprecationWarning)
         if self._is_scaled:
             self._is_scaled = False
 
+    @deprecate
     def set_relative(self):
-        warnings.warn("set_relative is deprecated as of 2020/02/26. It is not guaranteed from v. 0.3", DeprecationWarning)
         if not self._is_scaled:
             self._is_scaled = True
 
-    def get_wrapped_coordinates(self, positions):
+    def get_wrapped_coordinates(self, positions, epsilon=1.0e-8):
         """
         Return coordinates in wrapped in the periodic cell
-        
+
         Args:
             positions (list/numpy.ndarray): Positions
+            epsilon (float): displacement to add to avoid wrapping of atoms at borders
 
         Returns:
 
@@ -880,7 +892,7 @@ class Atoms(ASEAtoms):
             'ji,nj->ni', np.linalg.inv(self.cell), np.asarray(positions).reshape(-1, 3)
         )
         if any(self.pbc):
-            scaled_positions[:, self.pbc] -= np.floor(scaled_positions[:, self.pbc])
+            scaled_positions[:, self.pbc] -= np.floor(scaled_positions[:, self.pbc]+epsilon)
         new_positions = np.einsum('ji,nj->ni', self.cell, scaled_positions)
         return new_positions.reshape(np.asarray(positions).shape)
 
@@ -1071,7 +1083,7 @@ class Atoms(ASEAtoms):
         """
         from pyiron.atomistics.structure.pyscal import analyse_cna_adaptive
         return analyse_cna_adaptive(atoms=self, mode=mode, ovito_compatibility=ovito_compatibility)
-    
+
     def analyse_pyscal_centro_symmetry(self, num_neighbors=12):
         """
         Analyse centrosymmetry parameter
@@ -1115,7 +1127,7 @@ class Atoms(ASEAtoms):
         """
         from pyiron.atomistics.structure.pyscal import analyse_voronoi_volume
         return analyse_voronoi_volume(atoms=self)
-    
+
     def analyse_phonopy_equivalent_atoms(self):
         from pyiron.atomistics.structure.phonopy import analyse_phonopy_equivalent_atoms
 
@@ -1469,16 +1481,15 @@ class Atoms(ASEAtoms):
             cutoff_radius=cutoff_radius,
         )
 
-    def find_neighbors_by_vector(self, vector, deviation=False, num_neighbors=96):
-        warnings.warn(
-            'structure.find_neighbors_by_vector() is deprecated as of vers. 0.3.'
-            + 'It is not guaranteed to be in service in vers. 1.0.'
-            + 'Use neigh.find_neighbors_by_vector() instead (after calling neigh = structure.get_neighbors()).',
-            DeprecationWarning)
+    @deprecate("use neigh.find_neighbors_by_vector() instead (after calling neigh = structure.get_neighbors())",
+               version="1.0.0")
+    def find_neighbors_by_vector(self, vector, return_deviation=False, num_neighbors=96):
         neighbors = self.get_neighbors(num_neighbors=num_neighbors)
-        return neighbors.find_neighbors_by_vector(vector=vector, deviation=deviation)
+        return neighbors.find_neighbors_by_vector(vector=vector, return_deviation=return_deviation)
     find_neighbors_by_vector.__doc__ = Neighbors.find_neighbors_by_vector.__doc__
 
+    @deprecate("Use neigh.get_shell_matrix() instead (after calling neigh = structure.get_neighbors())",
+               version="1.0.0")
     def get_shell_matrix(
         self, id_list=None, chemical_pair=None, num_neighbors=100, tolerance=2,
         cluster_by_distances=False, cluster_by_vecs=False
@@ -1486,10 +1497,6 @@ class Atoms(ASEAtoms):
         neigh_list = self.get_neighbors(
             num_neighbors=num_neighbors, id_list=id_list, tolerance=tolerance
         )
-        warnings.warn('structure.get_shell_matrix() is deprecated as of vers. 0.3.'
-            + 'It is not guaranteed to be in service in vers. 1.0.'
-            + 'Use neigh.get_shell_matrix() instead (after calling neigh = structure.get_neighbors()).',
-            DeprecationWarning)
         return neigh_list.get_shell_matrix(
             chemical_pair=chemical_pair,
             cluster_by_distances=cluster_by_distances,
@@ -1524,6 +1531,8 @@ class Atoms(ASEAtoms):
         self.set_species(new_species)
         self.indices = new_indices
 
+    @deprecate("Use neigh.cluster_analysis() instead (after calling neigh = structure.get_neighbors())",
+               version="1.0.0")
     def cluster_analysis(
         self, id_list, neighbors=None, radius=None, return_cluster_sizes=False
     ):
@@ -1538,10 +1547,6 @@ class Atoms(ASEAtoms):
         Returns:
 
         """
-        warnings.warn('structure.cluster_analysis() is deprecated as of vers. 0.3.'
-            + 'It is not guaranteed to be in service in vers. 1.0.'
-            + 'Use neigh.cluster_analysis() instead (after calling neigh = structure.get_neighbors()).',
-            DeprecationWarning)
         if neighbors is None:
             if radius is None:
                 neigh = self.get_neighbors(num_neighbors=100)
@@ -1553,6 +1558,8 @@ class Atoms(ASEAtoms):
         return neighbors.cluster_analysis(id_list=id_list, return_cluster_sizes=return_cluster_sizes)
 
     # TODO: combine with corresponding routine in plot3d
+    @deprecate("Use neigh.get_bonds() instead (after calling neigh = structure.get_neighbors())",
+               version="1.0.0")
     def get_bonds(self, radius=np.inf, max_shells=None, prec=0.1, num_neighbors=20):
         """
 
@@ -1565,10 +1572,6 @@ class Atoms(ASEAtoms):
         Returns:
 
         """
-        warnings.warn('structure.cluster_analysis() is deprecated as of vers. 0.3.'
-            + 'It is not guaranteed to be in service in vers. 1.0.'
-            + 'Use neigh.cluster_analysis() instead (after calling neigh = structure.get_neighbors()).',
-            DeprecationWarning)
         neighbors = self.get_neighbors_by_distance(
             cutoff_radius=radius, num_neighbors=num_neighbors
         )
@@ -2148,7 +2151,8 @@ class Atoms(ASEAtoms):
         for key, val in self.__dict__.items():
             if key not in ase_keys:
                 atoms_new.__dict__[key] = copy(val)
-        atoms_new.visualize = Visualize(atoms_new)
+        atoms_new._visualize = Visualize(atoms_new)
+        atoms_new._analyse = Analyse(atoms_new)
         return atoms_new
 
     def __delitem__(self, key):
@@ -3413,3 +3417,4 @@ def default(data, dflt):
         return newdata
     else:
         return data
+

@@ -2,6 +2,7 @@
 # Copyright (c) Max-Planck-Institut für Eisenforschung GmbH - Computational Materials Design (CM) Department
 # Distributed under the terms of "New BSD License", see the LICENSE file.
 
+import ast
 import json
 import numpy as np
 import warnings
@@ -10,11 +11,13 @@ from pyiron.atomistics.structure.atoms import Atoms, pyiron_to_ase
 
 
 def _get_value_from_incar(job, key):
-    return eval(
-        job["input/incar/data_dict"]["Value"][
-            job["input/incar/data_dict"]["Parameter"].index(key)
-        ]
-    )
+    value = job["input/incar/data_dict"]["Value"][
+        job["input/incar/data_dict"]["Parameter"].index(key)
+    ]   
+    if isinstance(value, str):
+        return ast.literal_eval(value)
+    else:
+        return value
 
 
 def get_majority(lst, minority=False):
@@ -132,7 +135,10 @@ def get_majority_crystal_structure(job):
     majority_index = [
         ind for ind, el in enumerate(basis) if el.symbol == majority_element
     ]
-    type_list = list(basis[majority_index].analyse_ovito_cna_adaptive(mode="str"))
+    type_list = list(basis[majority_index].analyse_pyscal_cna_adaptive(
+        mode="str",
+        ovito_compatibility=True
+    ))
     return {"crystal_structure": get_majority(type_list, minority=False)}
 
 

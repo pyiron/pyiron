@@ -5,9 +5,10 @@
 from __future__ import print_function
 import os
 import posixpath
+# import warnings
 from string import punctuation
 from shutil import copyfile
-from pyiron_base import Settings, ProjectHDFio, JobType, JobTypeChoice, Project as ProjectCore
+from pyiron_base import Settings, ProjectHDFio, JobType, JobTypeChoice, Project as ProjectCore, Creator as CreatorCore
 try:
     from pyiron_base import ProjectGUI
 except (ImportError, TypeError, AttributeError):
@@ -18,7 +19,7 @@ from pyiron.lammps.potential import LammpsPotentialFile
 from pyiron.vasp.potential import VaspPotential
 import pyiron.atomistics.structure.pyironase as ase
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron.atomistics.structure.generator import create_surface, create_ase_bulk, create_structure
+from pyiron.atomistics.structure.factory import StructureFactory
 from pyiron.atomistics.master.parallel import pipe
 
 
@@ -113,6 +114,9 @@ class Project(ProjectCore):
         )
         self.job_type = JobTypeChoice()
         self.object_type = ObjectTypeChoice()
+        self._creator = Creator(self)
+        # TODO: instead of re-initialzing, auto-update pyiron_base creator with factories, like we update job class
+        #  creation
 
     def create_job(self, job_type, job_name, delete_existing_job=False):
         """
@@ -187,21 +191,6 @@ class Project(ProjectCore):
         """
         obj = ObjectType(object_type, project=None, job_name=None)
         return obj
-
-    def create_table(self, job_name="table", delete_existing_job=False):
-        """
-        Create pyiron table
-
-        Args:
-            job_name (str): job name of the pyiron table job
-            delete_existing_job (bool): Delete the existing table and run the analysis again.
-
-        Returns:
-            pyiron.table.datamining.TableJob
-        """
-        table = self.create_job(job_type=self.job_type.TableJob, job_name=job_name, delete_existing_job=delete_existing_job)
-        table.analysis_project = self
-        return table
 
     def copy(self):
         """
@@ -396,31 +385,51 @@ class Project(ProjectCore):
             self.import_single_calculation(path, rel_path=rel_path, job_type="KMC", copy_raw_files=copy_raw_files)
 
     @staticmethod
-    def create_structure(element, bravais_basis, lattice_constant):
-        """
-        Create a crystal structure using pyiron's native crystal structure generator
-
-        Args:
-            element (str): Element name
-            bravais_basis (str): Basis type
-            lattice_constant (float/list): Lattice constants
-
-        Returns:
-            pyiron.atomistics.structure.atoms.Atoms: The required crystal structure
-
-        """
-        return create_structure(element=element, bravais_basis=bravais_basis, lattice_constant=lattice_constant)
+    def inspect_periodic_table():
+        return PeriodicTable()
 
     @staticmethod
+    def inspect_emperical_potentials():
+        return LammpsPotentialFile()
+
+    @staticmethod
+    def inspect_pseudo_potentials():
+        return VaspPotential()
+
+    # Graphical user interfaces
+    def gui(self):
+        """
+
+        Returns:
+
+        """
+        ProjectGUI(self)
+
+    def create_pipeline(self, job, step_lst, delete_existing_job=False):
+        """
+        Create a job pipeline
+
+        Args:
+            job (AtomisticGenericJob): Template for the calculation
+            step_lst (list): List of functions which create calculations
+
+        Returns:
+            FlexibleMaster:
+        """
+        return pipe(project=self, job=job, step_lst=step_lst, delete_existing_job=delete_existing_job)
+
+    # Deprecated methods
+
     def create_ase_bulk(
-        name,
-        crystalstructure=None,
-        a=None,
-        c=None,
-        covera=None,
-        u=None,
-        orthorhombic=False,
-        cubic=False,
+            self,
+            name,
+            crystalstructure=None,
+            a=None,
+            c=None,
+            covera=None,
+            u=None,
+            orthorhombic=False,
+            cubic=False,
     ):
         """
         Creating bulk systems using ASE bulk module. Crystal structure and lattice constant(s) will be guessed if not
@@ -440,31 +449,84 @@ class Project(ProjectCore):
 
             pyiron.atomistics.structure.atoms.Atoms: Required bulk structure
         """
-        return create_ase_bulk(name=name, crystalstructure=crystalstructure, a=a, c=c, covera=covera, u=u,
-                               orthorhombic=orthorhombic, cubic=cubic)
+        # warnings.warn(
+        #     "Project.create_ase_bulk is deprecated as of v0.3. Please use Project.create.structure.ase_bulk.",
+        #     DeprecationWarning
+        # )
+        return self.create.structure.ase_bulk(name=name, crystalstructure=crystalstructure, a=a, c=c,
+                                              covera=covera, u=u, orthorhombic=orthorhombic, cubic=cubic)
 
-    @staticmethod
+    def create_structure(self, element, bravais_basis, lattice_constant):
+        """
+        Create a crystal structure using pyiron's native crystal structure generator
+
+        Args:
+            element (str): Element name
+            bravais_basis (str): Basis type
+            lattice_constant (float/list): Lattice constants
+
+        Returns:
+            pyiron.atomistics.structure.atoms.Atoms: The required crystal structure
+
+        """
+        # warnings.warn(
+        #     "Project.create_structure is deprecated as of v0.3. Please use Project.create.structure.structure.",
+        #     DeprecationWarning
+        # )
+        return self.create.structure.crystal(element=element, bravais_basis=bravais_basis,
+                                             lattice_constant=lattice_constant)
+
+    def create_surface(
+            self, element, surface_type, size=(1, 1, 1), vacuum=1.0, center=False, pbc=None, **kwargs
+    ):
+        """
+        Generate a surface based on the ase.build.surface module.
+
+        Args:
+            element (str): Element name
+            surface_type (str): The string specifying the surface type generators available through ase (fcc111,
+            hcp0001 etc.)
+            size (tuple): Size of the surface
+            vacuum (float): Length of vacuum layer added to the surface along the z direction
+            center (bool): Tells if the surface layers have to be at the center or at one end along the z-direction
+            pbc (list/numpy.ndarray): List of booleans specifying the periodic boundary conditions along all three
+                                      directions. If None, it is set to [True, True, True]
+            **kwargs: Additional, arguments you would normally pass to the structure generator like 'a', 'b',
+            'orthogonal' etc.
+
+        Returns:
+            pyiron.atomistics.structure.atoms.Atoms instance: Required surface
+
+        """
+        # warnings.warn(
+        #     "Project.create_surface is deprecated as of v0.3. Please use Project.create.structure.surface.",
+        #     DeprecationWarning
+        # )
+        return self.create.structure.surface(element=element, surface_type=surface_type, size=size,
+                                             vacuum=vacuum, center=center, pbc=pbc, **kwargs)
+
     def create_atoms(
-        symbols=None,
-        positions=None,
-        numbers=None,
-        tags=None,
-        momenta=None,
-        masses=None,
-        magmoms=None,
-        charges=None,
-        scaled_positions=None,
-        cell=None,
-        pbc=None,
-        celldisp=None,
-        constraint=None,
-        calculator=None,
-        info=None,
-        indices=None,
-        elements=None,
-        dimension=None,
-        species=None,
-        **qwargs
+            self,
+            symbols=None,
+            positions=None,
+            numbers=None,
+            tags=None,
+            momenta=None,
+            masses=None,
+            magmoms=None,
+            charges=None,
+            scaled_positions=None,
+            cell=None,
+            pbc=None,
+            celldisp=None,
+            constraint=None,
+            calculator=None,
+            info=None,
+            indices=None,
+            elements=None,
+            dimension=None,
+            species=None,
+            **qwargs
     ):
         """
         Creates a atomistics.structure.atoms.Atoms instance.
@@ -493,11 +555,12 @@ class Project(ProjectCore):
 
         Returns:
             pyiron.atomistics.structure.atoms.Atoms: The required structure instance
-
         """
-        if pbc is None:
-            pbc = True
-        return Atoms(
+        # warnings.warn(
+        #     "Project.create_atoms is deprecated as of v0.3. Please use Project.create.structure.atoms.",
+        #     DeprecationWarning
+        # )
+        return self.create.structure.atoms(
             symbols=symbols,
             positions=positions,
             numbers=numbers,
@@ -520,50 +583,8 @@ class Project(ProjectCore):
             **qwargs
         )
 
-    @staticmethod
-    def create_surface(
-        element, surface_type, size=(1, 1, 1), vacuum=1.0, center=False, pbc=None, **kwargs
-    ):
+    def create_element(self, parent_element, new_element_name=None, spin=None, potential_file=None):
         """
-        Generate a surface based on the ase.build.surface module.
-
-        Args:
-            element (str): Element name
-            surface_type (str): The string specifying the surface type generators available through ase (fcc111,
-            hcp0001 etc.)
-            size (tuple): Size of the surface
-            vacuum (float): Length of vacuum layer added to the surface along the z direction
-            center (bool): Tells if the surface layers have to be at the center or at one end along the z-direction
-            pbc (list/numpy.ndarray): List of booleans specifying the periodic boundary conditions along all three
-                                      directions. If None, it is set to [True, True, True]
-            **kwargs: Additional, arguments you would normally pass to the structure generator like 'a', 'b',
-            'orthogonal' etc.
-
-        Returns:
-            pyiron.atomistics.structure.atoms.Atoms instance: Required surface
-
-        """
-        return create_surface(element=element, surface_type=surface_type,
-                              size=size, vacuum=vacuum, center=center, pbc=pbc, **kwargs)
-
-    @staticmethod
-    def inspect_periodic_table():
-        return PeriodicTable()
-
-    @staticmethod
-    def inspect_emperical_potentials():
-        return LammpsPotentialFile()
-
-    @staticmethod
-    def inspect_pseudo_potentials():
-        return VaspPotential()
-
-    @staticmethod
-    def create_element(
-        parent_element, new_element_name=None, spin=None, potential_file=None
-    ):
-        """
-
         Args:
             parent_element (str, int): The parent element eq. "N", "O", "Mg" etc.
             new_element_name (str): The name of the new parent element (can be arbitrary)
@@ -573,58 +594,24 @@ class Project(ProjectCore):
         Returns:
             atomistics.structure.periodic_table.ChemicalElement instance
         """
-        periodic_table = PeriodicTable()
-        if new_element_name is None:
-            if spin is not None:
-                new_element_name = (
-                    parent_element + "_spin_" + str(spin).replace(".", "_")
-                )
-            else:
-                new_element_name = parent_element + "_1"
-        if potential_file is not None:
-            if spin is not None:
-                periodic_table.add_element(
-                    parent_element=parent_element,
-                    new_element=new_element_name,
-                    spin=str(spin),
-                    pseudo_potcar_file=potential_file,
-                )
-            else:
-                periodic_table.add_element(
-                    parent_element=parent_element,
-                    new_element=new_element_name,
-                    pseudo_potcar_file=potential_file,
-                )
-        elif spin is not None:
-            periodic_table.add_element(
-                parent_element=parent_element,
-                new_element=new_element_name,
-                spin=str(spin),
-            )
-        else:
-            periodic_table.add_element(
-                parent_element=parent_element, new_element=new_element_name
-            )
-        return periodic_table.element(new_element_name)
+        # warnings.warn(
+        #     "Project.create_element is deprecated as of v0.3. Please use Project.create.structure.element.",
+        #     DeprecationWarning
+        # )
+        return self.create.structure.element(
+            parent_element=parent_element,
+            new_element_name=new_element_name,
+            spin=spin,
+            potential_file=potential_file
+        )
 
-    # Graphical user interfaces
-    def gui(self):
-        """
 
-        Returns:
+class Creator(CreatorCore):
 
-        """
-        ProjectGUI(self)
+    def __init__(self, project):
+        super().__init__(project)
+        self._structure = StructureFactory()
 
-    def create_pipeline(self, job, step_lst, delete_existing_job=False):
-        """
-        Create a job pipeline
-
-        Args:
-            job (AtomisticGenericJob): Template for the calculation
-            step_lst (list): List of functions which create calculations
-
-        Returns:
-            FlexibleMaster:
-        """
-        return pipe(project=self, job=job, step_lst=step_lst, delete_existing_job=delete_existing_job)
+    @property
+    def structure(self):
+        return self._structure

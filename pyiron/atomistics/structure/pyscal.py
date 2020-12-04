@@ -87,9 +87,7 @@ def analyse_centro_symmetry(atoms, num_neighbors=12):
     s.publication_add(publication())
     sys = pc.System()
     sys.read_inputfile(atoms, format="ase")
-    sys.calculate_centrosymmetry(nmax=num_neighbors)
-    atoms = sys.atoms
-    return np.array([atom.centrosymmetry for atom in atoms])
+    return np.array(sys.calculate_centrosymmetry(nmax=num_neighbors))
 
 
 def analyse_diamond_structure(atoms, mode="total", ovito_compatibility=False):
@@ -115,13 +113,13 @@ def analyse_diamond_structure(atoms, mode="total", ovito_compatibility=False):
     diamond_dict = sys.identify_diamond()
 
     ovito_identifiers = [
-        'IdentifyDiamond.counts.CUBIC_DIAMOND',
-        'IdentifyDiamond.counts.CUBIC_DIAMOND_FIRST_NEIGHBOR',
-        'IdentifyDiamond.counts.CUBIC_DIAMOND_SECOND_NEIGHBOR',
-        'IdentifyDiamond.counts.HEX_DIAMOND',
-        'IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR',
-        'IdentifyDiamond.counts.HEX_DIAMOND_SECOND_NEIGHBOR',
-        'IdentifyDiamond.counts.OTHER'
+        'Cubic diamond',
+        'Cubic diamond (1st neighbor)',
+        'Cubic diamond (2nd neighbor)',
+        'Hexagonal diamond',
+        'Hexagonal diamond (1st neighbor)',
+        'Hexagonal diamond (2nd neighbor)',
+        'Other'
     ]
     pyscal_identifiers = [
         'others', 'fcc', 'hcp', 'bcc', 'ico', 'cubic diamond',
@@ -153,14 +151,14 @@ def analyse_diamond_structure(atoms, mode="total", ovito_compatibility=False):
             }
     elif mode == "numeric":
         if not ovito_compatibility:
-            return [atom.structure for atom in sys.atoms]
+            return np.array([atom.structure for atom in sys.atoms])
         else:
-            return [convert_to_ovito[atom.structure] for atom in sys.atoms]
+            return np.array([convert_to_ovito[atom.structure] for atom in sys.atoms])
     elif mode == "str":
         if not ovito_compatibility:
-            return [pyscal_identifiers[atom.structure] for atom in sys.atoms]
+            return np.array([pyscal_identifiers[atom.structure] for atom in sys.atoms])
         else:
-            return [ovito_identifiers[convert_to_ovito[atom.structure]] for atom in sys.atoms]
+            return np.array([ovito_identifiers[convert_to_ovito[atom.structure]] for atom in sys.atoms])
     else:
         raise ValueError("Only total, str and numeric mode is imported for analyse_diamond_structure()")
 
@@ -209,16 +207,16 @@ def analyse_cna_adaptive(atoms, mode="total", ovito_compatibility=False):
             )}
     else:
         atoms = sys.atoms
-        cnalist = ([atom.structure for atom in atoms])
+        cnalist = np.array([atom.structure for atom in atoms])
         if mode == "numeric":
             return cnalist
         elif mode == "str":
             if not ovito_compatibility:
                 dd = ['others', 'fcc', 'hcp', 'bcc', 'ico']
-                return [dd[int(x)] for x in cnalist]
+                return np.array([dd[int(x)] for x in cnalist])
             else:
-                dd = ["OTHER", "FCC", "HCP", "BCC", "ICO"]
-                return [dd[int(x)] for x in cnalist]
+                dd = ['Other', "FCC", "HCP", "BCC", "ICO"]
+                return np.array([dd[int(x)] for x in cnalist])
         else:
             raise ValueError("Only total, str and numeric mode is imported for analyse_cna_adaptive()")
 
@@ -235,8 +233,7 @@ def analyse_voronoi_volume(atoms):
     sys.read_inputfile(atoms, format="ase")
     sys.find_neighbors(method="voronoi")
     atoms = sys.atoms
-    vols = np.array([atom.volume for atom in atoms])
-    return vols
+    return np.array([atom.volume for atom in atoms])
 
 
 def publication():

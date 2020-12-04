@@ -524,7 +524,7 @@ class SphinxBase(GenericDFTJob):
             "nEmptyStates", self.input["EmptyStates"]
             )
         self.input.sphinx.PAWHamiltonian.setdefault(
-            "ekt", self.input["Sigma"]/HARTREE_TO_EV
+            "ekt", self.input["Sigma"]
             )
         self.input.sphinx.PAWHamiltonian.setdefault("xc", self.input["Xcorr"])
         self.input.sphinx.PAWHamiltonian["spinPolarized"] = self._spin_enabled
@@ -1093,7 +1093,6 @@ class SphinxBase(GenericDFTJob):
         manual_kpoints=None,
         weights=None,
         reciprocal=True,
-        kpoints_per_reciprocal_angstrom=None,
         n_path=None,
         path_name=None,
     ):
@@ -1113,8 +1112,6 @@ class SphinxBase(GenericDFTJob):
             mesh (list): Size of the mesh (in the MP scheme)
             center_shift (list): Shifts the center of the mesh from the
                                  gamma point by the given vector
-            kpoints_per_reciprocal_angstrom (float): Number of kpoint per angstrom
-                                          in each direction
             n_path (int): Number of points per trace part for line mode
             path_name (str): Name of high symmetry path used for band
                              structure calculations.
@@ -1134,16 +1131,7 @@ class SphinxBase(GenericDFTJob):
             # Remove kPoints and set kPoint
             if "kPoints" in self.input.sphinx.basis:
                 del self.input.sphinx.basis.kPoints
-            if kpoints_per_reciprocal_angstrom is not None:
-                if mesh is not None:
-                    warnings.warn(
-                        "mesh value is overwritten "
-                        "by kpoints_per_reciprocal_angstrom"
-                    )
-                mesh = self.get_k_mesh_by_cell(
-                    kpoints_per_reciprocal_angstrom=kpoints_per_reciprocal_angstrom
-                    )
-            self.input.sphinx.basis.get("kPoint", create = True)
+            self.input.sphinx.basis.get("kPoint", create=True)
             if mesh is not None:
                 self.input["KpointFolding"] = list(mesh)
                 self.input.sphinx.basis["folding"] = np.array(self.input["KpointFolding"])
@@ -1300,7 +1288,6 @@ class SphinxBase(GenericDFTJob):
             potformat = "VASP"
         else:
             potformat = "JTH"
-
         # If the species group was not modified directly by the user,
         # via job.input.pawPot (which is likely True),
         # load it based on job.structure.
@@ -1491,7 +1478,7 @@ class SphinxBase(GenericDFTJob):
                     isinstance(self.input.sphinx.PAWHamiltonian["ekt"], int)
                     or isinstance(self.input.sphinx.PAWHamiltonian["ekt"], float)
                 )
-                or round(self.input.sphinx.PAWHamiltonian["ekt"]*HARTREE_TO_EV, 1) == 0.2
+                or round(self.input.sphinx.PAWHamiltonian["ekt"], 1) == 0.2
             ):
                 warnings.warn(
                     "Fermi smearing value wrong or not modified from default "+
@@ -1571,7 +1558,7 @@ class SphinxBase(GenericDFTJob):
                 )
 
             if round(self.input["Sigma"], 1) != \
-                    round(self.input.sphinx.PAWHamiltonian.ekt * HARTREE_TO_EV, 1):
+                    round(self.input.sphinx.PAWHamiltonian.ekt, 1):
                 warnings.warn(
                     "job.input.PAWHamiltonian.ekt was modified directly. "
                     "It is recommended to set it via "

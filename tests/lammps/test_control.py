@@ -152,6 +152,26 @@ class TestLammps(unittest.TestCase):
         ):
             self.assertFalse(self.lc._is_isotropic_hydrostatic(nonisotropic_pressure))
 
+    def test_fix_move_linear_by_id(self):
+        fix = self.lc.fix_move_linear_by_id
+        good_ids = np.arange(4, dtype=int)
+        good_velocities = [None, -0.004, 0.001]
+        fix(good_ids, good_velocities)
+
+        has_str = ['one', 2, 3]
+        has_list = [[1, 2, 3], 4, 5]
+        empty = []
+        self.assertRaises(TypeError, fix, has_str, good_velocities)
+        self.assertRaises(TypeError, fix, has_list, good_velocities)
+        self.assertRaises(ValueError, fix, empty, good_velocities)
+        self.assertRaises(TypeError, fix, [True, True, False], good_velocities)
+        self.assertRaises(ValueError, fix, [-2, -1, 0], good_velocities)
+
+        self.assertRaises(TypeError, fix, good_ids, has_str)
+        self.assertRaises(TypeError, fix, good_ids, has_list)
+        self.assertRaises(ValueError, fix, good_ids, empty)
+        self.assertRaises(ValueError, fix, good_ids, np.arange(4))
+
 
 if __name__ == "__main__":
     unittest.main()

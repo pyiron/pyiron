@@ -25,14 +25,14 @@ setup(
                  'Programming Language :: Python :: 3.5',
                  'Programming Language :: Python :: 3.6',
                  'Programming Language :: Python :: 3.7',
-                 'Programming Language :: Python :: 3.8'],
+                 'Programming Language :: Python :: 3.8',
+                 'Programming Language :: Python :: 3.9'],
 
     keywords='pyiron',
     packages=find_packages(exclude=["*tests*", "*docs*", "*binder*", "*conda*", "*notebooks*", "*.ci_support*"]),
     install_requires=[
         'ase>=3.20',
         'defusedxml>=0.6.0',
-        'dill>=0.3.1.1',
         'future>=0.18.2',
         'h5py>=2.10.0',
         'matplotlib>=3.2.0',
@@ -41,7 +41,7 @@ setup(
         'numpy>=1.18.1',
         'pandas>=1.0.1',
         'phonopy>=2.4.2',
-        'pyiron_base>=0.1.29',
+        'pyiron_base>=0.1.36',
         'quickff>=2.2.4',
         'scipy>=1.4.1',
         'seekpath>=1.9.4',
@@ -50,7 +50,6 @@ setup(
         'spglib>=1.14.1',
         'tables>=3.6.1',
         'tamkin>=1.2.6',
-        'tqdm>=4.43.0',
         'yaff>=1.4.2'
     ],
     cmdclass=versioneer.get_cmdclass(),
