@@ -524,7 +524,7 @@ class SphinxBase(GenericDFTJob):
             "nEmptyStates", self.input["EmptyStates"]
             )
         self.input.sphinx.PAWHamiltonian.setdefault(
-            "ekt", self.input["Sigma"]/HARTREE_TO_EV
+            "ekt", self.input["Sigma"]
             )
         self.input.sphinx.PAWHamiltonian.setdefault("xc", self.input["Xcorr"])
         self.input.sphinx.PAWHamiltonian["spinPolarized"] = self._spin_enabled
@@ -1478,7 +1478,7 @@ class SphinxBase(GenericDFTJob):
                     isinstance(self.input.sphinx.PAWHamiltonian["ekt"], int)
                     or isinstance(self.input.sphinx.PAWHamiltonian["ekt"], float)
                 )
-                or round(self.input.sphinx.PAWHamiltonian["ekt"]*HARTREE_TO_EV, 1) == 0.2
+                or round(self.input.sphinx.PAWHamiltonian["ekt"], 1) == 0.2
             ):
                 warnings.warn(
                     "Fermi smearing value wrong or not modified from default "+
@@ -1558,7 +1558,7 @@ class SphinxBase(GenericDFTJob):
                 )
 
             if round(self.input["Sigma"], 1) != \
-                    round(self.input.sphinx.PAWHamiltonian.ekt * HARTREE_TO_EV, 1):
+                    round(self.input.sphinx.PAWHamiltonian.ekt, 1):
                 warnings.warn(
                     "job.input.PAWHamiltonian.ekt was modified directly. "
                     "It is recommended to set it via "

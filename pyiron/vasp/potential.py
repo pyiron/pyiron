@@ -10,6 +10,7 @@ import pandas
 import tables
 import warnings
 from pyiron_base import GenericParameters, Settings
+from pyiron_base.generic.util import deprecate
 from pyiron.atomistics.job.potentials import PotentialAbstract, find_potential_file_base
 
 __author__ = "Jan Janssen"
@@ -273,6 +274,7 @@ def find_potential_file(path):
     )
 
 
+@deprecate("use get_enmax_among_potentials and note the adjustment to the signature (*args instead of list)")
 def get_enmax_among_species(symbol_lst, return_list=False, xc="PBE"):
     """
     DEPRECATED: Please use `get_enmax_among_potentials`.
@@ -289,8 +291,6 @@ def get_enmax_among_species(symbol_lst, return_list=False, xc="PBE"):
         (float): The largest ENMAX among the POTCAR files for all the species.
         [optional](list): The ENMAX value corresponding to each species.
     """
-    warnings.warn(("get_enmax_among_species is deprecated as of v0.3.0. Please use get_enmax_among_potentials and note "
-                   + "the adjustment to the signature (*args instead of list)"), DeprecationWarning)
     return get_enmax_among_potentials(*symbol_lst, return_list=return_list, xc=xc)
 
 

@@ -16,7 +16,7 @@ dependencies:
   - phonopy >=2.4.2
   - pymatgen >=2020.9.14
   - pyiron_base >=0.1.36
-  - pyscal >=2.10.5
+  - pyscal >=2.10.6
   - pytables >=3.6.1
   - quickff >=2.2.4
   - scipy >=1.4.1
