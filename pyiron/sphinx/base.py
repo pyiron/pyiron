@@ -2026,11 +2026,9 @@ class Output(object):
         file_name = posixpath.join(cwd, file_name)
         if os.path.isfile(file_name):
             try:
-                self._parse_dict["bands_eigen_values"] = \
-                    np.loadtxt(file_name)[:, 1:]
-            except:
-                self._parse_dict["bands_eigen_values"] = \
-                    np.loadtxt(file_name)[1:]
+                value = np.loadtxt(file_name)[:, 1:]
+            except IndexError:
+                value = np.loadtxt(file_name)[1:]
         else:
             if os.path.isfile(posixpath.join(
                 cwd, "eps.0.dat")) and os.path.isfile(
@@ -2044,7 +2042,11 @@ class Output(object):
                 else:
                     eps_up = eps_up[1:]
                     eps_down = eps_down[1:]
-                self._parse_dict["bands_eigen_values"] = np.array(list(zip(eps_up.tolist(), eps_down.tolist())))
+                value = np.vstack((eps_up, eps_down)).reshape((2,)+eps_up.shape)
+        if len(self._parse_dict["bands_eigen_values"]) > 0:
+            self._parse_dict["bands_eigen_values"][-1] = value
+        else:
+            self._parse_dict["bands_eigen_values"] = value.reshape((-1,)+value.shape)
         return None
 
     def collect_energy_struct(self, file_name="energy-structOpt.dat",
