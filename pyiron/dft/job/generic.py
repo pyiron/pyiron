@@ -424,7 +424,8 @@ class GenericDFTJob(AtomisticGenericJob):
             e_fermi = self['output/electronic_structure/efermi']
         eigen_values = self['output/electronic_structure/eig_matrix']
         eigen_values = eigen_values-e_fermi
-        grid = np.arange(eigen_values.min()-5*sigma, eigen_values.max()+5*sigma, sigma)
+        if grid is None:
+            grid = np.arange(eigen_values.min()-5*sigma, eigen_values.max()+5*sigma, sigma)
         hist = eigen_values[:,:,:,np.newaxis]-grid[np.newaxis,np.newaxis,np.newaxis,:]
         hist = np.exp(-(hist)**2/(2*sigma**2))*k_weights[np.newaxis,:,np.newaxis,np.newaxis]
         hist = np.sum(hist, axis=(1,2))
