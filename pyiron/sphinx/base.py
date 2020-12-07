@@ -2006,6 +2006,11 @@ class Output(object):
                 if len(self._parse_dict["dos_energies"])==0:
                     self._parse_dict["dos_energies"] = data[:,0]
                 self._parse_dict["dos_tot_densities"].append(data[:,1])
+        self._parse_dict["dos_tot_densities"] = np.array(self._parse_dict["dos_tot_densities"])
+        if len(self._parse_dict["dos_tot_densities"])>0:
+            self._parse_dict["dos_tot_densities"] /= len(
+                np.array(self._parse_dict["dos_tot_densities"])
+            )
         return None
 
     def collect_eps_dat(self, file_name="eps.dat", cwd=None):
@@ -2019,8 +2024,6 @@ class Output(object):
 
         """
         file_name = posixpath.join(cwd, file_name)
-        if len(self._parse_dict["bands_eigen_values"]) != 0:
-            return None
         if os.path.isfile(file_name):
             try:
                 self._parse_dict["bands_eigen_values"] = \
