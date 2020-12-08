@@ -2005,21 +2005,23 @@ class Output(object):
                 value = np.loadtxt(file_name)[:, 1:]
             except IndexError:
                 value = np.loadtxt(file_name)[1:]
-        else:
-            if os.path.isfile(posixpath.join(
+        elif os.path.isfile(posixpath.join(
                 cwd, "eps.0.dat")) and os.path.isfile(
                 posixpath.join(cwd, "eps.1.dat")
-            ):
-                eps_up = np.loadtxt(posixpath.join(cwd, "eps.0.dat"))
-                eps_down = np.loadtxt(posixpath.join(cwd, "eps.1.dat"))
-                if len(eps_up.shape) == 2:
-                    eps_up = eps_up[:, 1:]
-                    eps_down = eps_down[:, 1:]
-                else:
-                    eps_up = eps_up[1:]
-                    eps_down = eps_down[1:]
-                value = np.vstack((eps_up, eps_down)).reshape((2,)+eps_up.shape)
-        if len(self._parse_dict["bands_eigen_values"]) > 0:
+        ):
+            eps_up = np.loadtxt(posixpath.join(cwd, "eps.0.dat"))
+            eps_down = np.loadtxt(posixpath.join(cwd, "eps.1.dat"))
+            if len(eps_up.shape) == 2:
+                eps_up = eps_up[:, 1:]
+                eps_down = eps_down[:, 1:]
+            else:
+                eps_up = eps_up[1:]
+                eps_down = eps_down[1:]
+            value = np.vstack((eps_up, eps_down)).reshape((2,)+eps_up.shape)
+        else:
+            return
+        shape = np.asarray(self._parse_dict["bands_eigen_values"]).shape
+        if shape[1:] == value.shape:
             self._parse_dict["bands_eigen_values"][-1] = value
         else:
             self._parse_dict["bands_eigen_values"] = value.reshape((-1,)+value.shape)

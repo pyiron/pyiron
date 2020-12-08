@@ -51,6 +51,7 @@ class TestSphinx(unittest.TestCase):
             scaled_positions=[[0.0, 0.0, 0.0], [0.5, 0.5, 0.5]],
             cell=2.83 * np.eye(3),
         )
+        cls.sphinx_2_5.structure.set_initial_magnetic_moments([2,2])
         cls.sphinx_aborted.structure = Atoms(
             elements=32 * ["Fe"],
             scaled_positions=np.arange(32 * 3).reshape(-1, 3) / (32 * 3),
@@ -69,6 +70,7 @@ class TestSphinx(unittest.TestCase):
         cls.sphinx_2_3.to_hdf()
         cls.sphinx_2_3.decompress()
         cls.sphinx_2_5.decompress()
+        cls.sphinx_2_5.collect_output()
 
     @classmethod
     def tearDownClass(cls):
@@ -539,7 +541,6 @@ class TestSphinx(unittest.TestCase):
         self.assertIsNotNone(vel.total_data)
 
     def test_check_band_occupancy(self):
-        self.sphinx_2_5.collect_output()
         self.assertTrue(self.sphinx_2_5.output.check_band_occupancy())
 
     def test_collect_2_3(self):
