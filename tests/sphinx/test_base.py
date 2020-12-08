@@ -584,6 +584,10 @@ class TestSphinx(unittest.TestCase):
             file_name="relaxedHist_2.sx", cwd=self.sphinx_2_3.working_directory
         )
 
+    def test_density_of_states(self):
+        dos = self.sphinx_2_5.get_density_of_states()
+        self.assertLess(dos['grid'][dos['dos'][0].argmax()], 0)
+
 
 if __name__ == "__main__":
     unittest.main()
