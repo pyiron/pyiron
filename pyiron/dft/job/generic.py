@@ -398,6 +398,40 @@ class GenericDFTJob(AtomisticGenericJob):
         self.modify_kpoints()
         super(GenericDFTJob, self).save()
 
+    def get_density_of_states(self, sigma=0.1, shift_by_fermi_energy=True, grid=None):
+        """
+        Get density of states from a fully converged result. A Gaussian smeared histogram is
+        returned
+
+        Args:
+            sigma (float): Gaussian smearing parameter in energy unit.
+            shift_by_fermi_energy (bool): Shift the histogram by the Fermi energy value. Setting
+                this to False will return code specific absolute values which have physically no
+                meaning.
+            grid (list/numpy.ndarray): Energy grid. If None, the interval between maximum and
+                minimum eigenvalues plus 5 x sigma with a step length of sigma will be taken.
+
+        Returns:
+            (dict): grid and density of states (n_spin x energy_grid)
+        """
+        if sigma <= 0:
+            raise ValueError('Sigma must be a positive float')
+        k_weights = self['output/electronic_structure/k_weights']
+        if k_weights is None:
+            raise ValueError('k-point weighting not found')
+        e_fermi = 0
+        if shift_by_fermi_energy:
+            e_fermi = self['output/electronic_structure/efermi']
+        eigen_values = self['output/electronic_structure/eig_matrix']
+        eigen_values = eigen_values-e_fermi
+        if grid is None:
+            grid = np.arange(eigen_values.min()-5*sigma, eigen_values.max()+5*sigma, sigma)
+        hist = eigen_values[:,:,:,np.newaxis]-grid[np.newaxis,np.newaxis,np.newaxis,:]
+        hist = np.exp(-(hist)**2/(2*sigma**2))*k_weights[np.newaxis,:,np.newaxis,np.newaxis]
+        hist = np.sum(hist, axis=(1,2))
+        hist *= 2/len(eigen_values)/np.sqrt(2*np.pi*sigma**2)
+        return {'grid': grid, 'dos': hist}
+
 
 def get_k_mesh_by_density(cell, k_mesh_spacing=0.5):
     """
