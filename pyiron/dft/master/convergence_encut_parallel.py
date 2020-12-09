@@ -38,9 +38,9 @@ class EncutConvergenceJobGenerator(JobGenerator):
         return [
             np.round(encut, 7)
             for encut in np.linspace(
-                self._job.input["min"],
-                self._job.input["max"],
-                self._job.input["num_points"],
+                self._master.input["min"],
+                self._master.input["max"],
+                self._master.input["num_points"],
             )
         ]
 
