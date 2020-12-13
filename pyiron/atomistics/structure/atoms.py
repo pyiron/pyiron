@@ -2159,7 +2159,10 @@ class Atoms(ASEAtoms):
         if isinstance(key, (int, np.integer)):
             key = [key]
         key = np.array(key).flatten()
-        new_length = len(self) - len(key)
+        if isinstance(key[0], (bool, np.bool_)):
+            new_length = len(self) - len(np.argwhere(key).flatten())
+        else:
+            new_length = len(self) - len(key)
         super(Atoms, self).__delitem__(key)
         self.indices = np.delete(self.indices, key, axis=0)
         del self._tag_list[key]
