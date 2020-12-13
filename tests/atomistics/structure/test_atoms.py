@@ -6,6 +6,7 @@ import unittest
 import numpy as np
 import os
 import warnings
+from pyiron import ase_to_pyiron
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron.atomistics.structure.factory import StructureFactory
@@ -14,6 +15,7 @@ from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalEl
 from pyiron_base import FileHDFio, ProjectHDFio, Project
 from ase.cell import Cell as ASECell
 from ase.atoms import Atoms as ASEAtoms
+from ase.build import molecule
 
 
 class TestAtoms(unittest.TestCase):
@@ -1505,6 +1507,10 @@ class TestAtoms(unittest.TestCase):
         self.assertAlmostEqual(
             np.linalg.norm(position-structure.cell*0.1), 0
         )
+
+    def test_set_dihedral(self):
+        structure = ase_to_pyiron(molecule('H2COH'))
+        structure.set_dihedral(4, 0, 1, 2, angle=90)
 
 
 def generate_fcc_lattice(a=4.2):
