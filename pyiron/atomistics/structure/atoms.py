@@ -170,7 +170,7 @@ class Atoms(ASEAtoms):
             el_index_lst = indices
             self.set_species(species)
 
-        self.indices = np.array(el_index_lst)
+        self.indices = np.array(el_index_lst, dtype=int)
 
         el_lst = [el.Abbreviation if el.Parent is None else el.Parent for el in self.species]
         symbols = np.array([el_lst[el] for el in self.indices])
