@@ -1508,7 +1508,8 @@ class TestAtoms(unittest.TestCase):
             np.linalg.norm(position-structure.cell*0.1), 0
         )
 
-    def test_set_dihedral(self):
+    @staticmethod
+    def test_set_dihedral():
         structure = ase_to_pyiron(molecule('H2COH'))
         structure.set_dihedral(4, 0, 1, 2, angle=90)
 
