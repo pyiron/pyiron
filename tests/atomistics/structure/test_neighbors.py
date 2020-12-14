@@ -171,7 +171,7 @@ class TestAtoms(unittest.TestCase):
         ).repeat(2)
         neigh = structure.get_neighbors()
         distances = neigh.distances
-        new_positions = structure.positions+structure.cell.diagonal()
+        new_positions = structure.positions+structure.cell.diagonal()*2
         self.assertFalse(
             np.all(np.isclose(distances, neigh.get_distances(new_positions, num_neighbors=13)[:,1:]))
         )
@@ -330,6 +330,12 @@ class TestAtoms(unittest.TestCase):
         basis = CrystalStructure("Al", bravais_basis="fcc", lattice_constants=4.2).repeat(3)
         neigh = basis.get_neighbors(cutoff_radius=3.5, num_neighbors=None)
         self.assertTrue('each atom' in neigh.__repr__())
+
+    def test_norm_order(self):
+        a_0 = 2.8
+        basis = CrystalStructure("Fe", bravais_basis="bcc", lattice_constants=a_0).repeat(10)
+        neigh = basis.get_neighbors(num_neighbors=None, norm_order=np.inf, cutoff_radius=a_0+0.01)
+        self.assertEqual(len(neigh.indices[0]), 34)
 
 
 if __name__ == "__main__":

@@ -401,7 +401,6 @@ class Tree:
         elif num_neighbors is None and self.num_neighbors is None:
             volume = self._ref_structure.get_volume(per_atom=True)
             width_buffer = 1+width_buffer
-            # Rough estimate
             width_buffer *= 8*gamma(1+1/self.norm_order)**3/gamma(1+3/self.norm_order)
             num_neighbors = max(14, int(width_buffer*cutoff_radius**3/volume))
         elif num_neighbors is None:
