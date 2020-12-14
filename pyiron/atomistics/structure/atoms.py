@@ -1204,17 +1204,20 @@ class Atoms(ASEAtoms):
         xyz = self.get_scaled_positions(wrap=False)
         return xyz[:, 0], xyz[:, 1], xyz[:, 2]
 
-    def get_extended_positions(self, width, return_indices=False):
+    def get_extended_positions(self, width, return_indices=False, norm_order=2):
         """
         Get all atoms in the boundary around the supercell which have a distance
         to the supercell boundary of less than dist
 
         Args:
-            dist (float): Distance in Angstrom
+            width (float): width of the buffer layer on every periodic box side within which all
+                atoms across periodic boundaries are chosen.
+            return_indices (bool): Whether or not return the original indices of the appended
+                atoms.
+            norm_order (float): Order of Lp-norm.
 
         Returns:
-            pyiron.atomistics.structure.atoms.Atoms, numpy.ndarray:
-                Positions of all atoms in the extended box, indices of atoms in
+            numpy.ndarray: Positions of all atoms in the extended box, indices of atoms in
                 their original option (if return_indices=True)
 
         """
@@ -1226,7 +1229,9 @@ class Atoms(ASEAtoms):
             return self.positions
         width /= np.linalg.det(self.cell)
         width *= np.linalg.norm(
-            np.cross(np.roll(self.cell, -1, axis=0), np.roll(self.cell, 1, axis=0)), axis=-1
+            np.cross(np.roll(self.cell, -1, axis=0), np.roll(self.cell, 1, axis=0)),
+            axis=-1,
+            ord=norm_order,
         )
         rep = 2*np.ceil(width).astype(int)*self.pbc+1
         rep = [np.arange(r)-int(r/2) for r in rep]
@@ -1342,6 +1347,7 @@ class Atoms(ASEAtoms):
         cutoff_radius=np.inf,
         width_buffer=1.2,
         allow_ragged=False,
+        norm_order=2,
     ):
         """
 
@@ -1355,6 +1361,10 @@ class Atoms(ASEAtoms):
             width_buffer (float): width of the layer to be added to account for pbc.
             allow_ragged (bool): Whether to allow ragged list of arrays or rectangular
                 numpy.ndarray filled with np.inf for values outside cutoff_radius
+            norm_order (int): Norm to use for the neighborhood search and shell recognition. The
+                definition follows the conventional Lp norm (cf.
+                https://en.wikipedia.org/wiki/Lp_space). This is still an feature and for anything
+                other than norm_order=2, there is no guarantee that this works flawlessly.
 
         Returns:
 
@@ -1369,6 +1379,7 @@ class Atoms(ASEAtoms):
             id_list=id_list,
             cutoff_radius=cutoff_radius,
             width_buffer=width_buffer,
+            norm_order=norm_order,
         )
         neigh.allow_ragged = allow_ragged
         return neigh
@@ -1382,31 +1393,15 @@ class Atoms(ASEAtoms):
         cutoff_radius=np.inf,
         width_buffer=1.2,
         get_tree=False,
+        norm_order=2,
     ):
-        """
-
-        Args:
-            num_neighbors (int): number of neighbors
-            t_vec (bool): True: compute distance vectors
-                        (pbc are automatically taken into account)
-            id_list (list): list of atoms the neighbors are to be looked for
-            width_buffer (float): width of the layer to be added to account for pbc.
-            cutoff_radius (float): self-explanatory
-            allow_ragged (bool): Whether to allow ragged list of arrays or rectangular
-                numpy.ndarray filled with np.inf for values outside cutoff_radius
-
-        Returns:
-
-            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor
-                indices, distances and vectors
-
-        """
         if width_buffer<0:
             raise ValueError('width_buffer must be a positive float')
         if get_tree:
             neigh = Tree(ref_structure=self)
         else:
             neigh = Neighbors(ref_structure=self, tolerance=tolerance)
+        neigh._norm_order = norm_order
         width = neigh._estimate_width(
             num_neighbors=num_neighbors,
             cutoff_radius=cutoff_radius,
@@ -1417,11 +1412,15 @@ class Atoms(ASEAtoms):
                 and np.all(self.pbc)
                 and cutoff_radius==np.inf):
             neigh._cell = self.cell.diagonal()
-            extended_positions = self.get_extended_positions(0, return_indices=False).copy()
+            extended_positions = self.get_extended_positions(
+                0,
+                return_indices=False,
+                norm_order=norm_order
+            ).copy()
             extended_positions -= neigh._cell*np.floor(extended_positions/neigh._cell)
         else:
             extended_positions, neigh._wrapped_indices = self.get_extended_positions(
-                width, return_indices=True
+                width, return_indices=True, norm_order=norm_order
             )
             neigh._extended_positions = extended_positions
         neigh._tree = cKDTree(extended_positions, boxsize=neigh._cell)
