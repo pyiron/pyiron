@@ -9,6 +9,7 @@ import matplotlib.pyplot as pt
 from pyiron.dft.job.generic import GenericDFTJob
 from pyiron_base import GenericParameters
 from pyiron.atomistics.structure.atoms import Atoms
+from pyiron_base.generic.util import ImportAlarm
 
 try:
     from molmod.io.fchk import FCHKFile
@@ -16,8 +17,12 @@ try:
     from molmod.constants import lightspeed
     from molmod.periodic import periodic
     import tamkin
+    import_alarm = ImportAlarm()
 except ImportError:
-    pass
+    import_alarm = ImportAlarm(
+        "Gaussian relies on the molmod and tamkin packages, but these are unavailable. Please ensure your python "
+        "environment contains these."
+    )
 
 
 __author__ = "Jan Janssen, Sander Borgmans"
@@ -31,6 +36,7 @@ __date__ = "Aug 27, 2019"
 
 
 class Gaussian(GenericDFTJob):
+    @import_alarm
     def __init__(self, project, job_name):
         super(Gaussian, self).__init__(project, job_name)
         self.__name__ = "Gaussian"

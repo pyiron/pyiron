@@ -5,6 +5,7 @@
 from pyiron.gpaw.pyiron_ase import AseJob
 from pyiron.dft.job.generic import GenericDFTJob
 from pyiron_base import GenericParameters, Settings
+from pyiron_base.generic.util import ImportAlarm
 
 __author__ = "Jan Janssen"
 __copyright__ = (
@@ -21,28 +22,20 @@ s = Settings()
 
 try:
     from gpaw import GPAW as GPAWcode, PW, MethfesselPaxton
+    import_alarm = ImportAlarm()
 except ImportError:
-    GPAWcode = None
-
-
-def _fail_if_imports_missing():
-    """
-    Just a temporary measure as long as any imports are wrapped in a try/pass instead of being on the dependencies
-    list.
-    """
-    if GPAWcode is None:
-        raise ImportError(
-            "Gpaw relies on the gpaw module but th is unavailable. Please ensure your python environment contains "
-            "gpaw, e.g. by running `conda install -c conda-forge gpaw`."
-        )
+    import_alarm = ImportAlarm(
+        "Gpaw relies on the gpaw module but th is unavailable. Please ensure your python environment contains gpaw, "
+        "e.g. by running `conda install -c conda-forge gpaw`."
+    )
 
 
 class Gpaw(AseJob, GenericDFTJob):
+    @import_alarm
     def __init__(self, project, job_name):
         super(Gpaw, self).__init__(project, job_name)
         self.__name__ = "GpawJob"
         self.input = GpawInput()
-        _fail_if_imports_missing()
 
     @property
     def plane_wave_cutoff(self):
