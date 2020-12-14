@@ -1309,6 +1309,7 @@ class Atoms(ASEAtoms):
         id_list=None,
         width_buffer=1.2,
         allow_ragged=True,
+        norm_order=2,
     ):
         """
 
@@ -1322,10 +1323,15 @@ class Atoms(ASEAtoms):
             width_buffer (float): width of the layer to be added to account for pbc.
             allow_ragged (bool): Whether to allow ragged list of arrays or rectangular
                 numpy.ndarray filled with np.inf for values outside cutoff_radius
+            norm_order (int): Norm to use for the neighborhood search and shell recognition. The
+                definition follows the conventional Lp norm (cf.
+                https://en.wikipedia.org/wiki/Lp_space). This is an feature and for anything
+                other than norm_order=2, there is no guarantee that this works flawlessly.
+
         Returns:
 
-            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor indices, distances
-            and vectors
+            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor
+                indices, distances and vectors
 
         """
         return self.get_neighbors(
@@ -1336,6 +1342,7 @@ class Atoms(ASEAtoms):
             id_list=id_list,
             width_buffer=width_buffer,
             allow_ragged=allow_ragged,
+            norm_order=norm_order,
         )
 
     def get_neighbors(
@@ -1363,13 +1370,13 @@ class Atoms(ASEAtoms):
                 numpy.ndarray filled with np.inf for values outside cutoff_radius
             norm_order (int): Norm to use for the neighborhood search and shell recognition. The
                 definition follows the conventional Lp norm (cf.
-                https://en.wikipedia.org/wiki/Lp_space). This is still an feature and for anything
+                https://en.wikipedia.org/wiki/Lp_space). This is an feature and for anything
                 other than norm_order=2, there is no guarantee that this works flawlessly.
 
         Returns:
 
-            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor indices, distances
-            and vectors
+            pyiron.atomistics.structure.atoms.Neighbors: Neighbors instances with the neighbor
+                indices, distances and vectors
 
         """
         neigh = self._get_neighbors(
@@ -1449,6 +1456,7 @@ class Atoms(ASEAtoms):
         t_vec=True,
         cutoff_radius=np.inf,
         width_buffer=1.2,
+        norm_order=2,
     ):
         """
 
@@ -1458,11 +1466,15 @@ class Atoms(ASEAtoms):
             t_vec (bool): True: compute distance vectors (pbc are taken into account)
             cutoff_radius (float): Upper bound of the distance to which the search is to be done
             width_buffer (float): Width of the layer to be added to account for pbc.
+            norm_order (int): Norm to use for the neighborhood search and shell recognition. The
+                definition follows the conventional Lp norm (cf.
+                https://en.wikipedia.org/wiki/Lp_space). This is an feature and for anything
+                other than norm_order=2, there is no guarantee that this works flawlessly.
 
         Returns:
 
-            pyiron.atomistics.structure.atoms.Tree: Neighbors instances with the neighbor indices,
-                distances and vectors
+            pyiron.atomistics.structure.atoms.Tree: Neighbors instances with the neighbor
+                indices, distances and vectors
 
         """
 
@@ -1472,6 +1484,7 @@ class Atoms(ASEAtoms):
             width_buffer=width_buffer,
             t_vec=t_vec,
             get_tree=True,
+            norm_order=norm_order,
         )
         return neigh._get_neighborhood(
             positions=positions,
