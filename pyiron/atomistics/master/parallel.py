@@ -144,10 +144,10 @@ class MapJobGenerator(JobGenerator):
         Returns:
             (list)
         """
-        return self._job.parameter_list
+        return self._master.parameter_list
 
     def modify_job(self, job, parameter):
-        return self._job._map_function(job, parameter)
+        return self._master._map_function(job, parameter)
 
 
 def pipe(project, job, step_lst, delete_existing_job=False):

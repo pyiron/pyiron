@@ -1335,6 +1335,16 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(len(b.indices), 3)
         self.assertEqual(len(b.species), 1)
         self.assertEqual(np.max(b.indices), 0)
+        basis = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
+        del basis[0]
+        basis.set_initial_magnetic_moments(len(basis) * [2])
+        self.assertEqual(len(basis), 3)
+        self.assertTrue(np.array_equal(basis.get_initial_magnetic_moments(), [2, 2, 2]))
+        basis = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
+        del basis[np.array([True, False, False, False])]
+        self.assertEqual(len(basis), 3)
+        basis.set_initial_magnetic_moments(len(basis) * [2])
+        self.assertTrue(np.array_equal(basis.get_initial_magnetic_moments(), [2, 2, 2]))
 
     def test__setitem__(self):
         basis = self.CO2.copy()

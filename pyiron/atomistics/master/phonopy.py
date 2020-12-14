@@ -92,9 +92,9 @@ class PhonopyJobGenerator(JobGenerator):
         Returns:
             (list)
         """
-        supercells = self._job.phonopy.get_supercells_with_displacements()
+        supercells = self._master.phonopy.get_supercells_with_displacements()
         return [
-            ["{}_{}".format(self._job.ref_job.job_name, ind), self._restore_magmoms(phonopy_to_atoms(sc))]
+            ["{}_{}".format(self._master.ref_job.job_name, ind), self._restore_magmoms(phonopy_to_atoms(sc))]
             for ind, sc in enumerate(supercells)
         ]
 
@@ -106,9 +106,9 @@ class PhonopyJobGenerator(JobGenerator):
         Returns:
             structure (pyiron.atomistics.structure.atoms): output structure with magnetic moments
         """
-        if any(self._job.structure.get_initial_magnetic_moments()!=None):
-            magmoms = self._job.structure.get_initial_magnetic_moments()
-            magmoms = np.tile(magmoms, np.prod(np.diagonal(self._job._phonopy_supercell_matrix())).astype(int))
+        if any(self._master.structure.get_initial_magnetic_moments()!=None):
+            magmoms = self._master.structure.get_initial_magnetic_moments()
+            magmoms = np.tile(magmoms, np.prod(np.diagonal(self._master._phonopy_supercell_matrix())).astype(int))
             structure.set_initial_magnetic_moments(magmoms)
         return structure
 
