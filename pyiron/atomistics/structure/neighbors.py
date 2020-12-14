@@ -5,6 +5,7 @@
 import numpy as np
 from sklearn.cluster import AgglomerativeClustering
 from scipy.sparse import coo_matrix
+from scipy.special import gamma
 from pyiron_base import Settings
 from pyiron.atomistics.structure.analyse import get_average_of_unique_labels
 import warnings
@@ -399,7 +400,10 @@ class Tree:
             raise ValueError('Specify num_neighbors or cutoff_radius')
         elif num_neighbors is None and self.num_neighbors is None:
             volume = self._ref_structure.get_volume(per_atom=True)
-            num_neighbors = max(14, int((1+width_buffer)*4./3.*np.pi*cutoff_radius**3/volume))
+            width_buffer = 1+width_buffer
+            # Rough estimate
+            width_buffer *= 8*gamma(1+1/self.norm_order)**3/gamma(1+3/self.norm_order)
+            num_neighbors = max(14, int(width_buffer*cutoff_radius**3/volume))
         elif num_neighbors is None:
             num_neighbors = self.num_neighbors
         if self.num_neighbors is None:
@@ -429,8 +433,8 @@ class Tree:
         elif cutoff_radius!=np.inf:
             return cutoff_radius
         pbc = self._ref_structure.pbc
-        prefactor = [1, 1/np.pi, 4/(3*np.pi)]
-        prefactor = prefactor[sum(pbc)-1]
+        n = sum(pbc)
+        prefactor = 2**n*gamma(1+1/self.norm_order)**2/gamma(1+n/self.norm_order)
         width = np.prod((
             np.linalg.norm(self._ref_structure.cell, axis=-1, ord=self.norm_order)-np.ones(3)
         )*pbc+np.ones(3))
