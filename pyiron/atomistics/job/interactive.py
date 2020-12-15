@@ -274,19 +274,20 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
         Args:
             wrap_atoms (bool):
         """
-        if self.output.indices is None or len(self.output.indices) == 0:
-            return
-        indices = self.output.indices[-1]
-        if indices is None:
+        try:
+            indices = self.output.indices[-1]
+            positions = self.output.positions[-1]
+            cell = self.output.cells[-1]
+        except IndexError:
             return
         if len(self._interactive_species_lst) == 0:
             el_lst = [el.Abbreviation for el in self.structure.species]
         else:
             el_lst = self._interactive_species_lst.tolist()
-        self._structure_previous.positions = self.output.positions[-1]
         self._structure_previous.set_species([self._periodic_table.element(el) for el in el_lst])
         self._structure_previous.indices = indices
-        self._structure_previous.cell = self.output.cells[-1]
+        self._structure_previous.positions = positions
+        self._structure_previous.cell = cell
 
     @staticmethod
     def _extend_species_elements(struct_species, species_array):
