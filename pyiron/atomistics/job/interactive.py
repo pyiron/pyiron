@@ -121,7 +121,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             self.interactive_initialize_interface()
         if self._structure_previous is None:
             self._structure_previous = self.structure.copy()
-        self.update_previous_structure()
+        self._update_previous_structure()
         if self._structure_current is not None:
             if (
                 len(self._structure_current) != len(self._structure_previous)
@@ -268,7 +268,7 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
     def interactive_volume_getter(self):
         return self.initial_structure.get_volume()
 
-    def update_previous_structure(self):
+    def _update_previous_structure(self):
         """
         Update the previous structure to the last step configuration
         Args:
