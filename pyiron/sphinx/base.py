@@ -429,9 +429,9 @@ class SphinxBase(GenericDFTJob):
                             "potential": '"' + elem + "_POTCAR" + '"',
                 })
             else:
-                raise ValueError()
+                raise ValueError('Potential must be JTH or VASP')
         if not check_overlap:
-            self.input.sphinx.pawPot["species"]["checkOverlap"] = "false"
+            self.input.sphinx.pawPot.species["checkOverlap"] = "0"
         if self.input["KJxc"]:
             self.input.sphinx.pawPot["kjxc"] = True
 
@@ -1292,7 +1292,7 @@ class SphinxBase(GenericDFTJob):
         # via job.input.pawPot (which is likely True),
         # load it based on job.structure.
         if not structure_sync and not self.input.sphinx.pawPot.read_only:
-            self.load_species_group(potformat=potformat)
+            self.load_species_group(check_overlap=self.input.CheckOverlap, potformat=potformat)
 
         modified_elements = {
             key: value
