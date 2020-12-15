@@ -629,8 +629,8 @@ class AtomisticGenericJob(GenericJobCore):
         Returns:
             pyiron.atomistics.structure.atoms.Atoms: The required structure
         """
-        if not (self.structure is not None):
-            raise AssertionError()
+        if self.structure is None:
+            raise AssertionError('Structure not set')
         snapshot = self.structure.copy()
         conditions = list()
         if isinstance(self.output.cells, (list, np.ndarray)):

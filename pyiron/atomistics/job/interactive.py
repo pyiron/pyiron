@@ -119,11 +119,9 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
             raise ValueError("Input structure not set. Use method set_structure()")
         if not self.interactive_is_activated():
             self.interactive_initialize_interface()
-        pre_struct = self.get_structure(-1)
-        if pre_struct is not None:
-            self._structure_previous = pre_struct
-        else:
+        if self._structure_previous is None:
             self._structure_previous = self.structure.copy()
+        self.update_previous_structure()
         if self._structure_current is not None:
             if (
                 len(self._structure_current) != len(self._structure_previous)
@@ -270,65 +268,25 @@ class GenericInteractive(AtomisticGenericJob, InteractiveBase):
     def interactive_volume_getter(self):
         return self.initial_structure.get_volume()
 
-    def get_structure(self, iteration_step=-1, wrap_atoms=True):
+    def update_previous_structure(self):
         """
-        Gets the structure from a given iteration step of the simulation (MD/ionic relaxation). For static calculations
-        there is only one ionic iteration step
+        Update the previous structure to the last step configuration
         Args:
-            iteration_step (int): Step for which the structure is requested
             wrap_atoms (bool):
-
-        Returns:
-            atomistics.structure.atoms.Atoms object
         """
-        if (
-            self.server.run_mode.interactive
-            or self.server.run_mode.interactive_non_modal
-        ):
-            # Warning: We only copy symbols, positions and cell information - no tags.
-            if self.output.indices is not None and len(self.output.indices) != 0:
-                indices = self.output.indices[iteration_step]
-            else:
-                return None
-            if len(self._interactive_species_lst) == 0:
-                el_lst = [el.Abbreviation for el in self.structure.species]
-            else:
-                el_lst = self._interactive_species_lst.tolist()
-            if indices is not None:
-                if wrap_atoms:
-                    positions = self.output.positions[iteration_step]
-                else:
-                    if len(self.output.unwrapped_positions) > max([iteration_step, 0]):
-                        positions = self.output.unwrapped_positions[iteration_step]
-                    else:
-                        positions = (
-                            self.output.positions[iteration_step]
-                            + self.output.total_displacements[iteration_step]
-                        )
-                atoms = Atoms(
-                    symbols=np.array([el_lst[el] for el in indices]),
-                    positions=positions,
-                    cell=self.output.cells[iteration_step],
-                    pbc=self.structure.pbc,
-                )
-                # Update indicies to match the indicies in the cache.
-                atoms.set_species([self._periodic_table.element(el) for el in el_lst])
-                atoms.indices = indices
-                if wrap_atoms:
-                    atoms = atoms.center_coordinates_in_unit_cell()
-                return atoms
-            else:
-                return None
+        if self.output.indices is None or len(self.output.indices) == 0:
+            return
+        indices = self.output.indices[-1]
+        if indices is None:
+            return
+        if len(self._interactive_species_lst) == 0:
+            el_lst = [el.Abbreviation for el in self.structure.species]
         else:
-            if (
-                self.get("output/generic/cells") is not None
-                and len(self.get("output/generic/cells")) != 0
-            ):
-                return super(GenericInteractive, self).get_structure(
-                    iteration_step=iteration_step, wrap_atoms=wrap_atoms
-                )
-            else:
-                return None
+            el_lst = self._interactive_species_lst.tolist()
+        self._structure_previous.positions = self.output.positions[-1]
+        self._structure_previous.set_species([self._periodic_table.element(el) for el in el_lst])
+        self._structure_previous.indices = indices
+        self._structure_previous.cell = self.output.cells[-1]
 
     @staticmethod
     def _extend_species_elements(struct_species, species_array):
