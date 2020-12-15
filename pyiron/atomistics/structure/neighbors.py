@@ -5,6 +5,7 @@
 import numpy as np
 from sklearn.cluster import AgglomerativeClustering
 from scipy.sparse import coo_matrix
+from scipy.special import gamma
 from pyiron_base import Settings
 from pyiron.atomistics.structure.analyse import get_average_of_unique_labels
 import warnings
@@ -66,6 +67,7 @@ class Tree:
         self._tree = None
         self.num_neighbors = None
         self.cutoff_radius = np.inf
+        self._norm_order = 2
 
     def __repr__(self):
         """
@@ -94,7 +96,25 @@ class Tree:
         new_neigh._tree = self._tree
         new_neigh.num_neighbors = self.num_neighbors
         new_neigh.cutoff_radius = self.cutoff_radius
+        new_neigh._norm_order = self._norm_order
         return new_neigh
+
+    @property
+    def norm_order(self):
+        """
+        Norm to use for the neighborhood search and shell recognition. The definition follows the
+        conventional Lp norm (cf. https://en.wikipedia.org/wiki/Lp_space). This is still an
+        experimental feature and for anything other than norm_order=2, there is no guarantee that
+        this works flawlessly.
+        """
+        return self._norm_order
+
+    @norm_order.setter
+    def norm_order(self, value):
+        raise ValueError(
+            'norm_order cannot be changed after initialization. Re-initialize the Neighbor class'
+            + ' with the correct norm_order value'
+        )
 
     def _get_max_length(self, ref_vector=None):
         if ref_vector is None:
@@ -195,7 +215,8 @@ class Tree:
         distances, indices = self._tree.query(
             self._get_wrapped_positions(positions),
             k=num_neighbors,
-            distance_upper_bound=cutoff_radius
+            distance_upper_bound=cutoff_radius,
+            p=self.norm_order,
         )
         if cutoff_radius<np.inf and np.any(distances.T[-1]<np.inf):
             warnings.warn(
@@ -379,7 +400,9 @@ class Tree:
             raise ValueError('Specify num_neighbors or cutoff_radius')
         elif num_neighbors is None and self.num_neighbors is None:
             volume = self._ref_structure.get_volume(per_atom=True)
-            num_neighbors = max(14, int((1+width_buffer)*4./3.*np.pi*cutoff_radius**3/volume))
+            width_buffer = 1+width_buffer
+            width_buffer *= 8*gamma(1+1/self.norm_order)**3/gamma(1+3/self.norm_order)
+            num_neighbors = max(14, int(width_buffer*cutoff_radius**3/volume))
         elif num_neighbors is None:
             num_neighbors = self.num_neighbors
         if self.num_neighbors is None:
@@ -409,11 +432,11 @@ class Tree:
         elif cutoff_radius!=np.inf:
             return cutoff_radius
         pbc = self._ref_structure.pbc
-        prefactor = [1, 1/np.pi, 4/(3*np.pi)]
-        prefactor = prefactor[sum(pbc)-1]
-        width = np.prod(
-            (np.linalg.norm(self._ref_structure.cell, axis=-1)-np.ones(3))*pbc+np.ones(3)
-        )
+        n = sum(pbc)
+        prefactor = 2**n*gamma(1+1/self.norm_order)**2/gamma(1+n/self.norm_order)
+        width = np.prod((
+            np.linalg.norm(self._ref_structure.cell, axis=-1, ord=self.norm_order)-np.ones(3)
+        )*pbc+np.ones(3))
         width *= prefactor*np.max([num_neighbors, 8])/len(self._ref_structure)
         cutoff_radius = width_buffer*width**(1/np.sum(pbc))
         return cutoff_radius
@@ -490,7 +513,9 @@ class Tree:
     def _check_width(self, width, pbc):
         if any(pbc) and np.prod(self.distances.shape)>0 and self.vecs is not None:
             if np.linalg.norm(
-                self._fill(self._contract(self.vecs), filler=0.0)[...,pbc], axis=-1
+                self._fill(self._contract(self.vecs), filler=0.0)[...,pbc],
+                axis=-1,
+                ord=self.norm_order
             ).max() > width:
                 return True
         return False
@@ -588,7 +613,11 @@ class Neighbors(Tree):
             if self._cluster_vecs is None:
                 self.cluster_by_vecs()
             shells = np.array([np.unique(np.round(dist, decimals=tolerance), return_inverse=True)[1]+1
-                         for dist in np.linalg.norm(self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1)
+                         for dist in np.linalg.norm(
+                            self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_],
+                            axis=-1,
+                            ord=self.norm_order
+                        )
                      ])
             shells[self._cluster_vecs.labels_<0] = -1
             shells = shells.reshape(self.indices.shape)
@@ -643,7 +672,9 @@ class Neighbors(Tree):
             if self._cluster_vecs is None:
                 self.cluster_by_vecs()
             distances = np.linalg.norm(
-                self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_], axis=-1
+                self._cluster_vecs.cluster_centers_[self._cluster_vecs.labels_],
+                axis=-1,
+                ord=self.norm_order,
             ).reshape(self.distances.shape)
             distances[self._cluster_vecs.labels_<0] = np.inf
         dist_lst = np.unique(np.round(a=distances, decimals=tolerance))
@@ -721,7 +752,7 @@ class Neighbors(Tree):
 
         z = np.zeros(len(self._ref_structure)*3).reshape(-1, 3)
         v = np.append(z[:,np.newaxis,:], self.vecs, axis=1)
-        dist = np.linalg.norm(v-np.array(vector), axis=-1)
+        dist = np.linalg.norm(v-np.array(vector), axis=-1, ord=self.norm_order)
         indices = np.append(np.arange(len(self._ref_structure))[:,np.newaxis], self.indices, axis=1)
         if return_deviation:
             return indices[np.arange(len(dist)), np.argmin(dist, axis=-1)], np.min(dist, axis=-1)
@@ -811,7 +842,11 @@ class Neighbors(Tree):
             if self._cluster_vecs is None:
                 self.cluster_by_vecs()
             labels_to_consider = self._cluster_vecs.labels_[self._cluster_vecs.labels_>=0]
-            dr = np.linalg.norm(self._cluster_vecs.cluster_centers_[labels_to_consider], axis=-1)
+            dr = np.linalg.norm(
+                self._cluster_vecs.cluster_centers_[labels_to_consider],
+                axis=-1,
+                ord=self.norm_order
+            )
         self._cluster_dist = AgglomerativeClustering(
             distance_threshold=distance_threshold,
             n_clusters=n_clusters,
