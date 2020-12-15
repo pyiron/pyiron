@@ -336,6 +336,8 @@ class TestAtoms(unittest.TestCase):
         basis = CrystalStructure("Fe", bravais_basis="bcc", lattice_constants=a_0).repeat(10)
         neigh = basis.get_neighbors(num_neighbors=None, norm_order=np.inf, cutoff_radius=a_0+0.01)
         self.assertEqual(len(neigh.indices[0]), 34)
+        with self.assertRaises(ValueError):
+            neigh.norm_order = 3
 
 
 if __name__ == "__main__":
