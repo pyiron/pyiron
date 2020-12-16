@@ -431,7 +431,7 @@ class SphinxBase(GenericDFTJob):
             else:
                 raise ValueError('Potential must be JTH or VASP')
         if not check_overlap:
-            self.input.sphinx.pawPot.species["checkOverlap"] = "0"
+            self.input.sphinx.pawPot["species"][-1]["checkOverlap"] = "false"
         if self.input["KJxc"]:
             self.input.sphinx.pawPot["kjxc"] = True
 
