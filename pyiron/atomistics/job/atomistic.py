@@ -637,7 +637,7 @@ class AtomisticGenericJob(GenericJobCore):
             snapshot.cell = self.output.cells[iteration_step]
         except IndexError:
             if wrap_atoms:
-                raise IndexError('cell at step ', iteraction_step, ' not found')
+                raise IndexError('cell at step ', iteration_step, ' not found')
             snapshot.cell = None
         try:
             snapshot.indices = self.output.indices[iteration_step]
