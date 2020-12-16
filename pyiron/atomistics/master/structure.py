@@ -36,7 +36,7 @@ class StructureJobGenerator(JobGenerator):
         Returns:
             (list): [[index(int), pyiron.atomistics.structure.atoms.Atoms], ...]
         """
-        return list(enumerate(self._job.structure_lst))
+        return list(enumerate(self._master.structure_lst))
 
     @staticmethod
     def job_name(parameter):

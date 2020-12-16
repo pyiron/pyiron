@@ -2000,29 +2000,31 @@ class Output(object):
 
         """
         file_name = posixpath.join(cwd, file_name)
-        if len(self._parse_dict["bands_eigen_values"]) != 0:
-            return None
         if os.path.isfile(file_name):
             try:
-                self._parse_dict["bands_eigen_values"] = \
-                    np.loadtxt(file_name)[:, 1:]
-            except:
-                self._parse_dict["bands_eigen_values"] = \
-                    np.loadtxt(file_name)[1:]
-        else:
-            if os.path.isfile(posixpath.join(
+                value = np.loadtxt(file_name)[:, 1:]
+            except IndexError:
+                value = np.loadtxt(file_name)[1:]
+        elif os.path.isfile(posixpath.join(
                 cwd, "eps.0.dat")) and os.path.isfile(
                 posixpath.join(cwd, "eps.1.dat")
-            ):
-                eps_up = np.loadtxt(posixpath.join(cwd, "eps.0.dat"))
-                eps_down = np.loadtxt(posixpath.join(cwd, "eps.1.dat"))
-                if len(eps_up.shape) == 2:
-                    eps_up = eps_up[:, 1:]
-                    eps_down = eps_down[:, 1:]
-                else:
-                    eps_up = eps_up[1:]
-                    eps_down = eps_down[1:]
-                self._parse_dict["bands_eigen_values"] = np.array(list(zip(eps_up.tolist(), eps_down.tolist())))
+        ):
+            eps_up = np.loadtxt(posixpath.join(cwd, "eps.0.dat"))
+            eps_down = np.loadtxt(posixpath.join(cwd, "eps.1.dat"))
+            if len(eps_up.shape) == 2:
+                eps_up = eps_up[:, 1:]
+                eps_down = eps_down[:, 1:]
+            else:
+                eps_up = eps_up[1:]
+                eps_down = eps_down[1:]
+            value = np.vstack((eps_up, eps_down)).reshape((2,)+eps_up.shape)
+        else:
+            return
+        shape = np.asarray(self._parse_dict["bands_eigen_values"]).shape
+        if shape[1:] == value.shape:
+            self._parse_dict["bands_eigen_values"][-1] = value
+        else:
+            self._parse_dict["bands_eigen_values"] = value.reshape((-1,)+value.shape)
         return None
 
     def collect_energy_struct(self, file_name="energy-structOpt.dat",
@@ -2391,6 +2393,15 @@ class Output(object):
                 es = self._get_electronic_structure_object()
                 if len(es.kpoint_list) > 0:
                     es.to_hdf(hdf5_output)
+            with hdf5_output.open("electronic_structure") as hdf5_es:
+                if "dos" not in hdf5_es.list_groups():
+                    hdf5_es.create_group("dos")
+                with hdf5_es.open("dos") as hdf5_dos:
+                    warning_message = (
+                        ' is not stored in SPHInX; use job.get_density_of_states instead'
+                    )
+                    for k in ['energies', 'int_densities', 'tot_densities']:
+                        hdf5_dos[k] = k+warning_message
             with hdf5_output.open("generic") as hdf5_generic:
                 if "dft" not in hdf5_generic.list_groups():
                     hdf5_generic.create_group("dft")

@@ -308,7 +308,7 @@ class SxPhononsJobGenerator(JobGenerator):
         """
         return [
             ["supercell_phonon_%d" % ind, sc]
-            for ind, sc in enumerate(self._job._displacement_job.structure_lst)
+            for ind, sc in enumerate(self._master._displacement_job.structure_lst)
         ]
 
     @staticmethod

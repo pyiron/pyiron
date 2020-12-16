@@ -50,9 +50,9 @@ class SQSJobGenerator(JobGenerator):
         return [
             [
                 "sqs_" + str(np.round(f, 4)).replace(".", "_"),
-                {self._job.input["species_one"]: f, self._job.input["species_two"]: 1-f}
+                {self._master.input["species_one"]: f, self._master.input["species_two"]: 1-f}
             ]
-            for f in self._job.input["fraction_lst"]
+            for f in self._master.input["fraction_lst"]
         ]
 
     @staticmethod
