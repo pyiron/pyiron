@@ -632,25 +632,19 @@ class AtomisticGenericJob(GenericJobCore):
         if self.structure is None:
             raise AssertionError('Structure not set')
         snapshot = self.structure.copy()
-        try:
-            snapshot.cell = self.output.cells[iteration_step]
-        except IndexError:
-            pass
+        snapshot.cell = self.output.cells[iteration_step]
         try:
             snapshot.indices = self.output.indices[iteration_step]
         except IndexError:
             pass
-        try:
-            if wrap_atoms:
-                snapshot.positions = self.output.positions[iteration_step]
-                return snapshot.center_coordinates_in_unit_cell()
-            if len(self.output.unwrapped_positions) > max([iteration_step, 0]):
-                snapshot.positions = self.output.unwrapped_positions[iteration_step]
-            else:
-                snapshot.positions += self.output.total_displacements[iteration_step]
-            return snapshot
-        except IndexError:
-            return snapshot
+        if wrap_atoms:
+            snapshot.positions = self.output.positions[iteration_step]
+            return snapshot.center_coordinates_in_unit_cell()
+        if len(self.output.unwrapped_positions) > max([iteration_step, 0]):
+            snapshot.positions = self.output.unwrapped_positions[iteration_step]
+        else:
+            snapshot.positions += self.output.total_displacements[iteration_step]
+        return snapshot
 
     def map(self, function, parameter_lst):
         master = self.create_job(
