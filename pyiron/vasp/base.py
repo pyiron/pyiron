@@ -13,6 +13,7 @@ from pyiron.vasp.potential import VaspPotential, VaspPotentialFile, VaspPotentia
     strip_xc_from_potential_name
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron_base import Settings, GenericParameters
+from pyiron_base.generic.util import deprecate
 from pyiron.vasp.outcar import Outcar
 from pyiron.vasp.oszicar import Oszicar
 from pyiron.vasp.procar import Procar
@@ -1176,6 +1177,8 @@ class VaspBase(GenericDFTJob):
             reciprocal=False,
         )
 
+    @deprecate(ionic_forces="Use ionic_force_tolerance",
+               ionic_energy="use ionic_energy_tolerance")
     def set_convergence_precision(
         self, ionic_energy_tolerance=1.0e-3, electronic_energy=1.0e-7, ionic_force_tolerance=1.0e-2,
         ionic_energy=None, ionic_forces=None
@@ -1192,19 +1195,9 @@ class VaspBase(GenericDFTJob):
             ionic_forces (float/NoneType): Same as ionic_force_tolerance (deprecated)
         """
         if ionic_forces is not None:
-            warnings.warn(
-                "ionic_forces is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. "
-                "Use ionic_force_tolerance instead.",
-                DeprecationWarning
-            )
             if ionic_force_tolerance is None:
                 ionic_force_tolerance = ionic_forces
         if ionic_energy is not None:
-            warnings.warn(
-                "ionic_energy is deprecated as of vers. 0.3.0. It is not guaranteed to be in service in vers. 0.4.0. "
-                "Use ionic_energy_tolerance instead.",
-                DeprecationWarning
-            )
             if ionic_energy_tolerance is None:
                 ionic_energy_tolerance = ionic_energy
         if ionic_force_tolerance is not None:

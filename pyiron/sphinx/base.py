@@ -28,6 +28,7 @@ from pyiron.sphinx.potential import find_potential_file \
     as find_potential_file_jth
 from pyiron.sphinx.volumetric_data import SphinxVolumetricData
 from pyiron_base import Settings, InputList, job_status_successful_lst
+from pyiron_base.generic.util import deprecate
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = (
@@ -998,6 +999,8 @@ class SphinxBase(GenericDFTJob):
         if width is not None:
             self.input["Sigma"] = width
 
+    @deprecate(ionic_forces="Use ionic_force_tolerance",
+               ionic_energy="use ionic_energy_tolerance")
     def set_convergence_precision(
             self,
             ionic_energy_tolerance=None,
@@ -1023,18 +1026,8 @@ class SphinxBase(GenericDFTJob):
             ionic_force_tolerance (float): Ionic force convergence precision
         """
         if ionic_forces is not None:
-            warnings.warn(
-                "ionic_forces is deprecated as of vers. 0.3.0. It is not guaranteed "
-                "to be in service in vers. 0.4.0. Use ionic_force_tolerance instead.",
-                DeprecationWarning
-            )
             ionic_force_tolerance = ionic_forces
         if ionic_energy is not None:
-            warnings.warn(
-                "ionic_energy is deprecated as of vers. 0.3.0. It is not guaranteed "
-                " to be in service in vers. 0.4.0. Use ionic_energy_tolerance instead.",
-                DeprecationWarning
-            )
             ionic_energy_tolerance =ionic_energy
         assert (
             ionic_energy_tolerance is None or ionic_energy_tolerance > 0
