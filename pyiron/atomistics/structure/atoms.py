@@ -21,7 +21,7 @@ from pyiron.atomistics.structure.periodic_table import (
     ChemicalElement
 )
 from pyiron_base import Settings
-from pyiron_base.generic.util import deprecate, deprecate_soon
+from pyiron_base import deprecate, deprecate_soon
 
 from scipy.spatial import cKDTree, Voronoi
 import spglib
@@ -1017,22 +1017,22 @@ class Atoms(ASEAtoms):
     def reset_absolute(self, is_absolute):
         raise NotImplementedError("This function was removed!")
 
-    @deprecate("use analyse.pyscal_cna_adaptive() with ovito_compatibility=True instead.")
+    @deprecate("Use Atoms.analyse.pyscal_cna_adaptive() with ovito_compatibility=True instead")
     def analyse_ovito_cna_adaptive(self, mode="total"):
         return self._analyse.pyscal_cna_adaptive(mode=mode, ovito_compatibility=True)
     analyse_ovito_cna_adaptive.__doc__ = Analyse.pyscal_cna_adaptive.__doc__
 
-    @deprecate('use analyse.pyscal_centro_symmetry() instead.')
+    @deprecate('Use Atoms.analyse.pyscal_centro_symmetry() instead')
     def analyse_ovito_centro_symmetry(self, num_neighbors=12):
         return self._analyse.pyscal_centro_symmetry(num_neighbors=num_neighbors)
     analyse_ovito_centro_symmetry.__doc__ = Analyse.pyscal_centro_symmetry.__doc__
 
-    @deprecate("use analyse.pyscal_voronoi_volume() instead.")
+    @deprecate("Use Atoms.analyse.pyscal_voronoi_volume() instead")
     def analyse_ovito_voronoi_volume(self):
         return self._analyse.pyscal_voronoi_volume()
     analyse_ovito_voronoi_volume.__doc__ = Analyse.pyscal_voronoi_volume.__doc__
 
-    @deprecate("use analyse.pyscal_steinhardt_parameter() instead.")
+    @deprecate("Use Atoms.analyse.pyscal_steinhardt_parameter() instead")
     def analyse_pyscal_steinhardt_parameter(self, neighbor_method="cutoff", cutoff=0, n_clusters=2,
                                             q=(4, 6), averaged=False, clustering=True):
         return self._analyse.pyscal_steinhardt_parameter(
@@ -1041,27 +1041,27 @@ class Atoms(ASEAtoms):
         )
     analyse_pyscal_steinhardt_parameter.__doc__ = Analyse.pyscal_steinhardt_parameter.__doc__
 
-    @deprecate("use analyse.pyscal_cna_adaptive() instead.")
+    @deprecate("Use Atoms.analyse.pyscal_cna_adaptive() instead")
     def analyse_pyscal_cna_adaptive(self, mode="total", ovito_compatibility=False):
         return self._analyse.pyscal_cna_adaptive(mode=mode, ovito_compatibility=ovito_compatibility)
     analyse_pyscal_cna_adaptive.__doc__ = Analyse.pyscal_cna_adaptive.__doc__
 
-    @deprecate("use analyse.pyscal_centro_symmetry() instead.")
+    @deprecate("Use Atoms.analyse.pyscal_centro_symmetry() instead")
     def analyse_pyscal_centro_symmetry(self, num_neighbors=12):
         return self._analyse.pyscal_centro_symmetry(num_neighbors=num_neighbors)
     analyse_pyscal_centro_symmetry.__doc__ = Analyse.pyscal_centro_symmetry.__doc__
 
-    @deprecate("use analyse.pyscal_diamond_structure() instead.")
+    @deprecate("Use Atoms.analyse.pyscal_diamond_structure() instead")
     def analyse_pyscal_diamond_structure(self, mode="total", ovito_compatibility=False):
         return self._analyse.pyscal_diamond_structure(mode=mode, ovito_compatibility=ovito_compatibility)
     analyse_pyscal_diamond_structure.__doc__ = Analyse.pyscal_diamond_structure.__doc__
 
-    @deprecate("use analyse.pyscal_voronoi_volume() instead.")
+    @deprecate("Use Atoms.analyse.pyscal_voronoi_volume() instead")
     def analyse_pyscal_voronoi_volume(self):
         return self._analyse.pyscal_voronoi_volume()
     analyse_pyscal_voronoi_volume.__doc__ = Analyse.pyscal_voronoi_volume.__doc__
 
-    @deprecate("use get_symmetry()['equivalent_atoms'] instead.")
+    @deprecate("Use get_symmetry()['equivalent_atoms'] instead")
     def analyse_phonopy_equivalent_atoms(self):
         from pyiron.atomistics.structure.phonopy import analyse_phonopy_equivalent_atoms
         return analyse_phonopy_equivalent_atoms(atoms=self)
@@ -1410,14 +1410,14 @@ class Atoms(ASEAtoms):
             cutoff_radius=cutoff_radius,
         )
 
-    @deprecate("use neigh.find_neighbors_by_vector() instead (after calling neigh = structure.get_neighbors())",
+    @deprecate("Use neigh.find_neighbors_by_vector() instead (after calling neigh = structure.get_neighbors())",
                version="1.0.0")
     def find_neighbors_by_vector(self, vector, return_deviation=False, num_neighbors=96):
         neighbors = self.get_neighbors(num_neighbors=num_neighbors)
         return neighbors.find_neighbors_by_vector(vector=vector, return_deviation=return_deviation)
     find_neighbors_by_vector.__doc__ = Neighbors.find_neighbors_by_vector.__doc__
 
-    @deprecate("Use neigh.get_shell_matrix() instead (after calling neigh = structure.get_neighbors())",
+    @deprecate("use neigh.get_shell_matrix() instead (after calling neigh = structure.get_neighbors())",
                version="1.0.0")
     def get_shell_matrix(
         self, id_list=None, chemical_pair=None, num_neighbors=100, tolerance=2,
@@ -1899,7 +1899,7 @@ class Atoms(ASEAtoms):
         # TODO: implement
         pass
 
-    @deprecate("use analyse.pyscal_voronoi_volume() instead.")
+    @deprecate("Use Atoms.analyse.pyscal_voronoi_volume() instead")
     def get_voronoi_volume(self):
         return self._analyse.pyscal_voronoi_volume()
     get_voronoi_volume.__doc__ = Analyse.pyscal_voronoi_volume.__doc__
