@@ -87,6 +87,21 @@ class Testpyscalatoms(unittest.TestCase):
         cls.fe_bcc = ase_to_pyiron(bulk("Fe", cubic=True))
         cls.ti_hcp = ase_to_pyiron(bulk("Ti", orthorhombic=True))
         cls.si_dia = ase_to_pyiron(bulk("Si", cubic=True))
+        cls.al_fcc_4 = CrystalStructure(element="Al",
+                                        bravais_basis="fcc",
+                                        lattice_constants=4
+                                        ).repeat(4)
+
+    def test_steinhardt_parameters(self):
+        """ Test the calculation of Steinhardts parameters using the Analyse class. """
+        perfect_vals = [0.00, 0.00, 0.190, 0.00, 0.575, 0.00, 0.404, 0.00,
+                        0.013, 0.00, 0.600]
+
+        qtest = np.random.randint(2, 13, size=2)
+
+        qs, _ = self.al_fcc_4.analyse.pyscal_steinhardt_parameter(cutoff=0, n_clusters=2, q=qtest)
+        for c, q in enumerate(qs):
+            self.assertLess(np.abs(np.mean(q) - perfect_vals[qtest[c]-2]), 1E-3)
 
     def test_analyse_pyscal_centro_symmetry(self):
         self.assertTrue(all([np.isclose(v, 0.0) for v in self.al_fcc.analyse.pyscal_centro_symmetry(num_neighbors=12)]))

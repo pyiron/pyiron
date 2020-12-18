@@ -828,14 +828,75 @@ class TestAtoms(unittest.TestCase):
             )
             self.assertGreaterEqual(len(w), 1)
 
-    @unittest.skip("skip ovito because it is not installed in the test environment")
+    #@unittest.skip("skip ovito because it is not installed in the test environment")
     def test_analyse_ovito_voronoi_volume(self):
         basis = Atoms(
             "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
         )
-        self.assertTrue(
-            all(basis.analyse_ovito_centro_symmetry() == np.array([0.5, 0.5]))
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            self.assertAlmostEqual(np.mean(basis.analyse_ovito_voronoi_volume()), 0.5)
+            self.assertGreaterEqual(len(w), 1)
+
+    def test_analyse_pyscal_steinhardt_parameter(self):
+        basis = Atoms(
+            "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
         )
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            qs, _ = basis.analyse_pyscal_steinhardt_parameter()
+            self.assertLess(np.abs(np.mean(qs[0]) - 0.0363696483726654), 1E-3)
+            self.assertLess(np.abs(np.mean(qs[1]) - 0.5106882308569508), 1E-3)
+            self.assertGreaterEqual(len(w), 1)
+
+    def test_analyse_pyscal_cna_adaptive(self):
+        basis = Atoms(
+            "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
+        )
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            deprecated = basis.analyse_pyscal_cna_adaptive()
+            current = basis.analyse.pyscal_cna_adaptive()
+            self.assertEqual(deprecated, current)
+            self.assertGreaterEqual(len(w), 1)
+
+    def test_pyscal_centro_symmetry(self):
+        basis = Atoms(
+            "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
+        )
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            self.assertTrue(all(basis.analyse_pyscal_centro_symmetry() == np.array([0.75, 0.75])))
+            self.assertGreaterEqual(len(w), 1)
+
+    def test_analyse_pyscal_diamond_structure(self):
+        basis = Atoms(
+            "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
+        )
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            deprecated = basis.analyse_pyscal_diamond_structure()
+            current = basis.analyse.pyscal_diamond_structure()
+            self.assertEqual(deprecated, current)
+            self.assertGreaterEqual(len(w), 1)
+
+    def test_analyse_pyscal_voronoi_volume(self):
+        basis = Atoms(
+            "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
+        )
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            self.assertAlmostEqual(np.mean(basis.analyse_pyscal_voronoi_volume()), 0.5)
+            self.assertGreaterEqual(len(w), 1)
+
+    def test_get_voronoi_volume(self):
+        basis = Atoms(
+            "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
+        )
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            self.assertAlmostEqual(np.mean(basis.get_voronoi_volume()), 0.5)
+            self.assertGreaterEqual(len(w), 1)
 
     @unittest.skip("skip nglview because it is not installed in the test environment")
     def test_plot3d(self):
