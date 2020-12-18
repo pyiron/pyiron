@@ -30,6 +30,7 @@ jobs:
       run: |
         python .ci_support/pyironconfig.py
         pip install --no-deps .
+        pip check
     - name: Tests
       shell: bash -l {0}
       run: coverage run --omit pyiron/_version.py -m unittest discover tests
