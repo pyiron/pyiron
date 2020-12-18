@@ -27,8 +27,7 @@ from pyiron.sphinx.potential import SphinxJTHPotentialFile
 from pyiron.sphinx.potential import find_potential_file \
     as find_potential_file_jth
 from pyiron.sphinx.volumetric_data import SphinxVolumetricData
-from pyiron_base import Settings, InputList, job_status_successful_lst
-from pyiron_base.generic.util import deprecate
+from pyiron_base import Settings, InputList, job_status_successful_lst, deprecate
 
 __author__ = "Osamu Waseda, Jan Janssen"
 __copyright__ = (

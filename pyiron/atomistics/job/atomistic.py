@@ -9,8 +9,7 @@ import numpy as np
 import warnings
 
 from pyiron.atomistics.structure.atoms import Atoms
-from pyiron_base import GenericParameters, GenericMaster, GenericJob as GenericJobCore
-from pyiron_base.generic.util import deprecate
+from pyiron_base import GenericParameters, GenericMaster, GenericJob as GenericJobCore, deprecate
 
 try:
     from pyiron_base import ProjectGUI
