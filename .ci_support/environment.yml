@@ -15,7 +15,7 @@ dependencies:
   - pandas >=1.0.1
   - phonopy >=2.4.2
   - pymatgen >=2020.9.14
-  - pyiron_base >=0.1.41
+  - pyiron_base >=0.1.39
   - pyscal >=2.10.6
   - pytables >=3.6.1
   - quickff >=2.2.4
