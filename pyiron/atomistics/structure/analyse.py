@@ -150,7 +150,7 @@ class Analyse:
 
         """
         return get_steinhardt_parameter_structure(
-            structure=self._structure, neighbor_method=neighbor_method, cutoff=cutoff, n_clusters=n_clusters,
+            self._structure, neighbor_method=neighbor_method, cutoff=cutoff, n_clusters=n_clusters,
             q=q, averaged=averaged, clustering=clustering
         )
 
