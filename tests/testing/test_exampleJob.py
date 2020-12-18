@@ -30,10 +30,7 @@ class TestExampleJob(unittest.TestCase):
 
     def test_delete_existing_job(self):
         self.job = self.project.create_job("ExampleJob", "job_test_delete_existing_job")
-        with warnings.catch_warnings(record=True) as w:
-            self.job.run(run_again=True)
-            print("test_delete_existing_job", len(w), w)
-            self.assertTrue(len(w) > 1)
+        self.job.run(run_again=True)
         self.assertTrue(self.job.status.finished)
         self.job = self.project.create_job("ExampleJob", "job_test_delete_existing_job", delete_existing_job=True)
         self.assertTrue(self.job.status.initialized)
