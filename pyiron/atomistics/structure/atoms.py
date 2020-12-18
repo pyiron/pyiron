@@ -1417,7 +1417,7 @@ class Atoms(ASEAtoms):
         return neighbors.find_neighbors_by_vector(vector=vector, return_deviation=return_deviation)
     find_neighbors_by_vector.__doc__ = Neighbors.find_neighbors_by_vector.__doc__
 
-    @deprecate("use neigh.get_shell_matrix() instead (after calling neigh = structure.get_neighbors())",
+    @deprecate("Use neigh.get_shell_matrix() instead (after calling neigh = structure.get_neighbors())",
                version="1.0.0")
     def get_shell_matrix(
         self, id_list=None, chemical_pair=None, num_neighbors=100, tolerance=2,
