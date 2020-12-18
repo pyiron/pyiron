@@ -53,7 +53,7 @@ class TestAtoms(unittest.TestCase):
             "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
         )
         self.assertTrue(
-            basis.analyse.pyscal_cna_adaptive()["CommonNeighborAnalysis.counts.BCC"] == 2
+            basis.analyse.pyscal_cna_adaptive()["bcc"] == 2
         )
 
     def test_pyscal_centro_symmetry(self):
