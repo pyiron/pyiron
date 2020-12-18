@@ -824,7 +824,7 @@ class TestAtoms(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             self.assertTrue(
-                all(basis.analyse_ovito_centro_symmetry() == np.array([0.75, 0.]))
+                np.allclose(basis.analyse_ovito_centro_symmetry() ,np.array([0.75, 0.]))
             )
             self.assertGreaterEqual(len(w), 1)
 
@@ -866,7 +866,7 @@ class TestAtoms(unittest.TestCase):
         )
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            self.assertTrue(all(basis.analyse_pyscal_centro_symmetry() == np.array([0.75, 0.])))
+            self.assertTrue(np.allclose(basis.analyse_pyscal_centro_symmetry(), np.array([0.75, 0.])))
             self.assertGreaterEqual(len(w), 1)
 
     def test_analyse_pyscal_diamond_structure(self):

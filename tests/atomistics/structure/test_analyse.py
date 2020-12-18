@@ -61,7 +61,7 @@ class TestAtoms(unittest.TestCase):
             "FeFe", scaled_positions=[(0, 0, 0), (0.5, 0.5, 0.5)], cell=np.identity(3)
         )
         self.assertTrue(
-            all(basis.analyse.pyscal_centro_symmetry() == np.array([0.75, 0.]))
+            np.allclose(basis.analyse.pyscal_centro_symmetry(), np.array([0.75, 0.]))
         )
 
 
