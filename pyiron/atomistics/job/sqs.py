@@ -8,14 +8,17 @@ from pyiron_base import InputList, GenericParameters, Settings
 from pyiron.atomistics.structure.atoms import Atoms, ase_to_pyiron, pyiron_to_ase
 from pymatgen.io.ase import AseAtomsAdaptor
 import numpy as np
+from pyiron_base.generic.util import ImportAlarm
 
 try:
     from sqsgenerator.core.sqs import ParallelSqsIterator
+    import_alarm = ImportAlarm()
 except ImportError:
-    # sqsgenerator is not available for all systems
-    # This is no reason to have pyiron fail catestrophically, it just means this job class is unavailable.
-    # Pass silently for now, but throw an exception if the user tries to instantiate this job.
-    ParallelSqsIterator = None
+    import_alarm = ImportAlarm(
+        "SQSJob relies on sqsgenerator.core.sqs.ParallelSqsIterator, but this is unavailable. Please ensure your "
+        "python environment contains the [sqsgenerator module](https://github.com/dgehringer/sqsgenerator), e.g. with "
+        "`conda install -c conda-forge sqsgenerator`."
+    )
 
 __author__ = "Jan Janssen"
 __copyright__ = (
@@ -53,15 +56,6 @@ def get_sqs_structures(structure, mole_fractions, weights=None, objective=0.0, i
         iterations=iterations, output_structures=output_structures, objective=objective
     )
     return [pymatgen_to_pyiron(s) for s in structures], decmp, iter_, cycle_time
-
-
-def _fail_if_imports_missing():
-    """
-    Just a temporary measure as long as any imports are wrapped in a try/pass instead of being on the dependencies
-    list.
-    """
-    if ParallelSqsIterator is None:
-        raise ImportError("SQSJob relies on sqsgenerator.core.sqs.ParallelSqsIterator, but this is unavailable.")
 
 
 class SQSJob(AtomisticGenericJob):
@@ -130,6 +124,7 @@ class SQSJob(AtomisticGenericJob):
         }
     }
 
+    @import_alarm
     def __init__(self, project, job_name):
         super(SQSJob, self).__init__(project, job_name)
         # self.input = InputList(table_name='input')
@@ -141,7 +136,6 @@ class SQSJob(AtomisticGenericJob):
         self.input.n_output_structures = 1
         self._python_only_job = True
         self._lst_of_struct = []
-        _fail_if_imports_missing()
         self.__hdf_version__ = "0.2.0"
         self.__name__ = "SQSJob"
         s.publication_add(self.publication)
