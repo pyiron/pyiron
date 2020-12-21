@@ -372,7 +372,7 @@ class TestSphinx(unittest.TestCase):
         self.assertFalse(self.sphinx_band_structure.check_setup())
 
     def test_set_check_overlap(self):
-        self.assertRaises(ValueError, self.sphinx_band_structure.set_check_overlap, 0)
+        self.assertRaises(TypeError, self.sphinx_band_structure.set_check_overlap, 0)
 
     def test_set_occupancy_smearing(self):
         self.assertRaises(
