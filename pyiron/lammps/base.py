@@ -405,13 +405,11 @@ class LammpsBase(AtomisticGenericJob):
         else:
             self.collect_dump_file(file_name="dump.out", cwd=self.working_directory)
         self.collect_output_log(file_name="log.lammps", cwd=self.working_directory)
-        try:
+        if len(self.output.cells) > 0:
             final_structure = self.get_structure(iteration_step=-1)
-        except IndexError:
-            final_structure = None
-        if final_structure is not None:
-            with self.project_hdf5.open("output") as hdf_output:
-                final_structure.to_hdf(hdf_output)
+            if final_structure is not None:
+                with self.project_hdf5.open("output") as hdf_output:
+                    final_structure.to_hdf(hdf_output)
 
     def convergence_check(self):
         if self._generic_input["calc_mode"] == "minimize":
