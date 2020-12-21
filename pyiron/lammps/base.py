@@ -405,7 +405,10 @@ class LammpsBase(AtomisticGenericJob):
         else:
             self.collect_dump_file(file_name="dump.out", cwd=self.working_directory)
         self.collect_output_log(file_name="log.lammps", cwd=self.working_directory)
-        final_structure = self.get_structure(iteration_step=-1)
+        try:
+            final_structure = self.get_structure(iteration_step=-1)
+        except IndexError:
+            final_structure = None
         if final_structure is not None:
             with self.project_hdf5.open("output") as hdf_output:
                 final_structure.to_hdf(hdf_output)
@@ -547,7 +550,10 @@ class LammpsBase(AtomisticGenericJob):
                     )
                     for llst, llen in zip(l_start, l_end)
                 ]
-            df = df[-1]
+            if len(df) == 1:
+                df = df[-1]
+            else:
+                df = pd.concat(df)
 
             h5_dict = {
                 "Step": "steps",
