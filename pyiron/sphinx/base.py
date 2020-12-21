@@ -429,7 +429,7 @@ class SphinxBase(GenericDFTJob):
                             "potential": '"' + elem + "_POTCAR" + '"',
                 })
             else:
-                raise ValueError()
+                raise ValueError('Potential must be JTH or VASP')
         if not check_overlap:
             self.input.sphinx.pawPot["species"][-1]["checkOverlap"] = "false"
         if self.input["KJxc"]:
@@ -911,7 +911,7 @@ class SphinxBase(GenericDFTJob):
             check_overlap to False.
         """
         if not isinstance(check_overlap, bool):
-            raise ValueError("check_overlap has to be a boolean")
+            raise TypeError("check_overlap has to be a boolean")
 
         if self.get_version_float() < 2.51 and not check_overlap:
             warnings.warn(
@@ -919,7 +919,7 @@ class SphinxBase(GenericDFTJob):
                 + "in order for the overlap to be considered. "
                 + "Change it via job.executable.version"
             )
-        self.input["CheckOverlap"] = check_overlap
+        self.input.CheckOverlap = check_overlap
 
     def set_mixing_parameters(
         self,
@@ -1237,7 +1237,7 @@ class SphinxBase(GenericDFTJob):
         else:
             potformat = "JTH"
         if not self.input.sphinx.pawPot.read_only:
-            self.load_species_group(potformat=potformat)
+            self.load_species_group(check_overlap=self.input.CheckOverlap, potformat=potformat)
         if not self.input.sphinx.initialGuess.read_only:
             self.load_guess_group()
         if not self.input.sphinx.PAWHamiltonian.read_only:
@@ -1284,7 +1284,7 @@ class SphinxBase(GenericDFTJob):
         # via job.input.pawPot (which is likely True),
         # load it based on job.structure.
         if not structure_sync and not self.input.sphinx.pawPot.read_only:
-            self.load_species_group(potformat=potformat)
+            self.load_species_group(check_overlap=self.input.CheckOverlap, potformat=potformat)
 
         modified_elements = {
             key: value

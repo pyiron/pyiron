@@ -6,6 +6,7 @@ import unittest
 import numpy as np
 import os
 import warnings
+from pyiron import ase_to_pyiron
 from pyiron.atomistics.structure.atom import Atom
 from pyiron.atomistics.structure.atoms import Atoms, CrystalStructure
 from pyiron.atomistics.structure.factory import StructureFactory
@@ -14,6 +15,7 @@ from pyiron.atomistics.structure.periodic_table import PeriodicTable, ChemicalEl
 from pyiron_base import FileHDFio, ProjectHDFio, Project
 from ase.cell import Cell as ASECell
 from ase.atoms import Atoms as ASEAtoms
+from ase.build import molecule
 
 
 class TestAtoms(unittest.TestCase):
@@ -1335,6 +1337,16 @@ class TestAtoms(unittest.TestCase):
         self.assertEqual(len(b.indices), 3)
         self.assertEqual(len(b.species), 1)
         self.assertEqual(np.max(b.indices), 0)
+        basis = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
+        del basis[0]
+        basis.set_initial_magnetic_moments(len(basis) * [2])
+        self.assertEqual(len(basis), 3)
+        self.assertTrue(np.array_equal(basis.get_initial_magnetic_moments(), [2, 2, 2]))
+        basis = CrystalStructure("Mg", bravais_basis="fcc", lattice_constant=4.2)
+        del basis[np.array([True, False, False, False])]
+        self.assertEqual(len(basis), 3)
+        basis.set_initial_magnetic_moments(len(basis) * [2])
+        self.assertTrue(np.array_equal(basis.get_initial_magnetic_moments(), [2, 2, 2]))
 
     def test__setitem__(self):
         basis = self.CO2.copy()
@@ -1505,6 +1517,11 @@ class TestAtoms(unittest.TestCase):
         self.assertAlmostEqual(
             np.linalg.norm(position-structure.cell*0.1), 0
         )
+
+    @staticmethod
+    def test_set_dihedral():
+        structure = ase_to_pyiron(molecule('H2COH'))
+        structure.set_dihedral(4, 0, 1, 2, angle=90)
 
 
 def generate_fcc_lattice(a=4.2):

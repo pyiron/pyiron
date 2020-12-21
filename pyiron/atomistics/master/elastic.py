@@ -291,15 +291,15 @@ class _ElasticJobGenerator(JobGenerator):
     @property
     def parameter_list(self):
         parameter_lst = []
-        for ii, epsilon in enumerate(self._job.input['strain_matrices']):
-            basis = self._job.ref_job.structure.copy()
+        for ii, epsilon in enumerate(self._master.input['strain_matrices']):
+            basis = self._master.ref_job.structure.copy()
             basis.apply_strain(np.array(epsilon))
             parameter_lst.append([ii, basis])
         return parameter_lst
 
     def job_name(self, parameter):
         return "{}_{}".format(
-            self._job.job_name, parameter[0]
+            self._master.job_name, parameter[0]
         ).replace(".", "_")
 
     @staticmethod

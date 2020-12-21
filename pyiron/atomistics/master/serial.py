@@ -132,14 +132,14 @@ class SerialMaster(SerialMasterBase, AtomisticGenericJob):
 
     @property
     def structure(self):
-        if self.start_job:
+        if self.start_job is not None:
             return self._start_job.structure
         else:
             return None
 
     @structure.setter
     def structure(self, basis):
-        if self.start_job:
+        if self.start_job is not None:
             self._start_job.structure = basis
         else:
             raise ValueError(
